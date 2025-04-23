@@ -38,9 +38,10 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 
 public class SendGridAPI implements ConsentLogger {
 
-  private String fromAccount;
-  private SendGrid sendGrid;
-  private Boolean activateEmailNotifications;
+  private final String fromAccount;
+  private final SendGrid sendGrid;
+  private final boolean activateEmailNotifications;
+
   private final NewCaseMessage newCaseMessageCreator = new NewCaseMessage();
   private final NewDARRequestMessage newDARMessageCreator = new NewDARRequestMessage();
   private final ReminderMessage reminderMessageCreator = new ReminderMessage();
@@ -57,23 +58,14 @@ public class SendGridAPI implements ConsentLogger {
   private final UserDAO userDAO;
 
   public SendGridAPI(MailConfiguration config, UserDAO userDAO) {
-    setFromAccount(config.getGoogleAccount());
-    setSendGrid(new SendGrid(config.getSendGridApiKey()));
-    setActivateEmailNotifications(config.isActivateEmailNotifications());
+    this.fromAccount = config.getGoogleAccount();
+    this.sendGrid = new SendGrid(config.getSendGridApiKey());
+    this.activateEmailNotifications = config.isActivateEmailNotifications();
     this.userDAO = userDAO;
   }
 
-  private void setFromAccount(String fromAccount) {
-    this.fromAccount = fromAccount;
-  }
-
-  @VisibleForTesting
-  public void setSendGrid(SendGrid sendGrid) {
-    this.sendGrid = sendGrid;
-  }
-
-  private void setActivateEmailNotifications(Boolean activateEmailNotifications) {
-    this.activateEmailNotifications = activateEmailNotifications;
+  public String getFromAccount() {
+    return fromAccount;
   }
 
   /**
