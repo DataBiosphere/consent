@@ -55,7 +55,6 @@ class ComplianceLoggerTest extends AbstractTestHelper {
     user.setDisplayName("Test User");
     institution.setName("testInstitution");
     user.setInstitution(institution);
-    dataset.setName("testDataset");
     dataset.setAlias(randomInt(1, 1000));
     when(request.getRequestUri()).thenReturn(new URI("http://example.com"));
     when(request.getHeaderString("oidc_claim_user_id")).thenReturn("testUserId");
@@ -101,6 +100,16 @@ class ComplianceLoggerTest extends AbstractTestHelper {
     ILoggingEvent event = testAppender.getLoggedEvents().get(0);
     assertMessageContainsValueFields(event);
     assertThat(event.getFormattedMessage(), containsString(ComplianceEvent.DAR_SUBMISSION.toString()));
+  }
+
+  @Test
+  void testLogDARCancellation() {
+    ComplianceLogger.getInstance()
+        .logDARCancellation(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
+    assertEquals(1, testAppender.getSize());
+    ILoggingEvent event = testAppender.getLoggedEvents().get(0);
+    assertMessageContainsValueFields(event);
+    assertThat(event.getFormattedMessage(), containsString(ComplianceEvent.DAR_CANCELLATION.toString()));
   }
 
   private static class TestAppender extends ListAppender<ILoggingEvent> {
