@@ -34,6 +34,8 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.DarStatus;
+import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Collaborator;
@@ -501,9 +503,6 @@ class DataAccessRequestServiceTest {
   private DataAccessRequest generateDataAccessRequest() {
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
-    Integer userId = userDAO.insertUser(UUID.randomUUID().toString(), "displayName",
-        null, new Date());
-    dar.setUserId(userId);
     dar.setId(new Random().nextInt());
     dar.setCollectionId(new Random().nextInt());
     dar.setReferenceId(UUID.randomUUID().toString());

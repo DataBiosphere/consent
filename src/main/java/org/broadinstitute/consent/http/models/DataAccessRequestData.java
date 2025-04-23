@@ -23,7 +23,7 @@ public class DataAccessRequestData {
   public static final List<String> DEPRECATED_PROPS = Arrays
       .asList("referenceId", "investigator",
           "institution", "department", "address1", "address2", "city", "zipcode", "zipCode",
-          "state", "country", "researcher", "userId", "isThePi", "havePi", "piEmail",
+          "state", "country", "researcher", "userId", "isThePi", "havePi",
           "profileName", "pubmedId", "scientificUrl", "eraExpiration", "academicEmail",
           "eraAuthorized", "nihUsername", "linkedIn", "orcid", "researcherGate", "datasetDetail",
           "datasets", "datasetId", "validRestriction", "restriction", "translatedUseRestriction",

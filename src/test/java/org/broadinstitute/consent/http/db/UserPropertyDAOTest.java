@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserFields;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.junit.jupiter.api.Test;
@@ -17,7 +16,7 @@ class UserPropertyDAOTest extends DAOTestHelper {
 
   @Test
   void testFindUserProperties() {
-    User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+    User user = createUser();
 
     UserProperty suggestedSigningOfficial = new UserProperty();
     suggestedSigningOfficial.setPropertyKey(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue());
