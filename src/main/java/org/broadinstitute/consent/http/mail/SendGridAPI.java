@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.mail;
 
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.sendgrid.Method;
 import com.sendgrid.Request;
@@ -62,10 +61,6 @@ public class SendGridAPI implements ConsentLogger {
     this.sendGrid = new SendGrid(config.getSendGridApiKey());
     this.activateEmailNotifications = config.isActivateEmailNotifications();
     this.userDAO = userDAO;
-  }
-
-  public String getFromAccount() {
-    return fromAccount;
   }
 
   /**
