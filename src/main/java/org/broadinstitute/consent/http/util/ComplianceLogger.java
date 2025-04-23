@@ -32,13 +32,11 @@ public class ComplianceLogger implements ConsentLogger {
       user_name: %s; \
       user_id: %s; \
       user_id_provider: %s; \
-      session_id: -; \
       url: %s; \
       app: DUOS; \
       http_user_agent: %s; \
       status: %s; \
       http_content_type: %s; \
-      nih_ico: -; \
       cadr_name: DUOS; \
       user_org: %s; \
       user_email: %s; \
