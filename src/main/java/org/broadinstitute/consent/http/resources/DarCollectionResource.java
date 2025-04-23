@@ -188,8 +188,8 @@ public class DarCollectionResource extends Resource {
   @Produces("application/json")
   @RolesAllowed({ADMIN, CHAIRPERSON, RESEARCHER})
   public Response cancelDarCollectionByCollectionId(
-      @Context Request request,
       @Auth AuthUser authUser,
+      @Context Request request,
       @PathParam("id") Integer collectionId,
       @QueryParam("roleName") String roleName) {
     try {

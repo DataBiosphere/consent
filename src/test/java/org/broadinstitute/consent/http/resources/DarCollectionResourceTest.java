@@ -300,7 +300,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     when(darCollectionService.getByCollectionId(anyInt())).thenReturn(null);
     initResource();
 
-    try (var response = resource.cancelDarCollectionByCollectionId(request, authUser, 1, null)) {
+    try (var response = resource.cancelDarCollectionByCollectionId(authUser, request, 1, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
@@ -315,7 +315,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
         new BadRequestException());
     initResource();
 
-    try (var response = resource.cancelDarCollectionByCollectionId(request, authUser, 1, null)) {
+    try (var response = resource.cancelDarCollectionByCollectionId(authUser, request, 1, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -330,7 +330,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
         .thenThrow(new InternalServerErrorException());
     initResource();
 
-    try (var response = resource.cancelDarCollectionByCollectionId(request, authUser, 1, null)) {
+    try (var response = resource.cancelDarCollectionByCollectionId(authUser, request, 1, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
   }
@@ -347,7 +347,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     when(darCollectionService.cancelDarCollectionElectionsAsAdmin(collection)).thenReturn(collection);
     initResource();
 
-    try (var response = resource.cancelDarCollectionByCollectionId(request, authUser, 1, Resource.ADMIN)) {
+    try (var response = resource.cancelDarCollectionByCollectionId(authUser, request, 1, Resource.ADMIN)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -364,7 +364,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     when(darCollectionService.cancelDarCollectionElectionsAsChair(collection, chair)).thenReturn(collection);
     initResource();
 
-    try (var response = resource.cancelDarCollectionByCollectionId(request, authUser, 1, Resource.CHAIRPERSON)) {
+    try (var response = resource.cancelDarCollectionByCollectionId(authUser, request, 1, Resource.CHAIRPERSON)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -380,7 +380,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     when(darCollectionService.getByCollectionId(anyInt())).thenReturn(collection);
     initResource();
 
-    try (var response = resource.cancelDarCollectionByCollectionId(request, authUser, 1, Resource.ADMIN)) {
+    try (var response = resource.cancelDarCollectionByCollectionId(authUser, request, 1, Resource.ADMIN)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -394,7 +394,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     when(darCollectionService.cancelDarCollectionAsResearcher(collection)).thenReturn(collection);
     initResource();
 
-    try (var response = resource.cancelDarCollectionByCollectionId(request, authUser, 1, Resource.RESEARCHER)) {
+    try (var response = resource.cancelDarCollectionByCollectionId(authUser, request, 1, Resource.RESEARCHER)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -407,7 +407,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     when(darCollectionService.getByCollectionId(anyInt())).thenReturn(collection);
     initResource();
 
-    try (var response = resource.cancelDarCollectionByCollectionId(request, authUser, 1, Resource.ADMIN)) {
+    try (var response = resource.cancelDarCollectionByCollectionId(authUser, request, 1, Resource.ADMIN)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
