@@ -13,12 +13,14 @@ import ch.qos.logback.core.read.ListAppender;
 import com.google.api.client.http.HttpStatusCodes;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.util.ComplianceLogger.ComplianceEvent;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,11 +35,14 @@ class ComplianceLoggerTest extends AbstractTestHelper {
 
   @Mock
   private ContainerRequest request;
-
   private TestAppender testAppender;
+  private final User user = new User();
+  private final Institution institution = new Institution();
+  private final Dataset dataset = new Dataset();
+
 
   @BeforeEach
-  void setUp() {
+  void setUp() throws URISyntaxException {
     Logger testLogger = (Logger) LoggerFactory.getLogger(ComplianceLogger.class);
     testLogger.setLevel(Level.TRACE);
     testAppender = new TestAppender();
@@ -45,30 +50,24 @@ class ComplianceLoggerTest extends AbstractTestHelper {
     testLogger.addAppender(testAppender);
     testAppender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
     testAppender.start();
-  }
-
-  @Test
-  void testLogDARSubmission() throws Exception {
-    User user = new User();
     user.setEraCommonsId("testUser");
     user.setEmail("test@test.com");
     user.setDisplayName("Test User");
-    Institution institution = new Institution();
     institution.setName("testInstitution");
     user.setInstitution(institution);
-    Dataset dataset = new Dataset();
     dataset.setName("testDataset");
     dataset.setAlias(randomInt(1, 1000));
-
-    // Mock request
     when(request.getRequestUri()).thenReturn(new URI("http://example.com"));
     when(request.getHeaderString("oidc_claim_user_id")).thenReturn("testUserId");
     when(request.getHeaderString(HttpHeaderNames.USER_AGENT.toString())).thenReturn(
         "testUserAgent");
+  }
 
+  @Test
+  void testLogDARSApproval() {
     // Log Event
     ComplianceLogger.getInstance()
-        .logDARSubmission(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
+        .logDARApproval(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
 
     // Verify log event
     assertEquals(1, testAppender.getSize());
@@ -78,6 +77,41 @@ class ComplianceLoggerTest extends AbstractTestHelper {
     assertThat(event.getFormattedMessage(), containsString(user.getEraCommonsId()));
     assertThat(event.getFormattedMessage(), containsString(institution.getName()));
     assertThat(event.getFormattedMessage(), containsString(dataset.getDatasetIdentifier()));
+    assertThat(event.getFormattedMessage(), containsString(ComplianceEvent.DAR_APPROVAL.toString()));
+  }
+
+  @Test
+  void testLogDARRejection() {
+    // Log Event
+    ComplianceLogger.getInstance()
+        .logDARRejection(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
+
+    // Verify log event
+    assertEquals(1, testAppender.getSize());
+    ILoggingEvent event = testAppender.getLoggedEvents().get(0);
+    assertThat(event.getFormattedMessage(), containsString(user.getDisplayName()));
+    assertThat(event.getFormattedMessage(), containsString(user.getEmail()));
+    assertThat(event.getFormattedMessage(), containsString(user.getEraCommonsId()));
+    assertThat(event.getFormattedMessage(), containsString(institution.getName()));
+    assertThat(event.getFormattedMessage(), containsString(dataset.getDatasetIdentifier()));
+    assertThat(event.getFormattedMessage(), containsString(ComplianceEvent.DAR_REJECTION.toString()));
+  }
+
+  @Test
+  void testLogDARSubmission() {
+    // Log Event
+    ComplianceLogger.getInstance()
+        .logDARSubmission(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_CREATED);
+
+    // Verify log event
+    assertEquals(1, testAppender.getSize());
+    ILoggingEvent event = testAppender.getLoggedEvents().get(0);
+    assertThat(event.getFormattedMessage(), containsString(user.getDisplayName()));
+    assertThat(event.getFormattedMessage(), containsString(user.getEmail()));
+    assertThat(event.getFormattedMessage(), containsString(user.getEraCommonsId()));
+    assertThat(event.getFormattedMessage(), containsString(institution.getName()));
+    assertThat(event.getFormattedMessage(), containsString(dataset.getDatasetIdentifier()));
+    assertThat(event.getFormattedMessage(), containsString(ComplianceEvent.DAR_SUBMISSION.toString()));
   }
 
   private static class TestAppender extends ListAppender<ILoggingEvent> {

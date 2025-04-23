@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -11,12 +12,14 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.NotFoundException;
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -47,9 +50,13 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
+import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -936,6 +943,30 @@ class VoteServiceTest extends AbstractTestHelper {
       fail(e.getMessage());
     }
   }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void testLogDARApprovalOrRejection(boolean voteValue) {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    Election election = new Election();
+    election.setElectionId(1);
+    election.setDatasetId(dataset.getDatasetId());
+    User user = new User();
+    Vote vote = new Vote();
+    vote.setVote(voteValue);
+    vote.setType(VoteType.FINAL.getValue());
+    vote.setElectionId(election.getElectionId());
+    when(electionDAO.findElectionsByIds(List.of())).thenReturn(List.of());
+    when(electionDAO.findElectionsByIds(List.of(election.getElectionId()))).thenReturn(List.of(election));
+    when(datasetDAO.findDatasetsByIdList(List.of())).thenReturn(List.of());
+    when(datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId()))).thenReturn(List.of(dataset));
+    ContainerRequest request = mock();
+
+    initService();
+    assertDoesNotThrow(() -> service.logDARApprovalOrRejection(user, List.of(vote), request));
+  }
+
 
   private void setUpUserAndElectionVotes(UserRoles userRoles) {
     User user = new User();

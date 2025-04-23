@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
+import static java.util.function.Predicate.not;
+
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -18,6 +21,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.apache.hc.core5.http.impl.Http1StreamListener;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -42,8 +46,10 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
+import org.broadinstitute.consent.http.util.ComplianceLogger;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.glassfish.jersey.server.ContainerRequest;
 
 public class VoteService implements ConsentLogger {
 
@@ -505,4 +511,29 @@ public class VoteService implements ConsentLogger {
   private void notFoundException(Integer voteId) {
     throw new NotFoundException("Could not find vote for specified id. Vote id: " + voteId);
   }
+
+  public void logDARApprovalOrRejection(User user, List<Vote> updatedVotes,
+      ContainerRequest request) {
+    List<Integer> approvedElectionIds = updatedVotes.stream()
+        .filter(v -> v.getType().equals(VoteType.FINAL.getValue()))
+        .filter(Vote::getVote)
+        .map(Vote::getElectionId)
+        .toList();
+    List<Integer> approvedDatasetIds = electionDAO.findElectionsByIds(approvedElectionIds).stream()
+        .map(Election::getDatasetId).toList();
+    List<Dataset> approvedDatasets = datasetDAO.findDatasetsByIdList(approvedDatasetIds);
+    ComplianceLogger.getInstance().logDARApproval(user, approvedDatasets, request,
+        HttpStatusCodes.STATUS_CODE_OK);
+
+    List<Integer> rejectedElectionIds = updatedVotes.stream()
+        .filter(v -> v.getType().equals(VoteType.FINAL.getValue()))
+        .filter(not(Vote::getVote))
+        .map(Vote::getElectionId)
+        .toList();
+    List<Integer> rejectedDatasetIds = electionDAO.findElectionsByIds(rejectedElectionIds).stream()
+        .map(Election::getDatasetId).toList();
+    List<Dataset> rejectedDatasets = datasetDAO.findDatasetsByIdList(rejectedDatasetIds);
+    ComplianceLogger.getInstance().logDARRejection(user, rejectedDatasets, request, HttpStatusCodes.STATUS_CODE_OK);
+  }
+
 }
