@@ -37,7 +37,6 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DarDataset;
@@ -213,7 +212,7 @@ class DataAccessRequestServiceTest {
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.setParentId(parentDar.getId().toString());
     progressReport.setCollectionId(parentDar.getCollectionId());
-    parentDar.setDraft(false);
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(List.of(new LibraryCard()));
     parentDar.setUserId(user.getUserId());
@@ -256,27 +255,12 @@ class DataAccessRequestServiceTest {
     return requestingUser;
   }
 
-  private static Collaborator cerateCollaborator() {
-    Collaborator validCollaborator = new Collaborator();
-    validCollaborator.setEmail("collaborator@test.com");
-    return validCollaborator;
-  }
-
-  private static DataAccessRequest createDataAccessRequest(List<Collaborator> internalCollaborators) {
-    DataAccessRequestData data = new DataAccessRequestData();
-    data.setInternalCollaborators(internalCollaborators);
-    DataAccessRequest dar = new DataAccessRequest();
-    dar.setData(data);
-    return dar;
-  }
-
   @Test
   void validateProgressReportParentDarIsDraft() {
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(List.of(new LibraryCard()));
     DataAccessRequest progressReport = generateProgressReport();
     DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setDraft(true);
     initService();
     assertThrows(BadRequestException.class, () -> {
       service.validateProgressReport(user, progressReport, parentDar);
@@ -289,7 +273,7 @@ class DataAccessRequestServiceTest {
     user.setLibraryCards(List.of(new LibraryCard()));
     DataAccessRequest progressReport = generateProgressReport();
     DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setDraft(false);
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setUserId(2); // Different user ID
     initService();
     assertThrows(ForbiddenException.class, () -> {
@@ -304,7 +288,7 @@ class DataAccessRequestServiceTest {
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.setDatasetIds(Collections.emptyList());
     DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setDraft(false);
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setUserId(user.getUserId());
     initService();
     assertThrows(BadRequestException.class, () -> {
@@ -319,7 +303,7 @@ class DataAccessRequestServiceTest {
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.getData().setProgressReportSummary(null);
     DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setDraft(false);
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setUserId(user.getUserId());
     initService();
     assertThrows(BadRequestException.class, () -> {
@@ -334,7 +318,7 @@ class DataAccessRequestServiceTest {
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.getData().setIntellectualPropertySummary(null);
     DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setDraft(false);
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setUserId(user.getUserId());
     initService();
     assertThrows(BadRequestException.class, () -> {
@@ -349,7 +333,7 @@ class DataAccessRequestServiceTest {
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.setDatasetIds(List.of(3, 4, 5)); // IDs not all in parent DAR
     DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setDraft(false);
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setDatasetIds(List.of(1, 2, 3));
     parentDar.setUserId(user.getUserId());
     initService();
@@ -365,7 +349,7 @@ class DataAccessRequestServiceTest {
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.setDatasetIds(List.of(1, 2));
     DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setDraft(false);
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setDatasetIds(List.of(1, 2, 3));
     parentDar.setUserId(user.getUserId());
     initService();
