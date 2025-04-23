@@ -12,7 +12,6 @@ import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -50,7 +49,7 @@ public class DataAccessRequest {
   public Boolean expired = false;
 
   @JsonProperty
-  public long expiresAt = -1;
+  public Timestamp expiresAt;
 
   @JsonProperty
   public Integer userId;
@@ -135,7 +134,7 @@ public class DataAccessRequest {
     return expired;
   }
 
-  public long getExpiresAt() {
+  public Timestamp getExpiresAt() {
     return expiresAt;
   }
 
@@ -171,9 +170,10 @@ public class DataAccessRequest {
     this.submissionDate = submissionDate;
     draft = submissionDate == null;
     expired = submissionDate != null
-        && Instant.now().toEpochMilli() - submissionDate.getTime() > EXPIRATION_DURATION_MILLIS;
-    expiresAt = (submissionDate != null) ? submissionDate.getTime() + EXPIRATION_DURATION_MILLIS
-        : -1; // no expiration for drafts;
+        && submissionDate.before(
+        new Timestamp(System.currentTimeMillis() - EXPIRATION_DURATION_MILLIS));
+    expiresAt = (submissionDate != null) ? new Timestamp(
+        submissionDate.getTime() + EXPIRATION_DURATION_MILLIS) : null;
   }
 
   public Timestamp getUpdateDate() {
@@ -319,12 +319,8 @@ public class DataAccessRequest {
     if (Objects.nonNull(dar.getDraft())) {
       copy.put("draft", dar.getDraft());
     }
-    if (Objects.nonNull(dar.getExpired())) {
-      copy.put("expired", dar.getExpired());
-    }
-    if (Objects.nonNull(dar.getExpiresAt())) {
-      copy.put("expiredAt", dar.getExpiresAt());
-    }
+    copy.put("expired", dar.getExpired());
+    copy.put("expiredAt", dar.getExpiresAt());
     if (Objects.nonNull(dar.getId())) {
       copy.put("id", dar.getId());
     }

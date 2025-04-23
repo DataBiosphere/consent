@@ -27,7 +27,7 @@ properties:
     description: Expired status of this DAR
   expiredAt:
     type: number
-    description: When this DAR expires, in milliseconds since the epoch.  A value of -1 indicates this DAR does not have an expiration date because it is a draft.
+    description: When this DAR expires, in milliseconds since the epoch.  Present if the DAR is no longer a draft.
   darCode:
     type: string
     description: Unique DAR Code

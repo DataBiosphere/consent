@@ -137,17 +137,44 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.updateDataByReferenceId(dar.referenceId, dar.userId, new Date(), null,
         new Date(), dar.getData());
     dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-    assertNull(dar.getSubmissionDate());
-    assertEquals(true, dar.getDraft());
-    assertFalse(dar.getExpired());
-    assertEquals(-1, dar.getExpiresAt());
     DataAccessRequestData darData = dar.getData();
     dataAccessRequestDAO.updateDataByReferenceId(dar.referenceId, dar.userId, new Date(),
         new Date(), new Date(), darData);
     dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
     assertFalse(dar.getDraft());
-    assertEquals(dar.getSubmissionDate().getTime() + DataAccessRequest.EXPIRATION_DURATION_MILLIS,
-        dar.getExpiresAt());
+    Timestamp expectedTimestamp = new Timestamp(
+        dar.getSubmissionDate().getTime() + DataAccessRequest.EXPIRATION_DURATION_MILLIS);
+    assertEquals(expectedTimestamp, dar.getExpiresAt());
+  }
+
+  @Test
+  void testDataAccessRequestSubmissionDateAbsent() {
+    DarCollection darColl = createDarCollection();
+    DataAccessRequest dar = new ArrayList<>(darColl.getDars().values()).get(0);
+
+    dataAccessRequestDAO.updateDataByReferenceId(dar.referenceId, dar.userId, new Date(), null,
+        new Date(), dar.getData());
+    dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+    assertNull(dar.getSubmissionDate());
+    assertEquals(true, dar.getDraft());
+    assertFalse(dar.getExpired());
+    assertNull(dar.getExpiresAt());
+  }
+
+  @Test
+  void testDataAccessRequestSubmissionDatePresent() {
+    DarCollection darColl = createDarCollection();
+    DataAccessRequest dar = new ArrayList<>(darColl.getDars().values()).get(0);
+
+    dataAccessRequestDAO.updateDataByReferenceId(dar.referenceId, dar.userId, new Date(),
+        new Date(),
+        new Date(), dar.getData());
+    dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+    assertEquals(false, dar.getDraft());
+    assertFalse(dar.getExpired());
+    Timestamp expectedTimestamp = new Timestamp(
+        dar.getSubmissionDate().getTime() + DataAccessRequest.EXPIRATION_DURATION_MILLIS);
+    assertEquals(expectedTimestamp, dar.getExpiresAt());
   }
 
   @Test
@@ -157,16 +184,13 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
 
     dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
     assertEquals(false, dar.getDraft());
-    assertFalse(dar.getExpired());
-    assertEquals(dar.getSubmissionDate().getTime() + DataAccessRequest.EXPIRATION_DURATION_MILLIS,
-        dar.getExpiresAt(), dar.getExpiresAt());
     dataAccessRequestDAO.updateDataByReferenceId(dar.referenceId, dar.userId, new Date(), null,
         new Date(), dar.getData());
     dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
     assertEquals(true, dar.getDraft());
     assertNull(dar.getSubmissionDate());
     assertFalse(dar.getExpired());
-    assertEquals(-1, dar.getExpiresAt());
+    assertNull(dar.getExpiresAt());
   }
 
   @Test
