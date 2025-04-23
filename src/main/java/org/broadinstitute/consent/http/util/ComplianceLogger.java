@@ -51,14 +51,16 @@ public class ComplianceLogger implements ConsentLogger {
       event_type: %s;
       """;
 
-  public void logDARSubmission(User user, List<Dataset> datasets, ContainerRequest request,
-      int responseStatusCode) {
+  private void logEvent(User user, List<Dataset> datasets, ContainerRequest request,
+      int responseStatusCode, ComplianceEvent event) {
     Instant now = Instant.now();
     String userId = request.getHeaderString("oidc_claim_user_id") == null ? "-"
         : request.getHeaderString("oidc_claim_user_id");
     String userAgent = request.getHeaderString(HttpHeaderNames.USER_AGENT.toString()) == null ? "-"
         : request.getHeaderString(HttpHeaderNames.USER_AGENT.toString());
     String userIdProvider = user.getEraCommonsId() == null ? "-" : "RAS";
+    String url = request.getRequestUri() == null ? "-"
+        : request.getRequestUri().toString();
     String responseContentType = MediaType.APPLICATION_JSON;
     String institutionName = user.getInstitution() == null ? "-" : user.getInstitution().getName();
     datasets.forEach(dataset -> {
@@ -68,7 +70,7 @@ public class ComplianceLogger implements ConsentLogger {
               user.getDisplayName(),
               userId,
               userIdProvider,
-              request.getRequestUri().toString(),
+              url,
               userAgent,
               responseStatusCode,
               responseContentType,
@@ -76,10 +78,25 @@ public class ComplianceLogger implements ConsentLogger {
               user.getEmail(),
               dataset.getDatasetIdentifier(),
               user.getEraCommonsId(),
-              ComplianceEvent.DAR_SUBMISSION)
+              event)
           .replace("\\R", " ");
       logInfo(logMessage);
     });
+  }
+
+  public void logDARApproval(User user, List<Dataset> datasets, ContainerRequest request,
+      int responseStatusCode) {
+    logEvent(user, datasets, request, responseStatusCode, ComplianceEvent.DAR_APPROVAL);
+  }
+
+  public void logDARRejection(User user, List<Dataset> datasets, ContainerRequest request,
+      int responseStatusCode) {
+    logEvent(user, datasets, request, responseStatusCode, ComplianceEvent.DAR_REJECTION);
+  }
+
+  public void logDARSubmission(User user, List<Dataset> datasets, ContainerRequest request,
+      int responseStatusCode) {
+    logEvent(user, datasets, request, responseStatusCode, ComplianceEvent.DAR_SUBMISSION);
   }
 
 }
