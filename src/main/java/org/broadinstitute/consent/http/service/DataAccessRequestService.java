@@ -223,7 +223,6 @@ public class DataAccessRequestService implements ConsentLogger {
   public DataAccessRequest createProgressReport(User user, DataAccessRequest progressReport, DataAccessRequest parentDar) {
     validateProgressReport(user, progressReport, parentDar);
 
-    Date now = new Date();
     String referenceId = progressReport.getReferenceId();
     List<Integer> datasetIds = progressReport.getDatasetIds();
     dataAccessRequestDAO.insertProgressReport(
@@ -231,10 +230,6 @@ public class DataAccessRequestService implements ConsentLogger {
           progressReport.getCollectionId(),
           referenceId,
           user.getUserId(),
-          now,
-          now,
-          now,
-          now,
           progressReport.getData());
     syncDataAccessRequestDatasets(datasetIds, referenceId);
     return findByReferenceId(referenceId);

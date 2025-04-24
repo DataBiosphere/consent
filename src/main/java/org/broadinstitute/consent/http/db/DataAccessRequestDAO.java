@@ -39,7 +39,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
           SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
             (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar
-          LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id 
+          LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
           WHERE dar.submission_date is not null
           AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)""")
   List<DataAccessRequest> findAllDataAccessRequests();
@@ -117,7 +117,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery(
       """
-              SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date, 
+              SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
                 (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar
               LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
               WHERE dar.submission_date is null
@@ -320,10 +320,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @param collectionId   Integer DarCollection
    * @param referenceId    String
    * @param userId         Integer User
-   * @param createDate     Date Creation Date
-   * @param sortDate       Date Sorting Date
-   * @param submissionDate Date Submission Date
-   * @param updateDate     Date Update Date
    * @param data           DataAccessRequestData DAR Properties
    */
   @RegisterArgumentFactory(JsonArgumentFactory.class)
@@ -331,18 +327,13 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
           INSERT INTO data_access_request
             (parent_id, collection_id, reference_id, user_id, create_date, sort_date, submission_date, update_date, data)
-          VALUES (:parentId, :collectionId, :referenceId, :userId, :createDate, :sortDate,
-            :submissionDate, :updateDate, to_jsonb(:data))
+          VALUES (:parentId, :collectionId, :referenceId, :userId, now(), now(), now(), now(), to_jsonb(:data))
       """)
   void insertProgressReport(
       @Bind("parentId") Integer parentId,
       @Bind("collectionId") Integer collectionId,
       @Bind("referenceId") String referenceId,
       @Bind("userId") Integer userId,
-      @Bind("createDate") Date createDate,
-      @Bind("sortDate") Date sortDate,
-      @Bind("submissionDate") Date submissionDate,
-      @Bind("updateDate") Date updateDate,
       @Bind("data") @Json DataAccessRequestData data);
 
 

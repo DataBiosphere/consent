@@ -222,8 +222,8 @@ class DataAccessRequestServiceTest {
     DataAccessRequest newDar = service.createProgressReport(user, progressReport, parentDar);
     assertNotNull(newDar);
     verify(dataAccessRequestDAO)
-        .insertProgressReport(eq(parentDar.getId()), eq(progressReport.getCollectionId()), eq(progressReport.getReferenceId()), eq(user.getUserId()), any(), any(),
-            any(), any(), eq(progressReport.getData()));
+        .insertProgressReport(parentDar.getId(), progressReport.getCollectionId(), progressReport.getReferenceId(), user.getUserId(),
+            progressReport.getData());
     verify(dataAccessRequestDAO).insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
   }
 
