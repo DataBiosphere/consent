@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.models;
 
-import com.google.gson.Gson;
 import java.security.Principal;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 
@@ -17,11 +16,6 @@ public class AuthUser implements Principal {
 
   public AuthUser(String email) {
     this.email = email;
-  }
-
-  public AuthUser deepCopy() {
-    Gson gson = new Gson();
-    return gson.fromJson(gson.toJson(this), AuthUser.class);
   }
 
   public String getAuthToken() {
