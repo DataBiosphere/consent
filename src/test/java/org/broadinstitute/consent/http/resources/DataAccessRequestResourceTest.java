@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -168,6 +169,21 @@ class DataAccessRequestResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
     org.broadinstitute.consent.http.models.Error error = (org.broadinstitute.consent.http.models.Error) response.getEntity();
     assertEquals(SubmittedDARCannotBeEditedException.MESSAGE, error.message());
+  }
+
+  @Test
+  void testCreateDataAccessRequestWithoutValidERACommons() {
+    User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
+    userWithCards.setLibraryCards(List.of(new LibraryCard()));
+    when(userService.findUserByEmail(any())).thenReturn(userWithCards);
+    doThrow(new BadRequestException()).when(dataAccessRequestService).createDataAccessRequest(eq(user), any());
+    resource =
+        new DataAccessRequestResource(daaService,
+            dataAccessRequestService, emailService, gcsService, userService, datasetService,
+            matchService);
+
+    Response response = resource.createDataAccessRequest(authUser, info, "");
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test

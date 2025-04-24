@@ -11,6 +11,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.BadRequestException;
@@ -84,7 +85,7 @@ class DataAccessRequestServiceTest {
   @Mock
   private DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
   @Mock
-  private UseRestrictionConverter useRestrictionConverter;
+  private UserService userService;
   private DataAccessRequestService service;
 
   private static Collaborator createCollaborator() {
@@ -114,7 +115,7 @@ class DataAccessRequestServiceTest {
     container.setVoteDAO(voteDAO);
     container.setMatchDAO(matchDAO);
     service = new DataAccessRequestService(counterService, container, dacService,
-        dataAccessRequestServiceDAO);
+        dataAccessRequestServiceDAO, userService);
   }
 
   @Test
@@ -141,7 +142,6 @@ class DataAccessRequestServiceTest {
     dar.setReferenceId("id");
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(List.of(new LibraryCard()));
-    user.setLibraryCards(List.of(new LibraryCard()));
     when(counterService.getNextDarSequence()).thenReturn(1);
     when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
     when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
@@ -165,13 +165,30 @@ class DataAccessRequestServiceTest {
     dar.setSubmissionDate(Timestamp.from(Instant.now()));
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(List.of(new LibraryCard()));
-    user.setLibraryCards(List.of(new LibraryCard()));
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
     initService();
     assertThrows(SubmittedDARCannotBeEditedException.class, () -> {
       service.createDataAccessRequest(user, dar);
     });
   }
+
+  @Test
+  void testCreateDataAccessRequestCreateWithoutERACommons() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.addDatasetIds(List.of(1, 2, 3));
+    dar.setCreateDate(new Timestamp(1000));
+    dar.setSortDate(new Timestamp(1000));
+    dar.setReferenceId("id");
+    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    user.setLibraryCards(List.of(new LibraryCard()));
+    doThrow(BadRequestException.class).when(userService).hasValidActiveERACredentials(user);
+    initService();
+    assertThrows(BadRequestException.class, () -> {
+      service.createDataAccessRequest(user, dar);
+    });
+  }
+
 
   @Test
   void testUpdateByReferenceIdThrowsOnDraft() throws Exception {
@@ -194,7 +211,6 @@ class DataAccessRequestServiceTest {
     dar.setSortDate(new Timestamp(1000));
     dar.setReferenceId("id");
     User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
     user.setLibraryCards(List.of());
     initService();
     assertThrows(NIHComplianceRuleException.class, () -> {

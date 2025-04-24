@@ -10,6 +10,7 @@ import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -32,6 +33,7 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
@@ -467,32 +469,36 @@ public class UserService implements ConsentLogger {
     return jsonElementList.stream().distinct().map(e -> findUserById(e.getAsInt())).toList();
   }
 
-  public void hasValidActiveERACredentials(Integer userId) {
-    List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(userId);
-    List<UserProperty> userProperties = findAllUserProperties(userId);
-    boolean hasEraCommonsId = cards.stream().anyMatch(c -> c.getEraCommonsId() != null);
-    if (!hasEraCommonsId) {
-      throw new BadRequestException("User does not have an Era Commons ID");
-    }
-    List<UserProperty> eraStatusProps = userProperties.stream().filter(
-            userProperty -> userProperty.getPropertyKey().equalsIgnoreCase(ERA_STATUS.getValue()))
-        .toList();
-    List<UserProperty> eraExpirationProps = userProperties.stream().filter(
-            userProperty -> userProperty.getPropertyKey()
-                .equalsIgnoreCase(ERA_EXPIRATION_DATE.getValue()))
-        .toList();
-    if (eraStatusProps.size() == 1 && eraExpirationProps.size() == 1) {
-      if (!eraStatusProps.get(0).getPropertyValue().equalsIgnoreCase("true")) {
-        throw new BadRequestException("User does not have an Era Commons ID that is authorized.");
+    public void hasValidActiveERACredentials(User user) {
+      List<LibraryCard> cards = user.getLibraryCards();
+      List<UserProperty> userProperties = findAllUserProperties(user.getUserId());
+      if (cards.isEmpty()) {
+        throw new LibraryCardRequiredException();
       }
-      if (Long.parseLong(eraExpirationProps.get(0).getPropertyValue()) < System.currentTimeMillis()) {
-        throw new BadRequestException("User has an expired Era Commons ID.");
+      boolean hasEraCommonsId = cards.stream().anyMatch(c -> c.getEraCommonsId() != null);
+      if (!hasEraCommonsId) {
+        throw new BadRequestException("User does not have an Era Commons ID");
       }
-    } else {
-      throw new BadRequestException(
-          "Invalid ERA configuration for this user.  Only one ERA Commons ID is allowed.");
+      List<UserProperty> eraStatusProps = userProperties.stream().filter(
+              userProperty -> userProperty.getPropertyKey().equalsIgnoreCase(ERA_STATUS.getValue()))
+          .toList();
+      List<UserProperty> eraExpirationProps = userProperties.stream().filter(
+              userProperty -> userProperty.getPropertyKey()
+                  .equalsIgnoreCase(ERA_EXPIRATION_DATE.getValue()))
+          .toList();
+      if (eraStatusProps.size() == 1 && eraExpirationProps.size() == 1) {
+        if (!eraStatusProps.get(0).getPropertyValue().equalsIgnoreCase("true")) {
+          throw new BadRequestException("User does not have an Era Commons ID that is authorized.");
+        }
+        if (Instant.ofEpochMilli(Long.parseLong(eraExpirationProps.get(0).getPropertyValue()))
+            .isBefore(Instant.now())) {
+          throw new BadRequestException("User has an expired Era Commons ID.");
+        }
+      } else {
+        throw new BadRequestException(
+            "Invalid ERA configuration for this user.  Only one ERA Commons ID is allowed.");
+      }
     }
-  }
 
   public static class SimplifiedUser {
 

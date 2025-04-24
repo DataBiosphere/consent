@@ -45,6 +45,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
@@ -317,129 +318,123 @@ class UserServiceTest {
     });
   }
 
-  @Test
-  void testHasValidERACommonsCredentials() {
-    User u = generateUser();
-    LibraryCard lc = generateLibraryCard(u.getEmail());
-    lc.setEraCommonsId(u.getEmail());
-    u.addLibraryCard(lc);
-    UserProperty eraStatus = new UserProperty(1, u.getUserId(), ERA_STATUS.getValue(), "true");
-    //standard practice is that these expire in 30 days.
-    Timestamp eraExpirationTime = new Timestamp(
-        System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30));
-    UserProperty eraExpirationDate = new UserProperty(2, u.getUserId(),
-        ERA_EXPIRATION_DATE.getValue(), Long.toString(eraExpirationTime.getTime()));
-    List<UserProperty> userProperties = new ArrayList<>();
-    userProperties.add(eraStatus);
-    userProperties.add(eraExpirationDate);
-    u.setProperties(userProperties);
-    when(libraryCardDAO.findLibraryCardsByUserId(u.getUserId())).thenReturn(u.getLibraryCards());
-    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
-        UserFields.getValues())).thenReturn(u.getProperties());
-    assertDoesNotThrow(() -> service.hasValidActiveERACredentials(u.getUserId()));
-  }
+    @Test
+    void testHasValidERACommonsCredentials() {
+      User u = generateUser();
+      LibraryCard lc = generateLibraryCard(u.getEmail());
+      lc.setEraCommonsId(u.getEmail());
+      u.addLibraryCard(lc);
+      UserProperty eraStatus = new UserProperty(1, u.getUserId(), ERA_STATUS.getValue(), "true");
+      //standard practice is that these expire in 30 days.
+      Timestamp eraExpirationTime = new Timestamp(
+          System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30));
+      UserProperty eraExpirationDate = new UserProperty(2, u.getUserId(),
+          ERA_EXPIRATION_DATE.getValue(), Long.toString(eraExpirationTime.getTime()));
+      List<UserProperty> userProperties = new ArrayList<>();
+      userProperties.add(eraStatus);
+      userProperties.add(eraExpirationDate);
+      u.setProperties(userProperties);
+      when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
+          UserFields.getValues())).thenReturn(u.getProperties());
+      assertDoesNotThrow(() -> service.hasValidActiveERACredentials(u));
+    }
 
-  @Test
-  void testValidateERACommonsCredentialsMissingLibraryCards() {
-    User u = generateUser();
-    UserProperty eraStatus = new UserProperty(1, u.getUserId(), ERA_STATUS.getValue(), "true");
-    //standard practice is that these expire in 30 days.
-    Timestamp eraExpirationTime = new Timestamp(
-        System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30));
-    UserProperty eraExpirationDate = new UserProperty(2, u.getUserId(),
-        ERA_EXPIRATION_DATE.getValue(), Long.toString(eraExpirationTime.getTime()));
-    List<UserProperty> userProperties = new ArrayList<>();
-    userProperties.add(eraStatus);
-    userProperties.add(eraExpirationDate);
-    u.setProperties(userProperties);
-    when(libraryCardDAO.findLibraryCardsByUserId(u.getUserId())).thenReturn(u.getLibraryCards());
-    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
-        UserFields.getValues())).thenReturn(u.getProperties());
-    assertThrows(BadRequestException.class,
-        () -> service.hasValidActiveERACredentials(u.getUserId()));
-  }
+    @Test
+    void testValidateERACommonsCredentialsMissingLibraryCards() {
+      User u = generateUser();
+      UserProperty eraStatus = new UserProperty(1, u.getUserId(), ERA_STATUS.getValue(), "true");
+      //standard practice is that these expire in 30 days.
+      Timestamp eraExpirationTime = new Timestamp(
+          System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30));
+      UserProperty eraExpirationDate = new UserProperty(2, u.getUserId(),
+          ERA_EXPIRATION_DATE.getValue(), Long.toString(eraExpirationTime.getTime()));
+      List<UserProperty> userProperties = new ArrayList<>();
+      userProperties.add(eraStatus);
+      userProperties.add(eraExpirationDate);
+      u.setProperties(userProperties);
+      when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
+          UserFields.getValues())).thenReturn(u.getProperties());
+      assertThrows(LibraryCardRequiredException.class,
+          () -> service.hasValidActiveERACredentials(u));
+    }
 
-  @Test
-  void testValidateERACommonsCredentialsMissingERACommonsId() {
-    User u = generateUser();
-    LibraryCard lc = generateLibraryCard(u.getEmail());
-    lc.setEraCommonsId(null);
-    u.addLibraryCard(lc);
-    UserProperty eraStatus = new UserProperty(1, u.getUserId(), ERA_STATUS.getValue(), "true");
-    //standard practice is that these expire in 30 days.
-    Timestamp eraExpirationTime = new Timestamp(
-        System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30));
-    UserProperty eraExpirationDate = new UserProperty(2, u.getUserId(),
-        ERA_EXPIRATION_DATE.getValue(), Long.toString(eraExpirationTime.getTime()));
-    List<UserProperty> userProperties = new ArrayList<>();
-    userProperties.add(eraStatus);
-    userProperties.add(eraExpirationDate);
-    u.setProperties(userProperties);
-    when(libraryCardDAO.findLibraryCardsByUserId(u.getUserId())).thenReturn(u.getLibraryCards());
-    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
-        UserFields.getValues())).thenReturn(u.getProperties());
-    assertThrows(BadRequestException.class,
-        () -> service.hasValidActiveERACredentials(u.getUserId()));
-  }
+    @Test
+    void testValidateERACommonsCredentialsMissingERACommonsId() {
+      User u = generateUser();
+      LibraryCard lc = generateLibraryCard(u.getEmail());
+      lc.setEraCommonsId(null);
+      u.addLibraryCard(lc);
+      UserProperty eraStatus = new UserProperty(1, u.getUserId(), ERA_STATUS.getValue(), "true");
+      //standard practice is that these expire in 30 days.
+      Timestamp eraExpirationTime = new Timestamp(
+          System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30));
+      UserProperty eraExpirationDate = new UserProperty(2, u.getUserId(),
+          ERA_EXPIRATION_DATE.getValue(), Long.toString(eraExpirationTime.getTime()));
+      List<UserProperty> userProperties = new ArrayList<>();
+      userProperties.add(eraStatus);
+      userProperties.add(eraExpirationDate);
+      u.setProperties(userProperties);
+      when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
+          UserFields.getValues())).thenReturn(u.getProperties());
+      assertThrows(BadRequestException.class,
+          () -> service.hasValidActiveERACredentials(u));
+    }
 
-  @Test
-  void testValidateRACommonsCredentialsMissingERAStatusShouldFail() {
-    User u = generateUser();
-    LibraryCard lc = generateLibraryCard(u.getEmail());
-    lc.setEraCommonsId(u.getEmail());
-    u.addLibraryCard(lc);
-    //standard practice is that these expire in 30 days.
-    Timestamp eraExpirationTime = new Timestamp(
-        System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30));
-    UserProperty eraExpirationDate = new UserProperty(2, u.getUserId(),
-        ERA_EXPIRATION_DATE.getValue(), Long.toString(eraExpirationTime.getTime()));
-    List<UserProperty> userProperties = new ArrayList<>();
-    userProperties.add(eraExpirationDate);
-    u.setProperties(userProperties);
-    when(libraryCardDAO.findLibraryCardsByUserId(u.getUserId())).thenReturn(u.getLibraryCards());
-    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
-        UserFields.getValues())).thenReturn(u.getProperties());
-    assertThrows(BadRequestException.class,
-        () -> service.hasValidActiveERACredentials(u.getUserId()));
-  }
+    @Test
+    void testValidateRACommonsCredentialsMissingERAStatusShouldFail() {
+      User u = generateUser();
+      LibraryCard lc = generateLibraryCard(u.getEmail());
+      lc.setEraCommonsId(u.getEmail());
+      u.addLibraryCard(lc);
+      //standard practice is that these expire in 30 days.
+      Timestamp eraExpirationTime = new Timestamp(
+          System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30));
+      UserProperty eraExpirationDate = new UserProperty(2, u.getUserId(),
+          ERA_EXPIRATION_DATE.getValue(), Long.toString(eraExpirationTime.getTime()));
+      List<UserProperty> userProperties = new ArrayList<>();
+      userProperties.add(eraExpirationDate);
+      u.setProperties(userProperties);
+      when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
+          UserFields.getValues())).thenReturn(u.getProperties());
+      assertThrows(BadRequestException.class,
+          () -> service.hasValidActiveERACredentials(u));
+    }
 
-  @Test
-  void testValidateERACommonsCredentialsMissingERAStatusAndExpirationShouldFail() {
-    User u = generateUser();
-    LibraryCard lc = generateLibraryCard(u.getEmail());
-    lc.setEraCommonsId(u.getEmail());
-    u.addLibraryCard(lc);
-    List<UserProperty> userProperties = new ArrayList<>();
-    u.setProperties(userProperties);
-    when(libraryCardDAO.findLibraryCardsByUserId(u.getUserId())).thenReturn(u.getLibraryCards());
-    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
-        UserFields.getValues())).thenReturn(u.getProperties());
-    assertThrows(BadRequestException.class,
-        () -> service.hasValidActiveERACredentials(u.getUserId()));
-  }
+    @Test
+    void testValidateERACommonsCredentialsMissingERAStatusAndExpirationShouldFail() {
+      User u = generateUser();
+      LibraryCard lc = generateLibraryCard(u.getEmail());
+      lc.setEraCommonsId(u.getEmail());
+      u.addLibraryCard(lc);
+      List<UserProperty> userProperties = new ArrayList<>();
+      u.setProperties(userProperties);
+      when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
+          UserFields.getValues())).thenReturn(u.getProperties());
+      assertThrows(BadRequestException.class,
+          () -> service.hasValidActiveERACredentials(u));
+    }
 
-  @Test
-  void testValidateERACommonsCredentialsWithExpiredERAExpirationDateShouldFail() {
-    User u = generateUser();
-    LibraryCard lc = generateLibraryCard(u.getEmail());
-    lc.setEraCommonsId(u.getEmail());
-    u.addLibraryCard(lc);
-    UserProperty eraStatus = new UserProperty(1, u.getUserId(), ERA_STATUS.getValue(), "true");
-    // set expiration date to 30 days ago!
-    Timestamp eraExpirationTime = new Timestamp(
-        System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30));
-    UserProperty eraExpirationDate = new UserProperty(2, u.getUserId(),
-        ERA_EXPIRATION_DATE.getValue(), Long.toString(eraExpirationTime.getTime()));
-    List<UserProperty> userProperties = new ArrayList<>();
-    userProperties.add(eraStatus);
-    userProperties.add(eraExpirationDate);
-    u.setProperties(userProperties);
-    when(libraryCardDAO.findLibraryCardsByUserId(u.getUserId())).thenReturn(u.getLibraryCards());
-    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
-        UserFields.getValues())).thenReturn(u.getProperties());
-    assertThrows(BadRequestException.class,
-        () -> service.hasValidActiveERACredentials(u.getUserId()));
-  }
+    @Test
+    void testValidateERACommonsCredentialsWithExpiredERAExpirationDateShouldFail() {
+      User u = generateUser();
+      LibraryCard lc = generateLibraryCard(u.getEmail());
+      lc.setEraCommonsId(u.getEmail());
+      u.addLibraryCard(lc);
+      UserProperty eraStatus = new UserProperty(1, u.getUserId(), ERA_STATUS.getValue(), "true");
+      // set expiration date to 30 days ago!
+      Timestamp eraExpirationTime = new Timestamp(
+          System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30));
+      UserProperty eraExpirationDate = new UserProperty(2, u.getUserId(),
+          ERA_EXPIRATION_DATE.getValue(), Long.toString(eraExpirationTime.getTime()));
+      List<UserProperty> userProperties = new ArrayList<>();
+      userProperties.add(eraStatus);
+      userProperties.add(eraExpirationDate);
+      u.setProperties(userProperties);
+      when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
+          UserFields.getValues())).thenReturn(u.getProperties());
+      assertThrows(BadRequestException.class,
+          () -> service.hasValidActiveERACredentials(u));
+    }
 
   @Test
   void testCreateUserNoRoles() {

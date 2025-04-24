@@ -247,7 +247,8 @@ public class ConsentModule extends AbstractModule {
         providesCounterService(),
         providesDAOContainer(),
         providesDacService(),
-        providesDataAccessRequestServiceDAO()
+        providesDataAccessRequestServiceDAO(),
+        providesUserService()
     );
   }
 
