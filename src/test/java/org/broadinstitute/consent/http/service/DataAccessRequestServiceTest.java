@@ -175,11 +175,6 @@ class DataAccessRequestServiceTest {
   @Test
   void testCreateDataAccessRequestCreateWithoutERACommons() {
     DataAccessRequest dar = generateDataAccessRequest();
-    dar.addDatasetIds(List.of(1, 2, 3));
-    dar.setCreateDate(new Timestamp(1000));
-    dar.setSortDate(new Timestamp(1000));
-    dar.setReferenceId("id");
-    dar.setSubmissionDate(Timestamp.from(Instant.now()));
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(List.of(new LibraryCard()));
     doThrow(BadRequestException.class).when(userService).hasValidActiveERACredentials(user);
