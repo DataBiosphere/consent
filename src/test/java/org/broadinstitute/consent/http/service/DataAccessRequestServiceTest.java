@@ -11,6 +11,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.BadRequestException;
@@ -215,16 +216,15 @@ class DataAccessRequestServiceTest {
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(List.of(new LibraryCard()));
     parentDar.setUserId(user.getUserId());
-
-    doNothing().when(dataAccessRequestDAO)
-        .insertProgressReport(eq(parentDar.getId()), eq(progressReport.getCollectionId()), eq(progressReport.getReferenceId()), eq(user.getUserId()), any(), any(),
-            any(), any(), eq(progressReport.getData()));
-    doNothing().when(dataAccessRequestDAO).insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
     when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId())).thenReturn(progressReport);
 
     initService();
     DataAccessRequest newDar = service.createProgressReport(user, progressReport, parentDar);
     assertNotNull(newDar);
+    verify(dataAccessRequestDAO)
+        .insertProgressReport(eq(parentDar.getId()), eq(progressReport.getCollectionId()), eq(progressReport.getReferenceId()), eq(user.getUserId()), any(), any(),
+            any(), any(), eq(progressReport.getData()));
+    verify(dataAccessRequestDAO).insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
   }
 
   static class DarDatasetMatcher implements ArgumentMatcher<List<DarDataset>> {
