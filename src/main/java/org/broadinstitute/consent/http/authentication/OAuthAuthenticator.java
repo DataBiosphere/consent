@@ -11,12 +11,12 @@ import java.util.Objects;
 import java.util.Optional;
 import org.broadinstitute.consent.http.filters.ClaimsCache;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DUOSAuthUser;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
-import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 
 public class OAuthAuthenticator implements Authenticator<String, AuthUser>, ConsentLogger {
@@ -41,6 +41,13 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
       if (userWithStatus == null) {
         logWarn("User with status is null, authentication incomplete");
         return Optional.of(user);
+      }
+      if (user.getEmail() != null) {
+        try {
+          return Optional.of(new DUOSAuthUser(userWithStatus, userService.findUserByEmail(user.getEmail())));
+        } catch (NotFoundException e) {
+          logWarn("DUOS User not found, authentication incomplete: %s".formatted(user.getEmail()));
+        }
       }
       return Optional.of(userWithStatus);
     }
@@ -71,7 +78,7 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
    * Attempt to get the registration status of the current user and set the value on AuthUser
    *
    * @param authUser The AuthUser
-   * @return A cloned AuthUser with Sam registration status and a Consent User
+   * @return A cloned AuthUser with Sam registration status
    */
   private AuthUser getUserWithStatusInfo(AuthUser authUser) {
     if (authUser == null || authUser.getEmail() == null) {
@@ -79,18 +86,13 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
       return null;
     }
     try {
-      authUser.setUser(userService.findUserByEmail(authUser.getEmail()));
-    } catch (Exception e) {
-      logException("Error finding Consent user: " + authUser.getEmail(), e);
-    }
-    try {
       UserStatusInfo userStatusInfo = samService.getRegistrationInfo(authUser);
       if (Objects.nonNull(userStatusInfo)) {
         // safety check in case the call to generic user (i.e. Google) failed.
-        if (authUser.getEmail() == null) {
+        if (Objects.isNull(authUser.getEmail())) {
           authUser.setEmail(userStatusInfo.getUserEmail());
         }
-        if (authUser.getName() == null) {
+        if (Objects.isNull(authUser.getName())) {
           authUser.setName(userStatusInfo.getUserEmail());
         }
       } else {
@@ -98,20 +100,20 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
       }
       return authUser.deepCopy().setUserStatusInfo(userStatusInfo);
     } catch (NotFoundException e) {
+      Gson gson = new Gson();
       try {
         // Try to post the user to Sam if they have not registered previously
         UserStatus userStatus = samService.postRegistrationInfo(authUser);
-        if ((userStatus != null) && (userStatus.getUserInfo() != null)) {
+        if (Objects.nonNull(userStatus) && Objects.nonNull(userStatus.getUserInfo())) {
           authUser.setEmail(userStatus.getUserInfo().getUserEmail());
         } else {
-          Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
           logWarn("Error posting to Sam, AuthUser not able to be registered: " + gson.toJson(authUser));
         }
       } catch (Exception ex) {
         // if post response is not successful, propagate the error to the user
         throw new WebApplicationException(ex.getMessage());
       }
-    } catch (Exception e) {
+    } catch (Throwable e) {
       // if there is some other error getting the user, log it and return the user without status info
       logWarn(String.format("Exception retrieving Sam user info for '%s'", authUser.getEmail()), e);
     }

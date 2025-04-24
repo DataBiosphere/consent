@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.authentication;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -19,6 +20,7 @@ import java.util.Optional;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.filters.ClaimsCache;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DUOSAuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
@@ -76,7 +78,7 @@ class OAuthAuthenticatorTest extends AbstractTestHelper {
     headerCache.loadCache(bearerToken, headerMap);
 
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertEquals(authUser.orElseThrow().getAuthToken(), bearerToken);
+    assertEquals(bearerToken, authUser.orElseThrow().getAuthToken());
   }
 
   /**
@@ -91,7 +93,7 @@ class OAuthAuthenticatorTest extends AbstractTestHelper {
     when(samService.getRegistrationInfo(any())).thenThrow(new NotFoundException());
 
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertEquals(authUser.orElseThrow().getAuthToken(), bearerToken);
+    assertEquals(bearerToken, authUser.orElseThrow().getAuthToken());
     verify(samService, times(1)).postRegistrationInfo(any());
   }
 
@@ -146,7 +148,8 @@ class OAuthAuthenticatorTest extends AbstractTestHelper {
     when(userService.findUserByEmail(headerMap.get(ClaimsCache.OAUTH2_CLAIM_email).get(0))).thenReturn(new User());
 
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertNotNull(authUser.orElseThrow().getUser());
+    assertInstanceOf(DUOSAuthUser.class, authUser.orElseThrow());
+    assertNotNull(((DUOSAuthUser) authUser.orElseThrow()).getUser());
   }
 
 }
