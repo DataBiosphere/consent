@@ -127,7 +127,7 @@ public class DataAccessRequestResource extends Resource {
       URI uri = info.getRequestUriBuilder().build();
       matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
       List<Dataset> datasets = datasetService.findDatasetsByIds(newDar.getDatasetIds());
-      ComplianceLogger.getInstance().logDARSubmission(user, datasets, ((ContainerRequest) request), HttpStatusCodes.STATUS_CODE_CREATED);
+      ComplianceLogger.logDARSubmission(user, datasets, ((ContainerRequest) request), HttpStatusCodes.STATUS_CODE_CREATED);
       return Response.created(uri).entity(newDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

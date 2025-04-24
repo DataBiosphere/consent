@@ -12,6 +12,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.google.api.client.http.HttpStatusCodes;
 import io.netty.handler.codec.http.HttpHeaderNames;
+import jakarta.ws.rs.core.HttpHeaders;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
@@ -40,7 +41,6 @@ class ComplianceLoggerTest extends AbstractTestHelper {
   private final Institution institution = new Institution();
   private final Dataset dataset = new Dataset();
 
-
   @BeforeEach
   void setUp() throws URISyntaxException {
     Logger testLogger = (Logger) LoggerFactory.getLogger(ComplianceLogger.class);
@@ -58,8 +58,7 @@ class ComplianceLoggerTest extends AbstractTestHelper {
     dataset.setAlias(randomInt(1, 1000));
     when(request.getRequestUri()).thenReturn(new URI("http://example.com"));
     when(request.getHeaderString("oidc_claim_user_id")).thenReturn("testUserId");
-    when(request.getHeaderString(HttpHeaderNames.USER_AGENT.toString())).thenReturn(
-        "testUserAgent");
+    when(request.getHeaderString(HttpHeaders.USER_AGENT)).thenReturn("testUserAgent");
     when(request.getHeaderString("X-Forwarded-For")).thenReturn("1.2.3.4");
     when(request.getHeaderString("X-Forwarded-Server")).thenReturn("4.3.2.1");
   }
@@ -74,8 +73,7 @@ class ComplianceLoggerTest extends AbstractTestHelper {
 
   @Test
   void testLogDARSApproval() {
-    ComplianceLogger.getInstance()
-        .logDARApproval(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
+    ComplianceLogger.logDARApproval(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
     assertEquals(1, testAppender.getSize());
     ILoggingEvent event = testAppender.getLoggedEvents().get(0);
     assertMessageContainsValueFields(event);
@@ -84,8 +82,7 @@ class ComplianceLoggerTest extends AbstractTestHelper {
 
   @Test
   void testLogDARRejection() {
-    ComplianceLogger.getInstance()
-        .logDARRejection(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
+    ComplianceLogger.logDARRejection(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
     assertEquals(1, testAppender.getSize());
     ILoggingEvent event = testAppender.getLoggedEvents().get(0);
     assertMessageContainsValueFields(event);
@@ -94,8 +91,7 @@ class ComplianceLoggerTest extends AbstractTestHelper {
 
   @Test
   void testLogDARSubmission() {
-    ComplianceLogger.getInstance()
-        .logDARSubmission(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_CREATED);
+    ComplianceLogger.logDARSubmission(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_CREATED);
     assertEquals(1, testAppender.getSize());
     ILoggingEvent event = testAppender.getLoggedEvents().get(0);
     assertMessageContainsValueFields(event);
@@ -104,8 +100,7 @@ class ComplianceLoggerTest extends AbstractTestHelper {
 
   @Test
   void testLogDARCancellation() {
-    ComplianceLogger.getInstance()
-        .logDARCancellation(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
+    ComplianceLogger.logDARCancellation(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
     assertEquals(1, testAppender.getSize());
     ILoggingEvent event = testAppender.getLoggedEvents().get(0);
     assertMessageContainsValueFields(event);

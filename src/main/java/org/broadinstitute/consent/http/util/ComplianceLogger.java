@@ -1,9 +1,10 @@
 package org.broadinstitute.consent.http.util;
 
-import io.netty.handler.codec.http.HttpHeaderNames;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -13,7 +14,7 @@ public class ComplianceLogger implements ConsentLogger {
   private ComplianceLogger() {
   }
 
-  public static ComplianceLogger getInstance() {
+  private static ComplianceLogger getInstance() {
     return new ComplianceLogger();
   }
 
@@ -48,14 +49,12 @@ public class ComplianceLogger implements ConsentLogger {
   private void logEvent(User user, List<Dataset> datasets, ContainerRequest request,
       int responseStatusCode, ComplianceEvent event) {
     Instant now = Instant.now();
-    String sourceIp = request.getHeaderString("X-Forwarded-For") == null ? "-"
-        : request.getHeaderString("X-Forwarded-For");
-    String destinationIp = request.getHeaderString("X-Forwarded-Server") == null ? "-"
-        : request.getHeaderString("X-Forwarded-Server");
-    String userId = request.getHeaderString("oidc_claim_user_id") == null ? "-"
-        : request.getHeaderString("oidc_claim_user_id");
-    String userAgent = request.getHeaderString(HttpHeaderNames.USER_AGENT.toString()) == null ? "-"
-        : request.getHeaderString(HttpHeaderNames.USER_AGENT.toString());
+    String sourceIp = Objects.requireNonNullElse(request.getHeaderString("X-Forwarded-For"), "-");
+    String destinationIp = Objects.requireNonNullElse(request.getHeaderString("X-Forwarded-Server"),
+        "-");
+    String userId = Objects.requireNonNullElse(request.getHeaderString("oidc_claim_user_id"), "-");
+    String userAgent = Objects.requireNonNullElse(request.getHeaderString(HttpHeaders.USER_AGENT),
+        "-");
     String userIdProvider = user.getEraCommonsId() == null ? "-" : "RAS";
     String urlString = request.getRequestUri() == null ? "-"
         : request.getRequestUri().toString();
@@ -83,24 +82,24 @@ public class ComplianceLogger implements ConsentLogger {
     });
   }
 
-  public void logDARApproval(User user, List<Dataset> datasets, ContainerRequest request,
+  public static void logDARApproval(User user, List<Dataset> datasets, ContainerRequest request,
       int responseStatusCode) {
-    logEvent(user, datasets, request, responseStatusCode, ComplianceEvent.DAR_APPROVAL);
+    getInstance().logEvent(user, datasets, request, responseStatusCode, ComplianceEvent.DAR_APPROVAL);
   }
 
-  public void logDARRejection(User user, List<Dataset> datasets, ContainerRequest request,
+  public static void logDARRejection(User user, List<Dataset> datasets, ContainerRequest request,
       int responseStatusCode) {
-    logEvent(user, datasets, request, responseStatusCode, ComplianceEvent.DAR_REJECTION);
+    getInstance().logEvent(user, datasets, request, responseStatusCode, ComplianceEvent.DAR_REJECTION);
   }
 
-  public void logDARSubmission(User user, List<Dataset> datasets, ContainerRequest request,
+  public static void logDARSubmission(User user, List<Dataset> datasets, ContainerRequest request,
       int responseStatusCode) {
-    logEvent(user, datasets, request, responseStatusCode, ComplianceEvent.DAR_SUBMISSION);
+    getInstance().logEvent(user, datasets, request, responseStatusCode, ComplianceEvent.DAR_SUBMISSION);
   }
 
-  public void logDARCancellation(User user, List<Dataset> datasets, ContainerRequest request,
+  public static void logDARCancellation(User user, List<Dataset> datasets, ContainerRequest request,
       int responseStatusCode) {
-    logEvent(user, datasets, request, responseStatusCode, ComplianceEvent.DAR_CANCELLATION);
+    getInstance().logEvent(user, datasets, request, responseStatusCode, ComplianceEvent.DAR_CANCELLATION);
   }
 
 }

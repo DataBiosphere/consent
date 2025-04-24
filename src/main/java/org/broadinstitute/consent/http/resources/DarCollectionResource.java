@@ -215,8 +215,7 @@ public class DarCollectionResource extends Resource {
           yield darCollectionService.cancelDarCollectionAsResearcher(collection);
         }
       };
-      ComplianceLogger.getInstance()
-          .logDARCancellation(user, cancelledCollection.getDatasets().stream().toList(),
+      ComplianceLogger.logDARCancellation(user, cancelledCollection.getDatasets().stream().toList(),
               (ContainerRequest) request, Response.Status.OK.getStatusCode());
       return Response.ok().entity(cancelledCollection).build();
     } catch (Exception e) {

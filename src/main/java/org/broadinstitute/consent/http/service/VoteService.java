@@ -520,7 +520,7 @@ public class VoteService implements ConsentLogger {
     List<Integer> approvedDatasetIds = electionDAO.findElectionsByIds(approvedElectionIds).stream()
         .map(Election::getDatasetId).toList();
     List<Dataset> approvedDatasets = datasetDAO.findDatasetsByIdList(approvedDatasetIds);
-    ComplianceLogger.getInstance().logDARApproval(user, approvedDatasets, request,
+    ComplianceLogger.logDARApproval(user, approvedDatasets, request,
         HttpStatusCodes.STATUS_CODE_OK);
 
     List<Integer> rejectedElectionIds = updatedVotes.stream()
@@ -531,7 +531,7 @@ public class VoteService implements ConsentLogger {
     List<Integer> rejectedDatasetIds = electionDAO.findElectionsByIds(rejectedElectionIds).stream()
         .map(Election::getDatasetId).toList();
     List<Dataset> rejectedDatasets = datasetDAO.findDatasetsByIdList(rejectedDatasetIds);
-    ComplianceLogger.getInstance().logDARRejection(user, rejectedDatasets, request, HttpStatusCodes.STATUS_CODE_OK);
+    ComplianceLogger.logDARRejection(user, rejectedDatasets, request, HttpStatusCodes.STATUS_CODE_OK);
   }
 
 }
