@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.authentication;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -22,6 +23,8 @@ import org.broadinstitute.consent.http.filters.ClaimsCache;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DUOSAuthUser;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.sam.UserStatus;
+import org.broadinstitute.consent.http.models.sam.UserStatus.UserInfo;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.junit.jupiter.api.BeforeEach;
@@ -91,6 +94,9 @@ class OAuthAuthenticatorTest extends AbstractTestHelper {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("name"));
     headerCache.loadCache(bearerToken, headerMap);
     when(samService.getRegistrationInfo(any())).thenThrow(new NotFoundException());
+    when(samService.postRegistrationInfo(any())).thenReturn(
+        new UserStatus()
+            .setUserInfo(new UserInfo().setUserEmail("email").setUserSubjectId("subjectId")));
 
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
     assertEquals(bearerToken, authUser.orElseThrow().getAuthToken());
@@ -150,6 +156,19 @@ class OAuthAuthenticatorTest extends AbstractTestHelper {
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
     assertInstanceOf(DUOSAuthUser.class, authUser.orElseThrow());
     assertNotNull(((DUOSAuthUser) authUser.orElseThrow()).getUser());
+  }
+
+  @Test
+  void testAuthenticateGetUserInfoWithDUOSUserNotFound() {
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("name"));
+    headerCache.loadCache(bearerToken, headerMap);
+    when(userService.findUserByEmail(headerMap.get(ClaimsCache.OAUTH2_CLAIM_email).get(0))).thenThrow(new NotFoundException());
+
+    Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
+    assertInstanceOf(AuthUser.class, authUser.orElseThrow());
+    assertFalse(authUser.get() instanceof DUOSAuthUser);
   }
 
 }

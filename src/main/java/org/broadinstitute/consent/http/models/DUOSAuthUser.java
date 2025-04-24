@@ -5,11 +5,6 @@ public class DUOSAuthUser extends AuthUser {
 
   private final User user;
 
-  public DUOSAuthUser(String email) {
-    super(email);
-    this.user = null;
-  }
-
   public DUOSAuthUser(AuthUser authUser, User user) {
     super.setAuthToken(authUser.getAuthToken());
     super.setEmail(authUser.getEmail());
@@ -22,4 +17,5 @@ public class DUOSAuthUser extends AuthUser {
   public User getUser() {
     return user;
   }
+
 }
