@@ -414,6 +414,10 @@ public class DataAccessRequestResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       DataAccessRequest parentDar = dataAccessRequestService.findByReferenceId(parentReferenceId);
+      // needs to happen before docs are uploaded
+      if (!user.getUserId().equals(parentDar.getUserId())) {
+        throw new ForbiddenException("User not authorized to update this Data Access Request");
+      }
       DataAccessRequest payload = populateProgressReportFromJsonString(dar, parentDar);
       updateProgressReportWithDocuments(collabInputStream, collabFileDetails, ethicsInputStream,
           ethicsFileDetails, payload, parentDar);

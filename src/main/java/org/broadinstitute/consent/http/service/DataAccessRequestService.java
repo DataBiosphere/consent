@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.SQLException;
@@ -246,9 +245,6 @@ public class DataAccessRequestService implements ConsentLogger {
     if (parentDar.getDraft()) {
       throw new BadRequestException(
           "Cannot create a progress report for a draft Data Access Request");
-    }
-    if (!user.getUserId().equals(parentDar.getUserId())) {
-      throw new ForbiddenException("User not authorized to update this Data Access Request");
     }
     if (progressReport.getDatasetIds() == null || progressReport.getDatasetIds().isEmpty() ) {
       throw new BadRequestException("At least one dataset is required");

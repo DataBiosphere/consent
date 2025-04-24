@@ -418,6 +418,21 @@ class DataAccessRequestResourceTest {
   }
 
   @Test
+  void testPostProgressReportDifferentUser() {
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setUserId(2);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
+    Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
+
+    initResource();
+    Response response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
+        collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+  }
+
+  @Test
   void testPostProgressReportMissingParentDar() {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenThrow(NotFoundException.class);

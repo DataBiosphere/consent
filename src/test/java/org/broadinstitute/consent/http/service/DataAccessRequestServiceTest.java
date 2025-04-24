@@ -14,7 +14,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
@@ -263,20 +262,6 @@ class DataAccessRequestServiceTest {
     DataAccessRequest parentDar = generateDataAccessRequest();
     initService();
     assertThrows(BadRequestException.class, () -> {
-      service.validateProgressReport(user, progressReport, parentDar);
-    });
-  }
-
-  @Test
-  void validateProgressReportDifferentUser() {
-    User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
-    DataAccessRequest progressReport = generateProgressReport();
-    DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
-    parentDar.setUserId(2); // Different user ID
-    initService();
-    assertThrows(ForbiddenException.class, () -> {
       service.validateProgressReport(user, progressReport, parentDar);
     });
   }
