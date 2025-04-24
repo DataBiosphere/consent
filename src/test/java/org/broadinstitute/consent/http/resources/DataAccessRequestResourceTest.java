@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -462,7 +463,7 @@ class DataAccessRequestResourceTest {
   }
 
   @Test
-  void updateProgressReportWithDocuments() throws Exception {
+  void populateProgressReportWithDocuments() throws Exception {
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.getData().setCollaborationLetterLocation("existing_collab_location");
     parentDar.getData().setIrbDocumentLocation("existing_irb_location");
@@ -498,14 +499,14 @@ class DataAccessRequestResourceTest {
     when(gcsService.storeDocument(eq(collabInputStream), eq(fileType), any())).thenReturn(blobId);
     when(gcsService.storeDocument(eq(ethicsInputStream), eq(fileType), any())).thenReturn(blobId);
     initResource();
-    resource.updateProgressReportWithDocuments(
+    resource.populateProgressReportWithDocuments(
         collabInputStream, collabFileDetails, ethicsInputStream, ethicsFileDetails, childDar, parentDar);
     verify(gcsService, times(2)).storeDocument(any(), any(), any());
 
   }
 
   @Test
-  void updateProgressReportWithDocumentsMissingCollaboration() {
+  void populateProgressReportWithDocumentsMissingCollaboration() {
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.getData().setCollaborationLetterLocation(null);
 
@@ -521,7 +522,7 @@ class DataAccessRequestResourceTest {
 
     initResource();
     BadRequestException exception = assertThrows(BadRequestException.class, () -> {
-      resource.updateProgressReportWithDocuments(
+      resource.populateProgressReportWithDocuments(
           null, null, null, null, childDar, parentDar);
     });
 
@@ -529,7 +530,7 @@ class DataAccessRequestResourceTest {
   }
 
   @Test
-  void updateProgressReportWithDocumentsMissingEthics() {
+  void populateProgressReportWithDocumentsMissingEthics() {
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.getData().setIrbDocumentLocation(null);
 
@@ -546,7 +547,7 @@ class DataAccessRequestResourceTest {
 
     initResource();
     BadRequestException exception = assertThrows(BadRequestException.class, () -> {
-      resource.updateProgressReportWithDocuments(
+      resource.populateProgressReportWithDocuments(
           null, null, null, null, childDar, parentDar);
     });
 
@@ -554,7 +555,7 @@ class DataAccessRequestResourceTest {
   }
 
   @Test
-  void updateProgressReportWithDocumentsMissingDataUse() {
+  void populateProgressReportWithDocumentsMissingDataUse() {
     DataAccessRequest parentDar = generateDataAccessRequest();
 
     DataAccessRequest childDar = generateDataAccessRequest();
@@ -566,7 +567,7 @@ class DataAccessRequestResourceTest {
 
     initResource();
     BadRequestException exception = assertThrows(BadRequestException.class, () -> {
-      resource.updateProgressReportWithDocuments(
+      resource.populateProgressReportWithDocuments(
           null, null, null, null, childDar, parentDar);
     });
 
@@ -574,7 +575,7 @@ class DataAccessRequestResourceTest {
   }
 
   @Test
-  void testUpdateProgressReportWithDocumentsDatasetNotFound() {
+  void populateProgressReportWithDocumentsDatasetNotFound() {
     DataAccessRequest parentDar = generateDataAccessRequest();
     DataAccessRequest childDar = generateDataAccessRequest();
     childDar.setDatasetIds(List.of(1));
@@ -582,7 +583,7 @@ class DataAccessRequestResourceTest {
 
     initResource();
     NotFoundException exception = assertThrows(NotFoundException.class, () -> {
-      resource.updateProgressReportWithDocuments(
+      resource.populateProgressReportWithDocuments(
           null, null, null, null, childDar, parentDar);
     });
 
@@ -627,7 +628,7 @@ class DataAccessRequestResourceTest {
   }
 
   @Test
-  void testPopulateProgressReportFromJsonString() {
+  void populateProgressReportFromJsonString() {
     DataAccessRequest parentDar = new DataAccessRequest();
     parentDar.setId(1);
     parentDar.setReferenceId("parent-reference-id");
@@ -640,6 +641,10 @@ class DataAccessRequestResourceTest {
     parentData.setExternalCollaborators(List.of(collaborator));
     parentData.setLabCollaborators(List.of(collaborator));
     parentDar.setDatasetIds(List.of(1, 2, 3));
+    parentData.setCollaborationLetterName("collaboration_letter.txt");
+    parentData.setIrbDocumentName("irb_document.txt");
+    parentData.setCollaborationLetterLocation("collaboration_letter_location");
+    parentData.setIrbDocumentLocation("irb_document_location");
     parentDar.setData(parentData);
 
     String json = """
@@ -649,7 +654,11 @@ class DataAccessRequestResourceTest {
             "externalCollaborators": [],
             "labCollaborators": [],
             "progressReportSummary": "New Summary",
-            "datasetIds": [1, 2]
+            "datasetIds": [1, 2],
+            "collaborationLetterName": "new_collaboration_letter.txt",
+            "irbDocumentName": "new_irb_document.txt",
+            "collaborationLetterLocation": "new_collaboration_letter_location",
+            "irbDocumentLocation": "new_irb_document_location"
         }
     """;
 
@@ -665,7 +674,12 @@ class DataAccessRequestResourceTest {
     assertEquals(List.of(), newDar.getData().getLabCollaborators());
     assertEquals("New Summary", newDar.getData().getProgressReportSummary());
     assertEquals(List.of(1, 2), newDar.getDatasetIds());
+    assertNull(newDar.getData().getCollaborationLetterName());
+    assertNull(newDar.getData().getIrbDocumentName());
+    assertNull(newDar.getData().getCollaborationLetterLocation());
+    assertNull(newDar.getData().getIrbDocumentLocation());
     assertEquals(List.of(collaborator), parentDar.getData().getInternalCollaborators()); // Ensure parent is unchanged
+    assertEquals("collaboration_letter.txt", parentDar.getData().getCollaborationLetterName());
   }
 
   @Test

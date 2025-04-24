@@ -419,7 +419,7 @@ public class DataAccessRequestResource extends Resource {
         throw new ForbiddenException("User not authorized to update this Data Access Request");
       }
       DataAccessRequest payload = populateProgressReportFromJsonString(dar, parentDar);
-      updateProgressReportWithDocuments(collabInputStream, collabFileDetails, ethicsInputStream,
+      populateProgressReportWithDocuments(collabInputStream, collabFileDetails, ethicsInputStream,
           ethicsFileDetails, payload, parentDar);
       DataAccessRequest progressReport = dataAccessRequestService.createProgressReport(user, payload, parentDar);
       return Response.ok(progressReport.convertToSimplifiedDar()).build();
@@ -428,7 +428,7 @@ public class DataAccessRequestResource extends Resource {
     }
   }
 
-  public void updateProgressReportWithDocuments(InputStream collabInputStream,
+  public void populateProgressReportWithDocuments(InputStream collabInputStream,
       FormDataContentDisposition collabFileDetails, InputStream ethicsInputStream,
       FormDataContentDisposition ethicsFileDetails, DataAccessRequest childDar,
       DataAccessRequest parentDar) throws IOException {
@@ -597,7 +597,6 @@ public class DataAccessRequestResource extends Resource {
     originalDataCopy.setInternalCollaborators(newData.getInternalCollaborators());
     originalDataCopy.setExternalCollaborators(newData.getExternalCollaborators());
     originalDataCopy.setLabCollaborators(newData.getLabCollaborators());
-
     originalDataCopy.setProgressReportSummary(newData.getProgressReportSummary());
     originalDataCopy.setIntellectualPropertySummary(newData.getIntellectualPropertySummary());
     originalDataCopy.setPublications(newData.getPublications());
@@ -605,6 +604,13 @@ public class DataAccessRequestResource extends Resource {
     originalDataCopy.setDmi(newData.getDmi());
     originalDataCopy.setResearchPlans(newData.getResearchPlans());
     originalDataCopy.setCloseoutSupplement(newData.getCloseoutSupplement());
+
+    // These values will be updated in updateProgressReportWithDocuments if documents exist.
+    // Its important we don't copy over the parent values so those documents are not deleted.
+    originalDataCopy.setCollaborationLetterName(null);
+    originalDataCopy.setCollaborationLetterLocation(null);
+    originalDataCopy.setIrbDocumentName(null);
+    originalDataCopy.setIrbDocumentLocation(null);
 
     newDar.setData(originalDataCopy);
     return newDar;
