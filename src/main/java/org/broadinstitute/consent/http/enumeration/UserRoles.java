@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.enumeration;
 
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -20,18 +19,10 @@ public enum UserRoles {
 
   private final String roleName;
   private final Integer roleId;
-  private static final HashSet<Integer> LIST_OF_NON_DAC_ROLE_IDS = new HashSet<>(Set.of(
-      ALUMNI.getRoleId(),
-      ADMIN.getRoleId(),
-      RESEARCHER.getRoleId(),
-      SIGNINGOFFICIAL.getRoleId(),
-      DATASUBMITTER.getRoleId(),
-      ITDIRECTOR.getRoleId()));
-  private static final HashSet<Integer> LIST_OF_SO_AUTHORIZED_ROLES_TO_ADJUST = new HashSet<>(
-      Set.of(
-          ITDIRECTOR.getRoleId(),
-          SIGNINGOFFICIAL.getRoleId(),
-          DATASUBMITTER.getRoleId()));
+  private static final Set<UserRoles> NON_DAC_ROLES =
+      Set.of(ALUMNI, ADMIN, RESEARCHER, SIGNINGOFFICIAL, DATASUBMITTER, ITDIRECTOR);
+  private static final Set<UserRoles> SO_AUTHORIZED_ROLES_TO_ADJUST =
+      Set.of(ITDIRECTOR, SIGNINGOFFICIAL, DATASUBMITTER);
 
   UserRoles(String roleName, Integer roleId) {
     this.roleName = roleName;
@@ -106,12 +97,12 @@ public enum UserRoles {
         .anyMatch(roleName::equalsIgnoreCase);
   }
 
-  public static boolean isValidNonDACRoleId(Integer roleId) {
-    return !Objects.isNull(roleId) && LIST_OF_NON_DAC_ROLE_IDS.contains(roleId);
+  public static boolean isValidNonDACRoleId(UserRoles role) {
+    return NON_DAC_ROLES.contains(role);
   }
 
-  public static boolean isValidSoAdjustableRoleId(Integer roleId) {
-    return !Objects.isNull(roleId) && LIST_OF_SO_AUTHORIZED_ROLES_TO_ADJUST.contains(roleId);
+  public static boolean isValidSoAdjustableRoleId(UserRoles role) {
+    return SO_AUTHORIZED_ROLES_TO_ADJUST.contains(role);
   }
 
 }

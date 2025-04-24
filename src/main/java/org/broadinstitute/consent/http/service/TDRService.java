@@ -47,7 +47,7 @@ public class TDRService implements ConsentLogger {
     List<String> labCollaborators = dars.stream()
         .map(DataAccessRequest::getData)
         .filter(Objects::nonNull)
-        .map(DataAccessRequestData::getLabCollaborators)
+        .map(DataAccessRequestData::getLabAndInternalCollaborators)
         .flatMap(List::stream)
         .filter(Objects::nonNull)
         .map(Collaborator::getEmail)
@@ -61,7 +61,7 @@ public class TDRService implements ConsentLogger {
             logWarn("User " + authUser.getEmail() + " is not authorized to look for users in Sam");
             return null;
           } catch (Exception e) {
-            logWarn("Lab Collaborator: " + email + " does not exist in Sam");
+            logWarn("Collaborator: " + email + " does not exist in Sam");
             return null;
           }
         })

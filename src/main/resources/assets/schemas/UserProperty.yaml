@@ -4,8 +4,6 @@ properties:
     type: string
   eraExpiration:
     type: string
-  suggestedInstitution:
-    type: string
   suggestedSigningOfficial:
     type: string
   selectedSigningOfficial:

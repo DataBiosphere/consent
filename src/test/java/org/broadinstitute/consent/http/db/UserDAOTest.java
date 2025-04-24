@@ -16,18 +16,14 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
-import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -183,29 +179,6 @@ class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testInsertUser() {
-    // No-op ... tested in `createUser()`
-  }
-
-  @Test
-  void testUpdateUser_case1() {
-    User user = createUser();
-    Institution firstInstitute = createInstitution();
-    userDAO.updateUser(
-        "Dac User Test",
-        user.getUserId(),
-        firstInstitute.getId()
-    );
-    User user2 = userDAO.findUserById(user.getUserId());
-    assertEquals(user2.getInstitution().getId(), firstInstitute.getId());
-  }
-
-  @Test
-  void testDeleteUserById() {
-    // No-op ... tested in `tearDown()`
-  }
-
-  @Test
   void testFindUsersWithLCsAndInstitution() {
     User user = createUserWithInstitution();
     int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5),
@@ -222,8 +195,12 @@ class UserDAOTest extends DAOTestHelper {
     libraryCardDAO.createLibraryCardDaaRelation(lcId2, daaId);
 
     List<User> users = userDAO.findUsersWithLCsAndInstitution();
-    assertNotNull(users);
-    assertFalse(users.isEmpty());
+    // Four users: two admin users, two signing official users with library cards.
+    assertEquals(4, users.size());
+    // Filter out admin users, which don't have institutions.
+    users = users.stream()
+        .filter(u -> u.getInstitution() != null)
+        .toList();
     assertEquals(2, users.size());
     assertNotNull(users.get(0).getInstitution());
     assertNotNull(users.get(0).getLibraryCards());
@@ -235,7 +212,7 @@ class UserDAOTest extends DAOTestHelper {
 
   @Test
   void testDescribeUsersByRoleAndEmailPreference() {
-    User researcher = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+    User researcher = createUser();
     userDAO.updateEmailPreference(researcher.getUserId(), true);
     Collection<User> researchers = userDAO.describeUsersByRoleAndEmailPreference("Researcher",
         true);
@@ -244,7 +221,7 @@ class UserDAOTest extends DAOTestHelper {
 
   @Test
   void testUpdateEmailPreference() {
-    User researcher = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+    User researcher = createUser();
     userDAO.updateEmailPreference(researcher.getUserId(), true);
     User u1 = userDAO.findUserById(researcher.getUserId());
     assertTrue(u1.getEmailPreference());
@@ -255,7 +232,7 @@ class UserDAOTest extends DAOTestHelper {
 
   @Test
   void testUpdateInstitutionId() {
-    User researcher = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+    User researcher = createUser();
     Integer institutionId = institutionDAO.insertInstitution("Institution", "it director",
         "it director email", null, null, null, null, null, null, researcher.getUserId(),
         new Date());
@@ -266,7 +243,7 @@ class UserDAOTest extends DAOTestHelper {
 
   @Test
   void testUpdateDisplayName() {
-    User researcher = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+    User researcher = createUser();
     String newName = RandomStringUtils.random(10, true, false);
     userDAO.updateDisplayName(researcher.getUserId(), newName);
     User u1 = userDAO.findUserById(researcher.getUserId());
@@ -275,7 +252,7 @@ class UserDAOTest extends DAOTestHelper {
 
   @Test
   void testUpdateDisplayNameInvalidChars() {
-    User researcher = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+    User researcher = createUser();
     String newName = "invalid\0name";
     assertThrows(UnableToExecuteStatementException.class,
         () -> userDAO.updateDisplayName(researcher.getUserId(), newName));
@@ -401,8 +378,10 @@ class UserDAOTest extends DAOTestHelper {
     createUserWithInstitution();
     User user = createUser();
     List<User> users = userDAO.getUsersWithNoInstitution();
-    assertEquals(1, users.size());
-    assertEquals(user.getUserId(), users.get(0).getUserId());
+    // One user we created just now, one is the admin user for the institution.
+    assertEquals(2, users.size());
+    assertTrue(users.stream()
+        .anyMatch(u -> u.getUserId().equals(user.getUserId())));
   }
 
   @Test
@@ -499,88 +478,13 @@ class UserDAOTest extends DAOTestHelper {
     datasetDAO.insertDatasetProperties(list);
   }
 
-  private Institution createInstitution() {
-    User createUser = createUser();
-    Integer id = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
-        "itDirectorName",
-        "itDirectorEmail",
-        RandomStringUtils.randomAlphabetic(10),
-        new Random().nextInt(),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        OrganizationType.NON_PROFIT.getValue(),
-        createUser.getUserId(),
-        createUser.getCreateDate());
-    Institution institution = institutionDAO.findInstitutionById(id);
-    User updateUser = createUser();
-    institutionDAO.updateInstitutionById(
-        id,
-        institution.getName(),
-        institution.getItDirectorEmail(),
-        institution.getItDirectorName(),
-        institution.getInstitutionUrl(),
-        institution.getDunsNumber(),
-        institution.getOrgChartUrl(),
-        institution.getVerificationUrl(),
-        institution.getVerificationFilename(),
-        institution.getOrganizationType().getValue(),
-        updateUser.getUserId(),
-        new Date()
-    );
-    return institutionDAO.findInstitutionById(id);
-  }
-
   private LibraryCard createLibraryCard() {
-    Integer institutionId = createInstitution().getId();
-    String email = RandomStringUtils.randomAlphabetic(11);
-    Integer userId = userDAO.insertUser(email, "displayName", new Date());
-    userDAO.updateUser(email, userId, institutionId);
+    User user = createUserWithInstitution();
+    Integer institutionId = getUserInstitution(user).getId();
+    Integer userId = user.getUserId();
     String stringValue = "value";
     Integer id = libraryCardDAO.insertLibraryCard(userId, institutionId, stringValue, stringValue,
         stringValue, userId, new Date());
     return libraryCardDAO.findLibraryCardById(id);
   }
-
-  private User createUserWithRoleInDac(Integer roleId, Integer dacId) {
-    User user = createUserWithRole(roleId);
-    dacDAO.addDacMember(roleId, user.getUserId(), dacId);
-    return user;
-  }
-
-  private User createUserWithRole(Integer roleId) {
-    int i1 = RandomUtils.nextInt(5, 10);
-    int i2 = RandomUtils.nextInt(5, 10);
-    int i3 = RandomUtils.nextInt(3, 5);
-    String email = RandomStringUtils.randomAlphabetic(i1) +
-        "@" +
-        RandomStringUtils.randomAlphabetic(i2) +
-        "." +
-        RandomStringUtils.randomAlphabetic(i3);
-    Integer userId = userDAO.insertUser(email, "display name", new Date());
-    userRoleDAO.insertSingleUserRole(roleId, userId);
-    return userDAO.findUserById(userId);
-  }
-
-  private User createUserWithInstitution() {
-    int i1 = RandomUtils.nextInt(5, 10);
-    String email = RandomStringUtils.randomAlphabetic(i1);
-    String name = RandomStringUtils.randomAlphabetic(10);
-    Integer userId = userDAO.insertUser(email, name, new Date());
-    Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
-        "itDirectorName",
-        "itDirectorEmail",
-        RandomStringUtils.randomAlphabetic(10),
-        new Random().nextInt(),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        OrganizationType.NON_PROFIT.getValue(),
-        userId,
-        new Date());
-    userDAO.updateUser(name, userId, institutionId);
-    userRoleDAO.insertSingleUserRole(7, userId);
-    return userDAO.findUserById(userId);
-  }
-
 }

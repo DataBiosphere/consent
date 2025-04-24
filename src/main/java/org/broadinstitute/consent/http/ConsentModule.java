@@ -247,8 +247,7 @@ public class ConsentModule extends AbstractModule {
         providesCounterService(),
         providesDAOContainer(),
         providesDacService(),
-        providesDataAccessRequestServiceDAO(),
-        providesUseRestrictionConverter()
+        providesDataAccessRequestServiceDAO()
     );
   }
 
@@ -519,7 +518,7 @@ public class ConsentModule extends AbstractModule {
 
   @Provides
   InstitutionService providesInstitutionService() {
-    return new InstitutionService(providesInstitutionDAO(), providesUserDAO());
+    return new InstitutionService(providesInstitutionDAO(), providesUserDAO(), providesGCSService());
   }
 
   @Provides
@@ -527,6 +526,7 @@ public class ConsentModule extends AbstractModule {
     return new LibraryCardService(
         providesLibraryCardDAO(),
         providesInstitutionDAO(),
+        providesInstitutionService(),
         providesUserDAO());
   }
 
@@ -575,7 +575,7 @@ public class ConsentModule extends AbstractModule {
         providesDaaDAO(),
         providesEmailService(),
         providesDraftService(),
-        providesGCSService());
+        providesInstitutionService());
   }
 
   @Provides

@@ -423,27 +423,6 @@ class DacDAOTest extends DAOTestHelper {
     return dacDAO.findById(id);
   }
 
-  private User createUserWithInstitution() {
-    int i1 = randomInt(5, 10);
-    String email = randomAlphabetic(i1);
-    String name = randomAlphabetic(10);
-    Integer userId = userDAO.insertUser(email, name, new Date());
-    Integer institutionId = institutionDAO.insertInstitution(randomAlphabetic(20),
-        "itDirectorName",
-        "itDirectorEmail",
-        randomAlphabetic(10),
-        new Random().nextInt(),
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        OrganizationType.NON_PROFIT.getValue(),
-        userId,
-        new Date());
-    userDAO.updateUser(name, userId, institutionId);
-    userRoleDAO.insertSingleUserRole(7, userId);
-    return userDAO.findUserById(userId);
-  }
-
   private DarCollection createDarCollection() {
     User user = createUserWithInstitution();
     String darCode = "DAR-" + randomInt(1, 10000);

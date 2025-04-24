@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -12,9 +13,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -30,16 +33,18 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.DarStatus;
-import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
-import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
+import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +55,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DataAccessRequestServiceTest {
 
+  private static final String PI_EMAIL = "pi@example.broadinstitute.org";
+  private static final String SO_EMAIL = "so@example.broadinstitute.org";
+  private static final String IT_EMAIL = "it@example.broadinstitute.org";
+  private final List<UserRole> roles = List.of(UserRoles.Researcher());
   @Mock
   private CounterService counterService;
   @Mock
@@ -76,8 +85,22 @@ class DataAccessRequestServiceTest {
   private DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
   @Mock
   private UseRestrictionConverter useRestrictionConverter;
-
   private DataAccessRequestService service;
+
+  private static Collaborator createCollaborator() {
+    Collaborator validCollaborator = new Collaborator();
+    validCollaborator.setEmail("collaborator@test.com");
+    return validCollaborator;
+  }
+
+  private static DataAccessRequest createDataAccessRequest(
+      List<Collaborator> internalCollaborators) {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setInternalCollaborators(internalCollaborators);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setData(data);
+    return dar;
+  }
 
   private void initService() {
     DAOContainer container = new DAOContainer();
@@ -91,7 +114,7 @@ class DataAccessRequestServiceTest {
     container.setVoteDAO(voteDAO);
     container.setMatchDAO(matchDAO);
     service = new DataAccessRequestService(counterService, container, dacService,
-        dataAccessRequestServiceDAO, useRestrictionConverter);
+        dataAccessRequestServiceDAO);
   }
 
   @Test
@@ -133,6 +156,37 @@ class DataAccessRequestServiceTest {
   }
 
   @Test
+  void testCreateDataAccessRequest_CreateWithSubmittedDar() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.addDatasetIds(List.of(1, 2, 3));
+    dar.setCreateDate(new Timestamp(1000));
+    dar.setSortDate(new Timestamp(1000));
+    dar.setReferenceId("id");
+    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    user.setLibraryCards(List.of(new LibraryCard()));
+    user.setLibraryCards(List.of(new LibraryCard()));
+    when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
+    initService();
+    assertThrows(SubmittedDARCannotBeEditedException.class, () -> {
+      service.createDataAccessRequest(user, dar);
+    });
+  }
+
+  @Test
+  void testUpdateByReferenceIdThrowsOnDraft() throws Exception {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setCollectionId(RandomUtils.nextInt(0, 100));
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    dar.addDatasetIds(List.of(1, 2, 3));
+    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    initService();
+    assertThrows(SubmittedDARCannotBeEditedException.class, () ->
+        service.updateByReferenceId(user, dar)
+    );
+  }
+
+  @Test
   void testCreateDataAccessRequest_FailsIfNoLibraryCard() {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.addDatasetIds(List.of(1, 2, 3));
@@ -146,6 +200,91 @@ class DataAccessRequestServiceTest {
     assertThrows(NIHComplianceRuleException.class, () -> {
       service.createDataAccessRequest(user, dar);
     });
+  }
+
+  private User createRequestingUser() {
+    User requestingUser = new User(1, "requestor@test.com", "Requestor", new Date(), roles);
+    requestingUser.setInstitutionId(1);
+    Institution institution = new Institution();
+    institution.setName("Test Institution");
+    requestingUser.setInstitution(institution);
+    return requestingUser;
+  }
+
+  @Test
+  void testValidateInternalCollaboratorsNone() {
+    User requestingUser = createRequestingUser();
+    DataAccessRequest dar = createDataAccessRequest(List.of());
+    initService();
+    assertDoesNotThrow(() -> service.validateInternalCollaborators(dar, requestingUser));
+  }
+
+  @Test
+  void testValidateInternalCollaboratorsValid() {
+    User requestingUser = createRequestingUser();
+    Collaborator validCollaborator = createCollaborator();
+    User collaboratorUser = new User(2, validCollaborator.getEmail(), "Collaborator", new Date(),
+        roles);
+    collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
+    LibraryCard libraryCard = new LibraryCard();
+    libraryCard.setInstitutionId(requestingUser.getInstitutionId());
+    collaboratorUser.setLibraryCards(List.of(libraryCard));
+    DataAccessRequest dar = createDataAccessRequest(List.of(validCollaborator));
+    when(userDAO.findUserByEmail(validCollaborator.getEmail())).thenReturn(collaboratorUser);
+
+    initService();
+    assertDoesNotThrow(() -> service.validateInternalCollaborators(dar, requestingUser));
+  }
+
+  @Test
+  void testValidateInternalCollaboratorsDoesNotExist() {
+    User requestingUser = createRequestingUser();
+    Collaborator invalidCollaborator = createCollaborator();
+    DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
+    when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(null);
+
+    initService();
+    NotFoundException exception = assertThrows(NotFoundException.class, () ->
+        service.validateInternalCollaborators(dar, requestingUser));
+    assertEquals(exception.getMessage(),
+        "Unable to find User with the provided email: " + invalidCollaborator.getEmail());
+  }
+
+  @Test
+  void testValidateInternalCollaboratorsDifferentInstitution() {
+    User requestingUser = createRequestingUser();
+    Collaborator invalidCollaborator = createCollaborator();
+    User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(),
+        roles);
+    collaboratorUser.setInstitutionId(2);
+    DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
+    when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(collaboratorUser);
+
+    initService();
+    BadRequestException exception = assertThrows(BadRequestException.class, () ->
+        service.validateInternalCollaborators(dar, requestingUser)
+    );
+    assertEquals(exception.getMessage(), "Collaborator " + invalidCollaborator.getEmail()
+        + " is not part of the same institution, Test Institution");
+  }
+
+  @Test
+  void testValidateInternalCollaboratorsNoLibraryCard() {
+    User requestingUser = createRequestingUser();
+    Collaborator invalidCollaborator = createCollaborator();
+    User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(),
+        roles);
+    collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
+    collaboratorUser.setLibraryCards(Collections.emptyList());
+    DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
+    when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(collaboratorUser);
+
+    initService();
+    BadRequestException exception = assertThrows(BadRequestException.class, () ->
+        service.validateInternalCollaborators(dar, requestingUser)
+    );
+    assertEquals(exception.getMessage(),
+        "Collaborator " + invalidCollaborator.getEmail() + " does not have a library card.");
   }
 
   @Test
@@ -201,7 +340,7 @@ class DataAccessRequestServiceTest {
     DataAccessRequest draft = generateDataAccessRequest();
     doNothing()
         .when(dataAccessRequestDAO)
-        .insertDraftDataAccessRequest(any(), any(), any(), any(), any(), any(), any());
+        .insertDraftDataAccessRequest(any(), any(), any(), any(), any(), any());
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(draft);
     initService();
     DataAccessRequest dar = service.insertDraftDataAccessRequest(user, draft);
@@ -221,11 +360,12 @@ class DataAccessRequestServiceTest {
   private DataAccessRequest generateDataAccessRequest() {
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
-    Integer userId = userDAO.insertUser(UUID.randomUUID().toString(), "displayName", new Date());
-    dar.setUserId(userId);
     dar.setReferenceId(UUID.randomUUID().toString());
     data.setReferenceId(dar.getReferenceId());
     dar.addDatasetId(1);
+    data.setPiEmail(PI_EMAIL);
+    data.setItDirectorEmail(IT_EMAIL);
+    data.setSigningOfficialEmail(SO_EMAIL);
     data.setForProfit(false);
     data.setAddiction(false);
     data.setAnvilUse(true);
@@ -251,6 +391,7 @@ class DataAccessRequestServiceTest {
     data.setMethods(false);
     data.setOther(false);
     dar.setData(data);
+    dar.setSubmissionDate(null);
     return dar;
   }
 
@@ -301,132 +442,6 @@ class DataAccessRequestServiceTest {
   }
 
   @Test
-  void testCreateDraftDarFromCanceledCollection_NoDars() {
-    User user = new User();
-    DarCollection sourceCollection = new DarCollection();
-    initService();
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.createDraftDarFromCanceledCollection(user, sourceCollection);
-    });
-  }
-
-  @Test
-  void testCreateDraftDarFromCanceledCollection_NoDarData() {
-    User user = new User();
-    user.setLibraryCards(List.of(new LibraryCard()));
-    DarCollection sourceCollection = new DarCollection();
-    DataAccessRequest newDar = new DataAccessRequest();
-    newDar.setReferenceId(UUID.randomUUID().toString());
-    sourceCollection.addDar(newDar);
-    initService();
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.createDraftDarFromCanceledCollection(user, sourceCollection);
-    });
-  }
-
-  @Test
-  void testCreateDraftDarFromCanceledCollection_NoCanceledDars() {
-    User user = new User();
-    user.setLibraryCards(List.of(new LibraryCard()));
-    DarCollection sourceCollection = new DarCollection();
-    DataAccessRequest dar = new DataAccessRequest();
-    DataAccessRequestData data = new DataAccessRequestData();
-    data.setReferenceId(UUID.randomUUID().toString());
-    data.setStatus("Not Canceled");
-    dar.setData(data);
-    dar.setReferenceId(data.getReferenceId());
-    sourceCollection.addDar(dar);
-    initService();
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.createDraftDarFromCanceledCollection(user, sourceCollection);
-    });
-  }
-
-  @Test
-  void testCreateDraftDarFromCanceledCollection_NoDatasets() {
-    User user = new User();
-    user.setLibraryCards(List.of(new LibraryCard()));
-    DarCollection sourceCollection = new DarCollection();
-    DataAccessRequest dar = new DataAccessRequest();
-    DataAccessRequestData data = new DataAccessRequestData();
-    data.setReferenceId(UUID.randomUUID().toString());
-    data.setStatus(DarStatus.CANCELED.getValue());
-    dar.setData(data);
-    dar.setDatasetIds(null);
-    dar.setReferenceId(data.getReferenceId());
-    sourceCollection.addDar(dar);
-    initService();
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.createDraftDarFromCanceledCollection(user, sourceCollection);
-    });
-  }
-
-  @Test
-  void testCreateDraftDarFromCanceledCollection_OpenElectionsOnCanceledDars() {
-    User user = new User();
-    user.setLibraryCards(List.of(new LibraryCard()));
-    DarCollection sourceCollection = new DarCollection();
-    DataAccessRequest dar = new DataAccessRequest();
-    DataAccessRequestData data = new DataAccessRequestData();
-    data.setStatus(DarStatus.CANCELED.getValue());
-    dar.addDatasetId(1);
-    data.setReferenceId(UUID.randomUUID().toString());
-    dar.setData(data);
-    dar.setReferenceId(data.getReferenceId());
-    sourceCollection.addDar(dar);
-    when(electionDAO.getElectionIdsByReferenceIds(any())).thenReturn(List.of(1));
-    initService();
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.createDraftDarFromCanceledCollection(user, sourceCollection);
-    });
-  }
-
-  @Test
-  void testCreateDraftDarFromCanceledCollection() {
-    User user = new User();
-    user.setLibraryCards(List.of(new LibraryCard()));
-    DarCollection sourceCollection = new DarCollection();
-    DataAccessRequest dar = new DataAccessRequest();
-    DataAccessRequestData data = new DataAccessRequestData();
-    data.setStatus(DarStatus.CANCELED.getValue());
-    dar.addDatasetId(1);
-    data.setReferenceId(UUID.randomUUID().toString());
-    dar.setData(data);
-    dar.setReferenceId(data.getReferenceId());
-    sourceCollection.addDar(dar);
-    when(electionDAO.getElectionIdsByReferenceIds(any())).thenReturn(List.of());
-    doNothing().when(dataAccessRequestDAO).insertDraftDataAccessRequest(
-        any(),
-        any(),
-        any(),
-        any(),
-        any(),
-        any(),
-        any()
-    );
-    when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(new DataAccessRequest());
-    initService();
-    service.createDraftDarFromCanceledCollection(user, sourceCollection);
-  }
-
-  @Test
-  void testCreateDraftDarFromCanceledCollectionNoLibraryCards() {
-    User user = new User();
-    DarCollection sourceCollection = new DarCollection();
-    DataAccessRequest dar = new DataAccessRequest();
-    DataAccessRequestData data = new DataAccessRequestData();
-    data.setStatus(DarStatus.CANCELED.getValue());
-    dar.addDatasetId(1);
-    data.setReferenceId(UUID.randomUUID().toString());
-    dar.setData(data);
-    dar.setReferenceId(data.getReferenceId());
-    sourceCollection.addDar(dar);
-    initService();
-    assertThrows(LibraryCardRequiredException.class,
-        () -> service.createDraftDarFromCanceledCollection(user, sourceCollection));
-  }
-
-  @Test
   void testDeleteByReferenceIdAdmin() {
     String referenceId = UUID.randomUUID().toString();
     User adminUser = new User();
@@ -474,6 +489,80 @@ class DataAccessRequestServiceTest {
 
     assertThrows(NotAcceptableException.class, () -> {
       service.deleteByReferenceId(user, referenceId);
+    });
+  }
+
+  @Test
+  void testValidateNoKeyPersonnelDuplicates() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(PI_EMAIL);
+    data.setItDirectorEmail(IT_EMAIL);
+    data.setSigningOfficialEmail(SO_EMAIL);
+    initService();
+    try {
+      service.validateNoKeyPersonnelDuplicates(data);
+    } catch (IllegalArgumentException e) {
+      fail("Should not have thrown exception");
+    }
+  }
+
+  @Test
+  void testValidateNoKeyPersonnelDuplicatesBadPIEmail() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail("invalid");
+    data.setItDirectorEmail(IT_EMAIL);
+    data.setSigningOfficialEmail(SO_EMAIL);
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.validateNoKeyPersonnelDuplicates(data);
+    });
+  }
+
+  @Test
+  void testValidateNoKeyPersonnelDuplicatesBadITDirectorEmail() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(PI_EMAIL);
+    data.setItDirectorEmail("invalid");
+    data.setSigningOfficialEmail(SO_EMAIL);
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.validateNoKeyPersonnelDuplicates(data);
+    });
+  }
+
+  @Test
+  void testValidateNoKeyPersonnelDuplicatesBadSO() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(PI_EMAIL);
+    data.setItDirectorEmail(IT_EMAIL);
+    data.setSigningOfficialEmail("invalid");
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.validateNoKeyPersonnelDuplicates(data);
+    });
+  }
+
+  @Test
+  void testValidateNoKeyPersonnelDuplicatesItDirector() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(PI_EMAIL);
+    data.setItDirectorEmail(PI_EMAIL);
+    data.setSigningOfficialEmail(SO_EMAIL);
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.validateNoKeyPersonnelDuplicates(data);
+    });
+  }
+
+  @Test
+  void testValidateNoKeyPersonnelDuplicatesSO() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(PI_EMAIL);
+    data.setItDirectorEmail(IT_EMAIL);
+    data.setSigningOfficialEmail(PI_EMAIL);
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.validateNoKeyPersonnelDuplicates(data);
     });
   }
 

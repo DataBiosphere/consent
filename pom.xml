@@ -460,7 +460,7 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry</artifactId>
-      <version>8.7.0</version>
+      <version>8.8.0</version>
     </dependency>
 
     <dependency>
@@ -644,7 +644,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>33.4.7-jre</version>
+      <version>33.4.8-jre</version>
     </dependency>
 
     <dependency>
@@ -729,7 +729,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>8.17.4</version>
+      <version>9.0.0</version>
     </dependency>
 
     <dependency>

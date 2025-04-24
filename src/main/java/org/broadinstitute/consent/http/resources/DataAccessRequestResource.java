@@ -36,8 +36,7 @@ import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
-import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
-import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
+import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -108,9 +107,6 @@ public class DataAccessRequestResource extends Resource {
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     try {
       User user = findUserByEmail(authUser.getEmail());
-      if (user.getLibraryCards().isEmpty()) {
-        throw new NIHComplianceRuleException();
-      }
 
       DataAccessRequest payload = populateDarFromJsonString(user, dar);
       DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload);
@@ -138,9 +134,6 @@ public class DataAccessRequestResource extends Resource {
       @Auth AuthUser authUser, @Context UriInfo info, String dar) {
     try {
       User user = findUserByEmail(authUser.getEmail());
-      if (user.getLibraryCards().isEmpty()) {
-        throw new NIHComplianceRuleException();
-      }
       DataAccessRequest payload = populateDarFromJsonString(user, dar);
       // DAA Enforcement
       datasetService.enforceDAARestrictions(user, payload.getDatasetIds());
@@ -418,56 +411,49 @@ public class DataAccessRequestResource extends Resource {
       @FormDataParam("collaboratorRequiredFile") FormDataContentDisposition collabFileDetails,
       @FormDataParam("ethicsApprovalRequiredFile") InputStream ethicsInputStream,
       @FormDataParam("ethicsApprovalRequiredFile") FormDataContentDisposition ethicsFileDetails) {
-    User user = userService.findUserByEmail(authUser.getEmail());
-    DataAccessRequest parentDar = dataAccessRequestService.findByReferenceId(parentReferenceId);
     try {
-      checkAuthorizedUpdateUser(user, parentDar);
+      User user = userService.findUserByEmail(authUser.getEmail());
+      DataAccessRequest parentDar = dataAccessRequestService.findByReferenceId(parentReferenceId);
+      if (!user.getUserId().equals(parentDar.getUserId())) {
+        throw new ForbiddenException("User not authorized to update this Data Access Request");
+      }
+
+      DataAccessRequest payload = populateDarFromJsonString(user, dar);
+      DataAccessRequest childDar = dataAccessRequestService.createDataAccessRequest(user, payload);
+
+      for (Integer datasetId : childDar.getDatasetIds()) {
+        Dataset dataset = datasetService.findDatasetById(datasetId);
+        if (dataset == null) {
+          throw new NotFoundException("Dataset " + datasetId + " not found");
+        }
+        DataUse dataUse = dataset.getDataUse();
+        if (dataUse == null || dataUse.getCollaboratorRequired() == null
+            || dataUse.getEthicsApprovalRequired() == null) {
+          throw new BadRequestException("Dataset " + datasetId + " is missing data use(s)");
+        }
+        if (dataUse.getCollaboratorRequired()) {
+          String parentCollabLocation = parentDar.getData().getCollaborationLetterLocation();
+          if ((collabFileDetails == null || collabFileDetails.getSize() <= 0)
+              && Strings.isNullOrEmpty(parentCollabLocation)) {
+            throw new BadRequestException("Collaboration document is required");
+          }
+          childDar = updateDarWithDocumentContents(DarDocumentType.COLLABORATION, user, childDar,
+              collabInputStream, collabFileDetails);
+        }
+        if (dataUse.getEthicsApprovalRequired()) {
+          String parentEthicsLocation = parentDar.getData().getIrbDocumentLocation();
+          if ((ethicsFileDetails == null || ethicsFileDetails.getSize() <= 0)
+              && Strings.isNullOrEmpty(parentEthicsLocation)) {
+            throw new BadRequestException("Ethics approval document is required");
+          }
+          childDar = updateDarWithDocumentContents(DarDocumentType.IRB, user, childDar,
+              ethicsInputStream, ethicsFileDetails);
+        }
+      }
+      return Response.ok(childDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
-
-    DataAccessRequest payload = populateDarFromJsonString(user, dar);
-    DataAccessRequest childDar = dataAccessRequestService.createDataAccessRequest(user, payload);
-
-    for (Integer datasetId : childDar.getDatasetIds()) {
-      Dataset dataset = datasetService.findDatasetById(datasetId);
-      if (dataset == null) {
-        throw new NotFoundException("Dataset " + datasetId + " not found");
-      }
-      DataUse dataUse = dataset.getDataUse();
-      if (dataUse == null || dataUse.getCollaboratorRequired() == null
-          || dataUse.getEthicsApprovalRequired() == null) {
-        throw new BadRequestException("Dataset " + datasetId + " is missing data use(s)");
-      }
-      if (dataUse.getCollaboratorRequired()) {
-        String parentCollabLocation = parentDar.getData().getCollaborationLetterLocation();
-        if ((collabFileDetails == null || collabFileDetails.getSize() <= 0)
-            && Strings.isNullOrEmpty(parentCollabLocation)) {
-          throw new BadRequestException("Collaboration document is required");
-        }
-        try {
-          childDar = updateDarWithDocumentContents(DarDocumentType.COLLABORATION, user, childDar,
-              collabInputStream, collabFileDetails);
-        } catch (IOException e) {
-          return createExceptionResponse(e);
-        }
-      }
-      if (dataUse.getEthicsApprovalRequired()) {
-        String parentEthicsLocation = parentDar.getData().getIrbDocumentLocation();
-        if ((ethicsFileDetails == null || ethicsFileDetails.getSize() <= 0)
-            && Strings.isNullOrEmpty(parentEthicsLocation)) {
-          throw new BadRequestException("Ethics approval document is required");
-        }
-        try {
-          childDar = updateDarWithDocumentContents(DarDocumentType.IRB, user, childDar,
-              ethicsInputStream, ethicsFileDetails);
-        } catch (IOException e) {
-          return createExceptionResponse(e);
-        }
-      }
-    }
-
-    return Response.ok(childDar.convertToSimplifiedDar()).build();
   }
 
   @GET
@@ -604,6 +590,12 @@ public class DataAccessRequestResource extends Resource {
       DataAccessRequest dar,
       InputStream uploadInputStream,
       FormDataContentDisposition fileDetail) throws IOException {
+    // When we move updateDarWithDocumentContents to the service tier, we should incorporate the
+    // code below into that method
+    if (!dar.getDraft()) {
+      throw new SubmittedDARCannotBeEditedException();
+    }
+    // This should be moved to service tier logic and the transactions should be coordinated
     validateFileDetails(fileDetail);
     String fileName = fileDetail.getFileName();
     UUID id = UUID.randomUUID();
