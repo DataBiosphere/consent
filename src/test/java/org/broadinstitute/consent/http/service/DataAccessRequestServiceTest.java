@@ -11,6 +11,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.BadRequestException;
@@ -21,6 +23,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -33,10 +36,11 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.Collaborator;
+import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -84,7 +88,7 @@ class DataAccessRequestServiceTest {
   @Mock
   private DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
   @Mock
-  private UseRestrictionConverter useRestrictionConverter;
+  private UserService userService;
   private DataAccessRequestService service;
 
   private static Collaborator createCollaborator() {
@@ -114,12 +118,13 @@ class DataAccessRequestServiceTest {
     container.setVoteDAO(voteDAO);
     container.setMatchDAO(matchDAO);
     service = new DataAccessRequestService(counterService, container, dacService,
-        dataAccessRequestServiceDAO);
+        dataAccessRequestServiceDAO, userService);
   }
 
   @Test
   void testCreateDataAccessRequest_Update() {
     DataAccessRequest dar = generateDataAccessRequest();
+    dar.setCollectionId(null);
     dar.addDatasetIds(List.of(1, 2, 3));
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(List.of(new LibraryCard()));
@@ -140,7 +145,6 @@ class DataAccessRequestServiceTest {
     dar.setSortDate(new Timestamp(1000));
     dar.setReferenceId("id");
     User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
     user.setLibraryCards(List.of(new LibraryCard()));
     when(counterService.getNextDarSequence()).thenReturn(1);
     when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
@@ -165,13 +169,25 @@ class DataAccessRequestServiceTest {
     dar.setSubmissionDate(Timestamp.from(Instant.now()));
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(List.of(new LibraryCard()));
-    user.setLibraryCards(List.of(new LibraryCard()));
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
     initService();
     assertThrows(SubmittedDARCannotBeEditedException.class, () -> {
       service.createDataAccessRequest(user, dar);
     });
   }
+
+  @Test
+  void testCreateDataAccessRequestCreateWithoutERACommons() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    user.setLibraryCards(List.of(new LibraryCard()));
+    doThrow(BadRequestException.class).when(userService).hasValidActiveERACredentials(user);
+    initService();
+    assertThrows(BadRequestException.class, () -> {
+      service.createDataAccessRequest(user, dar);
+    });
+  }
+
 
   @Test
   void testUpdateByReferenceIdThrowsOnDraft() throws Exception {
@@ -194,12 +210,50 @@ class DataAccessRequestServiceTest {
     dar.setSortDate(new Timestamp(1000));
     dar.setReferenceId("id");
     User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
     user.setLibraryCards(List.of());
     initService();
     assertThrows(NIHComplianceRuleException.class, () -> {
       service.createDataAccessRequest(user, dar);
     });
+  }
+
+  @Test
+  void createProgressReport() {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.setParentId(parentDar.getId().toString());
+    progressReport.setCollectionId(parentDar.getCollectionId());
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    user.setLibraryCards(List.of(new LibraryCard()));
+    parentDar.setUserId(user.getUserId());
+    when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId())).thenReturn(progressReport);
+
+    initService();
+    DataAccessRequest newDar = service.createProgressReport(user, progressReport, parentDar);
+    assertNotNull(newDar);
+    verify(dataAccessRequestDAO)
+        .insertProgressReport(parentDar.getId(), progressReport.getCollectionId(), progressReport.getReferenceId(), user.getUserId(),
+            progressReport.getData());
+    verify(dataAccessRequestDAO).insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
+  }
+
+  static class DarDatasetMatcher implements ArgumentMatcher<List<DarDataset>> {
+    private final DataAccessRequest progressReport;
+
+    public DarDatasetMatcher(DataAccessRequest progressReport) {
+      this.progressReport = progressReport;
+    }
+    @Override
+    public boolean matches(List<DarDataset> darDatasets) {
+      for (int i=0; i < darDatasets.size(); i++) {
+        if (!darDatasets.get(i).getReferenceId().equals(progressReport.getReferenceId()) ||
+            !darDatasets.get(i).getDatasetId().equals(progressReport.getDatasetIds().get(i))) {
+          return false;
+        }
+      }
+      return true;
+    }
   }
 
   private User createRequestingUser() {
@@ -209,6 +263,157 @@ class DataAccessRequestServiceTest {
     institution.setName("Test Institution");
     requestingUser.setInstitution(institution);
     return requestingUser;
+  }
+
+  @Test
+  void validateProgressReportParentDarIsDraft() {
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    user.setLibraryCards(List.of(new LibraryCard()));
+    DataAccessRequest progressReport = generateProgressReport();
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    initService();
+    assertThrows(BadRequestException.class, () -> {
+      service.validateProgressReport(user, progressReport, parentDar);
+    });
+  }
+
+  @Test
+  void validateProgressReportNoDatasetIds() {
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    user.setLibraryCards(List.of(new LibraryCard()));
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.setDatasetIds(Collections.emptyList());
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setUserId(user.getUserId());
+    initService();
+    assertThrows(BadRequestException.class, () -> {
+      service.validateProgressReport(user, progressReport, parentDar);
+    });
+  }
+
+  @Test
+  void validateProgressReportNoSummary() {
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    user.setLibraryCards(List.of(new LibraryCard()));
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.getData().setProgressReportSummary(null);
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setUserId(user.getUserId());
+    initService();
+    assertThrows(BadRequestException.class, () -> {
+      service.validateProgressReport(user, progressReport, parentDar);
+    });
+  }
+
+  @Test
+  void validateProgressReportNoIPSummary() {
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    user.setLibraryCards(List.of(new LibraryCard()));
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.getData().setIntellectualPropertySummary(null);
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setUserId(user.getUserId());
+    initService();
+    assertThrows(BadRequestException.class, () -> {
+      service.validateProgressReport(user, progressReport, parentDar);
+    });
+  }
+
+  @Test
+  void validateProgressReportInvalidDatasetIds() {
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    user.setLibraryCards(List.of(new LibraryCard()));
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.setDatasetIds(List.of(3, 4, 5)); // IDs not all in parent DAR
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setDatasetIds(List.of(1, 2, 3));
+    parentDar.setUserId(user.getUserId());
+    initService();
+    assertThrows(BadRequestException.class, () -> {
+      service.validateProgressReport(user, progressReport, parentDar);
+    });
+  }
+
+  @Test
+  void validateProgressReport() {
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    user.setLibraryCards(List.of(new LibraryCard()));
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.setDatasetIds(List.of(1, 2));
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setDatasetIds(List.of(1, 2, 3));
+    parentDar.setUserId(user.getUserId());
+    initService();
+    assertDoesNotThrow(() -> {
+      service.validateProgressReport(user, progressReport, parentDar);
+    });
+  }
+
+  @Test
+  void validateDarNullUser() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.validateDar(null, dar);
+    });
+  }
+
+  @Test
+  void validateDarNullDar() {
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.validateDar(user, null);
+    });
+  }
+
+  @Test
+  void validateDarNullReferenceId() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setReferenceId(null);
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.validateDar(user, dar);
+    });
+  }
+
+  @Test
+  void validateDarNullData() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setData(null);
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> {
+      service.validateDar(user, dar);
+    });
+  }
+
+  @Test
+  void validateDarNoLibraryCards() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    user.setLibraryCards(Collections.emptyList());
+    initService();
+    assertThrows(NIHComplianceRuleException.class, () -> {
+      service.validateDar(user, dar);
+    });
+  }
+
+  @Test
+  void validateDar() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    user.setLibraryCards(List.of(new LibraryCard()));
+    initService();
+    assertDoesNotThrow(() -> {
+      service.validateDar(user, dar);
+    });
   }
 
   @Test
@@ -356,10 +561,18 @@ class DataAccessRequestServiceTest {
     });
   }
 
+  private DataAccessRequest generateProgressReport() {
+    DataAccessRequest progressReport = generateDataAccessRequest();
+    progressReport.getData().setProgressReportSummary("Progress Report Summary");
+    progressReport.getData().setIntellectualPropertySummary("Intellectual Property Summary");
+    return progressReport;
+  }
 
   private DataAccessRequest generateDataAccessRequest() {
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
+    dar.setId(new Random().nextInt());
+    dar.setCollectionId(new Random().nextInt());
     dar.setReferenceId(UUID.randomUUID().toString());
     data.setReferenceId(dar.getReferenceId());
     dar.addDatasetId(1);
