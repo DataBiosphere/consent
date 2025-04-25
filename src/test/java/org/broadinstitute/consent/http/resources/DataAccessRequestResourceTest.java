@@ -176,7 +176,8 @@ class DataAccessRequestResourceTest {
     User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
     userWithCards.setLibraryCards(List.of(new LibraryCard()));
     when(userService.findUserByEmail(any())).thenReturn(userWithCards);
-    doThrow(new BadRequestException()).when(dataAccessRequestService).createDataAccessRequest(eq(user), any());
+    doThrow(new BadRequestException()).when(dataAccessRequestService)
+        .createDataAccessRequest(eq(user), any());
     resource =
         new DataAccessRequestResource(daaService,
             dataAccessRequestService, emailService, gcsService, userService, datasetService,
