@@ -1,19 +1,50 @@
 package org.broadinstitute.consent.http.mail.message;
 
-import com.sendgrid.helpers.mail.Mail;
-import java.io.Writer;
+import java.util.List;
+import org.broadinstitute.consent.http.enumeration.EmailType;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
 public class ResearcherApprovedMessage extends MailMessage {
 
-  private final String APPROVED_DAR = "Your DUOS Data Access Request Results";
+  private static final String APPROVED_DAR = "Your DUOS Data Access Request Results";
 
-  public Mail researcherApprovedMessage(String toAddress, String fromAddress, Writer template,
-      String darCode) {
-    return generateEmailMessage(toAddress, fromAddress, template, darCode, null);
+  private final String darCode;
+  private final List<DatasetMailDTO> datasets;
+  private final String dataUseRestriction;
+
+  public ResearcherApprovedMessage(User toUser, String darCode, List<DatasetMailDTO> datasets,
+      String dataUseRestriction) {
+    super(toUser, EmailType.RESEARCHER_DAR_APPROVED);
+    this.darCode = darCode;
+    this.datasets = datasets;
+    this.dataUseRestriction = dataUseRestriction;
   }
 
   @Override
-  String assignSubject(String referenceId, String type) {
+  public String createSubject() {
     return APPROVED_DAR;
+  }
+
+  record Model(
+      String researcherName,
+      String darCode,
+      List<DatasetMailDTO> datasets,
+      String dataUseRestriction,
+      String researcherEmail) {}
+
+  @Override
+  public Object createModel(String serverUrl) {
+    return new Model(
+        toUser.getDisplayName(),
+        darCode,
+        datasets,
+        dataUseRestriction,
+        toUser.getEmail());
+  }
+
+  @Override
+  public String getEntityReferenceId() {
+    return darCode;
   }
 }

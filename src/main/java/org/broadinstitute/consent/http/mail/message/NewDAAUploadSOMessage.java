@@ -1,20 +1,42 @@
 package org.broadinstitute.consent.http.mail.message;
 
-import com.sendgrid.helpers.mail.Mail;
-import java.io.Writer;
-import javax.mail.MessagingException;
+import org.broadinstitute.consent.http.enumeration.EmailType;
+import org.broadinstitute.consent.http.models.User;
 
 public class NewDAAUploadSOMessage extends MailMessage {
-  private final String NEW_DAA_UPLOAD_SO = "New DAA uploaded and sent to SO for DAC in DUOS";
+  private static final String NEW_DAA_UPLOAD_SO = "New DAA uploaded and sent to SO for DAC in DUOS";
 
-  public Mail newDAAUploadSOMessage(String toAddress, String fromAddress, Writer template, String dacName)
-      throws MessagingException {
-    return generateEmailMessage(toAddress, fromAddress, template, dacName, null);
+  private final String dacName;
+  private final String previousDaaName;
+  private final String newDaaName;
+
+  public NewDAAUploadSOMessage(
+      User toUser, String dacName, String previousDaaName, String newDaaName) {
+    super(toUser, EmailType.NEW_DAA_UPLOAD_SO);
+    this.dacName = dacName;
+    this.previousDaaName = previousDaaName;
+    this.newDaaName = newDaaName;
   }
 
   @Override
-  String assignSubject(String referenceId, String type) {
+  public String createSubject() {
     return NEW_DAA_UPLOAD_SO;
   }
 
+  record Model(
+      String serverUrl,
+      String dacName,
+      String signingOfficialUserName,
+      String previousDaaName,
+      String newDaaName) {}
+
+  @Override
+  public Object createModel(String serverUrl) {
+    return new Model(serverUrl, dacName, toUser.getDisplayName(), previousDaaName, newDaaName);
+  }
+
+  @Override
+  public String getEntityReferenceId() {
+    return dacName;
+  }
 }

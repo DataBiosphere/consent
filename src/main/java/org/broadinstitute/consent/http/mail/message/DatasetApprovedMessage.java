@@ -1,20 +1,34 @@
 package org.broadinstitute.consent.http.mail.message;
 
-import com.sendgrid.helpers.mail.Mail;
-import java.io.Writer;
-import javax.mail.MessagingException;
+import org.broadinstitute.consent.http.enumeration.EmailType;
+import org.broadinstitute.consent.http.models.User;
 
 public class DatasetApprovedMessage extends MailMessage {
 
-  private final String DATASET_APPROVED = "Dataset approved for DUOS";
+  private static final String DATASET_APPROVED = "Dataset approved for DUOS";
+  private final String dacName;
+  private final String datasetName;
 
-  public Mail datasetApprovedMessage(String toAddress, String fromAddress, Writer template)
-      throws MessagingException {
-    return generateEmailMessage(toAddress, fromAddress, template, null, null);
+  public DatasetApprovedMessage(User toUser, String dacName, String datasetName) {
+    super(toUser, EmailType.DATASET_APPROVED);
+    this.dacName = dacName;
+    this.datasetName = datasetName;
   }
 
   @Override
-  String assignSubject(String referenceId, String type) {
+  public String createSubject() {
     return DATASET_APPROVED;
+  }
+
+  record Model(String dataSubmitterName, String datasetName, String dacName) {}
+
+  @Override
+  public Object createModel(String serverUrl) {
+    return new Model(toUser.getDisplayName(), datasetName, dacName);
+  }
+
+  @Override
+  public String getEntityReferenceId() {
+    return datasetName;
   }
 }
