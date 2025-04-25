@@ -1,6 +1,9 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -10,6 +13,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
@@ -21,7 +26,6 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -31,15 +35,18 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -57,6 +64,8 @@ import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -410,42 +419,31 @@ class DataAccessRequestResourceTest {
   }
 
   @Test
-  void testPostProgressReportCollabAndEthicsFiles() throws IOException {
+  void testPostProgressReport() {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.getData().setCollaborationLetterLocation("collaborationLetterLocation");
-    parentDar.getData().setIrbDocumentLocation("irbDocumentLocation");
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
     DataAccessRequest childDar = generateDataAccessRequest();
-    when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
+    when(dataAccessRequestService.createProgressReport(eq(user), any(), eq(parentDar))).thenReturn(childDar);
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
-    Dataset dataset = mock(Dataset.class);
-    when(datasetService.findDatasetById(any())).thenReturn(dataset);
-    DataUse dataUseCollabAndEthics = new DataUseBuilder()
-        .setCollaboratorRequired(true)
-        .setEthicsApprovalRequired(true).build();
-    when(dataset.getDataUse()).thenReturn(dataUseCollabAndEthics);
-    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
-    when(gcsService.deleteDocument(any())).thenReturn(true);
-    when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(childDar);
-    initResource();
 
+    initResource();
     Response response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
         collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
   @Test
-  void testPostProgressReportUserNotAuthorized() {
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(member);
+  void testPostProgressReportDifferentUser() {
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setUserId(2);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
-    initResource();
-    user.setLibraryCards(null);
 
+    initResource();
     Response response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
         collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
@@ -481,139 +479,223 @@ class DataAccessRequestResourceTest {
   }
 
   @Test
-  void testPostProgressReportNullCollabFile() {
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+  void populateProgressReportWithDocuments() throws Exception {
     DataAccessRequest parentDar = generateDataAccessRequest();
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    parentDar.getData().setCollaborationLetterLocation("existing_collab_location");
+    parentDar.getData().setIrbDocumentLocation("existing_irb_location");
     DataAccessRequest childDar = generateDataAccessRequest();
-    when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
-    Pair<InputStream, FormDataContentDisposition> collabFile = Pair.of(null, null);
-    Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
-    Dataset dataset = mock(Dataset.class);
-    when(datasetService.findDatasetById(any())).thenReturn(dataset);
-    DataUse dataUseCollabAndEthics = new DataUseBuilder()
+    childDar.setDatasetIds(List.of(1, 2));
+
+    Dataset dataset1 = new Dataset();
+    DataUse dataUse1 = new DataUseBuilder()
         .setCollaboratorRequired(true)
         .setEthicsApprovalRequired(true).build();
-    when(dataset.getDataUse()).thenReturn(dataUseCollabAndEthics);
-    initResource();
+    dataset1.setDataUse(dataUse1); // Both documents required
+    Dataset dataset2 = new Dataset();
+    DataUse dataUse2 = new DataUseBuilder()
+        .setCollaboratorRequired(false)
+        .setEthicsApprovalRequired(false).build();
+    dataset2.setDataUse(dataUse2); // No documents required
 
-    Response response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
-        collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    assertTrue(response.getEntity().toString()
-        .contains("Collaboration document is required"));
+    when(datasetService.findDatasetById(1)).thenReturn(dataset1);
+    when(datasetService.findDatasetById(2)).thenReturn(dataset2);
+
+    String fileType = "text/plain";
+    InputStream collabInputStream = IOUtils.toInputStream("collab content", Charset.defaultCharset());
+    FormDataContentDisposition collabFileDetails = mock(FormDataContentDisposition.class);
+    when(collabFileDetails.getFileName()).thenReturn("collab_document.txt");
+    when(collabFileDetails.getType()).thenReturn(fileType);
+
+    InputStream ethicsInputStream = IOUtils.toInputStream("ethics content", Charset.defaultCharset());
+    FormDataContentDisposition ethicsFileDetails = mock(FormDataContentDisposition.class);
+    when(ethicsFileDetails.getFileName()).thenReturn("ethics_document.txt");
+    when(ethicsFileDetails.getType()).thenReturn(fileType);
+
+    BlobId blobId = BlobId.of("bucket", "location");
+    when(gcsService.storeDocument(eq(collabInputStream), eq(fileType), any())).thenReturn(blobId);
+    when(gcsService.storeDocument(eq(ethicsInputStream), eq(fileType), any())).thenReturn(blobId);
+    initResource();
+    resource.populateProgressReportWithDocuments(
+        collabInputStream, collabFileDetails, ethicsInputStream, ethicsFileDetails, childDar, parentDar);
+    verify(gcsService, times(2)).storeDocument(any(), any(), any());
+
   }
 
   @Test
-  void testPostProgressReportEmptyEthicsFile() {
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+  void populateProgressReportWithDocumentsMissingCollaboration() {
     DataAccessRequest parentDar = generateDataAccessRequest();
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    parentDar.getData().setCollaborationLetterLocation(null);
+
     DataAccessRequest childDar = generateDataAccessRequest();
-    when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
-    var collabFile = mockFormDataMultiPart("collab.txt");
-    var ethicsFile = mockFormDataMultiPart("ethics.txt");
-    Dataset dataset = mock(Dataset.class);
-    when(datasetService.findDatasetById(any())).thenReturn(dataset);
-    DataUse dataUseCollabAndEthics = new DataUseBuilder()
+    childDar.setDatasetIds(List.of(1));
+
+    Dataset dataset = new Dataset();
+    DataUse dataUse = new DataUseBuilder()
+        .setCollaboratorRequired(true)
+        .setEthicsApprovalRequired(false).build();
+    dataset.setDataUse(dataUse); // Collaboration document required
+    when(datasetService.findDatasetById(1)).thenReturn(dataset);
+
+    initResource();
+    BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+      resource.populateProgressReportWithDocuments(
+          null, null, null, null, childDar, parentDar);
+    });
+
+    assertEquals("Collaboration document is required", exception.getMessage());
+  }
+
+  @Test
+  void populateProgressReportWithDocumentsMissingEthics() {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.getData().setIrbDocumentLocation(null);
+
+    DataAccessRequest childDar = generateDataAccessRequest();
+    childDar.setDatasetIds(List.of(1));
+
+    // Mock dataset
+    Dataset dataset = new Dataset();
+    DataUse dataUse = new DataUseBuilder()
         .setCollaboratorRequired(false)
         .setEthicsApprovalRequired(true).build();
-    when(dataset.getDataUse()).thenReturn(dataUseCollabAndEthics);
-    initResource();
+    dataset.setDataUse(dataUse); // Ethics approval document required
+    when(datasetService.findDatasetById(1)).thenReturn(dataset);
 
-    Response response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
-        collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    assertTrue(response.getEntity().toString()
-        .contains("Ethics approval document is required"));
+    initResource();
+    BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+      resource.populateProgressReportWithDocuments(
+          null, null, null, null, childDar, parentDar);
+    });
+
+    assertEquals("Ethics approval document is required", exception.getMessage());
   }
 
   @Test
-  void testPostProgressReportNullDataset() {
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+  void populateProgressReportWithDocumentsMissingDataUse() {
     DataAccessRequest parentDar = generateDataAccessRequest();
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
-    DataAccessRequest childDar = generateDataAccessRequest();
-    when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
-    var collabFile = mockFormDataMultiPart("collab.txt");
-    var ethicsFile = mockFormDataMultiPart("ethics.txt");
-    Integer firstDatasetId = childDar.getDatasetIds().get(0);
-    when(datasetService.findDatasetById(firstDatasetId)).thenReturn(null);
-    initResource();
 
-    Response response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
-        collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-    assertTrue(response.getEntity().toString()
-        .contains("Dataset " + firstDatasetId + " not found"));
+    DataAccessRequest childDar = generateDataAccessRequest();
+    childDar.setDatasetIds(List.of(1));
+
+    Dataset dataset = new Dataset();
+    dataset.setDataUse(null); // Ethics approval document required
+    when(datasetService.findDatasetById(1)).thenReturn(dataset);
+
+    initResource();
+    BadRequestException exception = assertThrows(BadRequestException.class, () -> {
+      resource.populateProgressReportWithDocuments(
+          null, null, null, null, childDar, parentDar);
+    });
+
+    assertEquals("Dataset 1 is missing data use(s)", exception.getMessage());
   }
 
   @Test
-  void testPostProgressReportNullDataUse() {
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+  void populateProgressReportWithDocumentsDatasetNotFound() {
     DataAccessRequest parentDar = generateDataAccessRequest();
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
     DataAccessRequest childDar = generateDataAccessRequest();
-    when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
-    var collabFile = mockFormDataMultiPart("collab.txt");
-    var ethicsFile = mockFormDataMultiPart("ethics.txt");
-    Dataset dataset = mock(Dataset.class);
-    Integer firstDatasetId = childDar.getDatasetIds().get(0);
-    when(datasetService.findDatasetById(firstDatasetId)).thenReturn(dataset);
-    when(dataset.getDataUse()).thenReturn(null);
-    initResource();
+    childDar.setDatasetIds(List.of(1));
+    when(datasetService.findDatasetById(1)).thenReturn(null);
 
-    Response response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
-        collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    assertTrue(response.getEntity().toString()
-        .contains("Dataset " + firstDatasetId + " is missing data use(s)"));
+    initResource();
+    NotFoundException exception = assertThrows(NotFoundException.class, () -> {
+      resource.populateProgressReportWithDocuments(
+          null, null, null, null, childDar, parentDar);
+    });
+
+    assertEquals("Dataset 1 not found", exception.getMessage());
+  }
+
+  @ParameterizedTest
+  @EnumSource(DarDocumentType.class)
+  void uploadDocumentContents(DarDocumentType documentType) throws Exception {
+    InputStream uploadInputStream = IOUtils.toInputStream("test content", Charset.defaultCharset());
+    FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
+    String fileName = "document.txt";
+    when(fileDetail.getFileName()).thenReturn(fileName);
+    String fileType = "text/plain";
+    when(fileDetail.getType()).thenReturn(fileType);
+
+    DataAccessRequest dar = generateDataAccessRequest();
+    String existingLocation = "existing_location";
+    if (DarDocumentType.COLLABORATION.equals(documentType)) {
+      dar.getData().setCollaborationLetterLocation(existingLocation);
+      dar.getData().setCollaborationLetterName("existing_name.txt");
+    } else {
+      dar.getData().setIrbDocumentLocation(existingLocation);
+      dar.getData().setIrbDocumentName("existing_name.txt");
+    }
+
+    String newLocation = "new_location";
+    BlobId mockBlobId = BlobId.of("bucket", newLocation);
+    when(gcsService.storeDocument(eq(uploadInputStream), eq(fileType), any())).thenReturn(mockBlobId);
+    when(gcsService.deleteDocument(existingLocation)).thenReturn(true);
+
+    initResource();
+    resource.uploadDocumentContents(documentType, dar, uploadInputStream, fileDetail);
+
+    if (DarDocumentType.COLLABORATION.equals(documentType)) {
+      assertEquals(newLocation, dar.getData().getCollaborationLetterLocation());
+      assertEquals(fileName, dar.getData().getCollaborationLetterName());
+    } else {
+      assertEquals(newLocation, dar.getData().getIrbDocumentLocation());
+      assertEquals(fileName, dar.getData().getIrbDocumentName());
+    }
   }
 
   @Test
-  void testPostProgressReportNullCollaboratorDataUse() {
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
-    DataAccessRequest parentDar = generateDataAccessRequest();
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
-    DataAccessRequest childDar = generateDataAccessRequest();
-    when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
-    var collabFile = mockFormDataMultiPart("collab.txt");
-    var ethicsFile = mockFormDataMultiPart("ethics.txt");
-    Dataset dataset = mock(Dataset.class);
-    Integer firstDatasetId = childDar.getDatasetIds().get(0);
-    when(datasetService.findDatasetById(firstDatasetId)).thenReturn(dataset);
-    DataUse dataUseEthicsOnly = new DataUseBuilder().setEthicsApprovalRequired(true).build();
-    when(dataset.getDataUse()).thenReturn(dataUseEthicsOnly);
+  void populateProgressReportFromJsonString() {
+    DataAccessRequest parentDar = new DataAccessRequest();
+    parentDar.setId(1);
+    parentDar.setReferenceId("parent-reference-id");
+    parentDar.setCollectionId(100);
+    DataAccessRequestData parentData = new DataAccessRequestData();
+    parentData.setProjectTitle("Parent Project Title");
+    Collaborator collaborator = new Collaborator();
+    collaborator.setName("Parent Collaborator");
+    parentData.setInternalCollaborators(List.of(collaborator));
+    parentData.setExternalCollaborators(List.of(collaborator));
+    parentData.setLabCollaborators(List.of(collaborator));
+    parentDar.setDatasetIds(List.of(1, 2, 3));
+    parentData.setCollaborationLetterName("collaboration_letter.txt");
+    parentData.setIrbDocumentName("irb_document.txt");
+    parentData.setCollaborationLetterLocation("collaboration_letter_location");
+    parentData.setIrbDocumentLocation("irb_document_location");
+    parentDar.setData(parentData);
+
+    String json = """
+        {
+            "projectTitle": "New Project Title",
+            "internalCollaborators": [],
+            "externalCollaborators": [],
+            "labCollaborators": [],
+            "progressReportSummary": "New Summary",
+            "datasetIds": [1, 2],
+            "collaborationLetterName": "new_collaboration_letter.txt",
+            "irbDocumentName": "new_irb_document.txt",
+            "collaborationLetterLocation": "new_collaboration_letter_location",
+            "irbDocumentLocation": "new_irb_document_location"
+        }
+    """;
+
     initResource();
+    DataAccessRequest newDar = resource.populateProgressReportFromJsonString(json, parentDar);
 
-    Response response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
-        collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    assertTrue(response.getEntity().toString()
-        .contains("Dataset " + firstDatasetId + " is missing data use(s)"));
-  }
-
-  @Test
-  void testPostProgressReportNullEthicsApprovalDataUse() throws IOException {
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
-    DataAccessRequest parentDar = generateDataAccessRequest();
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
-    DataAccessRequest childDar = generateDataAccessRequest();
-    when(dataAccessRequestService.createDataAccessRequest(any(), any())).thenReturn(childDar);
-    var collabFile = mockFormDataMultiPart("collab.txt");
-    var ethicsFile = mockFormDataMultiPart("ethics.txt");
-    Dataset dataset = mock(Dataset.class);
-    Integer firstDatasetId = childDar.getDatasetIds().get(0);
-    when(datasetService.findDatasetById(firstDatasetId)).thenReturn(dataset);
-    DataUse dataUseCollaboratorOnly = new DataUseBuilder().setCollaboratorRequired(true).build();
-    when(dataset.getDataUse()).thenReturn(dataUseCollaboratorOnly);
-    initResource();
-
-    Response response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
-        collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    assertTrue(response.getEntity().toString()
-        .contains("Dataset " + firstDatasetId + " is missing data use(s)"));
+    assertNotNull(newDar);
+    assertNotEquals(parentDar.getReferenceId(), newDar.getReferenceId());
+    assertEquals(parentDar.getCollectionId(), newDar.getCollectionId());
+    assertEquals("Parent Project Title", newDar.getData().getProjectTitle());
+    assertEquals(List.of(), newDar.getData().getInternalCollaborators());
+    assertEquals(List.of(), newDar.getData().getExternalCollaborators());
+    assertEquals(List.of(), newDar.getData().getLabCollaborators());
+    assertEquals("New Summary", newDar.getData().getProgressReportSummary());
+    assertEquals(List.of(1, 2), newDar.getDatasetIds());
+    assertNull(newDar.getData().getCollaborationLetterName());
+    assertNull(newDar.getData().getIrbDocumentName());
+    assertNull(newDar.getData().getCollaborationLetterLocation());
+    assertNull(newDar.getData().getIrbDocumentLocation());
+    assertEquals(List.of(collaborator), parentDar.getData().getInternalCollaborators()); // Ensure parent is unchanged
+    assertEquals("collaboration_letter.txt", parentDar.getData().getCollaborationLetterName());
   }
 
   @Test
@@ -737,6 +819,7 @@ class DataAccessRequestResourceTest {
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setReferenceId(UUID.randomUUID().toString());
     data.setReferenceId(dar.getReferenceId());
+    dar.setId(new Random().nextInt());
     dar.setDatasetIds(Arrays.asList(1, 2));
     dar.setData(data);
     dar.setUserId(user.getUserId());
