@@ -605,7 +605,7 @@ public class DataAccessRequestResource extends Resource {
     originalDataCopy.setResearchPlans(newData.getResearchPlans());
     originalDataCopy.setCloseoutSupplement(newData.getCloseoutSupplement());
 
-    // These values will be updated in updateProgressReportWithDocuments if documents exist.
+    // These values will be updated in populateProgressReportWithDocuments if documents exist.
     // Its important we don't copy over the parent values so those documents are not deleted.
     originalDataCopy.setCollaborationLetterName(null);
     originalDataCopy.setCollaborationLetterLocation(null);
