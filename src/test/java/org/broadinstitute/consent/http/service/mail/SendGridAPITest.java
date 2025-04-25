@@ -112,7 +112,7 @@ class SendGridAPITest {
   void testSendDaaRequestMessage() {
     try {
       sendGridAPI.sendDaaRequestMessage(TO, template, "1");
-    } catch (Exception  e) {
+    } catch (Exception e) {
       fail("Should not throw exception");
     }
   }
@@ -121,7 +121,7 @@ class SendGridAPITest {
   void testSendNewDAAUploadSOMessage() {
     try {
       sendGridAPI.sendNewDAAUploadSOMessage(TO, template, "Test DAC");
-    } catch (Exception  e) {
+    } catch (Exception e) {
       fail("Should not throw exception");
     }
   }
@@ -130,7 +130,16 @@ class SendGridAPITest {
   void testSendNewDAAUploadResearcherMessage() {
     try {
       sendGridAPI.sendNewDAAUploadResearcherMessage(TO, template, "Test DAC");
-    } catch (Exception  e) {
+    } catch (Exception e) {
+      fail("Should not throw exception");
+    }
+  }
+
+  @Test
+  void testDarExpirationReminderMessage() {
+    try {
+      sendGridAPI.sendDarExpirationReminderMessage(TO, ID, TYPE, template);
+    } catch (Exception e) {
       fail("Should not throw exception");
     }
   }

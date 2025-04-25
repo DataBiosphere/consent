@@ -59,7 +59,8 @@ class FreeMarkerTemplateHelperTest {
     Writer template = helper.getReminderTemplate("Reminder User", "DAR-1", "localhost:1234");
     String templateString = template.toString();
     final Document parsedTemplate = getAsHtmlDoc(templateString);
-    assertEquals("Broad Data Use Oversight System - Your vote was requested for a Data Access Request",
+    assertEquals(
+        "Broad Data Use Oversight System - Your vote was requested for a Data Access Request",
         parsedTemplate.title());
     assertEquals("Hello Reminder User,", parsedTemplate.getElementById("userName").text());
   }
@@ -181,7 +182,9 @@ class FreeMarkerTemplateHelperTest {
         .getElementById("content")
         .text()
         .contains(
-            userName + " has registered with your institution and is requesting you approve them under the " + daaName + " data access agreement, so that they can request access to data."));
+            userName
+                + " has registered with your institution and is requesting you approve them under the "
+                + daaName + " data access agreement, so that they can request access to data."));
     assertTrue(parsedTemplate
         .getElementById("link")
         .text()
@@ -214,12 +217,14 @@ class FreeMarkerTemplateHelperTest {
         .getElementById("content")
         .text()
         .contains(
-            "You previously pre-authorized researchers under the " + previousDaaName + " which was in use by the " + dacName + "."));
+            "You previously pre-authorized researchers under the " + previousDaaName
+                + " which was in use by the " + dacName + "."));
     assertTrue(parsedTemplate
         .getElementById("content")
         .text()
         .contains(
-            "The " + dacName + " has recently transitioned to using the " + newDaaName + " which will apply for all future requests to this DAC."));
+            "The " + dacName + " has recently transitioned to using the " + newDaaName
+                + " which will apply for all future requests to this DAC."));
     // no unspecified values
     assertFalse(templateString.contains("${"));
   }
@@ -247,14 +252,33 @@ class FreeMarkerTemplateHelperTest {
         .getElementById("content")
         .text()
         .contains(
-            "You were previously pre-authorized to request data from the " + dacName + " under the " + previousDaaName + "."));
+            "You were previously pre-authorized to request data from the " + dacName + " under the "
+                + previousDaaName + "."));
     assertTrue(parsedTemplate
         .getElementById("content")
         .text()
         .contains(
-            "The " + dacName + " has recently transitioned to using the " + newDaaName + " which will apply for all future requests to this DAC."));
+            "The " + dacName + " has recently transitioned to using the " + newDaaName
+                + " which will apply for all future requests to this DAC."));
     // no unspecified values
     assertFalse(templateString.contains("${"));
+  }
+
+  @Test
+  void testGetDarExpirationReminderTemplate() throws Exception {
+    Writer template = helper.getDarExpirationReminderTemplate("Expiration User", "DAR-123",
+        "localhost:1234");
+    String templateString = template.toString();
+    final Document parsedTemplate = getAsHtmlDoc(templateString);
+    assertEquals("Broad Data Use Oversight System - Your DAR is about to expire",
+        parsedTemplate.title());
+    assertEquals("Hello Expiration User,", parsedTemplate.getElementById("userName").text());
+    assertEquals(
+        "Your Data Access Request DAR-123 is expiring in 30 days. Please complete a progress report to preserve your access to this data.",
+        parsedTemplate.getElementById("expirationWarning").text());
+    assertEquals(
+        "Login to DUOS to submit a progress report.",
+        parsedTemplate.getElementById("loginLink").text());
   }
 
   /* Helper methods */

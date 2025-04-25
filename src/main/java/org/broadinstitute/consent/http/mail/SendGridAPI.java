@@ -21,6 +21,7 @@ import javax.mail.MessagingException;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.mail.message.DaaRequestMessage;
+import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
 import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
@@ -54,6 +55,7 @@ public class SendGridAPI implements ConsentLogger {
   private final DaaRequestMessage daaRequestMessage = new DaaRequestMessage();
   private final NewDAAUploadSOMessage newDAAUploadSOMessage = new NewDAAUploadSOMessage();
   private final NewDAAUploadResearcherMessage newDAAUploadResearcherMessage = new NewDAAUploadResearcherMessage();
+  private final DarExpirationReminderMessage darExpirationReminderMessage = new DarExpirationReminderMessage();
   private final UserDAO userDAO;
 
   public SendGridAPI(MailConfiguration config, UserDAO userDAO) {
@@ -109,8 +111,9 @@ public class SendGridAPI implements ConsentLogger {
     boolean userEmailPreference = findUserEmailPreference(message);
     if (!userEmailPreference) {
       Gson gson = new Gson();
-      logInfo("User Email Preference has evaluated to 'false', not sending to: %s".formatted(gson.toJson(
-          message.getPersonalization())));
+      logInfo("User Email Preference has evaluated to 'false', not sending to: %s".formatted(
+          gson.toJson(
+              message.getPersonalization())));
     }
     if (activateEmailNotifications && userEmailPreference) {
       try {
@@ -224,17 +227,28 @@ public class SendGridAPI implements ConsentLogger {
     return sendMessage(message);
   }
 
-  public Optional<Response> sendNewDAAUploadSOMessage(String toAddress, Writer template, String dacName)
+  public Optional<Response> sendNewDAAUploadSOMessage(String toAddress, Writer template,
+      String dacName)
       throws MessagingException {
     Mail message = newDAAUploadSOMessage.newDAAUploadSOMessage(toAddress, fromAccount,
         template, dacName);
     return sendMessage(message);
   }
 
-  public Optional<Response> sendNewDAAUploadResearcherMessage(String toAddress, Writer template, String dacName)
+  public Optional<Response> sendNewDAAUploadResearcherMessage(String toAddress, Writer template,
+      String dacName)
       throws MessagingException {
-    Mail message = newDAAUploadResearcherMessage.newDAAUploadResearcherMessage(toAddress, fromAccount,
+    Mail message = newDAAUploadResearcherMessage.newDAAUploadResearcherMessage(toAddress,
+        fromAccount,
         template, dacName);
+    return sendMessage(message);
+  }
+
+  public Optional<Response> sendDarExpirationReminderMessage(String toAddress, String referenceId,
+      String type, Writer template) {
+    Mail message = darExpirationReminderMessage.darExpirationReminderMessage(toAddress, fromAccount,
+        template,
+        referenceId, type);
     return sendMessage(message);
   }
 

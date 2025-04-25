@@ -119,20 +119,26 @@ public class EmailService implements ConsentLogger {
       throws IOException, TemplateException {
     DarCollection collection = collectionDAO.findDARCollectionByCollectionId(collectionId);
     if (collection == null) {
-      logWarn("Sending new DAR Collection message: Could not find collection for specified collection id: " + collectionId);
+      logWarn(
+          "Sending new DAR Collection message: Could not find collection for specified collection id: "
+              + collectionId);
       return;
     }
     List<User> distinctUsers = getDistinctAdminAndChairUsersForCollection(collection);
     User researcher = userDAO.findUserById(collection.getCreateUserId());
     if (researcher == null) {
-      logWarn("Sending new DAR Collection message: Could not find researcher for specified user id: " + collection.getCreateUserId());
+      logWarn(
+          "Sending new DAR Collection message: Could not find researcher for specified user id: "
+              + collection.getCreateUserId());
     }
     String researcherName = researcher == null ? "Unknown" : researcher.getDisplayName();
     Collection<Dac> dacsInDAR = dacDAO.findDacsForCollectionId(collectionId);
-    List<Integer> datasetIds = collection.getDatasets().stream().map(Dataset::getDatasetId).toList();
-    List<Dataset> datasetsInDAR = datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
+    List<Integer> datasetIds = collection.getDatasets().stream().map(Dataset::getDatasetId)
+        .toList();
+    List<Dataset> datasetsInDAR =
+        datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
 
-    Map<String, List<String>>  sendList = new HashMap<>();
+    Map<String, List<String>> sendList = new HashMap<>();
     for (User user : distinctUsers) {
       List<Dac> matchingDacsForUser = getMatchingDacs(user, dacsInDAR);
       for (Dac dac : matchingDacsForUser) {
@@ -212,7 +218,8 @@ public class EmailService implements ConsentLogger {
   public void sendReminderMessage(Integer voteId) throws IOException, TemplateException {
     Vote vote = voteDAO.findVoteById(voteId);
     Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
-    DarCollection collection = collectionDAO.findDARCollectionByReferenceId(election.getReferenceId());
+    DarCollection collection = collectionDAO.findDARCollectionByReferenceId(
+        election.getReferenceId());
     User user = findUserById(vote.getUserId());
     String voteUrl = SERVER_URL + "dar_collection/%d".formatted(collection.getDarCollectionId());
     Writer template = templateHelper.getReminderTemplate(
@@ -369,7 +376,8 @@ public class EmailService implements ConsentLogger {
       Integer userId) throws Exception {
     Writer template = templateHelper.getDaaRequestTemplate(signingOfficialName, userName, daaName,
         this.SERVER_URL);
-    Optional<Response> response = sendGridAPI.sendDaaRequestMessage(signingOfficialEmail, template, daaId.toString());
+    Optional<Response> response = sendGridAPI.sendDaaRequestMessage(signingOfficialEmail, template,
+        daaId.toString());
     saveEmailAndResponse(
         response.orElse(null),
         daaId.toString(),
@@ -389,7 +397,8 @@ public class EmailService implements ConsentLogger {
       Integer userId) throws Exception {
     Writer template = templateHelper.getNewDaaUploadSOTemplate(signingOfficialName, dacName,
         newDaaName, previousDaaName, this.SERVER_URL);
-    Optional<Response> response = sendGridAPI.sendNewDAAUploadSOMessage(signingOfficialEmail, template, dacName);
+    Optional<Response> response = sendGridAPI.sendNewDAAUploadSOMessage(signingOfficialEmail,
+        template, dacName);
     saveEmailAndResponse(
         response.orElse(null),
         dacName,
@@ -409,13 +418,33 @@ public class EmailService implements ConsentLogger {
       Integer userId) throws Exception {
     Writer template = templateHelper.getNewDaaUploadResearcherTemplate(researcherUserName, dacName,
         newDaaName, previousDaaName, this.SERVER_URL);
-    Optional<Response> response = sendGridAPI.sendNewDAAUploadResearcherMessage(researcherEmail, template, dacName);
+    Optional<Response> response = sendGridAPI.sendNewDAAUploadResearcherMessage(researcherEmail,
+        template, dacName);
     saveEmailAndResponse(
         response.orElse(null),
         dacName,
         null,
         userId,
         EmailType.NEW_DAA_UPLOAD_RESEARCHER,
+        template
+    );
+  }
+
+  public void sendDarExpirationReminderMessage(User researcher, String darName)
+      throws IOException, TemplateException {
+    String emailType = "DAR Expiration Reminder";
+    Writer template = templateHelper.getDarExpirationReminderTemplate(researcher.getDisplayName(),
+        darName,
+        this.SERVER_URL);
+    Optional<Response> response = sendGridAPI.sendDarExpirationReminderMessage(
+        researcher.getEmail(),
+        darName, emailType, template);
+    saveEmailAndResponse(
+        response.orElse(null),
+        darName,
+        null,
+        researcher.getUserId(),
+        EmailType.DAR_EXPIRATION_REMINDER,
         template
     );
   }

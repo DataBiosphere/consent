@@ -45,8 +45,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -174,7 +172,6 @@ class EmailServiceTest {
     when(userDAO.describeUsersByRoleAndEmailPreference(any(), any())).thenReturn(List.of());
     when(userDAO.findUsersForDatasetsByRole(any(), any())).thenReturn(Set.of(chairperson));
 
-
     try {
       service.sendNewDARCollectionMessage(collection.getDarCollectionId());
     } catch (Exception e) {
@@ -213,7 +210,8 @@ class EmailServiceTest {
     dataset.setAlias(dataset.getDatasetId());
     dataset.setDatasetIdentifier();
     dataset.setDacId(dacId);
-    dataset.setName(String.format("Dataset %s-%s", RandomStringUtils.randomAlphabetic(10), dataset.getDatasetId()));
+    dataset.setName(String.format("Dataset %s-%s", RandomStringUtils.randomAlphabetic(10),
+        dataset.getDatasetId()));
     return dataset;
   }
 
@@ -375,7 +373,8 @@ class EmailServiceTest {
     initService();
 
     try {
-      service.sendNewDAAUploadSOMessage(signingOfficial.getDisplayName(), signingOfficial.getEmail(),
+      service.sendNewDAAUploadSOMessage(signingOfficial.getDisplayName(),
+          signingOfficial.getEmail(),
           dac.getName(), previousDaaName, newDaaName, user.getUserId());
     } catch (Exception e) {
       fail("Should not fail sending message: " + e);
@@ -470,6 +469,40 @@ class EmailServiceTest {
           eq(vote.getVoteId()),
           eq(user.getUserId()),
           eq(EmailType.REMINDER.getTypeInt()),
+          any(),
+          any(),
+          any(),
+          any(),
+          any()
+      );
+    } catch (IOException e) {
+      fail("Should not fail sending message: " + e);
+    } catch (TemplateException e) {
+      fail("Should not fail generating template: " + e);
+    }
+  }
+
+  @Test
+  void testSendDarExpirationReminderMessage() {
+    User user = new User();
+    user.setUserId(123);
+    user.setDisplayName("John Doe");
+    user.setEmail("user@example.com");
+
+    DarCollection collection = new DarCollection();
+    collection.setDarCollectionId(RandomUtils.nextInt());
+    collection.setDarCode("DAR-456");
+
+    try {
+      initService();
+      service.sendDarExpirationReminderMessage(user, collection.getDarCode());
+      verify(sendGridAPI, times(1)).sendDarExpirationReminderMessage(any(), any(), any(), any());
+      verify(templateHelper, times(1)).getDarExpirationReminderTemplate(any(), any(), any());
+      verify(emailDAO, times(1)).insert(
+          eq(collection.getDarCode()),
+          any(),
+          eq(user.getUserId()),
+          eq(EmailType.DAR_EXPIRATION_REMINDER.getTypeInt()),
           any(),
           any(),
           any(),

@@ -108,14 +108,22 @@ public class FreeMarkerTemplateHelper {
       String dacName, String newDaaName, String previousDaaName, String serverUrl)
       throws IOException, TemplateException {
     Template temp = freeMarkerConfig.getTemplate("new-daa-upload-signing-official.html");
-    return generateNewDAAUploadSOTemplate(signingOfficialUserName, dacName, previousDaaName, newDaaName, serverUrl, temp);
+    return generateNewDAAUploadSOTemplate(signingOfficialUserName, dacName, previousDaaName,
+        newDaaName, serverUrl, temp);
   }
 
   public Writer getNewDaaUploadResearcherTemplate(String researcherUserName,
       String dacName, String newDaaName, String previousDaaName, String serverUrl)
       throws IOException, TemplateException {
     Template temp = freeMarkerConfig.getTemplate("new-daa-upload-researcher.html");
-    return generateNewDAAUploadResearcherTemplate(researcherUserName, dacName, previousDaaName, newDaaName, serverUrl, temp);
+    return generateNewDAAUploadResearcherTemplate(researcherUserName, dacName, previousDaaName,
+        newDaaName, serverUrl, temp);
+  }
+
+  public Writer getDarExpirationReminderTemplate(String userName, String darId, String serverUrl)
+      throws IOException, TemplateException {
+    Template temp = freeMarkerConfig.getTemplate("dar-expiration-reminder.html");
+    return generateDarExpirationReminderTemplate(userName, darId, serverUrl, temp);
   }
 
   private Writer generateDatasetApprovedTemplate(String dataSubmitterName, String datasetName,
@@ -128,7 +136,8 @@ public class FreeMarkerTemplateHelper {
 
   private Writer generateDatasetDeniedTemplate(String dataSubmitterName, String datasetName,
       String dacName, String dacEmail, Template temp) throws IOException, TemplateException {
-    DatasetDeniedModel model = new DatasetDeniedModel(dataSubmitterName, datasetName, dacName, dacEmail);
+    DatasetDeniedModel model = new DatasetDeniedModel(dataSubmitterName, datasetName, dacName,
+        dacEmail);
     Writer out = new StringWriter();
     temp.process(model, out);
     return out;
@@ -260,6 +269,14 @@ public class FreeMarkerTemplateHelper {
   ) throws IOException, TemplateException {
     NewDAAUploadResearcherModel model = new NewDAAUploadResearcherModel(serverUrl, dacName,
         researcherUserName, previousDaaName, newDaaName);
+    Writer out = new StringWriter();
+    temp.process(model, out);
+    return out;
+  }
+
+  private Writer generateDarExpirationReminderTemplate(String userName, String darId,
+      String serverUrl, Template temp) throws IOException, TemplateException {
+    DarExpirationReminderModel model = new DarExpirationReminderModel(userName, darId, serverUrl);
     Writer out = new StringWriter();
     temp.process(model, out);
     return out;
