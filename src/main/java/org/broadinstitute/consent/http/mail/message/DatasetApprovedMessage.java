@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.mail.message;
 
+import java.util.Map;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.User;
 
@@ -20,11 +21,11 @@ public class DatasetApprovedMessage extends MailMessage {
     return DATASET_APPROVED;
   }
 
-  record Model(String dataSubmitterName, String datasetName, String dacName) {}
-
   @Override
   public Object createModel(String serverUrl) {
-    return new Model(toUser.getDisplayName(), datasetName, dacName);
+    return Map.of("dataSubmitterName", toUser.getDisplayName(),
+        "datasetName", datasetName,
+        "dacName", dacName);
   }
 
   @Override

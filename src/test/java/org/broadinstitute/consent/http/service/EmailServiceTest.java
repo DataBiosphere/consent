@@ -1,14 +1,10 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -47,6 +43,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -89,7 +86,8 @@ class EmailServiceTest {
 
   private static final String SERVER_URL = "http://localhost:8000/#/";
 
-  private void initService() {
+  @BeforeEach
+  void initService() {
     boolean serviceActive = false;
 
     ConsentConfiguration config = new ConsentConfiguration();
@@ -119,7 +117,6 @@ class EmailServiceTest {
 
   @Test
   void testSendNewResearcherEmail() throws Exception {
-    initService();
     User user = new User();
     user.setUserId(1234);
     user.setDisplayName("John Doe");
@@ -146,7 +143,6 @@ class EmailServiceTest {
 
   @Test
   void testSendNewDARCollectionMessage() throws TemplateException, IOException {
-    initService();
     User researcher = createUserWithRole(UserRoles.RESEARCHER, null);
     Dac dac = new Dac();
     dac.setDacId(1);
@@ -233,8 +229,6 @@ class EmailServiceTest {
     String dacName = "DAC-123";
     String datasetName = "testDataset";
 
-    initService();
-
     service.sendDatasetSubmittedMessage(dacChair, dataSubmitter, dacName, datasetName);
 
     verify(sendGridAPI).sendMessage(any(), any());
@@ -264,8 +258,6 @@ class EmailServiceTest {
 
     String daaName = "DAA-123";
     int daaId = 456;
-
-    initService();
 
     service.sendDaaRequestMessage(signingOfficial, user, daaName, daaId);
 
@@ -300,8 +292,6 @@ class EmailServiceTest {
     String previousDaaName = "DAA-123";
 
     String newDaaName = "DAA-456";
-
-    initService();
 
     service.sendNewDAAUploadResearcherMessage(
         researcher, dac.getName(), previousDaaName, newDaaName, user.getUserId());
@@ -338,8 +328,6 @@ class EmailServiceTest {
 
     String newDaaName = "DAA-456";
 
-    initService();
-
     service.sendNewDAAUploadSOMessage(signingOfficial,
         dac.getName(), previousDaaName, newDaaName, user.getUserId());
 
@@ -361,7 +349,6 @@ class EmailServiceTest {
   @Test
   void testFetchEmails() {
     List<MailMessage> mailMessages = generateMailMessageList();
-    initService();
     when(emailDAO.fetchMessagesByType(any(), anyInt(), anyInt())).thenReturn(mailMessages);
     assertEquals(2,
         service.fetchEmailMessagesByType(EmailType.COLLECT, 20, 0).size());
@@ -370,7 +357,6 @@ class EmailServiceTest {
   @Test
   void testFetchEmailsByCreateDate() {
     List<MailMessage> mailMessages = generateMailMessageList();
-    initService();
     Date startDate = new Date();
     Date endDate = new Date();
     when(emailDAO.fetchMessagesByCreateDate(any(), any(), anyInt(), anyInt())).thenReturn(
@@ -420,7 +406,6 @@ class EmailServiceTest {
     user.setEmail(RandomStringUtils.randomAlphanumeric(10));
     when(userDAO.findUserById(any())).thenReturn(user);
 
-    initService();
     service.sendReminderMessage(vote.getVoteId());
     verify(sendGridAPI).sendMessage(any(), any());
     verify(templateHelper).getTemplate(EmailType.REMINDER.templateName);

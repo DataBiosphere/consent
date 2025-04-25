@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.mail.message;
 
+import java.util.Map;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.User;
 
@@ -21,15 +22,12 @@ public class DaaRequestMessage extends MailMessage {
     return NEW_DAA_LIBRARY_CARD_REQUEST;
   }
 
-  record Model(
-      String serverUrl,
-      String daaName,
-      String userName,
-      String signingOfficialUserName) {}
-
   @Override
   public Object createModel(String serverUrl) {
-    return new Model(serverUrl, daaName, requestUser.getDisplayName(), toUser.getDisplayName());
+    return Map.of("serverUrl", serverUrl,
+        "daaName", daaName,
+        "userName", requestUser.getDisplayName(),
+        "signingOfficialUserName", toUser.getDisplayName());
   }
 
   @Override

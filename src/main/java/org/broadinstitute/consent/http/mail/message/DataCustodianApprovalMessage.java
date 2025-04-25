@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.mail.message;
 
 import java.util.List;
+import java.util.Map;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
@@ -30,15 +31,12 @@ public class DataCustodianApprovalMessage extends MailMessage {
     return String.format("%s has been approved by the DAC", darCode);
   }
 
-  record Model(
-      List<DatasetMailDTO> datasets,
-      String dataDepositorName,
-      String darCode,
-      String researcherEmail) {}
-
   @Override
   public Object createModel(String serverUrl) {
-    return new Model(datasets, dataDepositorName, darCode, researcherEmail);
+    return Map.of("datasets", datasets,
+        "dataDepositorName", dataDepositorName,
+        "darCode", darCode,
+        "researcherEmail", researcherEmail);
   }
 
   @Override

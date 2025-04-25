@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.mail.message;
 
+import java.util.Map;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.User;
 
@@ -19,11 +20,9 @@ public class NewResearcherLibraryRequestMessage extends MailMessage {
     return NEW_RESEARCHER;
   }
 
-  record Model(String researcherName, String serverUrl) { }
-
   @Override
   public Object createModel(String serverUrl) {
-    return new Model(researcher.getDisplayName(), serverUrl);
+    return Map.of("researcherName", researcher.getDisplayName(), "serverUrl", serverUrl);
   }
 
   @Override

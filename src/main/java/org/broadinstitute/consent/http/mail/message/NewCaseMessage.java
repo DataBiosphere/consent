@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.mail.message;
 
+import java.util.Map;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.User;
 
@@ -25,11 +26,12 @@ public class NewCaseMessage extends MailMessage {
     }
   }
 
-  record Model(String userName, String election, String entityName, String serverUrl) {}
-
   @Override
   public Object createModel(String serverUrl) {
-    return new Model(toUser.getDisplayName(), referenceId, type, serverUrl);
+    return Map.of("userName", toUser.getDisplayName(),
+        "election", referenceId,
+        "entityName", type,
+        "serverUrl", serverUrl);
   }
 
   @Override
