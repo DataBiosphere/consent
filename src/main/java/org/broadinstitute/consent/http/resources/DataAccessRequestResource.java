@@ -84,6 +84,19 @@ public class DataAccessRequestResource extends Resource {
     this.matchService = matchService;
   }
 
+  private static DataAccessRequestData populateDARData(String json) {
+    DataAccessRequestData data;
+    try {
+      data = DataAccessRequestData.fromString(json);
+    } catch (Exception e) {
+      throw new BadRequestException("Unable to parse DAR from JSON string");
+    }
+    if (Objects.isNull(data)) {
+      data = new DataAccessRequestData();
+    }
+    return data;
+  }
+
   @GET
   @Produces("application/json")
   @PermitAll
@@ -413,6 +426,10 @@ public class DataAccessRequestResource extends Resource {
       @FormDataParam("ethicsApprovalRequiredFile") FormDataContentDisposition ethicsFileDetails) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
+      // added here because other dataAccessRequestServices calls are invoked that do not normally
+      // require this sequence.  hasValidActiveERACredentials will also check for a LC so no
+      // additional LC check needed.
+      userService.hasValidActiveERACredentials(user);
       DataAccessRequest parentDar = dataAccessRequestService.findByReferenceId(parentReferenceId);
       // needs to happen before docs are uploaded
       if (!user.getUserId().equals(parentDar.getUserId())) {
@@ -421,7 +438,8 @@ public class DataAccessRequestResource extends Resource {
       DataAccessRequest payload = populateProgressReportFromJsonString(dar, parentDar);
       populateProgressReportWithDocuments(collabInputStream, collabFileDetails, ethicsInputStream,
           ethicsFileDetails, payload, parentDar);
-      DataAccessRequest progressReport = dataAccessRequestService.createProgressReport(user, payload, parentDar);
+      DataAccessRequest progressReport = dataAccessRequestService.createProgressReport(user,
+          payload, parentDar);
       return Response.ok(progressReport.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -576,17 +594,19 @@ public class DataAccessRequestResource extends Resource {
 
   /**
    * Populate a new Data Access Request from the JSON string and the parent Data Access Request.
-   * Copies all the data from the parent dar, then overwrites the collaborators and datasets.
-   * Adds all progress report specific fields.
+   * Copies all the data from the parent dar, then overwrites the collaborators and datasets. Adds
+   * all progress report specific fields.
    *
    * @param json      The JSON string to populate the new Progress Report.
    * @param parentDar The parent Data Access Request to copy data from.
    * @return A new Progress Report populated with the provided JSON string and parent DAR data.
    */
-  public DataAccessRequest populateProgressReportFromJsonString(String json, DataAccessRequest parentDar) {
+  public DataAccessRequest populateProgressReportFromJsonString(String json,
+      DataAccessRequest parentDar) {
     DataAccessRequest newDar = new DataAccessRequest();
     DataAccessRequestData newData = populateDARData(json);
-    DataAccessRequestData originalDataCopy = DataAccessRequestData.fromString(parentDar.getData().toString());
+    DataAccessRequestData originalDataCopy = DataAccessRequestData.fromString(
+        parentDar.getData().toString());
 
     String referenceId = UUID.randomUUID().toString();
     newDar.setReferenceId(referenceId);
@@ -616,19 +636,6 @@ public class DataAccessRequestResource extends Resource {
     return newDar;
   }
 
-  private static DataAccessRequestData populateDARData(String json) {
-    DataAccessRequestData data;
-    try {
-      data = DataAccessRequestData.fromString(json);
-    } catch (Exception e) {
-      throw new BadRequestException("Unable to parse DAR from JSON string");
-    }
-    if (Objects.isNull(data)) {
-      data = new DataAccessRequestData();
-    }
-    return data;
-  }
-
   private void checkAuthorizedUpdateUser(User user, DataAccessRequest dar) {
     if (!user.getUserId().equals(dar.getUserId())) {
       throw new ForbiddenException("User not authorized to update this Data Access Request");
@@ -656,13 +663,14 @@ public class DataAccessRequestResource extends Resource {
   /**
    * Uploads the document contents to GCS and mutates the dar data object with the blobId.
    *
-   * @param type            The type of document (IRB or Collaboration)
-   * @param dar             The Data Access Request
+   * @param type              The type of document (IRB or Collaboration)
+   * @param dar               The Data Access Request
    * @param uploadInputStream The input stream of the file to be uploaded
-   * @param fileDetail      The file details
+   * @param fileDetail        The file details
    * @throws IOException if an error occurs during upload
    */
-  public void uploadDocumentContents(DarDocumentType type, DataAccessRequest dar, InputStream uploadInputStream,
+  public void uploadDocumentContents(DarDocumentType type, DataAccessRequest dar,
+      InputStream uploadInputStream,
       FormDataContentDisposition fileDetail) throws IOException {
     // This should be moved to service tier logic and the transactions should be coordinated
     validateFileDetails(fileDetail);

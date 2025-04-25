@@ -181,6 +181,22 @@ class DataAccessRequestResourceTest {
   }
 
   @Test
+  void testCreateDataAccessRequestWithoutValidERACommons() {
+    User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
+    userWithCards.setLibraryCards(List.of(new LibraryCard()));
+    when(userService.findUserByEmail(any())).thenReturn(userWithCards);
+    doThrow(new BadRequestException()).when(dataAccessRequestService)
+        .createDataAccessRequest(eq(user), any());
+    resource =
+        new DataAccessRequestResource(daaService,
+            dataAccessRequestService, emailService, gcsService, userService, datasetService,
+            matchService);
+
+    Response response = resource.createDataAccessRequest(authUser, info, "");
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
   void testGetByReferenceId() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
@@ -408,7 +424,8 @@ class DataAccessRequestResourceTest {
     DataAccessRequest parentDar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
     DataAccessRequest childDar = generateDataAccessRequest();
-    when(dataAccessRequestService.createProgressReport(eq(user), any(), eq(parentDar))).thenReturn(childDar);
+    when(dataAccessRequestService.createProgressReport(eq(user), any(), eq(parentDar))).thenReturn(
+        childDar);
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
 
@@ -463,6 +480,17 @@ class DataAccessRequestResourceTest {
   }
 
   @Test
+  void testPostProgressReportThrowsWhenNoERACommonsID() {
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+    doThrow(BadRequestException.class).when(userService).hasValidActiveERACredentials(user);
+    initResource();
+
+    Response response = resource.postProgressReport(authUser, "", "",
+        null, null, null, null);
+    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+  }
+
+  @Test
   void populateProgressReportWithDocuments() throws Exception {
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.getData().setCollaborationLetterLocation("existing_collab_location");
@@ -485,12 +513,14 @@ class DataAccessRequestResourceTest {
     when(datasetService.findDatasetById(2)).thenReturn(dataset2);
 
     String fileType = "text/plain";
-    InputStream collabInputStream = IOUtils.toInputStream("collab content", Charset.defaultCharset());
+    InputStream collabInputStream = IOUtils.toInputStream("collab content",
+        Charset.defaultCharset());
     FormDataContentDisposition collabFileDetails = mock(FormDataContentDisposition.class);
     when(collabFileDetails.getFileName()).thenReturn("collab_document.txt");
     when(collabFileDetails.getType()).thenReturn(fileType);
 
-    InputStream ethicsInputStream = IOUtils.toInputStream("ethics content", Charset.defaultCharset());
+    InputStream ethicsInputStream = IOUtils.toInputStream("ethics content",
+        Charset.defaultCharset());
     FormDataContentDisposition ethicsFileDetails = mock(FormDataContentDisposition.class);
     when(ethicsFileDetails.getFileName()).thenReturn("ethics_document.txt");
     when(ethicsFileDetails.getType()).thenReturn(fileType);
@@ -500,7 +530,8 @@ class DataAccessRequestResourceTest {
     when(gcsService.storeDocument(eq(ethicsInputStream), eq(fileType), any())).thenReturn(blobId);
     initResource();
     resource.populateProgressReportWithDocuments(
-        collabInputStream, collabFileDetails, ethicsInputStream, ethicsFileDetails, childDar, parentDar);
+        collabInputStream, collabFileDetails, ethicsInputStream, ethicsFileDetails, childDar,
+        parentDar);
     verify(gcsService, times(2)).storeDocument(any(), any(), any());
 
   }
@@ -612,7 +643,8 @@ class DataAccessRequestResourceTest {
 
     String newLocation = "new_location";
     BlobId mockBlobId = BlobId.of("bucket", newLocation);
-    when(gcsService.storeDocument(eq(uploadInputStream), eq(fileType), any())).thenReturn(mockBlobId);
+    when(gcsService.storeDocument(eq(uploadInputStream), eq(fileType), any())).thenReturn(
+        mockBlobId);
     when(gcsService.deleteDocument(existingLocation)).thenReturn(true);
 
     initResource();
@@ -648,19 +680,19 @@ class DataAccessRequestResourceTest {
     parentDar.setData(parentData);
 
     String json = """
-        {
-            "projectTitle": "New Project Title",
-            "internalCollaborators": [],
-            "externalCollaborators": [],
-            "labCollaborators": [],
-            "progressReportSummary": "New Summary",
-            "datasetIds": [1, 2],
-            "collaborationLetterName": "new_collaboration_letter.txt",
-            "irbDocumentName": "new_irb_document.txt",
-            "collaborationLetterLocation": "new_collaboration_letter_location",
-            "irbDocumentLocation": "new_irb_document_location"
-        }
-    """;
+            {
+                "projectTitle": "New Project Title",
+                "internalCollaborators": [],
+                "externalCollaborators": [],
+                "labCollaborators": [],
+                "progressReportSummary": "New Summary",
+                "datasetIds": [1, 2],
+                "collaborationLetterName": "new_collaboration_letter.txt",
+                "irbDocumentName": "new_irb_document.txt",
+                "collaborationLetterLocation": "new_collaboration_letter_location",
+                "irbDocumentLocation": "new_irb_document_location"
+            }
+        """;
 
     initResource();
     DataAccessRequest newDar = resource.populateProgressReportFromJsonString(json, parentDar);
@@ -678,7 +710,8 @@ class DataAccessRequestResourceTest {
     assertNull(newDar.getData().getIrbDocumentName());
     assertNull(newDar.getData().getCollaborationLetterLocation());
     assertNull(newDar.getData().getIrbDocumentLocation());
-    assertEquals(List.of(collaborator), parentDar.getData().getInternalCollaborators()); // Ensure parent is unchanged
+    assertEquals(List.of(collaborator),
+        parentDar.getData().getInternalCollaborators()); // Ensure parent is unchanged
     assertEquals("collaboration_letter.txt", parentDar.getData().getCollaborationLetterName());
   }
 

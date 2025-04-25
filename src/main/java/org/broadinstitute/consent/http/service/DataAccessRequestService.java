@@ -44,13 +44,14 @@ public class DataAccessRequestService implements ConsentLogger {
   private final MatchDAO matchDAO;
   private final VoteDAO voteDAO;
   private final UserDAO userDAO;
+  private final UserService userService;
   private final DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
 
   private final DacService dacService;
 
   @Inject
   public DataAccessRequestService(CounterService counterService, DAOContainer container,
-      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO) {
+      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO, UserService userService) {
     this.counterService = counterService;
     this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
     this.darCollectionDAO = container.getDarCollectionDAO();
@@ -60,6 +61,7 @@ public class DataAccessRequestService implements ConsentLogger {
     this.userDAO = container.getUserDAO();
     this.dacService = dacService;
     this.dataAccessRequestServiceDAO = dataAccessRequestServiceDAO;
+    this.userService = userService;
   }
 
   public List<DataAccessRequest> findAllDraftDataAccessRequests() {
@@ -266,6 +268,8 @@ public class DataAccessRequestService implements ConsentLogger {
     if (user.getLibraryCards().isEmpty()) {
       throw new NIHComplianceRuleException();
     }
+
+    userService.hasValidActiveERACredentials(user);
 
     validateInternalCollaborators(dar, user);
     validateNoKeyPersonnelDuplicates(dar.getData());
