@@ -7,7 +7,6 @@ import org.broadinstitute.consent.http.models.User;
 
 public class NewDARRequestMessage extends MailMessage {
 
-  // nosemgrep
   private static final String NEW_DAR_REQUEST = "Create an election for Data Access Request id: %s.";
 
   private final String darCode;
@@ -24,6 +23,7 @@ public class NewDARRequestMessage extends MailMessage {
 
   @Override
   public String createSubject() {
+    // nosemgrep
     return String.format(NEW_DAR_REQUEST, darCode);
   }
 
