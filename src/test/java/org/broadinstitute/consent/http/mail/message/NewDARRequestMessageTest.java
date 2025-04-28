@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.mail.message;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
 
 import freemarker.template.Template;
 import java.io.StringWriter;
@@ -19,23 +18,16 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
 class NewDARRequestMessageTest {
 
   private FreeMarkerTemplateHelper helper;
 
-  @Mock
-  private FreeMarkerConfiguration freeMarkerConfig;
-
   @BeforeEach
   void setUp() {
-    when(freeMarkerConfig.getTemplateDirectory()).thenReturn("/freemarker");
-    when(freeMarkerConfig.getDefaultEncoding()).thenReturn("UTF-8");
-    helper = new FreeMarkerTemplateHelper(freeMarkerConfig);
+    FreeMarkerConfiguration freeMarkerConfig = new FreeMarkerConfiguration();
+    freeMarkerConfig.setTemplateDirectory("/freemarker");
+    freeMarkerConfig.setDefaultEncoding("UTF-8");
   }
 
   @Test

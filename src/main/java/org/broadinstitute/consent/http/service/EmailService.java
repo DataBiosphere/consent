@@ -281,7 +281,7 @@ public class EmailService implements ConsentLogger {
   }
 
   public void sendNewResearcherMessage(User researcher, User signingOfficial) throws Exception {
-    sendMessage(new NewResearcherLibraryRequestMessage(researcher, signingOfficial), researcher.getUserId());
+    sendMessage(new NewResearcherLibraryRequestMessage(signingOfficial, researcher), researcher.getUserId());
   }
 
   public void sendDaaRequestMessage(

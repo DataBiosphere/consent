@@ -10,7 +10,7 @@ public class NewResearcherLibraryRequestMessage extends MailMessage {
 
   private final User researcher;
 
-  public NewResearcherLibraryRequestMessage(User researcher, User signingOfficial) {
+  public NewResearcherLibraryRequestMessage(User signingOfficial, User researcher) {
     super(signingOfficial, EmailType.NEW_RESEARCHER);
     this.researcher = researcher;
   }
