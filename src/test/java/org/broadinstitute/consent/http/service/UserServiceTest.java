@@ -45,6 +45,7 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
@@ -333,10 +334,9 @@ class UserServiceTest {
     userProperties.add(eraStatus);
     userProperties.add(eraExpirationDate);
     u.setProperties(userProperties);
-    when(libraryCardDAO.findLibraryCardsByUserId(u.getUserId())).thenReturn(u.getLibraryCards());
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
         UserFields.getValues())).thenReturn(u.getProperties());
-    assertDoesNotThrow(() -> service.hasValidActiveERACredentials(u.getUserId()));
+    assertDoesNotThrow(() -> service.hasValidActiveERACredentials(u));
   }
 
   @Test
@@ -352,11 +352,10 @@ class UserServiceTest {
     userProperties.add(eraStatus);
     userProperties.add(eraExpirationDate);
     u.setProperties(userProperties);
-    when(libraryCardDAO.findLibraryCardsByUserId(u.getUserId())).thenReturn(u.getLibraryCards());
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
         UserFields.getValues())).thenReturn(u.getProperties());
-    assertThrows(BadRequestException.class,
-        () -> service.hasValidActiveERACredentials(u.getUserId()));
+    assertThrows(LibraryCardRequiredException.class,
+        () -> service.hasValidActiveERACredentials(u));
   }
 
   @Test
@@ -375,11 +374,10 @@ class UserServiceTest {
     userProperties.add(eraStatus);
     userProperties.add(eraExpirationDate);
     u.setProperties(userProperties);
-    when(libraryCardDAO.findLibraryCardsByUserId(u.getUserId())).thenReturn(u.getLibraryCards());
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
         UserFields.getValues())).thenReturn(u.getProperties());
     assertThrows(BadRequestException.class,
-        () -> service.hasValidActiveERACredentials(u.getUserId()));
+        () -> service.hasValidActiveERACredentials(u));
   }
 
   @Test
@@ -396,11 +394,10 @@ class UserServiceTest {
     List<UserProperty> userProperties = new ArrayList<>();
     userProperties.add(eraExpirationDate);
     u.setProperties(userProperties);
-    when(libraryCardDAO.findLibraryCardsByUserId(u.getUserId())).thenReturn(u.getLibraryCards());
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
         UserFields.getValues())).thenReturn(u.getProperties());
     assertThrows(BadRequestException.class,
-        () -> service.hasValidActiveERACredentials(u.getUserId()));
+        () -> service.hasValidActiveERACredentials(u));
   }
 
   @Test
@@ -411,11 +408,10 @@ class UserServiceTest {
     u.addLibraryCard(lc);
     List<UserProperty> userProperties = new ArrayList<>();
     u.setProperties(userProperties);
-    when(libraryCardDAO.findLibraryCardsByUserId(u.getUserId())).thenReturn(u.getLibraryCards());
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
         UserFields.getValues())).thenReturn(u.getProperties());
     assertThrows(BadRequestException.class,
-        () -> service.hasValidActiveERACredentials(u.getUserId()));
+        () -> service.hasValidActiveERACredentials(u));
   }
 
   @Test
@@ -434,11 +430,10 @@ class UserServiceTest {
     userProperties.add(eraStatus);
     userProperties.add(eraExpirationDate);
     u.setProperties(userProperties);
-    when(libraryCardDAO.findLibraryCardsByUserId(u.getUserId())).thenReturn(u.getLibraryCards());
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
         UserFields.getValues())).thenReturn(u.getProperties());
     assertThrows(BadRequestException.class,
-        () -> service.hasValidActiveERACredentials(u.getUserId()));
+        () -> service.hasValidActiveERACredentials(u));
   }
 
   @Test

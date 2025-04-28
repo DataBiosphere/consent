@@ -10,6 +10,7 @@ import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -32,6 +33,7 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
@@ -467,9 +469,12 @@ public class UserService implements ConsentLogger {
     return jsonElementList.stream().distinct().map(e -> findUserById(e.getAsInt())).toList();
   }
 
-  public void hasValidActiveERACredentials(Integer userId) {
-    List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(userId);
-    List<UserProperty> userProperties = findAllUserProperties(userId);
+  public void hasValidActiveERACredentials(User user) {
+    List<LibraryCard> cards = user.getLibraryCards();
+    List<UserProperty> userProperties = findAllUserProperties(user.getUserId());
+    if (cards.isEmpty()) {
+      throw new LibraryCardRequiredException();
+    }
     boolean hasEraCommonsId = cards.stream().anyMatch(c -> c.getEraCommonsId() != null);
     if (!hasEraCommonsId) {
       throw new BadRequestException("User does not have an Era Commons ID");
@@ -485,7 +490,8 @@ public class UserService implements ConsentLogger {
       if (!eraStatusProps.get(0).getPropertyValue().equalsIgnoreCase("true")) {
         throw new BadRequestException("User does not have an Era Commons ID that is authorized.");
       }
-      if (Long.parseLong(eraExpirationProps.get(0).getPropertyValue()) < System.currentTimeMillis()) {
+      if (Instant.ofEpochMilli(Long.parseLong(eraExpirationProps.get(0).getPropertyValue()))
+          .isBefore(Instant.now())) {
         throw new BadRequestException("User has an expired Era Commons ID.");
       }
     } else {

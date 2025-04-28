@@ -17,6 +17,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.Request;
 import jakarta.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.List;
@@ -30,6 +32,8 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.util.ComplianceLogger;
+import org.glassfish.jersey.server.ContainerRequest;
 
 @Path("api/collections")
 public class DarCollectionResource extends Resource {
@@ -185,6 +189,7 @@ public class DarCollectionResource extends Resource {
   @RolesAllowed({ADMIN, CHAIRPERSON, RESEARCHER})
   public Response cancelDarCollectionByCollectionId(
       @Auth AuthUser authUser,
+      @Context Request request,
       @PathParam("id") Integer collectionId,
       @QueryParam("roleName") String roleName) {
     try {
@@ -202,22 +207,16 @@ public class DarCollectionResource extends Resource {
         }
       }
 
-      DarCollection cancelledCollection;
-      switch (actingRole) {
-        case ADMIN:
-          cancelledCollection = darCollectionService.cancelDarCollectionElectionsAsAdmin(
-              collection);
-          break;
-        case CHAIRPERSON:
-          cancelledCollection = darCollectionService.cancelDarCollectionElectionsAsChair(collection,
-              user);
-          break;
-        default:
+      DarCollection cancelledCollection = switch (actingRole) {
+        case ADMIN -> darCollectionService.cancelDarCollectionElectionsAsAdmin(collection);
+        case CHAIRPERSON -> darCollectionService.cancelDarCollectionElectionsAsChair(collection, user);
+        default -> {
           validateUserIsCreator(user, collection);
-          cancelledCollection = darCollectionService.cancelDarCollectionAsResearcher(collection);
-          break;
-      }
-
+          yield darCollectionService.cancelDarCollectionAsResearcher(collection);
+        }
+      };
+      ComplianceLogger.logDARCancellation(user, cancelledCollection.getDatasets().stream().toList(),
+              (ContainerRequest) request, Response.Status.OK.getStatusCode());
       return Response.ok().entity(cancelledCollection).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
