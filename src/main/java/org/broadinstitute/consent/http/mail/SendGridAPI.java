@@ -51,10 +51,9 @@ public class SendGridAPI implements ConsentLogger {
     }
     boolean userEmailPreference = findUserEmailPreference(toUserEmail);
     if (!userEmailPreference) {
-      Gson gson = new Gson();
       logInfo(
           "User Email Preference has evaluated to 'false', not sending to: %s"
-              .formatted(gson.toJson(message.getPersonalization())));
+              .formatted(toUserEmail));
       return null;
     }
     try {
