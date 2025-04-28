@@ -24,7 +24,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -488,6 +487,55 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
     assertEquals(0, summaries.size());
 
+  }
+
+  @Test
+  void testGetDarCollectionSummariesForResearcher_TwoDataAccessRequests() {
+    User userOne = createUser();
+    Integer userOneId = userOne.getUserId();
+
+    Dataset dataset = createDataset(userOneId);
+    Dataset dataset1 = createDataset(userOneId);
+
+    Integer collectionId = createDarCollection(userOneId);
+
+    // Create two DataAccessRequests in the same collection
+    DataAccessRequest olderDar = createDataAccessRequest(collectionId, userOneId);
+    DataAccessRequest newerDar = createDataAccessRequest(collectionId, userOneId);
+
+    // Insert dataset relations for both DARs
+    // the older DAR has two datasets and the newer DAR has one
+    dataAccessRequestDAO.insertDARDatasetRelation(olderDar.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(olderDar.getReferenceId(), dataset1.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(newerDar.getReferenceId(), dataset.getDatasetId());
+
+    // Create an election for the older DAR
+    createElection(ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        olderDar.getReferenceId(), dataset.getDatasetId());
+
+    List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userOneId);
+
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    DarCollectionSummary summary = summaries.get(0);
+    assertEquals(collectionId, summary.getDarCollectionId());
+
+    // Ensure the reference IDs include both DARs
+    assertNotNull(summary.getReferenceIds());
+    assertEquals(2, summary.getReferenceIds().size());
+    assertTrue(summary.getReferenceIds().contains(olderDar.getReferenceId()));
+    assertTrue(summary.getReferenceIds().contains(newerDar.getReferenceId()));
+
+    // Ensure the election from the older DAR is not included
+    assertTrue(summary.getElections().isEmpty());
+
+    // Ensure the summary represents the most recently submitted DAR
+    assertEquals(newerDar.getSubmissionDate(), summary.getSubmissionDate());
+    assertEquals(newerDar.getExpiresAt(), summary.getExpiresAt());
+    // should only be one dataset because the newer dar has one dataset
+    assertEquals(1, summary.getDatasetIds().size());
+    assertTrue(summary.getDatasetIds().contains(dataset.getDatasetId()));
   }
 
   @Test
