@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import freemarker.template.Template;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Objects;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.User;
@@ -68,7 +69,9 @@ class ReminderMessageTest {
     final Document parsedTemplate = getAsHtmlDoc(templateString);
     assertEquals("Broad Data Use Oversight System - Your vote was requested for a Data Access Request",
         parsedTemplate.title());
-    assertEquals("Hello Reminder User,", parsedTemplate.getElementById("userName").text());
+    assertEquals(
+        "Hello Reminder User,",
+        Objects.requireNonNull(parsedTemplate.getElementById("userName")).text());
     assertTrue(templateString.contains(darCode));
     assertTrue(templateString.contains(voteUrl));
   }
