@@ -33,23 +33,23 @@ public class SendGridAPI implements ConsentLogger {
    * Determine if the user we are sending an email to has set their preference to false or not.
    * Users who have been disabled like this should never receive an email.
    *
-   * @param userId The ID of the user we are sending an email to.
+   * @param userEmail The email of the user we are sending an email to.
    * @return False if the user has explicitly disabled email, True otherwise.
    */
-  private boolean findUserEmailPreference(Integer userId) {
-    User user = userDAO.findUserById(userId);
+  private boolean findUserEmailPreference(String userEmail) {
+    User user = userDAO.findUserByEmail(userEmail);
     if (user == null) {
-      logWarn("Unknown user ID: %s".formatted(userId));
+      logWarn("Unknown user ID: %s".formatted(userEmail));
       return false;
     }
     return Objects.requireNonNullElse(user.getEmailPreference(), true);
   }
 
-  public Response sendMessage(Mail message, Integer toUserId) {
+  public Response sendMessage(Mail message, String toUserEmail) {
     if (!activateEmailNotifications) {
       return null;
     }
-    boolean userEmailPreference = findUserEmailPreference(toUserId);
+    boolean userEmailPreference = findUserEmailPreference(toUserEmail);
     if (!userEmailPreference) {
       Gson gson = new Gson();
       logInfo(

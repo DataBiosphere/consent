@@ -130,7 +130,7 @@ public class EmailService implements ConsentLogger {
     String content = out.toString();
     Mail message = new Mail(new Email(fromAccount), mailMessage.createSubject(),
         new Email(mailMessage.toUser.getEmail()), new Content("text/html", content));
-    Response response = sendGridAPI.sendMessage(message, userId);
+    Response response = sendGridAPI.sendMessage(message, mailMessage.toUser.getEmail());
     saveEmailAndResponse(
         response,
         mailMessage.getEntityReferenceId(),

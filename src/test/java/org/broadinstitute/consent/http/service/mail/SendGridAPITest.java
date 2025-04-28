@@ -25,7 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class SendGridAPITest {
 
   private static final String FROM = "from@broadinstitute.org";
-  private static final int TO_ID = 123;
+  private static final String TO = "to@broadinstitute.org";
   private static final Response RESPONSE = new Response();
 
   private SendGrid sendGrid;
@@ -43,7 +43,7 @@ class SendGridAPITest {
       sendGridAPI = new SendGridAPI(config, userDAO);
       sendGrid = mockedSendGrid.constructed().get(0);
     }
-    when(userDAO.findUserById(TO_ID)).thenReturn(new User());
+    when(userDAO.findUserByEmail(TO)).thenReturn(new User());
     when(sendGrid.makeCall(any())).thenReturn(RESPONSE);
   }
 
@@ -56,7 +56,7 @@ class SendGridAPITest {
         return messageBody;
       }
     };
-    assertEquals(RESPONSE, sendGridAPI.sendMessage(mail, TO_ID));
+    assertEquals(RESPONSE, sendGridAPI.sendMessage(mail, TO));
     ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
     verify(sendGrid).makeCall(requestCaptor.capture());
     assertEquals(messageBody, requestCaptor.getValue().getBody());
