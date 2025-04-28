@@ -142,11 +142,13 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
             SELECT *
             FROM data_access_request
             WHERE data_access_request.collection_id = c.collection_id
+            AND data_access_request.submission_date IS NOT NULL
             ORDER BY data_access_request.submission_date DESC
             LIMIT 1
         ) dar ON true
     INNER JOIN
         data_access_request dar_all ON dar_all.collection_id = c.collection_id
+        AND dar_all.submission_date IS NOT NULL
     LEFT JOIN
         LATERAL (
             SELECT
@@ -163,6 +165,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         c.create_user_id = :userId
         AND (e.latest = e.election_id OR e.election_id IS NULL)
         AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+        AND (EXISTS (SELECT 1 FROM data_access_request WHERE (collection_id = c.collection_id AND dar.submission_date IS  NOT NULL)))
     GROUP BY
         c.collection_id, c.dar_code, dar.submission_date, dar.reference_id, u.display_name, i.institution_name,
         e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id, dar.data

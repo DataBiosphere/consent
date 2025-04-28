@@ -490,7 +490,46 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetDarCollectionSummariesForResearcher_TwoDataAccessRequests() {
+  void testGetDarCollectionSummaryForResearcher_DraftNotIncluded() {
+    User user = createUser();
+    Integer userId = user.getUserId();
+
+    Dataset dataset = createDataset(userId);
+
+    Integer collectionId = createDarCollection(userId);
+
+    // Create two DataAccessRequests in the same collection
+    DataAccessRequest olderDar = createDataAccessRequest(collectionId, userId);
+    DataAccessRequest draftDar = createDataAccessRequest(collectionId, userId);
+
+    // Insert dataset relations for both DARs
+    // the older DAR has two datasets, the newer DAR has one, the draft also has one
+    dataAccessRequestDAO.insertDARDatasetRelation(olderDar.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(draftDar.getReferenceId(), dataset.getDatasetId());
+    // draft DAR
+    dataAccessRequestDAO.updateDataByReferenceId(draftDar.getReferenceId(), draftDar.userId, new Date(), null,
+        new Date(), draftDar.getData());
+
+    List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
+
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    DarCollectionSummary summary = summaries.get(0);
+    assertEquals(collectionId, summary.getDarCollectionId());
+
+    // Ensure the reference IDs include both DARs
+    assertNotNull(summary.getReferenceIds());
+    assertEquals(1, summary.getReferenceIds().size());
+    assertTrue(summary.getReferenceIds().contains(olderDar.getReferenceId()));
+    assertFalse(summary.getReferenceIds().contains(draftDar.getReferenceId()));
+
+    // Ensure the summary represents the older DAR, because the most recent DAR is a draft
+    assertEquals(olderDar.getSubmissionDate(), summary.getSubmissionDate());
+    assertEquals(olderDar.getExpiresAt(), summary.getExpiresAt());
+  }
+
+  @Test
+  void testGetDarCollectionSummaryForResearcher_TwoDataAccessRequests() {
     User userOne = createUser();
     Integer userOneId = userOne.getUserId();
 
