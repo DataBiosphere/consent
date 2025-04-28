@@ -130,7 +130,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         dd.dataset_id AS dd_datasetid,
         (regexp_replace(dar.data #>> '{}', '\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name,
         (regexp_replace(dar.data #>> '{}', '\\u0000', '', 'g'))::jsonb ->> 'status' AS dar_status,
-        ARRAY_AGG(dar_all.reference_id)::text[] AS reference_ids
+        ARRAY_AGG(dar_all.reference_id) AS reference_ids
     FROM
         dar_collection c
     INNER JOIN
