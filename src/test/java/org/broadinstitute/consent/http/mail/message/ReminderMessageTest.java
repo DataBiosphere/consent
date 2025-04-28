@@ -35,10 +35,6 @@ class ReminderMessageTest {
     helper = new FreeMarkerTemplateHelper(freeMarkerConfig);
   }
 
-  private Document getAsHtmlDoc(String parsedHtml) {
-    return Jsoup.parse(parsedHtml);
-  }
-
   @Test
   void testMessageSubject() {
     var message = new ReminderMessage(new User(), new Vote(), "DUL-123", "Data Use Limitations", "");
@@ -66,7 +62,7 @@ class ReminderMessageTest {
     Writer out = new StringWriter();
     template.process(message.createModel("http://testServerUrl"), out);
     String templateString = out.toString();
-    final Document parsedTemplate = getAsHtmlDoc(templateString);
+    Document parsedTemplate = Jsoup.parse(templateString);
     assertEquals("Broad Data Use Oversight System - Your vote was requested for a Data Access Request",
         parsedTemplate.title());
     assertEquals(
