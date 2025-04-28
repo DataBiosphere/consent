@@ -48,7 +48,7 @@ class SendGridAPITest {
   }
 
   @Test
-  void testNewCaseMessage() throws Exception {
+  void sendMessage() throws Exception {
     String messageBody = "This is a test message";
     Mail mail = new Mail() {
       @Override

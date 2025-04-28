@@ -2,12 +2,8 @@ package org.broadinstitute.consent.http.mail.freemarker;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
-import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
 import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.util.List;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 
 public class FreeMarkerTemplateHelper {
