@@ -1,15 +1,21 @@
 package org.broadinstitute.consent.http.service.mail;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mockConstruction;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.google.api.client.http.HttpStatusCodes;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
 import com.sendgrid.helpers.mail.Mail;
+import java.io.IOException;
+import java.util.Map;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
@@ -60,5 +66,37 @@ class SendGridAPITest {
     ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
     verify(sendGrid).makeCall(requestCaptor.capture());
     assertEquals(messageBody, requestCaptor.getValue().getBody());
+  }
+
+  @Test
+  void sendMessageUserMissing() {
+    reset(userDAO);
+    reset(sendGrid);
+    assertNull(sendGridAPI.sendMessage(null, TO));
+    verifyNoInteractions(sendGrid);
+  }
+
+  @Test
+  void sendMessageUserDisabledEmails() {
+    User user = new User();
+    user.setEmailPreference(false);
+    when(userDAO.findUserByEmail(TO)).thenReturn(user);
+    reset(sendGrid);
+    assertNull(sendGridAPI.sendMessage(new Mail(), TO));
+    verifyNoInteractions(sendGrid);
+  }
+
+  @Test
+  void sendMessageApiError() throws Exception {
+    Response response = new Response(400, "", Map.of());
+    when(sendGrid.makeCall(any())).thenReturn(response);
+    assertEquals(response, sendGridAPI.sendMessage(new Mail(), TO));
+  }
+
+  @Test
+  void sendMessageExceptionThrown() throws Exception {
+    when(sendGrid.makeCall(any())).thenThrow(new IOException());
+    var response = sendGridAPI.sendMessage(new Mail(), TO);
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatusCode());
   }
 }

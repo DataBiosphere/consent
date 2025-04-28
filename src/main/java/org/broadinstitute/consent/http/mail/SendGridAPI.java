@@ -64,9 +64,7 @@ public class SendGridAPI implements ConsentLogger {
       // make request
       request.setBaseUri(sendGrid.getHost());
       request.setEndpoint("/" + sendGrid.getVersion() + "/mail/send");
-      for (String key : sendGrid.getRequestHeaders().keySet()) {
-        request.addHeader(key, sendGrid.getRequestHeaders().get(key));
-      }
+      sendGrid.getRequestHeaders().forEach(request::addHeader);
       // send
       Response response = sendGrid.makeCall(request);
       if (response.getStatusCode() > 202) {
