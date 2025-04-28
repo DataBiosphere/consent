@@ -14,6 +14,22 @@ public class AuthUser implements Principal {
   public AuthUser() {
   }
 
+  public AuthUser(String authToken, String email, String name, String aud) {
+    this.authToken = authToken;
+    this.email = email;
+    this.name = name;
+    this.aud = aud;
+  }
+
+  public AuthUser(String authToken, String email, String name, String aud,
+      UserStatusInfo userStatusInfo) {
+    this.authToken = authToken;
+    this.email = email;
+    this.name = name;
+    this.aud = aud;
+    this.userStatusInfo = userStatusInfo;
+  }
+
   public AuthUser(String email) {
     this.email = email;
   }
@@ -48,11 +64,6 @@ public class AuthUser implements Principal {
 
   public String getAud() {
     return aud;
-  }
-
-  public AuthUser setAud(String aud) {
-    this.aud = aud;
-    return this;
   }
 
   public UserStatusInfo getUserStatusInfo() {

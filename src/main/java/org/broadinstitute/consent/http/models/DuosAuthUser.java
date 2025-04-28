@@ -6,11 +6,11 @@ public class DuosAuthUser extends AuthUser {
   private final User user;
 
   public DuosAuthUser(AuthUser authUser, User user) {
-    super.setAuthToken(authUser.getAuthToken());
-    super.setEmail(authUser.getEmail());
-    super.setName(authUser.getName());
-    super.setAud(authUser.getAud());
-    super.setUserStatusInfo(authUser.getUserStatusInfo());
+    super(authUser.getAuthToken(),
+        authUser.getEmail(),
+        authUser.getName(),
+        authUser.getAud(),
+        authUser.getUserStatusInfo());
     this.user = user;
   }
 

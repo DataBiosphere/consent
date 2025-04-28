@@ -67,9 +67,9 @@ class OAuthAuthenticatorTest extends AbstractTestHelper {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("name"));
     headerCache.loadCache(bearerToken, headerMap);
 
-    Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertNotNull(authUser.orElseThrow().getEmail());
-    assertNotNull(authUser.get().getAuthToken());
+    AuthUser authUser = oAuthAuthenticator.authenticate(bearerToken).orElseThrow();
+    assertNotNull(authUser.getEmail());
+    assertNotNull(authUser.getAuthToken());
   }
 
   /**

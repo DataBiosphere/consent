@@ -12,8 +12,7 @@ import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
-public abstract class AbstractAuthenticator implements
-    ConsentLogger {
+public abstract class AbstractAuthenticator implements ConsentLogger {
 
   protected final ClaimsCache claimsCache;
   protected final SamService samService;
@@ -41,11 +40,7 @@ public abstract class AbstractAuthenticator implements
           "Reading oauth2 claim headers: email is null, auth user is incomplete. Aud: %s Name: %s",
           aud, name));
     }
-    return new AuthUser()
-        .setAud(aud)
-        .setAuthToken(token)
-        .setEmail(email)
-        .setName(name);
+    return new AuthUser(token, email, name, aud);
   }
 
   /**
