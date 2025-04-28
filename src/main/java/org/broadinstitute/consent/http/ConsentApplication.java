@@ -161,8 +161,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     // Services
     final DarCollectionService darCollectionService = injector.getProvider(
         DarCollectionService.class).get();
-    final DataAccessRequestService dataAccessRequestService = injector.getProvider(
-        DataAccessRequestService.class).get();
     final DatasetService datasetService = injector.getProvider(DatasetService.class).get();
     final ElectionService electionService = injector.getProvider(ElectionService.class).get();
     final EmailService emailService = injector.getProvider(EmailService.class).get();

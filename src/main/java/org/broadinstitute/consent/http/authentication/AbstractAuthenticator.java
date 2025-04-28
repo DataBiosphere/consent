@@ -20,7 +20,7 @@ public abstract class AbstractAuthenticator implements
   protected final UserService userService;
 
   @Inject
-  public AbstractAuthenticator(SamService samService,
+  protected AbstractAuthenticator(SamService samService,
       UserService userService) {
     this.claimsCache = ClaimsCache.getInstance();
     this.samService = samService;
