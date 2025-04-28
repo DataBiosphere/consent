@@ -28,6 +28,7 @@ class NewDARRequestMessageTest {
     FreeMarkerConfiguration freeMarkerConfig = new FreeMarkerConfiguration();
     freeMarkerConfig.setTemplateDirectory("/freemarker");
     freeMarkerConfig.setDefaultEncoding("UTF-8");
+    helper = new FreeMarkerTemplateHelper(freeMarkerConfig);
   }
 
   @Test
