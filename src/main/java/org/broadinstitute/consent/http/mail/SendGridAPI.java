@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.mail;
 
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.Gson;
 import com.sendgrid.Method;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
