@@ -2,8 +2,6 @@ package org.broadinstitute.consent.http;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jersey3.InstrumentedResourceMethodApplicationListener;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -22,7 +20,9 @@ import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
@@ -35,6 +35,7 @@ import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.ui.LoggerUIService;
 import liquibase.util.SmartMap;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.authentication.DuosUserAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -48,7 +49,7 @@ import org.broadinstitute.consent.http.health.OntologyHealthCheck;
 import org.broadinstitute.consent.http.health.SamHealthCheck;
 import org.broadinstitute.consent.http.health.SendGridHealthCheck;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DUOSAuthUser;
+import org.broadinstitute.consent.http.models.DuosAuthUser;
 import org.broadinstitute.consent.http.resources.DACUserResource;
 import org.broadinstitute.consent.http.resources.DaaResource;
 import org.broadinstitute.consent.http.resources.DacResource;
@@ -172,7 +173,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     final UserService userService = injector.getProvider(UserService.class).get();
     final VoteService voteService = injector.getProvider(VoteService.class).get();
     final MatchService matchService = injector.getProvider(MatchService.class).get();
-    final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
     final LibraryCardService libraryCardService = injector.getProvider(LibraryCardService.class)
         .get();
     final SamService samService = injector.getProvider(SamService.class).get();
@@ -248,17 +248,19 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(new DraftResource(userService, draftService));
 
     // Authentication filters
+    final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
+    final DuosUserAuthenticator duosUserAuthenticator = injector.getProvider(DuosUserAuthenticator.class).get();
     final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();
     // Requests annotated with @Auth AuthUser will be authenticated with this filter
     final AuthFilter<String, AuthUser> primaryAuthFilter = new OAuthCustomAuthFilter<>(authenticator, userRoleDAO);
     // Requests annotated with @Auth DUOSAuthUser will be authenticated with this filter and are guaranteed to have a populated User object
-    final AuthFilter<String, DUOSAuthUser> duosAuthUserFilter = new OAuthCustomAuthFilter<>(authenticator, userRoleDAO);
+    final AuthFilter<String, DuosAuthUser> duosAuthUserFilter = new OAuthCustomAuthFilter<>(duosUserAuthenticator, userRoleDAO);
     final PolymorphicAuthDynamicFeature<AuthUser> feature = new PolymorphicAuthDynamicFeature<>(
-        ImmutableMap.of(
+        Map.of(
             AuthUser.class, primaryAuthFilter,
-            DUOSAuthUser.class, duosAuthUserFilter));
+            DuosAuthUser.class, duosAuthUserFilter));
     final AbstractBinder binder = new PolymorphicAuthValueFactoryProvider.Binder<>(
-        ImmutableSet.of(AuthUser.class, DUOSAuthUser.class));
+        Set.of(AuthUser.class, DuosAuthUser.class));
     env.jersey().register(feature);
     env.jersey().register(binder);
 

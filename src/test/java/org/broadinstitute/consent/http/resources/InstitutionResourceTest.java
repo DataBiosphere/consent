@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
@@ -13,14 +12,11 @@ import jakarta.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DUOSAuthUser;
+import org.broadinstitute.consent.http.models.DuosAuthUser;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.InstitutionService;
-import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,7 +29,7 @@ class InstitutionResourceTest {
   private final AuthUser authUser = new AuthUser("test@test.com");
   private final User user = new User(1, "test@test.com", "Display Name", new Date(),
       Collections.emptyList());
-  private final DUOSAuthUser duosAuthUserUser = new DUOSAuthUser(authUser, user);
+  private final DuosAuthUser duosAuthUserUser = new DuosAuthUser(authUser, user);
 
   @Mock
   private InstitutionService institutionService;
@@ -203,7 +199,7 @@ class InstitutionResourceTest {
   @Test
   void testDeleteInstitution() {
     initResource();
-    Response response = resource.deleteInstitution(1);
+    Response response = resource.deleteInstitution(duosAuthUserUser,1);
     assertEquals(204, response.getStatus());
   }
 
@@ -212,7 +208,7 @@ class InstitutionResourceTest {
     Exception error = new NotFoundException("Institution not found");
     doThrow(error).when(institutionService).deleteInstitutionById(anyInt());
     initResource();
-    Response response = resource.deleteInstitution(1);
+    Response response = resource.deleteInstitution(duosAuthUserUser, 1);
     assertEquals(404, response.getStatus());
   }
 }

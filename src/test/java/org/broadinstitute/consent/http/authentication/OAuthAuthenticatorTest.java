@@ -21,7 +21,7 @@ import java.util.Optional;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.filters.ClaimsCache;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DUOSAuthUser;
+import org.broadinstitute.consent.http.models.DuosAuthUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatus.UserInfo;
@@ -154,8 +154,8 @@ class OAuthAuthenticatorTest extends AbstractTestHelper {
     when(userService.findUserByEmail(headerMap.get(ClaimsCache.OAUTH2_CLAIM_email).get(0))).thenReturn(new User());
 
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertInstanceOf(DUOSAuthUser.class, authUser.orElseThrow());
-    assertNotNull(((DUOSAuthUser) authUser.orElseThrow()).getUser());
+    assertInstanceOf(DuosAuthUser.class, authUser.orElseThrow());
+    assertNotNull(((DuosAuthUser) authUser.orElseThrow()).getUser());
   }
 
   @Test
@@ -168,7 +168,7 @@ class OAuthAuthenticatorTest extends AbstractTestHelper {
 
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
     assertInstanceOf(AuthUser.class, authUser.orElseThrow());
-    assertFalse(authUser.get() instanceof DUOSAuthUser);
+    assertFalse(authUser.get() instanceof DuosAuthUser);
   }
 
 }

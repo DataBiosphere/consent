@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.authentication;
 
-import com.google.inject.Inject;
 import io.dropwizard.auth.Authenticator;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
@@ -11,17 +10,15 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 
-
-public class OAuthAuthenticator extends AbstractAuthenticator implements
-    Authenticator<String, AuthUser> {
-
-  @Inject
-  public OAuthAuthenticator(SamService samService, UserService userService) {
+public class DuosUserAuthenticator extends AbstractAuthenticator implements Authenticator<String, DuosAuthUser> {
+  public DuosUserAuthenticator(SamService samService,
+      UserService userService) {
     super(samService, userService);
   }
 
+
   @Override
-  public Optional<AuthUser> authenticate(String bearer) {
+  public Optional<DuosAuthUser> authenticate(String bearer) {
     var headers = claimsCache.cache.getIfPresent(bearer);
     if (headers != null) {
       AuthUser authUser = buildAuthUserFromHeaders(headers);
@@ -34,7 +31,7 @@ public class OAuthAuthenticator extends AbstractAuthenticator implements
           logWarn("User not found, authentication incomplete: %s".formatted(authUser.getEmail()));
         }
       }
-      return Optional.of(authUser);
+      return Optional.empty();
     }
     logException(new ServerErrorException("Error reading request headers", 500));
     return Optional.empty();

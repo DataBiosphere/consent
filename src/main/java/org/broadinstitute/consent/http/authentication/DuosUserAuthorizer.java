@@ -8,18 +8,18 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
-import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosAuthUser;
 
-public class UserAuthorizer implements Authorizer<AuthUser> {
+public class DuosUserAuthorizer implements Authorizer<DuosAuthUser> {
 
   private final UserRoleDAO userRoleDAO;
 
-  UserAuthorizer(UserRoleDAO userRoleDAO) {
+  DuosUserAuthorizer(UserRoleDAO userRoleDAO) {
     this.userRoleDAO = userRoleDAO;
   }
 
   @Override
-  public boolean authorize(AuthUser user, String role, ContainerRequestContext context) {
+  public boolean authorize(DuosAuthUser user, String role, ContainerRequestContext context) {
     boolean authorize = false;
     if (StringUtils.isNotEmpty(role)) {
       List<String> roles = userRoleDAO.findRoleNamesByUserEmail(user.getEmail());

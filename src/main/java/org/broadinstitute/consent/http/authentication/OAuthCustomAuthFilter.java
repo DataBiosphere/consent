@@ -2,20 +2,33 @@ package org.broadinstitute.consent.http.authentication;
 
 import io.dropwizard.auth.AuthFilter;
 import io.dropwizard.auth.oauth.OAuthCredentialAuthFilter;
+import jakarta.annotation.Priority;
+import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import java.io.IOException;
 import java.security.Principal;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosAuthUser;
 
+@Priority(Priorities.AUTHENTICATION)
 public class OAuthCustomAuthFilter<P extends Principal> extends AuthFilter<String, P> {
 
-  private AuthFilter filter;
+  private final AuthFilter filter;
 
   public OAuthCustomAuthFilter(OAuthAuthenticator authenticator, UserRoleDAO userRoleDAO) {
     filter = new OAuthCredentialAuthFilter.Builder<AuthUser>()
         .setAuthenticator(authenticator)
         .setAuthorizer(new UserAuthorizer(userRoleDAO))
+        .setPrefix("Bearer")
+        .setRealm("OAUTH-AUTH")
+        .buildAuthFilter();
+  }
+
+  public OAuthCustomAuthFilter(DuosUserAuthenticator authenticator, UserRoleDAO userRoleDAO) {
+    filter = new OAuthCredentialAuthFilter.Builder<DuosAuthUser>()
+        .setAuthenticator(authenticator)
+        .setAuthorizer(new DuosUserAuthorizer(userRoleDAO))
         .setPrefix("Bearer")
         .setRealm("OAUTH-AUTH")
         .buildAuthFilter();

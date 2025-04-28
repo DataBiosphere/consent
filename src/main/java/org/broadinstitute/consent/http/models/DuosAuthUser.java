@@ -1,11 +1,11 @@
 package org.broadinstitute.consent.http.models;
 
 
-public class DUOSAuthUser extends AuthUser {
+public class DuosAuthUser extends AuthUser {
 
   private final User user;
 
-  public DUOSAuthUser(AuthUser authUser, User user) {
+  public DuosAuthUser(AuthUser authUser, User user) {
     super.setAuthToken(authUser.getAuthToken());
     super.setEmail(authUser.getEmail());
     super.setName(authUser.getName());

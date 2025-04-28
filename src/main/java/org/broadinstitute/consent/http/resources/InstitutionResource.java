@@ -16,12 +16,9 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
-import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DUOSAuthUser;
+import org.broadinstitute.consent.http.models.DuosAuthUser;
 import org.broadinstitute.consent.http.models.Institution;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.InstitutionService;
-import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.InstitutionUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
@@ -45,7 +42,7 @@ public class InstitutionResource extends Resource {
   @GET
   @Produces("application/json")
   @PermitAll
-  public Response getInstitutions(@Auth DUOSAuthUser authUser) {
+  public Response getInstitutions(@Auth DuosAuthUser authUser) {
     try {
       Boolean isAdmin = institutionUtil.checkIfAdmin(authUser.getUser());
       Gson gson = institutionUtil.getGsonBuilder(isAdmin);
@@ -60,7 +57,7 @@ public class InstitutionResource extends Resource {
   @Produces("application/json")
   @Path("/{id}")
   @PermitAll
-  public Response getInstitution(@Auth DUOSAuthUser authUser, @PathParam("id") Integer id) {
+  public Response getInstitution(@Auth DuosAuthUser authUser, @PathParam("id") Integer id) {
     try {
       Boolean isAdmin = institutionUtil.checkIfAdmin(authUser.getUser());
       Gson gson = institutionUtil.getGsonBuilder(isAdmin);
@@ -75,7 +72,7 @@ public class InstitutionResource extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @RolesAllowed(ADMIN)
-  public Response createInstitution(@Auth DUOSAuthUser authUser, String institution) {
+  public Response createInstitution(@Auth DuosAuthUser authUser, String institution) {
     try {
       Institution payload = GsonUtil.getInstance().fromJson(institution, Institution.class);
       List<Institution> conflicts = institutionService.findAllInstitutionsByName(payload.getName());
@@ -95,7 +92,7 @@ public class InstitutionResource extends Resource {
   @Produces("application/json")
   @Path("/{id}")
   @RolesAllowed(ADMIN)
-  public Response updateInstitution(@Auth DUOSAuthUser authUser, @PathParam("id") Integer id,
+  public Response updateInstitution(@Auth DuosAuthUser authUser, @PathParam("id") Integer id,
       String institution) {
     try {
       Institution payload = GsonUtil.getInstance().fromJson(institution, Institution.class);
@@ -111,7 +108,7 @@ public class InstitutionResource extends Resource {
   @Produces("application/json")
   @Path("/{id}")
   @RolesAllowed(ADMIN)
-  public Response deleteInstitution(@PathParam("id") Integer id) {
+  public Response deleteInstitution(@Auth DuosAuthUser authUser, @PathParam("id") Integer id) {
     try {
       institutionService.deleteInstitutionById(id);
       return Response.status(204).build();
