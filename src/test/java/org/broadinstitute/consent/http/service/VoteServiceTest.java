@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -11,6 +12,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -48,8 +50,11 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -661,7 +666,6 @@ class VoteServiceTest extends AbstractTestHelper {
     // Since we have a false vote, we should not be sending any email
     verify(emailService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any());
     // Similar check for all DAO calls
-    verify(electionDAO, times(0)).findElectionsByIds(any());
     verify(dataAccessRequestDAO, times(0)).findByReferenceIds(any());
     verify(darCollectionDAO, times(0)).findDARCollectionByCollectionIds(any());
     verify(datasetDAO, times(0)).findDatasetsByIdList(any());
@@ -700,7 +704,6 @@ class VoteServiceTest extends AbstractTestHelper {
     // Since we have a non-final vote, we should not be sending any email
     verify(emailService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any());
     // Similar check for all DAO calls
-    verify(electionDAO, times(0)).findElectionsByIds(any());
     verify(dataAccessRequestDAO, times(0)).findByReferenceIds(any());
     verify(darCollectionDAO, times(0)).findDARCollectionByCollectionIds(any());
     verify(datasetDAO, times(0)).findDatasetsByIdList(any());
@@ -936,6 +939,30 @@ class VoteServiceTest extends AbstractTestHelper {
       fail(e.getMessage());
     }
   }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void testLogDARApprovalOrRejection(boolean voteValue) {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    Election election = new Election();
+    election.setElectionId(1);
+    election.setDatasetId(dataset.getDatasetId());
+    User user = new User();
+    Vote vote = new Vote();
+    vote.setVote(voteValue);
+    vote.setType(VoteType.FINAL.getValue());
+    vote.setElectionId(election.getElectionId());
+    when(electionDAO.findElectionsByIds(List.of())).thenReturn(List.of());
+    when(electionDAO.findElectionsByIds(List.of(election.getElectionId()))).thenReturn(List.of(election));
+    when(datasetDAO.findDatasetsByIdList(List.of())).thenReturn(List.of());
+    when(datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId()))).thenReturn(List.of(dataset));
+    ContainerRequest request = mock();
+
+    initService();
+    assertDoesNotThrow(() -> service.logDARApprovalOrRejection(user, List.of(vote), request));
+  }
+
 
   private void setUpUserAndElectionVotes(UserRoles userRoles) {
     User user = new User();

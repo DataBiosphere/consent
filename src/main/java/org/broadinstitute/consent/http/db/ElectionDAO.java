@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -168,7 +169,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
   @UseRowMapper(SimpleElectionMapper.class)
   @SqlQuery("SELECT DISTINCT * FROM election e WHERE e.election_id IN (<electionIds>)")
-  List<Election> findElectionsByIds(@BindList("electionIds") List<Integer> electionIds);
+  List<Election> findElectionsByIds(@BindList(value = "electionIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> electionIds);
 
   @UseRowMapper(SimpleElectionMapper.class)
   @SqlQuery("SELECT * FROM election e WHERE e.election_id = :electionId")

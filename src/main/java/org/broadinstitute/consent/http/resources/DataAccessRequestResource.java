@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.storage.BlobId;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -19,6 +20,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Request;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriInfo;
@@ -51,8 +53,10 @@ import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.util.ComplianceLogger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.glassfish.jersey.server.ContainerRequest;
 
 @Path("api/dar")
 public class DataAccessRequestResource extends Resource {
@@ -117,7 +121,10 @@ public class DataAccessRequestResource extends Resource {
   @RolesAllowed(RESEARCHER)
   @Path("/v2")
   public Response createDataAccessRequest(
-      @Auth AuthUser authUser, @Context UriInfo info, String dar) {
+      @Auth AuthUser authUser,
+      @Context Request request,
+      @Context UriInfo info,
+      String dar) {
     try {
       User user = findUserByEmail(authUser.getEmail());
 
@@ -132,6 +139,8 @@ public class DataAccessRequestResource extends Resource {
       }
       URI uri = info.getRequestUriBuilder().build();
       matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
+      List<Dataset> datasets = datasetService.findDatasetsByIds(newDar.getDatasetIds());
+      ComplianceLogger.logDARSubmission(user, datasets, ((ContainerRequest) request), HttpStatusCodes.STATUS_CODE_CREATED);
       return Response.created(uri).entity(newDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
