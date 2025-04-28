@@ -46,7 +46,7 @@ public class SendGridAPI implements ConsentLogger {
   }
 
   public Response sendMessage(Mail message, Integer toUserId) {
-    if (activateEmailNotifications) {
+    if (!activateEmailNotifications) {
       return null;
     }
     boolean userEmailPreference = findUserEmailPreference(toUserId);
