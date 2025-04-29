@@ -490,7 +490,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetDarCollectionSummaryForResearcher_DraftNotIncluded() {
+  void testGetDarCollectionSummaryForResearcher_DraftAndArchivedNotIncluded() {
     User user = createUser();
     Integer userId = user.getUserId();
 
@@ -501,14 +501,17 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     // Create two DataAccessRequests in the same collection
     DataAccessRequest olderDar = createDataAccessRequest(collectionId, userId);
     DataAccessRequest draftDar = createDataAccessRequest(collectionId, userId);
+    DataAccessRequest archivedDar = createDataAccessRequest(collectionId, userId);
 
-    // Insert dataset relations for both DARs
-    // the older DAR has two datasets, the newer DAR has one, the draft also has one
+    // Insert dataset relations for all DARs
     dataAccessRequestDAO.insertDARDatasetRelation(olderDar.getReferenceId(), dataset.getDatasetId());
     dataAccessRequestDAO.insertDARDatasetRelation(draftDar.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(archivedDar.getReferenceId(), dataset.getDatasetId());
     // draft DAR
     dataAccessRequestDAO.updateDataByReferenceId(draftDar.getReferenceId(), draftDar.userId, new Date(), null,
         new Date(), draftDar.getData());
+    // archived DAR
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(archivedDar.getReferenceId()));
 
     List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
 
@@ -517,13 +520,13 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     DarCollectionSummary summary = summaries.get(0);
     assertEquals(collectionId, summary.getDarCollectionId());
 
-    // Ensure the reference IDs include both DARs
+    // Ensure the reference IDs include only the non-draft non-archived DAR
     assertNotNull(summary.getReferenceIds());
     assertEquals(1, summary.getReferenceIds().size());
     assertTrue(summary.getReferenceIds().contains(olderDar.getReferenceId()));
     assertFalse(summary.getReferenceIds().contains(draftDar.getReferenceId()));
 
-    // Ensure the summary represents the older DAR, because the most recent DAR is a draft
+    // Ensure the summary represents the older DAR
     assertEquals(olderDar.getSubmissionDate(), summary.getSubmissionDate());
     assertEquals(olderDar.getExpiresAt(), summary.getExpiresAt());
   }
@@ -572,7 +575,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     // Ensure the summary represents the most recently submitted DAR
     assertEquals(newerDar.getSubmissionDate(), summary.getSubmissionDate());
     assertEquals(newerDar.getExpiresAt(), summary.getExpiresAt());
-    // should only be one dataset because the newer dar has one dataset
+    // should only be one dataset because the newer DAR has one dataset
     assertEquals(1, summary.getDatasetIds().size());
     assertTrue(summary.getDatasetIds().contains(dataset.getDatasetId()));
   }
