@@ -26,6 +26,8 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -490,97 +492,6 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetDarCollectionSummaryForResearcher_DraftAndArchivedNotIncluded() {
-    User user = createUser();
-    Integer userId = user.getUserId();
-
-    Dataset dataset = createDataset(userId);
-
-    Integer collectionId = createDarCollection(userId);
-
-    // Create two DataAccessRequests in the same collection
-    DataAccessRequest olderDar = createDataAccessRequest(collectionId, userId);
-    DataAccessRequest draftDar = createDataAccessRequest(collectionId, userId);
-    DataAccessRequest archivedDar = createDataAccessRequest(collectionId, userId);
-
-    // Insert dataset relations for all DARs
-    dataAccessRequestDAO.insertDARDatasetRelation(olderDar.getReferenceId(), dataset.getDatasetId());
-    dataAccessRequestDAO.insertDARDatasetRelation(draftDar.getReferenceId(), dataset.getDatasetId());
-    dataAccessRequestDAO.insertDARDatasetRelation(archivedDar.getReferenceId(), dataset.getDatasetId());
-    // draft DAR
-    dataAccessRequestDAO.updateDataByReferenceId(draftDar.getReferenceId(), draftDar.userId, new Date(), null,
-        new Date(), draftDar.getData());
-    // archived DAR
-    dataAccessRequestDAO.archiveByReferenceIds(List.of(archivedDar.getReferenceId()));
-
-    List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
-
-    assertNotNull(summaries);
-    assertEquals(1, summaries.size());
-    DarCollectionSummary summary = summaries.get(0);
-    assertEquals(collectionId, summary.getDarCollectionId());
-
-    // Ensure the reference IDs include only the non-draft non-archived DAR
-    assertNotNull(summary.getReferenceIds());
-    assertEquals(1, summary.getReferenceIds().size());
-    assertTrue(summary.getReferenceIds().contains(olderDar.getReferenceId()));
-    assertFalse(summary.getReferenceIds().contains(draftDar.getReferenceId()));
-
-    // Ensure the summary represents the older DAR
-    assertEquals(olderDar.getSubmissionDate(), summary.getSubmissionDate());
-    assertEquals(olderDar.getExpiresAt(), summary.getExpiresAt());
-  }
-
-  @Test
-  void testGetDarCollectionSummaryForResearcher_TwoDataAccessRequests() {
-    User userOne = createUser();
-    Integer userOneId = userOne.getUserId();
-
-    Dataset dataset = createDataset(userOneId);
-    Dataset dataset1 = createDataset(userOneId);
-
-    Integer collectionId = createDarCollection(userOneId);
-
-    // Create two DataAccessRequests in the same collection
-    DataAccessRequest olderDar = createDataAccessRequest(collectionId, userOneId);
-    DataAccessRequest newerDar = createDataAccessRequest(collectionId, userOneId);
-
-    // Insert dataset relations for both DARs
-    // the older DAR has two datasets and the newer DAR has one
-    dataAccessRequestDAO.insertDARDatasetRelation(olderDar.getReferenceId(), dataset.getDatasetId());
-    dataAccessRequestDAO.insertDARDatasetRelation(olderDar.getReferenceId(), dataset1.getDatasetId());
-    dataAccessRequestDAO.insertDARDatasetRelation(newerDar.getReferenceId(), dataset.getDatasetId());
-
-    // Create an election for the older DAR
-    createElection(ElectionType.DATA_ACCESS.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        olderDar.getReferenceId(), dataset.getDatasetId());
-
-    List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userOneId);
-
-    assertNotNull(summaries);
-    assertEquals(1, summaries.size());
-    DarCollectionSummary summary = summaries.get(0);
-    assertEquals(collectionId, summary.getDarCollectionId());
-
-    // Ensure the reference IDs include both DARs
-    assertNotNull(summary.getReferenceIds());
-    assertEquals(2, summary.getReferenceIds().size());
-    assertTrue(summary.getReferenceIds().contains(olderDar.getReferenceId()));
-    assertTrue(summary.getReferenceIds().contains(newerDar.getReferenceId()));
-
-    // Ensure the election from the older DAR is not included
-    assertTrue(summary.getElections().isEmpty());
-
-    // Ensure the summary represents the most recently submitted DAR
-    assertEquals(newerDar.getSubmissionDate(), summary.getSubmissionDate());
-    assertEquals(newerDar.getExpiresAt(), summary.getExpiresAt());
-    // should only be one dataset because the newer DAR has one dataset
-    assertEquals(1, summary.getDatasetIds().size());
-    assertTrue(summary.getDatasetIds().contains(dataset.getDatasetId()));
-  }
-
-  @Test
   void testGetDarCollectionSummaryForAdmin() {
 
     User userOne = createUser();
@@ -711,6 +622,107 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
     assertEquals(collectionOneId, summaries.get(0).getDarCollectionId());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings= {"admin", "researcher"})
+  void testGetDarCollectionSummaryDraftAndArchivedNotIncluded(String type) {
+    User user = createUser();
+    Integer userId = user.getUserId();
+
+    Dataset dataset = createDataset(userId);
+
+    Integer collectionId = createDarCollection(userId);
+
+    // Create two DataAccessRequests in the same collection
+    DataAccessRequest olderDar = createDataAccessRequest(collectionId, userId);
+    DataAccessRequest draftDar = createDataAccessRequest(collectionId, userId);
+    DataAccessRequest archivedDar = createDataAccessRequest(collectionId, userId);
+
+    // Insert dataset relations for all DARs
+    dataAccessRequestDAO.insertDARDatasetRelation(olderDar.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(draftDar.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(archivedDar.getReferenceId(), dataset.getDatasetId());
+    // draft DAR
+    dataAccessRequestDAO.updateDataByReferenceId(draftDar.getReferenceId(), draftDar.userId, new Date(), null,
+        new Date(), draftDar.getData());
+    // archived DAR
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(archivedDar.getReferenceId()));
+
+    List<DarCollectionSummary> summaries = switch (type) {
+      case "admin" -> darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
+      case "researcher" -> darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
+      default -> throw new IllegalArgumentException("Invalid type: " + type);
+    };
+
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    DarCollectionSummary summary = summaries.get(0);
+    assertEquals(collectionId, summary.getDarCollectionId());
+
+    // Ensure the reference IDs include only the non-draft non-archived DAR
+    assertNotNull(summary.getReferenceIds());
+    assertEquals(1, summary.getReferenceIds().size());
+    assertTrue(summary.getReferenceIds().contains(olderDar.getReferenceId()));
+    assertFalse(summary.getReferenceIds().contains(draftDar.getReferenceId()));
+
+    // Ensure the summary represents the older DAR
+    assertEquals(olderDar.getSubmissionDate(), summary.getSubmissionDate());
+    assertEquals(olderDar.getExpiresAt(), summary.getExpiresAt());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings= {"admin", "researcher"})
+  void testGetDarCollectionSummaryTwoDataAccessRequests(String type) {
+    User userOne = createUser();
+    Integer userOneId = userOne.getUserId();
+
+    Dataset dataset = createDataset(userOneId);
+    Dataset dataset1 = createDataset(userOneId);
+
+    Integer collectionId = createDarCollection(userOneId);
+
+    // Create two DataAccessRequests in the same collection
+    DataAccessRequest olderDar = createDataAccessRequest(collectionId, userOneId);
+    DataAccessRequest newerDar = createDataAccessRequest(collectionId, userOneId);
+
+    // Insert dataset relations for both DARs
+    // the older DAR has two datasets and the newer DAR has one
+    dataAccessRequestDAO.insertDARDatasetRelation(olderDar.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(olderDar.getReferenceId(), dataset1.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(newerDar.getReferenceId(), dataset.getDatasetId());
+
+    // Create an election for the older DAR
+    createElection(ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        olderDar.getReferenceId(), dataset.getDatasetId());
+
+    List<DarCollectionSummary> summaries = switch (type) {
+      case "admin" -> darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
+      case "researcher" ->
+          darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userOneId);
+      default -> throw new IllegalArgumentException("Invalid type: " + type);
+    };
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    DarCollectionSummary summary = summaries.get(0);
+    assertEquals(collectionId, summary.getDarCollectionId());
+
+    // Ensure the reference IDs include both DARs
+    assertNotNull(summary.getReferenceIds());
+    assertEquals(2, summary.getReferenceIds().size());
+    assertTrue(summary.getReferenceIds().contains(olderDar.getReferenceId()));
+    assertTrue(summary.getReferenceIds().contains(newerDar.getReferenceId()));
+
+    // Ensure the election from the older DAR is not included
+    assertTrue(summary.getElections().isEmpty());
+
+    // Ensure the summary represents the most recently submitted DAR
+    assertEquals(newerDar.getSubmissionDate(), summary.getSubmissionDate());
+    assertEquals(newerDar.getExpiresAt(), summary.getExpiresAt());
+    // should only be one dataset because the newer DAR has one dataset
+    assertEquals(1, summary.getDatasetIds().size());
+    assertTrue(summary.getDatasetIds().contains(dataset.getDatasetId()));
   }
 
   @Test
