@@ -37,6 +37,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.message.DaaRequestMessage;
+import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
 import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
 import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
@@ -143,12 +144,14 @@ public class EmailService implements ConsentLogger {
         content);
   }
 
-  public List<org.broadinstitute.consent.http.models.mail.MailMessage> fetchEmailMessagesByType(EmailType emailType, Integer limit,
+  public List<org.broadinstitute.consent.http.models.mail.MailMessage> fetchEmailMessagesByType(
+      EmailType emailType, Integer limit,
       Integer offset) {
     return emailDAO.fetchMessagesByType(emailType.getTypeInt(), limit, offset);
   }
 
-  public List<org.broadinstitute.consent.http.models.mail.MailMessage> fetchEmailMessagesByCreateDate(Date start, Date end, Integer limit,
+  public List<org.broadinstitute.consent.http.models.mail.MailMessage> fetchEmailMessagesByCreateDate(
+      Date start, Date end, Integer limit,
       Integer offset) {
     return emailDAO.fetchMessagesByCreateDate(start, end, limit, offset);
   }
@@ -157,20 +160,26 @@ public class EmailService implements ConsentLogger {
       throws IOException, TemplateException {
     DarCollection collection = collectionDAO.findDARCollectionByCollectionId(collectionId);
     if (collection == null) {
-      logWarn("Sending new DAR Collection message: Could not find collection for specified collection id: " + collectionId);
+      logWarn(
+          "Sending new DAR Collection message: Could not find collection for specified collection id: "
+              + collectionId);
       return;
     }
     List<User> distinctUsers = getDistinctAdminAndChairUsersForCollection(collection);
     User researcher = userDAO.findUserById(collection.getCreateUserId());
     if (researcher == null) {
-      logWarn("Sending new DAR Collection message: Could not find researcher for specified user id: " + collection.getCreateUserId());
+      logWarn(
+          "Sending new DAR Collection message: Could not find researcher for specified user id: "
+              + collection.getCreateUserId());
     }
     String researcherName = researcher == null ? "Unknown" : researcher.getDisplayName();
     Collection<Dac> dacsInDAR = dacDAO.findDacsForCollectionId(collectionId);
-    List<Integer> datasetIds = collection.getDatasets().stream().map(Dataset::getDatasetId).toList();
-    List<Dataset> datasetsInDAR = datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
+    List<Integer> datasetIds = collection.getDatasets().stream().map(Dataset::getDatasetId)
+        .toList();
+    List<Dataset> datasetsInDAR =
+        datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
 
-    Map<String, List<String>>  sendList = new HashMap<>();
+    Map<String, List<String>> sendList = new HashMap<>();
     for (User user : distinctUsers) {
       List<Dac> matchingDacsForUser = getMatchingDacs(user, dacsInDAR);
       for (Dac dac : matchingDacsForUser) {
@@ -220,16 +229,19 @@ public class EmailService implements ConsentLogger {
   private void sendNewDARRequestEmail(
       User user, Map<String, List<String>> sendList, String researcherName, String darCode)
       throws TemplateException, IOException {
-    sendMessage(new NewDARRequestMessage(user, darCode, sendList, researcherName), user.getUserId());
+    sendMessage(new NewDARRequestMessage(user, darCode, sendList, researcherName),
+        user.getUserId());
   }
 
   public void sendReminderMessage(Integer voteId) throws IOException, TemplateException {
     Vote vote = voteDAO.findVoteById(voteId);
     Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
-    DarCollection collection = collectionDAO.findDARCollectionByReferenceId(election.getReferenceId());
+    DarCollection collection = collectionDAO.findDARCollectionByReferenceId(
+        election.getReferenceId());
     User user = findUserById(vote.getUserId());
     String voteUrl = serverUrl + "dar_collection/%d".formatted(collection.getDarCollectionId());
-    sendMessage(new ReminderMessage(user, vote, collection.getDarCode(), election.getElectionType(), voteUrl), user.getUserId());
+    sendMessage(new ReminderMessage(user, vote, collection.getDarCode(), election.getElectionType(),
+        voteUrl), user.getUserId());
     voteDAO.updateVoteReminderFlag(voteId, true);
   }
 
@@ -332,11 +344,23 @@ public class EmailService implements ConsentLogger {
    * Send a message to a researcher that their data access request has expired.
    *
    * @param researcher the researcher to send the message to
-   * @param darCode the data access request code that's expired
-   * @param userId the user id of the person sending the message
+   * @param darCode    the data access request code that's expired
+   * @param userId     the user id of the person sending the message
    */
   public void sendDarExpiredMessage(User researcher, String darCode, Integer userId)
       throws TemplateException, IOException {
     sendMessage(new DarExpiredMessage(researcher, darCode), userId);
+  }
+
+  /**
+   * Remind the user that their data access request is about to expire.
+   *
+   * @param user    the user to send the message to
+   * @param darCode the data access request code that's about to expire
+   * @param userId  the user id of the person sending the message
+   */
+  public void sendDarExpirationReminderMessage(User user, String darCode, Integer userId)
+      throws TemplateException, IOException {
+    sendMessage(new DarExpirationReminderMessage(user, darCode), userId);
   }
 }
