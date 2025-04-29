@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
 import com.google.inject.Inject;
 import com.sendgrid.Response;
@@ -124,7 +125,8 @@ public class EmailService implements ConsentLogger {
         now);
   }
 
-  private void sendMessage(MailMessage mailMessage, Integer userId) throws IOException, TemplateException {
+  @VisibleForTesting
+  protected void sendMessage(MailMessage mailMessage, Integer userId) throws IOException, TemplateException {
     Writer out = new StringWriter();
     Template template = templateHelper.getTemplate(mailMessage.getTemplateName());
     template.process(mailMessage.createModel(serverUrl), out);

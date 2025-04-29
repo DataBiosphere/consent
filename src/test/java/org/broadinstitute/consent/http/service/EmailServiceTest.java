@@ -3,14 +3,21 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.sendgrid.Response;
+import com.sendgrid.helpers.mail.Mail;
+import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -46,6 +53,7 @@ import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -85,12 +93,13 @@ class EmailServiceTest {
   private FreeMarkerTemplateHelper templateHelper;
 
   private static final String SERVER_URL = "http://localhost:8000/#/";
+  private static final String FROM = "from@duos";
 
   @BeforeEach
   void initService() {
     ConsentConfiguration config = new ConsentConfiguration();
     MailConfiguration mConfig = config.getMailConfiguration();
-    mConfig.setGoogleAccount("from@duos");
+    mConfig.setGoogleAccount(FROM);
 
     ServicesConfiguration servicesConfiguration = config.getServicesConfiguration();
     servicesConfiguration.setLocalURL(SERVER_URL);
@@ -105,6 +114,86 @@ class EmailServiceTest {
         sendGridAPI,
         templateHelper,
         config);
+  }
+
+  @Test
+  void sendMessage() throws Exception {
+    String userEmail = "user@duos";
+    User user = new User();
+    user.setEmail(userEmail);
+    String subject = "subject";
+    var model = Map.of("key", "value");
+    String entityReferenceId = "entityReferenceId";
+    Integer userId = 1234;
+    Integer voteId = 4567;
+    when(templateHelper.getTemplate(EmailType.COLLECT.templateName)).thenReturn(mock());
+    var message = new org.broadinstitute.consent.http.mail.message.MailMessage(user, EmailType.COLLECT) {
+      @Override
+      public String createSubject() {
+        return subject;
+      }
+
+      @Override
+      public Object createModel(String serverUrl) {
+        return model;
+      }
+
+      @Override
+      public String getEntityReferenceId() {
+        return entityReferenceId;
+      }
+
+      @Override
+      public Integer getVoteId() {
+        return voteId;
+      }
+    };
+    Template template = mock();
+    when(templateHelper.getTemplate(EmailType.COLLECT.templateName)).thenReturn(template);
+    Response response = new Response();
+    response.setStatusCode(200);
+    response.setBody("body");
+    when(sendGridAPI.sendMessage(any(), any())).thenReturn(response);
+    String emailText = "emailText";
+    doNothing()
+        .when(template)
+        .process(
+            eq(model),
+            argThat(
+                writer -> {
+                  try {
+                    writer.append(emailText);
+                  } catch (IOException e) {
+                    throw new RuntimeException(e);
+                  }
+                  return true;
+                }));
+
+    Instant fixedInstant = Instant.now();
+    try (var mockedStatic = mockStatic(Instant.class)) {
+      mockedStatic.when(Instant::now).thenReturn(fixedInstant);
+      service.sendMessage(message, userId);
+    }
+
+    var captor = ArgumentCaptor.forClass(Mail.class);
+    verify(sendGridAPI).sendMessage(captor.capture(), eq(user.getEmail()));
+    var mail = captor.getValue();
+    assertEquals(FROM, mail.getFrom().getEmail());
+    assertEquals(user.getEmail(), mail.getPersonalization().get(0).getTos().get(0).getEmail());
+    assertEquals(subject, mail.getSubject());
+
+    verify(template).process(eq(model), any());
+    verify(emailDAO)
+        .insert(
+            entityReferenceId,
+            voteId,
+            1234,
+            EmailType.COLLECT.getTypeInt(),
+            fixedInstant,
+            emailText,
+            response.getBody(),
+            response.getStatusCode(),
+            fixedInstant);
   }
 
   @Test
