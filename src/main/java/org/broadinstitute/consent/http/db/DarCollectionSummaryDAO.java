@@ -90,40 +90,54 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @RegisterBeanMapper(value = Election.class)
   @UseRowReducer(DarCollectionSummaryReducer.class)
   @SqlQuery("""
-      SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, u.display_name as researcher_name,
-        i.institution_name, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid,
-        (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name,
-        dac.name as dac_name, ARRAY_AGG(dar_all.reference_id) AS reference_ids
-      FROM dar_collection c
-      INNER JOIN users u ON u.user_id = c.create_user_id
-      LEFT JOIN institution i ON i.institution_id = u.institution_id
-      INNER JOIN
-              LATERAL (
-                  SELECT *
-                  FROM data_access_request
-                  WHERE data_access_request.collection_id = c.collection_id
-                  AND data_access_request.submission_date IS NOT NULL
-                  AND (LOWER(data_access_request.data->>'status') != 'archived' OR data_access_request.data->>'status' IS NULL)
-                  ORDER BY data_access_request.submission_date DESC
-                  LIMIT 1
-              ) dar ON true
-      INNER JOIN
-              data_access_request dar_all ON dar_all.collection_id = c.collection_id
-              AND dar_all.submission_date IS NOT NULL
-              AND (LOWER(dar_all.data->>'status') != 'archived' OR dar_all.data->>'status' IS NULL)
-      LEFT JOIN (
-        SELECT election.*, MAX(election.election_id) OVER(PARTITION BY election.reference_id, election.dataset_id) AS latest
-        FROM election
-        WHERE LOWER(election.election_type) = 'dataaccess'
-      ) AS e ON e.reference_id = dar.reference_id
-      INNER JOIN dar_dataset dd ON dar.reference_id = dd.reference_id
-      LEFT JOIN dataset dataset on dataset.dataset_id = dd.dataset_id
-      LEFT JOIN dac dac on dac.dac_id = dataset.dac_id
-      WHERE (e.latest = e.election_id OR e.election_id IS NULL)
-      GROUP BY
-              c.collection_id, c.dar_code, dar.submission_date, dar.reference_id, u.display_name, i.institution_name,
-              e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id, dar.data, dac.name
-      """)
+    SELECT
+        c.collection_id AS dar_collection_id,
+        c.dar_code,
+        dar.submission_date,
+        dar.reference_id AS dar_reference_id,
+        u.display_name AS researcher_name,
+        i.institution_name,
+        e.election_id,
+        e.status,
+        e.dataset_id,
+        dd.dataset_id AS dd_datasetid,
+        (regexp_replace(dar.data #>> '{}', '\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name,
+        dac.name AS dac_name,
+        ARRAY_AGG(dar_all.reference_id) AS reference_ids
+    FROM dar_collection c
+    INNER JOIN users u ON u.user_id = c.create_user_id
+    LEFT JOIN institution i ON i.institution_id = u.institution_id
+    INNER JOIN (
+        SELECT *
+        FROM (
+            SELECT *, ROW_NUMBER() OVER (PARTITION BY collection_id ORDER BY submission_date DESC) as rn
+            FROM data_access_request
+            WHERE submission_date IS NOT NULL
+            AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
+        ) latest_dar
+        WHERE rn = 1
+    ) dar ON dar.collection_id = c.collection_id
+    INNER JOIN data_access_request dar_all
+        ON dar_all.collection_id = c.collection_id
+        AND dar_all.submission_date IS NOT NULL
+        AND (LOWER(dar_all.data->>'status') != 'archived' OR dar_all.data->>'status' IS NULL)
+    LEFT JOIN (
+        SELECT *
+        FROM (
+            SELECT *, ROW_NUMBER() OVER (PARTITION BY reference_id, dataset_id ORDER BY election_id DESC) as rn
+            FROM election
+            WHERE LOWER(election_type) = 'dataaccess'
+        ) latest_election
+        WHERE rn = 1
+    ) e ON e.reference_id = dar.reference_id
+    INNER JOIN dar_dataset dd ON dar.reference_id = dd.reference_id
+    LEFT JOIN dataset ON dataset.dataset_id = dd.dataset_id
+    LEFT JOIN dac ON dac.dac_id = dataset.dac_id
+    GROUP BY
+        c.collection_id, c.dar_code, dar.submission_date, dar.reference_id,
+        u.display_name, i.institution_name, e.election_id, e.status,
+        e.dataset_id, dd.dataset_id, dar.data, dac.name
+""")
   List<DarCollectionSummary> getDarCollectionSummariesForAdmin();
 
   @RegisterBeanMapper(value = DarCollectionSummary.class)
