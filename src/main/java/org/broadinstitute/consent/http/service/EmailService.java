@@ -246,11 +246,6 @@ public class EmailService implements ConsentLogger {
     EmailType emailType = EmailType.DAR_EXPIRED;
     String interval = "1 year";
     String noEmailForUserToWarnFoundLogTemplate = "User %d (%s) not found for expiring DAR.  Reference id: %s";
-    processDARExpirationMessages(emailType, interval, noEmailForUserToWarnFoundLogTemplate);
-  }
-
-  private void processDARExpirationMessages(EmailType emailType, String interval,
-      String noEmailForUserToWarnFoundLogTemplate) {
     // Per value in ticket DT-1573
     Timestamp minimumSubmittedDateForExpirations = Timestamp.from(Instant.ofEpochSecond(
         LocalDate.of(2024, 9, 30).toEpochSecond(LocalTime.of(0, 0, 0, 0), ZoneOffset.UTC)));
@@ -281,7 +276,30 @@ public class EmailService implements ConsentLogger {
     EmailType emailType = EmailType.DAR_EXPIRING_SOON;
     String interval = "11 months";
     String noEmailForUserToWarnFoundLogTemplate = "User %d (%s) not found for expiring warning.  DAR reference id: %s";
-    processDARExpirationMessages(emailType, interval, noEmailForUserToWarnFoundLogTemplate);
+    // Per value in ticket DT-1573
+    Timestamp minimumSubmittedDateForExpirations = Timestamp.from(Instant.ofEpochSecond(
+        LocalDate.of(2024, 9, 30).toEpochSecond(LocalTime.of(0, 0, 0, 0), ZoneOffset.UTC)));
+    List<DataAccessRequest> expiredDars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
+        emailType.getTypeInt(), interval, minimumSubmittedDateForExpirations);
+    expiredDars.forEach(expiredDar -> {
+      try {
+        String referenceId = expiredDar.getReferenceId();
+        User user = userDAO.findUserById(expiredDar.getUserId());
+        String darCode = expiredDar.getDarCode();
+        String userName = user.getDisplayName();
+        if (user.getEmail() == null) {
+          // Do not throw here.  Log information about the DAR since this will continue
+          // to appear broken until manual intervention is taken to resolve the missing user
+          // email address
+          logWarn(String.format(noEmailForUserToWarnFoundLogTemplate,
+              expiredDar.getUserId(), userName, referenceId));
+        } else {
+          // Send the warning,
+        }
+      } catch (Exception e) {
+        logException(e);
+      }
+    });
   }
 
   public void sendReminderMessage(Integer voteId) throws IOException, TemplateException {
