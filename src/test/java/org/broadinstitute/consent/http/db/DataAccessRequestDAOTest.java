@@ -106,22 +106,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindAllDarsByUserId() {
-    DataAccessRequest dar = createDataAccessRequestV3();
-    DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(
-        dar.getCollectionId());
-
-    List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDarsByUserId(dar.getUserId());
-    assertFalse(newDars.isEmpty());
-    assertEquals(collection.getDars().size(), newDars.size());
-    assertEquals(newDars.get(0).getReferenceId(), dar.getReferenceId());
-    assertNotNull(newDars.get(0).getDarCode());
-
-    List<DataAccessRequest> missingDars = dataAccessRequestDAO.findAllDarsByUserId(0);
-    assertTrue(missingDars.isEmpty());
-  }
-
-  @Test
   void updateDraftToNonDraft() {
     DataAccessRequest dar = createDraftDataAccessRequest();
 
@@ -750,23 +734,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     DataAccessRequest testDar = createDraftDAR(user);
     dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
     List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllDraftsByUserId(
-        user.getUserId());
-    assertTrue(returnedDARs.isEmpty());
-  }
-
-  // findAllDarsByUserId should exclude archived DARs
-  @Test
-  void testFindAllDarsByUserIdArchived() {
-    User user = createUserWithInstitution();
-    List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDarsByUserId(user.getUserId());
-    assertTrue(dars.isEmpty());
-
-    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
-    Dataset dataset = createDARDAOTestDataset();
-
-    DataAccessRequest testDar = createDAR(user, dataset, darCode);
-    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
-    List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllDarsByUserId(
         user.getUserId());
     assertTrue(returnedDARs.isEmpty());
   }

@@ -154,26 +154,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           """)
   List<DataAccessRequest> findAllDraftsByUserId(@Bind("userId") Integer userId);
 
-
-  /**
-   * Find all complete DataAccessRequests by user id, sorted descending order
-   *
-   * @return List<DataAccessRequest>
-   */
-  @UseRowReducer(DataAccessRequestReducer.class)
-  @SqlQuery(
-      """
-              SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-              (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code FROM data_access_request dar
-              LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
-              LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
-              WHERE dar.submission_date is not null
-                AND dar.user_id = :userId
-                AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
-              ORDER BY dar.sort_date DESC
-          """)
-  List<DataAccessRequest> findAllDarsByUserId(@Bind("userId") Integer userId);
-
   /**
    * Find DataAccessRequest by reference id
    *
