@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
 import com.google.inject.Inject;
 import com.sendgrid.Response;
@@ -36,6 +37,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.message.DaaRequestMessage;
+import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
 import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
@@ -123,7 +125,8 @@ public class EmailService implements ConsentLogger {
         now);
   }
 
-  private void sendMessage(MailMessage mailMessage, Integer userId) throws IOException, TemplateException {
+  @VisibleForTesting
+  protected void sendMessage(MailMessage mailMessage, Integer userId) throws IOException, TemplateException {
     Writer out = new StringWriter();
     Template template = templateHelper.getTemplate(mailMessage.getTemplateName());
     template.process(mailMessage.createModel(serverUrl), out);
@@ -244,7 +247,7 @@ public class EmailService implements ConsentLogger {
       Integer researcherId,
       List<DatasetMailDTO> datasets,
       String dataUseRestriction)
-      throws Exception {
+      throws TemplateException, IOException {
     User user = userDAO.findUserById(researcherId);
     sendMessage(
         new ResearcherApprovedMessage(user, darCode, datasets, dataUseRestriction), researcherId);
@@ -256,7 +259,7 @@ public class EmailService implements ConsentLogger {
       List<DatasetMailDTO> datasets,
       String dataDepositorName,
       String researcherEmail)
-      throws Exception {
+      throws TemplateException, IOException {
     sendMessage(
         new DataCustodianApprovalMessage(
             custodian, darCode, datasets, dataDepositorName, researcherEmail),
@@ -264,28 +267,34 @@ public class EmailService implements ConsentLogger {
   }
 
   public void sendDatasetSubmittedMessage(
-      User dacChair, User dataSubmitter, String dacName, String datasetName) throws Exception {
+      User dacChair, User dataSubmitter, String dacName, String datasetName)
+      throws TemplateException, IOException {
     sendMessage(
         new DatasetSubmittedMessage(dacChair, dataSubmitter.getDisplayName(), datasetName, dacName),
         dacChair.getUserId());
   }
 
   public void sendDatasetApprovedMessage(User user, String dacName, String datasetName)
-      throws Exception {
+      throws TemplateException, IOException {
     sendMessage(new DatasetApprovedMessage(user, dacName, datasetName), user.getUserId());
   }
 
   public void sendDatasetDeniedMessage(
-      User user, String dacName, String datasetName, String dacEmail) throws Exception {
+      User user, String dacName, String datasetName, String dacEmail)
+      throws TemplateException, IOException {
     sendMessage(new DatasetDeniedMessage(user, dacName, datasetName, dacEmail), user.getUserId());
   }
 
-  public void sendNewResearcherMessage(User researcher, User signingOfficial) throws Exception {
-    sendMessage(new NewResearcherLibraryRequestMessage(signingOfficial, researcher), researcher.getUserId());
+  public void sendNewResearcherMessage(User researcher, User signingOfficial)
+      throws TemplateException, IOException {
+    sendMessage(
+        new NewResearcherLibraryRequestMessage(signingOfficial, researcher),
+        researcher.getUserId());
   }
 
   public void sendDaaRequestMessage(
-      User signingOfficial, User requestUser, String daaName, Integer daaId) throws Exception {
+      User signingOfficial, User requestUser, String daaName, Integer daaId)
+      throws TemplateException, IOException {
     sendMessage(
         new DaaRequestMessage(signingOfficial, requestUser, daaName, daaId),
         requestUser.getUserId());
@@ -297,14 +306,14 @@ public class EmailService implements ConsentLogger {
       String previousDaaName,
       String newDaaName,
       Integer userId)
-      throws Exception {
+      throws TemplateException, IOException {
     sendMessage(
         new NewDAAUploadSOMessage(signingOfficial, dacName, previousDaaName, newDaaName), userId);
   }
 
   public void sendNewDAAUploadResearcherMessage(
       User researcher, String dacName, String previousDaaName, String newDaaName, Integer userId)
-      throws Exception {
+      throws TemplateException, IOException {
     sendMessage(
         new NewDAAUploadResearcherMessage(
             researcher, dacName, previousDaaName, newDaaName),
@@ -317,5 +326,17 @@ public class EmailService implements ConsentLogger {
       throw new NotFoundException("Could not find dacUser for specified id : " + id);
     }
     return user;
+  }
+
+  /**
+   * Send a message to a researcher that their data access request has expired.
+   *
+   * @param researcher the researcher to send the message to
+   * @param darCode the data access request code that's expired
+   * @param userId the user id of the person sending the message
+   */
+  public void sendDarExpiredMessage(User researcher, String darCode, Integer userId)
+      throws TemplateException, IOException {
+    sendMessage(new DarExpiredMessage(researcher, darCode), userId);
   }
 }
