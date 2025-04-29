@@ -9,7 +9,7 @@ public class DarExpiredMessage extends MailMessage {
   private final String darCode;
 
   public DarExpiredMessage(User toUser, String darCode) {
-    super(toUser, EmailType.DAC_EXPIRED);
+    super(toUser, EmailType.DAR_EXPIRED);
     this.darCode = darCode;
   }
 

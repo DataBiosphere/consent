@@ -21,7 +21,7 @@ public enum EmailType {
   NEW_DAA_UPLOAD_SO(17, "new-daa-upload-signing-official.html"),
   DATASET_DENIED(18, "dataset-denied.html"),
   DATASET_APPROVED(19, "dataset-approved.html"),
-  DAC_EXPIRED(20, "dac-expired.html");
+  DAR_EXPIRED(20, "dac-expired.html");
 
   private final Integer typeInt;
   public final String templateName;
