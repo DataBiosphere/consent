@@ -1,20 +1,32 @@
 package org.broadinstitute.consent.http.mail.message;
 
-import com.sendgrid.helpers.mail.Mail;
-import java.io.Writer;
-import javax.mail.MessagingException;
+import java.util.Map;
+import org.broadinstitute.consent.http.enumeration.EmailType;
+import org.broadinstitute.consent.http.models.User;
 
 public class NewResearcherLibraryRequestMessage extends MailMessage {
 
-  private final String NEW_RESEARCHER = "New Library Card Request in DUOS";
+  private static final String NEW_RESEARCHER = "New Library Card Request in DUOS";
 
-  public Mail newResearcherLibraryRequestMessage(String toAddress, String fromAddress,
-      Writer template) throws MessagingException {
-    return generateEmailMessage(toAddress, fromAddress, template, null, null);
+  private final User researcher;
+
+  public NewResearcherLibraryRequestMessage(User signingOfficial, User researcher) {
+    super(signingOfficial, EmailType.NEW_RESEARCHER);
+    this.researcher = researcher;
   }
 
   @Override
-  String assignSubject(String referenceId, String type) {
+  public String createSubject() {
     return NEW_RESEARCHER;
+  }
+
+  @Override
+  public Object createModel(String serverUrl) {
+    return Map.of("researcherName", researcher.getDisplayName(), "serverUrl", serverUrl);
+  }
+
+  @Override
+  public String getEntityReferenceId() {
+    return researcher.getUserId().toString();
   }
 }

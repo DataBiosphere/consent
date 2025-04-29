@@ -105,3 +105,14 @@ Consent will now point to a local ES instance.
 I also suggest changing the default bucket location so uploaded
 ontology files do not interfere with other dev environments.
 
+## How To...
+
+### How to add a new email
+
+DUOS uses SendGrid for sending emails and FreeMarker for expanding email templates before 
+passing them to SendGrid. To add a new email, follow these steps:
+1. 
+2. Create the HTML template and add it to [src/main/resources/freemarker](src/main/resources/freemarker).
+2. Add a new entry to [EmailType](src/main/java/org/broadinstitute/consent/http/enumeration/EmailType.java) that references that file.
+3. Add a new [MailMessage](src/main/java/org/broadinstitute/consent/http/mail/message/MailMessage.java) subclass that references this EmailType and implements methods to provide data for the freemarker template and database operation
+4. Add a method to [EmailService](src/main/java/org/broadinstitute/consent/http/service/EmailService.java) that creates this message and passes it to sendMessage().
