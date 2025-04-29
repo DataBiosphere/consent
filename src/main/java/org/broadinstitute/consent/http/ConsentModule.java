@@ -304,8 +304,7 @@ public class ConsentModule extends AbstractModule {
         providesDacDAO(),
         providesSendGridAPI(),
         providesFreeMarkerTemplateHelper(),
-        config.getServicesConfiguration().getLocalURL()
-    );
+        config);
   }
 
   @Provides
