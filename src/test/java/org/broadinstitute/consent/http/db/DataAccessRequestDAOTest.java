@@ -85,6 +85,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertFalse(newDars.isEmpty());
     assertEquals(1, newDars.size());
     assertTrue(newDars.get(0).getDraft());
+    assertNull(newDars.get(0).getDarCode());
   }
 
   @Test
@@ -98,6 +99,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDraftsByUserId(dar.getUserId());
     assertFalse(newDars.isEmpty());
     assertEquals(1, newDars.size());
+    assertNull(newDars.get(0).getDarCode());
 
     List<DataAccessRequest> missingDars = dataAccessRequestDAO.findAllDraftsByUserId(0);
     assertTrue(missingDars.isEmpty());
@@ -113,6 +115,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertFalse(newDars.isEmpty());
     assertEquals(collection.getDars().size(), newDars.size());
     assertEquals(newDars.get(0).getReferenceId(), dar.getReferenceId());
+    assertNotNull(newDars.get(0).getDarCode());
 
     List<DataAccessRequest> missingDars = dataAccessRequestDAO.findAllDarsByUserId(0);
     assertTrue(missingDars.isEmpty());
@@ -144,6 +147,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     List<DataAccessRequest> draftDars2 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
     assertFalse(draftDars2.isEmpty());
     assertEquals(1, draftDars2.size());
+    assertNotNull(draftDars2.get(0).getDarCode());
   }
 
   @Test
@@ -162,6 +166,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Timestamp expectedTimestamp = new Timestamp(
         dar.getSubmissionDate().getTime() + DataAccessRequest.EXPIRATION_DURATION_MILLIS);
     assertEquals(expectedTimestamp, dar.getExpiresAt());
+    assertNotNull(dar.getDarCode());
   }
 
   @Test
@@ -240,6 +245,9 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertNotNull(dars);
     assertFalse(dars.isEmpty());
     assertEquals(3, dars.size());
+    dars.forEach(dar->{
+      assertNotNull(dar.getDarCode());
+    });
   }
 
   @Test
@@ -480,6 +488,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
     List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllDataAccessRequests();
     assertEquals(1, returnedDARs.size());
+    assertNotNull(returnedDARs.get(0).getDarCode());
   }
 
   // See: https://broadworkbench.atlassian.net/browse/DUOS-2182
@@ -522,6 +531,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataset1.getDatasetId());
     assertEquals(1, dars.size());
     assertTrue(dars.get(0).getDatasetIds().contains(dataset1.getDatasetId()));
+    assertEquals(darCode1, dars.get(0).getDarCode());
   }
 
   @Test
@@ -918,6 +928,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     dars.forEach((dar) -> {
       assertEquals(userOne.getUserId(), dar.getUserId());
       assertEquals(darOne.getReferenceId(), dar.getReferenceId());
+      assertNotNull(dar.getDarCode());
     });
   }
 
@@ -954,6 +965,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
       assertNotNull(dar.getUserId());
       assertNotNull(dar.getReferenceId());
       assertNotNull(dar.getExpiresAt());
+      assertNotNull(dar.getDarCode());
     });
   }
 
@@ -1022,6 +1034,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     dars.forEach((dar) -> {
       assertEquals(userTwo.getUserId(), dar.getUserId());
       assertEquals(darTwo.getReferenceId(), dar.getReferenceId());
+      assertNotNull(dar.getDarCode());
     });
 
     List<DataAccessRequest> expiredDars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(

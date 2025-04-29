@@ -260,7 +260,7 @@ public class EmailService implements ConsentLogger {
       try {
         String referenceId = expiredDar.getReferenceId();
         User user = userDAO.findUserById(expiredDar.getUserId());
-        String darCode = collectionDAO.findDARCollectionByCollectionId(expiredDar.getCollectionId()).getDarCode();
+        String darCode = expiredDar.getDarCode();
         String userName = user.getDisplayName();
         if (user.getEmail() == null) {
           // Do not throw here.  Log information about the DAR since this will continue

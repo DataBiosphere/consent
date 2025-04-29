@@ -43,6 +43,9 @@ public class DataAccessRequest {
   public DataAccessRequestData data;
 
   @JsonProperty
+  public String darCode;
+
+  @JsonProperty
   public Boolean draft = true;
 
   @JsonProperty
@@ -237,6 +240,14 @@ public class DataAccessRequest {
     }
   }
 
+  public void setDarCode(String darCode) {
+    this.darCode = darCode;
+  }
+
+  public String getDarCode() {
+    return darCode;
+  }
+
   /**
    * Merges the DAR and the DAR Data into a single Map Ignores a series of deprecated keys Null
    * values are ignored by default
@@ -347,6 +358,9 @@ public class DataAccessRequest {
     }
     if (Objects.nonNull(dar.getParentId())) {
       copy.put("parentId", dar.getParentId());
+    }
+    if (Objects.nonNull(dar.getDarCode())) {
+      copy.put("darCode", dar.getDarCode());
     }
     return copy;
   }
