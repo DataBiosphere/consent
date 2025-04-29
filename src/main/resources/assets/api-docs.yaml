@@ -529,7 +529,21 @@ paths:
           description: Email successfully sent
         500:
           description: Server error.
-
+  /api/emailNotifier/darExpirationNotices:
+    get:
+      summary: Send Expiration Notices
+      description: Send expiration notices for DARs that meet criteria
+      tags:
+        - Notifier
+      responses:
+        200:
+          description: Notification process started.
+        401:
+          description: Not authenticated.
+        403:
+          description: Not authorized.
+        500:
+          description: Server error.
   /api/institutions:
     $ref: './paths/institutions.yaml'
   /api/institutions/{id}:

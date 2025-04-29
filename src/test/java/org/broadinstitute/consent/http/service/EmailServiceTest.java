@@ -27,6 +27,7 @@ import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
+import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
@@ -45,8 +46,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -61,32 +60,26 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class EmailServiceTest {
 
+  private static final String serverUrl = "http://localhost:8000/#/";
+  FreeMarkerTemplateHelper templateHelper;
   private EmailService service;
-
   @Mock
   private DarCollectionDAO collectionDAO;
-
   @Mock
   private VoteDAO voteDAO;
-
   @Mock
   private ElectionDAO electionDAO;
-
   @Mock
   private UserDAO userDAO;
-
   @Mock
   private MailMessageDAO emailDAO;
   @Mock
   private DatasetDAO datasetDAO;
   @Mock
   private DacDAO dacDAO;
+  @Mock
+  private DataAccessRequestDAO dataAccessRequestDAO;
   private SendGridAPI sendGridAPI;
-
-  FreeMarkerTemplateHelper templateHelper;
-
-
-  private static final String serverUrl = "http://localhost:8000/#/";
 
   private void initService() {
     boolean serviceActive = false;
@@ -109,6 +102,7 @@ class EmailServiceTest {
         emailDAO,
         datasetDAO,
         dacDAO,
+        dataAccessRequestDAO,
         sendGridAPI,
         templateHelper,
         serverUrl);
@@ -174,7 +168,6 @@ class EmailServiceTest {
     when(userDAO.describeUsersByRoleAndEmailPreference(any(), any())).thenReturn(List.of());
     when(userDAO.findUsersForDatasetsByRole(any(), any())).thenReturn(Set.of(chairperson));
 
-
     try {
       service.sendNewDARCollectionMessage(collection.getDarCollectionId());
     } catch (Exception e) {
@@ -213,7 +206,8 @@ class EmailServiceTest {
     dataset.setAlias(dataset.getDatasetId());
     dataset.setDatasetIdentifier();
     dataset.setDacId(dacId);
-    dataset.setName(String.format("Dataset %s-%s", RandomStringUtils.randomAlphabetic(10), dataset.getDatasetId()));
+    dataset.setName(String.format("Dataset %s-%s", RandomStringUtils.randomAlphabetic(10),
+        dataset.getDatasetId()));
     return dataset;
   }
 
@@ -375,7 +369,8 @@ class EmailServiceTest {
     initService();
 
     try {
-      service.sendNewDAAUploadSOMessage(signingOfficial.getDisplayName(), signingOfficial.getEmail(),
+      service.sendNewDAAUploadSOMessage(signingOfficial.getDisplayName(),
+          signingOfficial.getEmail(),
           dac.getName(), previousDaaName, newDaaName, user.getUserId());
     } catch (Exception e) {
       fail("Should not fail sending message: " + e);
