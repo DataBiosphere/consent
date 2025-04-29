@@ -512,12 +512,13 @@ class EmailServiceTest {
     user.setEmail("jd@somewhere");
     String darCode = "DAR-12345";
     Integer otherUserId = 456;
+    String referenceId = UUID.randomUUID().toString();
     when(templateHelper.getTemplate(EmailType.DAR_EXPIRED.templateName)).thenReturn(mock());
 
-    service.sendDarExpiredMessage(user, darCode, otherUserId);
+    service.sendDarExpiredMessage(user, darCode, otherUserId, referenceId);
     verify(sendGridAPI).sendMessage(any(), eq(user.getEmail()));
     verify(emailDAO).insert(
-        eq(darCode),
+        eq(referenceId),
         isNull(),
         eq(otherUserId),
         eq(EmailType.DAR_EXPIRED.getTypeInt()),

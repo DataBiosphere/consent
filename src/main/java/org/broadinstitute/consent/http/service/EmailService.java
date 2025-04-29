@@ -260,6 +260,7 @@ public class EmailService implements ConsentLogger {
       try {
         String referenceId = expiredDar.getReferenceId();
         User user = userDAO.findUserById(expiredDar.getUserId());
+        String darCode = collectionDAO.findDARCollectionByCollectionId(expiredDar.getCollectionId()).getDarCode();
         String userName = user.getDisplayName();
         if (user.getEmail() == null) {
           // Do not throw here.  Log information about the DAR since this will continue
@@ -268,9 +269,7 @@ public class EmailService implements ConsentLogger {
           logWarn(String.format(noEmailForUserToWarnFoundLogTemplate,
               expiredDar.getUserId(), userName, referenceId));
         } else {
-          //build an expiration notice email to the user
-          //send it.
-          //save the response.
+          sendDarExpiredMessage(user, darCode, user.getUserId(), referenceId);
         }
       } catch (Exception e) {
         logException(e);
@@ -397,9 +396,10 @@ public class EmailService implements ConsentLogger {
    * @param researcher the researcher to send the message to
    * @param darCode the data access request code that's expired
    * @param userId the user id of the person sending the message
+   * @param referenceId the data access request reference id that's expired
    */
-  public void sendDarExpiredMessage(User researcher, String darCode, Integer userId)
+  public void sendDarExpiredMessage(User researcher, String darCode, Integer userId, String referenceId)
       throws TemplateException, IOException {
-    sendMessage(new DarExpiredMessage(researcher, darCode), userId);
+    sendMessage(new DarExpiredMessage(researcher, darCode, referenceId), userId);
   }
 }
