@@ -299,8 +299,7 @@ public class ConsentModule extends AbstractModule {
         providesDataAccessRequestDAO(),
         providesSendGridAPI(),
         providesFreeMarkerTemplateHelper(),
-        config.getServicesConfiguration().getLocalURL()
-    );
+        config);
   }
 
   @Provides

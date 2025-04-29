@@ -1,25 +1,25 @@
 package org.broadinstitute.consent.http.mail.message;
 
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import freemarker.template.Template;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
-import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class NewDARRequestMessageTest {
+class DataCustodianApprovalMessageTest {
 
   private FreeMarkerTemplateHelper helper;
 
@@ -32,43 +32,37 @@ class NewDARRequestMessageTest {
   }
 
   @Test
-  void testGetNewDARRequestTemplate() throws Exception {
+  void testGetDataCustodianApprovalTemplate() throws Exception {
     User toUser = new User();
-    toUser.setDisplayName("Admin");
+    toUser.setDisplayName("Data Custodian");
+    String datasetName = "dataset name";
+    List<DatasetMailDTO> datasetMailDTOs = List.of(new DatasetMailDTO(datasetName, "dataset id"));
+    var serverUrl = "http://localhost:8000/#/";
+    String darCode = "Dar Code";
 
-    Dac dac = new Dac();
-    dac.setDacId(1);
-    dac.setName("DAC-01");
-
-    Dataset d1 = new Dataset();
-    d1.setDacId(1);
-    d1.setDatasetName("Dataset-01");
-    d1.setDatasetId(1);
-    d1.setAlias(1);
-    d1.setDatasetIdentifier();
-
-    var dacDatasetGroups = Map.of(dac.getName(), List.of(d1.getDatasetIdentifier()));
-    String darCode = "DAR-01";
-    var message = new NewDARRequestMessage(toUser, darCode, dacDatasetGroups, "ResearcherName");
+    var message =
+        new DataCustodianApprovalMessage(
+            toUser, darCode, datasetMailDTOs, "Depositor", "researcher@email.com");
     assertEquals(darCode, message.getEntityReferenceId());
-    assertEquals(
-        "Create an election for Data Access Request id: DAR-01.", message.createSubject());
+    assertEquals("Dar Code has been approved by the DAC", message.createSubject());
 
     Template template = helper.getTemplate(message.getTemplateName());
     Writer out = new StringWriter();
-    String serverUrl = "http://testServerUrl";
     template.process(message.createModel(serverUrl), out);
     String templateString = out.toString();
     Document parsedTemplate = Jsoup.parse(templateString);
 
-    assertEquals("Broad Data Use Oversight System - New DAR submitted to your DAC",
-        parsedTemplate.title());
     assertEquals(
-        "Hello Admin,",
-        Objects.requireNonNull(parsedTemplate.getElementById("userName")).text());
-    assertTrue(templateString.contains(darCode));
-    assertTrue(templateString.contains(serverUrl));
-    assertTrue(templateString.contains(dac.getName()));
-    assertTrue(templateString.contains(d1.getDatasetIdentifier()));
+        "Broad Data Use Oversight System - Researcher - A researcher was approved for your dataset",
+        parsedTemplate.title());
+    assertTrue(
+        Objects.requireNonNull(parsedTemplate.getElementById("content"))
+            .text()
+            .contains("researcher@email.com was approved by the DAC for the following datasets"));
+
+    assertTrue(templateString.contains(datasetName));
+
+    // no unspecified values
+    assertFalse(templateString.contains("${"));
   }
 }

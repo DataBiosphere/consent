@@ -3,11 +3,15 @@ package org.broadinstitute.consent.http.service;
 import com.google.common.collect.Streams;
 import com.google.inject.Inject;
 import com.sendgrid.Response;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Content;
+import com.sendgrid.helpers.mail.objects.Email;
+import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.io.Writer;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -19,10 +23,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -35,6 +39,19 @@ import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
+import org.broadinstitute.consent.http.mail.message.DaaRequestMessage;
+import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
+import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
+import org.broadinstitute.consent.http.mail.message.DatasetSubmittedMessage;
+import org.broadinstitute.consent.http.mail.message.MailMessage;
+import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
+import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
+import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
+import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
+import org.broadinstitute.consent.http.mail.message.NewResearcherLibraryRequestMessage;
+import org.broadinstitute.consent.http.mail.message.ReminderMessage;
+import org.broadinstitute.consent.http.mail.message.ResearcherApprovedMessage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -44,7 +61,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
-import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
 public class EmailService implements ConsentLogger {
@@ -59,7 +75,8 @@ public class EmailService implements ConsentLogger {
   private final DacDAO dacDAO;
   private final FreeMarkerTemplateHelper templateHelper;
   private final SendGridAPI sendGridAPI;
-  private final String SERVER_URL;
+  private final String fromAccount;
+  private final String serverUrl;
 
   @Inject
   public EmailService(
@@ -73,8 +90,7 @@ public class EmailService implements ConsentLogger {
       DataAccessRequestDAO dataAccessRequestDAO,
       SendGridAPI sendGridAPI,
       FreeMarkerTemplateHelper helper,
-      String serverUrl
-  ) {
+      ConsentConfiguration config) {
     this.collectionDAO = collectionDAO;
     this.userDAO = userDAO;
     this.electionDAO = electionDAO;
@@ -85,7 +101,8 @@ public class EmailService implements ConsentLogger {
     this.dacDAO = dacDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.sendGridAPI = sendGridAPI;
-    this.SERVER_URL = serverUrl;
+    this.serverUrl = config.getServicesConfiguration().getLocalURL();
+    this.fromAccount = config.getMailConfiguration().getGoogleAccount();
   }
 
   /**
@@ -98,7 +115,7 @@ public class EmailService implements ConsentLogger {
       @Nullable Integer voteId,
       Integer userId,
       EmailType emailType,
-      Writer template) {
+      String content) {
     Instant now = Instant.now();
     Instant dateSent = (Objects.nonNull(response) && response.getStatusCode() < 400) ? now : null;
     emailDAO.insert(
@@ -107,18 +124,35 @@ public class EmailService implements ConsentLogger {
         userId,
         emailType.getTypeInt(),
         dateSent,
-        template.toString(),
+        content,
         Objects.nonNull(response) ? response.getBody() : null,
         Objects.nonNull(response) ? response.getStatusCode() : null,
         now);
   }
 
-  public List<MailMessage> fetchEmailMessagesByType(EmailType emailType, Integer limit,
+  private void sendMessage(MailMessage mailMessage, Integer userId) throws IOException, TemplateException {
+    Writer out = new StringWriter();
+    Template template = templateHelper.getTemplate(mailMessage.getTemplateName());
+    template.process(mailMessage.createModel(serverUrl), out);
+    String content = out.toString();
+    Mail message = new Mail(new Email(fromAccount), mailMessage.createSubject(),
+        new Email(mailMessage.toUser.getEmail()), new Content("text/html", content));
+    Response response = sendGridAPI.sendMessage(message, mailMessage.toUser.getEmail());
+    saveEmailAndResponse(
+        response,
+        mailMessage.getEntityReferenceId(),
+        mailMessage.getVoteId(),
+        userId,
+        mailMessage.emailType,
+        content);
+  }
+
+  public List<org.broadinstitute.consent.http.models.mail.MailMessage> fetchEmailMessagesByType(EmailType emailType, Integer limit,
       Integer offset) {
     return emailDAO.fetchMessagesByType(emailType.getTypeInt(), limit, offset);
   }
 
-  public List<MailMessage> fetchEmailMessagesByCreateDate(Date start, Date end, Integer limit,
+  public List<org.broadinstitute.consent.http.models.mail.MailMessage> fetchEmailMessagesByCreateDate(Date start, Date end, Integer limit,
       Integer offset) {
     return emailDAO.fetchMessagesByCreateDate(start, end, limit, offset);
   }
@@ -194,33 +228,9 @@ public class EmailService implements ConsentLogger {
   }
 
   private void sendNewDARRequestEmail(
-      User user,
-      Map<String, List<String>> sendList,
-      String researcherName,
-      String darCode
-  ) throws TemplateException, IOException {
-    Writer template = templateHelper.getNewDARRequestTemplate(
-        SERVER_URL,
-        user.getDisplayName(),
-        sendList,
-        researcherName,
-        darCode
-    );
-    Map<String, String> data = retrieveForNewDAR(darCode, user);
-    Optional<Response> response = sendGridAPI.sendNewDARRequests(
-        user.getEmail(),
-        data.get("entityId"),
-        data.get("electionType"),
-        template
-    );
-    saveEmailAndResponse(
-        response.orElse(null),
-        darCode,
-        null,
-        user.getUserId(),
-        EmailType.NEW_DAR,
-        template
-    );
+      User user, Map<String, List<String>> sendList, String researcherName, String darCode)
+      throws TemplateException, IOException {
+    sendMessage(new NewDARRequestMessage(user, darCode, sendList, researcherName), user.getUserId());
   }
 
   public void sendExpirationNotices() {
@@ -277,25 +287,9 @@ public class EmailService implements ConsentLogger {
     DarCollection collection = collectionDAO.findDARCollectionByReferenceId(
         election.getReferenceId());
     User user = findUserById(vote.getUserId());
-    String voteUrl = SERVER_URL + "dar_collection/%d".formatted(collection.getDarCollectionId());
-    Writer template = templateHelper.getReminderTemplate(
-        user.getDisplayName(),
-        collection.getDarCode(),
-        voteUrl);
-    Optional<Response> response = sendGridAPI.sendReminderMessage(
-        user.getEmail(),
-        collection.getDarCode(),
-        election.getElectionType(),
-        template);
+    String voteUrl = serverUrl + "dar_collection/%d".formatted(collection.getDarCollectionId());
+    sendMessage(new ReminderMessage(user, vote, collection.getDarCode(), election.getElectionType(), voteUrl), user.getUserId());
     voteDAO.updateVoteReminderFlag(voteId, true);
-    saveEmailAndResponse(
-        response.orElse(null),
-        String.valueOf(vote.getElectionId()),
-        voteId,
-        user.getUserId(),
-        EmailType.REMINDER,
-        template
-    );
   }
 
   public void sendDarNewCollectionElectionMessage(List<User> users, DarCollection darCollection)
@@ -303,187 +297,80 @@ public class EmailService implements ConsentLogger {
     String electionType = "Data Access Request";
     String darCode = darCollection.getDarCode();
     for (User user : users) {
-      Writer template = templateHelper.getNewCaseTemplate(user.getDisplayName(), electionType,
-          darCode, SERVER_URL);
-      Optional<Response> response = sendGridAPI.sendNewCaseMessage(user.getEmail(), darCode,
-          electionType, template);
-      saveEmailAndResponse(
-          response.orElse(null),
-          darCode,
-          null,
-          user.getUserId(),
-          EmailType.NEW_CASE,
-          template
-      );
+      sendMessage(new NewCaseMessage(user, darCode, electionType), user.getUserId());
     }
   }
 
-  public void sendResearcherDarApproved(String darCode, Integer researcherId,
-      List<DatasetMailDTO> datasets, String dataUseRestriction) throws Exception {
+  public void sendResearcherDarApproved(
+      String darCode,
+      Integer researcherId,
+      List<DatasetMailDTO> datasets,
+      String dataUseRestriction)
+      throws Exception {
     User user = userDAO.findUserById(researcherId);
-    Writer template = templateHelper.getResearcherDarApprovedTemplate(darCode,
-        user.getDisplayName(), datasets, dataUseRestriction, user.getEmail());
-    Optional<Response> response = sendGridAPI.sendNewResearcherApprovedMessage(user.getEmail(),
-        template, darCode);
-    saveEmailAndResponse(
-        response.orElse(null),
-        darCode,
-        null,
-        user.getUserId(),
-        EmailType.RESEARCHER_DAR_APPROVED,
-        template
-    );
+    sendMessage(
+        new ResearcherApprovedMessage(user, darCode, datasets, dataUseRestriction), researcherId);
   }
 
-  public void sendDataCustodianApprovalMessage(User custodian,
+  public void sendDataCustodianApprovalMessage(
+      User custodian,
       String darCode,
       List<DatasetMailDTO> datasets,
       String dataDepositorName,
-      String researcherEmail) throws Exception {
-    Writer template = templateHelper.getDataCustodianApprovalTemplate(datasets,
-        dataDepositorName, darCode, researcherEmail);
-    Optional<Response> response = sendGridAPI.sendDataCustodianApprovalMessage(custodian.getEmail(),
-        darCode, template);
-    saveEmailAndResponse(
-        response.orElse(null),
-        darCode,
-        null,
-        custodian.getUserId(),
-        EmailType.DATA_CUSTODIAN_APPROVAL,
-        template
-    );
+      String researcherEmail)
+      throws Exception {
+    sendMessage(
+        new DataCustodianApprovalMessage(
+            custodian, darCode, datasets, dataDepositorName, researcherEmail),
+        custodian.getUserId());
   }
 
-  public void sendDatasetSubmittedMessage(User dacChair,
-      User dataSubmitter,
-      String dacName,
-      String datasetName) throws Exception {
-    Writer template = templateHelper.getDatasetSubmittedTemplate(dacChair.getDisplayName(),
-        dataSubmitter.getDisplayName(),
-        datasetName,
-        dacName);
-    Optional<Response> response = sendGridAPI.sendDatasetSubmittedMessage(dacChair.getEmail(),
-        template);
-    saveEmailAndResponse(
-        response.orElse(null),
-        datasetName,
-        null,
-        dacChair.getUserId(),
-        EmailType.NEW_DATASET,
-        template
-    );
+  public void sendDatasetSubmittedMessage(
+      User dacChair, User dataSubmitter, String dacName, String datasetName) throws Exception {
+    sendMessage(
+        new DatasetSubmittedMessage(dacChair, dataSubmitter.getDisplayName(), datasetName, dacName),
+        dacChair.getUserId());
   }
 
-  public void sendDatasetApprovedMessage(User user,
-      String dacName,
-      String datasetName) throws Exception {
-    Writer template = templateHelper.getDatasetApprovedTemplate(user.getDisplayName(), datasetName,
-        dacName);
-    Optional<Response> response = sendGridAPI.sendDatasetApprovedMessage(user.getEmail(), template);
-    saveEmailAndResponse(
-        response.orElse(null),
-        datasetName,
-        null,
-        user.getUserId(),
-        EmailType.NEW_CASE,
-        template
-    );
+  public void sendDatasetApprovedMessage(User user, String dacName, String datasetName)
+      throws Exception {
+    sendMessage(new DatasetApprovedMessage(user, dacName, datasetName), user.getUserId());
   }
 
-  public void sendDatasetDeniedMessage(User user,
-      String dacName,
-      String datasetName,
-      String dacEmail) throws Exception {
-    Writer template = templateHelper.getDatasetDeniedTemplate(user.getDisplayName(), datasetName,
-        dacName, dacEmail);
-    Optional<Response> response = sendGridAPI.sendDatasetDeniedMessage(user.getEmail(), template);
-    saveEmailAndResponse(
-        response.orElse(null),
-        datasetName,
-        null,
-        user.getUserId(),
-        EmailType.NEW_CASE,
-        template
-    );
+  public void sendDatasetDeniedMessage(
+      User user, String dacName, String datasetName, String dacEmail) throws Exception {
+    sendMessage(new DatasetDeniedMessage(user, dacName, datasetName, dacEmail), user.getUserId());
   }
 
-  public void sendNewResearcherMessage(User researcher,
-      User signingOfficial) throws Exception {
-    Writer template = templateHelper.getNewResearcherLibraryRequestTemplate(
-        researcher.getDisplayName(), this.SERVER_URL);
-    Optional<Response> response = sendGridAPI.sendNewResearcherLibraryRequestMessage(
-        signingOfficial.getEmail(), template);
-    saveEmailAndResponse(
-        response.orElse(null),
-        researcher.getUserId().toString(),
-        null,
-        researcher.getUserId(),
-        EmailType.NEW_RESEARCHER,
-        template
-    );
+  public void sendNewResearcherMessage(User researcher, User signingOfficial) throws Exception {
+    sendMessage(new NewResearcherLibraryRequestMessage(signingOfficial, researcher), researcher.getUserId());
   }
 
   public void sendDaaRequestMessage(
-      String signingOfficialName,
-      String signingOfficialEmail,
-      String userName,
-      String daaName,
-      Integer daaId,
-      Integer userId) throws Exception {
-    Writer template = templateHelper.getDaaRequestTemplate(signingOfficialName, userName, daaName,
-        this.SERVER_URL);
-    Optional<Response> response = sendGridAPI.sendDaaRequestMessage(signingOfficialEmail, template,
-        daaId.toString());
-    saveEmailAndResponse(
-        response.orElse(null),
-        daaId.toString(),
-        null,
-        userId,
-        EmailType.NEW_DAA_REQUEST,
-        template
-    );
+      User signingOfficial, User requestUser, String daaName, Integer daaId) throws Exception {
+    sendMessage(
+        new DaaRequestMessage(signingOfficial, requestUser, daaName, daaId),
+        requestUser.getUserId());
   }
 
   public void sendNewDAAUploadSOMessage(
-      String signingOfficialName,
-      String signingOfficialEmail,
+      User signingOfficial,
       String dacName,
       String previousDaaName,
       String newDaaName,
-      Integer userId) throws Exception {
-    Writer template = templateHelper.getNewDaaUploadSOTemplate(signingOfficialName, dacName,
-        newDaaName, previousDaaName, this.SERVER_URL);
-    Optional<Response> response = sendGridAPI.sendNewDAAUploadSOMessage(signingOfficialEmail,
-        template, dacName);
-    saveEmailAndResponse(
-        response.orElse(null),
-        dacName,
-        null,
-        userId,
-        EmailType.NEW_DAA_UPLOAD_SO,
-        template
-    );
+      Integer userId)
+      throws Exception {
+    sendMessage(
+        new NewDAAUploadSOMessage(signingOfficial, dacName, previousDaaName, newDaaName), userId);
   }
 
   public void sendNewDAAUploadResearcherMessage(
-      String researcherUserName,
-      String researcherEmail,
-      String dacName,
-      String previousDaaName,
-      String newDaaName,
-      Integer userId) throws Exception {
-    Writer template = templateHelper.getNewDaaUploadResearcherTemplate(researcherUserName, dacName,
-        newDaaName, previousDaaName, this.SERVER_URL);
-    Optional<Response> response = sendGridAPI.sendNewDAAUploadResearcherMessage(researcherEmail,
-        template, dacName);
-    saveEmailAndResponse(
-        response.orElse(null),
-        dacName,
-        null,
-        userId,
-        EmailType.NEW_DAA_UPLOAD_RESEARCHER,
-        template
-    );
+      User researcher, String dacName, String previousDaaName, String newDaaName, Integer userId)
+      throws Exception {
+    sendMessage(
+        new NewDAAUploadResearcherMessage(
+            researcher, dacName, previousDaaName, newDaaName),
+        userId);
   }
 
   private User findUserById(Integer id) throws IllegalArgumentException {
@@ -493,15 +380,4 @@ public class EmailService implements ConsentLogger {
     }
     return user;
   }
-
-  private Map<String, String> retrieveForNewDAR(String dataAccessRequestId, User user) {
-    Map<String, String> dataMap = new HashMap<>();
-    dataMap.put("userName", user.getDisplayName());
-    dataMap.put("electionType", "New Data Access Request Case");
-    dataMap.put("entityId", dataAccessRequestId);
-    dataMap.put("dacUserId", user.getUserId().toString());
-    dataMap.put("email", user.getEmail());
-    return dataMap;
-  }
-
 }

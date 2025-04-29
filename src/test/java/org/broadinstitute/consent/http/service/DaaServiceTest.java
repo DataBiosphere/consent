@@ -12,6 +12,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
@@ -226,12 +227,10 @@ class DaaServiceTest {
     when(daa.getFile()).thenReturn(file);
     when(daaDAO.findById(any())).thenReturn(daa);
 
-    doNothing().when(emailService).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
-
     initService();
 
     assertDoesNotThrow(() -> service.sendDaaRequestEmails(user, 1));
-    verify(emailService, times(1)).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
+    verify(emailService).sendDaaRequestMessage(any(), any(), any(), any());
   }
 
   @Test
@@ -258,12 +257,10 @@ class DaaServiceTest {
     when(daa.getFile()).thenReturn(file);
     when(daaDAO.findById(any())).thenReturn(daa);
 
-    doNothing().when(emailService).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
-
     initService();
 
     assertDoesNotThrow(() -> service.sendDaaRequestEmails(user, 1));
-    verify(emailService, times(2)).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
+    verify(emailService, times(2)).sendDaaRequestMessage(any(), any(), any(), any());
   }
 
   @Test
@@ -299,8 +296,8 @@ class DaaServiceTest {
     when(userService.getUsersByDaaId(any())).thenReturn(List.of(researcher, researcher2));
     when(userService.findSOsByInstitutionId(any())).thenReturn(List.of(signingOfficial, signingOfficial2));
     assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
-    verify(emailService, times(2)).sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any(), any());
-    verify(emailService, times(2)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any(), any());
+    verify(emailService, times(2)).sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any());
+    verify(emailService, times(2)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any());
   }
 
   @Test
@@ -331,8 +328,8 @@ class DaaServiceTest {
     when(userService.getUsersByDaaId(any())).thenReturn(List.of(researcher));
     when(userService.findSOsByInstitutionId(any())).thenReturn(List.of(signingOfficial, signingOfficial2));
     assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
-    verify(emailService, times(1)).sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any(), any());
-    verify(emailService, times(2)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any(), any());
+    verify(emailService, times(1)).sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any());
+    verify(emailService, times(2)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any());
   }
 
   @Test
@@ -358,8 +355,7 @@ class DaaServiceTest {
 
     when(userService.getUsersByDaaId(any())).thenReturn(List.of());
     assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
-    verify(emailService, times(0)).sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any(), any());
-    verify(emailService, times(0)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any(), any());
+    verifyNoInteractions(emailService);
   }
 
   @Test
@@ -394,12 +390,10 @@ class DaaServiceTest {
     when(daa.getFile()).thenReturn(file);
     when(daaDAO.findById(any())).thenReturn(daa);
 
-    doNothing().when(emailService).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
-
     initService();
 
     assertDoesNotThrow(() -> service.sendDaaRequestEmails(user, 1));
-    verify(emailService, times(1)).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
+    verify(emailService).sendDaaRequestMessage(any(), any(), any(), any());
   }
 
   @Test
@@ -426,12 +420,10 @@ class DaaServiceTest {
     when(daa.getFile()).thenReturn(file);
     when(daaDAO.findById(any())).thenReturn(daa);
 
-    doNothing().when(emailService).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
-
     initService();
 
     assertDoesNotThrow(() -> service.sendDaaRequestEmails(user, 1));
-    verify(emailService, times(2)).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
+    verify(emailService, times(2)).sendDaaRequestMessage(any(), any(), any(), any());
   }
 
   @Test
