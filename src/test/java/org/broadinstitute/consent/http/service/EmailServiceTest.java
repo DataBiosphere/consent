@@ -3,13 +3,21 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.spy;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.sendgrid.Response;
+import com.sendgrid.helpers.mail.Mail;
+import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -20,7 +28,6 @@ import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -47,6 +54,7 @@ import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -79,24 +87,18 @@ class EmailServiceTest {
   @Mock
   private SendGridAPI sendGridAPI;
 
+  @Mock
   private FreeMarkerTemplateHelper templateHelper;
 
   private static final String SERVER_URL = "http://localhost:8000/#/";
+  private static final String FROM = "from@duos";
 
   @BeforeEach
   void initService() {
-    boolean serviceActive = false;
-
     ConsentConfiguration config = new ConsentConfiguration();
     MailConfiguration mConfig = config.getMailConfiguration();
-    mConfig.setActivateEmailNotifications(serviceActive);
-    mConfig.setGoogleAccount("");
-    mConfig.setSendGridApiKey("");
+    mConfig.setGoogleAccount(FROM);
 
-    FreeMarkerConfiguration fmConfig = new FreeMarkerConfiguration();
-    fmConfig.setDefaultEncoding("UTF-8");
-    fmConfig.setTemplateDirectory("/freemarker");
-    templateHelper = spy(new FreeMarkerTemplateHelper(fmConfig));
     ServicesConfiguration servicesConfiguration = config.getServicesConfiguration();
     servicesConfiguration.setLocalURL(SERVER_URL);
     service = new EmailService(
@@ -114,6 +116,85 @@ class EmailServiceTest {
   }
 
   @Test
+  void sendMessage() throws Exception {
+    String userEmail = "user@duos";
+    User user = new User();
+    user.setEmail(userEmail);
+    String subject = "subject";
+    var model = Map.of("key", "value");
+    String entityReferenceId = "entityReferenceId";
+    Integer userId = 1234;
+    Integer voteId = 4567;
+    when(templateHelper.getTemplate(EmailType.COLLECT.templateName)).thenReturn(mock());
+    var message = new org.broadinstitute.consent.http.mail.message.MailMessage(user, EmailType.COLLECT) {
+      @Override
+      public String createSubject() {
+        return subject;
+      }
+
+      @Override
+      public Object createModel(String serverUrl) {
+        return model;
+      }
+
+      @Override
+      public String getEntityReferenceId() {
+        return entityReferenceId;
+      }
+
+      @Override
+      public Integer getVoteId() {
+        return voteId;
+      }
+    };
+    Template template = mock();
+    when(templateHelper.getTemplate(EmailType.COLLECT.templateName)).thenReturn(template);
+    Response response = new Response();
+    response.setStatusCode(200);
+    response.setBody("body");
+    when(sendGridAPI.sendMessage(any(), any())).thenReturn(response);
+    String emailText = "emailText";
+    doNothing()
+        .when(template)
+        .process(
+            eq(model),
+            argThat(
+                writer -> {
+                  try {
+                    writer.append(emailText);
+                  } catch (IOException e) {
+                    throw new RuntimeException(e);
+                  }
+                  return true;
+                }));
+
+    Instant fixedInstant = Instant.now();
+    try (var mockedStatic = mockStatic(Instant.class)) {
+      mockedStatic.when(Instant::now).thenReturn(fixedInstant);
+      service.sendMessage(message, userId);
+    }
+
+    var captor = ArgumentCaptor.forClass(Mail.class);
+    verify(sendGridAPI).sendMessage(captor.capture(), eq(user.getEmail()));
+    var mail = captor.getValue();
+    assertEquals(FROM, mail.getFrom().getEmail());
+    assertEquals(user.getEmail(), mail.getPersonalization().get(0).getTos().get(0).getEmail());
+    assertEquals(subject, mail.getSubject());
+
+    verify(emailDAO)
+        .insert(
+            entityReferenceId,
+            voteId,
+            1234,
+            EmailType.COLLECT.getTypeInt(),
+            fixedInstant,
+            emailText,
+            response.getBody(),
+            response.getStatusCode(),
+            fixedInstant);
+  }
+
+  @Test
   void testSendNewResearcherEmail() throws Exception {
     User user = new User();
     user.setUserId(1234);
@@ -122,10 +203,11 @@ class EmailServiceTest {
     User so = new User();
     user.setEmail("fake_email@asdf.com");
 
+    when(templateHelper.getTemplate(EmailType.NEW_RESEARCHER.templateName)).thenReturn(mock());
+
     service.sendNewResearcherMessage(user, so);
 
     verify(sendGridAPI).sendMessage(any(), any());
-    verify(templateHelper).getTemplate(EmailType.NEW_RESEARCHER.templateName);
     verify(emailDAO).insert(
         eq("1234"),
         eq(null),
@@ -166,12 +248,11 @@ class EmailServiceTest {
     when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1, d2));
     when(userDAO.describeUsersByRoleAndEmailPreference(any(), any())).thenReturn(List.of());
     when(userDAO.findUsersForDatasetsByRole(any(), any())).thenReturn(Set.of(chairperson));
-
+    when(templateHelper.getTemplate(EmailType.NEW_DAR.templateName)).thenReturn(mock());
 
     service.sendNewDARCollectionMessage(collection.getDarCollectionId());
 
     verify(sendGridAPI).sendMessage(any(), any());
-    verify(templateHelper).getTemplate(EmailType.NEW_DAR.templateName);
     verify(emailDAO).insert(
         eq("01"),
         eq(null),
@@ -227,11 +308,11 @@ class EmailServiceTest {
 
     String dacName = "DAC-123";
     String datasetName = "testDataset";
+    when(templateHelper.getTemplate(EmailType.NEW_DATASET.templateName)).thenReturn(mock());
 
     service.sendDatasetSubmittedMessage(dacChair, dataSubmitter, dacName, datasetName);
 
     verify(sendGridAPI).sendMessage(any(), any());
-    verify(templateHelper).getTemplate(EmailType.NEW_DATASET.templateName);
     verify(emailDAO).insert(
         eq(datasetName),
         eq(null),
@@ -257,11 +338,11 @@ class EmailServiceTest {
 
     String daaName = "DAA-123";
     int daaId = 456;
+    when(templateHelper.getTemplate(EmailType.NEW_DAA_REQUEST.templateName)).thenReturn(mock());
 
     service.sendDaaRequestMessage(signingOfficial, user, daaName, daaId);
 
     verify(sendGridAPI).sendMessage(any(), any());
-    verify(templateHelper).getTemplate(EmailType.NEW_DAA_REQUEST.templateName);
     verify(emailDAO).insert(
         eq("456"),
         eq(null),
@@ -291,12 +372,12 @@ class EmailServiceTest {
     String previousDaaName = "DAA-123";
 
     String newDaaName = "DAA-456";
+    when(templateHelper.getTemplate(EmailType.NEW_DAA_UPLOAD_RESEARCHER.templateName)).thenReturn(mock());
 
     service.sendNewDAAUploadResearcherMessage(
         researcher, dac.getName(), previousDaaName, newDaaName, user.getUserId());
 
     verify(sendGridAPI).sendMessage(any(), any());
-    verify(templateHelper).getTemplate(EmailType.NEW_DAA_UPLOAD_RESEARCHER.templateName);
     verify(emailDAO).insert(
         eq("DAC-01"),
         eq(null),
@@ -326,12 +407,12 @@ class EmailServiceTest {
     String previousDaaName = "DAA-123";
 
     String newDaaName = "DAA-456";
+    when(templateHelper.getTemplate(EmailType.NEW_DAA_UPLOAD_SO.templateName)).thenReturn(mock());
 
     service.sendNewDAAUploadSOMessage(signingOfficial,
         dac.getName(), previousDaaName, newDaaName, user.getUserId());
 
     verify(sendGridAPI).sendMessage(any(), any());
-    verify(templateHelper).getTemplate(EmailType.NEW_DAA_UPLOAD_SO.templateName);
     verify(emailDAO).insert(
         eq("DAC-01"),
         eq(null),
@@ -405,9 +486,10 @@ class EmailServiceTest {
     user.setEmail(RandomStringUtils.randomAlphanumeric(10));
     when(userDAO.findUserById(any())).thenReturn(user);
 
+    when(templateHelper.getTemplate(EmailType.REMINDER.templateName)).thenReturn(mock());
+
     service.sendReminderMessage(vote.getVoteId());
     verify(sendGridAPI).sendMessage(any(), any());
-    verify(templateHelper).getTemplate(EmailType.REMINDER.templateName);
     verify(emailDAO)
         .insert(
             eq(String.valueOf(vote.getElectionId())),
@@ -420,5 +502,29 @@ class EmailServiceTest {
             any(),
             any());
     verify(voteDAO).updateVoteReminderFlag(vote.getVoteId(), true);
+  }
+
+  @Test
+  void sendDarExpiredMessage() throws Exception {
+    User user = new User();
+    user.setUserId(123);
+    user.setDisplayName("John Doe");
+    user.setEmail("jd@somewhere");
+    String darCode = "DAR-12345";
+    Integer otherUserId = 456;
+    when(templateHelper.getTemplate(EmailType.DAR_EXPIRED.templateName)).thenReturn(mock());
+
+    service.sendDarExpiredMessage(user, darCode, otherUserId);
+    verify(sendGridAPI).sendMessage(any(), eq(user.getEmail()));
+    verify(emailDAO).insert(
+        eq(darCode),
+        isNull(),
+        eq(otherUserId),
+        eq(EmailType.DAR_EXPIRED.getTypeInt()),
+        any(),
+        any(),
+        any(),
+        any(),
+        any());
   }
 }
