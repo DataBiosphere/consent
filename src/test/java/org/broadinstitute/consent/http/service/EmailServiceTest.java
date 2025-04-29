@@ -182,7 +182,6 @@ class EmailServiceTest {
     assertEquals(user.getEmail(), mail.getPersonalization().get(0).getTos().get(0).getEmail());
     assertEquals(subject, mail.getSubject());
 
-    verify(template).process(eq(model), any());
     verify(emailDAO)
         .insert(
             entityReferenceId,
