@@ -372,7 +372,8 @@ class EmailServiceTest {
     String previousDaaName = "DAA-123";
 
     String newDaaName = "DAA-456";
-    when(templateHelper.getTemplate(EmailType.NEW_DAA_UPLOAD_RESEARCHER.templateName)).thenReturn(mock());
+    when(templateHelper.getTemplate(EmailType.NEW_DAA_UPLOAD_RESEARCHER.templateName)).thenReturn(
+        mock());
 
     service.sendNewDAAUploadResearcherMessage(
         researcher, dac.getName(), previousDaaName, newDaaName, user.getUserId());
@@ -522,6 +523,31 @@ class EmailServiceTest {
         isNull(),
         eq(otherUserId),
         eq(EmailType.DAR_EXPIRED.getTypeInt()),
+        any(),
+        any(),
+        any(),
+        any(),
+        any());
+  }
+
+  @Test
+  void sendDarExpirationReminderMessage() throws Exception {
+    User user = new User();
+    user.setUserId(123);
+    user.setDisplayName("John Doe");
+    user.setEmail("jd@somewhere");
+    String darCode = "DAR-12345";
+    Integer otherUserId = 456;
+    when(templateHelper.getTemplate(EmailType.DAR_EXPIRATION_REMINDER.templateName)).thenReturn(
+        mock());
+
+    service.sendDarExpirationReminderMessage(user, darCode, otherUserId);
+    verify(sendGridAPI).sendMessage(any(), eq(user.getEmail()));
+    verify(emailDAO).insert(
+        eq(darCode),
+        isNull(),
+        eq(otherUserId),
+        eq(EmailType.DAR_EXPIRATION_REMINDER.getTypeInt()),
         any(),
         any(),
         any(),

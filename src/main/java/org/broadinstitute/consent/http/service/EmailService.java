@@ -42,6 +42,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.message.DaaRequestMessage;
+import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
 import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
 import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
@@ -151,12 +152,14 @@ public class EmailService implements ConsentLogger {
         content);
   }
 
-  public List<org.broadinstitute.consent.http.models.mail.MailMessage> fetchEmailMessagesByType(EmailType emailType, Integer limit,
+  public List<org.broadinstitute.consent.http.models.mail.MailMessage> fetchEmailMessagesByType(
+      EmailType emailType, Integer limit,
       Integer offset) {
     return emailDAO.fetchMessagesByType(emailType.getTypeInt(), limit, offset);
   }
 
-  public List<org.broadinstitute.consent.http.models.mail.MailMessage> fetchEmailMessagesByCreateDate(Date start, Date end, Integer limit,
+  public List<org.broadinstitute.consent.http.models.mail.MailMessage> fetchEmailMessagesByCreateDate(
+      Date start, Date end, Integer limit,
       Integer offset) {
     return emailDAO.fetchMessagesByCreateDate(start, end, limit, offset);
   }
@@ -234,7 +237,8 @@ public class EmailService implements ConsentLogger {
   private void sendNewDARRequestEmail(
       User user, Map<String, List<String>> sendList, String researcherName, String darCode)
       throws TemplateException, IOException {
-    sendMessage(new NewDARRequestMessage(user, darCode, sendList, researcherName), user.getUserId());
+    sendMessage(new NewDARRequestMessage(user, darCode, sendList, researcherName),
+        user.getUserId());
   }
 
   public void sendExpirationNotices() {
@@ -273,7 +277,7 @@ public class EmailService implements ConsentLogger {
   }
 
   private void sendDARExpirationWarningNotices() {
-    EmailType emailType = EmailType.DAR_EXPIRING_SOON;
+    EmailType emailType = EmailType.DAR_EXPIRATION_REMINDER;
     String interval = "11 months";
     String noEmailForUserToWarnFoundLogTemplate = "User %d (%s) not found for expiring warning.  DAR reference id: %s";
     // Per value in ticket DT-1573
@@ -309,7 +313,8 @@ public class EmailService implements ConsentLogger {
         election.getReferenceId());
     User user = findUserById(vote.getUserId());
     String voteUrl = serverUrl + "dar_collection/%d".formatted(collection.getDarCollectionId());
-    sendMessage(new ReminderMessage(user, vote, collection.getDarCode(), election.getElectionType(), voteUrl), user.getUserId());
+    sendMessage(new ReminderMessage(user, vote, collection.getDarCode(), election.getElectionType(),
+        voteUrl), user.getUserId());
     voteDAO.updateVoteReminderFlag(voteId, true);
   }
 
@@ -419,5 +424,17 @@ public class EmailService implements ConsentLogger {
   public void sendDarExpiredMessage(User researcher, String darCode, Integer userId, String referenceId)
       throws TemplateException, IOException {
     sendMessage(new DarExpiredMessage(researcher, darCode, referenceId), userId);
+  }
+
+  /**
+   * Remind the user that their data access request is about to expire.
+   *
+   * @param user    the user to send the message to
+   * @param darCode the data access request code that's about to expire
+   * @param userId  the user id of the person sending the message
+   */
+  public void sendDarExpirationReminderMessage(User user, String darCode, Integer userId)
+      throws TemplateException, IOException {
+    sendMessage(new DarExpirationReminderMessage(user, darCode), userId);
   }
 }

@@ -827,7 +827,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
             ChronoUnit.DAYS).toEpochMilli()));
 
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
-        EmailType.DAR_EXPIRING_SOON.getTypeInt(),
+        EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(),
         "11 months", Timestamp.from(Instant.now().minus(365, ChronoUnit.DAYS)));
     assertFalse(dars.isEmpty());
     assertEquals(1, dars.size());
@@ -848,7 +848,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
             ChronoUnit.DAYS).toEpochMilli()));
 
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
-        EmailType.DAR_EXPIRING_SOON.getTypeInt(),
+        EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(),
         "11 months", Timestamp.from(Instant.now().minus(2, ChronoUnit.DAYS)));
     assertTrue(dars.isEmpty());
   }
@@ -862,7 +862,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     });
     // query far enough into the past so slight clock variations do not matter for this test
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
-        EmailType.DAR_EXPIRING_SOON.getTypeInt(), "11 months",
+        EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(), "11 months",
         Timestamp.from(Instant.now().minus(365, ChronoUnit.DAYS)));
     assertTrue(dars.isEmpty());
   }
@@ -887,7 +887,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         datasetTwo.getDatasetId());
 
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
-        EmailType.DAR_EXPIRING_SOON.getTypeInt(), "11 months",
+        EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(), "11 months",
         Timestamp.from(Instant.now().minus(366, ChronoUnit.DAYS)));
 
     assertNotNull(dars);
@@ -923,7 +923,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         datasetThree.getDatasetId());
 
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
-        EmailType.DAR_EXPIRING_SOON.getTypeInt(), "11 months",
+        EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(), "11 months",
         Timestamp.from(Instant.now().minus(366, ChronoUnit.DAYS)));
 
     assertNotNull(dars);
@@ -958,7 +958,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         datasetTwo.getDatasetId());
 
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
-        EmailType.DAR_EXPIRING_SOON.getTypeInt(), "11 months",
+        EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(), "11 months",
         Timestamp.from(Instant.now().minus(366, ChronoUnit.DAYS)));
 
     assertNotNull(dars);
@@ -990,10 +990,10 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(darTwo.getReferenceId(),
         datasetThree.getDatasetId());
     mailMessageDAO.insert(darOne.getReferenceId(), null, userOneId,
-        EmailType.DAR_EXPIRING_SOON.getTypeInt(), Instant.now(), "hello world!",
+        EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(), Instant.now(), "hello world!",
         "success", 200, Instant.now());
     List<DataAccessRequest> dars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
-        EmailType.DAR_EXPIRING_SOON.getTypeInt(), "11 months",
+        EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(), "11 months",
         Timestamp.from(Instant.now().minus(367, ChronoUnit.DAYS)));
 
     assertNotNull(dars);
