@@ -111,12 +111,34 @@
           </dependency>
         </dependencies>
         <configuration>
-          <!-- limit format enforcement to just the files changed by this feature branch -->
-          <ratchetFrom>origin/develop</ratchetFrom>
           <java>
             <googleJavaFormat/>
           </java>
         </configuration>
+        <executions>
+          <execution>
+            <id>spotless-check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>verify</phase>
+            <configuration>
+              <!-- In CI workflows, run verify. -->
+              <skip>${env.CI != true}</skip>
+            </configuration>
+          </execution>
+          <execution>
+            <id>spotless-apply</id>
+            <goals>
+              <goal>apply</goal>
+            </goals>
+            <phase>process-sources</phase>
+            <configuration>
+              <!-- In local workflows, run apply. -->
+              <skip>${env.CI}</skip>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
 
       <plugin>
