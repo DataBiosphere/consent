@@ -242,7 +242,7 @@ public class EmailService implements ConsentLogger {
   }
 
   public void sendExpirationNotices() {
-    sendDARExpirationWarningNotices();
+    sendDARExpirationReminderNotices();
     sendDARExpirationNotices();
   }
 
@@ -276,7 +276,7 @@ public class EmailService implements ConsentLogger {
     });
   }
 
-  private void sendDARExpirationWarningNotices() {
+  private void sendDARExpirationReminderNotices() {
     EmailType emailType = EmailType.DAR_EXPIRATION_REMINDER;
     String interval = "11 months";
     String noEmailForUserToWarnFoundLogTemplate = "User %d (%s) not found for expiring warning.  DAR reference id: %s";
@@ -298,7 +298,7 @@ public class EmailService implements ConsentLogger {
           logWarn(String.format(noEmailForUserToWarnFoundLogTemplate,
               expiredDar.getUserId(), userName, referenceId));
         } else {
-          // Send the warning,
+          sendDarExpirationReminderMessage(user, darCode, user.getUserId(), referenceId);
         }
       } catch (Exception e) {
         logException(e);
@@ -432,9 +432,10 @@ public class EmailService implements ConsentLogger {
    * @param user    the user to send the message to
    * @param darCode the data access request code that's about to expire
    * @param userId  the user id of the person sending the message
+   * @param referenceId the data access request reference id that is expiring
    */
-  public void sendDarExpirationReminderMessage(User user, String darCode, Integer userId)
+  public void sendDarExpirationReminderMessage(User user, String darCode, Integer userId, String referenceId)
       throws TemplateException, IOException {
-    sendMessage(new DarExpirationReminderMessage(user, darCode), userId);
+    sendMessage(new DarExpirationReminderMessage(user, darCode, referenceId), userId);
   }
 }

@@ -537,14 +537,15 @@ class EmailServiceTest {
     user.setDisplayName("John Doe");
     user.setEmail("jd@somewhere");
     String darCode = "DAR-12345";
+    String referenceId = UUID.randomUUID().toString();
     Integer otherUserId = 456;
     when(templateHelper.getTemplate(EmailType.DAR_EXPIRATION_REMINDER.templateName)).thenReturn(
         mock());
 
-    service.sendDarExpirationReminderMessage(user, darCode, otherUserId);
+    service.sendDarExpirationReminderMessage(user, darCode, otherUserId, referenceId);
     verify(sendGridAPI).sendMessage(any(), eq(user.getEmail()));
     verify(emailDAO).insert(
-        eq(darCode),
+        eq(referenceId),
         isNull(),
         eq(otherUserId),
         eq(EmailType.DAR_EXPIRATION_REMINDER.getTypeInt()),
