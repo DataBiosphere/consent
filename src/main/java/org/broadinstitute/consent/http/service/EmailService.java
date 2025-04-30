@@ -69,6 +69,9 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 
 public class EmailService implements ConsentLogger {
 
+  public static final Timestamp MINIMUM_SUBMITTED_DATE_FOR_DAR_EXPIRATIONS = Timestamp.from(
+      Instant.ofEpochSecond(
+          LocalDate.of(2024, 9, 30).toEpochSecond(LocalTime.of(0, 0, 0, 0), ZoneOffset.UTC)));
   private final DarCollectionDAO collectionDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final UserDAO userDAO;
@@ -135,7 +138,8 @@ public class EmailService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  protected void sendMessage(MailMessage mailMessage, Integer userId) throws IOException, TemplateException {
+  protected void sendMessage(MailMessage mailMessage, Integer userId)
+      throws IOException, TemplateException {
     Writer out = new StringWriter();
     Template template = templateHelper.getTemplate(mailMessage.getTemplateName());
     template.process(mailMessage.createModel(serverUrl), out);
@@ -249,40 +253,18 @@ public class EmailService implements ConsentLogger {
   private void sendDARExpirationNotices() {
     EmailType emailType = EmailType.DAR_EXPIRED;
     String interval = "1 year";
-    // Per value in ticket DT-1573
-    Timestamp minimumSubmittedDateForExpirations = Timestamp.from(Instant.ofEpochSecond(
-        LocalDate.of(2024, 9, 30).toEpochSecond(LocalTime.of(0, 0, 0, 0), ZoneOffset.UTC)));
-    List<DataAccessRequest> expiredDars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
-        emailType.getTypeInt(), interval, minimumSubmittedDateForExpirations);
-    expiredDars.forEach(expiredDar -> {
-      try {
-        String referenceId = expiredDar.getReferenceId();
-        User user = userDAO.findUserById(expiredDar.getUserId());
-        String darCode = expiredDar.getDarCode();
-        String userName = user.getDisplayName();
-        if (user.getEmail() == null) {
-          // Do not throw here.  Log information about the DAR since this will continue
-          // to appear broken until manual intervention is taken to resolve the missing user
-          // email address
-          logWarn(String.format("Email address for user %d (%s) not found for expiring DAR.  Reference id: %s",
-              expiredDar.getUserId(), userName, referenceId));
-        } else {
-          sendDarExpiredMessage(user, darCode, user.getUserId(), referenceId);
-        }
-      } catch (Exception e) {
-        logException(e);
-      }
-    });
+    sendDARMessageToList(emailType, interval);
   }
 
   private void sendDARExpirationReminderNotices() {
     EmailType emailType = EmailType.DAR_EXPIRATION_REMINDER;
     String interval = "11 months";
-    // Per value in ticket DT-1573
-    Timestamp minimumSubmittedDateForExpirations = Timestamp.from(Instant.ofEpochSecond(
-        LocalDate.of(2024, 9, 30).toEpochSecond(LocalTime.of(0, 0, 0, 0), ZoneOffset.UTC)));
+    sendDARMessageToList(emailType, interval);
+  }
+
+  private void sendDARMessageToList(EmailType type, String interval) {
     List<DataAccessRequest> expiredDars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
-        emailType.getTypeInt(), interval, minimumSubmittedDateForExpirations);
+        type.getTypeInt(), interval, MINIMUM_SUBMITTED_DATE_FOR_DAR_EXPIRATIONS);
     expiredDars.forEach(expiredDar -> {
       try {
         String referenceId = expiredDar.getReferenceId();
@@ -293,10 +275,17 @@ public class EmailService implements ConsentLogger {
           // Do not throw here.  Log information about the DAR since this will continue
           // to appear broken until manual intervention is taken to resolve the missing user
           // email address
-          logWarn(String.format("Email address for user %d (%s) not found for expiring warning.  DAR reference id: %s",
+          logWarn(String.format(
+              "Email address for user %d (%s) not found for expiring warning.  DAR reference id: %s",
               expiredDar.getUserId(), userName, referenceId));
         } else {
-          sendDarExpirationReminderMessage(user, darCode, user.getUserId(), referenceId);
+          switch (type) {
+            case DAR_EXPIRATION_REMINDER:
+              sendDarExpirationReminderMessage(user, darCode, user.getUserId(), referenceId);
+              break;
+            case DAR_EXPIRED:
+              sendDarExpiredMessage(user, darCode, user.getUserId(), referenceId);
+          }
         }
       } catch (Exception e) {
         logException(e);
@@ -414,12 +403,13 @@ public class EmailService implements ConsentLogger {
   /**
    * Send a message to a researcher that their data access request has expired.
    *
-   * @param researcher the researcher to send the message to
-   * @param darCode the data access request code that's expired
-   * @param userId the user id of the person sending the message
+   * @param researcher  the researcher to send the message to
+   * @param darCode     the data access request code that's expired
+   * @param userId      the user id of the person sending the message
    * @param referenceId the data access request reference id that's expired
    */
-  public void sendDarExpiredMessage(User researcher, String darCode, Integer userId, String referenceId)
+  public void sendDarExpiredMessage(User researcher, String darCode, Integer userId,
+      String referenceId)
       throws TemplateException, IOException {
     sendMessage(new DarExpiredMessage(researcher, darCode, referenceId), userId);
   }
@@ -427,12 +417,13 @@ public class EmailService implements ConsentLogger {
   /**
    * Remind the user that their data access request is about to expire.
    *
-   * @param user    the user to send the message to
-   * @param darCode the data access request code that's about to expire
-   * @param userId  the user id of the person sending the message
+   * @param user        the user to send the message to
+   * @param darCode     the data access request code that's about to expire
+   * @param userId      the user id of the person sending the message
    * @param referenceId the data access request reference id that is expiring
    */
-  public void sendDarExpirationReminderMessage(User user, String darCode, Integer userId, String referenceId)
+  public void sendDarExpirationReminderMessage(User user, String darCode, Integer userId,
+      String referenceId)
       throws TemplateException, IOException {
     sendMessage(new DarExpirationReminderMessage(user, darCode, referenceId), userId);
   }
