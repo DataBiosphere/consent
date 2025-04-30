@@ -48,9 +48,6 @@ class MetricsServiceTest extends AbstractTestHelper {
   @Mock
   private DarCollectionDAO darCollectionDAO;
 
-//  @Mock
-//  private MatchDAO matchDAO;
-
   @Mock
   private ElectionDAO electionDAO;
 
@@ -59,32 +56,6 @@ class MetricsServiceTest extends AbstractTestHelper {
   private void initService() {
     service = new MetricsService(dataSetDAO, darDAO, darCollectionDAO, electionDAO);
   }
-
-//  @Test
-//  void testGenerateDarDecisionMetricsNCase() {
-//    int darCount = RandomUtils.nextInt(1, 100);
-//    int datasetCount = RandomUtils.nextInt(1, 100);
-//    initializeMetricsDAOCalls(darCount, datasetCount);
-//    initService();
-//    List<? extends DecisionMetrics> metrics = service.generateDecisionMetrics(Type.DAR);
-//    assertFalse(metrics.isEmpty());
-//    assertEquals(darCount, metrics.size());
-//  }
-
-//  @Test
-//  void testGenerateDacDecisionMetricsNCase() {
-//    int darCount = RandomUtils.nextInt(1, 100);
-//    int datasetCount = RandomUtils.nextInt(1, 100);
-//    initializeMetricsDAOCalls(darCount, datasetCount);
-//    Dac dac = generateDac();
-//    when(dacService.findAllDacsWithMembers()).thenReturn(Collections.singletonList(dac));
-//    List<DatasetDTO> datasetDTOS = generateDatasetDTO(datasetCount);
-//    when(dataSetDAO.findDatasetsWithDacs()).thenReturn(new HashSet<>(datasetDTOS));
-//    initService();
-//
-//    List<? extends DecisionMetrics> metrics = service.generateDecisionMetrics(Type.DAC);
-//    assertFalse(metrics.isEmpty());
-//  }
 
   @Test
   void testGenerateDatasetMetrics() {
@@ -119,14 +90,6 @@ class MetricsServiceTest extends AbstractTestHelper {
       service.generateDatasetMetrics(1);
     });
   }
-
-//  private void initializeMetricsDAOCalls(int darCount, int datasetCount) {
-//    when(darDAO.findAllDataAccessRequests()).thenReturn(generateDars(darCount));
-//    when(dataSetDAO.findDatasetsByIdList(any())).thenReturn(generateDatasets(datasetCount));
-//    when(electionDAO.findLastElectionsByReferenceIds(any())).thenReturn(Collections.emptyList());
-//    when(matchDAO.findMatchesForPurposeIds(any())).thenReturn(Collections.emptyList());
-//    when(electionDAO.findAllDacsForElectionIds(any())).thenReturn(Collections.emptyList());
-//  }
 
   private Dac generateDac() {
     Dac dac = new Dac();
