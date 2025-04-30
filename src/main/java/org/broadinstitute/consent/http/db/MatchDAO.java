@@ -50,15 +50,6 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   List<Match> findMatchesForLatestDataAccessElectionsByPurposeIds(
       @BindList("purposeIds") List<String> purposeIds);
 
-  @UseRowReducer(MatchReducer.class)
-  @SqlQuery("""
-      SELECT m.*, r.*
-            FROM match_entity m
-            LEFT JOIN match_rationale r on r.match_entity_id = m.matchid
-            WHERE m.purpose IN (<purposeId>)
-      """)
-  List<Match> findMatchesForPurposeIds(@BindList("purposeId") List<String> purposeId);
-
   @SqlUpdate("""
         INSERT INTO match_entity
           (consent, purpose, matchentity, failed, createdate, algorithm_version, abstain)

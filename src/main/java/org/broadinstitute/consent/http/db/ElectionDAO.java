@@ -205,17 +205,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       """)
   Dac findDacForElection(@Bind("electionId") Integer electionId);
 
-  @SqlQuery("""
-      SELECT d.*, e.election_id
-      FROM dac d
-      INNER JOIN dataset data ON d.dac_id = data.dac_id
-      INNER JOIN election e
-      ON e.dataset_id = data.dataset_id
-      WHERE e.election_id IN (<electionIds>)
-      """)
-  @UseRowMapper(DacMapper.class)
-  List<Dac> findAllDacsForElectionIds(@BindList("electionIds") List<Integer> electionIds);
-
   /**
    * Find the OPEN elections that belong to this Dac
    *

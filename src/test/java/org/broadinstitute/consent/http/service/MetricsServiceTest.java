@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -17,24 +16,19 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.MatchDAO;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
-import org.broadinstitute.consent.http.models.DecisionMetrics;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Type;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.junit.jupiter.api.Test;
@@ -43,10 +37,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class MetricsServiceTest {
-
-  @Mock
-  private DacService dacService;
+class MetricsServiceTest extends AbstractTestHelper {
 
   @Mock
   private DatasetDAO dataSetDAO;
@@ -57,8 +48,8 @@ class MetricsServiceTest {
   @Mock
   private DarCollectionDAO darCollectionDAO;
 
-  @Mock
-  private MatchDAO matchDAO;
+//  @Mock
+//  private MatchDAO matchDAO;
 
   @Mock
   private ElectionDAO electionDAO;
@@ -66,35 +57,34 @@ class MetricsServiceTest {
   private MetricsService service;
 
   private void initService() {
-    service = new MetricsService(dacService, dataSetDAO, darDAO, darCollectionDAO, matchDAO,
-        electionDAO);
+    service = new MetricsService(dataSetDAO, darDAO, darCollectionDAO, electionDAO);
   }
 
-  @Test
-  void testGenerateDarDecisionMetricsNCase() {
-    int darCount = RandomUtils.nextInt(1, 100);
-    int datasetCount = RandomUtils.nextInt(1, 100);
-    initializeMetricsDAOCalls(darCount, datasetCount);
-    initService();
-    List<? extends DecisionMetrics> metrics = service.generateDecisionMetrics(Type.DAR);
-    assertFalse(metrics.isEmpty());
-    assertEquals(darCount, metrics.size());
-  }
+//  @Test
+//  void testGenerateDarDecisionMetricsNCase() {
+//    int darCount = RandomUtils.nextInt(1, 100);
+//    int datasetCount = RandomUtils.nextInt(1, 100);
+//    initializeMetricsDAOCalls(darCount, datasetCount);
+//    initService();
+//    List<? extends DecisionMetrics> metrics = service.generateDecisionMetrics(Type.DAR);
+//    assertFalse(metrics.isEmpty());
+//    assertEquals(darCount, metrics.size());
+//  }
 
-  @Test
-  void testGenerateDacDecisionMetricsNCase() {
-    int darCount = RandomUtils.nextInt(1, 100);
-    int datasetCount = RandomUtils.nextInt(1, 100);
-    initializeMetricsDAOCalls(darCount, datasetCount);
-    Dac dac = generateDac();
-    when(dacService.findAllDacsWithMembers()).thenReturn(Collections.singletonList(dac));
-    List<DatasetDTO> datasetDTOS = generateDatasetDTO(datasetCount);
-    when(dataSetDAO.findDatasetsWithDacs()).thenReturn(new HashSet<>(datasetDTOS));
-    initService();
-
-    List<? extends DecisionMetrics> metrics = service.generateDecisionMetrics(Type.DAC);
-    assertFalse(metrics.isEmpty());
-  }
+//  @Test
+//  void testGenerateDacDecisionMetricsNCase() {
+//    int darCount = RandomUtils.nextInt(1, 100);
+//    int datasetCount = RandomUtils.nextInt(1, 100);
+//    initializeMetricsDAOCalls(darCount, datasetCount);
+//    Dac dac = generateDac();
+//    when(dacService.findAllDacsWithMembers()).thenReturn(Collections.singletonList(dac));
+//    List<DatasetDTO> datasetDTOS = generateDatasetDTO(datasetCount);
+//    when(dataSetDAO.findDatasetsWithDacs()).thenReturn(new HashSet<>(datasetDTOS));
+//    initService();
+//
+//    List<? extends DecisionMetrics> metrics = service.generateDecisionMetrics(Type.DAC);
+//    assertFalse(metrics.isEmpty());
+//  }
 
   @Test
   void testGenerateDatasetMetrics() {
@@ -102,7 +92,7 @@ class MetricsServiceTest {
     List<Election> election = generateElection(dars.get(0).getReferenceId());
     Set<DatasetDTO> dataset = new HashSet<>(generateDatasetDTO(1));
     DarCollection collection = new DarCollection();
-    collection.setDarCode("DAR-" + RandomUtils.nextInt(1, 999999999));
+    collection.setDarCode("DAR-" + randomInt(1, 999999999));
 
     when(dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(dataset);
     when(darDAO.findApprovedDARsByDatasetId(any())).thenReturn(dars);
@@ -130,13 +120,13 @@ class MetricsServiceTest {
     });
   }
 
-  private void initializeMetricsDAOCalls(int darCount, int datasetCount) {
-    when(darDAO.findAllDataAccessRequests()).thenReturn(generateDars(darCount));
-    when(dataSetDAO.findDatasetsByIdList(any())).thenReturn(generateDatasets(datasetCount));
-    when(electionDAO.findLastElectionsByReferenceIds(any())).thenReturn(Collections.emptyList());
-    when(matchDAO.findMatchesForPurposeIds(any())).thenReturn(Collections.emptyList());
-    when(electionDAO.findAllDacsForElectionIds(any())).thenReturn(Collections.emptyList());
-  }
+//  private void initializeMetricsDAOCalls(int darCount, int datasetCount) {
+//    when(darDAO.findAllDataAccessRequests()).thenReturn(generateDars(darCount));
+//    when(dataSetDAO.findDatasetsByIdList(any())).thenReturn(generateDatasets(datasetCount));
+//    when(electionDAO.findLastElectionsByReferenceIds(any())).thenReturn(Collections.emptyList());
+//    when(matchDAO.findMatchesForPurposeIds(any())).thenReturn(Collections.emptyList());
+//    when(electionDAO.findAllDacsForElectionIds(any())).thenReturn(Collections.emptyList());
+//  }
 
   private Dac generateDac() {
     Dac dac = new Dac();
