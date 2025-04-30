@@ -25,7 +25,7 @@
     <junit.version>5.12.2</junit.version>
     <io.grpc.version>1.58.0</io.grpc.version>
     <mockito.version>5.17.0</mockito.version>
-    <spotless.version>2.43.0</spotless.version>
+    <spotless.version>2.44.4</spotless.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -128,12 +128,34 @@
           </dependency>
         </dependencies>
         <configuration>
-          <!-- limit format enforcement to just the files changed by this feature branch -->
-          <ratchetFrom>origin/develop</ratchetFrom>
           <java>
             <googleJavaFormat/>
           </java>
         </configuration>
+        <executions>
+          <execution>
+            <id>spotless-check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>verify</phase>
+            <configuration>
+              <!-- In CI workflows, run verify. -->
+              <skip>${env.CI != true}</skip>
+            </configuration>
+          </execution>
+          <execution>
+            <id>spotless-apply</id>
+            <goals>
+              <goal>apply</goal>
+            </goals>
+            <phase>process-sources</phase>
+            <configuration>
+              <!-- In local workflows, run apply. -->
+              <skip>${env.CI}</skip>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
 
       <plugin>
