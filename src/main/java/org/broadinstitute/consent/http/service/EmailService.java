@@ -249,7 +249,6 @@ public class EmailService implements ConsentLogger {
   private void sendDARExpirationNotices() {
     EmailType emailType = EmailType.DAR_EXPIRED;
     String interval = "1 year";
-    String noEmailForUserToWarnFoundLogTemplate = "User %d (%s) not found for expiring DAR.  Reference id: %s";
     // Per value in ticket DT-1573
     Timestamp minimumSubmittedDateForExpirations = Timestamp.from(Instant.ofEpochSecond(
         LocalDate.of(2024, 9, 30).toEpochSecond(LocalTime.of(0, 0, 0, 0), ZoneOffset.UTC)));
@@ -265,7 +264,7 @@ public class EmailService implements ConsentLogger {
           // Do not throw here.  Log information about the DAR since this will continue
           // to appear broken until manual intervention is taken to resolve the missing user
           // email address
-          logWarn(String.format(noEmailForUserToWarnFoundLogTemplate,
+          logWarn(String.format("Email address for user %d (%s) not found for expiring DAR.  Reference id: %s",
               expiredDar.getUserId(), userName, referenceId));
         } else {
           sendDarExpiredMessage(user, darCode, user.getUserId(), referenceId);
@@ -279,7 +278,6 @@ public class EmailService implements ConsentLogger {
   private void sendDARExpirationReminderNotices() {
     EmailType emailType = EmailType.DAR_EXPIRATION_REMINDER;
     String interval = "11 months";
-    String noEmailForUserToWarnFoundLogTemplate = "User %d (%s) not found for expiring warning.  DAR reference id: %s";
     // Per value in ticket DT-1573
     Timestamp minimumSubmittedDateForExpirations = Timestamp.from(Instant.ofEpochSecond(
         LocalDate.of(2024, 9, 30).toEpochSecond(LocalTime.of(0, 0, 0, 0), ZoneOffset.UTC)));
@@ -295,7 +293,7 @@ public class EmailService implements ConsentLogger {
           // Do not throw here.  Log information about the DAR since this will continue
           // to appear broken until manual intervention is taken to resolve the missing user
           // email address
-          logWarn(String.format(noEmailForUserToWarnFoundLogTemplate,
+          logWarn(String.format("Email address for user %d (%s) not found for expiring warning.  DAR reference id: %s",
               expiredDar.getUserId(), userName, referenceId));
         } else {
           sendDarExpirationReminderMessage(user, darCode, user.getUserId(), referenceId);

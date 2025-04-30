@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -9,9 +10,12 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.sendgrid.Response;
 import com.sendgrid.helpers.mail.Mail;
 import freemarker.template.Template;
@@ -20,7 +24,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,6 +48,7 @@ import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
@@ -57,6 +61,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class can be used to functionally test email notifications as well as unit test. To enable
@@ -238,9 +243,6 @@ class EmailServiceTest {
     collection.setDarCollectionId(1);
     collection.setDatasets(Set.of(d1, d2));
 
-    Map<String, List<String>> dacDatasetGroups = new HashMap<>();
-    dacDatasetGroups.put(dac.getName(), List.of(d1.getDatasetIdentifier(),
-        d2.getDatasetIdentifier()));
 
     when(collectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
     when(userDAO.findUserById(any())).thenReturn(researcher);
@@ -554,5 +556,113 @@ class EmailServiceTest {
         any(),
         any(),
         any());
+  }
+
+  @Test
+  void sendExpirationNoticesTest() throws IOException {
+    User user1 = new User();
+    user1.setUserId(123);
+    user1.setDisplayName("John Doe");
+    user1.setEmail("jd@somewhere");
+
+    User user2 = new User();
+    user2.setUserId(124);
+    user2.setDisplayName("Jane Doe");
+    user2.setEmail("jd@somewhereelse");
+
+    DataAccessRequest dar1 = getMockedDar("DAR-12345", UUID.randomUUID().toString(), user1);
+    DataAccessRequest dar2 = getMockedDar("DAR-12346", UUID.randomUUID().toString(), user2);
+
+    when(userDAO.findUserById(user1.getUserId())).thenReturn(user1);
+    when(userDAO.findUserById(user2.getUserId())).thenReturn(user2);
+    List<DataAccessRequest> dars = List.of(dar1, dar2);
+    when(dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(any(), any(), any())).thenReturn(dars);
+    when(templateHelper.getTemplate(EmailType.DAR_EXPIRATION_REMINDER.templateName)).thenReturn(mock());
+    when(templateHelper.getTemplate(EmailType.DAR_EXPIRED.templateName)).thenReturn(mock());
+
+    assertDoesNotThrow(()->service.sendExpirationNotices());
+    verify(emailDAO).insert(eq(dar1.getReferenceId()),eq(null), eq(user1.getUserId()), eq(EmailType.DAR_EXPIRED.getTypeInt()), any(), any(), any(), any(), any());
+    verify(emailDAO).insert(eq(dar1.getReferenceId()),eq(null), eq(user1.getUserId()), eq(EmailType.DAR_EXPIRATION_REMINDER.getTypeInt()), any(), any(), any(), any(), any());
+    verify(emailDAO).insert(eq(dar2.getReferenceId()),eq(null), eq(user2.getUserId()), eq(EmailType.DAR_EXPIRED.getTypeInt()), any(), any(), any(), any(), any());
+    verify(emailDAO).insert(eq(dar2.getReferenceId()),eq(null), eq(user2.getUserId()), eq(EmailType.DAR_EXPIRATION_REMINDER.getTypeInt()), any(), any(), any(), any(), any());
+    verify(emailDAO, times(4)).insert(any(), any(), any(), any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void sendExpirationNoticesTestMissingEmailForOneUser() throws IOException {
+    ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+    ch.qos.logback.classic.Logger log = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(EmailService.class);
+    listAppender.start();
+    log.addAppender(listAppender);
+    User user1 = new User();
+    user1.setUserId(123);
+    user1.setDisplayName("John Doe");
+    user1.setEmail("jd@somewhere");
+
+    User user2 = new User();
+    user2.setUserId(124);
+    user2.setDisplayName("Jane Doe");
+
+    DataAccessRequest dar1 =getMockedDar("DAR-12345", UUID.randomUUID().toString(), user1);
+    DataAccessRequest dar2 = getMockedDar("DAR-12346", UUID.randomUUID().toString(), user2);
+
+    when(userDAO.findUserById(user1.getUserId())).thenReturn(user1);
+    when(userDAO.findUserById(user2.getUserId())).thenReturn(user2);
+
+    List<DataAccessRequest> dars = List.of(dar2, dar1);
+
+    when(dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(any(), any(), any())).thenReturn(dars);
+    when(templateHelper.getTemplate(EmailType.DAR_EXPIRATION_REMINDER.templateName)).thenReturn(mock());
+    when(templateHelper.getTemplate(EmailType.DAR_EXPIRED.templateName)).thenReturn(mock());
+
+    assertDoesNotThrow(()->service.sendExpirationNotices());
+
+    verify(emailDAO).insert(eq(dar1.getReferenceId()),eq(null), eq(user1.getUserId()), eq(EmailType.DAR_EXPIRED.getTypeInt()), any(), any(), any(), any(), any());
+    verify(emailDAO).insert(eq(dar1.getReferenceId()),eq(null), eq(user1.getUserId()), eq(EmailType.DAR_EXPIRATION_REMINDER.getTypeInt()), any(), any(), any(), any(), any());
+    verify(emailDAO, times(2)).insert(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    assertEquals(2, listAppender.list.size());
+  }
+
+  @Test
+  void sendExpirationNoticesTestUnderlyingExceptionThrownSendingOneTypeOfMessage() throws IOException {
+    ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+    ch.qos.logback.classic.Logger log = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(EmailService.class);
+    listAppender.start();
+    log.addAppender(listAppender);
+    User user1 = new User();
+    user1.setUserId(123);
+    user1.setDisplayName("John Doe");
+    user1.setEmail("jd@somewhere");
+
+    User user2 = new User();
+    user2.setUserId(124);
+    user2.setDisplayName("Jane Doe");
+    user2.setEmail("jane@somewhere");
+
+    DataAccessRequest dar1 =getMockedDar("DAR-12345", UUID.randomUUID().toString(), user1);
+    DataAccessRequest dar2 = getMockedDar("DAR-12346", UUID.randomUUID().toString(), user2);
+
+    when(userDAO.findUserById(user1.getUserId())).thenReturn(user1);
+    when(userDAO.findUserById(user2.getUserId())).thenReturn(user2);
+
+    List<DataAccessRequest> dars = List.of(dar2, dar1);
+
+    when(dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(any(), any(), any())).thenReturn(dars);
+    when(templateHelper.getTemplate(EmailType.DAR_EXPIRED.templateName)).thenReturn(mock());
+
+    assertDoesNotThrow(()->service.sendExpirationNotices());
+
+    verify(emailDAO).insert(eq(dar1.getReferenceId()),eq(null), eq(user1.getUserId()), eq(EmailType.DAR_EXPIRED.getTypeInt()), any(), any(), any(), any(), any());
+    verify(emailDAO).insert(eq(dar2.getReferenceId()),eq(null), eq(user2.getUserId()), eq(EmailType.DAR_EXPIRED.getTypeInt()), any(), any(), any(), any(), any());
+    verify(emailDAO, times(2)).insert(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    assertEquals(2, listAppender.list.size());
+  }
+
+  private DataAccessRequest getMockedDar(String darCode, String referenceId, User user) {
+    DataAccessRequest dar = mock(DataAccessRequest.class);
+    when(dar.getReferenceId()).thenReturn(referenceId);
+    when(dar.getDarCode()).thenReturn(darCode);
+    when(dar.getUserId()).thenReturn(user.getUserId());
+    return dar;
   }
 }
