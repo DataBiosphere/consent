@@ -20,7 +20,9 @@ public enum EmailType {
   NEW_DAA_UPLOAD_RESEARCHER(16, "new-daa-upload-researcher.html"),
   NEW_DAA_UPLOAD_SO(17, "new-daa-upload-signing-official.html"),
   DATASET_DENIED(18, "dataset-denied.html"),
-  DATASET_APPROVED(19, "dataset-approved.html");
+  DATASET_APPROVED(19, "dataset-approved.html"),
+  DAR_EXPIRED(20, "dar-expired.html"),
+  DAR_EXPIRATION_REMINDER(21, "dar-expiration-reminder.html");
 
   private final Integer typeInt;
   public final String templateName;
@@ -28,6 +30,7 @@ public enum EmailType {
   EmailType(Integer typeInt) {
     this(typeInt, null);
   }
+
   EmailType(Integer typeInt, String templateName) {
     this.typeInt = typeInt;
     this.templateName = templateName;

@@ -24,9 +24,10 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -71,9 +72,9 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     return dacDAO.findById(id);
   }
 
-  private Election createElection(String type, String status, String referenceId,
+  private Election createElection(ElectionType type, String status, String referenceId,
       Integer datasetId) {
-    Integer electionId = electionDAO.insertElection(type, status, new Date(), referenceId,
+    Integer electionId = electionDAO.insertElection(type.getValue(), status, new Date(), referenceId,
         datasetId);
     return electionDAO.findElectionById(electionId);
   }
@@ -109,18 +110,18 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(excludedDar.getReferenceId(),
         excludedDataset.getDatasetId());
 
-    Election collectionOnePrevElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election collectionOnePrevElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.CLOSED.getValue(),
         darOne.getReferenceId(),
         dataset.getDatasetId()); //non-latest dataset, need to make sure this isn't pulled into query results
-    Election collectionOneElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election collectionOneElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.OPEN.getValue(), darOne.getReferenceId(), dataset.getDatasetId());
     Integer collectionOneElectionId = collectionOneElection.getElectionId();
     Integer collectionOnePrevElectionId = collectionOnePrevElection.getElectionId();
-    Election excludedElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election excludedElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.CLOSED.getValue(), //tied to excluded dataset, it should not be pulled in
         excludedDar.getReferenceId(), excludedDataset.getDatasetId());
-    Election collectionTwoElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election collectionTwoElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.OPEN.getValue(),
         darTwo.getReferenceId(), datasetTwo.getDatasetId());
     Integer collectionTwoElectionId = collectionTwoElection.getElectionId();
@@ -205,7 +206,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(excludedDar.getReferenceId(),
         excludedDataset.getDatasetId());
 
-    Election excludedElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election excludedElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.CLOSED.getValue(),
         excludedDar.getReferenceId(), excludedDataset.getDatasetId());
     Integer excludedElectionId = excludedElection.getElectionId();
@@ -278,15 +279,15 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(darTwo.getReferenceId(),
         datasetTwo.getDatasetId());
 
-    Election collectionOnePrevElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election collectionOnePrevElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.CLOSED.getValue(),
         darOne.getReferenceId(), dataset.getDatasetId());
-    Election collectionOneElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election collectionOneElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.OPEN.getValue(),
         darOne.getReferenceId(), dataset.getDatasetId());
     Integer collectionOneElectionId = collectionOneElection.getElectionId();
     Integer collectionOnePrevElectionId = collectionOnePrevElection.getElectionId();
-    Election collectionTwoElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election collectionTwoElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.OPEN.getValue(),
         darTwo.getReferenceId(), datasetTwo.getDatasetId());
     Integer collectionTwoElectionId = collectionTwoElection.getElectionId();
@@ -376,15 +377,15 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(darTwo.getReferenceId(),
         datasetTwo.getDatasetId());
 
-    Election collectionOnePrevElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election collectionOnePrevElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.CLOSED.getValue(),
         darOne.getReferenceId(), dataset.getDatasetId());
-    Election collectionOneElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election collectionOneElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.OPEN.getValue(),
         darOne.getReferenceId(), dataset.getDatasetId());
     Integer collectionOneElectionId = collectionOneElection.getElectionId();
     Integer collectionOnePrevElectionId = collectionOnePrevElection.getElectionId();
-    Election collectionTwoElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election collectionTwoElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.OPEN.getValue(),
         darTwo.getReferenceId(), datasetTwo.getDatasetId());
     Integer collectionTwoElectionId = collectionTwoElection.getElectionId();
@@ -426,7 +427,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(darTwo.getReferenceId(),
         datasetTwo.getDatasetId());
 
-    Election collectionTwoElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election collectionTwoElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.OPEN.getValue(),
         darTwo.getReferenceId(), datasetTwo.getDatasetId());
     Integer collectionTwoElectionId = collectionTwoElection.getElectionId();
@@ -514,15 +515,15 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(darTwo.getReferenceId(),
         datasetTwo.getDatasetId());
 
-    Election collectionOnePrevElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election collectionOnePrevElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.CLOSED.getValue(),
         darOne.getReferenceId(), dataset.getDatasetId());
-    Election collectionOneElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election collectionOneElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.OPEN.getValue(),
         darOne.getReferenceId(), dataset.getDatasetId());
     Integer collectionOneElectionId = collectionOneElection.getElectionId();
     Integer collectionOnePrevElectionId = collectionOnePrevElection.getElectionId();
-    Election collectionTwoElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election collectionTwoElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.OPEN.getValue(),
         darTwo.getReferenceId(), datasetTwo.getDatasetId());
     Integer collectionTwoElectionId = collectionTwoElection.getElectionId();
@@ -623,6 +624,105 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     assertEquals(collectionOneId, summaries.get(0).getDarCollectionId());
   }
 
+  @ParameterizedTest
+  @ValueSource(strings= {"admin", "researcher"})
+  void testGetDarCollectionSummaryDraftAndArchivedNotIncluded(String type) {
+    User user = createUser();
+    Integer userId = user.getUserId();
+
+    Dataset dataset = createDataset(userId);
+
+    Integer collectionId = createDarCollection(userId);
+
+    // Create two DataAccessRequests in the same collection
+    DataAccessRequest olderDar = createDataAccessRequest(collectionId, userId);
+    DataAccessRequest draftDar = createDataAccessRequest(collectionId, userId);
+    DataAccessRequest archivedDar = createDataAccessRequest(collectionId, userId);
+
+    // Insert dataset relations for all DARs
+    dataAccessRequestDAO.insertDARDatasetRelation(olderDar.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(draftDar.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(archivedDar.getReferenceId(), dataset.getDatasetId());
+    // draft DAR
+    dataAccessRequestDAO.updateDataByReferenceId(draftDar.getReferenceId(), draftDar.userId, new Date(), null,
+        new Date(), draftDar.getData());
+    // archived DAR
+    dataAccessRequestDAO.archiveByReferenceIds(List.of(archivedDar.getReferenceId()));
+
+    List<DarCollectionSummary> summaries = switch (type) {
+      case "admin" -> darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
+      case "researcher" -> darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
+      default -> throw new IllegalArgumentException("Invalid type: " + type);
+    };
+
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    DarCollectionSummary summary = summaries.get(0);
+    assertEquals(collectionId, summary.getDarCollectionId());
+
+    // Ensure the reference IDs include only the non-draft non-archived DAR
+    assertNotNull(summary.getReferenceIds());
+    assertEquals(1, summary.getReferenceIds().size());
+    assertTrue(summary.getReferenceIds().contains(olderDar.getReferenceId()));
+
+    // Ensure the summary represents the older DAR
+    assertEquals(olderDar.getSubmissionDate(), summary.getSubmissionDate());
+    assertEquals(olderDar.getExpiresAt(), summary.getExpiresAt());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings= {"admin", "researcher"})
+  void testGetDarCollectionSummaryTwoDataAccessRequests(String type) {
+    User userOne = createUser();
+    Integer userOneId = userOne.getUserId();
+
+    Dataset dataset = createDataset(userOneId);
+    Dataset dataset1 = createDataset(userOneId);
+
+    Integer collectionId = createDarCollection(userOneId);
+
+    // Create two DataAccessRequests in the same collection
+    DataAccessRequest olderDar = createDataAccessRequest(collectionId, userOneId);
+    DataAccessRequest newerDar = createDataAccessRequest(collectionId, userOneId);
+
+    // Insert dataset relations for both DARs
+    // the older DAR has two datasets and the newer DAR has one
+    dataAccessRequestDAO.insertDARDatasetRelation(olderDar.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(olderDar.getReferenceId(), dataset1.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(newerDar.getReferenceId(), dataset.getDatasetId());
+
+    // Create an election for the older DAR
+    createElection(ElectionType.DATA_ACCESS,
+        ElectionStatus.OPEN.getValue(),
+        olderDar.getReferenceId(), dataset.getDatasetId());
+
+    List<DarCollectionSummary> summaries = switch (type) {
+      case "admin" -> darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
+      case "researcher" ->
+          darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userOneId);
+      default -> throw new IllegalArgumentException("Invalid type: " + type);
+    };
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    DarCollectionSummary summary = summaries.get(0);
+    assertEquals(collectionId, summary.getDarCollectionId());
+
+    // Ensure the reference IDs include both DARs
+    assertNotNull(summary.getReferenceIds());
+    assertEquals(2, summary.getReferenceIds().size());
+    assertTrue(summary.getReferenceIds().containsAll(List.of(olderDar.getReferenceId(), newerDar.getReferenceId())));
+
+    // Ensure the election from the older DAR is not included
+    assertTrue(summary.getElections().isEmpty());
+
+    // Ensure the summary represents the most recently submitted DAR
+    assertEquals(newerDar.getSubmissionDate(), summary.getSubmissionDate());
+    assertEquals(newerDar.getExpiresAt(), summary.getExpiresAt());
+    // should only be one dataset because the newer DAR has one dataset
+    assertEquals(1, summary.getDatasetIds().size());
+    assertTrue(summary.getDatasetIds().contains(dataset.getDatasetId()));
+  }
+
   @Test
   void testGetDarCollectionSummaryByCollectionId() {
     User userOne = createUser();
@@ -641,15 +741,15 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(darTwo.getReferenceId(),
         datasetTwo.getDatasetId());
 
-    Election collectionOnePrevElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election collectionOnePrevElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.CLOSED.getValue(),
         darOne.getReferenceId(), dataset.getDatasetId());
-    Election collectionOneElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election collectionOneElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.OPEN.getValue(),
         darOne.getReferenceId(), dataset.getDatasetId());
     Integer collectionOneElectionId = collectionOneElection.getElectionId();
     Integer collectionOnePrevElectionId = collectionOnePrevElection.getElectionId();
-    Election collectionTwoElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election collectionTwoElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.OPEN.getValue(),
         darTwo.getReferenceId(), datasetTwo.getDatasetId());
     Integer collectionTwoElectionId = collectionTwoElection.getElectionId();
@@ -690,7 +790,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(darTwo.getReferenceId(),
         datasetTwo.getDatasetId());
 
-    Election collectionTwoElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election collectionTwoElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.OPEN.getValue(),
         darTwo.getReferenceId(), datasetTwo.getDatasetId());
     Integer collectionTwoElectionId = collectionTwoElection.getElectionId();
@@ -728,15 +828,15 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(excludedDar.getReferenceId(),
         datasetTwo.getDatasetId());
 
-    Election collectionOnePrevElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election collectionOnePrevElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.CLOSED.getValue(),
         darOne.getReferenceId(),
         dataset.getDatasetId()); //non-latest dataset, need to make sure this isn't pulled into query results
-    Election collectionOneElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election collectionOneElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.OPEN.getValue(), darOne.getReferenceId(), dataset.getDatasetId());
     Integer collectionOneElectionId = collectionOneElection.getElectionId();
     Integer collectionOnePrevElectionId = collectionOnePrevElection.getElectionId();
-    Election excludedCollectionElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election excludedCollectionElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.OPEN.getValue(),
         excludedDar.getReferenceId(), datasetTwo.getDatasetId());
     Integer excludedCollectionElectionId = excludedCollectionElection.getElectionId();
@@ -804,7 +904,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(excludedDar.getReferenceId(),
         excludedDataset.getDatasetId());
 
-    Election excludedElection = createElection(ElectionType.DATA_ACCESS.getValue(),
+    Election excludedElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.CLOSED.getValue(),
         excludedDar.getReferenceId(), excludedDataset.getDatasetId());
     Integer excludedElectionId = excludedElection.getElectionId();

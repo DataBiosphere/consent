@@ -88,7 +88,7 @@ public class DarCollectionSummary {
   }
 
   public void setReferenceIds(Set<String> referenceIds) {
-    this.referenceIds = referenceIds;
+    this.referenceIds = new HashSet<>(referenceIds);
   }
 
   public void addVote(Vote vote) {
