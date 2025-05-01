@@ -250,7 +250,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();
     // Requests annotated with @Auth AuthUser will be authenticated through this filter
     final AuthFilter<String, AuthUser> primaryAuthFilter = new OAuthCustomAuthFilter<>(authenticator, userRoleDAO);
-    // Requests annotated with @Auth DUOSAuthUser will be authenticated through this filter and are guaranteed to have a populated User object
+    // Requests annotated with @Auth DuosUser will be authenticated through this filter and are guaranteed to have a populated User object
     final AuthFilter<String, DuosUser> duosAuthUserFilter = new OAuthCustomAuthFilter<>(duosUserAuthenticator, userRoleDAO);
     final PolymorphicAuthDynamicFeature<AuthUser> feature = new PolymorphicAuthDynamicFeature<>(
         Map.of(

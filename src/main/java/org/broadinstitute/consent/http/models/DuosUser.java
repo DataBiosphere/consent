@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.models;
 
 /**
- * This class is used to represent an authenticated user that exists as a previously existing User.
- * It extends the AuthUser class which is not guaranteed to have a user associated with it.
+ * This class is used to represent an authenticated user that exists as a User in the Consent
+ * system. It extends the AuthUser class which is not guaranteed to have a user associated with it.
  */
 public class DuosUser extends AuthUser {
 
