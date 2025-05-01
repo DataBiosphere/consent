@@ -62,6 +62,7 @@ class DataAccessRequestServiceTest {
   private static final String PI_EMAIL = "pi@example.broadinstitute.org";
   private static final String SO_EMAIL = "so@example.broadinstitute.org";
   private static final String IT_EMAIL = "it@example.broadinstitute.org";
+  private static final int APPROVED_PROGRESS_REPORT_DATASET_ID = 1;
   private final List<UserRole> roles = List.of(UserRoles.Researcher());
   @Mock
   private CounterService counterService;
@@ -228,6 +229,7 @@ class DataAccessRequestServiceTest {
     user.setLibraryCards(List.of(new LibraryCard()));
     parentDar.setUserId(user.getUserId());
     when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId())).thenReturn(progressReport);
+    when(dataAccessRequestDAO.findApprovedDatasetsByDar(parentDar.getReferenceId())).thenReturn(List.of(APPROVED_PROGRESS_REPORT_DATASET_ID));
 
     initService();
     DataAccessRequest newDar = service.createProgressReport(user, progressReport, parentDar);
@@ -236,6 +238,21 @@ class DataAccessRequestServiceTest {
         .insertProgressReport(parentDar.getId(), progressReport.getCollectionId(), progressReport.getReferenceId(), user.getUserId(),
             progressReport.getData());
     verify(dataAccessRequestDAO).insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
+  }
+
+  @Test
+  void createProgressReportFailsIfNonApprovedDatasets() {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.setParentId(parentDar.getId().toString());
+    progressReport.setCollectionId(parentDar.getCollectionId());
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    user.setLibraryCards(List.of(new LibraryCard()));
+    parentDar.setUserId(user.getUserId());
+    when(dataAccessRequestDAO.findApprovedDatasetsByDar(parentDar.getReferenceId())).thenReturn(List.of());
+    initService();
+    assertThrows(BadRequestException.class, () -> service.createProgressReport(user, progressReport, parentDar));
   }
 
   static class DarDatasetMatcher implements ArgumentMatcher<List<DarDataset>> {
@@ -563,6 +580,7 @@ class DataAccessRequestServiceTest {
 
   private DataAccessRequest generateProgressReport() {
     DataAccessRequest progressReport = generateDataAccessRequest();
+    progressReport.setDatasetIds(List.of(APPROVED_PROGRESS_REPORT_DATASET_ID));
     progressReport.getData().setProgressReportSummary("Progress Report Summary");
     progressReport.getData().setIntellectualPropertySummary("Intellectual Property Summary");
     return progressReport;

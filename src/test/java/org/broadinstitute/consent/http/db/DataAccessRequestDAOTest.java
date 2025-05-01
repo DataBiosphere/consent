@@ -601,6 +601,51 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertFalse(approvedDarIds.contains(testDar1.getId()));
   }
 
+  @Test
+  void testFindAllApprovedDatasetsByDar() {
+    String darCode1 = "DAR-" + RandomUtils.nextInt(100, 1000000);
+    Dataset dataset1 = createDARDAOTestDataset();
+    Dataset dataset2 = createDARDAOTestDataset();
+
+    User user1 = createUserWithInstitution();
+    DataAccessRequest testDar1 = createDAR(user1, dataset1, darCode1);
+    assertTrue(
+        dataAccessRequestDAO.findApprovedDatasetsByDar(testDar1.getReferenceId())
+            .isEmpty());
+
+    Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDatasetId());
+    Vote v1 = createFinalVote(dataset1.getCreateUserId(), e1.getElectionId());
+    Date now = new Date();
+    voteDAO.updateVote(true,
+        "",
+        now,
+        v1.getVoteId(),
+        false,
+        e1.getElectionId(),
+        now,
+        false);
+
+    assertEquals(1,
+        dataAccessRequestDAO.findApprovedDatasetsByDar(testDar1.getReferenceId())
+            .size());
+
+    dataAccessRequestDAO.insertDARDatasetRelation(testDar1.getReferenceId(), dataset2.getDatasetId());
+    Election e2 = createDataAccessElection(testDar1.getReferenceId(), dataset2.getDatasetId());
+    Vote v2 = createFinalVote(dataset2.getCreateUserId(), e2.getElectionId());
+    voteDAO.updateVote(true,
+        "",
+        now,
+        v2.getVoteId(),
+        false,
+        e2.getElectionId(),
+        now,
+        false);
+
+    assertEquals(2,
+        dataAccessRequestDAO.findApprovedDatasetsByDar(testDar1.getReferenceId())
+            .size());
+  }
+
   /**
    * Tests the case where a user has been approved for access, then denied access, and that the user
    * does not show up as an approved user for the dataset.
