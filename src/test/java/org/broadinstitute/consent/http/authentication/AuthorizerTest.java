@@ -5,11 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import jakarta.ws.rs.container.ContainerRequestContext;
 import java.util.List;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,9 +18,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class UserAuthorizerTest {
+class AuthorizerTest {
 
-  private UserAuthorizer authorizer;
+  private AuthorizerHelper authorizerHelper;
   @Mock
   private UserRoleDAO userRoleDAO;
   @Mock
@@ -28,23 +28,27 @@ class UserAuthorizerTest {
   @Mock
   private AuthUser unauthorizedUser;
   @Mock
-  private ContainerRequestContext context;
+  private DuosUser authorizedDuosUser;
+  @Mock
+  private DuosUser unauthorizedDuosUser;
 
   @BeforeEach
   void setUp() {
-    authorizer = new UserAuthorizer(userRoleDAO);
+    authorizerHelper = new AuthorizerHelper(userRoleDAO);
   }
 
   @Test
   void testAuthorizeNotAuthorized() {
-    assertFalse(authorizer.authorize(unauthorizedUser, Resource.MEMBER, context));
+    assertFalse(authorizerHelper.authorize(unauthorizedUser, Resource.MEMBER));
+    assertFalse(authorizerHelper.authorize(unauthorizedDuosUser, Resource.MEMBER));
   }
 
   @Test
   void testAuthorizeAuthorized() {
     when(userRoleDAO.findRoleNamesByUserEmail(any()))
       .thenReturn(List.of(UserRoles.CHAIRPERSON.getRoleName()));
-    assertTrue(authorizer.authorize(authorizedUser, Resource.CHAIRPERSON, context));
+    assertTrue(authorizerHelper.authorize(authorizedUser, Resource.CHAIRPERSON));
+    assertTrue(authorizerHelper.authorize(authorizedDuosUser, Resource.CHAIRPERSON));
   }
 
 }
