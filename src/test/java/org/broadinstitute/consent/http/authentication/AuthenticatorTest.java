@@ -34,12 +34,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class OAuthAuthenticatorTest extends AbstractTestHelper {
+class AuthenticatorTest extends AbstractTestHelper {
 
   @Mock
   private SamService samService;
   @Mock
   private UserService userService;
+
+  private DuosUserAuthenticator duosUserAuthenticator;
   private OAuthAuthenticator oAuthAuthenticator;
   private final ClaimsCache headerCache = ClaimsCache.getInstance();
   private final String bearerToken = randomAlphabetic(100);
@@ -48,6 +50,7 @@ class OAuthAuthenticatorTest extends AbstractTestHelper {
   @BeforeEach
   void setUp() {
     headerCache.cache.invalidateAll();
+    duosUserAuthenticator = new DuosUserAuthenticator(samService, userService);
     oAuthAuthenticator = new OAuthAuthenticator(samService, userService);
   }
 
@@ -56,8 +59,8 @@ class OAuthAuthenticatorTest extends AbstractTestHelper {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerCache.loadCache(bearerToken, headerMap);
 
-    Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertTrue(authUser.isPresent());
+    oAuthAuthenticator.authenticate(bearerToken).orElseThrow();
+    duosUserAuthenticator.authenticate(bearerToken).orElseThrow();
   }
 
   @Test
@@ -80,8 +83,11 @@ class OAuthAuthenticatorTest extends AbstractTestHelper {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
     headerCache.loadCache(bearerToken, headerMap);
 
-    Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertEquals(bearerToken, authUser.orElseThrow().getAuthToken());
+    AuthUser authUser = oAuthAuthenticator.authenticate(bearerToken).orElseThrow();
+    assertEquals(bearerToken, authUser.getAuthToken());
+    // A DuosUser is not created if the user is not found
+    Optional<DuosUser> duosUser = duosUserAuthenticator.authenticate(bearerToken);
+    assertFalse(duosUser.isPresent());
   }
 
   /**
@@ -153,9 +159,12 @@ class OAuthAuthenticatorTest extends AbstractTestHelper {
     headerCache.loadCache(bearerToken, headerMap);
     when(userService.findUserByEmail(headerMap.get(ClaimsCache.OAUTH2_CLAIM_email).get(0))).thenReturn(new User());
 
-    Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertInstanceOf(DuosUser.class, authUser.orElseThrow());
-    assertNotNull(((DuosUser) authUser.orElseThrow()).getUser());
+    AuthUser authUser = oAuthAuthenticator.authenticate(bearerToken).orElseThrow();
+    assertInstanceOf(DuosUser.class, authUser);
+    assertNotNull(((DuosUser) authUser).getUser());
+
+    DuosUser duosUser = duosUserAuthenticator.authenticate(bearerToken).orElseThrow();
+    assertNotNull(duosUser.getUser());
   }
 
   @Test
@@ -166,9 +175,12 @@ class OAuthAuthenticatorTest extends AbstractTestHelper {
     headerCache.loadCache(bearerToken, headerMap);
     when(userService.findUserByEmail(headerMap.get(ClaimsCache.OAUTH2_CLAIM_email).get(0))).thenThrow(new NotFoundException());
 
-    Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertInstanceOf(AuthUser.class, authUser.orElseThrow());
-    assertFalse(authUser.get() instanceof DuosUser);
+    AuthUser authUser = oAuthAuthenticator.authenticate(bearerToken).orElseThrow();
+    assertInstanceOf(AuthUser.class, authUser);
+    assertFalse(authUser instanceof DuosUser);
+
+    Optional<DuosUser> duosUser = duosUserAuthenticator.authenticate(bearerToken);
+    assertFalse(duosUser.isPresent());
   }
 
 }
