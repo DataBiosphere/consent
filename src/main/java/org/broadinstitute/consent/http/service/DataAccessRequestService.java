@@ -36,6 +36,8 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
 public class DataAccessRequestService implements ConsentLogger {
+  public static final String EXPIRE_WARN_INTERVAL = "11 months";
+  public static final String EXPIRE_NOTICE_INTERVAL = "1 year";
 
   private final CounterService counterService;
   private final DataAccessRequestDAO dataAccessRequestDAO;

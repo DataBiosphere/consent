@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.service.DataAccessRequestService.EXPIRE_NOTICE_INTERVAL;
+import static org.broadinstitute.consent.http.service.DataAccessRequestService.EXPIRE_WARN_INTERVAL;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
 import com.google.inject.Inject;
@@ -252,14 +255,12 @@ public class EmailService implements ConsentLogger {
 
   private void sendDARExpirationNotices() {
     EmailType emailType = EmailType.DAR_EXPIRED;
-    String interval = "1 year";
-    sendDARMessageToList(emailType, interval);
+    sendDARMessageToList(emailType, EXPIRE_NOTICE_INTERVAL);
   }
 
   private void sendDARExpirationReminderNotices() {
     EmailType emailType = EmailType.DAR_EXPIRATION_REMINDER;
-    String interval = "11 months";
-    sendDARMessageToList(emailType, interval);
+    sendDARMessageToList(emailType, EXPIRE_WARN_INTERVAL);
   }
 
   private void sendDARMessageToList(EmailType type, String interval) {
@@ -275,9 +276,9 @@ public class EmailService implements ConsentLogger {
           // Do not throw here.  Log information about the DAR since this will continue
           // to appear broken until manual intervention is taken to resolve the missing user
           // email address
-          logWarn(String.format(
+          logException(new Exception(String.format(
               "Email address for user %d (%s) not found for expiring warning.  DAR reference id: %s",
-              expiredDar.getUserId(), userName, referenceId));
+              expiredDar.getUserId(), userName, referenceId)));
         } else {
           switch (type) {
             case DAR_EXPIRATION_REMINDER:

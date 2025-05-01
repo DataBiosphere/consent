@@ -580,12 +580,53 @@ class EmailServiceTest {
     when(templateHelper.getTemplate(EmailType.DAR_EXPIRATION_REMINDER.templateName)).thenReturn(mock());
     when(templateHelper.getTemplate(EmailType.DAR_EXPIRED.templateName)).thenReturn(mock());
 
-    assertDoesNotThrow(()->service.sendExpirationNotices());
-    verify(emailDAO).insert(eq(dar1.getReferenceId()),eq(null), eq(user1.getUserId()), eq(EmailType.DAR_EXPIRED.getTypeInt()), any(), any(), any(), any(), any());
-    verify(emailDAO).insert(eq(dar1.getReferenceId()),eq(null), eq(user1.getUserId()), eq(EmailType.DAR_EXPIRATION_REMINDER.getTypeInt()), any(), any(), any(), any(), any());
-    verify(emailDAO).insert(eq(dar2.getReferenceId()),eq(null), eq(user2.getUserId()), eq(EmailType.DAR_EXPIRED.getTypeInt()), any(), any(), any(), any(), any());
-    verify(emailDAO).insert(eq(dar2.getReferenceId()),eq(null), eq(user2.getUserId()), eq(EmailType.DAR_EXPIRATION_REMINDER.getTypeInt()), any(), any(), any(), any(), any());
-    verify(emailDAO, times(4)).insert(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    assertDoesNotThrow(() -> service.sendExpirationNotices());
+    verify(emailDAO)
+        .insert(
+            eq(dar1.getReferenceId()),
+            isNull(),
+            eq(user1.getUserId()),
+            eq(EmailType.DAR_EXPIRED.getTypeInt()),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
+    verify(emailDAO)
+        .insert(
+            eq(dar1.getReferenceId()),
+            isNull(),
+            eq(user1.getUserId()),
+            eq(EmailType.DAR_EXPIRATION_REMINDER.getTypeInt()),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
+    verify(emailDAO)
+        .insert(
+            eq(dar2.getReferenceId()),
+            isNull(),
+            eq(user2.getUserId()),
+            eq(EmailType.DAR_EXPIRED.getTypeInt()),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
+    verify(emailDAO)
+        .insert(
+            eq(dar2.getReferenceId()),
+            isNull(),
+            eq(user2.getUserId()),
+            eq(EmailType.DAR_EXPIRATION_REMINDER.getTypeInt()),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
+    verify(emailDAO, times(4))
+        .insert(any(), any(), any(), any(), any(), any(), any(), any(), any());
   }
 
   @Test
@@ -617,8 +658,8 @@ class EmailServiceTest {
 
     assertDoesNotThrow(()->service.sendExpirationNotices());
 
-    verify(emailDAO).insert(eq(dar1.getReferenceId()),eq(null), eq(user1.getUserId()), eq(EmailType.DAR_EXPIRED.getTypeInt()), any(), any(), any(), any(), any());
-    verify(emailDAO).insert(eq(dar1.getReferenceId()),eq(null), eq(user1.getUserId()), eq(EmailType.DAR_EXPIRATION_REMINDER.getTypeInt()), any(), any(), any(), any(), any());
+    verify(emailDAO).insert(eq(dar1.getReferenceId()),isNull(), eq(user1.getUserId()), eq(EmailType.DAR_EXPIRED.getTypeInt()), any(), any(), any(), any(), any());
+    verify(emailDAO).insert(eq(dar1.getReferenceId()),isNull(), eq(user1.getUserId()), eq(EmailType.DAR_EXPIRATION_REMINDER.getTypeInt()), any(), any(), any(), any(), any());
     verify(emailDAO, times(2)).insert(any(), any(), any(), any(), any(), any(), any(), any(), any());
     assertEquals(2, listAppender.list.size());
   }
@@ -652,8 +693,8 @@ class EmailServiceTest {
 
     assertDoesNotThrow(()->service.sendExpirationNotices());
 
-    verify(emailDAO).insert(eq(dar1.getReferenceId()),eq(null), eq(user1.getUserId()), eq(EmailType.DAR_EXPIRED.getTypeInt()), any(), any(), any(), any(), any());
-    verify(emailDAO).insert(eq(dar2.getReferenceId()),eq(null), eq(user2.getUserId()), eq(EmailType.DAR_EXPIRED.getTypeInt()), any(), any(), any(), any(), any());
+    verify(emailDAO).insert(eq(dar1.getReferenceId()),isNull(), eq(user1.getUserId()), eq(EmailType.DAR_EXPIRED.getTypeInt()), any(), any(), any(), any(), any());
+    verify(emailDAO).insert(eq(dar2.getReferenceId()),isNull(), eq(user2.getUserId()), eq(EmailType.DAR_EXPIRED.getTypeInt()), any(), any(), any(), any(), any());
     verify(emailDAO, times(2)).insert(any(), any(), any(), any(), any(), any(), any(), any(), any());
     assertEquals(2, listAppender.list.size());
   }
