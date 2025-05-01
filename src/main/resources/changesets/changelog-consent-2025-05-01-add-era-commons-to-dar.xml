@@ -1,0 +1,17 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2025-05-01-add-era-commons-to-dar" author="grushton">
+    <addColumn tableName="data_access_request">
+      <column name="era_commons_id" type="varchar(255)"/>
+    </addColumn>
+    <sql>
+      UPDATE data_access_request dar
+      SET era_commons_id = users.era_commons_id FROM (select user_id, era_commons_id FROM users) AS users
+      WHERE dar.user_id = users.user_id;
+    </sql>
+    <rollback>
+      <dropColumn tableName="data_access_request" columnName="era_commons_id"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

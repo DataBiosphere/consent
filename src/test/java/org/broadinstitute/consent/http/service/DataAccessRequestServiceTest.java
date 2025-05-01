@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -57,7 +58,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DataAccessRequestServiceTest {
+class DataAccessRequestServiceTest extends AbstractTestHelper {
 
   private static final String PI_EMAIL = "pi@example.broadinstitute.org";
   private static final String SO_EMAIL = "so@example.broadinstitute.org";
@@ -131,7 +132,7 @@ class DataAccessRequestServiceTest {
     when(counterService.getNextDarSequence()).thenReturn(1);
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
     doNothing().when(dataAccessRequestDAO)
-        .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
+        .updateDataByReferenceId(any(), any(), any(), any(), any(), any(), any());
     initService();
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar);
     assertNotNull(newDar);
@@ -153,7 +154,7 @@ class DataAccessRequestServiceTest {
         RandomUtils.nextInt(1, 100));
     doNothing().when(dataAccessRequestDAO)
         .insertDataAccessRequest(anyInt(), anyString(), anyInt(), any(Date.class), any(Date.class),
-            any(Date.class), any(Date.class), any(DataAccessRequestData.class));
+            any(Date.class), any(Date.class), any(DataAccessRequestData.class), randomAlphabetic(10));
     initService();
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar);
     assertNotNull(newDar);

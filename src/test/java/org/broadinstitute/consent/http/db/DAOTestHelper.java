@@ -196,7 +196,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
       String darCode) {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle("Project Title: " + randomAlphabetic(50));
-    data.setDarCode(darCode);
+//    data.setDarCode(darCode);
     DatasetEntry entry = new DatasetEntry();
     entry.setKey("key");
     entry.setValue("value");
@@ -211,7 +211,8 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
         referenceId,
         userId,
         now, now, now, now,
-        data);
+        data,
+        randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 

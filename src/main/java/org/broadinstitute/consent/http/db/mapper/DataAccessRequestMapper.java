@@ -34,6 +34,7 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
       dar.addDatasetId(resultSet.getInt("dataset_id"));
     }
     dar.setData(data);
+    dar.setEraCommonsId(resultSet.getString("era_commons_id"));
     return dar;
   }
 
