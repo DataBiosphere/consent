@@ -12,14 +12,18 @@ import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
-public abstract class AbstractAuthenticator implements ConsentLogger {
+/**
+ * This class is used to help with authentication. It contains common methods and properties that
+ * are used by the OAuthAuthenticator and DuosUserAuthenticator classes.
+ */
+public abstract class AuthenticatorHelper implements ConsentLogger {
 
   protected final ClaimsCache claimsCache;
   protected final SamService samService;
   protected final UserService userService;
 
   @Inject
-  protected AbstractAuthenticator(SamService samService,
+  protected AuthenticatorHelper(SamService samService,
       UserService userService) {
     this.claimsCache = ClaimsCache.getInstance();
     this.samService = samService;

@@ -3,6 +3,10 @@ package org.broadinstitute.consent.http.models;
 import java.security.Principal;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 
+/**
+ * This class is used to represent an authenticated user that may or may not exist in Sam or the
+ * Consent system.
+ */
 public class AuthUser implements Principal {
 
   private String authToken;

@@ -5,7 +5,7 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
 
-public class UserAuthorizer extends AbstractAuthorizer implements Authorizer<AuthUser> {
+public class UserAuthorizer extends AuthorizerHelper implements Authorizer<AuthUser> {
 
   UserAuthorizer(UserRoleDAO userRoleDAO) {
     super(userRoleDAO);
@@ -15,5 +15,4 @@ public class UserAuthorizer extends AbstractAuthorizer implements Authorizer<Aut
   public boolean authorize(AuthUser user, String role, ContainerRequestContext context) {
     return super.authorize(user, role);
   }
-
 }

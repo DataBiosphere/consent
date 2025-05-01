@@ -49,7 +49,7 @@ import org.broadinstitute.consent.http.health.OntologyHealthCheck;
 import org.broadinstitute.consent.http.health.SamHealthCheck;
 import org.broadinstitute.consent.http.health.SendGridHealthCheck;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DuosAuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.resources.DACUserResource;
 import org.broadinstitute.consent.http.resources.DaaResource;
 import org.broadinstitute.consent.http.resources.DacResource;
@@ -80,7 +80,6 @@ import org.broadinstitute.consent.http.resources.VersionResource;
 import org.broadinstitute.consent.http.resources.VoteResource;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.DraftService;
@@ -249,16 +248,16 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
     final DuosUserAuthenticator duosUserAuthenticator = injector.getProvider(DuosUserAuthenticator.class).get();
     final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();
-    // Requests annotated with @Auth AuthUser will be authenticated with this filter
+    // Requests annotated with @Auth AuthUser will be authenticated through this filter
     final AuthFilter<String, AuthUser> primaryAuthFilter = new OAuthCustomAuthFilter<>(authenticator, userRoleDAO);
-    // Requests annotated with @Auth DUOSAuthUser will be authenticated with this filter and are guaranteed to have a populated User object
-    final AuthFilter<String, DuosAuthUser> duosAuthUserFilter = new OAuthCustomAuthFilter<>(duosUserAuthenticator, userRoleDAO);
+    // Requests annotated with @Auth DUOSAuthUser will be authenticated through this filter and are guaranteed to have a populated User object
+    final AuthFilter<String, DuosUser> duosAuthUserFilter = new OAuthCustomAuthFilter<>(duosUserAuthenticator, userRoleDAO);
     final PolymorphicAuthDynamicFeature<AuthUser> feature = new PolymorphicAuthDynamicFeature<>(
         Map.of(
             AuthUser.class, primaryAuthFilter,
-            DuosAuthUser.class, duosAuthUserFilter));
+            DuosUser.class, duosAuthUserFilter));
     final AbstractBinder binder = new PolymorphicAuthValueFactoryProvider.Binder<>(
-        Set.of(AuthUser.class, DuosAuthUser.class));
+        Set.of(AuthUser.class, DuosUser.class));
     env.jersey().register(feature);
     env.jersey().register(binder);
 

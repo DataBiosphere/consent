@@ -21,7 +21,7 @@ import java.util.Optional;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.filters.ClaimsCache;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DuosAuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatus.UserInfo;
@@ -146,7 +146,7 @@ class OAuthAuthenticatorTest extends AbstractTestHelper {
   }
 
   @Test
-  void testAuthenticateGetUserInfoWithDUOSUser() {
+  void testAuthenticateGetUserInfoWithDuosUser() {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("name"));
@@ -154,12 +154,12 @@ class OAuthAuthenticatorTest extends AbstractTestHelper {
     when(userService.findUserByEmail(headerMap.get(ClaimsCache.OAUTH2_CLAIM_email).get(0))).thenReturn(new User());
 
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertInstanceOf(DuosAuthUser.class, authUser.orElseThrow());
-    assertNotNull(((DuosAuthUser) authUser.orElseThrow()).getUser());
+    assertInstanceOf(DuosUser.class, authUser.orElseThrow());
+    assertNotNull(((DuosUser) authUser.orElseThrow()).getUser());
   }
 
   @Test
-  void testAuthenticateGetUserInfoWithDUOSUserNotFound() {
+  void testAuthenticateGetUserInfoWithDuosUserNotFound() {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("name"));
@@ -168,7 +168,7 @@ class OAuthAuthenticatorTest extends AbstractTestHelper {
 
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
     assertInstanceOf(AuthUser.class, authUser.orElseThrow());
-    assertFalse(authUser.get() instanceof DuosAuthUser);
+    assertFalse(authUser.get() instanceof DuosUser);
   }
 
 }

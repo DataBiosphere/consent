@@ -9,13 +9,19 @@ import java.io.IOException;
 import java.security.Principal;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DuosAuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 
 @Priority(Priorities.AUTHENTICATION)
 public class OAuthCustomAuthFilter<P extends Principal> extends AuthFilter<String, P> {
 
   private final AuthFilter filter;
 
+  /**
+   * Constructor for OAuthCustomAuthFilter intended to be used with AuthUsers.
+   *
+   * @param authenticator OAuthAuthenticator
+   * @param userRoleDAO   UserRoleDAO
+   */
   public OAuthCustomAuthFilter(OAuthAuthenticator authenticator, UserRoleDAO userRoleDAO) {
     filter = new OAuthCredentialAuthFilter.Builder<AuthUser>()
         .setAuthenticator(authenticator)
@@ -25,8 +31,14 @@ public class OAuthCustomAuthFilter<P extends Principal> extends AuthFilter<Strin
         .buildAuthFilter();
   }
 
+  /**
+   * Constructor for OAuthCustomAuthFilter intended to be used with DuosUsers.
+   *
+   * @param authenticator DuosUserAuthenticator
+   * @param userRoleDAO   UserRoleDAO
+   */
   public OAuthCustomAuthFilter(DuosUserAuthenticator authenticator, UserRoleDAO userRoleDAO) {
-    filter = new OAuthCredentialAuthFilter.Builder<DuosAuthUser>()
+    filter = new OAuthCredentialAuthFilter.Builder<DuosUser>()
         .setAuthenticator(authenticator)
         .setAuthorizer(new DuosUserAuthorizer(userRoleDAO))
         .setPrefix("Bearer")

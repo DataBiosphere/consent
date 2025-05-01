@@ -6,13 +6,12 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import java.util.Optional;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.DuosAuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 
-
-public class OAuthAuthenticator extends AbstractAuthenticator implements
+public class OAuthAuthenticator extends AuthenticatorHelper implements
     Authenticator<String, AuthUser> {
 
   @Inject
@@ -29,7 +28,7 @@ public class OAuthAuthenticator extends AbstractAuthenticator implements
         authUser.setUserStatusInfo(getUserStatusInfo(authUser));
         try {
           User duosUser = userService.findUserByEmail(authUser.getEmail());
-          return Optional.of(new DuosAuthUser(authUser, duosUser));
+          return Optional.of(new DuosUser(authUser, duosUser));
         } catch (NotFoundException e) {
           logWarn("User not found, authentication incomplete: %s".formatted(authUser.getEmail()));
         }
@@ -39,5 +38,4 @@ public class OAuthAuthenticator extends AbstractAuthenticator implements
     logException(new ServerErrorException("Error reading request headers", 500));
     return Optional.empty();
   }
-
 }
