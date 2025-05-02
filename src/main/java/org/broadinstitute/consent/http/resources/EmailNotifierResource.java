@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -28,5 +29,18 @@ public class EmailNotifierResource extends Resource {
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
+  }
+
+  @GET
+  @Path("/darExpirationNotices")
+  @RolesAllowed({SERVICE_ACCOUNT})
+  public Response sendDarExpirationNotices() {
+    try {
+      emailService.sendExpirationNotices();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+
+    return Response.ok().build();
   }
 }

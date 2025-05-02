@@ -22,6 +22,9 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
         dar.setCollectionId(collectionId);
       }
     }
+    if (hasColumn(resultSet, "dar_code")) {
+      dar.setDarCode(resultSet.getString("dar_code"));
+    }
     dar.setParentId(resultSet.getString("parent_id"));
     dar.setUserId(resultSet.getInt("user_id"));
     dar.setCreateDate(resultSet.getTimestamp("create_date"));
