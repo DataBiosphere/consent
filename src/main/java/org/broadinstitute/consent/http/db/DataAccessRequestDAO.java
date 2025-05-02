@@ -109,7 +109,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               FROM data_access_request dar
               INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
               INNER JOIN (
-                SELECT DISTINCT e.reference_id, LAST_VALUE(v.vote)
+                SELECT DISTINCT e.reference_id, e.dataset_id, LAST_VALUE(v.vote)
                 OVER(
                   PARTITION BY e.reference_id
                     ORDER BY v.createdate
@@ -124,6 +124,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               WHERE dar.submission_date > now() - interval '1 year'
               AND final_access_vote.last_vote = TRUE
               AND dar.reference_id = :darReferenceId
+              AND final_access_vote.dataset_id = dd.dataset_id
               AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
           """)
   List<Integer> findApprovedDatasetsByDar(@Bind("darReferenceId") String darReferenceId);

@@ -630,6 +630,9 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
             .size());
 
     dataAccessRequestDAO.insertDARDatasetRelation(testDar1.getReferenceId(), dataset2.getDatasetId());
+    assertEquals(1,
+        dataAccessRequestDAO.findApprovedDatasetsByDar(testDar1.getReferenceId())
+            .size());
     Election e2 = createDataAccessElection(testDar1.getReferenceId(), dataset2.getDatasetId());
     Vote v2 = createFinalVote(dataset2.getCreateUserId(), e2.getElectionId());
     voteDAO.updateVote(true,
