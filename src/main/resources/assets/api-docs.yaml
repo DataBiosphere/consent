@@ -529,7 +529,8 @@ paths:
           description: Email successfully sent
         500:
           description: Server error.
-
+  /api/emailNotifier/darExpirationNotices:
+    $ref: './paths/darExpirationNotices.yaml'
   /api/institutions:
     $ref: './paths/institutions.yaml'
   /api/institutions/{id}:
