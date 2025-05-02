@@ -9,8 +9,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -55,7 +53,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     cal.set(Calendar.DAY_OF_MONTH, 1);
     Date old = cal.getTime();
 
-    String referenceId = RandomStringUtils.randomAlphanumeric(10);
+    String referenceId = randomAlphanumeric(10);
     DarDataset oldDarDataset = new DarDataset(referenceId, datasetOne.getDatasetId());
     DarDataset oldDarDatasetTwo = new DarDataset(referenceId, datasetTwo.getDatasetId());
     DarCollection collection = createDarCollection();
@@ -93,9 +91,9 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
 
   private Dataset createDataset() {
     User user = createUser();
-    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    String name = "Name_" + randomAlphanumeric(20);
     Timestamp now = new Timestamp(new Date().getTime());
-    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
         dataUse.toString(), null);
@@ -116,7 +114,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
 
   private DarCollection createDarCollection() {
     User user = createUserWithInstitution();
-    String darCode = "DAR-" + RandomUtils.nextInt(1, 10000);
+    String darCode = "DAR-" + randomInt(1, 10000);
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     Dataset dataset = createDataset();
@@ -151,8 +149,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
   private DataAccessRequest createDataAccessRequest(Integer userId, Integer collectionId,
       String darCode) {
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setProjectTitle("Project Title: " + RandomStringUtils.random(50, true, false));
-    data.setDarCode(darCode);
+    data.setProjectTitle("Project Title: " + randomAlphabetic(50));
     DatasetEntry entry = new DatasetEntry();
     entry.setKey("key");
     entry.setValue("value");
