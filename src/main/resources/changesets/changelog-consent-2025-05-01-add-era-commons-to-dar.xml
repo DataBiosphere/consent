@@ -8,7 +8,8 @@
     <sql>
       UPDATE data_access_request dar
       SET era_commons_id = users.era_commons_id FROM (select user_id, era_commons_id FROM users) AS users
-      WHERE dar.user_id = users.user_id;
+      WHERE dar.user_id = users.user_id
+      AND dar.submission_date IS NOT NULL;
     </sql>
     <rollback>
       <dropColumn tableName="data_access_request" columnName="era_commons_id"/>
