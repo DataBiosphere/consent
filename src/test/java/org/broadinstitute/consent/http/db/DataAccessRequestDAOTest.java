@@ -18,7 +18,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.EmailType;
@@ -229,9 +228,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertNotNull(dars);
     assertFalse(dars.isEmpty());
     assertEquals(3, dars.size());
-    dars.forEach(dar -> {
-      assertNotNull(dar.getDarCode());
-    });
+    dars.forEach(dar -> assertNotNull(dar.getDarCode()));
   }
 
   @Test
@@ -811,23 +808,8 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(1, dars.size());
   }
 
-//  @Test
-//  void testFindDARsByDateRange() {
-//    DarCollection darCollection = createDarCollection();
-//    darCollection.getDars().keySet().forEach(referenceId ->
-//        dataAccessRequestDAO.updateDraftToSubmittedForCollection(darCollection.getDarCollectionId(),
-//            referenceId));
-//    Timestamp oneYearAgo = Timestamp.from(Instant.now().minus(365, ChronoUnit.DAYS));
-//    Timestamp oneMinuteInTheFuture = Timestamp.from(Instant.now().plus(1, ChronoUnit.MINUTES));
-//    List<DataAccessRequest> dars = dataAccessRequestDAO.findSubmittedDarsByTimeRange(oneYearAgo,
-//        oneMinuteInTheFuture);
-//    assertFalse(dars.isEmpty());
-//    assertEquals(1, dars.size());
-//  }
-
   @Test
-  void testFindAgedDARsByEmailTypeOlderThanIntervalSkipsEntriesBeforeNotBefore()
-      throws InterruptedException {
+  void testFindAgedDARsByEmailTypeOlderThanIntervalSkipsEntriesBeforeNotBefore() {
     User userOne = createUserWithInstitution();
     Integer userOneId = userOne.getUserId();
     Integer collectionOneId = createDarCollection(userOneId);
@@ -884,7 +866,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
 
     assertNotNull(dars);
     assertEquals(1, dars.size());
-    dars.forEach((dar) -> {
+    dars.forEach(dar -> {
       assertEquals(userOne.getUserId(), dar.getUserId());
       assertEquals(darOne.getReferenceId(), dar.getReferenceId());
       assertNotNull(dar.getDarCode());
@@ -920,7 +902,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
 
     assertNotNull(dars);
     assertEquals(2, dars.size());
-    dars.forEach((dar) -> {
+    dars.forEach(dar -> {
       assertNotNull(dar.getUserId());
       assertNotNull(dar.getReferenceId());
       assertNotNull(dar.getExpiresAt());
@@ -990,7 +972,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
 
     assertNotNull(dars);
     assertEquals(1, dars.size());
-    dars.forEach((dar) -> {
+    dars.forEach(dar -> {
       assertEquals(userTwo.getUserId(), dar.getUserId());
       assertEquals(darTwo.getReferenceId(), dar.getReferenceId());
       assertNotNull(dar.getDarCode());
