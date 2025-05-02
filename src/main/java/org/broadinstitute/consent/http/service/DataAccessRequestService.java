@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -228,9 +229,8 @@ public class DataAccessRequestService implements ConsentLogger {
 
     String referenceId = progressReport.getReferenceId();
     List<Integer> progressReportDatasetIds = progressReport.getDatasetIds();
-    List<Integer> darDatasetIds = dataAccessRequestDAO.findApprovedDatasetsByDar(parentDar.getReferenceId());
-    boolean allIdsValid = new HashSet<>(darDatasetIds).containsAll(progressReportDatasetIds);
-    if(!allIdsValid) {
+    Set<Integer> darDatasetIds = dataAccessRequestDAO.findApprovedDatasetsByDar(parentDar.getReferenceId());
+    if (!darDatasetIds.containsAll(progressReportDatasetIds)) {
       throw new BadRequestException("Progress report can only be created for approved datasets in the parent DAR");
     }
     dataAccessRequestDAO.insertProgressReport(

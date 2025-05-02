@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -637,9 +638,10 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         now,
         false);
 
-    assertEquals(1,
-        dataAccessRequestDAO.findApprovedDatasetsByDar(testDar1.getReferenceId())
-            .size());
+    Set<Integer> approvedDatasetIds = dataAccessRequestDAO.findApprovedDatasetsByDar(
+        testDar1.getReferenceId());
+    assertEquals(1, approvedDatasetIds.size());
+    assertTrue(approvedDatasetIds.contains(dataset1.getDatasetId()));
 
     voteDAO.updateVote(true,
         "",
@@ -650,9 +652,12 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         now,
         false);
 
-    assertEquals(2,
-        dataAccessRequestDAO.findApprovedDatasetsByDar(testDar1.getReferenceId())
-            .size());
+    approvedDatasetIds = dataAccessRequestDAO.findApprovedDatasetsByDar(testDar1.getReferenceId());
+
+    assertEquals(2, approvedDatasetIds.size());
+    assertTrue(approvedDatasetIds.contains(dataset1.getDatasetId()));
+    assertTrue(approvedDatasetIds.contains(dataset2.getDatasetId()));
+
 
     voteDAO.updateVote(false,
         "",
@@ -663,9 +668,11 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         now,
         false);
 
-    assertEquals(2,
-        dataAccessRequestDAO.findApprovedDatasetsByDar(testDar1.getReferenceId())
-            .size());
+    approvedDatasetIds = dataAccessRequestDAO.findApprovedDatasetsByDar(testDar1.getReferenceId());
+
+    assertEquals(2, approvedDatasetIds.size());
+    assertTrue(approvedDatasetIds.contains(dataset1.getDatasetId()));
+    assertTrue(approvedDatasetIds.contains(dataset2.getDatasetId()));
   }
 
   /**

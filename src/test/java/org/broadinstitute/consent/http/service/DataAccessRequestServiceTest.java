@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -62,7 +63,6 @@ class DataAccessRequestServiceTest {
   private static final String PI_EMAIL = "pi@example.broadinstitute.org";
   private static final String SO_EMAIL = "so@example.broadinstitute.org";
   private static final String IT_EMAIL = "it@example.broadinstitute.org";
-  private static final int APPROVED_PROGRESS_REPORT_DATASET_ID = 1;
   private final List<UserRole> roles = List.of(UserRoles.Researcher());
   @Mock
   private CounterService counterService;
@@ -229,7 +229,8 @@ class DataAccessRequestServiceTest {
     user.setLibraryCards(List.of(new LibraryCard()));
     parentDar.setUserId(user.getUserId());
     when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId())).thenReturn(progressReport);
-    when(dataAccessRequestDAO.findApprovedDatasetsByDar(parentDar.getReferenceId())).thenReturn(List.of(APPROVED_PROGRESS_REPORT_DATASET_ID));
+    when(dataAccessRequestDAO.findApprovedDatasetsByDar(parentDar.getReferenceId())).thenReturn(
+        Set.copyOf(progressReport.getDatasetIds()));
 
     initService();
     DataAccessRequest newDar = service.createProgressReport(user, progressReport, parentDar);
@@ -250,7 +251,7 @@ class DataAccessRequestServiceTest {
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(List.of(new LibraryCard()));
     parentDar.setUserId(user.getUserId());
-    when(dataAccessRequestDAO.findApprovedDatasetsByDar(parentDar.getReferenceId())).thenReturn(List.of());
+    when(dataAccessRequestDAO.findApprovedDatasetsByDar(parentDar.getReferenceId())).thenReturn(Set.of());
     initService();
     assertThrows(BadRequestException.class, () -> service.createProgressReport(user, progressReport, parentDar));
   }
@@ -580,7 +581,7 @@ class DataAccessRequestServiceTest {
 
   private DataAccessRequest generateProgressReport() {
     DataAccessRequest progressReport = generateDataAccessRequest();
-    progressReport.setDatasetIds(List.of(APPROVED_PROGRESS_REPORT_DATASET_ID));
+    progressReport.setDatasetIds(List.of(1));
     progressReport.getData().setProgressReportSummary("Progress Report Summary");
     progressReport.getData().setIntellectualPropertySummary("Intellectual Property Summary");
     return progressReport;
