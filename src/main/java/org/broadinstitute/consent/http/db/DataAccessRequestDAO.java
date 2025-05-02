@@ -359,18 +359,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   void updateDraftToSubmittedForCollection(@Bind("collectionId") Integer collectionId,
       @Bind("referenceId") String referenceId);
 
-// TODO: Unused
-//  @RegisterRowMapper(DataAccessRequestDataMapper.class)
-//  @SqlQuery(
-//      """
-//          SELECT (data #>> '{}')::jsonb AS data
-//          FROM data_access_request
-//          WHERE (LOWER(data->>'status') != 'archived'
-//            OR data->>'status' IS NULL)
-//      """)
-//  List<DataAccessRequestData> findAllDataAccessRequestDatas();
-
-  // TODO: Only used in tests, we should be able to remove it.
   @SqlUpdate(
       """
          UPDATE data_access_request
