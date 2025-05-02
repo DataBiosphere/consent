@@ -8,7 +8,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -56,10 +55,11 @@ class InstitutionResourceTest {
     List<Institution> institutions = Collections.singletonList(mockInstitutionSetup());
     when(institutionService.findAllInstitutions()).thenReturn(institutions);
     initResource();
-    Response adminResponse = resource.getInstitutions(duosUser);
-    String json = adminResponse.getEntity().toString();
-    assertEquals(200, adminResponse.getStatus());
-    assertNotNull(json);
+    try (var adminResponse = resource.getInstitutions(duosUser)) {
+      String json = adminResponse.getEntity().toString();
+      assertEquals(200, adminResponse.getStatus());
+      assertNotNull(json);
+    }
   }
 
   @Test
@@ -67,10 +67,11 @@ class InstitutionResourceTest {
     List<Institution> institutions = Collections.singletonList(mockInstitutionSetup());
     when(institutionService.findAllInstitutions()).thenReturn(institutions);
     initResource();
-    Response researcherResponse = resource.getInstitutions(duosUser);
-    String json = researcherResponse.getEntity().toString();
-    assertEquals(200, researcherResponse.getStatus());
-    assertNotNull(json);
+    try (var researcherResponse = resource.getInstitutions(duosUser)) {
+      String json = researcherResponse.getEntity().toString();
+      assertEquals(200, researcherResponse.getStatus());
+      assertNotNull(json);
+    }
   }
 
   @Test
@@ -78,10 +79,11 @@ class InstitutionResourceTest {
     Institution mockInstitution = mockInstitutionSetup();
     when(institutionService.findInstitutionById(anyInt())).thenReturn(mockInstitution);
     initResource();
-    Response adminResponse = resource.getInstitution(duosUser, 1);
-    String json = adminResponse.getEntity().toString();
-    assertEquals(200, adminResponse.getStatus());
-    assertNotNull(json);
+    try (var adminResponse = resource.getInstitution(duosUser, 1)) {
+      String json = adminResponse.getEntity().toString();
+      assertEquals(200, adminResponse.getStatus());
+      assertNotNull(json);
+    }
   }
 
   @Test
@@ -89,10 +91,11 @@ class InstitutionResourceTest {
     Institution mockInstitution = mockInstitutionSetup();
     when(institutionService.findInstitutionById(anyInt())).thenReturn(mockInstitution);
     initResource();
-    Response researcherResponse = resource.getInstitution(duosUser, 1);
-    String json = researcherResponse.getEntity().toString();
-    assertEquals(200, researcherResponse.getStatus());
-    assertNotNull(json);
+    try (var researcherResponse = resource.getInstitution(duosUser, 1)) {
+      String json = researcherResponse.getEntity().toString();
+      assertEquals(200, researcherResponse.getStatus());
+      assertNotNull(json);
+    }
   }
 
   @Test
@@ -100,8 +103,9 @@ class InstitutionResourceTest {
     Exception error = new NotFoundException("Institution not found");
     when(institutionService.findInstitutionById(anyInt())).thenThrow(error);
     initResource();
-    Response response = resource.getInstitution(duosUser, 1);
-    assertEquals(404, response.getStatus());
+    try (var response = resource.getInstitution(duosUser, 1)) {
+      assertEquals(404, response.getStatus());
+    }
   }
 
 
@@ -111,10 +115,11 @@ class InstitutionResourceTest {
     when(institutionService.createInstitution(any(), anyInt())).thenReturn(mockInstitution);
     initResource();
     String requestJson = GsonUtil.getInstance().toJson(mockInstitution, Institution.class);
-    Response response = resource.createInstitution(duosUser, requestJson);
-    String json = response.getEntity().toString();
-    assertEquals(200, response.getStatus());
-    assertNotNull(json);
+    try (var response = resource.createInstitution(duosUser, requestJson)) {
+      String json = response.getEntity().toString();
+      assertEquals(200, response.getStatus());
+      assertNotNull(json);
+    }
   }
 
   @Test
@@ -123,9 +128,10 @@ class InstitutionResourceTest {
     Institution mockInstitution = mockInstitutionSetup();
     when(institutionService.createInstitution(any(), anyInt())).thenThrow(error);
     initResource();
-    Response response = resource.createInstitution(duosUser,
-        GsonUtil.getInstance().toJson(mockInstitution));
-    assertEquals(400, response.getStatus());
+    try (var response = resource.createInstitution(duosUser,
+        GsonUtil.getInstance().toJson(mockInstitution))) {
+      assertEquals(400, response.getStatus());
+    }
   }
 
   @Test
@@ -134,9 +140,10 @@ class InstitutionResourceTest {
     Institution mockInstitution = mockInstitutionSetup();
     when(institutionService.createInstitution(any(), anyInt())).thenThrow(error);
     initResource();
-    Response response = resource.createInstitution(duosUser,
-        GsonUtil.getInstance().toJson(mockInstitution));
-    assertEquals(400, response.getStatus());
+    try (var response = resource.createInstitution(duosUser,
+        GsonUtil.getInstance().toJson(mockInstitution))) {
+      assertEquals(400, response.getStatus());
+    }
   }
 
   @Test
@@ -144,9 +151,10 @@ class InstitutionResourceTest {
     Institution mockInstitution = mockInstitutionSetup();
     when(institutionService.findAllInstitutionsByName(any())).thenReturn(List.of(mockInstitution));
     initResource();
-    Response response = resource.createInstitution(duosUser,
-        GsonUtil.getInstance().toJson(mockInstitution));
-    assertEquals(409, response.getStatus());
+    try (var response = resource.createInstitution(duosUser,
+        GsonUtil.getInstance().toJson(mockInstitution))) {
+      assertEquals(409, response.getStatus());
+    }
   }
 
   @Test
@@ -155,10 +163,11 @@ class InstitutionResourceTest {
     when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenReturn(
         mockInstitution);
     initResource();
-    Response response = resource.updateInstitution(duosUser, 1,
-        GsonUtil.getInstance().toJson(mockInstitution));
-    assertEquals(200, response.getStatus());
-    assertNotNull(response.getEntity().toString());
+    try (var response = resource.updateInstitution(duosUser, 1,
+        GsonUtil.getInstance().toJson(mockInstitution))) {
+      assertEquals(200, response.getStatus());
+      assertNotNull(response.getEntity().toString());
+    }
   }
 
   @Test
@@ -167,9 +176,10 @@ class InstitutionResourceTest {
     Institution mockInstitution = mockInstitutionSetup();
     when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
     initResource();
-    Response response = resource.updateInstitution(duosUser, 1,
-        GsonUtil.getInstance().toJson(mockInstitution));
-    assertEquals(404, response.getStatus());
+    try (var response = resource.updateInstitution(duosUser, 1,
+        GsonUtil.getInstance().toJson(mockInstitution))) {
+      assertEquals(404, response.getStatus());
+    }
   }
 
   @Test
@@ -179,9 +189,10 @@ class InstitutionResourceTest {
     mockInstitution.setName(null);
     when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
     initResource();
-    Response response = resource.updateInstitution(duosUser, 1,
-        GsonUtil.getInstance().toJson(mockInstitution));
-    assertEquals(400, response.getStatus());
+    try (var response = resource.updateInstitution(duosUser, 1,
+        GsonUtil.getInstance().toJson(mockInstitution))) {
+      assertEquals(400, response.getStatus());
+    }
   }
 
   @Test
@@ -191,16 +202,18 @@ class InstitutionResourceTest {
     mockInstitution.setName("");
     when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
     initResource();
-    Response response = resource.updateInstitution(duosUser, 1,
-        GsonUtil.getInstance().toJson(mockInstitution));
-    assertEquals(400, response.getStatus());
+    try (var response = resource.updateInstitution(duosUser, 1,
+        GsonUtil.getInstance().toJson(mockInstitution))) {
+      assertEquals(400, response.getStatus());
+    }
   }
 
   @Test
   void testDeleteInstitution() {
     initResource();
-    Response response = resource.deleteInstitution(duosUser,1);
-    assertEquals(204, response.getStatus());
+    try (var response = resource.deleteInstitution(duosUser, 1)) {
+      assertEquals(204, response.getStatus());
+    }
   }
 
   @Test
@@ -208,7 +221,8 @@ class InstitutionResourceTest {
     Exception error = new NotFoundException("Institution not found");
     doThrow(error).when(institutionService).deleteInstitutionById(anyInt());
     initResource();
-    Response response = resource.deleteInstitution(duosUser, 1);
-    assertEquals(404, response.getStatus());
+    try (var response = resource.deleteInstitution(duosUser, 1)) {
+      assertEquals(404, response.getStatus());
+    }
   }
 }
