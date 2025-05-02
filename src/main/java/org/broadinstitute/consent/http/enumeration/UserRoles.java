@@ -15,14 +15,16 @@ public enum UserRoles {
   RESEARCHER(Resource.RESEARCHER, 5),
   SIGNINGOFFICIAL(Resource.SIGNINGOFFICIAL, 7),
   DATASUBMITTER(Resource.DATASUBMITTER, 8),
-  ITDIRECTOR(Resource.ITDIRECTOR, 9);
+  ITDIRECTOR(Resource.ITDIRECTOR, 9),
+  SERVICE_ACCOUNT(Resource.SERVICE_ACCOUNT, 10);
 
-  private final String roleName;
-  private final Integer roleId;
   private static final Set<UserRoles> NON_DAC_ROLES =
-      Set.of(ALUMNI, ADMIN, RESEARCHER, SIGNINGOFFICIAL, DATASUBMITTER, ITDIRECTOR);
+      Set.of(ALUMNI, ADMIN, RESEARCHER, SIGNINGOFFICIAL, DATASUBMITTER, ITDIRECTOR,
+          SERVICE_ACCOUNT);
   private static final Set<UserRoles> SO_AUTHORIZED_ROLES_TO_ADJUST =
       Set.of(ITDIRECTOR, SIGNINGOFFICIAL, DATASUBMITTER);
+  private final String roleName;
+  private final Integer roleId;
 
   UserRoles(String roleName, Integer roleId) {
     this.roleName = roleName;
@@ -61,12 +63,8 @@ public enum UserRoles {
     return new UserRole(SIGNINGOFFICIAL.getRoleId(), SIGNINGOFFICIAL.getRoleName());
   }
 
-  public String getRoleName() {
-    return roleName;
-  }
-
-  public Integer getRoleId() {
-    return roleId;
+  public static UserRole ServiceAccount() {
+    return new UserRole(SERVICE_ACCOUNT.getRoleId(), SERVICE_ACCOUNT.getRoleName());
   }
 
   public static UserRoles getUserRoleFromName(String value) {
@@ -103,6 +101,14 @@ public enum UserRoles {
 
   public static boolean isValidSoAdjustableRoleId(UserRoles role) {
     return SO_AUTHORIZED_ROLES_TO_ADJUST.contains(role);
+  }
+
+  public String getRoleName() {
+    return roleName;
+  }
+
+  public Integer getRoleId() {
+    return roleId;
   }
 
 }

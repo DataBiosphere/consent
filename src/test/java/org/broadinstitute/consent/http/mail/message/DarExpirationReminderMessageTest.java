@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.StringWriter;
 import java.util.Objects;
+import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
@@ -33,11 +34,12 @@ public class DarExpirationReminderMessageTest extends AbstractTestHelper {
   void testGetDarExpiredTemplate() throws Exception {
     String userName = randomAlphabetic(10);
     String darCode = randomAlphabetic(10);
+    String darReferenceId = UUID.randomUUID().toString();
     User requestUser = new User();
     requestUser.setDisplayName(userName);
 
-    var message = new DarExpirationReminderMessage(requestUser, darCode);
-    assertEquals(darCode, message.getEntityReferenceId());
+    var message = new DarExpirationReminderMessage(requestUser, darCode, darReferenceId);
+    assertEquals(darReferenceId, message.getEntityReferenceId());
 
     var template = helper.getTemplate(message.getTemplateName());
     var out = new StringWriter();

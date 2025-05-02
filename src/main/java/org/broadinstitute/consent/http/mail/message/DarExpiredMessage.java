@@ -7,10 +7,12 @@ import org.broadinstitute.consent.http.models.User;
 public class DarExpiredMessage extends MailMessage {
 
   private final String darCode;
+  private final String referenceId;
 
-  public DarExpiredMessage(User toUser, String darCode) {
+  public DarExpiredMessage(User toUser, String darCode, String referenceId) {
     super(toUser, EmailType.DAR_EXPIRED);
     this.darCode = darCode;
+    this.referenceId = referenceId;
   }
 
   @Override
@@ -26,6 +28,6 @@ public class DarExpiredMessage extends MailMessage {
 
   @Override
   public String getEntityReferenceId() {
-    return darCode;
+    return referenceId;
   }
 }

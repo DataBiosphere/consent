@@ -907,6 +907,16 @@ class UserServiceTest {
   }
 
   @Test
+  void insertServiceAccountUserRole() {
+    User testUser = generateUser();
+    UserRole role = UserRoles.ServiceAccount();
+    service.insertRoleAndInstitutionForUser(role, testUser);
+    verifyNoInteractions(institutionService);
+    verifyNoInteractions(userServiceDAO);
+    verify(userRoleDAO).insertSingleUserRole(role.getRoleId(), testUser.getUserId());
+  }
+
+  @Test
   void insertUserRoleAndInstitution_FailingTxn() {
     Institution institution = new Institution();
     institution.setId(1);

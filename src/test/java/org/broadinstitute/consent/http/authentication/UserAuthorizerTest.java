@@ -43,8 +43,14 @@ class UserAuthorizerTest {
   @Test
   void testAuthorizeAuthorized() {
     when(userRoleDAO.findRoleNamesByUserEmail(any()))
-      .thenReturn(List.of(UserRoles.CHAIRPERSON.getRoleName()));
+        .thenReturn(List.of(UserRoles.CHAIRPERSON.getRoleName()));
     assertTrue(authorizer.authorize(authorizedUser, Resource.CHAIRPERSON, context));
   }
 
+  @Test
+  void testAuthorizedServiceAccount() {
+    when(userRoleDAO.findRoleNamesByUserEmail(any())).thenReturn(
+        List.of(UserRoles.SERVICE_ACCOUNT.getRoleName()));
+    assertTrue(authorizer.authorize(authorizedUser, Resource.SERVICE_ACCOUNT, context));
+  }
 }

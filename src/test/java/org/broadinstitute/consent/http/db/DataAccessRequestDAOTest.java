@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.broadinstitute.consent.http.service.DataAccessRequestService.EXPIRE_NOTICE_INTERVAL;
+import static org.broadinstitute.consent.http.service.DataAccessRequestService.EXPIRE_WARN_INTERVAL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -20,6 +22,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -40,6 +43,20 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DataAccessRequestDAOTest extends DAOTestHelper {
+
+  private static DataAccessRequestData createDataAccessRequestData(String darCode) {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setProjectTitle("Project Title: " + RandomStringUtils.random(50, true, false));
+    data.setDarCode(darCode);
+    DatasetEntry entry = new DatasetEntry();
+    entry.setKey("key");
+    entry.setValue("value");
+    entry.setLabel("label");
+    data.setDatasets(List.of(entry));
+    data.setHmb(true);
+    data.setMethods(false);
+    return data;
+  }
 
   @Test
   void testFindAll() {
@@ -70,6 +87,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertFalse(newDars.isEmpty());
     assertEquals(1, newDars.size());
     assertTrue(newDars.get(0).getDraft());
+    assertNull(newDars.get(0).getDarCode());
   }
 
   @Test
@@ -83,23 +101,9 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDraftsByUserId(dar.getUserId());
     assertFalse(newDars.isEmpty());
     assertEquals(1, newDars.size());
+    assertNull(newDars.get(0).getDarCode());
 
     List<DataAccessRequest> missingDars = dataAccessRequestDAO.findAllDraftsByUserId(0);
-    assertTrue(missingDars.isEmpty());
-  }
-
-  @Test
-  void testFindAllDarsByUserId() {
-    DataAccessRequest dar = createDataAccessRequestV3();
-    DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(
-        dar.getCollectionId());
-
-    List<DataAccessRequest> newDars = dataAccessRequestDAO.findAllDarsByUserId(dar.getUserId());
-    assertFalse(newDars.isEmpty());
-    assertEquals(collection.getDars().size(), newDars.size());
-    assertEquals(newDars.get(0).getReferenceId(), dar.getReferenceId());
-
-    List<DataAccessRequest> missingDars = dataAccessRequestDAO.findAllDarsByUserId(0);
     assertTrue(missingDars.isEmpty());
   }
 
@@ -129,8 +133,8 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     List<DataAccessRequest> draftDars2 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
     assertFalse(draftDars2.isEmpty());
     assertEquals(1, draftDars2.size());
+    assertEquals(dar.getDarCode(), draftDars2.get(0).getDarCode());
   }
-
 
   @Test
   void updateDraftToNonDraftByCollectionId() {
@@ -148,6 +152,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Timestamp expectedTimestamp = new Timestamp(
         dar.getSubmissionDate().getTime() + DataAccessRequest.EXPIRATION_DURATION_MILLIS);
     assertEquals(expectedTimestamp, dar.getExpiresAt());
+    assertNotNull(dar.getDarCode());
   }
 
   @Test
@@ -226,6 +231,9 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertNotNull(dars);
     assertFalse(dars.isEmpty());
     assertEquals(3, dars.size());
+    dars.forEach(dar -> {
+      assertNotNull(dar.getDarCode());
+    });
   }
 
   @Test
@@ -450,7 +458,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertTrue(returnedDARs.isEmpty());
   }
 
-
   // findAllDataAccessRequests should exclude archived DARs
   // test case with two DARs
   @Test
@@ -467,6 +474,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar1.getReferenceId()));
     List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllDataAccessRequests();
     assertEquals(1, returnedDARs.size());
+    assertNotNull(returnedDARs.get(0).getDarCode());
   }
 
   // See: https://broadworkbench.atlassian.net/browse/DUOS-2182
@@ -509,6 +517,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataset1.getDatasetId());
     assertEquals(1, dars.size());
     assertTrue(dars.get(0).getDatasetIds().contains(dataset1.getDatasetId()));
+    assertEquals(darCode1, dars.get(0).getDarCode());
   }
 
   @Test
@@ -645,7 +654,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
             .size());
   }
 
-
   @ParameterizedTest
   @ValueSource(longs = {200, 370})
   void testFindAllApprovedDataAccessRequestsByDatasetId_ExpiredDARCase(long submissionDaysAgo) {
@@ -732,25 +740,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertTrue(returnedDARs.isEmpty());
   }
 
-
-  // findAllDarsByUserId should exclude archived DARs
-  @Test
-  void testFindAllDarsByUserIdArchived() {
-    User user = createUserWithInstitution();
-    List<DataAccessRequest> dars = dataAccessRequestDAO.findAllDarsByUserId(user.getUserId());
-    assertTrue(dars.isEmpty());
-
-    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
-    Dataset dataset = createDARDAOTestDataset();
-
-    DataAccessRequest testDar = createDAR(user, dataset, darCode);
-    dataAccessRequestDAO.archiveByReferenceIds(List.of(testDar.getReferenceId()));
-    List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findAllDarsByUserId(
-        user.getUserId());
-    assertTrue(returnedDARs.isEmpty());
-  }
-
-
   // findByReferenceId should exclude archived DARs
   @Test
   void testFindByReferenceIdArchived() {
@@ -810,7 +799,8 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   void createProgressReport() {
     DarCollection darCollection = createDarCollection();
     DataAccessRequest dar = new ArrayList<>(darCollection.getDars().values()).get(0);
-    DataAccessRequest progressReport = createProgressReport(dar.getUserId(), darCollection.getDarCollectionId(), darCollection.getDarCode(),
+    DataAccessRequest progressReport = createProgressReport(dar.getUserId(),
+        darCollection.getDarCollectionId(), darCollection.getDarCode(),
         dar.getId());
 
     assertNotNull(progressReport);
@@ -826,32 +816,201 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindDARsByDateRange() throws InterruptedException {
-    DarCollection darCollection = createDarCollection();
-    darCollection.getDars().keySet().forEach((referenceId) ->
-      dataAccessRequestDAO.updateDraftToSubmittedForCollection(darCollection.getDarCollectionId(),
-          referenceId));
-    Timestamp oneYearAgo = Timestamp.from(Instant.now().minus(365, ChronoUnit.DAYS));
-    Timestamp oneMinuteInTheFuture = Timestamp.from(Instant.now().plus(1, ChronoUnit.MINUTES));
-    List<DataAccessRequest> dars = dataAccessRequestDAO.findSubmittedDarsByTimeRange(oneYearAgo,
-        oneMinuteInTheFuture);
+  void testFindAgedDARsByEmailTypeOlderThanInterval() {
+    User userOne = createUserWithInstitution();
+    Integer userOneId = userOne.getUserId();
+    Integer collectionOneId = createDarCollection(userOneId);
+    Integer collectionTwoId = createDarCollection(userOneId);
+    createDataAccessRequest(collectionOneId, userOneId,
+        new Date(Instant.now().minus(360,
+            ChronoUnit.DAYS).toEpochMilli()));
+    createDataAccessRequest(collectionTwoId, userOneId,
+        new Date(Instant.now().minus(15,
+            ChronoUnit.DAYS).toEpochMilli()));
+
+    List<DataAccessRequest> dars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
+        EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(),
+        EXPIRE_WARN_INTERVAL, Timestamp.from(Instant.now().minus(365, ChronoUnit.DAYS)));
     assertFalse(dars.isEmpty());
-    assertEquals(darCollection.getDars().size(), dars.size());
+    assertEquals(1, dars.size());
   }
 
   @Test
-  void testFindDARsByDateRangeWithNoneInRange() throws InterruptedException {
+  void testFindAgedDARsByEmailTypeOlderThanIntervalSkipsEntriesBeforeNotBefore()
+      throws InterruptedException {
+    User userOne = createUserWithInstitution();
+    Integer userOneId = userOne.getUserId();
+    Integer collectionOneId = createDarCollection(userOneId);
+    Integer collectionTwoId = createDarCollection(userOneId);
+    createDataAccessRequest(collectionOneId, userOneId,
+        Date.from(Instant.now().minus(360,
+            ChronoUnit.DAYS)));
+    createDataAccessRequest(collectionTwoId, userOneId,
+         Date.from(Instant.now().minus(15,
+            ChronoUnit.DAYS)));
+
+    List<DataAccessRequest> dars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
+        EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(),
+        EXPIRE_WARN_INTERVAL, Timestamp.from(Instant.now().minus(2, ChronoUnit.DAYS)));
+    assertTrue(dars.isEmpty());
+  }
+
+  @Test
+  void testFindAgedDARsByEmailTypeOlderThanIntervalNoneInRange() throws InterruptedException {
     DarCollection darCollection = createDarCollection();
     darCollection.getDars().keySet().forEach((referenceId) -> {
       dataAccessRequestDAO.updateDraftToSubmittedForCollection(darCollection.getDarCollectionId(),
           referenceId);
     });
-    Instant oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS);
-    Instant halfAnHourAgo = Instant.now().minus(30, ChronoUnit.MINUTES);
     // query far enough into the past so slight clock variations do not matter for this test
-    List<DataAccessRequest> dars = dataAccessRequestDAO.findSubmittedDarsByTimeRange(
-        Timestamp.from(oneHourAgo), Timestamp.from(halfAnHourAgo));
+    List<DataAccessRequest> dars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
+        EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(), EXPIRE_WARN_INTERVAL,
+        Timestamp.from(Instant.now().minus(365, ChronoUnit.DAYS)));
     assertTrue(dars.isEmpty());
+  }
+
+  @Test
+  void testFindAgedDARsByEmailTypeOlderThanIntervalWithExpiringEntries() {
+    User userOne = createUserWithInstitution();
+    Integer userOneId = userOne.getUserId();
+    Integer userTwoId = createUserWithInstitution().getUserId();
+
+    Dataset dataset = createDataset(userOneId);
+    Dataset datasetTwo = createDataset(userTwoId);
+    Integer collectionOneId = createDarCollection(userOneId);
+    Integer collectionTwoId = createDarCollection(userTwoId);
+    DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId,
+        Date.from(Instant.now().minus(365,
+            ChronoUnit.DAYS)));
+    DataAccessRequest darTwo = createDataAccessRequest(collectionTwoId, userTwoId, new Date());
+
+    dataAccessRequestDAO.insertDARDatasetRelation(darOne.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(darTwo.getReferenceId(),
+        datasetTwo.getDatasetId());
+
+    List<DataAccessRequest> dars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
+        EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(), EXPIRE_WARN_INTERVAL,
+        Timestamp.from(Instant.now().minus(366, ChronoUnit.DAYS)));
+
+    assertNotNull(dars);
+    assertEquals(1, dars.size());
+    dars.forEach((dar) -> {
+      assertEquals(userOne.getUserId(), dar.getUserId());
+      assertEquals(darOne.getReferenceId(), dar.getReferenceId());
+      assertNotNull(dar.getDarCode());
+    });
+  }
+
+  @Test
+  void testFindAgedDARsByEmailTypeOlderThanIntervalWithExpiringEntriesFromMultipleUsers() {
+    Integer userOneId = createUserWithInstitution().getUserId();
+    Integer userTwoId = createUserWithInstitution().getUserId();
+
+    Dataset dataset = createDataset(userOneId);
+    Dataset datasetTwo = createDataset(userTwoId);
+    Dataset datasetThree = createDataset(userTwoId);
+    Integer collectionOneId = createDarCollection(userOneId);
+    Integer collectionTwoId = createDarCollection(userTwoId);
+    DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId,
+        Date.from(Instant.now().minus(365,
+            ChronoUnit.DAYS)));
+    DataAccessRequest darTwo = createDataAccessRequest(collectionTwoId, userTwoId,
+        Date.from(Instant.now().minus(350,
+            ChronoUnit.DAYS)));
+
+    dataAccessRequestDAO.insertDARDatasetRelation(darOne.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(darTwo.getReferenceId(),
+        datasetTwo.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(darTwo.getReferenceId(),
+        datasetThree.getDatasetId());
+
+    List<DataAccessRequest> dars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
+        EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(), EXPIRE_WARN_INTERVAL,
+        Timestamp.from(Instant.now().minus(366, ChronoUnit.DAYS)));
+
+    assertNotNull(dars);
+    assertEquals(2, dars.size());
+    dars.forEach((dar) -> {
+      assertNotNull(dar.getUserId());
+      assertNotNull(dar.getReferenceId());
+      assertNotNull(dar.getExpiresAt());
+      assertNotNull(dar.getDarCode());
+    });
+  }
+
+  @Test
+  void testFindAgedDARsByEmailTypeOlderThanIntervalWithNoExpiringEntries() {
+    User userOne = createUserWithInstitution();
+    Integer userOneId = userOne.getUserId();
+    Integer userTwoId = createUserWithInstitution().getUserId();
+
+    Dataset dataset = createDataset(userOneId);
+    Dataset datasetTwo = createDataset(userTwoId);
+    Integer collectionOneId = createDarCollection(userOneId);
+    Integer collectionTwoId = createDarCollection(userTwoId);
+    DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId,
+        Date.from(Instant.now().minus(30,
+            ChronoUnit.DAYS)));
+    DataAccessRequest darTwo = createDataAccessRequest(collectionTwoId, userTwoId,
+        Date.from(Instant.now().minus(30,
+            ChronoUnit.DAYS)));
+
+    dataAccessRequestDAO.insertDARDatasetRelation(darOne.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(darTwo.getReferenceId(),
+        datasetTwo.getDatasetId());
+
+    List<DataAccessRequest> dars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
+        EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(), EXPIRE_WARN_INTERVAL,
+        Timestamp.from(Instant.now().minus(366, ChronoUnit.DAYS)));
+
+    assertNotNull(dars);
+    assertEquals(0, dars.size());
+  }
+
+  @Test
+  void testFindAgedDARsByEmailTypeOlderThanIntervalExpiringEntriesDoesNotRepeatIfEmailSent() {
+    User userOne = createUserWithInstitution();
+    User userTwo = createUserWithInstitution();
+    Integer userOneId = userOne.getUserId();
+    Integer userTwoId = userTwo.getUserId();
+
+    Dataset dataset = createDataset(userOneId);
+    Dataset datasetTwo = createDataset(userTwoId);
+    Dataset datasetThree = createDataset(userTwoId);
+    Integer collectionOneId = createDarCollection(userOneId);
+    Integer collectionTwoId = createDarCollection(userTwoId);
+    DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId,
+        Date.from(Instant.now().minus(365,
+            ChronoUnit.DAYS)));
+    DataAccessRequest darTwo = createDataAccessRequest(collectionTwoId, userTwoId,
+        Date.from(Instant.now().minus(366,
+            ChronoUnit.DAYS)));
+
+    dataAccessRequestDAO.insertDARDatasetRelation(darOne.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(darTwo.getReferenceId(),
+        datasetTwo.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(darTwo.getReferenceId(),
+        datasetThree.getDatasetId());
+    mailMessageDAO.insert(darOne.getReferenceId(), null, userOneId,
+        EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(), Instant.now(), "hello world!",
+        "success", 200, Instant.now());
+    List<DataAccessRequest> dars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
+        EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(), EXPIRE_WARN_INTERVAL,
+        Timestamp.from(Instant.now().minus(367, ChronoUnit.DAYS)));
+
+    assertNotNull(dars);
+    assertEquals(1, dars.size());
+    dars.forEach((dar) -> {
+      assertEquals(userTwo.getUserId(), dar.getUserId());
+      assertEquals(darTwo.getReferenceId(), dar.getReferenceId());
+      assertNotNull(dar.getDarCode());
+    });
+
+    List<DataAccessRequest> expiredDars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
+        EmailType.DAR_EXPIRED.getTypeInt(), EXPIRE_NOTICE_INTERVAL,
+        Timestamp.from(Instant.now().minus(367, ChronoUnit.DAYS)));
+    assertNotNull(expiredDars);
+    assertEquals(2, expiredDars.size());
   }
 
   /**
@@ -912,18 +1071,21 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
-  private static DataAccessRequestData createDataAccessRequestData(String darCode) {
+  private DataAccessRequest createDataAccessRequest(Integer collectionId, Integer userId,
+      Date submissionDate) {
+    String referenceId = UUID.randomUUID().toString();
+    Date createDate = new Date();
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setProjectTitle("Project Title: " + RandomStringUtils.random(50, true, false));
-    data.setDarCode(darCode);
-    DatasetEntry entry = new DatasetEntry();
-    entry.setKey("key");
-    entry.setValue("value");
-    entry.setLabel("label");
-    data.setDatasets(List.of(entry));
-    data.setHmb(true);
-    data.setMethods(false);
-    return data;
+    data.setProjectTitle(RandomStringUtils.randomAlphabetic(20));
+    data.setStatus("test");
+    dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, createDate,
+        new Date(), submissionDate, new Date(), data);
+    return dataAccessRequestDAO.findByReferenceId(referenceId);
+  }
+
+  private Integer createDarCollection(Integer createUserId) {
+    String darCode = RandomStringUtils.randomAlphabetic(20);
+    return darCollectionDAO.insertDarCollection(darCode, createUserId, new Date());
   }
 
   private DarCollection createDarCollection() {
@@ -965,6 +1127,13 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataUse.toString(), null);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
+  }
+
+  private Dataset createDataset(Integer userId) {
+    Integer datasetId = datasetDAO.insertDataset(RandomStringUtils.randomAlphabetic(20),
+        new Timestamp(System.currentTimeMillis()), userId, null,
+        new DataUseBuilder().setGeneralUse(true).build().toString(), null);
+    return datasetDAO.findDatasetById(datasetId);
   }
 
   private void createDatasetProperties(Integer datasetId) {
