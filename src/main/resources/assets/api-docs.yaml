@@ -989,36 +989,6 @@ paths:
     $ref: './paths/votes.yaml'
   /api/votes/rationale:
     $ref: './paths/votesRationale.yaml'
-  /metrics/dac/decision:
-    get:
-      summary: Dac Decision Metrics
-      description: Dac Decision Metrics
-      tags:
-        - Metrics
-      responses:
-        200:
-          description: Dac Decision Metrics
-          content:
-            text/plain:
-              schema:
-                type: string
-        500:
-          description: Internal Server Error
-  /metrics/dar/decision:
-    get:
-      summary: DAR Decision Metrics
-      description: DAR Decision Metrics
-      tags:
-        - Metrics
-      responses:
-        200:
-          description: DAR Decision Metrics
-          content:
-            text/plain:
-              schema:
-                type: string
-        500:
-          description: Internal Server Error
   /metrics/dataset/{datasetId}:
     get:
       summary: Dataset Metrics

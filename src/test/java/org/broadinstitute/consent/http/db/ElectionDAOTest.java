@@ -373,29 +373,6 @@ class ElectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindAllDacsForElectionIds() {
-    Dac dac = createDac();
-    Dataset dataset = createDataset();
-    Integer datasetId = dataset.getDatasetId();
-    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
-    Election accessElection = createDataAccessElection(UUID.randomUUID().toString(), datasetId);
-
-    List<Integer> electionIds = Collections.singletonList(accessElection.getElectionId());
-    List<Dac> dacList = electionDAO.findAllDacsForElectionIds(electionIds);
-    Dac dacRecord = dacList.get(0);
-    assertEquals(1, dacList.size());
-    assertEquals(dac.getName(), dacRecord.getName());
-    assertEquals(dac.getDacId(), dacRecord.getDacId());
-  }
-
-  @Test
-  void testFindAllDacsForElectionIds_EmptyList() {
-    List<Integer> electionIds = Collections.singletonList(10000);
-    List<Dac> dacList = electionDAO.findAllDacsForElectionIds(electionIds);
-    assertTrue(dacList.isEmpty());
-  }
-
-  @Test
   void testFindLastElectionsByReferenceIds() {
     Dac dac = createDac();
     Dataset dataset = createDataset();

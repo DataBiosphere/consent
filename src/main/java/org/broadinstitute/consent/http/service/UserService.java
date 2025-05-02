@@ -475,7 +475,7 @@ public class UserService implements ConsentLogger {
     if (cards.isEmpty()) {
       throw new LibraryCardRequiredException();
     }
-    boolean hasEraCommonsId = cards.stream().anyMatch(c -> c.getEraCommonsId() != null);
+    boolean hasEraCommonsId = user.getEraCommonsId() != null;
     if (!hasEraCommonsId) {
       throw new BadRequestException("User does not have an Era Commons ID");
     }

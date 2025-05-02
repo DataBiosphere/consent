@@ -361,8 +361,8 @@ class UserServiceTest {
   @Test
   void testValidateERACommonsCredentialsMissingERACommonsId() {
     User u = generateUser();
+    u.setEraCommonsId(null);
     LibraryCard lc = generateLibraryCard(u.getEmail());
-    lc.setEraCommonsId(null);
     u.addLibraryCard(lc);
     UserProperty eraStatus = new UserProperty(1, u.getUserId(), ERA_STATUS.getValue(), "true");
     //standard practice is that these expire in 30 days.
@@ -997,6 +997,7 @@ class UserServiceTest {
     String displayName =
         RandomStringUtils.randomAlphabetic(i1) + " " + RandomStringUtils.randomAlphabetic(i2);
     u.setEmail(email);
+    u.setEraCommonsId(email);
     u.setDisplayName(displayName);
     u.setUserId(RandomUtils.nextInt(1, 100));
     u.setInstitutionId(RandomUtils.nextInt(1, 100));
