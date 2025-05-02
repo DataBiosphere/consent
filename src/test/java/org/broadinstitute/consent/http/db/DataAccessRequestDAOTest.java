@@ -612,13 +612,22 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     DataAccessRequest testDar1 = createDAR(user1, dataset1, darCode1);
     dataAccessRequestDAO.insertDARDatasetRelation(testDar1.getReferenceId(), dataset2.getDatasetId());
     dataAccessRequestDAO.insertDARDatasetRelation(testDar1.getReferenceId(), dataset3.getDatasetId());
+
+    Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDatasetId());
+    Vote v1 = createFinalVote(dataset1.getCreateUserId(), e1.getElectionId());
+
+    Election e2 = createDataAccessElection(testDar1.getReferenceId(), dataset2.getDatasetId());
+    Vote v2 = createFinalVote(dataset2.getCreateUserId(), e2.getElectionId());
+
+    Election e3 = createDataAccessElection(testDar1.getReferenceId(), dataset3.getDatasetId());
+    Vote v3 = createFinalVote(dataset3.getCreateUserId(), e3.getElectionId());
+
+    Date now = new Date();
+
     assertTrue(
         dataAccessRequestDAO.findApprovedDatasetsByDar(testDar1.getReferenceId())
             .isEmpty());
 
-    Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDatasetId());
-    Vote v1 = createFinalVote(dataset1.getCreateUserId(), e1.getElectionId());
-    Date now = new Date();
     voteDAO.updateVote(true,
         "",
         now,
@@ -632,8 +641,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.findApprovedDatasetsByDar(testDar1.getReferenceId())
             .size());
 
-    Election e2 = createDataAccessElection(testDar1.getReferenceId(), dataset2.getDatasetId());
-    Vote v2 = createFinalVote(dataset2.getCreateUserId(), e2.getElectionId());
     voteDAO.updateVote(true,
         "",
         now,
@@ -646,8 +653,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(2,
         dataAccessRequestDAO.findApprovedDatasetsByDar(testDar1.getReferenceId())
             .size());
-    Election e3 = createDataAccessElection(testDar1.getReferenceId(), dataset3.getDatasetId());
-    Vote v3 = createFinalVote(dataset3.getCreateUserId(), e3.getElectionId());
+
     voteDAO.updateVote(false,
         "",
         now,
