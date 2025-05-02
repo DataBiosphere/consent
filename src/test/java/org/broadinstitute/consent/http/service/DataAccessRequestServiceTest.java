@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -228,6 +229,8 @@ class DataAccessRequestServiceTest {
     user.setLibraryCards(List.of(new LibraryCard()));
     parentDar.setUserId(user.getUserId());
     when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId())).thenReturn(progressReport);
+    when(dataAccessRequestDAO.findApprovedDatasetsByDar(parentDar.getReferenceId())).thenReturn(
+        Set.copyOf(progressReport.getDatasetIds()));
 
     initService();
     DataAccessRequest newDar = service.createProgressReport(user, progressReport, parentDar);
@@ -236,6 +239,21 @@ class DataAccessRequestServiceTest {
         .insertProgressReport(parentDar.getId(), progressReport.getCollectionId(), progressReport.getReferenceId(), user.getUserId(),
             progressReport.getData());
     verify(dataAccessRequestDAO).insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
+  }
+
+  @Test
+  void createProgressReportFailsIfNonApprovedDatasets() {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.setParentId(parentDar.getId().toString());
+    progressReport.setCollectionId(parentDar.getCollectionId());
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    user.setLibraryCards(List.of(new LibraryCard()));
+    parentDar.setUserId(user.getUserId());
+    when(dataAccessRequestDAO.findApprovedDatasetsByDar(parentDar.getReferenceId())).thenReturn(Set.of());
+    initService();
+    assertThrows(BadRequestException.class, () -> service.createProgressReport(user, progressReport, parentDar));
   }
 
   static class DarDatasetMatcher implements ArgumentMatcher<List<DarDataset>> {
@@ -563,6 +581,7 @@ class DataAccessRequestServiceTest {
 
   private DataAccessRequest generateProgressReport() {
     DataAccessRequest progressReport = generateDataAccessRequest();
+    progressReport.setDatasetIds(List.of(1));
     progressReport.getData().setProgressReportSummary("Progress Report Summary");
     progressReport.getData().setIntellectualPropertySummary("Intellectual Property Summary");
     return progressReport;
