@@ -9,11 +9,7 @@ public class DuosUser extends AuthUser {
   private final User user;
 
   public DuosUser(AuthUser authUser, User user) {
-    super(authUser.getAuthToken(),
-        authUser.getEmail(),
-        authUser.getName(),
-        authUser.getAud(),
-        authUser.getUserStatusInfo());
+    super(authUser);
     this.user = user;
   }
 
@@ -21,4 +17,7 @@ public class DuosUser extends AuthUser {
     return user;
   }
 
+  public Integer getUserId() {
+    return getUser().getUserId();
+  }
 }

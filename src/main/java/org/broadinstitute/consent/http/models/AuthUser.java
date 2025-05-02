@@ -18,6 +18,14 @@ public class AuthUser implements Principal {
   public AuthUser() {
   }
 
+  public AuthUser(AuthUser authUser) {
+    this.authToken = authUser.getAuthToken();
+    this.email = authUser.getEmail();
+    this.name = authUser.getName();
+    this.aud = authUser.getAud();
+    this.userStatusInfo = authUser.getUserStatusInfo();
+  }
+
   public AuthUser(String authToken, String email, String name, String aud) {
     this.authToken = authToken;
     this.email = email;

@@ -97,7 +97,7 @@ public class InstitutionResource extends Resource {
     try {
       Institution payload = GsonUtil.getInstance().fromJson(institution, Institution.class);
       Institution updatedInstitution = institutionService.updateInstitutionById(payload, id,
-          duosUser.getUser().getUserId());
+          duosUser.getUserId());
       return Response.ok().entity(updatedInstitution).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
