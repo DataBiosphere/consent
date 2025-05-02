@@ -1,11 +1,13 @@
 package org.broadinstitute.consent.http.authentication;
 
+import com.google.common.cache.Cache;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import java.util.Map;
 import org.broadinstitute.consent.http.filters.ClaimsCache;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService;
@@ -13,21 +15,25 @@ import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
 /**
- * This class is used to help with authentication. It contains common methods and properties that
- * are used by the OAuthAuthenticator and DuosUserAuthenticator classes.
+ * Helper class for authorization and authentication. This class contains methods to build AuthUser
+ * objects from request headers, retrieve user status information from Sam, and check user roles.
  */
-public abstract class AuthenticatorHelper implements ConsentLogger {
+public class AuthorizationHelper implements ConsentLogger {
 
   protected final ClaimsCache claimsCache;
   protected final SamService samService;
   protected final UserService userService;
 
   @Inject
-  protected AuthenticatorHelper(SamService samService,
+  public AuthorizationHelper(SamService samService,
       UserService userService) {
     this.claimsCache = ClaimsCache.getInstance();
     this.samService = samService;
     this.userService = userService;
+  }
+
+  protected Cache<String, Map<String, String>> getCache() {
+    return claimsCache.cache;
   }
 
   protected AuthUser buildAuthUserFromHeaders(Map<String, String> headers) {
@@ -74,6 +80,25 @@ public abstract class AuthenticatorHelper implements ConsentLogger {
       logWarn(String.format("Exception retrieving Sam user info for '%s'", authUser.getEmail()), e);
     }
     return null;
+  }
+
+  /**
+   * Check if the user has a specific role. This method will check if the user is a Duos User and
+   * look for all roles they may have, returning true if any of them match the requested role.
+   *
+   * @param authUser AuthUser
+   * @param role     String role to check
+   * @return True if the user has the role, false otherwise
+   */
+  protected boolean authorize(AuthUser authUser, String role) {
+    boolean authorize = false;
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      return user.getRoles().stream().anyMatch(r -> r.getName().equalsIgnoreCase(role));
+    } catch (NotFoundException e) {
+      logWarn("User not found, authorization incomplete: %s".formatted(authUser.getEmail()));
+    }
+    return authorize;
   }
 
 }

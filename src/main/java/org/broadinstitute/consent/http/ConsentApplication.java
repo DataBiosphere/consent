@@ -35,6 +35,7 @@ import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.ui.LoggerUIService;
 import liquibase.util.SmartMap;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.authentication.AuthorizationHelper;
 import org.broadinstitute.consent.http.authentication.DuosUserAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
@@ -247,11 +248,11 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     // Authentication filters
     final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
     final DuosUserAuthenticator duosUserAuthenticator = injector.getProvider(DuosUserAuthenticator.class).get();
-    final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();
+    final AuthorizationHelper authorizationHelper = injector.getProvider(AuthorizationHelper.class).get();
     // Requests annotated with @Auth AuthUser will be authenticated through this filter
-    final AuthFilter<String, AuthUser> primaryAuthFilter = new OAuthCustomAuthFilter<>(authenticator, userRoleDAO);
+    final AuthFilter<String, AuthUser> primaryAuthFilter = new OAuthCustomAuthFilter<>(authenticator, authorizationHelper);
     // Requests annotated with @Auth DuosUser will be authenticated through this filter and are guaranteed to have a populated User object
-    final AuthFilter<String, DuosUser> duosAuthUserFilter = new OAuthCustomAuthFilter<>(duosUserAuthenticator, userRoleDAO);
+    final AuthFilter<String, DuosUser> duosAuthUserFilter = new OAuthCustomAuthFilter<>(duosUserAuthenticator, authorizationHelper);
     final PolymorphicAuthDynamicFeature<AuthUser> feature = new PolymorphicAuthDynamicFeature<>(
         Map.of(
             AuthUser.class, primaryAuthFilter,

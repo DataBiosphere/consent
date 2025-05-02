@@ -8,6 +8,7 @@ import io.dropwizard.core.Configuration;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.jdbi3.JdbiFactory;
 import jakarta.ws.rs.client.Client;
+import org.broadinstitute.consent.http.authentication.AuthorizationHelper;
 import org.broadinstitute.consent.http.authentication.DuosUserAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -200,13 +201,18 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
+  AuthorizationHelper providesAuthorizationHelper() {
+    return new AuthorizationHelper(providesSamService(), providesUserService());
+  }
+
+  @Provides
   OAuthAuthenticator providesOAuthAuthenticator() {
-    return new OAuthAuthenticator(providesSamService(), providesUserService());
+    return new OAuthAuthenticator(providesAuthorizationHelper());
   }
 
   @Provides
   DuosUserAuthenticator providesDuosUserOAuthAuthenticator() {
-    return new DuosUserAuthenticator(providesSamService(), providesUserService());
+    return new DuosUserAuthenticator(providesAuthorizationHelper());
   }
 
   @Provides
