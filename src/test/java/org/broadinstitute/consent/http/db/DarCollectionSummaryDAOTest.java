@@ -625,9 +625,9 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @ParameterizedTest
-  @ValueSource(strings= {"admin", "researcher"})
+  @ValueSource(strings= {"admin", "researcher", "so"})
   void testGetDarCollectionSummaryDraftAndArchivedNotIncluded(String type) {
-    User user = createUser();
+    User user = createUserWithInstitution();
     Integer userId = user.getUserId();
 
     Dataset dataset = createDataset(userId);
@@ -652,6 +652,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     List<DarCollectionSummary> summaries = switch (type) {
       case "admin" -> darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
       case "researcher" -> darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
+      case "so" -> darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId());
       default -> throw new IllegalArgumentException("Invalid type: " + type);
     };
 
@@ -671,19 +672,19 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @ParameterizedTest
-  @ValueSource(strings= {"admin", "researcher"})
+  @ValueSource(strings= {"admin", "researcher", "so"})
   void testGetDarCollectionSummaryTwoDataAccessRequests(String type) {
-    User userOne = createUser();
-    Integer userOneId = userOne.getUserId();
+    User user = createUserWithInstitution();
+    Integer userId = user.getUserId();
 
-    Dataset dataset = createDataset(userOneId);
-    Dataset dataset1 = createDataset(userOneId);
+    Dataset dataset = createDataset(userId);
+    Dataset dataset1 = createDataset(userId);
 
-    Integer collectionId = createDarCollection(userOneId);
+    Integer collectionId = createDarCollection(userId);
 
     // Create two DataAccessRequests in the same collection
-    DataAccessRequest olderDar = createDataAccessRequest(collectionId, userOneId);
-    DataAccessRequest newerDar = createDataAccessRequest(collectionId, userOneId);
+    DataAccessRequest olderDar = createDataAccessRequest(collectionId, userId);
+    DataAccessRequest newerDar = createDataAccessRequest(collectionId, userId);
 
     // Insert dataset relations for both DARs
     // the older DAR has two datasets and the newer DAR has one
@@ -699,7 +700,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     List<DarCollectionSummary> summaries = switch (type) {
       case "admin" -> darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
       case "researcher" ->
-          darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userOneId);
+          darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
+      case "so" -> darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId());
       default -> throw new IllegalArgumentException("Invalid type: " + type);
     };
     assertNotNull(summaries);
