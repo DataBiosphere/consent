@@ -4,7 +4,6 @@ import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
-import org.broadinstitute.consent.http.db.mapper.DataAccessRequestDataMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestReducer;
 import org.broadinstitute.consent.http.models.DarDataset;
@@ -66,8 +65,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
               SELECT dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
                 dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, dar.era_commons_id,
-                dd.dataset_id, collection.dar_code
+                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
+                dd.dataset_id, collection.dar_code, dar.era_commons_id
               FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
               INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id AND dd.dataset_id = :datasetId
@@ -103,7 +102,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * value is `TRUE` so the denied election in the example would be filtered out.
    *
    * @param darReferenceId The DAR reference UUID
-   * @return List of approved Datasets for the DAR
+   * @return Set of approved Dataset Ids for the DAR
    */
   @SqlQuery(
       """
@@ -145,8 +144,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
               SELECT dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
                 dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, dar.era_commons_id,
-                dd.dataset_id, collection.dar_code
+                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
+                dd.dataset_id, collection.dar_code, dar.era_commons_id
               FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
               LEFT JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
@@ -154,7 +153,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               WHERE dar.submission_date >= :notBefore
               AND (dar.submission_date < now() - :interval ::interval)
               AND (email.email_type IS NULL)
-            
+          
           """)
   List<DataAccessRequest> findAgedDARsByEmailTypeOlderThanInterval(@Bind("emailType") Integer emailType,
       @Bind("interval") String interval, @Bind("notBefore") Timestamp notBefore);
@@ -168,7 +167,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       """
               SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code, dar.era_commons_id 
+                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code, dar.era_commons_id
               FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
               LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
@@ -197,25 +196,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               ORDER BY dar.sort_date DESC
           """)
   List<DataAccessRequest> findAllDraftsByUserId(@Bind("userId") Integer userId);
-
-
-  /**
-   * Find all complete DataAccessRequests by user id, sorted descending order
-   *
-   * @return List<DataAccessRequest>
-   */
-  @UseRowReducer(DataAccessRequestReducer.class)
-  @SqlQuery(
-      """
-              SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-              (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar
-              LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
-              WHERE dar.submission_date is not null
-                AND dar.user_id = :userId
-                AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
-              ORDER BY dar.sort_date DESC
-          """)
-  List<DataAccessRequest> findAllDarsByUserId(@Bind("userId") Integer userId);
 
   /**
    * Find DataAccessRequest by reference id
@@ -344,7 +324,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       @Bind("data") @Json DataAccessRequestData data);
 
   /**
-   * Create new DataAccessRequest. This version supercedes `insertV2`
+   * Create new DataAccessRequest. This version supersedes `insertV2`
    *
    * @param collectionId   Integer DarCollection
    * @param referenceId    String
@@ -464,7 +444,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   void deleteDARDatasetRelationByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
   /**
-   * Returns all dataset_ids that match any of the referenceIds inside of the "referenceIds" list
+   * Returns all dataset_ids that match any of the referenceIds inside the "referenceIds" list
    *
    * @param referenceIds List<String>
    */
