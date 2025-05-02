@@ -357,8 +357,8 @@ class UserServiceTest extends AbstractTestHelper {
   @Test
   void testValidateERACommonsCredentialsMissingERACommonsId() {
     User u = generateUser();
+    u.setEraCommonsId(null);
     LibraryCard lc = generateLibraryCard(u.getEmail());
-    lc.setEraCommonsId(null);
     u.addLibraryCard(lc);
     UserProperty eraStatus = new UserProperty(1, u.getUserId(), ERA_STATUS.getValue(), "true");
     //standard practice is that these expire in 30 days.
@@ -957,6 +957,7 @@ class UserServiceTest extends AbstractTestHelper {
     String email = randomAlphabetic(i1) + "@" + randomAlphabetic(i2) + "." + randomAlphabetic(i3);
     String displayName = randomAlphabetic(i1) + " " + randomAlphabetic(i2);
     u.setEmail(email);
+    u.setEraCommonsId(email);
     u.setDisplayName(displayName);
     u.setUserId(randomInt(1, 100));
     u.setInstitutionId(randomInt(1, 100));
