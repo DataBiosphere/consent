@@ -8,6 +8,7 @@ import jakarta.ws.rs.NotFoundException;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -228,7 +229,8 @@ public class DataAccessRequestService implements ConsentLogger {
     String referenceId = progressReport.getReferenceId();
     List<Integer> progressReportDatasetIds = progressReport.getDatasetIds();
     List<Integer> darDatasetIds = dataAccessRequestDAO.findApprovedDatasetsByDar(parentDar.getReferenceId());
-    if(!progressReportDatasetIds.stream().filter(datasetId -> !darDatasetIds.contains(datasetId)).toList().isEmpty()) {
+    boolean allIdsValid = new HashSet<>(darDatasetIds).containsAll(progressReportDatasetIds);
+    if(!allIdsValid) {
       throw new BadRequestException("Progress report can only be created for approved datasets in the parent DAR");
     }
     dataAccessRequestDAO.insertProgressReport(
