@@ -606,9 +606,12 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     String darCode1 = "DAR-" + RandomUtils.nextInt(100, 1000000);
     Dataset dataset1 = createDARDAOTestDataset();
     Dataset dataset2 = createDARDAOTestDataset();
+    Dataset dataset3 = createDARDAOTestDataset();
 
     User user1 = createUserWithInstitution();
     DataAccessRequest testDar1 = createDAR(user1, dataset1, darCode1);
+    dataAccessRequestDAO.insertDARDatasetRelation(testDar1.getReferenceId(), dataset2.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(testDar1.getReferenceId(), dataset3.getDatasetId());
     assertTrue(
         dataAccessRequestDAO.findApprovedDatasetsByDar(testDar1.getReferenceId())
             .isEmpty());
@@ -629,10 +632,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.findApprovedDatasetsByDar(testDar1.getReferenceId())
             .size());
 
-    dataAccessRequestDAO.insertDARDatasetRelation(testDar1.getReferenceId(), dataset2.getDatasetId());
-    assertEquals(1,
-        dataAccessRequestDAO.findApprovedDatasetsByDar(testDar1.getReferenceId())
-            .size());
     Election e2 = createDataAccessElection(testDar1.getReferenceId(), dataset2.getDatasetId());
     Vote v2 = createFinalVote(dataset2.getCreateUserId(), e2.getElectionId());
     voteDAO.updateVote(true,
@@ -641,6 +640,20 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         v2.getVoteId(),
         false,
         e2.getElectionId(),
+        now,
+        false);
+
+    assertEquals(2,
+        dataAccessRequestDAO.findApprovedDatasetsByDar(testDar1.getReferenceId())
+            .size());
+    Election e3 = createDataAccessElection(testDar1.getReferenceId(), dataset3.getDatasetId());
+    Vote v3 = createFinalVote(dataset3.getCreateUserId(), e3.getElectionId());
+    voteDAO.updateVote(false,
+        "",
+        now,
+        v3.getVoteId(),
+        false,
+        e3.getElectionId(),
         now,
         false);
 
