@@ -133,7 +133,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     List<DataAccessRequest> draftDars2 = dataAccessRequestDAO.findAllDraftDataAccessRequests();
     assertFalse(draftDars2.isEmpty());
     assertEquals(1, draftDars2.size());
-    assertNotNull(draftDars2.get(0).getDarCode());
+    assertEquals(dar.getDarCode(), draftDars2.get(0).getDarCode());
   }
 
   @Test
