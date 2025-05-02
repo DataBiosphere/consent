@@ -182,9 +182,9 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     for (int i = 0; i < 4; i++) {
-      createDataAccessRequest(user.getUserId(), collection_id, darCode);
+      createDataAccessRequest(user.getUserId(), collection_id);
     }
-    return createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    return createDataAccessRequest(user.getUserId(), collection_id);
   }
 
   /**
@@ -192,8 +192,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
    *
    * @return Populated DataAccessRequest
    */
-  private DataAccessRequest createDataAccessRequest(Integer userId, Integer collectionId,
-      String darCode) {
+  private DataAccessRequest createDataAccessRequest(Integer userId, Integer collectionId) {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle("Project Title: " + randomAlphabetic(50));
     DatasetEntry entry = new DatasetEntry();
