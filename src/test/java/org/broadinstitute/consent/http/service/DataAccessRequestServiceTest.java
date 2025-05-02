@@ -345,21 +345,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void validateProgressReportNoEraCommonsId() {
-    User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
-    DataAccessRequest progressReport = generateProgressReport();
-    progressReport.setDatasetIds(List.of(3, 4, 5)); // IDs not all in parent DAR
-    DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
-    parentDar.setDatasetIds(List.of(1, 2, 3));
-    parentDar.setUserId(user.getUserId());
-    initService();
-    assertThrows(NIHComplianceRuleException.class,
-        () -> service.validateProgressReport(user, progressReport, parentDar));
-  }
-
-  @Test
   void validateProgressReport() {
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(List.of(new LibraryCard()));
@@ -411,15 +396,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = generateDataAccessRequest();
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(Collections.emptyList());
-    initService();
-    assertThrows(NIHComplianceRuleException.class, () -> service.validateDar(user, dar));
-  }
-
-  @Test
-  void validateDarNoEraCommonsId() {
-    DataAccessRequest dar = generateDataAccessRequest();
-    User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
     initService();
     assertThrows(NIHComplianceRuleException.class, () -> service.validateDar(user, dar));
   }

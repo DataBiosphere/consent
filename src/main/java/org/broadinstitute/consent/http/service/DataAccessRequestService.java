@@ -270,10 +270,6 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new NIHComplianceRuleException();
     }
 
-    if (user.getEraCommonsId() == null) {
-      throw new NIHComplianceRuleException();
-    }
-
     userService.hasValidActiveERACredentials(user);
 
     validateInternalCollaborators(dar, user);

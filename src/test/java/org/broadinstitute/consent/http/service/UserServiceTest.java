@@ -31,8 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
@@ -67,7 +66,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class UserServiceTest {
+class UserServiceTest extends AbstractTestHelper {
 
   @Mock
   private UserDAO userDAO;
@@ -147,12 +146,12 @@ class UserServiceTest {
     // We're modifying this user to have an SO role. This should leave in place
     // both the Researcher and Chairperson roles, but remove the Admin role.
     fields.setUserRoleIds(List.of(so.getRoleId()));
-    fields.setDisplayName(RandomStringUtils.random(10, true, false));
+    fields.setDisplayName(randomAlphabetic(10));
     fields.setInstitutionId(1);
     fields.setEmailPreference(true);
-    fields.setEraCommonsId(RandomStringUtils.random(10, true, false));
+    fields.setEraCommonsId(randomAlphabetic(10));
     fields.setSelectedSigningOfficialId(1);
-    fields.setSuggestedSigningOfficial(RandomStringUtils.random(10, true, false));
+    fields.setSuggestedSigningOfficial(randomAlphabetic(10));
     fields.setDaaAcceptance(true);
     assertEquals(3, fields.buildUserProperties(user.getUserId()).size());
     service.updateUserFieldsById(fields, user.getUserId());
@@ -168,7 +167,7 @@ class UserServiceTest {
   }
 
   @Test
-  void testUpdateUserFieldsById_SendsEmailWhenSOInitalized() throws Exception {
+  void testUpdateUserFieldsById_SendsEmailWhenSOInitialized() throws Exception {
     User user = new User();
     user.setUserId(1);
 
@@ -302,9 +301,7 @@ class UserServiceTest {
     List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
     u.setRoles(roles);
     when(userDAO.findUserByEmail(any())).thenReturn(u);
-    assertThrows(BadRequestException.class, () -> {
-      service.createUser(u);
-    });
+    assertThrows(BadRequestException.class, () -> service.createUser(u));
   }
 
   @Test
@@ -313,14 +310,13 @@ class UserServiceTest {
     List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
     u.setRoles(roles);
     u.setDisplayName(null);
-    assertThrows(BadRequestException.class, () -> {
-      service.createUser(u);
-    });
+    assertThrows(BadRequestException.class, () -> service.createUser(u));
   }
 
   @Test
   void testHasValidERACommonsCredentials() {
     User u = generateUser();
+    u.setEraCommonsId(randomAlphabetic(10));
     LibraryCard lc = generateLibraryCard(u.getEmail());
     lc.setEraCommonsId(u.getEmail());
     u.addLibraryCard(lc);
@@ -452,9 +448,7 @@ class UserServiceTest {
     User u = generateUser();
     List<UserRole> roles = List.of(generateRole(UserRoles.CHAIRPERSON.getRoleId()));
     u.setRoles(roles);
-    assertThrows(BadRequestException.class, () -> {
-      service.createUser(u);
-    });
+    assertThrows(BadRequestException.class, () -> service.createUser(u));
   }
 
   @Test
@@ -462,18 +456,14 @@ class UserServiceTest {
     User u = generateUser();
     List<UserRole> roles = List.of(generateRole(UserRoles.MEMBER.getRoleId()));
     u.setRoles(roles);
-    assertThrows(BadRequestException.class, () -> {
-      service.createUser(u);
-    });
+    assertThrows(BadRequestException.class, () -> service.createUser(u));
   }
 
   @Test
   void testCreateUserNoEmail() {
     User u = generateUser();
     u.setEmail(null);
-    assertThrows(BadRequestException.class, () -> {
-      service.createUser(u);
-    });
+    assertThrows(BadRequestException.class, () -> service.createUser(u));
   }
 
   @Test
@@ -524,9 +514,7 @@ class UserServiceTest {
     User u = generateUser();
     when(userDAO.findUserById(any())).thenReturn(null);
 
-    assertThrows(NotFoundException.class, () -> {
-      service.findUserById(u.getUserId());
-    });
+    assertThrows(NotFoundException.class, () -> service.findUserById(u.getUserId()));
   }
 
   @Test
@@ -560,9 +548,7 @@ class UserServiceTest {
     User u = generateUser();
     when(userDAO.findUserByEmail(any())).thenReturn(null);
 
-    assertThrows(NotFoundException.class, () -> {
-      service.findUserByEmail(u.getEmail());
-    });
+    assertThrows(NotFoundException.class, () -> service.findUserByEmail(u.getEmail()));
   }
 
   @Test
@@ -572,7 +558,7 @@ class UserServiceTest {
     when(userDAO.findUserByEmail(any())).thenReturn(u);
 
     try {
-      service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
+      service.deleteUserByEmail(randomAlphabetic(10));
       verify(draftServiceDAO).deleteDraftsByUser(u);
     } catch (Exception e) {
       fail("Should not fail: " + e.getMessage());
@@ -582,9 +568,7 @@ class UserServiceTest {
   @Test
   void testDeleteUserFailure() {
     when(userDAO.findUserByEmail(any())).thenThrow(new NotFoundException());
-    assertThrows(NotFoundException.class, () -> {
-      service.deleteUserByEmail(RandomStringUtils.random(10, true, false));
-    });
+    assertThrows(NotFoundException.class, () -> service.deleteUserByEmail(randomAlphabetic(10)));
   }
 
   @Test
@@ -606,17 +590,13 @@ class UserServiceTest {
 
   @Test
   void testFindUsersByInstitutionIdNullId() {
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.findUsersByInstitutionId(null);
-    });
+    assertThrows(IllegalArgumentException.class, () -> service.findUsersByInstitutionId(null));
   }
 
   @Test
   void testFindUsersByInstitutionIdNullInstitution() {
     doThrow(new NotFoundException()).when(institutionDAO).findInstitutionById(anyInt());
-    assertThrows(NotFoundException.class, () -> {
-      service.findUsersByInstitutionId(1);
-    });
+    assertThrows(NotFoundException.class, () -> service.findUsersByInstitutionId(1));
   }
 
   @Test
@@ -654,9 +634,8 @@ class UserServiceTest {
   void testGetUsersAsRoleSO_NoInstitution() {
     User u = generateUser();
     u.setInstitutionId(null);
-    assertThrows(NotFoundException.class, () -> {
-      service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
-    });
+    assertThrows(NotFoundException.class,
+        () -> service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName()));
   }
 
   @Test
@@ -694,7 +673,7 @@ class UserServiceTest {
   @Test
   void testGetUsersByDaaId() {
     User u1 = generateUser();
-    int dacId = RandomUtils.nextInt(0, 50);
+    int dacId = randomInt(0, 50);
     Instant now = Instant.now();
     LibraryCard card = generateLibraryCard(u1);
     int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
@@ -713,7 +692,7 @@ class UserServiceTest {
   void testGetUsersByDaaIdMultipleUsers() {
     User u1 = generateUser();
     User u2 = generateUser();
-    int dacId = RandomUtils.nextInt(0, 50);
+    int dacId = randomInt(0, 50);
     Instant now = Instant.now();
     LibraryCard card = generateLibraryCard(u1);
     LibraryCard card2 = generateLibraryCard(u2);
@@ -735,8 +714,8 @@ class UserServiceTest {
     User u1 = generateUser();
     User u2 = generateUser();
     User u3 = generateUser();
-    int dacId = RandomUtils.nextInt(0, 50);
-    int dacId2 = RandomUtils.nextInt(0, 50);
+    int dacId = randomInt(0, 50);
+    int dacId2 = randomInt(0, 50);
     Instant now = Instant.now();
     LibraryCard card = generateLibraryCard(u1);
     LibraryCard card2 = generateLibraryCard(u2);
@@ -766,7 +745,7 @@ class UserServiceTest {
   @Test
   void testGetUsersByDaaIdNoMatchingUsers() {
     User u1 = generateUser();
-    int dacId = RandomUtils.nextInt(0, 50);
+    int dacId = randomInt(0, 50);
     Instant now = Instant.now();
     LibraryCard card = generateLibraryCard(u1);
     int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
@@ -781,9 +760,7 @@ class UserServiceTest {
 
   @Test
   void testGetUsersByDaaIdNoMatchingDaa() {
-    assertThrows(NotFoundException.class, () -> {
-      service.getUsersByDaaId(RandomUtils.nextInt(10, 50));
-    });
+    assertThrows(NotFoundException.class, () -> service.getUsersByDaaId(randomInt(10, 50)));
   }
 
   @Test
@@ -802,7 +779,7 @@ class UserServiceTest {
     UserStatusInfo info = new UserStatusInfo().setUserEmail(user.getEmail()).setEnabled(true)
         .setUserSubjectId("subjectId");
     AuthUser authUser = new AuthUser().setEmail(user.getEmail())
-        .setAuthToken(RandomStringUtils.random(30, true, false)).setUserStatusInfo(info);
+        .setAuthToken(randomAlphabetic(30)).setUserStatusInfo(info);
     when(userDAO.findUserById(anyInt())).thenReturn(user);
     when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(
@@ -823,7 +800,7 @@ class UserServiceTest {
     UserStatusInfo info = new UserStatusInfo().setUserEmail(user.getEmail()).setEnabled(true)
         .setUserSubjectId("subjectId");
     AuthUser authUser = new AuthUser().setEmail("not the user's email address")
-        .setAuthToken(RandomStringUtils.random(30, true, false)).setUserStatusInfo(info);
+        .setAuthToken(randomAlphabetic(30)).setUserStatusInfo(info);
     when(userDAO.findUserById(anyInt())).thenReturn(user);
     when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(
@@ -846,7 +823,7 @@ class UserServiceTest {
         .setLdap(true);
     UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
     AuthUser authUser = new AuthUser().setEmail(user.getEmail())
-        .setAuthToken(RandomStringUtils.random(30, true, false));
+        .setAuthToken(randomAlphabetic(30));
 
     when(userDAO.findUserByEmail(any())).thenReturn(user);
     when(samDAO.postRegistrationInfo(any())).thenReturn(status);
@@ -865,7 +842,7 @@ class UserServiceTest {
         .setLdap(true);
     UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
     AuthUser authUser = new AuthUser().setName(user.getDisplayName()).setEmail(user.getEmail())
-        .setAuthToken(RandomStringUtils.random(30, true, false));
+        .setAuthToken(randomAlphabetic(30));
     Institution institution = new Institution();
 
     // mock findUserByEmail to throw the NFE on the first call (findOrCreateUser)
@@ -957,17 +934,13 @@ class UserServiceTest {
   void testFindUsersInJsonArrayInvalidJson() {
     // Missing closing bracket
     String json = "{users:[1,2,3}";
-    assertThrows(BadRequestException.class, () -> {
-      service.findUsersInJsonArray(json, "users");
-    });
+    assertThrows(BadRequestException.class, () -> service.findUsersInJsonArray(json, "users"));
   }
 
   @Test
   void testFindUsersInJsonArrayInvalidKey() {
     String json = "{users:[1,2,3]}";
-    assertThrows(BadRequestException.class, () -> {
-      service.findUsersInJsonArray(json, "invalidKey");
-    });
+    assertThrows(BadRequestException.class, () -> service.findUsersInJsonArray(json, "invalidKey"));
   }
 
   private User generateUserWithoutInstitution() {
@@ -978,35 +951,32 @@ class UserServiceTest {
 
   private User generateUser() {
     User u = new User();
-    int i1 = RandomUtils.nextInt(10, 50);
-    int i2 = RandomUtils.nextInt(10, 50);
-    int i3 = RandomUtils.nextInt(5, 25);
-    String email =
-        RandomStringUtils.randomAlphabetic(i1) + "@" + RandomStringUtils.randomAlphabetic(i2) + "."
-            + RandomStringUtils.randomAlphabetic(i3);
-    String displayName =
-        RandomStringUtils.randomAlphabetic(i1) + " " + RandomStringUtils.randomAlphabetic(i2);
+    int i1 = randomInt(10, 50);
+    int i2 = randomInt(10, 50);
+    int i3 = randomInt(5, 25);
+    String email = randomAlphabetic(i1) + "@" + randomAlphabetic(i2) + "." + randomAlphabetic(i3);
+    String displayName = randomAlphabetic(i1) + " " + randomAlphabetic(i2);
     u.setEmail(email);
     u.setDisplayName(displayName);
-    u.setUserId(RandomUtils.nextInt(1, 100));
-    u.setInstitutionId(RandomUtils.nextInt(1, 100));
+    u.setUserId(randomInt(1, 100));
+    u.setInstitutionId(randomInt(1, 100));
     return u;
   }
 
   private LibraryCard generateLibraryCard(String email) {
     LibraryCard libraryCard = new LibraryCard();
-    libraryCard.setId(RandomUtils.nextInt(1, 10));
-    libraryCard.setInstitutionId(RandomUtils.nextInt(1, 10));
+    libraryCard.setId(randomInt(1, 10));
+    libraryCard.setInstitutionId(randomInt(1, 10));
     libraryCard.setUserEmail(email);
-    libraryCard.setUserName(RandomStringUtils.randomAlphabetic(RandomUtils.nextInt(1, 10)));
+    libraryCard.setUserName(randomAlphabetic(randomInt(1, 10)));
     return libraryCard;
   }
 
   private LibraryCard generateLibraryCard(User user) {
     LibraryCard libraryCard = new LibraryCard();
-    libraryCard.setId(RandomUtils.nextInt(1, 10));
+    libraryCard.setId(randomInt(1, 10));
     libraryCard.setUserId(user.getUserId());
-    libraryCard.setInstitutionId(RandomUtils.nextInt(1, 10));
+    libraryCard.setInstitutionId(randomInt(1, 10));
     return libraryCard;
   }
 
