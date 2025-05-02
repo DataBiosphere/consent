@@ -6,11 +6,9 @@ import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestDataMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestReducer;
-import org.broadinstitute.consent.http.db.mapper.DatasetReducer;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.jdbi.v3.json.Json;
 import org.jdbi.v3.json.internal.JsonArgumentFactory;
 import org.jdbi.v3.sqlobject.config.RegisterArgumentFactory;
@@ -105,7 +103,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    */
   @SqlQuery(
       """
-              SELECT DISTINCT dd.dataset_id
+              SELECT dd.dataset_id
               FROM data_access_request dar
               INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
               INNER JOIN (
