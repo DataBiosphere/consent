@@ -231,7 +231,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertNotNull(dars);
     assertFalse(dars.isEmpty());
     assertEquals(3, dars.size());
-    dars.forEach(dar->{
+    dars.forEach(dar -> {
       assertNotNull(dar.getDarCode());
     });
   }
