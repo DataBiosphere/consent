@@ -22,8 +22,4 @@ public abstract class AbstractTestHelper {
     return RandomUtils.secureStrong().randomInt(startInclusive, endExclusive);
   }
 
-  public long randomLong() {
-    return RandomUtils.secureStrong().randomLong();
-  }
-
 }
