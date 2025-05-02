@@ -3,6 +3,8 @@ package org.broadinstitute.consent.http.db;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import org.broadinstitute.consent.http.db.mapper.DataAccessRequestDataMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestReducer;
 import org.broadinstitute.consent.http.models.DarDataset;
@@ -88,6 +90,47 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
           """)
   List<DataAccessRequest> findApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
+
+  /**
+   * This query finds dataset ids submitted within the last year on dar-dataset combinations where
+   * the most recent vote is true. The query accomplishes this by creating a view that is a grouping
+   * of election reference ids and LAST vote in the group of final votes for all data access
+   * elections. We need to group them due to the case of multiple elections on a dar-dataset
+   * request. Election 1 may have been denied. Election 2 may have been approved. Election 3 may
+   * have been denied again. When we partition over the election reference id, we'll get all final
+   * votes. The `LAST_VALUE` function selects the last result in the partition, which would be
+   * `FALSE` in the example above. Outside the JOIN, we filter on groupings where the final vote
+   * value is `TRUE` so the denied election in the example would be filtered out.
+   *
+   * @param darReferenceId The DAR reference UUID
+   * @return List of approved Datasets for the DAR
+   */
+  @SqlQuery(
+      """
+      SELECT dd.dataset_id
+      FROM data_access_request dar
+      INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
+      INNER JOIN (
+        SELECT DISTINCT e.reference_id, e.dataset_id, LAST_VALUE(v.vote)
+        OVER(
+          PARTITION BY e.dataset_id
+            ORDER BY v.createdate
+            RANGE BETWEEN
+              UNBOUNDED PRECEDING AND
+              UNBOUNDED FOLLOWING
+        ) last_vote
+        FROM election e
+        INNER JOIN vote v ON e.election_id = v.electionid AND v.vote IS NOT NULL
+        AND LOWER(e.election_type) = 'dataaccess'
+        AND LOWER(v.type) = 'final') final_access_vote ON
+          final_access_vote.reference_id = dar.reference_id AND
+          final_access_vote.dataset_id = dd.dataset_id
+      WHERE dar.submission_date > now() - interval '1 year'
+      AND final_access_vote.last_vote = TRUE
+      AND dar.reference_id = :darReferenceId
+      AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+      """)
+  Set<Integer> findApprovedDatasetsByDar(@Bind("darReferenceId") String darReferenceId);
 
   /**
    * This query finds submitted DARs based on a date range.  This would be useful if we wanted to

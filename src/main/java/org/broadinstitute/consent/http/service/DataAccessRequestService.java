@@ -8,8 +8,10 @@ import jakarta.ws.rs.NotFoundException;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -229,14 +231,18 @@ public class DataAccessRequestService implements ConsentLogger {
     validateProgressReport(user, progressReport, parentDar);
 
     String referenceId = progressReport.getReferenceId();
-    List<Integer> datasetIds = progressReport.getDatasetIds();
+    List<Integer> progressReportDatasetIds = progressReport.getDatasetIds();
+    Set<Integer> darDatasetIds = dataAccessRequestDAO.findApprovedDatasetsByDar(parentDar.getReferenceId());
+    if (!darDatasetIds.containsAll(progressReportDatasetIds)) {
+      throw new BadRequestException("Progress report can only be created for approved datasets in the parent DAR");
+    }
     dataAccessRequestDAO.insertProgressReport(
           Integer.valueOf(progressReport.getParentId()),
           progressReport.getCollectionId(),
           referenceId,
           user.getUserId(),
           progressReport.getData());
-    syncDataAccessRequestDatasets(datasetIds, referenceId);
+    syncDataAccessRequestDatasets(progressReportDatasetIds, referenceId);
     return findByReferenceId(referenceId);
   }
 
