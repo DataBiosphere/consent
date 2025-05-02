@@ -610,7 +610,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
 
   @Test
   void testFindAllApprovedDatasetsByDar() {
-    String darCode1 = "DAR-" + RandomUtils.nextInt(100, 1000000);
+    String darCode1 = "DAR-" + randomInt(100, 1000000);
     Dataset dataset1 = createDARDAOTestDataset();
     Dataset dataset2 = createDARDAOTestDataset();
     Dataset dataset3 = createDARDAOTestDataset();
