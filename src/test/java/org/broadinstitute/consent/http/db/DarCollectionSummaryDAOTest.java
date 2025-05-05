@@ -625,7 +625,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @ParameterizedTest
-  @ValueSource(strings= {"admin", "researcher", "so"})
+  @ValueSource(strings= {"admin", "researcher", "SO", "DAC"})
   void testGetDarCollectionSummaryDraftAndArchivedNotIncluded(String type) {
     User user = createUserWithInstitution();
     Integer userId = user.getUserId();
@@ -652,7 +652,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     List<DarCollectionSummary> summaries = switch (type) {
       case "admin" -> darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
       case "researcher" -> darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
-      case "so" -> darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId());
+      case "SO" -> darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId());
+      case "DAC" -> darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, List.of(dataset.getDatasetId()));
       default -> throw new IllegalArgumentException("Invalid type: " + type);
     };
 
@@ -672,7 +673,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @ParameterizedTest
-  @ValueSource(strings= {"admin", "researcher", "so"})
+  @ValueSource(strings= {"admin", "researcher", "SO", "DAC"})
   void testGetDarCollectionSummaryTwoDataAccessRequests(String type) {
     User user = createUserWithInstitution();
     Integer userId = user.getUserId();
@@ -701,7 +702,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
       case "admin" -> darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
       case "researcher" ->
           darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
-      case "so" -> darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId());
+      case "SO" -> darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId());
+      case "DAC" -> darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, List.of(dataset.getDatasetId(), dataset1.getDatasetId()));
       default -> throw new IllegalArgumentException("Invalid type: " + type);
     };
     assertNotNull(summaries);
@@ -723,6 +725,67 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     // should only be one dataset because the newer DAR has one dataset
     assertEquals(1, summary.getDatasetIds().size());
     assertTrue(summary.getDatasetIds().contains(dataset.getDatasetId()));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings= {"DAC"})
+  void testGetDarCollectionSummaryTwoDataAccessRequestsWithVotes(String type) {
+    User user = createUserWithInstitution();
+    Integer userId = user.getUserId();
+    User userTwo = createUser();
+    Integer userTwoId = userTwo.getUserId();
+    User userChair = createUser();
+    Integer userChairId = userChair.getUserId();
+
+    Dataset dataset = createDataset(userId);
+
+    Integer collectionId = createDarCollection(userId);
+
+    // Create two DataAccessRequests in the same collection
+    DataAccessRequest olderDar = createDataAccessRequest(collectionId, userId);
+    DataAccessRequest newerDar = createDataAccessRequest(collectionId, userId);
+
+    // Insert dataset relations for both DARs
+    // the older DAR has two datasets and the newer DAR has one
+    dataAccessRequestDAO.insertDARDatasetRelation(olderDar.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(newerDar.getReferenceId(), dataset.getDatasetId());
+
+    // Create an election for the new DAR
+    Election expectedElection = createElection(ElectionType.DATA_ACCESS,
+        ElectionStatus.OPEN.getValue(),
+        newerDar.getReferenceId(), dataset.getDatasetId());
+    Integer electionId = expectedElection.getElectionId();
+    Vote voteOne = createVote(userId, electionId, VoteType.DAC.getValue());
+    Vote voteTwo = createVote(userTwoId, electionId, VoteType.DAC.getValue());
+    Vote voteThree = createVote(userChairId, electionId, VoteType.DAC.getValue());
+    Vote voteFinal = createVote(userChairId, electionId, VoteType.FINAL.getValue());
+
+    // Create an election for the older DAR with old votes and make sure they are not included
+    Election oldElection = createElection(ElectionType.DATA_ACCESS,
+        ElectionStatus.OPEN.getValue(),
+        olderDar.getReferenceId(), dataset.getDatasetId());
+    Integer oldElectionId = oldElection.getElectionId();
+    createVote(userId, oldElectionId, VoteType.DAC.getValue());
+    createVote(userTwoId, oldElectionId, VoteType.DAC.getValue());
+    createVote(userChairId, oldElectionId, VoteType.DAC.getValue());
+    createVote(userChairId, oldElectionId, VoteType.FINAL.getValue());
+
+    List<DarCollectionSummary> summaries = switch (type) {
+      case "DAC" -> darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, List.of(dataset.getDatasetId(), dataset.getDatasetId()));
+      default -> throw new IllegalArgumentException("Invalid type: " + type);
+    };
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    DarCollectionSummary summary = summaries.get(0);
+    assertEquals(collectionId, summary.getDarCollectionId());
+
+    // Ensure the election and its votes are included
+    assertEquals(1, summary.getElections().size());
+    assertTrue(summary.getElections().containsKey(electionId));
+    assertEquals(2, summary.getVotes().size());
+
+    List<Integer> targetVotes = List.of(voteOne.getVoteId(), voteFinal.getVoteId());
+    summary.getVotes().forEach((v) -> assertTrue(targetVotes.contains(v.getVoteId())));
   }
 
   @Test
