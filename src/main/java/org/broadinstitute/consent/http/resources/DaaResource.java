@@ -150,6 +150,7 @@ public class DaaResource extends Resource implements ConsentLogger {
   @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, RESEARCHER})
   @Path("{daaId}")
   public Response findById(
+      @Auth AuthUser authUser,
       @PathParam("daaId") Integer daaId) {
     try {
       DataAccessAgreement daa = daaService.findById(daaId);

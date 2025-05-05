@@ -1,11 +1,12 @@
 package org.broadinstitute.consent.http.authentication;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -16,38 +17,91 @@ import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import java.util.List;
 import java.util.Optional;
-import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.filters.ClaimsCache;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.sam.UserStatus;
+import org.broadinstitute.consent.http.models.sam.UserStatus.UserInfo;
+import org.broadinstitute.consent.http.resources.Resource;
+import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class OAuthAuthenticatorTest {
+class AuthorizationHelperTest extends AbstractTestHelper {
 
   @Mock
   private SamService samService;
+  @Mock
+  private UserService userService;
+  @Mock
+  private AuthUser authorizedUser;
+  @Mock
+  private AuthUser unauthorizedUser;
+  @Mock
+  private DuosUser authorizedDuosUser;
+  @Mock
+  private DuosUser unauthorizedDuosUser;
+
+  private AuthorizationHelper authorizationHelper;
+  private DuosUserAuthenticator duosUserAuthenticator;
   private OAuthAuthenticator oAuthAuthenticator;
   private final ClaimsCache headerCache = ClaimsCache.getInstance();
-  private final String bearerToken = RandomStringUtils.randomAlphabetic(100);
+  private final String bearerToken = randomAlphabetic(100);
   private final MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
 
   @BeforeEach
   void setUp() {
+    authorizationHelper = new AuthorizationHelper(samService, userService);
     headerCache.cache.invalidateAll();
+    duosUserAuthenticator = new DuosUserAuthenticator(authorizationHelper);
+    oAuthAuthenticator = new OAuthAuthenticator(authorizationHelper);
+  }
+
+  @Test
+  void testAuthorized() {
+    unauthorizedUser.setEmail("email");
+    unauthorizedDuosUser.setEmail(unauthorizedUser.getEmail());
+    User user = new User();
+    user.setEmail(unauthorizedUser.getEmail());
+    user.addRole(UserRoles.Chairperson());
+    when(userService.findUserByEmail(unauthorizedUser.getEmail())).thenReturn(user);
+    assertTrue(authorizationHelper.authorize(authorizedUser, Resource.CHAIRPERSON));
+    assertTrue(authorizationHelper.authorize(authorizedDuosUser, Resource.CHAIRPERSON));
+  }
+
+  @ParameterizedTest
+  @NullAndEmptySource
+  @ValueSource(strings = {Resource.MEMBER, Resource.CHAIRPERSON, Resource.SIGNINGOFFICIAL,
+      Resource.ADMIN, Resource.DATASUBMITTER, Resource.ITDIRECTOR})
+  void testNotAuthorized(String roleName) {
+    unauthorizedUser.setEmail("email");
+    unauthorizedDuosUser.setEmail(unauthorizedUser.getEmail());
+    User user = new User();
+    user.setEmail(unauthorizedUser.getEmail());
+    user.addRole(UserRoles.Researcher());
+    when(userService.findUserByEmail(unauthorizedUser.getEmail())).thenReturn(user);
+    assertFalse(authorizationHelper.authorize(unauthorizedUser, roleName));
+    assertFalse(authorizationHelper.authorize(unauthorizedDuosUser, roleName));
   }
 
   @Test
   void testAuthenticateWithToken() {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerCache.loadCache(bearerToken, headerMap);
-    oAuthAuthenticator = new OAuthAuthenticator(samService);
-    Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertTrue(authUser.isPresent());
+
+    assertDoesNotThrow(() -> oAuthAuthenticator.authenticate(bearerToken));
+    assertDoesNotThrow(() -> duosUserAuthenticator.authenticate(bearerToken));
   }
 
   @Test
@@ -56,11 +110,10 @@ class OAuthAuthenticatorTest {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("name"));
     headerCache.loadCache(bearerToken, headerMap);
-    oAuthAuthenticator = new OAuthAuthenticator(samService);
-    Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertTrue(authUser.isPresent());
-    assertNotNull(authUser.get().getEmail());
-    assertNotNull(authUser.get().getAuthToken());
+
+    AuthUser authUser = oAuthAuthenticator.authenticate(bearerToken).orElseThrow();
+    assertNotNull(authUser.getEmail());
+    assertNotNull(authUser.getAuthToken());
   }
 
   /**
@@ -70,11 +123,12 @@ class OAuthAuthenticatorTest {
   void testAuthenticateGetUserInfoFailure() {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
     headerCache.loadCache(bearerToken, headerMap);
-    oAuthAuthenticator = new OAuthAuthenticator(samService);
 
-    Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertTrue(authUser.isPresent());
-    assertEquals(authUser.get().getAuthToken(), bearerToken);
+    AuthUser authUser = oAuthAuthenticator.authenticate(bearerToken).orElseThrow();
+    assertEquals(bearerToken, authUser.getAuthToken());
+    // A DuosUser is not created if the user is not found
+    Optional<DuosUser> duosUser = duosUserAuthenticator.authenticate(bearerToken);
+    assertFalse(duosUser.isPresent());
   }
 
   /**
@@ -87,17 +141,18 @@ class OAuthAuthenticatorTest {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("name"));
     headerCache.loadCache(bearerToken, headerMap);
     when(samService.getRegistrationInfo(any())).thenThrow(new NotFoundException());
-    oAuthAuthenticator = new OAuthAuthenticator(samService);
+    when(samService.postRegistrationInfo(any())).thenReturn(
+        new UserStatus()
+            .setUserInfo(new UserInfo().setUserEmail("email").setUserSubjectId("subjectId")));
 
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertTrue(authUser.isPresent());
-    assertEquals(authUser.get().getAuthToken(), bearerToken);
+    assertEquals(bearerToken, authUser.orElseThrow().getAuthToken());
     verify(samService, times(1)).postRegistrationInfo(any());
   }
 
   /**
-   * Test that in the case of a Sam user lookup failure, we then try to register the user.
-   * if that fails, we throw an exception.
+   * Test that in the case of a Sam user lookup failure, we then try to register the user. if that
+   * fails, we throw an exception.
    */
   @Test
   void testAuthenticateGetUserWithStatusInfoFailurePostUserFailureWebAppEx() throws Exception {
@@ -105,9 +160,9 @@ class OAuthAuthenticatorTest {
     headerCache.loadCache(bearerToken, headerMap);
     when(samService.getRegistrationInfo(any())).thenThrow(new NotFoundException());
     when(samService.postRegistrationInfo(any())).thenThrow(new Exception("errorMessage"));
-    oAuthAuthenticator = new OAuthAuthenticator(samService);
 
-    WebApplicationException ex = assertThrows(WebApplicationException.class, () -> oAuthAuthenticator.authenticate(bearerToken));
+    WebApplicationException ex = assertThrows(WebApplicationException.class,
+        () -> oAuthAuthenticator.authenticate(bearerToken));
     assertEquals("errorMessage", ex.getMessage());
   }
 
@@ -115,15 +170,12 @@ class OAuthAuthenticatorTest {
    * Test that in the case of a missing claim headers, we don't fail on Sam user lookup
    */
   @Test
-  void testAuthenticateGetUserWithStatusInfoIncompleteClaims() throws Exception {
+  void testAuthenticateGetUserWithStatusInfoIncompleteClaims() {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
     headerCache.loadCache(bearerToken, headerMap);
-    oAuthAuthenticator = new OAuthAuthenticator(samService);
 
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertTrue(authUser.isPresent());
-    assertEquals(authUser.get().getAuthToken(), bearerToken);
-    verify(samService, never()).getRegistrationInfo(any());
+    assertEquals(authUser.orElseThrow().getAuthToken(), bearerToken);
   }
 
   /**
@@ -131,17 +183,13 @@ class OAuthAuthenticatorTest {
    */
   @Test
   void testUnknownNameDefaultsToEmail() {
-    String bearerToken = RandomStringUtils.randomAlphabetic(100);
-    MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("unknown"));
     headerCache.loadCache(bearerToken, headerMap);
-    oAuthAuthenticator = new OAuthAuthenticator(samService);
 
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
-    assertTrue(authUser.isPresent());
-    assertEquals(authUser.get().getName(), authUser.get().getEmail());
+    assertEquals(authUser.orElseThrow().getName(), authUser.orElseThrow().getEmail());
   }
 
 }
