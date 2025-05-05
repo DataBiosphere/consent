@@ -172,4 +172,6 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2025-04-25-add-service-account-role.xml"
     relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2025-05-01-add-era-commons-to-dar.xml"
+    relativeToChangelogFile="true" />
 </databaseChangeLog>

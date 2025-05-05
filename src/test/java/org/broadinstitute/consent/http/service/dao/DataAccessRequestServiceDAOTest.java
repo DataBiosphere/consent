@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -24,7 +25,6 @@ import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Vote;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,7 +59,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     DarCollection collection = createDarCollection();
     Integer collectionId = collection.getDarCollectionId();
     dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, user.getUserId(), old,
-        old, old, old, new DataAccessRequestData());
+        old, old, old, new DataAccessRequestData(), user.getEraCommonsId());
     dataAccessRequestDAO.insertAllDarDatasets(List.of(oldDarDataset, oldDarDatasetTwo));
 
     DataAccessRequest dar = new DataAccessRequest();
@@ -76,7 +76,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     DataAccessRequest updatedDar = serviceDAO.updateByReferenceId(user, dar);
 
     Timestamp oldTimestamp = new Timestamp(old.getTime());
-    assertFalse(oldTimestamp.equals(updatedDar.getSortDate()));
+    assertNotEquals(oldTimestamp, updatedDar.getSortDate());
     assertFalse(oldTimestamp.equals(updatedDar.getUpdateDate()));
     assertEquals(newDatasetIds, updatedDar.getDatasetIds());
     DataAccessRequestData updatedData = updatedDar.getData();
@@ -115,19 +115,19 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
   private DarCollection createDarCollection() {
     User user = createUserWithInstitution();
     String darCode = "DAR-" + randomInt(1, 10000);
-    Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     Dataset dataset = createDataset();
-    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id);
+    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collectionId);
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
     Election cancelled = createCancelledAccessElection(dar.getReferenceId(),
         dataset.getDatasetId());
     Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     createFinalVote(user.getUserId(), cancelled.getElectionId());
     createFinalVote(user.getUserId(), access.getElectionId());
-    createDataAccessRequest(user.getUserId(), collection_id);
-    createDataAccessRequest(user.getUserId(), collection_id);
-    return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
+    createDataAccessRequest(user.getUserId(), collectionId);
+    createDataAccessRequest(user.getUserId(), collectionId);
+    return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
   }
 
   private Election createCancelledAccessElection(String referenceId, Integer datasetId) {
@@ -163,13 +163,13 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         referenceId,
         userId,
         now, now, now, now,
-        data);
+        data,
+        randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
-  private Vote createFinalVote(Integer userId, Integer electionId) {
-    Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
-    return voteDAO.findVoteById(voteId);
+  private void createFinalVote(Integer userId, Integer electionId) {
+    voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
   }
 
   private Election createDataAccessElection(String referenceId, Integer datasetId) {

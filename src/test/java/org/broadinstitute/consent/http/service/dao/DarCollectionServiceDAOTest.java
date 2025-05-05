@@ -398,7 +398,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
     Date now = new Date();
     dataAccessRequestDAO.updateDataByReferenceId(
-        dar.getReferenceId(), dar.getUserId(), now, now, now, dar.getData());
+        dar.getReferenceId(), dar.getUserId(), now, now, now, dar.getData(), user.getEraCommonsId());
     return darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId());
   }
 
@@ -460,7 +460,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         now, now, data);
     dataAccessRequestDAO.updateDraftToSubmittedForCollection(collectionId, dar.getReferenceId());
     dataAccessRequestDAO.updateDataByReferenceId(dar.referenceId, dar.userId, new Date(),
-        new Date(), new Date(), data);
+        new Date(), new Date(), data, user.getEraCommonsId());
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
     return dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
   }

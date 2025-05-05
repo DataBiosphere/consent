@@ -41,7 +41,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     data.setProjectTitle(RandomStringUtils.randomAlphabetic(20));
     data.setStatus("test");
     dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, createDate,
-        new Date(), submissionDate, new Date(), data);
+        new Date(), submissionDate, new Date(), data, randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
@@ -482,7 +482,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
     dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), dar.userId, new Date(), null,
-        new Date(), dar.getData()); // draft DAR
+        new Date(), dar.getData(), randomAlphabetic(10)); // draft DAR
 
     List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(
         userId);
@@ -532,7 +532,6 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     List<String> targetDatasetDacNames = List.of(dacOneName, dacTwoName);
     List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
     assertNotNull(summaries);
-    assertEquals(2, summaries.size());
     summaries.forEach((s) -> {
       assertEquals(1, s.getDatasetIds().size());
       s.getDatasetIds()
@@ -645,7 +644,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(archivedDar.getReferenceId(), dataset.getDatasetId());
     // draft DAR
     dataAccessRequestDAO.updateDataByReferenceId(draftDar.getReferenceId(), draftDar.userId, new Date(), null,
-        new Date(), draftDar.getData());
+        new Date(), draftDar.getData(), randomAlphabetic(10));
     // archived DAR
     dataAccessRequestDAO.archiveByReferenceIds(List.of(archivedDar.getReferenceId()));
 

@@ -293,7 +293,8 @@ class DarCollectionDAOTest extends DAOTestHelper {
         testDar.getSortDate(),
         testDar.getSubmissionDate(),
         testDar.getUpdateDate(),
-        testDar.getData()
+        testDar.getData(),
+        user.getEraCommonsId()
     );
     dataAccessRequestDAO.insertDARDatasetRelation(testDar.getReferenceId(), dataset.getDatasetId());
     return testDar;
@@ -438,7 +439,8 @@ class DarCollectionDAOTest extends DAOTestHelper {
         referenceId,
         userId,
         now, now, now, now,
-        data);
+        data,
+        randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 

@@ -76,6 +76,8 @@ public class DataAccessRequest {
   public List<Integer> datasetIds;
   @JsonProperty
   private Map<Integer, Election> elections;
+  @JsonProperty
+  private String eraCommonsId;
 
   public DataAccessRequest() {
     this.elections = new HashMap<>();
@@ -248,6 +250,15 @@ public class DataAccessRequest {
     return darCode;
   }
 
+  public String getEraCommonsId() {
+    return eraCommonsId;
+  }
+
+  public void setEraCommonsId(String eraCommonsId) {
+    this.eraCommonsId = eraCommonsId;
+  }
+
+
   /**
    * Merges the DAR and the DAR Data into a single Map Ignores a series of deprecated keys Null
    * values are ignored by default
@@ -361,6 +372,9 @@ public class DataAccessRequest {
     }
     if (Objects.nonNull(dar.getDarCode())) {
       copy.put("darCode", dar.getDarCode());
+    }
+    if (dar.getEraCommonsId() != null) {
+      copy.put("eraCommonsId", dar.getEraCommonsId());
     }
     return copy;
   }

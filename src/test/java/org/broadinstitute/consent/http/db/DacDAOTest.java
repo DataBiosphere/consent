@@ -17,11 +17,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
-import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
@@ -452,7 +450,8 @@ class DacDAOTest extends DAOTestHelper {
         referenceId,
         userId,
         now, now, now, now,
-        data);
+        data,
+        randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
@@ -470,7 +469,8 @@ class DacDAOTest extends DAOTestHelper {
         new Date(),
         new Date(),
         new Date(),
-        new DataAccessRequestData()
+        new DataAccessRequestData(),
+        user.getEraCommonsId()
     );
     dataAccessRequestDAO.insertDARDatasetRelation(randomUUID, d.getDatasetId());
   }
