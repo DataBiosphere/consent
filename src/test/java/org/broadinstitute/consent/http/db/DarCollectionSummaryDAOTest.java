@@ -625,7 +625,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @ParameterizedTest
-  @ValueSource(strings= {"admin", "researcher", "SO", "DAC", "DacCollectionId"})
+  @ValueSource(strings= {"admin", "researcher", "SO", "DAC", "dacCollectionId", "collectionId"})
   void testGetDarCollectionSummaryDraftAndArchivedNotIncluded(String type) {
     User user = createUserWithInstitution();
     Integer userId = user.getUserId();
@@ -654,7 +654,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
       case "researcher" -> darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
       case "SO" -> darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId());
       case "DAC" -> darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, List.of(dataset.getDatasetId()));
-      case "DacCollectionId" -> List.of(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId, List.of(dataset.getDatasetId()), collectionId));
+      case "dacCollectionId" -> List.of(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId, List.of(dataset.getDatasetId()), collectionId));
+      case "collectionId" -> List.of(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId));
       default -> throw new IllegalArgumentException("Invalid type: " + type);
     };
 
@@ -674,7 +675,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @ParameterizedTest
-  @ValueSource(strings= {"admin", "researcher", "SO", "DAC", "DacCollectionId"})
+  @ValueSource(strings= {"admin", "researcher", "SO", "DAC", "dacCollectionId", "collectionId"})
   void testGetDarCollectionSummaryTwoDataAccessRequests(String type) {
     User user = createUserWithInstitution();
     Integer userId = user.getUserId();
@@ -705,7 +706,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
           darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
       case "SO" -> darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId());
       case "DAC" -> darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, List.of(dataset.getDatasetId(), dataset1.getDatasetId()));
-      case "DacCollectionId" -> List.of(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId, List.of(dataset.getDatasetId(), dataset1.getDatasetId()), collectionId));
+      case "dacCollectionId" -> List.of(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId, List.of(dataset.getDatasetId(), dataset1.getDatasetId()), collectionId));
+      case "collectionId" -> List.of(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId));
       default -> throw new IllegalArgumentException("Invalid type: " + type);
     };
     assertNotNull(summaries);
