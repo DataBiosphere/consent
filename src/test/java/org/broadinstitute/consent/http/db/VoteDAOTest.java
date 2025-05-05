@@ -486,7 +486,7 @@ class VoteDAOTest extends DAOTestHelper {
     data.setProjectTitle(RandomStringUtils.randomAlphabetic(10));
     String referenceId = RandomStringUtils.randomAlphanumeric(20);
     dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, new Date(),
-        new Date(), new Date(), new Date(), data);
+        new Date(), new Date(), new Date(), data, randomAlphabetic(10));
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }

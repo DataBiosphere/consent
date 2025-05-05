@@ -186,7 +186,6 @@ public class DataAccessRequestService implements ConsentLogger {
     } else {
       String darCodeSequence = "DAR-" + counterService.getNextDarSequence();
       collectionId = darCollectionDAO.insertDarCollection(darCodeSequence, user.getUserId(), now);
-      darData.setDarCode(darCodeSequence);
     }
     String referenceId;
     List<Integer> datasetIds = dataAccessRequest.getDatasetIds();
@@ -200,7 +199,8 @@ public class DataAccessRequestService implements ConsentLogger {
           now,
           now,
           now,
-          darData);
+          darData,
+          user.getEraCommonsId());
     } else {
       referenceId = UUID.randomUUID().toString();
       dataAccessRequestDAO.insertDataAccessRequest(
@@ -211,7 +211,8 @@ public class DataAccessRequestService implements ConsentLogger {
           now,
           now,
           now,
-          darData);
+          darData,
+          user.getEraCommonsId());
     }
     syncDataAccessRequestDatasets(datasetIds, referenceId);
     return findByReferenceId(referenceId);

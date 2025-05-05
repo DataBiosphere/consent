@@ -401,7 +401,8 @@ public class DarCollectionService implements ConsentLogger {
           now,
           null,
           now,
-          newData
+          newData,
+          null
       );
     });
 
