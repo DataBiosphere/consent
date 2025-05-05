@@ -75,12 +75,11 @@ case $1 in
     * ) error "ENV must be one of dev, alpha, or staging";;
 esac
 
-VAULT_PATH="secret/dsde/firecloud/$1/consent/secrets/postgres/app_sql_user"
-VAULT_JSON=$(vault read -format=json "$VAULT_PATH")
+PG_JSON=$(gcloud secrets versions access latest --secret=consent-postgres-creds)
 
-INSTANCE=$(echo "$VAULT_JSON" | jq -r .data.instance_name)
-USERNAME=$(echo "$VAULT_JSON" | jq -r .data.username)
-PASSWORD=$(echo "$VAULT_JSON" | jq -r .data.password)
+INSTANCE=$(echo "$PG_JSON" | jq -r .instance_name)
+USERNAME=$(echo "$PG_JSON" | jq -r .username)
+PASSWORD=$(echo "$PG_JSON" | jq -r .password)
 
 INSTANCE="broad-dsde-$1:us-central1:$INSTANCE"
 
