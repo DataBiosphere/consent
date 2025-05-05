@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doNothing;
 
 import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.service.EmailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,8 @@ class EmailNotifierResourceTest {
 
   @Mock
   private EmailService emailService;
+  @Mock
+  private AuthUser authUser;
 
   private EmailNotifierResource resource;
 
@@ -29,7 +32,7 @@ class EmailNotifierResourceTest {
   @Test
   void testResourceSuccess() throws Exception {
     doNothing().when(emailService).sendReminderMessage(any());
-    try (Response response = resource.sendReminderMessage(
+    try (Response response = resource.sendReminderMessage(authUser,
         String.valueOf(RandomUtils.nextInt(100, 1000)))) {
       assertEquals(200, response.getStatus());
     }
@@ -37,7 +40,7 @@ class EmailNotifierResourceTest {
 
   @Test
   void testResourceFailure() {
-    try (Response response = resource.sendReminderMessage("invalidVoteId")) {
+    try (Response response = resource.sendReminderMessage(authUser, "invalidVoteId")) {
       assertEquals(500, response.getStatus());
     }
   }
