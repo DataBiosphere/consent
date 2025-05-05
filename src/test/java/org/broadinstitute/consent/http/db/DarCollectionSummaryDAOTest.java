@@ -625,7 +625,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @ParameterizedTest
-  @ValueSource(strings= {"admin", "researcher", "SO", "DAC"})
+  @ValueSource(strings= {"admin", "researcher", "SO", "DAC", "DacCollectionId"})
   void testGetDarCollectionSummaryDraftAndArchivedNotIncluded(String type) {
     User user = createUserWithInstitution();
     Integer userId = user.getUserId();
@@ -654,6 +654,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
       case "researcher" -> darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
       case "SO" -> darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId());
       case "DAC" -> darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, List.of(dataset.getDatasetId()));
+      case "DacCollectionId" -> List.of(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId, List.of(dataset.getDatasetId()), collectionId));
       default -> throw new IllegalArgumentException("Invalid type: " + type);
     };
 
@@ -673,7 +674,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @ParameterizedTest
-  @ValueSource(strings= {"admin", "researcher", "SO", "DAC"})
+  @ValueSource(strings= {"admin", "researcher", "SO", "DAC", "DacCollectionId"})
   void testGetDarCollectionSummaryTwoDataAccessRequests(String type) {
     User user = createUserWithInstitution();
     Integer userId = user.getUserId();
@@ -704,6 +705,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
           darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
       case "SO" -> darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId());
       case "DAC" -> darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, List.of(dataset.getDatasetId(), dataset1.getDatasetId()));
+      case "DacCollectionId" -> List.of(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId, List.of(dataset.getDatasetId(), dataset1.getDatasetId()), collectionId));
       default -> throw new IllegalArgumentException("Invalid type: " + type);
     };
     assertNotNull(summaries);
@@ -728,8 +730,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @ParameterizedTest
-  @ValueSource(strings= {"DAC"})
-  void testGetDarCollectionSummaryTwoDataAccessRequestsWithVotes(String type) {
+  @ValueSource(strings= {"DatasetIds", "CollectionId"})
+  void testGetDarCollectionSummaryTwoDataAccessRequestsForDACsWithVotes(String type) {
     User user = createUserWithInstitution();
     Integer userId = user.getUserId();
     User userTwo = createUser();
@@ -771,7 +773,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     createVote(userChairId, oldElectionId, VoteType.FINAL.getValue());
 
     List<DarCollectionSummary> summaries = switch (type) {
-      case "DAC" -> darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, List.of(dataset.getDatasetId(), dataset.getDatasetId()));
+      case "DatasetIds" -> darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, List.of(dataset.getDatasetId()));
+      case "CollectionId" -> List.of(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId, List.of(dataset.getDatasetId()), collectionId));
       default -> throw new IllegalArgumentException("Invalid type: " + type);
     };
     assertNotNull(summaries);
