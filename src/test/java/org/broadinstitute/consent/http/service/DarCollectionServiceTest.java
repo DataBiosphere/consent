@@ -529,7 +529,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertEquals(1, summaries.size());
     DarCollectionSummary s = summaries.get(0);
     assertTrue(
-        s.getStatus().equalsIgnoreCase(DarCollectionStatus.UNREVIEWED.getValue()));
+        s.getStatus().equalsIgnoreCase(DarCollectionStatus.SUBMITTED.getValue()));
   }
 
   @Test
@@ -602,7 +602,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         DarCollectionActions.CANCEL.getValue()
     );
     assertTrue(
-        testTwo.getStatus().equalsIgnoreCase(DarCollectionStatus.UNREVIEWED.getValue()));
+        testTwo.getStatus().equalsIgnoreCase(DarCollectionStatus.SUBMITTED.getValue()));
     assertEquals(testTwo.getActions(), expectedTwoActions);
 
     DarCollectionSummary testThree = summaries.get(2);
@@ -713,7 +713,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     Set<String> expectedFourActions = Set.of(
         DarCollectionActions.OPEN.getValue());
     assertTrue(
-        testFour.getStatus().equalsIgnoreCase(DarCollectionStatus.UNREVIEWED.getValue()));
+        testFour.getStatus().equalsIgnoreCase(DarCollectionStatus.SUBMITTED.getValue()));
     assertEquals(testFour.getActions(), expectedFourActions);
   }
 
@@ -829,7 +829,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DarCollectionSummary testThree = summaries.get(2);
     Set<String> expectedThreeActions = Set.of();
     assertEquals(testThree.getActions(), expectedThreeActions);
-    assertEquals(DarCollectionStatus.UNREVIEWED.getValue(), testThree.getStatus());
+    assertEquals(DarCollectionStatus.SUBMITTED.getValue(), testThree.getStatus());
 
     DarCollectionSummary testFour = summaries.get(3);
     Set<String> expectedFourActions = Set.of(DarCollectionActions.VOTE.getValue());
@@ -969,7 +969,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     Set<String> expectedFourActions = Set.of(
         DarCollectionActions.OPEN.getValue());
     assertTrue(
-        testFour.getStatus().equalsIgnoreCase(DarCollectionStatus.UNREVIEWED.getValue()));
+        testFour.getStatus().equalsIgnoreCase(DarCollectionStatus.SUBMITTED.getValue()));
     assertEquals(testFour.getActions(), expectedFourActions);
 
     DarCollectionSummary testFive = summaries.get(4);
