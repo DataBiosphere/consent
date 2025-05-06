@@ -14,6 +14,7 @@ import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
@@ -962,5 +963,77 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     DarCollectionSummary summary = darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(
         archivedCollectionId);
     assertNull(summary);
+  }
+
+  @Test
+  void testGetDarCollectionSummaryWithProgressReports() {
+    Dac dac = createDac();
+    User user = createUserWithInstitution();
+    User userChair = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    Integer userId = user.getUserId();
+    Integer chairId = userChair.getUserId();
+    Integer dacId = dac.getDacId();
+    Dataset dataset = createDatasetWithDac(userId, dacId);
+
+
+    DarCollectionSummary summary = createDarWithVotes(userId, chairId, dataset.getDatasetId());
+
+    List<DarCollectionSummary> summariesForResearcher = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
+    assertEquals(1, summariesForResearcher.size());
+    DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(summariesForResearcher.get(0).getReferenceIds().stream().findFirst().get());
+
+    assertEquals(summary.getDarCollectionId(), dar.getCollectionId());
+    //create child progress report
+    String progressReportReferenceId = createProgressReportFromDAR(dar);
+    validateSummaryObjectWithParent(userId, progressReportReferenceId, dar);
+    //create grandchild progress report
+    DataAccessRequest progressReportDar = dataAccessRequestDAO.findByReferenceId(progressReportReferenceId);
+    String progressReportReferenceId2 = createProgressReportFromDAR(progressReportDar);
+    validateSummaryObjectWithParent(userId, progressReportReferenceId2, progressReportDar);
+    //create a second grandchild, peer to the first
+    String progressReportReferenceId3 = createProgressReportFromDAR(progressReportDar);
+    validateSummaryObjectWithParent(userId, progressReportReferenceId3, progressReportDar);
+  }
+
+  private void validateSummaryObjectWithParent(Integer userId, String referenceId, DataAccessRequest parentDar) {
+    DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(
+        referenceId);
+    List<DarCollectionSummary> summariesForResearcher =
+        darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
+    assertTrue(summariesForResearcher.get(0).getProgressReport());
+    assertTrue(dar.getProgressReport());
+    assertTrue(
+        summariesForResearcher
+            .get(0)
+            .getParentToReferenceIds()
+            .containsKey(Integer.toString(parentDar.id)));
+    assertTrue(summariesForResearcher.get(0).getParentToReferenceIds().get(Integer.toString(parentDar.id)).contains(dar.getReferenceId()));
+  }
+
+  private String createProgressReportFromDAR(DataAccessRequest dar) {
+    String referenceId = UUID.randomUUID().toString();
+    dataAccessRequestDAO.insertProgressReport(
+        dar.getId(), dar.getCollectionId(), referenceId, dar.getUserId(), dar.getData());
+    dataAccessRequestDAO.insertDARDatasetRelation(referenceId, dar.getDatasetIds().get(0));
+    return referenceId;
+  }
+
+  private DarCollectionSummary createDarWithVotes(Integer userId, Integer chairId, Integer datasetId) {
+    Integer collectionOneId = createDarCollection(userId);
+    DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userId);
+
+    dataAccessRequestDAO.insertDARDatasetRelation(darOne.getReferenceId(), datasetId);
+
+
+    Election collectionOneElection = createElection(ElectionType.DATA_ACCESS,
+        ElectionStatus.CLOSED.getValue(),
+        darOne.getReferenceId(), datasetId);
+
+
+    createVote(chairId, collectionOneElection.getElectionId(),
+        VoteType.FINAL.getValue());
+
+    return darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(
+        collectionOneId);
   }
 }

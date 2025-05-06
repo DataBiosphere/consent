@@ -49,6 +49,9 @@ public class DataAccessRequest {
   public Boolean draft = true;
 
   @JsonProperty
+  public Boolean progressReport = false;
+
+  @JsonProperty
   public Boolean expired = false;
 
   @JsonProperty
@@ -121,6 +124,7 @@ public class DataAccessRequest {
 
   public void setParentId(String parentId) {
     this.parentId = parentId;
+    updateProgressReportState();
   }
 
   public DataAccessRequestData getData() {
@@ -179,7 +183,10 @@ public class DataAccessRequest {
         new Timestamp(System.currentTimeMillis() - EXPIRATION_DURATION_MILLIS));
     expiresAt = (submissionDate != null) ? new Timestamp(
         submissionDate.getTime() + EXPIRATION_DURATION_MILLIS) : null;
+    updateProgressReportState();
   }
+
+  public boolean getProgressReport() { return progressReport; }
 
   public Timestamp getUpdateDate() {
     return updateDate;
@@ -378,4 +385,11 @@ public class DataAccessRequest {
     }
     return copy;
   }
+
+  // Simple state machine for determining if the Data Access Request
+  // is a progress report.
+  private void updateProgressReportState() {
+    progressReport = !getDraft() && (getParentId() != null);
+  }
+
 }

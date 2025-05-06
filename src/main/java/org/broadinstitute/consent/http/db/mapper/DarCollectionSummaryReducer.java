@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db.mapper;
 
+import java.sql.Timestamp;
 import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
@@ -25,6 +26,10 @@ public class DarCollectionSummaryReducer implements
     Integer datasetId;
     String darStatus;
     String darReferenceId;
+    String darParentId;
+
+    String aggReferenceId;
+    String aggParentId;
 
     try {
       datasetId = rowView.getColumn("dd_datasetid", Integer.class);
@@ -42,6 +47,28 @@ public class DarCollectionSummaryReducer implements
         darReferenceId = rowView.getColumn("dar_reference_id", String.class);
         if (Objects.nonNull(darReferenceId)) {
           summary.addReferenceId(darReferenceId);
+        }
+
+        if (hasColumn(rowView, "dar_all_reference_id", String.class)) {
+          aggReferenceId = rowView.getColumn("dar_all_reference_id", String.class);
+          if (Objects.nonNull(aggReferenceId)) {
+            summary.addReferenceId(aggReferenceId);
+            if (hasColumn(rowView, "dar_all_parent_id", String.class)) {
+              aggParentId = rowView.getColumn("dar_all_parent_id", String.class);
+              if (Objects.nonNull(aggParentId)) {
+                summary.addParentToReferenceId(aggParentId, aggReferenceId);
+              } else {
+                summary.addParentToReferenceId(null, aggReferenceId);
+              }
+            }
+          }
+        } else {
+          // This else will go away when all the queries that use this Reducer are
+          // updated with the row enrichment being performed in getDarCollectionSummariesForResearcher
+          darParentId = rowView.getColumn("dar_parent_id", String.class);
+          if (Objects.nonNull(darParentId)){
+            summary.addParentToReferenceId(darParentId, darReferenceId);
+          }
         }
 
         darStatus = rowView.getColumn("dar_status", String.class);

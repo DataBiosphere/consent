@@ -22,8 +22,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @RegisterBeanMapper(value = Election.class)
   @UseRowReducer(DarCollectionSummaryReducer.class)
   @SqlQuery("""
-      SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, u.display_name as researcher_name,
-        i.institution_name, e.election_id, e.status, e.dataset_id, e.reference_id, v.voteid as v_vote_id, dd.dataset_id as dd_datasetid,
+      SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, dar.parent_id as dar_parent_id,
+       u.display_name as researcher_name, i.institution_name, e.election_id, e.status, e.dataset_id, e.reference_id, v.voteid as v_vote_id, dd.dataset_id as dd_datasetid,
         v.user_id as v_user_id, v.vote as v_vote, v.electionid as v_election_id, v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type,
         (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name
       FROM dar_collection c
@@ -59,8 +59,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @SqlQuery
       (
           """
-              SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, u.display_name as researcher_name,
-                i.institution_name, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid,
+              SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, dar.parent_id as dar_parent_id,
+                u.display_name as researcher_name, i.institution_name, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid,
                 (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name
               FROM dar_collection c
               INNER JOIN users u
@@ -95,6 +95,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               c.dar_code,
               dar.submission_date,
               dar.reference_id AS dar_reference_id,
+              dar.parent_id AS dar_parent_id,
               u.display_name AS researcher_name,
               i.institution_name,
               e.election_id,
@@ -128,7 +129,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
           LEFT JOIN dac ON dac.dac_id = dataset.dac_id
           WHERE (e.latest = e.election_id OR e.election_id IS NULL)
           GROUP BY
-              c.collection_id, c.dar_code, dar.submission_date, dar.reference_id,
+              c.collection_id, c.dar_code, dar.submission_date, dar.reference_id, dar.parent_id,
               u.display_name, i.institution_name, e.election_id, e.status,
               e.dataset_id, dd.dataset_id, dar.data, dac.name
       """)
@@ -144,6 +145,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         c.dar_code,
         dar.submission_date,
         dar.reference_id AS dar_reference_id,
+        dar.parent_id AS dar_parent_id,
         u.display_name AS researcher_name,
         i.institution_name,
         e.election_id,
@@ -153,7 +155,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         dd.dataset_id AS dd_datasetid,
         (regexp_replace(dar.data #>> '{}', '\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name,
         (regexp_replace(dar.data #>> '{}', '\\u0000', '', 'g'))::jsonb ->> 'status' AS dar_status,
-        ARRAY_AGG(dar_all.reference_id) AS reference_ids
+        dar_all.reference_id as dar_all_reference_id,
+        dar_all.parent_id as dar_all_parent_id
     FROM
         dar_collection c
     INNER JOIN
@@ -182,7 +185,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         c.create_user_id = :userId
         AND (e.latest = e.election_id OR e.election_id IS NULL)
     GROUP BY
-        c.collection_id, c.dar_code, dar.submission_date, dar.reference_id, u.display_name, i.institution_name,
+        c.collection_id, c.dar_code, dar.submission_date, dar.reference_id, dar.parent_id, dar_all.reference_id, dar_all.parent_id, u.display_name, i.institution_name,
         e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id, dar.data
 """)
   List<DarCollectionSummary> getDarCollectionSummariesForResearcher(@Bind("userId") Integer userId);
@@ -234,7 +237,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @SqlQuery
       (
           """
-              SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, u.display_name as researcher_name,
+              SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, dar.parent_id as dar_parent_id, u.display_name as researcher_name,
                 u.user_id as researcher_id, i.institution_name, i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid,
                 (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name,
                 (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'status' AS dar_status
