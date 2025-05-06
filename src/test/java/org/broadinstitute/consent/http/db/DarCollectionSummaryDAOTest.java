@@ -45,6 +45,17 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
+  private DataAccessRequest createProgressReportFromDAR(DataAccessRequest dar) {
+    String referenceId = UUID.randomUUID().toString();
+    dataAccessRequestDAO.insertProgressReport(
+        dar.getId(),
+        dar.getCollectionId(),
+        referenceId,
+        dar.getUserId(),
+        dar.getData());
+    return dataAccessRequestDAO.findByReferenceId(referenceId);
+  }
+
   private Integer createDarCollection(Integer createUserId) {
     String darCode = RandomStringUtils.randomAlphabetic(20);
     return darCollectionDAO.insertDarCollection(darCode, createUserId, new Date());
@@ -626,7 +637,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
   @ParameterizedTest
   @ValueSource(strings= {"admin", "researcher", "SO", "DAC", "dacCollectionId", "collectionId"})
-  void testGetDarCollectionSummaryDraftAndArchivedNotIncluded(String type) {
+  void testGetDarCollectionSummaryArchivedNotIncluded(String type) {
     User user = createUserWithInstitution();
     Integer userId = user.getUserId();
 
@@ -636,16 +647,12 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
     // Create two DataAccessRequests in the same collection
     DataAccessRequest olderDar = createDataAccessRequest(collectionId, userId);
-    DataAccessRequest draftDar = createDataAccessRequest(collectionId, userId);
-    DataAccessRequest archivedDar = createDataAccessRequest(collectionId, userId);
+    DataAccessRequest archivedDar = createProgressReportFromDAR(olderDar);
 
     // Insert dataset relations for all DARs
     dataAccessRequestDAO.insertDARDatasetRelation(olderDar.getReferenceId(), dataset.getDatasetId());
-    dataAccessRequestDAO.insertDARDatasetRelation(draftDar.getReferenceId(), dataset.getDatasetId());
     dataAccessRequestDAO.insertDARDatasetRelation(archivedDar.getReferenceId(), dataset.getDatasetId());
-    // draft DAR
-    dataAccessRequestDAO.updateDataByReferenceId(draftDar.getReferenceId(), draftDar.userId, new Date(), null,
-        new Date(), draftDar.getData());
+
     // archived DAR
     dataAccessRequestDAO.archiveByReferenceIds(List.of(archivedDar.getReferenceId()));
 
@@ -687,7 +694,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
     // Create two DataAccessRequests in the same collection
     DataAccessRequest olderDar = createDataAccessRequest(collectionId, userId);
-    DataAccessRequest newerDar = createDataAccessRequest(collectionId, userId);
+    DataAccessRequest newerDar = createProgressReportFromDAR(olderDar);
 
     // Insert dataset relations for both DARs
     // the older DAR has two datasets and the newer DAR has one
@@ -747,7 +754,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
     // Create two DataAccessRequests in the same collection
     DataAccessRequest olderDar = createDataAccessRequest(collectionId, userId);
-    DataAccessRequest newerDar = createDataAccessRequest(collectionId, userId);
+    DataAccessRequest newerDar = createProgressReportFromDAR(olderDar);
 
     // Insert dataset relations for both DARs
     // the older DAR has two datasets and the newer DAR has one
