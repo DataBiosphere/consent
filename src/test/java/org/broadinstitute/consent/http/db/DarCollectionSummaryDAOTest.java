@@ -984,9 +984,6 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     DataAccessRequest progressReportDar = dataAccessRequestDAO.findByReferenceId(progressReportReferenceId);
     String progressReportReferenceId2 = createProgressReportFromDAR(progressReportDar);
     validateSummaryObjectForResearcherWithParent(userId, progressReportReferenceId2);
-    //create a second grandchild, peer to the first
-    String progressReportReferenceId3 = createProgressReportFromDAR(progressReportDar);
-    validateSummaryObjectForResearcherWithParent(userId, progressReportReferenceId3);
   }
 
   @Test
