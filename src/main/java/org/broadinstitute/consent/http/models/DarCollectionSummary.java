@@ -52,8 +52,7 @@ public class DarCollectionSummary {
   @JsonProperty
   private int datasetCount;
 
-  @JsonProperty
-  private Map<Integer, Set<String>> parentToReferenceIds;
+  private final Map<Integer, Set<String>> parentToReferenceIds;
 
   @JsonProperty
   private boolean progressReport;
@@ -99,7 +98,7 @@ public class DarCollectionSummary {
     updateProgressReportStatus();
   }
 
-  public Map<Integer, Set<String>> getParentToReferenceIds() {
+  private Map<Integer, Set<String>> getParentToReferenceIds() {
     return parentToReferenceIds;
   }
 

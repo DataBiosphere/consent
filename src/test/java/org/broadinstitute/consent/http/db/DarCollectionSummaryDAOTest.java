@@ -999,7 +999,6 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     List<DarCollectionSummary> summariesForDAC =
         darCollectionSummaryDAO.getDarCollectionSummariesForDAC(chairId, dar.getDatasetIds());
     assertTrue(summariesForDAC.get(0).getProgressReport());
-    assertFalse(summariesForDAC.get(0).getParentToReferenceIds().isEmpty());
   }
 
   @Test
@@ -1017,7 +1016,6 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     List<DarCollectionSummary> summariesForDAC =
         darCollectionSummaryDAO.getDarCollectionSummariesForSO(institutionId);
     assertTrue(summariesForDAC.get(0).getProgressReport());
-    assertFalse(summariesForDAC.get(0).getParentToReferenceIds().isEmpty());
   }
 
   @Test
@@ -1032,7 +1030,6 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     List<DarCollectionSummary> summariesForDAC =
         darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
     assertTrue(summariesForDAC.get(0).getProgressReport());
-    assertFalse(summariesForDAC.get(0).getParentToReferenceIds().isEmpty());
   }
 
   @Test
@@ -1048,7 +1045,6 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     DarCollectionSummary summaryForDAC =
         darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(chairId, dar.getDatasetIds(), dar.getCollectionId());
     assertTrue(summaryForDAC.getProgressReport());
-    assertFalse(summaryForDAC.getParentToReferenceIds().isEmpty());
   }
 
   private Pair<Pair<Integer, Integer>, DarCollectionSummary> createDarCollectionSummaryForUser() {
@@ -1071,7 +1067,6 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
         darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
     assertTrue(summariesForResearcher.get(0).getProgressReport());
     assertTrue(dar.getProgressReport());
-    assertFalse(summariesForResearcher.get(0).getParentToReferenceIds().isEmpty());
   }
 
   private String createProgressReportFromDAR(DataAccessRequest dar) {
