@@ -53,7 +53,7 @@ public class DarCollectionSummary {
   private int datasetCount;
 
   @JsonProperty
-  private Map<String, Set<String>> parentToReferenceIds;
+  private Map<Integer, Set<String>> parentToReferenceIds;
 
   @JsonProperty
   private boolean progressReport;
@@ -94,12 +94,12 @@ public class DarCollectionSummary {
     this.referenceIds.add(id);
   }
 
-  public void addParentToReferenceId(String parentId, String referenceId) {
+  public void addParentToReferenceId(Integer parentId, String referenceId) {
     parentToReferenceIds.computeIfAbsent(parentId, k -> new HashSet<>()).add(referenceId);
     updateProgressReportStatus();
   }
 
-  public Map<String, Set<String>> getParentToReferenceIds() {
+  public Map<Integer, Set<String>> getParentToReferenceIds() {
     return parentToReferenceIds;
   }
 

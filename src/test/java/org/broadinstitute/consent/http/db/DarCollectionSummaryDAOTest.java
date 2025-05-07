@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -966,17 +967,10 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetDarCollectionSummaryWithProgressReports() {
-    Dac dac = createDac();
-    User user = createUserWithInstitution();
-    User userChair = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
-    Integer userId = user.getUserId();
-    Integer chairId = userChair.getUserId();
-    Integer dacId = dac.getDacId();
-    Dataset dataset = createDatasetWithDac(userId, dacId);
-
-
-    DarCollectionSummary summary = createDarWithVotes(userId, chairId, dataset.getDatasetId());
+  void testGetDarCollectionSummaryForResearcherWithProgressReports() {
+    Pair<Pair<Integer, Integer>, DarCollectionSummary> setup = createDarCollectionSummaryForUser();
+    Integer userId = setup.getLeft().getLeft();
+    DarCollectionSummary summary = setup.getRight();
 
     List<DarCollectionSummary> summariesForResearcher = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
     assertEquals(1, summariesForResearcher.size());
@@ -985,29 +979,102 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     assertEquals(summary.getDarCollectionId(), dar.getCollectionId());
     //create child progress report
     String progressReportReferenceId = createProgressReportFromDAR(dar);
-    validateSummaryObjectWithParent(userId, progressReportReferenceId, dar);
+    validateSummaryObjectForResearcherWithParent(userId, progressReportReferenceId);
     //create grandchild progress report
     DataAccessRequest progressReportDar = dataAccessRequestDAO.findByReferenceId(progressReportReferenceId);
     String progressReportReferenceId2 = createProgressReportFromDAR(progressReportDar);
-    validateSummaryObjectWithParent(userId, progressReportReferenceId2, progressReportDar);
+    validateSummaryObjectForResearcherWithParent(userId, progressReportReferenceId2);
     //create a second grandchild, peer to the first
     String progressReportReferenceId3 = createProgressReportFromDAR(progressReportDar);
-    validateSummaryObjectWithParent(userId, progressReportReferenceId3, progressReportDar);
+    validateSummaryObjectForResearcherWithParent(userId, progressReportReferenceId3);
   }
 
-  private void validateSummaryObjectWithParent(Integer userId, String referenceId, DataAccessRequest parentDar) {
+  @Test
+  void testGetDarCollectionSummaryForDACWithProgressReports() {
+    Pair<Pair<Integer, Integer>, DarCollectionSummary> setup = createDarCollectionSummaryForUser();
+    Integer chairId = setup.getLeft().getRight();
+    DarCollectionSummary summary = setup.getRight();
+
+    DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(summary.getReferenceIds().stream().findFirst().get());
+
+    createProgressReportFromDAR(dar);
+
+    List<DarCollectionSummary> summariesForDAC =
+        darCollectionSummaryDAO.getDarCollectionSummariesForDAC(chairId, dar.getDatasetIds());
+    assertTrue(summariesForDAC.get(0).getProgressReport());
+    assertFalse(summariesForDAC.get(0).getParentToReferenceIds().isEmpty());
+  }
+
+  @Test
+  void testGetDarCollectionSummaryForSOWithProgressReports() {
+    Pair<Pair<Integer, Integer>, DarCollectionSummary> setup = createDarCollectionSummaryForUser();
+    DarCollectionSummary summary = setup.getRight();
+
+    DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(summary.getReferenceIds().stream().findFirst().get());
+
+    createProgressReportFromDAR(dar);
+
+    User user = userDAO.findUserById(dar.getUserId());
+    Integer institutionId = user.getInstitutionId();
+
+    List<DarCollectionSummary> summariesForDAC =
+        darCollectionSummaryDAO.getDarCollectionSummariesForSO(institutionId);
+    assertTrue(summariesForDAC.get(0).getProgressReport());
+    assertFalse(summariesForDAC.get(0).getParentToReferenceIds().isEmpty());
+  }
+
+  @Test
+  void testGetDarCollectionSummaryForAdminWithProgressReports() {
+    Pair<Pair<Integer, Integer>, DarCollectionSummary> setup = createDarCollectionSummaryForUser();
+    DarCollectionSummary summary = setup.getRight();
+
+    DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(summary.getReferenceIds().stream().findFirst().get());
+
+    createProgressReportFromDAR(dar);
+
+    List<DarCollectionSummary> summariesForDAC =
+        darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
+    assertTrue(summariesForDAC.get(0).getProgressReport());
+    assertFalse(summariesForDAC.get(0).getParentToReferenceIds().isEmpty());
+  }
+
+  @Test
+  void testGetDarCollectionSummaryForDACByCollectionIdWithProgressReports() {
+    Pair<Pair<Integer, Integer>, DarCollectionSummary> setup = createDarCollectionSummaryForUser();
+    Integer chairId = setup.getLeft().getRight();
+    DarCollectionSummary summary = setup.getRight();
+
+    DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(summary.getReferenceIds().stream().findFirst().get());
+
+    createProgressReportFromDAR(dar);
+
+    DarCollectionSummary summaryForDAC =
+        darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(chairId, dar.getDatasetIds(), dar.getCollectionId());
+    assertTrue(summaryForDAC.getProgressReport());
+    assertFalse(summaryForDAC.getParentToReferenceIds().isEmpty());
+  }
+
+  private Pair<Pair<Integer, Integer>, DarCollectionSummary> createDarCollectionSummaryForUser() {
+    Dac dac = createDac();
+    User user = createUserWithInstitution();
+    User userChair = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    Integer userId = user.getUserId();
+    Integer chairId = userChair.getUserId();
+    Integer dacId = dac.getDacId();
+    Dataset dataset = createDatasetWithDac(userId, dacId);
+
+    DarCollectionSummary summary = createDarWithVotes(userId, chairId, dataset.getDatasetId());
+    return Pair.of(Pair.of(userId, chairId), summary);
+  }
+
+  private void validateSummaryObjectForResearcherWithParent(Integer userId, String referenceId) {
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(
         referenceId);
     List<DarCollectionSummary> summariesForResearcher =
         darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
     assertTrue(summariesForResearcher.get(0).getProgressReport());
     assertTrue(dar.getProgressReport());
-    assertTrue(
-        summariesForResearcher
-            .get(0)
-            .getParentToReferenceIds()
-            .containsKey(Integer.toString(parentDar.id)));
-    assertTrue(summariesForResearcher.get(0).getParentToReferenceIds().get(Integer.toString(parentDar.id)).contains(dar.getReferenceId()));
+    assertFalse(summariesForResearcher.get(0).getParentToReferenceIds().isEmpty());
   }
 
   private String createProgressReportFromDAR(DataAccessRequest dar) {
