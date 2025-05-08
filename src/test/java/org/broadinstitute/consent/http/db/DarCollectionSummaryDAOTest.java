@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -93,6 +94,28 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   private Vote createVote(Integer dacUserId, Integer electionId, String type) {
     Integer voteId = voteDAO.insertVote(dacUserId, electionId, type);
     return voteDAO.findVoteById(voteId);
+  }
+
+
+  private Election createElectionWithVotes(Integer userId, String darReferenceId, Integer datasetId) {
+    User userTwo = createUser();
+    Integer userTwoId = userTwo.getUserId();
+    User userChair = createUser();
+    Integer userChairId = userChair.getUserId();
+    Election election = createElection(ElectionType.DATA_ACCESS,
+        ElectionStatus.OPEN.getValue(), darReferenceId, datasetId);
+    Integer electionId = election.getElectionId();
+    Vote voteOne = createVote(userId, electionId, VoteType.DAC.getValue());
+    Vote voteTwo = createVote(userTwoId, electionId, VoteType.DAC.getValue());
+    Vote voteThree = createVote(userChairId, electionId, VoteType.DAC.getValue());
+    Vote voteFinal = createVote(userChairId, electionId, VoteType.FINAL.getValue());
+    election.setVotes(Map.of(
+        voteOne.getVoteId(), voteOne,
+        voteTwo.getVoteId(), voteTwo,
+        voteThree.getVoteId(), voteThree,
+        voteFinal.getVoteId(), voteFinal
+    ));
+    return election;
   }
 
   @Test
@@ -743,13 +766,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   void testGetDarCollectionSummaryTwoDataAccessRequestsForDACsWithVotes(String type) {
     User user = createUserWithInstitution();
     Integer userId = user.getUserId();
-    User userTwo = createUser();
-    Integer userTwoId = userTwo.getUserId();
-    User userChair = createUser();
-    Integer userChairId = userChair.getUserId();
 
     Dataset dataset = createDataset(userId);
-
     Integer collectionId = createDarCollection(userId);
 
     // Create two DataAccessRequests in the same collection
@@ -757,47 +775,38 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     DataAccessRequest newerDar = createProgressReportFromDAR(olderDar);
 
     // Insert dataset relations for both DARs
-    // the older DAR has two datasets and the newer DAR has one
     dataAccessRequestDAO.insertDARDatasetRelation(olderDar.getReferenceId(), dataset.getDatasetId());
     dataAccessRequestDAO.insertDARDatasetRelation(newerDar.getReferenceId(), dataset.getDatasetId());
 
     // Create an election for the new DAR
-    Election expectedElection = createElection(ElectionType.DATA_ACCESS,
-        ElectionStatus.OPEN.getValue(),
+    Election expectedElection = createElectionWithVotes(userId,
         newerDar.getReferenceId(), dataset.getDatasetId());
-    Integer electionId = expectedElection.getElectionId();
-    Vote voteOne = createVote(userId, electionId, VoteType.DAC.getValue());
-    Vote voteTwo = createVote(userTwoId, electionId, VoteType.DAC.getValue());
-    Vote voteThree = createVote(userChairId, electionId, VoteType.DAC.getValue());
-    Vote voteFinal = createVote(userChairId, electionId, VoteType.FINAL.getValue());
 
     // Create an election for the older DAR with old votes and make sure they are not included
-    Election oldElection = createElection(ElectionType.DATA_ACCESS,
-        ElectionStatus.OPEN.getValue(),
+    createElectionWithVotes(userId,
         olderDar.getReferenceId(), dataset.getDatasetId());
-    Integer oldElectionId = oldElection.getElectionId();
-    createVote(userId, oldElectionId, VoteType.DAC.getValue());
-    createVote(userTwoId, oldElectionId, VoteType.DAC.getValue());
-    createVote(userChairId, oldElectionId, VoteType.DAC.getValue());
-    createVote(userChairId, oldElectionId, VoteType.FINAL.getValue());
 
     List<DarCollectionSummary> summaries = switch (type) {
       case "DatasetIds" -> darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, List.of(dataset.getDatasetId()));
       case "CollectionId" -> List.of(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(userId, List.of(dataset.getDatasetId()), collectionId));
       default -> throw new IllegalArgumentException("Invalid type: " + type);
     };
+
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
     DarCollectionSummary summary = summaries.get(0);
     assertEquals(collectionId, summary.getDarCollectionId());
 
-    // Ensure the election and its votes are included
+    // Ensure the new election and its votes are included
     assertEquals(1, summary.getElections().size());
-    assertTrue(summary.getElections().containsKey(electionId));
+    assertTrue(summary.getElections().containsKey(expectedElection.getElectionId()));
     assertEquals(2, summary.getVotes().size());
-
-    List<Integer> targetVotes = List.of(voteOne.getVoteId(), voteFinal.getVoteId());
-    summary.getVotes().forEach((v) -> assertTrue(targetVotes.contains(v.getVoteId())));
+    // votes from expected election that are from the specified user or are the final vote
+    List<Integer> expectedVotes = expectedElection.getVotes().values().stream()
+        .filter(v -> v.getUserId().equals(userId) || v.getType().equals(VoteType.FINAL.getValue()))
+        .map(Vote::getVoteId)
+        .toList();
+   summary.getVotes().forEach((v) -> assertTrue(expectedVotes.contains(v.getVoteId())));
   }
 
   @Test
