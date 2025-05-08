@@ -25,14 +25,24 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, u.display_name as researcher_name,
         i.institution_name, e.election_id, e.status, e.dataset_id, e.reference_id, v.voteid as v_vote_id, dd.dataset_id as dd_datasetid,
         v.user_id as v_user_id, v.vote as v_vote, v.electionid as v_election_id, v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type,
-        (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name
+        (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name,
+        ARRAY_AGG(dar_all.reference_id) AS reference_ids
       FROM dar_collection c
       INNER JOIN users u
         ON u.user_id = c.create_user_id
       LEFT JOIN institution i
         ON i.institution_id = u.institution_id
-      INNER JOIN data_access_request dar
-        ON dar.collection_id = c.collection_id
+      INNER JOIN (
+        SELECT DISTINCT ON (collection_id) *
+        FROM data_access_request
+        WHERE submission_date IS NOT NULL
+        AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
+        ORDER BY collection_id, submission_date DESC
+        ) dar ON dar.collection_id = c.collection_id
+      INNER JOIN data_access_request dar_all
+        ON dar_all.collection_id = c.collection_id
+        AND dar_all.submission_date IS NOT NULL
+        AND (LOWER(dar_all.data->>'status') != 'archived' OR dar_all.data->>'status' IS NULL)
       LEFT JOIN (
         SELECT election.*, MAX(election.election_id) OVER(PARTITION BY election.reference_id, election.dataset_id) AS latest
         FROM election
@@ -46,7 +56,11 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       WHERE dd.dataset_id IN (<datasetIds>)
         AND (e.latest = e.election_id OR e.election_id IS NULL)
         AND (LOWER(v.type) = 'final' OR (v.user_id = :currentUserId OR v.voteid IS NULL))
-        AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )
+      GROUP BY
+        c.collection_id, c.dar_code, dar.submission_date, dar.reference_id,
+        u.display_name, i.institution_name, e.election_id, e.status,
+        e.reference_id, e.dataset_id, v.voteid, dd.dataset_id, v.user_id,
+        v.vote, v.electionid, v.createdate, v.updatedate, v.type, dar.data
       """)
   List<DarCollectionSummary> getDarCollectionSummariesForDAC(
       @Bind("currentUserId") Integer currentUserId,
@@ -59,16 +73,35 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @SqlQuery
       (
           """
-              SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, u.display_name as researcher_name,
-                i.institution_name, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid,
-                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name
+              SELECT c.collection_id as dar_collection_id,
+               c.dar_code,
+               dar.submission_date,
+               dar.reference_id as dar_reference_id,
+               u.display_name as researcher_name,
+               i.institution_name,
+               e.election_id,
+               e.status,
+               e.dataset_id,
+               e.reference_id,
+               dd.dataset_id as dd_datasetid,
+               (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name,
+               ARRAY_AGG(dar_all.reference_id) AS reference_ids
               FROM dar_collection c
               INNER JOIN users u
                 ON u.user_id = c.create_user_id
               LEFT JOIN institution i
                 ON i.institution_id = u.institution_id
-              INNER JOIN data_access_request dar
-                ON dar.collection_id = c.collection_id
+              INNER JOIN (
+                SELECT DISTINCT ON (collection_id) *
+                FROM data_access_request
+                WHERE submission_date IS NOT NULL
+                AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
+                ORDER BY collection_id, submission_date DESC
+              ) dar ON dar.collection_id = c.collection_id
+              INNER JOIN data_access_request dar_all
+               ON dar_all.collection_id = c.collection_id
+               AND dar_all.submission_date IS NOT NULL
+               AND (LOWER(dar_all.data->>'status') != 'archived' OR dar_all.data->>'status' IS NULL)
               LEFT JOIN (
                 SELECT election.*, MAX(election.election_id) OVER(PARTITION BY election.reference_id, election.dataset_id) AS latest
                 FROM election
@@ -79,7 +112,10 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               ON dar.reference_id = dd.reference_id
               WHERE u.institution_id = :institutionId
                 AND (e.latest = e.election_id OR e.election_id IS NULL)
-                AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )
+              GROUP BY
+              c.collection_id, c.dar_code, dar.submission_date, dar.reference_id,
+              u.display_name, i.institution_name, e.election_id, e.status,
+              e.reference_id, e.dataset_id, dd.dataset_id, dar.data
           """
       )
   List<DarCollectionSummary> getDarCollectionSummariesForSO(
@@ -197,14 +233,24 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, u.display_name as researcher_name, u.user_id as researcher_id,
         i.institution_name, i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, v.voteid as v_vote_id, dd.dataset_id as dd_datasetid,
         v.user_id as v_user_id, v.vote as v_vote, v.electionid as v_election_id, v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type,
-        (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name
+        (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name,
+        ARRAY_AGG(dar_all.reference_id) AS reference_ids
       FROM dar_collection c
       INNER JOIN users u
         ON u.user_id = c.create_user_id
       LEFT JOIN institution i
         ON i.institution_id = u.institution_id
-      INNER JOIN data_access_request dar
-        ON dar.collection_id = c.collection_id
+      INNER JOIN (
+        SELECT DISTINCT ON (collection_id) *
+        FROM data_access_request
+        WHERE submission_date IS NOT NULL
+        AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
+        ORDER BY collection_id, submission_date DESC
+      ) dar ON dar.collection_id = c.collection_id
+      INNER JOIN
+        data_access_request dar_all ON dar_all.collection_id = c.collection_id
+        AND dar_all.submission_date IS NOT NULL
+        AND (LOWER(dar_all.data->>'status') != 'archived' OR dar_all.data->>'status' IS NULL)
       LEFT JOIN (
         SELECT election.*, MAX(election.election_id) OVER(PARTITION BY election.reference_id, election.dataset_id) AS latest
         FROM election
@@ -219,7 +265,11 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         AND dd.dataset_id IN (<datasetIds>)
         AND (e.latest = e.election_id OR e.election_id IS NULL)
         AND (LOWER(v.type) = 'final' OR (v.user_id = :currentUserId OR v.voteid IS NULL))
-        AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )
+      GROUP BY
+        c.collection_id, c.dar_code, dar.submission_date, u.display_name, u.user_id,
+        i.institution_name, i.institution_id, e.election_id, e.status,
+        e.reference_id, e.dataset_id, v.voteid, dd.dataset_id, v.user_id,
+        v.vote, v.electionid, v.createdate, v.updatedate, v.type, dar.data
       """)
   DarCollectionSummary getDarCollectionSummaryForDACByCollectionId(
       @Bind("currentUserId") Integer currentUserId,
@@ -237,14 +287,24 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               SELECT c.collection_id as dar_collection_id, c.dar_code, dar.submission_date, dar.reference_id as dar_reference_id, u.display_name as researcher_name,
                 u.user_id as researcher_id, i.institution_name, i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid,
                 (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name,
-                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'status' AS dar_status
+                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'status' AS dar_status,
+                ARRAY_AGG(dar_all.reference_id) AS reference_ids
               FROM dar_collection c
               INNER JOIN users u
               ON u.user_id = c.create_user_id
               LEFT JOIN institution i
               ON i.institution_id = u.institution_id
-              INNER JOIN data_access_request dar
-              ON dar.collection_id = c.collection_id
+              INNER JOIN (
+               SELECT DISTINCT ON (collection_id) *
+               FROM data_access_request
+               WHERE submission_date IS NOT NULL
+               AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL)
+               ORDER BY collection_id, submission_date DESC
+              ) dar ON dar.collection_id = c.collection_id
+              INNER JOIN
+               data_access_request dar_all ON dar_all.collection_id = c.collection_id
+               AND dar_all.submission_date IS NOT NULL
+               AND (LOWER(dar_all.data->>'status') != 'archived' OR dar_all.data->>'status' IS NULL)
               LEFT JOIN (
                 SELECT election.*, MAX(election.election_id) OVER(PARTITION BY election.reference_id, election.dataset_id) AS latest
                 FROM election
@@ -255,7 +315,9 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               ON dar.reference_id = dd.reference_id
               WHERE c.collection_id = :collectionId
                 AND (e.latest = e.election_id OR e.election_id IS NULL)
-                AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )
+              GROUP BY
+                c.collection_id, c.dar_code, dar.submission_date, dar.reference_id, u.display_name, u.user_id, i.institution_name,
+                i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id, dar.data
           """
       )
   DarCollectionSummary getDarCollectionSummaryByCollectionId(
