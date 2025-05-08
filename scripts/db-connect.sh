@@ -4,7 +4,7 @@
 # to be able to use this script.
 #
 # USAGE: ./db-connect.sh ENV
-#   ENV must be one of dev, alpha, or staging
+#   ENV must be one of dev, staging, or prod
 #
 
 set -eu
@@ -26,7 +26,7 @@ check_color_support() {
 
 # print out usage to stdout
 usage() {
-    printf "Usage: %s ${BLD}ENV${RST}\n  ${BLD}ENV${RST} must be one of dev, alpha, or staging\n" "$0"
+    printf "Usage: %s ${BLD}ENV${RST}\n  ${BLD}ENV${RST} must be one of dev, staging, or prod\n" "$0"
     exit 0
 }
 
@@ -69,13 +69,20 @@ if [ -z "${1+:}" ]; then
 fi
 
 case $1 in
-    --help ) usage;;
-    dev|alpha|staging ) ;;
-    prod ) error "This script cannot be run against prod.";;
-    * ) error "ENV must be one of dev, alpha, or staging";;
+    --help) usage;;
+    dev)
+      PROJECT=broad-dsde-dev
+      ;;
+    staging)
+      PROJECT=broad-dsde-staging
+      ;;
+    prod)
+      PROJECT=broad-dsde-prod
+      ;;
+    *) error "ENV must be one of dev, staging, or prod";;
 esac
 
-PG_JSON=$(gcloud secrets versions access latest --secret=consent-postgres-creds)
+PG_JSON=$(gcloud --project $PROJECT secrets versions access latest --secret=consent-postgres-creds)
 
 INSTANCE=$(echo "$PG_JSON" | jq -r .instance_name)
 USERNAME=$(echo "$PG_JSON" | jq -r .username)
