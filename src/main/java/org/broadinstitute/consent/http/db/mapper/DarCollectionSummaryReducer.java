@@ -25,7 +25,6 @@ public class DarCollectionSummaryReducer implements
     Integer datasetId;
     String darStatus;
     String darReferenceId;
-    Integer darParentId;
 
     try {
       datasetId = rowView.getColumn("dd_datasetid", Integer.class);
@@ -41,15 +40,8 @@ public class DarCollectionSummaryReducer implements
 
       try {
         darReferenceId = rowView.getColumn("dar_reference_id", String.class);
-        if (Objects.nonNull(darReferenceId)) {
-          summary.addReferenceId(darReferenceId);
-        }
-
-        darParentId = rowView.getColumn("dar_parent_id", Integer.class);
-        if (Objects.nonNull(darParentId)){
-          summary.addParentToReferenceId(darParentId, darReferenceId);
-        }
-
+        hasOptionalColumn(rowView, "dar_parent_id", Integer.class)
+            .ifPresent(darParentId -> summary.addParentToReferenceId(darParentId, darReferenceId));
         darStatus = rowView.getColumn("dar_status", String.class);
         if (Objects.nonNull(darStatus)) {
           summary.addStatus(darStatus, darReferenceId);
