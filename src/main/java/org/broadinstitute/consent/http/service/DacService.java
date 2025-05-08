@@ -126,7 +126,7 @@ public class DacService implements ConsentLogger {
 
   public List<Dac> findDacsWithMembersOption(Boolean withMembers) {
     List<Dac> dacs = dacDAO.findAll().stream().sorted(
-        (d1, d2) -> d1.getName().compareToIgnoreCase(d2.getName())).collect(Collectors.toList());
+        (d1, d2) -> d1.getName().compareToIgnoreCase(d2.getName())).toList();
     if (withMembers) {
       return addMemberInfoToDacs(dacs);
     }
