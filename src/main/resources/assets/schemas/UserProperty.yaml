@@ -1,8 +1,8 @@
 type: object
 properties:
   eraAuthorized:
-    type: string
+    type: boolean
   eraExpiration:
     type: string
   daaAcceptance:
-    type: string
+    type: boolean

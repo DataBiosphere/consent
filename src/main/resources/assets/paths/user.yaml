@@ -42,7 +42,7 @@ put:
               type: string
             daaAcceptance:
               description: Will be "true" if the user has accepted the Broad and NIH's Data Access Agreement.
-              type: string
+              type: boolean
   responses:
     200:
       description: The user, along with researcher properties and library cards
