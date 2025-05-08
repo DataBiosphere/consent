@@ -15,7 +15,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -117,7 +116,7 @@ class UserServiceTest extends AbstractTestHelper {
   void initService() {
     service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO,
         libraryCardDAO, acknowledgementDAO, fileStorageObjectDAO, samDAO, userServiceDAO, daaDAO,
-        emailService, draftServiceDAO, institutionService);
+        draftServiceDAO, institutionService);
   }
 
   @Test
@@ -137,10 +136,6 @@ class UserServiceTest extends AbstractTestHelper {
     when(userRoleDAO.findRolesByUserId(user.getUserId())).thenReturn(
         List.of(admin, researcher, chair));
     when(userDAO.findUserById(any())).thenReturn(user);
-    UserProperty prop = new UserProperty();
-    prop.setPropertyValue("1");
-    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any())).thenReturn(
-        List.of(prop));
 
     UserUpdateFields fields = new UserUpdateFields();
     // We're modifying this user to have an SO role. This should leave in place
@@ -150,10 +145,8 @@ class UserServiceTest extends AbstractTestHelper {
     fields.setInstitutionId(1);
     fields.setEmailPreference(true);
     fields.setEraCommonsId(randomAlphabetic(10));
-    fields.setSelectedSigningOfficialId(1);
-    fields.setSuggestedSigningOfficial(randomAlphabetic(10));
     fields.setDaaAcceptance(true);
-    assertEquals(3, fields.buildUserProperties(user.getUserId()).size());
+    assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
     service.updateUserFieldsById(fields, user.getUserId());
 
     // We added 3 user property values, we should have props for them:
@@ -164,95 +157,6 @@ class UserServiceTest extends AbstractTestHelper {
     // Verify role additions/deletions.
     verify(userRoleDAO, times(1)).insertUserRoles(List.of(so), 1);
     verify(userRoleDAO, times(1)).removeUserRoles(1, List.of(admin.getRoleId()));
-  }
-
-  @Test
-  void testUpdateUserFieldsById_SendsEmailWhenSOInitialized() throws Exception {
-    User user = new User();
-    user.setUserId(1);
-
-    when(userDAO.findUserById(any())).thenReturn(user);
-    UserProperty prop = new UserProperty();
-    prop.setPropertyValue("1");
-    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any())).thenReturn(
-            List.of()) // first time, no SO id
-        .thenReturn(List.of(prop)); // second time, has SO id
-    try {
-      UserUpdateFields fields = new UserUpdateFields();
-      fields.setSelectedSigningOfficialId(1);
-
-      assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
-      service.updateUserFieldsById(fields, user.getUserId());
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
-    // We added 3 user property values, we should have props for them:
-    verify(userDAO, never()).updateDisplayName(any(), any());
-    verify(userDAO, never()).updateEmailPreference(any(), any());
-    verify(userDAO, never()).updateEraCommonsId(any(), any());
-    verify(userPropertyDAO, times(1)).insertAll(any());
-
-    verify(emailService, times(1)).sendNewResearcherMessage(any(), any());
-  }
-
-  @Test
-  void testUpdateUserFieldsById_NoEmailOnSOChange() throws Exception {
-    User user = new User();
-    user.setUserId(1);
-
-    when(userDAO.findUserById(any())).thenReturn(user);
-    UserProperty prop1 = new UserProperty();
-    prop1.setPropertyValue("1");
-    UserProperty prop2 = new UserProperty();
-    prop2.setPropertyValue("2");
-    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any())).thenReturn(
-            List.of(prop1)) // first SO id
-        .thenReturn(List.of(prop2)); // second SO id
-    try {
-      UserUpdateFields fields = new UserUpdateFields();
-      fields.setSelectedSigningOfficialId(2);
-
-      assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
-      service.updateUserFieldsById(fields, user.getUserId());
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
-    // We added 3 user property values, we should have props for them:
-    verify(userDAO, never()).updateDisplayName(any(), any());
-    verify(userDAO, never()).updateEmailPreference(any(), any());
-    verify(userDAO, never()).updateEraCommonsId(any(), any());
-    verify(userPropertyDAO, times(1)).insertAll(any());
-
-    verify(emailService, never()).sendNewResearcherMessage(any(), any());
-  }
-
-  @Test
-  void testUpdateUserFieldsById_NoEmailOnNoChange() throws Exception {
-    User user = new User();
-    user.setUserId(1);
-
-    when(userDAO.findUserById(any())).thenReturn(user);
-    UserProperty prop = new UserProperty();
-    prop.setPropertyValue("1");
-    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any())).thenReturn(
-            List.of(prop)) // first SO id
-        .thenReturn(List.of(prop)); // second SO id
-    try {
-      UserUpdateFields fields = new UserUpdateFields();
-      fields.setSelectedSigningOfficialId(1);
-
-      assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
-      service.updateUserFieldsById(fields, user.getUserId());
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
-    // We added 3 user property values, we should have props for them:
-    verify(userDAO, never()).updateDisplayName(any(), any());
-    verify(userDAO, never()).updateEmailPreference(any(), any());
-    verify(userDAO, never()).updateEraCommonsId(any(), any());
-    verify(userPropertyDAO, times(1)).insertAll(any());
-
-    verify(emailService, never()).sendNewResearcherMessage(any(), any());
   }
 
   @Test

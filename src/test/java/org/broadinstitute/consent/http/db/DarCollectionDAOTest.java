@@ -11,11 +11,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
@@ -48,8 +46,10 @@ class DarCollectionDAOTest extends DAOTestHelper {
   private void generateDatasetElectionForCollection(DarCollection collection) {
     DataAccessRequest dar = collection.getDars().values().stream()
         .filter(d -> !d.getElections().isEmpty()).findFirst().orElse(null);
+    assertNotNull(dar);
     String referenceId = dar.getReferenceId();
     Election election = dar.getElections().values().stream().findFirst().orElse(null);
+    assertNotNull(election);
     Integer datasetId = election.getDatasetId();
     electionDAO.insertElection("DataSet", "Open", new Date(), referenceId, datasetId);
   }
@@ -57,15 +57,15 @@ class DarCollectionDAOTest extends DAOTestHelper {
   private List<Election> getElectionsFromCollection(DarCollection collection) {
     return collection.getDars().values().stream()
         .map(DataAccessRequest::getElections)
-        .map(electionMap -> electionMap.values())
+        .map(Map::values)
         .flatMap(Collection::stream)
-        .collect(Collectors.toList());
+        .toList();
   }
 
   private List<Election> getDatasetElectionsFromElection(List<Election> elections) {
     return elections.stream()
         .filter(e -> e.getElectionType().equalsIgnoreCase("dataset"))
-        .collect(Collectors.toList());
+        .toList();
   }
 
   @Test
@@ -81,7 +81,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
 
     List<Election> elections = getElectionsFromCollection(targetCollection);
     assertNotNull(elections);
-    assertTrue(elections.size() > 0);
+    assertFalse(elections.isEmpty());
     List<Election> datasetElections = getDatasetElectionsFromElection(elections);
     assertEquals(0, datasetElections.size());
     userProperties.forEach(p -> assertEquals(collection.getCreateUserId(),
@@ -108,7 +108,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
     assertNotNull(collection);
     assertEquals(dar.getCollectionId(), collection.getDarCollectionId());
     List<String> ids = collection.getDars().values().stream().map(DataAccessRequest::getReferenceId)
-        .collect(Collectors.toList());
+        .toList();
     assertTrue(ids.contains(dar.getReferenceId()));
   }
 
@@ -167,10 +167,10 @@ class DarCollectionDAOTest extends DAOTestHelper {
   void testFindDARCollectionByCollectionIdLibraryCard() {
     User user = createUser();
     LibraryCard libraryCard = createLibraryCard(user);
-    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+    String darCode = "DAR-" + randomInt(100, 1000);
     Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
-    createDataAccessRequest(user.getUserId(), collectionId, darCode);
+    createDataAccessRequest(user.getUserId(), collectionId);
 
     DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     User returnedUser = collection.getCreateUser();
@@ -185,7 +185,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
   @Test
   void testFindDARCollectionByCollectionIdNegative() {
     DarCollection returned = darCollectionDAO.findDARCollectionByCollectionId(
-        RandomUtils.nextInt(1000, 2000));
+        randomInt(1000, 2000));
     assertNull(returned);
   }
 
@@ -264,7 +264,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
   @Test
   void testDeleteByCollectionIdNegative() {
     try {
-      darCollectionDAO.deleteByCollectionId(RandomUtils.nextInt(100, 1000));
+      darCollectionDAO.deleteByCollectionId(randomInt(100, 1000));
     } catch (Exception e) {
       assertEquals(PSQLState.UNIQUE_VIOLATION.getState(),
           ((PSQLException) e.getCause()).getSQLState());
@@ -303,8 +303,8 @@ class DarCollectionDAOTest extends DAOTestHelper {
   // local method to create a test DAC
   Dac createDAC() {
     Integer id = dacDAO.createDac(
-        "Test_" + RandomStringUtils.random(20, true, true),
-        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + randomAlphanumeric(20),
+        "Test_" + randomAlphanumeric(20),
         new Date());
     return dacDAO.findById(id);
   }
@@ -314,7 +314,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
   // this method returns a list that includes: user, now, dataset, collectionId, testDar, dac, testDarCollection
   List<Object> createDarCollectionWithDataset(User user) {
     Timestamp now = new Timestamp(new Date().getTime());
-    String darCode = "DAR-" + RandomStringUtils.randomAlphanumeric(25);
+    String darCode = "DAR-" + randomAlphanumeric(25);
     Dataset dataset = createDataset();
 
     // creating a collection and DAR
@@ -396,7 +396,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
         testDar2.getReferenceId());
 
     assertNull(archivedCollection);
-    assertTrue(validCollection.equals(testDarCollection2));
+    assertEquals(validCollection, testDarCollection2);
   }
 
   // findDARCollectionByCollectionId should exclude archived collections
@@ -420,11 +420,9 @@ class DarCollectionDAOTest extends DAOTestHelper {
    *
    * @return Populated DataAccessRequest
    */
-  private DataAccessRequest createDataAccessRequest(Integer userId, Integer collectionId,
-      String darCode) {
+  private DataAccessRequest createDataAccessRequest(Integer userId, Integer collectionId) {
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setProjectTitle("Project Title: " + RandomStringUtils.random(50, true, false));
-    data.setDarCode(darCode);
+    data.setProjectTitle("Project Title: " + randomAlphabetic(50));
     DatasetEntry entry = new DatasetEntry();
     entry.setKey("key");
     entry.setValue("value");
@@ -446,9 +444,9 @@ class DarCollectionDAOTest extends DAOTestHelper {
 
   private Dataset createDataset() {
     User user = createUser();
-    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    String name = "Name_" + randomAlphanumeric(20);
     Timestamp now = new Timestamp(new Date().getTime());
-    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
         dataUse.toString(), null);
@@ -477,14 +475,14 @@ class DarCollectionDAOTest extends DAOTestHelper {
 
   private Institution createInstitution() {
     User createUser = createUser();
-    Integer id = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
+    Integer id = institutionDAO.insertInstitution(randomAlphabetic(20),
         "itDirectorName",
         "itDirectorEmail",
-        RandomStringUtils.randomAlphabetic(10),
+        randomAlphabetic(10),
         new Random().nextInt(),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
         OrganizationType.NON_PROFIT.getValue(),
         createUser.getUserId(),
         createUser.getCreateDate());
@@ -510,22 +508,21 @@ class DarCollectionDAOTest extends DAOTestHelper {
   private DarCollection createDarCollectionMultipleUserProperties() {
     User user = createUser();
     Integer userId = user.getUserId();
-    createUserProperty(userId, UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue());
     createUserProperty(userId, UserFields.ERA_STATUS.getValue());
-    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
-    Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
+    String darCode = "DAR-" + randomInt(100, 1000);
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     Dataset dataset = createDataset();
-    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collectionId);
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
     Election cancelled = createCancelledAccessElection(dar.getReferenceId(),
         dataset.getDatasetId());
     Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     createFinalVote(user.getUserId(), cancelled.getElectionId());
     createFinalVote(user.getUserId(), access.getElectionId());
-    createDataAccessRequest(user.getUserId(), collection_id, darCode);
-    createDataAccessRequest(user.getUserId(), collection_id, darCode);
-    return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
+    createDataAccessRequest(user.getUserId(), collectionId);
+    createDataAccessRequest(user.getUserId(), collectionId);
+    return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
   }
 
   private void createUserProperty(Integer userId, String field) {
@@ -549,28 +546,26 @@ class DarCollectionDAOTest extends DAOTestHelper {
 
   private DarCollection createDarCollection() {
     User user = createUserWithInstitution();
-    String darCode = "DAR-" + RandomUtils.nextInt(1, 10000);
-    Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
+    String darCode = "DAR-" + randomInt(1, 10000);
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     Dataset dataset = createDataset();
-    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    DataAccessRequest dar = createDataAccessRequest(user.getUserId(), collectionId);
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
     Election cancelled = createCancelledAccessElection(dar.getReferenceId(),
         dataset.getDatasetId());
     Election access = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     createFinalVote(user.getUserId(), cancelled.getElectionId());
     createFinalVote(user.getUserId(), access.getElectionId());
-    createDataAccessRequest(user.getUserId(), collection_id, darCode);
-    createDataAccessRequest(user.getUserId(), collection_id, darCode);
-    return darCollectionDAO.findDARCollectionByCollectionId(collection_id);
+    createDataAccessRequest(user.getUserId(), collectionId);
+    createDataAccessRequest(user.getUserId(), collectionId);
+    return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
   }
 
   private DataAccessRequest createDraftDataAccessRequest() {
     User user = createUser();
-    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
     DataAccessRequestData data = new DataAccessRequestData();
-    data.setProjectTitle("Project Title: " + RandomStringUtils.random(50, true, false));
-    data.setDarCode(darCode);
+    data.setProjectTitle("Project Title: " + randomAlphabetic(50));
     String referenceId = UUID.randomUUID().toString();
     Date now = new Date();
     dataAccessRequestDAO.insertDraftDataAccessRequest(
@@ -584,9 +579,9 @@ class DarCollectionDAOTest extends DAOTestHelper {
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
-  private Vote createFinalVote(Integer userId, Integer electionId) {
+  private void createFinalVote(Integer userId, Integer electionId) {
     Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
-    return voteDAO.findVoteById(voteId);
+    voteDAO.findVoteById(voteId);
   }
 
   private Election createDataAccessElection(String referenceId, Integer datasetId) {

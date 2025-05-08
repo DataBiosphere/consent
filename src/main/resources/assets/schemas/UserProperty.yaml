@@ -4,9 +4,5 @@ properties:
     type: string
   eraExpiration:
     type: string
-  suggestedSigningOfficial:
-    type: string
-  selectedSigningOfficial:
-    type: string
   daaAcceptance:
     type: string

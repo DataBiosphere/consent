@@ -60,12 +60,6 @@ put:
             eraCommonsId:
               description: The eRA Commons id for the user
               type: string
-            selectedSigningOfficialId:
-              description: The selected user id of the user's preferred signing official
-              type: number
-            suggestedSigningOfficial:
-              description: The suggested signing official for the user
-              type: string
             daaAcceptance:
               description: Todo
               type: boolean
