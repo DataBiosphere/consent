@@ -8,8 +8,8 @@
       WHERE LOWER(property_key) IN
             ('academicemail', 'address1', 'address2', 'checknotifications', 'city', 'completed',
              'country', 'department', 'division', 'eracommonsid', 'havepi', 'institution',
-             'isthepi', 'linkedin', 'namedaa', 'nihusername', 'orcid', 'pieracommonsid',
-             'profilename', 'pubmedid', 'researchergate', 'scientificurl',
+             'isthepi', 'linkedin', 'namedaa', 'nihusername', 'orcid', 'piemail', 'pieracommonsid',
+             'piname', 'profilename', 'pubmedid', 'researchergate', 'scientificurl',
              'selectedsigningofficialid', 'state', 'suggestedinstitution',
              'suggestedsigningofficial', 'urldaa', 'zipcode');
     </sql>
