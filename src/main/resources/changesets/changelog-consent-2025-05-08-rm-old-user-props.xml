@@ -6,10 +6,11 @@
       DELETE
       FROM user_property
       WHERE LOWER(property_key) IN
-            ('academicemail', 'address1', 'address2', 'city', 'completed', 'country', 'department',
-             'division', 'eracommonsid', 'havepi', 'institution', 'isthepi', 'linkedin', 'namedaa',
-             'nihusername', 'orcid', 'pieracommonsid', 'profilename', 'pubmedid', 'researchergate',
-             'scientificurl', 'selectedsigningofficialid', 'state', 'suggestedinstitution',
+            ('academicemail', 'address1', 'address2', 'checknotifications', 'city', 'completed',
+             'country', 'department', 'division', 'eracommonsid', 'havepi', 'institution',
+             'isthepi', 'linkedin', 'namedaa', 'nihusername', 'orcid', 'pieracommonsid',
+             'profilename', 'pubmedid', 'researchergate', 'scientificurl',
+             'selectedsigningofficialid', 'state', 'suggestedinstitution',
              'suggestedsigningofficial', 'urldaa', 'zipcode');
     </sql>
   </changeSet>
