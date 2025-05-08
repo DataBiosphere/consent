@@ -95,7 +95,7 @@ public class DarCollectionService implements ConsentLogger {
     //if there are some elections open, status is in process
     //if all elections are closed or canceled and electionCount == datasetCount, status is complete
     if (electionCount.equals(0)) {
-      summary.setStatus(DarCollectionStatus.UNREVIEWED.getValue());
+      summary.setStatus(DarCollectionStatus.SUBMITTED.getValue());
     } else if (electionCount.equals(datasetCount)) {
       Integer openCount = statusCount.get(ElectionStatus.OPEN.getValue());
       if (Objects.isNull(openCount)) {
@@ -116,7 +116,7 @@ public class DarCollectionService implements ConsentLogger {
       Map<Integer, Election> elections = s.getElections();
       if (elections.size() == 0) {
         s.addAction(DarCollectionActions.OPEN.getValue());
-        s.setStatus(DarCollectionStatus.UNREVIEWED.getValue());
+        s.setStatus(DarCollectionStatus.SUBMITTED.getValue());
       } else {
         elections.values().forEach(e -> {
           String status = e.getStatus();
@@ -169,7 +169,7 @@ public class DarCollectionService implements ConsentLogger {
           s.setStatus(DarCollectionStatus.CANCELED.getValue());
         } else {
           s.addAction(DarCollectionActions.CANCEL.getValue());
-          s.setStatus(DarCollectionStatus.UNREVIEWED.getValue());
+          s.setStatus(DarCollectionStatus.SUBMITTED.getValue());
         }
       } else {
         determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
@@ -185,7 +185,7 @@ public class DarCollectionService implements ConsentLogger {
       //if there are no elections present, unreviewed
       //if there are elections present. in process
       if (electionCount == 0) {
-        s.setStatus(DarCollectionStatus.UNREVIEWED.getValue());
+        s.setStatus(DarCollectionStatus.SUBMITTED.getValue());
       } else {
         Boolean isVotable = elections
             .stream()
@@ -229,7 +229,7 @@ public class DarCollectionService implements ConsentLogger {
       Map<String, Integer> statusCount = new HashMap<>();
       Map<Integer, Election> elections = s.getElections();
       if (elections.size() == 0) {
-        s.setStatus(DarCollectionStatus.UNREVIEWED.getValue());
+        s.setStatus(DarCollectionStatus.SUBMITTED.getValue());
         s.addAction(DarCollectionActions.OPEN.getValue());
       } else {
         if (elections.size() < s.getDatasetCount()) {
@@ -401,7 +401,8 @@ public class DarCollectionService implements ConsentLogger {
           now,
           null,
           now,
-          newData
+          newData,
+          null
       );
     });
 

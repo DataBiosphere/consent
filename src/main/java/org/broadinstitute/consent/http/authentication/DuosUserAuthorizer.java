@@ -2,18 +2,18 @@ package org.broadinstitute.consent.http.authentication;
 
 import io.dropwizard.auth.Authorizer;
 import jakarta.ws.rs.container.ContainerRequestContext;
-import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 
-public class UserAuthorizer implements Authorizer<AuthUser> {
+public class DuosUserAuthorizer implements Authorizer<DuosUser> {
 
   private final AuthorizationHelper authorizationHelper;
 
-  UserAuthorizer(AuthorizationHelper authorizationHelper) {
+  DuosUserAuthorizer(AuthorizationHelper authorizationHelper) {
     this.authorizationHelper = authorizationHelper;
   }
 
   @Override
-  public boolean authorize(AuthUser user, String role, ContainerRequestContext context) {
+  public boolean authorize(DuosUser user, String role, ContainerRequestContext context) {
     return authorizationHelper.authorize(user, role);
   }
 }

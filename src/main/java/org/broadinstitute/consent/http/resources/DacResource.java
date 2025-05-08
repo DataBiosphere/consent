@@ -133,7 +133,7 @@ public class DacResource extends Resource {
   @Path("{dacId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
-  public Response findById(@PathParam("dacId") Integer dacId) {
+  public Response findById(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId) {
     Dac dac = findDacById(dacId);
     return Response.ok().entity(unmarshal(dac)).build();
   }
@@ -142,7 +142,7 @@ public class DacResource extends Resource {
   @Path("{dacId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN})
-  public Response deleteDac(@PathParam("dacId") Integer dacId) {
+  public Response deleteDac(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId) {
     findDacById(dacId);
     try {
       dacService.deleteDac(dacId);
@@ -239,7 +239,7 @@ public class DacResource extends Resource {
   @Path("users/{term}")
   @Produces("application/json")
   @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
-  public Response filterUsers(@PathParam("term") String term) {
+  public Response filterUsers(@Auth AuthUser authUser, @PathParam("term") String term) {
     List<User> users = dacService.findAllDACUsersBySearchString(term);
     return Response.ok().entity(users).build();
   }

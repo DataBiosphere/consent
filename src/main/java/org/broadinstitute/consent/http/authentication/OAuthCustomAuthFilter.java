@@ -2,20 +2,44 @@ package org.broadinstitute.consent.http.authentication;
 
 import io.dropwizard.auth.AuthFilter;
 import io.dropwizard.auth.oauth.OAuthCredentialAuthFilter;
+import jakarta.annotation.Priority;
+import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import java.io.IOException;
 import java.security.Principal;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 
+@Priority(Priorities.AUTHENTICATION)
 public class OAuthCustomAuthFilter<P extends Principal> extends AuthFilter<String, P> {
 
-  private AuthFilter filter;
+  private final AuthFilter filter;
 
-  public OAuthCustomAuthFilter(OAuthAuthenticator authenticator, UserRoleDAO userRoleDAO) {
+  /**
+   * Constructor for OAuthCustomAuthFilter intended to be used with AuthUsers.
+   *
+   * @param authenticator OAuthAuthenticator
+   * @param authorizationHelper   AuthorizationHelper
+   */
+  public OAuthCustomAuthFilter(OAuthAuthenticator authenticator, AuthorizationHelper authorizationHelper) {
     filter = new OAuthCredentialAuthFilter.Builder<AuthUser>()
         .setAuthenticator(authenticator)
-        .setAuthorizer(new UserAuthorizer(userRoleDAO))
+        .setAuthorizer(new UserAuthorizer(authorizationHelper))
+        .setPrefix("Bearer")
+        .setRealm("OAUTH-AUTH")
+        .buildAuthFilter();
+  }
+
+  /**
+   * Constructor for OAuthCustomAuthFilter intended to be used with DuosUsers.
+   *
+   * @param authenticator DuosUserAuthenticator
+   * @param authorizationHelper   AuthorizationHelper
+   */
+  public OAuthCustomAuthFilter(DuosUserAuthenticator authenticator, AuthorizationHelper authorizationHelper) {
+    filter = new OAuthCredentialAuthFilter.Builder<DuosUser>()
+        .setAuthenticator(authenticator)
+        .setAuthorizer(new DuosUserAuthorizer(authorizationHelper))
         .setPrefix("Bearer")
         .setRealm("OAUTH-AUTH")
         .buildAuthFilter();

@@ -3,10 +3,9 @@ package org.broadinstitute.consent.http.db;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
-import org.broadinstitute.consent.http.db.mapper.DataAccessRequestDataMapper;
+import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestReducer;
-import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -39,7 +38,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       """
           SELECT collection.dar_code, dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-            (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data FROM data_access_request dar
+            (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, dar.era_commons_id
+          FROM data_access_request dar
           LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
           LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
           WHERE dar.submission_date is not null
@@ -66,7 +66,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               SELECT dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
                 dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
                 (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
-                dd.dataset_id, collection.dar_code
+                dd.dataset_id, collection.dar_code, dar.era_commons_id
               FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
               INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id AND dd.dataset_id = :datasetId
@@ -91,6 +91,47 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   List<DataAccessRequest> findApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
 
   /**
+   * This query finds dataset ids submitted within the last year on dar-dataset combinations where
+   * the most recent vote is true. The query accomplishes this by creating a view that is a grouping
+   * of election reference ids and LAST vote in the group of final votes for all data access
+   * elections. We need to group them due to the case of multiple elections on a dar-dataset
+   * request. Election 1 may have been denied. Election 2 may have been approved. Election 3 may
+   * have been denied again. When we partition over the election reference id, we'll get all final
+   * votes. The `LAST_VALUE` function selects the last result in the partition, which would be
+   * `FALSE` in the example above. Outside the JOIN, we filter on groupings where the final vote
+   * value is `TRUE` so the denied election in the example would be filtered out.
+   *
+   * @param darReferenceId The DAR reference UUID
+   * @return Set of approved Dataset Ids for the DAR
+   */
+  @SqlQuery(
+      """
+      SELECT dd.dataset_id
+      FROM data_access_request dar
+      INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
+      INNER JOIN (
+        SELECT DISTINCT e.reference_id, e.dataset_id, LAST_VALUE(v.vote)
+        OVER(
+          PARTITION BY e.dataset_id
+            ORDER BY v.createdate
+            RANGE BETWEEN
+              UNBOUNDED PRECEDING AND
+              UNBOUNDED FOLLOWING
+        ) last_vote
+        FROM election e
+        INNER JOIN vote v ON e.election_id = v.electionid AND v.vote IS NOT NULL
+        AND LOWER(e.election_type) = 'dataaccess'
+        AND LOWER(v.type) = 'final') final_access_vote ON
+          final_access_vote.reference_id = dar.reference_id AND
+          final_access_vote.dataset_id = dd.dataset_id
+      WHERE dar.submission_date > now() - interval '1 year'
+      AND final_access_vote.last_vote = TRUE
+      AND dar.reference_id = :darReferenceId
+      AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+      """)
+  Set<Integer> findApprovedDatasetsByDar(@Bind("darReferenceId") String darReferenceId);
+
+  /**
    * This query finds submitted DARs based on a date range.  This would be useful if we wanted to
    * send notifications for "expiring" DARs 30 days before expiration and again at 7 days.
    *
@@ -104,7 +145,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               SELECT dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
                 dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
                 (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
-                dd.dataset_id, collection.dar_code
+                dd.dataset_id, collection.dar_code, dar.era_commons_id
               FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
               LEFT JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
@@ -112,7 +153,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               WHERE dar.submission_date >= :notBefore
               AND (dar.submission_date < now() - :interval ::interval)
               AND (email.email_type IS NULL)
-            
+          
           """)
   List<DataAccessRequest> findAgedDARsByEmailTypeOlderThanInterval(@Bind("emailType") Integer emailType,
       @Bind("interval") String interval, @Bind("notBefore") Timestamp notBefore);
@@ -126,7 +167,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       """
               SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code FROM data_access_request dar
+                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code, dar.era_commons_id
+              FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
               LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
               WHERE dar.submission_date is null
@@ -144,7 +186,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       """
               SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code FROM data_access_request dar
+                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code, dar.era_commons_id
+              FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
               LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
               WHERE dar.submission_date is null
@@ -164,7 +207,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       """
               SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code FROM data_access_request dar
+                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code, dar.era_commons_id
+              FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
               LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
               WHERE dar.reference_id = :referenceId
@@ -182,7 +226,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       """
           SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-            (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code FROM data_access_request dar
+            (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code, dar.era_commons_id
+          FROM data_access_request dar
           LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
           LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
           WHERE dar.reference_id IN (<referenceIds>)
@@ -199,13 +244,14 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @param submissionDate Date Submission Date
    * @param updateDate     Date Update Date
    * @param data           DataAccessRequestData DAR Properties
+   * @param eraCommonsId   The user's era commons id at the time of update
    */
   @RegisterArgumentFactory(JsonArgumentFactory.class)
   @SqlUpdate(
       """
           UPDATE data_access_request
           SET data = to_jsonb(regexp_replace(:data, '\\\\u0000', '', 'g')), user_id = :userId, sort_date = :sortDate,
-            submission_date = :submissionDate, update_date = :updateDate
+            submission_date = :submissionDate, update_date = :updateDate, era_commons_id = :eraCommonsId
           WHERE reference_id = :referenceId
       """)
   void updateDataByReferenceId(
@@ -214,7 +260,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       @Bind("sortDate") Date sortDate,
       @Bind("submissionDate") Date submissionDate,
       @Bind("updateDate") Date updateDate,
-      @Bind("data") @Json DataAccessRequestData data);
+      @Bind("data") @Json DataAccessRequestData data,
+      @Bind("eraCommonsId") String eraCommonsId);
 
   /**
    * Delete DataAccessRequest by reference id
@@ -277,7 +324,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       @Bind("data") @Json DataAccessRequestData data);
 
   /**
-   * Create new DataAccessRequest. This version supercedes `insertV2`
+   * Create new DataAccessRequest. This version supersedes `insertV2`
    *
    * @param collectionId   Integer DarCollection
    * @param referenceId    String
@@ -292,9 +339,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate(
       """
           INSERT INTO data_access_request
-            (collection_id, reference_id, user_id, create_date, sort_date, submission_date, update_date, data)
+            (collection_id, reference_id, user_id, create_date, sort_date, submission_date, update_date, data, era_commons_id)
           VALUES (:collectionId, :referenceId, :userId, :createDate, :sortDate,
-            :submissionDate, :updateDate, to_jsonb(:data))
+            :submissionDate, :updateDate, to_jsonb(:data), :eraCommonsId)
       """)
   void insertDataAccessRequest(
       @Bind("collectionId") Integer collectionId,
@@ -304,7 +351,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       @Bind("sortDate") Date sortDate,
       @Bind("submissionDate") Date submissionDate,
       @Bind("updateDate") Date updateDate,
-      @Bind("data") @Json DataAccessRequestData data);
+      @Bind("data") @Json DataAccessRequestData data,
+      @Bind("eraCommonsId") String eraCommonsId);
 
   /**
    * Create new Progress Report.
@@ -343,16 +391,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
        """)
   void updateDraftToSubmittedForCollection(@Bind("collectionId") Integer collectionId,
       @Bind("referenceId") String referenceId);
-
-  @RegisterRowMapper(DataAccessRequestDataMapper.class)
-  @SqlQuery(
-      """
-          SELECT (data #>> '{}')::jsonb AS data
-          FROM data_access_request
-          WHERE (LOWER(data->>'status') != 'archived'
-            OR data->>'status' IS NULL)
-      """)
-  List<DataAccessRequestData> findAllDataAccessRequestDatas();
 
   @SqlUpdate(
       """
@@ -406,7 +444,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   void deleteDARDatasetRelationByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
 
   /**
-   * Returns all dataset_ids that match any of the referenceIds inside of the "referenceIds" list
+   * Returns all dataset_ids that match any of the referenceIds inside the "referenceIds" list
    *
    * @param referenceIds List<String>
    */

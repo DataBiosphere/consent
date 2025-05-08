@@ -42,7 +42,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     data.setProjectTitle(RandomStringUtils.randomAlphabetic(20));
     data.setStatus("test");
     dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, createDate,
-        new Date(), submissionDate, new Date(), data);
+        new Date(), submissionDate, new Date(), data, randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
@@ -516,7 +516,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
     dataAccessRequestDAO.updateDataByReferenceId(dar.getReferenceId(), dar.userId, new Date(), null,
-        new Date(), dar.getData()); // draft DAR
+        new Date(), dar.getData(), randomAlphabetic(10)); // draft DAR
 
     List<DarCollectionSummary> summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(
         userId);
