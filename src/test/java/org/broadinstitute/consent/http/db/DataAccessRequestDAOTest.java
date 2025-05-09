@@ -86,6 +86,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(1, newDars.size());
     assertTrue(newDars.get(0).getDraft());
     assertNull(newDars.get(0).getDarCode());
+    assertFalse(newDars.get(0).getProgressReport());
   }
 
   @Test
@@ -860,6 +861,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertNotNull(progressReport.getSubmissionDate());
     assertNotNull(progressReport.getUpdateDate());
     assertNotEquals(dar.getReferenceId(), progressReport.getReferenceId());
+    assertTrue(progressReport.getProgressReport());
   }
 
   @Test

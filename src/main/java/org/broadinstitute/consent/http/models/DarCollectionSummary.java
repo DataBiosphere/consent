@@ -52,6 +52,11 @@ public class DarCollectionSummary {
   @JsonProperty
   private int datasetCount;
 
+  private final Map<Integer, Set<String>> parentToReferenceIds;
+
+  @JsonProperty
+  private boolean progressReport;
+
   private List<String> dacNames;
 
   private Integer researcherId;
@@ -68,6 +73,7 @@ public class DarCollectionSummary {
     this.datasetIds = new HashSet<>();
     this.referenceIds = new HashSet<>();
     this.darStatuses = new HashMap<>();
+    this.parentToReferenceIds = new HashMap<>();
     this.datasetCount = 0;
   }
 
@@ -85,6 +91,15 @@ public class DarCollectionSummary {
 
   public void addReferenceId(String id) {
     this.referenceIds.add(id);
+  }
+
+  public void addParentChildRelationship(Integer parentId, String childReferenceId) {
+    parentToReferenceIds.computeIfAbsent(parentId, k -> new HashSet<>()).add(childReferenceId);
+    updateProgressReportStatus();
+  }
+
+  private Map<Integer, Set<String>> getParentToReferenceIds() {
+    return parentToReferenceIds;
   }
 
   public void setReferenceIds(Set<String> referenceIds) {
@@ -145,6 +160,7 @@ public class DarCollectionSummary {
       this.expiresAt = Timestamp.from(Instant.ofEpochMilli(submissionDate.getTime() + DataAccessRequest.EXPIRATION_DURATION_MILLIS));
       this.expired = this.expiresAt.before(Timestamp.from(Instant.now()));
     }
+    updateProgressReportStatus();
   }
 
   public boolean isExpired() {
@@ -249,6 +265,14 @@ public class DarCollectionSummary {
     if (!this.dacNames.contains(dacName)) {
       this.dacNames.add(dacName);
     }
+  }
+
+  public boolean getProgressReport() {
+    return progressReport;
+  }
+
+  private void updateProgressReportStatus() {
+    progressReport = !getParentToReferenceIds().isEmpty() && Objects.nonNull(getSubmissionDate());
   }
 
   @Override

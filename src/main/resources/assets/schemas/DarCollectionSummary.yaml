@@ -43,3 +43,6 @@ properties:
   expired:
     type: boolean
     description: Indicator true when the collection is expired.
+  progressReport:
+    type: boolean
+    description: Indicator true when the collection contains a progress report.

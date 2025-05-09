@@ -28,6 +28,9 @@ properties:
   expiredAt:
     type: number
     description: When this DAR expires, in milliseconds since the epoch.  Present if the DAR is no longer a draft.
+  progressReport:
+    type: boolean
+    description: Indicator that this DAR is a progress report.
   darCode:
     type: string
     description: Unique DAR Code
