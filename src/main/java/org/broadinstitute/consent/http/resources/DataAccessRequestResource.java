@@ -449,6 +449,13 @@ public class DataAccessRequestResource extends Resource {
           ethicsFileDetails, payload, parentDar);
       DataAccessRequest progressReport = dataAccessRequestService.createProgressReport(user,
           payload, parentDar);
+      try {
+        // This service method knows how to distinguish between a DAR and a Progress Report.
+        emailService.sendNewDARCollectionMessage(parentDar.getCollectionId());
+      } catch (Exception e) {
+        // non-fatal exception
+        logException("Exception sending email for collection id: " + parentDar.getCollectionId(), e);
+      }
       return Response.ok(progressReport.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
