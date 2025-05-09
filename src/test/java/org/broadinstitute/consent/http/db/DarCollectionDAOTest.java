@@ -45,8 +45,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
 
   private void generateDatasetElectionForCollection(DarCollection collection) {
     DataAccessRequest dar = collection.getDars().values().stream()
-        .filter(d -> !d.getElections().isEmpty()).findFirst().orElse(null);
-    assertNotNull(dar);
+        .filter(d -> !d.getElections().isEmpty()).findFirst().orElseThrow();
     String referenceId = dar.getReferenceId();
     Election election = dar.getElections().values().stream().findFirst().orElse(null);
     assertNotNull(election);
