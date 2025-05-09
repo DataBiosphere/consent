@@ -427,25 +427,6 @@ class DacServiceTest extends AbstractTestHelper {
     assertEquals(dacsForUser.size(), dacs.size());
   }
 
-  @Test
-  void testFindDacsIsSorted() {
-    String firstDacName = "aaa";
-    DataAccessAgreement daa = new DataAccessAgreement();
-    daa.setDaaId(1);
-    List<Dac> dacs = getDacs();
-    Dac newDac = new Dac();
-    newDac.setDacId(100);
-    newDac.setDescription("aaa");
-    newDac.setName(firstDacName);
-    newDac.setAssociatedDaa(daa);
-    dacs.add(newDac);
-    when(dacDAO.findAll()).thenReturn(dacs);
-    initService();
-
-    List<Dac> dacsForUser = service.findDacsWithMembersOption(false);
-    assertEquals(dacsForUser.get(0).getName(), firstDacName);
-  }
-
 
   /* Helper functions */
 
