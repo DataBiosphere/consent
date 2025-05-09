@@ -77,16 +77,8 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   private void updateStatusCount(Map<String, Integer> statusCount, String status) {
-    if (Objects.isNull(status)) {
-      //If the status is null, track it as Undefined to ensure election is accounted for
-      status = "Undefined";
-    }
-    Integer count = statusCount.get(status);
-    if (Objects.isNull(count)) {
-      statusCount.put(status, 0);
-      count = 0;
-    }
-    statusCount.put(status, count + 1);
+    // If the status is null, track it as Undefined to ensure election is accounted for.
+    statusCount.merge(Objects.requireNonNullElse(status, "Undefined"), 1, Integer::sum);
   }
 
   private void determineCollectionStatus(DarCollectionSummary summary,
@@ -114,7 +106,7 @@ public class DarCollectionService implements ConsentLogger {
     summaries.forEach(s -> {
       Map<String, Integer> statusCount = new HashMap<>();
       Map<Integer, Election> elections = s.getElections();
-      if (elections.size() == 0) {
+      if (elections.isEmpty()) {
         s.addAction(DarCollectionActions.OPEN);
         s.setStatus(DarCollectionStatus.SUBMITTED.getValue());
       } else {
@@ -122,7 +114,9 @@ public class DarCollectionService implements ConsentLogger {
           String status = e.getStatus();
           updateStatusCount(statusCount, status);
           if (status.equals(ElectionStatus.OPEN.getValue())) {
-            s.addAction(DarCollectionActions.CANCEL);
+            if (!s.getProgressReport()) {
+              s.addAction(DarCollectionActions.CANCEL);
+            }
           } else {
             s.addAction(DarCollectionActions.OPEN);
           }
@@ -168,7 +162,9 @@ public class DarCollectionService implements ConsentLogger {
           s.addAction(DarCollectionActions.REVISE);
           s.setStatus(DarCollectionStatus.CANCELED.getValue());
         } else {
-          s.addAction(DarCollectionActions.CANCEL);
+          if (!s.getProgressReport()) {
+            s.addAction(DarCollectionActions.CANCEL);
+          }
           s.setStatus(DarCollectionStatus.SUBMITTED.getValue());
         }
       } else {
@@ -252,8 +248,8 @@ public class DarCollectionService implements ConsentLogger {
         });
         Integer closedCount = statusCount.get(ElectionStatus.CLOSED.getValue());
         Integer openCount = statusCount.get(ElectionStatus.OPEN.getValue());
-        //add cancel if there are no closed elections and at least one open election
-        if (Objects.isNull(closedCount) && Objects.nonNull(openCount)) {
+        // add cancel if there are no closed elections and at least one open election, and this is not a progress report.
+        if (Objects.isNull(closedCount) && Objects.nonNull(openCount) && !s.getProgressReport()) {
           s.addAction(DarCollectionActions.CANCEL);
         }
 
@@ -560,15 +556,19 @@ public class DarCollectionService implements ConsentLogger {
    */
   public DarCollection cancelDarCollectionAsResearcher(DarCollection collection) {
     Collection<DataAccessRequest> dars = collection.getDars().values();
-    List<String> referenceIds = dars.stream()
-        .map(DataAccessRequest::getReferenceId)
-        .collect(Collectors.toList());
-
-    if (referenceIds.isEmpty()) {
+    if (dars.isEmpty()) {
       logWarn("DAR Collection ID: [%s] does not have any associated DAR ids".formatted(
           collection.getDarCollectionId()));
       return collection;
     }
+
+    DarCollectionSummary summary = darCollectionSummaryDAO
+        .getDarCollectionSummaryByCollectionId(collection.getDarCollectionId());
+    if (summary.getProgressReport()) {
+      throw new BadRequestException("Cannot cancel a progress report");
+    }
+
+    List<String> referenceIds = dars.stream().map(DataAccessRequest::getReferenceId).toList();
 
     List<Election> elections = electionDAO.findLastElectionsByReferenceIds(referenceIds);
     if (!elections.isEmpty()) {
@@ -579,7 +579,7 @@ public class DarCollectionService implements ConsentLogger {
     List<String> activeDarIds = dars.stream()
         .filter(d -> !DataAccessRequest.isCanceled(d))
         .map(DataAccessRequest::getReferenceId)
-        .collect(Collectors.toList());
+        .toList();
     if (!activeDarIds.isEmpty()) {
       dataAccessRequestDAO.cancelByReferenceIds(activeDarIds);
     }
@@ -597,15 +597,19 @@ public class DarCollectionService implements ConsentLogger {
    */
   public DarCollection cancelDarCollectionElectionsAsAdmin(DarCollection collection) {
     Collection<DataAccessRequest> dars = collection.getDars().values();
-    List<String> referenceIds = dars.stream()
-        .map(DataAccessRequest::getReferenceId)
-        .collect(Collectors.toList());
-
-    if (referenceIds.isEmpty()) {
+    if (dars.isEmpty()) {
       logWarn("DAR Collection ID: [%s] does not have any associated DAR ids".formatted(
           collection.getDarCollectionId()));
       return collection;
     }
+
+    DarCollectionSummary summary = darCollectionSummaryDAO
+        .getDarCollectionSummaryByCollectionId(collection.getDarCollectionId());
+    if (summary.getProgressReport()) {
+      throw new BadRequestException("Cannot cancel a progress report");
+    }
+
+    List<String> referenceIds = dars.stream().map(DataAccessRequest::getReferenceId).toList();
 
     // Cancel all DAR elections
     cancelElectionsForReferenceIds(referenceIds);
@@ -639,6 +643,12 @@ public class DarCollectionService implements ConsentLogger {
           "DAR Collection ID: [%s] does not have any associated DARs that this chairperson can access".formatted(
               collection.getDarCollectionId()));
       return collection;
+    }
+
+    DarCollectionSummary summary = darCollectionSummaryDAO
+        .getDarCollectionSummaryByCollectionId(collection.getDarCollectionId());
+    if (summary.getProgressReport()) {
+      throw new BadRequestException("Cannot cancel a progress report");
     }
 
     // Cancel filtered DAR elections

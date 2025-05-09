@@ -154,6 +154,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DarCollection collection = generateMockDarCollection(datasets);
     collection.getDars().values().forEach(d -> d.getData().setStatus("Canceled"));
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
+    when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collection.getDarCollectionId()))
+        .thenReturn(new DarCollectionSummary());
 
     DarCollection canceledCollection = service.cancelDarCollectionAsResearcher(collection);
     for (DataAccessRequest collectionDar : canceledCollection.getDars().values()) {
@@ -168,6 +170,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(
         List.of(new Election()));
+    when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collection.getDarCollectionId()))
+        .thenReturn(new DarCollectionSummary());
 
     assertThrows(BadRequestException.class, () -> service.cancelDarCollectionAsResearcher(collection));
   }
@@ -182,6 +186,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     collection.setDars(Map.of(dar.getReferenceId(), dar));
     when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of());
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
+    when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collection.getDarCollectionId()))
+        .thenReturn(new DarCollectionSummary());
     initService();
 
     service.cancelDarCollectionAsResearcher(collection);
@@ -204,6 +210,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     election.setStatus(ElectionStatus.OPEN.getValue());
     election.setElectionId(1);
     when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
+    when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collection.getDarCollectionId()))
+        .thenReturn(new DarCollectionSummary());
 
     assertThrows(BadRequestException.class, () -> service.cancelDarCollectionAsResearcher(collection));
   }
@@ -222,6 +230,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     election.setElectionId(1);
     when(electionDAO.findOpenElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
     when(darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collection.getDarCollectionId()))
+        .thenReturn(new DarCollectionSummary());
 
     service.cancelDarCollectionElectionsAsAdmin(collection);
     verify(electionDAO, times(1)).findOpenElectionsByReferenceIds(anyList());
@@ -251,6 +261,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         List.of(dataset.getDatasetId()));
     when(electionDAO.findOpenElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
     when(darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collection.getDarCollectionId()))
+        .thenReturn(new DarCollectionSummary());
 
     service.cancelDarCollectionElectionsAsChair(collection, user);
     verify(datasetDAO, times(1)).findDatasetIdsByDACUserId(anyInt());
