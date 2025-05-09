@@ -1059,9 +1059,9 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
   @Test
   void testGetDarCollectionSummaryForResearcherWithProgressReports() {
-    Pair<Pair<Integer, Integer>, DarCollectionSummary> setup = createDarCollectionSummaryForUser();
-    Integer userId = setup.getLeft().getLeft();
-    DarCollectionSummary summary = setup.getRight();
+    Setup setup = createDarCollectionSummaryForUser();
+    Integer userId = setup.userId();
+    DarCollectionSummary summary = setup.summary();
 
     List<DarCollectionSummary> summariesForResearcher = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
     assertEquals(1, summariesForResearcher.size());
@@ -1079,9 +1079,9 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
   @Test
   void testGetDarCollectionSummaryForDACWithProgressReports() {
-    Pair<Pair<Integer, Integer>, DarCollectionSummary> setup = createDarCollectionSummaryForUser();
-    Integer chairId = setup.getLeft().getRight();
-    DarCollectionSummary summary = setup.getRight();
+    Setup setup = createDarCollectionSummaryForUser();
+    Integer chairId = setup.chairId();
+    DarCollectionSummary summary = setup.summary();
 
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(summary.getReferenceIds().stream().findFirst().get());
 
@@ -1094,8 +1094,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
   @Test
   void testGetDarCollectionSummaryForSOWithProgressReports() {
-    Pair<Pair<Integer, Integer>, DarCollectionSummary> setup = createDarCollectionSummaryForUser();
-    DarCollectionSummary summary = setup.getRight();
+    Setup setup = createDarCollectionSummaryForUser();
+    DarCollectionSummary summary = setup.summary();
 
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(summary.getReferenceIds().stream().findFirst().get());
 
@@ -1111,8 +1111,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
   @Test
   void testGetDarCollectionSummaryForAdminWithProgressReports() {
-    Pair<Pair<Integer, Integer>, DarCollectionSummary> setup = createDarCollectionSummaryForUser();
-    DarCollectionSummary summary = setup.getRight();
+    Setup setup = createDarCollectionSummaryForUser();
+    DarCollectionSummary summary = setup.summary();
 
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(summary.getReferenceIds().stream().findFirst().get());
 
@@ -1125,9 +1125,9 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
   @Test
   void testGetDarCollectionSummaryForDACByCollectionIdWithProgressReports() {
-    Pair<Pair<Integer, Integer>, DarCollectionSummary> setup = createDarCollectionSummaryForUser();
-    Integer chairId = setup.getLeft().getRight();
-    DarCollectionSummary summary = setup.getRight();
+    Setup setup = createDarCollectionSummaryForUser();
+    Integer chairId = setup.chairId();
+    DarCollectionSummary summary = setup.summary();
 
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(summary.getReferenceIds().stream().findFirst().get());
 
@@ -1138,7 +1138,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     assertTrue(summaryForDAC.getProgressReport());
   }
 
-  private Pair<Pair<Integer, Integer>, DarCollectionSummary> createDarCollectionSummaryForUser() {
+  private Setup createDarCollectionSummaryForUser() {
     Dac dac = createDac();
     User user = createUserWithInstitution();
     User userChair = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
@@ -1148,8 +1148,10 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Dataset dataset = createDatasetWithDac(userId, dacId);
 
     DarCollectionSummary summary = createDarWithVotes(userId, chairId, dataset.getDatasetId());
-    return Pair.of(Pair.of(userId, chairId), summary);
+    return new Setup(userId, chairId, summary);
   }
+
+  public record Setup(Integer userId, Integer chairId, DarCollectionSummary summary) {};
 
   private void validateSummaryObjectForResearcherWithParent(Integer userId, String referenceId) {
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(
