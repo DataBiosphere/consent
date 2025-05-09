@@ -295,12 +295,12 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     dar.setReferenceId(UUID.randomUUID().toString());
     DarCollection collection = createMockCollections().get(0);
     collection.setDars(Map.of(dar.getReferenceId(), dar));
-    when(darCollectionServiceDAO.createElectionsForDarCollection(any(), any())).thenReturn(
+    when(darCollectionServiceDAO.createElectionsForDarByCollection(any(), any())).thenReturn(
         List.of("electionId"));
     when(voteDAO.findVoteUsersByElectionReferenceIdList(any())).thenReturn(List.of(new User()));
 
     service.createElectionsForDarCollection(user, collection);
-    verify(darCollectionServiceDAO, times(1)).createElectionsForDarCollection(any(), any());
+    verify(darCollectionServiceDAO, times(1)).createElectionsForDarByCollection(any(), any());
     verify(voteDAO, times(1)).findVoteUsersByElectionReferenceIdList(any());
     verify(emailService, times(1)).sendDarNewCollectionElectionMessage(any(), any());
     verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(any());
@@ -327,13 +327,13 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DarCollection collection = createMockCollections().get(0);
     collection.setDars(Map.of(dar.getReferenceId(), dar));
     List<String> electionIds = List.of("electionId");
-    when(darCollectionServiceDAO.createElectionsForDarCollection(user, collection)).thenReturn(
+    when(darCollectionServiceDAO.createElectionsForDarByCollection(user, collection)).thenReturn(
         electionIds);
     when(voteDAO.findVoteUsersByElectionReferenceIdList(electionIds)).thenThrow(
         IllegalArgumentException.class);
 
     service.createElectionsForDarCollection(user, collection);
-    verify(darCollectionServiceDAO).createElectionsForDarCollection(user, collection);
+    verify(darCollectionServiceDAO).createElectionsForDarByCollection(user, collection);
     verify(voteDAO).findVoteUsersByElectionReferenceIdList(electionIds);
     verifyNoInteractions(emailService);
     verify(darCollectionDAO).findDARCollectionByCollectionId(collection.getDarCollectionId());

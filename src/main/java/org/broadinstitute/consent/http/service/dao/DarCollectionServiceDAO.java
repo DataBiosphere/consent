@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.Handle;
@@ -47,7 +48,7 @@ public class DarCollectionServiceDAO {
    * @param collection The DarCollection
    * @return List of reference ids for which a DAR election was created
    */
-  public List<String> createElectionsForDarCollection(User user, DarCollection collection)
+  public List<String> createElectionsForDarByCollection(User user, DarCollection collection)
       throws SQLException {
     final Date now = new Date();
     boolean isAdmin = user.hasUserRole(UserRoles.ADMIN);
@@ -73,6 +74,10 @@ public class DarCollectionServiceDAO {
           //    4. Create an RP Election
           //    5. Create member votes for rp election
           //        5a. Chair Vote for chair
+
+          // Close elections in parent
+          DataAccessRequest mostRecentDar = collection.getMostRecentDar();
+          mostRecentDar.getParentId();
           collection.getDars().values().forEach(dar -> {
             dar.getDatasetIds().forEach(datasetId -> {
               // If there is an existing open election for this DAR+Dataset, we can ignore it

@@ -222,7 +222,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   void createProgressReport() {
     DataAccessRequest parentDar = generateDataAccessRequest();
     DataAccessRequest progressReport = generateProgressReport();
-    progressReport.setParentId(parentDar.getId().toString());
+    progressReport.setParentId(parentDar.getId());
     progressReport.setCollectionId(parentDar.getCollectionId());
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     User user = new User(1, "email@test.org", "Display Name", new Date());
@@ -248,7 +248,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   void createProgressReportFailsIfNonApprovedDatasets() {
     DataAccessRequest parentDar = generateDataAccessRequest();
     DataAccessRequest progressReport = generateProgressReport();
-    progressReport.setParentId(parentDar.getId().toString());
+    progressReport.setParentId(parentDar.getId());
     progressReport.setCollectionId(parentDar.getCollectionId());
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     User user = new User(1, "email@test.org", "Display Name", new Date());

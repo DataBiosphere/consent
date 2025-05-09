@@ -50,14 +50,14 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
    * - Elections created should be for the DAR/Dataset for the user
    */
   @Test
-  void testCreateElectionsForDarCollectionAdmin() throws Exception {
+  void testCreateElectionsForDarByCollectionAdmin() throws Exception {
     User user = new User();
     user.setAdminRole();
     DarCollection collection = setUpDarCollectionWithDacDataset();
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
     assertNotNull(dar);
 
-    List<String> referenceIds = serviceDAO.createElectionsForDarCollection(user, collection);
+    List<String> referenceIds = serviceDAO.createElectionsForDarByCollection(user, collection);
 
     List<Election> createdElections =
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
@@ -110,7 +110,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
    * - User is an Admin - Elections created should only be for ALL the DAR/Dataset combinations
    */
   @Test
-  void testCreateElectionsForDarCollectionWithMultipleDatasetsForAdmin() throws Exception {
+  void testCreateElectionsForDarCollectionWithMultipleDatasetsForAdminBy() throws Exception {
     User user = new User();
     user.setAdminRole();
     DarCollection collection = setUpDarCollectionWithDacDataset();
@@ -122,7 +122,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     // refresh the collection
     collection = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
 
-    List<String> referenceIds = serviceDAO.createElectionsForDarCollection(user, collection);
+    List<String> referenceIds = serviceDAO.createElectionsForDarByCollection(user, collection);
 
     List<Election> createdElections =
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
@@ -162,7 +162,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
    * combinations - Elections created should be for the DAR/Dataset for the user
    */
   @Test
-  void testCreateElectionsForDarCollectionChair() throws Exception {
+  void testCreateElectionsForDarByCollectionChair() throws Exception {
     DarCollection collection = setUpDarCollectionWithDacDataset();
     Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
     assertTrue(dar.isPresent());
@@ -175,7 +175,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         .findFirst();
     assertTrue(chair.isPresent());
 
-    List<String> referenceIds = serviceDAO.createElectionsForDarCollection(chair.get(), collection);
+    List<String> referenceIds = serviceDAO.createElectionsForDarByCollection(chair.get(), collection);
 
     List<Election> createdElections =
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.get().getReferenceId()));
@@ -210,7 +210,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
    * created should only be for the DAR/Dataset for the user
    */
   @Test
-  void testCreateElectionsForDarCollectionWithMultipleDatasetsForChair() throws Exception {
+  void testCreateElectionsForDarCollectionWithMultipleDatasetsForChairBy() throws Exception {
     // Start off with a collection and a single DAR
     DarCollection collection = setUpDarCollectionWithDacDataset();
     Optional<DataAccessRequest> dar = collection.getDars().values().stream().findFirst();
@@ -233,7 +233,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     // refresh the collection
     collection = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
 
-    List<String> referenceIds = serviceDAO.createElectionsForDarCollection(chair.get(), collection);
+    List<String> referenceIds = serviceDAO.createElectionsForDarByCollection(chair.get(), collection);
 
     List<Election> createdElections =
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.get().getReferenceId()));
@@ -275,7 +275,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
    * elections are correctly archived
    */
   @Test
-  void testCreateElectionsForDarCollectionAfterCancelingEarlierElectionsAsAdmin()
+  void testCreateElectionsForDarCollectionAfterCancelingEarlierElectionsAsAdminBy()
       throws Exception {
     User user = new User();
     user.setAdminRole();
@@ -284,7 +284,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     assertNotNull(dar);
 
     // create elections & votes:
-    List<String> referenceIds = serviceDAO.createElectionsForDarCollection(user, collection);
+    List<String> referenceIds = serviceDAO.createElectionsForDarByCollection(user, collection);
 
     // cancel those elections:
     List<Integer> canceledElectionIds = electionDAO.findLastElectionsByReferenceIds(
@@ -296,7 +296,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         electionDAO.updateElectionById(id, ElectionStatus.CANCELED.getValue(), new Date()));
 
     // re-create elections & new votes:
-    referenceIds.addAll(serviceDAO.createElectionsForDarCollection(user, collection));
+    referenceIds.addAll(serviceDAO.createElectionsForDarByCollection(user, collection));
 
     List<Election> createdElections =
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
@@ -323,7 +323,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
    * correctly - Elections created should only be for the DAR/Dataset for the user
    */
   @Test
-  void testCreateElectionsForDarCollectionAfterCancelingEarlierElectionsAsChair()
+  void testCreateElectionsForDarCollectionAfterCancelingEarlierElectionsAsChairBy()
       throws Exception {
     // Start off with a collection and a single DAR
     DarCollection collection = setUpDarCollectionWithDacDataset();
@@ -349,7 +349,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     collection = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
 
     // create elections & votes:
-    List<String> referenceIds = serviceDAO.createElectionsForDarCollection(chair.get(), collection);
+    List<String> referenceIds = serviceDAO.createElectionsForDarByCollection(chair.get(), collection);
 
     // cancel elections for all DARs in the collection:
     collection.getDars().values().forEach(d ->
@@ -359,7 +359,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     );
 
     // re-create elections & new votes:
-    referenceIds.addAll(serviceDAO.createElectionsForDarCollection(chair.get(), collection));
+    referenceIds.addAll(serviceDAO.createElectionsForDarByCollection(chair.get(), collection));
 
     List<Election> createdElections =
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.get().getReferenceId()));

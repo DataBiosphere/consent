@@ -661,7 +661,7 @@ public class DarCollectionService implements ConsentLogger {
   public DarCollection createElectionsForDarCollection(User user, DarCollection collection)
       throws Exception {
     try {
-      List<String> createdElectionReferenceIds = collectionServiceDAO.createElectionsForDarCollection(
+      List<String> createdElectionReferenceIds = collectionServiceDAO.createElectionsForDarByCollection(
           user, collection);
       if (createdElectionReferenceIds.isEmpty()) {
         var e = new IllegalStateException(
