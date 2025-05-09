@@ -159,6 +159,12 @@ public class DarCollectionService implements ConsentLogger {
       int electionCount = elections.values().size();
       elections.values().forEach(election -> updateStatusCount(statusCount, election.getStatus()));
       s.addAction(DarCollectionActions.REVIEW.getValue());
+      // if any DARs in the collection have approved datasets, include create progress report action
+      if (s.getReferenceIds().stream()
+          .map(dataAccessRequestDAO::findApprovedDatasetsByDar)
+          .anyMatch(approvedDatasetIds -> !approvedDatasetIds.isEmpty())) {
+        s.addAction(DarCollectionActions.CREATE_PROGRESS_REPORT.getValue());
+      }
       //check dar statuses, if they're all canceled show revise (but only if there are no elections)
       if (electionCount == 0) {
         Collection<String> darStatuses = s.getDarStatuses().values();
