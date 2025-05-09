@@ -21,6 +21,7 @@ import com.sendgrid.helpers.mail.Mail;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
@@ -242,11 +243,16 @@ class EmailServiceTest {
     collection.setDarCode("01");
     collection.setDarCollectionId(1);
     collection.setDatasets(Set.of(d1, d2));
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    dar.setDatasetIds(List.of(d1.getDatasetId(), d2.getDatasetId()));
+    collection.setDars(Map.of(dar.getReferenceId(), dar));
 
 
     when(collectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
     when(userDAO.findUserById(any())).thenReturn(researcher);
-    when(dacDAO.findDacsForCollectionId(any())).thenReturn(Set.of(dac));
+    when(dacDAO.findDacsForDatasetIds(any())).thenReturn(Set.of(dac));
     when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1, d2));
     when(userDAO.describeUsersByRoleAndEmailPreference(any(), any())).thenReturn(List.of());
     when(userDAO.findUsersForDatasetsByRole(any(), any())).thenReturn(Set.of(chairperson));

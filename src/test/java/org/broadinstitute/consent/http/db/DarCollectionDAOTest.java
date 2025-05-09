@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -413,6 +414,19 @@ class DarCollectionDAOTest extends DAOTestHelper {
     DarCollection returnedCollection = darCollectionDAO.findDARCollectionByCollectionId(
         collectionId);
     assertNull(returnedCollection);
+  }
+
+  @Test
+  void testFindMostRecentDarInCollection() {
+    User user = createUserWithInstitution();
+    List<Object> newDarCollection1 = createDarCollectionWithDataset(user);
+    DataAccessRequest testDar1 = (DataAccessRequest) newDarCollection1.get(4);
+    Dataset dataset = (Dataset) newDarCollection1.get(2);
+    DataAccessRequest testDar2 = createDAR(user, dataset, testDar1.getCollectionId());
+    DarCollection returnedCollection = darCollectionDAO.findDARCollectionByCollectionId(testDar1.getCollectionId());
+    assertTrue(testDar2.getSubmissionDate().after(testDar1.getSubmissionDate()));
+    assertNotEquals(testDar2.getReferenceId(), testDar1.getReferenceId());
+    assertEquals(testDar2.getReferenceId(), returnedCollection.getMostRecentDar().getReferenceId());
   }
 
   /**

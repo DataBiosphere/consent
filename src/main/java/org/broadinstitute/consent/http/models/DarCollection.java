@@ -3,9 +3,13 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -142,6 +146,16 @@ public class DarCollection {
         dars.put(referenceId, dar);
       }
     }
+  }
+
+  public DataAccessRequest getMostRecentDar() {
+    List<DataAccessRequest> dars = new java.util.ArrayList<>(
+        this.getDars().values().stream().toList());
+    dars.sort(Comparator.comparing(DataAccessRequest::getSubmissionDate).reversed());
+    if (dars.isEmpty()) {
+      return null;
+    }
+    return dars.get(0);
   }
 
   public void addDataset(Dataset dataset) {

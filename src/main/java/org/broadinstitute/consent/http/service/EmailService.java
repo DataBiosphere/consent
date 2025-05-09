@@ -56,6 +56,7 @@ import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
+import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewResearcherLibraryRequestMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedMessage;
@@ -180,7 +181,9 @@ public class EmailService implements ConsentLogger {
               + collectionId);
       return;
     }
-    List<User> distinctUsers = getDistinctAdminAndChairUsersForCollection(collection);
+    // Do this, but only for a single DAR
+    DataAccessRequest dar = collection.getMostRecentDar();
+    List<User> distinctUsers = getDistinctAdminAndChairUsersForDAR(dar);
     User researcher = userDAO.findUserById(collection.getCreateUserId());
     if (researcher == null) {
       logWarn(
@@ -188,9 +191,10 @@ public class EmailService implements ConsentLogger {
               + collection.getCreateUserId());
     }
     String researcherName = researcher == null ? "Unknown" : researcher.getDisplayName();
-    Collection<Dac> dacsInDAR = dacDAO.findDacsForCollectionId(collectionId);
-    List<Integer> datasetIds = collection.getDatasets().stream().map(Dataset::getDatasetId)
-        .toList();
+    // Only do this for the DAR... dacDAO.findDacsForDatasetIds(dar.getDatasetIds())
+    Collection<Dac> dacsInDAR = dacDAO.findDacsForDatasetIds(dar.getDatasetIds());
+    // Use only the datasets from the dar
+    List<Integer> datasetIds = dar.getDatasetIds();
     List<Dataset> datasetsInDAR =
         datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
 
@@ -203,17 +207,25 @@ public class EmailService implements ConsentLogger {
           sendList.put(dac.getName(), matchingDatasetsForDac);
         }
       }
-      sendNewDARRequestEmail(user, sendList, researcherName, collection.getDarCode());
+      // If the dar is not a progress report, use the DAR template else use the PR template.
+      if (dar.getProgressReport()) {
+        // Use the reference ID to link the fact that this progress report will have been noted.
+        // the DAR Code at this point will be ambiguous.
+        sendNewProgressReportRequestEmail(user, sendList, researcherName, collection.getDarCode(), dar.getReferenceId());
+      } else {
+        sendNewDARRequestEmail(user, sendList, researcherName, collection.getDarCode());
+      }
     }
   }
 
-  private List<User> getDistinctAdminAndChairUsersForCollection(DarCollection collection) {
+  private List<User> getDistinctAdminAndChairUsersForDAR(DataAccessRequest dar) {
+    List<Integer> datasetIds = dar.getDatasetIds();
+    return getDistinctAdminAndChairUsersForDatasetIds(datasetIds);
+  }
+
+  private List<User> getDistinctAdminAndChairUsersForDatasetIds(List<Integer> datasetIds) {
     List<User> admins = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(),
         true);
-    List<Integer> datasetIds = collection.getDars().values().stream()
-        .map(DataAccessRequest::getDatasetIds)
-        .flatMap(List::stream)
-        .collect(Collectors.toList());
     Set<User> chairPersons = userDAO.findUsersForDatasetsByRole(datasetIds,
         Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
     // Ensure that admins/chairs are not double emailed
@@ -245,6 +257,13 @@ public class EmailService implements ConsentLogger {
       User user, Map<String, List<String>> sendList, String researcherName, String darCode)
       throws TemplateException, IOException {
     sendMessage(new NewDARRequestMessage(user, darCode, sendList, researcherName),
+        user.getUserId());
+  }
+
+  private void sendNewProgressReportRequestEmail(
+      User user, Map<String, List<String>> sendList, String researcherName, String darCode, String referenceId)
+      throws TemplateException, IOException {
+    sendMessage(new NewProgressReportRequestMessage(user, darCode, referenceId, sendList, researcherName),
         user.getUserId());
   }
 

@@ -322,6 +322,7 @@ public class VoteService implements ConsentLogger {
         String translation = String.join(";", dataUseTranslations);
 
         try {
+          // TODO: Get specifics about the email we need to send when a progress report is approved.
           emailService.sendResearcherDarApproved(darCode, researcherId, datasetMailDTOs,
               translation);
         } catch (Exception e) {
