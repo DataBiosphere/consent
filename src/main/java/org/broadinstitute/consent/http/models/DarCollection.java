@@ -7,7 +7,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -48,7 +47,7 @@ public class DarCollection {
   private Integer updateUserId;
 
   @JsonProperty
-  private Map<String, DataAccessRequest> dars;
+  private final Map<String, DataAccessRequest> dars = new HashMap<>();
 
   @JsonProperty
   private Set<Dataset> datasets;
@@ -121,27 +120,11 @@ public class DarCollection {
   }
 
   public Map<String, DataAccessRequest> getDars() {
-    if (Objects.isNull(dars)) {
-      return new HashMap<>();
-    }
     return dars;
   }
 
-  public void setDars(Map<String, DataAccessRequest> dars) {
-    this.dars = dars;
-  }
-
   public void addDar(DataAccessRequest dar) {
-    if (Objects.isNull(dars)) {
-      this.setDars(new HashMap<>());
-    }
-    if (Objects.nonNull(dar)) {
-      String referenceId = dar.getReferenceId();
-      DataAccessRequest savedDar = dars.get(referenceId);
-      if (Objects.isNull(savedDar)) {
-        dars.put(referenceId, dar);
-      }
-    }
+    dars.putIfAbsent(dar.getReferenceId(), dar);
   }
 
   public void addDataset(Dataset dataset) {
