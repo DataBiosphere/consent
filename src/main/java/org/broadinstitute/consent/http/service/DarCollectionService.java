@@ -661,19 +661,20 @@ public class DarCollectionService implements ConsentLogger {
   public DarCollection createElectionsForDarCollection(User user, DarCollection collection)
       throws Exception {
     try {
-      List<String> createdElectionReferenceIds = collectionServiceDAO.createElectionsForDarByCollection(
-          user, collection);
+      DataAccessRequest dar = collection.getMostRecentDar();
+      List<String> createdElectionReferenceIds = collectionServiceDAO.createElectionsForDarByUser(
+          user, dar);
       if (createdElectionReferenceIds.isEmpty()) {
         var e = new IllegalStateException(
-            "No elections were created for DAR Collection: %s".formatted(
-                collection.getDarCode()));
+            "No elections were created for DAR Collection: %s %s".formatted(
+                collection.getDarCode(), dar.getReferenceId()));
         logException(e);
         throw e;
       }
       try {
         List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(
             createdElectionReferenceIds);
-        if (collection.getMostRecentDar().getProgressReport()) {
+        if (dar.getProgressReport()) {
           emailService.sendProgressReportNewCollectionElectionMessage(voteUsers, collection);
         } else {
           emailService.sendDarNewCollectionElectionMessage(voteUsers, collection);

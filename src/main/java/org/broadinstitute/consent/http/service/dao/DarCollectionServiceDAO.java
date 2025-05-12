@@ -6,8 +6,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -15,7 +13,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
@@ -40,17 +37,17 @@ public class DarCollectionServiceDAO {
   }
 
   /**
-   * Find all Dar Collection + Dataset combinations that are available to the user. - Admins have
+   * Find all Dar + Dataset combinations that are available to the user. - Admins have
    * all available to them - Chairs can only create elections for datasets in their DACs
    * <p>
-   * DarCollections with no elections, or with previously canceled elections, are valid for
+   * DataAccessRequests with no elections, or with previously canceled elections, are valid for
    * initiating a new set of elections. Any DAR elections in open state should be ignored.
    *
-   * @param user       The User initiating new elections for a collection
-   * @param collection The DarCollection
+   * @param user       The User initiating new elections for a data access request
+   * @param dataAccessRequest The DataAccessRequest
    * @return List of reference ids for which a DAR election was created
    */
-  public List<String> createElectionsForDarByCollection(User user, DarCollection collection)
+  public List<String> createElectionsForDarByUser(User user, DataAccessRequest dataAccessRequest)
       throws SQLException {
     final Date now = new Date();
     boolean isAdmin = user.hasUserRole(UserRoles.ADMIN);
@@ -80,11 +77,10 @@ public class DarCollectionServiceDAO {
           // Only take actions on the most recent DAR/Progress report in the collection
           // This means a chair cannot reopen an election in any other DAR in the collection besides
           // the most recently submitted progress report.
-          DataAccessRequest mostRecentDar = collection.getMostRecentDar();
-          mostRecentDar.getDatasetIds().forEach(datasetId -> {
+          dataAccessRequest.getDatasetIds().forEach(datasetId -> {
               // If there is an existing open election for this DAR+Dataset, we can ignore it
               Election lastDataAccessElection = electionDAO.findLastElectionByReferenceIdDatasetIdAndType(
-                  mostRecentDar.getReferenceId(), datasetId, ElectionType.DATA_ACCESS.getValue());
+                  dataAccessRequest.getReferenceId(), datasetId, ElectionType.DATA_ACCESS.getValue());
               boolean ignore =
                   Objects.nonNull(lastDataAccessElection) && lastDataAccessElection.getStatus()
                       .equalsIgnoreCase(ElectionStatus.OPEN.getValue());
@@ -97,7 +93,7 @@ public class DarCollectionServiceDAO {
               if (!ignore) {
                 // Archive all old elections for this DAR + Dataset
                 List<Integer> oldElectionIds = electionDAO
-                    .findElectionsByReferenceIdAndDatasetId(mostRecentDar.getReferenceId(), datasetId)
+                    .findElectionsByReferenceIdAndDatasetId(dataAccessRequest.getReferenceId(), datasetId)
                     .stream().map(Election::getElectionId)
                     .toList();
                 if (!oldElectionIds.isEmpty()) {
@@ -105,18 +101,18 @@ public class DarCollectionServiceDAO {
                 }
                 List<User> voteUsers = findVoteUsersForDataset(datasetId);
                 inserts.add(createElectionInsert(handle, ElectionType.DATA_ACCESS.getValue(),
-                    mostRecentDar.getReferenceId(), now, datasetId));
+                    dataAccessRequest.getReferenceId(), now, datasetId));
                 inserts.addAll(createVoteInsertsForUsers(handle, voteUsers,
-                    ElectionType.DATA_ACCESS.getValue(), mostRecentDar.getReferenceId(), datasetId, now,
-                    mostRecentDar.requiresManualReview()));
+                    ElectionType.DATA_ACCESS.getValue(), dataAccessRequest.getReferenceId(), datasetId, now,
+                    dataAccessRequest.requiresManualReview()));
                 inserts.add(
-                    createElectionInsert(handle, ElectionType.RP.getValue(), mostRecentDar.getReferenceId(),
+                    createElectionInsert(handle, ElectionType.RP.getValue(), dataAccessRequest.getReferenceId(),
                         now, datasetId));
                 inserts.addAll(
                     createVoteInsertsForUsers(handle, voteUsers, ElectionType.RP.getValue(),
-                        mostRecentDar.getReferenceId(), datasetId, now,
-                        mostRecentDar.requiresManualReview()));
-                createdElectionReferenceIds.add(mostRecentDar.getReferenceId());
+                        dataAccessRequest.getReferenceId(), datasetId, now,
+                        dataAccessRequest.requiresManualReview()));
+                createdElectionReferenceIds.add(dataAccessRequest.getReferenceId());
               }
             });
           inserts.forEach(Update::execute);
