@@ -237,9 +237,8 @@ public class DarCollectionSummary {
     this.actions = actions;
   }
 
-  public void addAction(String action) {
-    String newAction = DarCollectionActions.valueOf(action.toUpperCase()).getValue();
-    actions.add(newAction);
+  public void addAction(DarCollectionActions action) {
+    actions.add(action.getValue());
   }
 
   public void addStatus(String status, String referenceId) {
