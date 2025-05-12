@@ -594,8 +594,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(List.of(draft));
     when(darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(any())).thenReturn(
         mockSummaries);
-    when(dataAccessRequestDAO.findApprovedDatasetsByDars(List.of())).thenReturn(Set.of());
-    when(dataAccessRequestDAO.findApprovedDatasetsByDars(List.of("ref1")))
+    when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of())).thenReturn(Set.of());
+    when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of("ref1")))
         .thenReturn(Set.of(datasetSix.getDatasetId()));
 
     List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
@@ -1091,7 +1091,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId))
         .thenReturn(summary);
 
-    when(dataAccessRequestDAO.findApprovedDatasetsByDars(List.of("ref1")))
+    when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of("ref1")))
         .thenReturn(Set.of(1));
 
     DarCollectionSummary summaryResult = service.getSummaryForRoleNameByCollectionId(user,

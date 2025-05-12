@@ -616,7 +616,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindAllApprovedDatasetsByDar() {
+  void testFindAllDatasetApprovalsByDar() {
     String darCode1 = "DAR-" + randomInt(100, 1000000);
     Dataset dataset1 = createDARDAOTestDataset();
     Dataset dataset2 = createDARDAOTestDataset();
@@ -639,7 +639,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Date now = new Date();
 
     assertTrue(
-        dataAccessRequestDAO.findApprovedDatasetsByDar(testDar1.getReferenceId())
+        dataAccessRequestDAO.findDatasetApprovalsByDar(testDar1.getReferenceId())
             .isEmpty());
 
     voteDAO.updateVote(true,
@@ -651,7 +651,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         now,
         false);
 
-    Set<Integer> approvedDatasetIds = dataAccessRequestDAO.findApprovedDatasetsByDar(
+    Set<Integer> approvedDatasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(
         testDar1.getReferenceId());
     assertEquals(1, approvedDatasetIds.size());
     assertTrue(approvedDatasetIds.contains(dataset1.getDatasetId()));
@@ -665,7 +665,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         now,
         false);
 
-    approvedDatasetIds = dataAccessRequestDAO.findApprovedDatasetsByDar(testDar1.getReferenceId());
+    approvedDatasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(testDar1.getReferenceId());
 
     assertEquals(2, approvedDatasetIds.size());
     assertTrue(approvedDatasetIds.contains(dataset1.getDatasetId()));
@@ -681,7 +681,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         now,
         false);
 
-    approvedDatasetIds = dataAccessRequestDAO.findApprovedDatasetsByDar(testDar1.getReferenceId());
+    approvedDatasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(testDar1.getReferenceId());
 
     assertEquals(2, approvedDatasetIds.size());
     assertTrue(approvedDatasetIds.contains(dataset1.getDatasetId()));
@@ -689,7 +689,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindAllApprovedDatasetsByDar_IncludesExpired() {
+  void testFindAllDatasetApprovalsByDar_IncludesExpired() {
     String darCode1 = "DAR-" + randomInt(100, 1000000);
     Dataset dataset1 = createDARDAOTestDataset();
 
@@ -708,14 +708,14 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         now,
         false);
 
-    Set<Integer> approvedDatasetIds = dataAccessRequestDAO.findApprovedDatasetsByDar(
+    Set<Integer> approvedDatasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(
         testDar1.getReferenceId());
     assertEquals(1, approvedDatasetIds.size());
     assertTrue(approvedDatasetIds.contains(dataset1.getDatasetId()));
   }
 
   @Test
-  void testFindAllApprovedDatasetsByDars() {
+  void testFindAllDatasetApprovalsByDars() {
     String darCode1 = "DAR-" + randomInt(100, 1000000);
     String darCode2 = "DAR-" + randomInt(100, 1000000);
     Dataset dataset1 = createDARDAOTestDataset();
@@ -777,13 +777,13 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         now,
         false);
 
-    Set<Integer> approvedDatasetIds = dataAccessRequestDAO.findApprovedDatasetsByDars(
+    Set<Integer> approvedDatasetIds = dataAccessRequestDAO.findDatasetApprovalsByDars(
         List.of(testDar1.getReferenceId(), testDar2.getReferenceId()));
     assertEquals(2, approvedDatasetIds.size());
     assertTrue(approvedDatasetIds.containsAll(List.of(dataset1.getDatasetId(), dataset4.getDatasetId())));
   }
   @Test
-  void testFindAllApprovedDatasetsByDars_IncludesExpired() {
+  void testFindAllDatasetApprovalsByDars_IncludesExpired() {
     String darCode1 = "DAR-" + randomInt(100, 1000000);
     Dataset dataset1 = createDARDAOTestDataset();
 
@@ -805,7 +805,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         now,
         false);
 
-    Set<Integer> approvedDatasetIds = dataAccessRequestDAO.findApprovedDatasetsByDars(
+    Set<Integer> approvedDatasetIds = dataAccessRequestDAO.findDatasetApprovalsByDars(
         List.of(testDar1.getReferenceId()));
     assertEquals(1, approvedDatasetIds.size());
     assertTrue(approvedDatasetIds.contains(dataset1.getDatasetId()));
