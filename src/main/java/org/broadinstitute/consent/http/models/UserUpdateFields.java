@@ -24,8 +24,6 @@ public class UserUpdateFields {
   private Boolean emailPreference;
   private List<Integer> userRoleIds;
   private String eraCommonsId;
-  private Integer selectedSigningOfficialId;
-  private String suggestedSigningOfficial;
   private Boolean daaAcceptance;
 
   public UserUpdateFields() {
@@ -71,22 +69,6 @@ public class UserUpdateFields {
     this.eraCommonsId = eraCommonsId;
   }
 
-  public Integer getSelectedSigningOfficialId() {
-    return selectedSigningOfficialId;
-  }
-
-  public void setSelectedSigningOfficialId(Integer selectedSigningOfficialId) {
-    this.selectedSigningOfficialId = selectedSigningOfficialId;
-  }
-
-  public String getSuggestedSigningOfficial() {
-    return suggestedSigningOfficial;
-  }
-
-  public void setSuggestedSigningOfficial(String suggestedSigningOfficial) {
-    this.suggestedSigningOfficial = suggestedSigningOfficial;
-  }
-
   public Boolean getDaaAcceptance() {
     return daaAcceptance;
   }
@@ -97,20 +79,6 @@ public class UserUpdateFields {
 
   public List<UserProperty> buildUserProperties(Integer userId) {
     List<UserProperty> userProps = new ArrayList<>();
-    if (Objects.nonNull(this.getSelectedSigningOfficialId())) {
-      UserProperty prop = new UserProperty();
-      prop.setUserId(userId);
-      prop.setPropertyKey(UserFields.SELECTED_SIGNING_OFFICIAL_ID.getValue());
-      prop.setPropertyValue(this.getSelectedSigningOfficialId().toString());
-      userProps.add(prop);
-    }
-    if (Objects.nonNull(this.getSuggestedSigningOfficial())) {
-      UserProperty prop = new UserProperty();
-      prop.setUserId(userId);
-      prop.setPropertyKey(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue());
-      prop.setPropertyValue(this.getSuggestedSigningOfficial());
-      userProps.add(prop);
-    }
     if (Objects.nonNull(this.getDaaAcceptance())) {
       UserProperty prop = new UserProperty();
       prop.setUserId(userId);
@@ -174,14 +142,12 @@ public class UserUpdateFields {
     return Objects.equals(displayName, that.displayName) && Objects.equals(institutionId,
         that.institutionId) && Objects.equals(emailPreference, that.emailPreference)
         && Objects.equals(userRoleIds, that.userRoleIds) && Objects.equals(eraCommonsId,
-        that.eraCommonsId) && Objects.equals(selectedSigningOfficialId,
-        that.selectedSigningOfficialId) && Objects.equals(suggestedSigningOfficial,
-        that.suggestedSigningOfficial) && Objects.equals(daaAcceptance, that.daaAcceptance);
+        that.eraCommonsId) && Objects.equals(daaAcceptance, that.daaAcceptance);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(displayName, institutionId, emailPreference, userRoleIds, eraCommonsId,
-        selectedSigningOfficialId, suggestedSigningOfficial, daaAcceptance);
+        daaAcceptance);
   }
 }

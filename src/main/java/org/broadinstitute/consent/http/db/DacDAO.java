@@ -84,6 +84,7 @@ public interface DacDAO extends Transactional<DacDAO> {
       LEFT JOIN dac_daa dd ON dac.dac_id = dd.dac_id
       LEFT JOIN data_access_agreement daa ON dd.daa_id = daa.daa_id
       LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+      ORDER BY dac.name
       """)
   List<Dac> findAll();
 

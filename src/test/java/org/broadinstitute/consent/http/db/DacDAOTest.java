@@ -107,6 +107,20 @@ class DacDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindAllAlphabeticized() {
+    String firstName = "A" + randomAlphabetic(20);
+    String secondName = "B" + randomAlphabetic(20);
+    String thirdName = "C" + randomAlphabetic(20);
+    Integer dacId1 = createRandomDACWithName(firstName);
+    Integer dacId2 = createRandomDACWithName(thirdName);
+    Integer dacId3 = createRandomDACWithName(secondName);
+    List<Dac> dacs = dacDAO.findAll();
+    assertEquals(dacs.get(0).getName(), firstName);
+    assertEquals(dacs.get(1).getName(), secondName);
+    assertEquals(dacs.get(2).getName(), thirdName);
+  }
+
+  @Test
   void testFindAllWithDataset() {
     Integer dacId1 = createRandomDAC();
     Integer dacId2 = createRandomDAC();
@@ -510,11 +524,16 @@ class DacDAOTest extends DAOTestHelper {
     return datasetDAO.findDatasetById(id);
   }
 
-  private Integer createRandomDAC() {
+  private Integer createRandomDACWithName(String name) {
     return dacDAO.createDac(
-        "Test_" + randomAlphabetic(20),
+        name,
         "Test_" + randomAlphabetic(20),
         new Date());
+  }
+
+  private Integer createRandomDAC() {
+    return createRandomDACWithName(
+        "Test_" + randomAlphabetic(20));
   }
 
   private void createFSO(Integer userId, Integer daaId) {
