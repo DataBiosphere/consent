@@ -1094,8 +1094,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of("ref1")))
         .thenReturn(Set.of(1));
 
-    DarCollectionSummary summaryResult = service.getSummaryForRoleNameByCollectionId(user,
-        UserRoles.RESEARCHER.getRoleName(), collectionId);
+    DarCollectionSummary summaryResult = service.getSummaryForRoleByCollectionId(user,
+        UserRoles.RESEARCHER, collectionId);
 
     assertNotNull(summaryResult);
 
