@@ -9,9 +9,10 @@
 # NOTE: This does not support bee deployments. You can connect to a bee deployment database
 # by running these commands, where <pshapiro-test> is the name of your bee:
 #
-# Connect to the cluster and port-forward the postgres pod to the local port 5432.
+# Get the credentials for the cluster.
 # $ gcloud container clusters get-credentials terra-qa-bees --zone us-central1-a --project broad-dsde-qa
 #
+# Connect to the cluster and port-forward the postgres pod to the local port 5432.
 # $ kubectl port-forward --namespace terra-pshapiro-test $(kubectl get pod --namespace terra-pshapiro-test --selector="selectorLabel=consent-postgres" --output jsonpath='{.items[0].metadata.name}') 5432:5432 &
 #
 # Print out the postgres password. The user is always "consent".
