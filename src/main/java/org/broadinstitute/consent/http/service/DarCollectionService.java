@@ -673,7 +673,12 @@ public class DarCollectionService implements ConsentLogger {
       try {
         List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(
             createdElectionReferenceIds);
-        emailService.sendDarNewCollectionElectionMessage(voteUsers, collection);
+        if (collection.getMostRecentDar().getProgressReport()) {
+          emailService.sendProgressReportNewCollectionElectionMessage(voteUsers, collection);
+        } else {
+          emailService.sendDarNewCollectionElectionMessage(voteUsers, collection);
+        }
+
       } catch (Exception e) {
         logException(
             "Unable to send new case message to DAC members for DAR Collection: %s".formatted(

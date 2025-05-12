@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -75,14 +77,14 @@ public class DarCollectionServiceDAO {
           //    5. Create member votes for rp election
           //        5a. Chair Vote for chair
 
-          // Close elections in parent
+          // Only take actions on the most recent DAR/Progress report in the collection
+          // This means a chair cannot reopen an election in any other DAR in the collection besides
+          // the most recently submitted progress report.
           DataAccessRequest mostRecentDar = collection.getMostRecentDar();
-          mostRecentDar.getParentId();
-          collection.getDars().values().forEach(dar -> {
-            dar.getDatasetIds().forEach(datasetId -> {
+          mostRecentDar.getDatasetIds().forEach(datasetId -> {
               // If there is an existing open election for this DAR+Dataset, we can ignore it
               Election lastDataAccessElection = electionDAO.findLastElectionByReferenceIdDatasetIdAndType(
-                  dar.getReferenceId(), datasetId, ElectionType.DATA_ACCESS.getValue());
+                  mostRecentDar.getReferenceId(), datasetId, ElectionType.DATA_ACCESS.getValue());
               boolean ignore =
                   Objects.nonNull(lastDataAccessElection) && lastDataAccessElection.getStatus()
                       .equalsIgnoreCase(ElectionStatus.OPEN.getValue());
@@ -95,7 +97,7 @@ public class DarCollectionServiceDAO {
               if (!ignore) {
                 // Archive all old elections for this DAR + Dataset
                 List<Integer> oldElectionIds = electionDAO
-                    .findElectionsByReferenceIdAndDatasetId(dar.getReferenceId(), datasetId)
+                    .findElectionsByReferenceIdAndDatasetId(mostRecentDar.getReferenceId(), datasetId)
                     .stream().map(Election::getElectionId)
                     .toList();
                 if (!oldElectionIds.isEmpty()) {
@@ -103,21 +105,20 @@ public class DarCollectionServiceDAO {
                 }
                 List<User> voteUsers = findVoteUsersForDataset(datasetId);
                 inserts.add(createElectionInsert(handle, ElectionType.DATA_ACCESS.getValue(),
-                    dar.getReferenceId(), now, datasetId));
+                    mostRecentDar.getReferenceId(), now, datasetId));
                 inserts.addAll(createVoteInsertsForUsers(handle, voteUsers,
-                    ElectionType.DATA_ACCESS.getValue(), dar.getReferenceId(), datasetId, now,
-                    dar.requiresManualReview()));
+                    ElectionType.DATA_ACCESS.getValue(), mostRecentDar.getReferenceId(), datasetId, now,
+                    mostRecentDar.requiresManualReview()));
                 inserts.add(
-                    createElectionInsert(handle, ElectionType.RP.getValue(), dar.getReferenceId(),
+                    createElectionInsert(handle, ElectionType.RP.getValue(), mostRecentDar.getReferenceId(),
                         now, datasetId));
                 inserts.addAll(
                     createVoteInsertsForUsers(handle, voteUsers, ElectionType.RP.getValue(),
-                        dar.getReferenceId(), datasetId, now, dar.requiresManualReview()));
-                createdElectionReferenceIds.add(dar.getReferenceId());
+                        mostRecentDar.getReferenceId(), datasetId, now,
+                        mostRecentDar.requiresManualReview()));
+                createdElectionReferenceIds.add(mostRecentDar.getReferenceId());
               }
             });
-
-          });
           inserts.forEach(Update::execute);
           handle.commit();
         });

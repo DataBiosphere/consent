@@ -23,7 +23,8 @@ public enum EmailType {
   DATASET_APPROVED(19, "dataset-approved.html"),
   DAR_EXPIRED(20, "dar-expired.html"),
   DAR_EXPIRATION_REMINDER(21, "dar-expiration-reminder.html"),
-  NEW_PROGRESS_REPORT(22, "new-progress-report-request.html");
+  NEW_PROGRESS_REPORT(22, "new-progress-report-request.html"),
+  NEW_PROGRESS_REPORT_CASE(23, "new-progress-report-case.html");
 
   private final Integer typeInt;
   public final String templateName;
