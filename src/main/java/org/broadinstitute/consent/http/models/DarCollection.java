@@ -149,13 +149,9 @@ public class DarCollection {
   }
 
   public DataAccessRequest getMostRecentDar() {
-    List<DataAccessRequest> dars = new java.util.ArrayList<>(
-        this.getDars().values().stream().toList());
-    dars.sort(Comparator.comparing(DataAccessRequest::getSubmissionDate).reversed());
-    if (dars.isEmpty()) {
-      return null;
-    }
-    return dars.get(0);
+    return dars.values().stream()
+        .max(Comparator.comparing(DataAccessRequest::getSubmissionDate))
+        .orElse(null);
   }
 
   public void addDataset(Dataset dataset) {
