@@ -10,12 +10,15 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
@@ -43,6 +46,7 @@ import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
@@ -64,6 +68,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 
 @ExtendWith(MockitoExtension.class)
 class DataAccessRequestServiceTest extends AbstractTestHelper {
@@ -828,33 +833,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     service.sendReminderMessage(vote.getVoteId());
   }
 
-  @Test
-  void sendDarExpiredMessage() throws Exception {
-    User user = new User();
-    user.setUserId(123);
-    user.setDisplayName("John Doe");
-    user.setEmail("jd@somewhere");
-    String darCode = "DAR-12345";
-    Integer otherUserId = 456;
-    String referenceId = UUID.randomUUID().toString();
-
-    initService();
-    service.sendDarExpiredMessage(user, darCode, otherUserId, referenceId);
-  }
-
-  @Test
-  void sendDarExpirationReminderMessage() throws Exception {
-    User user = new User();
-    user.setUserId(123);
-    user.setDisplayName("John Doe");
-    user.setEmail("jd@somewhere");
-    String darCode = "DAR-12345";
-    String referenceId = UUID.randomUUID().toString();
-    Integer otherUserId = 456;
-
-    initService();
-    service.sendDarExpirationReminderMessage(user, darCode, otherUserId, referenceId);
-  }
 
   @Test
   void sendExpirationNoticesTest() throws IOException {
@@ -881,6 +859,10 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
 
   @Test
   void sendExpirationNoticesTestMissingEmailForOneUser() throws IOException {
+    ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+    ch.qos.logback.classic.Logger log = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(DataAccessRequestService.class);
+    listAppender.start();
+    log.addAppender(listAppender);
     User user1 = new User();
     user1.setUserId(123);
     user1.setDisplayName("John Doe");
@@ -890,7 +872,39 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     user2.setUserId(124);
     user2.setDisplayName("Jane Doe");
 
-    DataAccessRequest dar1 =getMockedDar("DAR-12345", UUID.randomUUID().toString(), user1);
+    DataAccessRequest dar1 = getMockedDar("DAR-12345", UUID.randomUUID().toString(), user1);
+    DataAccessRequest dar2 = getMockedDar("DAR-12346", UUID.randomUUID().toString(), user2);
+
+    when(userDAO.findUserById(user1.getUserId())).thenReturn(user1);
+    when(userDAO.findUserById(user2.getUserId())).thenReturn(user2);
+
+    List<DataAccessRequest> dars = List.of(dar2, dar1);
+
+    when(dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(any(), any(), any())).thenReturn(dars);
+    initService();
+
+    assertDoesNotThrow(()->service.sendExpirationNotices());
+
+    assertEquals(2, listAppender.list.size());
+  }
+
+  @Test
+  void sendExpirationNoticesTestUnderlyingExceptionThrownSendingOneTypeOfMessage() throws IOException {
+    ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+    ch.qos.logback.classic.Logger log = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(DataAccessRequestService.class);
+    listAppender.start();
+    log.addAppender(listAppender);
+    User user1 = new User();
+    user1.setUserId(123);
+    user1.setDisplayName("John Doe");
+    user1.setEmail("jd@somewhere");
+
+    User user2 = new User();
+    user2.setUserId(124);
+    user2.setDisplayName("Jane Doe");
+    user2.setEmail(null);
+
+    DataAccessRequest dar1 = getMockedDar("DAR-12345", UUID.randomUUID().toString(), user1);
     DataAccessRequest dar2 = getMockedDar("DAR-12346", UUID.randomUUID().toString(), user2);
 
     when(userDAO.findUserById(user1.getUserId())).thenReturn(user1);
@@ -901,31 +915,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(any(), any(), any())).thenReturn(dars);
     initService();
     assertDoesNotThrow(()->service.sendExpirationNotices());
-  }
 
-  @Test
-  void sendExpirationNoticesTestUnderlyingExceptionThrownSendingOneTypeOfMessage() throws IOException {
-    User user1 = new User();
-    user1.setUserId(123);
-    user1.setDisplayName("John Doe");
-    user1.setEmail("jd@somewhere");
-
-    User user2 = new User();
-    user2.setUserId(124);
-    user2.setDisplayName("Jane Doe");
-    user2.setEmail("jane@somewhere");
-
-    DataAccessRequest dar1 =getMockedDar("DAR-12345", UUID.randomUUID().toString(), user1);
-    DataAccessRequest dar2 = getMockedDar("DAR-12346", UUID.randomUUID().toString(), user2);
-
-    when(userDAO.findUserById(user1.getUserId())).thenReturn(user1);
-    when(userDAO.findUserById(user2.getUserId())).thenReturn(user2);
-
-    List<DataAccessRequest> dars = List.of(dar2, dar1);
-
-    when(dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(any(), any(), any())).thenReturn(dars);
-    initService();
-    service.sendExpirationNotices();
+    assertEquals(2, listAppender.list.size());
   }
 
   private DataAccessRequest getMockedDar(String darCode, String referenceId, User user) {

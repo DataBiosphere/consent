@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -20,6 +21,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
@@ -183,6 +185,56 @@ class EmailServiceTest {
         any(),
         any()
     );
+  }
+
+  @Test
+  void sendDarExpiredMessage() throws Exception {
+    User user = new User();
+    user.setUserId(123);
+    user.setDisplayName("John Doe");
+    user.setEmail("jd@somewhere");
+    String darCode = "DAR-12345";
+    Integer otherUserId = 456;
+    String referenceId = UUID.randomUUID().toString();
+    when(templateHelper.getTemplate(EmailType.DAR_EXPIRED.templateName)).thenReturn(mock());
+
+    service.sendDarExpiredMessage(user, darCode, otherUserId, referenceId);
+    verify(sendGridAPI).sendMessage(any(), eq(user.getEmail()));
+    verify(emailDAO).insert(
+        eq(referenceId),
+        isNull(),
+        eq(otherUserId),
+        eq(EmailType.DAR_EXPIRED.getTypeInt()),
+        any(),
+        any(),
+        any(),
+        any(),
+        any());
+  }
+  @Test
+  void sendDarExpirationReminderMessage() throws Exception {
+    User user = new User();
+    user.setUserId(123);
+    user.setDisplayName("John Doe");
+    user.setEmail("jd@somewhere");
+    String darCode = "DAR-12345";
+    String referenceId = UUID.randomUUID().toString();
+    Integer otherUserId = 456;
+    when(templateHelper.getTemplate(EmailType.DAR_EXPIRATION_REMINDER.templateName)).thenReturn(
+        mock());
+
+    service.sendDarExpirationReminderMessage(user, darCode, otherUserId, referenceId);
+    verify(sendGridAPI).sendMessage(any(), eq(user.getEmail()));
+    verify(emailDAO).insert(
+        eq(referenceId),
+        isNull(),
+        eq(otherUserId),
+        eq(EmailType.DAR_EXPIRATION_REMINDER.getTypeInt()),
+        any(),
+        any(),
+        any(),
+        any(),
+        any());
   }
 
   @Test

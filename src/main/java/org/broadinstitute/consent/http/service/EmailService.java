@@ -23,6 +23,8 @@ import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.message.DaaRequestMessage;
+import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
+import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
 import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
@@ -205,6 +207,34 @@ public class EmailService implements ConsentLogger {
         new NewDAAUploadResearcherMessage(
             researcher, dacName, previousDaaName, newDaaName),
         userId);
+  }
+
+  /**
+   * Send a message to a researcher that their data access request has expired.
+   *
+   * @param researcher  the researcher to send the message to
+   * @param darCode     the data access request code that's expired
+   * @param userId      the user id of the person sending the message
+   * @param referenceId the data access request reference id that's expired
+   */
+  public void sendDarExpiredMessage(User researcher, String darCode, Integer userId,
+      String referenceId)
+      throws TemplateException, IOException {
+    sendMessage(new DarExpiredMessage(researcher, darCode, referenceId), userId);
+  }
+
+  /**
+   * Remind the user that their data access request is about to expire.
+   *
+   * @param user        the user to send the message to
+   * @param darCode     the data access request code that's about to expire
+   * @param userId      the user id of the person sending the message
+   * @param referenceId the data access request reference id that is expiring
+   */
+  public void sendDarExpirationReminderMessage(User user, String darCode, Integer userId,
+      String referenceId)
+      throws TemplateException, IOException {
+    sendMessage(new DarExpirationReminderMessage(user, darCode, referenceId), userId);
   }
 
 }

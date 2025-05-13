@@ -417,10 +417,10 @@ public class DataAccessRequestService implements ConsentLogger {
         } else {
           switch (type) {
             case DAR_EXPIRATION_REMINDER:
-              sendDarExpirationReminderMessage(user, darCode, user.getUserId(), referenceId);
+              emailService.sendDarExpirationReminderMessage(user, darCode, user.getUserId(), referenceId);
               break;
             case DAR_EXPIRED:
-              sendDarExpiredMessage(user, darCode, user.getUserId(), referenceId);
+              emailService.sendDarExpiredMessage(user, darCode, user.getUserId(), referenceId);
           }
         }
       } catch (Exception e) {
@@ -447,34 +447,6 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new NotFoundException("Could not find dacUser for specified id : " + id);
     }
     return user;
-  }
-
-  /**
-   * Send a message to a researcher that their data access request has expired.
-   *
-   * @param researcher  the researcher to send the message to
-   * @param darCode     the data access request code that's expired
-   * @param userId      the user id of the person sending the message
-   * @param referenceId the data access request reference id that's expired
-   */
-  public void sendDarExpiredMessage(User researcher, String darCode, Integer userId,
-      String referenceId)
-      throws TemplateException, IOException {
-    emailService.sendMessage(new DarExpiredMessage(researcher, darCode, referenceId), userId);
-  }
-
-  /**
-   * Remind the user that their data access request is about to expire.
-   *
-   * @param user        the user to send the message to
-   * @param darCode     the data access request code that's about to expire
-   * @param userId      the user id of the person sending the message
-   * @param referenceId the data access request reference id that is expiring
-   */
-  public void sendDarExpirationReminderMessage(User user, String darCode, Integer userId,
-      String referenceId)
-      throws TemplateException, IOException {
-    emailService.sendMessage(new DarExpirationReminderMessage(user, darCode, referenceId), userId);
   }
 
 }
