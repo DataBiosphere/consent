@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -51,6 +52,7 @@ import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
@@ -341,6 +343,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     verify(darCollectionServiceDAO, times(1)).createElectionsForDarByUser(any(), eq(progressReport));
     verify(voteDAO, times(1)).findVoteUsersByElectionReferenceIdList(any());
     verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(any());
+    verify(emailService, times(1)).sendMessage(isA(NewProgressReportCaseMessage.class), any());
   }
 
   @Test

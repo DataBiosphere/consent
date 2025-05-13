@@ -42,6 +42,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
+import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
@@ -727,9 +728,9 @@ public class DarCollectionService implements ConsentLogger {
 
   private void sendProgressReportNewCollectionElectionMessage(List<User> users, String darCode)
       throws IOException, TemplateException {
-    String electionType = "Data Access Request";
+    String electionType = "Progress Report";
     for (User user : users) {
-      emailService.sendMessage(new NewCaseMessage(user, darCode, electionType), user.getUserId());
+      emailService.sendMessage(new NewProgressReportCaseMessage(user, darCode, electionType), user.getUserId());
     }
   }
 
