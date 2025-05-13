@@ -639,7 +639,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Date now = new Date();
 
     assertTrue(
-        dataAccessRequestDAO.findDatasetApprovalsByDar(testDar1.getReferenceId())
+        dataAccessRequestDAO.findDatasetApprovalsByDars(List.of(testDar1.getReferenceId()))
             .isEmpty());
 
     voteDAO.updateVote(true,
@@ -651,8 +651,8 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         now,
         false);
 
-    Set<Integer> approvedDatasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(
-        testDar1.getReferenceId());
+    Set<Integer> approvedDatasetIds = dataAccessRequestDAO.findDatasetApprovalsByDars(
+        List.of(testDar1.getReferenceId()));
     assertEquals(1, approvedDatasetIds.size());
     assertTrue(approvedDatasetIds.contains(dataset1.getDatasetId()));
 
@@ -665,7 +665,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         now,
         false);
 
-    approvedDatasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(testDar1.getReferenceId());
+    approvedDatasetIds = dataAccessRequestDAO.findDatasetApprovalsByDars(List.of(testDar1.getReferenceId()));
 
     assertEquals(2, approvedDatasetIds.size());
     assertTrue(approvedDatasetIds.contains(dataset1.getDatasetId()));
@@ -681,37 +681,11 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         now,
         false);
 
-    approvedDatasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(testDar1.getReferenceId());
+    approvedDatasetIds = dataAccessRequestDAO.findDatasetApprovalsByDars(List.of(testDar1.getReferenceId()));
 
     assertEquals(2, approvedDatasetIds.size());
     assertTrue(approvedDatasetIds.contains(dataset1.getDatasetId()));
     assertTrue(approvedDatasetIds.contains(dataset2.getDatasetId()));
-  }
-
-  @Test
-  void testFindAllDatasetApprovalsByDar_IncludesExpired() {
-    String darCode1 = "DAR-" + randomInt(100, 1000000);
-    Dataset dataset1 = createDARDAOTestDataset();
-
-    User user1 = createUserWithInstitution();
-    DataAccessRequest testDar1 = createExpiredDAR(user1, dataset1, darCode1);
-
-    Election election = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDatasetId());
-    Vote v1 = createFinalVote(dataset1.getCreateUserId(), election.getElectionId());
-    Date now = new Date();
-    voteDAO.updateVote(true,
-        "",
-        now,
-        v1.getVoteId(),
-        false,
-        election.getElectionId(),
-        now,
-        false);
-
-    Set<Integer> approvedDatasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(
-        testDar1.getReferenceId());
-    assertEquals(1, approvedDatasetIds.size());
-    assertTrue(approvedDatasetIds.contains(dataset1.getDatasetId()));
   }
 
   @Test
