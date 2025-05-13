@@ -756,6 +756,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(2, approvedDatasetIds.size());
     assertTrue(approvedDatasetIds.containsAll(List.of(dataset1.getDatasetId(), dataset4.getDatasetId())));
   }
+
   @Test
   void testFindAllDatasetApprovalsByDars_IncludesExpired() {
     String darCode1 = "DAR-" + randomInt(100, 1000000);
