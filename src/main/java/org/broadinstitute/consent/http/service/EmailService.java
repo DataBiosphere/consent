@@ -4,7 +4,6 @@ import static org.broadinstitute.consent.http.service.DataAccessRequestService.E
 import static org.broadinstitute.consent.http.service.DataAccessRequestService.EXPIRE_WARN_INTERVAL;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Streams;
 import com.google.inject.Inject;
 import com.sendgrid.Response;
 import com.sendgrid.helpers.mail.Mail;
@@ -21,15 +20,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -41,7 +34,6 @@ import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.message.DaaRequestMessage;
@@ -52,21 +44,15 @@ import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetSubmittedMessage;
 import org.broadinstitute.consent.http.mail.message.MailMessage;
-import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
-import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
-import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewResearcherLibraryRequestMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedMessage;
-import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -170,101 +156,6 @@ public class EmailService implements ConsentLogger {
       Date start, Date end, Integer limit,
       Integer offset) {
     return emailDAO.fetchMessagesByCreateDate(start, end, limit, offset);
-  }
-
-  public void sendNewDARCollectionMessage(Integer collectionId)
-      throws IOException, TemplateException {
-    DarCollection collection = collectionDAO.findDARCollectionByCollectionId(collectionId);
-    if (collection == null) {
-      logWarn(
-          "Sending new DAR Collection message: Could not find collection for specified collection id: "
-              + collectionId);
-      return;
-    }
-    // Do this, but only for a single DAR
-    DataAccessRequest dar = collection.getMostRecentDar();
-    List<User> distinctUsers = getDistinctAdminAndChairUsersForDAR(dar);
-    User researcher = userDAO.findUserById(collection.getCreateUserId());
-    if (researcher == null) {
-      logWarn(
-          "Sending new DAR Collection message: Could not find researcher for specified user id: "
-              + collection.getCreateUserId());
-    }
-    String researcherName = researcher == null ? "Unknown" : researcher.getDisplayName();
-    // Only do this for the DAR... dacDAO.findDacsForDatasetIds(dar.getDatasetIds())
-    Collection<Dac> dacsInDAR = dacDAO.findDacsForDatasetIds(dar.getDatasetIds());
-    // Use only the datasets from the dar
-    List<Integer> datasetIds = dar.getDatasetIds();
-    List<Dataset> datasetsInDAR =
-        datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
-
-    Map<String, List<String>> sendList = new HashMap<>();
-    for (User user : distinctUsers) {
-      List<Dac> matchingDacsForUser = getMatchingDacs(user, dacsInDAR);
-      for (Dac dac : matchingDacsForUser) {
-        List<String> matchingDatasetsForDac = getMatchingDatasets(dac, datasetsInDAR);
-        if (matchingDatasetsForDac != null) {
-          sendList.put(dac.getName(), matchingDatasetsForDac);
-        }
-      }
-      // If the dar is not a progress report, use the DAR template else use the PR template.
-      if (dar.getProgressReport()) {
-        // Use the reference ID to link the fact that this progress report will have been noted.
-        // the DAR Code at this point will be ambiguous.
-        sendNewProgressReportRequestEmail(user, sendList, researcherName, collection.getDarCode(), dar.getReferenceId());
-      } else {
-        sendNewDARRequestEmail(user, sendList, researcherName, collection.getDarCode());
-      }
-    }
-  }
-
-  private List<User> getDistinctAdminAndChairUsersForDAR(DataAccessRequest dar) {
-    List<Integer> datasetIds = dar.getDatasetIds();
-    return getDistinctAdminAndChairUsersForDatasetIds(datasetIds);
-  }
-
-  private List<User> getDistinctAdminAndChairUsersForDatasetIds(List<Integer> datasetIds) {
-    List<User> admins = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(),
-        true);
-    Set<User> chairPersons = userDAO.findUsersForDatasetsByRole(datasetIds,
-        Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
-    // Ensure that admins/chairs are not double emailed
-    // and filter users that don't want to receive email
-    return Streams.concat(admins.stream(), chairPersons.stream())
-        .filter(u -> Boolean.TRUE.equals(u.getEmailPreference()))
-        .distinct()
-        .toList();
-  }
-
-  private List<Dac> getMatchingDacs(User user, Collection<Dac> dacsInDAR) {
-    List<Integer> dacIDs = user.getRoles().stream()
-        .filter(ur -> ur.getDacId() != null)
-        .map(UserRole::getDacId)
-        .toList();
-    return dacsInDAR.stream()
-        .filter(dac -> dacIDs.contains(dac.getDacId()))
-        .toList();
-  }
-
-  private List<String> getMatchingDatasets(Dac dac, List<Dataset> datasetsInDAR) {
-    return datasetsInDAR.stream()
-        .filter(dataset -> dataset.getDacId() == dac.getDacId())
-        .map(dataset -> dataset.getDatasetIdentifier())
-        .toList();
-  }
-
-  private void sendNewDARRequestEmail(
-      User user, Map<String, List<String>> sendList, String researcherName, String darCode)
-      throws TemplateException, IOException {
-    sendMessage(new NewDARRequestMessage(user, darCode, sendList, researcherName),
-        user.getUserId());
-  }
-
-  private void sendNewProgressReportRequestEmail(
-      User user, Map<String, List<String>> sendList, String researcherName, String darCode, String referenceId)
-      throws TemplateException, IOException {
-    sendMessage(new NewProgressReportRequestMessage(user, darCode, referenceId, sendList, researcherName),
-        user.getUserId());
   }
 
   public void sendExpirationNotices() {

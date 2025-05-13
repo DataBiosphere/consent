@@ -48,6 +48,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DaaService;
+import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -63,6 +64,7 @@ public class DataAccessRequestResource extends Resource {
 
   private final DaaService daaService;
   private final DataAccessRequestService dataAccessRequestService;
+  private final DarCollectionService darCollectionService;
   private final EmailService emailService;
   private final GCSService gcsService;
   private final MatchService matchService;
@@ -77,7 +79,8 @@ public class DataAccessRequestResource extends Resource {
       GCSService gcsService,
       UserService userService,
       DatasetService datasetService,
-      MatchService matchService
+      MatchService matchService,
+      DarCollectionService darCollectionService
   ) {
     this.daaService = daaService;
     this.dataAccessRequestService = dataAccessRequestService;
@@ -86,6 +89,7 @@ public class DataAccessRequestResource extends Resource {
     this.userService = userService;
     this.datasetService = datasetService;
     this.matchService = matchService;
+    this.darCollectionService = darCollectionService;
   }
 
   private static DataAccessRequestData populateDARData(String json) {
@@ -132,7 +136,7 @@ public class DataAccessRequestResource extends Resource {
       DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload);
       Integer collectionId = newDar.getCollectionId();
       try {
-        emailService.sendNewDARCollectionMessage(collectionId);
+        darCollectionService.sendNewDARCollectionMessage(collectionId);
       } catch (Exception e) {
         // non-fatal exception
         logException("Exception sending email for collection id: " + collectionId, e);
@@ -162,7 +166,7 @@ public class DataAccessRequestResource extends Resource {
       DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload);
       Integer collectionId = newDar.getCollectionId();
       try {
-        emailService.sendNewDARCollectionMessage(collectionId);
+        darCollectionService.sendNewDARCollectionMessage(collectionId);
       } catch (Exception e) {
         // non-fatal exception
         logException("Exception sending email for collection id: " + collectionId, e);
@@ -451,7 +455,7 @@ public class DataAccessRequestResource extends Resource {
           payload, parentDar);
       try {
         // This service method knows how to distinguish between a DAR and a Progress Report.
-        emailService.sendNewDARCollectionMessage(parentDar.getCollectionId());
+        darCollectionService.sendNewDARCollectionMessage(parentDar.getCollectionId());
       } catch (Exception e) {
         // non-fatal exception
         logException("Exception sending email for collection id: " + parentDar.getCollectionId(), e);

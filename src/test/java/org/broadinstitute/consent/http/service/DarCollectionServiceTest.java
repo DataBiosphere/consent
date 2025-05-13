@@ -14,10 +14,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -31,13 +33,17 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarCollectionActions;
 import org.broadinstitute.consent.http.enumeration.DarCollectionStatus;
@@ -53,6 +59,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.junit.jupiter.api.BeforeEach;
@@ -84,6 +91,10 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   private VoteDAO voteDAO;
   @Mock
   private MatchDAO matchDAO;
+  @Mock
+  private UserDAO userDAO;
+  @Mock
+  private DacDAO dacDAO;
 
   @BeforeEach
   void setUp() {
@@ -1229,6 +1240,30 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertThrows(NotFoundException.class, () -> service.getSummaryForRoleNameByCollectionId(user, reasearcherRoleName, collectionId));
   }
 
+  @Test
+  void testSendNewDARCollectionMessage() throws TemplateException, IOException {
+    Dac dac = new Dac();
+    dac.setDacId(1);
+    User chairperson = createUserWithRole(UserRoles.CHAIRPERSON, dac.getDacId());
+    dac.setChairpersons(List.of(chairperson));
+    dac.setName("DAC-01");
+
+    Dataset d1 = createDataset(dac.getDacId());
+    Dataset d2 = createDataset(dac.getDacId());
+
+    DarCollection collection = new DarCollection();
+    collection.setDarCode("01");
+    collection.setDarCollectionId(1);
+    collection.setDatasets(Set.of(d1, d2));
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    dar.setDatasetIds(List.of(d1.getDatasetId(), d2.getDatasetId()));
+    collection.setDars(Map.of(dar.getReferenceId(), dar));
+
+    service.sendNewDARCollectionMessage(collection.getDarCollectionId());
+  }
+
   private DarCollection generateMockDarCollection(Set<Dataset> datasets) {
     DarCollection collection = new DarCollection();
     Map<String, DataAccessRequest> dars = new HashMap<>();
@@ -1261,7 +1296,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   private void initService() {
     service = new DarCollectionService(darCollectionDAO, darCollectionServiceDAO, datasetDAO,
         electionDAO, dataAccessRequestDAO, emailService, voteDAO, matchDAO,
-        darCollectionSummaryDAO);
+        darCollectionSummaryDAO, userDAO, dacDAO);
   }
 
   private List<DarCollection> createMockCollections() {
@@ -1282,6 +1317,34 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     election.setElectionId(1);
     election.setReferenceId(UUID.randomUUID().toString());
     return election;
+  }
+
+  private Dataset createDataset(Integer dacId) {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(RandomUtils.nextInt(1, 100000));
+    dataset.setAlias(dataset.getDatasetId());
+    dataset.setDatasetIdentifier();
+    dataset.setDacId(dacId);
+    dataset.setName(String.format("Dataset %s-%s", RandomStringUtils.randomAlphabetic(10),
+        dataset.getDatasetId()));
+    return dataset;
+  }
+
+  private User createUserWithRole(UserRoles userRoles, Integer dacId) {
+    User user = new User();
+    user.setUserId(RandomUtils.nextInt(1, 100000));
+    user.setDisplayName(String.format("%s - %s", userRoles.getRoleName(), user.getUserId()));
+    user.setEmail(String.format("%s@test.com", userRoles.getRoleName()));
+    UserRole role = new UserRole(
+        userRoles.getRoleId(),
+        userRoles.getRoleName()
+    );
+    if (dacId != null) {
+      role.setDacId(dacId);
+    }
+    user.setRoles(List.of(role));
+    user.setEmailPreference(Boolean.TRUE);
+    return user;
   }
 
 }

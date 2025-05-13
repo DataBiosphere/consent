@@ -56,6 +56,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DaaService;
+import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -106,6 +107,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Mock
   private DatasetService datasetService;
   @Mock
+  private DarCollectionService darCollectionService;
+  @Mock
   private ContainerRequest request;
   @Mock
   private UriInfo info;
@@ -121,7 +124,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       resource =
           new DataAccessRequestResource(daaService,
               dataAccessRequestService, emailService, gcsService, userService, datasetService,
-              matchService);
+              matchService, darCollectionService);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -142,13 +145,10 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       when(dataAccessRequestService.createDataAccessRequest(any(), any()))
           .thenReturn(dar);
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
-      doNothing().when(emailService).sendNewDARCollectionMessage(any());
+      doNothing().when(darCollectionService).sendNewDARCollectionMessage(any());
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
       when(info.getRequestUriBuilder()).thenReturn(builder);
-      resource =
-          new DataAccessRequestResource(daaService,
-              dataAccessRequestService, emailService, gcsService, userService, datasetService,
-              matchService);
+      initResource();
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -172,10 +172,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     dar.setSubmissionDate(Timestamp.from(Instant.now()));
     doThrow(new SubmittedDARCannotBeEditedException()).when(dataAccessRequestService)
         .createDataAccessRequest(any(), any());
-    resource =
-        new DataAccessRequestResource(daaService,
-            dataAccessRequestService, emailService, gcsService, userService, datasetService,
-            matchService);
+    initResource();
 
     try (var response = resource.createDataAccessRequest(authUser, request, info, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
@@ -191,10 +188,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(any())).thenReturn(userWithCards);
     doThrow(new BadRequestException()).when(dataAccessRequestService)
         .createDataAccessRequest(eq(user), any());
-    resource =
-        new DataAccessRequestResource(daaService,
-            dataAccessRequestService, emailService, gcsService, userService, datasetService,
-            matchService);
+    initResource();
 
     try (var response = resource.createDataAccessRequest(authUser, request, info, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
@@ -230,10 +224,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
       when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
-      resource =
-          new DataAccessRequestResource(daaService,
-              dataAccessRequestService, emailService, gcsService, userService, datasetService,
-              matchService);
+      initResource();
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -250,10 +241,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     try {
       when(userService.findUserByEmail(any())).thenReturn(invalidUser);
       when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-      resource =
-          new DataAccessRequestResource(daaService,
-              dataAccessRequestService, emailService, gcsService, userService, datasetService,
-              matchService);
+      initResource();
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -272,10 +260,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       when(builder.path(anyString())).thenReturn(builder);
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
       when(info.getRequestUriBuilder()).thenReturn(builder);
-      resource =
-          new DataAccessRequestResource(daaService,
-              dataAccessRequestService, emailService, gcsService, userService, datasetService,
-              matchService);
+      initResource();
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -937,13 +922,10 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       when(dataAccessRequestService.createDataAccessRequest(any(), any()))
           .thenReturn(dar);
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
-      doNothing().when(emailService).sendNewDARCollectionMessage(any());
+      doNothing().when(darCollectionService).sendNewDARCollectionMessage(any());
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
       when(info.getRequestUriBuilder()).thenReturn(builder);
-      resource =
-          new DataAccessRequestResource(daaService,
-              dataAccessRequestService, emailService, gcsService, userService, datasetService,
-              matchService);
+      initResource();
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -967,10 +949,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       data.setReferenceId(dar.getReferenceId());
       dar.setData(data);
       doThrow(BadRequestException.class).when(datasetService).enforceDAARestrictions(any(), any());
-      resource =
-          new DataAccessRequestResource(daaService,
-              dataAccessRequestService, emailService, gcsService, userService, datasetService,
-              matchService);
+      initResource();
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -990,10 +969,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       when(builder.path(anyString())).thenReturn(builder);
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
       when(info.getRequestUriBuilder()).thenReturn(builder);
-      resource =
-          new DataAccessRequestResource(daaService,
-              dataAccessRequestService, emailService, gcsService, userService, datasetService,
-              matchService);
+      initResource();
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -1009,10 +985,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     try {
       when(userService.findUserByEmail(any())).thenReturn(user);
       doThrow(BadRequestException.class).when(datasetService).enforceDAARestrictions(any(), any());
-      resource =
-          new DataAccessRequestResource(daaService,
-              dataAccessRequestService, emailService, gcsService, userService, datasetService,
-              matchService);
+      initResource();
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
