@@ -11,7 +11,6 @@ import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
-import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -59,17 +58,8 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 
 public class EmailService implements ConsentLogger {
 
-  public static final Timestamp MINIMUM_SUBMITTED_DATE_FOR_DAR_EXPIRATIONS = Timestamp.from(
-      Instant.ofEpochSecond(
-          LocalDate.of(2024, 9, 30).toEpochSecond(LocalTime.of(0, 0, 0, 0), ZoneOffset.UTC)));
-  private final DarCollectionDAO collectionDAO;
-  private final DataAccessRequestDAO dataAccessRequestDAO;
   private final UserDAO userDAO;
-  private final ElectionDAO electionDAO;
   private final MailMessageDAO emailDAO;
-  private final VoteDAO voteDAO;
-  private final DatasetDAO datasetDAO;
-  private final DacDAO dacDAO;
   private final FreeMarkerTemplateHelper templateHelper;
   private final SendGridAPI sendGridAPI;
   private final String fromAccount;
@@ -77,26 +67,14 @@ public class EmailService implements ConsentLogger {
 
   @Inject
   public EmailService(
-      DarCollectionDAO collectionDAO,
-      VoteDAO voteDAO,
-      ElectionDAO electionDAO,
       UserDAO userDAO,
       MailMessageDAO emailDAO,
-      DatasetDAO datasetDAO,
-      DacDAO dacDAO,
-      DataAccessRequestDAO dataAccessRequestDAO,
       SendGridAPI sendGridAPI,
       FreeMarkerTemplateHelper helper,
       ConsentConfiguration config) {
-    this.collectionDAO = collectionDAO;
     this.userDAO = userDAO;
-    this.electionDAO = electionDAO;
-    this.voteDAO = voteDAO;
     this.templateHelper = helper;
     this.emailDAO = emailDAO;
-    this.datasetDAO = datasetDAO;
-    this.dacDAO = dacDAO;
-    this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.sendGridAPI = sendGridAPI;
     this.serverUrl = config.getServicesConfiguration().getLocalURL();
     this.fromAccount = config.getMailConfiguration().getGoogleAccount();
@@ -158,63 +136,6 @@ public class EmailService implements ConsentLogger {
     return emailDAO.fetchMessagesByCreateDate(start, end, limit, offset);
   }
 
-  public void sendExpirationNotices() {
-    sendDARExpirationReminderNotices();
-    sendDARExpirationNotices();
-  }
-
-  private void sendDARExpirationNotices() {
-    EmailType emailType = EmailType.DAR_EXPIRED;
-    sendDARMessageToList(emailType, EXPIRE_NOTICE_INTERVAL);
-  }
-
-  private void sendDARExpirationReminderNotices() {
-    EmailType emailType = EmailType.DAR_EXPIRATION_REMINDER;
-    sendDARMessageToList(emailType, EXPIRE_WARN_INTERVAL);
-  }
-
-  private void sendDARMessageToList(EmailType type, String interval) {
-    List<DataAccessRequest> expiredDars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
-        type.getTypeInt(), interval, MINIMUM_SUBMITTED_DATE_FOR_DAR_EXPIRATIONS);
-    expiredDars.forEach(expiredDar -> {
-      try {
-        String referenceId = expiredDar.getReferenceId();
-        User user = userDAO.findUserById(expiredDar.getUserId());
-        String darCode = expiredDar.getDarCode();
-        String userName = user.getDisplayName();
-        if (user.getEmail() == null) {
-          // Do not throw here.  Log information about the DAR since this will continue
-          // to appear broken until manual intervention is taken to resolve the missing user
-          // email address
-          logException(new Exception(String.format(
-              "Email address for user %d (%s) not found for expiring warning.  DAR reference id: %s",
-              expiredDar.getUserId(), userName, referenceId)));
-        } else {
-          switch (type) {
-            case DAR_EXPIRATION_REMINDER:
-              sendDarExpirationReminderMessage(user, darCode, user.getUserId(), referenceId);
-              break;
-            case DAR_EXPIRED:
-              sendDarExpiredMessage(user, darCode, user.getUserId(), referenceId);
-          }
-        }
-      } catch (Exception e) {
-        logException(e);
-      }
-    });
-  }
-
-  public void sendReminderMessage(Integer voteId) throws IOException, TemplateException {
-    Vote vote = voteDAO.findVoteById(voteId);
-    Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
-    DarCollection collection = collectionDAO.findDARCollectionByReferenceId(
-        election.getReferenceId());
-    User user = findUserById(vote.getUserId());
-    String voteUrl = serverUrl + "dar_collection/%d".formatted(collection.getDarCollectionId());
-    sendMessage(new ReminderMessage(user, vote, collection.getDarCode(), election.getElectionType(),
-        voteUrl), user.getUserId());
-    voteDAO.updateVoteReminderFlag(voteId, true);
-  }
 
   public void sendResearcherDarApproved(
       String darCode,
@@ -294,39 +215,4 @@ public class EmailService implements ConsentLogger {
         userId);
   }
 
-  private User findUserById(Integer id) throws IllegalArgumentException {
-    User user = userDAO.findUserById(id);
-    if (user == null) {
-      throw new NotFoundException("Could not find dacUser for specified id : " + id);
-    }
-    return user;
-  }
-
-  /**
-   * Send a message to a researcher that their data access request has expired.
-   *
-   * @param researcher  the researcher to send the message to
-   * @param darCode     the data access request code that's expired
-   * @param userId      the user id of the person sending the message
-   * @param referenceId the data access request reference id that's expired
-   */
-  public void sendDarExpiredMessage(User researcher, String darCode, Integer userId,
-      String referenceId)
-      throws TemplateException, IOException {
-    sendMessage(new DarExpiredMessage(researcher, darCode, referenceId), userId);
-  }
-
-  /**
-   * Remind the user that their data access request is about to expire.
-   *
-   * @param user        the user to send the message to
-   * @param darCode     the data access request code that's about to expire
-   * @param userId      the user id of the person sending the message
-   * @param referenceId the data access request reference id that is expiring
-   */
-  public void sendDarExpirationReminderMessage(User user, String darCode, Integer userId,
-      String referenceId)
-      throws TemplateException, IOException {
-    sendMessage(new DarExpirationReminderMessage(user, darCode, referenceId), userId);
-  }
 }

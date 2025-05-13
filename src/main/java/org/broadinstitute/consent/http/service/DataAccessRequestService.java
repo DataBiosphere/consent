@@ -2,18 +2,25 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
+import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
+import java.io.IOException;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -21,11 +28,16 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
+import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
+import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
+import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.models.Collaborator;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -33,6 +45,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
@@ -40,11 +53,14 @@ import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 public class DataAccessRequestService implements ConsentLogger {
   public static final String EXPIRE_WARN_INTERVAL = "11 months";
   public static final String EXPIRE_NOTICE_INTERVAL = "1 year";
-
+  public static final Timestamp MINIMUM_SUBMITTED_DATE_FOR_DAR_EXPIRATIONS = Timestamp.from(
+      Instant.ofEpochSecond(
+          LocalDate.of(2024, 9, 30).toEpochSecond(LocalTime.of(0, 0, 0, 0), ZoneOffset.UTC)));
   private final CounterService counterService;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DarCollectionDAO darCollectionDAO;
   private final ElectionDAO electionDAO;
+  private final EmailService emailService;
   private final MatchDAO matchDAO;
   private final VoteDAO voteDAO;
   private final UserDAO userDAO;
@@ -52,10 +68,11 @@ public class DataAccessRequestService implements ConsentLogger {
   private final DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
 
   private final DacService dacService;
+  private final String serverUrl;
 
   @Inject
   public DataAccessRequestService(CounterService counterService, DAOContainer container,
-      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO, UserService userService) {
+      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO, UserService userService, EmailService emailService, ConsentConfiguration config) {
     this.counterService = counterService;
     this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
     this.darCollectionDAO = container.getDarCollectionDAO();
@@ -66,6 +83,8 @@ public class DataAccessRequestService implements ConsentLogger {
     this.dacService = dacService;
     this.dataAccessRequestServiceDAO = dataAccessRequestServiceDAO;
     this.userService = userService;
+    this.emailService = emailService;
+    this.serverUrl = config.getServicesConfiguration().getLocalURL();
   }
 
   public List<DataAccessRequest> findAllDraftDataAccessRequests() {
@@ -362,6 +381,100 @@ public class DataAccessRequestService implements ConsentLogger {
 
   public Collection<DataAccessRequest> getApprovedDARsForDataset(Dataset dataset) {
     return dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset.getDatasetId());
+  }
+
+  public void sendExpirationNotices() {
+    sendDARExpirationReminderNotices();
+    sendDARExpirationNotices();
+  }
+
+  private void sendDARExpirationNotices() {
+    EmailType emailType = EmailType.DAR_EXPIRED;
+    sendDARMessageToList(emailType, EXPIRE_NOTICE_INTERVAL);
+  }
+
+  private void sendDARExpirationReminderNotices() {
+    EmailType emailType = EmailType.DAR_EXPIRATION_REMINDER;
+    sendDARMessageToList(emailType, EXPIRE_WARN_INTERVAL);
+  }
+
+  private void sendDARMessageToList(EmailType type, String interval) {
+    List<DataAccessRequest> expiredDars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
+        type.getTypeInt(), interval, MINIMUM_SUBMITTED_DATE_FOR_DAR_EXPIRATIONS);
+    expiredDars.forEach(expiredDar -> {
+      try {
+        String referenceId = expiredDar.getReferenceId();
+        User user = userDAO.findUserById(expiredDar.getUserId());
+        String darCode = expiredDar.getDarCode();
+        String userName = user.getDisplayName();
+        if (user.getEmail() == null) {
+          // Do not throw here.  Log information about the DAR since this will continue
+          // to appear broken until manual intervention is taken to resolve the missing user
+          // email address
+          logException(new Exception(String.format(
+              "Email address for user %d (%s) not found for expiring warning.  DAR reference id: %s",
+              expiredDar.getUserId(), userName, referenceId)));
+        } else {
+          switch (type) {
+            case DAR_EXPIRATION_REMINDER:
+              sendDarExpirationReminderMessage(user, darCode, user.getUserId(), referenceId);
+              break;
+            case DAR_EXPIRED:
+              sendDarExpiredMessage(user, darCode, user.getUserId(), referenceId);
+          }
+        }
+      } catch (Exception e) {
+        logException(e);
+      }
+    });
+  }
+
+  public void sendReminderMessage(Integer voteId) throws IOException, TemplateException {
+    Vote vote = voteDAO.findVoteById(voteId);
+    Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
+    DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(
+        election.getReferenceId());
+    User user = findUserById(vote.getUserId());
+    String voteUrl = serverUrl + "dar_collection/%d".formatted(collection.getDarCollectionId());
+    emailService.sendMessage(new ReminderMessage(user, vote, collection.getDarCode(), election.getElectionType(),
+        voteUrl), user.getUserId());
+    voteDAO.updateVoteReminderFlag(voteId, true);
+  }
+
+  private User findUserById(Integer id) throws IllegalArgumentException {
+    User user = userDAO.findUserById(id);
+    if (user == null) {
+      throw new NotFoundException("Could not find dacUser for specified id : " + id);
+    }
+    return user;
+  }
+
+  /**
+   * Send a message to a researcher that their data access request has expired.
+   *
+   * @param researcher  the researcher to send the message to
+   * @param darCode     the data access request code that's expired
+   * @param userId      the user id of the person sending the message
+   * @param referenceId the data access request reference id that's expired
+   */
+  public void sendDarExpiredMessage(User researcher, String darCode, Integer userId,
+      String referenceId)
+      throws TemplateException, IOException {
+    emailService.sendMessage(new DarExpiredMessage(researcher, darCode, referenceId), userId);
+  }
+
+  /**
+   * Remind the user that their data access request is about to expire.
+   *
+   * @param user        the user to send the message to
+   * @param darCode     the data access request code that's about to expire
+   * @param userId      the user id of the person sending the message
+   * @param referenceId the data access request reference id that is expiring
+   */
+  public void sendDarExpirationReminderMessage(User user, String darCode, Integer userId,
+      String referenceId)
+      throws TemplateException, IOException {
+    emailService.sendMessage(new DarExpirationReminderMessage(user, darCode, referenceId), userId);
   }
 
 }
