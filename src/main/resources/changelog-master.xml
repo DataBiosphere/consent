@@ -174,4 +174,6 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2025-05-01-add-era-commons-to-dar.xml"
     relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2025-05-08-rm-old-user-props.xml"
+    relativeToChangelogFile="true" />
 </databaseChangeLog>

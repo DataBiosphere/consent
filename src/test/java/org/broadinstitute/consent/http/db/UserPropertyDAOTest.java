@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Instant;
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.User;
@@ -18,10 +19,10 @@ class UserPropertyDAOTest extends DAOTestHelper {
   void testFindUserProperties() {
     User user = createUser();
 
-    UserProperty suggestedSigningOfficial = new UserProperty();
-    suggestedSigningOfficial.setPropertyKey(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue());
-    suggestedSigningOfficial.setPropertyValue(randomAlphabetic(10));
-    suggestedSigningOfficial.setUserId(user.getUserId());
+    UserProperty eraExpProp = new UserProperty();
+    eraExpProp.setPropertyKey(UserFields.ERA_EXPIRATION_DATE.getValue());
+    eraExpProp.setPropertyValue(Instant.now().toString());
+    eraExpProp.setUserId(user.getUserId());
 
     UserProperty notPresent = new UserProperty();
     notPresent.setPropertyKey("nonExistentKey");
@@ -30,25 +31,23 @@ class UserPropertyDAOTest extends DAOTestHelper {
 
     List<UserProperty> props = userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
         user.getUserId(),
-        List.of(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue(),
-            UserFields.ERA_EXPIRATION_DATE.getValue()));
+        List.of(UserFields.ERA_EXPIRATION_DATE.getValue()));
 
     assertEquals(0, props.size());
 
     userPropertyDAO.insertAll(List.of(
-        suggestedSigningOfficial,
+        eraExpProp,
         notPresent
     ));
 
     props = userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
         user.getUserId(),
-        List.of(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue(),
-            UserFields.ERA_EXPIRATION_DATE.getValue()));
+        List.of(UserFields.ERA_EXPIRATION_DATE.getValue()));
 
     assertEquals(1, props.size());
 
     assertTrue(props.stream().anyMatch((p) ->
-        (p.getPropertyKey().equals(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue())
-            && p.getPropertyValue().equals(suggestedSigningOfficial.getPropertyValue()))));
+        (p.getPropertyKey().equals(UserFields.ERA_EXPIRATION_DATE.getValue())
+            && p.getPropertyValue().equals(eraExpProp.getPropertyValue()))));
   }
 }

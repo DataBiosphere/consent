@@ -509,8 +509,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(darCollectionSummaryDAO.getDarCollectionSummariesForSO(any())).thenReturn(
         List.of(summary));
 
-    List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user,
+        UserRoles.SIGNINGOFFICIAL);
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
     DarCollectionSummary s = summaries.get(0);
@@ -540,8 +540,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(darCollectionSummaryDAO.getDarCollectionSummariesForSO(any())).thenReturn(
         List.of(summary));
 
-    List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user,
+        UserRoles.SIGNINGOFFICIAL);
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
     DarCollectionSummary s = summaries.get(0);
@@ -563,8 +563,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(darCollectionSummaryDAO.getDarCollectionSummariesForSO(any())).thenReturn(
         List.of(summary));
 
-    List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user,
+        UserRoles.SIGNINGOFFICIAL);
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
     DarCollectionSummary s = summaries.get(0);
@@ -579,6 +579,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     //summaryTwo -> no elections
     //summaryThree -> no elections, canceled
     //summaryThree -> draft
+    //summaryFour -> closed election, approved datasets
 
     User user = new User();
     user.setUserId(1);
@@ -609,6 +610,16 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     summaryThree.addDatasetId(datasetFive.getDatasetId());
     summaryThree.addStatus(DarStatus.CANCELED.getValue(), randomAlphabetic(3));
 
+    DarCollectionSummary summaryFour = new DarCollectionSummary();
+    Dataset datasetSix = new Dataset();
+    datasetSix.setDatasetId(6);
+    summaryFour.addDatasetId(datasetSix.getDatasetId());
+    Election electionTwo = new Election();
+    electionOne.setElectionId(2);
+    electionOne.setStatus(ElectionStatus.CLOSED.getValue());
+    summaryFour.addElection(electionTwo);
+    summaryFour.setReferenceIds(Set.of("ref1"));
+
     DataAccessRequest draft = new DataAccessRequest();
     draft.setCreateDate(new Timestamp(new Date().getTime()));
     DataAccessRequestData data = new DataAccessRequestData();
@@ -619,14 +630,18 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     mockSummaries.add(summaryOne);
     mockSummaries.add(summaryTwo);
     mockSummaries.add(summaryThree);
+    mockSummaries.add(summaryFour);
     when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(List.of(draft));
     when(darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(any())).thenReturn(
         mockSummaries);
+    when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of())).thenReturn(Set.of());
+    when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of("ref1")))
+        .thenReturn(Set.of(datasetSix.getDatasetId()));
 
-    List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
-        UserRoles.RESEARCHER.getRoleName());
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user,
+        UserRoles.RESEARCHER);
     assertNotNull(summaries);
-    assertEquals(4, summaries.size());
+    assertEquals(5, summaries.size());
 
     DarCollectionSummary testOne = summaries.get(0);
     Set<String> expectedOneActions = Set.of(
@@ -653,7 +668,15 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         testThree.getStatus().equalsIgnoreCase(DarCollectionStatus.CANCELED.getValue()));
     assertEquals(testThree.getActions(), expectedThreeActions);
 
-    DarCollectionSummary testDraft = summaries.get(3);
+    DarCollectionSummary testFour = summaries.get(3);
+    Set<String> expectedFourActions = Set.of(
+        DarCollectionActions.REVIEW.getValue(),
+        DarCollectionActions.CREATE_PROGRESS_REPORT.getValue());
+    assertTrue(
+        testFour.getStatus().equalsIgnoreCase(DarCollectionStatus.COMPLETE.getValue()));
+    assertEquals(testFour.getActions(), expectedFourActions);
+
+    DarCollectionSummary testDraft = summaries.get(4);
     Set<String> expectedDraftActions = Set.of(
         DarCollectionActions.RESUME.getValue(),
         DarCollectionActions.DELETE.getValue());
@@ -724,8 +747,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(darCollectionSummaryDAO.getDarCollectionSummariesForAdmin())
         .thenReturn(List.of(summaryOne, summaryTwo, summaryThree, summaryFour));
 
-    List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
-        UserRoles.ADMIN.getRoleName());
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user,
+        UserRoles.ADMIN);
 
     DarCollectionSummary testOne = summaries.get(0);
     Set<String> expectedOneActions = Set.of(
@@ -764,8 +787,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setUserId(randomInt(1, 10));
     user.setMemberRole();
-    List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
-        UserRoles.MEMBER.getRoleName());
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user,
+        UserRoles.MEMBER);
     assertTrue(summaries.isEmpty());
   }
 
@@ -776,8 +799,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setUserId(randomInt(1, 10));
     user.setChairpersonRole();
-    List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
-        UserRoles.CHAIRPERSON.getRoleName());
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user,
+        UserRoles.CHAIRPERSON);
     assertTrue(summaries.isEmpty());
   }
 
@@ -850,8 +873,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDAC(any(), any()))
         .thenReturn(List.of(summary, summaryTwo, summaryThree, summaryFour));
 
-    List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
-        UserRoles.MEMBER.getRoleName());
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user,
+        UserRoles.MEMBER);
 
     assertNotNull(summaries);
     assertEquals(4, summaries.size());
@@ -977,8 +1000,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         datasetFive,
         datasetSix));
 
-    List<DarCollectionSummary> summaries = service.getSummariesForRoleName(user,
-        UserRoles.CHAIRPERSON.getRoleName());
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user,
+        UserRoles.CHAIRPERSON);
     assertEquals(6, summaries.size());
 
     DarCollectionSummary testOne = summaries.get(0);
@@ -1032,33 +1055,18 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testGetSummaryForRoleNameByCollectionId_SO() {
+  void testGetSummaryForRoleByCollectionId_SO() {
     User user = new User();
     user.setUserId(1);
 
-    DarCollectionSummary summary = new DarCollectionSummary();
-    Integer collectionId = randomInt(1, 100);
-    summary.setDarCollectionId(collectionId);
-    Dataset datasetOne = new Dataset();
-    datasetOne.setDatasetId(1);
-    Dataset datasetTwo = new Dataset();
-    datasetTwo.setDatasetId(2);
-    Election electionOne = new Election();
-    electionOne.setElectionId(1);
-    electionOne.setStatus(ElectionStatus.OPEN.getValue());
-    Election electionTwo = new Election();
-    electionTwo.setElectionId(2);
-    electionTwo.setStatus(ElectionStatus.CLOSED.getValue());
-    summary.addElection(electionOne);
-    summary.addElection(electionTwo);
-    summary.addDatasetId(datasetOne.getDatasetId());
-    summary.addDatasetId(datasetTwo.getDatasetId());
+    DarCollectionSummary summary = createDarCollectionSummaryWithElections();
+    Integer collectionId = summary.getDarCollectionId();
 
     when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId))
         .thenReturn(summary);
 
-    DarCollectionSummary summaryResult = service.getSummaryForRoleNameByCollectionId(user,
-        UserRoles.SIGNINGOFFICIAL.getRoleName(), collectionId);
+    DarCollectionSummary summaryResult = service.getSummaryForRoleByCollectionId(user,
+        UserRoles.SIGNINGOFFICIAL, collectionId);
     assertNotNull(summaryResult);
 
     assertTrue(
@@ -1067,33 +1075,18 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testGetSummaryForRoleNameByCollectionId_Researcher() {
+  void testGetSummaryForRoleByCollectionId_Researcher() {
     User user = new User();
     user.setUserId(1);
 
-    DarCollectionSummary summary = new DarCollectionSummary();
-    Integer collectionId = randomInt(1, 100);
-    summary.setDarCollectionId(collectionId);
-    Dataset datasetOne = new Dataset();
-    datasetOne.setDatasetId(1);
-    Dataset datasetTwo = new Dataset();
-    datasetTwo.setDatasetId(2);
-    Election electionOne = new Election();
-    electionOne.setElectionId(1);
-    electionOne.setStatus(ElectionStatus.OPEN.getValue());
-    Election electionTwo = new Election();
-    electionTwo.setElectionId(2);
-    electionTwo.setStatus(ElectionStatus.CLOSED.getValue());
-    summary.addElection(electionOne);
-    summary.addElection(electionTwo);
-    summary.addDatasetId(datasetOne.getDatasetId());
-    summary.addDatasetId(datasetTwo.getDatasetId());
+    DarCollectionSummary summary = createDarCollectionSummaryWithElections();
+    Integer collectionId = summary.getDarCollectionId();
 
     when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId))
         .thenReturn(summary);
 
-    DarCollectionSummary summaryResult = service.getSummaryForRoleNameByCollectionId(user,
-        UserRoles.RESEARCHER.getRoleName(), collectionId);
+    DarCollectionSummary summaryResult = service.getSummaryForRoleByCollectionId(user,
+        UserRoles.RESEARCHER, collectionId);
     assertNotNull(summaryResult);
 
     Set<String> expectedActions = Set.of(
@@ -1104,33 +1097,18 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testGetSummaryForRoleNameByCollectionId_Admin() {
+  void testGetSummaryForRoleByCollectionId_Admin() {
     User user = new User();
     user.setUserId(1);
 
-    DarCollectionSummary summary = new DarCollectionSummary();
-    Integer collectionId = randomInt(1, 100);
-    summary.setDarCollectionId(collectionId);
-    Dataset datasetOne = new Dataset();
-    datasetOne.setDatasetId(1);
-    Dataset datasetTwo = new Dataset();
-    datasetTwo.setDatasetId(2);
-    Election electionOne = new Election();
-    electionOne.setElectionId(1);
-    electionOne.setStatus(ElectionStatus.OPEN.getValue());
-    Election electionTwo = new Election();
-    electionTwo.setElectionId(2);
-    electionTwo.setStatus(ElectionStatus.CLOSED.getValue());
-    summary.addElection(electionOne);
-    summary.addElection(electionTwo);
-    summary.addDatasetId(datasetOne.getDatasetId());
-    summary.addDatasetId(datasetTwo.getDatasetId());
+    DarCollectionSummary summary = createDarCollectionSummaryWithElections();
+    Integer collectionId = summary.getDarCollectionId();
 
     when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId))
         .thenReturn(summary);
 
-    DarCollectionSummary summaryResult = service.getSummaryForRoleNameByCollectionId(user,
-        UserRoles.ADMIN.getRoleName(), collectionId);
+    DarCollectionSummary summaryResult = service.getSummaryForRoleByCollectionId(user,
+        UserRoles.ADMIN, collectionId);
     assertNotNull(summaryResult);
 
     Set<String> expectedActions = Set.of(
@@ -1142,37 +1120,52 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testGetSummaryForRoleNameByCollectionId_Chair() {
+  void testGetSummaryForRoleNameByCollectionId_Researcher_PR() {
+    User user = new User();
+    user.setUserId(1);
+
+    DarCollectionSummary summary = createDarCollectionSummaryWithElections();
+    summary.setReferenceIds(Set.of("ref1"));
+    Integer collectionId = summary.getDarCollectionId();
+
+    when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId))
+        .thenReturn(summary);
+
+    when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of("ref1")))
+        .thenReturn(Set.of(1));
+
+    DarCollectionSummary summaryResult = service.getSummaryForRoleByCollectionId(user,
+        UserRoles.RESEARCHER, collectionId);
+
+    assertNotNull(summaryResult);
+
+    // Verify that the create_progress_report action is included
+    Set<String> expectedActions = Set.of(
+        DarCollectionActions.REVIEW.getValue(),
+        DarCollectionActions.CREATE_PROGRESS_REPORT.getValue());
+    assertTrue(
+        summaryResult.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
+    assertEquals(expectedActions, summaryResult.getActions());
+  }
+
+  @Test
+  void testGetSummaryForRoleByCollectionId_Chair() {
     Dac dac = new Dac();
     dac.setDacId(1);
     User user = new User();
     user.setUserId(1);
     user.setChairpersonRoleWithDAC(dac.getDacId());
-    DarCollectionSummary summary = new DarCollectionSummary();
-    Integer collectionId = randomInt(1, 100);
-    summary.setDarCollectionId(collectionId);
-    Dataset datasetOne = new Dataset();
-    datasetOne.setDatasetId(1);
-    Dataset datasetTwo = new Dataset();
-    datasetTwo.setDatasetId(2);
-    Election electionOne = new Election();
-    electionOne.setElectionId(1);
-    electionOne.setStatus(ElectionStatus.OPEN.getValue());
-    Election electionTwo = new Election();
-    electionTwo.setElectionId(2);
-    electionTwo.setStatus(ElectionStatus.CANCELED.getValue());
-    summary.addElection(electionOne);
-    summary.addElection(electionTwo);
-    summary.addDatasetId(datasetOne.getDatasetId());
-    summary.addDatasetId(datasetTwo.getDatasetId());
+
+    DarCollectionSummary summary = createDarCollectionSummaryWithElections();
+    Integer collectionId = summary.getDarCollectionId();
 
     when(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(user.getUserId(),
         List.of(), collectionId))
         .thenReturn(summary);
     when(datasetDAO.findDatasetListByDacIds(any())).thenReturn(List.of());
 
-    DarCollectionSummary summaryResult = service.getSummaryForRoleNameByCollectionId(user,
-        UserRoles.CHAIRPERSON.getRoleName(), collectionId);
+    DarCollectionSummary summaryResult = service.getSummaryForRoleByCollectionId(user,
+        UserRoles.CHAIRPERSON, collectionId);
     assertNotNull(summaryResult);
 
     Set<String> expectedActions = Set.of(
@@ -1185,7 +1178,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testGetSummaryForRoleNameByCollectionId_DACMember() {
+  void testGetSummaryForRoleByCollectionId_DACMember() {
     Dac dac = new Dac();
     dac.setDacId(1);
     User user = new User();
@@ -1217,8 +1210,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         List.of(), collectionId))
         .thenReturn(summary);
 
-    DarCollectionSummary summaryResult = service.getSummaryForRoleNameByCollectionId(user,
-        UserRoles.MEMBER.getRoleName(), collectionId);
+    DarCollectionSummary summaryResult = service.getSummaryForRoleByCollectionId(user,
+        UserRoles.MEMBER, collectionId);
     assertNotNull(summaryResult);
 
     Set<String> expectedActions = Set.of(
@@ -1239,8 +1232,28 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId))
         .thenReturn(null);
 
-    String reasearcherRoleName = UserRoles.RESEARCHER.getRoleName();
-    assertThrows(NotFoundException.class, () -> service.getSummaryForRoleNameByCollectionId(user, reasearcherRoleName, collectionId));
+    assertThrows(NotFoundException.class, () -> service.getSummaryForRoleByCollectionId(user, UserRoles.RESEARCHER, collectionId));
+  }
+
+  private DarCollectionSummary createDarCollectionSummaryWithElections() {
+    DarCollectionSummary summary = new DarCollectionSummary();
+    Integer collectionId = randomInt(1, 100);
+    summary.setDarCollectionId(collectionId);
+    Dataset datasetOne = new Dataset();
+    datasetOne.setDatasetId(1);
+    Dataset datasetTwo = new Dataset();
+    datasetTwo.setDatasetId(2);
+    Election electionOne = new Election();
+    electionOne.setElectionId(1);
+    electionOne.setStatus(ElectionStatus.OPEN.getValue());
+    Election electionTwo = new Election();
+    electionTwo.setElectionId(2);
+    electionTwo.setStatus(ElectionStatus.CANCELED.getValue());
+    summary.addElection(electionOne);
+    summary.addElection(electionTwo);
+    summary.addDatasetId(datasetOne.getDatasetId());
+    summary.addDatasetId(datasetTwo.getDatasetId());
+    return summary;
   }
 
   @Test

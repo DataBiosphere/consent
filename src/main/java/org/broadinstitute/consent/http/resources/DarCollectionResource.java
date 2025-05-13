@@ -56,9 +56,8 @@ public class DarCollectionResource extends Resource {
       @PathParam("roleName") String roleName) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      validateUserHasRoleName(user, roleName);
-      List<DarCollectionSummary> summaries = darCollectionService.getSummariesForRoleName(user,
-          roleName);
+      var role = validateUserHasRoleName(user, roleName);
+      List<DarCollectionSummary> summaries = darCollectionService.getSummariesForRole(user, role);
       return Response.ok().entity(summaries).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -74,31 +73,21 @@ public class DarCollectionResource extends Resource {
       @PathParam("roleName") String roleName, @PathParam("collectionId") Integer collectionId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      validateUserHasRoleName(user,
-          roleName); //throws BadRequestException if user does not have roleName
-      DarCollectionSummary summary = darCollectionService.getSummaryForRoleNameByCollectionId(user,
-          roleName, collectionId);
+      // throws BadRequestException if user does not have roleName
+      var role = validateUserHasRoleName(user, roleName);
+      DarCollectionSummary summary = darCollectionService.getSummaryForRoleByCollectionId(user, role, collectionId);
 
-      boolean allowedAccess;
-      switch (roleName) {
-        case Resource.ADMIN:
-          allowedAccess = true;
-          break;
-        case Resource.CHAIRPERSON:
-        case Resource.MEMBER:
+      boolean allowedAccess = switch (role) {
+        case ADMIN -> true;
+        case CHAIRPERSON, MEMBER -> {
           List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByDACUser(user);
-          allowedAccess = summary.getDatasetIds().stream().anyMatch(userDatasetIds::contains);
-          break;
-        case Resource.SIGNINGOFFICIAL:
-          allowedAccess = Objects.nonNull(user.getInstitutionId()) &&
-              user.getInstitutionId().equals(summary.getInstitutionId());
-          break;
-        case Resource.RESEARCHER:
-          allowedAccess = user.getUserId().equals(summary.getResearcherId());
-          break;
-        default:
-          throw new BadRequestException("Invalid role selection: " + roleName);
-      }
+          yield summary.getDatasetIds().stream().anyMatch(userDatasetIds::contains);
+        }
+        case SIGNINGOFFICIAL -> Objects.nonNull(user.getInstitutionId()) &&
+            user.getInstitutionId().equals(summary.getInstitutionId());
+        case RESEARCHER -> user.getUserId().equals(summary.getResearcherId());
+        default -> throw new BadRequestException("Invalid role selection: " + roleName);
+      };
       if (!allowedAccess) {
         // user has role but is not allowed to view collection; throw NotFoundException to avoid leaking existence
         throw new NotFoundException(
@@ -199,22 +188,20 @@ public class DarCollectionResource extends Resource {
 
       // Default to the least impactful role if none provided.
       UserRoles actingRole = UserRoles.RESEARCHER;
-      if (Objects.nonNull(roleName)) {
-        validateUserHasRoleName(user, roleName);
-        UserRoles requestedRole = UserRoles.getUserRoleFromName(roleName);
-        if (Objects.nonNull(requestedRole)) {
-          actingRole = requestedRole;
-        }
+      if (roleName != null) {
+        actingRole = validateUserHasRoleName(user, roleName);
       }
 
-      DarCollection cancelledCollection = switch (actingRole) {
-        case ADMIN -> darCollectionService.cancelDarCollectionElectionsAsAdmin(collection);
-        case CHAIRPERSON -> darCollectionService.cancelDarCollectionElectionsAsChair(collection, user);
-        default -> {
-          validateUserIsCreator(user, collection);
-          yield darCollectionService.cancelDarCollectionAsResearcher(collection);
-        }
-      };
+      DarCollection cancelledCollection =
+          switch (actingRole) {
+            case ADMIN -> darCollectionService.cancelDarCollectionElectionsAsAdmin(collection);
+            case CHAIRPERSON ->
+                darCollectionService.cancelDarCollectionElectionsAsChair(collection, user);
+            default -> {
+              validateUserIsCreator(user, collection);
+              yield darCollectionService.cancelDarCollectionAsResearcher(collection);
+            }
+          };
       ComplianceLogger.logDARCancellation(user, cancelledCollection.getDatasets().stream().toList(),
               (ContainerRequest) request, Response.Status.OK.getStatusCode());
       return Response.ok().entity(cancelledCollection).build();

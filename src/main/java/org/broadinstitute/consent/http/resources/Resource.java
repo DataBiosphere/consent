@@ -268,12 +268,14 @@ abstract public class Resource implements ConsentLogger {
    *
    * @param user     The User
    * @param roleName The UserRole name
+   * @return the user's role
    */
-  void validateUserHasRoleName(User user, String roleName) {
+  UserRoles validateUserHasRoleName(User user, String roleName) {
     UserRoles thisRole = UserRoles.getUserRoleFromName(roleName);
-    if (Objects.isNull(thisRole) || !user.hasUserRole(thisRole)) {
+    if (thisRole == null || !user.hasUserRole(thisRole)) {
       throw new BadRequestException("Invalid role selection: " + roleName);
     }
+    return thisRole;
   }
 
   /**

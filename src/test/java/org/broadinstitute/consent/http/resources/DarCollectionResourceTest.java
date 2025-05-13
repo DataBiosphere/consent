@@ -513,8 +513,8 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     User user = new User();
     user.setMemberRole();
     DarCollectionSummary mockSummary = new DarCollectionSummary();
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(darCollectionService.getSummariesForRoleName(any(User.class), anyString()))
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(darCollectionService.getSummariesForRole(user, UserRoles.MEMBER))
         .thenReturn(List.of(mockSummary));
     initResource();
 
@@ -528,8 +528,8 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     User user = new User();
     user.setChairpersonRole();
     DarCollectionSummary mockSummary = new DarCollectionSummary();
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(darCollectionService.getSummariesForRoleName(any(User.class), anyString()))
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(darCollectionService.getSummariesForRole(user, UserRoles.CHAIRPERSON))
         .thenReturn(List.of(mockSummary));
     initResource();
 
@@ -543,8 +543,8 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     User user = new User();
     user.setSigningOfficialRole();
     DarCollectionSummary mockSummary = new DarCollectionSummary();
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(darCollectionService.getSummariesForRoleName(any(User.class), anyString()))
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(darCollectionService.getSummariesForRole(user, UserRoles.SIGNINGOFFICIAL))
         .thenReturn(List.of(mockSummary));
     initResource();
 
@@ -558,8 +558,8 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     User user = new User();
     user.setResearcherRole();
     DarCollectionSummary mockSummary = new DarCollectionSummary();
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(darCollectionService.getSummariesForRoleName(any(User.class), anyString()))
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(darCollectionService.getSummariesForRole(user, UserRoles.RESEARCHER))
         .thenReturn(List.of(mockSummary));
     initResource();
 
@@ -573,8 +573,8 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     User user = new User();
     user.setAdminRole();
     DarCollectionSummary mockSummary = new DarCollectionSummary();
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(darCollectionService.getSummariesForRoleName(any(User.class), anyString()))
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(darCollectionService.getSummariesForRole(user, UserRoles.ADMIN))
         .thenReturn(List.of(mockSummary));
     initResource();
 
@@ -614,10 +614,9 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     mockSummary.setDatasetIds(Set.of(1));
     Integer collectionId = randomInt(1, 100);
 
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(darCollectionService.findDatasetIdsByDACUser(user)).thenReturn(List.of(1, 2));
-    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(),
-        anyInt()))
+    when(darCollectionService.getSummaryForRoleByCollectionId(user, UserRoles.MEMBER, collectionId))
         .thenReturn(mockSummary);
     initResource();
 
@@ -635,10 +634,9 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     mockSummary.setDatasetIds(Set.of(1));
     Integer collectionId = randomInt(1, 100);
 
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(darCollectionService.findDatasetIdsByDACUser(user)).thenReturn(List.of(2));
-    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(),
-        anyInt()))
+    when(darCollectionService.getSummaryForRoleByCollectionId(user, UserRoles.MEMBER, collectionId))
         .thenReturn(mockSummary);
     initResource();
 
@@ -656,10 +654,9 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     mockSummary.setDatasetIds(Set.of(1));
     Integer collectionId = randomInt(1, 100);
 
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(darCollectionService.findDatasetIdsByDACUser(user)).thenReturn(List.of(1, 2));
-    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(),
-        anyInt()))
+    when(darCollectionService.getSummaryForRoleByCollectionId(user, UserRoles.CHAIRPERSON, collectionId))
         .thenReturn(mockSummary);
     initResource();
 
@@ -677,10 +674,9 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     mockSummary.setDatasetIds(Set.of(1));
     Integer collectionId = randomInt(1, 100);
 
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(darCollectionService.findDatasetIdsByDACUser(user)).thenReturn(List.of(2));
-    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(),
-        anyInt()))
+    when(darCollectionService.getSummaryForRoleByCollectionId(user, UserRoles.CHAIRPERSON, collectionId))
         .thenReturn(mockSummary);
     initResource();
 
@@ -700,9 +696,9 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     mockSummary.setInstitutionId(institutionId);
     Integer collectionId = randomInt(1, 100);
 
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(),
-        anyInt()))
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(darCollectionService.getSummaryForRoleByCollectionId(user, UserRoles.SIGNINGOFFICIAL,
+        collectionId))
         .thenReturn(mockSummary);
     initResource();
 
@@ -721,9 +717,9 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     mockSummary.setInstitutionId(2);
     Integer collectionId = randomInt(1, 100);
 
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(),
-        anyInt()))
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(darCollectionService.getSummaryForRoleByCollectionId(user, UserRoles.SIGNINGOFFICIAL,
+        collectionId))
         .thenReturn(mockSummary);
     initResource();
 
@@ -743,9 +739,9 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     mockSummary.setResearcherId(userId);
     Integer collectionId = randomInt(1, 100);
 
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(),
-        anyInt()))
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(darCollectionService.getSummaryForRoleByCollectionId(user, UserRoles.RESEARCHER,
+        collectionId))
         .thenReturn(mockSummary);
     initResource();
 
@@ -764,9 +760,9 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     mockSummary.setResearcherId(2);
     Integer collectionId = randomInt(1, 100);
 
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(),
-        anyInt()))
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(darCollectionService.getSummaryForRoleByCollectionId(user, UserRoles.RESEARCHER,
+        collectionId))
         .thenReturn(mockSummary);
     initResource();
 
@@ -782,9 +778,9 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     DarCollectionSummary mockSummary = new DarCollectionSummary();
     Integer collectionId = randomInt(1, 100);
 
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(),
-        anyInt()))
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(darCollectionService.getSummaryForRoleByCollectionId(user, UserRoles.ADMIN,
+        collectionId))
         .thenReturn(mockSummary);
     initResource();
 
@@ -824,9 +820,9 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     user.setResearcherRole();
     Integer collectionId = randomInt(1, 100);
 
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(darCollectionService.getSummaryForRoleNameByCollectionId(any(User.class), anyString(),
-        anyInt()))
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(darCollectionService.getSummaryForRoleByCollectionId(user, UserRoles.RESEARCHER,
+        collectionId))
         .thenThrow(new NotFoundException());
     initResource();
 
