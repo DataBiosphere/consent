@@ -46,4 +46,11 @@ class EmailNotifierResourceTest {
     }
   }
 
+  @Test
+  void testSendDarExpirationNotices() {
+    try (Response response = resource.sendDarExpirationNotices(authUser)) {
+      assertEquals(200, response.getStatus());
+    }
+  }
+
 }
