@@ -325,24 +325,6 @@ public class EmailService implements ConsentLogger {
     voteDAO.updateVoteReminderFlag(voteId, true);
   }
 
-  public void sendDarNewCollectionElectionMessage(List<User> users, DarCollection darCollection)
-      throws IOException, TemplateException {
-    String electionType = "Data Access Request";
-    String darCode = darCollection.getDarCode();
-    for (User user : users) {
-      sendMessage(new NewCaseMessage(user, darCode, electionType), user.getUserId());
-    }
-  }
-
-  public void sendProgressReportNewCollectionElectionMessage(List<User> users, DarCollection darCollection)
-      throws IOException, TemplateException {
-    String electionType = "Data Access Request";
-    String darCode = darCollection.getDarCode();
-    for (User user : users) {
-      sendMessage(new NewCaseMessage(user, darCode, electionType), user.getUserId());
-    }
-  }
-
   public void sendResearcherDarApproved(
       String darCode,
       Integer researcherId,

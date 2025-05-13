@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -18,6 +19,7 @@ import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -300,9 +302,33 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(voteDAO.findVoteUsersByElectionReferenceIdList(any())).thenReturn(List.of(new User()));
 
     service.createElectionsForDarCollection(user, collection);
-    verify(darCollectionServiceDAO, times(1)).createElectionsForDarByUser(any(), any());
+    verify(darCollectionServiceDAO, times(1)).createElectionsForDarByUser(any(), eq(dar));
     verify(voteDAO, times(1)).findVoteUsersByElectionReferenceIdList(any());
-    verify(emailService, times(1)).sendDarNewCollectionElectionMessage(any(), any());
+    verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(any());
+  }
+
+  @Test
+  void testCreateElectionsForProgressReport() throws Exception {
+    User user = new User();
+    user.setEmail("email");
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setId(randomInt(1, 10));
+    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    DataAccessRequest progressReport = new DataAccessRequest();
+    progressReport.setReferenceId(UUID.randomUUID().toString());
+    progressReport.setParentId(dar.getId());
+    progressReport.setSubmissionDate(Timestamp.from(Instant.now()));
+    DarCollection collection = createMockCollections().get(0);
+    collection.setDars(Map.of(dar.getReferenceId(), dar, progressReport.getReferenceId(), progressReport));
+
+    when(darCollectionServiceDAO.createElectionsForDarByUser(any(), any())).thenReturn(
+        List.of("electionId"));
+    when(voteDAO.findVoteUsersByElectionReferenceIdList(any())).thenReturn(List.of(new User()));
+
+    service.createElectionsForDarCollection(user, collection);
+    verify(darCollectionServiceDAO, times(1)).createElectionsForDarByUser(any(), eq(progressReport));
+    verify(voteDAO, times(1)).findVoteUsersByElectionReferenceIdList(any());
     verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(any());
   }
 

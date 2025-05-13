@@ -2,12 +2,15 @@ package org.broadinstitute.consent.http.service;
 
 import static java.util.stream.Collectors.toList;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,6 +38,7 @@ import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -675,9 +679,9 @@ public class DarCollectionService implements ConsentLogger {
         List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(
             createdElectionReferenceIds);
         if (dar.getProgressReport()) {
-          emailService.sendProgressReportNewCollectionElectionMessage(voteUsers, collection);
+          sendProgressReportNewCollectionElectionMessage(voteUsers, collection.getDarCode());
         } else {
-          emailService.sendDarNewCollectionElectionMessage(voteUsers, collection);
+          sendDarNewCollectionElectionMessage(voteUsers, collection.getDarCode());
         }
 
       } catch (Exception e) {
@@ -702,5 +706,23 @@ public class DarCollectionService implements ConsentLogger {
             new Date());
       }
     });
+  }
+
+  @VisibleForTesting
+  void sendDarNewCollectionElectionMessage(List<User> users, String darCode)
+      throws IOException, TemplateException {
+    String electionType = "Data Access Request";
+    for (User user : users) {
+      emailService.sendMessage(new NewCaseMessage(user, darCode, electionType), user.getUserId());
+    }
+  }
+
+  @VisibleForTesting
+  void sendProgressReportNewCollectionElectionMessage(List<User> users, String darCode)
+      throws IOException, TemplateException {
+    String electionType = "Data Access Request";
+    for (User user : users) {
+      emailService.sendMessage(new NewCaseMessage(user, darCode, electionType), user.getUserId());
+    }
   }
 }
