@@ -8,7 +8,8 @@ public enum DarCollectionActions {
   REVIEW("Review"),
   REVISE("Revise"),
   RESUME("Resume"),
-  DELETE("Delete");
+  DELETE("Delete"),
+  CREATE_PROGRESS_REPORT("Create_Progress_Report");
 
   private final String value;
 

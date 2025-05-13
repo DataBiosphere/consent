@@ -91,8 +91,9 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   List<DataAccessRequest> findApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
 
   /**
-   * This query finds dataset ids submitted within the last year on dar-dataset combinations where
-   * the most recent vote is true. The query accomplishes this by creating a view that is a grouping
+   * This query finds dataset ids on dar-dataset combinations where the most recent vote is true.
+   * This includes datasets that are a part of expired DARs, UNLIKE findApprovedDARsByDatasetId.
+   * The query accomplishes this by creating a view that is a grouping
    * of election reference ids and LAST vote in the group of final votes for all data access
    * elections. We need to group them due to the case of multiple elections on a dar-dataset
    * request. Election 1 may have been denied. Election 2 may have been approved. Election 3 may
@@ -101,8 +102,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * `FALSE` in the example above. Outside the JOIN, we filter on groupings where the final vote
    * value is `TRUE` so the denied election in the example would be filtered out.
    *
-   * @param darReferenceId The DAR reference UUID
-   * @return Set of approved Dataset Ids for the DAR
+   * @param darReferenceIds The DARs reference UUIDs
+   * @return Set of approved Dataset Ids for the list of DARs
    */
   @SqlQuery(
       """
@@ -124,12 +125,11 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
         AND LOWER(v.type) = 'final') final_access_vote ON
           final_access_vote.reference_id = dar.reference_id AND
           final_access_vote.dataset_id = dd.dataset_id
-      WHERE dar.submission_date > now() - interval '1 year'
-      AND final_access_vote.last_vote = TRUE
-      AND dar.reference_id = :darReferenceId
-      AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+      WHERE final_access_vote.last_vote = TRUE
+        AND dar.reference_id IN (<darReferenceIds>)
+        AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
       """)
-  Set<Integer> findApprovedDatasetsByDar(@Bind("darReferenceId") String darReferenceId);
+  Set<Integer> findDatasetApprovalsByDars(@BindList("darReferenceIds") List<String> darReferenceIds);
 
   /**
    * This query finds submitted DARs based on a date range.  This would be useful if we wanted to
