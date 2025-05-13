@@ -1,8 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.broadinstitute.consent.http.service.DataAccessRequestService.EXPIRE_NOTICE_INTERVAL;
-import static org.broadinstitute.consent.http.service.DataAccessRequestService.EXPIRE_WARN_INTERVAL;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.sendgrid.Response;
@@ -14,30 +11,18 @@ import freemarker.template.TemplateException;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.db.DacDAO;
-import org.broadinstitute.consent.http.db.DarCollectionDAO;
-import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetDAO;
-import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.message.DaaRequestMessage;
-import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
-import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
 import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
@@ -46,13 +31,9 @@ import org.broadinstitute.consent.http.mail.message.MailMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
 import org.broadinstitute.consent.http.mail.message.NewResearcherLibraryRequestMessage;
-import org.broadinstitute.consent.http.mail.message.ReminderMessage;
-import org.broadinstitute.consent.http.mail.message.ResearcherApprovedMessage;
-import org.broadinstitute.consent.http.models.DarCollection;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
@@ -145,7 +126,18 @@ public class EmailService implements ConsentLogger {
       throws TemplateException, IOException {
     User user = userDAO.findUserById(researcherId);
     sendMessage(
-        new ResearcherApprovedMessage(user, darCode, datasets, dataUseRestriction), researcherId);
+        new ResearcherDarApprovedMessage(user, darCode, datasets, dataUseRestriction), researcherId);
+  }
+
+  public void sendResearcherProgressReportApproved(
+      String darCode,
+      Integer researcherId,
+      List<DatasetMailDTO> datasets,
+      String dataUseRestriction)
+      throws TemplateException, IOException {
+    User user = userDAO.findUserById(researcherId);
+    sendMessage(
+        new ResearcherApprovedProgressReportMessage(user, darCode, datasets, dataUseRestriction), researcherId);
   }
 
   public void sendDataCustodianApprovalMessage(

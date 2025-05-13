@@ -268,14 +268,8 @@ public class VoteService implements ConsentLogger {
         .distinct()
         .collect(Collectors.toList());
 
-    List<Integer> collectionIds =
-        finalElectionReferenceIds.isEmpty() ? List.of() : dataAccessRequestDAO
-            .findByReferenceIds(finalElectionReferenceIds).stream()
-            .map(DataAccessRequest::getCollectionId)
-            .collect(Collectors.toList());
+    List<DataAccessRequest> dars = dataAccessRequestDAO.findByReferenceIds(finalElectionReferenceIds);
 
-    List<DarCollection> collections = collectionIds.isEmpty() ? List.of() :
-        darCollectionDAO.findDARCollectionByCollectionIds(collectionIds);
 
     List<Integer> datasetIds = finalElections.stream()
         .map(Election::getDatasetId)
@@ -289,30 +283,25 @@ public class VoteService implements ConsentLogger {
       logException("Error indexing datasets for approved DARs: " + e.getMessage(), e);
     }
 
-    // For each dar collection, email the researcher summarizing the approved datasets in that collection
-    collections.forEach(c -> {
+    // For each dar, email the researcher summarizing the approved datasets in that dar
+    dars.forEach(dar -> {
       // Get the datasets in this collection that have been approved
-      List<Integer> collectionDatasetIds = c.getDars().values().stream()
-          .map(DataAccessRequest::getDatasetIds)
-          .flatMap(List::stream)
-          .distinct()
-          .toList();
-      List<Dataset> approvedDatasetsInCollection = datasets.stream()
-          .filter(d -> collectionDatasetIds.contains(d.getDatasetId()))
+      List<Dataset> approvedDatasetsInDar = datasets.stream()
+          .filter(d -> dar.getDatasetIds().contains(d.getDatasetId()))
           .toList();
 
-      if (!approvedDatasetsInCollection.isEmpty()) {
-        String darCode = c.getDarCode();
-        User researcher = userDAO.findUserById(c.getCreateUserId());
+      if (!approvedDatasetsInDar.isEmpty()) {
+        String darCode = dar.getDarCode();
+        User researcher = userDAO.findUserById(dar.getUserId());
         Integer researcherId = researcher.getUserId();
-        List<DatasetMailDTO> datasetMailDTOs = approvedDatasetsInCollection
+        List<DatasetMailDTO> datasetMailDTOs = approvedDatasetsInDar
             .stream()
             .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
             .toList();
 
         // Get all Data Use translations, distinctly in the case that there are several with the same
         // data use, and then conjoin them for email display.
-        List<DataUse> dataUses = approvedDatasetsInCollection.stream()
+        List<DataUse> dataUses = approvedDatasetsInDar.stream()
             .map(Dataset::getDataUse)
             .toList();
         List<String> dataUseTranslations = dataUses.stream()
@@ -322,14 +311,18 @@ public class VoteService implements ConsentLogger {
         String translation = String.join(";", dataUseTranslations);
 
         try {
-          // TODO: Get specifics about the email we need to send when a progress report is approved.
-          emailService.sendResearcherDarApproved(darCode, researcherId, datasetMailDTOs,
-              translation);
+          if(dar.getProgressReport()) {
+            emailService.sendResearcherProgressReportApproved(darCode, researcherId, datasetMailDTOs,
+                translation);
+          } else {
+            emailService.sendResearcherDarApproved(darCode, researcherId, datasetMailDTOs,
+                translation);
+          }
         } catch (Exception e) {
           logException("Error sending researcher dar approved email: " + e.getMessage(), e);
         }
         try {
-          notifyCustodiansOfApprovedDatasets(approvedDatasetsInCollection, researcher, darCode);
+          notifyCustodiansOfApprovedDatasets(approvedDatasetsInDar, researcher, darCode);
         } catch (Exception e) {
           logException("Error notifying custodians of dar approved email: " + e.getMessage(), e);
         }
