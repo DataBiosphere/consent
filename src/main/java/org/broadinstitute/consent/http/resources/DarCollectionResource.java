@@ -8,7 +8,6 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
@@ -20,7 +19,6 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Request;
 import jakarta.ws.rs.core.Response;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
@@ -192,16 +190,7 @@ public class DarCollectionResource extends Resource {
         actingRole = validateUserHasRoleName(user, roleName);
       }
 
-      DarCollection cancelledCollection =
-          switch (actingRole) {
-            case ADMIN -> darCollectionService.cancelDarCollectionElectionsAsAdmin(collection);
-            case CHAIRPERSON ->
-                darCollectionService.cancelDarCollectionElectionsAsChair(collection, user);
-            default -> {
-              validateUserIsCreator(user, collection);
-              yield darCollectionService.cancelDarCollectionAsResearcher(collection);
-            }
-          };
+      DarCollection cancelledCollection = darCollectionService.cancelDarCollectionByRole(user, collection, actingRole);
       ComplianceLogger.logDARCancellation(user, cancelledCollection.getDatasets().stream().toList(),
               (ContainerRequest) request, Response.Status.OK.getStatusCode());
       return Response.ok().entity(cancelledCollection).build();
@@ -269,11 +258,8 @@ public class DarCollectionResource extends Resource {
   // We don't want to leak existence so throw a not found if someone tries to
   // view another user's collection.
   private void validateUserIsCreator(User user, DarCollection collection) {
-    try {
-      validateAuthedRoleUser(Collections.emptyList(), user, collection.getCreateUserId());
-    } catch (ForbiddenException e) {
+    if (!user.getUserId().equals(collection.getCreateUserId())) {
       throw new NotFoundException();
     }
   }
-
 }

@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static java.util.stream.Collectors.toList;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -91,16 +92,8 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   private void updateStatusCount(Map<String, Integer> statusCount, String status) {
-    if (Objects.isNull(status)) {
-      //If the status is null, track it as Undefined to ensure election is accounted for
-      status = "Undefined";
-    }
-    Integer count = statusCount.get(status);
-    if (Objects.isNull(count)) {
-      statusCount.put(status, 0);
-      count = 0;
-    }
-    statusCount.put(status, count + 1);
+    // If the status is null, track it as Undefined to ensure election is accounted for.
+    statusCount.merge(Objects.requireNonNullElse(status, "Undefined"), 1, Integer::sum);
   }
 
   private void determineCollectionStatus(DarCollectionSummary summary,
@@ -128,7 +121,7 @@ public class DarCollectionService implements ConsentLogger {
     summaries.forEach(s -> {
       Map<String, Integer> statusCount = new HashMap<>();
       Map<Integer, Election> elections = s.getElections();
-      if (elections.size() == 0) {
+      if (elections.isEmpty()) {
         s.addAction(DarCollectionActions.OPEN);
         s.setStatus(DarCollectionStatus.SUBMITTED.getValue());
       } else {
@@ -187,7 +180,9 @@ public class DarCollectionService implements ConsentLogger {
           s.addAction(DarCollectionActions.REVISE);
           s.setStatus(DarCollectionStatus.CANCELED.getValue());
         } else {
-          s.addAction(DarCollectionActions.CANCEL);
+          if (!s.getProgressReport()) {
+            s.addAction(DarCollectionActions.CANCEL);
+          }
           s.setStatus(DarCollectionStatus.SUBMITTED.getValue());
         }
       } else {
@@ -259,12 +254,12 @@ public class DarCollectionService implements ConsentLogger {
           updateStatusCount(statusCount, statusString);
           ElectionStatus status = ElectionStatus.getStatusFromString(statusString);
           switch (status) {
-            case CLOSED:
-            case CANCELED:
+            case CLOSED, CANCELED:
               s.addAction(DarCollectionActions.OPEN);
               break;
             case OPEN:
               s.addAction(DarCollectionActions.VOTE);
+              break;
             default:
               break;
           }
@@ -300,7 +295,7 @@ public class DarCollectionService implements ConsentLogger {
    * @return List of DarCollectionSummary objects
    */
   public List<DarCollectionSummary> getSummariesForRole(User user, UserRoles role) {
-    List<DarCollectionSummary> summaries = new ArrayList<>();
+    final List<DarCollectionSummary> summaries;
     Integer userId = user.getUserId();
     List<Integer> datasetIds;
     switch (role) {
@@ -323,17 +318,17 @@ public class DarCollectionService implements ConsentLogger {
         processDarCollectionSummariesForMember(summaries, userId);
         break;
       case RESEARCHER:
-        summaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
-        processDarCollectionSummariesForResearcher(summaries);
+        var darSummaries = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
+        processDarCollectionSummariesForResearcher(darSummaries);
         List<DataAccessRequest> drafts = dataAccessRequestDAO.findAllDraftsByUserId(userId);
-        summaries.addAll(drafts
-            .stream()
-            .map(this::processDraftAsSummary)
-            .filter(Objects::nonNull)
-            .toList()
-        );
+        summaries =
+            Stream.concat(
+                    darSummaries.stream(),
+                    drafts.stream().map(this::processDraftAsSummary).filter(Objects::nonNull))
+                .toList();
         break;
       default:
+        summaries = List.of();
         break;
     }
     return summaries;
@@ -507,9 +502,7 @@ public class DarCollectionService implements ConsentLogger {
       throw new NotFoundException(
           "Collection with the reference id of " + referenceId + " was not found");
     }
-    List<DarCollection> populatedCollections = addDatasetsToCollections(
-        Collections.singletonList(collection), List.of());
-    return populatedCollections.stream().findFirst().orElse(null);
+    return addDatasetsToCollection(collection);
   }
 
   public DarCollection getByCollectionId(Integer collectionId) {
@@ -518,53 +511,64 @@ public class DarCollectionService implements ConsentLogger {
       throw new NotFoundException(
           "Collection with the collection id of " + collectionId + " was not found");
     }
-    List<DarCollection> populatedCollections = addDatasetsToCollections(
-        Collections.singletonList(collection), List.of());
-    return populatedCollections.stream().findFirst().orElse(null);
+    return addDatasetsToCollection(collection);
   }
 
   /**
-   * Iterate through a set of collections and add relevant datasets.
+   * Given a DarCollection, add its relevant datasets.
    *
-   * @param collections      The list of DarCollections to iterate over.
-   * @param filterDatasetIds An optional list of Dataset Ids used to filter down the datasets for
-   *                         the collections
-   * @return List<DarCollection>
+   * @param collection      The list of DarCollections to iterate over.
+   * @return collection with datasets added
    */
-  public List<DarCollection> addDatasetsToCollections(List<DarCollection> collections,
-      List<Integer> filterDatasetIds) {
+  @VisibleForTesting
+  protected DarCollection addDatasetsToCollection(DarCollection collection) {
     // get datasetIds from each DAR from each collection
-    List<String> referenceIds = collections.stream()
-        .map(DarCollection::getDars)
-        .map(Map::keySet)
-        .flatMap(Set::stream)
-        .collect(Collectors.toList());
+    List<String> referenceIds = List.copyOf(collection.getDars().keySet());
     List<Integer> datasetIds = referenceIds.isEmpty() ? List.of()
         : dataAccessRequestDAO.findAllDARDatasetRelations(referenceIds);
     if (!datasetIds.isEmpty()) {
-      // if filterDatasetIds has values, get the intersection between that and datasetIds
-      if (!filterDatasetIds.isEmpty()) {
-        datasetIds.retainAll(filterDatasetIds);
-      }
       Map<Integer, Dataset> datasetMap = datasetDAO.findDatasetsByIdList(datasetIds)
           .stream()
           .distinct()
           .collect(Collectors.toMap(Dataset::getDatasetId, Function.identity()));
 
-      return collections.stream().map(c -> {
-        Set<Dataset> collectionDatasets = c.getDars().values().stream()
+        Set<Dataset> collectionDatasets = collection.getDars().values().stream()
             .map(DataAccessRequest::getDatasetIds)
             .flatMap(Collection::stream)
             .map(datasetMap::get)
             .filter(Objects::nonNull) // filtering out nulls which were getting captured by map
             .collect(Collectors.toSet());
-        DarCollection copy = c.deepCopy();
+        DarCollection copy = collection.deepCopy();
         copy.setDatasets(collectionDatasets);
         return copy;
-      }).collect(Collectors.toList());
     }
     // There were no datasets to add, so we return the original list
-    return collections;
+    return collection;
+  }
+
+  /**
+   * Cancel Elections or a dar for a DarCollection, given a user and a role. If the user is a chair,
+   * or admin, cancel elections. If the user is a researcher, cancel the dar.
+   *
+   * @param user       The User initiating the cancel
+   * @param collection The DarCollection
+   * @param role       The role of the user, must be one of ADMIN, CHAIRPERSON, or RESEARCHER
+   * @return The DarCollection that has been canceled
+   */
+  public DarCollection cancelDarCollectionByRole(User user, DarCollection collection, UserRoles role) {
+    Collection<DataAccessRequest> dars = collection.getDars().values();
+    if (dars.isEmpty()) {
+      logWarn("DAR Collection ID: [%s] does not have any associated DAR ids".formatted(
+          collection.getDarCollectionId()));
+      return collection;
+    }
+
+    return switch (role) {
+      case ADMIN -> cancelDarCollectionElectionsAsAdmin(collection);
+      case CHAIRPERSON ->
+          cancelDarCollectionElectionsAsChair(collection, user);
+      default -> cancelDarCollectionAsResearcher(collection, user);
+    };
   }
 
   /**
@@ -575,19 +579,21 @@ public class DarCollectionService implements ConsentLogger {
    * decline or cancel the elections for the collection.
    *
    * @param collection The DarCollection
+   * @param user the researcher requesting the cancel
    * @return The canceled DarCollection
    */
-  public DarCollection cancelDarCollectionAsResearcher(DarCollection collection) {
-    Collection<DataAccessRequest> dars = collection.getDars().values();
-    List<String> referenceIds = dars.stream()
-        .map(DataAccessRequest::getReferenceId)
-        .collect(Collectors.toList());
-
-    if (referenceIds.isEmpty()) {
-      logWarn("DAR Collection ID: [%s] does not have any associated DAR ids".formatted(
-          collection.getDarCollectionId()));
-      return collection;
+  private DarCollection cancelDarCollectionAsResearcher(DarCollection collection, User user) {
+    if (!user.getUserId().equals(collection.getCreateUserId())) {
+      throw new NotFoundException();
     }
+    DarCollectionSummary summary = darCollectionSummaryDAO
+        .getDarCollectionSummaryByCollectionId(collection.getDarCollectionId());
+    if (summary.getProgressReport()) {
+      throw new BadRequestException("Cannot cancel a progress report");
+    }
+
+    Collection<DataAccessRequest> dars = collection.getDars().values();
+    List<String> referenceIds = dars.stream().map(DataAccessRequest::getReferenceId).toList();
 
     List<Election> elections = electionDAO.findLastElectionsByReferenceIds(referenceIds);
     if (!elections.isEmpty()) {
@@ -598,7 +604,7 @@ public class DarCollectionService implements ConsentLogger {
     List<String> activeDarIds = dars.stream()
         .filter(d -> !DataAccessRequest.isCanceled(d))
         .map(DataAccessRequest::getReferenceId)
-        .collect(Collectors.toList());
+        .toList();
     if (!activeDarIds.isEmpty()) {
       dataAccessRequestDAO.cancelByReferenceIds(activeDarIds);
     }
@@ -614,17 +620,9 @@ public class DarCollectionService implements ConsentLogger {
    * @param collection The DarCollection
    * @return The DarCollection whose elections have been canceled
    */
-  public DarCollection cancelDarCollectionElectionsAsAdmin(DarCollection collection) {
+  private DarCollection cancelDarCollectionElectionsAsAdmin(DarCollection collection) {
     Collection<DataAccessRequest> dars = collection.getDars().values();
-    List<String> referenceIds = dars.stream()
-        .map(DataAccessRequest::getReferenceId)
-        .collect(Collectors.toList());
-
-    if (referenceIds.isEmpty()) {
-      logWarn("DAR Collection ID: [%s] does not have any associated DAR ids".formatted(
-          collection.getDarCollectionId()));
-      return collection;
-    }
+    List<String> referenceIds = dars.stream().map(DataAccessRequest::getReferenceId).toList();
 
     // Cancel all DAR elections
     cancelElectionsForReferenceIds(referenceIds);
@@ -640,18 +638,15 @@ public class DarCollectionService implements ConsentLogger {
    * @param collection The DarCollection
    * @return The DarCollection whose elections have been canceled
    */
-  public DarCollection cancelDarCollectionElectionsAsChair(DarCollection collection, User user) {
+  private DarCollection cancelDarCollectionElectionsAsChair(DarCollection collection, User user) {
     // Find dataset ids the chairperson has access to:
-    List<Integer> datasetIds = datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
+    Set<Integer> datasetIds = Set.copyOf(datasetDAO.findDatasetIdsByDACUserId(user.getUserId()));
 
     // Filter the list of DARs we can operate on by the datasets accessible to this chairperson
-    List<DataAccessRequest> dars = collection.getDars().values().stream()
+    List<String> referenceIds = collection.getDars().values().stream()
         .filter(d -> datasetIds.containsAll(d.getDatasetIds()))
-        .collect(Collectors.toList());
-
-    List<String> referenceIds = dars.stream()
         .map(DataAccessRequest::getReferenceId)
-        .collect(Collectors.toList());
+        .toList();
 
     if (referenceIds.isEmpty()) {
       logWarn(
