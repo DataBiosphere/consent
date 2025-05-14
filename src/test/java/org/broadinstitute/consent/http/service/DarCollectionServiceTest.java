@@ -543,8 +543,9 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     // summaryOne -> in review (elections present)
     // summaryTwo -> no elections
     // summaryThree -> no elections, canceled
-    // summaryFour -> dar collection is a progress report
-    // summaryFive -> draft
+    // summaryFour -> closed election, approved datasets
+    // summaryFive -> dar collection is a progress report
+    // summarySix -> draft
 
     User user = new User();
     user.setUserId(1);
@@ -576,13 +577,23 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     summaryThree.addStatus(DarStatus.CANCELED.getValue(), randomAlphabetic(3));
 
     DarCollectionSummary summaryFour = new DarCollectionSummary();
+    Dataset datasetSix = new Dataset();
+    datasetSix.setDatasetId(6);
+    summaryFour.addDatasetId(datasetSix.getDatasetId());
+    Election electionTwo = new Election();
+    electionOne.setElectionId(2);
+    electionOne.setStatus(ElectionStatus.CLOSED.getValue());
+    summaryFour.addElection(electionTwo);
+    summaryFour.setReferenceIds(Set.of("ref1"));
+
+    DarCollectionSummary summaryFive = new DarCollectionSummary();
     {
-      summaryFour.setSubmissionDate(new Timestamp(0));
-      summaryFour.addParentChildRelationship(123, "456");
+      summaryFive.setSubmissionDate(new Timestamp(0));
+      summaryFive.addParentChildRelationship(123, "456");
       Election election = new Election();
       election.setElectionId(234);
       election.setStatus(ElectionStatus.OPEN.getValue());
-      summaryFour.addElection(election);
+      summaryFive.addElection(election);
     }
 
     DataAccessRequest draft = new DataAccessRequest();
@@ -593,7 +604,10 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     draft.setData(data);
     when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(List.of(draft));
     when(darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(any())).thenReturn(
-        List.of(summaryOne, summaryTwo, summaryThree, summaryFour));
+        List.of(summaryOne, summaryTwo, summaryThree, summaryFour, summaryFive));
+    when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of())).thenReturn(Set.of());
+    when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of("ref1")))
+        .thenReturn(Set.of(datasetSix.getDatasetId()));
 
     List<DarCollectionSummary> summaries = service.getSummariesForRole(user,
         UserRoles.RESEARCHER);
@@ -626,8 +640,16 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertEquals(expectedThreeActions, testThree.getActions());
 
     DarCollectionSummary testFour = summaries.get(3);
-    assertEquals(DarCollectionStatus.IN_PROCESS.getValue(), testFour.getStatus());
-    assertEquals(Set.of(DarCollectionActions.REVIEW.getValue()), testFour.getActions());
+    Set<String> expectedFourActions = Set.of(
+        DarCollectionActions.REVIEW.getValue(),
+        DarCollectionActions.CREATE_PROGRESS_REPORT.getValue());
+    assertTrue(
+        testFour.getStatus().equalsIgnoreCase(DarCollectionStatus.COMPLETE.getValue()));
+    assertEquals(testFour.getActions(), expectedFourActions);
+
+    DarCollectionSummary testFive = summaries.get(3);
+    assertEquals(DarCollectionStatus.IN_PROCESS.getValue(), testFive.getStatus());
+    assertEquals(Set.of(DarCollectionActions.REVIEW.getValue()), testFive.getActions());
 
     DarCollectionSummary testDraft = summaries.get(4);
     Set<String> expectedDraftActions = Set.of(
@@ -1011,23 +1033,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setUserId(1);
 
-    DarCollectionSummary summary = new DarCollectionSummary();
-    Integer collectionId = randomInt(1, 100);
-    summary.setDarCollectionId(collectionId);
-    Dataset datasetOne = new Dataset();
-    datasetOne.setDatasetId(1);
-    Dataset datasetTwo = new Dataset();
-    datasetTwo.setDatasetId(2);
-    Election electionOne = new Election();
-    electionOne.setElectionId(1);
-    electionOne.setStatus(ElectionStatus.OPEN.getValue());
-    Election electionTwo = new Election();
-    electionTwo.setElectionId(2);
-    electionTwo.setStatus(ElectionStatus.CLOSED.getValue());
-    summary.addElection(electionOne);
-    summary.addElection(electionTwo);
-    summary.addDatasetId(datasetOne.getDatasetId());
-    summary.addDatasetId(datasetTwo.getDatasetId());
+    DarCollectionSummary summary = createDarCollectionSummaryWithElections();
+    Integer collectionId = summary.getDarCollectionId();
 
     when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId))
         .thenReturn(summary);
@@ -1046,23 +1053,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setUserId(1);
 
-    DarCollectionSummary summary = new DarCollectionSummary();
-    Integer collectionId = randomInt(1, 100);
-    summary.setDarCollectionId(collectionId);
-    Dataset datasetOne = new Dataset();
-    datasetOne.setDatasetId(1);
-    Dataset datasetTwo = new Dataset();
-    datasetTwo.setDatasetId(2);
-    Election electionOne = new Election();
-    electionOne.setElectionId(1);
-    electionOne.setStatus(ElectionStatus.OPEN.getValue());
-    Election electionTwo = new Election();
-    electionTwo.setElectionId(2);
-    electionTwo.setStatus(ElectionStatus.CLOSED.getValue());
-    summary.addElection(electionOne);
-    summary.addElection(electionTwo);
-    summary.addDatasetId(datasetOne.getDatasetId());
-    summary.addDatasetId(datasetTwo.getDatasetId());
+    DarCollectionSummary summary = createDarCollectionSummaryWithElections();
+    Integer collectionId = summary.getDarCollectionId();
 
     when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId))
         .thenReturn(summary);
@@ -1083,23 +1075,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setUserId(1);
 
-    DarCollectionSummary summary = new DarCollectionSummary();
-    Integer collectionId = randomInt(1, 100);
-    summary.setDarCollectionId(collectionId);
-    Dataset datasetOne = new Dataset();
-    datasetOne.setDatasetId(1);
-    Dataset datasetTwo = new Dataset();
-    datasetTwo.setDatasetId(2);
-    Election electionOne = new Election();
-    electionOne.setElectionId(1);
-    electionOne.setStatus(ElectionStatus.OPEN.getValue());
-    Election electionTwo = new Election();
-    electionTwo.setElectionId(2);
-    electionTwo.setStatus(ElectionStatus.CLOSED.getValue());
-    summary.addElection(electionOne);
-    summary.addElection(electionTwo);
-    summary.addDatasetId(datasetOne.getDatasetId());
-    summary.addDatasetId(datasetTwo.getDatasetId());
+    DarCollectionSummary summary = createDarCollectionSummaryWithElections();
+    Integer collectionId = summary.getDarCollectionId();
 
     when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId))
         .thenReturn(summary);
@@ -1117,29 +1094,44 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testGetSummaryForRoleNameByCollectionId_Researcher_PR() {
+    User user = new User();
+    user.setUserId(1);
+
+    DarCollectionSummary summary = createDarCollectionSummaryWithElections();
+    summary.setReferenceIds(Set.of("ref1"));
+    Integer collectionId = summary.getDarCollectionId();
+
+    when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId))
+        .thenReturn(summary);
+
+    when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of("ref1")))
+        .thenReturn(Set.of(1));
+
+    DarCollectionSummary summaryResult = service.getSummaryForRoleByCollectionId(user,
+        UserRoles.RESEARCHER, collectionId);
+
+    assertNotNull(summaryResult);
+
+    // Verify that the create_progress_report action is included
+    Set<String> expectedActions = Set.of(
+        DarCollectionActions.REVIEW.getValue(),
+        DarCollectionActions.CREATE_PROGRESS_REPORT.getValue());
+    assertTrue(
+        summaryResult.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
+    assertEquals(expectedActions, summaryResult.getActions());
+  }
+
+  @Test
   void testGetSummaryForRoleByCollectionId_Chair() {
     Dac dac = new Dac();
     dac.setDacId(1);
     User user = new User();
     user.setUserId(1);
     user.setChairpersonRoleWithDAC(dac.getDacId());
-    DarCollectionSummary summary = new DarCollectionSummary();
-    Integer collectionId = randomInt(1, 100);
-    summary.setDarCollectionId(collectionId);
-    Dataset datasetOne = new Dataset();
-    datasetOne.setDatasetId(1);
-    Dataset datasetTwo = new Dataset();
-    datasetTwo.setDatasetId(2);
-    Election electionOne = new Election();
-    electionOne.setElectionId(1);
-    electionOne.setStatus(ElectionStatus.OPEN.getValue());
-    Election electionTwo = new Election();
-    electionTwo.setElectionId(2);
-    electionTwo.setStatus(ElectionStatus.CANCELED.getValue());
-    summary.addElection(electionOne);
-    summary.addElection(electionTwo);
-    summary.addDatasetId(datasetOne.getDatasetId());
-    summary.addDatasetId(datasetTwo.getDatasetId());
+
+    DarCollectionSummary summary = createDarCollectionSummaryWithElections();
+    Integer collectionId = summary.getDarCollectionId();
 
     when(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(user.getUserId(),
         List.of(), collectionId))
@@ -1215,6 +1207,27 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         .thenReturn(null);
 
     assertThrows(NotFoundException.class, () -> service.getSummaryForRoleByCollectionId(user, UserRoles.RESEARCHER, collectionId));
+  }
+
+  private DarCollectionSummary createDarCollectionSummaryWithElections() {
+    DarCollectionSummary summary = new DarCollectionSummary();
+    Integer collectionId = randomInt(1, 100);
+    summary.setDarCollectionId(collectionId);
+    Dataset datasetOne = new Dataset();
+    datasetOne.setDatasetId(1);
+    Dataset datasetTwo = new Dataset();
+    datasetTwo.setDatasetId(2);
+    Election electionOne = new Election();
+    electionOne.setElectionId(1);
+    electionOne.setStatus(ElectionStatus.OPEN.getValue());
+    Election electionTwo = new Election();
+    electionTwo.setElectionId(2);
+    electionTwo.setStatus(ElectionStatus.CANCELED.getValue());
+    summary.addElection(electionOne);
+    summary.addElection(electionTwo);
+    summary.addDatasetId(datasetOne.getDatasetId());
+    summary.addDatasetId(datasetTwo.getDatasetId());
+    return summary;
   }
 
   private DarCollection generateMockDarCollection(Set<Dataset> datasets) {
