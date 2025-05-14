@@ -124,7 +124,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     user.setUserId(1);
     collection.setCreateUserId(user.getUserId());
     when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of());
-    DarCollection canceledCollection = service.cancelDarCollectionElections(user, collection, UserRoles.RESEARCHER);
+    DarCollection canceledCollection = service.cancelDarCollectionByRole(user, collection, UserRoles.RESEARCHER);
     for (DataAccessRequest collectionDar : canceledCollection.getDars().values()) {
       assertEquals("canceled", collectionDar.getData().getStatus().toLowerCase());
     }
@@ -145,7 +145,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     collection.setCreateUserId(user.getUserId());
     assertThrows(
         BadRequestException.class,
-        () -> service.cancelDarCollectionElections(user, collection, UserRoles.RESEARCHER));
+        () -> service.cancelDarCollectionByRole(user, collection, UserRoles.RESEARCHER));
   }
 
   @Test
@@ -164,7 +164,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setUserId(1);
     collection.setCreateUserId(user.getUserId());
-    service.cancelDarCollectionElections(user, collection, UserRoles.RESEARCHER);
+    service.cancelDarCollectionByRole(user, collection, UserRoles.RESEARCHER);
     verify(electionDAO).findLastElectionsByReferenceIds(anyList());
     verify(electionDAO, times(0)).updateElectionById(anyInt(), anyString(), any());
     verify(dataAccessRequestDAO).cancelByReferenceIds(anyList());
@@ -192,7 +192,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertThrows(
         BadRequestException.class,
-        () -> service.cancelDarCollectionElections(user, collection, UserRoles.RESEARCHER));
+        () -> service.cancelDarCollectionByRole(user, collection, UserRoles.RESEARCHER));
   }
 
   @Test
@@ -210,7 +210,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(electionDAO.findOpenElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
     when(darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId())).thenReturn(collection);
 
-    service.cancelDarCollectionElections(new User(), collection, UserRoles.ADMIN);
+    service.cancelDarCollectionByRole(new User(), collection, UserRoles.ADMIN);
     verify(electionDAO).findOpenElectionsByReferenceIds(anyList());
     verify(electionDAO).updateElectionById(anyInt(), anyString(), any());
     verify(dataAccessRequestDAO, times(0)).cancelByReferenceIds(anyList());
@@ -239,7 +239,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(electionDAO.findOpenElectionsByReferenceIds(anyList())).thenReturn(List.of(election));
     when(darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId())).thenReturn(collection);
 
-    service.cancelDarCollectionElections(user, collection, UserRoles.CHAIRPERSON);
+    service.cancelDarCollectionByRole(user, collection, UserRoles.CHAIRPERSON);
     verify(datasetDAO).findDatasetIdsByDACUserId(anyInt());
     verify(electionDAO).findOpenElectionsByReferenceIds(anyList());
     verify(electionDAO).updateElectionById(anyInt(), anyString(), any());
@@ -266,14 +266,14 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     election.setElectionId(1);
     when(datasetDAO.findDatasetIdsByDACUserId(anyInt())).thenReturn(List.of());
 
-    service.cancelDarCollectionElections(user, collection, UserRoles.CHAIRPERSON);
+    service.cancelDarCollectionByRole(user, collection, UserRoles.CHAIRPERSON);
     verify(datasetDAO).findDatasetIdsByDACUserId(anyInt());
     verifyNoMoreInteractions(electionDAO);
     verifyNoInteractions(dataAccessRequestDAO, darCollectionDAO);
   }
 
   @Test
-  void cancelDarCollectionElections_ProgressReport() {
+  void cancelDarCollectionByRole_ProgressReport() {
     DarCollection collection = createMockCollections().get(0);
     collection.addDar(new DataAccessRequest());
     DarCollectionSummary summary = new DarCollectionSummary();
@@ -287,13 +287,13 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     collection.setCreateUserId(user.getUserId());
     assertThrows(
         BadRequestException.class,
-        () -> service.cancelDarCollectionElections(user, collection, UserRoles.RESEARCHER));
+        () -> service.cancelDarCollectionByRole(user, collection, UserRoles.RESEARCHER));
   }
 
   @Test
-  void cancelDarCollectionElections_NoDars() {
+  void cancelDarCollectionByRole_NoDars() {
     DarCollection collection = new DarCollection();
-    var newCollection = service.cancelDarCollectionElections(null, collection, UserRoles.RESEARCHER);
+    var newCollection = service.cancelDarCollectionByRole(null, collection, UserRoles.RESEARCHER);
     assertEquals(collection, newCollection);
     verifyNoInteractions(electionDAO);
   }

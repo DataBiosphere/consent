@@ -190,7 +190,7 @@ public class DarCollectionResource extends Resource {
         actingRole = validateUserHasRoleName(user, roleName);
       }
 
-      DarCollection cancelledCollection = darCollectionService.cancelDarCollectionElections(user, collection, actingRole);
+      DarCollection cancelledCollection = darCollectionService.cancelDarCollectionByRole(user, collection, actingRole);
       ComplianceLogger.logDARCancellation(user, cancelledCollection.getDatasets().stream().toList(),
               (ContainerRequest) request, Response.Status.OK.getStatusCode());
       return Response.ok().entity(cancelledCollection).build();

@@ -313,7 +313,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     int collectionId = collection.getDarCollectionId();
     when(userService.findUserByEmail(researcher.getEmail())).thenReturn(researcher);
     when(darCollectionService.getByCollectionId(collectionId)).thenReturn(collection);
-    when(darCollectionService.cancelDarCollectionElections(researcher, collection, UserRoles.RESEARCHER))
+    when(darCollectionService.cancelDarCollectionByRole(researcher, collection, UserRoles.RESEARCHER))
         .thenThrow(new BadRequestException());
     initResource();
 
@@ -329,7 +329,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     int collectionId = collection.getDarCollectionId();
     when(userService.findUserByEmail(researcher.getEmail())).thenReturn(researcher);
     when(darCollectionService.getByCollectionId(collectionId)).thenReturn(collection);
-    when(darCollectionService.cancelDarCollectionElections(researcher, collection, UserRoles.RESEARCHER))
+    when(darCollectionService.cancelDarCollectionByRole(researcher, collection, UserRoles.RESEARCHER))
         .thenThrow(new InternalServerErrorException());
     initResource();
 
@@ -348,7 +348,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     int collectionId = collection.getDarCollectionId();
     when(userService.findUserByEmail(admin.getEmail())).thenReturn(admin);
     when(darCollectionService.getByCollectionId(collectionId)).thenReturn(collection);
-    when(darCollectionService.cancelDarCollectionElections(admin, collection, UserRoles.ADMIN))
+    when(darCollectionService.cancelDarCollectionByRole(admin, collection, UserRoles.ADMIN))
         .thenReturn(collection);
     initResource();
 
@@ -367,7 +367,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     int collectionId = collection.getDarCollectionId();
     when(userService.findUserByEmail(anyString())).thenReturn(chair);
     when(darCollectionService.getByCollectionId(collectionId)).thenReturn(collection);
-    when(darCollectionService.cancelDarCollectionElections(chair, collection, UserRoles.CHAIRPERSON))
+    when(darCollectionService.cancelDarCollectionByRole(chair, collection, UserRoles.CHAIRPERSON))
         .thenReturn(collection);
     initResource();
 
@@ -399,7 +399,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setCreateUserId(researcher.getUserId());
     when(userService.findUserByEmail(researcher.getEmail())).thenReturn(researcher);
     when(darCollectionService.getByCollectionId(collectionId)).thenReturn(collection);
-    when(darCollectionService.cancelDarCollectionElections(researcher, collection, UserRoles.RESEARCHER))
+    when(darCollectionService.cancelDarCollectionByRole(researcher, collection, UserRoles.RESEARCHER))
         .thenReturn(collection);
     initResource();
 

@@ -532,14 +532,15 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   /**
-   * Cancel Elections for a DarCollection, given a user and a role.
+   * Cancel Elections or a dar for a DarCollection, given a user and a role. If the user is a chair,
+   * or admin, cancel elections. If the user is a researcher, cancel the dar.
    *
    * @param user       The User initiating the cancel
    * @param collection The DarCollection
    * @param role       The role of the user, must be one of ADMIN, CHAIRPERSON, or RESEARCHER
-   * @return The DarCollection whose elections have been canceled
+   * @return The DarCollection that has been canceled
    */
-  public DarCollection cancelDarCollectionElections(User user, DarCollection collection, UserRoles role) {
+  public DarCollection cancelDarCollectionByRole(User user, DarCollection collection, UserRoles role) {
     Collection<DataAccessRequest> dars = collection.getDars().values();
     if (dars.isEmpty()) {
       logWarn("DAR Collection ID: [%s] does not have any associated DAR ids".formatted(
