@@ -10,7 +10,6 @@ public enum EmailType {
   CLOSED_DATASET_ELECTION(6),
   DATA_CUSTODIAN_APPROVAL(7, "data-custodian-approval.html"),
   RESEARCHER_DAR_APPROVED(8, "researcher-dar-approved.html"),
-  RESEARCHER_PROGRESS_REPORT_APPROVED(8, "researcher-progress-report-approved.html"),
   ADMIN_FLAGGED_DAR_APPROVED(9),
   DAR_CANCEL(10),
   DELEGATE_RESPONSIBILITIES(11),
@@ -25,7 +24,8 @@ public enum EmailType {
   DAR_EXPIRED(20, "dar-expired.html"),
   DAR_EXPIRATION_REMINDER(21, "dar-expiration-reminder.html"),
   NEW_PROGRESS_REPORT(22, "new-progress-report-request.html"),
-  NEW_PROGRESS_REPORT_CASE(23, "new-progress-report-case.html");
+  NEW_PROGRESS_REPORT_CASE(23, "new-progress-report-case.html"),
+  RESEARCHER_PROGRESS_REPORT_APPROVED(24, "researcher-progress-report-approved.html"),
 
   private final Integer typeInt;
   public final String templateName;
