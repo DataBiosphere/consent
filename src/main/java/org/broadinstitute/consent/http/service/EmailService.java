@@ -14,6 +14,7 @@ import java.io.Writer;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
@@ -30,8 +31,12 @@ import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetSubmittedMessage;
 import org.broadinstitute.consent.http.mail.message.MailMessage;
+import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
+import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
+import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
+import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewResearcherLibraryRequestMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
@@ -207,6 +212,36 @@ public class EmailService implements ConsentLogger {
         new NewDAAUploadResearcherMessage(
             researcher, dacName, previousDaaName, newDaaName),
         userId);
+  }
+
+  public void sendDarNewCollectionElectionMessage(List<User> users, String darCode)
+      throws IOException, TemplateException {
+    String electionType = "Data Access Request";
+    for (User user : users) {
+      sendMessage(new NewCaseMessage(user, darCode, electionType), user.getUserId());
+    }
+  }
+
+  public void sendProgressReportNewCollectionElectionMessage(List<User> users, String darCode)
+      throws IOException, TemplateException {
+    String electionType = "Progress Report";
+    for (User user : users) {
+      sendMessage(new NewProgressReportCaseMessage(user, darCode, electionType), user.getUserId());
+    }
+  }
+
+  public void sendNewDARRequestEmail(
+      User user, Map<String, List<String>> sendList, String researcherName, String darCode)
+      throws TemplateException, IOException {
+        sendMessage(new NewDARRequestMessage(user, darCode, sendList, researcherName),
+        user.getUserId());
+  }
+
+  public void sendNewProgressReportRequestEmail(
+      User user, Map<String, List<String>> sendList, String researcherName, String darCode, String referenceId)
+      throws TemplateException, IOException {
+      sendMessage(new NewProgressReportRequestMessage(user, darCode, referenceId, sendList, researcherName),
+        user.getUserId());
   }
 
   /**

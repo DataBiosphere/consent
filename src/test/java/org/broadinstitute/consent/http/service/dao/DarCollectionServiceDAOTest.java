@@ -277,7 +277,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     // Verify we have open votes for both datasets on the DAR.
     createdVotes =
         voteDAO.findVotesByElectionIds(
-            createdElections.stream().map(Election::getElectionId).collect(Collectors.toList()));
+            createdElections.stream().map(Election::getElectionId).toList());
     assertEquals(16, createdVotes.size()); // 2 datasets X 2 elections/dataset X 4 votes/election each = 16 votes.
   }
 
@@ -463,37 +463,12 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     return new DacAndDataset(dac, dataset);
   }
 
-  /**
-   * Helper method to add a DAR to a collection. This creates a new DAC/Dataset/Chair/Member to
-   * facilitate the creation.
-   */
-  private DataAccessRequest addDARWithDacAndDatasetToCollection(DarCollection collection) {
-    // Create new DAC and Dataset:
-    DacAndDataset dacAndDataset = createDacAndDataset();
-
-    // Create new DAR with Dataset and add it to the collection
-    User user = createUser();
-    return createDarForCollection(user, collection.getDarCollectionId(), dacAndDataset.dataset);
-  }
-
   private Dac createDac() {
     Integer id = dacDAO.createDac(
         "Test_" + RandomStringUtils.random(20, true, true),
         "Test_" + RandomStringUtils.random(20, true, true),
         new Date());
     return dacDAO.findById(id);
-  }
-
-  private Dataset createDataset() {
-    User user = createUser();
-    String name = "Name_" + RandomStringUtils.random(20, true, true);
-    Timestamp now = new Timestamp(new Date().getTime());
-    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
-    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
-        dataUse.toString(), null);
-    createDatasetProperties(id);
-    return datasetDAO.findDatasetById(id);
   }
 
   private void createDatasetProperties(Integer datasetId) {

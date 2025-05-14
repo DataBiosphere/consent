@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -343,7 +344,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     verify(darCollectionServiceDAO, times(1)).createElectionsForDarByUser(any(), eq(progressReport));
     verify(voteDAO, times(1)).findVoteUsersByElectionReferenceIdList(any());
     verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(any());
-    verify(emailService, times(1)).sendMessage(isA(NewProgressReportCaseMessage.class), any());
+    verify(emailService, times(1)).sendProgressReportNewCollectionElectionMessage(any(), any());
   }
 
   @Test
@@ -1277,7 +1278,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     dar.setDatasetIds(List.of(d1.getDatasetId(), d2.getDatasetId()));
     collection.setDars(Map.of(dar.getReferenceId(), dar));
 
-    service.sendNewDARCollectionMessage(collection.getDarCollectionId());
+    assertDoesNotThrow(() -> service.sendNewDARCollectionMessage(collection.getDarCollectionId()));
   }
 
   private DarCollection generateMockDarCollection(Set<Dataset> datasets) {

@@ -692,9 +692,9 @@ public class DarCollectionService implements ConsentLogger {
         List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(
             createdElectionReferenceIds);
         if (dar.getProgressReport()) {
-          sendProgressReportNewCollectionElectionMessage(voteUsers, collection.getDarCode());
+          emailService.sendProgressReportNewCollectionElectionMessage(voteUsers, collection.getDarCode());
         } else {
-          sendDarNewCollectionElectionMessage(voteUsers, collection.getDarCode());
+          emailService.sendDarNewCollectionElectionMessage(voteUsers, collection.getDarCode());
         }
 
       } catch (Exception e) {
@@ -721,21 +721,6 @@ public class DarCollectionService implements ConsentLogger {
     });
   }
 
-  private void sendDarNewCollectionElectionMessage(List<User> users, String darCode)
-      throws IOException, TemplateException {
-    String electionType = "Data Access Request";
-    for (User user : users) {
-      emailService.sendMessage(new NewCaseMessage(user, darCode, electionType), user.getUserId());
-    }
-  }
-
-  private void sendProgressReportNewCollectionElectionMessage(List<User> users, String darCode)
-      throws IOException, TemplateException {
-    String electionType = "Progress Report";
-    for (User user : users) {
-      emailService.sendMessage(new NewProgressReportCaseMessage(user, darCode, electionType), user.getUserId());
-    }
-  }
 
   public void sendNewDARCollectionMessage(Integer collectionId)
       throws IOException, TemplateException {
@@ -776,9 +761,9 @@ public class DarCollectionService implements ConsentLogger {
       if (dar.getProgressReport()) {
         // Use the reference ID to link the fact that this progress report will have been noted.
         // the DAR Code at this point will be ambiguous.
-        sendNewProgressReportRequestEmail(user, sendList, researcherName, collection.getDarCode(), dar.getReferenceId());
+        emailService.sendNewProgressReportRequestEmail(user, sendList, researcherName, collection.getDarCode(), dar.getReferenceId());
       } else {
-        sendNewDARRequestEmail(user, sendList, researcherName, collection.getDarCode());
+        emailService.sendNewDARRequestEmail(user, sendList, researcherName, collection.getDarCode());
       }
     }
   }
@@ -813,23 +798,9 @@ public class DarCollectionService implements ConsentLogger {
 
   private List<String> getMatchingDatasets(Dac dac, List<Dataset> datasetsInDAR) {
     return datasetsInDAR.stream()
-        .filter(dataset -> dataset.getDacId() == dac.getDacId())
-        .map(dataset -> dataset.getDatasetIdentifier())
+        .filter(dataset -> dataset.getDacId().equals(dac.getDacId()))
+        .map(Dataset::getDatasetIdentifier)
         .toList();
-  }
-
-  private void sendNewDARRequestEmail(
-      User user, Map<String, List<String>> sendList, String researcherName, String darCode)
-      throws TemplateException, IOException {
-    emailService.sendMessage(new NewDARRequestMessage(user, darCode, sendList, researcherName),
-        user.getUserId());
-  }
-
-  private void sendNewProgressReportRequestEmail(
-      User user, Map<String, List<String>> sendList, String researcherName, String darCode, String referenceId)
-      throws TemplateException, IOException {
-    emailService.sendMessage(new NewProgressReportRequestMessage(user, darCode, referenceId, sendList, researcherName),
-        user.getUserId());
   }
 
 }

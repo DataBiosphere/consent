@@ -33,8 +33,6 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
-import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
-import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DarCollection;
@@ -53,7 +51,7 @@ import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 public class DataAccessRequestService implements ConsentLogger {
   public static final String EXPIRE_WARN_INTERVAL = "11 months";
   public static final String EXPIRE_NOTICE_INTERVAL = "1 year";
-  public static final Timestamp MINIMUM_SUBMITTED_DATE_FOR_DAR_EXPIRATIONS = Timestamp.from(
+  protected static final Timestamp MINIMUM_SUBMITTED_DATE_FOR_DAR_EXPIRATIONS = Timestamp.from(
       Instant.ofEpochSecond(
           LocalDate.of(2024, 9, 30).toEpochSecond(LocalTime.of(0, 0, 0, 0), ZoneOffset.UTC)));
   private final CounterService counterService;
@@ -256,7 +254,7 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new BadRequestException("Progress report can only be created for approved datasets in the parent DAR");
     }
     dataAccessRequestDAO.insertProgressReport(
-          Integer.valueOf(progressReport.getParentId()),
+          progressReport.getParentId(),
           progressReport.getCollectionId(),
           referenceId,
           user.getUserId(),
@@ -421,6 +419,8 @@ public class DataAccessRequestService implements ConsentLogger {
               break;
             case DAR_EXPIRED:
               emailService.sendDarExpiredMessage(user, darCode, user.getUserId(), referenceId);
+            default:
+              break;
           }
         }
       } catch (Exception e) {

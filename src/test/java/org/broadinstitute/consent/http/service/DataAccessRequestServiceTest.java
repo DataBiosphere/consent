@@ -10,7 +10,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -46,7 +45,6 @@ import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
@@ -807,7 +805,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSendReminderMessage() throws Exception {
+  void testSendReminderMessage() {
     Election election = new Election();
     election.setElectionId(RandomUtils.nextInt());
     election.setReferenceId(UUID.randomUUID().toString());
@@ -830,12 +828,12 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(userDAO.findUserById(any())).thenReturn(user);
 
     initService();
-    service.sendReminderMessage(vote.getVoteId());
+    assertDoesNotThrow(() -> service.sendReminderMessage(vote.getVoteId()));
   }
 
 
   @Test
-  void sendExpirationNoticesTest() throws IOException {
+  void sendExpirationNoticesTest() {
     User user1 = new User();
     user1.setUserId(123);
     user1.setDisplayName("John Doe");
@@ -858,7 +856,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void sendExpirationNoticesTestMissingEmailForOneUser() throws IOException {
+  void sendExpirationNoticesTestMissingEmailForOneUser() {
     ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
     ch.qos.logback.classic.Logger log = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(DataAccessRequestService.class);
     listAppender.start();
@@ -889,7 +887,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void sendExpirationNoticesTestUnderlyingExceptionThrownSendingOneTypeOfMessage() throws IOException {
+  void sendExpirationNoticesTestUnderlyingExceptionThrownSendingOneTypeOfMessage() {
     ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
     ch.qos.logback.classic.Logger log = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(DataAccessRequestService.class);
     listAppender.start();

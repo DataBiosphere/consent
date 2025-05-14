@@ -139,7 +139,7 @@ public class DataAccessRequestResource extends Resource {
         darCollectionService.sendNewDARCollectionMessage(collectionId);
       } catch (Exception e) {
         // non-fatal exception
-        logException("Exception sending email for collection id: " + collectionId, e);
+        logCaughtEmailException(collectionId, e);
       }
       URI uri = info.getRequestUriBuilder().build();
       matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
@@ -169,7 +169,7 @@ public class DataAccessRequestResource extends Resource {
         darCollectionService.sendNewDARCollectionMessage(collectionId);
       } catch (Exception e) {
         // non-fatal exception
-        logException("Exception sending email for collection id: " + collectionId, e);
+        logCaughtEmailException(collectionId, e);
       }
       URI uri = info.getRequestUriBuilder().build();
       matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
@@ -453,17 +453,25 @@ public class DataAccessRequestResource extends Resource {
           ethicsFileDetails, payload, parentDar);
       DataAccessRequest progressReport = dataAccessRequestService.createProgressReport(user,
           payload, parentDar);
-      try {
-        // This service method knows how to distinguish between a DAR and a Progress Report.
-        darCollectionService.sendNewDARCollectionMessage(parentDar.getCollectionId());
-      } catch (Exception e) {
-        // non-fatal exception
-        logException("Exception sending email for collection id: " + parentDar.getCollectionId(), e);
-      }
+      sendNewDarCollectionMessage(parentDar.getCollectionId());
       return Response.ok(progressReport.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
+  }
+
+  private void sendNewDarCollectionMessage(Integer collectionId) {
+    try {
+      // This service method knows how to distinguish between a DAR and a Progress Report.
+      darCollectionService.sendNewDARCollectionMessage(collectionId);
+    } catch (Exception e) {
+      // non-fatal exception
+      logCaughtEmailException(collectionId, e);
+    }
+  }
+
+  private void logCaughtEmailException(Integer collectionId, Exception e) {
+    logException("Exception sending email for collection id: " + collectionId, e);
   }
 
   public void populateProgressReportWithDocuments(InputStream collabInputStream,
