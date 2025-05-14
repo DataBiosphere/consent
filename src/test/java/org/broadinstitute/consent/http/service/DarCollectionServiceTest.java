@@ -612,7 +612,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     List<DarCollectionSummary> summaries = service.getSummariesForRole(user,
         UserRoles.RESEARCHER);
     assertNotNull(summaries);
-    assertEquals(5, summaries.size());
+    assertEquals(6, summaries.size());
 
     DarCollectionSummary testOne = summaries.get(0);
     Set<String> expectedOneActions = Set.of(
@@ -647,11 +647,11 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         testFour.getStatus().equalsIgnoreCase(DarCollectionStatus.COMPLETE.getValue()));
     assertEquals(testFour.getActions(), expectedFourActions);
 
-    DarCollectionSummary testFive = summaries.get(3);
+    DarCollectionSummary testFive = summaries.get(4);
     assertEquals(DarCollectionStatus.IN_PROCESS.getValue(), testFive.getStatus());
     assertEquals(Set.of(DarCollectionActions.REVIEW.getValue()), testFive.getActions());
 
-    DarCollectionSummary testDraft = summaries.get(4);
+    DarCollectionSummary testDraft = summaries.get(5);
     Set<String> expectedDraftActions = Set.of(
         DarCollectionActions.RESUME.getValue(),
         DarCollectionActions.DELETE.getValue());
