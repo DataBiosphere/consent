@@ -27,14 +27,16 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       @Bind("createUserId") Integer createUserId,
       @Bind("createDate") Date createDate);
 
-  @SqlUpdate("UPDATE library_card SET " +
-      " id = :libraryCardId, " +
-      " user_id = :userId, " +
-      " user_name = :userName, " +
-      " user_email = :userEmail, " +
-      " update_user_id = :updateUserId, " +
-      " update_date = :updateDate " +
-      " WHERE id = :libraryCardId")
+  @SqlUpdate("""
+      UPDATE library_card SET
+            id = :libraryCardId, 
+            user_id = :userId, 
+            user_name = :userName, 
+            user_email = :userEmail, 
+            update_user_id = :updateUserId, 
+            update_date = :updateDate 
+            WHERE id = :libraryCardId
+      """)
   void updateLibraryCardById(@Bind("libraryCardId") Integer libraryCardId,
       @Bind("userId") Integer userId,
       @Bind("userName") String userName,
