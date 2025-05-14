@@ -437,8 +437,7 @@ public class DataAccessRequestService implements ConsentLogger {
         election.getReferenceId());
     User user = findUserById(vote.getUserId());
     String voteUrl = serverUrl + "dar_collection/%d".formatted(collection.getDarCollectionId());
-    emailService.sendMessage(new ReminderMessage(user, vote, collection.getDarCode(), election.getElectionType(),
-        voteUrl), user.getUserId());
+    emailService.sendReminderMessage(user, vote, collection.getDarCode(), election.getElectionType(), voteUrl);
     voteDAO.updateVoteReminderFlag(voteId, true);
   }
 

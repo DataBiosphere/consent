@@ -38,9 +38,11 @@ import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewResearcherLibraryRequestMessage;
+import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
@@ -270,6 +272,11 @@ public class EmailService implements ConsentLogger {
       String referenceId)
       throws TemplateException, IOException {
     sendMessage(new DarExpirationReminderMessage(user, darCode, referenceId), userId);
+  }
+
+  public void sendReminderMessage(User user, Vote vote, String darCode, String electionType, String url)
+      throws TemplateException, IOException {
+    sendMessage(new ReminderMessage(user, vote, darCode, electionType, url), user.getUserId());
   }
 
 }
