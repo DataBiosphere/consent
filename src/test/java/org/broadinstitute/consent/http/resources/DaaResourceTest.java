@@ -371,7 +371,6 @@ class DaaResourceTest {
   @Test
   void testCreateLibraryCardDaaRelation_InvalidDaaIdCase() {
     UriInfo info = mock(UriInfo.class);
-    UriBuilder builder = mock(UriBuilder.class);
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
     User admin = new User();
@@ -420,7 +419,6 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
     when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
-    when(libraryCardService.createLibraryCardForSigningOfficial(any(), any())).thenReturn(newLc);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
@@ -1092,7 +1090,6 @@ class DaaResourceTest {
   @Test
   void testAddDacToDaaFromUserForbidden() {
     int daaId = RandomUtils.nextInt(10, 100);
-    DataAccessAgreement daa = new DataAccessAgreement();
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
 

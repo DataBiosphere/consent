@@ -189,7 +189,6 @@ class UserServiceTest extends AbstractTestHelper {
     verify(libraryCardDAO).updateLibraryCardById(
         eq(lc.getId()),
         eq(u.getUserId()),
-        eq(lc.getEraCommonsId()),
         eq(lc.getUserName()),
         eq(lc.getUserEmail()),
         eq(u.getUserId()),
@@ -219,7 +218,6 @@ class UserServiceTest extends AbstractTestHelper {
     User u = generateUser();
     u.setEraCommonsId(randomAlphabetic(10));
     LibraryCard lc = generateLibraryCard(u.getEmail());
-    lc.setEraCommonsId(u.getEmail());
     u.addLibraryCard(lc);
     UserProperty eraStatus = new UserProperty(1, u.getUserId(), ERA_STATUS.getValue(), "true");
     //standard practice is that these expire in 30 days.
@@ -281,7 +279,6 @@ class UserServiceTest extends AbstractTestHelper {
   void testValidateRACommonsCredentialsMissingERAStatusShouldFail() {
     User u = generateUser();
     LibraryCard lc = generateLibraryCard(u.getEmail());
-    lc.setEraCommonsId(u.getEmail());
     u.addLibraryCard(lc);
     //standard practice is that these expire in 30 days.
     Timestamp eraExpirationTime = new Timestamp(
@@ -301,7 +298,6 @@ class UserServiceTest extends AbstractTestHelper {
   void testValidateERACommonsCredentialsMissingERAStatusAndExpirationShouldFail() {
     User u = generateUser();
     LibraryCard lc = generateLibraryCard(u.getEmail());
-    lc.setEraCommonsId(u.getEmail());
     u.addLibraryCard(lc);
     List<UserProperty> userProperties = new ArrayList<>();
     u.setProperties(userProperties);
@@ -315,7 +311,6 @@ class UserServiceTest extends AbstractTestHelper {
   void testValidateERACommonsCredentialsWithExpiredERAExpirationDateShouldFail() {
     User u = generateUser();
     LibraryCard lc = generateLibraryCard(u.getEmail());
-    lc.setEraCommonsId(u.getEmail());
     u.addLibraryCard(lc);
     UserProperty eraStatus = new UserProperty(1, u.getUserId(), ERA_STATUS.getValue(), "true");
     // set expiration date to 30 days ago!

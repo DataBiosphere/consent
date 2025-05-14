@@ -234,7 +234,7 @@ class DaaDAOTest extends DAOTestHelper {
     // That user must have an LC with a DAA associated to the same DAC that the dataset is associated to.
     User user = createUserWithInstitution();
     Institution institution = getUserInstitution(user);
-    LibraryCard lc = createRandomLibraryCard(user, institution);
+    LibraryCard lc = createRandomLibraryCard(user);
     Dac dac1 = createRandomDac();
     Dac dac2 = createRandomDac();
     DataAccessAgreement daa = createRandomDataAccessAgreement(user, dac1);
@@ -269,7 +269,7 @@ class DaaDAOTest extends DAOTestHelper {
     Institution institution = createRandomInstitution(user.getUserId());
     Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "",  new Date());;
     Integer daaId1 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
-    LibraryCard lc = createRandomLibraryCard(user, institution);
+    LibraryCard lc = createRandomLibraryCard(user);
     DataAccessAgreement daa1 = daaDAO.findById(daaId1);
 
     daaDAO.createDacDaaRelation(dacId, daa1.getDaaId());
@@ -344,10 +344,9 @@ class DaaDAOTest extends DAOTestHelper {
     return institutionDAO.findInstitutionById(institutionId);
   }
 
-  private LibraryCard createRandomLibraryCard(User user, Institution institution) {
+  private LibraryCard createRandomLibraryCard(User user) {
     int lcId = libraryCardDAO.insertLibraryCard(
         user.getUserId(),
-        randomAlphabetic(5),
         randomAlphabetic(5),
         randomAlphabetic(5),
         user.getUserId(),

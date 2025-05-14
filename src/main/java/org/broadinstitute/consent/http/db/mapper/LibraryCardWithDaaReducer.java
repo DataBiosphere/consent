@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import java.util.Map;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
-import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;

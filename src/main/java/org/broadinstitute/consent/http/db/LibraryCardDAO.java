@@ -17,12 +17,11 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @SqlUpdate("""
-        INSERT INTO library_card (user_id, era_commons_id, user_name, user_email, create_user_id, create_date)
-        VALUES (:userId, :eraCommonsId, :userName, :userEmail, :createUserId, :createDate)
+        INSERT INTO library_card (user_id, user_name, user_email, create_user_id, create_date)
+        VALUES (:userId, :userName, :userEmail, :createUserId, :createDate)
         """)
   @GetGeneratedKeys
   Integer insertLibraryCard(@Bind("userId") Integer userId,
-      @Bind("eraCommonsId") String eraCommonsId,
       @Bind("userName") String userName,
       @Bind("userEmail") String userEmail,
       @Bind("createUserId") Integer createUserId,
@@ -31,7 +30,6 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   @SqlUpdate("UPDATE library_card SET " +
       " id = :libraryCardId, " +
       " user_id = :userId, " +
-      " era_commons_id = :eraCommonsId, " +
       " user_name = :userName, " +
       " user_email = :userEmail, " +
       " update_user_id = :updateUserId, " +
@@ -39,7 +37,6 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       " WHERE id = :libraryCardId")
   void updateLibraryCardById(@Bind("libraryCardId") Integer libraryCardId,
       @Bind("userId") Integer userId,
-      @Bind("eraCommonsId") String eraCommonsId,
       @Bind("userName") String userName,
       @Bind("userEmail") String userEmail,
       @Bind("updateUserId") Integer updateUserId,
@@ -95,12 +92,10 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   @RegisterBeanMapper(value = LibraryCard.class)
   @UseRowReducer(LibraryCardReducer.class)
   @SqlQuery("""
-      SELECT library_card.*,
-      ld.daa_id
+      SELECT library_card.*, ld.daa_id
       FROM library_card
-      INNER JOIN users u ON library_card.user_id = u.user_id
       LEFT JOIN lc_daa ld ON library_card.id = ld.lc_id
-      WHERE u.institution_id = :institutionId
+      INNER JOIN users u ON library_card.user_id = u.user_id AND u.institution_id = :institutionId
       """)
   List<LibraryCard> findLibraryCardsByInstitutionId(@Bind("institutionId") Integer institutionId);
 
@@ -119,14 +114,6 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   @SqlQuery("SELECT * FROM library_card " +
       "WHERE user_email = :email")
   List<LibraryCard> findAllLibraryCardsByUserEmail(@Bind("email") String email);
-
-  @SqlUpdate("""
-      UPDATE library_card
-      SET era_commons_id = :eraCommonsId
-      WHERE user_id = :userId
-      """)
-  void updateEraCommonsForUser(@Bind("userId") Integer userId,
-      @Bind("eraCommonsId") String eraCommonsId);
 
   @SqlUpdate("DELETE FROM library_card WHERE user_id = :userId OR create_user_id = :userId OR update_user_id = :userId")
   void deleteAllLibraryCardsByUser(@Bind("userId") Integer userId);

@@ -41,7 +41,6 @@ public class NihServiceDAO implements ConsentLogger {
               nihAccount.getEraExpiration())
       );
       userPropertyDAO.insertAll(properties);
-      libraryCardDAO.updateEraCommonsForUser(user.getUserId(), nihAccount.getNihUsername());
       userDAO.updateEraCommonsId(user.getUserId(), nihAccount.getNihUsername());
     });
   }

@@ -185,12 +185,12 @@ class UserDAOTest extends DAOTestHelper {
         RandomStringUtils.randomAlphabetic(5), new Date());
     Instant now = Instant.now();
     int daaId = daaDAO.createDaa(user.getUserId(), now, user.getUserId(), now, dacId);
-    int lcId1 = libraryCardDAO.insertLibraryCard(user.getUserId(), "asdf",
+    int lcId1 = libraryCardDAO.insertLibraryCard(user.getUserId(),
         user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
     libraryCardDAO.createLibraryCardDaaRelation(lcId1, daaId);
 
     User user2 = createUserWithInstitution();
-    int lcId2 = libraryCardDAO.insertLibraryCard(user2.getUserId(), "asdf",
+    int lcId2 = libraryCardDAO.insertLibraryCard(user2.getUserId(),
         user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
     libraryCardDAO.createLibraryCardDaaRelation(lcId2, daaId);
 
@@ -481,7 +481,7 @@ class UserDAOTest extends DAOTestHelper {
     User user = createUserWithInstitution();
     Integer userId = user.getUserId();
     String stringValue = "value";
-    Integer id = libraryCardDAO.insertLibraryCard(userId, stringValue, stringValue,
+    Integer id = libraryCardDAO.insertLibraryCard(userId, stringValue,
         stringValue, userId, new Date());
     return libraryCardDAO.findLibraryCardById(id);
   }

@@ -10,7 +10,6 @@ public class LibraryCard {
   public static final String QUERY_FIELDS_WITH_LC_PREFIX =
       " lc.id AS lc_id, " +
           " lc.user_id AS lc_user_id, " +
-          " lc.era_commons_id AS lc_era_commons_id, " +
           " lc.user_name AS lc_user_name, " +
           " lc.user_email AS lc_user_email, " +
           " lc.create_user_id AS lc_create_user_id, " +
@@ -19,7 +18,6 @@ public class LibraryCard {
 
   private Integer id;
   private Integer userId;
-  private String eraCommonsId;
   private String userName;
   private String userEmail;
   private Date createDate;
@@ -48,14 +46,6 @@ public class LibraryCard {
 
   public void setUserId(Integer userId) {
     this.userId = userId;
-  }
-
-  public String getEraCommonsId() {
-    return eraCommonsId;
-  }
-
-  public void setEraCommonsId(String eraCommonsId) {
-    this.eraCommonsId = eraCommonsId;
   }
 
   public String getUserName() {

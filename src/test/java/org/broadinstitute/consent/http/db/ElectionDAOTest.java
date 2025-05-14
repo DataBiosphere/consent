@@ -774,7 +774,7 @@ class ElectionDAOTest extends DAOTestHelper {
   private LibraryCard createLibraryCard(User user) {
     Integer institutionId = createInstitution().getId();
     String stringValue = "value";
-    Integer id = libraryCardDAO.insertLibraryCard(user.getUserId(), stringValue,
+    Integer id = libraryCardDAO.insertLibraryCard(user.getUserId(),
         user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
     return libraryCardDAO.findLibraryCardById(id);
   }
