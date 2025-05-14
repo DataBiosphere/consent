@@ -121,9 +121,9 @@ public class LibraryCardService {
     return libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
   }
 
-  public List<LibraryCard> removeDaaFromUserLibraryCardByInstitution(User user, Integer daaId) {
+  public List<LibraryCard> removeDaaFromUserLibraryCards(User user, Integer daaId) {
     List<LibraryCard> libraryCards = findLibraryCardsByUserId(user.getUserId());
-    // typically there should be one library card per user per institution
+    // typically there should be one library card per user
     for (LibraryCard libraryCard : libraryCards) {
       removeDaaFromLibraryCard(libraryCard.getId(), daaId);
     }

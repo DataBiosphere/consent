@@ -429,7 +429,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testRemoveDaaFromUserLibraryCardByInstitution() {
+  void testRemoveDaaFromUserLibraryCards() {
     User user = testUser(1);
     Integer userId = user.getUserId();
     List<LibraryCard> libraryCards = List.of(
@@ -441,14 +441,14 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     when(libraryCardDAO.findLibraryCardsByUserId(user.getUserId()))
         .thenReturn(libraryCards);
     doNothing().when(libraryCardDAO).deleteLibraryCardDaaRelation(any(), any());
-    List<LibraryCard> cards = service.removeDaaFromUserLibraryCardByInstitution(user, 1);
+    List<LibraryCard> cards = service.removeDaaFromUserLibraryCards(user, 1);
     // The above deletion only affects the lc-daa join table and does not remove library cards
     assertEquals(libraryCards.size(), cards.size());
   }
 
   @Disabled
   @Test
-  void testRemoveDaaFromUserLibraryCardByInstitutionNoMatchingInstitutions() {
+  void testRemoveDaaFromUserLibraryCardsNoMatchingInstitutions() {
     User user = testUser(1);
     Integer userId = user.getUserId();
     List<LibraryCard> libraryCards = List.of(
@@ -458,7 +458,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
         testLibraryCard(userId)
     );
     when(libraryCardDAO.findLibraryCardsByUserId(user.getUserId())).thenReturn(libraryCards);
-    List<LibraryCard> cards = service.removeDaaFromUserLibraryCardByInstitution(user, 1);
+    List<LibraryCard> cards = service.removeDaaFromUserLibraryCards(user, 1);
     assertEquals(0, cards.size());
   }
 
@@ -493,7 +493,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     Integer userId = user.getUserId();
     when(libraryCardDAO.findLibraryCardsByUserId(userId))
         .thenReturn(Collections.emptyList());
-    List<LibraryCard> cards = service.removeDaaFromUserLibraryCardByInstitution(user,1);
+    List<LibraryCard> cards = service.removeDaaFromUserLibraryCards(user,1);
     assertEquals(0, cards.size());
   }
 
