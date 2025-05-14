@@ -37,14 +37,6 @@ public class LibraryCardService {
   public LibraryCard createLibraryCard(LibraryCard libraryCard, User user) {
     throwIfNull(libraryCard);
     boolean isAdmin = checkIsAdmin(user);
-    // If user is not an admin, ensure that the authenticated user has the same institution as the
-    // user for whom the library card is being created.
-    if (!isAdmin) {
-      User lcUser = userDAO.findUserByEmail(libraryCard.getUserEmail());
-      if (lcUser == null || !lcUser.getInstitutionId().equals(user.getInstitutionId())) {
-        throw new BadRequestException("User not found");
-      }
-    }
     checkIfCardExists(libraryCard);
     processUserOnNewLC(libraryCard);
     if (!isAdmin) {
@@ -132,7 +124,7 @@ public class LibraryCardService {
     return libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
   }
 
-  public List<LibraryCard> removeDaaFromUserLibraryCardByInstitution(User user, Integer institutionId, Integer daaId) {
+  public List<LibraryCard> removeDaaFromUserLibraryCardByInstitution(User user, Integer daaId) {
     List<LibraryCard> libraryCards = findLibraryCardsByUserId(user.getUserId());
     // typically there should be one library card per user per institution
     for (LibraryCard libraryCard : libraryCards) {
