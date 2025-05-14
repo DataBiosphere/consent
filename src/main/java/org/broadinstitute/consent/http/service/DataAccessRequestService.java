@@ -419,6 +419,7 @@ public class DataAccessRequestService implements ConsentLogger {
               break;
             case DAR_EXPIRED:
               emailService.sendDarExpiredMessage(user, darCode, user.getUserId(), referenceId);
+              break;
             default:
               break;
           }
