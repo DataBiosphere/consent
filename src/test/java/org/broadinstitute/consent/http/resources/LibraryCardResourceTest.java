@@ -261,7 +261,6 @@ class LibraryCardResourceTest {
     LibraryCard card = mockLibraryCardSetup();
     User soUser = mockSOUser();
     soUser.setInstitutionId(1);
-    card.setInstitutionId(2);
 
     when(userService.findUserByEmail(anyString())).thenReturn(soUser);
     when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);

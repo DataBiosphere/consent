@@ -347,7 +347,6 @@ class DaaDAOTest extends DAOTestHelper {
   private LibraryCard createRandomLibraryCard(User user, Institution institution) {
     int lcId = libraryCardDAO.insertLibraryCard(
         user.getUserId(),
-        institution.getId(),
         randomAlphabetic(5),
         randomAlphabetic(5),
         randomAlphabetic(5),

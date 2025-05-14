@@ -115,19 +115,18 @@ public class DaaResource extends Resource implements ConsentLogger {
           return Response.status(Status.FORBIDDEN).build();
       }
       List<LibraryCard> libraryCards = libraryCardService.findLibraryCardsByUserId(userId);
-      Optional<LibraryCard> matchingCard = libraryCards.stream()
-          .filter(card -> card.getInstitutionId() == authedUser.getInstitutionId().intValue())
-          .findFirst();
-      if (matchingCard.isEmpty()) {
-        LibraryCard createdLc = libraryCardService.createLibraryCardForSigningOfficial(user, authedUser);
-        matchingCard = Optional.of(createdLc);
+      LibraryCard workingLibraryCard;
+      if (libraryCards.isEmpty()) {
+        workingLibraryCard = libraryCardService.createLibraryCardForSigningOfficial(user, authedUser);
+      } else {
+        workingLibraryCard = libraryCards.get(0);
       }
-      int libraryCardId = matchingCard.get().getId();
+      int libraryCardId = workingLibraryCard.getId();
       libraryCardService.addDaaToLibraryCard(libraryCardId, daaId);
       URI uri = info.getBaseUriBuilder()
           .replacePath("api/libraryCards/{libraryCardId}")
           .build(libraryCardId);
-      return Response.ok().location(uri).entity(matchingCard.get()).build();
+      return Response.ok().location(uri).entity(workingLibraryCard).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

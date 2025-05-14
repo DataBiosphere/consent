@@ -277,7 +277,6 @@ class DaaResourceTest {
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(1);
     LibraryCard lc = new LibraryCard();
-    lc.setInstitutionId(1);
     lc.setId(1);
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
@@ -309,7 +308,6 @@ class DaaResourceTest {
     daa.setDaaId(1);
     LibraryCard lc = new LibraryCard();
     lc.setId(1);
-    lc.setInstitutionId(1);
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
@@ -336,7 +334,6 @@ class DaaResourceTest {
     daa.setDaaId(1);
     LibraryCard lc = new LibraryCard();
     lc.setId(1);
-    lc.setInstitutionId(1);
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
@@ -362,7 +359,6 @@ class DaaResourceTest {
     daa.setDaaId(1);
     LibraryCard lc = new LibraryCard();
     lc.setId(1);
-    lc.setInstitutionId(1);
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
@@ -388,7 +384,6 @@ class DaaResourceTest {
     daa.setDaaId(1);
     LibraryCard lc = new LibraryCard();
     lc.setId(1);
-    lc.setInstitutionId(1);
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
@@ -418,10 +413,8 @@ class DaaResourceTest {
     daa.setDaaId(1);
     LibraryCard lc = new LibraryCard();
     lc.setId(1);
-    lc.setInstitutionId(2);
     LibraryCard newLc = new LibraryCard();
     newLc.setId(2);
-    newLc.setInstitutionId(1);
 
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
@@ -452,7 +445,6 @@ class DaaResourceTest {
     daa.setDaaId(1);
     LibraryCard newLc = new LibraryCard();
     newLc.setId(1);
-    newLc.setInstitutionId(1);
 
 
     when(userService.findUserByEmail(any())).thenReturn(admin);

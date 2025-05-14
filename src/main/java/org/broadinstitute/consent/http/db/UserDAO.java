@@ -243,12 +243,6 @@ public interface UserDAO extends Transactional<UserDAO> {
           lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date,
           lc.update_user_id AS lc_update_user_id,
           ld.daa_id as lc_daa_id,
-          lci.institution_id as lci_id,
-          lci.institution_name as lci_name,
-          lci.it_director_name as lci_it_director_name,
-          lci.it_director_email as lci_it_director_email,
-          lci.create_date as lci_create_date,
-          lci.update_date as lci_update_date,
           i.institution_id as i_id,
           i.institution_name as i_name,
           i.it_director_name as i_it_director_name,
@@ -260,7 +254,6 @@ public interface UserDAO extends Transactional<UserDAO> {
           LEFT JOIN roles r ON r.role_id = ur.role_id
           LEFT JOIN library_card lc ON lc.user_id = u.user_id AND lc.institution_id = :institutionId
           LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
-          LEFT JOIN institution lci ON lc.institution_id = lci.institution_id
           LEFT JOIN institution i ON u.institution_id = i.institution_id
           WHERE u.institution_id = :institutionId
         """)

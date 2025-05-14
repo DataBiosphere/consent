@@ -78,7 +78,6 @@ class DacServiceDAOTest extends DAOTestHelper {
           new Date());
       int userLcId = libraryCardDAO.insertLibraryCard(
           lcUser.getUserId(),
-          userInstitutionId,
           "era commons id: " + RandomStringUtils.randomAlphabetic(10),
           "library card user name: " + RandomStringUtils.randomAlphabetic(10),
           "library card user email: " + RandomStringUtils.randomAlphabetic(10),

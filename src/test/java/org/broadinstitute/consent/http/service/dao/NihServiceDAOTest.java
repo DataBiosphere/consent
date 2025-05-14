@@ -54,7 +54,7 @@ class NihServiceDAOTest extends DAOTestHelper {
     // Create Library Card
     Integer institutionId = institutionDAO.insertInstitution("name", "name", "email", "url", 1,
         "url", "url", "file", "type", user.getUserId(), new Date());
-    libraryCardDAO.insertLibraryCard(user.getUserId(), institutionId, commonsId,
+    libraryCardDAO.insertLibraryCard(user.getUserId(), commonsId,
         user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
 
     // Build a new NIHUserAccount to update

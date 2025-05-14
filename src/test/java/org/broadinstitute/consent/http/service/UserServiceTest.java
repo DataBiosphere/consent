@@ -177,9 +177,7 @@ class UserServiceTest extends AbstractTestHelper {
   void createUserWithLibraryCardTest() {
     User u = generateUser();
     LibraryCard lc = generateLibraryCard(u.getEmail());
-    Integer institutionId = lc.getInstitutionId();
     Institution institution = new Institution();
-    institution.setId(institutionId);
     List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
     u.setRoles(roles);
     when(libraryCardDAO.findAllLibraryCardsByUserEmail(u.getEmail())).thenReturn(
@@ -191,7 +189,6 @@ class UserServiceTest extends AbstractTestHelper {
     verify(libraryCardDAO).updateLibraryCardById(
         eq(lc.getId()),
         eq(u.getUserId()),
-        eq(lc.getInstitutionId()),
         eq(lc.getEraCommonsId()),
         eq(lc.getUserName()),
         eq(lc.getUserEmail()),
@@ -881,7 +878,6 @@ class UserServiceTest extends AbstractTestHelper {
   private LibraryCard generateLibraryCard(String email) {
     LibraryCard libraryCard = new LibraryCard();
     libraryCard.setId(randomInt(1, 10));
-    libraryCard.setInstitutionId(randomInt(1, 10));
     libraryCard.setUserEmail(email);
     libraryCard.setUserName(randomAlphabetic(randomInt(1, 10)));
     return libraryCard;
@@ -891,7 +887,6 @@ class UserServiceTest extends AbstractTestHelper {
     LibraryCard libraryCard = new LibraryCard();
     libraryCard.setId(randomInt(1, 10));
     libraryCard.setUserId(user.getUserId());
-    libraryCard.setInstitutionId(randomInt(1, 10));
     return libraryCard;
   }
 
