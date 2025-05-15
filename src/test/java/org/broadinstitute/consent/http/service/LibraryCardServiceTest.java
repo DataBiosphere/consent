@@ -29,7 +29,6 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -144,7 +143,6 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     verify(libraryCardDAO).insertLibraryCard(eq(null), eq(null), any(), eq(null), any());
   }
 
-  @Disabled
   @Test
   //Test LC create with only user id (no email)
   void testCreateLibraryCardPartialUserDetailsId() {
@@ -166,14 +164,12 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     assertEquals(newCard, service.createLibraryCard(payload, adminUser));
   }
 
-  @Disabled
   @Test
   void stubTest() {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
     user.setEmail("testemail");
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
-    when(institutionService.findInstitutionForEmail(user.getEmail())).thenReturn(institution);
     LibraryCard libraryCard = testLibraryCard(user.getUserId());
     libraryCard.setCreateUserId(RandomUtils.nextInt(1, 10));
     when(libraryCardDAO.insertLibraryCard(eq(user.getUserId()), eq(null), eq(user.getEmail()),
@@ -329,17 +325,6 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     });
   }
 
-  @Disabled
-  @Test
-  void testUpdateLibraryCard_InvalidInstitution() {
-    User user = testUser(1);
-    LibraryCard libraryCard = testLibraryCard(user.getUserId());
-    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
-    when(libraryCardDAO.findLibraryCardById(libraryCard.getId())).thenReturn(libraryCard);
-
-    assertThrows(IllegalArgumentException.class, () -> service.updateLibraryCard(libraryCard, libraryCard.getId(), 1));
-  }
-
   @Test
   void testDeleteLibraryCard_NotFound() {
     Institution institution = testInstitution();
@@ -437,26 +422,28 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     assertThrows(BadRequestException.class, () -> service.addDaaToUserLibraryCardByInstitution(user, signingOfficial, 1));
   }
 
-  @Disabled
   @Test
-  void testAddDaaToUserLibraryCardByInstitutionNoLibraryCards() {
+  void testAddDaaToUserLibraryCardWithNoLibraryCards() {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
     user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
     User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
     signingOfficial.setInstitutionId(institution.getId());
     Integer userId = user.getUserId();
-    LibraryCard payload = testLibraryCard(signingOfficial.getUserId());
+    LibraryCard payload = testLibraryCard(user.getUserId());
     payload.setUserEmail("testemail");
+    // There are two calls to findLibraryCardsByUserId for checks before creation
     when(libraryCardDAO.findLibraryCardsByUserId(userId))
-        .thenReturn(Collections.emptyList());
-    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
+        .thenReturn(List.of())
+        .thenReturn(List.of())
+        .thenReturn(List.of(payload));
+    when(institutionDAO.findInstitutionById(institution.getId())).thenReturn(institution);
     when(institutionService.findInstitutionForEmail(any())).thenReturn(institution);
-    when(userDAO.findUserById(anyInt())).thenReturn(signingOfficial);
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
     when(libraryCardDAO.insertLibraryCard(anyInt(), any(), any(), anyInt(), any()))
         .thenReturn(1);
     when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
-    when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
+
     List<LibraryCard> cards = service.addDaaToUserLibraryCardByInstitution(user, signingOfficial, 1);
     assertEquals(1, cards.size());
   }
@@ -488,7 +475,6 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     assertEquals(libraryCards.size(), cards.size());
   }
 
-  @Disabled
   @Test
   void testRemoveDaaFromUserLibraryCardsNoMatchingInstitutions() {
     User user = testUser(1);
@@ -501,7 +487,8 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     );
     when(libraryCardDAO.findLibraryCardsByUserId(user.getUserId())).thenReturn(libraryCards);
     List<LibraryCard> cards = service.removeDaaFromUserLibraryCards(user, 1);
-    assertEquals(0, cards.size());
+    // DAA removal should not delete library cards
+    assertEquals(libraryCards.size(), cards.size());
   }
 
   @Test
