@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
+import jakarta.ws.rs.BadRequestException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -740,5 +741,18 @@ public class DataAccessRequestData {
   public void setCloseoutSupplement(
       CloseoutSupplement closeoutSupplement) {
     this.closeoutSupplement = closeoutSupplement;
+  }
+
+  public static DataAccessRequestData populateDARData(String json) {
+    DataAccessRequestData data;
+    try {
+      data = DataAccessRequestData.fromString(json);
+    } catch (Exception e) {
+      throw new BadRequestException("Unable to parse DAR from JSON string");
+    }
+    if (Objects.isNull(data)) {
+      data = new DataAccessRequestData();
+    }
+    return data;
   }
 }

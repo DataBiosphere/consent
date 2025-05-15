@@ -88,19 +88,6 @@ public class DataAccessRequestResource extends Resource {
     this.matchService = matchService;
   }
 
-  private static DataAccessRequestData populateDARData(String json) {
-    DataAccessRequestData data;
-    try {
-      data = DataAccessRequestData.fromString(json);
-    } catch (Exception e) {
-      throw new BadRequestException("Unable to parse DAR from JSON string");
-    }
-    if (Objects.isNull(data)) {
-      data = new DataAccessRequestData();
-    }
-    return data;
-  }
-
   @GET
   @Produces("application/json")
   @PermitAll
@@ -444,7 +431,7 @@ public class DataAccessRequestResource extends Resource {
       if (!user.getUserId().equals(parentDar.getUserId())) {
         throw new ForbiddenException("User not authorized to update this Data Access Request");
       }
-      DataAccessRequest payload = populateProgressReportFromJsonString(dar, parentDar);
+      DataAccessRequest payload = DataAccessRequest.populateProgressReportFromJsonString(dar, parentDar);
       populateProgressReportWithDocuments(collabInputStream, collabFileDetails, ethicsInputStream,
           ethicsFileDetails, payload, parentDar);
       DataAccessRequest progressReport = dataAccessRequestService.createProgressReport(user,
@@ -568,7 +555,7 @@ public class DataAccessRequestResource extends Resource {
 
   private DataAccessRequest populateDarFromJsonString(User user, String json) {
     DataAccessRequest newDar = new DataAccessRequest();
-    DataAccessRequestData data = populateDARData(json);
+    DataAccessRequestData data = DataAccessRequestData.populateDARData(json);
     // When posting a submitted dar, there are two cases:
     // 1. those that existed previously as a draft dar
     // 2. those that are brand new
@@ -598,53 +585,6 @@ public class DataAccessRequestResource extends Resource {
     }
     newDar.setData(data);
     newDar.addDatasetIds(data.getDatasetIds());
-    return newDar;
-  }
-
-  /**
-   * Populate a new Data Access Request from the JSON string and the parent Data Access Request.
-   * Copies all the data from the parent dar, then overwrites the collaborators and datasets. Adds
-   * all progress report specific fields.
-   *
-   * @param json      The JSON string to populate the new Progress Report.
-   * @param parentDar The parent Data Access Request to copy data from.
-   * @return A new Progress Report populated with the provided JSON string and parent DAR data.
-   */
-  public DataAccessRequest populateProgressReportFromJsonString(String json,
-      DataAccessRequest parentDar) {
-    DataAccessRequest newDar = new DataAccessRequest();
-    DataAccessRequestData newData = populateDARData(json);
-    DataAccessRequestData originalDataCopy = DataAccessRequestData.fromString(
-        parentDar.getData().toString());
-
-    String referenceId = UUID.randomUUID().toString();
-    newDar.setReferenceId(referenceId);
-    newDar.setParentId(parentDar.getId().toString());
-    newDar.setCollectionId(parentDar.getCollectionId());
-
-    newDar.addDatasetIds(newData.getDatasetIds());
-    originalDataCopy.setInternalCollaborators(newData.getInternalCollaborators());
-    originalDataCopy.setExternalCollaborators(newData.getExternalCollaborators());
-    originalDataCopy.setLabCollaborators(newData.getLabCollaborators());
-    originalDataCopy.setProgressReportSummary(newData.getProgressReportSummary());
-    originalDataCopy.setIntellectualPropertySummary(newData.getIntellectualPropertySummary());
-    originalDataCopy.setPublications(newData.getPublications());
-    originalDataCopy.setPresentations(newData.getPresentations());
-    originalDataCopy.setDmi(newData.getDmi());
-    originalDataCopy.setResearchPlans(newData.getResearchPlans());
-    originalDataCopy.setCloseoutSupplement(newData.getCloseoutSupplement());
-    originalDataCopy.setPubAcknowledgement(newData.getPubAcknowledgement());
-    originalDataCopy.setDSAcknowledgement(newData.getDSAcknowledgement());
-    originalDataCopy.setGSOAcknowledgement(newData.getGSOAcknowledgement());
-
-    // These values will be updated in populateProgressReportWithDocuments if documents exist.
-    // Its important we don't copy over the parent values so those documents are not deleted.
-    originalDataCopy.setCollaborationLetterName(null);
-    originalDataCopy.setCollaborationLetterLocation(null);
-    originalDataCopy.setIrbDocumentName(null);
-    originalDataCopy.setIrbDocumentLocation(null);
-
-    newDar.setData(originalDataCopy);
     return newDar;
   }
 
