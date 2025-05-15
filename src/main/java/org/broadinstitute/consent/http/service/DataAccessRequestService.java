@@ -285,25 +285,19 @@ public class DataAccessRequestService implements ConsentLogger {
 
     userService.hasValidActiveERACredentials(user);
 
-    validateInternalCollaborators(dar, user);
+    validateInternalCollaborators(dar);
     validateNoKeyPersonnelDuplicates(dar.getData());
     validatePersonnelInSameInstitution(user, dar.getData());
   }
 
   @VisibleForTesting
-  public void validateInternalCollaborators(DataAccessRequest payload, User requestingUser) {
-    Integer institution = requestingUser.getInstitutionId();
+  public void validateInternalCollaborators(DataAccessRequest payload) {
     List<Collaborator> internalCollaborators = payload.getData().getInternalCollaborators();
     for (Collaborator collaborator : internalCollaborators) {
       User collabUser = userDAO.findUserByEmail(collaborator.getEmail());
       if (collabUser == null) {
         throw new NotFoundException(
             "Unable to find User with the provided email: " + collaborator.getEmail());
-      }
-      if (!Objects.equals(collabUser.getInstitutionId(), institution)) {
-        throw new BadRequestException(
-            "Collaborator " + collaborator.getEmail() + " is not part of the same institution, "
-                + requestingUser.getInstitution().getName());
       }
       List<LibraryCard> libraryCards = collabUser.getLibraryCards();
       if (libraryCards.isEmpty()) {

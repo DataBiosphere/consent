@@ -417,10 +417,9 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
 
   @Test
   void testValidateInternalCollaboratorsNone() {
-    User requestingUser = createRequestingUser();
     DataAccessRequest dar = createDataAccessRequest(List.of());
     initService();
-    assertDoesNotThrow(() -> service.validateInternalCollaborators(dar, requestingUser));
+    assertDoesNotThrow(() -> service.validateInternalCollaborators(dar));
   }
 
   @Test
@@ -437,39 +436,20 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(userDAO.findUserByEmail(validCollaborator.getEmail())).thenReturn(collaboratorUser);
 
     initService();
-    assertDoesNotThrow(() -> service.validateInternalCollaborators(dar, requestingUser));
+    assertDoesNotThrow(() -> service.validateInternalCollaborators(dar));
   }
 
   @Test
   void testValidateInternalCollaboratorsDoesNotExist() {
-    User requestingUser = createRequestingUser();
     Collaborator invalidCollaborator = createCollaborator();
     DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
     when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(null);
 
     initService();
     NotFoundException exception = assertThrows(NotFoundException.class, () ->
-        service.validateInternalCollaborators(dar, requestingUser));
+        service.validateInternalCollaborators(dar));
     assertEquals(exception.getMessage(),
         "Unable to find User with the provided email: " + invalidCollaborator.getEmail());
-  }
-
-  @Test
-  void testValidateInternalCollaboratorsDifferentInstitution() {
-    User requestingUser = createRequestingUser();
-    Collaborator invalidCollaborator = createCollaborator();
-    User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(),
-        roles);
-    collaboratorUser.setInstitutionId(2);
-    DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
-    when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(collaboratorUser);
-
-    initService();
-    BadRequestException exception = assertThrows(BadRequestException.class, () ->
-        service.validateInternalCollaborators(dar, requestingUser)
-    );
-    assertEquals(exception.getMessage(), "Collaborator " + invalidCollaborator.getEmail()
-        + " is not part of the same institution, Test Institution");
   }
 
   @Test
@@ -485,7 +465,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
 
     initService();
     BadRequestException exception = assertThrows(BadRequestException.class, () ->
-        service.validateInternalCollaborators(dar, requestingUser)
+        service.validateInternalCollaborators(dar)
     );
     assertEquals(exception.getMessage(),
         "Collaborator " + invalidCollaborator.getEmail() + " does not have a library card.");
