@@ -64,7 +64,6 @@ import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.server.ContainerRequest;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -121,7 +120,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   private DataAccessRequestResource resource;
 
   @BeforeEach
-  public void initResource() {
+  void initResource() {
     user.setLibraryCards(List.of(new LibraryCard()));
     try {
       resource =
