@@ -679,6 +679,9 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     parentData.setIrbDocumentName("irb_document.txt");
     parentData.setCollaborationLetterLocation("collaboration_letter_location");
     parentData.setIrbDocumentLocation("irb_document_location");
+    parentData.setDSAcknowledgement(false);
+    parentData.setGSOAcknowledgement(false);
+    parentData.setPubAcknowledgement(false);
     parentDar.setData(parentData);
 
     String json = """
@@ -692,29 +695,35 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
                 "collaborationLetterName": "new_collaboration_letter.txt",
                 "irbDocumentName": "new_irb_document.txt",
                 "collaborationLetterLocation": "new_collaboration_letter_location",
-                "irbDocumentLocation": "new_irb_document_location"
+                "irbDocumentLocation": "new_irb_document_location",
+                "dsAcknowledgement": true,
+                "gsoAcknowledgement": true
             }
         """;
 
     initResource();
     DataAccessRequest newDar = resource.populateProgressReportFromJsonString(json, parentDar);
+    DataAccessRequestData newData = newDar.getData();
 
     assertNotNull(newDar);
     assertNotEquals(parentDar.getReferenceId(), newDar.getReferenceId());
     assertEquals(parentDar.getCollectionId(), newDar.getCollectionId());
-    assertEquals("Parent Project Title", newDar.getData().getProjectTitle());
-    assertEquals(List.of(), newDar.getData().getInternalCollaborators());
-    assertEquals(List.of(), newDar.getData().getExternalCollaborators());
-    assertEquals(List.of(), newDar.getData().getLabCollaborators());
-    assertEquals("New Summary", newDar.getData().getProgressReportSummary());
+    assertEquals("Parent Project Title", newData.getProjectTitle());
+    assertEquals(List.of(), newData.getInternalCollaborators());
+    assertEquals(List.of(), newData.getExternalCollaborators());
+    assertEquals(List.of(), newData.getLabCollaborators());
+    assertEquals("New Summary", newData.getProgressReportSummary());
     assertEquals(List.of(1, 2), newDar.getDatasetIds());
-    assertNull(newDar.getData().getCollaborationLetterName());
-    assertNull(newDar.getData().getIrbDocumentName());
-    assertNull(newDar.getData().getCollaborationLetterLocation());
-    assertNull(newDar.getData().getIrbDocumentLocation());
+    assertNull(newData.getCollaborationLetterName());
+    assertNull(newData.getIrbDocumentName());
+    assertNull(newData.getCollaborationLetterLocation());
+    assertNull(newData.getIrbDocumentLocation());
     assertEquals(List.of(collaborator),
         parentDar.getData().getInternalCollaborators()); // Ensure parent is unchanged
     assertEquals("collaboration_letter.txt", parentDar.getData().getCollaborationLetterName());
+    assertTrue(newData.getDSAcknowledgement());
+    assertTrue(newData.getGSOAcknowledgement());
+    assertNull(newData.getPubAcknowledgement());
   }
 
   @Test

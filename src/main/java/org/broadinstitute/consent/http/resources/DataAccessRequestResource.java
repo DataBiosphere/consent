@@ -633,6 +633,9 @@ public class DataAccessRequestResource extends Resource {
     originalDataCopy.setDmi(newData.getDmi());
     originalDataCopy.setResearchPlans(newData.getResearchPlans());
     originalDataCopy.setCloseoutSupplement(newData.getCloseoutSupplement());
+    originalDataCopy.setPubAcknowledgement(newData.getPubAcknowledgement());
+    originalDataCopy.setDSAcknowledgement(newData.getDSAcknowledgement());
+    originalDataCopy.setGSOAcknowledgement(newData.getGSOAcknowledgement());
 
     // These values will be updated in populateProgressReportWithDocuments if documents exist.
     // Its important we don't copy over the parent values so those documents are not deleted.
