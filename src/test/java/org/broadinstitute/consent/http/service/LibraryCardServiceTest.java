@@ -54,7 +54,6 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     service = new LibraryCardService(libraryCardDAO, institutionDAO, institutionService, userDAO);
   }
 
-  @Disabled
   @Test
   // Test LC create with userId and email
   void testCreateLibraryCardFullUserDetails() {
@@ -63,6 +62,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     user.setEmail("testemail");
     User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
+    when(institutionDAO.findInstitutionById(institution.getId())).thenReturn(institution);
     when(institutionService.findInstitutionForEmail(user.getEmail())).thenReturn(institution);
 
     LibraryCard payload = testLibraryCard(user.getUserId());
