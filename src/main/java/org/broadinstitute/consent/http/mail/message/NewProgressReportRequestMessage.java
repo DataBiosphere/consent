@@ -7,7 +7,7 @@ import org.broadinstitute.consent.http.models.User;
 
 public class NewProgressReportRequestMessage extends MailMessage {
 
-  private static final String NEW_DAR_REQUEST = "Create an election for Progress Report id: %s.";
+  private static final String NEW_PROGRESS_REPORT_REQUEST = "Create an election for Progress Report id: %s.";
 
   private final String darCode;
   private final Map<String, List<String>> sendList;
@@ -17,7 +17,7 @@ public class NewProgressReportRequestMessage extends MailMessage {
 
   public NewProgressReportRequestMessage(User toUser, String darCode, String referenceId, Map<String, List<String>> sendList,
       String researcherName) {
-    super(toUser, EmailType.NEW_PROGRESS_REPORT);
+    super(toUser, EmailType.NEW_PROGRESS_REPORT_REQUEST);
     this.darCode = darCode;
     this.referenceId = referenceId;
     this.sendList = sendList;
@@ -27,7 +27,7 @@ public class NewProgressReportRequestMessage extends MailMessage {
   @Override
   public String createSubject() {
     // nosemgrep
-    return String.format(NEW_DAR_REQUEST, darCode);
+    return String.format(NEW_PROGRESS_REPORT_REQUEST, darCode);
   }
 
   @Override

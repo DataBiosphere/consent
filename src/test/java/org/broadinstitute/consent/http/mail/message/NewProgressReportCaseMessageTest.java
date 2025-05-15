@@ -32,10 +32,8 @@ class NewProgressReportCaseMessageTest extends AbstractTestHelper {
 
   @Test
   void testMessageSubject() {
-    var message = new NewProgressReportCaseMessage(new User(), "DUL-123", "Data Use Limitations");
-    assertEquals("Log vote on Data Use Limitations case id: DUL-123.", message.createSubject());
-    var message2 = new NewProgressReportCaseMessage(new User(), "DAR-123", "Data Access");
-    assertEquals("Log votes on Data Access Request case id: DAR-123.", message2.createSubject());
+    var message2 = new NewProgressReportCaseMessage(new User(), "DAR-123");
+    assertEquals("Log votes on Progress Report case id: DAR-123.", message2.createSubject());
   }
 
   @Test
@@ -46,7 +44,7 @@ class NewProgressReportCaseMessageTest extends AbstractTestHelper {
     User toUser = new User();
     toUser.setDisplayName(userName);
 
-    var message = new NewProgressReportCaseMessage(toUser, referenceId, "Data Use Limitations");
+    var message = new NewProgressReportCaseMessage(toUser, referenceId);
     assertEquals(referenceId, message.getEntityReferenceId());
 
     var template = helper.getTemplate(message.getTemplateName());
@@ -60,7 +58,7 @@ class NewProgressReportCaseMessageTest extends AbstractTestHelper {
     assertEquals("Hello " + userName + ",", getElementTextById(parsedTemplate, "userName"));
     assertTrue(
         templateString.contains(
-            "Data Use Limitations Review case id " + referenceId + ", has been created"));
+            "Progress Report Review case id " + referenceId + ", has been created"));
     assertTrue(templateString.contains(serverUrl));
   }
 }

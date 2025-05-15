@@ -226,9 +226,8 @@ public class EmailService implements ConsentLogger {
 
   public void sendProgressReportNewCollectionElectionMessage(List<User> users, String darCode)
       throws IOException, TemplateException {
-    String electionType = "Progress Report";
     for (User user : users) {
-      sendMessage(new NewProgressReportCaseMessage(user, darCode, electionType), user.getUserId());
+      sendMessage(new NewProgressReportCaseMessage(user, darCode), user.getUserId());
     }
   }
 
