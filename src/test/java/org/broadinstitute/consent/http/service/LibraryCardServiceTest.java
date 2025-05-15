@@ -55,15 +55,13 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  // Test LC create with userId and email
-  void testCreateLibraryCardFullUserDetails() {
+  // Test Admin LC create with userId and email
+  void testCreateLibraryCardFullUserDetailsAsAdmin() {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
     user.setEmail("testemail");
     User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
-    when(institutionDAO.findInstitutionById(institution.getId())).thenReturn(institution);
-    when(institutionService.findInstitutionForEmail(user.getEmail())).thenReturn(institution);
 
     LibraryCard payload = testLibraryCard(user.getUserId());
     payload.setUserEmail(user.getEmail());
@@ -80,7 +78,54 @@ class LibraryCardServiceTest extends AbstractTestHelper {
         eq(payload.getCreateUserId()), any());
   }
 
-  @Disabled
+  @Test
+  // Test SO LC create with userId and email
+  void testCreateLibraryCardFullUserDetailsAsSOSameInstitution() {
+    Institution institution = testInstitution();
+    User user = testUser(institution.getId());
+    user.setEmail("testemail");
+    User soUser = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    soUser.setInstitutionId(institution.getId());
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
+    when(institutionDAO.findInstitutionById(institution.getId())).thenReturn(institution);
+    when(institutionService.findInstitutionForEmail(user.getEmail())).thenReturn(institution);
+
+    LibraryCard payload = testLibraryCard(user.getUserId());
+    payload.setUserEmail(user.getEmail());
+    payload.setUserName("username");
+    payload.setCreateUserId(randomInt(1, 10));
+
+    //last two calls in the function, no need to test within this service test file
+    LibraryCard createdCard = new LibraryCard();
+    when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(createdCard);
+
+    assertEquals(createdCard, service.createLibraryCard(payload, soUser));
+    verify(libraryCardDAO).insertLibraryCard(eq(user.getUserId()),
+        eq(payload.getUserName()), eq(user.getEmail()),
+        eq(payload.getCreateUserId()), any());
+  }
+
+  @Test
+  // Test SO LC create with userId and email
+  void testCreateLibraryCardFullUserDetailsAsSODifferentInstitution() {
+    Institution institution = testInstitution();
+    User user = testUser(institution.getId());
+    user.setEmail("testemail");
+    User soUser = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    // Signing officials should not create LCs for users outside their institution.
+    soUser.setInstitutionId(institution.getId()+1);
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
+    when(institutionDAO.findInstitutionById(soUser.getInstitutionId())).thenReturn(new Institution());
+    when(institutionService.findInstitutionForEmail(user.getEmail())).thenReturn(institution);
+
+    LibraryCard payload = testLibraryCard(user.getUserId());
+    payload.setUserEmail(user.getEmail());
+    payload.setUserName("username");
+    payload.setCreateUserId(randomInt(1, 10));
+
+    assertThrows(BadRequestException.class, () -> service.createLibraryCard(payload, soUser));
+  }
+
   @Test
   //Test LC create with only user email (no userId)
   void testCreateLibraryCardPartialUserDetailsEmail() {
@@ -89,9 +134,6 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
     user.setUserId(null);
     user.setEmail("testemail");
-
-    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
-    when(institutionService.findInstitutionForEmail(user.getEmail())).thenReturn(institution);
 
     // last two calls in the function, no need to test within this service test file
     when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
@@ -501,7 +543,6 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setUserId(RandomUtils.nextInt(1, 10));
     user.setInstitutionId(institutionId);
-    user.setEmail(randomAlphabetic(10));
     return user;
   }
 

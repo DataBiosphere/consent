@@ -36,9 +36,12 @@ public class LibraryCardService {
 
   public LibraryCard createLibraryCard(LibraryCard libraryCard, User user) {
     throwIfNull(libraryCard);
+    boolean isAdmin = checkIsAdmin(user);
     checkIfCardExists(libraryCard);
     processUserOnNewLC(libraryCard);
-    checkForValidInstitution(user.getInstitutionId(), libraryCard.getUserEmail());
+    if (!isAdmin) {
+      checkForValidInstitution(user.getInstitutionId(), libraryCard.getUserEmail());
+    }
     Date createDate = new Date();
     Integer id = libraryCardDAO.insertLibraryCard(
         libraryCard.getUserId(),
