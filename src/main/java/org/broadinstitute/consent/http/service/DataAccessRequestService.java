@@ -6,10 +6,12 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.validator.routines.EmailValidator;
@@ -30,6 +32,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
@@ -44,6 +47,7 @@ public class DataAccessRequestService implements ConsentLogger {
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DarCollectionDAO darCollectionDAO;
   private final ElectionDAO electionDAO;
+  private final InstitutionService institutionService;
   private final MatchDAO matchDAO;
   private final VoteDAO voteDAO;
   private final UserDAO userDAO;
@@ -54,7 +58,8 @@ public class DataAccessRequestService implements ConsentLogger {
 
   @Inject
   public DataAccessRequestService(CounterService counterService, DAOContainer container,
-      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO, UserService userService) {
+      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO,
+      UserService userService, InstitutionService institutionService ) {
     this.counterService = counterService;
     this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
     this.darCollectionDAO = container.getDarCollectionDAO();
@@ -65,6 +70,7 @@ public class DataAccessRequestService implements ConsentLogger {
     this.dacService = dacService;
     this.dataAccessRequestServiceDAO = dataAccessRequestServiceDAO;
     this.userService = userService;
+    this.institutionService = institutionService;
   }
 
   public List<DataAccessRequest> findAllDraftDataAccessRequests() {
@@ -281,6 +287,7 @@ public class DataAccessRequestService implements ConsentLogger {
 
     validateInternalCollaborators(dar, user);
     validateNoKeyPersonnelDuplicates(dar.getData());
+    validatePersonnelInSameInstitution(user, dar.getData());
   }
 
   @VisibleForTesting
@@ -357,6 +364,92 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new IllegalArgumentException(
           "Principal Investigator email cannot be the same as IT Director email");
     }
+  }
+
+  @VisibleForTesting
+  public void validatePersonnelInSameInstitution(User user, DataAccessRequestData darData) {
+    Institution submitterInstitution = user.getInstitution();
+    String piEmail = darData.getPiEmail();
+    String soEmail = darData.getSigningOfficialEmail();
+    String itEmail = darData.getItDirectorEmail();
+    List<String> collaboratorsEmails =
+        darData.getInternalCollaborators().stream().map(Collaborator::getEmail).toList();
+    List<String> labStaffEmails =
+        darData.getLabCollaborators().stream().map(Collaborator::getEmail).toList();
+
+    List<String> invalidMembers = new ArrayList<>();
+
+    if (emailDoesNotMatchInstitution(submitterInstitution, piEmail)) {
+      invalidMembers.add("Principal Investigator: " + piEmail);
+    }
+    if (emailDoesNotMatchInstitution(submitterInstitution, soEmail)) {
+      invalidMembers.add("Signing Official: " + soEmail);
+    }
+
+    if (emailDoesNotMatchInstitution(submitterInstitution, itEmail)) {
+      invalidMembers.add("IT Director: " + itEmail);
+    }
+
+    getErrorSummary(
+            collaboratorsEmails,
+            submitterInstitution,
+            "Internal Collaborator member: ",
+            "Internal Collaborator members: ")
+        .ifPresent(invalidMembers::add);
+
+    getErrorSummary(
+            labStaffEmails, submitterInstitution, "Lab staff member: ", "Lab staff members: ")
+        .ifPresent(invalidMembers::add);
+
+    if (!invalidMembers.isEmpty()) {
+      throw new IllegalArgumentException(
+          "All listed personnel must share the same institutional affiliation.  The following list of roles and members must have email addresses associated with your institution: "
+              + String.join(", ", invalidMembers));
+    }
+  }
+
+  private Optional<String> getErrorSummary(
+      List<String> emails,
+      Institution institution,
+      String categorySingular,
+      String categoryPlural) {
+    List<String> errors = findEmailAddressesNotInInstitution(emails, institution);
+    if (!errors.isEmpty()) {
+      return Optional.of(buildSingleErrorFromErrorList(errors, categorySingular, categoryPlural));
+    }
+    return Optional.empty();
+  }
+
+  private List<String> findEmailAddressesNotInInstitution(
+      List<String> emailAddresses, Institution institution) {
+    ArrayList<String> errors = new ArrayList<>();
+    emailAddresses.forEach(
+        collaborator -> {
+          if (emailDoesNotMatchInstitution(institution, collaborator)) {
+            errors.add(collaborator);
+          }
+        });
+    return errors;
+  }
+
+  private String buildSingleErrorFromErrorList(
+      List<String> errors, String categorySingular, String categoryPlural) {
+    StringBuilder msg = new StringBuilder();
+    if (errors.size() == 1) {
+      msg.append(categorySingular);
+    } else if (errors.size() > 1) {
+      msg.append(categoryPlural);
+    }
+    msg.append(String.join(", ", errors));
+    return msg.toString();
+  }
+
+  private boolean emailDoesNotMatchInstitution(Institution institution, String email) {
+    Institution foundInstitution = institutionService.findInstitutionForEmail(email);
+    if (foundInstitution == null || institution == null) {
+      return true;
+    }
+    return !institution.getId().equals(foundInstitution.getId());
   }
 
   public Collection<DataAccessRequest> getApprovedDARsForDataset(Dataset dataset) {

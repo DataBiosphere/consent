@@ -90,6 +90,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   private DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
   @Mock
   private UserService userService;
+  @Mock
+  private InstitutionService institutionService;
   private DataAccessRequestService service;
 
   private static Collaborator createCollaborator() {
@@ -119,7 +121,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     container.setVoteDAO(voteDAO);
     container.setMatchDAO(matchDAO);
     service = new DataAccessRequestService(counterService, container, dacService,
-        dataAccessRequestServiceDAO, userService);
+        dataAccessRequestServiceDAO, userService, institutionService);
   }
 
   @Test
@@ -127,9 +129,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.setCollectionId(null);
     dar.addDatasetIds(List.of(1, 2, 3));
-    User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
-    user.setEraCommonsId("eraCommonsId");
+    User user = createUserWithPrerequisites();
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     when(counterService.getNextDarSequence()).thenReturn(1);
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
     doNothing().when(dataAccessRequestDAO)
@@ -146,9 +147,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     dar.setCreateDate(new Timestamp(1000));
     dar.setSortDate(new Timestamp(1000));
     dar.setReferenceId("id");
-    User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
-    user.setEraCommonsId("eraCommonsId");
+    User user = createUserWithPrerequisites();
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     when(counterService.getNextDarSequence()).thenReturn(1);
     when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
     when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
@@ -170,9 +170,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     dar.setSortDate(new Timestamp(1000));
     dar.setReferenceId("id");
     dar.setSubmissionDate(Timestamp.from(Instant.now()));
-    User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
-    user.setEraCommonsId("eraCommonsId");
+    User user = createUserWithPrerequisites();
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
     initService();
     assertThrows(SubmittedDARCannotBeEditedException.class,
@@ -182,9 +181,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   @Test
   void testCreateDataAccessRequestCreateWithoutERACommons() {
     DataAccessRequest dar = generateDataAccessRequest();
-    User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
-    user.setEraCommonsId("eraCommonsId");
+    User user = createUserWithPrerequisites();
     doThrow(BadRequestException.class).when(userService).hasValidActiveERACredentials(user);
     initService();
     assertThrows(BadRequestException.class, () -> service.createDataAccessRequest(user, dar));
@@ -225,14 +222,12 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setParentId(parentDar.getId().toString());
     progressReport.setCollectionId(parentDar.getCollectionId());
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
-    User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
-    user.setEraCommonsId("eraCommonsId");
+    User user = createUserWithPrerequisites();
     parentDar.setUserId(user.getUserId());
     when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId())).thenReturn(progressReport);
     when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of(parentDar.getReferenceId()))).thenReturn(
         Set.copyOf(progressReport.getDatasetIds()));
-
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     initService();
     DataAccessRequest newDar = service.createProgressReport(user, progressReport, parentDar);
     assertNotNull(newDar);
@@ -251,9 +246,9 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setParentId(parentDar.getId().toString());
     progressReport.setCollectionId(parentDar.getCollectionId());
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
-    User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
+    User user = createUserWithPrerequisites();
     parentDar.setUserId(user.getUserId());
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of(parentDar.getReferenceId()))).thenReturn(Set.of());
     initService();
     assertThrows(BadRequestException.class, () -> service.createProgressReport(user, progressReport, parentDar));
@@ -290,11 +285,10 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
 
   @Test
   void validateProgressReportParentDarIsDraft() {
-    User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
-    user.setEraCommonsId("eraCommonsId");
+    User user = createUserWithPrerequisites();
     DataAccessRequest progressReport = generateProgressReport();
     DataAccessRequest parentDar = generateDataAccessRequest();
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     initService();
     assertThrows(BadRequestException.class,
         () -> service.validateProgressReport(user, progressReport, parentDar));
@@ -302,14 +296,13 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
 
   @Test
   void validateProgressReportNoDatasetIds() {
-    User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
-    user.setEraCommonsId("eraCommonsId");
+    User user = createUserWithPrerequisites();
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.setDatasetIds(Collections.emptyList());
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setUserId(user.getUserId());
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     initService();
     assertThrows(BadRequestException.class,
         () -> service.validateProgressReport(user, progressReport, parentDar));
@@ -317,14 +310,13 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
 
   @Test
   void validateProgressReportNoSummary() {
-    User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
-    user.setEraCommonsId("eraCommonsId");
+    User user = createUserWithPrerequisites();
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.getData().setProgressReportSummary(null);
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setUserId(user.getUserId());
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     initService();
     assertThrows(BadRequestException.class,
         () -> service.validateProgressReport(user, progressReport, parentDar));
@@ -332,14 +324,13 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
 
   @Test
   void validateProgressReportNoIPSummary() {
-    User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
-    user.setEraCommonsId("eraCommonsId");
+    User user = createUserWithPrerequisites();
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.getData().setIntellectualPropertySummary(null);
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setUserId(user.getUserId());
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     initService();
     assertThrows(BadRequestException.class,
         () -> service.validateProgressReport(user, progressReport, parentDar));
@@ -347,15 +338,14 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
 
   @Test
   void validateProgressReportInvalidDatasetIds() {
-    User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
-    user.setEraCommonsId("eraCommonsId");
+    User user = createUserWithPrerequisites();
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.setDatasetIds(List.of(3, 4, 5)); // IDs not all in parent DAR
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setDatasetIds(List.of(1, 2, 3));
     parentDar.setUserId(user.getUserId());
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     initService();
     assertThrows(BadRequestException.class,
         () -> service.validateProgressReport(user, progressReport, parentDar));
@@ -363,15 +353,14 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
 
   @Test
   void validateProgressReport() {
-    User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
-    user.setEraCommonsId("eraCommonsId");
+    User user = createUserWithPrerequisites();
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.setDatasetIds(List.of(1, 2));
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setDatasetIds(List.of(1, 2, 3));
     parentDar.setUserId(user.getUserId());
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     initService();
     assertDoesNotThrow(() -> service.validateProgressReport(user, progressReport, parentDar));
   }
@@ -420,9 +409,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   @Test
   void validateDar() {
     DataAccessRequest dar = generateDataAccessRequest();
-    User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
-    user.setEraCommonsId("eraCommonsId");
+    User user = createUserWithPrerequisites();
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     initService();
     assertDoesNotThrow(() -> service.validateDar(user, dar));
   }
@@ -782,11 +770,199 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         () -> service.validateNoKeyPersonnelDuplicates(data));
   }
 
+  @Test
+  void testValidatePersonnelInSameInstitutionThrowsException() {
+    String badEmailAddress = "j@example.com";
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    Institution usersInstitution = new Institution();
+    usersInstitution.setId(1);
+    user.setInstitution(usersInstitution);
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(badEmailAddress);
+    data.setSigningOfficialEmail(badEmailAddress);
+    data.setItDirectorEmail(badEmailAddress);
+    Collaborator collaborator = new Collaborator();
+    collaborator.setEmail(badEmailAddress);
+    data.setInternalCollaborators(List.of(collaborator));
+    Collaborator labStaffMember = new Collaborator();
+    labStaffMember.setEmail(badEmailAddress);
+    data.setLabCollaborators(List.of(labStaffMember));
+
+    Institution badInstitution = new Institution();
+    badInstitution.setId(2);
+    when(institutionService.findInstitutionForEmail(badEmailAddress)).thenReturn(badInstitution);
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> service.validatePersonnelInSameInstitution(user, data));
+  }
+
+  @Test
+  void testValidatePersonnelInSameInstitutionDoesNotThrowException() {
+    String goodEmailAddress = "j@example.com";
+    User user = new User(1, "j@example.com", "Display Name", new Date());
+    Institution goodInstitution = new Institution();
+    goodInstitution.setId(1);
+    user.setInstitution(goodInstitution);
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(goodEmailAddress);
+    data.setSigningOfficialEmail(goodEmailAddress);
+    data.setItDirectorEmail(goodEmailAddress);
+    Collaborator collaborator = new Collaborator();
+    collaborator.setEmail(goodEmailAddress);
+    data.setInternalCollaborators(List.of(collaborator));
+    Collaborator labStaffMember = new Collaborator();
+    labStaffMember.setEmail(goodEmailAddress);
+    data.setLabCollaborators(List.of(labStaffMember));
+
+    when(institutionService.findInstitutionForEmail(goodEmailAddress)).thenReturn(goodInstitution);
+    initService();
+    assertDoesNotThrow(() -> service.validatePersonnelInSameInstitution(user, data));
+  }
+
+  @Test
+  void testValidatePersonnelInSameInstitutionThrowsForBadPI() {
+    String goodEmailAddress = "j@example.com";
+    String badEmailAddress = "bad@evil.com";
+    User user = new User(1, "j@example.com", "Display Name", new Date());
+    Institution goodInstitution = new Institution();
+    goodInstitution.setId(1);
+    user.setInstitution(goodInstitution);
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(badEmailAddress);
+    data.setSigningOfficialEmail(goodEmailAddress);
+    data.setItDirectorEmail(goodEmailAddress);
+    Collaborator collaborator = new Collaborator();
+    collaborator.setEmail(goodEmailAddress);
+    data.setInternalCollaborators(List.of(collaborator));
+    Collaborator labStaffMember = new Collaborator();
+    labStaffMember.setEmail(goodEmailAddress);
+    data.setLabCollaborators(List.of(labStaffMember));
+    when(institutionService.findInstitutionForEmail(goodEmailAddress)).thenReturn(goodInstitution);
+    when(institutionService.findInstitutionForEmail(badEmailAddress)).thenReturn(null);
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> service.validatePersonnelInSameInstitution(user, data));
+  }
+
+  @Test
+  void testValidatePersonnelInSameInstitutionThrowsForBadSO() {
+    String goodEmailAddress = "j@example.com";
+    String badEmailAddress = "bad@evil.com";
+    User user = new User(1, "j@example.com", "Display Name", new Date());
+    Institution goodInstitution = new Institution();
+    goodInstitution.setId(1);
+    user.setInstitution(goodInstitution);
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(goodEmailAddress);
+    data.setSigningOfficialEmail(badEmailAddress);
+    data.setItDirectorEmail(goodEmailAddress);
+    when(institutionService.findInstitutionForEmail(goodEmailAddress)).thenReturn(goodInstitution);
+    when(institutionService.findInstitutionForEmail(badEmailAddress)).thenReturn(null);
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> service.validatePersonnelInSameInstitution(user, data));
+  }
+
+  @Test
+  void testValidatePersonnelInSameInstitutionThrowsForBadIT() {
+    String goodEmailAddress = "j@example.com";
+    String badEmailAddress = "bad@evil.com";
+    User user = new User(1, "j@example.com", "Display Name", new Date());
+    Institution goodInstitution = new Institution();
+    goodInstitution.setId(1);
+    user.setInstitution(goodInstitution);
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(goodEmailAddress);
+    data.setSigningOfficialEmail(goodEmailAddress);
+    data.setItDirectorEmail(badEmailAddress);
+    when(institutionService.findInstitutionForEmail(goodEmailAddress)).thenReturn(goodInstitution);
+    when(institutionService.findInstitutionForEmail(badEmailAddress)).thenReturn(null);
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> service.validatePersonnelInSameInstitution(user, data));
+  }
+
+  @Test
+  void testValidatePersonnelInSameInstitutionThrowsForBadCollaborator() {
+    String goodEmailAddress = "j@example.com";
+    String badEmailAddress = "bad@evil.com";
+    User user = new User(1, "j@example.com", "Display Name", new Date());
+    Institution goodInstitution = new Institution();
+    goodInstitution.setId(1);
+    user.setInstitution(goodInstitution);
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(goodEmailAddress);
+    data.setSigningOfficialEmail(goodEmailAddress);
+    data.setItDirectorEmail(goodEmailAddress);
+    Collaborator collaborator1 = new Collaborator();
+    collaborator1.setEmail(goodEmailAddress);
+    Collaborator collaborator2 = new Collaborator();
+    collaborator2.setEmail(badEmailAddress);
+    data.setLabCollaborators(List.of(collaborator1, collaborator2));
+    when(institutionService.findInstitutionForEmail(goodEmailAddress)).thenReturn(goodInstitution);
+    when(institutionService.findInstitutionForEmail(badEmailAddress)).thenReturn(null);
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> service.validatePersonnelInSameInstitution(user, data));
+  }
+
+  @Test
+  void testValidatePersonnelInSameInstitutionThrowsForBadLabStaffMember() {
+    String goodEmailAddress = "j@example.com";
+    String badEmailAddress = "bad@evil.com";
+    User user = new User(1, "j@example.com", "Display Name", new Date());
+    Institution goodInstitution = new Institution();
+    goodInstitution.setId(1);
+    user.setInstitution(goodInstitution);
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(goodEmailAddress);
+    data.setSigningOfficialEmail(goodEmailAddress);
+    data.setItDirectorEmail(goodEmailAddress);
+    Collaborator collaborator1 = new Collaborator();
+    collaborator1.setEmail(goodEmailAddress);
+    Collaborator collaborator2 = new Collaborator();
+    collaborator2.setEmail(goodEmailAddress);
+    data.setLabCollaborators(List.of(collaborator1, collaborator2));
+    Collaborator labStaffMember = new Collaborator();
+    labStaffMember.setEmail(goodEmailAddress);
+    Collaborator labStaffMember2 = new Collaborator();
+    labStaffMember2.setEmail(badEmailAddress);
+    data.setLabCollaborators(List.of(labStaffMember, labStaffMember2));
+    when(institutionService.findInstitutionForEmail(goodEmailAddress)).thenReturn(goodInstitution);
+    when(institutionService.findInstitutionForEmail(badEmailAddress)).thenReturn(null);
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> service.validatePersonnelInSameInstitution(user, data));
+  }
+
+  @Test
+  void testValidatePersonnelInSameInstitution_NoCollaborators() {
+    String badEmailAddress = "j@example.com";
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    Institution usersInstitution = new Institution();
+    usersInstitution.setId(1);
+    user.setInstitution(usersInstitution);
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail(badEmailAddress);
+    data.setSigningOfficialEmail(badEmailAddress);
+    data.setItDirectorEmail(badEmailAddress);
+
+    Institution badInstitution = new Institution();
+    badInstitution.setId(2);
+    when(institutionService.findInstitutionForEmail(badEmailAddress)).thenReturn(badInstitution);
+    initService();
+    assertThrows(IllegalArgumentException.class, () -> service.validatePersonnelInSameInstitution(user, data));
+  }
+
   private static class LongerThanTwo implements ArgumentMatcher<String> {
 
     @Override
     public boolean matches(String argument) {
       return argument.length() > 2;
     }
+  }
+
+  private User createUserWithPrerequisites() {
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    Institution institution = new Institution();
+    institution.setId(1);
+    user.setInstitution(institution);
+    user.setLibraryCards(List.of(new LibraryCard()));
+    user.setEraCommonsId("eraCommonsId");
+    return user;
   }
 }
