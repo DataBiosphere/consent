@@ -230,7 +230,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     List<LibraryCard> cardsFromDAO = libraryCardDAO.findLibraryCardsByUserId(
         libraryCard.getUserId());
     assertNotNull(cardsFromDAO);
-    assertEquals(cardsFromDAO.size(), 1);
+    assertEquals(1, cardsFromDAO.size());
     assertEquals(cardsFromDAO.get(0).getId(), libraryCard.getId());
     assertEquals(cardsFromDAO.get(0).getUserId(), libraryCard.getUserId());
     assertFalse(cardsFromDAO.get(0).getDaaIds().isEmpty());
@@ -241,7 +241,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     List<LibraryCard> cardList = libraryCardDAO.findAllLibraryCards();
     assertEquals(0, cardList.size());
     Institution institution = createInstitution();
-    createLibraryCardForIndex(institution.getId());
+    createLibraryCardForIndex();
     List<LibraryCard> cardListUpdated = libraryCardDAO.findAllLibraryCards();
     assertEquals(1, cardListUpdated.size());
     LibraryCard card = cardListUpdated.get(0);
@@ -360,7 +360,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
   }
 
 
-  private LibraryCard createLibraryCardForIndex(Integer institutionId) {
+  private LibraryCard createLibraryCardForIndex() {
     Integer userId = createUser().getUserId();
     String stringValue = "value";
     Integer id = libraryCardDAO.insertLibraryCard(userId, stringValue,
@@ -384,7 +384,6 @@ class LibraryCardDAOTest extends DAOTestHelper {
   }
 
   private LibraryCard createLibraryCard(User user) {
-    String stringValue = "value";
     Integer id = libraryCardDAO.insertLibraryCard(user.getUserId(),
         user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
     return libraryCardDAO.findLibraryCardById(id);

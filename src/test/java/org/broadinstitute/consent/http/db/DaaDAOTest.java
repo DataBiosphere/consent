@@ -18,7 +18,6 @@ import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
@@ -233,7 +232,6 @@ class DaaDAOTest extends DAOTestHelper {
     // Testing the case of a user requesting DAR access to a dataset.
     // That user must have an LC with a DAA associated to the same DAC that the dataset is associated to.
     User user = createUserWithInstitution();
-    Institution institution = getUserInstitution(user);
     LibraryCard lc = createRandomLibraryCard(user);
     Dac dac1 = createRandomDac();
     Dac dac2 = createRandomDac();
@@ -266,8 +264,7 @@ class DaaDAOTest extends DAOTestHelper {
   void testDeleteDaa() {
     Integer userId = createUserId();
     User user = userDAO.findUserById(userId);
-    Institution institution = createRandomInstitution(user.getUserId());
-    Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "",  new Date());;
+    Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "",  new Date());
     Integer daaId1 = daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
     LibraryCard lc = createRandomLibraryCard(user);
     DataAccessAgreement daa1 = daaDAO.findById(daaId1);
@@ -326,22 +323,6 @@ class DaaDAOTest extends DAOTestHelper {
     assertTrue(daaIds.contains(daa1.getDaaId()));
     assertTrue(daaIds.contains(daa2.getDaaId()));
     assertFalse(daaIds.contains(daa3.getDaaId()));
-  }
-
-  private Institution createRandomInstitution(int userId) {
-    int institutionId = institutionDAO.insertInstitution(
-        randomAlphabetic(5),
-        randomAlphabetic(5),
-        randomAlphabetic(5),
-        randomAlphabetic(5),
-        null,
-        null,
-        null,
-        null,
-        null,
-        userId,
-        new Date());
-    return institutionDAO.findInstitutionById(institutionId);
   }
 
   private LibraryCard createRandomLibraryCard(User user) {

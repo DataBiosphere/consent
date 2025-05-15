@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
@@ -31,7 +30,6 @@ public class NihServiceDAO implements ConsentLogger {
       throw new IllegalArgumentException("Invalid NIH account information");
     }
     jdbi.useTransaction(handler -> {
-      LibraryCardDAO libraryCardDAO = handler.attach(LibraryCardDAO.class);
       UserDAO userDAO = handler.attach(UserDAO.class);
       UserPropertyDAO userPropertyDAO = handler.attach(UserPropertyDAO.class);
       Collection<UserProperty> properties = List.of(
