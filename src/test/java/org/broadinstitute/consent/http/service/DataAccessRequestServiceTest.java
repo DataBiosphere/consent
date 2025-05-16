@@ -51,6 +51,8 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatcher;
@@ -107,7 +109,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     return dar;
   }
 
-  private void initService() {
+  @BeforeEach
+  void initService() {
     DAOContainer container = new DAOContainer();
     container.setDataAccessRequestDAO(dataAccessRequestDAO);
     container.setDarCollectionDAO(darCollectionDAO);
@@ -134,7 +137,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
     doNothing().when(dataAccessRequestDAO)
         .updateDataByReferenceId(any(), any(), any(), any(), any(), any(), any());
-    initService();
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar);
     assertNotNull(newDar);
   }
@@ -157,7 +159,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     doNothing().when(dataAccessRequestDAO)
         .insertDataAccessRequest(anyInt(), anyString(), anyInt(), any(Date.class), any(Date.class),
             any(Date.class), any(Date.class), any(DataAccessRequestData.class), anyString());
-    initService();
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar);
     assertNotNull(newDar);
   }
@@ -174,7 +175,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     user.setLibraryCards(List.of(new LibraryCard()));
     user.setEraCommonsId("eraCommonsId");
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
-    initService();
     assertThrows(SubmittedDARCannotBeEditedException.class,
         () -> service.createDataAccessRequest(user, dar));
   }
@@ -186,7 +186,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     user.setLibraryCards(List.of(new LibraryCard()));
     user.setEraCommonsId("eraCommonsId");
     doThrow(BadRequestException.class).when(userService).hasValidActiveERACredentials(user);
-    initService();
     assertThrows(BadRequestException.class, () -> service.createDataAccessRequest(user, dar));
   }
 
@@ -198,7 +197,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = new User(1, "email@test.org", "Display Name", new Date());
     dar.addDatasetIds(List.of(1, 2, 3));
     dar.setSubmissionDate(Timestamp.from(Instant.now()));
-    initService();
     assertThrows(SubmittedDARCannotBeEditedException.class, () ->
         service.updateByReferenceId(user, dar)
     );
@@ -213,7 +211,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     dar.setReferenceId("id");
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(List.of());
-    initService();
     assertThrows(NIHComplianceRuleException.class,
         () -> service.createDataAccessRequest(user, dar));
   }
@@ -233,7 +230,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of(parentDar.getReferenceId()))).thenReturn(
         Set.copyOf(progressReport.getDatasetIds()));
 
-    initService();
     DataAccessRequest newDar = service.createProgressReport(user, progressReport, parentDar);
     assertNotNull(newDar);
     verify(dataAccessRequestDAO)
@@ -255,7 +251,30 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     user.setLibraryCards(List.of(new LibraryCard()));
     parentDar.setUserId(user.getUserId());
     when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of(parentDar.getReferenceId()))).thenReturn(Set.of());
-    initService();
+    assertThrows(BadRequestException.class, () -> service.createProgressReport(user, progressReport, parentDar));
+  }
+
+  @Test
+  void createProgressReportFailsIfDAOOperationFails() {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.setParentId(parentDar.getId().toString());
+    progressReport.setCollectionId(parentDar.getCollectionId());
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    User user = new User(1, "email@test.org", "Display Name", new Date());
+    user.setLibraryCards(List.of(new LibraryCard()));
+    user.setEraCommonsId("eraCommonsId");
+    parentDar.setUserId(user.getUserId());
+    when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of(parentDar.getReferenceId()))).thenReturn(
+        Set.copyOf(progressReport.getDatasetIds()));
+    doThrow(new UnableToExecuteStatementException("Test exception"))
+        .when(dataAccessRequestDAO)
+        .insertProgressReport(
+            parentDar.getId(),
+            parentDar.getCollectionId(),
+            progressReport.referenceId,
+            user.getUserId(),
+            progressReport.data);
     assertThrows(BadRequestException.class, () -> service.createProgressReport(user, progressReport, parentDar));
   }
 
@@ -295,7 +314,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     user.setEraCommonsId("eraCommonsId");
     DataAccessRequest progressReport = generateProgressReport();
     DataAccessRequest parentDar = generateDataAccessRequest();
-    initService();
     assertThrows(BadRequestException.class,
         () -> service.validateProgressReport(user, progressReport, parentDar));
   }
@@ -310,7 +328,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setUserId(user.getUserId());
-    initService();
     assertThrows(BadRequestException.class,
         () -> service.validateProgressReport(user, progressReport, parentDar));
   }
@@ -325,7 +342,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setUserId(user.getUserId());
-    initService();
     assertThrows(BadRequestException.class,
         () -> service.validateProgressReport(user, progressReport, parentDar));
   }
@@ -340,7 +356,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setUserId(user.getUserId());
-    initService();
     assertThrows(BadRequestException.class,
         () -> service.validateProgressReport(user, progressReport, parentDar));
   }
@@ -356,7 +371,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setDatasetIds(List.of(1, 2, 3));
     parentDar.setUserId(user.getUserId());
-    initService();
     assertThrows(BadRequestException.class,
         () -> service.validateProgressReport(user, progressReport, parentDar));
   }
@@ -372,21 +386,18 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setDatasetIds(List.of(1, 2, 3));
     parentDar.setUserId(user.getUserId());
-    initService();
     assertDoesNotThrow(() -> service.validateProgressReport(user, progressReport, parentDar));
   }
 
   @Test
   void validateDarNullUser() {
     DataAccessRequest dar = generateDataAccessRequest();
-    initService();
     assertThrows(IllegalArgumentException.class, () -> service.validateDar(null, dar));
   }
 
   @Test
   void validateDarNullDar() {
     User user = new User(1, "email@test.org", "Display Name", new Date());
-    initService();
     assertThrows(IllegalArgumentException.class, () -> service.validateDar(user, null));
   }
 
@@ -395,7 +406,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.setReferenceId(null);
     User user = new User(1, "email@test.org", "Display Name", new Date());
-    initService();
     assertThrows(IllegalArgumentException.class, () -> service.validateDar(user, dar));
   }
 
@@ -404,7 +414,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.setData(null);
     User user = new User(1, "email@test.org", "Display Name", new Date());
-    initService();
     assertThrows(IllegalArgumentException.class, () -> service.validateDar(user, dar));
   }
 
@@ -413,7 +422,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = generateDataAccessRequest();
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(Collections.emptyList());
-    initService();
     assertThrows(NIHComplianceRuleException.class, () -> service.validateDar(user, dar));
   }
 
@@ -423,7 +431,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = new User(1, "email@test.org", "Display Name", new Date());
     user.setLibraryCards(List.of(new LibraryCard()));
     user.setEraCommonsId("eraCommonsId");
-    initService();
     assertDoesNotThrow(() -> service.validateDar(user, dar));
   }
 
@@ -431,7 +438,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   void testValidateInternalCollaboratorsNone() {
     User requestingUser = createRequestingUser();
     DataAccessRequest dar = createDataAccessRequest(List.of());
-    initService();
     assertDoesNotThrow(() -> service.validateInternalCollaborators(dar, requestingUser));
   }
 
@@ -448,7 +454,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = createDataAccessRequest(List.of(validCollaborator));
     when(userDAO.findUserByEmail(validCollaborator.getEmail())).thenReturn(collaboratorUser);
 
-    initService();
     assertDoesNotThrow(() -> service.validateInternalCollaborators(dar, requestingUser));
   }
 
@@ -459,7 +464,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
     when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(null);
 
-    initService();
     NotFoundException exception = assertThrows(NotFoundException.class, () ->
         service.validateInternalCollaborators(dar, requestingUser));
     assertEquals(exception.getMessage(),
@@ -476,7 +480,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
     when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(collaboratorUser);
 
-    initService();
     BadRequestException exception = assertThrows(BadRequestException.class, () ->
         service.validateInternalCollaborators(dar, requestingUser)
     );
@@ -495,7 +498,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
     when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(collaboratorUser);
 
-    initService();
     BadRequestException exception = assertThrows(BadRequestException.class, () ->
         service.validateInternalCollaborators(dar, requestingUser)
     );
@@ -510,7 +512,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = new User(1, "email@test.org", "Display Name", new Date());
     dar.addDatasetIds(List.of(1, 2, 3));
     when(dataAccessRequestServiceDAO.updateByReferenceId(any(), any())).thenReturn(dar);
-    initService();
     DataAccessRequest newDar = service.updateByReferenceId(user, dar);
     assertNotNull(newDar);
   }
@@ -521,7 +522,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = new User(1, "email@test.org", "Display Name", new Date());
     dar.addDatasetIds(List.of(1, 2, 3));
     when(dataAccessRequestServiceDAO.updateByReferenceId(user, dar)).thenReturn(dar);
-    initService();
     DataAccessRequest newDar = service.updateByReferenceId(user, dar);
     assertNotNull(newDar);
   }
@@ -543,7 +543,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(dataAccessRequestDAO
         .findApprovedDARsByDatasetId(d.getDatasetId()))
         .thenReturn(List.of(dar1, dar2));
-    initService();
 
     assertEquals(List.of(dar1, dar2), service.getApprovedDARsForDataset(d));
   }
@@ -558,18 +557,13 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         .when(dataAccessRequestDAO)
         .insertDraftDataAccessRequest(any(), any(), any(), any(), any(), any());
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(draft);
-    initService();
     DataAccessRequest dar = service.insertDraftDataAccessRequest(user, draft);
     assertNotNull(dar);
   }
 
   @Test
   void testInsertDraftDataAccessRequestFailure() {
-    initService();
-    assertThrows(IllegalArgumentException.class, () -> {
-      DataAccessRequest dar = service.insertDraftDataAccessRequest(null, null);
-      assertNotNull(dar);
-    });
+    assertThrows(IllegalArgumentException.class, () -> service.insertDraftDataAccessRequest(null, null));
   }
 
   private DataAccessRequest generateProgressReport() {
@@ -623,7 +617,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   void testFindAllDraftDataAccessRequests() {
     when(dataAccessRequestDAO.findAllDraftDataAccessRequests()).thenReturn(
         List.of(new DataAccessRequest()));
-    initService();
     List<DataAccessRequest> drafts = service.findAllDraftDataAccessRequests();
     assertEquals(1, drafts.size());
   }
@@ -632,7 +625,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   void testFindAllDraftDataAccessRequestsByUser() {
     when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(
         List.of(new DataAccessRequest()));
-    initService();
     List<DataAccessRequest> drafts = service.findAllDraftDataAccessRequestsByUser(1);
     assertEquals(1, drafts.size());
   }
@@ -642,14 +634,12 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     List<DataAccessRequest> dars = List.of(new DataAccessRequest());
     when(dataAccessRequestDAO.findAllDataAccessRequests()).thenReturn(dars);
     when(dacService.filterDataAccessRequestsByDac(eq(dars), any())).thenReturn(dars);
-    initService();
     List<DataAccessRequest> foundDars = service.getDataAccessRequestsByUserRole(new User());
     assertEquals(1, foundDars.size());
   }
 
   @Test
   void testFindByReferenceId() {
-    initService();
     DataAccessRequest dar = new DataAccessRequest();
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
     DataAccessRequest foundDar = service.findByReferenceId("refId");
@@ -658,7 +648,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
 
   @Test
   void testFindByReferenceId_NotFound() {
-    initService();
     when(dataAccessRequestDAO.findByReferenceId(any())).thenThrow(new NotFoundException());
     assertThrows(NotFoundException.class, () -> service.findByReferenceId("referenceId"));
   }
@@ -675,7 +664,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     doNothing().when(voteDAO).deleteVotesByReferenceId(any());
     doNothing().when(matchDAO).deleteMatchesByPurposeId(any());
     doNothing().when(dataAccessRequestDAO).deleteByReferenceId(any());
-    initService();
 
     try {
       service.deleteByReferenceId(adminUser, referenceId);
@@ -693,7 +681,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     doNothing().when(matchDAO).deleteMatchesByPurposeId(any());
     doNothing().when(dataAccessRequestDAO).deleteByReferenceId(any());
     doNothing().when(dataAccessRequestDAO).deleteDARDatasetRelationByReferenceId(any());
-    initService();
 
     assertDoesNotThrow(() -> service.deleteByReferenceId(user, referenceId));
   }
@@ -707,7 +694,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     election.setElectionId(1);
     election.setReferenceId(referenceId);
     when(electionDAO.findElectionsByReferenceId(any())).thenReturn(List.of(election));
-    initService();
 
     assertThrows(NotAcceptableException.class,
         () -> service.deleteByReferenceId(user, referenceId));
@@ -719,7 +705,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     data.setPiEmail(PI_EMAIL);
     data.setItDirectorEmail(IT_EMAIL);
     data.setSigningOfficialEmail(SO_EMAIL);
-    initService();
     try {
       service.validateNoKeyPersonnelDuplicates(data);
     } catch (IllegalArgumentException e) {
@@ -733,7 +718,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     data.setPiEmail("invalid");
     data.setItDirectorEmail(IT_EMAIL);
     data.setSigningOfficialEmail(SO_EMAIL);
-    initService();
     assertThrows(IllegalArgumentException.class,
         () -> service.validateNoKeyPersonnelDuplicates(data));
   }
@@ -744,7 +728,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     data.setPiEmail(PI_EMAIL);
     data.setItDirectorEmail("invalid");
     data.setSigningOfficialEmail(SO_EMAIL);
-    initService();
     assertThrows(IllegalArgumentException.class,
         () -> service.validateNoKeyPersonnelDuplicates(data));
   }
@@ -755,7 +738,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     data.setPiEmail(PI_EMAIL);
     data.setItDirectorEmail(IT_EMAIL);
     data.setSigningOfficialEmail("invalid");
-    initService();
     assertThrows(IllegalArgumentException.class,
         () -> service.validateNoKeyPersonnelDuplicates(data));
   }
@@ -766,7 +748,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     data.setPiEmail(PI_EMAIL);
     data.setItDirectorEmail(PI_EMAIL);
     data.setSigningOfficialEmail(SO_EMAIL);
-    initService();
     assertThrows(IllegalArgumentException.class,
         () -> service.validateNoKeyPersonnelDuplicates(data));
   }
@@ -777,7 +758,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     data.setPiEmail(PI_EMAIL);
     data.setItDirectorEmail(IT_EMAIL);
     data.setSigningOfficialEmail(PI_EMAIL);
-    initService();
     assertThrows(IllegalArgumentException.class,
         () -> service.validateNoKeyPersonnelDuplicates(data));
   }

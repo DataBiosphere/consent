@@ -34,6 +34,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.jdbi.v3.core.JdbiException;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
 public class DataAccessRequestService implements ConsentLogger {
@@ -235,12 +236,17 @@ public class DataAccessRequestService implements ConsentLogger {
     if (!darDatasetIds.containsAll(progressReportDatasetIds)) {
       throw new BadRequestException("Progress report can only be created for approved datasets in the parent DAR");
     }
-    dataAccessRequestDAO.insertProgressReport(
+    try {
+      dataAccessRequestDAO.insertProgressReport(
           Integer.valueOf(progressReport.getParentId()),
           progressReport.getCollectionId(),
           referenceId,
           user.getUserId(),
           progressReport.getData());
+    } catch (JdbiException e) {
+      throw new BadRequestException(
+          "Unable to create progress report for Data Access Request " + parentDar.getReferenceId());
+    }
     syncDataAccessRequestDatasets(progressReportDatasetIds, referenceId);
     return findByReferenceId(referenceId);
   }
