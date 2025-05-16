@@ -303,7 +303,7 @@ public class DataAccessRequestService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  public void validateInternalCollaborators(DataAccessRequest payload, User requestingUser) {
+  protected void validateInternalCollaborators(DataAccessRequest payload, User requestingUser) {
     Integer institution = requestingUser.getInstitutionId();
     List<Collaborator> internalCollaborators = payload.getData().getInternalCollaborators();
     for (Collaborator collaborator : internalCollaborators) {
