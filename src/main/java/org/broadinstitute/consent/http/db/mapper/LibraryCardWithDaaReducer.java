@@ -7,7 +7,8 @@ import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 
-public class LibraryCardWithDaaReducer implements LinkedHashMapRowReducer<Integer, LibraryCard> {
+public class LibraryCardWithDaaReducer implements LinkedHashMapRowReducer<Integer, LibraryCard>,
+    RowMapperHelper {
 
   @Override
   public void accumulate(Map<Integer, LibraryCard> map, RowView rowView) {
@@ -17,11 +18,12 @@ public class LibraryCardWithDaaReducer implements LinkedHashMapRowReducer<Intege
     DataAccessAgreement daa = new DataAccessAgreement();
 
     try {
-      if (card != null && rowView.getColumn("daa_id", Integer.class) != null) {
+      if (hasNonZeroColumn(rowView, "daa_id")) {
         daa = rowView.getRow(DataAccessAgreement.class);
         card.addDaa(rowView.getColumn("daa_id", Integer.class));
       }
-    } catch (MappingException ignored) {
+    } catch (MappingException e) {
+      logWarn("Error adding DAA to Library Card", e);
     }
 
     if (daa.getDaaId() != null) {

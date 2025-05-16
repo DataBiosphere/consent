@@ -240,7 +240,6 @@ class LibraryCardDAOTest extends DAOTestHelper {
   void testFindAllLibraryCards() {
     List<LibraryCard> cardList = libraryCardDAO.findAllLibraryCards();
     assertEquals(0, cardList.size());
-    Institution institution = createInstitution();
     createLibraryCardForIndex();
     List<LibraryCard> cardListUpdated = libraryCardDAO.findAllLibraryCards();
     assertEquals(1, cardListUpdated.size());

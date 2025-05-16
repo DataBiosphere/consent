@@ -254,7 +254,6 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   //Negative test, checks to see if error is thrown if email and userId are not provided
   void testCreateLibraryCardNoUserDetails() {
     User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
-    Institution institution = testInstitution();
     LibraryCard payload = testLibraryCard(null);
 
     assertThrows(BadRequestException.class, () -> {
