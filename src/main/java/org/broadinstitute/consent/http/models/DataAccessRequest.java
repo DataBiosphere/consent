@@ -47,7 +47,7 @@ public class DataAccessRequest {
   public String darCode;
 
   @JsonProperty
-  public boolean draft = true;
+  public Boolean draft = true;
 
   @JsonProperty
   public Boolean progressReport = false;
