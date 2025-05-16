@@ -352,7 +352,7 @@ public class DataAccessRequest {
 
     String referenceId = UUID.randomUUID().toString();
     newDar.setReferenceId(referenceId);
-    newDar.setParentId(parentDar.getId().toString());
+    newDar.setParentId(parentDar.getId());
     newDar.setCollectionId(parentDar.getCollectionId());
 
     newDar.addDatasetIds(newData.getDatasetIds());

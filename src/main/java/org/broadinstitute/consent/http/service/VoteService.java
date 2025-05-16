@@ -301,9 +301,6 @@ public class VoteService implements ConsentLogger {
 
         // Get all Data Use translations, distinctly in the case that there are several with the same
         // data use, and then conjoin them for email display.
-        List<DataUse> dataUses = approvedDatasetsInDar.stream()
-            .map(Dataset::getDataUse)
-            .toList();
         String translation = approvedDatasetsInDar.stream()
             .map(dataset -> useRestrictionConverter.translateDataUse(dataset.getDataUse(), DataUseTranslationType.DATASET))
             .distinct()
