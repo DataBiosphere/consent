@@ -6,9 +6,6 @@ properties:
   userId:
     type: integer
     description: ID of associated user
-  institutionId:
-    type: integer
-    description: ID of associated institution
   userName:
     type: string
     description: Name of associated user
