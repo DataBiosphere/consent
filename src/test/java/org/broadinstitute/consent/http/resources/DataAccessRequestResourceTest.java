@@ -1,9 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -46,7 +43,6 @@ import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -617,61 +613,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       assertEquals(newLocation, dar.getData().getIrbDocumentLocation());
       assertEquals(fileName, dar.getData().getIrbDocumentName());
     }
-  }
-
-  @Test
-  void populateProgressReportFromJsonString() {
-    DataAccessRequest parentDar = new DataAccessRequest();
-    parentDar.setId(1);
-    parentDar.setReferenceId("parent-reference-id");
-    parentDar.setCollectionId(100);
-    DataAccessRequestData parentData = new DataAccessRequestData();
-    parentData.setProjectTitle("Parent Project Title");
-    Collaborator collaborator = new Collaborator();
-    collaborator.setName("Parent Collaborator");
-    parentData.setInternalCollaborators(List.of(collaborator));
-    parentData.setExternalCollaborators(List.of(collaborator));
-    parentData.setLabCollaborators(List.of(collaborator));
-    parentDar.setDatasetIds(List.of(1, 2, 3));
-    parentData.setCollaborationLetterName("collaboration_letter.txt");
-    parentData.setIrbDocumentName("irb_document.txt");
-    parentData.setCollaborationLetterLocation("collaboration_letter_location");
-    parentData.setIrbDocumentLocation("irb_document_location");
-    parentDar.setData(parentData);
-
-    String json = """
-            {
-                "projectTitle": "New Project Title",
-                "internalCollaborators": [],
-                "externalCollaborators": [],
-                "labCollaborators": [],
-                "progressReportSummary": "New Summary",
-                "datasetIds": [1, 2],
-                "collaborationLetterName": "new_collaboration_letter.txt",
-                "irbDocumentName": "new_irb_document.txt",
-                "collaborationLetterLocation": "new_collaboration_letter_location",
-                "irbDocumentLocation": "new_irb_document_location"
-            }
-        """;
-
-    DataAccessRequest newDar = resource.populateProgressReportFromJsonString(json, parentDar);
-
-    assertNotNull(newDar);
-    assertNotEquals(parentDar.getReferenceId(), newDar.getReferenceId());
-    assertEquals(parentDar.getCollectionId(), newDar.getCollectionId());
-    assertEquals("Parent Project Title", newDar.getData().getProjectTitle());
-    assertEquals(List.of(), newDar.getData().getInternalCollaborators());
-    assertEquals(List.of(), newDar.getData().getExternalCollaborators());
-    assertEquals(List.of(), newDar.getData().getLabCollaborators());
-    assertEquals("New Summary", newDar.getData().getProgressReportSummary());
-    assertEquals(List.of(1, 2), newDar.getDatasetIds());
-    assertNull(newDar.getData().getCollaborationLetterName());
-    assertNull(newDar.getData().getIrbDocumentName());
-    assertNull(newDar.getData().getCollaborationLetterLocation());
-    assertNull(newDar.getData().getIrbDocumentLocation());
-    assertEquals(List.of(collaborator),
-        parentDar.getData().getInternalCollaborators()); // Ensure parent is unchanged
-    assertEquals("collaboration_letter.txt", parentDar.getData().getCollaborationLetterName());
   }
 
   @Test

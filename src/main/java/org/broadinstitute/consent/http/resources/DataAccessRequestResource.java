@@ -92,19 +92,6 @@ public class DataAccessRequestResource extends Resource {
     this.darCollectionService = darCollectionService;
   }
 
-  private static DataAccessRequestData populateDARData(String json) {
-    DataAccessRequestData data;
-    try {
-      data = DataAccessRequestData.fromString(json);
-    } catch (Exception e) {
-      throw new BadRequestException("Unable to parse DAR from JSON string");
-    }
-    if (Objects.isNull(data)) {
-      data = new DataAccessRequestData();
-    }
-    return data;
-  }
-
   @GET
   @Produces("application/json")
   @PermitAll
@@ -436,7 +423,7 @@ public class DataAccessRequestResource extends Resource {
       if (!user.getUserId().equals(parentDar.getUserId())) {
         throw new ForbiddenException("User not authorized to update this Data Access Request");
       }
-      DataAccessRequest payload = populateProgressReportFromJsonString(dar, parentDar);
+      DataAccessRequest payload = DataAccessRequest.populateProgressReportFromJsonString(dar, parentDar);
       populateProgressReportWithDocuments(collabInputStream, collabFileDetails, ethicsInputStream,
           ethicsFileDetails, payload, parentDar);
       DataAccessRequest progressReport = dataAccessRequestService.createProgressReport(user,
@@ -575,7 +562,7 @@ public class DataAccessRequestResource extends Resource {
 
   private DataAccessRequest populateDarFromJsonString(User user, String json) {
     DataAccessRequest newDar = new DataAccessRequest();
-    DataAccessRequestData data = populateDARData(json);
+    DataAccessRequestData data = DataAccessRequestData.populateDARData(json);
     // When posting a submitted dar, there are two cases:
     // 1. those that existed previously as a draft dar
     // 2. those that are brand new
@@ -620,7 +607,7 @@ public class DataAccessRequestResource extends Resource {
   public DataAccessRequest populateProgressReportFromJsonString(String json,
       DataAccessRequest parentDar) {
     DataAccessRequest newDar = new DataAccessRequest();
-    DataAccessRequestData newData = populateDARData(json);
+    DataAccessRequestData newData = DataAccessRequestData.populateDARData(json);
     DataAccessRequestData originalDataCopy = DataAccessRequestData.fromString(
         parentDar.getData().toString());
 

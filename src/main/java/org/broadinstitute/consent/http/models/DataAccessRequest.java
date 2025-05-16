@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -332,6 +333,54 @@ public class DataAccessRequest {
                 (Objects.nonNull(this.getData().getNotHealth()) && this.getData().getNotHealth())
         );
   }
+
+  /**
+   * Populate a new Data Access Request from the JSON string and the parent Data Access Request.
+   * Copies all the data from the parent dar, then overwrites the collaborators and datasets. Adds
+   * all progress report specific fields.
+   *
+   * @param json      The JSON string to populate the new Progress Report.
+   * @param parentDar The parent Data Access Request to copy data from.
+   * @return A new Progress Report populated with the provided JSON string and parent DAR data.
+   */
+  public static DataAccessRequest populateProgressReportFromJsonString(String json,
+      DataAccessRequest parentDar) {
+    DataAccessRequest newDar = new DataAccessRequest();
+    DataAccessRequestData newData = DataAccessRequestData.populateDARData(json);
+    DataAccessRequestData originalDataCopy = DataAccessRequestData.fromString(
+        parentDar.getData().toString());
+
+    String referenceId = UUID.randomUUID().toString();
+    newDar.setReferenceId(referenceId);
+    newDar.setParentId(parentDar.getId().toString());
+    newDar.setCollectionId(parentDar.getCollectionId());
+
+    newDar.addDatasetIds(newData.getDatasetIds());
+    originalDataCopy.setInternalCollaborators(newData.getInternalCollaborators());
+    originalDataCopy.setExternalCollaborators(newData.getExternalCollaborators());
+    originalDataCopy.setLabCollaborators(newData.getLabCollaborators());
+    originalDataCopy.setProgressReportSummary(newData.getProgressReportSummary());
+    originalDataCopy.setIntellectualPropertySummary(newData.getIntellectualPropertySummary());
+    originalDataCopy.setPublications(newData.getPublications());
+    originalDataCopy.setPresentations(newData.getPresentations());
+    originalDataCopy.setDmi(newData.getDmi());
+    originalDataCopy.setResearchPlans(newData.getResearchPlans());
+    originalDataCopy.setCloseoutSupplement(newData.getCloseoutSupplement());
+    originalDataCopy.setPubAcknowledgement(newData.getPubAcknowledgement());
+    originalDataCopy.setDSAcknowledgement(newData.getDSAcknowledgement());
+    originalDataCopy.setGSOAcknowledgement(newData.getGSOAcknowledgement());
+
+    // These values will be updated in populateProgressReportWithDocuments if documents exist.
+    // Its important we don't copy over the parent values so those documents are not deleted.
+    originalDataCopy.setCollaborationLetterName(null);
+    originalDataCopy.setCollaborationLetterLocation(null);
+    originalDataCopy.setIrbDocumentName(null);
+    originalDataCopy.setIrbDocumentLocation(null);
+
+    newDar.setData(originalDataCopy);
+    return newDar;
+  }
+
 
   /**
    * Make a shallow copy of the dar. This is mostly a workaround for problems serializing dates when
