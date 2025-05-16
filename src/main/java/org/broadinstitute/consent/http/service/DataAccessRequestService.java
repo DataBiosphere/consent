@@ -11,7 +11,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.validator.routines.EmailValidator;
@@ -361,7 +360,7 @@ public class DataAccessRequestService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  public void validatePersonnelInSameInstitution(User user, DataAccessRequestData darData) {
+  protected void validatePersonnelInSameInstitution(User user, DataAccessRequestData darData) {
     Institution submitterInstitution = user.getInstitution();
     String piEmail = darData.getPiEmail();
     String soEmail = darData.getSigningOfficialEmail();
@@ -373,27 +372,18 @@ public class DataAccessRequestService implements ConsentLogger {
 
     List<String> invalidMembers = new ArrayList<>();
 
-    if (emailDoesNotMatchInstitution(submitterInstitution, piEmail)) {
-      invalidMembers.add("Principal Investigator: " + piEmail);
-    }
-    if (emailDoesNotMatchInstitution(submitterInstitution, soEmail)) {
-      invalidMembers.add("Signing Official: " + soEmail);
-    }
-
-    if (emailDoesNotMatchInstitution(submitterInstitution, itEmail)) {
-      invalidMembers.add("IT Director: " + itEmail);
-    }
+    verifyInstitution(submitterInstitution, piEmail, "Principal Investigator", invalidMembers);
+    verifyInstitution(submitterInstitution, soEmail, "Signing Official", invalidMembers);
+    verifyInstitution(submitterInstitution, itEmail, "IT Director", invalidMembers);
 
     getErrorSummary(
             collaboratorsEmails,
             submitterInstitution,
             "Internal Collaborator member: ",
-            "Internal Collaborator members: ")
-        .ifPresent(invalidMembers::add);
+            "Internal Collaborator members: ", invalidMembers);
 
     getErrorSummary(
-            labStaffEmails, submitterInstitution, "Lab staff member: ", "Lab staff members: ")
-        .ifPresent(invalidMembers::add);
+            labStaffEmails, submitterInstitution, "Lab staff member: ", "Lab staff members: ", invalidMembers);
 
     if (!invalidMembers.isEmpty()) {
       throw new IllegalArgumentException(
@@ -402,16 +392,22 @@ public class DataAccessRequestService implements ConsentLogger {
     }
   }
 
-  private Optional<String> getErrorSummary(
+  private void verifyInstitution(Institution submitterInstitution, String email, String role, List<String> invalidMembers) {
+    if (emailDoesNotMatchInstitution(submitterInstitution, email)) {
+      invalidMembers.add(role + ": " + email);
+    }
+  }
+
+  private void getErrorSummary(
       List<String> emails,
       Institution institution,
       String categorySingular,
-      String categoryPlural) {
+      String categoryPlural,
+      List<String> invalidMembers) {
     List<String> errors = findEmailAddressesNotInInstitution(emails, institution);
     if (!errors.isEmpty()) {
-      return Optional.of(buildSingleErrorFromErrorList(errors, categorySingular, categoryPlural));
+      invalidMembers.add(buildSingleErrorFromErrorList(errors, categorySingular, categoryPlural));
     }
-    return Optional.empty();
   }
 
   private List<String> findEmailAddressesNotInInstitution(
@@ -443,7 +439,7 @@ public class DataAccessRequestService implements ConsentLogger {
     if (foundInstitution == null || institution == null) {
       return true;
     }
-    return !institution.getId().equals(foundInstitution.getId());
+    return !institution.equals(foundInstitution);
   }
 
   public Collection<DataAccessRequest> getApprovedDARsForDataset(Dataset dataset) {

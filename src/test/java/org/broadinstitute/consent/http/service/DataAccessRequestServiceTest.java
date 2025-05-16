@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -51,6 +52,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatcher;
@@ -757,22 +759,25 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     Institution usersInstitution = new Institution();
     usersInstitution.setId(1);
     user.setInstitution(usersInstitution);
-    DataAccessRequestData data = new DataAccessRequestData();
-    data.setPiEmail(badEmailAddress);
-    data.setSigningOfficialEmail(badEmailAddress);
-    data.setItDirectorEmail(badEmailAddress);
-    Collaborator collaborator = new Collaborator();
-    collaborator.setEmail(badEmailAddress);
-    data.setInternalCollaborators(List.of(collaborator));
-    Collaborator labStaffMember = new Collaborator();
-    labStaffMember.setEmail(badEmailAddress);
-    data.setLabCollaborators(List.of(labStaffMember));
+    DataAccessRequestData data = getDataAccessRequestData(badEmailAddress);
 
     Institution badInstitution = new Institution();
     badInstitution.setId(2);
     when(institutionService.findInstitutionForEmail(badEmailAddress)).thenReturn(badInstitution);
     initService();
-    assertThrows(IllegalArgumentException.class, () -> service.validatePersonnelInSameInstitution(user, data));
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> service.validatePersonnelInSameInstitution(user, data));
+    validateException(
+        exception,
+        badEmailAddress,
+        List.of(
+            "Principal Investigator",
+            "Signing Official",
+            "IT Director",
+            "Internal Collaborator",
+            "Lab staff"));
   }
 
   @Test
@@ -782,6 +787,15 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     Institution goodInstitution = new Institution();
     goodInstitution.setId(1);
     user.setInstitution(goodInstitution);
+    DataAccessRequestData data = getDataAccessRequestData(goodEmailAddress);
+
+    when(institutionService.findInstitutionForEmail(goodEmailAddress)).thenReturn(goodInstitution);
+    initService();
+    assertDoesNotThrow(() -> service.validatePersonnelInSameInstitution(user, data));
+  }
+
+  @NotNull
+  private static DataAccessRequestData getDataAccessRequestData(String goodEmailAddress) {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setPiEmail(goodEmailAddress);
     data.setSigningOfficialEmail(goodEmailAddress);
@@ -792,34 +806,24 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     Collaborator labStaffMember = new Collaborator();
     labStaffMember.setEmail(goodEmailAddress);
     data.setLabCollaborators(List.of(labStaffMember));
-
-    when(institutionService.findInstitutionForEmail(goodEmailAddress)).thenReturn(goodInstitution);
-    initService();
-    assertDoesNotThrow(() -> service.validatePersonnelInSameInstitution(user, data));
+    return data;
   }
 
   @Test
   void testValidatePersonnelInSameInstitutionThrowsForBadPI() {
-    String goodEmailAddress = "j@example.com";
     String badEmailAddress = "bad@evil.com";
     User user = new User(1, "j@example.com", "Display Name", new Date());
     Institution goodInstitution = new Institution();
     goodInstitution.setId(1);
     user.setInstitution(goodInstitution);
-    DataAccessRequestData data = new DataAccessRequestData();
-    data.setPiEmail(badEmailAddress);
-    data.setSigningOfficialEmail(goodEmailAddress);
-    data.setItDirectorEmail(goodEmailAddress);
-    Collaborator collaborator = new Collaborator();
-    collaborator.setEmail(goodEmailAddress);
-    data.setInternalCollaborators(List.of(collaborator));
-    Collaborator labStaffMember = new Collaborator();
-    labStaffMember.setEmail(goodEmailAddress);
-    data.setLabCollaborators(List.of(labStaffMember));
-    when(institutionService.findInstitutionForEmail(goodEmailAddress)).thenReturn(goodInstitution);
+    DataAccessRequestData data = getDataAccessRequestData(badEmailAddress);
     when(institutionService.findInstitutionForEmail(badEmailAddress)).thenReturn(null);
     initService();
-    assertThrows(IllegalArgumentException.class, () -> service.validatePersonnelInSameInstitution(user, data));
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> service.validatePersonnelInSameInstitution(user, data));
+    validateException(exception, badEmailAddress, List.of("Principal Investigator"));
   }
 
   @Test
@@ -837,7 +841,19 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(institutionService.findInstitutionForEmail(goodEmailAddress)).thenReturn(goodInstitution);
     when(institutionService.findInstitutionForEmail(badEmailAddress)).thenReturn(null);
     initService();
-    assertThrows(IllegalArgumentException.class, () -> service.validatePersonnelInSameInstitution(user, data));
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> service.validatePersonnelInSameInstitution(user, data));
+    validateException(exception, badEmailAddress, List.of("Signing Official"));
+  }
+
+  private void validateException(
+      IllegalArgumentException exception, String email, List<String> errorTypes) {
+    assertTrue(exception.getMessage().toLowerCase().contains(email.toLowerCase()));
+    errorTypes.forEach(
+        errorType ->
+            assertTrue(exception.getMessage().toLowerCase().contains(errorType.toLowerCase())));
   }
 
   @Test
@@ -855,7 +871,11 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(institutionService.findInstitutionForEmail(goodEmailAddress)).thenReturn(goodInstitution);
     when(institutionService.findInstitutionForEmail(badEmailAddress)).thenReturn(null);
     initService();
-    assertThrows(IllegalArgumentException.class, () -> service.validatePersonnelInSameInstitution(user, data));
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> service.validatePersonnelInSameInstitution(user, data));
+    validateException(exception, badEmailAddress, List.of("IT Director"));
   }
 
   @Test
@@ -874,11 +894,15 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     collaborator1.setEmail(goodEmailAddress);
     Collaborator collaborator2 = new Collaborator();
     collaborator2.setEmail(badEmailAddress);
-    data.setLabCollaborators(List.of(collaborator1, collaborator2));
+    data.setInternalCollaborators(List.of(collaborator1, collaborator2));
     when(institutionService.findInstitutionForEmail(goodEmailAddress)).thenReturn(goodInstitution);
     when(institutionService.findInstitutionForEmail(badEmailAddress)).thenReturn(null);
     initService();
-    assertThrows(IllegalArgumentException.class, () -> service.validatePersonnelInSameInstitution(user, data));
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> service.validatePersonnelInSameInstitution(user, data));
+    validateException(exception, badEmailAddress, List.of("Internal Collaborator"));
   }
 
   @Test
@@ -889,6 +913,20 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     Institution goodInstitution = new Institution();
     goodInstitution.setId(1);
     user.setInstitution(goodInstitution);
+    DataAccessRequestData data = getDataAccessRequestData(goodEmailAddress, badEmailAddress);
+    when(institutionService.findInstitutionForEmail(goodEmailAddress)).thenReturn(goodInstitution);
+    when(institutionService.findInstitutionForEmail(badEmailAddress)).thenReturn(null);
+    initService();
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> service.validatePersonnelInSameInstitution(user, data));
+    validateException(exception, badEmailAddress, List.of("Lab staff member"));
+  }
+
+  @NotNull
+  private static DataAccessRequestData getDataAccessRequestData(String goodEmailAddress,
+      String badEmailAddress) {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setPiEmail(goodEmailAddress);
     data.setSigningOfficialEmail(goodEmailAddress);
@@ -903,10 +941,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     Collaborator labStaffMember2 = new Collaborator();
     labStaffMember2.setEmail(badEmailAddress);
     data.setLabCollaborators(List.of(labStaffMember, labStaffMember2));
-    when(institutionService.findInstitutionForEmail(goodEmailAddress)).thenReturn(goodInstitution);
-    when(institutionService.findInstitutionForEmail(badEmailAddress)).thenReturn(null);
-    initService();
-    assertThrows(IllegalArgumentException.class, () -> service.validatePersonnelInSameInstitution(user, data));
+    return data;
   }
 
   @Test
@@ -925,7 +960,14 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     badInstitution.setId(2);
     when(institutionService.findInstitutionForEmail(badEmailAddress)).thenReturn(badInstitution);
     initService();
-    assertThrows(IllegalArgumentException.class, () -> service.validatePersonnelInSameInstitution(user, data));
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> service.validatePersonnelInSameInstitution(user, data));
+    validateException(
+        exception,
+        badEmailAddress,
+        List.of("Principal Investigator", "Signing Official", "IT Director"));
   }
 
   private static class LongerThanTwo implements ArgumentMatcher<String> {
