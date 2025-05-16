@@ -158,8 +158,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
   @Test
   void testCreateElectionsForDarByUserChair() throws Exception {
     DarCollection collection = setUpDarCollectionWithDacDataset();
-    DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
-    assertNotNull(dar);
+    DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElseThrow();
     Integer datasetId = dar.getDatasetIds().get(0);
     assertNotNull(datasetId);
     Optional<Dac> dac = dacDAO.findDacsForDatasetIds(List.of(datasetId)).stream().findFirst();
@@ -256,8 +255,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     assertEquals(8, createdVotes.size());  // 1 dataset X 2 elections/dataset X 4 votes/election each = 8 votes.
 
     // Find the dac chairperson for the second Dataset in the DAR.
-    // refresh the collection
-    collection = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
+
     Dac dac2 = dacDAO.findDacsForDatasetIds(List.of(datasetId2)).stream().findFirst().orElseThrow();
     assertNotNull(dac2);
     List<User> dacUsers2 = dacDAO.findMembersByDacId(dac2.getDacId());
@@ -425,9 +423,9 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         dar.getUserId(),
         dar.getData());
     DataAccessRequest progressReport = dataAccessRequestDAO.findByReferenceId(referenceId);
-    dar.getDatasetIds().forEach(datasetId -> {
-      dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
-    });
+    dar.getDatasetIds().forEach(datasetId ->
+      dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId)
+    );
     return progressReport;
   }
   /**
@@ -442,8 +440,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         new Date());
     createDarForCollection(user, collectionId, dacAndDataset.dataset);
     DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
-    DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
-    assertNotNull(dar);
+    DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElseThrow();
     assertNotNull(dar.getData());
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dacAndDataset.dataset.getDatasetId());
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dacAndDataset2.dataset.getDatasetId());

@@ -304,11 +304,10 @@ public class VoteService implements ConsentLogger {
         List<DataUse> dataUses = approvedDatasetsInDar.stream()
             .map(Dataset::getDataUse)
             .toList();
-        List<String> dataUseTranslations = dataUses.stream()
-            .map(d -> useRestrictionConverter.translateDataUse(d, DataUseTranslationType.DATASET))
+        String translation = approvedDatasetsInDar.stream()
+            .map(dataset -> useRestrictionConverter.translateDataUse(dataset.getDataUse(), DataUseTranslationType.DATASET))
             .distinct()
-            .collect(Collectors.toList());
-        String translation = String.join(";", dataUseTranslations);
+            .collect(Collectors.joining(";"));
 
         try {
           if(dar.getProgressReport()) {

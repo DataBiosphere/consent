@@ -783,8 +783,8 @@ public class DarCollectionService implements ConsentLogger {
 
   private List<Dac> getMatchingDacs(User user, Collection<Dac> dacsInDAR) {
     List<Integer> dacIDs = user.getRoles().stream()
-        .filter(ur -> ur.getDacId() != null)
         .map(UserRole::getDacId)
+        .filter(Objects::nonNull)
         .toList();
     return dacsInDAR.stream()
         .filter(dac -> dacIDs.contains(dac.getDacId()))

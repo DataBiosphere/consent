@@ -22,9 +22,11 @@ import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -323,10 +325,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(voteDAO.findVoteUsersByElectionReferenceIdList(any())).thenReturn(List.of(new User()));
 
     service.createElectionsForDarCollection(user, collection);
-    verify(darCollectionServiceDAO, times(1)).createElectionsForDarByUser(any(), eq(dar));
-    verify(voteDAO, times(1)).findVoteUsersByElectionReferenceIdList(any());
-    verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(any());
-    verify(darCollectionServiceDAO).createElectionsForDarByUser(any(), any());
+    verify(darCollectionServiceDAO).createElectionsForDarByUser(any(), eq(dar));
     verify(voteDAO).findVoteUsersByElectionReferenceIdList(any());
     verify(emailService).sendDarNewCollectionElectionMessage(any(), any());
     verify(darCollectionDAO).findDARCollectionByCollectionId(any());
@@ -348,15 +347,18 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     collection.addDar(dar);
     collection.addDar(progressReport);
 
-    when(darCollectionServiceDAO.createElectionsForDarByUser(any(), any())).thenReturn(
-        List.of("electionId"));
-    when(voteDAO.findVoteUsersByElectionReferenceIdList(any())).thenReturn(List.of(new User()));
+    User voteUser = new User();
+    String electionId = "electionId";
+    when(darCollectionServiceDAO.createElectionsForDarByUser(user, progressReport))
+        .thenReturn(List.of(electionId));
+    when(voteDAO.findVoteUsersByElectionReferenceIdList(List.of(electionId)))
+        .thenReturn(List.of(voteUser));
 
     service.createElectionsForDarCollection(user, collection);
-    verify(darCollectionServiceDAO, times(1)).createElectionsForDarByUser(any(), eq(progressReport));
-    verify(voteDAO, times(1)).findVoteUsersByElectionReferenceIdList(any());
-    verify(darCollectionDAO, times(1)).findDARCollectionByCollectionId(any());
-    verify(emailService, times(1)).sendProgressReportNewCollectionElectionMessage(any(), any());
+
+    verify(darCollectionDAO).findDARCollectionByCollectionId(collection.getDarCollectionId());
+    verify(emailService)
+        .sendProgressReportNewCollectionElectionMessage(List.of(voteUser), collection.getDarCode());
   }
 
   @Test
@@ -1273,12 +1275,13 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSendNewDARCollectionMessage() {
+  void testSendNewDARCollectionMessage() throws Exception {
     Dac dac = new Dac();
     dac.setDacId(1);
     User chairperson = createUserWithRole(UserRoles.CHAIRPERSON, dac.getDacId());
     dac.setChairpersons(List.of(chairperson));
     dac.setName("DAC-01");
+    User researcher = createUserWithRole(UserRoles.RESEARCHER, null);
 
     Dataset d1 = createDataset(dac.getDacId());
     Dataset d2 = createDataset(dac.getDacId());
@@ -1287,13 +1290,27 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     collection.setDarCode("01");
     collection.setDarCollectionId(1);
     collection.setDatasets(Set.of(d1, d2));
+    collection.setCreateUserId(researcher.getUserId());
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
     dar.setSubmissionDate(Timestamp.from(Instant.now()));
     dar.setDatasetIds(List.of(d1.getDatasetId(), d2.getDatasetId()));
     collection.addDar(dar);
 
-    assertDoesNotThrow(() -> service.sendNewDARCollectionMessage(collection.getDarCollectionId()));
+    when(darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId()))
+        .thenReturn(collection);
+    when(userDAO.findUserById(researcher.getUserId())).thenReturn(researcher);
+    when(userDAO.findUsersForDatasetsByRole(dar.getDatasetIds(),
+        Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()))).thenReturn(Set.of(chairperson));
+    when(dacDAO.findDacsForDatasetIds(dar.getDatasetIds())).thenReturn(Set.of(dac));
+    when(datasetDAO.findDatasetsByIdList(dar.getDatasetIds())).thenReturn(List.of(d1, d2));
+    service.sendNewDARCollectionMessage(collection.getDarCollectionId());
+    verify(emailService)
+        .sendNewDARRequestEmail(
+            chairperson,
+            Map.of(dac.getName(), List.of(d1.getDatasetIdentifier(), d2.getDatasetIdentifier())),
+            researcher.getDisplayName(),
+            collection.getDarCode());
   }
 
   private DarCollection generateMockDarCollection(Set<Dataset> datasets) {

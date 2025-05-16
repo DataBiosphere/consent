@@ -18,6 +18,7 @@ import static org.mockito.Mockito.when;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
@@ -122,6 +123,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
 
   private void initService() {
     ConsentConfiguration config = new ConsentConfiguration();
+    config.getServicesConfiguration().setLocalURL("local_url/");
     DAOContainer container = new DAOContainer();
     container.setDataAccessRequestDAO(dataAccessRequestDAO);
     container.setDarCollectionDAO(darCollectionDAO);
@@ -805,7 +807,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSendReminderMessage() {
+  void testSendReminderMessage() throws TemplateException, IOException {
     Election election = new Election();
     election.setElectionId(RandomUtils.nextInt());
     election.setReferenceId(UUID.randomUUID().toString());
@@ -828,7 +830,15 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(userDAO.findUserById(any())).thenReturn(user);
 
     initService();
-    assertDoesNotThrow(() -> service.sendReminderMessage(vote.getVoteId()));
+    service.sendReminderMessage(vote.getVoteId());
+    verify(emailService)
+        .sendReminderMessage(
+            user,
+            vote,
+            collection.getDarCode(),
+            election.getElectionType(),
+            "local_url/dar_collection/" + collection.getDarCollectionId());
+    verify(voteDAO).updateVoteReminderFlag(vote.getVoteId(), true);
   }
 
 

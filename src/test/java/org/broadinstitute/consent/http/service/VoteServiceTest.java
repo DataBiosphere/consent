@@ -464,7 +464,7 @@ class VoteServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testNotifyResearchersOfProessReportApproval() throws TemplateException, IOException {
+  void testNotifyResearchersOfProgressReportApproval() throws TemplateException, IOException {
     String referenceId1 = UUID.randomUUID().toString();
 
     Vote v1 = new Vote();
@@ -511,9 +511,10 @@ class VoteServiceTest extends AbstractTestHelper {
     when(userDAO.findUserById(any())).thenReturn(researcher);
 
     initService();
+
     service.sendDatasetApprovalNotifications(List.of(v1), researcher);
-    // Since we have 1 collection with different DAR/Datasets, we should be sending 1 email
-    verify(emailService, times(1)).sendResearcherProgressReportApproved(any(), any(), anyList(), any());
+
+    verify(emailService).sendResearcherProgressReportApproved(any(), any(), anyList(), any());
   }
 
   @Test

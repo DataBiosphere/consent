@@ -43,11 +43,11 @@ public class DarCollectionServiceDAO {
    * DataAccessRequests with no elections, or with previously canceled elections, are valid for
    * initiating a new set of elections. Any DAR elections in open state should be ignored.
    *
-   * @param user       The User initiating new elections for a data access request
-   * @param dataAccessRequest The DataAccessRequest
+   * @param user   The User initiating new elections for a data access request
+   * @param dar    The DataAccessRequest
    * @return List of reference ids for which a DAR election was created
    */
-  public List<String> createElectionsForDarByUser(User user, DataAccessRequest dataAccessRequest)
+  public List<String> createElectionsForDarByUser(User user, DataAccessRequest dar)
       throws SQLException {
     final Date now = new Date();
     boolean isAdmin = user.hasUserRole(UserRoles.ADMIN);
@@ -77,10 +77,10 @@ public class DarCollectionServiceDAO {
           // Only take actions on the most recent DAR/Progress report in the collection
           // This means a chair cannot reopen an election in any other DAR in the collection besides
           // the most recently submitted progress report.
-          dataAccessRequest.getDatasetIds().forEach(datasetId -> {
+          dar.getDatasetIds().forEach(datasetId -> {
               // If there is an existing open election for this DAR+Dataset, we can ignore it
               Election lastDataAccessElection = electionDAO.findLastElectionByReferenceIdDatasetIdAndType(
-                  dataAccessRequest.getReferenceId(), datasetId, ElectionType.DATA_ACCESS.getValue());
+                  dar.getReferenceId(), datasetId, ElectionType.DATA_ACCESS.getValue());
               boolean ignore =
                   Objects.nonNull(lastDataAccessElection) && lastDataAccessElection.getStatus()
                       .equalsIgnoreCase(ElectionStatus.OPEN.getValue());
@@ -93,7 +93,7 @@ public class DarCollectionServiceDAO {
               if (!ignore) {
                 // Archive all old elections for this DAR + Dataset
                 List<Integer> oldElectionIds = electionDAO
-                    .findElectionsByReferenceIdAndDatasetId(dataAccessRequest.getReferenceId(), datasetId)
+                    .findElectionsByReferenceIdAndDatasetId(dar.getReferenceId(), datasetId)
                     .stream().map(Election::getElectionId)
                     .toList();
                 if (!oldElectionIds.isEmpty()) {
@@ -101,18 +101,18 @@ public class DarCollectionServiceDAO {
                 }
                 List<User> voteUsers = findVoteUsersForDataset(datasetId);
                 inserts.add(createElectionInsert(handle, ElectionType.DATA_ACCESS.getValue(),
-                    dataAccessRequest.getReferenceId(), now, datasetId));
+                    dar.getReferenceId(), now, datasetId));
                 inserts.addAll(createVoteInsertsForUsers(handle, voteUsers,
-                    ElectionType.DATA_ACCESS.getValue(), dataAccessRequest.getReferenceId(), datasetId, now,
-                    dataAccessRequest.requiresManualReview()));
+                    ElectionType.DATA_ACCESS.getValue(), dar.getReferenceId(), datasetId, now,
+                    dar.requiresManualReview()));
                 inserts.add(
-                    createElectionInsert(handle, ElectionType.RP.getValue(), dataAccessRequest.getReferenceId(),
+                    createElectionInsert(handle, ElectionType.RP.getValue(), dar.getReferenceId(),
                         now, datasetId));
                 inserts.addAll(
                     createVoteInsertsForUsers(handle, voteUsers, ElectionType.RP.getValue(),
-                        dataAccessRequest.getReferenceId(), datasetId, now,
-                        dataAccessRequest.requiresManualReview()));
-                createdElectionReferenceIds.add(dataAccessRequest.getReferenceId());
+                        dar.getReferenceId(), datasetId, now,
+                        dar.requiresManualReview()));
+                createdElectionReferenceIds.add(dar.getReferenceId());
               }
             });
           inserts.forEach(Update::execute);

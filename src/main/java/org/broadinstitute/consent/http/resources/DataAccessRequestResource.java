@@ -134,13 +134,7 @@ public class DataAccessRequestResource extends Resource {
 
       DataAccessRequest payload = populateDarFromJsonString(user, dar);
       DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload);
-      Integer collectionId = newDar.getCollectionId();
-      try {
-        darCollectionService.sendNewDARCollectionMessage(collectionId);
-      } catch (Exception e) {
-        // non-fatal exception
-        logCaughtEmailException(collectionId, e);
-      }
+      sendNewDarCollectionMessage(newDar.getCollectionId());
       URI uri = info.getRequestUriBuilder().build();
       matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
       List<Dataset> datasets = datasetService.findDatasetsByIds(newDar.getDatasetIds());
@@ -164,13 +158,7 @@ public class DataAccessRequestResource extends Resource {
       // DAA Enforcement
       datasetService.enforceDAARestrictions(user, payload.getDatasetIds());
       DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload);
-      Integer collectionId = newDar.getCollectionId();
-      try {
-        darCollectionService.sendNewDARCollectionMessage(collectionId);
-      } catch (Exception e) {
-        // non-fatal exception
-        logCaughtEmailException(collectionId, e);
-      }
+      sendNewDarCollectionMessage(newDar.getCollectionId());
       URI uri = info.getRequestUriBuilder().build();
       matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
       return Response.created(uri).entity(newDar.convertToSimplifiedDar()).build();

@@ -30,6 +30,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.InvalidEmailAddressException;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
@@ -397,37 +398,37 @@ public class DataAccessRequestService implements ConsentLogger {
   }
 
   private void sendDARMessageToList(EmailType type, String interval) {
-    List<DataAccessRequest> expiredDars = dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
-        type.getTypeInt(), interval, MINIMUM_SUBMITTED_DATE_FOR_DAR_EXPIRATIONS);
-    expiredDars.forEach(expiredDar -> {
-      try {
-        String referenceId = expiredDar.getReferenceId();
-        User user = userDAO.findUserById(expiredDar.getUserId());
-        String darCode = expiredDar.getDarCode();
-        String userName = user.getDisplayName();
-        if (user.getEmail() == null) {
-          // Do not throw here.  Log information about the DAR since this will continue
-          // to appear broken until manual intervention is taken to resolve the missing user
-          // email address
-          logException(new Exception(String.format(
-              "Email address for user %d (%s) not found for expiring warning.  DAR reference id: %s",
-              expiredDar.getUserId(), userName, referenceId)));
-        } else {
-          switch (type) {
-            case DAR_EXPIRATION_REMINDER:
-              emailService.sendDarExpirationReminderMessage(user, darCode, user.getUserId(), referenceId);
-              break;
-            case DAR_EXPIRED:
-              emailService.sendDarExpiredMessage(user, darCode, user.getUserId(), referenceId);
-              break;
-            default:
-              break;
+    List<DataAccessRequest> expiredDars =
+        dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
+            type.getTypeInt(), interval, MINIMUM_SUBMITTED_DATE_FOR_DAR_EXPIRATIONS);
+    expiredDars.forEach(
+        expiredDar -> {
+          try {
+            String referenceId = expiredDar.getReferenceId();
+            User user = userDAO.findUserById(expiredDar.getUserId());
+            String darCode = expiredDar.getDarCode();
+            String userName = user.getDisplayName();
+            if (user.getEmail() == null) {
+              throw new InvalidEmailAddressException(
+                  String.format(
+                      "Email address for user %d (%s) not found for expiring warning.  DAR reference id: %s",
+                      expiredDar.getUserId(), userName, referenceId));
+            }
+            switch (type) {
+              case DAR_EXPIRATION_REMINDER:
+                emailService.sendDarExpirationReminderMessage(
+                    user, darCode, user.getUserId(), referenceId);
+                break;
+              case DAR_EXPIRED:
+                emailService.sendDarExpiredMessage(user, darCode, user.getUserId(), referenceId);
+                break;
+              default:
+                break;
+            }
+          } catch (Exception e) {
+            logException(e);
           }
-        }
-      } catch (Exception e) {
-        logException(e);
-      }
-    });
+        });
   }
 
   public void sendReminderMessage(Integer voteId) throws IOException, TemplateException {
