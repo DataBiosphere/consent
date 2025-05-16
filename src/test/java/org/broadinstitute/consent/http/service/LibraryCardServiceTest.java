@@ -78,7 +78,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  // Test SO LC create with userId and email
+  // Test SO LC create with userId and email success case
   void testCreateLibraryCardFullUserDetailsAsSOSameInstitution() {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
@@ -105,7 +105,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  // Test SO LC create with userId and email
+  // Test SO LC create with userId and email but in different institutions
   void testCreateLibraryCardFullUserDetailsAsSODifferentInstitution() {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
