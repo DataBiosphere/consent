@@ -8,6 +8,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -118,10 +119,15 @@ public class LibraryCardResource extends Resource {
   public Response deleteLibraryCard(@Auth AuthUser authUser, @PathParam("id") Integer id) {
     User user = userService.findUserByEmail(authUser.getEmail());
     LibraryCard card = libraryCardService.findLibraryCardById(id);
-    User lcUser = userService.findUserById(card.getUserId());
+    User lcUser = null;
+    try {
+      lcUser = userService.findUserById(card.getUserId());
+    } catch (NotFoundException nfe) {
+      // LC User can be null - do not need to error here
+    }
     try {
       // If user is not an admin and SO institutionID doesn't match the user's throw an exception
-      if (!checkIsAdmin(user) && !lcUser.getInstitutionId().equals(user.getInstitutionId())) {
+      if (lcUser != null && !checkIsAdmin(user) && !lcUser.getInstitution().equals(user.getInstitution())) {
         throw new ForbiddenException("You are not authorized to delete this library card");
       }
       libraryCardService.deleteLibraryCardById(id);
