@@ -6,7 +6,7 @@ import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
-public class ResearcherApprovedMessage extends MailMessage {
+public class ResearcherDarApprovedMessage extends MailMessage {
 
   private static final String APPROVED_DAR = "Your DUOS Data Access Request Results";
 
@@ -14,7 +14,7 @@ public class ResearcherApprovedMessage extends MailMessage {
   private final List<DatasetMailDTO> datasets;
   private final String dataUseRestriction;
 
-  public ResearcherApprovedMessage(User toUser, String darCode, List<DatasetMailDTO> datasets,
+  public ResearcherDarApprovedMessage(User toUser, String darCode, List<DatasetMailDTO> datasets,
       String dataUseRestriction) {
     super(toUser, EmailType.RESEARCHER_DAR_APPROVED);
     this.darCode = darCode;

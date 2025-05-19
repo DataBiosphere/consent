@@ -69,17 +69,6 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
                 .filter(card -> card.getId().equals(lcId))
                 .findFirst();
         lc = existingLibraryCard.orElseGet(() -> rowView.getRow(LibraryCard.class));
-        try {
-          if (Objects.nonNull(rowView.getColumn("lci_id", Integer.class))) {
-            Institution institution = rowView.getRow(Institution.class);
-            // There are unusual cases where we somehow create an institution with null values
-            if (Objects.nonNull(institution.getId())) {
-              lc.setInstitution(institution);
-            }
-          }
-        } catch (MappingException e) {
-          // Ignore institution mapping errors
-        }
         if (rowView.getColumn("lc_daa_id", Integer.class) != null) {
           lc.addDaa(rowView.getColumn("lc_daa_id", Integer.class));
         }

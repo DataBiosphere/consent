@@ -7,6 +7,7 @@ import static org.mockito.Mockito.doNothing;
 import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.EmailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class EmailNotifierResourceTest {
 
   @Mock
-  private EmailService emailService;
+  private DataAccessRequestService dataAccessRequestService;
   @Mock
   private AuthUser authUser;
 
@@ -26,12 +27,12 @@ class EmailNotifierResourceTest {
 
   @BeforeEach
   void setUp() {
-    resource = new EmailNotifierResource(emailService);
+    resource = new EmailNotifierResource(dataAccessRequestService);
   }
 
   @Test
   void testResourceSuccess() throws Exception {
-    doNothing().when(emailService).sendReminderMessage(any());
+    doNothing().when(dataAccessRequestService).sendReminderMessage(any());
     try (Response response = resource.sendReminderMessage(authUser,
         String.valueOf(RandomUtils.nextInt(100, 1000)))) {
       assertEquals(200, response.getStatus());
@@ -42,6 +43,13 @@ class EmailNotifierResourceTest {
   void testResourceFailure() {
     try (Response response = resource.sendReminderMessage(authUser, "invalidVoteId")) {
       assertEquals(500, response.getStatus());
+    }
+  }
+
+  @Test
+  void testSendDarExpirationNotices() {
+    try (Response response = resource.sendDarExpirationNotices(authUser)) {
+      assertEquals(200, response.getStatus());
     }
   }
 

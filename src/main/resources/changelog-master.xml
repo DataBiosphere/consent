@@ -176,6 +176,8 @@
     relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2025-05-08-rm-old-user-props.xml"
     relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2025-05-14-rm-lc-institution.xml"
+    relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2025-05-16-disallow-pr-siblings.xml"
     relativeToChangelogFile="true" />
 </databaseChangeLog>
