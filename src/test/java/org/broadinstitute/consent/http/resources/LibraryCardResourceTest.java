@@ -257,6 +257,19 @@ class LibraryCardResourceTest {
   }
 
   @Test
+  void deleteLibraryCardUserNotFound() {
+    LibraryCard card = mockLibraryCardSetup();
+    card.setUserId(null);
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+    when(userService.findUserById(null)).thenThrow(new NotFoundException());
+    when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
+    initResource();
+
+    Response response = resource.deleteLibraryCard(authUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
+  }
+
+  @Test
   void deleteLibraryCardThrowsForbiddenException() {
     LibraryCard card = mockLibraryCardSetup();
     User soUser = mockSOUser();
