@@ -956,7 +956,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dar.getId());
 
     assertNotNull(progressReport);
-    assertEquals(dar.getId().toString(), progressReport.getParentId());
+    assertEquals(dar.getId(), progressReport.getParentId());
     assertEquals(dar.getCollectionId(), progressReport.getCollectionId());
     assertEquals(dar.getUserId(), progressReport.getUserId());
     assertNotNull(progressReport.getData());

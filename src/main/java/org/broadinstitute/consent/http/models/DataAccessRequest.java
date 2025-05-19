@@ -38,7 +38,7 @@ public class DataAccessRequest {
   public Integer collectionId;
 
   @JsonProperty
-  public String parentId;
+  public Integer parentId;
 
   @JsonProperty
   public DataAccessRequestData data;
@@ -119,11 +119,11 @@ public class DataAccessRequest {
     this.collectionId = collectionId;
   }
 
-  public String getParentId() {
+  public Integer getParentId() {
     return parentId;
   }
 
-  public void setParentId(String parentId) {
+  public void setParentId(Integer parentId) {
     this.parentId = parentId;
     updateProgressReportState();
   }
@@ -352,7 +352,7 @@ public class DataAccessRequest {
 
     String referenceId = UUID.randomUUID().toString();
     newDar.setReferenceId(referenceId);
-    newDar.setParentId(parentDar.getId().toString());
+    newDar.setParentId(parentDar.getId());
     newDar.setCollectionId(parentDar.getCollectionId());
 
     newDar.addDatasetIds(newData.getDatasetIds());

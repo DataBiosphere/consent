@@ -9,16 +9,16 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.service.EmailService;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
 
 @Path("api/emailNotifier")
 public class EmailNotifierResource extends Resource {
 
-  private final EmailService emailService;
+  private final DataAccessRequestService dataAccessRequestService;
 
   @Inject
-  public EmailNotifierResource(EmailService emailService) {
-    this.emailService = emailService;
+  public EmailNotifierResource(DataAccessRequestService dataAccessRequestService) {
+    this.dataAccessRequestService = dataAccessRequestService;
   }
 
   @POST
@@ -26,7 +26,7 @@ public class EmailNotifierResource extends Resource {
   @RolesAllowed({ADMIN, CHAIRPERSON})
   public Response sendReminderMessage(@Auth AuthUser authUser, @PathParam("voteId") String voteId) {
     try {
-      emailService.sendReminderMessage(Integer.valueOf(voteId));
+      dataAccessRequestService.sendReminderMessage(Integer.valueOf(voteId));
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -38,7 +38,7 @@ public class EmailNotifierResource extends Resource {
   @RolesAllowed({SERVICE_ACCOUNT})
   public Response sendDarExpirationNotices(@Auth AuthUser authUser) {
     try {
-      emailService.sendExpirationNotices();
+      dataAccessRequestService.sendExpirationNotices();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
