@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
@@ -236,12 +237,29 @@ class LibraryCardResourceTest {
   @Test
   void deleteLibraryCard() {
     LibraryCard card = mockLibraryCardSetup();
+    card.setId(1);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
     initResource();
 
-    Response response = resource.deleteLibraryCard(authUser, 1);
+    Response response = resource.deleteLibraryCard(authUser, card.getId());
     assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
+    verify(libraryCardService).deleteLibraryCardById(card.getId());
+  }
+
+  @Test
+  void deleteLibraryCardUserNotFound() {
+    LibraryCard card = mockLibraryCardSetup();
+    card.setId(1);
+    card.setUserId(null);
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+    when(userService.findUserById(null)).thenThrow(new NotFoundException());
+    when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
+    initResource();
+
+    Response response = resource.deleteLibraryCard(authUser, card.getId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
+    verify(libraryCardService).deleteLibraryCardById(card.getId());
   }
 
   @Test
@@ -254,19 +272,6 @@ class LibraryCardResourceTest {
 
     Response response = resource.deleteLibraryCard(authUser, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-  }
-
-  @Test
-  void deleteLibraryCardUserNotFound() {
-    LibraryCard card = mockLibraryCardSetup();
-    card.setUserId(null);
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
-    when(userService.findUserById(null)).thenThrow(new NotFoundException());
-    when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
-    initResource();
-
-    Response response = resource.deleteLibraryCard(authUser, 1);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
   }
 
   @Test
