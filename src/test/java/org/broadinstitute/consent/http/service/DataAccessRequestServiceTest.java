@@ -443,7 +443,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         roles);
     collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
     LibraryCard libraryCard = new LibraryCard();
-    libraryCard.setInstitutionId(requestingUser.getInstitutionId());
     collaboratorUser.setLibraryCards(List.of(libraryCard));
     DataAccessRequest dar = createDataAccessRequest(List.of(validCollaborator));
     when(userDAO.findUserByEmail(validCollaborator.getEmail())).thenReturn(collaboratorUser);

@@ -277,7 +277,6 @@ class DaaResourceTest {
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(1);
     LibraryCard lc = new LibraryCard();
-    lc.setInstitutionId(1);
     lc.setId(1);
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
@@ -309,7 +308,6 @@ class DaaResourceTest {
     daa.setDaaId(1);
     LibraryCard lc = new LibraryCard();
     lc.setId(1);
-    lc.setInstitutionId(1);
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
@@ -336,7 +334,6 @@ class DaaResourceTest {
     daa.setDaaId(1);
     LibraryCard lc = new LibraryCard();
     lc.setId(1);
-    lc.setInstitutionId(1);
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
@@ -362,7 +359,6 @@ class DaaResourceTest {
     daa.setDaaId(1);
     LibraryCard lc = new LibraryCard();
     lc.setId(1);
-    lc.setInstitutionId(1);
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
@@ -375,7 +371,6 @@ class DaaResourceTest {
   @Test
   void testCreateLibraryCardDaaRelation_InvalidDaaIdCase() {
     UriInfo info = mock(UriInfo.class);
-    UriBuilder builder = mock(UriBuilder.class);
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
     User admin = new User();
@@ -388,7 +383,6 @@ class DaaResourceTest {
     daa.setDaaId(1);
     LibraryCard lc = new LibraryCard();
     lc.setId(1);
-    lc.setInstitutionId(1);
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
@@ -418,16 +412,13 @@ class DaaResourceTest {
     daa.setDaaId(1);
     LibraryCard lc = new LibraryCard();
     lc.setId(1);
-    lc.setInstitutionId(2);
     LibraryCard newLc = new LibraryCard();
     newLc.setId(2);
-    newLc.setInstitutionId(1);
 
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
     when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
-    when(libraryCardService.createLibraryCardForSigningOfficial(any(), any())).thenReturn(newLc);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
@@ -452,7 +443,6 @@ class DaaResourceTest {
     daa.setDaaId(1);
     LibraryCard newLc = new LibraryCard();
     newLc.setId(1);
-    newLc.setInstitutionId(1);
 
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
@@ -766,7 +756,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
     when(daaService.findById(daaId)).thenReturn(new DataAccessAgreement());
-    when(libraryCardService.removeDaaFromUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+    when(libraryCardService.removeDaaFromUserLibraryCards(any(), any())).thenReturn(List.of());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -792,7 +782,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
     when(daaService.findById(daaId)).thenReturn(new DataAccessAgreement());
-    when(libraryCardService.removeDaaFromUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+    when(libraryCardService.removeDaaFromUserLibraryCards(any(), any())).thenReturn(List.of());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -966,7 +956,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenReturn(researcher);
     when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
-    when(libraryCardService.removeDaaFromUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+    when(libraryCardService.removeDaaFromUserLibraryCards(any(), any())).thenReturn(List.of());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -993,7 +983,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenReturn(researcher);
     when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
-    when(libraryCardService.removeDaaFromUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+    when(libraryCardService.removeDaaFromUserLibraryCards(any(), any())).thenReturn(List.of());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -1100,7 +1090,6 @@ class DaaResourceTest {
   @Test
   void testAddDacToDaaFromUserForbidden() {
     int daaId = RandomUtils.nextInt(10, 100);
-    DataAccessAgreement daa = new DataAccessAgreement();
     Dac dac = new Dac();
     dac.setDacId(RandomUtils.nextInt(10, 100));
 

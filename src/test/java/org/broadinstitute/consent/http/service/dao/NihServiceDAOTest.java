@@ -52,9 +52,7 @@ class NihServiceDAOTest extends DAOTestHelper {
     userDAO.updateEraCommonsId(user.getUserId(), commonsId);
     userPropertyDAO.insertAll(List.of(prop1, prop2));
     // Create Library Card
-    Integer institutionId = institutionDAO.insertInstitution("name", "name", "email", "url", 1,
-        "url", "url", "file", "type", user.getUserId(), new Date());
-    libraryCardDAO.insertLibraryCard(user.getUserId(), institutionId, commonsId,
+    libraryCardDAO.insertLibraryCard(user.getUserId(),
         user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
 
     // Build a new NIHUserAccount to update
@@ -93,7 +91,6 @@ class NihServiceDAOTest extends DAOTestHelper {
 
     List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
     assertFalse(cards.isEmpty());
-    assertEquals(cards.get(0).getEraCommonsId(), userAccount.getNihUsername());
   }
 
   @Test
