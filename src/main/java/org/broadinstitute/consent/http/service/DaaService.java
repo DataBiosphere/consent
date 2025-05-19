@@ -15,19 +15,17 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
-import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -154,21 +152,14 @@ public class DaaService implements ConsentLogger {
 
   public void sendDaaRequestEmails(User user, Integer daaId) throws Exception {
     try {
-      Institution institution = institutionDAO.findInstitutionWithSOById(user.getInstitutionId());
-      if (institution == null) {
-        throw new BadRequestException("This user has not set their institution: " + user.getDisplayName());
-      }
-      List<SimplifiedUser> signingOfficials = institution.getSigningOfficials();
+      List<User> signingOfficials = userService.findSOsByUser(user);
       if (signingOfficials.isEmpty()) {
         throw new NotFoundException("No signing officials found for user: " + user.getDisplayName());
       }
-      for (SimplifiedUser signingOfficial : signingOfficials) {
+      for (User signingOfficial : signingOfficials) {
         DataAccessAgreement daa = findById(daaId);
         String daaName = daa.getFile().getFileName();
-        User toUser = new User();
-        toUser.setEmail(signingOfficial.email);
-        toUser.setDisplayName(signingOfficial.displayName);
-        emailService.sendDaaRequestMessage(toUser, user, daaName, daaId);
+        emailService.sendDaaRequestMessage(signingOfficial, user, daaName, daaId);
       }
     } catch (Exception e) {
       logException(e);
@@ -181,22 +172,17 @@ public class DaaService implements ConsentLogger {
       DataAccessAgreement daa = findById(daaId);
       if (daa != null) {
         String previousDaaName = daa.getFile().getFileName();
-        List<SimplifiedUser> researchers = userService.getUsersByDaaId(daaId);
-        List<SimplifiedUser> signingOfficials = researchers.stream()
-            .flatMap(researcher -> userService.findSOsByInstitutionId(researcher.institutionId).stream())
+        List<User> researchers = userService.getUsersByDaaId(daaId);
+        List<User> signingOfficials = researchers.stream()
+            .flatMap(researcher -> userService.findSOsByUser(user).stream())
             .distinct()
             .toList();
-        User toUser = new User();
 
-        for (SimplifiedUser researcher : researchers) {
-          toUser.setEmail(researcher.email);
-          toUser.setDisplayName(researcher.displayName);
-          emailService.sendNewDAAUploadResearcherMessage(toUser, dacName, previousDaaName, newDaaName, user.getUserId());
+        for (User researcher : researchers) {
+          emailService.sendNewDAAUploadResearcherMessage(researcher, dacName, previousDaaName, newDaaName, user.getUserId());
         }
-        for (SimplifiedUser signingOfficial : signingOfficials) {
-          toUser.setEmail(signingOfficial.email);
-          toUser.setDisplayName(signingOfficial.displayName);
-          emailService.sendNewDAAUploadSOMessage(toUser, dacName, previousDaaName, newDaaName, user.getUserId());
+        for (User signingOfficial : signingOfficials) {
+          emailService.sendNewDAAUploadSOMessage(signingOfficial, dacName, previousDaaName, newDaaName, user.getUserId());
         }
       }
     } catch (Exception e) {

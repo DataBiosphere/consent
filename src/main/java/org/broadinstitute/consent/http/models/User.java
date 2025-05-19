@@ -5,14 +5,11 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import java.beans.Transient;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import net.gcardone.junidecode.Junidecode;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -50,12 +47,7 @@ public class User {
   private Boolean emailPreference;
 
   @JsonProperty
-  private Integer institutionId;
-
-  @JsonProperty
   private String eraCommonsId;
-
-  private Institution institution;
 
   private List<LibraryCard> libraryCards;
 
@@ -94,21 +86,17 @@ public class User {
    *
    * @param json A json string that may or may not be correctly structured as a DACUser
    */
-  public User(String json) {
+  public static User fromJson(String json) {
     Gson gson = GsonUtil.getInstance();
     JsonObject userJsonObject = gson.fromJson(json, JsonObject.class);
     // There are no cases where we want to pull the create date/update date from user-provided data.
     // Nor do we need to retrieve the full institution object from user-provided data.
-    JsonObject filteredUserJsonObject = filterFields(
-        userJsonObject,
-        Arrays.asList("createDate", "institution", "libraryCards"));
-    User u = gson.fromJson(filteredUserJsonObject.toString(), User.class);
-    setUserId(u);
-    setEmail(u);
-    setDisplayName(u);
-    setEmailPreference(u);
-    setRoles(u);
-    setInstitutionId(u);
+    JsonObject filteredUserJsonObject = filterFields(userJsonObject, List.of("createDate", "institution", "libraryCards"));
+    User user = gson.fromJson(filteredUserJsonObject.toString(), User.class);
+      if (user.email != null) {
+        user.email = Junidecode.unidecode(user.email);
+      }
+    return user;
   }
 
   /**
@@ -118,7 +106,7 @@ public class User {
    * @param fields The fields to remove
    * @return Filtered Clone of the object.
    */
-  private JsonObject filterFields(JsonObject obj, List<String> fields) {
+  private static JsonObject filterFields(JsonObject obj, List<String> fields) {
     JsonObject copy = obj.deepCopy();
     fields.forEach(f -> {
       if (copy.has(f)) {
@@ -126,42 +114,6 @@ public class User {
       }
     });
     return copy;
-  }
-
-  private void setUserId(User u) {
-    if (Objects.nonNull(u.getUserId())) {
-      this.setUserId(u.getUserId());
-    }
-  }
-
-  private void setEmail(User u) {
-    if (!StringUtils.isEmpty(u.getEmail()) && u.getEmail() != null) {
-      this.setEmail(Junidecode.unidecode(u.getEmail()));
-    }
-  }
-
-  private void setDisplayName(User u) {
-    if (!StringUtils.isEmpty(u.getDisplayName())) {
-      this.setDisplayName(u.getDisplayName());
-    }
-  }
-
-  private void setEmailPreference(User u) {
-    if (Objects.nonNull(u.getEmailPreference())) {
-      this.setEmailPreference(u.getEmailPreference());
-    }
-  }
-
-  private void setRoles(User u) {
-    if (CollectionUtils.isNotEmpty(u.getRoles())) {
-      this.setRoles(u.getRoles());
-    }
-  }
-
-  private void setInstitutionId(User u) {
-    if (Objects.nonNull(u.getInstitutionId())) {
-      this.setInstitutionId(u.getInstitutionId());
-    }
   }
 
   public String getEmail() {
@@ -248,34 +200,12 @@ public class User {
     this.emailPreference = emailPreference;
   }
 
-  public Integer getInstitutionId() {
-    return institutionId;
-  }
-
-  public void setInstitutionId(Integer institutionId) {
-    this.institutionId = institutionId;
-  }
-
   public String getEraCommonsId() {
     return eraCommonsId;
   }
 
   public void setEraCommonsId(String eraCommonsId) {
     this.eraCommonsId = eraCommonsId;
-  }
-
-  public void setInstitution(Institution institution) {
-    this.institution = institution;
-  }
-
-  public void setInstitution(User user) {
-    if (Objects.nonNull(user.getInstitution())) {
-      this.institution = user.institution;
-    }
-  }
-
-  public Institution getInstitution() {
-    return institution;
   }
 
   public void setLibraryCards(List<LibraryCard> cards) {

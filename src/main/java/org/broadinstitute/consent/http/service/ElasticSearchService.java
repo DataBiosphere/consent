@@ -232,10 +232,7 @@ public class ElasticSearchService implements ConsentLogger {
     if (Objects.isNull(user)) {
       return null;
     }
-    InstitutionTerm institution = (Objects.nonNull(user.getInstitutionId())) ?
-        toInstitutionTerm(institutionDAO.findInstitutionById(user.getInstitutionId())) :
-        null;
-    return new UserTerm(user.getUserId(), user.getDisplayName(), institution);
+    return new UserTerm(user.getUserId(), user.getDisplayName(), user.getEmail());
   }
 
   public DacTerm toDacTerm(Dac dac) {

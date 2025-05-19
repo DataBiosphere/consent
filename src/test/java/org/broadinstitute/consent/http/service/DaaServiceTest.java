@@ -294,7 +294,7 @@ class DaaServiceTest {
     initService();
 
     when(userService.getUsersByDaaId(any())).thenReturn(List.of(researcher, researcher2));
-    when(userService.findSOsByInstitutionId(any())).thenReturn(List.of(signingOfficial, signingOfficial2));
+    when(userService.findSOsByUser(any())).thenReturn(List.of(signingOfficial, signingOfficial2));
     assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
     verify(emailService, times(2)).sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any());
     verify(emailService, times(2)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any());
@@ -326,7 +326,7 @@ class DaaServiceTest {
     initService();
 
     when(userService.getUsersByDaaId(any())).thenReturn(List.of(researcher));
-    when(userService.findSOsByInstitutionId(any())).thenReturn(List.of(signingOfficial, signingOfficial2));
+    when(userService.findSOsByUser(any())).thenReturn(List.of(signingOfficial, signingOfficial2));
     assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
     verify(emailService, times(1)).sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any());
     verify(emailService, times(2)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any());

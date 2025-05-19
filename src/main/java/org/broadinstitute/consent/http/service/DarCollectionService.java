@@ -59,12 +59,14 @@ public class DarCollectionService implements ConsentLogger {
   private final VoteDAO voteDAO;
   private final MatchDAO matchDAO;
   private final EmailService emailService;
+  private final InstitutionService institutionService;
 
   @Inject
   public DarCollectionService(DarCollectionDAO darCollectionDAO,
       DarCollectionServiceDAO collectionServiceDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO,
       DataAccessRequestDAO dataAccessRequestDAO, EmailService emailService, VoteDAO voteDAO,
-      MatchDAO matchDAO, DarCollectionSummaryDAO darCollectionSummaryDAO) {
+      MatchDAO matchDAO, DarCollectionSummaryDAO darCollectionSummaryDAO,
+      InstitutionService institutionService) {
     this.darCollectionDAO = darCollectionDAO;
     this.collectionServiceDAO = collectionServiceDAO;
     this.datasetDAO = datasetDAO;
@@ -74,6 +76,7 @@ public class DarCollectionService implements ConsentLogger {
     this.voteDAO = voteDAO;
     this.matchDAO = matchDAO;
     this.darCollectionSummaryDAO = darCollectionSummaryDAO;
+    this.institutionService = institutionService;
   }
 
   private void updateStatusCount(Map<String, Integer> statusCount, String status) {
@@ -289,7 +292,12 @@ public class DarCollectionService implements ConsentLogger {
         processDarCollectionSummariesForAdmin(summaries);
         break;
       case SIGNINGOFFICIAL:
-        summaries = darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId());
+        summaries =
+            darCollectionSummaryDAO.getDarCollectionSummariesForAdmin().stream()
+                .filter(s -> institutionService.sameInstitution(user, s.getResearcherEmail()))
+                .toList();
+            darCollectionSummaryDAO.getDarCollectionSummariesForSO(
+                institutionService.findInstitutionForUser(user).getId());
         processDarCollectionSummariesForSO(summaries);
         break;
       case CHAIRPERSON:

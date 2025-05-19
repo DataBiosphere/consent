@@ -49,12 +49,14 @@ public class DataAccessRequestService implements ConsentLogger {
   private final UserDAO userDAO;
   private final UserService userService;
   private final DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
+  private final InstitutionService institutionService;
 
   private final DacService dacService;
 
   @Inject
   public DataAccessRequestService(CounterService counterService, DAOContainer container,
-      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO, UserService userService) {
+      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO, UserService userService,
+      InstitutionService institutionService) {
     this.counterService = counterService;
     this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
     this.darCollectionDAO = container.getDarCollectionDAO();
@@ -65,6 +67,7 @@ public class DataAccessRequestService implements ConsentLogger {
     this.dacService = dacService;
     this.dataAccessRequestServiceDAO = dataAccessRequestServiceDAO;
     this.userService = userService;
+    this.institutionService = institutionService;
   }
 
   public List<DataAccessRequest> findAllDraftDataAccessRequests() {
@@ -285,7 +288,6 @@ public class DataAccessRequestService implements ConsentLogger {
 
   @VisibleForTesting
   public void validateInternalCollaborators(DataAccessRequest payload, User requestingUser) {
-    Integer institution = requestingUser.getInstitutionId();
     List<Collaborator> internalCollaborators = payload.getData().getInternalCollaborators();
     for (Collaborator collaborator : internalCollaborators) {
       User collabUser = userDAO.findUserByEmail(collaborator.getEmail());
@@ -293,10 +295,10 @@ public class DataAccessRequestService implements ConsentLogger {
         throw new NotFoundException(
             "Unable to find User with the provided email: " + collaborator.getEmail());
       }
-      if (!Objects.equals(collabUser.getInstitutionId(), institution)) {
+      if (!institutionService.sameInstitution(requestingUser, collabUser)) {
         throw new BadRequestException(
             "Collaborator " + collaborator.getEmail() + " is not part of the same institution, "
-                + requestingUser.getInstitution().getName());
+                + requestingUser.getEmail());
       }
       List<LibraryCard> libraryCards = collabUser.getLibraryCards();
       if (libraryCards.isEmpty()) {

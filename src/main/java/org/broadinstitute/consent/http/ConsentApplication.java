@@ -220,10 +220,10 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(injector.getInstance(DacResource.class));
     env.jersey().register(new DACUserResource(userService));
     env.jersey().register(
-        new DarCollectionResource(darCollectionService, userService));
+        new DarCollectionResource(darCollectionService, userService, institutionService));
     env.jersey().register(new EmailNotifierResource(emailService));
     env.jersey().register(new InstitutionResource(institutionService));
-    env.jersey().register(new LibraryCardResource(userService, libraryCardService));
+    env.jersey().register(new LibraryCardResource(userService, libraryCardService, institutionService));
     env.jersey().register(new MatchResource(matchService));
     env.jersey().register(new MetricsResource(metricsService));
     env.jersey().register(new NihAccountResource(nihService, userService));
@@ -233,7 +233,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(new StatusResource(env.healthChecks()));
     env.jersey().register(injector.getInstance(SupportResource.class));
     env.jersey().register(
-        new UserResource(samService, userService, datasetService, acknowledgementService));
+        new UserResource(samService, userService, datasetService, acknowledgementService, institutionService));
     env.jersey().register(new TosResource(samService));
     env.jersey().register(injector.getInstance(VersionResource.class));
     env.jersey().register(new VoteResource(userService, voteService, electionService));

@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.InstitutionDomainMap;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 
 public class InstitutionService {
@@ -101,6 +102,19 @@ public class InstitutionService {
       throw new ServerErrorException("Could not load institution configuration",
           HttpStatusCodes.STATUS_CODE_SERVER_ERROR, e);
     }
+  }
+
+  public boolean sameInstitution(User user1, User user2) {
+    return sameInstitution(user1, user2.getEmail());
+  }
+
+  public boolean sameInstitution(User user, String email) {
+    Institution institution = findInstitutionForEmail(user.getEmail());
+    return institution != null && institution.equals(findInstitutionForEmail(email));
+  }
+
+  public Institution findInstitutionForUser(User user) {
+    return findInstitutionForEmail(user.getEmail());
   }
 
   public Institution findInstitutionForEmail(String email) {

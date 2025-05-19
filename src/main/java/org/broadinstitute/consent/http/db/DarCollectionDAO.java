@@ -6,7 +6,6 @@ import org.broadinstitute.consent.http.db.mapper.DarCollectionReducer;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -27,7 +26,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   String getCollectionAndDars =
       " SELECT c.*, i.institution_name, u.display_name AS researcher, dd.dataset_id, " +
           User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
-          Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR +
           Election.QUERY_FIELDS_WITH_E_PREFIX + QUERY_FIELD_SEPARATOR +
           Vote.QUERY_FIELDS_WITH_V_PREFIX + QUERY_FIELD_SEPARATOR +
           UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR +
@@ -53,7 +51,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   String archiveFilterQuery = " AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL) ";
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @RegisterBeanMapper(value = Election.class, prefix = "e")
@@ -71,7 +68,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
    * @return List<DarCollection>
    */
   @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
@@ -80,7 +76,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   @SqlQuery(
       " SELECT c.*, " +
           User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
-          Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR +
           UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR +
           Election.QUERY_FIELDS_WITH_E_PREFIX + QUERY_FIELD_SEPARATOR +
           "dd.dataset_id, " +
@@ -95,7 +90,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           "LEFT JOIN user_property up ON u.user_id = up.user_id " +
           "INNER JOIN data_access_request dar on c.collection_id = dar.collection_id " +
           "LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id " +
-          "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
           "LEFT JOIN (" +
           "   SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.election_type, election.dataset_id) AS latest FROM election "
           +
@@ -115,7 +109,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
    * @return DarCollection
    */
   @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
@@ -124,10 +117,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
       """
         SELECT c.*,
         u.user_id as u_user_id, u.email as u_email, u.display_name as u_display_name, u.create_date
-        as u_create_date, u.email_preference as u_email_preference, u.institution_id
-        as u_institution_id, u.era_commons_id as u_era_commons_id, i.institution_id as i_id,
-        i.institution_name as i_name, i.it_director_name as i_it_director_name,  i.it_director_email
-        as i_it_director_email, i.create_date as i_create_date, i.update_date as i_update_date,
+        as u_create_date, u.email_preference as u_email_preference, u.era_commons_id as u_era_commons_id,
         up.property_id AS up_property_id, up.user_id AS up_user_id, up.property_key
         as up_property_key, up.property_value AS up_property_value,
         dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id,
@@ -137,7 +127,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
         FROM dar_collection c
         INNER JOIN users u ON c.create_user_id = u.user_id
         LEFT JOIN user_property up ON u.user_id = up.user_id
-        LEFT JOIN institution i ON i.institution_id = u.institution_id
         INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id
         LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
         WHERE c.collection_id = (SELECT collection_id FROM data_access_request WHERE reference_id = :referenceId)
@@ -151,7 +140,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
    * @return DarCollection
    */
   @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
   @RegisterBeanMapper(value = Election.class, prefix = "e")
@@ -163,7 +151,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
       // nosemgrep
       "SELECT c.*, "
           + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-          + Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR
           + UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR
           + LibraryCard.QUERY_FIELDS_WITH_LC_PREFIX + QUERY_FIELD_SEPARATOR
           + "dd.dataset_id, "
@@ -178,7 +165,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           + "FROM dar_collection c "
           + "INNER JOIN users u ON c.create_user_id = u.user_id "
           + "LEFT JOIN user_property up ON u.user_id = up.user_id "
-          + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
           + "LEFT JOIN library_card lc ON u.user_id = lc.user_id "
           + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
           + "LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "

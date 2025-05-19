@@ -28,11 +28,9 @@ import jakarta.ws.rs.core.UriInfo;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -47,8 +45,8 @@ import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.sam.SamService;
 
 @Path("api/user")
@@ -59,14 +57,17 @@ public class UserResource extends Resource {
   private final SamService samService;
   private final DatasetService datasetService;
   private final AcknowledgementService acknowledgementService;
+  private final InstitutionService institutionService;
 
   @Inject
   public UserResource(SamService samService, UserService userService,
-      DatasetService datasetService, AcknowledgementService acknowledgementService) {
+      DatasetService datasetService, AcknowledgementService acknowledgementService,
+      InstitutionService institutionService) {
     this.samService = samService;
     this.userService = userService;
     this.datasetService = datasetService;
     this.acknowledgementService = acknowledgementService;
+    this.institutionService = institutionService;
   }
 
   @GET
@@ -76,18 +77,17 @@ public class UserResource extends Resource {
   public Response getUsers(@Auth AuthUser authUser, @PathParam("roleName") String roleName) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      boolean valid = UserRoles.isValidRole(roleName);
-      if (valid) {
+      UserRoles role = UserRoles.getUserRoleFromName(roleName);
+      if (role != null) {
         //if there is a valid roleName but it is not SO or Admin then throw an exception
-        if (!roleName.equals(UserRoles.ADMIN.getRoleName()) && !roleName.equals(
-            UserRoles.SIGNINGOFFICIAL.getRoleName())) {
-          throw new BadRequestException("Unsupported role name: " + roleName);
+        if (role != UserRoles.ADMIN && role != UserRoles.SIGNINGOFFICIAL) {
+          throw new BadRequestException("Unsupported role: " + role);
         }
-        if (!user.hasUserRole(UserRoles.getUserRoleFromName(roleName))) {
+        if (!user.hasUserRole(role)) {
           throw new NotFoundException(
-              "User: " + user.getDisplayName() + ", does not have " + roleName + " role.");
+              "User: " + user.getDisplayName() + ", does not have " + role + " role.");
         }
-        List<User> users = userService.getUsersAsRole(user, roleName);
+        List<User> users = userService.getUsersAsRole(user, role);
         return Response.ok().entity(users).build();
       } else {
         throw new BadRequestException("Invalid role name: " + roleName);
@@ -267,7 +267,7 @@ public class UserResource extends Resource {
       if ((activeUser.hasUserRole(UserRoles.ADMIN) && UserRoles.isValidNonDACRoleId(targetRole)) ||
           signingOfficialMeetsRequirements(targetRole, activeUser, user)) {
         if (!currentUserRoleIds.contains(roleId)) {
-          userService.insertRoleAndInstitutionForUser(role, user);
+          userService.insertRoleForUser(role, user);
           return getUserResponse(authUser, userId);
         } else {
           return Response.notModified().build();
@@ -280,12 +280,11 @@ public class UserResource extends Resource {
     }
   }
 
-  private static boolean signingOfficialMeetsRequirements(UserRoles role, User activeUser,
+  private boolean signingOfficialMeetsRequirements(UserRoles role, User activeUser,
       User user) {
     return activeUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)
-        && activeUser.getInstitutionId() != null
         && UserRoles.isValidSoAdjustableRoleId(role)
-        && (user.getInstitutionId() == null || user.getInstitutionId().equals(activeUser.getInstitutionId()));
+        && institutionService.sameInstitution(activeUser, user);
   }
 
   private Response getUserResponse(AuthUser authUser, Integer userId) {
@@ -321,8 +320,7 @@ public class UserResource extends Resource {
           throw new BadRequestException(
               "You cannot remove the SIGNINGOFFICIAL role from yourself.");
         }
-        if (Objects.nonNull(activeUser.getInstitutionId())
-            && Objects.equals(activeUser.getInstitutionId(), user.getInstitutionId())) {
+        if (institutionService.sameInstitution(activeUser, user)) {
           return doDelete(authUser, userId, roleId, activeUser, user);
         } else {
           throw new ForbiddenException("Not authorized to remove roles");
@@ -401,12 +399,8 @@ public class UserResource extends Resource {
   public Response getSOsForInstitution(@Auth AuthUser authUser) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      if (Objects.nonNull(user.getInstitutionId())) {
-        List<SimplifiedUser> signingOfficials = userService.findSOsByInstitutionId(
-            user.getInstitutionId());
-        return Response.ok().entity(signingOfficials).build();
-      }
-      return Response.ok().entity(Collections.emptyList()).build();
+      List<User> signingOfficials = userService.findSOsByUser(user);
+      return Response.ok().entity(signingOfficials).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

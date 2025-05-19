@@ -476,19 +476,19 @@ class UserServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testFindSOsByInstitutionId() {
+  void testFindSOsByUser() {
     User u = generateUser();
     Integer institutionId = u.getInstitutionId();
     when(userDAO.getSOsByInstitution(any())).thenReturn(List.of(u, u, u));
-    List<SimplifiedUser> users = service.findSOsByInstitutionId(institutionId);
+    List<SimplifiedUser> users = service.findSOsByUser(institutionId);
     assertEquals(3, users.size());
     assertEquals(u.getDisplayName(), users.get(0).displayName);
     assertEquals(u.getEmail(), users.get(0).email);
   }
 
   @Test
-  void testFindSOsByInstitutionId_NullId() {
-    List<SimplifiedUser> users = service.findSOsByInstitutionId(null);
+  void testFindSOsByUser() {
+    List<SimplifiedUser> users = service.findSOsByUser(null);
     assertEquals(0, users.size());
   }
 
@@ -557,7 +557,7 @@ class UserServiceTest extends AbstractTestHelper {
     }
     LibraryCard lc = generateLibraryCard(u1);
     u1.setLibraryCards(List.of(lc));
-    when(userDAO.findUsersWithLCsAndInstitution()).thenReturn(returnedUsers);
+    when(userDAO.findUsersWithLCs()).thenReturn(returnedUsers);
     List<User> users = service.getUsersAsRole(u1, UserRoles.ADMIN.getRoleName());
     assertNotNull(users);
     assertEquals(returnedUsers.size(), users.size());
@@ -773,7 +773,7 @@ class UserServiceTest extends AbstractTestHelper {
     Integer testUserId = testUser.getUserId();
     UserRole role = UserRoles.Researcher();
     when(institutionService.findInstitutionForEmail(testUser.getEmail())).thenReturn(institution);
-    service.insertRoleAndInstitutionForUser(role, testUser);
+    service.insertRoleForUser(role, testUser);
     verify(userServiceDAO).insertRoleAndInstitutionTxn(role, institution.getId(), testUserId);
   }
 
@@ -781,7 +781,7 @@ class UserServiceTest extends AbstractTestHelper {
   void insertUserRoleAndInstitution_roleOnly() {
     User testUser = generateUser();
     UserRole role = UserRoles.Researcher();
-    service.insertRoleAndInstitutionForUser(role, testUser);
+    service.insertRoleForUser(role, testUser);
     verifyNoInteractions(institutionService);
     verifyNoInteractions(userServiceDAO);
     verify(userRoleDAO).insertSingleUserRole(role.getRoleId(), testUser.getUserId());
@@ -791,7 +791,7 @@ class UserServiceTest extends AbstractTestHelper {
   void insertServiceAccountUserRole() {
     User testUser = generateUser();
     UserRole role = UserRoles.ServiceAccount();
-    service.insertRoleAndInstitutionForUser(role, testUser);
+    service.insertRoleForUser(role, testUser);
     verifyNoInteractions(institutionService);
     verifyNoInteractions(userServiceDAO);
     verify(userRoleDAO).insertSingleUserRole(role.getRoleId(), testUser.getUserId());
@@ -808,7 +808,7 @@ class UserServiceTest extends AbstractTestHelper {
     doThrow(new TransactionException("txn error")).when(userServiceDAO)
         .insertRoleAndInstitutionTxn(role, institution.getId(), testUser.getUserId());
     assertThrows(TransactionException.class,
-        () -> service.insertRoleAndInstitutionForUser(role, testUser));
+        () -> service.insertRoleForUser(role, testUser));
   }
 
   @Test
@@ -816,7 +816,7 @@ class UserServiceTest extends AbstractTestHelper {
     User testUser = generateUserWithoutInstitution();
     UserRole role = UserRoles.Researcher();
     assertThrows(BadRequestException.class,
-        () -> service.insertRoleAndInstitutionForUser(role, testUser));
+        () -> service.insertRoleForUser(role, testUser));
   }
 
   @Test

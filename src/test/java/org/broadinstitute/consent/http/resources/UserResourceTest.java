@@ -364,14 +364,13 @@ class UserResourceTest {
     User user = createUserWithInstitution();
     User so = createUserWithRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(userService.findSOsByInstitutionId(any())).thenReturn(
-        Arrays.asList(new UserService.SimplifiedUser(so), new UserService.SimplifiedUser(so)));
+    when(userService.findSOsByUser(any())).thenReturn(Arrays.asList(so, so));
 
     Response response = userResource.getSOsForInstitution(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     var body = (List<UserService.SimplifiedUser>) response.getEntity();
     assertFalse(body.isEmpty());
-    assertEquals(so.getDisplayName(), body.get(0).displayName);
+    assertEquals(so.getDisplayName(), body.get(0).displayName());
   }
 
   @SuppressWarnings("rawtypes")
@@ -541,7 +540,7 @@ class UserResourceTest {
     Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(),
         UserRoles.RESEARCHER.getRoleId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    User returnedUser = new User((String) response.getEntity());
+    User returnedUser = User.fromJson((String) response.getEntity());
     assertEquals(user.getEmail(), returnedUser.getEmail());
   }
 
@@ -688,7 +687,7 @@ class UserResourceTest {
     Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(),
         UserRoles.ADMIN.getRoleId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    User returnedUser = new User((String) response.getEntity());
+    User returnedUser = User.fromJson((String) response.getEntity());
     assertEquals(user.getEmail(), returnedUser.getEmail());
   }
 

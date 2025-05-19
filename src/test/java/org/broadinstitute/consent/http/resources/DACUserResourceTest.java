@@ -15,33 +15,31 @@ class DACUserResourceTest {
 
   @Test
   void testConvertJsonToDACUserDateIgnoredCase() {
-    String jsonRole = "[{\"roleId\": 1, \"name\":\"name\", \"what\": \"Huh?\", \"rationale\": \"rationale\", \"status\": \"pending\"}]";
-    String json =
-        "{\"userId\": 1, \"email\":\"email\", \"what\": \"Huh?\", \"createDate\": \"Oct 28, 2020\", \"emailPreference\": false, \"roles\": "
-            + jsonRole + "}";
-    User user = new User(json);
+    String json = """
+        {"userId": 1, "email":"email", "what": "Huh?", "createDate": "Oct 28, 2020", "emailPreference": false,
+        "roles": [{"roleId": 1, "name":"name", "what": "Huh?", "rationale": "rationale", "status": "pending"}]}""";
+    User user = User.fromJson(json);
     assertNotNull(user);
     assertNull(user.getCreateDate());
-    assertEquals(user.getUserId().intValue(), 1);
-    assertEquals(user.getEmail(), "email");
-    assertEquals(user.getEmailPreference(), false);
+    assertEquals(1, user.getUserId().intValue());
+    assertEquals("email", user.getEmail());
+    assertEquals(false, user.getEmailPreference());
     assertFalse(user.getRoles().isEmpty());
-    assertEquals(user.getRoles().get(0).getRoleId().intValue(), 1);
+    assertEquals(1, user.getRoles().get(0).getRoleId().intValue());
   }
 
   @Test
   void testConvertJsonToDACUserNoCreateDate() {
-    String jsonRole = "[{\"roleId\": 1, \"name\":\"name\", \"what\": \"Huh?\", \"rationale\": \"rationale\", \"status\": \"pending\"}]";
-    String json =
-        "{\"userId\": 1, \"email\":\"email\", \"what\": \"Huh?\", \"emailPreference\": false, \"roles\": "
-            + jsonRole + "}";
-    User user = new User(json);
+    String json = """
+        {"userId": 1, "email":"email", "what": "Huh?", "emailPreference": false, 
+        "roles": [{"roleId": 1, "name":"name", "what": "Huh?", "rationale": "rationale", "status": "pending"}]}""";
+    User user = User.fromJson(json);
     assertNotNull(user);
     assertNull(user.getCreateDate());
-    assertEquals(user.getUserId().intValue(), 1);
-    assertEquals(user.getEmail(), "email");
-    assertEquals(user.getEmailPreference(), false);
+    assertEquals(1, user.getUserId().intValue());
+    assertEquals("email", user.getEmail());
+    assertEquals(false, user.getEmailPreference());
     assertFalse(user.getRoles().isEmpty());
-    assertEquals(user.getRoles().get(0).getRoleId().intValue(), 1);
+    assertEquals(1, user.getRoles().get(0).getRoleId().intValue());
   }
 }

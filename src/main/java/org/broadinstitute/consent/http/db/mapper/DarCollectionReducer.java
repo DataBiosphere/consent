@@ -25,7 +25,6 @@ public class DarCollectionReducer
     Vote vote = null;
     User user = null;
     UserProperty userProperty = null;
-    Institution institution = null;
     LibraryCard libraryCard = null;
     DarCollection collection =
         map.computeIfAbsent(
@@ -40,9 +39,6 @@ public class DarCollectionReducer
       }
       if (Objects.isNull(user) && Objects.nonNull(rowView.getColumn("u_user_id", Integer.class))) {
         user = rowView.getRow(User.class);
-      }
-      if (Objects.nonNull(rowView.getColumn("i_id", Integer.class))) {
-        institution = rowView.getRow(Institution.class);
       }
       if (Objects.nonNull(collection)) {
         if (Objects.nonNull(rowView.getColumn("dar_id", Integer.class))) {
@@ -90,9 +86,6 @@ public class DarCollectionReducer
     }
 
     if (Objects.nonNull(user)) {
-      if (Objects.nonNull(institution)) {
-        user.setInstitution(institution);
-      }
       if (Objects.nonNull(libraryCard)) {
         user.addLibraryCard(libraryCard);
       }

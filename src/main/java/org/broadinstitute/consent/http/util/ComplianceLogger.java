@@ -39,7 +39,6 @@ public class ComplianceLogger implements ConsentLogger {
       status: %s; \
       http_content_type: %s; \
       cadr_name: DUOS; \
-      user_org: %s; \
       user_email: %s; \
       associated_study: %s; \
       eRA_commons_id: %s; \
@@ -59,7 +58,6 @@ public class ComplianceLogger implements ConsentLogger {
     String urlString = request.getRequestUri() == null ? "-"
         : request.getRequestUri().toString();
     String responseContentType = MediaType.APPLICATION_JSON;
-    String institutionName = user.getInstitution() == null ? "-" : user.getInstitution().getName();
     datasets.forEach(dataset -> {
       String logMessage = MESSAGE
           .formatted(
@@ -73,7 +71,6 @@ public class ComplianceLogger implements ConsentLogger {
               userAgent,
               responseStatusCode,
               responseContentType,
-              institutionName,
               user.getEmail(),
               dataset.getDatasetIdentifier(),
               user.getEraCommonsId(),

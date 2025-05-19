@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
-import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -26,16 +25,13 @@ public interface UserDAO extends Transactional<UserDAO> {
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class)
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @UseRowReducer(UserWithRolesReducer.class)
   @SqlQuery("SELECT "
       + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-      + Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR
       + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name  "
       + " FROM users u "
       + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
       + " LEFT JOIN roles r ON r.role_id = ur.role_id "
-      + " LEFT JOIN institution i ON u.institution_id = i.institution_id"
       + " WHERE u.user_id = :userId")
   User findUserById(@Bind("userId") Integer userId);
 
@@ -91,17 +87,14 @@ public interface UserDAO extends Transactional<UserDAO> {
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class, prefix = "ur")
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @UseRowReducer(UserWithRolesReducer.class)
   @SqlQuery("SELECT "
       + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-      + Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR
       + "     ur.user_role_id as ur_user_role_id, ur.user_id as ur_user_id, "
       + "     ur.role_id as ur_role_id, ur.dac_id as ur_dac_id, r.name as ur_name "
       + " FROM users u "
       + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
       + " LEFT JOIN roles r ON r.role_id = ur.role_id "
-      + " LEFT JOIN institution i ON u.institution_id = i.institution_id"
       + " WHERE LOWER(u.email) = LOWER(:email)")
   User findUserByEmail(@Bind("email") String email);
 
@@ -112,7 +105,7 @@ public interface UserDAO extends Transactional<UserDAO> {
       SELECT
           u.user_id as u_user_id, u.email as u_email, u.display_name as u_display_name,
           u.create_date as u_create_date, u.email_preference as u_email_preference,
-          u.institution_id as u_institution_id, u.era_commons_id as u_era_commons_id,
+          u.era_commons_id as u_era_commons_id,
           ur.user_role_id as ur_user_role_id, ur.user_id as ur_user_id,
           ur.role_id as ur_role_id, ur.dac_id as ur_dac_id, r.name as ur_name
       FROM users u
@@ -122,11 +115,10 @@ public interface UserDAO extends Transactional<UserDAO> {
       """)
   List<User> findUsersByEmailList(@BindList("emails") List<String> emails);
 
-  @SqlUpdate("INSERT INTO users (email, display_name, institution_id, create_date) values (:email, :displayName, :institutionId, :createDate)")
+  @SqlUpdate("INSERT INTO users (email, display_name, create_date) values (:email, :displayName, :createDate)")
   @GetGeneratedKeys
   Integer insertUser(@Bind("email") String email,
       @Bind("displayName") String displayName,
-      @Bind("institutionId") Integer institutionId,
       @Bind("createDate") Date createDate);
 
   @SqlUpdate("delete from users where user_id = :id")
@@ -135,8 +127,6 @@ public interface UserDAO extends Transactional<UserDAO> {
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class)
   @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
-  @RegisterBeanMapper(value = Institution.class, prefix = "lci")
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @UseRowReducer(UserWithRolesReducer.class)
   @SqlQuery(
       //This will pull in users tied to the institution
@@ -148,35 +138,20 @@ public interface UserDAO extends Transactional<UserDAO> {
           u.display_name as u_display_name,
           u.create_date as u_create_date,
           u.email_preference as u_email_preference,
-          u.institution_id as u_institution_id,
           u.era_commons_id as u_era_commons_id,
           r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id,
-          lc.id AS lc_id , lc.user_id AS lc_user_id, lc.institution_id AS lc_institution_id,
+          lc.id AS lc_id , lc.user_id AS lc_user_id,
           lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email,
           lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date,
           lc.update_user_id AS lc_update_user_id,
           ld.daa_id as lc_daa_id,
-          lci.institution_id as lci_id,
-          lci.institution_name as lci_name,
-          lci.it_director_name as lci_it_director_name,
-          lci.it_director_email as lci_it_director_email,
-          lci.create_date as lci_create_date,
-          lci.update_date as lci_update_date,
-          i.institution_id as i_id,
-          i.institution_name as i_name,
-          i.it_director_name as i_it_director_name,
-          i.it_director_email as i_it_director_email,
-          i.create_date as i_create_date,
-          i.update_date as i_update_date
           FROM users u
           LEFT JOIN user_role ur ON ur.user_id = u.user_id
           LEFT JOIN roles r ON r.role_id = ur.role_id
           LEFT JOIN library_card lc ON lc.user_id = u.user_id
           LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
-          LEFT JOIN institution lci ON lc.institution_id = lci.institution_id
-          LEFT JOIN institution i ON u.institution_id = i.institution_id
         """)
-  List<User> findUsersWithLCsAndInstitution();
+  List<User> findUsersWithLCs();
 
   @UseRowMapper(UserWithRolesMapper.class)
   @SqlQuery("select du.*, r.role_id, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from users du inner join user_role ur on ur.user_id = du.user_id inner join roles r on r.role_id = ur.role_id where r.name = :roleName and du.email_preference = :emailPreference")
@@ -222,55 +197,6 @@ public interface UserDAO extends Transactional<UserDAO> {
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class)
   @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
-  @RegisterBeanMapper(value = Institution.class, prefix = "lci")
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
-  @UseRowReducer(UserWithRolesReducer.class)
-  @SqlQuery(
-      //This will pull in users tied to the institution
-      //Users will come with LCs issued by SOs institution (if any)
-      """
-          SELECT
-          u.user_id as u_user_id,
-          u.email as u_email,
-          u.display_name as u_display_name,
-          u.create_date as u_create_date,
-          u.email_preference as u_email_preference,
-          u.institution_id as u_institution_id,
-          u.era_commons_id as u_era_commons_id,
-          r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id,
-          lc.id AS lc_id , lc.user_id AS lc_user_id, lc.institution_id AS lc_institution_id,
-          lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email,
-          lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date,
-          lc.update_user_id AS lc_update_user_id,
-          ld.daa_id as lc_daa_id,
-          lci.institution_id as lci_id,
-          lci.institution_name as lci_name,
-          lci.it_director_name as lci_it_director_name,
-          lci.it_director_email as lci_it_director_email,
-          lci.create_date as lci_create_date,
-          lci.update_date as lci_update_date,
-          i.institution_id as i_id,
-          i.institution_name as i_name,
-          i.it_director_name as i_it_director_name,
-          i.it_director_email as i_it_director_email,
-          i.create_date as i_create_date,
-          i.update_date as i_update_date
-          FROM users u
-          LEFT JOIN user_role ur ON ur.user_id = u.user_id
-          LEFT JOIN roles r ON r.role_id = ur.role_id
-          LEFT JOIN library_card lc ON lc.user_id = u.user_id AND lc.institution_id = :institutionId
-          LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
-          LEFT JOIN institution lci ON lc.institution_id = lci.institution_id
-          LEFT JOIN institution i ON u.institution_id = i.institution_id
-          WHERE u.institution_id = :institutionId
-        """)
-  List<User> getUsersFromInstitutionWithCards(@Bind("institutionId") Integer institutionId);
-
-  @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = UserRole.class)
-  @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
-  @RegisterBeanMapper(value = Institution.class, prefix = "lci")
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @UseRowReducer(UserWithRolesReducer.class)
   @SqlQuery(
       """
@@ -280,33 +206,18 @@ public interface UserDAO extends Transactional<UserDAO> {
           u.display_name as u_display_name,
           u.create_date as u_create_date,
           u.email_preference as u_email_preference,
-          u.institution_id as u_institution_id,
           u.era_commons_id as u_era_commons_id,
           r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id,
-          lc.id AS lc_id , lc.user_id AS lc_user_id, lc.institution_id AS lc_institution_id,
+          lc.id AS lc_id , lc.user_id AS lc_user_id,
           lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email,
           lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date,
           lc.update_user_id AS lc_update_user_id,
-          ld.daa_id as lc_daa_id,
-          lci.institution_id as lci_id,
-          lci.institution_name as lci_name,
-          lci.it_director_name as lci_it_director_name,
-          lci.it_director_email as lci_it_director_email,
-          lci.create_date as lci_create_date,
-          lci.update_date as lci_update_date,
-          i.institution_id as i_id,
-          i.institution_name as i_name,
-          i.it_director_name as i_it_director_name,
-          i.it_director_email as i_it_director_email,
-          i.create_date as i_create_date,
-          i.update_date as i_update_date
+          ld.daa_id as lc_daa_id
           FROM users u
           LEFT JOIN user_role ur ON ur.user_id = u.user_id
           LEFT JOIN roles r ON r.role_id = ur.role_id
           LEFT JOIN library_card lc ON lc.user_id = u.user_id
           LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
-          LEFT JOIN institution lci ON lc.institution_id = lci.institution_id
-          LEFT JOIN institution i ON u.institution_id = i.institution_id
           WHERE ld.daa_id = :daaId
         """)
   List<User> getUsersWithCardsByDaaId(@Bind("daaId") Integer daaId);

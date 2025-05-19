@@ -41,7 +41,7 @@ public class DarCollectionSummary {
   private String researcherName;
 
   @JsonProperty
-  private String institutionName;
+  private String researcherEmail;
 
   @JsonProperty
   private String status;
@@ -60,7 +60,6 @@ public class DarCollectionSummary {
   private List<String> dacNames;
 
   private Integer researcherId;
-  private Integer institutionId;
   private Set<Integer> datasetIds;
   private List<Vote> votes;
   private Map<Integer, Election> elections;
@@ -187,20 +186,12 @@ public class DarCollectionSummary {
     this.researcherId = researcherId;
   }
 
-  public String getInstitutionName() {
-    return institutionName;
+  public String getResearcherEmail() {
+    return researcherEmail;
   }
 
-  public void setInstitutionName(String institutionName) {
-    this.institutionName = institutionName;
-  }
-
-  public Integer getInstitutionId() {
-    return institutionId;
-  }
-
-  public void setInstitutionId(Integer institutionId) {
-    this.institutionId = institutionId;
+  public void setResearcherEmail(String researcherEmail) {
+    this.researcherEmail = researcherEmail;
   }
 
   public Set<Integer> getDatasetIds() {

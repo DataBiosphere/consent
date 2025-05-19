@@ -179,7 +179,7 @@ class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindUsersWithLCsAndInstitution() {
+  void testFindUsersWithLCs() {
     User user = createUserWithInstitution();
     int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5),
         RandomStringUtils.randomAlphabetic(5), new Date());
@@ -194,7 +194,7 @@ class UserDAOTest extends DAOTestHelper {
         user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
     libraryCardDAO.createLibraryCardDaaRelation(lcId2, daaId);
 
-    List<User> users = userDAO.findUsersWithLCsAndInstitution();
+    List<User> users = userDAO.findUsersWithLCs();
     // Four users: two admin users, two signing official users with library cards.
     assertEquals(4, users.size());
     // Filter out admin users, which don't have institutions.

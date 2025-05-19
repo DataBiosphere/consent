@@ -29,6 +29,7 @@ import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DarCollectionService;
+import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.ComplianceLogger;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -38,11 +39,14 @@ public class DarCollectionResource extends Resource {
 
   private final DarCollectionService darCollectionService;
   private final UserService userService;
+  private final InstitutionService institutionService;
 
   @Inject
-  public DarCollectionResource(DarCollectionService darCollectionService, UserService userService) {
+  public DarCollectionResource(DarCollectionService darCollectionService, UserService userService,
+      InstitutionService institutionService) {
     this.darCollectionService = darCollectionService;
     this.userService = userService;
+    this.institutionService = institutionService;
   }
 
   @GET
@@ -74,6 +78,7 @@ public class DarCollectionResource extends Resource {
       // throws BadRequestException if user does not have roleName
       var role = validateUserHasRoleName(user, roleName);
       DarCollectionSummary summary = darCollectionService.getSummaryForRoleByCollectionId(user, role, collectionId);
+      User researcher = userService.findUserById(summary.getResearcherId());
 
       boolean allowedAccess = switch (role) {
         case ADMIN -> true;
@@ -81,8 +86,7 @@ public class DarCollectionResource extends Resource {
           List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByDACUser(user);
           yield summary.getDatasetIds().stream().anyMatch(userDatasetIds::contains);
         }
-        case SIGNINGOFFICIAL -> Objects.nonNull(user.getInstitutionId()) &&
-            user.getInstitutionId().equals(summary.getInstitutionId());
+        case SIGNINGOFFICIAL -> institutionService.sameInstitution(user, researcher);
         case RESEARCHER -> user.getUserId().equals(summary.getResearcherId());
         default -> throw new BadRequestException("Invalid role selection: " + roleName);
       };
@@ -146,11 +150,8 @@ public class DarCollectionResource extends Resource {
   }
 
   private boolean checkSoPermissionsForCollection(User user, DarCollection collection) {
-    Integer creatorInstitutionId = collection.getCreateUser().getInstitutionId();
-    boolean institutionsMatch = Objects.nonNull(creatorInstitutionId)
-        && creatorInstitutionId.equals(user.getInstitutionId());
-
-    return user.hasUserRole(UserRoles.SIGNINGOFFICIAL) && institutionsMatch;
+    return user.hasUserRole(UserRoles.SIGNINGOFFICIAL)
+        && institutionService.sameInstitution(collection.getCreateUser(), user);
   }
 
   @GET

@@ -29,8 +29,6 @@ public class LibraryCard {
   private Date updateDate;
   private Integer updateUserId;
 
-  private Institution institution;
-
   private List<Integer> daaIds;
 
   private List<DataAccessAgreement> daas;
@@ -54,14 +52,6 @@ public class LibraryCard {
 
   public void setUserId(Integer userId) {
     this.userId = userId;
-  }
-
-  public Integer getInstitutionId() {
-    return institutionId;
-  }
-
-  public void setInstitutionId(Integer institutionId) {
-    this.institutionId = institutionId;
   }
 
   public String getEraCommonsId() {
@@ -119,12 +109,6 @@ public class LibraryCard {
   public void setUpdateUserId(Integer updateUser) {
     this.updateUserId = updateUser;
   }
-
-  public Institution getInstitution() {
-    return institution;
-  }
-
-  public void setInstitution(Institution institution) {this.institution = institution;}
 
   public List<Integer> getDaaIds() {return daaIds;}
 

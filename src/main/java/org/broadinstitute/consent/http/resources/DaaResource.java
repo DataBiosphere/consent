@@ -33,6 +33,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DacService;
+import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -46,14 +47,16 @@ public class DaaResource extends Resource implements ConsentLogger {
   private final DacService dacService;
   private final UserService userService;
   private final LibraryCardService libraryCardService;
+  private final InstitutionService institutionService;
 
   @Inject
   public DaaResource(DaaService daaService, DacService dacService, UserService userService,
-      LibraryCardService libraryCardService) {
+      LibraryCardService libraryCardService, InstitutionService institutionService) {
     this.daaService = daaService;
     this.dacService = dacService;
     this.userService = userService;
     this.libraryCardService = libraryCardService;
+    this.institutionService = institutionService;
   }
 
   @POST
@@ -103,20 +106,18 @@ public class DaaResource extends Resource implements ConsentLogger {
       @PathParam("userId") Integer userId) {
     try {
       User authedUser = userService.findUserByEmail(authUser.getEmail());
-      int authedUserInstitutionId = authedUser.getInstitutionId();
       User user = userService.findUserById(userId);
-      int userInstitutionId = user.getInstitutionId();
       // Assert that the user has the correct institution permissions to add a DAA-LC relationship.
       // Admins can add a DAA with any DAC, but signing officials can only create relationships for
       // library cards associated with the same institution they are associated with.
       if (!authedUser.hasUserRole(UserRoles.ADMIN) && !authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
         return Response.status(Status.FORBIDDEN).build();
-      } else if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL) && authedUserInstitutionId != userInstitutionId) {
+      } else if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL) && !institutionService.sameInstitution(authedUser, user)) {
           return Response.status(Status.FORBIDDEN).build();
       }
       List<LibraryCard> libraryCards = libraryCardService.findLibraryCardsByUserId(userId);
       Optional<LibraryCard> matchingCard = libraryCards.stream()
-          .filter(card -> card.getInstitutionId() == authedUser.getInstitutionId().intValue())
+          .filter(card -> institutionService.sameInstitution(authedUser, card.getUserEmail()))
           .findFirst();
       if (matchingCard.isEmpty()) {
         LibraryCard createdLc = libraryCardService.createLibraryCardForSigningOfficial(user, authedUser);
@@ -223,8 +224,9 @@ public class DaaResource extends Resource implements ConsentLogger {
       @PathParam("daaId") Integer daaId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      if (user.getInstitutionId() == null) {
-        throw new BadRequestException("This user has not set their institution: " + user.getDisplayName());
+      // FIXME: I believe this check is redundant if a user has a library card.
+      if (institutionService.findInstitutionForUser(user) == null) {
+        throw new BadRequestException("This user has no institution: " + user.getDisplayName());
       }
       if (user.getLibraryCards().stream()
           .anyMatch(libraryCard -> libraryCard.getDaaIds().contains(daaId))) {
@@ -250,7 +252,7 @@ public class DaaResource extends Resource implements ConsentLogger {
       List<User> users = userService.findUsersInJsonArray(json, "users");
       if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL) && !authedUser.hasUserRole(UserRoles.ADMIN)) {
         for (User user : users) {
-          if (!Objects.equals(authedUser.getInstitutionId(), user.getInstitutionId())) {
+          if (!institutionService.sameInstitution(authedUser, user)) {
             return Response.status(Status.FORBIDDEN).build();
           }
         }
@@ -278,14 +280,14 @@ public class DaaResource extends Resource implements ConsentLogger {
       List<User> users = userService.findUsersInJsonArray(json, "users");
       if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL) && !authedUser.hasUserRole(UserRoles.ADMIN)) {
         for (User user : users) {
-          if (!Objects.equals(authedUser.getInstitutionId(), user.getInstitutionId())) {
+          if (!institutionService.sameInstitution(authedUser, user)) {
             return Response.status(Status.FORBIDDEN).build();
           }
         }
       }
       daaService.findById(daaId);
       for (User user : users) {
-        libraryCardService.removeDaaFromUserLibraryCardByInstitution(user, authedUser.getInstitutionId(), daaId);
+        libraryCardService.removeDaaFromUserLibraryCards(user, daaId);
       }
       return Response.ok().build();
     } catch (Exception e) {
@@ -304,7 +306,8 @@ public class DaaResource extends Resource implements ConsentLogger {
     try {
       User authedUser = userService.findUserByEmail(authUser.getEmail());
       User user = userService.findUserById(userId);
-      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL) && !Objects.equals(authedUser.getInstitutionId(), user.getInstitutionId())) {
+      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)
+          && !institutionService.sameInstitution(authedUser, user)) {
         return Response.status(Status.FORBIDDEN).build();
       }
       List<DataAccessAgreement> daaList = daaService.findDAAsInJsonArray(json, "daaList");
@@ -328,12 +331,13 @@ public class DaaResource extends Resource implements ConsentLogger {
     try {
       User authedUser = userService.findUserByEmail(authUser.getEmail());
       User user = userService.findUserById(userId);
-      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL) && !Objects.equals(authedUser.getInstitutionId(), user.getInstitutionId())) {
+      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)
+          && !institutionService.sameInstitution(authedUser, user)) {
         return Response.status(Status.FORBIDDEN).build();
       }
       List<DataAccessAgreement> daaList = daaService.findDAAsInJsonArray(json, "daaList");
       for (DataAccessAgreement daa : daaList) {
-        libraryCardService.removeDaaFromUserLibraryCardByInstitution(user, authedUser.getInstitutionId(), daa.getDaaId());
+        libraryCardService.removeDaaFromUserLibraryCards(user, daa.getDaaId());
       }
       return Response.ok().build();
     } catch (Exception e) {

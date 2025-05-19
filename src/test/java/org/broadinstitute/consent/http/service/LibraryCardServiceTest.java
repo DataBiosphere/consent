@@ -49,7 +49,7 @@ class LibraryCardServiceTest {
 
   @BeforeEach
   void initService() {
-    service = new LibraryCardService(libraryCardDAO, institutionDAO, institutionService, userDAO);
+    service = new LibraryCardService(libraryCardDAO, institutionService, userDAO);
   }
 
   @Test
@@ -432,7 +432,7 @@ class LibraryCardServiceTest {
   }
 
   @Test
-  void testRemoveDaaFromUserLibraryCardByInstitution() {
+  void testRemoveDaaFromUserLibraryCards() {
     User user = testUser(1);
     Integer userId = user.getUserId();
     List<LibraryCard> libraryCards = List.of(
@@ -444,12 +444,12 @@ class LibraryCardServiceTest {
     when(libraryCardDAO.findLibraryCardsByUserId(user.getUserId()))
         .thenReturn(libraryCards);
     doNothing().when(libraryCardDAO).deleteLibraryCardDaaRelation(any(), any());
-    List<LibraryCard> cards = service.removeDaaFromUserLibraryCardByInstitution(user, 1, 1);
+    List<LibraryCard> cards = service.removeDaaFromUserLibraryCards(user, 1, 1);
     assertEquals(2, cards.size());
   }
 
   @Test
-  void testRemoveDaaFromUserLibraryCardByInstitutionNoMatchingInstitutions() {
+  void testRemoveDaaFromUserLibraryCardsNoMatchingInstitutions() {
     User user = testUser(1);
     Integer userId = user.getUserId();
     List<LibraryCard> libraryCards = List.of(
@@ -459,7 +459,7 @@ class LibraryCardServiceTest {
         testLibraryCard(3, userId)
     );
     when(libraryCardDAO.findLibraryCardsByUserId(user.getUserId())).thenReturn(libraryCards);
-    List<LibraryCard> cards = service.removeDaaFromUserLibraryCardByInstitution(user, 4, 1);
+    List<LibraryCard> cards = service.removeDaaFromUserLibraryCards(user, 4, 1);
     assertEquals(0, cards.size());
   }
 
@@ -496,7 +496,7 @@ class LibraryCardServiceTest {
     Integer userId = user.getUserId();
     when(libraryCardDAO.findLibraryCardsByUserId(userId))
         .thenReturn(Collections.emptyList());
-    List<LibraryCard> cards = service.removeDaaFromUserLibraryCardByInstitution(user, 1, 1);
+    List<LibraryCard> cards = service.removeDaaFromUserLibraryCards(user, 1, 1);
     assertEquals(0, cards.size());
   }
 

@@ -11,7 +11,6 @@ import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -42,7 +41,6 @@ import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.resources.Resource;
 import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -143,19 +141,10 @@ public class UserService implements ConsentLogger {
     return findUserById(userId);
   }
 
-  public void insertRoleAndInstitutionForUser(UserRole role, User user) {
+  public void insertRoleForUser(UserRole role, User user) {
     var userId = user.getUserId();
     try {
-      if (user.getInstitutionId() == null) {
-        Institution institution = institutionService.findInstitutionForEmail(user.getEmail());
-        if (institution == null) {
-          throw new BadRequestException(
-              "No institution found for user: %s".formatted(user.getEmail()));
-        }
-        userServiceDAO.insertRoleAndInstitutionTxn(role, institution.getId(), userId);
-      } else {
-        userRoleDAO.insertSingleUserRole(role.getRoleId(), userId);
-      }
+      userRoleDAO.insertSingleUserRole(role.getRoleId(), userId);
     } catch (Exception e) {
       logException(
           "Error when updating user: %s, role: %s".formatted(userId, role), e);
@@ -173,12 +162,7 @@ public class UserService implements ConsentLogger {
     if (Objects.nonNull(existingUser)) {
       throw new BadRequestException("User exists with this email address: " + user.getEmail());
     }
-    Institution institution = institutionService.findInstitutionForEmail(user.getEmail());
-    if (institution != null) {
-      user.setInstitutionId(institution.getId());
-    }
-    Integer userId = userDAO.insertUser(user.getEmail(), user.getDisplayName(),
-        user.getInstitutionId(), new Date());
+    Integer userId = userDAO.insertUser(user.getEmail(), user.getDisplayName(), new Date());
     insertUserRoles(user.getRoles(), userId);
     addExistingLibraryCards(user);
     return userDAO.findUserById(userId);
@@ -212,32 +196,29 @@ public class UserService implements ConsentLogger {
    * Find users as a specific role, e.g., Admins can see all users, other roles can only see a
    * subset of users.
    *
-   * @param user     The user making the request
-   * @param roleName The role the user is making the request as
+   * @param user The user making the request
+   * @param role The role the user is making the request as
    * @return List of Users for specified role name
    */
-  public List<User> getUsersAsRole(User user, String roleName) {
-    switch (roleName) {
-      // SigningOfficial console is technically pulling LCs, it's just bringing associated users along for the ride
+  public List<User> getUsersAsRole(User user, UserRoles role) {
+    return switch (role) {
+      // SigningOfficial console is technically pulling LCs, it's just bringing associated users
+      // along for the ride
       // However LCs can be created for users not yet registered in the system
       // As such a more specialized query is needed to produce the proper listing
-      case Resource.SIGNINGOFFICIAL:
-        Integer institutionId = user.getInstitutionId();
-        if (Objects.nonNull(user.getInstitutionId())) {
-          return userDAO.getUsersFromInstitutionWithCards(institutionId);
-        } else {
-          throw new NotFoundException("Signing Official (user: " + user.getDisplayName()
-              + ") is not associated with an Institution.");
-        }
-      case Resource.ADMIN:
-        return userDAO.findUsersWithLCsAndInstitution();
-      default:
-        // do nothing
-    }
-    return Collections.emptyList();
+      case SIGNINGOFFICIAL ->
+          userDAO.findUsersWithLCs().stream()
+              .filter(u -> institutionService.sameInstitution(user, u))
+              .filter(u -> u.hasUserRole(UserRoles.SIGNINGOFFICIAL))
+              .toList();
+      case ADMIN -> userDAO.findUsersWithLCs();
+      default ->
+          // do nothing
+          List.of();
+    };
   }
 
-  public List<SimplifiedUser> getUsersByDaaId(Integer daaId) {
+  public List<User> getUsersByDaaId(Integer daaId) {
     if (Objects.isNull(daaId)) {
       throw new IllegalArgumentException();
     }
@@ -245,8 +226,7 @@ public class UserService implements ConsentLogger {
     if (Objects.isNull(daa)) {
       throw new NotFoundException();
     }
-    List<User> users = userDAO.getUsersWithCardsByDaaId(daaId);
-    return users.stream().map(SimplifiedUser::new).collect(Collectors.toList());
+    return userDAO.getUsersWithCardsByDaaId(daaId);
   }
 
   public void deleteUserByEmail(String email) {
@@ -292,13 +272,8 @@ public class UserService implements ConsentLogger {
     userDAO.updateEmailPreference(userId, preference);
   }
 
-  public List<SimplifiedUser> findSOsByInstitutionId(Integer institutionId) {
-    if (Objects.isNull(institutionId)) {
-      return Collections.emptyList();
-    }
-
-    List<User> users = userDAO.getSOsByInstitution(institutionId);
-    return users.stream().map(SimplifiedUser::new).collect(Collectors.toList());
+  public List<User> findSOsByUser(User user) {
+    return getUsersAsRole(user, UserRoles.SIGNINGOFFICIAL);
   }
 
   public List<User> findUsersByInstitutionId(Integer institutionId) {
@@ -385,7 +360,6 @@ public class UserService implements ConsentLogger {
           libraryCardDAO.updateLibraryCardById(
               lc.getId(),
               user.getUserId(),
-              lc.getInstitutionId(),
               lc.getEraCommonsId(),
               lc.getUserName(),
               lc.getUserEmail(),
@@ -456,54 +430,9 @@ public class UserService implements ConsentLogger {
     }
   }
 
-  public static class SimplifiedUser {
-
-    public Integer userId;
-    public String displayName;
-    public String email;
-    public Integer institutionId;
-
+  public record SimplifiedUser(Integer userId, String displayName, String email) {
     public SimplifiedUser(User user) {
-      this.userId = user.getUserId();
-      this.displayName = user.getDisplayName();
-      this.email = user.getEmail();
-      this.institutionId = user.getInstitutionId();
-    }
-
-    public SimplifiedUser() {
-    }
-
-    public void setUserId(Integer userId) {
-      this.userId = userId;
-    }
-
-    public void setDisplayName(String name) {
-      this.displayName = name;
-    }
-
-    public void setEmail(String email) {
-      this.email = email;
-    }
-
-    public void setInstitutionId(Integer institutionId) {
-      this.institutionId = institutionId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      SimplifiedUser that = (SimplifiedUser) o;
-      return Objects.equals(userId, that.userId);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(userId);
+      this(user.getUserId(), user.getDisplayName(), user.getEmail());
     }
   }
 }

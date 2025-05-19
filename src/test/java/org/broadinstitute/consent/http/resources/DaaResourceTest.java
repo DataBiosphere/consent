@@ -766,7 +766,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
     when(daaService.findById(daaId)).thenReturn(new DataAccessAgreement());
-    when(libraryCardService.removeDaaFromUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+    when(libraryCardService.removeDaaFromUserLibraryCards(any(), any(), any())).thenReturn(List.of());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -792,7 +792,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
     when(daaService.findById(daaId)).thenReturn(new DataAccessAgreement());
-    when(libraryCardService.removeDaaFromUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+    when(libraryCardService.removeDaaFromUserLibraryCards(any(), any(), any())).thenReturn(List.of());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -966,7 +966,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenReturn(researcher);
     when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
-    when(libraryCardService.removeDaaFromUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+    when(libraryCardService.removeDaaFromUserLibraryCards(any(), any(), any())).thenReturn(List.of());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -993,7 +993,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenReturn(researcher);
     when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
-    when(libraryCardService.removeDaaFromUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+    when(libraryCardService.removeDaaFromUserLibraryCards(any(), any(), any())).thenReturn(List.of());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 

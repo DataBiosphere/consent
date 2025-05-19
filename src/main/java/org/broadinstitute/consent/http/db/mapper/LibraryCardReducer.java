@@ -12,23 +12,9 @@ public class LibraryCardReducer implements LinkedHashMapRowReducer<Integer, Libr
 
   @Override
   public void accumulate(Map<Integer, LibraryCard> map, RowView rowView) {
-    Institution institution = null;
     LibraryCard card = map.computeIfAbsent(
         rowView.getColumn("id", Integer.class),
         id -> rowView.getRow(LibraryCard.class));
-
-    try {
-      if (Objects.nonNull(card) && Objects.nonNull(
-          rowView.getColumn("i_institution_id", Integer.class))) {
-        institution = rowView.getRow(Institution.class);
-        institution.setId(rowView.getColumn("i_institution_id", Integer.class));
-      }
-    } catch (MappingException e) {
-    }
-
-    if (Objects.nonNull(institution)) {
-      card.setInstitution(institution);
-    }
 
     try {
       if (Objects.nonNull(card) && Objects.nonNull(

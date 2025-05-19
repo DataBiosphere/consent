@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -28,14 +29,16 @@ public class LibraryCardResource extends Resource {
 
   private final UserService userService;
   private final LibraryCardService libraryCardService;
+  private final InstitutionService institutionService;
 
   @Inject
   public LibraryCardResource(
       UserService userService,
-      LibraryCardService libraryCardService
+      LibraryCardService libraryCardService, InstitutionService institutionService
   ) {
     this.userService = userService;
     this.libraryCardService = libraryCardService;
+    this.institutionService = institutionService;
   }
 
   @GET
@@ -70,8 +73,8 @@ public class LibraryCardResource extends Resource {
   public Response getLibraryCardsByInstitutionId(@Auth AuthUser authUser,
       @PathParam("id") Integer id) {
     try {
-      List<LibraryCard> libraryCards = libraryCardService.findLibraryCardsByInstitutionId(id);
-      return Response.ok().entity(libraryCards).build();
+      // FIXME: This is possible but will require filtering over all LCs to implement. Before we do this, make sure this API is needed.
+      return Response.ok().entity(List.of()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -120,7 +123,7 @@ public class LibraryCardResource extends Resource {
     LibraryCard card = libraryCardService.findLibraryCardById(id);
     try {
       // If user is not an admin and LC institutionID doesn't match the users's throw an exception
-      if (!checkIsAdmin(user) && !card.getInstitutionId().equals(user.getInstitutionId())) {
+      if (!checkIsAdmin(user) && !institutionService.sameInstitution(user, card.getUserEmail())) {
         throw new ForbiddenException("You are not authorized to delete this library card");
       }
       libraryCardService.deleteLibraryCardById(id);
