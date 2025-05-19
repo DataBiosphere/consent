@@ -127,7 +127,7 @@ public class LibraryCardResource extends Resource {
     }
     try {
       // If user is not an admin and SO institutionID doesn't match the user's throw an exception
-      if (lcUser != null && !checkIsAdmin(user) && !lcUser.getInstitutionId().equals(user.getInstitutionId())) {
+      if (lcUser != null && !checkIsAdmin(user) && !lcUser.getInstitution().equals(user.getInstitution())) {
         throw new ForbiddenException("You are not authorized to delete this library card");
       }
       libraryCardService.deleteLibraryCardById(id);

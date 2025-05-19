@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -278,9 +279,15 @@ class LibraryCardResourceTest {
   void deleteLibraryCardThrowsForbiddenException() {
     LibraryCard card = mockLibraryCardSetup();
     User soUser = mockSOUser();
-    soUser.setInstitutionId(1);
+    Institution soInstitution = new Institution();
+    soInstitution.setId(1);
+    soUser.setInstitution(soInstitution);
+    soUser.setInstitutionId(soInstitution.getId());
     // Mocks that the user is in a different institution than the SO
-    lcUser.setInstitutionId(2);
+    Institution lcUserInstitution = new Institution();
+    lcUserInstitution.setId(2);
+    lcUser.setInstitution(lcUserInstitution);
+    lcUser.setInstitutionId(lcUserInstitution.getId());
 
     when(userService.findUserByEmail(anyString())).thenReturn(soUser);
     when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
