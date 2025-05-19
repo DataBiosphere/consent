@@ -126,10 +126,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           final_access_vote.reference_id = dar.reference_id AND
           final_access_vote.dataset_id = dd.dataset_id
       WHERE final_access_vote.last_vote = TRUE
-        AND dar.reference_id IN (<darReferenceIds>)
+        AND dar.reference_id = :darReferenceId
         AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
       """)
-  Set<Integer> findDatasetApprovalsByDars(@BindList("darReferenceIds") List<String> darReferenceIds);
+  Set<Integer> findDatasetApprovalsByDar(@Bind("darReferenceId") String darReferenceIds);
 
   /**
    * This query finds submitted DARs based on a date range.  This would be useful if we wanted to
