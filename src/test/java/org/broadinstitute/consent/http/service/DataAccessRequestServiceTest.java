@@ -32,8 +32,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -271,15 +269,14 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   void createProgressReportFailsIfDAOOperationFails() {
     DataAccessRequest parentDar = generateDataAccessRequest();
     DataAccessRequest progressReport = generateProgressReport();
-    progressReport.setParentId(parentDar.getId().toString());
+    progressReport.setParentId(parentDar.getId());
     progressReport.setCollectionId(parentDar.getCollectionId());
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
-    User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of(new LibraryCard()));
-    user.setEraCommonsId("eraCommonsId");
+    User user = createUserWithPrerequisites();
     parentDar.setUserId(user.getUserId());
     when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of(parentDar.getReferenceId()))).thenReturn(
         Set.copyOf(progressReport.getDatasetIds()));
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     doThrow(new UnableToExecuteStatementException("Test exception"))
         .when(dataAccessRequestDAO)
         .insertProgressReport(
@@ -987,24 +984,24 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   @Test
   void testSendReminderMessage() throws TemplateException, IOException {
     Election election = new Election();
-    election.setElectionId(RandomUtils.nextInt());
+    election.setElectionId(randomInt(0, 100));
     election.setReferenceId(UUID.randomUUID().toString());
     election.setElectionType(ElectionType.DATA_ACCESS.getValue());
     when(electionDAO.findElectionWithFinalVoteById(any())).thenReturn(election);
 
     Vote vote = new Vote();
-    vote.setVoteId(RandomUtils.nextInt());
+    vote.setVoteId(randomInt(0, 100));
     vote.setElectionId(election.getElectionId());
     when(voteDAO.findVoteById(any())).thenReturn(vote);
 
     DarCollection collection = new DarCollection();
-    collection.setDarCollectionId(RandomUtils.nextInt());
+    collection.setDarCollectionId(randomInt(0, 100));
     collection.setDarCode("DAR-12345");
     when(darCollectionDAO.findDARCollectionByReferenceId(any())).thenReturn(collection);
 
     User user = new User();
-    user.setDisplayName(RandomStringUtils.randomAlphanumeric(10));
-    user.setEmail(RandomStringUtils.randomAlphanumeric(10));
+    user.setDisplayName(randomAlphanumeric(10));
+    user.setEmail(randomAlphanumeric(10));
     when(userDAO.findUserById(any())).thenReturn(user);
 
     initService();
