@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -12,11 +13,9 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.UUID;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Dac;
@@ -29,7 +28,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -414,6 +412,19 @@ class DarCollectionDAOTest extends DAOTestHelper {
     assertNull(returnedCollection);
   }
 
+  @Test
+  void testFindMostRecentDarInCollection() {
+    User user = createUserWithInstitution();
+    List<Object> newDarCollection1 = createDarCollectionWithDataset(user);
+    DataAccessRequest testDar1 = (DataAccessRequest) newDarCollection1.get(4);
+    Dataset dataset = (Dataset) newDarCollection1.get(2);
+    DataAccessRequest testDar2 = createDAR(user, dataset, testDar1.getCollectionId());
+    DarCollection returnedCollection = darCollectionDAO.findDARCollectionByCollectionId(testDar1.getCollectionId());
+    assertTrue(testDar2.getSubmissionDate().after(testDar1.getSubmissionDate()));
+    assertNotEquals(testDar2.getReferenceId(), testDar1.getReferenceId());
+    assertEquals(testDar2.getReferenceId(), returnedCollection.getMostRecentDar().getReferenceId());
+  }
+
   /**
    * Creates a new user, dataset, data access request, and dar collection
    *
@@ -465,43 +476,9 @@ class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   private LibraryCard createLibraryCard(User user) {
-    Integer institutionId = createInstitution().getId();
-    String stringValue = "value";
-    Integer id = libraryCardDAO.insertLibraryCard(user.getUserId(), institutionId, stringValue,
+    Integer id = libraryCardDAO.insertLibraryCard(user.getUserId(),
         user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
     return libraryCardDAO.findLibraryCardById(id);
-  }
-
-  private Institution createInstitution() {
-    User createUser = createUser();
-    Integer id = institutionDAO.insertInstitution(randomAlphabetic(20),
-        "itDirectorName",
-        "itDirectorEmail",
-        randomAlphabetic(10),
-        new Random().nextInt(),
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        OrganizationType.NON_PROFIT.getValue(),
-        createUser.getUserId(),
-        createUser.getCreateDate());
-    Institution institution = institutionDAO.findInstitutionById(id);
-    User updateUser = createUser();
-    institutionDAO.updateInstitutionById(
-        id,
-        institution.getName(),
-        institution.getItDirectorEmail(),
-        institution.getItDirectorName(),
-        institution.getInstitutionUrl(),
-        institution.getDunsNumber(),
-        institution.getOrgChartUrl(),
-        institution.getVerificationUrl(),
-        institution.getVerificationFilename(),
-        institution.getOrganizationType().getValue(),
-        updateUser.getUserId(),
-        new Date()
-    );
-    return institutionDAO.findInstitutionById(id);
   }
 
   private DarCollection createDarCollectionMultipleUserProperties() {

@@ -261,10 +261,12 @@ class LibraryCardResourceTest {
     LibraryCard card = mockLibraryCardSetup();
     User soUser = mockSOUser();
     soUser.setInstitutionId(1);
-    card.setInstitutionId(2);
+    // Mocks that the user is in a different institution than the SO
+    lcUser.setInstitutionId(2);
 
     when(userService.findUserByEmail(anyString())).thenReturn(soUser);
     when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
+    when(userService.findUserById(card.getUserId())).thenReturn(lcUser);
 
     initResource();
     Response response = resource.deleteLibraryCard(authUser, 1);

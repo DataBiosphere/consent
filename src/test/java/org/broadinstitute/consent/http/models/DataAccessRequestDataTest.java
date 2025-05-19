@@ -1,8 +1,12 @@
 package org.broadinstitute.consent.http.models;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import jakarta.ws.rs.BadRequestException;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
@@ -59,5 +63,37 @@ class DataAccessRequestDataTest {
     data.setSigningOfficialEmail(testEmail);
 
     assertEquals(testEmail, data.getSigningOfficialEmail());
+  }
+
+  @Test
+  void testPopulateDARDataWithValidJson() {
+    String validJson = """
+            {
+                "projectTitle": "Test Project",
+                "checkNihDataOnly": true
+            }
+        """;
+    DataAccessRequestData result = DataAccessRequestData.populateDARData(validJson);
+    assertNotNull(result);
+    assertEquals("Test Project", result.getProjectTitle());
+    assertTrue(result.getCheckNihDataOnly());
+  }
+
+  @Test
+  void testPopulateDARDataWithInvalidJson() {
+    String invalidJson = """
+            {
+                "projectTitle": "Test Project",
+                "checkNihDataOnly": true,
+        """;
+    assertThrows(BadRequestException.class, () -> DataAccessRequestData.populateDARData(invalidJson));
+  }
+
+  @Test
+  void testPopulateDARDataWithNullJson() {
+    DataAccessRequestData result = DataAccessRequestData.populateDARData(null);
+    assertNotNull(result);
+    assertNull(result.getProjectTitle());
+    assertNull(result.getCheckNihDataOnly());
   }
 }

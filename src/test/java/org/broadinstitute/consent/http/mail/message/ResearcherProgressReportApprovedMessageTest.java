@@ -18,7 +18,7 @@ import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class ResearcherApprovedMessageTest extends AbstractTestHelper {
+class ResearcherProgressReportApprovedMessageTest extends AbstractTestHelper {
 
   private FreeMarkerTemplateHelper helper;
 
@@ -36,8 +36,8 @@ class ResearcherApprovedMessageTest extends AbstractTestHelper {
 
   @Test
   void testMessageSubject() {
-    var message = new ResearcherApprovedMessage(new User(), "DAR-123", List.of(), "");
-    assertEquals("Your DUOS Data Access Request Results", message.createSubject());
+    var message = new ResearcherApprovedProgressReportMessage(new User(), "DAR-123", List.of(), "");
+    assertEquals("Your DUOS Progress Report Results", message.createSubject());
   }
 
   @Test
@@ -52,7 +52,7 @@ class ResearcherApprovedMessageTest extends AbstractTestHelper {
     researcher.setEmail(researcherEmail);
 
     var message =
-        new ResearcherApprovedMessage(
+        new ResearcherApprovedProgressReportMessage(
             researcher, darCode, List.of(new DatasetMailDTO(datasetName, datasetId)), "");
     assertEquals(darCode, message.getEntityReferenceId());
 
@@ -67,7 +67,7 @@ class ResearcherApprovedMessageTest extends AbstractTestHelper {
         parsedTemplate.title());
     assertEquals(
         "Hello " + researcherUserName + ",", getElementTextById(parsedTemplate, "userName"));
-    assertTrue(templateString.contains("Your application " + darCode + " was approved"));
+    assertTrue(templateString.contains("Your progress report application " + darCode + " was approved"));
     assertTrue(templateString.contains(datasetId));
     assertTrue(templateString.contains(datasetName));
     assertTrue(templateString.contains(researcherEmail));

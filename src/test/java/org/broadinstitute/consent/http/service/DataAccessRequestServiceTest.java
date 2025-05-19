@@ -13,12 +13,17 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collections;
@@ -27,7 +32,10 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -38,10 +46,12 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.Collaborator;
+import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -51,6 +61,7 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -58,6 +69,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 
 @ExtendWith(MockitoExtension.class)
 class DataAccessRequestServiceTest extends AbstractTestHelper {
@@ -80,6 +92,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   private DatasetDAO dataSetDAO;
   @Mock
   private ElectionDAO electionDAO;
+  @Mock
+  private EmailService emailService;
   @Mock
   private DacService dacService;
   @Mock
@@ -112,6 +126,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   }
 
   private void initService() {
+    ConsentConfiguration config = new ConsentConfiguration();
+    config.getServicesConfiguration().setLocalURL("local_url/");
     DAOContainer container = new DAOContainer();
     container.setDataAccessRequestDAO(dataAccessRequestDAO);
     container.setDarCollectionDAO(darCollectionDAO);
@@ -123,7 +139,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     container.setVoteDAO(voteDAO);
     container.setMatchDAO(matchDAO);
     service = new DataAccessRequestService(counterService, container, dacService,
-        dataAccessRequestServiceDAO, userService, institutionService);
+        dataAccessRequestServiceDAO, userService, institutionService,  emailService, config);
   }
 
   @Test
@@ -221,7 +237,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   void createProgressReport() {
     DataAccessRequest parentDar = generateDataAccessRequest();
     DataAccessRequest progressReport = generateProgressReport();
-    progressReport.setParentId(parentDar.getId().toString());
+    progressReport.setParentId(parentDar.getId());
     progressReport.setCollectionId(parentDar.getCollectionId());
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     User user = createUserWithPrerequisites();
@@ -245,7 +261,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   void createProgressReportFailsIfNonApprovedDatasets() {
     DataAccessRequest parentDar = generateDataAccessRequest();
     DataAccessRequest progressReport = generateProgressReport();
-    progressReport.setParentId(parentDar.getId().toString());
+    progressReport.setParentId(parentDar.getId());
     progressReport.setCollectionId(parentDar.getCollectionId());
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     User user = createUserWithPrerequisites();
@@ -432,7 +448,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         roles);
     collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
     LibraryCard libraryCard = new LibraryCard();
-    libraryCard.setInstitutionId(requestingUser.getInstitutionId());
     collaboratorUser.setLibraryCards(List.of(libraryCard));
     DataAccessRequest dar = createDataAccessRequest(List.of(validCollaborator));
     when(userDAO.findUserByEmail(validCollaborator.getEmail())).thenReturn(collaboratorUser);
@@ -987,4 +1002,134 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     user.setEraCommonsId("eraCommonsId");
     return user;
   }
+
+  @Test
+  void testSendReminderMessage() throws TemplateException, IOException {
+    Election election = new Election();
+    election.setElectionId(RandomUtils.nextInt());
+    election.setReferenceId(UUID.randomUUID().toString());
+    election.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    when(electionDAO.findElectionWithFinalVoteById(any())).thenReturn(election);
+
+    Vote vote = new Vote();
+    vote.setVoteId(RandomUtils.nextInt());
+    vote.setElectionId(election.getElectionId());
+    when(voteDAO.findVoteById(any())).thenReturn(vote);
+
+    DarCollection collection = new DarCollection();
+    collection.setDarCollectionId(RandomUtils.nextInt());
+    collection.setDarCode("DAR-12345");
+    when(darCollectionDAO.findDARCollectionByReferenceId(any())).thenReturn(collection);
+
+    User user = new User();
+    user.setDisplayName(RandomStringUtils.randomAlphanumeric(10));
+    user.setEmail(RandomStringUtils.randomAlphanumeric(10));
+    when(userDAO.findUserById(any())).thenReturn(user);
+
+    initService();
+    service.sendReminderMessage(vote.getVoteId());
+    verify(emailService)
+        .sendReminderMessage(
+            user,
+            vote,
+            collection.getDarCode(),
+            election.getElectionType(),
+            "local_url/dar_collection/" + collection.getDarCollectionId());
+    verify(voteDAO).updateVoteReminderFlag(vote.getVoteId(), true);
+  }
+
+
+  @Test
+  void sendExpirationNoticesTest() {
+    User user1 = new User();
+    user1.setUserId(123);
+    user1.setDisplayName("John Doe");
+    user1.setEmail("jd@somewhere");
+
+    User user2 = new User();
+    user2.setUserId(124);
+    user2.setDisplayName("Jane Doe");
+    user2.setEmail("jd@somewhereelse");
+
+    DataAccessRequest dar1 = getMockedDar("DAR-12345", UUID.randomUUID().toString(), user1);
+    DataAccessRequest dar2 = getMockedDar("DAR-12346", UUID.randomUUID().toString(), user2);
+
+    when(userDAO.findUserById(user1.getUserId())).thenReturn(user1);
+    when(userDAO.findUserById(user2.getUserId())).thenReturn(user2);
+    List<DataAccessRequest> dars = List.of(dar1, dar2);
+    when(dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(any(), any(), any())).thenReturn(dars);
+    initService();
+    assertDoesNotThrow(() -> service.sendExpirationNotices());
+  }
+
+  @Test
+  void sendExpirationNoticesTestMissingEmailForOneUser() {
+    ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+    ch.qos.logback.classic.Logger log = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(DataAccessRequestService.class);
+    listAppender.start();
+    log.addAppender(listAppender);
+    User user1 = new User();
+    user1.setUserId(123);
+    user1.setDisplayName("John Doe");
+    user1.setEmail("jd@somewhere");
+
+    User user2 = new User();
+    user2.setUserId(124);
+    user2.setDisplayName("Jane Doe");
+
+    DataAccessRequest dar1 = getMockedDar("DAR-12345", UUID.randomUUID().toString(), user1);
+    DataAccessRequest dar2 = getMockedDar("DAR-12346", UUID.randomUUID().toString(), user2);
+
+    when(userDAO.findUserById(user1.getUserId())).thenReturn(user1);
+    when(userDAO.findUserById(user2.getUserId())).thenReturn(user2);
+
+    List<DataAccessRequest> dars = List.of(dar2, dar1);
+
+    when(dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(any(), any(), any())).thenReturn(dars);
+    initService();
+
+    assertDoesNotThrow(()->service.sendExpirationNotices());
+
+    assertEquals(2, listAppender.list.size());
+  }
+
+  @Test
+  void sendExpirationNoticesTestUnderlyingExceptionThrownSendingOneTypeOfMessage() {
+    ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+    ch.qos.logback.classic.Logger log = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(DataAccessRequestService.class);
+    listAppender.start();
+    log.addAppender(listAppender);
+    User user1 = new User();
+    user1.setUserId(123);
+    user1.setDisplayName("John Doe");
+    user1.setEmail("jd@somewhere");
+
+    User user2 = new User();
+    user2.setUserId(124);
+    user2.setDisplayName("Jane Doe");
+    user2.setEmail(null);
+
+    DataAccessRequest dar1 = getMockedDar("DAR-12345", UUID.randomUUID().toString(), user1);
+    DataAccessRequest dar2 = getMockedDar("DAR-12346", UUID.randomUUID().toString(), user2);
+
+    when(userDAO.findUserById(user1.getUserId())).thenReturn(user1);
+    when(userDAO.findUserById(user2.getUserId())).thenReturn(user2);
+
+    List<DataAccessRequest> dars = List.of(dar2, dar1);
+
+    when(dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(any(), any(), any())).thenReturn(dars);
+    initService();
+    assertDoesNotThrow(()->service.sendExpirationNotices());
+
+    assertEquals(2, listAppender.list.size());
+  }
+
+  private DataAccessRequest getMockedDar(String darCode, String referenceId, User user) {
+    DataAccessRequest dar = mock(DataAccessRequest.class);
+    when(dar.getReferenceId()).thenReturn(referenceId);
+    when(dar.getDarCode()).thenReturn(darCode);
+    when(dar.getUserId()).thenReturn(user.getUserId());
+    return dar;
+  }
+
 }
