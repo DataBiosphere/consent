@@ -141,7 +141,7 @@ public interface UserDAO extends Transactional<UserDAO> {
           u.era_commons_id as u_era_commons_id,
           r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id,
           lc.id AS lc_id , lc.user_id AS lc_user_id,
-          lc.era_commons_id AS lc_era_commons_id, lc.user_name AS lc_user_name, lc.user_email AS lc_user_email,
+          lc.user_name AS lc_user_name, lc.user_email AS lc_user_email,
           lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date,
           lc.update_user_id AS lc_update_user_id,
           ld.daa_id as lc_daa_id,

@@ -48,6 +48,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DaaService;
+import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -63,6 +64,7 @@ public class DataAccessRequestResource extends Resource {
 
   private final DaaService daaService;
   private final DataAccessRequestService dataAccessRequestService;
+  private final DarCollectionService darCollectionService;
   private final EmailService emailService;
   private final GCSService gcsService;
   private final MatchService matchService;
@@ -77,7 +79,8 @@ public class DataAccessRequestResource extends Resource {
       GCSService gcsService,
       UserService userService,
       DatasetService datasetService,
-      MatchService matchService
+      MatchService matchService,
+      DarCollectionService darCollectionService
   ) {
     this.daaService = daaService;
     this.dataAccessRequestService = dataAccessRequestService;
@@ -86,6 +89,7 @@ public class DataAccessRequestResource extends Resource {
     this.userService = userService;
     this.datasetService = datasetService;
     this.matchService = matchService;
+    this.darCollectionService = darCollectionService;
   }
 
   @GET
@@ -117,13 +121,7 @@ public class DataAccessRequestResource extends Resource {
 
       DataAccessRequest payload = populateDarFromJsonString(user, dar);
       DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload);
-      Integer collectionId = newDar.getCollectionId();
-      try {
-        emailService.sendNewDARCollectionMessage(collectionId);
-      } catch (Exception e) {
-        // non-fatal exception
-        logException("Exception sending email for collection id: " + collectionId, e);
-      }
+      sendNewDarCollectionMessage(newDar.getCollectionId());
       URI uri = info.getRequestUriBuilder().build();
       matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
       List<Dataset> datasets = datasetService.findDatasetsByIds(newDar.getDatasetIds());
@@ -147,13 +145,7 @@ public class DataAccessRequestResource extends Resource {
       // DAA Enforcement
       datasetService.enforceDAARestrictions(user, payload.getDatasetIds());
       DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload);
-      Integer collectionId = newDar.getCollectionId();
-      try {
-        emailService.sendNewDARCollectionMessage(collectionId);
-      } catch (Exception e) {
-        // non-fatal exception
-        logException("Exception sending email for collection id: " + collectionId, e);
-      }
+      sendNewDarCollectionMessage(newDar.getCollectionId());
       URI uri = info.getRequestUriBuilder().build();
       matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
       return Response.created(uri).entity(newDar.convertToSimplifiedDar()).build();
@@ -436,10 +428,25 @@ public class DataAccessRequestResource extends Resource {
           ethicsFileDetails, payload, parentDar);
       DataAccessRequest progressReport = dataAccessRequestService.createProgressReport(user,
           payload, parentDar);
+      sendNewDarCollectionMessage(parentDar.getCollectionId());
       return Response.ok(progressReport.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
+  }
+
+  private void sendNewDarCollectionMessage(Integer collectionId) {
+    try {
+      // This service method knows how to distinguish between a DAR and a Progress Report.
+      darCollectionService.sendNewDARCollectionMessage(collectionId);
+    } catch (Exception e) {
+      // non-fatal exception
+      logCaughtEmailException(collectionId, e);
+    }
+  }
+
+  private void logCaughtEmailException(Integer collectionId, Exception e) {
+    logException("Exception sending email for collection id: " + collectionId, e);
   }
 
   public void populateProgressReportWithDocuments(InputStream collabInputStream,
@@ -585,6 +592,50 @@ public class DataAccessRequestResource extends Resource {
     }
     newDar.setData(data);
     newDar.addDatasetIds(data.getDatasetIds());
+    return newDar;
+  }
+
+  /**
+   * Populate a new Data Access Request from the JSON string and the parent Data Access Request.
+   * Copies all the data from the parent dar, then overwrites the collaborators and datasets. Adds
+   * all progress report specific fields.
+   *
+   * @param json      The JSON string to populate the new Progress Report.
+   * @param parentDar The parent Data Access Request to copy data from.
+   * @return A new Progress Report populated with the provided JSON string and parent DAR data.
+   */
+  public DataAccessRequest populateProgressReportFromJsonString(String json,
+      DataAccessRequest parentDar) {
+    DataAccessRequest newDar = new DataAccessRequest();
+    DataAccessRequestData newData = DataAccessRequestData.populateDARData(json);
+    DataAccessRequestData originalDataCopy = DataAccessRequestData.fromString(
+        parentDar.getData().toString());
+
+    String referenceId = UUID.randomUUID().toString();
+    newDar.setReferenceId(referenceId);
+    newDar.setParentId(parentDar.getId());
+    newDar.setCollectionId(parentDar.getCollectionId());
+
+    newDar.addDatasetIds(newData.getDatasetIds());
+    originalDataCopy.setInternalCollaborators(newData.getInternalCollaborators());
+    originalDataCopy.setExternalCollaborators(newData.getExternalCollaborators());
+    originalDataCopy.setLabCollaborators(newData.getLabCollaborators());
+    originalDataCopy.setProgressReportSummary(newData.getProgressReportSummary());
+    originalDataCopy.setIntellectualPropertySummary(newData.getIntellectualPropertySummary());
+    originalDataCopy.setPublications(newData.getPublications());
+    originalDataCopy.setPresentations(newData.getPresentations());
+    originalDataCopy.setDmi(newData.getDmi());
+    originalDataCopy.setResearchPlans(newData.getResearchPlans());
+    originalDataCopy.setCloseoutSupplement(newData.getCloseoutSupplement());
+
+    // These values will be updated in populateProgressReportWithDocuments if documents exist.
+    // Its important we don't copy over the parent values so those documents are not deleted.
+    originalDataCopy.setCollaborationLetterName(null);
+    originalDataCopy.setCollaborationLetterLocation(null);
+    originalDataCopy.setIrbDocumentName(null);
+    originalDataCopy.setIrbDocumentLocation(null);
+
+    newDar.setData(originalDataCopy);
     return newDar;
   }
 

@@ -8,6 +8,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -133,7 +134,7 @@ public class LibraryCardResource extends Resource {
     }
   }
 
-  private Boolean checkIsAdmin(User user) {
+  private boolean checkIsAdmin(User user) {
     return user.getRoles()
         .stream()
         .anyMatch(role -> role.getName().equalsIgnoreCase(UserRoles.ADMIN.getRoleName()));

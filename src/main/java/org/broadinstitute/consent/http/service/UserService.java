@@ -360,7 +360,6 @@ public class UserService implements ConsentLogger {
           libraryCardDAO.updateLibraryCardById(
               lc.getId(),
               user.getUserId(),
-              lc.getEraCommonsId(),
               lc.getUserName(),
               lc.getUserEmail(),
               user.getUserId(),

@@ -3,15 +3,19 @@ package org.broadinstitute.consent.http.service;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Streams;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -22,12 +26,14 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarCollectionActions;
 import org.broadinstitute.consent.http.enumeration.DarCollectionStatus;
@@ -35,6 +41,11 @@ import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
+import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
+import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
+import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -52,10 +63,14 @@ public class DarCollectionService implements ConsentLogger {
   private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
   private final DarCollectionDAO darCollectionDAO;
   private final DarCollectionServiceDAO collectionServiceDAO;
+  private final DacDAO dacDAO;
   private final DarCollectionSummaryDAO darCollectionSummaryDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DatasetDAO datasetDAO;
   private final ElectionDAO electionDAO;
+  private final EmailService emailService;
+  private final MatchDAO matchDAO;
+  private final UserDAO userDAO;
   private final VoteDAO voteDAO;
   private final MatchDAO matchDAO;
   private final EmailService emailService;
@@ -65,7 +80,7 @@ public class DarCollectionService implements ConsentLogger {
   public DarCollectionService(DarCollectionDAO darCollectionDAO,
       DarCollectionServiceDAO collectionServiceDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO,
       DataAccessRequestDAO dataAccessRequestDAO, EmailService emailService, VoteDAO voteDAO,
-      MatchDAO matchDAO, DarCollectionSummaryDAO darCollectionSummaryDAO,
+      MatchDAO matchDAO, DarCollectionSummaryDAO darCollectionSummaryDAO, UserDAO userDAO, DacDAO dacDAO,
       InstitutionService institutionService) {
     this.darCollectionDAO = darCollectionDAO;
     this.collectionServiceDAO = collectionServiceDAO;
@@ -76,6 +91,8 @@ public class DarCollectionService implements ConsentLogger {
     this.voteDAO = voteDAO;
     this.matchDAO = matchDAO;
     this.darCollectionSummaryDAO = darCollectionSummaryDAO;
+    this.userDAO = userDAO;
+    this.dacDAO = dacDAO;
     this.institutionService = institutionService;
   }
 
@@ -666,19 +683,25 @@ public class DarCollectionService implements ConsentLogger {
   public DarCollection createElectionsForDarCollection(User user, DarCollection collection)
       throws Exception {
     try {
-      List<String> createdElectionReferenceIds = collectionServiceDAO.createElectionsForDarCollection(
-          user, collection);
+      DataAccessRequest dar = collection.getMostRecentDar();
+      List<String> createdElectionReferenceIds = collectionServiceDAO.createElectionsForDarByUser(
+          user, dar);
       if (createdElectionReferenceIds.isEmpty()) {
         var e = new IllegalStateException(
-            "No elections were created for DAR Collection: %s".formatted(
-                collection.getDarCode()));
+            "No elections were created for DAR Collection: %s %s".formatted(
+                collection.getDarCode(), dar.getReferenceId()));
         logException(e);
         throw e;
       }
       try {
         List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(
             createdElectionReferenceIds);
-        emailService.sendDarNewCollectionElectionMessage(voteUsers, collection);
+        if (dar.getProgressReport()) {
+          emailService.sendProgressReportNewCollectionElectionMessage(voteUsers, collection.getDarCode());
+        } else {
+          emailService.sendDarNewCollectionElectionMessage(voteUsers, collection.getDarCode());
+        }
+
       } catch (Exception e) {
         logException(
             "Unable to send new case message to DAC members for DAR Collection: %s".formatted(
@@ -702,4 +725,87 @@ public class DarCollectionService implements ConsentLogger {
       }
     });
   }
+
+
+  public void sendNewDARCollectionMessage(Integer collectionId)
+      throws IOException, TemplateException {
+    DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+    if (collection == null) {
+      logWarn(
+          "Sending new DAR Collection message: Could not find collection for specified collection id: "
+              + collectionId);
+      return;
+    }
+    // Do this, but only for a single DAR
+    DataAccessRequest dar = collection.getMostRecentDar();
+    List<User> distinctUsers = getDistinctAdminAndChairUsersForDAR(dar);
+    User researcher = userDAO.findUserById(collection.getCreateUserId());
+    if (researcher == null) {
+      logWarn(
+          "Sending new DAR Collection message: Could not find researcher for specified user id: "
+              + collection.getCreateUserId());
+    }
+    String researcherName = researcher == null ? "Unknown" : researcher.getDisplayName();
+    // Only do this for the DAR... dacDAO.findDacsForDatasetIds(dar.getDatasetIds())
+    Collection<Dac> dacsInDAR = dacDAO.findDacsForDatasetIds(dar.getDatasetIds());
+    // Use only the datasets from the dar
+    List<Integer> datasetIds = dar.getDatasetIds();
+    List<Dataset> datasetsInDAR =
+        datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
+
+    Map<String, List<String>> sendList = new HashMap<>();
+    for (User user : distinctUsers) {
+      List<Dac> matchingDacsForUser = getMatchingDacs(user, dacsInDAR);
+      for (Dac dac : matchingDacsForUser) {
+        List<String> matchingDatasetsForDac = getMatchingDatasets(dac, datasetsInDAR);
+        if (matchingDatasetsForDac != null) {
+          sendList.put(dac.getName(), matchingDatasetsForDac);
+        }
+      }
+      // If the dar is not a progress report, use the DAR template else use the PR template.
+      if (dar.getProgressReport()) {
+        // Use the reference ID to link the fact that this progress report will have been noted.
+        // the DAR Code at this point will be ambiguous.
+        emailService.sendNewProgressReportRequestEmail(user, sendList, researcherName, collection.getDarCode(), dar.getReferenceId());
+      } else {
+        emailService.sendNewDARRequestEmail(user, sendList, researcherName, collection.getDarCode());
+      }
+    }
+  }
+
+  private List<User> getDistinctAdminAndChairUsersForDAR(DataAccessRequest dar) {
+    List<Integer> datasetIds = dar.getDatasetIds();
+    return getDistinctAdminAndChairUsersForDatasetIds(datasetIds);
+  }
+
+  private List<User> getDistinctAdminAndChairUsersForDatasetIds(List<Integer> datasetIds) {
+    List<User> admins = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(),
+        true);
+    Set<User> chairPersons = userDAO.findUsersForDatasetsByRole(datasetIds,
+        Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
+    // Ensure that admins/chairs are not double emailed
+    // and filter users that don't want to receive email
+    return Streams.concat(admins.stream(), chairPersons.stream())
+        .filter(u -> Boolean.TRUE.equals(u.getEmailPreference()))
+        .distinct()
+        .toList();
+  }
+
+  private List<Dac> getMatchingDacs(User user, Collection<Dac> dacsInDAR) {
+    List<Integer> dacIDs = user.getRoles().stream()
+        .map(UserRole::getDacId)
+        .filter(Objects::nonNull)
+        .toList();
+    return dacsInDAR.stream()
+        .filter(dac -> dacIDs.contains(dac.getDacId()))
+        .toList();
+  }
+
+  private List<String> getMatchingDatasets(Dac dac, List<Dataset> datasetsInDAR) {
+    return datasetsInDAR.stream()
+        .filter(dataset -> dataset.getDacId().equals(dac.getDacId()))
+        .map(Dataset::getDatasetIdentifier)
+        .toList();
+  }
+
 }

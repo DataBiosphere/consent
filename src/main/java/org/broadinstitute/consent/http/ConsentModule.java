@@ -227,6 +227,7 @@ public class ConsentModule extends AbstractModule {
         providesVoteDAO(),
         providesMatchDAO(),
         providesDarCollectionSummaryDAO(),
+        providesUserDAO(),
         providesInstitutionService());
   }
 
@@ -261,7 +262,10 @@ public class ConsentModule extends AbstractModule {
         providesDacService(),
         providesDataAccessRequestServiceDAO(),
         providesUserService(),
-        providesInstitutionService());
+        providesInstitutionService(),
+        providesEmailService(),
+        config
+    );
   }
 
   @Provides
@@ -301,14 +305,8 @@ public class ConsentModule extends AbstractModule {
   @Provides
   EmailService providesEmailService() {
     return new EmailService(
-        providesDARCollectionDAO(),
-        providesVoteDAO(),
-        providesElectionDAO(),
         providesUserDAO(),
         providesMailMessageDAO(),
-        providesDatasetDAO(),
-        providesDacDAO(),
-        providesDataAccessRequestDAO(),
         providesSendGridAPI(),
         providesFreeMarkerTemplateHelper(),
         config);

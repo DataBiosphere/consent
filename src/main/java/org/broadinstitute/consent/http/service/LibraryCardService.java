@@ -32,21 +32,18 @@ public class LibraryCardService {
   public LibraryCard createLibraryCard(LibraryCard libraryCard, User user) {
     throwIfNull(libraryCard);
     boolean isAdmin = checkIsAdmin(user);
-    //If user is not an admin, use user's institutionId rather than the value provided in the payload
-    if (!isAdmin && !institutionService.sameInstitution(user, libraryCard.getUserEmail())) {
-      throw new BadRequestException("Card payload not valid");
-    }
     checkIfCardExists(libraryCard);
     processUserOnNewLC(libraryCard);
+    if (!isAdmin) {
+      checkForValidInstitution(user.getInstitutionId(), libraryCard.getUserEmail());
+    }
     Date createDate = new Date();
-    Integer id =
-        libraryCardDAO.insertLibraryCard(
-            libraryCard.getUserId(),
-            libraryCard.getEraCommonsId(),
-            libraryCard.getUserName(),
-            libraryCard.getUserEmail(),
-            libraryCard.getCreateUserId(),
-            createDate);
+    Integer id = libraryCardDAO.insertLibraryCard(
+        libraryCard.getUserId(),
+        libraryCard.getUserName(),
+        libraryCard.getUserEmail(),
+        libraryCard.getCreateUserId(),
+        createDate);
     return libraryCardDAO.findLibraryCardById(id);
   }
 
@@ -60,7 +57,6 @@ public class LibraryCardService {
     libraryCardDAO.updateLibraryCardById(
         id,
         libraryCard.getUserId(),
-        libraryCard.getEraCommonsId(),
         libraryCard.getUserName(),
         libraryCard.getUserEmail(),
         userId,
@@ -103,7 +99,7 @@ public class LibraryCardService {
   }
 
   public List<LibraryCard> addDaaToUserLibraryCardByInstitution(User user, User signingOfficial, Integer daaId) {
-    List<LibraryCard> libraryCards = new ArrayList<>(libraryCardDAO.findLibraryCardsByUserIdInstitutionId(user.getUserId()));
+    List<LibraryCard> libraryCards = new ArrayList<>(libraryCardDAO.findLibraryCardsByUserId(user.getUserId()));
     if (libraryCards.isEmpty()) {
       LibraryCard lc = createLibraryCardForSigningOfficial(user, signingOfficial);
       libraryCards.add(lc);
@@ -112,12 +108,12 @@ public class LibraryCardService {
     for (LibraryCard libraryCard : libraryCards) {
       addDaaToLibraryCard(libraryCard.getId(), daaId);
     }
-    return libraryCardDAO.findLibraryCardsByUserIdInstitutionId(user.getUserId());
+    return libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
   }
 
   public List<LibraryCard> removeDaaFromUserLibraryCards(User user, Integer daaId) {
     List<LibraryCard> libraryCards = findLibraryCardsByUserId(user.getUserId());
-    // typically there should be one library card per user per institution
+    // typically there should be one library card per user
     for (LibraryCard libraryCard : libraryCards) {
       removeDaaFromLibraryCard(libraryCard.getId(), daaId);
     }
@@ -127,7 +123,6 @@ public class LibraryCardService {
   public LibraryCard createLibraryCardForSigningOfficial(User user, User signingOfficial) {
     LibraryCard lc = new LibraryCard();
     lc.setUserId(user.getUserId());
-    lc.setEraCommonsId(user.getEraCommonsId());
     lc.setUserName(user.getDisplayName());
     lc.setUserEmail(user.getEmail());
     lc.setCreateUserId(signingOfficial.getUserId());

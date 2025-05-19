@@ -11,12 +11,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
-import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Dac;
@@ -28,7 +26,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
@@ -772,43 +769,9 @@ class ElectionDAOTest extends DAOTestHelper {
   }
 
   private LibraryCard createLibraryCard(User user) {
-    Integer institutionId = createInstitution().getId();
-    String stringValue = "value";
-    Integer id = libraryCardDAO.insertLibraryCard(user.getUserId(), institutionId, stringValue,
+    Integer id = libraryCardDAO.insertLibraryCard(user.getUserId(),
         user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
     return libraryCardDAO.findLibraryCardById(id);
-  }
-
-  private Institution createInstitution() {
-    User createUser = createUser();
-    Integer id = institutionDAO.insertInstitution(randomAlphabetic(20),
-        "itDirectorName",
-        "itDirectorEmail",
-        randomAlphabetic(10),
-        new Random().nextInt(),
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        OrganizationType.NON_PROFIT.getValue(),
-        createUser.getUserId(),
-        createUser.getCreateDate());
-    Institution institution = institutionDAO.findInstitutionById(id);
-    User updateUser = createUser();
-    institutionDAO.updateInstitutionById(
-        id,
-        institution.getName(),
-        institution.getItDirectorEmail(),
-        institution.getItDirectorName(),
-        institution.getInstitutionUrl(),
-        institution.getDunsNumber(),
-        institution.getOrgChartUrl(),
-        institution.getVerificationUrl(),
-        institution.getVerificationFilename(),
-        institution.getOrganizationType().getValue(),
-        updateUser.getUserId(),
-        new Date()
-    );
-    return institutionDAO.findInstitutionById(id);
   }
 
   private Vote createFinalVote(Integer userId, Integer electionId) {
