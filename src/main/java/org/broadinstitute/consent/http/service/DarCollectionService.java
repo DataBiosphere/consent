@@ -72,8 +72,6 @@ public class DarCollectionService implements ConsentLogger {
   private final MatchDAO matchDAO;
   private final UserDAO userDAO;
   private final VoteDAO voteDAO;
-  private final MatchDAO matchDAO;
-  private final EmailService emailService;
   private final InstitutionService institutionService;
 
   @Inject

@@ -69,7 +69,6 @@ public class DataAccessRequestService implements ConsentLogger {
   private final UserDAO userDAO;
   private final UserService userService;
   private final DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
-  private final InstitutionService institutionService;
 
   private final DacService dacService;
   private final String serverUrl;
@@ -386,7 +385,6 @@ public class DataAccessRequestService implements ConsentLogger {
 
   @VisibleForTesting
   protected void validatePersonnelInSameInstitution(User user, DataAccessRequestData darData) {
-    Institution submitterInstitution = user.getInstitution();
     String piEmail = darData.getPiEmail();
     String soEmail = darData.getSigningOfficialEmail();
     String itEmail = darData.getItDirectorEmail();
@@ -397,18 +395,17 @@ public class DataAccessRequestService implements ConsentLogger {
 
     List<String> invalidMembers = new ArrayList<>();
 
-    verifyInstitution(submitterInstitution, piEmail, "Principal Investigator", invalidMembers);
-    verifyInstitution(submitterInstitution, soEmail, "Signing Official", invalidMembers);
-    verifyInstitution(submitterInstitution, itEmail, "IT Director", invalidMembers);
+    verifyInstitution(user, piEmail, "Principal Investigator", invalidMembers);
+    verifyInstitution(user, soEmail, "Signing Official", invalidMembers);
+    verifyInstitution(user, itEmail, "IT Director", invalidMembers);
 
     getErrorSummary(
-            collaboratorsEmails,
-            submitterInstitution,
+            collaboratorsEmails, user,
             "Internal Collaborator member: ",
             "Internal Collaborator members: ", invalidMembers);
 
     getErrorSummary(
-            labStaffEmails, submitterInstitution, "Lab staff member: ", "Lab staff members: ", invalidMembers);
+            labStaffEmails, user, "Lab staff member: ", "Lab staff members: ", invalidMembers);
 
     if (!invalidMembers.isEmpty()) {
       throw new IllegalArgumentException(
@@ -417,30 +414,30 @@ public class DataAccessRequestService implements ConsentLogger {
     }
   }
 
-  private void verifyInstitution(Institution submitterInstitution, String email, String role, List<String> invalidMembers) {
-    if (emailDoesNotMatchInstitution(submitterInstitution, email)) {
+  private void verifyInstitution(User submitter, String email, String role, List<String> invalidMembers) {
+    if (!institutionService.sameInstitution(submitter, email)) {
       invalidMembers.add(role + ": " + email);
     }
   }
 
   private void getErrorSummary(
       List<String> emails,
-      Institution institution,
+      User submitter,
       String categorySingular,
       String categoryPlural,
       List<String> invalidMembers) {
-    List<String> errors = findEmailAddressesNotInInstitution(emails, institution);
+    List<String> errors = findEmailAddressesNotInInstitution(emails, submitter);
     if (!errors.isEmpty()) {
       invalidMembers.add(buildSingleErrorFromErrorList(errors, categorySingular, categoryPlural));
     }
   }
 
   private List<String> findEmailAddressesNotInInstitution(
-      List<String> emailAddresses, Institution institution) {
+      List<String> emailAddresses, User submitter) {
     ArrayList<String> errors = new ArrayList<>();
     emailAddresses.forEach(
         collaborator -> {
-          if (emailDoesNotMatchInstitution(institution, collaborator)) {
+          if (!institutionService.sameInstitution(submitter, collaborator)) {
             errors.add(collaborator);
           }
         });
@@ -457,14 +454,6 @@ public class DataAccessRequestService implements ConsentLogger {
     }
     msg.append(String.join(", ", errors));
     return msg.toString();
-  }
-
-  private boolean emailDoesNotMatchInstitution(Institution institution, String email) {
-    Institution foundInstitution = institutionService.findInstitutionForEmail(email);
-    if (foundInstitution == null || institution == null) {
-      return true;
-    }
-    return !institution.equals(foundInstitution);
   }
 
   public Collection<DataAccessRequest> getApprovedDARsForDataset(Dataset dataset) {

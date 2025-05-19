@@ -34,8 +34,9 @@ public class LibraryCardService {
     boolean isAdmin = checkIsAdmin(user);
     checkIfCardExists(libraryCard);
     processUserOnNewLC(libraryCard);
-    if (!isAdmin) {
-      checkForValidInstitution(user.getInstitutionId(), libraryCard.getUserEmail());
+    if (!isAdmin && !institutionService.sameInstitution(user, libraryCard.getUserEmail())) {
+      throw new BadRequestException(
+          "Institution for %s does not match library card email %s".formatted(user.getEmail(), libraryCard.getUserEmail()));
     }
     Date createDate = new Date();
     Integer id = libraryCardDAO.insertLibraryCard(
