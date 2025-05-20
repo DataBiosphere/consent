@@ -39,11 +39,11 @@ public class DarCollectionSummaryReducer implements
       }
 
       try {
-        darReferenceId = rowView.getColumn("dar_reference_id", String.class);
+        darReferenceId = rowView.getColumn("latest_dar_reference_id", String.class);
         if (Objects.nonNull(darReferenceId)) {
           summary.setLatestReferenceId(darReferenceId);
         }
-        hasOptionalColumn(rowView, "dar_parent_id", Integer.class)
+        hasOptionalColumn(rowView, "latest_dar_parent_id", Integer.class)
             .ifPresent(darParentId -> summary.addParentChildRelationship(darParentId, darReferenceId));
         darStatus = rowView.getColumn("dar_status", String.class);
         if (Objects.nonNull(darStatus)) {
