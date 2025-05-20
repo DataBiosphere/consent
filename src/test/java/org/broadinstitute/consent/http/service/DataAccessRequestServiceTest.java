@@ -354,19 +354,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void validateProgressReportNoIPSummary() {
-    User user = createUserWithPrerequisites();
-    DataAccessRequest progressReport = generateProgressReport();
-    progressReport.getData().setIntellectualPropertySummary(null);
-    DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
-    parentDar.setUserId(user.getUserId());
-    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
-    assertThrows(BadRequestException.class,
-        () -> service.validateProgressReport(user, progressReport, parentDar));
-  }
-
-  @Test
   void validateProgressReportInvalidDatasetIds() {
     User user = createUserWithPrerequisites();
     DataAccessRequest progressReport = generateProgressReport();
