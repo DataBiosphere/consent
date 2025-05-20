@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -751,10 +750,11 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     DarCollectionSummary summary = summaries.get(0);
     assertEquals(collectionId, summary.getDarCollectionId());
 
-    // Ensure the reference IDs include both DARs
+    // Ensure the reference IDs include both DARs and latest represents the newer DAR
     assertNotNull(summary.getReferenceIds());
     assertEquals(2, summary.getReferenceIds().size());
     assertTrue(summary.getReferenceIds().containsAll(List.of(olderDar.getReferenceId(), newerDar.getReferenceId())));
+    assertEquals(newerDar.getReferenceId(), summary.getLatestReferenceId());
 
     // Ensure the election from the older DAR is not included
     assertTrue(summary.getElections().isEmpty());
@@ -1151,7 +1151,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     return new Setup(userId, chairId, summary);
   }
 
-  public record Setup(Integer userId, Integer chairId, DarCollectionSummary summary) {};
+  public record Setup(Integer userId, Integer chairId, DarCollectionSummary summary) {}
 
   private void validateSummaryObjectForResearcherWithParent(Integer userId, String referenceId) {
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(

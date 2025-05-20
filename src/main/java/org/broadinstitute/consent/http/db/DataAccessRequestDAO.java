@@ -102,7 +102,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * `FALSE` in the example above. Outside the JOIN, we filter on groupings where the final vote
    * value is `TRUE` so the denied election in the example would be filtered out.
    *
-   * @param darReferenceIds The DARs reference UUIDs
+   * @param darReferenceId The DARs reference UUID
    * @return Set of approved Dataset Ids for the list of DARs
    */
   @SqlQuery(
@@ -126,10 +126,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           final_access_vote.reference_id = dar.reference_id AND
           final_access_vote.dataset_id = dd.dataset_id
       WHERE final_access_vote.last_vote = TRUE
-        AND dar.reference_id IN (<darReferenceIds>)
+        AND dar.reference_id = :darReferenceId
         AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
       """)
-  Set<Integer> findDatasetApprovalsByDars(@BindList("darReferenceIds") List<String> darReferenceIds);
+  Set<Integer> findDatasetApprovalsByDar(@Bind("darReferenceId") String darReferenceId);
 
   /**
    * This query finds submitted DARs based on a date range.  This would be useful if we wanted to

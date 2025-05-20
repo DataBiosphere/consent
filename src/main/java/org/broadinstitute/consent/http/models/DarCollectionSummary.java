@@ -57,6 +57,8 @@ public class DarCollectionSummary {
   @JsonProperty
   private boolean progressReport;
 
+  @JsonProperty
+  private String latestReferenceId;
   private List<String> dacNames;
 
   private Integer researcherId;
@@ -268,6 +270,14 @@ public class DarCollectionSummary {
 
   public boolean getProgressReport() {
     return progressReport;
+  }
+
+  public String getLatestReferenceId() {
+    return latestReferenceId;
+  }
+
+  public void setLatestReferenceId(String latestReferenceId) {
+    this.latestReferenceId = latestReferenceId;
   }
 
   private void updateProgressReportStatus() {

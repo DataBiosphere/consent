@@ -166,8 +166,9 @@ public class DarCollectionService implements ConsentLogger {
       int electionCount = elections.size();
       elections.values().forEach(election -> updateStatusCount(statusCount, election.getStatus()));
       s.addAction(DarCollectionActions.REVIEW);
-      //if any DARs in the collection have approved datasets, include create progress report action
-      Set<Integer> datasetIds = dataAccessRequestDAO.findDatasetApprovalsByDars(List.copyOf(s.getReferenceIds()));
+      //if the latest DAR in the collection has at least one approved dataset,
+      //include the create progress report action
+      Set<Integer> datasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(s.getLatestReferenceId());
       if (!datasetIds.isEmpty()) {
         s.addAction(DarCollectionActions.CREATE_PROGRESS_REPORT);
       }

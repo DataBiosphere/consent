@@ -238,7 +238,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = createUserWithPrerequisites();
     parentDar.setUserId(user.getUserId());
     when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId())).thenReturn(progressReport);
-    when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of(parentDar.getReferenceId()))).thenReturn(
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId())).thenReturn(
         Set.copyOf(progressReport.getDatasetIds()));
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     DataAccessRequest newDar = service.createProgressReport(user, progressReport, parentDar);
@@ -261,7 +261,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = createUserWithPrerequisites();
     parentDar.setUserId(user.getUserId());
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
-    when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of(parentDar.getReferenceId()))).thenReturn(Set.of());
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId())).thenReturn(Set.of());
     assertThrows(BadRequestException.class, () -> service.createProgressReport(user, progressReport, parentDar));
   }
 
@@ -274,7 +274,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     User user = createUserWithPrerequisites();
     parentDar.setUserId(user.getUserId());
-    when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of(parentDar.getReferenceId()))).thenReturn(
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId())).thenReturn(
         Set.copyOf(progressReport.getDatasetIds()));
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     doThrow(new UnableToExecuteStatementException("Test exception"))

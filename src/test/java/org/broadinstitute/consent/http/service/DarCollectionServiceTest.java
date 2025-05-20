@@ -605,6 +605,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     summaryOne.addElection(electionOne);
     summaryOne.addDatasetId(datasetOne.getDatasetId());
     summaryOne.addDatasetId(datasetTwo.getDatasetId());
+    summaryOne.setLatestReferenceId("ref1");
 
     DarCollectionSummary summaryTwo = new DarCollectionSummary();
     Dataset datasetThree = new Dataset();
@@ -613,12 +614,14 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     datasetFour.setDatasetId(4);
     summaryTwo.addDatasetId(datasetThree.getDatasetId());
     summaryTwo.addDatasetId(datasetFour.getDatasetId());
+    summaryTwo.setLatestReferenceId("ref1");
 
     DarCollectionSummary summaryThree = new DarCollectionSummary();
     Dataset datasetFive = new Dataset();
     datasetFive.setDatasetId(5);
     summaryThree.addDatasetId(datasetFive.getDatasetId());
     summaryThree.addStatus(DarStatus.CANCELED.getValue(), randomAlphabetic(3));
+    summaryThree.setLatestReferenceId("ref1");
 
     DarCollectionSummary summaryFour = new DarCollectionSummary();
     Dataset datasetSix = new Dataset();
@@ -628,7 +631,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     electionOne.setElectionId(2);
     electionOne.setStatus(ElectionStatus.CLOSED.getValue());
     summaryFour.addElection(electionTwo);
-    summaryFour.setReferenceIds(Set.of("ref1"));
+    summaryFour.setLatestReferenceId("ref4");
 
     DarCollectionSummary summaryFive = new DarCollectionSummary();
     {
@@ -638,6 +641,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
       election.setElectionId(234);
       election.setStatus(ElectionStatus.OPEN.getValue());
       summaryFive.addElection(election);
+      summaryFive.setLatestReferenceId("ref1");
     }
 
     DataAccessRequest draft = new DataAccessRequest();
@@ -649,8 +653,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(List.of(draft));
     when(darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(any())).thenReturn(
         List.of(summaryOne, summaryTwo, summaryThree, summaryFour, summaryFive));
-    when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of())).thenReturn(Set.of());
-    when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of("ref1")))
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar("ref1")).thenReturn(Set.of());
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar("ref4"))
         .thenReturn(Set.of(datasetSix.getDatasetId()));
 
     List<DarCollectionSummary> summaries = service.getSummariesForRole(user,
@@ -1098,10 +1102,12 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     user.setUserId(1);
 
     DarCollectionSummary summary = createDarCollectionSummaryWithElections();
+    summary.setLatestReferenceId("ref1");
     Integer collectionId = summary.getDarCollectionId();
 
     when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId))
         .thenReturn(summary);
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar("ref1")).thenReturn(Set.of());
 
     DarCollectionSummary summaryResult = service.getSummaryForRoleByCollectionId(user,
         UserRoles.RESEARCHER, collectionId);
@@ -1143,13 +1149,13 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     user.setUserId(1);
 
     DarCollectionSummary summary = createDarCollectionSummaryWithElections();
-    summary.setReferenceIds(Set.of("ref1"));
+    summary.setLatestReferenceId("ref1");
     Integer collectionId = summary.getDarCollectionId();
 
     when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId))
         .thenReturn(summary);
 
-    when(dataAccessRequestDAO.findDatasetApprovalsByDars(List.of("ref1")))
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar("ref1"))
         .thenReturn(Set.of(1));
 
     DarCollectionSummary summaryResult = service.getSummaryForRoleByCollectionId(user,
