@@ -566,10 +566,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   @Test
   void testInsertDraftDataAccessRequestFailure() {
     initService();
-    assertThrows(IllegalArgumentException.class, () -> {
-      DataAccessRequest dar = service.insertDraftDataAccessRequest(null, null);
-      assertNotNull(dar);
-    });
+    assertThrows(IllegalArgumentException.class, () ->
+        service.insertDraftDataAccessRequest(null, null));
   }
 
   private DataAccessRequest generateProgressReport() {
