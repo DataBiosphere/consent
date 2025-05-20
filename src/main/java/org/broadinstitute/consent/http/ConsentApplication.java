@@ -81,6 +81,7 @@ import org.broadinstitute.consent.http.resources.VersionResource;
 import org.broadinstitute.consent.http.resources.VoteResource;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
+import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.DraftService;
@@ -161,6 +162,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     // Services
     final DarCollectionService darCollectionService = injector.getProvider(
         DarCollectionService.class).get();
+    final DataAccessRequestService dataAccessRequestService = injector.getProvider(DataAccessRequestService.class).get();
     final DatasetService datasetService = injector.getProvider(DatasetService.class).get();
     final ElectionService electionService = injector.getProvider(ElectionService.class).get();
     final EmailService emailService = injector.getProvider(EmailService.class).get();
@@ -221,7 +223,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(new DACUserResource(userService));
     env.jersey().register(
         new DarCollectionResource(darCollectionService, userService));
-    env.jersey().register(new EmailNotifierResource(emailService));
+    env.jersey().register(new EmailNotifierResource(dataAccessRequestService));
     env.jersey().register(new InstitutionResource(institutionService));
     env.jersey().register(new LibraryCardResource(userService, libraryCardService));
     env.jersey().register(new MatchResource(matchService));

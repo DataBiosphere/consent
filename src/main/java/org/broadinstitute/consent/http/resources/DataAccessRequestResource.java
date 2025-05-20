@@ -48,6 +48,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DaaService;
+import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -63,6 +64,7 @@ public class DataAccessRequestResource extends Resource {
 
   private final DaaService daaService;
   private final DataAccessRequestService dataAccessRequestService;
+  private final DarCollectionService darCollectionService;
   private final EmailService emailService;
   private final GCSService gcsService;
   private final MatchService matchService;
@@ -77,7 +79,8 @@ public class DataAccessRequestResource extends Resource {
       GCSService gcsService,
       UserService userService,
       DatasetService datasetService,
-      MatchService matchService
+      MatchService matchService,
+      DarCollectionService darCollectionService
   ) {
     this.daaService = daaService;
     this.dataAccessRequestService = dataAccessRequestService;
@@ -86,19 +89,7 @@ public class DataAccessRequestResource extends Resource {
     this.userService = userService;
     this.datasetService = datasetService;
     this.matchService = matchService;
-  }
-
-  private static DataAccessRequestData populateDARData(String json) {
-    DataAccessRequestData data;
-    try {
-      data = DataAccessRequestData.fromString(json);
-    } catch (Exception e) {
-      throw new BadRequestException("Unable to parse DAR from JSON string");
-    }
-    if (Objects.isNull(data)) {
-      data = new DataAccessRequestData();
-    }
-    return data;
+    this.darCollectionService = darCollectionService;
   }
 
   @GET
@@ -130,13 +121,7 @@ public class DataAccessRequestResource extends Resource {
 
       DataAccessRequest payload = populateDarFromJsonString(user, dar);
       DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload);
-      Integer collectionId = newDar.getCollectionId();
-      try {
-        emailService.sendNewDARCollectionMessage(collectionId);
-      } catch (Exception e) {
-        // non-fatal exception
-        logException("Exception sending email for collection id: " + collectionId, e);
-      }
+      sendNewDarCollectionMessage(newDar.getCollectionId());
       URI uri = info.getRequestUriBuilder().build();
       matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
       List<Dataset> datasets = datasetService.findDatasetsByIds(newDar.getDatasetIds());
@@ -160,13 +145,7 @@ public class DataAccessRequestResource extends Resource {
       // DAA Enforcement
       datasetService.enforceDAARestrictions(user, payload.getDatasetIds());
       DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload);
-      Integer collectionId = newDar.getCollectionId();
-      try {
-        emailService.sendNewDARCollectionMessage(collectionId);
-      } catch (Exception e) {
-        // non-fatal exception
-        logException("Exception sending email for collection id: " + collectionId, e);
-      }
+      sendNewDarCollectionMessage(newDar.getCollectionId());
       URI uri = info.getRequestUriBuilder().build();
       matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
       return Response.created(uri).entity(newDar.convertToSimplifiedDar()).build();
@@ -444,15 +423,30 @@ public class DataAccessRequestResource extends Resource {
       if (!user.getUserId().equals(parentDar.getUserId())) {
         throw new ForbiddenException("User not authorized to update this Data Access Request");
       }
-      DataAccessRequest payload = populateProgressReportFromJsonString(dar, parentDar);
+      DataAccessRequest payload = DataAccessRequest.populateProgressReportFromJsonString(dar, parentDar);
       populateProgressReportWithDocuments(collabInputStream, collabFileDetails, ethicsInputStream,
           ethicsFileDetails, payload, parentDar);
       DataAccessRequest progressReport = dataAccessRequestService.createProgressReport(user,
           payload, parentDar);
+      sendNewDarCollectionMessage(parentDar.getCollectionId());
       return Response.ok(progressReport.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
+  }
+
+  private void sendNewDarCollectionMessage(Integer collectionId) {
+    try {
+      // This service method knows how to distinguish between a DAR and a Progress Report.
+      darCollectionService.sendNewDARCollectionMessage(collectionId);
+    } catch (Exception e) {
+      // non-fatal exception
+      logCaughtEmailException(collectionId, e);
+    }
+  }
+
+  private void logCaughtEmailException(Integer collectionId, Exception e) {
+    logException("Exception sending email for collection id: " + collectionId, e);
   }
 
   public void populateProgressReportWithDocuments(InputStream collabInputStream,
@@ -568,7 +562,7 @@ public class DataAccessRequestResource extends Resource {
 
   private DataAccessRequest populateDarFromJsonString(User user, String json) {
     DataAccessRequest newDar = new DataAccessRequest();
-    DataAccessRequestData data = populateDARData(json);
+    DataAccessRequestData data = DataAccessRequestData.populateDARData(json);
     // When posting a submitted dar, there are two cases:
     // 1. those that existed previously as a draft dar
     // 2. those that are brand new
@@ -613,13 +607,13 @@ public class DataAccessRequestResource extends Resource {
   public DataAccessRequest populateProgressReportFromJsonString(String json,
       DataAccessRequest parentDar) {
     DataAccessRequest newDar = new DataAccessRequest();
-    DataAccessRequestData newData = populateDARData(json);
+    DataAccessRequestData newData = DataAccessRequestData.populateDARData(json);
     DataAccessRequestData originalDataCopy = DataAccessRequestData.fromString(
         parentDar.getData().toString());
 
     String referenceId = UUID.randomUUID().toString();
     newDar.setReferenceId(referenceId);
-    newDar.setParentId(parentDar.getId().toString());
+    newDar.setParentId(parentDar.getId());
     newDar.setCollectionId(parentDar.getCollectionId());
 
     newDar.addDatasetIds(newData.getDatasetIds());

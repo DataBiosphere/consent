@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
@@ -34,6 +35,7 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.jdbi.v3.core.JdbiException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -887,7 +889,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dar.getId());
 
     assertNotNull(progressReport);
-    assertEquals(dar.getId().toString(), progressReport.getParentId());
+    assertEquals(dar.getId(), progressReport.getParentId());
     assertEquals(dar.getCollectionId(), progressReport.getCollectionId());
     assertEquals(dar.getUserId(), progressReport.getUserId());
     assertNotNull(progressReport.getData());
@@ -897,6 +899,24 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertNotNull(progressReport.getUpdateDate());
     assertNotEquals(dar.getReferenceId(), progressReport.getReferenceId());
     assertTrue(progressReport.getProgressReport());
+  }
+
+  @Test
+  void insertProgressReport_WithExistingProgressReport() {
+    DarCollection darCollection = createDarCollection();
+    DataAccessRequest dar = darCollection.getDars().values().stream().findFirst().orElseThrow();
+    Integer userId = dar.getUserId();
+    Integer darCollectionId = darCollection.getDarCollectionId();
+    Integer id = dar.getId();
+    DataAccessRequest progressReport = createProgressReport(userId, darCollectionId, id);
+    assertNotNull(progressReport);
+
+    // Insert of second progress report should fail.
+    assertThrows(JdbiException.class, () -> createProgressReport(userId, darCollectionId, id));
+
+    // Check that the first progress report is not updated.
+    DataAccessRequest firstProgressReport = dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId());
+    assertEquals(progressReport.id, firstProgressReport.id);
   }
 
   @Test

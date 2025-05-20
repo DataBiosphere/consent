@@ -37,18 +37,14 @@ public class LibraryCardService {
   public LibraryCard createLibraryCard(LibraryCard libraryCard, User user) {
     throwIfNull(libraryCard);
     boolean isAdmin = checkIsAdmin(user);
-    //If user is not an admin, use user's institutionId rather than the value provided in the payload
-    if (!isAdmin && !libraryCard.getInstitutionId().equals(user.getInstitutionId())) {
-      throw new BadRequestException("Card payload not valid");
-    }
     checkIfCardExists(libraryCard);
     processUserOnNewLC(libraryCard);
-    checkForValidInstitution(libraryCard.getInstitutionId(), libraryCard.getUserEmail());
+    if (!isAdmin) {
+      checkForValidInstitution(user.getInstitutionId(), libraryCard.getUserEmail());
+    }
     Date createDate = new Date();
     Integer id = libraryCardDAO.insertLibraryCard(
         libraryCard.getUserId(),
-        libraryCard.getInstitutionId(),
-        libraryCard.getEraCommonsId(),
         libraryCard.getUserName(),
         libraryCard.getUserEmail(),
         libraryCard.getCreateUserId(),
@@ -61,14 +57,11 @@ public class LibraryCardService {
     throwIfNull(updateCard);
     checkUserId(userId);
     checkForValidUser(libraryCard.getUserId());
-    checkForValidInstitution(libraryCard.getInstitutionId(), libraryCard.getUserEmail());
 
     Date updateDate = new Date();
     libraryCardDAO.updateLibraryCardById(
         id,
         libraryCard.getUserId(),
-        libraryCard.getInstitutionId(),
-        libraryCard.getEraCommonsId(),
         libraryCard.getUserName(),
         libraryCard.getUserEmail(),
         userId,
@@ -119,7 +112,7 @@ public class LibraryCardService {
     if (signingOfficial.getInstitutionId() == null) {
       throw new BadRequestException("This signing official does not have an institution.");
     }
-    List<LibraryCard> libraryCards = new ArrayList<>(libraryCardDAO.findLibraryCardsByUserIdInstitutionId(user.getUserId(), signingOfficial.getInstitutionId()));
+    List<LibraryCard> libraryCards = new ArrayList<>(libraryCardDAO.findLibraryCardsByUserId(user.getUserId()));
     if (libraryCards.isEmpty()) {
       LibraryCard lc = createLibraryCardForSigningOfficial(user, signingOfficial);
       libraryCards.add(lc);
@@ -128,26 +121,21 @@ public class LibraryCardService {
     for (LibraryCard libraryCard : libraryCards) {
       addDaaToLibraryCard(libraryCard.getId(), daaId);
     }
-    return libraryCardDAO.findLibraryCardsByUserIdInstitutionId(user.getUserId(), signingOfficial.getInstitutionId());
+    return libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
   }
 
-  public List<LibraryCard> removeDaaFromUserLibraryCardByInstitution(User user, Integer institutionId, Integer daaId) {
+  public List<LibraryCard> removeDaaFromUserLibraryCards(User user, Integer daaId) {
     List<LibraryCard> libraryCards = findLibraryCardsByUserId(user.getUserId());
-    List<LibraryCard> matchingLibraryCards = libraryCards.stream()
-        .filter(card -> Objects.equals(card.getInstitutionId(), institutionId))
-        .toList();
-    // typically there should be one library card per user per institution
-    for (LibraryCard libraryCard : matchingLibraryCards) {
+    // typically there should be one library card per user
+    for (LibraryCard libraryCard : libraryCards) {
       removeDaaFromLibraryCard(libraryCard.getId(), daaId);
     }
-    return matchingLibraryCards;
+    return libraryCards;
   }
 
   public LibraryCard createLibraryCardForSigningOfficial(User user, User signingOfficial) {
     LibraryCard lc = new LibraryCard();
     lc.setUserId(user.getUserId());
-    lc.setInstitutionId(signingOfficial.getInstitutionId());
-    lc.setEraCommonsId(user.getEraCommonsId());
     lc.setUserName(user.getDisplayName());
     lc.setUserEmail(user.getEmail());
     lc.setCreateUserId(signingOfficial.getUserId());
@@ -203,7 +191,6 @@ public class LibraryCardService {
   private void checkIfCardExists(LibraryCard payload) {
     Integer userId = payload.getUserId();
     String email = payload.getUserEmail();
-    Integer institutionId = payload.getInstitutionId();
     Optional<LibraryCard> foundCard;
     List<LibraryCard> results;
 
@@ -217,8 +204,7 @@ public class LibraryCardService {
     foundCard = results.stream().filter(card -> {
       Boolean sameUserId = Objects.nonNull(userId) && card.getUserId().equals(userId);
       Boolean sameUserEmail = Objects.nonNull(email) && card.getUserEmail().equalsIgnoreCase(email);
-      Boolean sameInstitution = card.getInstitutionId().equals(institutionId);
-      return (sameUserId || sameUserEmail) && sameInstitution;
+      return (sameUserId || sameUserEmail);
     }).findFirst();
 
     if (foundCard.isPresent()) {

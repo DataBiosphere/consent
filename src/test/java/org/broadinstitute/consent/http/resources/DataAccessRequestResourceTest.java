@@ -1,9 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -46,7 +43,6 @@ import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.AuthUser;
-import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -56,6 +52,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DaaService;
+import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.EmailService;
@@ -63,6 +60,7 @@ import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.server.ContainerRequest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -106,6 +104,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Mock
   private DatasetService datasetService;
   @Mock
+  private DarCollectionService darCollectionService;
+  @Mock
   private ContainerRequest request;
   @Mock
   private UriInfo info;
@@ -115,13 +115,14 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   private User mockUser;
   private DataAccessRequestResource resource;
 
-  private void initResource() {
+  @BeforeEach
+  void initResource() {
     user.setLibraryCards(List.of(new LibraryCard()));
     try {
       resource =
           new DataAccessRequestResource(daaService,
               dataAccessRequestService, emailService, gcsService, userService, datasetService,
-              matchService);
+              matchService, darCollectionService);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -142,13 +143,9 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       when(dataAccessRequestService.createDataAccessRequest(any(), any()))
           .thenReturn(dar);
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
-      doNothing().when(emailService).sendNewDARCollectionMessage(any());
+      doNothing().when(darCollectionService).sendNewDARCollectionMessage(any());
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
       when(info.getRequestUriBuilder()).thenReturn(builder);
-      resource =
-          new DataAccessRequestResource(daaService,
-              dataAccessRequestService, emailService, gcsService, userService, datasetService,
-              matchService);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -172,10 +169,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     dar.setSubmissionDate(Timestamp.from(Instant.now()));
     doThrow(new SubmittedDARCannotBeEditedException()).when(dataAccessRequestService)
         .createDataAccessRequest(any(), any());
-    resource =
-        new DataAccessRequestResource(daaService,
-            dataAccessRequestService, emailService, gcsService, userService, datasetService,
-            matchService);
 
     try (var response = resource.createDataAccessRequest(authUser, request, info, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
@@ -191,10 +184,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(any())).thenReturn(userWithCards);
     doThrow(new BadRequestException()).when(dataAccessRequestService)
         .createDataAccessRequest(eq(user), any());
-    resource =
-        new DataAccessRequestResource(daaService,
-            dataAccessRequestService, emailService, gcsService, userService, datasetService,
-            matchService);
 
     try (var response = resource.createDataAccessRequest(authUser, request, info, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
@@ -205,7 +194,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testGetByReferenceId() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
-    initResource();
 
     Response response = resource.getByReferenceId(authUser, "");
     assertEquals(200, response.getStatus());
@@ -216,7 +204,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(mockUser.getUserId()).thenReturn(user.getUserId() + 1);
     when(userService.findUserByEmail(any())).thenReturn(mockUser);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
-    initResource();
 
     assertThrows(ForbiddenException.class, () -> resource.getByReferenceId(authUser, ""));
   }
@@ -230,10 +217,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
       when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
-      resource =
-          new DataAccessRequestResource(daaService,
-              dataAccessRequestService, emailService, gcsService, userService, datasetService,
-              matchService);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -250,10 +233,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     try {
       when(userService.findUserByEmail(any())).thenReturn(invalidUser);
       when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-      resource =
-          new DataAccessRequestResource(daaService,
-              dataAccessRequestService, emailService, gcsService, userService, datasetService,
-              matchService);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -272,10 +251,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       when(builder.path(anyString())).thenReturn(builder);
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
       when(info.getRequestUriBuilder()).thenReturn(builder);
-      resource =
-          new DataAccessRequestResource(daaService,
-              dataAccessRequestService, emailService, gcsService, userService, datasetService,
-              matchService);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -291,7 +266,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
-    initResource();
 
     try (var response = resource.updatePartialDataAccessRequest(authUser, "", "{}")) {
       assertEquals(200, response.getStatus());
@@ -304,7 +278,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     DataAccessRequest dar = generateDataAccessRequest();
     when(userService.findUserByEmail(any())).thenReturn(invalidUser);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-    initResource();
 
     try (var response = resource.updatePartialDataAccessRequest(authUser, "", "{}")) {
       assertEquals(403, response.getStatus());
@@ -322,7 +295,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     dar.getData().setIrbDocumentLocation(randomAlphabetic(10));
     dar.getData().setIrbDocumentName(randomAlphabetic(10) + ".txt");
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-    initResource();
 
     assertEquals(200, resource.getIrbDocument(chairpersonUser, "").getStatus());
     assertEquals(200, resource.getIrbDocument(adminUser, "").getStatus());
@@ -335,7 +307,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testGetIrbDocumentNotFound() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
-    initResource();
 
     Response response = resource.getIrbDocument(authUser, "");
     assertEquals(404, response.getStatus());
@@ -344,7 +315,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testGetIrbDocumentDARNotFound() {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
-    initResource();
 
     Response response = resource.getIrbDocument(authUser, "");
     assertEquals(404, response.getStatus());
@@ -352,7 +322,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testGetIrbDocumentNullValues() {
-    initResource();
 
     Response response = resource.getIrbDocument(authUser, "");
     assertEquals(404, response.getStatus());
@@ -360,7 +329,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testGetIrbDocumentEmptyValues() {
-    initResource();
 
     Response response = resource.getIrbDocument(authUser, "");
     assertEquals(404, response.getStatus());
@@ -378,7 +346,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(formData.getType()).thenReturn("txt");
     when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
-    initResource();
 
     Response response = resource.uploadIrbDocument(authUser, "", uploadInputStream, formData);
     assertEquals(200, response.getStatus());
@@ -390,7 +357,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
-    initResource();
 
     Response response = resource.uploadIrbDocument(authUser, "", uploadInputStream, formData);
     assertEquals(404, response.getStatus());
@@ -411,7 +377,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
     when(gcsService.deleteDocument(any())).thenReturn(true);
-    initResource();
 
     Response response = resource.uploadIrbDocument(authUser, "", uploadInputStream, formData);
     assertEquals(200, response.getStatus());
@@ -435,7 +400,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
 
-    initResource();
     try (var response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
         collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -451,7 +415,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
 
-    initResource();
     Response response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
         collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
@@ -463,7 +426,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(dataAccessRequestService.findByReferenceId(any())).thenThrow(NotFoundException.class);
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
-    initResource();
 
     try (var response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
         collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight())) {
@@ -479,7 +441,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
     var collabFile = mockFormDataMultiPart("collab.txt");
     var ethicsFile = mockFormDataMultiPart("ethics.txt");
-    initResource();
 
     try (var response = resource.postProgressReport(authUser, "", invalidDar,
         collabFile.getLeft(), collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight())) {
@@ -492,7 +453,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testPostProgressReportThrowsWhenNoERACommonsID() {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     doThrow(BadRequestException.class).when(userService).hasValidActiveERACredentials(user);
-    initResource();
 
     try (var response = resource.postProgressReport(authUser, "", "",
         null, null, null, null)) {
@@ -538,7 +498,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     BlobId blobId = BlobId.of("bucket", "location");
     when(gcsService.storeDocument(eq(collabInputStream), eq(fileType), any())).thenReturn(blobId);
     when(gcsService.storeDocument(eq(ethicsInputStream), eq(fileType), any())).thenReturn(blobId);
-    initResource();
     resource.populateProgressReportWithDocuments(
         collabInputStream, collabFileDetails, ethicsInputStream, ethicsFileDetails, childDar,
         parentDar);
@@ -561,7 +520,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     dataset.setDataUse(dataUse); // Collaboration document required
     when(datasetService.findDatasetById(1)).thenReturn(dataset);
 
-    initResource();
     BadRequestException exception = assertThrows(BadRequestException.class, () -> resource.populateProgressReportWithDocuments(
         null, null, null, null, childDar, parentDar));
 
@@ -584,7 +542,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     dataset.setDataUse(dataUse); // Ethics approval document required
     when(datasetService.findDatasetById(1)).thenReturn(dataset);
 
-    initResource();
     BadRequestException exception = assertThrows(BadRequestException.class, () -> resource.populateProgressReportWithDocuments(
         null, null, null, null, childDar, parentDar));
 
@@ -602,7 +559,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     dataset.setDataUse(null); // Ethics approval document required
     when(datasetService.findDatasetById(1)).thenReturn(dataset);
 
-    initResource();
     BadRequestException exception = assertThrows(BadRequestException.class, () -> resource.populateProgressReportWithDocuments(
         null, null, null, null, childDar, parentDar));
 
@@ -616,7 +572,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     childDar.setDatasetIds(List.of(1));
     when(datasetService.findDatasetById(1)).thenReturn(null);
 
-    initResource();
     NotFoundException exception = assertThrows(NotFoundException.class, () -> resource.populateProgressReportWithDocuments(
         null, null, null, null, childDar, parentDar));
 
@@ -649,7 +604,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
         mockBlobId);
     when(gcsService.deleteDocument(existingLocation)).thenReturn(true);
 
-    initResource();
     resource.uploadDocumentContents(documentType, dar, uploadInputStream, fileDetail);
 
     if (DarDocumentType.COLLABORATION.equals(documentType)) {
@@ -659,62 +613,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       assertEquals(newLocation, dar.getData().getIrbDocumentLocation());
       assertEquals(fileName, dar.getData().getIrbDocumentName());
     }
-  }
-
-  @Test
-  void populateProgressReportFromJsonString() {
-    DataAccessRequest parentDar = new DataAccessRequest();
-    parentDar.setId(1);
-    parentDar.setReferenceId("parent-reference-id");
-    parentDar.setCollectionId(100);
-    DataAccessRequestData parentData = new DataAccessRequestData();
-    parentData.setProjectTitle("Parent Project Title");
-    Collaborator collaborator = new Collaborator();
-    collaborator.setName("Parent Collaborator");
-    parentData.setInternalCollaborators(List.of(collaborator));
-    parentData.setExternalCollaborators(List.of(collaborator));
-    parentData.setLabCollaborators(List.of(collaborator));
-    parentDar.setDatasetIds(List.of(1, 2, 3));
-    parentData.setCollaborationLetterName("collaboration_letter.txt");
-    parentData.setIrbDocumentName("irb_document.txt");
-    parentData.setCollaborationLetterLocation("collaboration_letter_location");
-    parentData.setIrbDocumentLocation("irb_document_location");
-    parentDar.setData(parentData);
-
-    String json = """
-            {
-                "projectTitle": "New Project Title",
-                "internalCollaborators": [],
-                "externalCollaborators": [],
-                "labCollaborators": [],
-                "progressReportSummary": "New Summary",
-                "datasetIds": [1, 2],
-                "collaborationLetterName": "new_collaboration_letter.txt",
-                "irbDocumentName": "new_irb_document.txt",
-                "collaborationLetterLocation": "new_collaboration_letter_location",
-                "irbDocumentLocation": "new_irb_document_location"
-            }
-        """;
-
-    initResource();
-    DataAccessRequest newDar = resource.populateProgressReportFromJsonString(json, parentDar);
-
-    assertNotNull(newDar);
-    assertNotEquals(parentDar.getReferenceId(), newDar.getReferenceId());
-    assertEquals(parentDar.getCollectionId(), newDar.getCollectionId());
-    assertEquals("Parent Project Title", newDar.getData().getProjectTitle());
-    assertEquals(List.of(), newDar.getData().getInternalCollaborators());
-    assertEquals(List.of(), newDar.getData().getExternalCollaborators());
-    assertEquals(List.of(), newDar.getData().getLabCollaborators());
-    assertEquals("New Summary", newDar.getData().getProgressReportSummary());
-    assertEquals(List.of(1, 2), newDar.getDatasetIds());
-    assertNull(newDar.getData().getCollaborationLetterName());
-    assertNull(newDar.getData().getIrbDocumentName());
-    assertNull(newDar.getData().getCollaborationLetterLocation());
-    assertNull(newDar.getData().getIrbDocumentLocation());
-    assertEquals(List.of(collaborator),
-        parentDar.getData().getInternalCollaborators()); // Ensure parent is unchanged
-    assertEquals("collaboration_letter.txt", parentDar.getData().getCollaborationLetterName());
   }
 
   @Test
@@ -728,7 +626,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     dar.getData().setCollaborationLetterLocation(randomAlphabetic(10));
     dar.getData().setCollaborationLetterName(randomAlphabetic(10) + ".txt");
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-    initResource();
 
     assertEquals(200,
         resource.getCollaborationDocument(chairpersonUser, "").getStatus());
@@ -743,7 +640,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testGetCollaborationDocumentNotFound() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
-    initResource();
 
     Response response = resource.getCollaborationDocument(authUser, "");
     assertEquals(404, response.getStatus());
@@ -752,7 +648,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testGetCollaborationDocumentDARNotFound() {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
-    initResource();
 
     Response response = resource.getCollaborationDocument(authUser, "");
     assertEquals(404, response.getStatus());
@@ -760,7 +655,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testGetCollaborationDocumentNullValues() {
-    initResource();
 
     Response response = resource.getIrbDocument(authUser, "");
     assertEquals(404, response.getStatus());
@@ -768,7 +662,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testGetCollaborationDocumentEmptyValues() {
-    initResource();
 
     Response response = resource.getIrbDocument(authUser, "");
     assertEquals(404, response.getStatus());
@@ -786,7 +679,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(formData.getType()).thenReturn("txt");
     when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("buket", "name"));
-    initResource();
 
     Response response = resource.uploadCollaborationDocument(authUser, "", uploadInputStream,
         formData);
@@ -799,7 +691,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
     InputStream uploadInputStream = IOUtils.toInputStream("test", Charset.defaultCharset());
     FormDataContentDisposition formData = mock(FormDataContentDisposition.class);
-    initResource();
 
     Response response = resource.uploadCollaborationDocument(authUser, "", uploadInputStream,
         formData);
@@ -821,7 +712,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(formData.getSize()).thenReturn(1L);
     when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("bucket", "name"));
     when(gcsService.deleteDocument(any())).thenReturn(true);
-    initResource();
 
     Response response = resource.uploadCollaborationDocument(authUser, "", uploadInputStream,
         formData);
@@ -846,7 +736,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void getDataAccessRequests() {
-    initResource();
     List<DataAccessRequest> list = Collections.emptyList();
     when(dataAccessRequestService.getDataAccessRequestsByUserRole(any())).thenReturn(list);
     Response res = resource.getDataAccessRequests(authUser);
@@ -856,7 +745,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void getDraftDataAccessRequests() {
-    initResource();
     List<DataAccessRequest> list = Collections.emptyList();
     User localUser = new User();
     localUser.setUserId(1);
@@ -869,7 +757,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void getDraftDataAccessRequests_UserNotFound() {
-    initResource();
     when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
     resource.getDraftDataAccessRequests(authUser);
     Response res = resource.getDraftDataAccessRequests(authUser);
@@ -878,7 +765,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void getDraftDar() {
-    initResource();
     User localUser = new User();
     localUser.setUserId(10);
     DataAccessRequest dar = new DataAccessRequest();
@@ -892,7 +778,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void getDraftDar_UserNotFound() {
-    initResource();
     when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
     Response res = resource.getDraftDar(authUser, "id");
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, res.getStatus());
@@ -900,7 +785,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void getDraftDar_DarNotFound() {
-    initResource();
     User localUser = new User();
     localUser.setUserId(10);
     when(userService.findUserByEmail(any())).thenReturn(localUser);
@@ -911,7 +795,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void getDraftDar_UserNotAllowed() {
-    initResource();
     User localUser = new User();
     localUser.setUserId(10);
     DataAccessRequest dar = new DataAccessRequest();
@@ -937,13 +820,9 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       when(dataAccessRequestService.createDataAccessRequest(any(), any()))
           .thenReturn(dar);
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
-      doNothing().when(emailService).sendNewDARCollectionMessage(any());
+      doNothing().when(darCollectionService).sendNewDARCollectionMessage(any());
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
       when(info.getRequestUriBuilder()).thenReturn(builder);
-      resource =
-          new DataAccessRequestResource(daaService,
-              dataAccessRequestService, emailService, gcsService, userService, datasetService,
-              matchService);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -967,10 +846,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       data.setReferenceId(dar.getReferenceId());
       dar.setData(data);
       doThrow(BadRequestException.class).when(datasetService).enforceDAARestrictions(any(), any());
-      resource =
-          new DataAccessRequestResource(daaService,
-              dataAccessRequestService, emailService, gcsService, userService, datasetService,
-              matchService);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -990,10 +865,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       when(builder.path(anyString())).thenReturn(builder);
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
       when(info.getRequestUriBuilder()).thenReturn(builder);
-      resource =
-          new DataAccessRequestResource(daaService,
-              dataAccessRequestService, emailService, gcsService, userService, datasetService,
-              matchService);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -1009,10 +880,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     try {
       when(userService.findUserByEmail(any())).thenReturn(user);
       doThrow(BadRequestException.class).when(datasetService).enforceDAARestrictions(any(), any());
-      resource =
-          new DataAccessRequestResource(daaService,
-              dataAccessRequestService, emailService, gcsService, userService, datasetService,
-              matchService);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
@@ -1029,7 +896,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     when(dataAccessRequestService.updateByReferenceId(any(), any())).thenReturn(dar);
-    initResource();
 
     try (Response response = resource.updatePartialDataAccessRequestWithDAARestrictions(authUser,
         "", "{}")) {
@@ -1043,7 +909,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     doThrow(BadRequestException.class).when(datasetService).enforceDAARestrictions(any(), any());
-    initResource();
 
     try (Response response = resource.updatePartialDataAccessRequestWithDAARestrictions(authUser,
         "", "{}")) {
@@ -1057,7 +922,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     when(daaService.findByDarReferenceId(any())).thenReturn(List.of());
-    initResource();
 
     try (Response response = resource.getDAAsByReferenceId(authUser, dar.getReferenceId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -1068,7 +932,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testGetDAAsByReferenceIdNotFound() {
     DataAccessRequest dar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
-    initResource();
 
     try (Response response = resource.getDAAsByReferenceId(authUser, dar.getReferenceId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
