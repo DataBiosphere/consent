@@ -47,7 +47,6 @@ import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class UserService implements ConsentLogger {
 
@@ -455,7 +454,7 @@ public class UserService implements ConsentLogger {
     }
   }
 
-  public User enforceInstitutionAndLibraryCardTruthTable(@NonNull User user) {
+  public User enforceInstitutionAndLibraryCardTruthTable(User user) {
     Institution institutionFromEmail = institutionService.findInstitutionForEmail(user.getEmail());
     Institution institutionFromDatabase = null;
     try {
