@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static org.broadinstitute.consent.http.enumeration.UserFields.ERA_EXPIRATION_DATE;
 import static org.broadinstitute.consent.http.enumeration.UserFields.ERA_STATUS;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -15,7 +16,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -47,6 +47,7 @@ import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class UserService implements ConsentLogger {
 
@@ -122,7 +123,7 @@ public class UserService implements ConsentLogger {
       // Handle Roles
       if (Objects.nonNull(userUpdateFields.getUserRoleIds())) {
         List<Integer> currentRoleIds = userRoleDAO.findRolesByUserId(userId).stream()
-            .map(UserRole::getRoleId).collect(Collectors.toList());
+            .map(UserRole::getRoleId).toList();
         List<Integer> roleIdsToAdd = userUpdateFields.getRoleIdsToAdd(currentRoleIds);
         List<Integer> roleIdsToRemove = userUpdateFields.getRoleIdsToRemove(currentRoleIds);
         // Add the new role ids to the user
@@ -130,7 +131,7 @@ public class UserService implements ConsentLogger {
           List<UserRole> newRoles = roleIdsToAdd.stream()
               .map(id -> new UserRole(id,
                   Objects.requireNonNull(UserRoles.getUserRoleFromId(id)).getRoleName()))
-              .collect(Collectors.toList());
+              .toList();
           userRoleDAO.insertUserRoles(newRoles, userId);
         }
         // Remove the old role ids from the user
@@ -246,7 +247,7 @@ public class UserService implements ConsentLogger {
       throw new NotFoundException();
     }
     List<User> users = userDAO.getUsersWithCardsByDaaId(daaId);
-    return users.stream().map(SimplifiedUser::new).collect(Collectors.toList());
+    return users.stream().map(SimplifiedUser::new).toList();
   }
 
   public void deleteUserByEmail(String email) {
@@ -259,13 +260,13 @@ public class UserService implements ConsentLogger {
         findRolesByUserId(userId).
         stream().
         map(UserRole::getRoleId).
-        collect(Collectors.toList());
+        toList();
     if (!roleIds.isEmpty()) {
       userRoleDAO.removeUserRoles(userId, roleIds);
     }
     List<Vote> votes = voteDAO.findVotesByUserId(userId);
     if (!votes.isEmpty()) {
-      List<Integer> voteIds = votes.stream().map(Vote::getVoteId).collect(Collectors.toList());
+      List<Integer> voteIds = votes.stream().map(Vote::getVoteId).toList();
       voteDAO.removeVotesByIds(voteIds);
     }
     try {
@@ -298,7 +299,7 @@ public class UserService implements ConsentLogger {
     }
 
     List<User> users = userDAO.getSOsByInstitution(institutionId);
-    return users.stream().map(SimplifiedUser::new).collect(Collectors.toList());
+    return users.stream().map(SimplifiedUser::new).toList();
   }
 
   public List<User> findUsersByInstitutionId(Integer institutionId) {
@@ -381,15 +382,15 @@ public class UserService implements ConsentLogger {
     List<LibraryCard> libraryCards = libraryCardDAO.findAllLibraryCardsByUserEmail(user.getEmail());
 
     libraryCards
-        .forEach(lc -> {
+        .forEach(lc ->
           libraryCardDAO.updateLibraryCardById(
               lc.getId(),
               user.getUserId(),
               lc.getUserName(),
               lc.getUserEmail(),
               user.getUserId(),
-              new Date());
-        });
+              new Date())
+        );
   }
 
   public User findOrCreateUser(AuthUser authUser) throws Exception {
@@ -454,12 +455,127 @@ public class UserService implements ConsentLogger {
     }
   }
 
+  public User enforceInstitutionAndLibraryCardTruthTable(@NonNull User user) {
+    Institution institutionFromEmail = institutionService.findInstitutionForEmail(user.getEmail());
+    Institution institutionFromDatabase = null;
+    try {
+      institutionFromDatabase = institutionService.findInstitutionById(user.getInstitutionId());
+    } catch (NotFoundException nfe) {
+      // do nothing.
+    }
+
+    boolean hasInstitutionMatchingEmailDomain =
+        hasInstitutionMatchingEmailDomain(institutionFromEmail);
+    boolean hasLibraryCard = hasLibraryCard(user);
+    boolean hasAssignedInstitutionInDatabase = institutionFromDatabase != null;
+    boolean hasMatchingInstitutionInDatabase =
+        hasMatchingInstitutionInDatabase(institutionFromEmail, institutionFromDatabase);
+
+    // take action
+    // case 2
+    if (hasInstitutionMatchingEmailDomain
+        && hasLibraryCard
+        && hasAssignedInstitutionInDatabase
+        && !hasMatchingInstitutionInDatabase) {
+      return dropLCAndInstitutionForUser(user);
+    }
+
+    // case 4
+    if (hasInstitutionMatchingEmailDomain
+        && hasLibraryCard
+        && !hasAssignedInstitutionInDatabase
+        && !hasMatchingInstitutionInDatabase) {
+      updateInstitutionForUser(user, institutionFromEmail.getId());
+      return dropLibraryCardForUser(user);
+    }
+    // case 6
+    if (hasInstitutionMatchingEmailDomain
+        && !hasLibraryCard
+        && hasAssignedInstitutionInDatabase
+        && !hasMatchingInstitutionInDatabase) {
+      return updateInstitutionForUserAndReturnUpdatedUser(user, institutionFromEmail.getId());
+    }
+    // case 8
+    if (hasInstitutionMatchingEmailDomain
+        && !hasLibraryCard
+        && !hasAssignedInstitutionInDatabase
+        && !hasMatchingInstitutionInDatabase) {
+      return updateInstitutionForUserAndReturnUpdatedUser(user, null);
+    }
+    // case 10
+    if (!hasInstitutionMatchingEmailDomain
+        && hasLibraryCard
+        && hasAssignedInstitutionInDatabase
+        && !hasMatchingInstitutionInDatabase) {
+      return dropLCAndInstitutionForUser(user);
+    }
+    // case 12
+    if (!hasInstitutionMatchingEmailDomain
+        && hasLibraryCard
+        && !hasAssignedInstitutionInDatabase
+        && !hasMatchingInstitutionInDatabase) {
+      dropLibraryCardForUser(user);
+      return findUserByEmail(user.getEmail());
+    }
+    // case 14
+    if (!hasInstitutionMatchingEmailDomain
+        && !hasLibraryCard
+        && hasAssignedInstitutionInDatabase
+        && !hasMatchingInstitutionInDatabase) {
+      return updateInstitutionForUserAndReturnUpdatedUser(user, null);
+    }
+
+    // do nothing cases 1, 5, 15, 16
+    return user;
+
+    // not possible cases: 3, 7, 9, 11, 13
+  }
+
+  private User dropLCAndInstitutionForUser(User user) {
+    updateInstitutionForUser(user, null);
+    libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
+    return findUserByEmail(user.getEmail());
+  }
+
+  private void updateInstitutionForUser(User user, Integer institutionId) {
+    userDAO.updateInstitutionId(user.getUserId(), institutionId);
+  }
+
+  private User updateInstitutionForUserAndReturnUpdatedUser(User user, Integer institutionId) {
+    updateInstitutionForUser(user, institutionId);
+    return findUserByEmail(user.getEmail());
+  }
+
+  private User dropLibraryCardForUser(User user) {
+    libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
+    return findUserByEmail(user.getEmail());
+  }
+
+  @VisibleForTesting
+  protected boolean hasInstitutionMatchingEmailDomain(Institution institution) {
+    return institution != null;
+  }
+
+  @VisibleForTesting
+  protected boolean hasLibraryCard(User user) {
+    return !user.getLibraryCards().isEmpty();
+  }
+
+  @VisibleForTesting
+  protected boolean hasMatchingInstitutionInDatabase(
+      Institution institutionFromEmail, Institution institutionFromDatabase) {
+    if (institutionFromEmail == null || institutionFromDatabase == null) {
+      return false;
+    }
+    return institutionFromDatabase.equals(institutionFromEmail);
+  }
+
   public static class SimplifiedUser {
 
-    public Integer userId;
-    public String displayName;
-    public String email;
-    public Integer institutionId;
+    private Integer userId;
+    private String displayName;
+    private String email;
+    private Integer institutionId;
 
     public SimplifiedUser(User user) {
       this.userId = user.getUserId();
@@ -485,6 +601,22 @@ public class UserService implements ConsentLogger {
 
     public void setInstitutionId(Integer institutionId) {
       this.institutionId = institutionId;
+    }
+
+    public String getDisplayName() {
+      return displayName;
+    }
+
+    public String getEmail() {
+      return email;
+    }
+
+    public Integer getInstitutionId() {
+      return institutionId;
+    }
+
+    public Integer getUserId() {
+      return userId;
     }
 
     @Override

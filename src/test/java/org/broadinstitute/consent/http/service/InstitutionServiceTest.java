@@ -172,9 +172,9 @@ class InstitutionServiceTest {
     List<SimplifiedUser> signingOfficials = institution.getSigningOfficials();
     assertEquals(getInstitutions().get(0), institution);
     assertEquals(1, signingOfficials.size());
-    assertEquals(u.getDisplayName(), signingOfficials.get(0).displayName);
-    assertEquals(u.getEmail(), signingOfficials.get(0).email);
-    assertEquals(u.getUserId(), signingOfficials.get(0).userId);
+    assertEquals(u.getDisplayName(), signingOfficials.get(0).getDisplayName());
+    assertEquals(u.getEmail(), signingOfficials.get(0).getEmail());
+    assertEquals(u.getUserId(), signingOfficials.get(0).getUserId());
   }
 
   @Test

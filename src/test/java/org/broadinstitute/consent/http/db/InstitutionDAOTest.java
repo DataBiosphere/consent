@@ -147,7 +147,7 @@ class InstitutionDAOTest extends DAOTestHelper {
     assertEquals(1, institution.getSigningOfficials().size());
     assertEquals(user.getInstitutionId(), institution.getId());
     assertEquals(user.getDisplayName(),
-        institution.getSigningOfficials().get(0).displayName);
+        institution.getSigningOfficials().get(0).getDisplayName());
   }
 
   @Test
@@ -181,7 +181,7 @@ class InstitutionDAOTest extends DAOTestHelper {
     User user = createUserWithInstitution();
     Institution institutionWithSO = institutionDAO.findInstitutionWithSOById(user.getInstitutionId());
     assertEquals(1, institutionWithSO.getSigningOfficials().size());
-    assertEquals(user.getDisplayName(), institutionWithSO.getSigningOfficials().get(0).displayName);
+    assertEquals(user.getDisplayName(), institutionWithSO.getSigningOfficials().get(0).getDisplayName());
   }
 
   private Institution createInstitution() {

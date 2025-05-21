@@ -50,6 +50,12 @@ public class AuthorizationHelper implements ConsentLogger {
           "Reading oauth2 claim headers: email is null, auth user is incomplete. Aud: %s Name: %s",
           aud, name));
     }
+    if (email != null) {
+      User user = userService.findUserByEmail(email);
+      if (user != null) {
+        userService.enforceInstitutionAndLibraryCardTruthTable(user);
+      }
+    }
     return new AuthUser(token, email, name, aud);
   }
 
@@ -94,6 +100,7 @@ public class AuthorizationHelper implements ConsentLogger {
     boolean authorize = false;
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
+      user = userService.enforceInstitutionAndLibraryCardTruthTable(user);
       return user.getRoles().stream().anyMatch(r -> r.getName().equalsIgnoreCase(role));
     } catch (NotFoundException e) {
       logWarn("User not found, authorization incomplete: %s".formatted(authUser.getEmail()));

@@ -213,8 +213,8 @@ class DaaServiceTest {
     when(user.getInstitutionId()).thenReturn(1);
 
     SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
-    signingOfficial.displayName = "Official Name";
-    signingOfficial.email = "official@example.com";
+    signingOfficial.setDisplayName("Official Name");
+    signingOfficial.setEmail("official@example.com");
 
     Institution institution = mock(Institution.class);
     when(institution.getSigningOfficials()).thenReturn(List.of(signingOfficial));
@@ -239,12 +239,12 @@ class DaaServiceTest {
     when(user.getInstitutionId()).thenReturn(1);
 
     SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
-    signingOfficial.displayName = "Official Name";
-    signingOfficial.email = "official@example.com";
+    signingOfficial.setDisplayName("Official Name");
+    signingOfficial.setEmail("official@example.com");
 
     SimplifiedUser signingOfficial2 = mock(SimplifiedUser.class);
-    signingOfficial2.displayName = "Official Name2";
-    signingOfficial2.email = "official2@example.com";
+    signingOfficial2.setDisplayName("Official Name2");
+    signingOfficial2.setEmail("official2@example.com");
 
     Institution institution = mock(Institution.class);
     when(institution.getSigningOfficials()).thenReturn(List.of(signingOfficial, signingOfficial2));
@@ -268,22 +268,22 @@ class DaaServiceTest {
     User user = mock(User.class);
 
     SimplifiedUser researcher = mock(SimplifiedUser.class);
-    researcher.displayName = "Official Name";
-    researcher.email = "official@example.com";
-    researcher.institutionId = RandomUtils.nextInt(0,50);
+    researcher.setDisplayName("Official Name");
+    researcher.setEmail("official@example.com");
+    researcher.setInstitutionId(RandomUtils.nextInt(0,50));
 
     SimplifiedUser researcher2 = mock(SimplifiedUser.class);
-    researcher2.displayName = "Official Name2";
-    researcher2.email = "official2@example.com";
-    researcher2.institutionId = RandomUtils.nextInt(0,50);
+    researcher2.setDisplayName("Official Name2");
+    researcher2.setEmail("official2@example.com");
+    researcher2.setInstitutionId(RandomUtils.nextInt(0,50));
 
     SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
-    signingOfficial.displayName = "Official Name";
-    signingOfficial.email = "official@example.com";
+    signingOfficial.setDisplayName("Official Name");
+    signingOfficial.setEmail("official@example.com");
 
     SimplifiedUser signingOfficial2 = mock(SimplifiedUser.class);
-    signingOfficial2.displayName = "Official Name2";
-    signingOfficial2.email = "official2@example.com";
+    signingOfficial2.setDisplayName("Official Name2");
+    signingOfficial2.setEmail("official2@example.com");
 
     DataAccessAgreement daa = mock(DataAccessAgreement.class);
     FileStorageObject file = mock(FileStorageObject.class);
@@ -305,17 +305,17 @@ class DaaServiceTest {
     User user = mock(User.class);
 
     SimplifiedUser researcher = mock(SimplifiedUser.class);
-    researcher.displayName = "Official Name";
-    researcher.email = "official@example.com";
-    researcher.institutionId = RandomUtils.nextInt(0,50);
+    researcher.setDisplayName("Official Name");
+    researcher.setEmail("official@example.com");
+    researcher.setInstitutionId(RandomUtils.nextInt(0,50));
 
     SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
-    signingOfficial.displayName = "Official Name";
-    signingOfficial.email = "official@example.com";
+    signingOfficial.setDisplayName("Official Name");
+    signingOfficial.setEmail("official@example.com");
 
     SimplifiedUser signingOfficial2 = mock(SimplifiedUser.class);
-    signingOfficial2.displayName = "Official Name2";
-    signingOfficial2.email = "official2@example.com";
+    signingOfficial2.setDisplayName("Official Name2");
+    signingOfficial2.setEmail("official2@example.com");
 
     DataAccessAgreement daa = mock(DataAccessAgreement.class);
     FileStorageObject file = mock(FileStorageObject.class);
@@ -376,8 +376,8 @@ class DaaServiceTest {
     when(user.getInstitutionId()).thenReturn(1);
 
     SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
-    signingOfficial.displayName = "Official Name";
-    signingOfficial.email = "official@example.com";
+    signingOfficial.setDisplayName("Official Name");
+    signingOfficial.setEmail("official@example.com");
 
     Institution institution = mock(Institution.class);
     when(institution.getSigningOfficials()).thenReturn(List.of(signingOfficial));
@@ -402,12 +402,12 @@ class DaaServiceTest {
     when(user.getInstitutionId()).thenReturn(1);
 
     SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
-    signingOfficial.displayName = "Official Name";
-    signingOfficial.email = "official@example.com";
+    signingOfficial.setDisplayName("Official Name");
+    signingOfficial.setEmail("official@example.com");
 
     SimplifiedUser signingOfficial2 = mock(SimplifiedUser.class);
-    signingOfficial2.displayName = "Official Name2";
-    signingOfficial2.email = "official2@example.com";
+    signingOfficial2.setDisplayName("Official Name2");
+    signingOfficial2.setEmail("official2@example.com");
 
     Institution institution = mock(Institution.class);
     when(institution.getSigningOfficials()).thenReturn(List.of(signingOfficial, signingOfficial2));

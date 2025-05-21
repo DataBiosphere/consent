@@ -5,6 +5,7 @@ import static org.broadinstitute.consent.http.enumeration.UserFields.ERA_STATUS;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
@@ -61,6 +63,11 @@ import org.jdbi.v3.core.transaction.TransactionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -474,8 +481,8 @@ class UserServiceTest extends AbstractTestHelper {
     when(userDAO.getSOsByInstitution(any())).thenReturn(List.of(u, u, u));
     List<SimplifiedUser> users = service.findSOsByInstitutionId(institutionId);
     assertEquals(3, users.size());
-    assertEquals(u.getDisplayName(), users.get(0).displayName);
-    assertEquals(u.getEmail(), users.get(0).email);
+    assertEquals(u.getDisplayName(), users.get(0).getDisplayName());
+    assertEquals(u.getEmail(), users.get(0).getEmail());
   }
 
   @Test
@@ -847,6 +854,103 @@ class UserServiceTest extends AbstractTestHelper {
   void testFindUsersInJsonArrayInvalidKey() {
     String json = "{users:[1,2,3]}";
     assertThrows(BadRequestException.class, () -> service.findUsersInJsonArray(json, "invalidKey"));
+  }
+
+  @Test
+  void hasInstitutionMatchingEmailDomain() {
+    Institution institution = new Institution();
+    assertTrue(service.hasInstitutionMatchingEmailDomain(institution));
+  }
+
+  @Test
+  void hasInstitutionMatchingEmailDomain_Bad() {
+    assertFalse(service.hasInstitutionMatchingEmailDomain(null));
+  }
+
+  @Test
+  void hasLibraryCard() {
+    User testUser = generateUser();
+    testUser.setLibraryCards(List.of(new LibraryCard()));
+    assertTrue(service.hasLibraryCard(testUser));
+  }
+
+  @Test
+  void hasLibraryCard_NoLibraryCard() {
+    User testUser = generateUser();
+    assertFalse(service.hasLibraryCard(testUser));
+  }
+
+  @Test
+  void hasMatchingInstitutionInDatabase() {
+    Institution institution = new Institution();
+    institution.setId(1);
+    assertTrue(service.hasMatchingInstitutionInDatabase(institution, institution));
+  }
+
+  @Test
+  void hasMatchingInstitutionInDatabase_NoInstitutionInDB() {
+    Institution institution = new Institution();
+    institution.setId(1);
+    assertFalse(service.hasMatchingInstitutionInDatabase(null, institution));
+  }
+
+  @Test
+  void hasMatchingInstitutionInDatabase_NoInstitutionEmailMap() {
+    Institution institution = new Institution();
+    institution.setId(1);
+    assertFalse(service.hasMatchingInstitutionInDatabase(institution, null));
+  }
+
+  static class TruthTableArgumentsProvider implements ArgumentsProvider {
+    @Override
+    public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
+      Institution institution1 = new Institution();
+      institution1.setId(1);
+      Institution institution2 = new Institution();
+      institution2.setId(2);
+      List<LibraryCard> libraryCards1 = List.of(new LibraryCard());
+      return Stream.of(
+          Arguments.of(institution1, libraryCards1, institution1, false),
+          Arguments.of(institution1, libraryCards1, institution2, true),
+          Arguments.of(institution1, libraryCards1, null, true),
+          Arguments.of(institution1, null, institution1, false),
+          Arguments.of(institution1, null, institution2, true),
+          Arguments.of(institution1, null, null, true),
+          Arguments.of(null, libraryCards1, institution2, true),
+          Arguments.of(null, libraryCards1, null, true),
+          Arguments.of(null, null, institution2, true),
+          Arguments.of(null, null, null, false)
+      );
+    }
+  }
+
+  @ParameterizedTest
+  @ArgumentsSource(TruthTableArgumentsProvider.class)
+  void testEnforceInstitutionAndLibraryCardTruthTable_TruthTable(Institution institutionFromMap, List<LibraryCard> libraryCard, Institution institutionFromDatabase, boolean expectsUserMod) {
+    User testUser = generateUser();
+    testUser.setLibraryCards(libraryCard);
+    User alteredUser = new User();
+    alteredUser.setEmail(testUser.getEmail());
+    when(institutionService.findInstitutionForEmail(testUser.getEmail())).thenReturn(institutionFromMap);
+    when(institutionService.findInstitutionById(testUser.getInstitutionId())).thenReturn(institutionFromDatabase);
+    if (expectsUserMod) {
+      when(userDAO.findUserByEmail(testUser.getEmail())).thenReturn(alteredUser);
+      validateAlteredUserIsReturned(testUser, service.enforceInstitutionAndLibraryCardTruthTable(testUser));
+    } else {
+      validateUserIsUnmodified(testUser, service.enforceInstitutionAndLibraryCardTruthTable(testUser));
+    }
+  }
+
+  private void validateUserIsUnmodified(User left, User right) {
+    assertEquals(left.getEmail(), right.getEmail());
+    assertEquals(left.getInstitutionId(), right.getInstitutionId());
+    assertEquals(left.getLibraryCards(), right.getLibraryCards());
+    assertEquals(left.getInstitutionId(), right.getInstitutionId());
+  }
+
+  private void validateAlteredUserIsReturned(User left, User right) {
+    assertEquals(left.getEmail(), right.getEmail());
+    assertNotEquals(left.getInstitutionId(), right.getInstitutionId());
   }
 
   private User generateUserWithoutInstitution() {

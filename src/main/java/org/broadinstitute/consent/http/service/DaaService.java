@@ -166,8 +166,8 @@ public class DaaService implements ConsentLogger {
         DataAccessAgreement daa = findById(daaId);
         String daaName = daa.getFile().getFileName();
         User toUser = new User();
-        toUser.setEmail(signingOfficial.email);
-        toUser.setDisplayName(signingOfficial.displayName);
+        toUser.setEmail(signingOfficial.getEmail());
+        toUser.setDisplayName(signingOfficial.getDisplayName());
         emailService.sendDaaRequestMessage(toUser, user, daaName, daaId);
       }
     } catch (Exception e) {
@@ -183,19 +183,19 @@ public class DaaService implements ConsentLogger {
         String previousDaaName = daa.getFile().getFileName();
         List<SimplifiedUser> researchers = userService.getUsersByDaaId(daaId);
         List<SimplifiedUser> signingOfficials = researchers.stream()
-            .flatMap(researcher -> userService.findSOsByInstitutionId(researcher.institutionId).stream())
+            .flatMap(researcher -> userService.findSOsByInstitutionId(researcher.getInstitutionId()).stream())
             .distinct()
             .toList();
         User toUser = new User();
 
         for (SimplifiedUser researcher : researchers) {
-          toUser.setEmail(researcher.email);
-          toUser.setDisplayName(researcher.displayName);
+          toUser.setEmail(researcher.getEmail());
+          toUser.setDisplayName(researcher.getDisplayName());
           emailService.sendNewDAAUploadResearcherMessage(toUser, dacName, previousDaaName, newDaaName, user.getUserId());
         }
         for (SimplifiedUser signingOfficial : signingOfficials) {
-          toUser.setEmail(signingOfficial.email);
-          toUser.setDisplayName(signingOfficial.displayName);
+          toUser.setEmail(signingOfficial.getEmail());
+          toUser.setDisplayName(signingOfficial.getDisplayName());
           emailService.sendNewDAAUploadSOMessage(toUser, dacName, previousDaaName, newDaaName, user.getUserId());
         }
       }
