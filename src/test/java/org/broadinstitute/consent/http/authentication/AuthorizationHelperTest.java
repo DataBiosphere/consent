@@ -92,7 +92,6 @@ class AuthorizationHelperTest extends AbstractTestHelper {
     user.setEmail(unauthorizedUser.getEmail());
     user.addRole(UserRoles.Researcher());
     when(userService.findUserByEmail(unauthorizedUser.getEmail())).thenReturn(user);
-    when(userService.enforceInstitutionAndLibraryCardTruthTable(user)).thenReturn(user);
     assertFalse(authorizationHelper.authorize(unauthorizedUser, roleName));
     assertFalse(authorizationHelper.authorize(unauthorizedDuosUser, roleName));
   }
