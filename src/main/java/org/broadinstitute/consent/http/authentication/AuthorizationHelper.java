@@ -99,7 +99,6 @@ public class AuthorizationHelper implements ConsentLogger {
     boolean authorize = false;
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      user = userService.enforceInstitutionAndLibraryCardTruthTable(user);
       return user.getRoles().stream().anyMatch(r -> r.getName().equalsIgnoreCase(role));
     } catch (NotFoundException e) {
       logWarn("User not found, authorization incomplete: %s".formatted(authUser.getEmail()));
