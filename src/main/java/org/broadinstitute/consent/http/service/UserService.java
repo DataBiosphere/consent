@@ -530,14 +530,14 @@ public class UserService implements ConsentLogger {
     // not possible cases: 3, 7, 9, 11, 13
   }
 
+  private void updateInstitutionForUser(User user, Integer institutionId) {
+    userDAO.updateInstitutionId(user.getUserId(), institutionId);
+  }
+
   private User dropLCAndInstitutionForUser(User user) {
     updateInstitutionForUser(user, null);
     libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
     return findUserByEmail(user.getEmail());
-  }
-
-  private void updateInstitutionForUser(User user, Integer institutionId) {
-    userDAO.updateInstitutionId(user.getUserId(), institutionId);
   }
 
   private User updateInstitutionForUserAndReturnUpdatedUser(User user, Integer institutionId) {
