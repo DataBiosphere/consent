@@ -175,6 +175,7 @@ class UserServiceTest extends AbstractTestHelper {
   void createUserWithLibraryCardTest() {
     User u = generateUser();
     LibraryCard lc = generateLibraryCard(u.getEmail());
+    lc.setUserName(u.getDisplayName());
     Institution institution = new Institution();
     List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
     u.setRoles(roles);
