@@ -683,19 +683,19 @@ class UserServiceTest extends AbstractTestHelper {
   @Test
   void testFindUserWithPropertiesAsJsonObjectByIdNonAuthUser() {
     User user = generateUser();
+    user.setLibraryCard(new LibraryCard());
     UserStatusInfo info = new UserStatusInfo().setUserEmail(user.getEmail()).setEnabled(true)
         .setUserSubjectId("subjectId");
     AuthUser authUser = new AuthUser().setEmail("not the user's email address")
         .setAuthToken(randomAlphabetic(30)).setUserStatusInfo(info);
     when(userDAO.findUserById(anyInt())).thenReturn(user);
-    when(libraryCardDAO.findLibraryCardByUserId(anyInt())).thenReturn(new LibraryCard());
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(
         List.of(new UserProperty()));
 
     JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser,
         user.getUserId());
     assertNotNull(userJson);
-    assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
+    assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonObject().isJsonObject());
     assertTrue(
         userJson.get(UserService.USER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
     assertNull(userJson.get(UserService.USER_STATUS_INFO_FIELD));
