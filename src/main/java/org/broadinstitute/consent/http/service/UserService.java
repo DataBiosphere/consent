@@ -454,6 +454,14 @@ public class UserService implements ConsentLogger {
     }
   }
 
+  /**
+   * Compliance method defined in
+   * <a href="https://broadworkbench.atlassian.net/browse/DT-1607">this ticket</a> that implements
+   * a truth table of rules in order to ensure Library Card and Institution matching rules are
+   * adhered to when authorizing users of the system.
+   * @param user the User being evaluated
+   * @return user with the Institution and Library Card rules applied
+   */
   public User enforceInstitutionAndLibraryCardTruthTable(User user) {
     Institution institutionFromEmail = institutionService.findInstitutionForEmail(user.getEmail());
     Institution institutionFromDatabase = null;
