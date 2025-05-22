@@ -162,7 +162,7 @@ class UserServiceTest extends AbstractTestHelper {
     User u = generateUser();
     List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
     u.setRoles(roles);
-    when(userDAO.findUserById(any())).thenReturn(u);
+    when(userDAO.findUserByEmail(u.getEmail())).thenReturn(null);
     when(libraryCardDAO.findLibraryCardByUserEmail(u.getEmail())).thenReturn(null);
     try {
       service.createUser(u);

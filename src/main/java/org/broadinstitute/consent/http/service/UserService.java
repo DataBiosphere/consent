@@ -368,13 +368,15 @@ public class UserService implements ConsentLogger {
 
   private void addFloatingLibraryCardToUser(User user) {
     LibraryCard libraryCard = libraryCardDAO.findLibraryCardByUserEmail(user.getEmail());
-    libraryCardDAO.updateLibraryCardById(
-        libraryCard.getId(),
-        user.getUserId(),
-        user.getDisplayName(),
-        user.getEmail(),
-        user.getUserId(),
-        new Date());
+    if (libraryCard != null) {
+      libraryCardDAO.updateLibraryCardById(
+          libraryCard.getId(),
+          user.getUserId(),
+          user.getDisplayName(),
+          user.getEmail(),
+          user.getUserId(),
+          new Date());
+    }
   }
 
   public User findOrCreateUser(AuthUser authUser) throws Exception {
