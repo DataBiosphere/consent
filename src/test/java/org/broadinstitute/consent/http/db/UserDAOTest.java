@@ -203,11 +203,9 @@ class UserDAOTest extends DAOTestHelper {
         .toList();
     assertEquals(2, users.size());
     assertNotNull(users.get(0).getInstitution());
-    assertNotNull(users.get(0).getLibraryCards());
-    assertEquals(1, users.get(0).getLibraryCards().size());
+    assertNotNull(users.get(0).getLibraryCard());
     assertNotNull(users.get(1).getInstitution());
-    assertNotNull(users.get(1).getLibraryCards());
-    assertEquals(1, users.get(1).getLibraryCards().size());
+    assertNotNull(users.get(1).getLibraryCard());
   }
 
   @Test
@@ -342,7 +340,7 @@ class UserDAOTest extends DAOTestHelper {
     User returnedUser = users.get(0);
     assertEquals(userId, returnedUser.getUserId());
 
-    LibraryCard returnedCard = returnedUser.getLibraryCards().get(0);
+    LibraryCard returnedCard = returnedUser.getLibraryCard();
     assertEquals(card.getId(), returnedCard.getId());
     assertEquals(userId, returnedCard.getUserId());
   }
@@ -365,7 +363,7 @@ class UserDAOTest extends DAOTestHelper {
     assertEquals(1, users2.size());
     User returnedUser = users.get(0);
 
-    LibraryCard returnedCard = returnedUser.getLibraryCards().get(0);
+    LibraryCard returnedCard = returnedUser.getLibraryCard();
     assertEquals(card.getId(), returnedCard.getId());
     assertEquals(returnedCard.getDaaIds(), List.of(daaId));
     assertEquals(userId, returnedCard.getUserId());

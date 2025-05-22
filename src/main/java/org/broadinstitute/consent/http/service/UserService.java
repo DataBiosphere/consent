@@ -50,7 +50,7 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class UserService implements ConsentLogger {
 
-  public static final String LIBRARY_CARDS_FIELD = "libraryCards";
+  public static final String LIBRARY_CARDS_FIELD = "libraryCard";
   public static final String USER_PROPERTIES_FIELD = "properties";
   public static final String USER_STATUS_INFO_FIELD = "userStatusInfo";
 
@@ -180,7 +180,7 @@ public class UserService implements ConsentLogger {
     Integer userId = userDAO.insertUser(user.getEmail(), user.getDisplayName(),
         user.getInstitutionId(), new Date());
     insertUserRoles(user.getRoles(), userId);
-    addExistingLibraryCards(user);
+    addFloatingLibraryCardToUser(user);
     return userDAO.findUserById(userId);
   }
 
@@ -189,10 +189,6 @@ public class UserService implements ConsentLogger {
     if (user == null) {
       throw new NotFoundException("Unable to find user with id: " + id);
     }
-    List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
-    if (Objects.nonNull(cards) && !cards.isEmpty()) {
-      user.setLibraryCards(cards);
-    }
     return user;
   }
 
@@ -200,10 +196,6 @@ public class UserService implements ConsentLogger {
     User user = userDAO.findUserByEmail(email);
     if (user == null) {
       throw new NotFoundException("Unable to find user with email: " + email);
-    }
-    List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
-    if (Objects.nonNull(cards) && !cards.isEmpty()) {
-      user.setLibraryCards(cards);
     }
     return user;
   }
@@ -334,13 +326,10 @@ public class UserService implements ConsentLogger {
     Gson gson = GsonUtil.getInstance();
     User user = findUserById(userId);
     List<UserProperty> props = findAllUserProperties(user.getUserId());
-    List<LibraryCard> entries =
-        Objects.nonNull(user.getLibraryCards()) ? user.getLibraryCards() : List.of();
     JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
     JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();
-    JsonArray entriesJson = gson.toJsonTree(entries).getAsJsonArray();
     userJson.add(USER_PROPERTIES_FIELD, propsJson);
-    userJson.add(LIBRARY_CARDS_FIELD, entriesJson);
+    userJson.add(LIBRARY_CARDS_FIELD, gson.toJsonTree(user.getLibraryCard()));
     if (authUser.getEmail().equalsIgnoreCase(user.getEmail()) && Objects.nonNull(
         authUser.getUserStatusInfo())) {
       JsonObject userStatusInfoJson = gson.toJsonTree(authUser.getUserStatusInfo())
@@ -377,19 +366,15 @@ public class UserService implements ConsentLogger {
     userRoleDAO.insertUserRoles(roles, userId);
   }
 
-  private void addExistingLibraryCards(User user) {
-    List<LibraryCard> libraryCards = libraryCardDAO.findAllLibraryCardsByUserEmail(user.getEmail());
-
-    libraryCards
-        .forEach(lc -> {
-          libraryCardDAO.updateLibraryCardById(
-              lc.getId(),
-              user.getUserId(),
-              lc.getUserName(),
-              lc.getUserEmail(),
-              user.getUserId(),
-              new Date());
-        });
+  private void addFloatingLibraryCardToUser(User user) {
+    LibraryCard libraryCard = libraryCardDAO.findLibraryCardByUserEmail(user.getEmail());
+    libraryCardDAO.updateLibraryCardById(
+        libraryCard.getId(),
+        user.getUserId(),
+        user.getDisplayName(),
+        user.getEmail(),
+        user.getUserId(),
+        new Date());
   }
 
   public User findOrCreateUser(AuthUser authUser) throws Exception {
@@ -424,15 +409,14 @@ public class UserService implements ConsentLogger {
   }
 
   public void hasValidActiveERACredentials(User user) {
-    List<LibraryCard> cards = user.getLibraryCards();
-    List<UserProperty> userProperties = findAllUserProperties(user.getUserId());
-    if (cards.isEmpty()) {
+    if (user.getLibraryCard() == null) {
       throw new LibraryCardRequiredException();
     }
     boolean hasEraCommonsId = user.getEraCommonsId() != null;
     if (!hasEraCommonsId) {
       throw new BadRequestException("User does not have an Era Commons ID");
     }
+    List<UserProperty> userProperties = findAllUserProperties(user.getUserId());
     List<UserProperty> eraStatusProps = userProperties.stream().filter(
             userProperty -> userProperty.getPropertyKey().equalsIgnoreCase(ERA_STATUS.getValue()))
         .toList();

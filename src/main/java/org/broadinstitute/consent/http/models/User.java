@@ -57,7 +57,7 @@ public class User {
 
   private Institution institution;
 
-  private List<LibraryCard> libraryCards;
+  private LibraryCard libraryCard;
 
   public User() {
   }
@@ -101,7 +101,7 @@ public class User {
     // Nor do we need to retrieve the full institution object from user-provided data.
     JsonObject filteredUserJsonObject = filterFields(
         userJsonObject,
-        Arrays.asList("createDate", "institution", "libraryCards"));
+        Arrays.asList("createDate", "institution", "libraryCard"));
     User u = gson.fromJson(filteredUserJsonObject.toString(), User.class);
     setUserId(u);
     setEmail(u);
@@ -278,15 +278,12 @@ public class User {
     return institution;
   }
 
-  public void setLibraryCards(List<LibraryCard> cards) {
-    this.libraryCards = cards;
+  public LibraryCard getLibraryCard() {
+    return libraryCard;
   }
 
-  public List<LibraryCard> getLibraryCards() {
-    if (this.libraryCards == null) {
-      this.libraryCards = new ArrayList<>();
-    }
-    return this.libraryCards;
+  public void setLibraryCard(LibraryCard libraryCard) {
+    this.libraryCard = libraryCard;
   }
 
   public void addRole(UserRole userRole) {
@@ -305,15 +302,6 @@ public class User {
     }
     if (!this.getProperties().contains(userProp)) {
       this.getProperties().add(userProp);
-    }
-  }
-
-  public void addLibraryCard(LibraryCard card) {
-    if (this.libraryCards == null) {
-      this.libraryCards = new ArrayList<>();
-    }
-    if (!this.libraryCards.contains(card)) {
-      this.libraryCards.add(card);
     }
   }
 

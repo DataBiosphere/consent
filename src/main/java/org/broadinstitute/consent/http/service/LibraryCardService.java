@@ -3,11 +3,9 @@ package org.broadinstitute.consent.http.service;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -80,8 +78,8 @@ public class LibraryCardService {
     return libraryCardDAO.findAllLibraryCards();
   }
 
-  public List<LibraryCard> findLibraryCardsByUserId(Integer userId) {
-    return libraryCardDAO.findLibraryCardsByUserId(userId);
+  public LibraryCard findLibraryCardByUserId(Integer userId) {
+    return libraryCardDAO.findLibraryCardByUserId(userId);
   }
 
   public List<LibraryCard> findLibraryCardsByInstitutionId(Integer institutionId) {
@@ -108,29 +106,26 @@ public class LibraryCardService {
     libraryCardDAO.deleteLibraryCardDaaRelation(libraryCardId, daaId);
   }
 
-  public List<LibraryCard> addDaaToUserLibraryCardByInstitution(User user, User signingOfficial, Integer daaId) {
+  public LibraryCard addDaaToUserLibraryCardByInstitution(User user, User signingOfficial, Integer daaId) {
     if (signingOfficial.getInstitutionId() == null) {
       throw new BadRequestException("This signing official does not have an institution.");
     }
-    List<LibraryCard> libraryCards = new ArrayList<>(libraryCardDAO.findLibraryCardsByUserId(user.getUserId()));
-    if (libraryCards.isEmpty()) {
-      LibraryCard lc = createLibraryCardForSigningOfficial(user, signingOfficial);
-      libraryCards.add(lc);
+    LibraryCard libraryCard = libraryCardDAO.findLibraryCardByUserId(user.getUserId());
+    if (libraryCard == null) {
+      libraryCard = createLibraryCardForSigningOfficial(user, signingOfficial);
     }
     // typically there should be one library card per user per institution
-    for (LibraryCard libraryCard : libraryCards) {
-      addDaaToLibraryCard(libraryCard.getId(), daaId);
-    }
-    return libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
+    addDaaToLibraryCard(libraryCard.getId(), daaId);
+    return libraryCardDAO.findLibraryCardByUserId(user.getUserId());
   }
 
-  public List<LibraryCard> removeDaaFromUserLibraryCards(User user, Integer daaId) {
-    List<LibraryCard> libraryCards = findLibraryCardsByUserId(user.getUserId());
+  public LibraryCard removeDaaFromUserLibraryCard(User user, Integer daaId) {
+    LibraryCard libraryCard = findLibraryCardByUserId(user.getUserId());
     // typically there should be one library card per user
-    for (LibraryCard libraryCard : libraryCards) {
+    if (libraryCard != null) {
       removeDaaFromLibraryCard(libraryCard.getId(), daaId);
     }
-    return libraryCards;
+    return findLibraryCardByUserId(user.getUserId());
   }
 
   public LibraryCard createLibraryCardForSigningOfficial(User user, User signingOfficial) {
@@ -189,26 +184,22 @@ public class LibraryCardService {
 
   //helper method for create method, checks to see if card already exists
   private void checkIfCardExists(LibraryCard payload) {
-    Integer userId = payload.getUserId();
-    String email = payload.getUserEmail();
-    Optional<LibraryCard> foundCard;
-    List<LibraryCard> results;
+    LibraryCard result = null;
 
-    if (Objects.nonNull(payload.getUserId())) {
-      results = libraryCardDAO.findLibraryCardsByUserId(userId);
-    } else if (Objects.nonNull(email)) {
-      results = libraryCardDAO.findAllLibraryCardsByUserEmail(email);
+    if (payload.getUserId() != null) {
+      result = libraryCardDAO.findLibraryCardByUserId(payload.getUserId());
+    } else if (payload.getUserEmail() != null) {
+      result = libraryCardDAO.findLibraryCardByUserEmail(payload.getUserEmail());
     } else {
       throw new BadRequestException();
     }
-    foundCard = results.stream().filter(card -> {
-      Boolean sameUserId = Objects.nonNull(userId) && card.getUserId().equals(userId);
-      Boolean sameUserEmail = Objects.nonNull(email) && card.getUserEmail().equalsIgnoreCase(email);
-      return (sameUserId || sameUserEmail);
-    }).findFirst();
 
-    if (foundCard.isPresent()) {
-      throw new ConsentConflictException();
+    if (result != null) {
+      Boolean sameUserId = payload.getUserId() != null && result.getUserId().equals(payload.getUserId());
+      Boolean sameUserEmail = payload.getUserEmail() != null && result.getUserEmail().equalsIgnoreCase(payload.getUserEmail());
+      if (sameUserId || sameUserEmail) {
+        throw new ConsentConflictException("Library card already exists for this user.");
+      }
     }
   }
 

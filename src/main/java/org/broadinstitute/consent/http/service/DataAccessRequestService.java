@@ -135,7 +135,7 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new IllegalArgumentException("User and DataAccessRequest are required");
     }
 
-    if (user.getLibraryCards().isEmpty()) {
+    if (user.getLibraryCard() == null) {
       throw new LibraryCardRequiredException();
     }
 
@@ -297,7 +297,7 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new IllegalArgumentException("User and DataAccessRequest are required");
     }
 
-    if (user.getLibraryCards().isEmpty()) {
+    if (user.getLibraryCard() == null) {
       throw new NIHComplianceRuleException();
     }
 
@@ -317,8 +317,7 @@ public class DataAccessRequestService implements ConsentLogger {
         throw new NotFoundException(
             "Unable to find User with the provided email: " + collaborator.getEmail());
       }
-      List<LibraryCard> libraryCards = collabUser.getLibraryCards();
-      if (libraryCards.isEmpty()) {
+      if (collabUser.getLibraryCard() == null) {
         throw new BadRequestException(
             "Collaborator " + collaborator.getEmail() + " does not have a library card.");
       }

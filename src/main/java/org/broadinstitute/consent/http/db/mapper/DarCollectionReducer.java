@@ -94,7 +94,7 @@ public class DarCollectionReducer
         user.setInstitution(institution);
       }
       if (Objects.nonNull(libraryCard)) {
-        user.addLibraryCard(libraryCard);
+        user.setLibraryCard(libraryCard);
       }
       if (Objects.nonNull(userProperty)) {
         user.addProperty(userProperty);
