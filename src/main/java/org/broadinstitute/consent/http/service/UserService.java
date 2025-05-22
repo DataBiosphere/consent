@@ -516,7 +516,8 @@ public class UserService implements ConsentLogger {
         && !hasMatchingInstitutionInDatabase) {
       return dropLCAndInstitutionForUser(user);
     }
-    // case 12
+
+    // case 11, 12
     if (!hasInstitutionMatchingEmailDomain
         && hasLibraryCard
         && !hasAssignedInstitutionInDatabase
@@ -535,7 +536,7 @@ public class UserService implements ConsentLogger {
     // do nothing cases 1, 5, 15, 16
     return user;
 
-    // not possible cases: 3, 7, 9, 11, 13
+    // not possible cases: 3, 7, 9, 13
   }
 
   private void updateInstitutionForUser(User user, Integer institutionId) {
