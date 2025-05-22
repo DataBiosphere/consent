@@ -50,9 +50,11 @@ public class AuthorizationHelper implements ConsentLogger {
           "Reading oauth2 claim headers: email is null, auth user is incomplete. Aud: %s Name: %s",
           aud, name));
     } else {
-      User user = userService.findUserByEmail(email);
-      if (user != null) {
+      try {
+        User user = userService.findUserByEmail(email);
         userService.enforceInstitutionAndLibraryCardTruthTable(user);
+      } catch (NotFoundException nfe) {
+        // nothing to do.  new user.
       }
     }
     return new AuthUser(token, email, name, aud);
