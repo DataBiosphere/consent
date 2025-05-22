@@ -48,7 +48,7 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
         }
       }
     } catch (MappingException e) {
-      logWarn("Error adding Institution to User", e);
+      logDebug("Error adding Institution to User: %s".formatted(e.getMessage()));
     }
     //user role join can cause duplication of data if done in tandem with joins on other tables
     //ex) The same LC can end up being repeated multiple times
@@ -62,7 +62,7 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
         user.setLibraryCard(lc);
       }
     } catch (MappingException e) {
-      logWarn("Error adding Library Card to User", e);
+      logDebug("Error adding Library Card to User: %s".formatted(e.getMessage()));
     }
     try {
       if (Objects.nonNull(rowView.getColumn("up_property_id", Integer.class))) {
@@ -70,7 +70,7 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
         user.addProperty(p);
       }
     } catch (MappingException e) {
-      logWarn("Error adding User Property to User", e);
+      logDebug("Error adding User Property to User: %s".formatted(e.getMessage()));
     }
   }
 
