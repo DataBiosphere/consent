@@ -30,7 +30,7 @@ public interface UserDAO extends Transactional<UserDAO> {
   @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
   @UseRowReducer(UserWithRolesReducer.class)
   @SqlQuery("""
-            SELECT
+      SELECT
           u.user_id as u_user_id,
           u.email as u_email,
           u.display_name as u_display_name,
