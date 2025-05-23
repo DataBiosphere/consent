@@ -36,7 +36,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     try {
       libraryCardDAO.insertLibraryCard(0, user.getDisplayName(), user.getEmail(),
           user.getUserId(), new Date());
-      fail("Should have thrown an exception");
+      fail("Should have thrown a FOREIGN_KEY_VIOLATION exception");
     } catch (Exception e) {
       assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(),
           ((PSQLException) e.getCause()).getSQLState());
@@ -45,7 +45,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     try {
       libraryCardDAO.insertLibraryCard(user.getUserId(), user.getDisplayName(), user.getEmail(), 0,
           new Date());
-      fail("Should have thrown an exception");
+      fail("Should have thrown a FOREIGN_KEY_VIOLATION exception");
     } catch (Exception e) {
       assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(),
           ((PSQLException) e.getCause()).getSQLState());
@@ -62,7 +62,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     try {
       libraryCardDAO.insertLibraryCard(user1.getUserId(), user1.getDisplayName(), user1.getEmail(),
           user1.getUserId(), new Date());
-      fail("Should have thrown an exception");
+      fail("Should have thrown a UNIQUE_VIOLATION exception");
     } catch (Exception e) {
       assertEquals(PSQLState.UNIQUE_VIOLATION.getState(),
           ((PSQLException) e.getCause()).getSQLState());
@@ -72,34 +72,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     try {
       libraryCardDAO.insertLibraryCard(user2.getUserId(), user2.getDisplayName(), user1.getEmail(),
           user2.getUserId(), new Date());
-      fail("Should have thrown an exception");
-    } catch (Exception e) {
-      assertEquals(PSQLState.UNIQUE_VIOLATION.getState(),
-          ((PSQLException) e.getCause()).getSQLState());
-    }
-  }
-
-  @Test
-  void testUpdateLibraryCardById() {
-    Integer userId = createUser().getUserId();
-    String newValue = "New Value";
-    LibraryCard card = createLibraryCard();
-    Integer id = card.getId();
-    card.setUserName("name");
-    libraryCardDAO.updateLibraryCardById(id, userId, newValue, newValue,
-        userId, new Date());
-    LibraryCard updated = libraryCardDAO.findLibraryCardById(id);
-    assertEquals(newValue, updated.getUserName());
-    assertEquals(userId, updated.getUpdateUserId());
-  }
-
-  @Test
-  void testUpdateLibraryCardByIdNegative() {
-    Integer userId = createUser().getUserId();
-    String newValue = "New Value";
-    try {
-      libraryCardDAO.updateLibraryCardById(0, userId, newValue, newValue,
-          userId, new Date());
+      fail("Should have thrown a UNIQUE_VIOLATION exception");
     } catch (Exception e) {
       assertEquals(PSQLState.UNIQUE_VIOLATION.getState(),
           ((PSQLException) e.getCause()).getSQLState());
@@ -247,8 +220,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     int daaId = daaDAO.createDaa(libraryCard.getUserId(), now, libraryCard.getUserId(), now, dacId);
     daaDAO.createDacDaaRelation(dacId, daaId);
     libraryCardDAO.createLibraryCardDaaRelation(libraryCard.getId(), daaId);
-    LibraryCard cardFromDAO = libraryCardDAO.findLibraryCardByUserId(
-        libraryCard.getUserId());
+    LibraryCard cardFromDAO = libraryCardDAO.findLibraryCardByUserId(libraryCard.getUserId());
     assertNotNull(cardFromDAO);
     assertEquals(cardFromDAO, libraryCard);
   }
@@ -265,7 +237,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindLibraryCardsByUserEmail() {
+  void testFindLibraryCardByUserEmail() {
     User user = createUser();
     LibraryCard libraryCard = createLibraryCard(user);
     LibraryCard cardFromDAO = libraryCardDAO.findLibraryCardByUserEmail(user.getEmail());
@@ -274,7 +246,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindLibraryCardsByUserId() {
+  void testFindLibraryCardByUserId() {
     User user = createUser();
     LibraryCard one = createLibraryCard(user);
     LibraryCard cardFromDAO = libraryCardDAO.findLibraryCardByUserId(user.getUserId());
@@ -399,4 +371,3 @@ class LibraryCardDAOTest extends DAOTestHelper {
   }
 
 }
-

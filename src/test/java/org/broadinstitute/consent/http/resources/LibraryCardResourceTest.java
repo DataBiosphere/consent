@@ -187,55 +187,6 @@ class LibraryCardResourceTest {
   }
 
   @Test
-  void testUpdateLibraryCard() {
-    LibraryCard mockCard = mockLibraryCardSetup();
-    String payload = GsonUtil.getInstance().toJson(mockCard);
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(libraryCardService.updateLibraryCard(any(LibraryCard.class), anyInt(), anyInt()))
-        .thenReturn(mockCard);
-    initResource();
-    Response response = resource.updateLibraryCard(authUser, 1, payload);
-    String json = response.getEntity().toString();
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    assertNotNull(json);
-  }
-
-  @Test
-  void testUpdateLibraryCardThrowsIllegalArgumentException() {
-    LibraryCard mockCard = mockLibraryCardSetup();
-    String payload = GsonUtil.getInstance().toJson(mockCard);
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(libraryCardService.updateLibraryCard(any(LibraryCard.class), anyInt(), anyInt()))
-        .thenThrow(new IllegalArgumentException());
-    initResource();
-    Response response = resource.updateLibraryCard(authUser, 1, payload);
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-  }
-
-  @Test
-  void testUpdateLibraryCardThrowsNotFoundException() {
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(libraryCardService.updateLibraryCard(any(LibraryCard.class), anyInt(), anyInt()))
-        .thenThrow(new NotFoundException());
-    String payload = GsonUtil.getInstance().toJson(mockLibraryCardSetup());
-    initResource();
-    Response response = resource.updateLibraryCard(authUser, 1, payload);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-  }
-
-  @Test
-  void testUpdateLibraryCardThrowsUniqueViolation() {
-    UnableToExecuteStatementException exception = generateUniqueViolationException();
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(libraryCardService.updateLibraryCard(any(LibraryCard.class), anyInt(), anyInt()))
-        .thenThrow(exception);
-    String payload = GsonUtil.getInstance().toJson(mockLibraryCardSetup());
-    initResource();
-    Response response = resource.updateLibraryCard(authUser, 1, payload);
-    assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());
-  }
-
-  @Test
   void deleteLibraryCard() {
     LibraryCard card = mockLibraryCardSetup();
     card.setId(1);

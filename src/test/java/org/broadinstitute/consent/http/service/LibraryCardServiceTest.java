@@ -54,7 +54,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  // Test Admin LC create with userId and email
+    // Test Admin LC create with userId and email
   void testCreateLibraryCardFullUserDetailsAsAdmin() {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
@@ -78,7 +78,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  // Test SO LC create with userId and email success case
+    // Test SO LC create with userId and email success case
   void testCreateLibraryCardFullUserDetailsAsSOSameInstitution() {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
@@ -105,7 +105,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  // Test SO LC create with userId and email but in different institutions
+    // Test SO LC create with userId and email but in different institutions
   void testCreateLibraryCardFullUserDetailsAsSODifferentInstitution() {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
@@ -126,7 +126,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  //Test LC create with only user email (no userId)
+    //Test LC create with only user email (no userId)
   void testCreateLibraryCardPartialUserDetailsEmail() {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
@@ -144,7 +144,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  //Test LC create with only user id (no email)
+    //Test LC create with only user id (no email)
   void testCreateLibraryCardPartialUserDetailsId() {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
@@ -201,7 +201,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  //Negative test, checks if error is thrown if payload email and userId don't match up to those on user record
+    //Negative test, checks if error is thrown if payload email and userId don't match up to those on user record
   void testCreateLibraryCardIncorrectUserIdAndEmail() {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
@@ -218,7 +218,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  //Negative test, checks to see if error thrown if card already exists on user id and institution id
+    //Negative test, checks to see if error thrown if card already exists on user id and institution id
   void testCreateLibraryCardAlreadyExistsOnUserId() {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
@@ -231,7 +231,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  // Negative test, checks to see if error thrown if card already exists on user email and institution id
+    // Negative test, checks to see if error thrown if card already exists on user email and institution id
   void testCreateLibraryCardAlreadyExistsOnUserEmail() {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
@@ -249,7 +249,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  //Negative test, checks to see if error is thrown if email and userId are not provided
+    //Negative test, checks to see if error is thrown if email and userId are not provided
   void testCreateLibraryCardNoUserDetails() {
     User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
     LibraryCard payload = testLibraryCard(null);
@@ -260,7 +260,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  //Negative test, checks if error is thrown on null institutionId
+    //Negative test, checks if error is thrown on null institutionId
   void testCreateLibraryCard_InvalidInstitution() {
     User user = testUser(1);
     User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
@@ -270,7 +270,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  //Negative test, checks to see if error is thrown on null payload
+    //Negative test, checks to see if error is thrown on null payload
   void testCreateLibraryCardNullPayload() {
     User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
     assertThrows(NotFoundException.class, () -> service.createLibraryCard(null, adminUser));
@@ -293,32 +293,6 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     LibraryCard card = testLibraryCard(2);
     assertThrows(BadRequestException.class, () -> {
       service.createLibraryCard(card, soUser);
-    });
-  }
-
-  @Test
-  void testUpdateLibraryCard() {
-    Institution institution = testInstitution();
-    User user = testUser(institution.getId());
-    LibraryCard libraryCard = testLibraryCard(user.getUserId());
-    when(libraryCardDAO.findLibraryCardById(libraryCard.getId())).thenReturn(libraryCard);
-    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
-    doNothing().when(libraryCardDAO)
-        .updateLibraryCardById(any(), any(), any(), any(), any(), any());
-
-    LibraryCard resultCard = service.updateLibraryCard(libraryCard, libraryCard.getId(), 1);
-    assertNotNull(resultCard);
-    assertEquals(resultCard.getId(), libraryCard.getId());
-  }
-
-  @Test
-  void testUpdateLibraryCard_NotFound() {
-    Institution institution = testInstitution();
-    User user = testUser(institution.getId());
-    LibraryCard libraryCard = testLibraryCard(user.getUserId());
-
-    assertThrows(NotFoundException.class, () -> {
-      service.updateLibraryCard(libraryCard, libraryCard.getId(), 1);
     });
   }
 
