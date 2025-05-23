@@ -651,7 +651,7 @@ class DaaResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
     when(daaService.findById(daaId)).thenReturn(new DataAccessAgreement());
-    when(libraryCardService.addDaaToUserLibraryCardByInstitution(any(), any(), any())).thenReturn(null);
+    when(libraryCardService.addDaaToUserLibraryCard(any(), any(), any())).thenReturn(null);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -858,7 +858,7 @@ class DaaResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenReturn(researcher);
     when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
-    when(libraryCardService.addDaaToUserLibraryCardByInstitution(any(), any(), any())).thenReturn(null);
+    when(libraryCardService.addDaaToUserLibraryCard(any(), any(), any())).thenReturn(null);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -885,7 +885,7 @@ class DaaResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenReturn(researcher);
     when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
-    when(libraryCardService.addDaaToUserLibraryCardByInstitution(any(), any(), any())).thenReturn(null);
+    when(libraryCardService.addDaaToUserLibraryCard(any(), any(), any())).thenReturn(null);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 

@@ -367,7 +367,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testAddDaaToUserLibraryCardByInstitution() {
+  void testAddDaaToUserLibraryCard() {
     User user = testUser(1);
     user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
     User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
@@ -375,17 +375,17 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     Integer userId = user.getUserId();
     when(libraryCardDAO.findLibraryCardByUserId(user.getUserId())).thenReturn(testLibraryCard(userId));
     doNothing().when(libraryCardDAO).createLibraryCardDaaRelation(any(), any());
-    LibraryCard card = service.addDaaToUserLibraryCardByInstitution(user, signingOfficial, 1);
+    LibraryCard card = service.addDaaToUserLibraryCard(user, signingOfficial, 1);
     assertNotNull(card);
   }
 
   @Test
-  void testAddDaaToUserLibraryCardByInstitutionNoMatchingInstitutions() {
+  void testAddDaaToUserLibraryCardNoMatchingInstitutions() {
     User user = testUser(1);
     user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
     User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
     signingOfficial.setInstitutionId(4);
-    assertThrows(BadRequestException.class, () -> service.addDaaToUserLibraryCardByInstitution(user, signingOfficial, 1));
+    assertThrows(BadRequestException.class, () -> service.addDaaToUserLibraryCard(user, signingOfficial, 1));
   }
 
   @Test
@@ -410,17 +410,8 @@ class LibraryCardServiceTest extends AbstractTestHelper {
         .thenReturn(1);
     when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
 
-    LibraryCard card = service.addDaaToUserLibraryCardByInstitution(user, signingOfficial, 1);
+    LibraryCard card = service.addDaaToUserLibraryCard(user, signingOfficial, 1);
     assertNotNull(card);
-  }
-
-  @Test
-  void testAddDaaToUserLibraryCardByInstitutionSigningOfficialNoInstitution() {
-    User user = testUser(1);
-    user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
-    User signingOfficial = new User();
-    signingOfficial.setRoles(List.of(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName())));
-    assertThrows(BadRequestException.class, () -> service.addDaaToUserLibraryCardByInstitution(user, signingOfficial, 1));
   }
 
   @Test

@@ -88,7 +88,7 @@ public class LibraryCardService {
     libraryCardDAO.deleteLibraryCardDaaRelation(libraryCardId, daaId);
   }
 
-  public LibraryCard addDaaToUserLibraryCardByInstitution(User user, User signingOfficial, Integer daaId) {
+  public LibraryCard addDaaToUserLibraryCard(User user, User signingOfficial, Integer daaId) {
     if (signingOfficial.getInstitutionId() == null) {
       throw new BadRequestException("This signing official does not have an institution.");
     }
@@ -96,7 +96,6 @@ public class LibraryCardService {
     if (libraryCard == null) {
       libraryCard = createLibraryCardForSigningOfficial(user, signingOfficial);
     }
-    // typically there should be one library card per user per institution
     addDaaToLibraryCard(libraryCard.getId(), daaId);
     return libraryCardDAO.findLibraryCardByUserId(user.getUserId());
   }
