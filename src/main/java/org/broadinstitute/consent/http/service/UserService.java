@@ -181,7 +181,7 @@ public class UserService implements ConsentLogger {
     Integer userId = userDAO.insertUser(user.getEmail(), user.getDisplayName(),
         user.getInstitutionId(), new Date());
     insertUserRoles(user.getRoles(), userId);
-    addFloatingLibraryCardToUser(user);
+    assignExistingLibraryCardToUser(user);
     return userDAO.findUserById(userId);
   }
 
@@ -372,7 +372,7 @@ public class UserService implements ConsentLogger {
     userRoleDAO.insertUserRoles(roles, userId);
   }
 
-  private void addFloatingLibraryCardToUser(User user) {
+  private void assignExistingLibraryCardToUser(User user) {
     LibraryCard libraryCard = libraryCardDAO.findLibraryCardByUserEmail(user.getEmail());
     if (libraryCard != null) {
       libraryCardDAO.updateLibraryCardById(
