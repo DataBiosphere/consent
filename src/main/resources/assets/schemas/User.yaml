@@ -22,7 +22,10 @@ properties:
       $ref: './UserRole.yaml'
   properties:
     $ref: './UserProperties.yaml'
+  libraryCard:
+    $ref: './LibraryCard.yaml'
   libraryCards:
+    deprecated: true
     type: array
     items:
       $ref: './LibraryCard.yaml'
