@@ -36,7 +36,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class UserDAOTest extends DAOTestHelper {
 
   @Test
-  void testFindDACUserById() {
+  void testFindUserById() {
     User user = createUserWithRole(UserRoles.ALUMNI.getRoleId());
     assertNotNull(user);
     assertFalse(user.getRoles().isEmpty());
@@ -62,6 +62,22 @@ class UserDAOTest extends DAOTestHelper {
     assert (queriedUser3.getUserId()).equals(user3.getUserId());
     assertNotNull(queriedUser3.getInstitutionId());
     assert (queriedUser3.getInstitution().getId()).equals(user3.getInstitution().getId());
+  }
+
+  @Test
+  void testFindUserByIdWithLibraryCard() {
+    LibraryCard libraryCard = createLibraryCard();
+    User user = userDAO.findUserById(libraryCard.getUserId());
+    assertNotNull(user);
+    assertEquals(libraryCard, user.getLibraryCard());
+  }
+
+  @Test
+  void testFindUserByEmailWithLibraryCard() {
+    LibraryCard libraryCard = createLibraryCard();
+    User user = userDAO.findUserByEmail(libraryCard.getUserEmail());
+    assertNotNull(user);
+    assertEquals(libraryCard, user.getLibraryCard());
   }
 
   @Test
@@ -477,10 +493,8 @@ class UserDAOTest extends DAOTestHelper {
 
   private LibraryCard createLibraryCard() {
     User user = createUserWithInstitution();
-    Integer userId = user.getUserId();
-    String stringValue = "value";
-    Integer id = libraryCardDAO.insertLibraryCard(userId, stringValue,
-        stringValue, userId, new Date());
+    Integer id = libraryCardDAO.insertLibraryCard(user.getUserId(), user.getDisplayName(),
+        user.getEmail(), user.getUserId(), new Date());
     return libraryCardDAO.findLibraryCardById(id);
   }
 }
