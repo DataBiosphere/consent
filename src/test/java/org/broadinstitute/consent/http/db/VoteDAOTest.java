@@ -421,16 +421,14 @@ class VoteDAOTest extends DAOTestHelper {
 
   @Test
   void testFindVoteUsersByElectionReferenceIdList_Empty() {
-    assertThrows(IllegalArgumentException.class, () -> {
-      voteDAO.findVoteUsersByElectionReferenceIdList(List.of());
-    });
+    List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(List.of());
+    assertTrue(voteUsers.isEmpty());
   }
 
   @Test
   void testFindVoteUsersByElectionReferenceIdList_Null() {
-    assertThrows(IllegalArgumentException.class, () -> {
-      voteDAO.findVoteUsersByElectionReferenceIdList(null);
-    });
+    List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(null);
+    assertTrue(voteUsers.isEmpty());
   }
 
   @Test
