@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -63,7 +64,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   @SqlQuery(
       getCollectionAndDars + " WHERE c.collection_id in (<collectionIds>)" + archiveFilterQuery)
   List<DarCollection> findDARCollectionByCollectionIds(
-      @BindList("collectionIds") List<Integer> collectionIds);
+      @BindList(value = "collectionIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> collectionIds);
 
   /**
    * Find all DARCollections with their DataAccessRequests
