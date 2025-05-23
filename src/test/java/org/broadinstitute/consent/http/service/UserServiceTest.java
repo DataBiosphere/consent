@@ -362,12 +362,11 @@ class UserServiceTest extends AbstractTestHelper {
     LibraryCard one = generateLibraryCard(u);
     u.setLibraryCard(one);
     when(userDAO.findUserById(any())).thenReturn(u);
-    when(libraryCardDAO.findLibraryCardByUserId(any())).thenReturn(one);
 
     User user = service.findUserById(u.getUserId());
     assertNotNull(user);
     assertNotNull(user.getLibraryCard());
-    assertSame(one, user.getLibraryCard());
+    assertEquals(one, user.getLibraryCard());
   }
 
   @Test
