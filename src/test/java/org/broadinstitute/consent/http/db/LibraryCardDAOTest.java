@@ -1,11 +1,10 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-
 
 import java.time.Instant;
 import java.util.Date;
@@ -55,33 +54,6 @@ class LibraryCardDAOTest extends DAOTestHelper {
           0, new Date());
     } catch (Exception e) {
       assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(),
-          ((PSQLException) e.getCause()).getSQLState());
-    }
-  }
-
-  @Test
-  void testUpdateLibraryCardById() {
-    Integer userId = createUser().getUserId();
-    String newValue = "New Value";
-    LibraryCard card = createLibraryCard();
-    Integer id = card.getId();
-    card.setUserName("name");
-    libraryCardDAO.updateLibraryCardById(id, userId, newValue, newValue,
-        userId, new Date());
-    LibraryCard updated = libraryCardDAO.findLibraryCardById(id);
-    assertEquals(newValue, updated.getUserName());
-    assertEquals(userId, updated.getUpdateUserId());
-  }
-
-  @Test
-  void testUpdateLibraryCardByIdNegative() {
-    Integer userId = createUser().getUserId();
-    String newValue = "New Value";
-    try {
-      libraryCardDAO.updateLibraryCardById(0, userId, newValue, newValue,
-          userId, new Date());
-    } catch (Exception e) {
-      assertEquals(PSQLState.UNIQUE_VIOLATION.getState(),
           ((PSQLException) e.getCause()).getSQLState());
     }
   }

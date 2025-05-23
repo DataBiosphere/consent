@@ -52,24 +52,6 @@ public class LibraryCardService {
     return libraryCardDAO.findLibraryCardById(id);
   }
 
-  public LibraryCard updateLibraryCard(LibraryCard libraryCard, Integer id, Integer userId) {
-    LibraryCard updateCard = libraryCardDAO.findLibraryCardById(id);
-    throwIfNull(updateCard);
-    checkUserId(userId);
-    checkForValidUser(libraryCard.getUserId());
-
-    Date updateDate = new Date();
-    libraryCardDAO.updateLibraryCardById(
-        id,
-        libraryCard.getUserId(),
-        libraryCard.getUserName(),
-        libraryCard.getUserEmail(),
-        userId,
-        updateDate
-    );
-    return libraryCardDAO.findLibraryCardById(id);
-  }
-
   public void deleteLibraryCardById(Integer id) {
     LibraryCard card = findLibraryCardById(id);
     throwIfNull(card);
