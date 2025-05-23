@@ -50,7 +50,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
       libraryCardDAO.insertLibraryCard(userId, stringValue, stringValue,
           0, new Date());
     } catch (Exception e) {
-      assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(),
+      assertEquals(PSQLState.UNIQUE_VIOLATION.getState(),
           ((PSQLException) e.getCause()).getSQLState());
     }
   }
