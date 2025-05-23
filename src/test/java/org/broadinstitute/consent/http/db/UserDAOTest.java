@@ -197,8 +197,8 @@ class UserDAOTest extends DAOTestHelper {
   @Test
   void testFindUsersWithLCsAndInstitution() {
     User user = createUserWithInstitution();
-    int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5),
-        RandomStringUtils.randomAlphabetic(5), new Date());
+    int dacId = dacDAO.createDac(randomAlphabetic(5),
+        randomAlphabetic(5), new Date());
     Instant now = Instant.now();
     int daaId = daaDAO.createDaa(user.getUserId(), now, user.getUserId(), now, dacId);
     int lcId1 = libraryCardDAO.insertLibraryCard(user.getUserId(),
@@ -207,7 +207,7 @@ class UserDAOTest extends DAOTestHelper {
 
     User user2 = createUserWithInstitution();
     int lcId2 = libraryCardDAO.insertLibraryCard(user2.getUserId(),
-        user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+        user2.getDisplayName(), user2.getEmail(), user2.getUserId(), new Date());
     libraryCardDAO.createLibraryCardDaaRelation(lcId2, daaId);
 
     List<User> users = userDAO.findUsersWithLCsAndInstitution();
@@ -333,8 +333,8 @@ class UserDAOTest extends DAOTestHelper {
 
   @Test
   void testGetUsersFromInstitutionWithCards() {
-    int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5),
-        RandomStringUtils.randomAlphabetic(5), new Date());
+    int dacId = dacDAO.createDac(randomAlphabetic(5),
+        randomAlphabetic(5), new Date());
     Instant now = Instant.now();
     LibraryCard card = createLibraryCard();
     int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
@@ -353,8 +353,8 @@ class UserDAOTest extends DAOTestHelper {
 
   @Test
   void testGetUsersWithCardsByDaaId() {
-    int dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(5),
-        RandomStringUtils.randomAlphabetic(5), new Date());
+    int dacId = dacDAO.createDac(randomAlphabetic(5),
+        randomAlphabetic(5), new Date());
     Instant now = Instant.now();
     LibraryCard card = createLibraryCard();
     int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
