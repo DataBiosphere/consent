@@ -223,7 +223,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     dar.setSortDate(new Timestamp(1000));
     dar.setReferenceId("id");
     User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCard(null);
     assertThrows(NIHComplianceRuleException.class,
         () -> service.createDataAccessRequest(user, dar));
   }
@@ -412,7 +411,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   void validateDarNoLibraryCards() {
     DataAccessRequest dar = generateDataAccessRequest();
     User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCard(null);
     assertThrows(NIHComplianceRuleException.class, () -> service.validateDar(user, dar));
   }
 
@@ -464,7 +462,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(),
         roles);
     collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
-    collaboratorUser.setLibraryCard(null);
     DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
     when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(collaboratorUser);
 
