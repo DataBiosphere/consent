@@ -218,19 +218,6 @@ public interface UserDAO extends Transactional<UserDAO> {
   List<User> describeUsersByRoleAndEmailPreference(@Bind("roleName") String roleName,
       @Bind("emailPreference") Boolean emailPreference);
 
-  @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = UserRole.class)
-  @UseRowReducer(UserWithRolesReducer.class)
-  @SqlQuery("SELECT "
-      + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-      + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
-      + " FROM users u "
-      + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
-      + " LEFT JOIN roles r ON r.role_id = ur.role_id "
-      + " WHERE LOWER(u.email) = LOWER(:email) "
-      + " AND r.role_id = :roleId")
-  User findUserByEmailAndRoleId(@Bind("email") String email, @Bind("roleId") Integer roleId);
-
   @UseRowMapper(UserWithRolesMapper.class)
   @SqlQuery("select du.*, r.role_id, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id " +
       " from users du " +

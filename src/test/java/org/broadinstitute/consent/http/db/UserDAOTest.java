@@ -273,16 +273,6 @@ class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindUserByEmailAndRoleId() {
-    User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-    User user = userDAO.findUserByEmailAndRoleId(chair.getEmail(),
-        UserRoles.CHAIRPERSON.getRoleId());
-    assertNotNull(user);
-    assertEquals(chair.getUserId(), user.getUserId());
-    assertEquals(chair.getDisplayName(), user.getDisplayName());
-  }
-
-  @Test
   void testFindUsersForDatasetsByRole() {
     Dataset dataset = createDataset();
     Dac dac = createDac();
