@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.Instant;
 import java.util.Date;
@@ -29,26 +30,49 @@ class LibraryCardDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testInsertLibraryCardNegative() {
-    Integer userId = createUser().getUserId();
-    String stringValue = "value";
+  void testInsertLibraryCardFKConstraintErrors() {
+    User user = createUser();
+    // Test FK on library_card.user_id
     try {
-      libraryCardDAO.insertLibraryCard(0, stringValue, stringValue,
-          userId, new Date());
+      libraryCardDAO.insertLibraryCard(0, user.getDisplayName(), user.getEmail(),
+          user.getUserId(), new Date());
+      fail("Should have thrown an exception");
     } catch (Exception e) {
       assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(),
           ((PSQLException) e.getCause()).getSQLState());
     }
+    // Test FK on library_card.create_user_id
     try {
-      libraryCardDAO.insertLibraryCard(userId, stringValue, stringValue, userId,
+      libraryCardDAO.insertLibraryCard(user.getUserId(), user.getDisplayName(), user.getEmail(), 0,
           new Date());
+      fail("Should have thrown an exception");
     } catch (Exception e) {
       assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(),
           ((PSQLException) e.getCause()).getSQLState());
     }
+  }
+
+  @Test
+  void testInsertLibraryCardUniqueConstraintErrors() {
+    User user1 = createUser();
+    // Set up LC that will trigger the unique constraints on subsequent inserts
+    libraryCardDAO.insertLibraryCard(user1.getUserId(), user1.getDisplayName(), user1.getEmail(),
+        user1.getUserId(), new Date());
+    // Test Unique on library_card.user_id
     try {
-      libraryCardDAO.insertLibraryCard(userId, stringValue, stringValue,
-          0, new Date());
+      libraryCardDAO.insertLibraryCard(user1.getUserId(), user1.getDisplayName(), user1.getEmail(),
+          user1.getUserId(), new Date());
+      fail("Should have thrown an exception");
+    } catch (Exception e) {
+      assertEquals(PSQLState.UNIQUE_VIOLATION.getState(),
+          ((PSQLException) e.getCause()).getSQLState());
+    }
+    User user2 = createUser();
+    // Test Unique on library_card.user_email - note that we're using the same email as user1
+    try {
+      libraryCardDAO.insertLibraryCard(user2.getUserId(), user2.getDisplayName(), user1.getEmail(),
+          user2.getUserId(), new Date());
+      fail("Should have thrown an exception");
     } catch (Exception e) {
       assertEquals(PSQLState.UNIQUE_VIOLATION.getState(),
           ((PSQLException) e.getCause()).getSQLState());
