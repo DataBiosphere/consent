@@ -15,7 +15,8 @@
              FROM (SELECT id,
                           ROW_NUMBER() OVER( PARTITION BY user_id
         ORDER BY  id ) AS row_num
-                   FROM library_card) t
+                   FROM library_card
+                   WHERE user_id IS NOT NULL) t
              WHERE t.row_num > 1);
 
       -- Remove duplicate library cards based on user_email where user_id is null
