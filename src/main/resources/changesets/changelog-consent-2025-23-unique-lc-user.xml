@@ -2,7 +2,36 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
   <changeSet id="changelog-consent-2025-23-unique-lc-user" author="grushton">
+    <sql>
+      -- Remove DAA associations - these are not in use yet and cause FK problems
+      DELETE
+      FROM lc_daa;
+
+      -- Remove duplicate library cards based on user_id
+      DELETE
+      FROM library_card
+      WHERE id IN
+            (SELECT id
+             FROM (SELECT id,
+                          ROW_NUMBER() OVER( PARTITION BY user_id
+        ORDER BY  id ) AS row_num
+                   FROM library_card) t
+             WHERE t.row_num > 1);
+
+      -- Remove duplicate library cards based on user_email
+      DELETE
+      FROM library_card
+      WHERE id IN
+            (SELECT id
+             FROM (SELECT id,
+                          ROW_NUMBER() OVER( PARTITION BY user_email
+        ORDER BY  id ) AS row_num
+                   FROM library_card) t
+             WHERE t.row_num > 1);
+    </sql>
     <addUniqueConstraint tableName="library_card" columnNames="user_id"
                          constraintName="uk_lc_user_id" />
+    <addUniqueConstraint tableName="library_card" columnNames="user_email"
+                         constraintName="uk_lc_user_email" />
   </changeSet>
 </databaseChangeLog>
