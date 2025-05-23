@@ -140,26 +140,9 @@ public class LibraryCardService {
     }
   }
 
-  private void checkForValidUser(Integer userId) {
-    if (Objects.isNull(userId)) {
-      return;
-    }
-
-    User user = userDAO.findUserById(userId);
-    if (Objects.isNull(user)) {
-      throw new IllegalArgumentException("Invalid User Id");
-    }
-  }
-
   private void checkInstitutionId(Integer institutionId) {
     if (Objects.isNull(institutionId)) {
       throw new IllegalArgumentException("Institution ID is a required parameter");
-    }
-  }
-
-  private void checkUserId(Integer userId) {
-    if (Objects.isNull(userId)) {
-      throw new IllegalArgumentException("User ID is a required parameter");
     }
   }
 
