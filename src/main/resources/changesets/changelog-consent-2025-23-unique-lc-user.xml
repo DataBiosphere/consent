@@ -18,7 +18,7 @@
                    FROM library_card) t
              WHERE t.row_num > 1);
 
-      -- Remove duplicate library cards based on user_email
+      -- Remove duplicate library cards based on user_email where user_id is null
       DELETE
       FROM library_card
       WHERE id IN
@@ -26,7 +26,8 @@
              FROM (SELECT id,
                           ROW_NUMBER() OVER( PARTITION BY user_email
         ORDER BY  id ) AS row_num
-                   FROM library_card) t
+                   FROM library_card
+                   WHERE user_id IS NULL) t
              WHERE t.row_num > 1);
     </sql>
     <addUniqueConstraint tableName="library_card" columnNames="user_id"
