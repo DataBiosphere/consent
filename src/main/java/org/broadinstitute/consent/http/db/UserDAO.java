@@ -13,6 +13,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -66,7 +67,7 @@ public interface UserDAO extends Transactional<UserDAO> {
   @SqlQuery("SELECT "
       + User.QUERY_FIELDS_WITH_U_PREFIX
       + " FROM users u WHERE u.user_id IN (<userIds>)")
-  Collection<User> findUsers(@BindList("userIds") Collection<Integer> userIds);
+  Collection<User> findUsers(@BindList(value = "userIds", onEmpty = EmptyHandling.NULL_STRING) Collection<Integer> userIds);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class)
@@ -109,7 +110,7 @@ public interface UserDAO extends Transactional<UserDAO> {
 
   @UseRowMapper(UserWithRolesMapper.class)
   @SqlQuery("select du.*, r.role_id, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from users du inner join user_role ur on ur.user_id = du.user_id inner join roles r on r.role_id = ur.role_id where  du.user_id IN (<userIds>)")
-  Set<User> findUsersWithRoles(@BindList("userIds") Collection<Integer> userIds);
+  Set<User> findUsersWithRoles(@BindList(value = "userIds", onEmpty = EmptyHandling.NULL_STRING) Collection<Integer> userIds);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class, prefix = "ur")
@@ -163,7 +164,7 @@ public interface UserDAO extends Transactional<UserDAO> {
       LEFT JOIN roles r ON r.role_id = ur.role_id
       WHERE LOWER(u.email) ILIKE ANY (array[<emails>])
       """)
-  List<User> findUsersByEmailList(@BindList("emails") List<String> emails);
+  List<User> findUsersByEmailList(@BindList(value = "emails", onEmpty = EmptyHandling.NULL_STRING) List<String> emails);
 
   @SqlUpdate("INSERT INTO users (email, display_name, institution_id, create_date) values (:email, :displayName, :institutionId, :createDate)")
   @GetGeneratedKeys
@@ -228,8 +229,8 @@ public interface UserDAO extends Transactional<UserDAO> {
       " where ds.dataset_id in (<datasetIds>) "
   )
   Set<User> findUsersForDatasetsByRole(
-      @BindList("datasetIds") List<Integer> datasetIds,
-      @BindList("roleNames") List<String> roleNames);
+      @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> datasetIds,
+      @BindList(value = "roleNames", onEmpty = EmptyHandling.NULL_STRING) List<String> roleNames);
 
   @RegisterBeanMapper(value = User.class)
   @RegisterBeanMapper(value = UserRole.class)

@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -124,5 +125,5 @@ public interface DraftDAO extends Transactional<DraftDAO> {
           WHERE uuid IN (<uuid_list>)
           """
   )
-  void deleteDraftByUUIDList(@BindList("uuid_list") List<UUID> uuid);
+  void deleteDraftByUUIDList(@BindList(value = "uuid_list", onEmpty = EmptyHandling.NULL_STRING) List<UUID> uuid);
 }

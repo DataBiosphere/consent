@@ -24,7 +24,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       "SELECT DISTINCT election_id " +
           "FROM election " +
           "WHERE reference_id IN (<referenceIds>)")
-  List<Integer> getElectionIdsByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+  List<Integer> getElectionIdsByReferenceIds(@BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
 
   @SqlUpdate("INSERT INTO election " +
       "(election_type, status, create_date, reference_id, dataset_id) VALUES " +
@@ -37,7 +37,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       @Bind("datasetId") Integer datasetId);
 
   @SqlUpdate("DELETE FROM election WHERE election_id in (<electionIds>)")
-  void deleteElectionsByIds(@BindList("electionIds") List<Integer> electionIds);
+  void deleteElectionsByIds(@BindList(value = "electionIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> electionIds);
 
   @SqlUpdate("UPDATE election SET status = :status, last_update = :lastUpdate WHERE election_id = :electionId ")
   void updateElectionById(@Bind("electionId") Integer electionId,
@@ -67,7 +67,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
           "INNER JOIN library_card lc ON lc.user_id = u.user_id " +
           "WHERE e.election_id IN (<electionIds>) ")
   List<Election> findElectionsWithCardHoldingUsersByElectionIds(
-      @BindList("electionIds") List<Integer> electionIds);
+      @BindList(value = "electionIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> electionIds);
 
   @UseRowMapper(SimpleElectionMapper.class)
   @SqlQuery("SELECT * FROM election WHERE reference_id = :referenceId")
@@ -75,7 +75,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
   @UseRowMapper(SimpleElectionMapper.class)
   @SqlQuery("SELECT * FROM election WHERE reference_id in (<referenceIds>)")
-  List<Election> findElectionsByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+  List<Election> findElectionsByReferenceIds(@BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
 
   @UseRowMapper(SimpleElectionMapper.class)
   @SqlQuery("SELECT * FROM election e " +
@@ -83,7 +83,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       "WHERE LOWER(e.election_type) = :electionType " +
       "AND v.voteid IN (<voteIds>)")
   List<Election> findElectionsByVoteIdsAndType(
-      @BindList("voteIds") List<Integer> voteIds,
+      @BindList(value = "voteIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> voteIds,
       @Bind("electionType") String electionType
   );
 
@@ -115,7 +115,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
   )
   @UseRowMapper(ElectionMapper.class)
   List<Election> findLastElectionsByReferenceIds(
-      @BindList("referenceIds") List<String> referenceIds);
+      @BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
 
   @SqlQuery("SELECT DISTINCT e.* " +
       "FROM election e " +
@@ -123,7 +123,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       "AND e.reference_id IN (<referenceIds>) ")
   @UseRowMapper(ElectionMapper.class)
   List<Election> findOpenElectionsByReferenceIds(
-      @BindList("referenceIds") List<String> referenceIds);
+      @BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
 
   @SqlQuery(
       "SELECT distinct * " +
@@ -138,7 +138,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
           "AND LOWER(e.election_type) = LOWER(:type)")
   @UseRowMapper(SimpleElectionMapper.class)
   List<Election> findLastElectionsByReferenceIdsAndType(
-      @BindList("referenceIds") List<String> referenceIds, @Bind("type") String type);
+      @BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds, @Bind("type") String type);
 
   @SqlQuery(
       "SELECT e.* FROM election e " +
@@ -186,7 +186,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       SET archived = true, last_update = :lastUpdate
       WHERE election_id IN (<electionIds>)
       """)
-  void archiveElectionByIds(@BindList("electionIds") List<Integer> electionIds,
+  void archiveElectionByIds(@BindList(value = "electionIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> electionIds,
       @Bind("lastUpdate") Date lastUpdate);
 
   /**

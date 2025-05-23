@@ -277,7 +277,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       """)
   DarCollectionSummary getDarCollectionSummaryForDACByCollectionId(
       @Bind("currentUserId") Integer currentUserId,
-      @BindList("datasetIds") List<Integer> datasetIds,
+      @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> datasetIds,
       @Bind("collectionId") Integer collectionId);
 
 

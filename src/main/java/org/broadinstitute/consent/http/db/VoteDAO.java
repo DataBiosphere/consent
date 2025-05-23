@@ -9,6 +9,7 @@ import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -22,10 +23,10 @@ public interface VoteDAO extends Transactional<VoteDAO> {
   Vote findVoteById(@Bind("voteId") Integer voteId);
 
   @SqlQuery("SELECT * FROM vote v WHERE v.voteid IN (<voteIds>)")
-  List<Vote> findVotesByIds(@BindList("voteIds") List<Integer> voteIds);
+  List<Vote> findVotesByIds(@BindList(value = "voteIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> voteIds);
 
   @SqlQuery("select * from vote v where v.electionId IN (<electionIds>)")
-  List<Vote> findVotesByElectionIds(@BindList("electionIds") List<Integer> electionIds);
+  List<Vote> findVotesByElectionIds(@BindList(value = "electionIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> electionIds);
 
   @SqlQuery("select * from vote v where v.electionId = :electionId and lower(v.type) = lower(:type)")
   List<Vote> findVotesByElectionIdAndType(@Bind("electionId") Integer electionId,
@@ -54,7 +55,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
   void deleteVotesByReferenceId(@Bind("referenceId") String referenceId);
 
   @SqlUpdate("DELETE FROM vote v WHERE electionId IN (SELECT election_id FROM election WHERE reference_id IN (<referenceIds>)) ")
-  void deleteVotesByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+  void deleteVotesByReferenceIds(@BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
 
 
   @SqlUpdate("update vote set vote = :vote, updateDate = :updateDate, rationale = :rationale, reminderSent = :reminderSent, createDate = :createDate, has_concerns = :hasConcerns where voteId = :voteId")
@@ -84,20 +85,20 @@ public interface VoteDAO extends Transactional<VoteDAO> {
       @Bind("finalVote") Boolean finalVote);
 
   @SqlQuery("SELECT MAX(c) FROM (SELECT COUNT(vote) as c FROM vote WHERE lower(type) = 'dac' and electionId IN (<electionIds>) GROUP BY electionId) as members")
-  Integer findMaxNumberOfDACMembers(@BindList("electionIds") List<Integer> electionIds);
+  Integer findMaxNumberOfDACMembers(@BindList(value = "electionIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> electionIds);
 
   @SqlBatch("insert into vote (user_id, electionId, type) values (:userId, :electionId, :type)")
   void insertVotes(@Bind("userId") List<Integer> userIds, @Bind("electionId") Integer electionId,
       @Bind("type") String type);
 
   @SqlUpdate("delete from vote where voteId IN (<voteIds>)")
-  void removeVotesByIds(@BindList("voteIds") List<Integer> voteIds);
+  void removeVotesByIds(@BindList(value = "voteIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> voteIds);
 
   @SqlQuery("SELECT * FROM vote v WHERE v.user_id = :userId ")
   List<Vote> findVotesByUserId(@Bind("userId") Integer userId);
 
   @SqlUpdate("UPDATE vote v SET rationale = :rationale WHERE v.voteid IN (<voteIds>)")
-  void updateRationaleByVoteIds(@BindList("voteIds") List<Integer> voteIds,
+  void updateRationaleByVoteIds(@BindList(value = "voteIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> voteIds,
       @Bind("rationale") String rationale);
 
   @RegisterBeanMapper(value = User.class)
@@ -109,6 +110,6 @@ public interface VoteDAO extends Transactional<VoteDAO> {
       WHERE e.reference_id IN (<referenceIds>)
       """)
   List<User> findVoteUsersByElectionReferenceIdList(
-      @BindList("referenceIds") List<String> referenceIds);
+      @BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
 
 }

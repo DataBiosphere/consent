@@ -16,6 +16,7 @@ import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -233,7 +234,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           WHERE dar.reference_id IN (<referenceIds>)
             AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
       """)
-  List<DataAccessRequest> findByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+  List<DataAccessRequest> findByReferenceIds(@BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
 
   /**
    * Update DataAccessRequest properties by reference id.
@@ -276,7 +277,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
 
 
   @SqlUpdate("DELETE FROM data_access_request WHERE reference_id IN (<referenceIds>)")
-  void deleteByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+  void deleteByReferenceIds(@BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
 
   @SqlUpdate(
       """
@@ -284,7 +285,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           SET data=jsonb_set((regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb, '{status}', '"Canceled"')
           WHERE reference_id IN (<referenceIds>)
       """)
-  void cancelByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+  void cancelByReferenceIds(@BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
 
   /**
    * Delete all DataAccessRequests with the given collection id
@@ -398,7 +399,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           SET data = jsonb_set ((data #>> '{}')::jsonb, '{status}', '"Archived"', true)
           WHERE reference_id IN (<referenceIds>)
       """)
-  void archiveByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+  void archiveByReferenceIds(@BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
 
 
   /**
@@ -441,7 +442,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @param referenceIds List<String>
    */
   @SqlUpdate("DELETE FROM dar_dataset WHERE reference_id in (<referenceIds>)")
-  void deleteDARDatasetRelationByReferenceIds(@BindList("referenceIds") List<String> referenceIds);
+  void deleteDARDatasetRelationByReferenceIds(@BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
 
   /**
    * Returns all dataset_ids that match any of the referenceIds inside the "referenceIds" list
@@ -449,6 +450,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @param referenceIds List<String>
    */
   @SqlQuery("SELECT distinct dataset_id FROM dar_dataset WHERE reference_id IN (<referenceIds>)")
-  List<Integer> findAllDARDatasetRelations(@BindList("referenceIds") List<String> referenceIds);
+  List<Integer> findAllDARDatasetRelations(@BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
 
 }

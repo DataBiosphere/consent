@@ -9,6 +9,7 @@ import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -66,7 +67,7 @@ public interface UserRoleDAO extends Transactional<UserRoleDAO> {
     DELETE FROM user_role WHERE user_id = :userId AND role_id IN (<existentRoles>)
     """)
   void removeUserRoles(@Bind("userId") Integer userId,
-      @BindList("existentRoles") List<Integer> existentRoles);
+      @BindList(value = "existentRoles", onEmpty = EmptyHandling.NULL_STRING) List<Integer> existentRoles);
 
   @SqlUpdate("""
     INSERT INTO user_role (role_id, user_id) VALUES (:roleId, :userId)

@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
@@ -421,16 +420,14 @@ class VoteDAOTest extends DAOTestHelper {
 
   @Test
   void testFindVoteUsersByElectionReferenceIdList_Empty() {
-    assertThrows(IllegalArgumentException.class, () -> {
-      voteDAO.findVoteUsersByElectionReferenceIdList(List.of());
-    });
+    List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(List.of());
+    assertTrue(voteUsers.isEmpty());
   }
 
   @Test
   void testFindVoteUsersByElectionReferenceIdList_Null() {
-    assertThrows(IllegalArgumentException.class, () -> {
-      voteDAO.findVoteUsersByElectionReferenceIdList(null);
-    });
+    List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(null);
+    assertTrue(voteUsers.isEmpty());
   }
 
   @Test
