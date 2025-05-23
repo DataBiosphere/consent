@@ -74,6 +74,7 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
     }
   }
 
+  // Some queries look for `user_role_id` while those that use a prefix look for `u_user_role_id`
   private UserRole mapUserRoleFromRowView(RowView rowView, Integer userId) {
     Integer userRoleId;
     Integer roleId;
