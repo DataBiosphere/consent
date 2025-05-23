@@ -10,7 +10,6 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -89,24 +88,6 @@ public class LibraryCardResource extends Resource {
       payload.setCreateUserId(user.getUserId());
       LibraryCard newLibraryCard = libraryCardService.createLibraryCard(payload, user);
       return Response.status(HttpStatusCodes.STATUS_CODE_CREATED).entity(newLibraryCard).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @PUT
-  @Consumes("application/json")
-  @Produces("application/json")
-  @Path("/{id}")
-  @RolesAllowed(ADMIN)
-  public Response updateLibraryCard(@Auth AuthUser authUser, @PathParam("id") Integer id,
-      String libraryCard) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      LibraryCard payload = GsonUtil.getInstance().fromJson(libraryCard, LibraryCard.class);
-      LibraryCard updatedLibraryCard = libraryCardService.updateLibraryCard(payload, id,
-          user.getUserId());
-      return Response.ok().entity(updatedLibraryCard).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
