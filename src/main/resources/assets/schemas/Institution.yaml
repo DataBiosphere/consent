@@ -49,4 +49,4 @@ properties:
     description: Signing officials belonging to the institution.
     type: array
     items:
-      $ref: './SimplifiedUser.yaml'
+      $ref: './User.yaml'

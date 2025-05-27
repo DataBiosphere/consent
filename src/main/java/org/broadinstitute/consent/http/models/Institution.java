@@ -2,12 +2,10 @@ package org.broadinstitute.consent.http.models;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
+import java.util.Set;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
-import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 
 public class Institution {
 
@@ -31,7 +29,7 @@ public class Institution {
   private String name;
   private String itDirectorName;
   private String itDirectorEmail;
-  private List<SimplifiedUser> signingOfficials;
+  private final List<User> signingOfficials = new ArrayList<>();
   private String institutionUrl;
   private Integer dunsNumber;
   private String orgChartUrl;
@@ -66,7 +64,6 @@ public class Institution {
     this.name = name;
     this.itDirectorName = itDirectorName;
     this.itDirectorEmail = itDirectorEmail;
-    this.signingOfficials = new ArrayList<>();
     this.createDate = createDate;
     this.createUserId = createUserId;
     this.institutionUrl = institutionUrl;
@@ -97,7 +94,6 @@ public class Institution {
     this.name = name;
     this.itDirectorName = itDirectorName;
     this.itDirectorEmail = itDirectorEmail;
-    this.signingOfficials = new ArrayList<>();
     this.institutionUrl = institutionUrl;
     this.dunsNumber = dunsNumber;
     this.orgChartUrl = orgChartUrl;
@@ -126,19 +122,17 @@ public class Institution {
     this.itDirectorName = itDirectorName;
   }
 
-  public List<SimplifiedUser> getSigningOfficials() {
+  public List<User> getSigningOfficials() {
     return signingOfficials;
   }
 
-  public void setSigningOfficials(List<SimplifiedUser> signingOfficials) {
-    this.signingOfficials = signingOfficials;
+  public void setSigningOfficials(List<User> signingOfficials) {
+    this.signingOfficials.clear();
+    this.signingOfficials.addAll(signingOfficials);
   }
 
-  public void addSigningOfficial(SimplifiedUser so) {
-    if (Objects.isNull(signingOfficials)) {
-      this.setSigningOfficials(new ArrayList<>());
-    }
-    if (!new HashSet<>(signingOfficials).contains(so)) {
+  public void addSigningOfficial(User so) {
+    if (!Set.copyOf(signingOfficials).contains(so)) {
       signingOfficials.add(so);
     }
   }

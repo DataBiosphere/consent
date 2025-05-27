@@ -6,7 +6,6 @@ import org.broadinstitute.consent.http.db.mapper.InstitutionMapper;
 import org.broadinstitute.consent.http.db.mapper.InstitutionWithUsersReducer;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -92,7 +91,6 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
   List<Institution> findInstitutionsByName(@Bind("name") String name);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = SimplifiedUser.class, prefix = "so")
   @UseRowReducer(InstitutionWithUsersReducer.class)
   @SqlQuery(
       "SELECT i.*, "
@@ -121,7 +119,6 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
   List<Institution> findAllInstitutions();
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = SimplifiedUser.class, prefix = "so")
   @UseRowReducer(InstitutionWithUsersReducer.class)
   @SqlQuery(
       """

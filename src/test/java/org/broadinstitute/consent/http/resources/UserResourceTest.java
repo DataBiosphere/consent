@@ -364,14 +364,13 @@ class UserResourceTest {
     User user = createUserWithInstitution();
     User so = createUserWithRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(userService.findSOsByInstitutionId(any())).thenReturn(
-        Arrays.asList(new UserService.SimplifiedUser(so), new UserService.SimplifiedUser(so)));
+    when(userService.findSOsByInstitutionId(any())).thenReturn(Arrays.asList(so, so));
 
     Response response = userResource.getSOsForInstitution(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    var body = (List<UserService.SimplifiedUser>) response.getEntity();
+    var body = (List<User>) response.getEntity();
     assertFalse(body.isEmpty());
-    assertEquals(so.getDisplayName(), body.get(0).displayName);
+    assertEquals(so.getDisplayName(), body.get(0).getDisplayName());
   }
 
   @SuppressWarnings("rawtypes")

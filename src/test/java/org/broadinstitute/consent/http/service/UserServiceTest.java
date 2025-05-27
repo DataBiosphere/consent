@@ -54,7 +54,6 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
-import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.jdbi.v3.core.transaction.TransactionException;
@@ -100,9 +99,6 @@ class UserServiceTest extends AbstractTestHelper {
 
   @Mock
   private DaaDAO daaDAO;
-
-  @Mock
-  private EmailService emailService;
 
   @Mock
   private DraftServiceDAO draftServiceDAO;
@@ -472,15 +468,15 @@ class UserServiceTest extends AbstractTestHelper {
     User u = generateUser();
     Integer institutionId = u.getInstitutionId();
     when(userDAO.getSOsByInstitution(any())).thenReturn(List.of(u, u, u));
-    List<SimplifiedUser> users = service.findSOsByInstitutionId(institutionId);
+    var users = service.findSOsByInstitutionId(institutionId);
     assertEquals(3, users.size());
-    assertEquals(u.getDisplayName(), users.get(0).displayName);
-    assertEquals(u.getEmail(), users.get(0).email);
+    assertEquals(u.getDisplayName(), users.get(0).getDisplayName());
+    assertEquals(u.getEmail(), users.get(0).getEmail());
   }
 
   @Test
   void testFindSOsByInstitutionId_NullId() {
-    List<SimplifiedUser> users = service.findSOsByInstitutionId(null);
+    var users = service.findSOsByInstitutionId(null);
     assertEquals(0, users.size());
   }
 
@@ -578,10 +574,10 @@ class UserServiceTest extends AbstractTestHelper {
     when(daaDAO.findById(any())).thenReturn(daa);
     when(userDAO.getUsersWithCardsByDaaId(any())).thenReturn(List.of(u1));
     libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
-    List<SimplifiedUser> users = service.getUsersByDaaId(daaId);
+    var users = service.getUsersByDaaId(daaId);
     assertNotNull(users);
     assertEquals(1, users.size());
-    assertEquals(List.of(new SimplifiedUser(u1)), users);
+    assertEquals(List.of(u1), users);
   }
 
   @Test
@@ -599,10 +595,10 @@ class UserServiceTest extends AbstractTestHelper {
     when(userDAO.getUsersWithCardsByDaaId(any())).thenReturn(List.of(u1, u2));
     libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
     libraryCardDAO.createLibraryCardDaaRelation(card2.getId(), daaId);
-    List<SimplifiedUser> users = service.getUsersByDaaId(daaId);
+    var users = service.getUsersByDaaId(daaId);
     assertNotNull(users);
     assertEquals(2, users.size());
-    assertEquals(List.of(new SimplifiedUser(u1), new SimplifiedUser(u2)), users);
+    assertEquals(List.of(u1, u2), users);
   }
 
   @Test
@@ -627,15 +623,15 @@ class UserServiceTest extends AbstractTestHelper {
     libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
     libraryCardDAO.createLibraryCardDaaRelation(card2.getId(), daaId);
     libraryCardDAO.createLibraryCardDaaRelation(card3.getId(), daaId2);
-    List<SimplifiedUser> users = service.getUsersByDaaId(daaId);
+    var users = service.getUsersByDaaId(daaId);
     assertNotNull(users);
     assertEquals(2, users.size());
-    assertEquals(List.of(new SimplifiedUser(u1), new SimplifiedUser(u2)), users);
+    assertEquals(List.of(u1, u2), users);
 
-    List<SimplifiedUser> users2 = service.getUsersByDaaId(daaId2);
+    var users2 = service.getUsersByDaaId(daaId2);
     assertNotNull(users2);
     assertEquals(1, users2.size());
-    assertEquals(List.of(new SimplifiedUser(u3)), users2);
+    assertEquals(List.of(u3), users2);
   }
 
   @Test
@@ -648,10 +644,9 @@ class UserServiceTest extends AbstractTestHelper {
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     when(daaDAO.findById(any())).thenReturn(daa);
-    List<SimplifiedUser> users = service.getUsersByDaaId(daaId);
+    var users = service.getUsersByDaaId(daaId);
     assertNotNull(users);
     assertEquals(0, users.size());
-    assertEquals(Collections.emptyList(), users);
   }
 
   @Test

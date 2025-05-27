@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -48,7 +47,6 @@ import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.sam.SamService;
 
 @Path("api/user")
@@ -402,8 +400,7 @@ public class UserResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       if (Objects.nonNull(user.getInstitutionId())) {
-        List<SimplifiedUser> signingOfficials = userService.findSOsByInstitutionId(
-            user.getInstitutionId());
+        var signingOfficials = userService.findSOsByInstitutionId(user.getInstitutionId());
         return Response.ok().entity(signingOfficials).build();
       }
       return Response.ok().entity(Collections.emptyList()).build();

@@ -8,13 +8,11 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.InstitutionDomainMap;
-import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 
 public class InstitutionService {
 
@@ -85,10 +83,7 @@ public class InstitutionService {
     Institution institution = institutionDAO.findInstitutionById(id);
     isInstitutionNull(institution);
 
-    List<SimplifiedUser> signingOfficials = userDAO.getSOsByInstitution(id).stream()
-        .map(SimplifiedUser::new)
-        .collect(Collectors.toList());
-    institution.setSigningOfficials(signingOfficials);
+    institution.setSigningOfficials(userDAO.getSOsByInstitution(id));
 
     return institution;
   }

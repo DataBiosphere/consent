@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 
@@ -38,7 +37,10 @@ public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Inte
     institution.setUpdateUser(update_user);
 
     if (Objects.nonNull(rowView.getColumn("so_user_id", Integer.class))) {
-      SimplifiedUser so_user = rowView.getRow(SimplifiedUser.class);
+      User so_user = new User();
+      so_user.setUserId(rowView.getColumn("so_user_id", Integer.class));
+      so_user.setEmail(rowView.getColumn("so_email", String.class));
+      so_user.setDisplayName(rowView.getColumn("so_display_name", String.class));
       institution.addSigningOfficial(so_user);
     }
 

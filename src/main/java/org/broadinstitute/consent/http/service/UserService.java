@@ -237,7 +237,7 @@ public class UserService implements ConsentLogger {
     return Collections.emptyList();
   }
 
-  public List<SimplifiedUser> getUsersByDaaId(Integer daaId) {
+  public List<User> getUsersByDaaId(Integer daaId) {
     if (Objects.isNull(daaId)) {
       throw new IllegalArgumentException();
     }
@@ -245,8 +245,7 @@ public class UserService implements ConsentLogger {
     if (Objects.isNull(daa)) {
       throw new NotFoundException();
     }
-    List<User> users = userDAO.getUsersWithCardsByDaaId(daaId);
-    return users.stream().map(SimplifiedUser::new).collect(Collectors.toList());
+    return userDAO.getUsersWithCardsByDaaId(daaId);
   }
 
   public void deleteUserByEmail(String email) {
@@ -292,13 +291,12 @@ public class UserService implements ConsentLogger {
     userDAO.updateEmailPreference(userId, preference);
   }
 
-  public List<SimplifiedUser> findSOsByInstitutionId(Integer institutionId) {
+  public List<User> findSOsByInstitutionId(Integer institutionId) {
     if (Objects.isNull(institutionId)) {
       return Collections.emptyList();
     }
 
-    List<User> users = userDAO.getSOsByInstitution(institutionId);
-    return users.stream().map(SimplifiedUser::new).collect(Collectors.toList());
+    return userDAO.getSOsByInstitution(institutionId);
   }
 
   public List<User> findUsersByInstitutionId(Integer institutionId) {
@@ -451,57 +449,6 @@ public class UserService implements ConsentLogger {
     } else {
       throw new BadRequestException(
           "Invalid ERA configuration for this user.  Only one ERA Commons ID is allowed.");
-    }
-  }
-
-  public static class SimplifiedUser {
-
-    public Integer userId;
-    public String displayName;
-    public String email;
-    public Integer institutionId;
-
-    public SimplifiedUser(User user) {
-      this.userId = user.getUserId();
-      this.displayName = user.getDisplayName();
-      this.email = user.getEmail();
-      this.institutionId = user.getInstitutionId();
-    }
-
-    public SimplifiedUser() {
-    }
-
-    public void setUserId(Integer userId) {
-      this.userId = userId;
-    }
-
-    public void setDisplayName(String name) {
-      this.displayName = name;
-    }
-
-    public void setEmail(String email) {
-      this.email = email;
-    }
-
-    public void setInstitutionId(Integer institutionId) {
-      this.institutionId = institutionId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      SimplifiedUser that = (SimplifiedUser) o;
-      return Objects.equals(userId, that.userId);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(userId);
     }
   }
 }
