@@ -457,12 +457,12 @@ public class UserService implements ConsentLogger {
   /**
    * Compliance method defined in
    * <a href="https://broadworkbench.atlassian.net/browse/DT-1607">this ticket</a> that implements
-   * a truth table of rules in order to ensure Library Card and Institution matching rules are
+   * a set of rules in order to ensure Library Card and Institution matching rules are
    * adhered to when authorizing users of the system.
    * @param user the User being evaluated
    * @return user with the Institution and Library Card rules applied
    */
-  public User enforceInstitutionAndLibraryCardTruthTable(User user) {
+  public User enforceInstitutionAndLibraryCardRules(User user) {
     Institution institutionFromEmail = institutionService.findInstitutionForEmail(user.getEmail());
     Institution institutionFromDatabase = null;
     try {
@@ -473,90 +473,89 @@ public class UserService implements ConsentLogger {
 
     boolean hasInstitutionMatchingEmailDomain =
         hasInstitutionMatchingEmailDomain(institutionFromEmail);
-    boolean hasLibraryCard = hasLibraryCard(user);
-    boolean hasAssignedInstitutionInDatabase = institutionFromDatabase != null;
-    boolean hasMatchingInstitutionInDatabase =
-        hasMatchingInstitutionInDatabase(institutionFromEmail, institutionFromDatabase);
 
-    // take action
-    // case 2
-    if (hasInstitutionMatchingEmailDomain
-        && hasLibraryCard
-        && hasAssignedInstitutionInDatabase
-        && !hasMatchingInstitutionInDatabase) {
-      return dropLCAndInstitutionForUser(user);
-    }
+    boolean modifiedUser = false;
 
-    // case 4
-    if (hasInstitutionMatchingEmailDomain
-        && hasLibraryCard
-        && !hasAssignedInstitutionInDatabase
-        && !hasMatchingInstitutionInDatabase) {
-      updateInstitutionForUser(user, institutionFromEmail.getId());
-      return dropLibraryCardForUser(user);
-    }
-    // case 6
-    if (hasInstitutionMatchingEmailDomain
-        && !hasLibraryCard
-        && hasAssignedInstitutionInDatabase
-        && !hasMatchingInstitutionInDatabase) {
-      return updateInstitutionForUserAndReturnUpdatedUser(user, institutionFromEmail.getId());
-    }
-    // case 8
-    if (hasInstitutionMatchingEmailDomain
-        && !hasLibraryCard
-        && !hasAssignedInstitutionInDatabase
-        && !hasMatchingInstitutionInDatabase) {
-      return updateInstitutionForUserAndReturnUpdatedUser(user, null);
-    }
-    // case 10
-    if (!hasInstitutionMatchingEmailDomain
-        && hasLibraryCard
-        && hasAssignedInstitutionInDatabase
-        && !hasMatchingInstitutionInDatabase) {
-      return dropLCAndInstitutionForUser(user);
+    if (hasInstitutionMatchingEmailDomain) {
+      if (handleUserWithInstitutionInMap(user, institutionFromEmail, institutionFromDatabase)) {
+        modifiedUser = true;
+      }
+    } else {
+      if (handleUserWithoutInstitutionInMap(user, institutionFromDatabase)) {
+        modifiedUser = true;
+      }
     }
 
-    // case 11, 12
-    if (!hasInstitutionMatchingEmailDomain
-        && hasLibraryCard
-        && !hasAssignedInstitutionInDatabase
-        && !hasMatchingInstitutionInDatabase) {
-      dropLibraryCardForUser(user);
+    if (modifiedUser) {
       return findUserByEmail(user.getEmail());
+    } else {
+      return user;
     }
-    // case 14
-    if (!hasInstitutionMatchingEmailDomain
-        && !hasLibraryCard
-        && hasAssignedInstitutionInDatabase
-        && !hasMatchingInstitutionInDatabase) {
-      return updateInstitutionForUserAndReturnUpdatedUser(user, null);
-    }
-
-    // do nothing cases 1, 5, 15, 16
-    return user;
-
-    // not possible cases: 3, 7, 9, 13
   }
 
-  private void updateInstitutionForUser(User user, Integer institutionId) {
+  @VisibleForTesting
+  protected boolean handleUserWithInstitutionInMap(User user, Institution institutionFromEmail, Institution institutionFromDatabase) {
+    boolean modifiedUser = false;
+    if (!hasMatchingInstitutionInDatabase(institutionFromEmail, institutionFromDatabase)) {
+      assignInstitutionToUser(user, institutionFromEmail.getId());
+      // Set these so we don't have to look the user up again in the database for the next bit of
+      // work with the library card.
+      user.setInstitutionId(institutionFromEmail.getId());
+      user.setInstitution(institutionFromEmail);
+      modifiedUser = true;
+    }
+
+    if (handleLibraryCardForUser(user)) {
+      modifiedUser = true;
+    }
+
+    return modifiedUser;
+  }
+
+  @VisibleForTesting
+  protected boolean handleLibraryCardForUser(User user) {
+    boolean modifiedUser = false;
+    if (hasLibraryCard(user)) {
+      try {
+        User lcIssuer = findUserById(user.getLibraryCards().get(0).getCreateUserId());
+        Institution lcIssuerInstitution = institutionService.findInstitutionForEmail(lcIssuer.getEmail());
+        if (!user.getInstitution().equals(lcIssuerInstitution)) {
+          dropLibraryCardForUser(user);
+          modifiedUser = true;
+        }
+      } catch (NotFoundException nfe) {
+        dropLibraryCardForUser(user);
+        modifiedUser = true;
+      }
+    }
+    return modifiedUser;
+  }
+
+  @VisibleForTesting
+  protected boolean handleUserWithoutInstitutionInMap(User user, Institution institutionFromDatabase) {
+    if (hasLibraryCard(user)) {
+      dropLCAndInstitutionForUser(user);
+      return true;
+    } else {
+      if (institutionFromDatabase != null) {
+        assignInstitutionToUser(user, null);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void assignInstitutionToUser(User user, Integer institutionId) {
     userDAO.updateInstitutionId(user.getUserId(), institutionId);
   }
 
-  private User dropLCAndInstitutionForUser(User user) {
-    updateInstitutionForUser(user, null);
+  private void dropLCAndInstitutionForUser(User user) {
+    assignInstitutionToUser(user, null);
     libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
-    return findUserByEmail(user.getEmail());
   }
 
-  private User updateInstitutionForUserAndReturnUpdatedUser(User user, Integer institutionId) {
-    updateInstitutionForUser(user, institutionId);
-    return findUserByEmail(user.getEmail());
-  }
-
-  private User dropLibraryCardForUser(User user) {
+  private void dropLibraryCardForUser(User user) {
     libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
-    return findUserByEmail(user.getEmail());
   }
 
   @VisibleForTesting

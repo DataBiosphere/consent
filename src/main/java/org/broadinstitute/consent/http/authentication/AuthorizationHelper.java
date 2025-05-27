@@ -52,7 +52,7 @@ public class AuthorizationHelper implements ConsentLogger {
     } else {
       try {
         User user = userService.findUserByEmail(email);
-        userService.enforceInstitutionAndLibraryCardTruthTable(user);
+        userService.enforceInstitutionAndLibraryCardRules(user);
       } catch (NotFoundException nfe) {
         // nothing to do.  new user.
       }

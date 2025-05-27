@@ -901,43 +901,190 @@ class UserServiceTest extends AbstractTestHelper {
     assertFalse(service.hasMatchingInstitutionInDatabase(institution, null));
   }
 
-  static class TruthTableArgumentsProvider implements ArgumentsProvider {
+  @Test
+  void handleUserWithInstitutionInMap() {
+    User testUser = generateUser();
+    Institution institutionFromEmail = new Institution();
+    institutionFromEmail.setId(1);
+    Institution institutionFromDatabase = new Institution();
+    institutionFromDatabase.setId(1);
+    assertFalse(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail, institutionFromDatabase));
+  }
+
+  @Test
+  void handleUserWithInstitutionInMap_DifferentInDatabase() {
+    User testUser = generateUser();
+    Institution institutionFromEmail = new Institution();
+    institutionFromEmail.setId(1);
+    Institution institutionFromDatabase = new Institution();
+    institutionFromDatabase.setId(2);
+    assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail, institutionFromDatabase));
+    verify(userDAO).updateInstitutionId(testUser.getUserId(), institutionFromEmail.getId());
+  }
+
+  @Test
+  void handleUserWithInstitutionInMap_DifferentInDatabaseWithLibraryCard() {
+    User testUser = generateUser();
+    User signingOfficial = generateUser();
+    LibraryCard lc = new LibraryCard();
+    lc.setCreateUserId(signingOfficial.getUserId());
+    testUser.setLibraryCards(List.of(lc));
+    Institution institutionFromEmail = new Institution();
+    institutionFromEmail.setId(1);
+    testUser.setInstitution(institutionFromEmail);
+    Institution institutionFromDatabase = new Institution();
+    institutionFromDatabase.setId(2);
+
+    when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
+    when(libraryCardDAO.findLibraryCardsByUserId(signingOfficial.getUserId())).thenReturn(List.of(new LibraryCard()));
+    when(institutionService.findInstitutionForEmail(signingOfficial.getEmail())).thenReturn(institutionFromDatabase);
+
+    assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail, institutionFromDatabase));
+    verify(userDAO).updateInstitutionId(testUser.getUserId(), institutionFromEmail.getId());
+    verify(libraryCardDAO).deleteAllLibraryCardsByUser(testUser.getUserId());
+  }
+
+  @Test
+  void handleUserWithInstitutionInMap_DifferentInDatabaseWithLibraryCard_SO_NFE() {
+    User testUser = generateUser();
+    User signingOfficial = generateUser();
+    LibraryCard lc = new LibraryCard();
+    lc.setCreateUserId(signingOfficial.getUserId());
+    testUser.setLibraryCards(List.of(lc));
+    Institution institutionFromEmail = new Institution();
+    institutionFromEmail.setId(1);
+    testUser.setInstitution(institutionFromEmail);
+    Institution institutionFromDatabase = new Institution();
+    institutionFromDatabase.setId(2);
+
+    when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(null);
+
+    assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail, institutionFromDatabase));
+    verify(userDAO).updateInstitutionId(testUser.getUserId(), institutionFromEmail.getId());
+    verify(libraryCardDAO).deleteAllLibraryCardsByUser(testUser.getUserId());
+  }
+
+  @Test
+  void handleUserWithInstitutionInMap_SameInDatabaseWithLC() {
+    User testUser = generateUser();
+    User signingOfficial = generateUser();
+    LibraryCard lc = new LibraryCard();
+    lc.setCreateUserId(signingOfficial.getUserId());
+    testUser.setLibraryCards(List.of(lc));
+    Institution institutionFromEmail = new Institution();
+    institutionFromEmail.setId(1);
+    testUser.setInstitution(institutionFromEmail);
+
+
+    when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
+    when(libraryCardDAO.findLibraryCardsByUserId(signingOfficial.getUserId())).thenReturn(List.of(new LibraryCard()));
+    when(institutionService.findInstitutionForEmail(signingOfficial.getEmail())).thenReturn(institutionFromEmail);
+
+    assertFalse(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail, institutionFromEmail));
+  }
+
+
+  @Test
+  void handleUserWithInstitutionInMap_SameInDatabaseWithLCFromDifferentOrg() {
+    User testUser = generateUser();
+    User signingOfficial = generateUser();
+    LibraryCard lc = new LibraryCard();
+    lc.setCreateUserId(signingOfficial.getUserId());
+    testUser.setLibraryCards(List.of(lc));
+    Institution institutionFromEmail = new Institution();
+    institutionFromEmail.setId(1);
+    testUser.setInstitution(institutionFromEmail);
+
+
+    when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
+    when(libraryCardDAO.findLibraryCardsByUserId(signingOfficial.getUserId())).thenReturn(List.of(new LibraryCard()));
+    when(institutionService.findInstitutionForEmail(signingOfficial.getEmail())).thenReturn(null);
+
+    assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail, institutionFromEmail));
+    verify(userDAO, times(0)).updateInstitutionId(any(), any());
+    verify(libraryCardDAO).deleteAllLibraryCardsByUser(testUser.getUserId());
+  }
+
+  @Test
+  void handleLibraryCardForUser() {
+    User testUser = generateUser();
+    testUser.setLibraryCards(List.of());
+    assertFalse(service.handleLibraryCardForUser(testUser));
+  }
+
+  @Test
+  void handleLibraryCardForUser_SO_NFE() {
+    User testUser = generateUser();
+    User signingOfficial = generateUser();
+    LibraryCard lc = new LibraryCard();
+    lc.setCreateUserId(signingOfficial.getUserId());
+    testUser.setLibraryCards(List.of(lc));
+
+    when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(null);
+    assertTrue(service.handleLibraryCardForUser(testUser));
+    verify(libraryCardDAO).deleteAllLibraryCardsByUser(testUser.getUserId());
+  }
+
+  @Test
+  void handleLibraryCardForUser_SO_DifferentInstitution() {
+    User testUser = generateUser();
+    User signingOfficial = generateUser();
+    LibraryCard lc = new LibraryCard();
+    lc.setCreateUserId(signingOfficial.getUserId());
+    testUser.setLibraryCards(List.of(lc));
+    Institution institutionFromEmail = new Institution();
+    institutionFromEmail.setId(1);
+    testUser.setInstitution(institutionFromEmail);
+
+    Institution soInstitution = new Institution();
+    institutionFromEmail.setId(2);
+
+    when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
+    when(institutionService.findInstitutionForEmail(signingOfficial.getEmail())).thenReturn(soInstitution);
+    assertTrue(service.handleLibraryCardForUser(testUser));
+    verify(libraryCardDAO).deleteAllLibraryCardsByUser(testUser.getUserId());
+  }
+
+  static class InstitutionAndLibraryCardVariationsProvider implements ArgumentsProvider {
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
+      User testUser = generateUser();
       Institution institution1 = new Institution();
       institution1.setId(1);
       Institution institution2 = new Institution();
       institution2.setId(2);
       List<LibraryCard> libraryCards1 = List.of(new LibraryCard());
+      LibraryCard libraryCard2 = new LibraryCard();
+      libraryCard2.setCreateUserId(1);
       return Stream.of(
-          Arguments.of(institution1, libraryCards1, institution1, false),
-          Arguments.of(institution1, libraryCards1, institution2, true),
-          Arguments.of(institution1, libraryCards1, null, true),
-          Arguments.of(institution1, null, institution1, false),
-          Arguments.of(institution1, null, institution2, true),
-          Arguments.of(institution1, null, null, true),
-          Arguments.of(null, libraryCards1, institution2, true),
-          Arguments.of(null, libraryCards1, null, true),
-          Arguments.of(null, null, institution2, true),
-          Arguments.of(null, null, null, false)
+          Arguments.of(institution1, testUser, libraryCards1, institution1, true),
+          Arguments.of(institution1, testUser, List.of(libraryCard2), institution1, true),
+          Arguments.of(institution1, testUser, libraryCards1, institution2, true),
+          Arguments.of(institution1, testUser, libraryCards1, null, true),
+          Arguments.of(institution1, testUser, null, institution1, false),
+          Arguments.of(institution1, testUser, null, institution2, true),
+          Arguments.of(institution1, testUser, null, null, true),
+          Arguments.of(null, testUser, libraryCards1, institution2, true),
+          Arguments.of(null, testUser, libraryCards1, null, true),
+          Arguments.of(null, testUser, null, institution2, true),
+          Arguments.of(null, testUser, null, null, false)
       );
     }
   }
 
   @ParameterizedTest
-  @ArgumentsSource(TruthTableArgumentsProvider.class)
-  void testEnforceInstitutionAndLibraryCardTruthTable_TruthTable(Institution institutionFromMap, List<LibraryCard> libraryCard, Institution institutionFromDatabase, boolean expectsUserMod) {
-    User testUser = generateUser();
-    testUser.setLibraryCards(libraryCard);
+  @ArgumentsSource(InstitutionAndLibraryCardVariationsProvider.class)
+  void testEnforceInstitutionAndLibraryCardVariations(Institution institutionFromMap, User testUser, List<LibraryCard> cards, Institution institutionFromDatabase, boolean expectsUserMod) {
+    testUser.setLibraryCards(cards);
     User alteredUser = new User();
     alteredUser.setEmail(testUser.getEmail());
     when(institutionService.findInstitutionForEmail(testUser.getEmail())).thenReturn(institutionFromMap);
     when(institutionService.findInstitutionById(testUser.getInstitutionId())).thenReturn(institutionFromDatabase);
     if (expectsUserMod) {
       when(userDAO.findUserByEmail(testUser.getEmail())).thenReturn(alteredUser);
-      validateAlteredUserIsReturned(testUser, service.enforceInstitutionAndLibraryCardTruthTable(testUser));
+      validateAlteredUserIsReturned(testUser, service.enforceInstitutionAndLibraryCardRules(testUser));
     } else {
-      validateUserIsUnmodified(testUser, service.enforceInstitutionAndLibraryCardTruthTable(testUser));
+      validateUserIsUnmodified(testUser, service.enforceInstitutionAndLibraryCardRules(testUser));
     }
   }
 
@@ -959,7 +1106,7 @@ class UserServiceTest extends AbstractTestHelper {
     return u;
   }
 
-  private User generateUser() {
+  private static User generateUser() {
     User u = new User();
     int i1 = randomInt(10, 50);
     int i2 = randomInt(10, 50);
