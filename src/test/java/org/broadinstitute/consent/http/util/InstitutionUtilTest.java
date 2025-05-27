@@ -74,6 +74,7 @@ class InstitutionUtilTest {
     Institution mockInstitution = initMockInstitution();
     Gson builder = util.getGsonBuilder(false);
     String json = builder.toJson(mockInstitution);
-    assertEquals("{\"id\":1,\"name\":\"Test Name\"}", json);
+    assertEquals("""
+        {"id":1,"name":"Test Name","signingOfficials":[]}""", json);
   }
 }
