@@ -104,6 +104,8 @@ PASSWORD=$(echo "$PG_JSON" | jq -r .password)
 
 INSTANCE="broad-dsde-$1:us-central1:$INSTANCE"
 
+echo "Starting a proxy for $1. Connect in IntelliJ using: \"jdbc:postgresql://localhost:5432/consent?user=$USERNAME&password=$PASSWORD\""
+
 cloud_sql_proxy -instances="$INSTANCE"=tcp:5432 -dir=/tmp &
 sleep 3
 psql "postgresql://$USERNAME:$PASSWORD@localhost:5432/consent"
