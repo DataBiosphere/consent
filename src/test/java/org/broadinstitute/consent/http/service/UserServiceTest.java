@@ -849,17 +849,6 @@ class UserServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void hasInstitutionMatchingEmailDomain() {
-    Institution institution = new Institution();
-    assertTrue(service.hasInstitutionMatchingEmailDomain(institution));
-  }
-
-  @Test
-  void hasInstitutionMatchingEmailDomain_Bad() {
-    assertFalse(service.hasInstitutionMatchingEmailDomain(null));
-  }
-
-  @Test
   void hasLibraryCard() {
     User testUser = generateUser();
     testUser.setLibraryCard(new LibraryCard());

@@ -470,12 +470,9 @@ public class UserService implements ConsentLogger {
       return null;
     }
 
-    boolean hasInstitutionMatchingEmailDomain =
-        hasInstitutionMatchingEmailDomain(institutionFromEmail);
-
     boolean modifiedUser = false;
 
-    if (hasInstitutionMatchingEmailDomain) {
+    if (institutionFromEmail != null) {
       if (handleUserWithInstitutionInMap(user, institutionFromEmail, institutionFromDatabase)) {
         modifiedUser = true;
       }
@@ -554,13 +551,8 @@ public class UserService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  protected boolean hasInstitutionMatchingEmailDomain(Institution institution) {
-    return institution != null;
-  }
-
-  @VisibleForTesting
   protected boolean hasLibraryCard(User user) {
-    return !(user.getLibraryCard() == null);
+    return user.getLibraryCard() != null;
   }
 
   @VisibleForTesting
