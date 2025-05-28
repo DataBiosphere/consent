@@ -459,16 +459,23 @@ public class UserService implements ConsentLogger {
    * <a href="https://broadworkbench.atlassian.net/browse/DT-1607">this ticket</a> that implements
    * a set of rules in order to ensure Library Card and Institution matching rules are
    * adhered to when authorizing users of the system.
-   * @param user the User being evaluated
-   * @return user with the Institution and Library Card rules applied
+   * @param email of the user being evaluated
+   * @return user with the Institution and Library Card rules applied or null if the requestor isn't
+   * a DUOS user.
    */
-  public User enforceInstitutionAndLibraryCardRules(User user) {
-    Institution institutionFromEmail = institutionService.findInstitutionForEmail(user.getEmail());
+  public User enforceInstitutionAndLibraryCardRules(String email) {
+    User user = null;
+    Institution institutionFromEmail = institutionService.findInstitutionForEmail(email);
     Institution institutionFromDatabase = null;
     try {
+      user = userDAO.findUserByEmail(email);
       institutionFromDatabase = institutionService.findInstitutionById(user.getInstitutionId());
     } catch (NotFoundException nfe) {
       // do nothing.
+    }
+
+    if (user == null) {
+      return null;
     }
 
     boolean hasInstitutionMatchingEmailDomain =
@@ -498,14 +505,10 @@ public class UserService implements ConsentLogger {
     boolean modifiedUser = false;
     if (!hasMatchingInstitutionInDatabase(institutionFromEmail, institutionFromDatabase)) {
       assignInstitutionToUser(user, institutionFromEmail.getId());
-      // Set these so we don't have to look the user up again in the database for the next bit of
-      // work with the library card.
-      user.setInstitutionId(institutionFromEmail.getId());
-      user.setInstitution(institutionFromEmail);
       modifiedUser = true;
     }
 
-    if (handleLibraryCardForUser(user)) {
+    if (handleLibraryCardForUser(user, institutionFromEmail)) {
       modifiedUser = true;
     }
 
@@ -513,13 +516,13 @@ public class UserService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  protected boolean handleLibraryCardForUser(User user) {
+  protected boolean handleLibraryCardForUser(User user, Institution userInstitution) {
     boolean modifiedUser = false;
     if (hasLibraryCard(user)) {
       try {
         User lcIssuer = findUserById(user.getLibraryCards().get(0).getCreateUserId());
         Institution lcIssuerInstitution = institutionService.findInstitutionForEmail(lcIssuer.getEmail());
-        if (!user.getInstitution().equals(lcIssuerInstitution)) {
+        if (!userInstitution.equals(lcIssuerInstitution)) {
           dropLibraryCardForUser(user);
           modifiedUser = true;
         }

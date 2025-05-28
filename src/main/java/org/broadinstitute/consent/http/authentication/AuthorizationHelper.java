@@ -51,8 +51,7 @@ public class AuthorizationHelper implements ConsentLogger {
           aud, name));
     } else {
       try {
-        User user = userService.findUserByEmail(email);
-        userService.enforceInstitutionAndLibraryCardRules(user);
+        userService.enforceInstitutionAndLibraryCardRules(email);
       } catch (NotFoundException nfe) {
         // nothing to do.  new user.
       }

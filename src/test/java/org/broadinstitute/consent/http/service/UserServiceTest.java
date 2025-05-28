@@ -1009,19 +1009,22 @@ class UserServiceTest extends AbstractTestHelper {
   void handleLibraryCardForUser() {
     User testUser = generateUser();
     testUser.setLibraryCards(List.of());
-    assertFalse(service.handleLibraryCardForUser(testUser));
+    Institution institution = new Institution();
+    assertFalse(service.handleLibraryCardForUser(testUser, institution));
   }
 
   @Test
   void handleLibraryCardForUser_SO_NFE() {
     User testUser = generateUser();
+    Institution institution = new Institution();
+    institution.setId(testUser.getInstitutionId());
     User signingOfficial = generateUser();
     LibraryCard lc = new LibraryCard();
     lc.setCreateUserId(signingOfficial.getUserId());
     testUser.setLibraryCards(List.of(lc));
 
     when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(null);
-    assertTrue(service.handleLibraryCardForUser(testUser));
+    assertTrue(service.handleLibraryCardForUser(testUser, institution));
     verify(libraryCardDAO).deleteAllLibraryCardsByUser(testUser.getUserId());
   }
 
@@ -1041,7 +1044,7 @@ class UserServiceTest extends AbstractTestHelper {
 
     when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
     when(institutionService.findInstitutionForEmail(signingOfficial.getEmail())).thenReturn(soInstitution);
-    assertTrue(service.handleLibraryCardForUser(testUser));
+    assertTrue(service.handleLibraryCardForUser(testUser, institutionFromEmail));
     verify(libraryCardDAO).deleteAllLibraryCardsByUser(testUser.getUserId());
   }
 
@@ -1081,10 +1084,11 @@ class UserServiceTest extends AbstractTestHelper {
     when(institutionService.findInstitutionForEmail(testUser.getEmail())).thenReturn(institutionFromMap);
     when(institutionService.findInstitutionById(testUser.getInstitutionId())).thenReturn(institutionFromDatabase);
     if (expectsUserMod) {
-      when(userDAO.findUserByEmail(testUser.getEmail())).thenReturn(alteredUser);
-      validateAlteredUserIsReturned(testUser, service.enforceInstitutionAndLibraryCardRules(testUser));
+      when(userDAO.findUserByEmail(testUser.getEmail())).thenReturn(testUser, alteredUser);
+      validateAlteredUserIsReturned(testUser, service.enforceInstitutionAndLibraryCardRules(testUser.getEmail()));
     } else {
-      validateUserIsUnmodified(testUser, service.enforceInstitutionAndLibraryCardRules(testUser));
+      when(userDAO.findUserByEmail(testUser.getEmail())).thenReturn(testUser);
+      validateUserIsUnmodified(testUser, service.enforceInstitutionAndLibraryCardRules(testUser.getEmail()));
     }
   }
 
