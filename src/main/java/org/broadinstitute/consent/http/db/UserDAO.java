@@ -28,16 +28,38 @@ public interface UserDAO extends Transactional<UserDAO> {
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class)
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
+  @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
   @UseRowReducer(UserWithRolesReducer.class)
-  @SqlQuery("SELECT "
-      + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-      + Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR
-      + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name  "
-      + " FROM users u "
-      + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
-      + " LEFT JOIN roles r ON r.role_id = ur.role_id "
-      + " LEFT JOIN institution i ON u.institution_id = i.institution_id"
-      + " WHERE u.user_id = :userId")
+  @SqlQuery("""
+      SELECT
+          u.user_id as u_user_id,
+          u.email as u_email,
+          u.display_name as u_display_name,
+          u.create_date as u_create_date,
+          u.email_preference as u_email_preference,
+          u.institution_id as u_institution_id,
+          u.era_commons_id as u_era_commons_id,
+          i.institution_id as i_id,
+          i.institution_name as i_name,
+          i.it_director_name as i_it_director_name,
+          i.it_director_email as i_it_director_email,
+          i.create_date as i_create_date,
+          i.update_date as i_update_date,
+          ur.user_role_id as ur_user_role_id, ur.user_id as ur_user_id,
+          ur.role_id as ur_role_id, ur.dac_id as ur_dac_id, r.name as ur_name,
+          lc.id AS lc_id, lc.user_id AS lc_user_id,
+          lc.user_name AS lc_user_name, lc.user_email AS lc_user_email,
+          lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date,
+          lc.update_user_id AS lc_update_user_id,
+          ld.daa_id as lc_daa_id
+      FROM users u
+      LEFT JOIN user_role ur ON ur.user_id = u.user_id
+      LEFT JOIN roles r ON r.role_id = ur.role_id
+      LEFT JOIN institution i ON u.institution_id = i.institution_id
+      LEFT JOIN library_card lc ON lc.user_id = u.user_id
+      LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+      WHERE u.user_id = :userId
+      """)
   User findUserById(@Bind("userId") Integer userId);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
@@ -93,17 +115,38 @@ public interface UserDAO extends Transactional<UserDAO> {
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class, prefix = "ur")
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
+  @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
   @UseRowReducer(UserWithRolesReducer.class)
-  @SqlQuery("SELECT "
-      + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-      + Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR
-      + "     ur.user_role_id as ur_user_role_id, ur.user_id as ur_user_id, "
-      + "     ur.role_id as ur_role_id, ur.dac_id as ur_dac_id, r.name as ur_name "
-      + " FROM users u "
-      + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
-      + " LEFT JOIN roles r ON r.role_id = ur.role_id "
-      + " LEFT JOIN institution i ON u.institution_id = i.institution_id"
-      + " WHERE LOWER(u.email) = LOWER(:email)")
+  @SqlQuery("""
+      SELECT
+          u.user_id as u_user_id,
+          u.email as u_email,
+          u.display_name as u_display_name,
+          u.create_date as u_create_date,
+          u.email_preference as u_email_preference,
+          u.institution_id as u_institution_id,
+          u.era_commons_id as u_era_commons_id,
+          i.institution_id as i_id,
+          i.institution_name as i_name,
+          i.it_director_name as i_it_director_name,
+          i.it_director_email as i_it_director_email,
+          i.create_date as i_create_date,
+          i.update_date as i_update_date,
+          ur.user_role_id as ur_user_role_id, ur.user_id as ur_user_id,
+          ur.role_id as ur_role_id, ur.dac_id as ur_dac_id, r.name as ur_name,
+          lc.id AS lc_id, lc.user_id AS lc_user_id,
+          lc.user_name AS lc_user_name, lc.user_email AS lc_user_email,
+          lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date,
+          lc.update_user_id AS lc_update_user_id,
+          ld.daa_id as lc_daa_id
+      FROM users u
+      LEFT JOIN user_role ur ON ur.user_id = u.user_id
+      LEFT JOIN roles r ON r.role_id = ur.role_id
+      LEFT JOIN institution i ON u.institution_id = i.institution_id
+      LEFT JOIN library_card lc ON lc.user_id = u.user_id
+      LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+      WHERE LOWER(u.email) = LOWER(:email)
+      """)
   User findUserByEmail(@Bind("email") String email);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
@@ -175,19 +218,6 @@ public interface UserDAO extends Transactional<UserDAO> {
   @SqlQuery("select du.*, r.role_id, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from users du inner join user_role ur on ur.user_id = du.user_id inner join roles r on r.role_id = ur.role_id where r.name = :roleName and du.email_preference = :emailPreference")
   List<User> describeUsersByRoleAndEmailPreference(@Bind("roleName") String roleName,
       @Bind("emailPreference") Boolean emailPreference);
-
-  @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = UserRole.class)
-  @UseRowReducer(UserWithRolesReducer.class)
-  @SqlQuery("SELECT "
-      + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-      + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
-      + " FROM users u "
-      + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
-      + " LEFT JOIN roles r ON r.role_id = ur.role_id "
-      + " WHERE LOWER(u.email) = LOWER(:email) "
-      + " AND r.role_id = :roleId")
-  User findUserByEmailAndRoleId(@Bind("email") String email, @Bind("roleId") Integer roleId);
 
   @UseRowMapper(UserWithRolesMapper.class)
   @SqlQuery("select du.*, r.role_id, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id " +

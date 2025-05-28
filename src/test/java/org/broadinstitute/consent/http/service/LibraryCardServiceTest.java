@@ -3,7 +3,9 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -14,9 +16,7 @@ import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
-import java.util.Collections;
 import java.util.List;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
@@ -65,7 +65,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     LibraryCard payload = testLibraryCard(user.getUserId());
     payload.setUserEmail(user.getEmail());
     payload.setUserName("username");
-    payload.setCreateUserId(RandomUtils.nextInt(1, 10));
+    payload.setCreateUserId(randomInt(1, 10));
 
     //last two calls in the function, no need to test within this service test file
     LibraryCard createdCard = new LibraryCard();
@@ -152,7 +152,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
 
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
-    when(libraryCardDAO.findLibraryCardsByUserId(user.getUserId())).thenReturn(List.of());
+    when(libraryCardDAO.findLibraryCardByUserId(user.getUserId())).thenReturn(null);
 
     LibraryCard payload = testLibraryCard(user.getUserId());
     int cardId = 1;
@@ -171,7 +171,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     user.setEmail("testemail");
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
     LibraryCard libraryCard = testLibraryCard(user.getUserId());
-    libraryCard.setCreateUserId(RandomUtils.nextInt(1, 10));
+    libraryCard.setCreateUserId(randomInt(1, 10));
     when(libraryCardDAO.insertLibraryCard(eq(user.getUserId()), eq(null), eq(user.getEmail()),
         eq(libraryCard.getCreateUserId()), any())).thenReturn(123);
     service.createLibraryCard(libraryCard,
@@ -189,7 +189,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     when(userDAO.findUserById(anyInt())).thenReturn(soUser);
     when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
     when(institutionService.findInstitutionForEmail("testemail")).thenReturn(institution);
-    when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(Collections.emptyList());
+    when(libraryCardDAO.findLibraryCardByUserId(anyInt())).thenReturn(null);
 
     // last two calls in the function, no need to test within this service test file
     when(libraryCardDAO.insertLibraryCard(anyInt(), eq(null), anyString(), eq(null), any())).thenReturn(1);
@@ -210,7 +210,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     user.setEmail("testemail");
 
     when(userDAO.findUserById(anyInt())).thenReturn(user);
-    when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(Collections.emptyList());
+    when(libraryCardDAO.findLibraryCardByUserId(anyInt())).thenReturn(null);
 
     LibraryCard payload = testLibraryCard(user.getUserId());
     payload.setUserEmail("differentemail");
@@ -226,8 +226,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     LibraryCard savedCard = testLibraryCard(user.getUserId());
     LibraryCard payload = savedCard;
 
-    when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(
-        Collections.singletonList(savedCard));
+    when(libraryCardDAO.findLibraryCardByUserId(anyInt())).thenReturn(savedCard);
     assertThrows(ConsentConflictException.class, () -> service.createLibraryCard(payload, adminUser));
   }
 
@@ -243,8 +242,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
 
     LibraryCard payload = savedCard;
 
-    when(libraryCardDAO.findAllLibraryCardsByUserEmail(any())).thenReturn(
-        Collections.singletonList(savedCard));
+    when(libraryCardDAO.findLibraryCardByUserEmail(any())).thenReturn(savedCard);
     assertThrows(ConsentConflictException.class, () -> {
       service.createLibraryCard(payload, adminUser);
     });
@@ -335,8 +333,8 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   void testFindLibraryCardByIdDaa() {
     LibraryCard libraryCard = testLibraryCard(1);
     DataAccessAgreement daa1 = new DataAccessAgreement();
-    int daaId1 = RandomUtils.nextInt(1, 10);
-    int daaId2 = RandomUtils.nextInt(1, 10);
+    int daaId1 = randomInt(1, 10);
+    int daaId2 = randomInt(1, 10);
     daa1.setDaaId(daaId1);
     DataAccessAgreement daa2 = new DataAccessAgreement();
     daa2.setDaaId(daaId2);
@@ -369,30 +367,25 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testAddDaaToUserLibraryCardByInstitution() {
+  void testAddDaaToUserLibraryCard() {
     User user = testUser(1);
     user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
     User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
     signingOfficial.setInstitutionId(1);
     Integer userId = user.getUserId();
-    List<LibraryCard> libraryCards = List.of(
-        testLibraryCard(userId),
-        testLibraryCard(userId)
-    );
-    when(libraryCardDAO.findLibraryCardsByUserId(user.getUserId()))
-        .thenReturn(libraryCards);
+    when(libraryCardDAO.findLibraryCardByUserId(user.getUserId())).thenReturn(testLibraryCard(userId));
     doNothing().when(libraryCardDAO).createLibraryCardDaaRelation(any(), any());
-    List<LibraryCard> cards = service.addDaaToUserLibraryCardByInstitution(user, signingOfficial, 1);
-    assertEquals(2, cards.size());
+    LibraryCard card = service.addDaaToUserLibraryCard(user, signingOfficial, 1);
+    assertNotNull(card);
   }
 
   @Test
-  void testAddDaaToUserLibraryCardByInstitutionNoMatchingInstitutions() {
+  void testAddDaaToUserLibraryCardNoMatchingInstitutions() {
     User user = testUser(1);
     user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
     User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
     signingOfficial.setInstitutionId(4);
-    assertThrows(BadRequestException.class, () -> service.addDaaToUserLibraryCardByInstitution(user, signingOfficial, 1));
+    assertThrows(BadRequestException.class, () -> service.addDaaToUserLibraryCard(user, signingOfficial, 1));
   }
 
   @Test
@@ -406,10 +399,10 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     LibraryCard payload = testLibraryCard(user.getUserId());
     payload.setUserEmail("testemail");
     // There are two calls to findLibraryCardsByUserId for checks before creation
-    when(libraryCardDAO.findLibraryCardsByUserId(userId))
-        .thenReturn(List.of())
-        .thenReturn(List.of())
-        .thenReturn(List.of(payload));
+    when(libraryCardDAO.findLibraryCardByUserId(userId))
+        .thenReturn(null)
+        .thenReturn(null)
+        .thenReturn(payload);
     when(institutionDAO.findInstitutionById(institution.getId())).thenReturn(institution);
     when(institutionService.findInstitutionForEmail(any())).thenReturn(institution);
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
@@ -417,51 +410,31 @@ class LibraryCardServiceTest extends AbstractTestHelper {
         .thenReturn(1);
     when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
 
-    List<LibraryCard> cards = service.addDaaToUserLibraryCardByInstitution(user, signingOfficial, 1);
-    assertEquals(1, cards.size());
-  }
-
-  @Test
-  void testAddDaaToUserLibraryCardByInstitutionSigningOfficialNoInstitution() {
-    User user = testUser(1);
-    user.setRoles(List.of(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
-    User signingOfficial = new User();
-    signingOfficial.setRoles(List.of(new UserRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName())));
-    assertThrows(BadRequestException.class, () -> service.addDaaToUserLibraryCardByInstitution(user, signingOfficial, 1));
+    LibraryCard card = service.addDaaToUserLibraryCard(user, signingOfficial, 1);
+    assertNotNull(card);
   }
 
   @Test
   void testRemoveDaaFromUserLibraryCards() {
     User user = testUser(1);
     Integer userId = user.getUserId();
-    List<LibraryCard> libraryCards = List.of(
-        testLibraryCard(userId),
-        testLibraryCard(userId),
-        testLibraryCard(userId),
-        testLibraryCard(userId)
-    );
-    when(libraryCardDAO.findLibraryCardsByUserId(user.getUserId()))
-        .thenReturn(libraryCards);
+    when(libraryCardDAO.findLibraryCardByUserId(user.getUserId())).thenReturn(testLibraryCard(userId));
     doNothing().when(libraryCardDAO).deleteLibraryCardDaaRelation(any(), any());
-    List<LibraryCard> cards = service.removeDaaFromUserLibraryCards(user, 1);
+    LibraryCard card = service.removeDaaFromUserLibraryCard(user, 1);
     // The above deletion only affects the lc-daa join table and does not remove library cards
-    assertEquals(libraryCards.size(), cards.size());
+    assertNotNull(card);
+    assertTrue(card.getDaaIds().isEmpty());
   }
 
   @Test
   void testRemoveDaaFromUserLibraryCardsNoMatchingInstitutions() {
     User user = testUser(1);
     Integer userId = user.getUserId();
-    List<LibraryCard> libraryCards = List.of(
-        testLibraryCard(userId),
-        testLibraryCard(userId),
-        testLibraryCard(userId),
-        testLibraryCard(userId)
-    );
-    when(libraryCardDAO.findLibraryCardsByUserId(user.getUserId())).thenReturn(libraryCards);
-    List<LibraryCard> cards = service.removeDaaFromUserLibraryCards(user, 1);
+    when(libraryCardDAO.findLibraryCardByUserId(user.getUserId())).thenReturn(testLibraryCard(userId));
+    LibraryCard card = service.removeDaaFromUserLibraryCard(user, 1);
     // DAA removal should not delete library cards
-    assertEquals(libraryCards.size(), cards.size());
+    assertNotNull(card);
+    assertTrue(card.getDaaIds().isEmpty());
   }
 
   @Test
@@ -478,7 +451,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     when(userDAO.findUserById(anyInt())).thenReturn(user);
     when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
     when(institutionService.findInstitutionForEmail(user.getEmail())).thenReturn(institution);
-    when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(Collections.emptyList());
+    when(libraryCardDAO.findLibraryCardByUserId(anyInt())).thenReturn(null);
 
     when(libraryCardDAO.insertLibraryCard(anyInt(), any(), any(), anyInt(),
         any())).thenReturn(1);
@@ -493,22 +466,21 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   void testRemoveDaaFromUserLibraryCardByInstitutionNoLibraryCards() {
     User user = testUser(1);
     Integer userId = user.getUserId();
-    when(libraryCardDAO.findLibraryCardsByUserId(userId))
-        .thenReturn(Collections.emptyList());
-    List<LibraryCard> cards = service.removeDaaFromUserLibraryCards(user,1);
-    assertEquals(0, cards.size());
+    when(libraryCardDAO.findLibraryCardByUserId(userId)).thenReturn(null);
+    LibraryCard card = service.removeDaaFromUserLibraryCard(user,1);
+    assertNull(card);
   }
 
   private User testUser(Integer institutionId) {
     User user = new User();
-    user.setUserId(RandomUtils.nextInt(1, 10));
+    user.setUserId(randomInt(1, 10));
     user.setInstitutionId(institutionId);
     return user;
   }
 
   private LibraryCard testLibraryCard(Integer userId) {
     LibraryCard libraryCard = new LibraryCard();
-    libraryCard.setId(RandomUtils.nextInt(1, 10));
+    libraryCard.setId(randomInt(1, 10));
     libraryCard.setUserId(userId);
 
     return libraryCard;
@@ -516,7 +488,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
 
   private Institution testInstitution() {
     Institution institution = new Institution();
-    institution.setId(RandomUtils.nextInt(1, 10));
+    institution.setId(randomInt(1, 10));
     institution.setName("Test Institution");
 
     return institution;

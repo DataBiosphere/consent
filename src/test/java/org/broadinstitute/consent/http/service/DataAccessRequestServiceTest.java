@@ -223,7 +223,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     dar.setSortDate(new Timestamp(1000));
     dar.setReferenceId("id");
     User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(List.of());
     assertThrows(NIHComplianceRuleException.class,
         () -> service.createDataAccessRequest(user, dar));
   }
@@ -412,7 +411,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   void validateDarNoLibraryCards() {
     DataAccessRequest dar = generateDataAccessRequest();
     User user = new User(1, "email@test.org", "Display Name", new Date());
-    user.setLibraryCards(Collections.emptyList());
     assertThrows(NIHComplianceRuleException.class, () -> service.validateDar(user, dar));
   }
 
@@ -438,7 +436,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         roles);
     collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
     LibraryCard libraryCard = new LibraryCard();
-    collaboratorUser.setLibraryCards(List.of(libraryCard));
+    collaboratorUser.setLibraryCard(libraryCard);
     DataAccessRequest dar = createDataAccessRequest(List.of(validCollaborator));
     when(userDAO.findUserByEmail(validCollaborator.getEmail())).thenReturn(collaboratorUser);
 
@@ -464,7 +462,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(),
         roles);
     collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
-    collaboratorUser.setLibraryCards(Collections.emptyList());
     DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
     when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(collaboratorUser);
 
@@ -521,7 +518,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   void testInsertDraftDataAccessRequest() {
     User user = new User();
     user.setUserId(1);
-    user.setLibraryCards(List.of(new LibraryCard()));
+    user.setLibraryCard(new LibraryCard());
     DataAccessRequest draft = generateDataAccessRequest();
     doNothing()
         .when(dataAccessRequestDAO)
@@ -963,7 +960,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     Institution institution = new Institution();
     institution.setId(1);
     user.setInstitution(institution);
-    user.setLibraryCards(List.of(new LibraryCard()));
+    user.setLibraryCard(new LibraryCard());
     user.setEraCommonsId("eraCommonsId");
     return user;
   }

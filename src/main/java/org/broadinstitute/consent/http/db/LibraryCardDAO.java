@@ -89,7 +89,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
       WHERE lc.user_id = :userId
       """)
-  List<LibraryCard> findLibraryCardsByUserId(@Bind("userId") Integer userId);
+  LibraryCard findLibraryCardByUserId(@Bind("userId") Integer userId);
 
   @RegisterBeanMapper(value = LibraryCard.class)
   @UseRowReducer(LibraryCardReducer.class)
@@ -115,7 +115,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   @UseRowReducer(LibraryCardReducer.class)
   @SqlQuery("SELECT * FROM library_card " +
       "WHERE user_email = :email")
-  List<LibraryCard> findAllLibraryCardsByUserEmail(@Bind("email") String email);
+  LibraryCard findLibraryCardByUserEmail(@Bind("email") String email);
 
   @SqlUpdate("DELETE FROM library_card WHERE user_id = :userId OR create_user_id = :userId OR update_user_id = :userId")
   void deleteAllLibraryCardsByUser(@Bind("userId") Integer userId);

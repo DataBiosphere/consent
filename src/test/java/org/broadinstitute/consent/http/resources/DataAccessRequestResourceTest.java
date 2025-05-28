@@ -117,7 +117,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @BeforeEach
   void initResource() {
-    user.setLibraryCards(List.of(new LibraryCard()));
+    user.setLibraryCard(new LibraryCard());
     try {
       resource =
           new DataAccessRequestResource(daaService,
@@ -132,7 +132,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testCreateDataAccessRequest() {
     try {
       User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
-      userWithCards.setLibraryCards(List.of(new LibraryCard()));
+      userWithCards.setLibraryCard(new LibraryCard());
       when(userService.findUserByEmail(any())).thenReturn(userWithCards);
       DataAccessRequest dar = new DataAccessRequest();
       dar.setReferenceId(UUID.randomUUID().toString());
@@ -158,7 +158,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testCreateDataAccessRequestWithSubmittedDAR() {
     User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
-    userWithCards.setLibraryCards(List.of(new LibraryCard()));
+    userWithCards.setLibraryCard(new LibraryCard());
     when(userService.findUserByEmail(any())).thenReturn(userWithCards);
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
@@ -180,7 +180,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testCreateDataAccessRequestWithoutValidERACommons() {
     User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
-    userWithCards.setLibraryCards(List.of(new LibraryCard()));
+    userWithCards.setLibraryCard(new LibraryCard());
     when(userService.findUserByEmail(any())).thenReturn(userWithCards);
     doThrow(new BadRequestException()).when(dataAccessRequestService)
         .createDataAccessRequest(eq(user), any());
@@ -211,7 +211,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testUpdateByReferenceId() {
     DataAccessRequest dar = generateDataAccessRequest();
-    user.setLibraryCards(List.of(new LibraryCard()));
+    user.setLibraryCard(new LibraryCard());
     try {
       when(userService.findUserByEmail(any())).thenReturn(user);
       when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
@@ -809,7 +809,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testCreateDataAccessRequestWithDAARestrictions() {
     try {
       User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
-      userWithCards.setLibraryCards(List.of(new LibraryCard()));
+      userWithCards.setLibraryCard(new LibraryCard());
       when(userService.findUserByEmail(any())).thenReturn(userWithCards);
       DataAccessRequest dar = new DataAccessRequest();
       dar.setReferenceId(UUID.randomUUID().toString());
@@ -837,7 +837,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testCreateDataAccessRequestWithDAARestrictionsFailure() {
     try {
       User userWithCards = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
-      userWithCards.setLibraryCards(List.of(new LibraryCard()));
+      userWithCards.setLibraryCard(new LibraryCard());
       when(userService.findUserByEmail(any())).thenReturn(userWithCards);
       DataAccessRequest dar = new DataAccessRequest();
       dar.setReferenceId(UUID.randomUUID().toString());

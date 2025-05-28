@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -109,9 +110,6 @@ class UserServiceTest extends AbstractTestHelper {
   private DaaDAO daaDAO;
 
   @Mock
-  private EmailService emailService;
-
-  @Mock
   private DraftServiceDAO draftServiceDAO;
 
   @Mock
@@ -171,8 +169,8 @@ class UserServiceTest extends AbstractTestHelper {
     User u = generateUser();
     List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
     u.setRoles(roles);
-    when(userDAO.findUserById(any())).thenReturn(u);
-    when(libraryCardDAO.findAllLibraryCardsByUserEmail(any())).thenReturn(Collections.emptyList());
+    when(userDAO.findUserByEmail(u.getEmail())).thenReturn(null);
+    when(libraryCardDAO.findLibraryCardByUserEmail(u.getEmail())).thenReturn(null);
     try {
       service.createUser(u);
     } catch (Exception e) {
@@ -184,11 +182,11 @@ class UserServiceTest extends AbstractTestHelper {
   void createUserWithLibraryCardTest() {
     User u = generateUser();
     LibraryCard lc = generateLibraryCard(u.getEmail());
+    lc.setUserName(u.getDisplayName());
     Institution institution = new Institution();
     List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
     u.setRoles(roles);
-    when(libraryCardDAO.findAllLibraryCardsByUserEmail(u.getEmail())).thenReturn(
-        List.of(lc));
+    when(libraryCardDAO.findLibraryCardByUserEmail(u.getEmail())).thenReturn(lc);
     when(institutionService.findInstitutionForEmail(u.getEmail())).thenReturn(institution);
 
     service.createUser(u);
@@ -225,7 +223,7 @@ class UserServiceTest extends AbstractTestHelper {
     User u = generateUser();
     u.setEraCommonsId(randomAlphabetic(10));
     LibraryCard lc = generateLibraryCard(u.getEmail());
-    u.addLibraryCard(lc);
+    u.setLibraryCard(lc);
     UserProperty eraStatus = new UserProperty(1, u.getUserId(), ERA_STATUS.getValue(), "true");
     //standard practice is that these expire in 30 days.
     Timestamp eraExpirationTime = new Timestamp(
@@ -254,8 +252,6 @@ class UserServiceTest extends AbstractTestHelper {
     userProperties.add(eraStatus);
     userProperties.add(eraExpirationDate);
     u.setProperties(userProperties);
-    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
-        UserFields.getValues())).thenReturn(u.getProperties());
     assertThrows(LibraryCardRequiredException.class,
         () -> service.hasValidActiveERACredentials(u));
   }
@@ -265,7 +261,7 @@ class UserServiceTest extends AbstractTestHelper {
     User u = generateUser();
     u.setEraCommonsId(null);
     LibraryCard lc = generateLibraryCard(u.getEmail());
-    u.addLibraryCard(lc);
+    u.setLibraryCard(lc);
     UserProperty eraStatus = new UserProperty(1, u.getUserId(), ERA_STATUS.getValue(), "true");
     //standard practice is that these expire in 30 days.
     Timestamp eraExpirationTime = new Timestamp(
@@ -276,8 +272,6 @@ class UserServiceTest extends AbstractTestHelper {
     userProperties.add(eraStatus);
     userProperties.add(eraExpirationDate);
     u.setProperties(userProperties);
-    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
-        UserFields.getValues())).thenReturn(u.getProperties());
     assertThrows(BadRequestException.class,
         () -> service.hasValidActiveERACredentials(u));
   }
@@ -286,7 +280,7 @@ class UserServiceTest extends AbstractTestHelper {
   void testValidateRACommonsCredentialsMissingERAStatusShouldFail() {
     User u = generateUser();
     LibraryCard lc = generateLibraryCard(u.getEmail());
-    u.addLibraryCard(lc);
+    u.setLibraryCard(lc);
     //standard practice is that these expire in 30 days.
     Timestamp eraExpirationTime = new Timestamp(
         System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30));
@@ -305,7 +299,7 @@ class UserServiceTest extends AbstractTestHelper {
   void testValidateERACommonsCredentialsMissingERAStatusAndExpirationShouldFail() {
     User u = generateUser();
     LibraryCard lc = generateLibraryCard(u.getEmail());
-    u.addLibraryCard(lc);
+    u.setLibraryCard(lc);
     List<UserProperty> userProperties = new ArrayList<>();
     u.setProperties(userProperties);
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
@@ -318,7 +312,7 @@ class UserServiceTest extends AbstractTestHelper {
   void testValidateERACommonsCredentialsWithExpiredERAExpirationDateShouldFail() {
     User u = generateUser();
     LibraryCard lc = generateLibraryCard(u.getEmail());
-    u.addLibraryCard(lc);
+    u.setLibraryCard(lc);
     UserProperty eraStatus = new UserProperty(1, u.getUserId(), ERA_STATUS.getValue(), "true");
     // set expiration date to 30 days ago!
     Timestamp eraExpirationTime = new Timestamp(
@@ -373,17 +367,13 @@ class UserServiceTest extends AbstractTestHelper {
   void testFindUserById_HasLibraryCards() {
     User u = generateUser();
     LibraryCard one = generateLibraryCard(u);
-    LibraryCard two = generateLibraryCard(u);
-    List<LibraryCard> cards = List.of(one, two);
+    u.setLibraryCard(one);
     when(userDAO.findUserById(any())).thenReturn(u);
-    when(libraryCardDAO.findLibraryCardsByUserId(any())).thenReturn(cards);
 
     User user = service.findUserById(u.getUserId());
     assertNotNull(user);
-    assertNotNull(user.getLibraryCards());
-    assertEquals(2, user.getLibraryCards().size());
-    assertEquals(one.getId(), user.getLibraryCards().get(0).getId());
-    assertEquals(two.getId(), user.getLibraryCards().get(1).getId());
+    assertNotNull(user.getLibraryCard());
+    assertEquals(one, user.getLibraryCard());
   }
 
   @Test
@@ -524,13 +514,13 @@ class UserServiceTest extends AbstractTestHelper {
     User u = generateUser();
     u.setInstitutionId(1);
     LibraryCard lc = generateLibraryCard(u);
-    u.setLibraryCards(List.of(lc));
+    u.setLibraryCard(lc);
     when(userDAO.getUsersFromInstitutionWithCards(anyInt())).thenReturn(List.of(u, new User()));
 
     List<User> users = service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
     assertNotNull(users);
     assertEquals(2, users.size());
-    assertEquals(List.of(lc), users.get(0).getLibraryCards());
+    assertSame(lc, users.get(0).getLibraryCard());
   }
 
   @Test
@@ -555,13 +545,13 @@ class UserServiceTest extends AbstractTestHelper {
       returnedUsers.add(u3);
     }
     LibraryCard lc = generateLibraryCard(u1);
-    u1.setLibraryCards(List.of(lc));
+    u1.setLibraryCard(lc);
     when(userDAO.findUsersWithLCsAndInstitution()).thenReturn(returnedUsers);
     List<User> users = service.getUsersAsRole(u1, UserRoles.ADMIN.getRoleName());
     assertNotNull(users);
     assertEquals(returnedUsers.size(), users.size());
-    assertEquals(List.of(lc), users.get(0).getLibraryCards());
-    assertTrue(users.get(1).getLibraryCards().isEmpty());
+    assertEquals(lc, users.get(0).getLibraryCard());
+    assertNull(users.get(1).getLibraryCard());
   }
 
   @Test
@@ -679,18 +669,19 @@ class UserServiceTest extends AbstractTestHelper {
   @Test
   void testFindUserWithPropertiesAsJsonObjectById() {
     User user = generateUser();
+    user.setLibraryCard(new LibraryCard());
     UserStatusInfo info = new UserStatusInfo().setUserEmail(user.getEmail()).setEnabled(true)
         .setUserSubjectId("subjectId");
     AuthUser authUser = new AuthUser().setEmail(user.getEmail())
         .setAuthToken(randomAlphabetic(30)).setUserStatusInfo(info);
     when(userDAO.findUserById(anyInt())).thenReturn(user);
-    when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(
         List.of(new UserProperty()));
 
     JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser,
         user.getUserId());
     assertNotNull(userJson);
+    assertTrue(userJson.get(UserService.LIBRARY_CARD_FIELD).getAsJsonObject().isJsonObject());
     assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
     assertTrue(
         userJson.get(UserService.USER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
@@ -700,18 +691,19 @@ class UserServiceTest extends AbstractTestHelper {
   @Test
   void testFindUserWithPropertiesAsJsonObjectByIdNonAuthUser() {
     User user = generateUser();
+    user.setLibraryCard(new LibraryCard());
     UserStatusInfo info = new UserStatusInfo().setUserEmail(user.getEmail()).setEnabled(true)
         .setUserSubjectId("subjectId");
     AuthUser authUser = new AuthUser().setEmail("not the user's email address")
         .setAuthToken(randomAlphabetic(30)).setUserStatusInfo(info);
     when(userDAO.findUserById(anyInt())).thenReturn(user);
-    when(libraryCardDAO.findLibraryCardsByUserId(anyInt())).thenReturn(List.of(new LibraryCard()));
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(
         List.of(new UserProperty()));
 
     JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser,
         user.getUserId());
     assertNotNull(userJson);
+    assertTrue(userJson.get(UserService.LIBRARY_CARD_FIELD).getAsJsonObject().isJsonObject());
     assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
     assertTrue(
         userJson.get(UserService.USER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
@@ -761,7 +753,7 @@ class UserServiceTest extends AbstractTestHelper {
     User newUser = service.findOrCreateUser(authUser);
     assertEquals(user.getEmail(), newUser.getEmail());
     verify(userRoleDAO).insertUserRoles(any(), any());
-    verify(libraryCardDAO).findAllLibraryCardsByUserEmail(any());
+    verify(libraryCardDAO).findLibraryCardByUserEmail(any());
   }
 
   @Test
@@ -870,7 +862,7 @@ class UserServiceTest extends AbstractTestHelper {
   @Test
   void hasLibraryCard() {
     User testUser = generateUser();
-    testUser.setLibraryCards(List.of(new LibraryCard()));
+    testUser.setLibraryCard(new LibraryCard());
     assertTrue(service.hasLibraryCard(testUser));
   }
 
@@ -928,7 +920,7 @@ class UserServiceTest extends AbstractTestHelper {
     User signingOfficial = generateUser();
     LibraryCard lc = new LibraryCard();
     lc.setCreateUserId(signingOfficial.getUserId());
-    testUser.setLibraryCards(List.of(lc));
+    testUser.setLibraryCard(lc);
     Institution institutionFromEmail = new Institution();
     institutionFromEmail.setId(1);
     testUser.setInstitution(institutionFromEmail);
@@ -936,7 +928,6 @@ class UserServiceTest extends AbstractTestHelper {
     institutionFromDatabase.setId(2);
 
     when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
-    when(libraryCardDAO.findLibraryCardsByUserId(signingOfficial.getUserId())).thenReturn(List.of(new LibraryCard()));
     when(institutionService.findInstitutionForEmail(signingOfficial.getEmail())).thenReturn(institutionFromDatabase);
 
     assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail, institutionFromDatabase));
@@ -950,7 +941,7 @@ class UserServiceTest extends AbstractTestHelper {
     User signingOfficial = generateUser();
     LibraryCard lc = new LibraryCard();
     lc.setCreateUserId(signingOfficial.getUserId());
-    testUser.setLibraryCards(List.of(lc));
+    testUser.setLibraryCard(lc);
     Institution institutionFromEmail = new Institution();
     institutionFromEmail.setId(1);
     testUser.setInstitution(institutionFromEmail);
@@ -970,14 +961,13 @@ class UserServiceTest extends AbstractTestHelper {
     User signingOfficial = generateUser();
     LibraryCard lc = new LibraryCard();
     lc.setCreateUserId(signingOfficial.getUserId());
-    testUser.setLibraryCards(List.of(lc));
+    testUser.setLibraryCard(lc);
     Institution institutionFromEmail = new Institution();
     institutionFromEmail.setId(1);
     testUser.setInstitution(institutionFromEmail);
 
 
     when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
-    when(libraryCardDAO.findLibraryCardsByUserId(signingOfficial.getUserId())).thenReturn(List.of(new LibraryCard()));
     when(institutionService.findInstitutionForEmail(signingOfficial.getEmail())).thenReturn(institutionFromEmail);
 
     assertFalse(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail, institutionFromEmail));
@@ -990,14 +980,13 @@ class UserServiceTest extends AbstractTestHelper {
     User signingOfficial = generateUser();
     LibraryCard lc = new LibraryCard();
     lc.setCreateUserId(signingOfficial.getUserId());
-    testUser.setLibraryCards(List.of(lc));
+    testUser.setLibraryCard(lc);
     Institution institutionFromEmail = new Institution();
     institutionFromEmail.setId(1);
     testUser.setInstitution(institutionFromEmail);
 
 
     when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
-    when(libraryCardDAO.findLibraryCardsByUserId(signingOfficial.getUserId())).thenReturn(List.of(new LibraryCard()));
     when(institutionService.findInstitutionForEmail(signingOfficial.getEmail())).thenReturn(null);
 
     assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail, institutionFromEmail));
@@ -1008,7 +997,6 @@ class UserServiceTest extends AbstractTestHelper {
   @Test
   void handleLibraryCardForUser() {
     User testUser = generateUser();
-    testUser.setLibraryCards(List.of());
     Institution institution = new Institution();
     assertFalse(service.handleLibraryCardForUser(testUser, institution));
   }
@@ -1021,7 +1009,7 @@ class UserServiceTest extends AbstractTestHelper {
     User signingOfficial = generateUser();
     LibraryCard lc = new LibraryCard();
     lc.setCreateUserId(signingOfficial.getUserId());
-    testUser.setLibraryCards(List.of(lc));
+    testUser.setLibraryCard(lc);
 
     when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(null);
     assertTrue(service.handleLibraryCardForUser(testUser, institution));
@@ -1034,7 +1022,7 @@ class UserServiceTest extends AbstractTestHelper {
     User signingOfficial = generateUser();
     LibraryCard lc = new LibraryCard();
     lc.setCreateUserId(signingOfficial.getUserId());
-    testUser.setLibraryCards(List.of(lc));
+    testUser.setLibraryCard(lc);
     Institution institutionFromEmail = new Institution();
     institutionFromEmail.setId(1);
     testUser.setInstitution(institutionFromEmail);
@@ -1056,12 +1044,12 @@ class UserServiceTest extends AbstractTestHelper {
       institution1.setId(1);
       Institution institution2 = new Institution();
       institution2.setId(2);
-      List<LibraryCard> libraryCards1 = List.of(new LibraryCard());
+      LibraryCard libraryCards1 = new LibraryCard();
       LibraryCard libraryCard2 = new LibraryCard();
       libraryCard2.setCreateUserId(1);
       return Stream.of(
           Arguments.of(institution1, testUser, libraryCards1, institution1, true),
-          Arguments.of(institution1, testUser, List.of(libraryCard2), institution1, true),
+          Arguments.of(institution1, testUser, libraryCard2, institution1, true),
           Arguments.of(institution1, testUser, libraryCards1, institution2, true),
           Arguments.of(institution1, testUser, libraryCards1, null, true),
           Arguments.of(institution1, testUser, null, institution1, false),
@@ -1077,8 +1065,8 @@ class UserServiceTest extends AbstractTestHelper {
 
   @ParameterizedTest
   @ArgumentsSource(InstitutionAndLibraryCardVariationsProvider.class)
-  void testEnforceInstitutionAndLibraryCardVariations(Institution institutionFromMap, User testUser, List<LibraryCard> cards, Institution institutionFromDatabase, boolean expectsUserMod) {
-    testUser.setLibraryCards(cards);
+  void testEnforceInstitutionAndLibraryCardVariations(Institution institutionFromMap, User testUser, LibraryCard card, Institution institutionFromDatabase, boolean expectsUserMod) {
+    testUser.setLibraryCard(card);
     User alteredUser = new User();
     alteredUser.setEmail(testUser.getEmail());
     when(institutionService.findInstitutionForEmail(testUser.getEmail())).thenReturn(institutionFromMap);
@@ -1095,7 +1083,7 @@ class UserServiceTest extends AbstractTestHelper {
   private void validateUserIsUnmodified(User left, User right) {
     assertEquals(left.getEmail(), right.getEmail());
     assertEquals(left.getInstitutionId(), right.getInstitutionId());
-    assertEquals(left.getLibraryCards(), right.getLibraryCards());
+    assertEquals(left.getLibraryCard(), right.getLibraryCard());
     assertEquals(left.getInstitutionId(), right.getInstitutionId());
   }
 
