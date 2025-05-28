@@ -608,43 +608,6 @@ paths:
           description: Library Card not found
         500:
           description: Internal server error
-    put:
-      summary: Library Card PUT resource
-      description: Update target Library Card based on id parameter and user provided json
-      tags:
-        - Library Card
-        - Admin
-      parameters:
-        - name: id
-          in: path
-          description: Library Card ID
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        description: 'JSON representation of updated Library Card state'
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LibraryCard'
-      responses:
-        200:
-          description: Library Card PUT request success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LibraryCard'
-        400:
-          description: Bad request (Issues with json payload)
-        401:
-          description: User not authorized
-        404:
-          description: Library Card not found
-        409:
-          description: Library Card payload conflicts with an existing record
-        500:
-          description: Internal server error
     delete:
       summary: Library Card DELETE resource
       description: Delete target Library Card based on id parameter

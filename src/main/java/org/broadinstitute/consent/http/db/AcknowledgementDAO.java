@@ -6,6 +6,7 @@ import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
@@ -30,7 +31,7 @@ public interface AcknowledgementDAO extends Transactional<AcknowledgementDAO> {
 
   @SqlQuery("SELECT ack_key, user_id, first_acknowledged, last_acknowledged "
       + " FROM acknowledgement WHERE user_id = :userId and ack_key IN (<key_list>)")
-  List<Acknowledgement> findAcknowledgementsForUser(@BindList("key_list") List<String> keys,
+  List<Acknowledgement> findAcknowledgementsForUser(@BindList(value = "key_list", onEmpty = EmptyHandling.NULL_STRING) List<String> keys,
       @Bind("userId") Integer userId);
 
   @SqlUpdate("DELETE FROM acknowledgement where user_id = :userId AND ack_key = :key")

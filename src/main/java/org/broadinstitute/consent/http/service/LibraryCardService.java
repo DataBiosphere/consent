@@ -52,24 +52,6 @@ public class LibraryCardService {
     return libraryCardDAO.findLibraryCardById(id);
   }
 
-  public LibraryCard updateLibraryCard(LibraryCard libraryCard, Integer id, Integer userId) {
-    LibraryCard updateCard = libraryCardDAO.findLibraryCardById(id);
-    throwIfNull(updateCard);
-    checkUserId(userId);
-    checkForValidUser(libraryCard.getUserId());
-
-    Date updateDate = new Date();
-    libraryCardDAO.updateLibraryCardById(
-        id,
-        libraryCard.getUserId(),
-        libraryCard.getUserName(),
-        libraryCard.getUserEmail(),
-        userId,
-        updateDate
-    );
-    return libraryCardDAO.findLibraryCardById(id);
-  }
-
   public void deleteLibraryCardById(Integer id) {
     LibraryCard card = findLibraryCardById(id);
     throwIfNull(card);
@@ -158,26 +140,9 @@ public class LibraryCardService {
     }
   }
 
-  private void checkForValidUser(Integer userId) {
-    if (Objects.isNull(userId)) {
-      return;
-    }
-
-    User user = userDAO.findUserById(userId);
-    if (Objects.isNull(user)) {
-      throw new IllegalArgumentException("Invalid User Id");
-    }
-  }
-
   private void checkInstitutionId(Integer institutionId) {
     if (Objects.isNull(institutionId)) {
       throw new IllegalArgumentException("Institution ID is a required parameter");
-    }
-  }
-
-  private void checkUserId(Integer userId) {
-    if (Objects.isNull(userId)) {
-      throw new IllegalArgumentException("User ID is a required parameter");
     }
   }
 

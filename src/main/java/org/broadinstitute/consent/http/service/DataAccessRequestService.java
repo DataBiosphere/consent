@@ -35,7 +35,6 @@ import org.broadinstitute.consent.http.exceptions.InvalidEmailAddressException;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
-import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
@@ -289,10 +288,6 @@ public class DataAccessRequestService implements ConsentLogger {
     if (progressReport.getData().getProgressReportSummary() == null ||
         progressReport.getData().getProgressReportSummary().isEmpty()) {
       throw new BadRequestException("Progress report summary is required");
-    }
-    if (progressReport.getData().getIntellectualPropertySummary() == null ||
-        progressReport.getData().getIntellectualPropertySummary().isEmpty()) {
-      throw new BadRequestException("Intellectual Property Summary is required");
     }
   }
 

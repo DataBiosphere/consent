@@ -19,12 +19,12 @@
     <pact.version>4.6.17</pact.version>
     <postgres.version>42.7.5</postgres.version>
     <surefire.version>3.5.3</surefire.version>
-    <swagger.ui.version>5.21.0</swagger.ui.version>
+    <swagger.ui.version>5.22.0</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <mockserver.version>5.15.0</mockserver.version>
     <junit.version>5.12.2</junit.version>
     <io.grpc.version>1.58.0</io.grpc.version>
-    <mockito.version>5.17.0</mockito.version>
+    <mockito.version>5.18.0</mockito.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -363,7 +363,7 @@
     <dependency>
       <groupId>com.networknt</groupId>
       <artifactId>json-schema-validator</artifactId>
-      <version>1.5.6</version>
+      <version>1.5.7</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -448,7 +448,7 @@
     <dependency>
       <groupId>org.apache.httpcomponents.client5</groupId>
       <artifactId>httpclient5</artifactId>
-      <version>5.4.4</version>
+      <version>5.5</version>
     </dependency>
 
     <dependency>
@@ -681,13 +681,13 @@
     <dependency>
       <groupId>com.google.api-client</groupId>
       <artifactId>google-api-client</artifactId>
-      <version>2.7.2</version>
+      <version>2.8.0</version>
     </dependency>
 
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>2.52.2</version>
+      <version>2.52.3</version>
     </dependency>
 
     <dependency>
