@@ -643,7 +643,7 @@ public class DataAccessRequestResource extends Resource {
     if (!user.getUserId().equals(dar.getUserId())) {
       throw new ForbiddenException("User not authorized to update this Data Access Request");
     }
-    if (user.getLibraryCards().isEmpty()) {
+    if (user.getLibraryCard() == null) {
       throw new LibraryCardRequiredException();
     }
   }

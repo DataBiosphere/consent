@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class LibraryCard {
@@ -114,6 +115,12 @@ public class LibraryCard {
     }
     LibraryCard other = (LibraryCard) libraryCard;
     return new EqualsBuilder().append(id, other.getId()).isEquals();
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, userId, userName, userEmail, createDate, createUserId, updateDate,
+        updateUserId, daaIds);
   }
 
   public void addDaa(Integer daaId) {

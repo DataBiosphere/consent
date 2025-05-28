@@ -144,7 +144,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
     userProperties.forEach(p -> assertEquals(collection.getCreateUserId(),
         p.getUserId()));
 
-    assertTrue(returned.getCreateUser().getLibraryCards().isEmpty());
+    assertNull(returned.getCreateUser().getLibraryCard());
   }
 
   @Test
@@ -163,20 +163,20 @@ class DarCollectionDAOTest extends DAOTestHelper {
   @Test
   void testFindDARCollectionByCollectionIdLibraryCard() {
     User user = createUser();
-    LibraryCard libraryCard = createLibraryCard(user);
+    createLibraryCard(user);
+    User updatedUser = userDAO.findUserById(user.getUserId());
     String darCode = "DAR-" + randomInt(100, 1000);
-    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, updatedUser.getUserId(),
         new Date());
-    createDataAccessRequest(user.getUserId(), collectionId);
+    createDataAccessRequest(updatedUser.getUserId(), collectionId);
 
     DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     User returnedUser = collection.getCreateUser();
-    assertEquals(user, returnedUser);
+    assertEquals(updatedUser, returnedUser);
 
-    List<LibraryCard> returnedLibraryCards = returnedUser.getLibraryCards();
-    assertEquals(1, returnedLibraryCards.size());
-    assertEquals(libraryCard, returnedLibraryCards.get(0));
-    assertEquals(user.getUserId(), returnedLibraryCards.get(0).getUserId());
+    LibraryCard returnedLibraryCard = returnedUser.getLibraryCard();
+    assertNotNull(returnedLibraryCard);
+    assertEquals(updatedUser.getLibraryCard(), returnedLibraryCard);
   }
 
   @Test
