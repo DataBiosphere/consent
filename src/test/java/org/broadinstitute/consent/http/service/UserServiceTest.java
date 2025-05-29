@@ -1050,17 +1050,21 @@ class UserServiceTest extends AbstractTestHelper {
 
   @ParameterizedTest
   @ArgumentsSource(InstitutionAndLibraryCardVariationsProvider.class)
-  void testEnforceInstitutionAndLibraryCardVariations(Institution institutionFromMap, User testUser, LibraryCard card, boolean expectsUserMod) {
+  void testEnforceInstitutionAndLibraryCardVariations(
+      Institution institutionFromMap, User testUser, LibraryCard card, boolean expectsUserMod) {
     testUser.setLibraryCard(card);
     User alteredUser = new User();
     alteredUser.setEmail(testUser.getEmail());
-    when(institutionService.findInstitutionForEmail(testUser.getEmail())).thenReturn(institutionFromMap);
+    when(institutionService.findInstitutionForEmail(testUser.getEmail()))
+        .thenReturn(institutionFromMap);
     if (expectsUserMod) {
       when(userDAO.findUserByEmail(testUser.getEmail())).thenReturn(testUser, alteredUser);
-      validateAlteredUserIsReturned(testUser, service.enforceInstitutionAndLibraryCardRules(testUser.getEmail()));
+      validateAlteredUserIsReturned(
+          testUser, service.enforceInstitutionAndLibraryCardRules(testUser.getEmail()));
     } else {
       when(userDAO.findUserByEmail(testUser.getEmail())).thenReturn(testUser);
-      validateUserIsUnmodified(testUser, service.enforceInstitutionAndLibraryCardRules(testUser.getEmail()));
+      validateUserIsUnmodified(
+          testUser, service.enforceInstitutionAndLibraryCardRules(testUser.getEmail()));
     }
   }
 

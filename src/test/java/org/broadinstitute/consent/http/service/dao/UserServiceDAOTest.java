@@ -18,7 +18,6 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Institution;
-import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.jupiter.api.BeforeEach;
@@ -119,7 +118,8 @@ class UserServiceDAOTest extends DAOTestHelper {
     User testUser = createUser();
     Institution institution = createInstitution();
 
-    serviceDAO.updateInstitutionAndClearLibraryCardForUser(testUser.getUserId(), institution.getId());
+    serviceDAO.updateInstitutionAndClearLibraryCardForUser(
+        testUser.getUserId(), institution.getId());
     User fetchedUser = userDAO.findUserById(testUser.getUserId());
     assertEquals(fetchedUser.getUserId(), testUser.getUserId());
     assertEquals(fetchedUser.getInstitutionId(), institution.getId());
@@ -131,7 +131,8 @@ class UserServiceDAOTest extends DAOTestHelper {
     User testUser = createUser();
     Institution institution = createInstitution();
 
-    serviceDAO.updateInstitutionAndClearLibraryCardForUser(testUser.getUserId(), institution.getId());
+    serviceDAO.updateInstitutionAndClearLibraryCardForUser(
+        testUser.getUserId(), institution.getId());
     User fetchedUser = userDAO.findUserById(testUser.getUserId());
     assertEquals(fetchedUser.getUserId(), testUser.getUserId());
     assertEquals(fetchedUser.getInstitutionId(), institution.getId());
@@ -139,7 +140,7 @@ class UserServiceDAOTest extends DAOTestHelper {
     serviceDAO.updateInstitutionAndClearLibraryCardForUser(testUser.getUserId(), null);
     fetchedUser = userDAO.findUserById(testUser.getUserId());
     assertEquals(fetchedUser.getUserId(), testUser.getUserId());
-    assertEquals(fetchedUser.getInstitutionId(), null);
+    assertNull(fetchedUser.getInstitutionId());
   }
 
   @Test
@@ -147,8 +148,12 @@ class UserServiceDAOTest extends DAOTestHelper {
     User testUser = createUser();
     Institution institution = createInstitution();
     userDAO.updateInstitutionId(testUser.getUserId(), institution.getId());
-    libraryCardDAO.insertLibraryCard(testUser.getUserId(), testUser.getDisplayName(), testUser.getEmail(), testUser.getUserId(), Timestamp.from(
-        Instant.now()));
+    libraryCardDAO.insertLibraryCard(
+        testUser.getUserId(),
+        testUser.getDisplayName(),
+        testUser.getEmail(),
+        testUser.getUserId(),
+        Timestamp.from(Instant.now()));
     assertNotNull(libraryCardDAO.findLibraryCardByUserId(testUser.getUserId()));
     User fetchedUser = userDAO.findUserById(testUser.getUserId());
     assertEquals(fetchedUser.getUserId(), testUser.getUserId());
@@ -158,5 +163,4 @@ class UserServiceDAOTest extends DAOTestHelper {
     assertNull(libraryCardDAO.findLibraryCardByUserId(testUser.getUserId()));
     assertNull(institutionDAO.findInstitutionById(testUser.getInstitutionId()));
   }
-
 }
