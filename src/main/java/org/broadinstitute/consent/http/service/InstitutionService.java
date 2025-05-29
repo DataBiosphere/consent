@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -81,13 +80,13 @@ public class InstitutionService {
     institutionDAO.deleteInstitutionById(id);
   }
 
-  public Institution findInstitutionById(Integer id) {
+  public Institution findInstitutionById(Integer id) throws NotFoundException {
     Institution institution = institutionDAO.findInstitutionById(id);
     isInstitutionNull(institution);
 
     List<SimplifiedUser> signingOfficials = userDAO.getSOsByInstitution(id).stream()
         .map(SimplifiedUser::new)
-        .collect(Collectors.toList());
+        .toList();
     institution.setSigningOfficials(signingOfficials);
 
     return institution;

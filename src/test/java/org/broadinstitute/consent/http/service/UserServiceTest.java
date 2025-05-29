@@ -5,6 +5,7 @@ import static org.broadinstitute.consent.http.enumeration.UserFields.ERA_STATUS;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
@@ -62,6 +64,9 @@ import org.jdbi.v3.core.transaction.TransactionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -464,8 +469,8 @@ class UserServiceTest extends AbstractTestHelper {
     when(userDAO.getSOsByInstitution(any())).thenReturn(List.of(u, u, u));
     List<SimplifiedUser> users = service.findSOsByInstitutionId(institutionId);
     assertEquals(3, users.size());
-    assertEquals(u.getDisplayName(), users.get(0).displayName);
-    assertEquals(u.getEmail(), users.get(0).email);
+    assertEquals(u.getDisplayName(), users.get(0).getDisplayName());
+    assertEquals(u.getEmail(), users.get(0).getEmail());
   }
 
   @Test
@@ -841,13 +846,242 @@ class UserServiceTest extends AbstractTestHelper {
     assertThrows(BadRequestException.class, () -> service.findUsersInJsonArray(json, "invalidKey"));
   }
 
+  @Test
+  void hasLibraryCard() {
+    User testUser = generateUser();
+    testUser.setLibraryCard(new LibraryCard());
+    assertTrue(service.hasLibraryCard(testUser));
+  }
+
+  @Test
+  void hasLibraryCard_NoLibraryCard() {
+    User testUser = generateUser();
+    assertFalse(service.hasLibraryCard(testUser));
+  }
+
+  @Test
+  void hasMatchingInstitutionInDatabase() {
+    Institution institution = new Institution();
+    institution.setId(1);
+    assertTrue(service.hasMatchingInstitutionInDatabase(institution, institution));
+  }
+
+  @Test
+  void hasMatchingInstitutionInDatabase_NoInstitutionInDB() {
+    Institution institution = new Institution();
+    institution.setId(1);
+    assertFalse(service.hasMatchingInstitutionInDatabase(null, institution));
+  }
+
+  @Test
+  void hasMatchingInstitutionInDatabase_NoInstitutionEmailMap() {
+    Institution institution = new Institution();
+    institution.setId(1);
+    assertFalse(service.hasMatchingInstitutionInDatabase(institution, null));
+  }
+
+  @Test
+  void handleUserWithInstitutionInMap() {
+    User testUser = generateUser();
+    Institution institutionFromEmail = new Institution();
+    institutionFromEmail.setId(1);
+    testUser.setInstitutionId(1);
+    assertFalse(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail));
+  }
+
+  @Test
+  void handleUserWithInstitutionInMap_DifferentInDatabase() {
+    User testUser = generateUser();
+    Institution institutionFromEmail = new Institution();
+    institutionFromEmail.setId(1);
+    testUser.setInstitutionId(2);
+    assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail));
+    verify(userDAO).updateInstitutionId(testUser.getUserId(), institutionFromEmail.getId());
+  }
+
+  @Test
+  void handleUserWithInstitutionInMap_DifferentInDatabaseWithLibraryCard() {
+    User testUser = generateUser();
+    User signingOfficial = generateUser();
+    LibraryCard lc = new LibraryCard();
+    lc.setCreateUserId(signingOfficial.getUserId());
+    testUser.setLibraryCard(lc);
+    Institution institutionFromEmail = new Institution();
+    institutionFromEmail.setId(1);
+    testUser.setInstitution(institutionFromEmail);
+    Institution institutionFromDatabase = new Institution();
+    institutionFromDatabase.setId(2);
+
+    when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
+    when(institutionService.findInstitutionForEmail(signingOfficial.getEmail())).thenReturn(institutionFromDatabase);
+
+    assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail));
+    verify(userServiceDAO).updateInstitutionAndClearLibraryCardForUser(testUser.getUserId(), institutionFromEmail.getId());
+  }
+
+  @Test
+  void handleUserWithInstitutionInMap_DifferentInDatabaseWithLibraryCard_SO_NFE() {
+    User testUser = generateUser();
+    User signingOfficial = generateUser();
+    LibraryCard lc = new LibraryCard();
+    lc.setCreateUserId(signingOfficial.getUserId());
+    testUser.setLibraryCard(lc);
+    Institution institutionFromEmail = new Institution();
+    institutionFromEmail.setId(1);
+    testUser.setInstitution(institutionFromEmail);
+    Institution institutionFromDatabase = new Institution();
+    institutionFromDatabase.setId(2);
+
+    when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(null);
+
+    assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail));
+    verify(userServiceDAO).updateInstitutionAndClearLibraryCardForUser(testUser.getUserId(), institutionFromEmail.getId());
+  }
+
+  @Test
+  void handleUserWithInstitutionInMap_SameInDatabaseWithLC() {
+    User testUser = generateUser();
+    User signingOfficial = generateUser();
+    LibraryCard lc = new LibraryCard();
+    lc.setCreateUserId(signingOfficial.getUserId());
+    testUser.setLibraryCard(lc);
+    Institution institutionFromEmail = new Institution();
+    institutionFromEmail.setId(1);
+    testUser.setInstitution(institutionFromEmail);
+    testUser.setInstitutionId(1);
+
+
+    when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
+    when(institutionService.findInstitutionForEmail(signingOfficial.getEmail())).thenReturn(institutionFromEmail);
+
+    assertFalse(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail));
+  }
+
+
+  @Test
+  void handleUserWithInstitutionInMap_SameInDatabaseWithLCFromDifferentOrg() {
+    User testUser = generateUser();
+    User signingOfficial = generateUser();
+    LibraryCard lc = new LibraryCard();
+    lc.setCreateUserId(signingOfficial.getUserId());
+    testUser.setLibraryCard(lc);
+    Institution institutionFromEmail = new Institution();
+    institutionFromEmail.setId(1);
+    testUser.setInstitution(institutionFromEmail);
+    testUser.setInstitutionId(1);
+
+
+    when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
+    when(institutionService.findInstitutionForEmail(signingOfficial.getEmail())).thenReturn(null);
+
+    assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail));
+    verify(userDAO, times(0)).updateInstitutionId(any(), any());
+    verify(libraryCardDAO).deleteAllLibraryCardsByUser(testUser.getUserId());
+  }
+
+  @Test
+  void needsLibraryCardRemovedForUser() {
+    User testUser = generateUser();
+    Institution institution = new Institution();
+    assertFalse(service.needsLibraryCardRemovedForUser(testUser, institution));
+  }
+
+  @Test
+  void needsLibraryCardRemovedForUser_SO_NFE() {
+    User testUser = generateUser();
+    Institution institution = new Institution();
+    institution.setId(testUser.getInstitutionId());
+    User signingOfficial = generateUser();
+    LibraryCard lc = new LibraryCard();
+    lc.setCreateUserId(signingOfficial.getUserId());
+    testUser.setLibraryCard(lc);
+
+    when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(null);
+    assertTrue(service.needsLibraryCardRemovedForUser(testUser, institution));
+  }
+
+  @Test
+  void needsLibraryCardRemovedForUser_SO_DifferentInstitution() {
+    User testUser = generateUser();
+    User signingOfficial = generateUser();
+    LibraryCard lc = new LibraryCard();
+    lc.setCreateUserId(signingOfficial.getUserId());
+    testUser.setLibraryCard(lc);
+    Institution institutionFromEmail = new Institution();
+    institutionFromEmail.setId(1);
+    testUser.setInstitution(institutionFromEmail);
+
+    Institution soInstitution = new Institution();
+    institutionFromEmail.setId(2);
+
+    when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
+    when(institutionService.findInstitutionForEmail(signingOfficial.getEmail())).thenReturn(soInstitution);
+    assertTrue(service.needsLibraryCardRemovedForUser(testUser, institutionFromEmail));
+  }
+
+  public static Stream<Arguments> testEnforceInstitutionAndLibraryCardVariations() {
+    User testUser = generateUser();
+    Institution institution1 = new Institution();
+    institution1.setId(1);
+    Institution institution2 = new Institution();
+    institution2.setId(2);
+    LibraryCard libraryCards1 = new LibraryCard();
+    LibraryCard libraryCard2 = new LibraryCard();
+    libraryCard2.setCreateUserId(1);
+    return Stream.of(
+        Arguments.of(institution1, testUser, libraryCards1, true),
+        Arguments.of(institution1, testUser, libraryCard2, true),
+        Arguments.of(institution1, testUser, libraryCards1, true),
+        Arguments.of(institution1, testUser, libraryCards1, true),
+        Arguments.of(institution1, testUser, null, false),
+        Arguments.of(institution1, testUser, null, true),
+        Arguments.of(institution1, testUser, null, true),
+        Arguments.of(null, testUser, libraryCards1, true),
+        Arguments.of(null, testUser, libraryCards1, true),
+        Arguments.of(null, testUser, null, true),
+        Arguments.of(null, testUser, null, false)
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource
+  void testEnforceInstitutionAndLibraryCardVariations(
+      Institution institutionFromMap, User testUser, LibraryCard card, boolean expectsUserMod) {
+    testUser.setLibraryCard(card);
+    User alteredUser = new User();
+    alteredUser.setEmail(testUser.getEmail());
+    when(institutionService.findInstitutionForEmail(testUser.getEmail()))
+        .thenReturn(institutionFromMap);
+    if (expectsUserMod) {
+      when(userDAO.findUserByEmail(testUser.getEmail())).thenReturn(testUser, alteredUser);
+      validateAlteredUserIsReturned(
+          testUser, service.enforceInstitutionAndLibraryCardRules(testUser.getEmail()));
+    } else {
+      when(userDAO.findUserByEmail(testUser.getEmail())).thenReturn(testUser);
+      validateUserIsUnmodified(
+          testUser, service.enforceInstitutionAndLibraryCardRules(testUser.getEmail()));
+    }
+  }
+
+  private void validateUserIsUnmodified(User left, User right) {
+    assertEquals(left.getEmail(), right.getEmail());
+    assertEquals(left.getInstitutionId(), right.getInstitutionId());
+    assertEquals(left.getLibraryCard(), right.getLibraryCard());
+    assertEquals(left.getInstitutionId(), right.getInstitutionId());
+  }
+
+  private void validateAlteredUserIsReturned(User left, User right) {
+    assertEquals(left.getEmail(), right.getEmail());
+    assertNotEquals(left.getInstitutionId(), right.getInstitutionId());
+  }
+
   private User generateUserWithoutInstitution() {
     User u = generateUser();
     u.setInstitutionId(null);
     return u;
   }
 
-  private User generateUser() {
+  private static User generateUser() {
     User u = new User();
     int i1 = randomInt(10, 50);
     int i2 = randomInt(10, 50);

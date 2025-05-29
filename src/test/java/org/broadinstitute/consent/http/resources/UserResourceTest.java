@@ -28,8 +28,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
@@ -55,7 +54,7 @@ import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
 
 @ExtendWith(MockitoExtension.class)
-class UserResourceTest {
+class UserResourceTest extends AbstractTestHelper {
 
   @Mock
   private UserService userService;
@@ -228,7 +227,7 @@ class UserResourceTest {
   void testDeleteUser() {
     doNothing().when(userService).deleteUserByEmail(any());
 
-    Response response = userResource.delete(authUser, RandomStringUtils.randomAlphabetic(10), uriInfo);
+    Response response = userResource.delete(authUser, randomAlphabetic(10), uriInfo);
     assertEquals(200, response.getStatus());
   }
 
@@ -371,7 +370,7 @@ class UserResourceTest {
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     var body = (List<UserService.SimplifiedUser>) response.getEntity();
     assertFalse(body.isEmpty());
-    assertEquals(so.getDisplayName(), body.get(0).displayName);
+    assertEquals(so.getDisplayName(), body.get(0).getDisplayName());
   }
 
   @SuppressWarnings("rawtypes")
@@ -884,7 +883,7 @@ class UserResourceTest {
     User user = createUserWithRole();
     Map<String, Acknowledgement> acknowledgementMap = getDefaultAcknowledgementForUser(user,
         acknowledgementKey);
-
+    when(acknowledgementService.findAcknowledgementsForUser(any())).thenReturn(acknowledgementMap);
     Response response = userResource.getUserAcknowledgements(authUser);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
@@ -915,7 +914,7 @@ class UserResourceTest {
 
   private User createUserWithRole() {
     User user = new User();
-    user.setUserId(RandomUtils.nextInt(1, 100));
+    user.setUserId(randomInt(1, 100));
     user.setDisplayName("Test");
     user.setEmail("Test");
     user.addRole(UserRoles.Researcher());

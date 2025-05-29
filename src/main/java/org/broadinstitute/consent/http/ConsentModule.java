@@ -565,6 +565,7 @@ public class ConsentModule extends AbstractModule {
   UserServiceDAO providesUserServiceDAO() {
     return new UserServiceDAO(
         providesJdbi(),
+        providesLibraryCardDAO(),
         providesUserDAO(),
         providesUserRoleDAO()
     );

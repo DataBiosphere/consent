@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static org.broadinstitute.consent.http.enumeration.UserFields.ERA_EXPIRATION_DATE;
 import static org.broadinstitute.consent.http.enumeration.UserFields.ERA_STATUS;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -15,7 +16,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -123,7 +123,7 @@ public class UserService implements ConsentLogger {
       // Handle Roles
       if (Objects.nonNull(userUpdateFields.getUserRoleIds())) {
         List<Integer> currentRoleIds = userRoleDAO.findRolesByUserId(userId).stream()
-            .map(UserRole::getRoleId).collect(Collectors.toList());
+            .map(UserRole::getRoleId).toList();
         List<Integer> roleIdsToAdd = userUpdateFields.getRoleIdsToAdd(currentRoleIds);
         List<Integer> roleIdsToRemove = userUpdateFields.getRoleIdsToRemove(currentRoleIds);
         // Add the new role ids to the user
@@ -131,7 +131,7 @@ public class UserService implements ConsentLogger {
           List<UserRole> newRoles = roleIdsToAdd.stream()
               .map(id -> new UserRole(id,
                   Objects.requireNonNull(UserRoles.getUserRoleFromId(id)).getRoleName()))
-              .collect(Collectors.toList());
+              .toList();
           userRoleDAO.insertUserRoles(newRoles, userId);
         }
         // Remove the old role ids from the user
@@ -239,7 +239,7 @@ public class UserService implements ConsentLogger {
       throw new NotFoundException();
     }
     List<User> users = userDAO.getUsersWithCardsByDaaId(daaId);
-    return users.stream().map(SimplifiedUser::new).collect(Collectors.toList());
+    return users.stream().map(SimplifiedUser::new).toList();
   }
 
   public void deleteUserByEmail(String email) {
@@ -252,13 +252,13 @@ public class UserService implements ConsentLogger {
         findRolesByUserId(userId).
         stream().
         map(UserRole::getRoleId).
-        collect(Collectors.toList());
+        toList();
     if (!roleIds.isEmpty()) {
       userRoleDAO.removeUserRoles(userId, roleIds);
     }
     List<Vote> votes = voteDAO.findVotesByUserId(userId);
     if (!votes.isEmpty()) {
-      List<Integer> voteIds = votes.stream().map(Vote::getVoteId).collect(Collectors.toList());
+      List<Integer> voteIds = votes.stream().map(Vote::getVoteId).toList();
       voteDAO.removeVotesByIds(voteIds);
     }
     try {
@@ -291,7 +291,7 @@ public class UserService implements ConsentLogger {
     }
 
     List<User> users = userDAO.getSOsByInstitution(institutionId);
-    return users.stream().map(SimplifiedUser::new).collect(Collectors.toList());
+    return users.stream().map(SimplifiedUser::new).toList();
   }
 
   public List<User> findUsersByInstitutionId(Integer institutionId) {
@@ -446,12 +446,113 @@ public class UserService implements ConsentLogger {
     }
   }
 
+  /**
+   * Compliance method that implements a set of rules in order to ensure Library Card and
+   * Institution matching rules are adhered to when authorizing users of the system.
+   * @param email of the user being evaluated
+   * @return user with the Institution and Library Card rules applied or null if the requestor isn't
+   * a DUOS user.
+   */
+  public User enforceInstitutionAndLibraryCardRules(String email) {
+    User user;
+    Institution institutionFromEmail = institutionService.findInstitutionForEmail(email);
+    try {
+      user = findUserByEmail(email);
+    } catch (NotFoundException nfe) {
+      return null;
+    }
+
+    boolean modifiedUser = false;
+
+    if (institutionFromEmail != null) {
+      if (handleUserWithInstitutionInMap(user, institutionFromEmail)) {
+        modifiedUser = true;
+      }
+    } else {
+      if (handleUserWithoutInstitutionInMap(user)) {
+        modifiedUser = true;
+      }
+    }
+
+    if (modifiedUser) {
+      return findUserByEmail(user.getEmail());
+    } else {
+      return user;
+    }
+  }
+
+  @VisibleForTesting
+  protected boolean handleUserWithInstitutionInMap(User user, Institution institutionFromEmail) {
+    boolean needsLCRemoved = needsLibraryCardRemovedForUser(user, institutionFromEmail);
+    boolean needsInstitutionAssigned = !institutionFromEmail.getId()
+        .equals(user.getInstitutionId());
+
+    if (needsInstitutionAssigned && needsLCRemoved) {
+      userServiceDAO.updateInstitutionAndClearLibraryCardForUser(user.getUserId(), institutionFromEmail.getId());
+    } else if (needsInstitutionAssigned) {
+      userDAO.updateInstitutionId(user.getUserId(), institutionFromEmail.getId());
+    } else if (needsLCRemoved) {
+      libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
+    }
+
+    return needsLCRemoved || needsInstitutionAssigned;
+  }
+
+  @VisibleForTesting
+  protected boolean needsLibraryCardRemovedForUser(User user, Institution userInstitution) {
+    boolean needsLCRemoved = false;
+    if (hasLibraryCard(user)) {
+      try {
+        User lcIssuer = findUserById(user.getLibraryCard().getCreateUserId());
+        Institution lcIssuerInstitution = institutionService.findInstitutionForEmail(lcIssuer.getEmail());
+        if (!userInstitution.equals(lcIssuerInstitution)) {
+          needsLCRemoved = true;
+        }
+      } catch (NotFoundException nfe) {
+        needsLCRemoved = true;
+      }
+    }
+    return needsLCRemoved;
+  }
+
+  @VisibleForTesting
+  protected boolean handleUserWithoutInstitutionInMap(User user) {
+    if (hasLibraryCard(user)) {
+      dropLCAndInstitutionForUser(user);
+      return true;
+    } else {
+      if (user.getInstitutionId() != null) {
+        userDAO.updateInstitutionId(user.getUserId(), null);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void dropLCAndInstitutionForUser(User user) {
+    userServiceDAO.updateInstitutionAndClearLibraryCardForUser(user.getUserId(), null);
+  }
+
+  @VisibleForTesting
+  protected boolean hasLibraryCard(User user) {
+    return user.getLibraryCard() != null;
+  }
+
+  @VisibleForTesting
+  protected boolean hasMatchingInstitutionInDatabase(
+      Institution institutionFromEmail, Institution institutionFromDatabase) {
+    if (institutionFromEmail == null || institutionFromDatabase == null) {
+      return false;
+    }
+    return institutionFromDatabase.equals(institutionFromEmail);
+  }
+
   public static class SimplifiedUser {
 
-    public Integer userId;
-    public String displayName;
-    public String email;
-    public Integer institutionId;
+    private Integer userId;
+    private String displayName;
+    private String email;
+    private Integer institutionId;
 
     public SimplifiedUser(User user) {
       this.userId = user.getUserId();
@@ -477,6 +578,22 @@ public class UserService implements ConsentLogger {
 
     public void setInstitutionId(Integer institutionId) {
       this.institutionId = institutionId;
+    }
+
+    public String getDisplayName() {
+      return displayName;
+    }
+
+    public String getEmail() {
+      return email;
+    }
+
+    public Integer getInstitutionId() {
+      return institutionId;
+    }
+
+    public Integer getUserId() {
+      return userId;
     }
 
     @Override
