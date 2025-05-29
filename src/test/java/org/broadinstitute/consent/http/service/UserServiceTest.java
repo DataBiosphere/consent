@@ -69,6 +69,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -1021,35 +1022,32 @@ class UserServiceTest extends AbstractTestHelper {
     assertTrue(service.needsLibraryCardRemovedForUser(testUser, institutionFromEmail));
   }
 
-  static class InstitutionAndLibraryCardVariationsProvider implements ArgumentsProvider {
-    @Override
-    public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
-      User testUser = generateUser();
-      Institution institution1 = new Institution();
-      institution1.setId(1);
-      Institution institution2 = new Institution();
-      institution2.setId(2);
-      LibraryCard libraryCards1 = new LibraryCard();
-      LibraryCard libraryCard2 = new LibraryCard();
-      libraryCard2.setCreateUserId(1);
-      return Stream.of(
-          Arguments.of(institution1, testUser, libraryCards1, true),
-          Arguments.of(institution1, testUser, libraryCard2, true),
-          Arguments.of(institution1, testUser, libraryCards1, true),
-          Arguments.of(institution1, testUser, libraryCards1, true),
-          Arguments.of(institution1, testUser, null, false),
-          Arguments.of(institution1, testUser, null, true),
-          Arguments.of(institution1, testUser, null, true),
-          Arguments.of(null, testUser, libraryCards1, true),
-          Arguments.of(null, testUser, libraryCards1, true),
-          Arguments.of(null, testUser, null, true),
-          Arguments.of(null, testUser, null, false)
-      );
-    }
+  public static Stream<Arguments> testEnforceInstitutionAndLibraryCardVariations() {
+    User testUser = generateUser();
+    Institution institution1 = new Institution();
+    institution1.setId(1);
+    Institution institution2 = new Institution();
+    institution2.setId(2);
+    LibraryCard libraryCards1 = new LibraryCard();
+    LibraryCard libraryCard2 = new LibraryCard();
+    libraryCard2.setCreateUserId(1);
+    return Stream.of(
+        Arguments.of(institution1, testUser, libraryCards1, true),
+        Arguments.of(institution1, testUser, libraryCard2, true),
+        Arguments.of(institution1, testUser, libraryCards1, true),
+        Arguments.of(institution1, testUser, libraryCards1, true),
+        Arguments.of(institution1, testUser, null, false),
+        Arguments.of(institution1, testUser, null, true),
+        Arguments.of(institution1, testUser, null, true),
+        Arguments.of(null, testUser, libraryCards1, true),
+        Arguments.of(null, testUser, libraryCards1, true),
+        Arguments.of(null, testUser, null, true),
+        Arguments.of(null, testUser, null, false)
+    );
   }
 
   @ParameterizedTest
-  @ArgumentsSource(InstitutionAndLibraryCardVariationsProvider.class)
+  @MethodSource
   void testEnforceInstitutionAndLibraryCardVariations(
       Institution institutionFromMap, User testUser, LibraryCard card, boolean expectsUserMod) {
     testUser.setLibraryCard(card);
