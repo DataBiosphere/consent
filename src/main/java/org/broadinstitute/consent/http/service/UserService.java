@@ -447,37 +447,29 @@ public class UserService implements ConsentLogger {
   }
 
   /**
-   * Compliance method defined in
-   * <a href="https://broadworkbench.atlassian.net/browse/DT-1607">this ticket</a> that implements
-   * a set of rules in order to ensure Library Card and Institution matching rules are
-   * adhered to when authorizing users of the system.
+   * Compliance method that implements a set of rules in order to ensure Library Card and
+   * Institution matching rules are adhered to when authorizing users of the system.
    * @param email of the user being evaluated
    * @return user with the Institution and Library Card rules applied or null if the requestor isn't
    * a DUOS user.
    */
   public User enforceInstitutionAndLibraryCardRules(String email) {
-    User user = null;
+    User user;
     Institution institutionFromEmail = institutionService.findInstitutionForEmail(email);
-    Institution institutionFromDatabase = null;
     try {
-      user = userDAO.findUserByEmail(email);
-      institutionFromDatabase = institutionService.findInstitutionById(user.getInstitutionId());
+      user = findUserByEmail(email);
     } catch (NotFoundException nfe) {
-      // do nothing.
-    }
-
-    if (user == null) {
       return null;
     }
 
     boolean modifiedUser = false;
 
     if (institutionFromEmail != null) {
-      if (handleUserWithInstitutionInMap(user, institutionFromEmail, institutionFromDatabase)) {
+      if (handleUserWithInstitutionInMap(user, institutionFromEmail)) {
         modifiedUser = true;
       }
     } else {
-      if (handleUserWithoutInstitutionInMap(user, institutionFromDatabase)) {
+      if (handleUserWithoutInstitutionInMap(user)) {
         modifiedUser = true;
       }
     }
@@ -490,64 +482,55 @@ public class UserService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  protected boolean handleUserWithInstitutionInMap(User user, Institution institutionFromEmail, Institution institutionFromDatabase) {
-    boolean modifiedUser = false;
-    if (!hasMatchingInstitutionInDatabase(institutionFromEmail, institutionFromDatabase)) {
-      assignInstitutionToUser(user, institutionFromEmail.getId());
-      modifiedUser = true;
+  protected boolean handleUserWithInstitutionInMap(User user, Institution institutionFromEmail) {
+    boolean needsLCRemoved = needsLibraryCardRemovedForUser(user, institutionFromEmail);
+    boolean needsInstitutionAssigned = !institutionFromEmail.getId()
+        .equals(user.getInstitutionId());
+
+    if (needsInstitutionAssigned && needsLCRemoved) {
+      userServiceDAO.updateInstitutionAndClearLibraryCardForUser(user.getUserId(), institutionFromEmail.getId());
+    } else if (needsInstitutionAssigned) {
+      userDAO.updateInstitutionId(user.getUserId(), institutionFromEmail.getId());
+    } else if (needsLCRemoved) {
+      libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
     }
 
-    if (handleLibraryCardForUser(user, institutionFromEmail)) {
-      modifiedUser = true;
-    }
-
-    return modifiedUser;
+    return needsLCRemoved || needsInstitutionAssigned;
   }
 
   @VisibleForTesting
-  protected boolean handleLibraryCardForUser(User user, Institution userInstitution) {
-    boolean modifiedUser = false;
+  protected boolean needsLibraryCardRemovedForUser(User user, Institution userInstitution) {
+    boolean needsLCRemoved = false;
     if (hasLibraryCard(user)) {
       try {
         User lcIssuer = findUserById(user.getLibraryCard().getCreateUserId());
         Institution lcIssuerInstitution = institutionService.findInstitutionForEmail(lcIssuer.getEmail());
         if (!userInstitution.equals(lcIssuerInstitution)) {
-          dropLibraryCardForUser(user);
-          modifiedUser = true;
+          needsLCRemoved = true;
         }
       } catch (NotFoundException nfe) {
-        dropLibraryCardForUser(user);
-        modifiedUser = true;
+        needsLCRemoved = true;
       }
     }
-    return modifiedUser;
+    return needsLCRemoved;
   }
 
   @VisibleForTesting
-  protected boolean handleUserWithoutInstitutionInMap(User user, Institution institutionFromDatabase) {
+  protected boolean handleUserWithoutInstitutionInMap(User user) {
     if (hasLibraryCard(user)) {
       dropLCAndInstitutionForUser(user);
       return true;
     } else {
-      if (institutionFromDatabase != null) {
-        assignInstitutionToUser(user, null);
+      if (user.getInstitutionId() != null) {
+        userDAO.updateInstitutionId(user.getUserId(), null);
         return true;
       }
     }
     return false;
   }
 
-  private void assignInstitutionToUser(User user, Integer institutionId) {
-    userDAO.updateInstitutionId(user.getUserId(), institutionId);
-  }
-
   private void dropLCAndInstitutionForUser(User user) {
-    assignInstitutionToUser(user, null);
-    libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
-  }
-
-  private void dropLibraryCardForUser(User user) {
-    libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
+    userServiceDAO.updateInstitutionAndClearLibraryCardForUser(user.getUserId(), null);
   }
 
   @VisibleForTesting
