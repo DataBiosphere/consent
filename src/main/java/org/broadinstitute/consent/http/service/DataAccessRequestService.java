@@ -16,6 +16,7 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -43,7 +44,6 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
-import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
@@ -57,6 +57,12 @@ public class DataAccessRequestService implements ConsentLogger {
   protected static final Timestamp MINIMUM_SUBMITTED_DATE_FOR_DAR_EXPIRATIONS = Timestamp.from(
       Instant.ofEpochSecond(
           LocalDate.of(2024, 9, 30).toEpochSecond(LocalTime.of(0, 0, 0, 0), ZoneOffset.UTC)));
+  private static final String MEMBER = "member";
+  private static final String MEMBERS = MEMBER + "s: ";
+  public static final String ALL_LISTED_PERSONNEL_MUST_SHARE_THE_SAME_INSTITUTION =
+      "All listed personnel must share the same institutional affiliation.  The following list of roles and members must have email addresses associated with your institution: ";
+  private static final String INTERNAL_COLLABORATOR = "Internal Collaborator";
+  private static final String LAB_STAFF = "Lab staff";
   private final CounterService counterService;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DarCollectionDAO darCollectionDAO;
@@ -128,7 +134,7 @@ public class DataAccessRequestService implements ConsentLogger {
     return dar;
   }
 
-  //NOTE: rewrite method into new servicedao method on another ticket
+  //NOTE: rewrite method into new service DAO method on another ticket
   public DataAccessRequest insertDraftDataAccessRequest(User user, DataAccessRequest dar) {
     if (Objects.isNull(user) || Objects.isNull(dar) || Objects.isNull(
         dar.getReferenceId()) || Objects.isNull(dar.getData())) {
@@ -184,9 +190,9 @@ public class DataAccessRequestService implements ConsentLogger {
   /**
    * Generate a DataAccessRequest from the provided DAR. The provided DAR may or may not exist in
    * draft form, so it covers both cases of converting an existing draft to submitted and creating a
-   * brand new DAR from scratch.
+   * brand-new DAR from scratch.
    *
-   * @param user              The create User
+   * @param user              The creating User
    * @param dataAccessRequest DataAccessRequest with populated DAR data
    * @return The created DAR.
    */
@@ -274,15 +280,26 @@ public class DataAccessRequestService implements ConsentLogger {
   }
 
   public void validateProgressReport(User user, DataAccessRequest progressReport, DataAccessRequest parentDar) {
-    validateDar(user, progressReport);
-    if (parentDar.getDraft()) {
+    validateCommonDarAndProgressReportElements(user, progressReport);
+    List<String> errorSummary = new ArrayList<>();
+    getErrorSummary(progressReport.getData().getInternalCollaborators().stream().map(Collaborator::getEmail).toList(), user.getInstitution(),
+        INTERNAL_COLLABORATOR + " " + MEMBER + ": ", INTERNAL_COLLABORATOR + " " + MEMBERS, errorSummary);
+    getErrorSummary(progressReport.getData().getLabCollaborators().stream().map(Collaborator::getEmail).toList(), user.getInstitution(),
+        LAB_STAFF + " " + MEMBER + ": ", LAB_STAFF + " " + MEMBERS, errorSummary);
+
+    if (!errorSummary.isEmpty()) {
+      throw new BadRequestException( ALL_LISTED_PERSONNEL_MUST_SHARE_THE_SAME_INSTITUTION
+          + String.join(", ", errorSummary));
+    }
+
+    if (Boolean.TRUE.equals(parentDar.getDraft())) {
       throw new BadRequestException(
           "Cannot create a progress report for a draft Data Access Request");
     }
     if (progressReport.getDatasetIds() == null || progressReport.getDatasetIds().isEmpty() ) {
       throw new BadRequestException("At least one dataset is required");
     }
-    if (!parentDar.getDatasetIds().containsAll(progressReport.getDatasetIds())) {
+    if (!new HashSet<>(parentDar.getDatasetIds()).containsAll(progressReport.getDatasetIds())) {
       throw new BadRequestException("Progress report can only be created for datasets in the parent DAR");
     }
     if (progressReport.getData().getProgressReportSummary() == null ||
@@ -291,7 +308,7 @@ public class DataAccessRequestService implements ConsentLogger {
     }
   }
 
-  public void validateDar(User user, DataAccessRequest dar) {
+  private void validateCommonDarAndProgressReportElements(User user, DataAccessRequest dar) {
     if (Objects.isNull(user) || Objects.isNull(dar) || Objects.isNull(
         dar.getReferenceId()) || Objects.isNull(dar.getData())) {
       throw new IllegalArgumentException("User and DataAccessRequest are required");
@@ -304,6 +321,10 @@ public class DataAccessRequestService implements ConsentLogger {
     userService.hasValidActiveERACredentials(user);
 
     validateInternalCollaborators(dar);
+  }
+
+  public void validateDar(User user, DataAccessRequest dar) {
+    validateCommonDarAndProgressReportElements(user, dar);
     validateNoKeyPersonnelDuplicates(dar.getData());
     validatePersonnelInSameInstitution(user, dar.getData());
   }
@@ -332,7 +353,7 @@ public class DataAccessRequestService implements ConsentLogger {
    * @return The updated DataAccessRequest
    */
   public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar) {
-    if (!dar.getDraft()) {
+    if (Boolean.FALSE.equals(dar.getDraft())) {
       throw new SubmittedDARCannotBeEditedException();
     }
     try {
@@ -397,15 +418,16 @@ public class DataAccessRequestService implements ConsentLogger {
     getErrorSummary(
             collaboratorsEmails,
             submitterInstitution,
-            "Internal Collaborator member: ",
-            "Internal Collaborator members: ", invalidMembers);
+        INTERNAL_COLLABORATOR + " " + MEMBER + ": ",
+        INTERNAL_COLLABORATOR + " " + MEMBERS, invalidMembers);
 
     getErrorSummary(
-            labStaffEmails, submitterInstitution, "Lab staff member: ", "Lab staff members: ", invalidMembers);
+            labStaffEmails, submitterInstitution, LAB_STAFF + " " + MEMBER + ": ", LAB_STAFF + " "
+            + MEMBERS, invalidMembers);
 
     if (!invalidMembers.isEmpty()) {
       throw new IllegalArgumentException(
-          "All listed personnel must share the same institutional affiliation.  The following list of roles and members must have email addresses associated with your institution: "
+          ALL_LISTED_PERSONNEL_MUST_SHARE_THE_SAME_INSTITUTION
               + String.join(", ", invalidMembers));
     }
   }

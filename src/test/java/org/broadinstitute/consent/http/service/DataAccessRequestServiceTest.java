@@ -239,7 +239,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId())).thenReturn(progressReport);
     when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId())).thenReturn(
         Set.copyOf(progressReport.getDatasetIds()));
-    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     DataAccessRequest newDar = service.createProgressReport(user, progressReport, parentDar);
     assertNotNull(newDar);
     verify(dataAccessRequestDAO)
@@ -259,7 +258,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     User user = createUserWithPrerequisites();
     parentDar.setUserId(user.getUserId());
-    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId())).thenReturn(Set.of());
     assertThrows(BadRequestException.class, () -> service.createProgressReport(user, progressReport, parentDar));
   }
@@ -275,7 +273,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     parentDar.setUserId(user.getUserId());
     when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId())).thenReturn(
         Set.copyOf(progressReport.getDatasetIds()));
-    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     doThrow(new UnableToExecuteStatementException("Test exception"))
         .when(dataAccessRequestDAO)
         .insertProgressReport(
@@ -321,7 +318,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = createUserWithPrerequisites();
     DataAccessRequest progressReport = generateProgressReport();
     DataAccessRequest parentDar = generateDataAccessRequest();
-    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     assertThrows(BadRequestException.class,
         () -> service.validateProgressReport(user, progressReport, parentDar));
   }
@@ -334,7 +330,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setUserId(user.getUserId());
-    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     assertThrows(BadRequestException.class,
         () -> service.validateProgressReport(user, progressReport, parentDar));
   }
@@ -347,7 +342,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setUserId(user.getUserId());
-    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     assertThrows(BadRequestException.class,
         () -> service.validateProgressReport(user, progressReport, parentDar));
   }
@@ -361,7 +355,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setDatasetIds(List.of(1, 2, 3));
     parentDar.setUserId(user.getUserId());
-    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     assertThrows(BadRequestException.class,
         () -> service.validateProgressReport(user, progressReport, parentDar));
   }
@@ -375,8 +368,50 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setDatasetIds(List.of(1, 2, 3));
     parentDar.setUserId(user.getUserId());
+    assertDoesNotThrow(() -> service.validateProgressReport(user, progressReport, parentDar));
+  }
+
+  @Test
+  void validateProgressReportWithCollaboratorsAndStaffInSameInstitution() {
+    User user = createUserWithPrerequisites();
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.setDatasetIds(List.of(1, 2));
+    DataAccessRequestData progressReportData = progressReport.getData();
+    Collaborator collaborator1 = new Collaborator();
+    collaborator1.setEmail("1" + user.getEmail());
+    progressReportData.setInternalCollaborators(Collections.singletonList(collaborator1));
+    Collaborator collaborator2 = new Collaborator();
+    collaborator2.setEmail("2" + user.getEmail());
+    progressReportData.setLabCollaborators(Collections.singletonList(collaborator2));
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setDatasetIds(List.of(1, 2, 3));
+    parentDar.setUserId(user.getUserId());
+    when(userDAO.findUserByEmail(collaborator1.getEmail())).thenReturn(user);
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     assertDoesNotThrow(() -> service.validateProgressReport(user, progressReport, parentDar));
+  }
+
+  @Test
+  void validateProgressReportWithCollaboratorsAndStaffInInvalidInstitution() {
+    User user = createUserWithPrerequisites();
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.setDatasetIds(List.of(1, 2));
+    DataAccessRequestData progressReportData = progressReport.getData();
+    Collaborator collaborator1 = new Collaborator();
+    collaborator1.setEmail("1" + user.getEmail());
+    progressReportData.setInternalCollaborators(Collections.singletonList(collaborator1));
+    Collaborator collaborator2 = new Collaborator();
+    collaborator2.setEmail("2" + user.getEmail());
+    progressReportData.setLabCollaborators(Collections.singletonList(collaborator2));
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setDatasetIds(List.of(1, 2, 3));
+    parentDar.setUserId(user.getUserId());
+    when(userDAO.findUserByEmail(collaborator1.getEmail())).thenReturn(user);
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(null);
+    BadRequestException badRequestException = assertThrows(BadRequestException.class, () -> service.validateProgressReport(user, progressReport, parentDar));
+    assertTrue(badRequestException.getMessage().contains("All listed personnel must share the same institutional affiliation.  The following list of roles and members must have email addresses associated with your institution: Internal Collaborator member: 1email@test.org, Lab staff member: 2email@test.org"));
   }
 
   @Test
