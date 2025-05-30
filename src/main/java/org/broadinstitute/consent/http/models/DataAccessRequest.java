@@ -136,7 +136,7 @@ public class DataAccessRequest {
     this.data = data;
   }
 
-  public Boolean getDraft() {
+  public boolean getDraft() {
     return draft;
   }
 

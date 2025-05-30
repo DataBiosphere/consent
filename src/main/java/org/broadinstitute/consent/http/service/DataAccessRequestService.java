@@ -16,7 +16,6 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -294,14 +293,14 @@ roles and members must have email addresses associated with your institution:\s"
           + String.join(", ", errorSummary));
     }
 
-    if (Boolean.TRUE.equals(parentDar.getDraft())) {
+    if (parentDar.getDraft()) {
       throw new BadRequestException(
           "Cannot create a progress report for a draft Data Access Request");
     }
     if (progressReport.getDatasetIds() == null || progressReport.getDatasetIds().isEmpty() ) {
       throw new BadRequestException("At least one dataset is required");
     }
-    if (!new HashSet<>(parentDar.getDatasetIds()).containsAll(progressReport.getDatasetIds())) {
+    if (!Set.copyOf(parentDar.getDatasetIds()).containsAll(progressReport.getDatasetIds())) {
       throw new BadRequestException("Progress report can only be created for datasets in the parent DAR");
     }
     if (progressReport.getData().getProgressReportSummary() == null ||
@@ -355,7 +354,7 @@ roles and members must have email addresses associated with your institution:\s"
    * @return The updated DataAccessRequest
    */
   public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar) {
-    if (Boolean.FALSE.equals(dar.getDraft())) {
+    if (!dar.getDraft()) {
       throw new SubmittedDARCannotBeEditedException();
     }
     try {

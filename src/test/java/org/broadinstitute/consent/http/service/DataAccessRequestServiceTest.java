@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -411,7 +413,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(userDAO.findUserByEmail(collaborator1.getEmail())).thenReturn(user);
     when(institutionService.findInstitutionForEmail(any())).thenReturn(null);
     BadRequestException badRequestException = assertThrows(BadRequestException.class, () -> service.validateProgressReport(user, progressReport, parentDar));
-    assertTrue(badRequestException.getMessage().contains("All listed personnel must share the same institutional affiliation.  The following list of roles and members must have email addresses associated with your institution: Internal Collaborator member: alice@1otherdomain.org, Lab staff member: eve@yetanotherdomain.org"));
+    assertThat(badRequestException.getMessage(), containsString("All listed personnel must share the same institutional affiliation.  The following list of roles and members must have email addresses associated with your institution: Internal Collaborator member: alice@1otherdomain.org, Lab staff member: eve@yetanotherdomain.org"));
+
   }
 
   @Test
