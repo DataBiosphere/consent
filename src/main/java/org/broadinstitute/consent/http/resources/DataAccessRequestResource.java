@@ -161,8 +161,8 @@ public class DataAccessRequestResource extends Resource {
   public Response getByReferenceId(
       @Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
     validateAuthedRoleUser(
-        Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER,
-            UserRoles.SIGNINGOFFICIAL).toList(),
+        List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER,
+            UserRoles.SIGNINGOFFICIAL),
         authUser, referenceId);
     try {
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);

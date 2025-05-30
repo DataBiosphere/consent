@@ -203,9 +203,9 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testGetByReferenceIdForbidden() {
     when(mockUser.getUserId()).thenReturn(user.getUserId() + 1);
     when(userService.findUserByEmail(any())).thenReturn(mockUser);
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
+    when(dataAccessRequestService.findByReferenceId("id")).thenReturn(generateDataAccessRequest());
 
-    assertThrows(ForbiddenException.class, () -> resource.getByReferenceId(authUser, ""));
+    assertThrows(ForbiddenException.class, () -> resource.getByReferenceId(authUser, "id"));
   }
 
   @ParameterizedTest
@@ -217,9 +217,9 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     // Set the DAR create user to be a different user from the roleUser
     DataAccessRequest dar = generateDataAccessRequest();
     dar.setUserId(roleUser.getUserId() + 1);
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+    when(dataAccessRequestService.findByReferenceId("id")).thenReturn(dar);
 
-    Response response = resource.getByReferenceId(authUser, "");
+    Response response = resource.getByReferenceId(authUser, "id");
     assertEquals(200, response.getStatus());
   }
 
@@ -232,8 +232,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     // Set the DAR create user to be a different user from the roleUser
     DataAccessRequest dar = generateDataAccessRequest();
     dar.setUserId(roleUser.getUserId() + 1);
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
-    assertThrows(ForbiddenException.class, () -> resource.getByReferenceId(authUser, ""));
+    when(dataAccessRequestService.findByReferenceId("id")).thenReturn(dar);
+    assertThrows(ForbiddenException.class, () -> resource.getByReferenceId(authUser, "id"));
   }
 
   @Test
