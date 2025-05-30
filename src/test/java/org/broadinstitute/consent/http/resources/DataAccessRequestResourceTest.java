@@ -452,7 +452,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testPostProgressReportThrowsWhenNoERACommonsID() {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
-    doThrow(BadRequestException.class).when(userService).hasValidActiveERACredentials(user);
+    doThrow(BadRequestException.class).when(userService).validateActiveERACredentials(user);
 
     try (var response = resource.postProgressReport(authUser, "", "",
         null, null, null, null)) {

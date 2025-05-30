@@ -234,7 +234,7 @@ class UserServiceTest extends AbstractTestHelper {
     u.setProperties(userProperties);
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
         UserFields.getValues())).thenReturn(u.getProperties());
-    assertDoesNotThrow(() -> service.hasValidActiveERACredentials(u));
+    assertDoesNotThrow(() -> service.validateActiveERACredentials(u));
   }
 
   @Test
@@ -251,7 +251,7 @@ class UserServiceTest extends AbstractTestHelper {
     userProperties.add(eraExpirationDate);
     u.setProperties(userProperties);
     assertThrows(LibraryCardRequiredException.class,
-        () -> service.hasValidActiveERACredentials(u));
+        () -> service.validateActiveERACredentials(u));
   }
 
   @Test
@@ -271,7 +271,7 @@ class UserServiceTest extends AbstractTestHelper {
     userProperties.add(eraExpirationDate);
     u.setProperties(userProperties);
     assertThrows(BadRequestException.class,
-        () -> service.hasValidActiveERACredentials(u));
+        () -> service.validateActiveERACredentials(u));
   }
 
   @Test
@@ -290,7 +290,7 @@ class UserServiceTest extends AbstractTestHelper {
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
         UserFields.getValues())).thenReturn(u.getProperties());
     assertThrows(BadRequestException.class,
-        () -> service.hasValidActiveERACredentials(u));
+        () -> service.validateActiveERACredentials(u));
   }
 
   @Test
@@ -303,7 +303,7 @@ class UserServiceTest extends AbstractTestHelper {
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
         UserFields.getValues())).thenReturn(u.getProperties());
     assertThrows(BadRequestException.class,
-        () -> service.hasValidActiveERACredentials(u));
+        () -> service.validateActiveERACredentials(u));
   }
 
   @Test
@@ -324,7 +324,7 @@ class UserServiceTest extends AbstractTestHelper {
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(u.getUserId(),
         UserFields.getValues())).thenReturn(u.getProperties());
     assertThrows(BadRequestException.class,
-        () -> service.hasValidActiveERACredentials(u));
+        () -> service.validateActiveERACredentials(u));
   }
 
   @Test

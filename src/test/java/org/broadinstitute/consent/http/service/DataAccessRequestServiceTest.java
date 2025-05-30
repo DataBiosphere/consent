@@ -198,7 +198,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   void testCreateDataAccessRequestCreateWithoutERACommons() {
     DataAccessRequest dar = generateDataAccessRequest();
     User user = createUserWithPrerequisites();
-    doThrow(BadRequestException.class).when(userService).hasValidActiveERACredentials(user);
+    doThrow(BadRequestException.class).when(userService).validateActiveERACredentials(user);
     assertThrows(BadRequestException.class, () -> service.createDataAccessRequest(user, dar));
   }
 
@@ -399,10 +399,10 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setDatasetIds(List.of(1, 2));
     DataAccessRequestData progressReportData = progressReport.getData();
     Collaborator collaborator1 = new Collaborator();
-    collaborator1.setEmail("1" + user.getEmail());
+    collaborator1.setEmail("alice@1otherdomain.org");
     progressReportData.setInternalCollaborators(Collections.singletonList(collaborator1));
     Collaborator collaborator2 = new Collaborator();
-    collaborator2.setEmail("2" + user.getEmail());
+    collaborator2.setEmail("eve@yetanotherdomain.org");
     progressReportData.setLabCollaborators(Collections.singletonList(collaborator2));
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
@@ -411,7 +411,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(userDAO.findUserByEmail(collaborator1.getEmail())).thenReturn(user);
     when(institutionService.findInstitutionForEmail(any())).thenReturn(null);
     BadRequestException badRequestException = assertThrows(BadRequestException.class, () -> service.validateProgressReport(user, progressReport, parentDar));
-    assertTrue(badRequestException.getMessage().contains("All listed personnel must share the same institutional affiliation.  The following list of roles and members must have email addresses associated with your institution: Internal Collaborator member: 1email@test.org, Lab staff member: 2email@test.org"));
+    assertTrue(badRequestException.getMessage().contains("All listed personnel must share the same institutional affiliation.  The following list of roles and members must have email addresses associated with your institution: Internal Collaborator member: alice@1otherdomain.org, Lab staff member: eve@yetanotherdomain.org"));
   }
 
   @Test

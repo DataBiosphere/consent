@@ -60,7 +60,9 @@ public class DataAccessRequestService implements ConsentLogger {
   private static final String MEMBER = "member";
   private static final String MEMBERS = MEMBER + "s: ";
   public static final String ALL_LISTED_PERSONNEL_MUST_SHARE_THE_SAME_INSTITUTION =
-      "All listed personnel must share the same institutional affiliation.  The following list of roles and members must have email addresses associated with your institution: ";
+      """
+All listed personnel must share the same institutional affiliation.  The following list of \
+roles and members must have email addresses associated with your institution:\s""";
   private static final String INTERNAL_COLLABORATOR = "Internal Collaborator";
   private static final String LAB_STAFF = "Lab staff";
   private final CounterService counterService;
@@ -318,7 +320,7 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new NIHComplianceRuleException();
     }
 
-    userService.hasValidActiveERACredentials(user);
+    userService.validateActiveERACredentials(user);
 
     validateInternalCollaborators(dar);
   }

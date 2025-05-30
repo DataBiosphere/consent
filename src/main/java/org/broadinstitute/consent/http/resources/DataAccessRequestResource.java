@@ -417,7 +417,7 @@ public class DataAccessRequestResource extends Resource {
       // added here because other dataAccessRequestServices calls are invoked that do not normally
       // require this sequence.  hasValidActiveERACredentials will also check for a LC so no
       // additional LC check needed.
-      userService.hasValidActiveERACredentials(user);
+      userService.validateActiveERACredentials(user);
       DataAccessRequest parentDar = dataAccessRequestService.findByReferenceId(parentReferenceId);
       // needs to happen before docs are uploaded
       if (!user.getUserId().equals(parentDar.getUserId())) {
