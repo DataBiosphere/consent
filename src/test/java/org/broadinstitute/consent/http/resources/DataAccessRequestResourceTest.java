@@ -19,6 +19,7 @@ import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriBuilder;
@@ -205,6 +206,34 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(any())).thenReturn(mockUser);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
 
+    assertThrows(ForbiddenException.class, () -> resource.getByReferenceId(authUser, ""));
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = UserRoles.class, names = {"ADMIN", "CHAIRPERSON", "MEMBER", "SIGNINGOFFICIAL"})
+  void testGetByReferenceIdAllowedRoles(UserRoles role) {
+    UserRole userRole = new UserRole(role.getRoleId(), role.getRoleName());
+    User roleUser = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(userRole));
+    when(userService.findUserByEmail(roleUser.getEmail())).thenReturn(roleUser);
+    // Set the DAR create user to be a different user from the roleUser
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setUserId(roleUser.getUserId() + 1);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
+
+    Response response = resource.getByReferenceId(authUser, "");
+    assertEquals(200, response.getStatus());
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = UserRoles.class, names = {"ALUMNI", "DATASUBMITTER", "ITDIRECTOR", "SERVICE_ACCOUNT", "RESEARCHER"})
+  void testGetByReferenceIdDisallowedRoles(UserRoles role) {
+    UserRole userRole = new UserRole(role.getRoleId(), role.getRoleName());
+    User roleUser = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(userRole));
+    when(userService.findUserByEmail(roleUser.getEmail())).thenReturn(roleUser);
+    // Set the DAR create user to be a different user from the roleUser
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setUserId(roleUser.getUserId() + 1);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     assertThrows(ForbiddenException.class, () -> resource.getByReferenceId(authUser, ""));
   }
 
