@@ -157,7 +157,8 @@ public class DataAccessRequestResource extends Resource {
   public Response getByReferenceId(
       @Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
     validateAuthedRoleUser(
-        Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER).toList(),
+        List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER,
+            UserRoles.SIGNINGOFFICIAL),
         authUser, referenceId);
     try {
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
@@ -183,7 +184,7 @@ public class DataAccessRequestResource extends Resource {
       @Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
     try {
       validateAuthedRoleUser(
-          Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER).toList(),
+          List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER),
           authUser, referenceId);
       List<DataAccessAgreement> dataAccessAgreements = daaService.findByDarReferenceId(referenceId);
       return Response.status(Response.Status.OK).entity(dataAccessAgreements).build();
@@ -350,7 +351,7 @@ public class DataAccessRequestResource extends Resource {
     try {
       DataAccessRequest dar = getDarById(referenceId);
       validateAuthedRoleUser(
-          Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER).toList(),
+          List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER),
           authUser, referenceId);
       if (dar.getData() != null &&
           StringUtils.isNotEmpty(dar.getData().getIrbDocumentLocation()) &&
@@ -487,7 +488,7 @@ public class DataAccessRequestResource extends Resource {
     try {
       DataAccessRequest dar = getDarById(referenceId);
       validateAuthedRoleUser(
-          Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER).toList(),
+          List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER),
           authUser, referenceId);
       if (dar.getData() != null &&
           StringUtils.isNotEmpty(dar.getData().getCollaborationLetterLocation()) &&

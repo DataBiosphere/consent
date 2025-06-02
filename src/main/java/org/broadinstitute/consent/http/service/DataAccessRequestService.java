@@ -49,7 +49,6 @@ import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.JdbiException;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
-import org.jetbrains.annotations.NotNull;
 
 public class DataAccessRequestService implements ConsentLogger {
   public static final String EXPIRE_WARN_INTERVAL = "11 months";
@@ -330,7 +329,6 @@ public class DataAccessRequestService implements ConsentLogger {
     }
   }
 
-  @NotNull
   private List<String> getCollaboratorAndLibraryCardErrors(User user, DataAccessRequestData darData) {
     List<String> errorSummary = new ArrayList<>();
     getErrorSummary(

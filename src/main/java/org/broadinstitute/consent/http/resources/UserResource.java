@@ -161,7 +161,7 @@ public class UserResource extends Resource {
   @GET
   @Path("/{userId}")
   @Produces("application/json")
-  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, DATASUBMITTER})
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, DATASUBMITTER, SIGNINGOFFICIAL})
   public Response getUserById(@Auth AuthUser authUser, @PathParam("userId") Integer userId) {
     try {
       JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
