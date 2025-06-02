@@ -1030,15 +1030,10 @@ class UserServiceTest extends AbstractTestHelper {
     libraryCard2.setCreateUserId(1);
     return Stream.of(
         Arguments.of(institution1, testUser, libraryCards1, true),
-        Arguments.of(institution1, testUser, libraryCard2, true),
-        Arguments.of(institution1, testUser, libraryCards1, true),
-        Arguments.of(institution1, testUser, libraryCards1, true),
+        Arguments.of(institution2, testUser, libraryCards1, true),
+        Arguments.of(institution1, testUser, libraryCard2, false),
         Arguments.of(institution1, testUser, null, false),
-        Arguments.of(institution1, testUser, null, true),
-        Arguments.of(institution1, testUser, null, true),
         Arguments.of(null, testUser, libraryCards1, true),
-        Arguments.of(null, testUser, libraryCards1, true),
-        Arguments.of(null, testUser, null, true),
         Arguments.of(null, testUser, null, false)
     );
   }

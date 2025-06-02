@@ -49,6 +49,7 @@ import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.JdbiException;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
+import org.jetbrains.annotations.NotNull;
 
 public class DataAccessRequestService implements ConsentLogger {
   public static final String EXPIRE_WARN_INTERVAL = "11 months";
@@ -60,8 +61,8 @@ public class DataAccessRequestService implements ConsentLogger {
   private static final String MEMBERS = MEMBER + "s: ";
   public static final String ALL_LISTED_PERSONNEL_MUST_SHARE_THE_SAME_INSTITUTION =
       """
-All listed personnel must share the same institutional affiliation.  The following list of \
-roles and members must have email addresses associated with your institution:\s""";
+All listed personnel must share the same institutional affiliation and have a library card.  The following list of \
+roles and members must have email addresses associated with your institution or library cards issued:\s""";
   private static final String INTERNAL_COLLABORATOR = "Internal Collaborator";
   private static final String LAB_STAFF = "Lab staff";
   private final CounterService counterService;
@@ -282,16 +283,7 @@ roles and members must have email addresses associated with your institution:\s"
 
   public void validateProgressReport(User user, DataAccessRequest progressReport, DataAccessRequest parentDar) {
     validateCommonDarAndProgressReportElements(user, progressReport);
-    List<String> errorSummary = new ArrayList<>();
-    getErrorSummary(progressReport.getData().getInternalCollaborators().stream().map(Collaborator::getEmail).toList(), user.getInstitution(),
-        INTERNAL_COLLABORATOR + " " + MEMBER + ": ", INTERNAL_COLLABORATOR + " " + MEMBERS, errorSummary);
-    getErrorSummary(progressReport.getData().getLabCollaborators().stream().map(Collaborator::getEmail).toList(), user.getInstitution(),
-        LAB_STAFF + " " + MEMBER + ": ", LAB_STAFF + " " + MEMBERS, errorSummary);
-
-    if (!errorSummary.isEmpty()) {
-      throw new BadRequestException( ALL_LISTED_PERSONNEL_MUST_SHARE_THE_SAME_INSTITUTION
-          + String.join(", ", errorSummary));
-    }
+    validateInternalCollaborators(user, progressReport);
 
     if (parentDar.getDraft()) {
       throw new BadRequestException(
@@ -320,30 +312,34 @@ roles and members must have email addresses associated with your institution:\s"
     }
 
     userService.validateActiveERACredentials(user);
-
-    validateInternalCollaborators(dar);
   }
 
   public void validateDar(User user, DataAccessRequest dar) {
     validateCommonDarAndProgressReportElements(user, dar);
     validateNoKeyPersonnelDuplicates(dar.getData());
-    validatePersonnelInSameInstitution(user, dar.getData());
+    validatePersonnelInstitutionAndLibraryCardRequirements(user, dar.getData());
   }
 
   @VisibleForTesting
-  public void validateInternalCollaborators(DataAccessRequest payload) {
-    List<Collaborator> internalCollaborators = payload.getData().getInternalCollaborators();
-    for (Collaborator collaborator : internalCollaborators) {
-      User collabUser = userDAO.findUserByEmail(collaborator.getEmail());
-      if (collabUser == null) {
-        throw new NotFoundException(
-            "Unable to find User with the provided email: " + collaborator.getEmail());
-      }
-      if (collabUser.getLibraryCard() == null) {
-        throw new BadRequestException(
-            "Collaborator " + collaborator.getEmail() + " does not have a library card.");
-      }
+  public void validateInternalCollaborators(User user, DataAccessRequest progressReport) {
+    List<String> errorSummary = getCollaboratorAndLibraryCardErrors(user, progressReport.getData());
+
+    if (!errorSummary.isEmpty()) {
+      throw new BadRequestException( ALL_LISTED_PERSONNEL_MUST_SHARE_THE_SAME_INSTITUTION
+          + String.join(", ", errorSummary));
     }
+  }
+
+  @NotNull
+  private List<String> getCollaboratorAndLibraryCardErrors(User user, DataAccessRequestData darData) {
+    List<String> errorSummary = new ArrayList<>();
+    getErrorSummary(
+        darData.getInternalCollaborators().stream().map(Collaborator::getEmail).toList(), user.getInstitution(),
+        INTERNAL_COLLABORATOR + " " + MEMBER + ": ", INTERNAL_COLLABORATOR + "  " + MEMBERS, errorSummary);
+    getErrorSummary(
+        darData.getLabCollaborators().stream().map(Collaborator::getEmail).toList(), user.getInstitution(),
+        LAB_STAFF + " " + MEMBER + ": ", LAB_STAFF + " " + MEMBERS, errorSummary);
+    return errorSummary;
   }
 
   /**
@@ -400,15 +396,11 @@ roles and members must have email addresses associated with your institution:\s"
   }
 
   @VisibleForTesting
-  protected void validatePersonnelInSameInstitution(User user, DataAccessRequestData darData) {
+  protected void validatePersonnelInstitutionAndLibraryCardRequirements(User user, DataAccessRequestData darData) {
     Institution submitterInstitution = user.getInstitution();
     String piEmail = darData.getPiEmail();
     String soEmail = darData.getSigningOfficialEmail();
     String itEmail = darData.getItDirectorEmail();
-    List<String> collaboratorsEmails =
-        darData.getInternalCollaborators().stream().map(Collaborator::getEmail).toList();
-    List<String> labStaffEmails =
-        darData.getLabCollaborators().stream().map(Collaborator::getEmail).toList();
 
     List<String> invalidMembers = new ArrayList<>();
 
@@ -416,15 +408,7 @@ roles and members must have email addresses associated with your institution:\s"
     verifyInstitution(submitterInstitution, soEmail, "Signing Official", invalidMembers);
     verifyInstitution(submitterInstitution, itEmail, "IT Director", invalidMembers);
 
-    getErrorSummary(
-            collaboratorsEmails,
-            submitterInstitution,
-        INTERNAL_COLLABORATOR + " " + MEMBER + ": ",
-        INTERNAL_COLLABORATOR + " " + MEMBERS, invalidMembers);
-
-    getErrorSummary(
-            labStaffEmails, submitterInstitution, LAB_STAFF + " " + MEMBER + ": ", LAB_STAFF + " "
-            + MEMBERS, invalidMembers);
+    invalidMembers.addAll(getCollaboratorAndLibraryCardErrors(user, darData));
 
     if (!invalidMembers.isEmpty()) {
       throw new IllegalArgumentException(
@@ -439,15 +423,34 @@ roles and members must have email addresses associated with your institution:\s"
     }
   }
 
+  private List<String> findCollaboratorsWithoutLibraryCards(List<String> usersToCheck) {
+    List<String> usersWithoutLibraryCards = new ArrayList<>();
+    usersToCheck.forEach(email -> {
+      User collabUser = userDAO.findUserByEmail(email);
+      if (collabUser == null || collabUser.getLibraryCard() == null) {
+        usersWithoutLibraryCards.add(email);
+      }
+    });
+    return usersWithoutLibraryCards;
+  }
+
   private void getErrorSummary(
       List<String> emails,
       Institution institution,
       String categorySingular,
       String categoryPlural,
       List<String> invalidMembers) {
-    List<String> errors = findEmailAddressesNotInInstitution(emails, institution);
-    if (!errors.isEmpty()) {
-      invalidMembers.add(buildSingleErrorFromErrorList(errors, categorySingular, categoryPlural));
+    List<String> institutionErrors = findEmailAddressesNotInInstitution(emails, institution);
+    List<String> libraryCardErrors = findCollaboratorsWithoutLibraryCards(emails);
+
+    if (!institutionErrors.isEmpty()) {
+      String missingInstitution = " (missing institution) ";
+      invalidMembers.add(buildSingleErrorFromErrorList(institutionErrors, categorySingular + missingInstitution, categoryPlural + missingInstitution));
+    }
+
+    if (!libraryCardErrors.isEmpty()) {
+      String missingLibraryCard = " (missing library card) ";
+      invalidMembers.add(buildSingleErrorFromErrorList(libraryCardErrors, categorySingular + missingLibraryCard, categoryPlural + missingLibraryCard));
     }
   }
 
