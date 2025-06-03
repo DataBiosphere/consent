@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
@@ -50,7 +49,6 @@ import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.ComplianceLogger;
@@ -453,11 +451,10 @@ public class DataAccessRequestResource extends Resource {
         throw new NotFoundException("Dataset " + datasetId + " not found");
       }
       DataUse dataUse = dataset.getDataUse();
-      if (dataUse == null || dataUse.getCollaboratorRequired() == null
-          || dataUse.getEthicsApprovalRequired() == null) {
+      if (dataUse == null) {
         throw new BadRequestException("Dataset " + datasetId + " is missing data use(s)");
       }
-      if (dataUse.getCollaboratorRequired()) {
+      if (Boolean.TRUE.equals(dataUse.getCollaboratorRequired())) {
         String parentCollabLocation = parentDar.getData().getCollaborationLetterLocation();
         if ((collabFileDetails == null || collabFileDetails.getSize() <= 0)
             && Strings.isNullOrEmpty(parentCollabLocation)) {
@@ -466,7 +463,7 @@ public class DataAccessRequestResource extends Resource {
         uploadDocumentContents(DarDocumentType.COLLABORATION, childDar,
             collabInputStream, collabFileDetails);
       }
-      if (dataUse.getEthicsApprovalRequired()) {
+      if (Boolean.TRUE.equals(dataUse.getEthicsApprovalRequired())) {
         String parentEthicsLocation = parentDar.getData().getIrbDocumentLocation();
         if ((ethicsFileDetails == null || ethicsFileDetails.getSize() <= 0)
             && Strings.isNullOrEmpty(parentEthicsLocation)) {
@@ -585,50 +582,6 @@ public class DataAccessRequestResource extends Resource {
     }
     newDar.setData(data);
     newDar.addDatasetIds(data.getDatasetIds());
-    return newDar;
-  }
-
-  /**
-   * Populate a new Data Access Request from the JSON string and the parent Data Access Request.
-   * Copies all the data from the parent dar, then overwrites the collaborators and datasets. Adds
-   * all progress report specific fields.
-   *
-   * @param json      The JSON string to populate the new Progress Report.
-   * @param parentDar The parent Data Access Request to copy data from.
-   * @return A new Progress Report populated with the provided JSON string and parent DAR data.
-   */
-  public DataAccessRequest populateProgressReportFromJsonString(String json,
-      DataAccessRequest parentDar) {
-    DataAccessRequest newDar = new DataAccessRequest();
-    DataAccessRequestData newData = DataAccessRequestData.populateDARData(json);
-    DataAccessRequestData originalDataCopy = DataAccessRequestData.fromString(
-        parentDar.getData().toString());
-
-    String referenceId = UUID.randomUUID().toString();
-    newDar.setReferenceId(referenceId);
-    newDar.setParentId(parentDar.getId());
-    newDar.setCollectionId(parentDar.getCollectionId());
-
-    newDar.addDatasetIds(newData.getDatasetIds());
-    originalDataCopy.setInternalCollaborators(newData.getInternalCollaborators());
-    originalDataCopy.setExternalCollaborators(newData.getExternalCollaborators());
-    originalDataCopy.setLabCollaborators(newData.getLabCollaborators());
-    originalDataCopy.setProgressReportSummary(newData.getProgressReportSummary());
-    originalDataCopy.setIntellectualPropertySummary(newData.getIntellectualPropertySummary());
-    originalDataCopy.setPublications(newData.getPublications());
-    originalDataCopy.setPresentations(newData.getPresentations());
-    originalDataCopy.setDmi(newData.getDmi());
-    originalDataCopy.setResearchPlans(newData.getResearchPlans());
-    originalDataCopy.setCloseoutSupplement(newData.getCloseoutSupplement());
-
-    // These values will be updated in populateProgressReportWithDocuments if documents exist.
-    // Its important we don't copy over the parent values so those documents are not deleted.
-    originalDataCopy.setCollaborationLetterName(null);
-    originalDataCopy.setCollaborationLetterLocation(null);
-    originalDataCopy.setIrbDocumentName(null);
-    originalDataCopy.setIrbDocumentLocation(null);
-
-    newDar.setData(originalDataCopy);
     return newDar;
   }
 
