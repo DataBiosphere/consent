@@ -734,16 +734,9 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testGetCollaborationDocumentNullValues() {
+  void testGetCollaborationDocumentNullOrEmptyValues() {
 
-    Response response = resource.getIrbDocument(authUser, "");
-    assertEquals(404, response.getStatus());
-  }
-
-  @Test
-  void testGetCollaborationDocumentEmptyValues() {
-
-    Response response = resource.getIrbDocument(authUser, "");
+    Response response = resource.getCollaborationDocument(authUser, "");
     assertEquals(404, response.getStatus());
   }
 
