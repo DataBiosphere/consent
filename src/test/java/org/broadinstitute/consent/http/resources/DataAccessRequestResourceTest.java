@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,6 +24,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -34,6 +36,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -64,7 +67,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -602,6 +607,57 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
         null, null, null, null, childDar, parentDar));
 
     assertEquals("Dataset 1 not found", exception.getMessage());
+  }
+
+  /**
+   * Provides a stream of DataUse objects for testing the `populateProgressReportWithDocuments`
+   * method. Each DataUse object has a different property set to true. `ethicsApprovalRequired` and
+   * `collaboratorRequired` require special handling by the method under test and are covered in
+   * other tests, so they are not included here.
+   */
+  private static Stream<Arguments> dataUseProvider() {
+    return Stream.of(
+        Arguments.of(new DataUseBuilder().setGeneralUse(true).build()),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).build()),
+        Arguments.of(
+            new DataUseBuilder().setDiseaseRestrictions(List.of("Cancer", "Diabetes")).build()),
+        Arguments.of(new DataUseBuilder().setPopulationOriginsAncestry(true).build()),
+        Arguments.of(new DataUseBuilder().setMethodsResearch(true).build()),
+        Arguments.of(new DataUseBuilder().setNonProfitUse(true).build()),
+        Arguments.of(new DataUseBuilder().setOther("Other").build()),
+        Arguments.of(new DataUseBuilder().setSecondaryOther("Other").build()),
+        Arguments.of(new DataUseBuilder().setGeographicalRestrictions("Geography").build()),
+        Arguments.of(new DataUseBuilder().setGeneticStudiesOnly(true).build()),
+        Arguments.of(new DataUseBuilder().setPublicationResults(true).build()),
+        Arguments.of(new DataUseBuilder().setPublicationMoratorium("Publication").build()),
+        Arguments.of(new DataUseBuilder().setControl(true).build()),
+        Arguments.of(new DataUseBuilder().setGender("Gender").build()),
+        Arguments.of(new DataUseBuilder().setPediatric(true).build()),
+        Arguments.of(new DataUseBuilder().setPopulation(true).build()),
+        Arguments.of(new DataUseBuilder().setIllegalBehavior(true).build()),
+        Arguments.of(new DataUseBuilder().setSexualDiseases(true).build()),
+        Arguments.of(new DataUseBuilder().setStigmatizeDiseases(true).build()),
+        Arguments.of(new DataUseBuilder().setVulnerablePopulations(true).build()),
+        Arguments.of(new DataUseBuilder().setPsychologicalTraits(true).build()),
+        Arguments.of(new DataUseBuilder().setNotHealth(true).build())
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("dataUseProvider")
+  void testPopulateProgressReportWithDocumentsAndValidDataUse(DataUse dataUse) {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDataUse(dataUse);
+    when(datasetService.findDatasetById(1)).thenReturn(dataset);
+
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setDatasetIds(List.of(dataset.getDatasetId()));
+    DataAccessRequest childDar = generateDataAccessRequest();
+    childDar.setDatasetIds(List.of(dataset.getDatasetId()));
+
+    assertDoesNotThrow(() -> resource.populateProgressReportWithDocuments(
+        null, null, null, null, childDar, parentDar));
   }
 
   @ParameterizedTest
