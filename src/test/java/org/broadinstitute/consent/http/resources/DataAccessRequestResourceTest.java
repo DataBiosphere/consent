@@ -96,8 +96,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Mock
   private MatchService matchService;
   @Mock
-  private EmailService emailService;
-  @Mock
   private GCSService gcsService;
   @Mock
   private UserService userService;
@@ -121,7 +119,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     try {
       resource =
           new DataAccessRequestResource(daaService,
-              dataAccessRequestService, emailService, gcsService, userService, datasetService,
+              dataAccessRequestService, gcsService, userService, datasetService,
               matchService, darCollectionService);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
@@ -480,7 +478,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testPostProgressReportThrowsWhenNoERACommonsID() {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
-    doThrow(BadRequestException.class).when(userService).hasValidActiveERACredentials(user);
+    doThrow(BadRequestException.class).when(userService).validateActiveERACredentials(user);
 
     try (var response = resource.postProgressReport(authUser, "", "",
         null, null, null, null)) {

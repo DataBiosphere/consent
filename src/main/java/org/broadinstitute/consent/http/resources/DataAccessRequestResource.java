@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -65,7 +64,6 @@ public class DataAccessRequestResource extends Resource {
   private final DaaService daaService;
   private final DataAccessRequestService dataAccessRequestService;
   private final DarCollectionService darCollectionService;
-  private final EmailService emailService;
   private final GCSService gcsService;
   private final MatchService matchService;
   private final UserService userService;
@@ -75,7 +73,6 @@ public class DataAccessRequestResource extends Resource {
   public DataAccessRequestResource(
       DaaService daaService,
       DataAccessRequestService dataAccessRequestService,
-      EmailService emailService,
       GCSService gcsService,
       UserService userService,
       DatasetService datasetService,
@@ -84,7 +81,6 @@ public class DataAccessRequestResource extends Resource {
   ) {
     this.daaService = daaService;
     this.dataAccessRequestService = dataAccessRequestService;
-    this.emailService = emailService;
     this.gcsService = gcsService;
     this.userService = userService;
     this.datasetService = datasetService;
@@ -188,8 +184,7 @@ public class DataAccessRequestResource extends Resource {
       @Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
     try {
       validateAuthedRoleUser(
-          Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
-              .collect(Collectors.toList()),
+          List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER),
           authUser, referenceId);
       List<DataAccessAgreement> dataAccessAgreements = daaService.findByDarReferenceId(referenceId);
       return Response.status(Response.Status.OK).entity(dataAccessAgreements).build();
@@ -356,8 +351,7 @@ public class DataAccessRequestResource extends Resource {
     try {
       DataAccessRequest dar = getDarById(referenceId);
       validateAuthedRoleUser(
-          Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
-              .collect(Collectors.toList()),
+          List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER),
           authUser, referenceId);
       if (dar.getData() != null &&
           StringUtils.isNotEmpty(dar.getData().getIrbDocumentLocation()) &&
@@ -417,7 +411,7 @@ public class DataAccessRequestResource extends Resource {
       // added here because other dataAccessRequestServices calls are invoked that do not normally
       // require this sequence.  hasValidActiveERACredentials will also check for a LC so no
       // additional LC check needed.
-      userService.hasValidActiveERACredentials(user);
+      userService.validateActiveERACredentials(user);
       DataAccessRequest parentDar = dataAccessRequestService.findByReferenceId(parentReferenceId);
       // needs to happen before docs are uploaded
       if (!user.getUserId().equals(parentDar.getUserId())) {
@@ -494,8 +488,7 @@ public class DataAccessRequestResource extends Resource {
     try {
       DataAccessRequest dar = getDarById(referenceId);
       validateAuthedRoleUser(
-          Stream.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER)
-              .collect(Collectors.toList()),
+          List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER),
           authUser, referenceId);
       if (dar.getData() != null &&
           StringUtils.isNotEmpty(dar.getData().getCollaborationLetterLocation()) &&

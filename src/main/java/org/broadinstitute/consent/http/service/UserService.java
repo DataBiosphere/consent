@@ -416,7 +416,7 @@ public class UserService implements ConsentLogger {
     return jsonElementList.stream().distinct().map(e -> findUserById(e.getAsInt())).toList();
   }
 
-  public void hasValidActiveERACredentials(User user) {
+  public void validateActiveERACredentials(User user) {
     if (user.getLibraryCard() == null) {
       throw new LibraryCardRequiredException();
     }
