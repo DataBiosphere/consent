@@ -1,7 +1,11 @@
-type: string
-description: An enumeration of Closeout Supplement values.
-enum:
-  - PROJECT_COMPLETED
-  - REQUESTOR_MOVED_INSTITUTION
-  - PROJECT_TRANSFERRED
-  - PROJECT_SUPERSEDED
+type: object
+description: A Closeout Supplement object.
+properties:
+  reasons:
+    type: array
+    items:
+      type: string
+    description: A list of closeout supplement selections.
+  otherText:
+    type: string
+    description: Text for the other closeout supplement.
