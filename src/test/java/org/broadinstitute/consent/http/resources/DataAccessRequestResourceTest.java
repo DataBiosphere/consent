@@ -350,15 +350,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testGetIrbDocumentNullValues() {
-
-    Response response = resource.getIrbDocument(authUser, "");
-    assertEquals(404, response.getStatus());
-  }
-
-  @Test
-  void testGetIrbDocumentEmptyValues() {
-
+  void testGetIrbDocumentNullOrEmptyValues() {
     Response response = resource.getIrbDocument(authUser, "");
     assertEquals(404, response.getStatus());
   }
