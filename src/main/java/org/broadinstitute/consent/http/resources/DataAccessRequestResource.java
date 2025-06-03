@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
@@ -50,7 +49,6 @@ import org.broadinstitute.consent.http.service.DaaService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.EmailService;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.ComplianceLogger;
@@ -453,11 +451,10 @@ public class DataAccessRequestResource extends Resource {
         throw new NotFoundException("Dataset " + datasetId + " not found");
       }
       DataUse dataUse = dataset.getDataUse();
-      if (dataUse == null || dataUse.getCollaboratorRequired() == null
-          || dataUse.getEthicsApprovalRequired() == null) {
+      if (dataUse == null) {
         throw new BadRequestException("Dataset " + datasetId + " is missing data use(s)");
       }
-      if (dataUse.getCollaboratorRequired()) {
+      if (Boolean.TRUE.equals(dataUse.getCollaboratorRequired())) {
         String parentCollabLocation = parentDar.getData().getCollaborationLetterLocation();
         if ((collabFileDetails == null || collabFileDetails.getSize() <= 0)
             && Strings.isNullOrEmpty(parentCollabLocation)) {
@@ -466,7 +463,7 @@ public class DataAccessRequestResource extends Resource {
         uploadDocumentContents(DarDocumentType.COLLABORATION, childDar,
             collabInputStream, collabFileDetails);
       }
-      if (dataUse.getEthicsApprovalRequired()) {
+      if (Boolean.TRUE.equals(dataUse.getEthicsApprovalRequired())) {
         String parentEthicsLocation = parentDar.getData().getIrbDocumentLocation();
         if ((ethicsFileDetails == null || ethicsFileDetails.getSize() <= 0)
             && Strings.isNullOrEmpty(parentEthicsLocation)) {
