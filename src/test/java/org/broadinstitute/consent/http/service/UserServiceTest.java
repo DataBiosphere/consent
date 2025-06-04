@@ -903,7 +903,7 @@ class UserServiceTest extends AbstractTestHelper {
   void handleUserWithInstitutionInMap_DifferentInDatabaseWithLibraryCard() {
     User testUser = generateUser();
     // Ensure that testUser has an institution id that will never be the same as the institution from email
-    testUser.setInstitutionId(-1);
+    testUser.setInstitutionId(3);
     User signingOfficial = generateUser();
     LibraryCard lc = new LibraryCard();
     lc.setCreateUserId(signingOfficial.getUserId());
