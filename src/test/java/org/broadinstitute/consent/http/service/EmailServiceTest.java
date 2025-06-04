@@ -392,12 +392,14 @@ class EmailServiceTest extends AbstractTestHelper {
   void testSendSubmittedCloseoutMessage() throws Exception {
     String darId = "DAR-123";
     String referenceId = "ref-456";
+    String closeoutUrl = SERVER_URL + "dar/" + darId + "/closeout";
+    when(templateHelper.getTemplate(EmailType.SUBMITTED_CLOSEOUT.templateName)).thenReturn(mock());
     User toUser = new User();
     toUser.setDisplayName("Test User");
     toUser.setEmail("test.user@test.com");
     when(templateHelper.getTemplate(EmailType.SUBMITTED_CLOSEOUT.templateName)).thenReturn(mock());
 
-    service.sendSubmittedCloseoutMessage(toUser, darId, referenceId);
+    service.sendSubmittedCloseoutMessage(toUser, darId, referenceId, closeoutUrl);
     verify(sendGridAPI).sendMessage(any(Mail.class), eq(toUser.getEmail()));
     verify(emailDAO).insert(
         eq(referenceId),

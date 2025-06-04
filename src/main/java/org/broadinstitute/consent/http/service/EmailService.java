@@ -279,9 +279,9 @@ public class EmailService implements ConsentLogger {
     sendMessage(new ReminderMessage(user, vote, darCode, electionType, url), user.getUserId());
   }
 
-  public void sendSubmittedCloseoutMessage(User toUser, String darId, String referenceId)
+  public void sendSubmittedCloseoutMessage(User toUser, String darId, String referenceId, String closeoutUrl)
       throws TemplateException, IOException {
-    sendMessage(new SubmittedCloseoutMessage(toUser, darId, referenceId), toUser.getUserId());
+    sendMessage(new SubmittedCloseoutMessage(toUser, darId, referenceId, closeoutUrl), toUser.getUserId());
   }
 
 }

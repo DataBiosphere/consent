@@ -31,7 +31,7 @@ class SubmittedCloseoutMessageTest {
 
   @Test
   void testMessageSubject() {
-    var message = new SubmittedCloseoutMessage(toUser, "DAR-123", "ref-456");
+    var message = new SubmittedCloseoutMessage(toUser, "DAR-123", "ref-456", "http://testServerUrl");
     assertEquals("DAR DAR-123 Closeout Available for Review", message.createSubject());
   }
 
@@ -41,7 +41,7 @@ class SubmittedCloseoutMessageTest {
     String referenceId = "ref-456";
     String linkUrl = "http://testServerUrl";
 
-    var message = new SubmittedCloseoutMessage(toUser, darId, referenceId);
+    var message = new SubmittedCloseoutMessage(toUser, darId, referenceId, "http://testServerUrl");
     assertEquals(referenceId, message.getEntityReferenceId());
 
     var template = helper.getTemplate(message.getTemplateName());

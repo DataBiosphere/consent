@@ -12,10 +12,13 @@ public class SubmittedCloseoutMessage extends MailMessage {
 
   private final String referenceId;
 
-  public SubmittedCloseoutMessage(User toUser, String darId, String referenceId) {
+  private final String closeoutUrl;
+
+  public SubmittedCloseoutMessage(User toUser, String darId, String referenceId, String closeoutUrl) {
     super(toUser, EmailType.SUBMITTED_CLOSEOUT);
     this.darId = darId;
     this.referenceId = referenceId;
+    this.closeoutUrl = closeoutUrl;
   }
 
   @Override
@@ -27,7 +30,7 @@ public class SubmittedCloseoutMessage extends MailMessage {
   public Object createModel(String linkUrl) {
     return Map.of("displayName", toUser.getDisplayName(),
         "darId", darId,
-        "linkUrl", linkUrl);
+        "linkUrl", closeoutUrl);
   }
 
   @Override
