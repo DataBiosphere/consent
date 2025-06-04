@@ -279,6 +279,17 @@ public class EmailService implements ConsentLogger {
     sendMessage(new ReminderMessage(user, vote, darCode, electionType, url), user.getUserId());
   }
 
+  /**
+   * Send a message to a Signing Official or a DAC member that a closeout has been submitted for
+   * review.
+   *
+   * @param toUser      The user to send the message to
+   * @param darId       The Data Access Request ID associated with the closeout
+   * @param referenceId The Reference ID of the closeout request
+   * @param closeoutUrl The URL to the closeout request for review
+   * @throws TemplateException Template processing exception
+   * @throws IOException       IOException when processing the template or sending the email
+   */
   public void sendSubmittedCloseoutMessage(User toUser, String darId, String referenceId, String closeoutUrl)
       throws TemplateException, IOException {
     sendMessage(new SubmittedCloseoutMessage(toUser, darId, referenceId, closeoutUrl), toUser.getUserId());
