@@ -444,8 +444,8 @@ class ElectionDAOTest extends DAOTestHelper {
     Dataset dataset = createDataset();
     int datasetId = dataset.getDatasetId();
     createLibraryCard(lcUser);
-    DataAccessRequest lcDAR = createDataAccessRequestWithUserIdV3(lcUser.getUserId());
-    DataAccessRequest nonLCDAR = createDataAccessRequestWithUserIdV3(nonLCUser.getUserId());
+    DataAccessRequest lcDAR = createDataAccessRequestWithUserIdV3(lcUser.getUserId(),"DAR-0001000");
+    DataAccessRequest nonLCDAR = createDataAccessRequestWithUserIdV3(nonLCUser.getUserId(),"DAR-0002000");
     Election lcElection = createDataAccessElection(lcDAR.getReferenceId(), datasetId);
     Election nonLCElection = createDataAccessElection(nonLCDAR.getReferenceId(), datasetId);
     List<Integer> electionIds = List.of(lcElection.getElectionId(), nonLCElection.getElectionId());
@@ -701,8 +701,7 @@ class ElectionDAOTest extends DAOTestHelper {
     return voteDAO.findVoteById(voteId);
   }
 
-  private DataAccessRequest createDataAccessRequestWithUserIdV3(Integer userId) {
-    String darCode = "DAR-" + randomInt(100, 1000);
+  private DataAccessRequest createDataAccessRequestWithUserIdV3(Integer userId, String darCode) {
     Integer collectionId = darCollectionDAO.insertDarCollection(darCode, userId, new Date());
     for (int i = 0; i < 4; i++) {
       createDataAccessRequest(userId, collectionId);
