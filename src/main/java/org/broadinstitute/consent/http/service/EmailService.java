@@ -41,6 +41,7 @@ import org.broadinstitute.consent.http.mail.message.NewResearcherLibraryRequestM
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
+import org.broadinstitute.consent.http.mail.message.SubmittedCloseoutMessage;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
@@ -276,6 +277,11 @@ public class EmailService implements ConsentLogger {
   public void sendReminderMessage(User user, Vote vote, String darCode, String electionType, String url)
       throws TemplateException, IOException {
     sendMessage(new ReminderMessage(user, vote, darCode, electionType, url), user.getUserId());
+  }
+
+  public void sendSubmittedCloseoutMessage(User toUser, String darId, String referenceId)
+      throws TemplateException, IOException {
+    sendMessage(new SubmittedCloseoutMessage(toUser, darId, referenceId), toUser.getUserId());
   }
 
 }
