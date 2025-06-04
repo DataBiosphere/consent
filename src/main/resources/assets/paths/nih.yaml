@@ -1,0 +1,29 @@
+delete:
+  summary: Delete eRA Commons Account
+  description: Removes only eRA Commons Account related information from the logued user, requesting this action
+  tags:
+    - User
+    - eRA Commons
+    - Nih
+  responses:
+    200:
+      description: Returns an empty response if the operation was successful
+post:
+  summary: Store eRA Commons information
+  description: Save user's eRA Commons account
+  requestBody:
+    description: The eRA Commons account information to be stored
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../schemas/NIHUserAccount.yaml'
+  tags:
+    - User
+    - eRA Commons
+    - Nih
+  responses:
+    200:
+      description: Returns eRA Commons Account information.
+    404:
+      description: The user doesn't exist in the system
