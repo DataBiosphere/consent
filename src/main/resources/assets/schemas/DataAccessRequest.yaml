@@ -39,6 +39,9 @@ properties:
     description: Map of elections tied to the DAR (electionid - election)
     items:
       $ref: './Election.yaml'
+  eraCommonsId:
+    type: string
+    description: The submitter's eraCommonsId at the time of request submission.
   projectTitle:
     type: string
     description: Project Title

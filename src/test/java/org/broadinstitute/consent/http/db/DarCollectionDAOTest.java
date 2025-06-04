@@ -124,6 +124,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
     DarCollection returned = darCollectionDAO.findDARCollectionByCollectionId(
         collection.getDarCollectionId());
     assertNotNull(returned);
+    assertNotNull(returned.getMostRecentDar().getEraCommonsId());
     assertEquals(collection.getDarCode(), returned.getDarCode());
     assertEquals(collection.getCreateUserId(), returned.getCreateUserId());
     generateDatasetElectionForCollection(collection);
@@ -279,6 +280,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
     testDar.setSortDate(now);
     testDar.setSubmissionDate(now);
     testDar.setUpdateDate(now);
+    testDar.setEraCommonsId(user.getEraCommonsId());
     DataAccessRequestData contents = new DataAccessRequestData();
     testDar.setData(contents);
 
@@ -394,6 +396,18 @@ class DarCollectionDAOTest extends DAOTestHelper {
 
     assertNull(archivedCollection);
     assertEquals(validCollection, testDarCollection2);
+  }
+
+  @Test
+  void testFindDARCollectionByReferenceIdIncludesERACommonsId() {
+    User user = createUserWithInstitution();
+    String eraCommonsId = randomAlphabetic(20);
+    //userDAO.updateEraCommonsId(user.getUserId(), eraCommonsId);
+    user.setEraCommonsId(eraCommonsId);
+    List<Object> newDarCollection1 = createDarCollectionWithDataset(user);
+    DataAccessRequest testDar1 = (DataAccessRequest) newDarCollection1.get(4);
+    DarCollection testDarCollection = darCollectionDAO.findDARCollectionByReferenceId(testDar1.getReferenceId());
+    assertNotNull(testDarCollection.getMostRecentDar().getEraCommonsId());
   }
 
   // findDARCollectionByCollectionId should exclude archived collections
