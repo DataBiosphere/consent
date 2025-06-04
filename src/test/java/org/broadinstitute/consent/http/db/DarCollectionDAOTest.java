@@ -402,7 +402,6 @@ class DarCollectionDAOTest extends DAOTestHelper {
   void testFindDARCollectionByReferenceIdIncludesERACommonsId() {
     User user = createUserWithInstitution();
     String eraCommonsId = randomAlphabetic(20);
-    //userDAO.updateEraCommonsId(user.getUserId(), eraCommonsId);
     user.setEraCommonsId(eraCommonsId);
     List<Object> newDarCollection1 = createDarCollectionWithDataset(user);
     DataAccessRequest testDar1 = (DataAccessRequest) newDarCollection1.get(4);
