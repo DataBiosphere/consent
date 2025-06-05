@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -348,6 +349,8 @@ class LibraryCardDAOTest extends DAOTestHelper {
     LibraryCard card1 = createLibraryCard(user1);
     LibraryCard card2 = createLibraryCard(user2);
     LibraryCard card3 = createLibraryCard(user3);
+    // This card will not be returned since its email is not in the list
+    LibraryCard card4 = createLibraryCard(createUser());
 
     List<LibraryCard> cardsFromDAO = libraryCardDAO.findByUserEmails(
         List.of(user1.getEmail().toUpperCase(), user2.getEmail().toLowerCase(), user3.getEmail()));
@@ -356,6 +359,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     assertTrue(cardsFromDAO.contains(card1));
     assertTrue(cardsFromDAO.contains(card2));
     assertTrue(cardsFromDAO.contains(card3));
+    assertFalse(cardsFromDAO.contains(card4));
   }
 
   private LibraryCard createLibraryCardForIndex() {
