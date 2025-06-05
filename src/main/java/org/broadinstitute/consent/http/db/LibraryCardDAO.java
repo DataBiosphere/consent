@@ -154,7 +154,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   /**
    * Finds library cards by user ids.
    * @param userIds A list of user IDs
-   * @return List of LibraryCard objects associated with the provided emails.
+   * @return List of LibraryCard objects associated with the provided ids.
    */
   @RegisterBeanMapper(value = LibraryCard.class)
   @UseRowReducer(LibraryCardReducer.class)
