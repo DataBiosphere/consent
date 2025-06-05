@@ -23,6 +23,7 @@ import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
+import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Dac;
@@ -30,6 +31,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
@@ -58,6 +60,7 @@ public class ElasticSearchService implements ConsentLogger {
   private final DatasetDAO datasetDAO;
   private final DatasetServiceDAO datasetServiceDAO;
   private final StudyDAO studyDAO;
+  private final LibraryCardDAO libraryCardDAO;
 
   public ElasticSearchService(
       RestClient esClient,
@@ -69,7 +72,8 @@ public class ElasticSearchService implements ConsentLogger {
       InstitutionDAO institutionDAO,
       DatasetDAO datasetDAO,
       DatasetServiceDAO datasetServiceDAO,
-      StudyDAO studyDAO) {
+      StudyDAO studyDAO,
+      LibraryCardDAO libraryCardDAO) {
     this.esClient = esClient;
     this.esConfig = esConfig;
     this.dacDAO = dacDAO;
@@ -80,6 +84,7 @@ public class ElasticSearchService implements ConsentLogger {
     this.datasetDAO = datasetDAO;
     this.datasetServiceDAO = datasetServiceDAO;
     this.studyDAO = studyDAO;
+    this.libraryCardDAO = libraryCardDAO;
   }
 
 
@@ -370,7 +375,11 @@ public class ElasticSearchService implements ConsentLogger {
         .toList();
 
     if (!approvedUserIds.isEmpty()) {
-      term.setApprovedUserIds(approvedUserIds);
+      List<Integer> approvedLCUserIds = libraryCardDAO.findLibraryCardsByUserIds(approvedUserIds)
+          .stream()
+          .map(LibraryCard::getUserId)
+          .toList();
+      term.setApprovedUserIds(approvedLCUserIds);
     }
 
     if (Objects.nonNull(dataset.getDataUse())) {

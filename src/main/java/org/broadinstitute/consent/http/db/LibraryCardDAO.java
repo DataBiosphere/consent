@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.LibraryCardReducer;
@@ -150,4 +151,19 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       """)
   List<LibraryCard> findByUserEmails(
       @BindList(value = "emails", onEmpty = EmptyHandling.NULL_STRING) List<String> emails);
+
+  /**
+   * Finds library cards by user ids.
+   * @param userIds A list of user IDs
+   * @return List of LibraryCard objects associated with the provided emails.
+   */
+  @RegisterBeanMapper(value = LibraryCard.class)
+  @UseRowReducer(LibraryCardReducer.class)
+  @SqlQuery("""
+      SELECT *
+      FROM library_card
+      WHERE user_id in (<userIds>)
+      """)
+  List<LibraryCard> findLibraryCardsByUserIds(@BindList(value = "userIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> userIds);
+
 }

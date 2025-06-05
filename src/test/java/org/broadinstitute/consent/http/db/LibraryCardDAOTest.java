@@ -410,6 +410,26 @@ class LibraryCardDAOTest extends DAOTestHelper {
     });
   }
 
+  @Test
+  void testFindByUserIds() {
+    User user1 = createUser();
+    User user2 = createUser();
+    User user3 = createUser();
+    LibraryCard card1 = createLibraryCard(user1);
+    LibraryCard card2 = createLibraryCard(user2);
+    LibraryCard card3 = createLibraryCard(user3);
+    // This card will not be returned since its email is not in the list
+    LibraryCard card4 = createLibraryCard(createUser());
+
+    List<LibraryCard> cardsFromDAO = libraryCardDAO.findLibraryCardsByUserIds(
+        List.of(user1.getUserId(), user2.getUserId(), user3.getUserId()));
+
+    assertEquals(3, cardsFromDAO.size());
+    assertTrue(cardsFromDAO.contains(card1));
+    assertTrue(cardsFromDAO.contains(card2));
+    assertTrue(cardsFromDAO.contains(card3));
+    assertFalse(cardsFromDAO.contains(card4));
+  }
 
   private LibraryCard createLibraryCardForIndex() {
     Integer userId = createUser().getUserId();
