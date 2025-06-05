@@ -26,6 +26,7 @@ public enum EmailType {
   NEW_PROGRESS_REPORT_REQUEST(22, "new-progress-report-request.html"),
   NEW_PROGRESS_REPORT_CASE(23, "new-progress-report-case.html"),
   RESEARCHER_PROGRESS_REPORT_APPROVED(24, "researcher-progress-report-approved.html"),
+  RESEARCHER_CLOSEOUT_COMPLETED(25, "researcher-closeout-completed.html"),
   SUBMITTED_CLOSEOUT(25, "submitted-closeout.html");
 
   private final Integer typeInt;

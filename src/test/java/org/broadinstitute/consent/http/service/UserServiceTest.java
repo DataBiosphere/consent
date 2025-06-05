@@ -911,6 +911,7 @@ class UserServiceTest extends AbstractTestHelper {
     testUser.setInstitution(institutionFromEmail);
     Institution institutionFromDatabase = new Institution();
     institutionFromDatabase.setId(2);
+    testUser.setInstitutionId(institutionFromDatabase.getId());
 
     when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
     when(institutionService.findInstitutionForEmail(signingOfficial.getEmail())).thenReturn(institutionFromDatabase);

@@ -370,6 +370,32 @@ class EmailServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testSendResearcherCloseoutCompletedMessage() throws Exception {
+    User user = new User();
+    user.setUserId(123);
+    user.setDisplayName("John Doe");
+    user.setEmail("jd@somewhere");
+    String darCode = "DAR-12345";
+    String referenceId = UUID.randomUUID().toString();
+    when(templateHelper.getTemplate(
+        EmailType.RESEARCHER_CLOSEOUT_COMPLETED.templateName)).thenReturn(
+        mock());
+
+    service.sendResearcherCloseoutCompletedMessage(user, darCode, referenceId);
+    verify(sendGridAPI).sendMessage(any(), eq(user.getEmail()));
+    verify(emailDAO).insert(
+        eq(referenceId),
+        isNull(),
+        eq(user.getUserId()),
+        eq(EmailType.RESEARCHER_CLOSEOUT_COMPLETED.getTypeInt()),
+        any(),
+        any(),
+        any(),
+        any(),
+        any());
+  }
+
+  @Test
   void testFetchEmails() {
     List<MailMessage> mailMessages = generateMailMessageList();
     when(emailDAO.fetchMessagesByType(any(), anyInt(), anyInt())).thenReturn(mailMessages);
