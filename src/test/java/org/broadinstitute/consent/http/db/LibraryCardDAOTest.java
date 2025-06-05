@@ -367,8 +367,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     LibraryCard card4 = createLibraryCard(createUser());
 
     List<LibraryCard> cardsFromDAO = libraryCardDAO.findByUserEmails(
-        List.of(user1.getEmail().toLowerCase(), user2.getEmail().toLowerCase(),
-            user3.getEmail().toLowerCase()));
+        List.of(user1.getEmail().toLowerCase(), user2.getEmail().toUpperCase(), user3.getEmail()));
 
     assertEquals(3, cardsFromDAO.size());
     assertTrue(cardsFromDAO.contains(card1));
