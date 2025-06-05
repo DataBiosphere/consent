@@ -42,6 +42,7 @@ import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherCloseoutCompletedMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.SubmittedCloseoutMessage;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
@@ -290,5 +291,21 @@ public class EmailService implements ConsentLogger {
       throws TemplateException, IOException {
     sendMessage(new ResearcherCloseoutCompletedMessage(user, darCode, referenceId),
         user.getUserId());
+  }
+
+  /**
+   * Send a message to a Signing Official or a DAC member that a closeout has been submitted for
+   * review.
+   *
+   * @param toUser      The user to send the message to
+   * @param darId       The Data Access Request ID associated with the closeout
+   * @param referenceId The Reference ID of the closeout request
+   * @param closeoutUrl The URL to the closeout request for review
+   * @throws TemplateException Template processing exception
+   * @throws IOException       IOException when processing the template or sending the email
+   */
+  public void sendSubmittedCloseoutMessage(User toUser, String darId, String referenceId, String closeoutUrl)
+      throws TemplateException, IOException {
+    sendMessage(new SubmittedCloseoutMessage(toUser, darId, referenceId, closeoutUrl), toUser.getUserId());
   }
 }

@@ -22,8 +22,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
@@ -49,7 +48,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * <a href="https://groups.google.com/a/broadinstitute.org/g/duos-dev">duos-dev</a>
  */
 @ExtendWith(MockitoExtension.class)
-class EmailServiceTest {
+class EmailServiceTest extends AbstractTestHelper {
 
   private EmailService service;
   @Mock
@@ -415,20 +414,46 @@ class EmailServiceTest {
         service.fetchEmailMessagesByCreateDate(startDate, endDate, 20, 0).size());
   }
 
+  @Test
+  void testSendSubmittedCloseoutMessage() throws Exception {
+    String darId = "DAR-123";
+    String referenceId = "ref-456";
+    String closeoutUrl = SERVER_URL + "dar/" + darId + "/closeout";
+    when(templateHelper.getTemplate(EmailType.SUBMITTED_CLOSEOUT.templateName)).thenReturn(mock());
+    User toUser = new User();
+    toUser.setDisplayName("Test User");
+    toUser.setEmail("test.user@test.com");
+    when(templateHelper.getTemplate(EmailType.SUBMITTED_CLOSEOUT.templateName)).thenReturn(mock());
+
+    service.sendSubmittedCloseoutMessage(toUser, darId, referenceId, closeoutUrl);
+    verify(sendGridAPI).sendMessage(any(Mail.class), eq(toUser.getEmail()));
+    verify(emailDAO).insert(
+        eq(referenceId),
+        eq(null),
+        eq(toUser.getUserId()),
+        eq(EmailType.SUBMITTED_CLOSEOUT.getTypeInt()),
+        any(),
+        any(),
+        any(),
+        any(),
+        any()
+    );
+  }
+
   private List<MailMessage> generateMailMessageList() {
     return Collections.nCopies(2, generateMailMessage());
   }
 
   private MailMessage generateMailMessage() {
     return new MailMessage(
-        RandomUtils.nextInt(),
-        RandomUtils.nextInt(),
-        RandomUtils.nextInt(),
-        RandomStringUtils.randomAlphanumeric(10),
+        randomInt(1, 10),
+        randomInt(11, 20),
+        randomInt(21, 30),
+        randomAlphanumeric(10),
         new Date(),
-        RandomStringUtils.randomAlphanumeric(10),
-        RandomStringUtils.randomAlphanumeric(10),
-        RandomUtils.nextInt(),
+        randomAlphanumeric(10),
+        randomAlphanumeric(10),
+        randomInt(31, 40),
         new Date()
     );
   }
