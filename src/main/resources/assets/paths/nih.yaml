@@ -1,6 +1,6 @@
 delete:
   summary: Delete eRA Commons Account
-  description: Removes only eRA Commons Account related information from the logued user, requesting this action
+  description: Removes only eRA Commons Account related information from the authenticated user requesting this action
   tags:
     - User
     - eRA Commons
