@@ -340,6 +340,23 @@ class LibraryCardDAOTest extends DAOTestHelper {
     assertTrue(lc1.getDaaIds().isEmpty());
   }
 
+  @Test
+  void testFindByUserEmails() {
+    User user1 = createUser();
+    User user2 = createUser();
+    User user3 = createUser();
+    LibraryCard card1 = createLibraryCard(user1);
+    LibraryCard card2 = createLibraryCard(user2);
+    LibraryCard card3 = createLibraryCard(user3);
+
+    List<LibraryCard> cardsFromDAO = libraryCardDAO.findByUserEmails(
+        List.of(user1.getEmail().toUpperCase(), user2.getEmail().toLowerCase(), user3.getEmail()));
+
+    assertEquals(3, cardsFromDAO.size());
+    assertTrue(cardsFromDAO.contains(card1));
+    assertTrue(cardsFromDAO.contains(card2));
+    assertTrue(cardsFromDAO.contains(card3));
+  }
 
   private LibraryCard createLibraryCardForIndex() {
     Integer userId = createUser().getUserId();

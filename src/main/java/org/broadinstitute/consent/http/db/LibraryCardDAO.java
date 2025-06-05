@@ -8,6 +8,8 @@ import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -133,4 +135,19 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       AND daa_id = :daaId
       """)
   void deleteLibraryCardDaaRelation(@Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
+
+  /**
+   * Finds library cards by user emails.
+   * @param emails A list of email addresses
+   * @return List of LibraryCard objects associated with the provided emails.
+   */
+  @RegisterBeanMapper(value = LibraryCard.class)
+  @UseRowReducer(LibraryCardReducer.class)
+  @SqlQuery("""
+      SELECT *
+      FROM library_card
+      WHERE user_email ILIKE ANY (ARRAY[<emails>])
+      """)
+  List<LibraryCard> findByUserEmails(
+      @BindList(value = "emails", onEmpty = EmptyHandling.NULL_STRING) List<String> emails);
 }

@@ -2,17 +2,13 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotAuthorizedException;
-import jakarta.ws.rs.NotFoundException;
-import java.sql.Timestamp;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -20,6 +16,7 @@ import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUser;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
@@ -29,14 +26,16 @@ public class TDRService implements ConsentLogger {
 
   private final DataAccessRequestService dataAccessRequestService;
   private final DatasetDAO datasetDAO;
+  private final LibraryCardDAO libraryCardDAO;
   private final SamDAO samDAO;
   private final UserDAO userDAO;
 
   @Inject
   public TDRService(DataAccessRequestService dataAccessRequestService, DatasetDAO datasetDAO,
-      SamDAO samDAO, UserDAO userDAO) {
+      LibraryCardDAO libraryCardDAO, SamDAO samDAO, UserDAO userDAO) {
     this.dataAccessRequestService = dataAccessRequestService;
     this.datasetDAO = datasetDAO;
+    this.libraryCardDAO = libraryCardDAO;
     this.samDAO = samDAO;
     this.userDAO = userDAO;
   }
@@ -74,9 +73,16 @@ public class TDRService implements ConsentLogger {
         .filter(email -> !email.isBlank())
         .toList();
 
-    List<ApprovedUser> approvedUsers = Stream.of(labCollaborators, userEmails)
+    // Filter to users where that have a library card
+    List<String> allEmails = Stream.of(labCollaborators, userEmails)
         .flatMap(List::stream)
         .distinct()
+        .map(String::toLowerCase)
+        .toList();
+
+    List<ApprovedUser> approvedUsers = libraryCardDAO.findByUserEmails(allEmails)
+        .stream()
+        .map(LibraryCard::getUserEmail)
         .map(ApprovedUser::new)
         .sorted(Comparator.comparing(ApprovedUser::email))
         .toList();
