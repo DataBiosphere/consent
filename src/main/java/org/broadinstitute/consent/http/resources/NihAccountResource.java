@@ -3,10 +3,12 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -29,9 +31,10 @@ public class NihAccountResource extends Resource {
   }
 
   @POST
-  @Produces("application/json")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
   @PermitAll
-  public Response registerResearcher(NIHUserAccount nihAccount, @Auth AuthUser authUser) {
+  public Response registerResearcher(@Auth AuthUser authUser, NIHUserAccount nihAccount) {
     try {
       nihService.validateNihUserAccount(nihAccount, authUser);
       User user = userService.findUserByEmail(authUser.getEmail());
@@ -44,7 +47,7 @@ public class NihAccountResource extends Resource {
   }
 
   @DELETE
-  @Produces("application/json")
+  @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
   public Response deleteNihAccount(@Auth AuthUser user) {
     try {

@@ -7,7 +7,6 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
@@ -42,16 +41,18 @@ class NihAccountResourceTest {
   void testRegisterResearcherSuccess() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     resource = new NihAccountResource(nihService, userService);
-    Response response = resource.registerResearcher(nihAccount, authUser);
-    assertEquals(200, response.getStatus());
+    try (var response = resource.registerResearcher(authUser, nihAccount)) {
+      assertEquals(200, response.getStatus());
+    }
   }
 
   @Test
   void testRegisterResearcherNoAuth() {
     when(userService.findUserByEmail(any())).thenReturn(null);
     resource = new NihAccountResource(nihService, userService);
-    Response response = resource.registerResearcher(nihAccount, authUser);
-    assertEquals(500, response.getStatus());
+    try (var response = resource.registerResearcher(authUser, nihAccount)) {
+      assertEquals(500, response.getStatus());
+    }
   }
 
   @Test
@@ -59,32 +60,36 @@ class NihAccountResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new RuntimeException()).when(nihService).authenticateNih(any(), any(), any());
     resource = new NihAccountResource(nihService, userService);
-    Response response = resource.registerResearcher(nihAccount, authUser);
-    assertEquals(500, response.getStatus());
+    try (var response = resource.registerResearcher(authUser, nihAccount)) {
+      assertEquals(500, response.getStatus());
+    }
   }
 
   @Test
   void testRegisterResearcherNullAccountError() {
     doThrow(new BadRequestException()).when(nihService).validateNihUserAccount(any(), any());
     resource = new NihAccountResource(nihService, userService);
-    Response response = resource.registerResearcher(null, authUser);
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    try (var response = resource.registerResearcher(authUser,null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
   }
 
   @Test
   void testDeleteNihAccountSuccess() {
     when(userService.findUserByEmail(any())).thenReturn(user);
     resource = new NihAccountResource(nihService, userService);
-    Response response = resource.deleteNihAccount(authUser);
-    assertEquals(200, response.getStatus());
+    try (var response = resource.deleteNihAccount(authUser)) {
+      assertEquals(200, response.getStatus());
+    }
   }
 
   @Test
   void testDeleteNihAccountNoAuth() {
     when(userService.findUserByEmail(any())).thenReturn(null);
     resource = new NihAccountResource(nihService, userService);
-    Response response = resource.deleteNihAccount(authUser);
-    assertEquals(500, response.getStatus());
+    try (var response = resource.deleteNihAccount(authUser)) {
+      assertEquals(500, response.getStatus());
+    }
   }
 
   @Test
@@ -92,7 +97,8 @@ class NihAccountResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new RuntimeException()).when(nihService).deleteNihAccountById(any());
     resource = new NihAccountResource(nihService, userService);
-    Response response = resource.deleteNihAccount(authUser);
-    assertEquals(500, response.getStatus());
+    try (var response = resource.deleteNihAccount(authUser)) {
+      assertEquals(500, response.getStatus());
+    }
   }
 }
