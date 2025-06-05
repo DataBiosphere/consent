@@ -19,9 +19,9 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @SqlUpdate("""
-        INSERT INTO library_card (user_id, user_name, user_email, create_user_id, create_date)
-        VALUES (:userId, :userName, :userEmail, :createUserId, :createDate)
-        """)
+      INSERT INTO library_card (user_id, user_name, user_email, create_user_id, create_date)
+      VALUES (:userId, :userName, :userEmail, :createUserId, :createDate)
+      """)
   @GetGeneratedKeys
   Integer insertLibraryCard(@Bind("userId") Integer userId,
       @Bind("userName") String userName,
@@ -138,6 +138,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   /**
    * Finds library cards by user emails.
+   *
    * @param emails A list of email addresses
    * @return List of LibraryCard objects associated with the provided emails.
    */
@@ -153,6 +154,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   /**
    * Finds library cards by user ids.
+   *
    * @param userIds A list of user IDs
    * @return List of LibraryCard objects associated with the provided ids.
    */
@@ -163,6 +165,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       FROM library_card
       WHERE user_id in (<userIds>)
       """)
-  List<LibraryCard> findLibraryCardsByUserIds(@BindList(value = "userIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> userIds);
+  List<LibraryCard> findLibraryCardsByUserIds(
+      @BindList(value = "userIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> userIds);
 
 }
