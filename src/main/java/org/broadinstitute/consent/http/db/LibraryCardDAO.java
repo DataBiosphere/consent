@@ -138,7 +138,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   /**
    * Finds library cards by user emails.
-   * @param emails A list of email addresses
+   * @param emails A list of LOWER cased email addresses
    * @return List of LibraryCard objects associated with the provided emails.
    */
   @RegisterBeanMapper(value = LibraryCard.class)
@@ -146,7 +146,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   @SqlQuery("""
       SELECT *
       FROM library_card
-      WHERE user_email ILIKE ANY (ARRAY[<emails>])
+      WHERE LOWER(user_email) in (<emails>)
       """)
   List<LibraryCard> findByUserEmails(
       @BindList(value = "emails", onEmpty = EmptyHandling.NULL_STRING) List<String> emails);

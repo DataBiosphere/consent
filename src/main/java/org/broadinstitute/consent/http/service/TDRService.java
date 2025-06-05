@@ -77,6 +77,7 @@ public class TDRService implements ConsentLogger {
     List<String> allEmails = Stream.of(labCollaborators, userEmails)
         .flatMap(List::stream)
         .distinct()
+        .map(String::toLowerCase)
         .toList();
 
     List<ApprovedUser> approvedUsers = libraryCardDAO.findByUserEmails(allEmails)
