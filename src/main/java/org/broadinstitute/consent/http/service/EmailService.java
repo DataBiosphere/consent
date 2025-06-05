@@ -39,8 +39,9 @@ import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage
 import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewResearcherLibraryRequestMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
-import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
+import org.broadinstitute.consent.http.mail.message.ResearcherCloseoutCompletedMessage;
+import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
@@ -278,4 +279,16 @@ public class EmailService implements ConsentLogger {
     sendMessage(new ReminderMessage(user, vote, darCode, electionType, url), user.getUserId());
   }
 
+  /**
+   * Send a message to a user that their closeout has been completed.
+   *
+   * @param user        the user to send the message to
+   * @param darCode     the data access request code for which closeout is completed
+   * @param referenceId the data access request reference id for which closeout is completed
+   */
+  public void sendResearcherCloseoutCompletedMessage(User user, String darCode, String referenceId)
+      throws TemplateException, IOException {
+    sendMessage(new ResearcherCloseoutCompletedMessage(user, darCode, referenceId),
+        user.getUserId());
+  }
 }
