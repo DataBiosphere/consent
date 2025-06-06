@@ -198,6 +198,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               e.dataset_id,
               dd.dataset_id AS dd_datasetid,
               (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name,
+              (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'status' AS dar_status,
               (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'closeoutSupplement' AS closeout,
               dac.name AS dac_name,
               ARRAY_AGG(dar_all.reference_id) AS reference_ids
