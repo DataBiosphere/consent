@@ -130,7 +130,7 @@ public class DataAccessRequestService implements ConsentLogger {
   public DataAccessRequest findByReferenceId(String referencedId) {
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referencedId);
     if (Objects.isNull(dar)) {
-      throw new NotFoundException("There does not exist a DAR with the given reference Id");
+      throw new NotFoundException("No data access request found for this reference Id");
     }
     return dar;
   }
@@ -280,11 +280,10 @@ public class DataAccessRequestService implements ConsentLogger {
     return findByReferenceId(referenceId);
   }
 
-  public DataAccessRequest approveDataAccessRequestCloseout(User signingOfficial, DataAccessRequest dataAccessRequest) {
-    validateCloseoutApproval(signingOfficial, dataAccessRequest);
-    String referenceId = dataAccessRequest.getReferenceId();
+  public void approveDataAccessRequestCloseout(User signingOfficial, String referenceId) {
+    DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
+    validateCloseoutApproval(signingOfficial, dar);
     dataAccessRequestDAO.updateDarCloseoutSO(signingOfficial.getUserId(), referenceId);
-    return findByReferenceId(referenceId);
   }
 
   @VisibleForTesting

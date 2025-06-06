@@ -1225,23 +1225,34 @@ institution or library cards issued: Internal Collaborator member:  \
 
   @Test
   void testValidateCloseoutApproval(){
-    User actor = new User();
-    actor.setUserId(123);
-    actor.setInstitutionId(1);
-    User darSubmitter = new User();
-    darSubmitter.setUserId(124);
-    darSubmitter.setInstitutionId(1);
-    DataAccessRequest dar = new DataAccessRequest();
-    dar.setUserId(darSubmitter.getUserId());
-    dar.setSubmissionDate(Timestamp.from(Instant.now()));
-    dar.setParentId(1);
+    CloseoutWithUserAndSigningOfficialApproval closeout = new CloseoutWithUserAndSigningOfficialApproval();
 
-    DataAccessRequestData data =  new DataAccessRequestData();
-    data.setCloseoutSupplement(new CloseoutSupplement(List.of(""), "", actor.getUserId()));
-    dar.setData(data);
+    when(userService.findUserById(closeout.submitter.getUserId())).thenReturn(closeout.submitter);
+    assertDoesNotThrow(()->service.validateCloseoutApproval(closeout.actor, closeout.dar));
+  }
 
-    when(userService.findUserById(darSubmitter.getUserId())).thenReturn(darSubmitter);
-    assertDoesNotThrow(()->service.validateCloseoutApproval(actor, dar));
+  @Test
+  void approveDataAccessRequest() {
+    CloseoutWithUserAndSigningOfficialApproval closeout = new CloseoutWithUserAndSigningOfficialApproval();
+    when(userService.findUserById(closeout.submitter.getUserId())).thenReturn(closeout.submitter);
+    when(dataAccessRequestDAO.findByReferenceId(closeout.dar.referenceId)).thenReturn(closeout.dar);
+    assertDoesNotThrow(()->service.approveDataAccessRequestCloseout(closeout.actor, closeout.dar.getReferenceId()));
+  }
+
+  record  CloseoutWithUserAndSigningOfficialApproval(User actor, User submitter, DataAccessRequest dar) {
+    public CloseoutWithUserAndSigningOfficialApproval() {
+      this(new User(), new User(),  new DataAccessRequest());
+      actor.setUserId(123);
+      actor.setInstitutionId(1);
+      submitter.setUserId(124);
+      submitter.setInstitutionId(1);
+      dar.setUserId(submitter.getUserId());
+      dar.setSubmissionDate(Timestamp.from(Instant.now()));
+      dar.setParentId(1);
+      DataAccessRequestData data =  new DataAccessRequestData();
+      data.setCloseoutSupplement(new CloseoutSupplement(List.of(""), "", actor.getUserId()));
+      dar.setData(data);
+    }
   }
 
   private DataAccessRequest getMockedDar(String darCode, String referenceId, User user) {

@@ -391,6 +391,20 @@ public class DataAccessRequestResource extends Resource {
     }
   }
 
+  @PUT
+  @RolesAllowed({SIGNINGOFFICIAL})
+  @Path("/approve_closeout/{referenceId}")
+  public Response approveCloseout(@Auth AuthUser authUser,
+      @PathParam("referenceId") String referenceId) {
+    try {
+      User  user = findUserByEmail(authUser.getEmail());
+      dataAccessRequestService.approveDataAccessRequestCloseout(user, referenceId);
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+    return Response.ok().build();
+  }
+
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
