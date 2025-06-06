@@ -67,6 +67,7 @@ public class DarCollectionSummary {
   private List<Vote> votes;
   private Map<Integer, Election> elections;
   private Map<String, String> darStatuses;
+  private CloseoutSupplement closeoutSupplement;
 
   public DarCollectionSummary() {
     this.votes = new ArrayList<>();
@@ -278,6 +279,15 @@ public class DarCollectionSummary {
 
   public void setLatestReferenceId(String latestReferenceId) {
     this.latestReferenceId = latestReferenceId;
+  }
+
+  public CloseoutSupplement getCloseoutSupplement() {
+    return closeoutSupplement;
+  }
+
+  public void setCloseoutSupplement(
+      CloseoutSupplement closeoutSupplement) {
+    this.closeoutSupplement = closeoutSupplement;
   }
 
   private void updateProgressReportStatus() {

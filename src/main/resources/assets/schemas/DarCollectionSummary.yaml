@@ -46,3 +46,5 @@ properties:
   progressReport:
     type: boolean
     description: Indicator true when the collection contains a progress report.
+  closeoutSupplement:
+    $ref: '../schemas/CloseOutSupplement.yaml'

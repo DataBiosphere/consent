@@ -45,6 +45,7 @@ import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
+import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
@@ -169,9 +170,11 @@ public class DarCollectionService implements ConsentLogger {
       //if the latest DAR in the collection has at least one approved dataset,
       //include the create progress report action
       Set<Integer> datasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(s.getLatestReferenceId());
-      if (!datasetIds.isEmpty()) {
-        s.addAction(DarCollectionActions.CREATE_PROGRESS_REPORT);
-      }
+      // Can only create a progress report if there are approved datasets and no closeout supplement
+      if (!datasetIds.isEmpty() && s.getCloseoutSupplement() == null) {
+          s.addAction(DarCollectionActions.CREATE_PROGRESS_REPORT);
+        }
+
       //check dar statuses, if they're all canceled show revise (but only if there are no elections)
       if (electionCount == 0) {
         Collection<String> darStatuses = s.getDarStatuses().values();
