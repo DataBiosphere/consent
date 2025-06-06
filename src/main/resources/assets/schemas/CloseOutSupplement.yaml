@@ -9,3 +9,6 @@ properties:
   otherText:
     type: string
     description: Text for the other closeout supplement.
+  signingOfficialId:
+    type: number
+    description: The ID of the signing official.
