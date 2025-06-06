@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.db;
 
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DarCollectionSummaryReducer;
-import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.Election;
