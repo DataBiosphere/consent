@@ -38,8 +38,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery(
       """
-          SELECT collection.dar_code, dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-            (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, dar.era_commons_id
+          SELECT collection.dar_code, dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, 
+            dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
+            (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, dar.era_commons_id,
+            dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
           FROM data_access_request dar
           LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
           LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
@@ -67,7 +69,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               SELECT dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
                 dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
                 (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
-                dd.dataset_id, collection.dar_code, dar.era_commons_id
+                dd.dataset_id, collection.dar_code, dar.era_commons_id,
+                dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
               FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
               INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id AND dd.dataset_id = :datasetId
@@ -146,7 +149,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               SELECT dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
                 dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
                 (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
-                dd.dataset_id, collection.dar_code, dar.era_commons_id
+                dd.dataset_id, collection.dar_code, dar.era_commons_id,
+                dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
               FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
               LEFT JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
@@ -167,8 +171,10 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery(
       """
-              SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code, dar.era_commons_id
+              SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
+              dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
+              (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code, 
+              dar.era_commons_id, dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
               FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
               LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
@@ -186,8 +192,11 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery(
       """
-              SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code, dar.era_commons_id
+              SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
+              dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
+              (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, 
+              collection.dar_code, dar.era_commons_id, dar.closeout_so_approval_timestamp,
+              dar.closeout_approving_so_id
               FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
               LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
@@ -207,8 +216,11 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery(
       """
-              SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code, dar.era_commons_id
+              SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
+                dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
+                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
+                collection.dar_code, dar.era_commons_id, dar.closeout_so_approval_timestamp,
+                dar.closeout_approving_so_id
               FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
               LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
@@ -227,7 +239,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       """
           SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-            (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code, dar.era_commons_id
+            (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code,
+            dar.era_commons_id, dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
           FROM data_access_request dar
           LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
           LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
@@ -401,12 +414,19 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """)
   void archiveByReferenceIds(@BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
 
+  @SqlUpdate(
+    """
+        UPDATE data_access_request
+          SET closeout_approving_so_id = :id, closeout_so_approval_timestamp = now()
+        WHERE reference_id = :referenceId
+    """)
+  void updateDarCloseoutSO(@Bind("id") Integer signingOfficialUserId, @Bind("referenceId") String referenceId);
 
   /**
    * Inserts into dar_dataset collection
    *
    * @param referenceId String
-   * @param datasetId   Integer
+   * @param datasetId Integer
    */
   @SqlUpdate(
       """
@@ -414,8 +434,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           VALUES (:referenceId, :datasetId)
           ON CONFLICT DO NOTHING
       """)
-  void insertDARDatasetRelation(@Bind("referenceId") String referenceId,
-      @Bind("datasetId") Integer datasetId);
+  void insertDARDatasetRelation(
+      @Bind("referenceId") String referenceId, @Bind("datasetId") Integer datasetId);
 
   @SqlBatch(
       """

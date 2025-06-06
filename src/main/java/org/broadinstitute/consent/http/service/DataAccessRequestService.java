@@ -280,6 +280,40 @@ public class DataAccessRequestService implements ConsentLogger {
     return findByReferenceId(referenceId);
   }
 
+  public DataAccessRequest approveDataAccessRequestCloseout(User signingOfficial, DataAccessRequest dataAccessRequest) {
+    validateCloseoutApproval(signingOfficial, dataAccessRequest);
+    String referenceId = dataAccessRequest.getReferenceId();
+    dataAccessRequestDAO.updateDarCloseoutSO(signingOfficial.getUserId(), referenceId);
+    return findByReferenceId(referenceId);
+  }
+
+  @VisibleForTesting
+  protected void validateCloseoutApproval(User signingOfficial, DataAccessRequest dataAccessRequest) {
+    // Note: we will allow a signing official to approve their own closeout.
+
+    if (!dataAccessRequest.getIsCloseoutProgressReport()) {
+      throw new BadRequestException("Signing officials can only approve closeout progress reports.");
+    }
+
+    if (dataAccessRequest.getHasSOCloseoutApproval()) {
+      throw new BadRequestException("This progress report closeout has already been approved by a signing official.");
+    }
+
+    if (signingOfficial.getUserId().equals(dataAccessRequest.getData().getCloseoutSupplement().signingOfficialId())) {
+      throw new BadRequestException("This request can only be approved by the signing official selected in the closeout request.");
+    }
+
+    try {
+      User submitter = userService.findUserById(dataAccessRequest.getUserId());
+      if (!submitter.getInstitutionId().equals(signingOfficial.getInstitutionId())) {
+        throw new BadRequestException("Signing Officials must be in the same institution as the creator of the closeout request.");
+      }
+
+    } catch (NotFoundException e) {
+      // do nothing.  we'll allow the SO to process a closeout even if the  user can't be found.
+    }
+  }
+
   public void validateProgressReport(User user, DataAccessRequest progressReport, DataAccessRequest parentDar) {
     validateCommonDarAndProgressReportElements(user, progressReport);
     validateInternalCollaborators(user, progressReport);
@@ -320,7 +354,7 @@ public class DataAccessRequestService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  public void validateInternalCollaborators(User user, DataAccessRequest progressReport) {
+  protected void validateInternalCollaborators(User user, DataAccessRequest progressReport) {
     List<String> errorSummary = getCollaboratorAndLibraryCardErrors(user, progressReport.getData());
 
     if (!errorSummary.isEmpty()) {

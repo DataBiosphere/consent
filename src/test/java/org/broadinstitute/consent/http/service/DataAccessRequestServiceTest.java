@@ -50,6 +50,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
+import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
@@ -1149,6 +1150,33 @@ institution or library cards issued: Internal Collaborator member:  \
     assertDoesNotThrow(()->service.sendExpirationNotices());
 
     assertEquals(2, listAppender.list.size());
+  }
+
+  @Test
+  void testValidateCloseoutApproval_NonCloseout(){
+    User user = new User();
+    user.setUserId(123);
+    DataAccessRequest dar = new DataAccessRequest();
+    BadRequestException exception = assertThrows(BadRequestException.class, ()->service.validateCloseoutApproval(user, dar));
+    assertThat(exception.getMessage(), containsString("Signing officials can only approve closeout progress reports."));
+  }
+
+
+  @Test
+  void testValidateCloseoutApproval_AlreadyApproved(){
+    User user = new User();
+    user.setUserId(123);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    dar.setParentId(1);
+    dar.setCloseoutSigningOfficialApprovedDate(Timestamp.from(Instant.now()));
+    dar.setCloseoutSigningOfficialApprovedUserId(1);
+    DataAccessRequestData data =  new DataAccessRequestData();
+    data.setCloseoutSupplement(new CloseoutSupplement(List.of("foo"), "", 1));
+    dar.setData(data);
+
+    BadRequestException exception = assertThrows(BadRequestException.class, ()->service.validateCloseoutApproval(user, dar));
+    assertThat(exception.getMessage(), containsString("This progress report closeout has already been approved by a signing official."));
   }
 
   private DataAccessRequest getMockedDar(String darCode, String referenceId, User user) {
