@@ -299,7 +299,7 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new BadRequestException("This progress report closeout has already been approved by a signing official.");
     }
 
-    if (signingOfficial.getUserId().equals(dataAccessRequest.getData().getCloseoutSupplement().signingOfficialId())) {
+    if (!signingOfficial.getUserId().equals(dataAccessRequest.getData().getCloseoutSupplement().signingOfficialId())) {
       throw new BadRequestException("This request can only be approved by the signing official selected in the closeout request.");
     }
 
