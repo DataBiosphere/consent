@@ -59,6 +59,13 @@ public class DarCollectionSummary {
 
   @JsonProperty
   private String latestReferenceId;
+
+  @JsonProperty
+  private Integer closeoutSigningOfficialId;
+
+  @JsonProperty
+  private Timestamp closeoutSigningOfficialApprovalDate;
+
   private List<String> dacNames;
 
   private Integer researcherId;
@@ -163,6 +170,23 @@ public class DarCollectionSummary {
       this.expired = this.expiresAt.before(Timestamp.from(Instant.now()));
     }
     updateProgressReportStatus();
+  }
+
+  public void setCloseoutSigningOfficialId(Integer darCloseoutSigningOfficialApprovalId) {
+    this.closeoutSigningOfficialId = darCloseoutSigningOfficialApprovalId;
+  }
+
+  public Timestamp getCloseoutSigningOfficialApprovalDate() {
+    return closeoutSigningOfficialApprovalDate;
+  }
+
+  public void setCloseoutSigningOfficialApprovalDate(
+      Timestamp darCloseoutSigningOfficialApprovalDate) {
+    this.closeoutSigningOfficialApprovalDate = darCloseoutSigningOfficialApprovalDate;
+  }
+
+  public Integer getCloseoutSigningOfficialApprovalId() {
+    return closeoutSigningOfficialId;
   }
 
   public boolean isExpired() {
