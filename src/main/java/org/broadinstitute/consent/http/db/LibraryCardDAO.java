@@ -8,6 +8,8 @@ import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -17,9 +19,9 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @SqlUpdate("""
-        INSERT INTO library_card (user_id, user_name, user_email, create_user_id, create_date)
-        VALUES (:userId, :userName, :userEmail, :createUserId, :createDate)
-        """)
+      INSERT INTO library_card (user_id, user_name, user_email, create_user_id, create_date)
+      VALUES (:userId, :userName, :userEmail, :createUserId, :createDate)
+      """)
   @GetGeneratedKeys
   Integer insertLibraryCard(@Bind("userId") Integer userId,
       @Bind("userName") String userName,
@@ -133,4 +135,37 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       AND daa_id = :daaId
       """)
   void deleteLibraryCardDaaRelation(@Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
+
+  /**
+   * Finds library cards by user emails.
+   *
+   * @param emails A list of email addresses
+   * @return List of LibraryCard objects associated with the provided emails.
+   */
+  @RegisterBeanMapper(value = LibraryCard.class)
+  @UseRowReducer(LibraryCardReducer.class)
+  @SqlQuery("""
+      SELECT *
+      FROM library_card
+      WHERE LOWER(user_email) = ANY(ARRAY(SELECT LOWER(UNNEST(ARRAY[<emails>]))))
+      """)
+  List<LibraryCard> findByUserEmails(
+      @BindList(value = "emails", onEmpty = EmptyHandling.NULL_STRING) List<String> emails);
+
+  /**
+   * Finds library cards by user ids.
+   *
+   * @param userIds A list of user IDs
+   * @return List of LibraryCard objects associated with the provided ids.
+   */
+  @RegisterBeanMapper(value = LibraryCard.class)
+  @UseRowReducer(LibraryCardReducer.class)
+  @SqlQuery("""
+      SELECT *
+      FROM library_card
+      WHERE user_id in (<userIds>)
+      """)
+  List<LibraryCard> findLibraryCardsByUserIds(
+      @BindList(value = "userIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> userIds);
+
 }
