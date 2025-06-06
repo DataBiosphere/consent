@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -48,6 +48,7 @@ import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
@@ -705,6 +706,51 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         DarCollectionActions.DELETE.getValue());
     assertEquals(DarCollectionStatus.DRAFT.getValue(), testDraft.getStatus());
     assertEquals(expectedDraftActions, testDraft.getActions());
+  }
+
+  @Test
+  void testProcessDarCollectionSummariesForResearcherWithCloseout() {
+    User user = new User();
+    user.setUserId(1);
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.setLatestReferenceId(UUID.randomUUID().toString());
+    summary.setCloseoutSupplement(new CloseoutSupplement(List.of("Closeout"), "Closeout", 1));
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(user.getUserId()))
+        .thenReturn(List.of(summary));
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar(summary.getLatestReferenceId()))
+        .thenReturn(Set.of(1));
+
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.RESEARCHER);
+
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    // All summaries should have the REVIEW action
+    assertTrue(summaries.get(0).getActions().contains(DarCollectionActions.REVIEW.getValue()));
+    // Summaries with closeout should not have the CREATE_PROGRESS_REPORT action
+    assertFalse(summaries.get(0).getActions()
+        .contains(DarCollectionActions.CREATE_PROGRESS_REPORT.getValue()));
+  }
+
+  @Test
+  void testProcessDarCollectionSummariesForResearcherWithoutCloseout() {
+    User user = new User();
+    user.setUserId(1);
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.setLatestReferenceId(UUID.randomUUID().toString());
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(user.getUserId()))
+        .thenReturn(List.of(summary));
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar(summary.getLatestReferenceId()))
+        .thenReturn(Set.of(1));
+
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.RESEARCHER);
+
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    // All summaries should have the REVIEW action
+    assertTrue(summaries.get(0).getActions().contains(DarCollectionActions.REVIEW.getValue()));
+    // Summaries without a closeout should have the CREATE_PROGRESS_REPORT action
+    assertTrue(summaries.get(0).getActions()
+        .contains(DarCollectionActions.CREATE_PROGRESS_REPORT.getValue()));
   }
 
   @Test
