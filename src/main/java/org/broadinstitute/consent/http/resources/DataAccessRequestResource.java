@@ -395,14 +395,19 @@ public class DataAccessRequestResource extends Resource {
   @RolesAllowed({SIGNINGOFFICIAL})
   @Path("/approve_closeout/{referenceId}")
   public Response approveCloseout(@Auth AuthUser authUser,
+      @Context Request request,
       @PathParam("referenceId") String referenceId) {
     try {
       User  user = findUserByEmail(authUser.getEmail());
       dataAccessRequestService.approveDataAccessRequestCloseout(user, referenceId);
+      DataAccessRequest dar = getDarById(referenceId);
+      List<Dataset> datasets = datasetService.findDatasetsByIds(dar.getDatasetIds());
+      ComplianceLogger.logCloseoutApprovalBySigningOfficial(user, datasets,
+          (ContainerRequest) request, HttpStatusCodes.STATUS_CODE_OK);
+      return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
-    return Response.ok().build();
   }
 
   @POST

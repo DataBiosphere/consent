@@ -1008,7 +1008,9 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     String referenceId = UUID.randomUUID().toString();
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     doNothing().when(dataAccessRequestService).approveDataAccessRequestCloseout(user,referenceId);
-    try (Response response = resource.approveCloseout(authUser, referenceId)) {
+    when(dataAccessRequestService.findByReferenceId(referenceId)).thenReturn(new DataAccessRequest());
+    when(datasetService.findDatasetsByIds(any())).thenReturn(List.of());
+    try (Response response = resource.approveCloseout(authUser,request, referenceId)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -1018,7 +1020,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     String referenceId = UUID.randomUUID().toString();
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     doThrow(BadRequestException.class).when(dataAccessRequestService).approveDataAccessRequestCloseout(user,referenceId);
-    try (Response response = resource.approveCloseout(authUser, referenceId)) {
+    try (Response response = resource.approveCloseout(authUser, request, referenceId)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
