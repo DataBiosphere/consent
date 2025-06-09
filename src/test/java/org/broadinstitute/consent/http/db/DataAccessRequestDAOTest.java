@@ -766,7 +766,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         randomAlphabetic(10)
     );
 
-    // Ensure that we do NOT get the dataset from either the parent DAR
+    // Ensure that we do NOT get the dataset from the parent DAR
     Set<Integer> noApprovedDatasetIds1 = dataAccessRequestDAO.findDatasetApprovalsByDar(
         parentDAR.getReferenceId());
     assertTrue(noApprovedDatasetIds1.isEmpty(),
