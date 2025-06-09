@@ -27,7 +27,8 @@ public enum EmailType {
   NEW_PROGRESS_REPORT_CASE(23, "new-progress-report-case.html"),
   RESEARCHER_PROGRESS_REPORT_APPROVED(24, "researcher-progress-report-approved.html"),
   RESEARCHER_CLOSEOUT_COMPLETED(25, "researcher-closeout-completed.html"),
-  SUBMITTED_CLOSEOUT(26, "submitted-closeout.html");
+  SUBMITTED_CLOSEOUT(26, "submitted-closeout.html"),
+  DAC_AUTOMATION_APPROVAL(27, "dac-automation-approval-researcher.html");
 
   private final Integer typeInt;
   public final String templateName;

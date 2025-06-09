@@ -23,6 +23,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
+import org.broadinstitute.consent.http.mail.message.DACAutomationApprovalResearcherMessage;
 import org.broadinstitute.consent.http.mail.message.DaaRequestMessage;
 import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
 import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
@@ -43,6 +44,8 @@ import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressRe
 import org.broadinstitute.consent.http.mail.message.ResearcherCloseoutCompletedMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.SubmittedCloseoutMessage;
+import org.broadinstitute.consent.http.models.DarCollection;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
@@ -247,6 +250,16 @@ public class EmailService implements ConsentLogger {
         user.getUserId());
   }
 
+  public void sendDACAutomationApprovalResearcherMessage(
+      DarCollection darCollection,
+      List<Dataset> datasets,
+      User researcher,
+      String dacName,
+      String automationRuleName,
+      User triggerUser) throws TemplateException, IOException {
+    //TODO: Finish this.
+    //sendMessage(new DACAutomationApprovalResearcherMessage());
+  }
   /**
    * Send a message to a researcher that their data access request has expired.
    *
