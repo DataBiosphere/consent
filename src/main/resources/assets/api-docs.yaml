@@ -519,10 +519,6 @@ paths:
     $ref: './paths/tdrDatasetApprovedUsers.yaml'
   /api/tdr/{identifier}:
     $ref: './paths/tdrDataset.yaml'
-  /api/tdr/dar/draft:
-    $ref: './paths/tdrDraftDAR.yaml'
-  /api/tdr/v2/dar/draft:
-    $ref: './paths/tdrV2DraftDAR.yaml'
   /api/emailNotifier/reminderMessage/{voteId}:
     post:
       summary: Send Reminder Email
@@ -541,7 +537,8 @@ paths:
           description: Email successfully sent
         500:
           description: Server error.
-
+  /api/emailNotifier/darExpirationNotices:
+    $ref: './paths/darExpirationNotices.yaml'
   /api/institutions:
     $ref: './paths/institutions.yaml'
   /api/institutions/{id}:
@@ -617,43 +614,6 @@ paths:
           description: User not authorized
         404:
           description: Library Card not found
-        500:
-          description: Internal server error
-    put:
-      summary: Library Card PUT resource
-      description: Update target Library Card based on id parameter and user provided json
-      tags:
-        - Library Card
-        - Admin
-      parameters:
-        - name: id
-          in: path
-          description: Library Card ID
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        description: 'JSON representation of updated Library Card state'
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LibraryCard'
-      responses:
-        200:
-          description: Library Card PUT request success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LibraryCard'
-        400:
-          description: Bad request (Issues with json payload)
-        401:
-          description: User not authorized
-        404:
-          description: Library Card not found
-        409:
-          description: Library Card payload conflicts with an existing record
         500:
           description: Internal server error
     delete:
@@ -944,35 +904,7 @@ paths:
         500:
           description: Error processing the request.
   /api/nih:
-    delete:
-      summary: Delete Era Commons Account
-      description: Removes only Era Commons Account related information from the logued user, requesting this action
-      tags:
-        - User
-        - eRA Commons
-        - Nih
-      responses:
-        200:
-          description: Returns an empty response if the operation was successful
-    post:
-      summary: Store NIH information
-      description: Save user's eRA Commons account
-      parameters:
-        - name: nihAccount
-          in: body
-          description: NIH Account information
-          required: true
-          schema:
-            $ref: '#/components/schemas/NIHUserAccount'
-      tags:
-        - User
-        - eRA Commons
-        - Nih
-      responses:
-        200:
-          description: Returns eRA Commons Account information. Map<String, String> format
-        404:
-          description: The user doesn't exist in the system
+    $ref: './paths/nih.yaml'
   /api/sam/register/self:
     $ref: './paths/samRegisterSelf.yaml'
   /api/sam/register/self/diagnostics:
@@ -987,36 +919,6 @@ paths:
     $ref: './paths/votes.yaml'
   /api/votes/rationale:
     $ref: './paths/votesRationale.yaml'
-  /metrics/dac/decision:
-    get:
-      summary: Dac Decision Metrics
-      description: Dac Decision Metrics
-      tags:
-        - Metrics
-      responses:
-        200:
-          description: Dac Decision Metrics
-          content:
-            text/plain:
-              schema:
-                type: string
-        500:
-          description: Internal Server Error
-  /metrics/dar/decision:
-    get:
-      summary: DAR Decision Metrics
-      description: DAR Decision Metrics
-      tags:
-        - Metrics
-      responses:
-        200:
-          description: DAR Decision Metrics
-          content:
-            text/plain:
-              schema:
-                type: string
-        500:
-          description: Internal Server Error
   /metrics/dataset/{datasetId}:
     get:
       summary: Dataset Metrics
@@ -1169,22 +1071,7 @@ components:
     UserRole:
       $ref: './schemas/UserRole.yaml'
     NIHUserAccount:
-      type: object
-      properties:
-        nihUsername:
-          type: string
-          description: Nih account associated name.
-        datasetPermissions:
-          type: array
-          items:
-            type: string
-          description: NIH dataset access permissions.
-        status:
-          type: string
-          description: Flag to determine if a user is authorized.
-        eraExpiration:
-          type: string
-          description: Contains the eRA account expiration date in miliseconds. This will be 30 days from the user's authentication.
+      $ref: './schemas/NIHUserAccount.yaml'
     Vote:
       $ref: './schemas/Vote.yaml'
     MatchResult:

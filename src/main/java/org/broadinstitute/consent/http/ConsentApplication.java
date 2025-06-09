@@ -6,10 +6,9 @@ import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.assets.AssetsBundle;
-import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthFilter;
-import io.dropwizard.auth.AuthValueFactoryProvider;
-import io.dropwizard.auth.chained.ChainedAuthFilter;
+import io.dropwizard.auth.PolymorphicAuthDynamicFeature;
+import io.dropwizard.auth.PolymorphicAuthValueFactoryProvider;
 import io.dropwizard.core.Application;
 import io.dropwizard.core.setup.Bootstrap;
 import io.dropwizard.core.setup.Environment;
@@ -21,8 +20,9 @@ import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
@@ -35,8 +35,8 @@ import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.ui.LoggerUIService;
 import liquibase.util.SmartMap;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.authentication.DefaultAuthFilter;
-import org.broadinstitute.consent.http.authentication.DefaultAuthenticator;
+import org.broadinstitute.consent.http.authentication.AuthorizationHelper;
+import org.broadinstitute.consent.http.authentication.DuosUserAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -50,6 +50,7 @@ import org.broadinstitute.consent.http.health.OntologyHealthCheck;
 import org.broadinstitute.consent.http.health.SamHealthCheck;
 import org.broadinstitute.consent.http.health.SendGridHealthCheck;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.resources.DACAutomationRuleResource;
 import org.broadinstitute.consent.http.resources.DACUserResource;
 import org.broadinstitute.consent.http.resources.DaaResource;
@@ -101,6 +102,7 @@ import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.gson.JerseyGsonProvider;
 import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
+import org.glassfish.jersey.internal.inject.AbstractBinder;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -161,8 +163,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     // Services
     final DarCollectionService darCollectionService = injector.getProvider(
         DarCollectionService.class).get();
-    final DataAccessRequestService dataAccessRequestService = injector.getProvider(
-        DataAccessRequestService.class).get();
+    final DataAccessRequestService dataAccessRequestService = injector.getProvider(DataAccessRequestService.class).get();
     final DatasetService datasetService = injector.getProvider(DatasetService.class).get();
     final ElectionService electionService = injector.getProvider(ElectionService.class).get();
     final EmailService emailService = injector.getProvider(EmailService.class).get();
@@ -173,7 +174,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     final UserService userService = injector.getProvider(UserService.class).get();
     final VoteService voteService = injector.getProvider(VoteService.class).get();
     final MatchService matchService = injector.getProvider(MatchService.class).get();
-    final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
     final LibraryCardService libraryCardService = injector.getProvider(LibraryCardService.class)
         .get();
     final SamService samService = injector.getProvider(SamService.class).get();
@@ -225,8 +225,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(new DACUserResource(userService));
     env.jersey().register(
         new DarCollectionResource(darCollectionService, userService));
-    env.jersey().register(new EmailNotifierResource(emailService));
-    env.jersey().register(new InstitutionResource(userService, institutionService));
+    env.jersey().register(new EmailNotifierResource(dataAccessRequestService));
+    env.jersey().register(new InstitutionResource(institutionService));
     env.jersey().register(new LibraryCardResource(userService, libraryCardService));
     env.jersey().register(new MatchResource(matchService));
     env.jersey().register(new MetricsResource(metricsService));
@@ -243,25 +243,31 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(new VoteResource(userService, voteService, electionService));
     env.jersey().register(new LivenessResource());
     env.jersey().register(
-        new TDRResource(tdrService, datasetService, userService, dataAccessRequestService));
+        new TDRResource(tdrService, datasetService));
     env.jersey().register(new MailResource(emailService));
     env.jersey().register(injector.getInstance(StudyResource.class));
     env.jersey().register(new OAuth2Resource(oidcService));
     env.jersey().register(new DraftResource(userService, draftService));
 
     // Authentication filters
-    final UserRoleDAO userRoleDAO = injector.getProvider(UserRoleDAO.class).get();
-    AuthFilter defaultAuthFilter = new DefaultAuthFilter.Builder<AuthUser>()
-        .setAuthenticator(new DefaultAuthenticator())
-        .setRealm(" ")
-        .buildAuthFilter();
-    List<AuthFilter> filters = List.of(
-        defaultAuthFilter,
-        new OAuthCustomAuthFilter(authenticator, userRoleDAO));
+    final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
+    final DuosUserAuthenticator duosUserAuthenticator = injector.getProvider(DuosUserAuthenticator.class).get();
+    final AuthorizationHelper authorizationHelper = injector.getProvider(AuthorizationHelper.class).get();
+    // Requests annotated with @Auth AuthUser will be authenticated through this filter
+    final AuthFilter<String, AuthUser> primaryAuthFilter = new OAuthCustomAuthFilter<>(authenticator, authorizationHelper);
+    // Requests annotated with @Auth DuosUser will be authenticated through this filter and are guaranteed to have a populated User object
+    final AuthFilter<String, DuosUser> duosAuthUserFilter = new OAuthCustomAuthFilter<>(duosUserAuthenticator, authorizationHelper);
+    final PolymorphicAuthDynamicFeature<AuthUser> feature = new PolymorphicAuthDynamicFeature<>(
+        Map.of(
+            AuthUser.class, primaryAuthFilter,
+            DuosUser.class, duosAuthUserFilter));
+    final AbstractBinder binder = new PolymorphicAuthValueFactoryProvider.Binder<>(
+        Set.of(AuthUser.class, DuosUser.class));
+    env.jersey().register(feature);
+    env.jersey().register(binder);
+
     env.jersey().register(RequestHeaderCacheFilter.class);
-    env.jersey().register(new AuthDynamicFeature(new ChainedAuthFilter(filters)));
     env.jersey().register(RolesAllowedDynamicFeature.class);
-    env.jersey().register(new AuthValueFactoryProvider.Binder<>(AuthUser.class));
   }
 
   @Override

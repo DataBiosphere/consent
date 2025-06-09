@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -56,7 +57,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DacServiceTest {
+class DacServiceTest extends AbstractTestHelper {
 
   private DacService service;
 
@@ -103,12 +104,12 @@ class DacServiceTest {
   @Test
   void testFindAllWithDaas() {
     Dac broadDac = new Dac();
-    int broadDacId = RandomUtils.nextInt(3,50);
+    int broadDacId = randomInt(3,50);
     broadDac.setName("broadDac");
     broadDac.setDacId(broadDacId);
 
     Dac dac2 = new Dac();
-    int dac2Id = RandomUtils.nextInt(3,50);
+    int dac2Id = randomInt(3,50);
     dac2.setName("dac2");
     dac2.setDacId(dac2Id);
 
@@ -131,33 +132,6 @@ class DacServiceTest {
     assertEquals(2, foundDacs.size());
     assertTrue(foundDacs.get(0).getAssociatedDaa().getBroadDaa());
     assertTrue(foundDacs.get(1).getAssociatedDaa().getBroadDaa());
-  }
-
-  @Test
-  void testFindAllDACUsersBySearchString_case1() {
-    when(dacDAO.findAll()).thenReturn(Collections.emptyList());
-    when(dacDAO.findAllDACUserMemberships()).thenReturn(Collections.emptyList());
-    initService();
-
-    assertTrue(service.findAllDacsWithMembers().isEmpty());
-  }
-
-  @Test
-  void testFindAllDACUsersBySearchString_case2() {
-    when(dacDAO.findAll()).thenReturn(getDacs());
-    when(dacDAO.findAllDACUserMemberships()).thenReturn(getDacUsers());
-    initService();
-
-    List<Dac> dacs = service.findAllDacsWithMembers();
-    assertFalse(dacs.isEmpty());
-    assertEquals(dacs.size(), getDacs().size());
-    List<Dac> dacsWithMembers = dacs.
-        stream().
-        filter(d -> !d.getChairpersons().isEmpty()).
-        filter(d -> !d.getMembers().isEmpty()).
-        toList();
-    assertFalse(dacsWithMembers.isEmpty());
-    assertEquals(1, dacsWithMembers.size());
   }
 
   @Test
@@ -225,9 +199,9 @@ class DacServiceTest {
   @Test
   void testDeleteDacServiceDAOException() throws SQLException {
     DataAccessAgreement daa = new DataAccessAgreement();
-    daa.setDaaId(RandomUtils.nextInt(1, 10));
+    daa.setDaaId(randomInt(1, 10));
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(100, 1000));
+    dac.setDacId(randomInt(100, 1000));
     dac.setDescription("DAC description");
     dac.setName("DAC name");
     dac.setAssociatedDaa(daa);
@@ -247,9 +221,9 @@ class DacServiceTest {
   })
   void testDeleteDac(String dacName) {
     DataAccessAgreement daa = new DataAccessAgreement();
-    daa.setDaaId(RandomUtils.nextInt(1, 10));
+    daa.setDaaId(randomInt(1, 10));
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(100, 1000));
+    dac.setDacId(randomInt(100, 1000));
     dac.setDescription(dacName + " description");
     dac.setName(dacName);
     dac.setAssociatedDaa(daa);

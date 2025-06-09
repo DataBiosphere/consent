@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
+import static java.util.function.Predicate.not;
+
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -42,8 +45,10 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
+import org.broadinstitute.consent.http.util.ComplianceLogger;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.glassfish.jersey.server.ContainerRequest;
 
 public class VoteService implements ConsentLogger {
 
@@ -256,22 +261,15 @@ public class VoteService implements ConsentLogger {
         .distinct()
         .collect(Collectors.toList());
 
-    List<Election> finalElections =
-        finalElectionIds.isEmpty() ? List.of() : electionDAO.findElectionsByIds(finalElectionIds);
+    List<Election> finalElections = electionDAO.findElectionsByIds(finalElectionIds);
 
     List<String> finalElectionReferenceIds = finalElections.stream()
         .map(Election::getReferenceId)
         .distinct()
         .collect(Collectors.toList());
 
-    List<Integer> collectionIds =
-        finalElectionReferenceIds.isEmpty() ? List.of() : dataAccessRequestDAO
-            .findByReferenceIds(finalElectionReferenceIds).stream()
-            .map(DataAccessRequest::getCollectionId)
-            .collect(Collectors.toList());
+    List<DataAccessRequest> dars = dataAccessRequestDAO.findByReferenceIds(finalElectionReferenceIds);
 
-    List<DarCollection> collections = collectionIds.isEmpty() ? List.of() :
-        darCollectionDAO.findDARCollectionByCollectionIds(collectionIds);
 
     List<Integer> datasetIds = finalElections.stream()
         .map(Election::getDatasetId)
@@ -280,51 +278,47 @@ public class VoteService implements ConsentLogger {
         datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
 
     try {
-      elasticSearchService.indexDatasets(datasets, user);
+      elasticSearchService.indexDatasets(datasetIds, user);
     } catch (Exception e) {
       logException("Error indexing datasets for approved DARs: " + e.getMessage(), e);
     }
 
-    // For each dar collection, email the researcher summarizing the approved datasets in that collection
-    collections.forEach(c -> {
+    // For each dar, email the researcher summarizing the approved datasets in that dar
+    dars.forEach(dar -> {
       // Get the datasets in this collection that have been approved
-      List<Integer> collectionDatasetIds = c.getDars().values().stream()
-          .map(DataAccessRequest::getDatasetIds)
-          .flatMap(List::stream)
-          .distinct()
-          .toList();
-      List<Dataset> approvedDatasetsInCollection = datasets.stream()
-          .filter(d -> collectionDatasetIds.contains(d.getDatasetId()))
+      List<Dataset> approvedDatasetsInDar = datasets.stream()
+          .filter(d -> dar.getDatasetIds().contains(d.getDatasetId()))
           .toList();
 
-      if (!approvedDatasetsInCollection.isEmpty()) {
-        String darCode = c.getDarCode();
-        User researcher = userDAO.findUserById(c.getCreateUserId());
+      if (!approvedDatasetsInDar.isEmpty()) {
+        String darCode = dar.getDarCode();
+        User researcher = userDAO.findUserById(dar.getUserId());
         Integer researcherId = researcher.getUserId();
-        List<DatasetMailDTO> datasetMailDTOs = approvedDatasetsInCollection
+        List<DatasetMailDTO> datasetMailDTOs = approvedDatasetsInDar
             .stream()
             .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
             .toList();
 
         // Get all Data Use translations, distinctly in the case that there are several with the same
         // data use, and then conjoin them for email display.
-        List<DataUse> dataUses = approvedDatasetsInCollection.stream()
-            .map(Dataset::getDataUse)
-            .toList();
-        List<String> dataUseTranslations = dataUses.stream()
-            .map(d -> useRestrictionConverter.translateDataUse(d, DataUseTranslationType.DATASET))
+        String translation = approvedDatasetsInDar.stream()
+            .map(dataset -> useRestrictionConverter.translateDataUse(dataset.getDataUse(), DataUseTranslationType.DATASET))
             .distinct()
-            .collect(Collectors.toList());
-        String translation = String.join(";", dataUseTranslations);
+            .collect(Collectors.joining(";"));
 
         try {
-          emailService.sendResearcherDarApproved(darCode, researcherId, datasetMailDTOs,
-              translation);
+          if(dar.getProgressReport()) {
+            emailService.sendResearcherProgressReportApproved(darCode, researcherId, datasetMailDTOs,
+                translation);
+          } else {
+            emailService.sendResearcherDarApproved(darCode, researcherId, datasetMailDTOs,
+                translation);
+          }
         } catch (Exception e) {
           logException("Error sending researcher dar approved email: " + e.getMessage(), e);
         }
         try {
-          notifyCustodiansOfApprovedDatasets(approvedDatasetsInCollection, researcher, darCode);
+          notifyCustodiansOfApprovedDatasets(approvedDatasetsInDar, researcher, darCode);
         } catch (Exception e) {
           logException("Error notifying custodians of dar approved email: " + e.getMessage(), e);
         }
@@ -505,4 +499,29 @@ public class VoteService implements ConsentLogger {
   private void notFoundException(Integer voteId) {
     throw new NotFoundException("Could not find vote for specified id. Vote id: " + voteId);
   }
+
+  public void logDARApprovalOrRejection(User user, List<Vote> updatedVotes,
+      ContainerRequest request) {
+    List<Integer> approvedElectionIds = updatedVotes.stream()
+        .filter(v -> v.getType().equals(VoteType.FINAL.getValue()))
+        .filter(Vote::getVote)
+        .map(Vote::getElectionId)
+        .toList();
+    List<Integer> approvedDatasetIds = electionDAO.findElectionsByIds(approvedElectionIds).stream()
+        .map(Election::getDatasetId).toList();
+    List<Dataset> approvedDatasets = datasetDAO.findDatasetsByIdList(approvedDatasetIds);
+    ComplianceLogger.logDARApproval(user, approvedDatasets, request,
+        HttpStatusCodes.STATUS_CODE_OK);
+
+    List<Integer> rejectedElectionIds = updatedVotes.stream()
+        .filter(v -> v.getType().equals(VoteType.FINAL.getValue()))
+        .filter(not(Vote::getVote))
+        .map(Vote::getElectionId)
+        .toList();
+    List<Integer> rejectedDatasetIds = electionDAO.findElectionsByIds(rejectedElectionIds).stream()
+        .map(Election::getDatasetId).toList();
+    List<Dataset> rejectedDatasets = datasetDAO.findDatasetsByIdList(rejectedDatasetIds);
+    ComplianceLogger.logDARRejection(user, rejectedDatasets, request, HttpStatusCodes.STATUS_CODE_OK);
+  }
+
 }

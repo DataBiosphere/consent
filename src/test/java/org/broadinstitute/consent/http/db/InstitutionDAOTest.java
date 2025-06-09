@@ -147,7 +147,7 @@ class InstitutionDAOTest extends DAOTestHelper {
     assertEquals(1, institution.getSigningOfficials().size());
     assertEquals(user.getInstitutionId(), institution.getId());
     assertEquals(user.getDisplayName(),
-        institution.getSigningOfficials().get(0).displayName);
+        institution.getSigningOfficials().get(0).getDisplayName());
   }
 
   @Test
@@ -181,7 +181,7 @@ class InstitutionDAOTest extends DAOTestHelper {
     User user = createUserWithInstitution();
     Institution institutionWithSO = institutionDAO.findInstitutionWithSOById(user.getInstitutionId());
     assertEquals(1, institutionWithSO.getSigningOfficials().size());
-    assertEquals(user.getDisplayName(), institutionWithSO.getSigningOfficials().get(0).displayName);
+    assertEquals(user.getDisplayName(), institutionWithSO.getSigningOfficials().get(0).getDisplayName());
   }
 
   private Institution createInstitution() {
@@ -215,26 +215,4 @@ class InstitutionDAOTest extends DAOTestHelper {
     );
     return institutionDAO.findInstitutionById(id);
   }
-
-  private User createUserWithInstitution() {
-    int i1 = RandomUtils.nextInt(5, 10);
-    String email = RandomStringUtils.randomAlphabetic(i1);
-    String name = RandomStringUtils.randomAlphabetic(10);
-    Integer userId = userDAO.insertUser(email, name, new Date());
-    Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
-        "itDirectorName",
-        "itDirectorEmail",
-        RandomStringUtils.randomAlphabetic(10),
-        new Random().nextInt(),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        OrganizationType.NON_PROFIT.getValue(),
-        userId,
-        new Date());
-    userDAO.updateUser(name, userId, institutionId);
-    userRoleDAO.insertSingleUserRole(7, userId);
-    return userDAO.findUserById(userId);
-  }
-
 }

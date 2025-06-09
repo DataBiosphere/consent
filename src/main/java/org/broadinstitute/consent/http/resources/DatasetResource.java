@@ -409,8 +409,7 @@ public class DatasetResource extends Resource {
   public Response indexDataset(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      var dataset = datasetService.findDatasetById(datasetId);
-      return elasticSearchService.indexDataset(dataset, user);
+      return elasticSearchService.indexDataset(datasetId, user);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

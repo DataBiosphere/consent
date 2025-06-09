@@ -18,11 +18,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @JsonInclude(Include.NON_NULL)
 public class DataAccessRequest {
+
+  public static final long EXPIRATION_DURATION_MILLIS = TimeUnit.DAYS.toMillis(365);
 
   @JsonProperty
   public Integer id;
@@ -34,13 +38,25 @@ public class DataAccessRequest {
   public Integer collectionId;
 
   @JsonProperty
-  public String parentId;
+  public Integer parentId;
 
   @JsonProperty
   public DataAccessRequestData data;
 
   @JsonProperty
-  public Boolean draft;
+  public String darCode;
+
+  @JsonProperty
+  public Boolean draft = true;
+
+  @JsonProperty
+  public Boolean progressReport = false;
+
+  @JsonProperty
+  public Boolean expired = false;
+
+  @JsonProperty
+  public Timestamp expiresAt;
 
   @JsonProperty
   public Integer userId;
@@ -60,12 +76,12 @@ public class DataAccessRequest {
 
   @JsonProperty
   public Timestamp updateDate;
-
-  @JsonProperty
-  private Map<Integer, Election> elections;
-
   @JsonProperty
   public List<Integer> datasetIds;
+  @JsonProperty
+  private Map<Integer, Election> elections;
+  @JsonProperty
+  private String eraCommonsId;
 
   public DataAccessRequest() {
     this.elections = new HashMap<>();
@@ -103,12 +119,13 @@ public class DataAccessRequest {
     this.collectionId = collectionId;
   }
 
-  public String getParentId() {
+  public Integer getParentId() {
     return parentId;
   }
 
-  public void setParentId(String parentId) {
+  public void setParentId(Integer parentId) {
     this.parentId = parentId;
+    updateProgressReportState();
   }
 
   public DataAccessRequestData getData() {
@@ -119,12 +136,16 @@ public class DataAccessRequest {
     this.data = data;
   }
 
-  public Boolean getDraft() {
+  public boolean getDraft() {
     return draft;
   }
 
-  public void setDraft(Boolean draft) {
-    this.draft = draft;
+  public boolean getExpired() {
+    return expired;
+  }
+
+  public Timestamp getExpiresAt() {
+    return expiresAt;
   }
 
   public Integer getUserId() {
@@ -157,7 +178,16 @@ public class DataAccessRequest {
 
   public void setSubmissionDate(Timestamp submissionDate) {
     this.submissionDate = submissionDate;
+    draft = submissionDate == null;
+    expired = submissionDate != null
+        && submissionDate.before(
+        new Timestamp(System.currentTimeMillis() - EXPIRATION_DURATION_MILLIS));
+    expiresAt = (submissionDate != null) ? new Timestamp(
+        submissionDate.getTime() + EXPIRATION_DURATION_MILLIS) : null;
+    updateProgressReportState();
   }
+
+  public boolean getProgressReport() { return progressReport; }
 
   public Timestamp getUpdateDate() {
     return updateDate;
@@ -167,12 +197,12 @@ public class DataAccessRequest {
     this.updateDate = updateDate;
   }
 
-  public void setElections(Map<Integer, Election> elections) {
-    this.elections = elections;
-  }
-
   public Map<Integer, Election> getElections() {
     return elections;
+  }
+
+  public void setElections(Map<Integer, Election> elections) {
+    this.elections = elections;
   }
 
   public void addElection(Election election) {
@@ -193,6 +223,10 @@ public class DataAccessRequest {
       return List.of();
     }
     return datasetIds;
+  }
+
+  public void setDatasetIds(List<Integer> datasetIds) {
+    this.datasetIds = datasetIds;
   }
 
   public void addDatasetId(Integer id) {
@@ -216,9 +250,22 @@ public class DataAccessRequest {
     }
   }
 
-  public void setDatasetIds(List<Integer> datasetIds) {
-    this.datasetIds = datasetIds;
+  public void setDarCode(String darCode) {
+    this.darCode = darCode;
   }
+
+  public String getDarCode() {
+    return darCode;
+  }
+
+  public String getEraCommonsId() {
+    return eraCommonsId;
+  }
+
+  public void setEraCommonsId(String eraCommonsId) {
+    this.eraCommonsId = eraCommonsId;
+  }
+
 
   /**
    * Merges the DAR and the DAR Data into a single Map Ignores a series of deprecated keys Null
@@ -288,6 +335,54 @@ public class DataAccessRequest {
   }
 
   /**
+   * Populate a new Data Access Request from the JSON string and the parent Data Access Request.
+   * Copies all the data from the parent dar, then overwrites the collaborators and datasets. Adds
+   * all progress report specific fields.
+   *
+   * @param json      The JSON string to populate the new Progress Report.
+   * @param parentDar The parent Data Access Request to copy data from.
+   * @return A new Progress Report populated with the provided JSON string and parent DAR data.
+   */
+  public static DataAccessRequest populateProgressReportFromJsonString(String json,
+      DataAccessRequest parentDar) {
+    DataAccessRequest newDar = new DataAccessRequest();
+    DataAccessRequestData newData = DataAccessRequestData.populateDARData(json);
+    DataAccessRequestData originalDataCopy = DataAccessRequestData.fromString(
+        parentDar.getData().toString());
+
+    String referenceId = UUID.randomUUID().toString();
+    newDar.setReferenceId(referenceId);
+    newDar.setParentId(parentDar.getId());
+    newDar.setCollectionId(parentDar.getCollectionId());
+
+    newDar.addDatasetIds(newData.getDatasetIds());
+    originalDataCopy.setInternalCollaborators(newData.getInternalCollaborators());
+    originalDataCopy.setExternalCollaborators(newData.getExternalCollaborators());
+    originalDataCopy.setLabCollaborators(newData.getLabCollaborators());
+    originalDataCopy.setProgressReportSummary(newData.getProgressReportSummary());
+    originalDataCopy.setIntellectualPropertySummary(newData.getIntellectualPropertySummary());
+    originalDataCopy.setPublications(newData.getPublications());
+    originalDataCopy.setPresentations(newData.getPresentations());
+    originalDataCopy.setDmi(newData.getDmi());
+    originalDataCopy.setResearchPlans(newData.getResearchPlans());
+    originalDataCopy.setCloseoutSupplement(newData.getCloseoutSupplement());
+    originalDataCopy.setPubAcknowledgement(newData.getPubAcknowledgement());
+    originalDataCopy.setDSAcknowledgement(newData.getDSAcknowledgement());
+    originalDataCopy.setGSOAcknowledgement(newData.getGSOAcknowledgement());
+
+    // These values will be updated in populateProgressReportWithDocuments if documents exist.
+    // Its important we don't copy over the parent values so those documents are not deleted.
+    originalDataCopy.setCollaborationLetterName(null);
+    originalDataCopy.setCollaborationLetterLocation(null);
+    originalDataCopy.setIrbDocumentName(null);
+    originalDataCopy.setIrbDocumentLocation(null);
+
+    newDar.setData(originalDataCopy);
+    return newDar;
+  }
+
+
+  /**
    * Make a shallow copy of the dar. This is mostly a workaround for problems serializing dates when
    * calling Gson.toJson on `this`
    *
@@ -302,6 +397,8 @@ public class DataAccessRequest {
     if (Objects.nonNull(dar.getDraft())) {
       copy.put("draft", dar.getDraft());
     }
+    copy.put("expired", dar.getExpired());
+    copy.put("expiredAt", dar.getExpiresAt());
     if (Objects.nonNull(dar.getId())) {
       copy.put("id", dar.getId());
     }
@@ -329,6 +426,19 @@ public class DataAccessRequest {
     if (Objects.nonNull(dar.getParentId())) {
       copy.put("parentId", dar.getParentId());
     }
+    if (Objects.nonNull(dar.getDarCode())) {
+      copy.put("darCode", dar.getDarCode());
+    }
+    if (dar.getEraCommonsId() != null) {
+      copy.put("eraCommonsId", dar.getEraCommonsId());
+    }
     return copy;
   }
+
+  // Simple state machine for determining if the Data Access Request
+  // is a progress report.
+  private void updateProgressReportState() {
+    progressReport = !getDraft() && (getParentId() != null);
+  }
+
 }

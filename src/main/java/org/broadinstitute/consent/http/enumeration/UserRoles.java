@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.enumeration;
 
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -16,22 +15,16 @@ public enum UserRoles {
   RESEARCHER(Resource.RESEARCHER, 5),
   SIGNINGOFFICIAL(Resource.SIGNINGOFFICIAL, 7),
   DATASUBMITTER(Resource.DATASUBMITTER, 8),
-  ITDIRECTOR(Resource.ITDIRECTOR, 9);
+  ITDIRECTOR(Resource.ITDIRECTOR, 9),
+  SERVICE_ACCOUNT(Resource.SERVICE_ACCOUNT, 10);
 
+  private static final Set<UserRoles> NON_DAC_ROLES =
+      Set.of(ALUMNI, ADMIN, RESEARCHER, SIGNINGOFFICIAL, DATASUBMITTER, ITDIRECTOR,
+          SERVICE_ACCOUNT);
+  private static final Set<UserRoles> SO_AUTHORIZED_ROLES_TO_ADJUST =
+      Set.of(ITDIRECTOR, SIGNINGOFFICIAL, DATASUBMITTER);
   private final String roleName;
   private final Integer roleId;
-  private static final HashSet<Integer> LIST_OF_NON_DAC_ROLE_IDS = new HashSet<>(Set.of(
-      ALUMNI.getRoleId(),
-      ADMIN.getRoleId(),
-      RESEARCHER.getRoleId(),
-      SIGNINGOFFICIAL.getRoleId(),
-      DATASUBMITTER.getRoleId(),
-      ITDIRECTOR.getRoleId()));
-  private static final HashSet<Integer> LIST_OF_SO_AUTHORIZED_ROLES_TO_ADJUST = new HashSet<>(
-      Set.of(
-          ITDIRECTOR.getRoleId(),
-          SIGNINGOFFICIAL.getRoleId(),
-          DATASUBMITTER.getRoleId()));
 
   UserRoles(String roleName, Integer roleId) {
     this.roleName = roleName;
@@ -70,12 +63,8 @@ public enum UserRoles {
     return new UserRole(SIGNINGOFFICIAL.getRoleId(), SIGNINGOFFICIAL.getRoleName());
   }
 
-  public String getRoleName() {
-    return roleName;
-  }
-
-  public Integer getRoleId() {
-    return roleId;
+  public static UserRole ServiceAccount() {
+    return new UserRole(SERVICE_ACCOUNT.getRoleId(), SERVICE_ACCOUNT.getRoleName());
   }
 
   public static UserRoles getUserRoleFromName(String value) {
@@ -106,12 +95,20 @@ public enum UserRoles {
         .anyMatch(roleName::equalsIgnoreCase);
   }
 
-  public static boolean isValidNonDACRoleId(Integer roleId) {
-    return !Objects.isNull(roleId) && LIST_OF_NON_DAC_ROLE_IDS.contains(roleId);
+  public static boolean isValidNonDACRoleId(UserRoles role) {
+    return NON_DAC_ROLES.contains(role);
   }
 
-  public static boolean isValidSoAdjustableRoleId(Integer roleId) {
-    return !Objects.isNull(roleId) && LIST_OF_SO_AUTHORIZED_ROLES_TO_ADJUST.contains(roleId);
+  public static boolean isValidSoAdjustableRoleId(UserRoles role) {
+    return SO_AUTHORIZED_ROLES_TO_ADJUST.contains(role);
+  }
+
+  public String getRoleName() {
+    return roleName;
+  }
+
+  public Integer getRoleId() {
+    return roleId;
   }
 
 }

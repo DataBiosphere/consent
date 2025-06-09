@@ -8,6 +8,8 @@ import io.dropwizard.core.Configuration;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.jdbi3.JdbiFactory;
 import jakarta.ws.rs.client.Client;
+import org.broadinstitute.consent.http.authentication.AuthorizationHelper;
+import org.broadinstitute.consent.http.authentication.DuosUserAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
@@ -203,8 +205,18 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
+  AuthorizationHelper providesAuthorizationHelper() {
+    return new AuthorizationHelper(providesSamService(), providesUserService());
+  }
+
+  @Provides
   OAuthAuthenticator providesOAuthAuthenticator() {
-    return new OAuthAuthenticator(providesSamService());
+    return new OAuthAuthenticator(providesAuthorizationHelper());
+  }
+
+  @Provides
+  DuosUserAuthenticator providesDuosUserOAuthAuthenticator() {
+    return new DuosUserAuthenticator(providesAuthorizationHelper());
   }
 
   @Provides
@@ -218,7 +230,9 @@ public class ConsentModule extends AbstractModule {
         providesEmailService(),
         providesVoteDAO(),
         providesMatchDAO(),
-        providesDarCollectionSummaryDAO()
+        providesDarCollectionSummaryDAO(),
+        providesUserDAO(),
+        providesDacDAO()
     );
   }
 
@@ -264,8 +278,11 @@ public class ConsentModule extends AbstractModule {
         providesDAOContainer(),
         providesDacService(),
         providesDataAccessRequestServiceDAO(),
-        providesUseRestrictionConverter(),
-        providesRuleService()
+        providesUserService(),
+        providesInstitutionService(),
+        providesEmailService(),
+        providesRuleService(),
+        config
     );
   }
 
@@ -306,17 +323,11 @@ public class ConsentModule extends AbstractModule {
   @Provides
   EmailService providesEmailService() {
     return new EmailService(
-        providesDARCollectionDAO(),
-        providesVoteDAO(),
-        providesElectionDAO(),
         providesUserDAO(),
         providesMailMessageDAO(),
-        providesDatasetDAO(),
-        providesDacDAO(),
         providesSendGridAPI(),
         providesFreeMarkerTemplateHelper(),
-        config.getServicesConfiguration().getLocalURL()
-    );
+        config);
   }
 
   @Provides
@@ -462,7 +473,8 @@ public class ConsentModule extends AbstractModule {
         providesInstitutionDAO(),
         providesDatasetDAO(),
         providesDatasetServiceDAO(),
-        providesStudyDAO()
+        providesStudyDAO(),
+        providesLibraryCardDAO()
     );
   }
 
@@ -500,11 +512,9 @@ public class ConsentModule extends AbstractModule {
   @Provides
   MetricsService providesMetricsService() {
     return new MetricsService(
-        providesDacService(),
         providesDatasetDAO(),
         providesDataAccessRequestDAO(),
         providesDARCollectionDAO(),
-        providesMatchDAO(),
         providesElectionDAO()
     );
   }
@@ -536,7 +546,8 @@ public class ConsentModule extends AbstractModule {
 
   @Provides
   InstitutionService providesInstitutionService() {
-    return new InstitutionService(providesInstitutionDAO(), providesUserDAO());
+    return new InstitutionService(providesInstitutionDAO(), providesUserDAO(),
+        providesGCSService());
   }
 
   @Provides
@@ -544,6 +555,7 @@ public class ConsentModule extends AbstractModule {
     return new LibraryCardService(
         providesLibraryCardDAO(),
         providesInstitutionDAO(),
+        providesInstitutionService(),
         providesUserDAO());
   }
 
@@ -571,6 +583,7 @@ public class ConsentModule extends AbstractModule {
   UserServiceDAO providesUserServiceDAO() {
     return new UserServiceDAO(
         providesJdbi(),
+        providesLibraryCardDAO(),
         providesUserDAO(),
         providesUserRoleDAO()
     );
@@ -590,8 +603,8 @@ public class ConsentModule extends AbstractModule {
         providesSamDAO(),
         providesUserServiceDAO(),
         providesDaaDAO(),
-        providesEmailService(),
         providesDraftService(),
+        providesInstitutionService(),
         providesDACAutomationRuleDAO());
   }
 

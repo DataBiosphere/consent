@@ -330,7 +330,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
           WHERE d.alias IN (<aliases>)
       """)
-  List<Dataset> findDatasetsByAlias(@BindList("aliases") List<Integer> aliases);
+  List<Dataset> findDatasetsByAlias(@BindList(value = "aliases", onEmpty = EmptyHandling.NULL_STRING) List<Integer> aliases);
 
   @Deprecated
   @SqlBatch("INSERT INTO dataset (name, create_date, object_id, alias, data_use) VALUES (:name, :createDate, :objectId, :alias, :dataUse)")
@@ -492,7 +492,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       LEFT OUTER JOIN dictionary k ON k.key_id = p.property_key
       WHERE d.dac_id IN (<dacIds>)
       """)
-  Set<DatasetDTO> findDatasetsByDacIds(@BindList("dacIds") List<Integer> dacIds);
+  Set<DatasetDTO> findDatasetsByDacIds(@BindList(value = "dacIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> dacIds);
 
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery("""
@@ -502,7 +502,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       LEFT JOIN dictionary k ON k.key_id = p.property_key
       WHERE d.dac_id IN (<dacIds>)
       """)
-  List<Dataset> findDatasetListByDacIds(@BindList("dacIds") List<Integer> dacIds);
+  List<Dataset> findDatasetListByDacIds(@BindList(value = "dacIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> dacIds);
 
   /**
    * DACs -> Datasets -> DatasetProperties -> Dictionary

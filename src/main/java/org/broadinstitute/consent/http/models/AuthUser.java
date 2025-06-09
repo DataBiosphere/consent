@@ -1,9 +1,12 @@
 package org.broadinstitute.consent.http.models;
 
-import com.google.gson.Gson;
 import java.security.Principal;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 
+/**
+ * This class is used to represent an authenticated user that may or may not exist in Sam or the
+ * Consent system.
+ */
 public class AuthUser implements Principal {
 
   private String authToken;
@@ -15,13 +18,32 @@ public class AuthUser implements Principal {
   public AuthUser() {
   }
 
-  public AuthUser(String email) {
-    this.email = email;
+  public AuthUser(AuthUser authUser) {
+    this.authToken = authUser.getAuthToken();
+    this.email = authUser.getEmail();
+    this.name = authUser.getName();
+    this.aud = authUser.getAud();
+    this.userStatusInfo = authUser.getUserStatusInfo();
   }
 
-  public AuthUser deepCopy() {
-    Gson gson = new Gson();
-    return gson.fromJson(gson.toJson(this), AuthUser.class);
+  public AuthUser(String authToken, String email, String name, String aud) {
+    this.authToken = authToken;
+    this.email = email;
+    this.name = name;
+    this.aud = aud;
+  }
+
+  public AuthUser(String authToken, String email, String name, String aud,
+      UserStatusInfo userStatusInfo) {
+    this.authToken = authToken;
+    this.email = email;
+    this.name = name;
+    this.aud = aud;
+    this.userStatusInfo = userStatusInfo;
+  }
+
+  public AuthUser(String email) {
+    this.email = email;
   }
 
   public String getAuthToken() {
@@ -54,11 +76,6 @@ public class AuthUser implements Principal {
 
   public String getAud() {
     return aud;
-  }
-
-  public AuthUser setAud(String aud) {
-    this.aud = aud;
-    return this;
   }
 
   public UserStatusInfo getUserStatusInfo() {

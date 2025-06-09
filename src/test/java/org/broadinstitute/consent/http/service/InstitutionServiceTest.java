@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Institution;
@@ -37,8 +38,11 @@ class InstitutionServiceTest {
   @Mock
   private UserDAO userDAO;
 
+  @Mock
+  private GCSService store;
+
   private void initService() {
-    service = new InstitutionService(institutionDAO, userDAO);
+    service = new InstitutionService(institutionDAO, userDAO, store);
   }
 
   private Institution initMockModel() {
@@ -168,9 +172,9 @@ class InstitutionServiceTest {
     List<SimplifiedUser> signingOfficials = institution.getSigningOfficials();
     assertEquals(getInstitutions().get(0), institution);
     assertEquals(1, signingOfficials.size());
-    assertEquals(u.getDisplayName(), signingOfficials.get(0).displayName);
-    assertEquals(u.getEmail(), signingOfficials.get(0).email);
-    assertEquals(u.getUserId(), signingOfficials.get(0).userId);
+    assertEquals(u.getDisplayName(), signingOfficials.get(0).getDisplayName());
+    assertEquals(u.getEmail(), signingOfficials.get(0).getEmail());
+    assertEquals(u.getUserId(), signingOfficials.get(0).getUserId());
   }
 
   @Test

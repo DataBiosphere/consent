@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.enumeration;
 
 public enum DarCollectionStatus {
-  UNREVIEWED("Unreviewed"),
+  SUBMITTED("Submitted"),
   IN_PROCESS("In Process"),
   COMPLETE("Complete"),
   DRAFT("Draft"),

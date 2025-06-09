@@ -78,17 +78,6 @@ public class DacService implements ConsentLogger {
         .collect(Collectors.toList());
   }
 
-  /**
-   * Retrieve a list of Dacs that contain a Dac, the list of chairperson users for the Dac, and a
-   * list of member users for the Dac.
-   *
-   * @return List of Dac objects
-   */
-  public List<Dac> findAllDacsWithMembers() {
-    List<Dac> dacs = dacDAO.findAll();
-    return addMemberInfoToDacs(dacs);
-  }
-
   private List<Dac> addMemberInfoToDacs(List<Dac> dacs) {
     List<User> allDacMembers = dacDAO.findAllDACUserMemberships().stream().distinct()
         .collect(Collectors.toList());

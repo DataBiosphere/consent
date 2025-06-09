@@ -4,11 +4,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
+import jakarta.ws.rs.BadRequestException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @JsonInclude(Include.NON_NULL)
 public class DataAccessRequestData {
@@ -22,7 +24,7 @@ public class DataAccessRequestData {
   public static final List<String> DEPRECATED_PROPS = Arrays
       .asList("referenceId", "investigator",
           "institution", "department", "address1", "address2", "city", "zipcode", "zipCode",
-          "state", "country", "researcher", "userId", "isThePi", "havePi", "piEmail",
+          "state", "country", "researcher", "userId", "isThePi", "havePi",
           "profileName", "pubmedId", "scientificUrl", "eraExpiration", "academicEmail",
           "eraAuthorized", "nihUsername", "linkedIn", "orcid", "researcherGate", "datasetDetail",
           "datasets", "datasetId", "validRestriction", "restriction", "translatedUseRestriction",
@@ -31,7 +33,6 @@ public class DataAccessRequestData {
   @Deprecated
   private String referenceId;
   private String projectTitle;
-  private Boolean checkCollaborator;
   private Boolean checkNihDataOnly;
   private String rus;
   @SerializedName(value = "nonTechRus", alternate = "non_tech_rus")
@@ -101,7 +102,9 @@ public class DataAccessRequestData {
   private String irbDocumentName;
   private String irbProtocolExpiration;
   private String itDirector;
+  private String itDirectorEmail;
   private String signingOfficial;
+  private String signingOfficialEmail;
   private Boolean publication;
   private Boolean collaboration;
   private String collaborationLetterLocation;
@@ -115,6 +118,7 @@ public class DataAccessRequestData {
   private Boolean gsoAcknowledgement;
   private Boolean pubAcknowledgement;
   private String piName;
+  private String piEmail;
 
   @Override
   public String toString() {
@@ -141,14 +145,6 @@ public class DataAccessRequestData {
 
   public void setProjectTitle(String projectTitle) {
     this.projectTitle = projectTitle;
-  }
-
-  public Boolean getCheckCollaborator() {
-    return checkCollaborator;
-  }
-
-  public void setCheckCollaborator(Boolean checkCollaborator) {
-    this.checkCollaborator = checkCollaborator;
   }
 
   public Boolean getCheckNihDataOnly() {
@@ -564,6 +560,12 @@ public class DataAccessRequestData {
     this.internalCollaborators = internalCollaborators;
   }
 
+  public List<Collaborator> getLabAndInternalCollaborators() {
+    return Stream.of(getInternalCollaborators(), getLabCollaborators())
+        .flatMap(List::stream)
+        .toList();
+  }
+
   public List<Collaborator> getExternalCollaborators() {
     if (Objects.isNull(externalCollaborators)) {
       return Collections.emptyList();
@@ -600,12 +602,28 @@ public class DataAccessRequestData {
     this.itDirector = itDirector;
   }
 
+  public String getItDirectorEmail() {
+    return itDirectorEmail;
+  }
+
+  public void setItDirectorEmail(String itDirectorEmail) {
+    this.itDirectorEmail = itDirectorEmail;
+  }
+
   public String getSigningOfficial() {
     return signingOfficial;
   }
 
   public void setSigningOfficial(String signingOfficial) {
     this.signingOfficial = signingOfficial;
+  }
+
+  public String getSigningOfficialEmail() {
+    return signingOfficialEmail;
+  }
+
+  public void setSigningOfficialEmail(String signingOfficialEmail) {
+    this.signingOfficialEmail = signingOfficialEmail;
   }
 
   public void setDSAcknowledgement(Boolean dsAcknowledgement) {
@@ -638,6 +656,14 @@ public class DataAccessRequestData {
 
   public void setPiName(String piName) {
     this.piName = piName;
+  }
+
+  public String getPiEmail() {
+    return piEmail;
+  }
+
+  public void setPiEmail(String piEmail) {
+    this.piEmail = piEmail;
   }
 
   // Validate all ontology entries
@@ -715,5 +741,18 @@ public class DataAccessRequestData {
   public void setCloseoutSupplement(
       CloseoutSupplement closeoutSupplement) {
     this.closeoutSupplement = closeoutSupplement;
+  }
+
+  public static DataAccessRequestData populateDARData(String json) {
+    DataAccessRequestData data;
+    try {
+      data = DataAccessRequestData.fromString(json);
+    } catch (Exception e) {
+      throw new BadRequestException("Unable to parse DAR from JSON string");
+    }
+    if (Objects.isNull(data)) {
+      data = new DataAccessRequestData();
+    }
+    return data;
   }
 }

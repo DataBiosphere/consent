@@ -351,7 +351,7 @@ class DacResourceTest {
         .build();
     when(dacService.findById(1)).thenReturn(dac);
 
-    try (Response response = dacResource.findById(dac.getDacId())) {
+    try (Response response = dacResource.findById(authUser, dac.getDacId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -361,7 +361,7 @@ class DacResourceTest {
     when(dacService.findById(1)).thenReturn(null);
 
     assertThrows(NotFoundException.class, () -> {
-      dacResource.findById(1);
+      dacResource.findById(authUser, 1);
     });
   }
 
@@ -373,8 +373,7 @@ class DacResourceTest {
         .setDescription("description")
         .build();
     when(dacService.findById(1)).thenReturn(dac);
-    User admin = buildAdmin(authUser);
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(admin);
+
     try (Response response = dacResource.deleteDac(authUser, dac.getDacId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
@@ -384,6 +383,7 @@ class DacResourceTest {
   @Test
   void testDeleteDac_failure() {
     when(dacService.findById(1)).thenReturn(null);
+
     assertThrows(NotFoundException.class, () -> {
       dacResource.deleteDac(authUser, 1);
     });
