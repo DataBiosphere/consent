@@ -17,11 +17,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
-import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
@@ -106,6 +104,20 @@ class DacDAOTest extends DAOTestHelper {
     Dac dac2 = dacs.stream().filter(d -> d.getDacId().equals(dacId2)).findFirst().orElseThrow();
     assertEquals(0, dac2.getDatasetIds().size());
     assertNull(dac2.getAssociatedDaa());
+  }
+
+  @Test
+  void testFindAllAlphabeticized() {
+    String firstName = "A" + randomAlphabetic(20);
+    String secondName = "B" + randomAlphabetic(20);
+    String thirdName = "C" + randomAlphabetic(20);
+    Integer dacId1 = createRandomDACWithName(firstName);
+    Integer dacId2 = createRandomDACWithName(thirdName);
+    Integer dacId3 = createRandomDACWithName(secondName);
+    List<Dac> dacs = dacDAO.findAll();
+    assertEquals(dacs.get(0).getName(), firstName);
+    assertEquals(dacs.get(1).getName(), secondName);
+    assertEquals(dacs.get(2).getName(), thirdName);
   }
 
   @Test
@@ -423,27 +435,6 @@ class DacDAOTest extends DAOTestHelper {
     return dacDAO.findById(id);
   }
 
-  private User createUserWithInstitution() {
-    int i1 = randomInt(5, 10);
-    String email = randomAlphabetic(i1);
-    String name = randomAlphabetic(10);
-    Integer userId = userDAO.insertUser(email, name, new Date());
-    Integer institutionId = institutionDAO.insertInstitution(randomAlphabetic(20),
-        "itDirectorName",
-        "itDirectorEmail",
-        randomAlphabetic(10),
-        new Random().nextInt(),
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        OrganizationType.NON_PROFIT.getValue(),
-        userId,
-        new Date());
-    userDAO.updateUser(name, userId, institutionId);
-    userRoleDAO.insertSingleUserRole(7, userId);
-    return userDAO.findUserById(userId);
-  }
-
   private DarCollection createDarCollection() {
     User user = createUserWithInstitution();
     String darCode = "DAR-" + randomInt(1, 10000);
@@ -473,7 +464,8 @@ class DacDAOTest extends DAOTestHelper {
         referenceId,
         userId,
         now, now, now, now,
-        data);
+        data,
+        randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
@@ -491,7 +483,8 @@ class DacDAOTest extends DAOTestHelper {
         new Date(),
         new Date(),
         new Date(),
-        new DataAccessRequestData()
+        new DataAccessRequestData(),
+        user.getEraCommonsId()
     );
     dataAccessRequestDAO.insertDARDatasetRelation(randomUUID, d.getDatasetId());
   }
@@ -531,11 +524,16 @@ class DacDAOTest extends DAOTestHelper {
     return datasetDAO.findDatasetById(id);
   }
 
-  private Integer createRandomDAC() {
+  private Integer createRandomDACWithName(String name) {
     return dacDAO.createDac(
-        "Test_" + randomAlphabetic(20),
+        name,
         "Test_" + randomAlphabetic(20),
         new Date());
+  }
+
+  private Integer createRandomDAC() {
+    return createRandomDACWithName(
+        "Test_" + randomAlphabetic(20));
   }
 
   private void createFSO(Integer userId, Integer daaId) {

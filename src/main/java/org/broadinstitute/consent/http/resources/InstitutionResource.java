@@ -16,18 +16,15 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
-import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Institution;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.InstitutionService;
-import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.InstitutionUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 @Path("api/institutions")
 public class InstitutionResource extends Resource {
 
-  private final UserService userService;
   private final InstitutionService institutionService;
   /*
     NOTE: InstitutionUtil will provide a configured GsonBuilder to help format the JSON response.
@@ -38,18 +35,16 @@ public class InstitutionResource extends Resource {
   private final InstitutionUtil institutionUtil = new InstitutionUtil();
 
   @Inject
-  public InstitutionResource(UserService userService, InstitutionService institutionService) {
-    this.userService = userService;
+  public InstitutionResource(InstitutionService institutionService) {
     this.institutionService = institutionService;
   }
 
   @GET
   @Produces("application/json")
   @PermitAll
-  public Response getInstitutions(@Auth AuthUser authUser) {
+  public Response getInstitutions(@Auth DuosUser duosUser) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      Boolean isAdmin = institutionUtil.checkIfAdmin(user);
+      Boolean isAdmin = institutionUtil.checkIfAdmin(duosUser.getUser());
       Gson gson = institutionUtil.getGsonBuilder(isAdmin);
       List<Institution> institutions = institutionService.findAllInstitutions();
       return Response.ok().entity(gson.toJson(institutions)).build();
@@ -62,10 +57,9 @@ public class InstitutionResource extends Resource {
   @Produces("application/json")
   @Path("/{id}")
   @PermitAll
-  public Response getInstitution(@Auth AuthUser authUser, @PathParam("id") Integer id) {
+  public Response getInstitution(@Auth DuosUser duosUser, @PathParam("id") Integer id) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      Boolean isAdmin = institutionUtil.checkIfAdmin(user);
+      Boolean isAdmin = institutionUtil.checkIfAdmin(duosUser.getUser());
       Gson gson = institutionUtil.getGsonBuilder(isAdmin);
       Institution institution = institutionService.findInstitutionById(id);
       return Response.ok().entity(gson.toJson(institution)).build();
@@ -78,16 +72,15 @@ public class InstitutionResource extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @RolesAllowed(ADMIN)
-  public Response createInstitution(@Auth AuthUser authUser, String institution) {
+  public Response createInstitution(@Auth DuosUser duosUser, String institution) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
       Institution payload = GsonUtil.getInstance().fromJson(institution, Institution.class);
       List<Institution> conflicts = institutionService.findAllInstitutionsByName(payload.getName());
       if (!conflicts.isEmpty()) {
         throw new ConsentConflictException(
             "An institution exists with the name of '" + payload.getName() + "'");
       }
-      Institution newInstitution = institutionService.createInstitution(payload, user.getUserId());
+      Institution newInstitution = institutionService.createInstitution(payload, duosUser.getUser().getUserId());
       return Response.ok().entity(newInstitution).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -99,13 +92,12 @@ public class InstitutionResource extends Resource {
   @Produces("application/json")
   @Path("/{id}")
   @RolesAllowed(ADMIN)
-  public Response updateInstitution(@Auth AuthUser authUser, @PathParam("id") Integer id,
+  public Response updateInstitution(@Auth DuosUser duosUser, @PathParam("id") Integer id,
       String institution) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
       Institution payload = GsonUtil.getInstance().fromJson(institution, Institution.class);
       Institution updatedInstitution = institutionService.updateInstitutionById(payload, id,
-          user.getUserId());
+          duosUser.getUserId());
       return Response.ok().entity(updatedInstitution).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -116,7 +108,7 @@ public class InstitutionResource extends Resource {
   @Produces("application/json")
   @Path("/{id}")
   @RolesAllowed(ADMIN)
-  public Response deleteInstitution(@Auth AuthUser authUser, @PathParam("id") Integer id) {
+  public Response deleteInstitution(@Auth DuosUser duosUser, @PathParam("id") Integer id) {
     try {
       institutionService.deleteInstitutionById(id);
       return Response.status(204).build();

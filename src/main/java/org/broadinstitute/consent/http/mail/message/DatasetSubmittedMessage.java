@@ -1,20 +1,40 @@
 package org.broadinstitute.consent.http.mail.message;
 
-import com.sendgrid.helpers.mail.Mail;
-import java.io.Writer;
-import javax.mail.MessagingException;
+import java.util.Map;
+import org.broadinstitute.consent.http.enumeration.EmailType;
+import org.broadinstitute.consent.http.models.User;
 
 public class DatasetSubmittedMessage extends MailMessage {
 
-  private final String DATASET_SUBMITTED = "Dataset submitted to DUOS";
+  private static final String DATASET_SUBMITTED = "Dataset submitted to DUOS";
 
-  public Mail datasetSubmittedMessage(String toAddress, String fromAddress, Writer template)
-      throws MessagingException {
-    return generateEmailMessage(toAddress, fromAddress, template, null, null);
+  private final String dataSubmitterName;
+  private final String datasetName;
+  private final String dacName;
+
+  public DatasetSubmittedMessage(User dacChair, String dataSubmitterName, String datasetName,
+      String dacName) {
+    super(dacChair, EmailType.NEW_DATASET);
+    this.dataSubmitterName = dataSubmitterName;
+    this.datasetName = datasetName;
+    this.dacName = dacName;
   }
 
   @Override
-  String assignSubject(String referenceId, String type) {
+  public String createSubject() {
     return DATASET_SUBMITTED;
+  }
+
+  @Override
+  public Object createModel(String serverUrl) {
+    return Map.of("dacChairName", toUser.getDisplayName(),
+        "dataSubmitterName", dataSubmitterName,
+        "datasetName", datasetName,
+        "dacName", dacName);
+  }
+
+  @Override
+  public String getEntityReferenceId() {
+    return datasetName;
   }
 }

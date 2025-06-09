@@ -2,8 +2,12 @@ package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
 import java.util.Random;
@@ -30,7 +34,7 @@ class UserServiceDAOTest extends DAOTestHelper {
 
   @BeforeEach
   void setup() {
-    serviceDAO = new UserServiceDAO(jdbi, userDAO, userRoleDAO);
+    serviceDAO = new UserServiceDAO(jdbi, libraryCardDAO, userDAO, userRoleDAO);
   }
 
   @Test
@@ -109,4 +113,54 @@ class UserServiceDAOTest extends DAOTestHelper {
     return institutionDAO.findInstitutionById(id);
   }
 
+  @Test
+  void testUpdateInstitutionAndClearLibraryCardForUser() {
+    User testUser = createUser();
+    Institution institution = createInstitution();
+
+    serviceDAO.updateInstitutionAndClearLibraryCardForUser(
+        testUser.getUserId(), institution.getId());
+    User fetchedUser = userDAO.findUserById(testUser.getUserId());
+    assertEquals(fetchedUser.getUserId(), testUser.getUserId());
+    assertEquals(fetchedUser.getInstitutionId(), institution.getId());
+    assertNull(libraryCardDAO.findLibraryCardByUserId(testUser.getUserId()));
+  }
+
+  @Test
+  void testUpdateInstitutionAndClearLibraryCardForUser_ClearInstitution() {
+    User testUser = createUser();
+    Institution institution = createInstitution();
+
+    serviceDAO.updateInstitutionAndClearLibraryCardForUser(
+        testUser.getUserId(), institution.getId());
+    User fetchedUser = userDAO.findUserById(testUser.getUserId());
+    assertEquals(fetchedUser.getUserId(), testUser.getUserId());
+    assertEquals(fetchedUser.getInstitutionId(), institution.getId());
+
+    serviceDAO.updateInstitutionAndClearLibraryCardForUser(testUser.getUserId(), null);
+    fetchedUser = userDAO.findUserById(testUser.getUserId());
+    assertEquals(fetchedUser.getUserId(), testUser.getUserId());
+    assertNull(fetchedUser.getInstitutionId());
+  }
+
+  @Test
+  void testUpdateInstitutionAndClearLibraryCardForUser_ClearLibraryCardAndInstitution() {
+    User testUser = createUser();
+    Institution institution = createInstitution();
+    userDAO.updateInstitutionId(testUser.getUserId(), institution.getId());
+    libraryCardDAO.insertLibraryCard(
+        testUser.getUserId(),
+        testUser.getDisplayName(),
+        testUser.getEmail(),
+        testUser.getUserId(),
+        Timestamp.from(Instant.now()));
+    assertNotNull(libraryCardDAO.findLibraryCardByUserId(testUser.getUserId()));
+    User fetchedUser = userDAO.findUserById(testUser.getUserId());
+    assertEquals(fetchedUser.getUserId(), testUser.getUserId());
+    assertEquals(fetchedUser.getInstitutionId(), institution.getId());
+
+    serviceDAO.updateInstitutionAndClearLibraryCardForUser(testUser.getUserId(), null);
+    assertNull(libraryCardDAO.findLibraryCardByUserId(testUser.getUserId()));
+    assertNull(institutionDAO.findInstitutionById(testUser.getInstitutionId()));
+  }
 }

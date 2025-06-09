@@ -16,13 +16,12 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
-import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DatasetEntry;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Config;
@@ -168,22 +167,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
    * @return Created User
    */
   protected User createUser() {
-    int i1 = randomInt(5, 10);
-    int i2 = randomInt(5, 10);
-    int i3 = randomInt(3, 5);
-    String email = randomAlphabetic(i1) +
-        "@" +
-        randomAlphabetic(i2) +
-        "." +
-        randomAlphabetic(i3);
-    Integer userId = userDAO.insertUser(email, "display name", new Date());
-    userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), userId);
-    UserProperty prop = new UserProperty();
-    prop.setUserId(userId);
-    prop.setPropertyKey(UserFields.SUGGESTED_INSTITUTION.getValue());
-    prop.setPropertyValue("test");
-    userPropertyDAO.insertAll(List.of(prop));
-    return userDAO.findUserById(userId);
+    return createUserWithRole(UserRoles.RESEARCHER.getRoleId());
   }
 
   /**
@@ -193,31 +177,14 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
    * @return Last DataAccessRequest of a DarCollection
    */
   protected DataAccessRequest createDataAccessRequestV3() {
-    int i1 = randomInt(5, 10);
-    String email = randomAlphabetic(i1);
-    String name = randomAlphabetic(10);
-    Integer userId = userDAO.insertUser(email, name, new Date());
-    Integer institutionId = institutionDAO.insertInstitution(randomAlphabetic(20),
-        "itDirectorName",
-        "itDirectorEmail",
-        randomAlphabetic(10),
-        new Random().nextInt(),
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        OrganizationType.NON_PROFIT.getValue(),
-        userId,
-        new Date());
-    userDAO.updateUser(name, userId, institutionId);
-    userRoleDAO.insertSingleUserRole(7, userId);
-    User user = userDAO.findUserById(userId);
+    User user = createUserWithInstitution();
     String darCode = "DAR-" + randomInt(1, 999999999);
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
         new Date());
     for (int i = 0; i < 4; i++) {
-      createDataAccessRequest(user.getUserId(), collection_id, darCode);
+      createDataAccessRequest(user.getUserId(), collection_id);
     }
-    return createDataAccessRequest(user.getUserId(), collection_id, darCode);
+    return createDataAccessRequest(user.getUserId(), collection_id);
   }
 
   /**
@@ -225,11 +192,9 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
    *
    * @return Populated DataAccessRequest
    */
-  private DataAccessRequest createDataAccessRequest(Integer userId, Integer collectionId,
-      String darCode) {
+  private DataAccessRequest createDataAccessRequest(Integer userId, Integer collectionId) {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle("Project Title: " + randomAlphabetic(50));
-    data.setDarCode(darCode);
     DatasetEntry entry = new DatasetEntry();
     entry.setKey("key");
     entry.setValue("value");
@@ -244,8 +209,50 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
         referenceId,
         userId,
         now, now, now, now,
-        data);
+        data,
+        randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
+  protected User createUserWithRoleInDac(Integer roleId, Integer dacId) {
+    User user = createUserWithRole(roleId);
+    dacDAO.addDacMember(roleId, user.getUserId(), dacId);
+    return user;
+  }
+
+  protected User createUserWithRole(Integer roleId) {
+    return createUserWithRole(roleId, null);
+  }
+
+  protected User createUserWithRole(Integer roleId, Integer institutionId) {
+    int i1 = randomInt(5, 10);
+    int i2 = randomInt(5, 10);
+    int i3 = randomInt(3, 5);
+    String email = randomAlphabetic(i1) + "@" + randomAlphabetic(i2) + "." + randomAlphabetic(i3);
+    Integer userId = userDAO.insertUser(email, "display name", institutionId, new Date());
+    userRoleDAO.insertSingleUserRole(roleId, userId);
+    return userDAO.findUserById(userId);
+  }
+
+  protected User createUserWithInstitution() {
+    User admin = createUserWithRole(UserRoles.ADMIN.getRoleId());
+    Integer adminId = admin.getUserId();
+    Integer institutionId = institutionDAO.insertInstitution(randomAlphabetic(20),
+        "itDirectorName",
+        "itDirectorEmail",
+        randomAlphabetic(10),
+        new Random().nextInt(),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
+        OrganizationType.NON_PROFIT.getValue(),
+        adminId,
+        new Date());
+    User user = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), institutionId);
+    return userDAO.findUserById(user.getUserId());
+  }
+
+  protected Institution getUserInstitution(User user) {
+    return institutionDAO.findInstitutionById(user.getInstitutionId());
+  }
 }

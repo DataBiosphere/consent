@@ -15,9 +15,8 @@ properties:
     type: string
     description: Collection name
   submissionDate:
-    type: string
-    format: date
-    description: Collection submission date
+    type: number
+    description: Collection submission date as milliseconds from the epoch
   researcherName:
     type: string
     description: Collection creator's name
@@ -38,3 +37,14 @@ properties:
   datasetCount:
     type: integer
     description: The count of datasets for this collection
+  expiresAt:
+    type: number
+    description: Collection expiration date as milliseconds from the epoch
+  expired:
+    type: boolean
+    description: Indicator true when the collection is expired.
+  progressReport:
+    type: boolean
+    description: Indicator true when the collection contains a progress report.
+  closeoutSupplement:
+    $ref: '../schemas/CloseOutSupplement.yaml'

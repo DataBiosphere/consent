@@ -69,12 +69,8 @@ public class DACAutomationApprovalResearcherMessage {
   public Mail generateEmailMessage() throws Exception {
     String subject = "DAC Automation Dataset Approval for Data Access Request %s".formatted(
         darCollection.getDarCode());
-    Model model = new Model(darCollection, researcher, datasets, dacName, automationRuleName, serverUrl);
-    Template template = templateHelper.getFreeMarkerConfig()
-        .getTemplate("dac-automation-approval-researcher.html");
-    template.process(model, writer);
-    Content content = new Content("text/html", template.toString());
-    return new Mail(new Email(fromAddress), subject, new Email(researcher.getEmail()), content);
+    //TODO: Fix me so I send a message
+    return new Mail();
   }
 
 }

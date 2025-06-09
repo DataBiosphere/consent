@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -63,7 +64,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   @SqlQuery(
       getCollectionAndDars + " WHERE c.collection_id in (<collectionIds>)" + archiveFilterQuery)
   List<DarCollection> findDARCollectionByCollectionIds(
-      @BindList("collectionIds") List<Integer> collectionIds);
+      @BindList(value = "collectionIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> collectionIds);
 
   /**
    * Find all DARCollections with their DataAccessRequests
@@ -86,7 +87,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           "dd.dataset_id, " +
           "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
           +
-          "dar.parent_id AS dar_parent_id, dar.draft AS dar_draft, dar.user_id AS dar_userId, " +
+          "dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, " +
           "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
           +
           "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data " +
@@ -121,25 +122,28 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
-      "SELECT c.*, " +
-          User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
-          Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR +
-          UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR +
-          "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
-          +
-          "dar.parent_id AS dar_parent_id, dar.draft AS dar_draft, dar.user_id AS dar_userId, " +
-          "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
-          +
-          "dar.update_date AS dar_update_date, (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, dd.dataset_id " +
-          "FROM dar_collection c " +
-          "INNER JOIN users u ON c.create_user_id = u.user_id " +
-          "LEFT JOIN user_property up ON u.user_id = up.user_id " +
-          "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
-          "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id " +
-          "LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id " +
-          "WHERE c.collection_id = (SELECT collection_id FROM data_access_request WHERE reference_id = :referenceId) "
-          +
-          "AND (LOWER(data->>'status')!='archived' OR data->>'status' IS NULL) ")
+      """
+        SELECT c.*,
+        u.user_id as u_user_id, u.email as u_email, u.display_name as u_display_name, u.create_date
+        as u_create_date, u.email_preference as u_email_preference, u.institution_id
+        as u_institution_id, u.era_commons_id as u_era_commons_id, i.institution_id as i_id,
+        i.institution_name as i_name, i.it_director_name as i_it_director_name,  i.it_director_email
+        as i_it_director_email, i.create_date as i_create_date, i.update_date as i_update_date,
+        up.property_id AS up_property_id, up.user_id AS up_user_id, up.property_key
+        as up_property_key, up.property_value AS up_property_value,
+        dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id,
+        dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, dar.era_commons_id AS dar_era_commons_id,
+        dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date,
+        dar.update_date AS dar_update_date, (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, dd.dataset_id
+        FROM dar_collection c
+        INNER JOIN users u ON c.create_user_id = u.user_id
+        LEFT JOIN user_property up ON u.user_id = up.user_id
+        LEFT JOIN institution i ON i.institution_id = u.institution_id
+        INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id
+        LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
+        WHERE c.collection_id = (SELECT collection_id FROM data_access_request WHERE reference_id = :referenceId)
+        AND (LOWER(data->>'status')!='archived' OR data->>'status' IS NULL)
+      """)
   DarCollection findDARCollectionByReferenceId(@Bind("referenceId") String referenceId);
 
   /**
@@ -165,7 +169,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           + LibraryCard.QUERY_FIELDS_WITH_LC_PREFIX + QUERY_FIELD_SEPARATOR
           + "dd.dataset_id, "
           + "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
-          + "dar.parent_id AS dar_parent_id, dar.draft AS dar_draft, dar.user_id AS dar_userId, "
+          + "dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, dar.era_commons_id AS dar_era_commons_id, "
           + "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
           + "dar.update_date AS dar_update_date, (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, "
           + "e.election_id AS e_election_id, e.reference_id AS e_reference_id, e.status AS e_status, e.create_date AS e_create_date, "
@@ -199,9 +203,12 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
    *
    * @return Integer, ID of newly created DarCollection
    */
-  @SqlUpdate("INSERT INTO dar_collection " +
-      " (dar_code, create_user_id, create_date) " +
-      " VALUES (:darCode, :createUserId, :createDate)")
+  @SqlUpdate(
+      """
+        INSERT INTO dar_collection
+        (dar_code, create_user_id, create_date)
+        VALUES (:darCode, :createUserId, :createDate)
+      """)
   @GetGeneratedKeys
   Integer insertDarCollection(@Bind("darCode") String darCode,
       @Bind("createUserId") Integer createUserId,

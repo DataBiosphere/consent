@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -44,8 +43,7 @@ class NihServiceTest {
 
   @BeforeEach
   void setUp() {
-    nihUserAccount = new NIHUserAccount("nih username", new ArrayList(), new Date().toString(),
-        true);
+    nihUserAccount = new NIHUserAccount("nih username", new Date().toString(), true);
     authUser = new AuthUser("test@test.com");
   }
 

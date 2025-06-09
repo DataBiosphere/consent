@@ -1,25 +1,31 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ServerErrorException;
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.InstitutionDomainMap;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 
 public class InstitutionService {
 
   private final InstitutionDAO institutionDAO;
   private final UserDAO userDAO;
+  private final GCSService store;
 
   @Inject
-  public InstitutionService(InstitutionDAO institutionDAO, UserDAO userDAO) {
+  public InstitutionService(InstitutionDAO institutionDAO, UserDAO userDAO, GCSService store) {
     this.institutionDAO = institutionDAO;
     this.userDAO = userDAO;
+    this.store = store;
   }
 
   public Institution createInstitution(Institution institution, Integer userId) {
@@ -74,16 +80,37 @@ public class InstitutionService {
     institutionDAO.deleteInstitutionById(id);
   }
 
-  public Institution findInstitutionById(Integer id) {
+  public Institution findInstitutionById(Integer id) throws NotFoundException {
     Institution institution = institutionDAO.findInstitutionById(id);
     isInstitutionNull(institution);
 
     List<SimplifiedUser> signingOfficials = userDAO.getSOsByInstitution(id).stream()
         .map(SimplifiedUser::new)
-        .collect(Collectors.toList());
+        .toList();
     institution.setSigningOfficials(signingOfficials);
 
     return institution;
+  }
+
+  private InstitutionDomainMap getInstitutionDomainMap() {
+    try {
+      return store.readJsonFileFromBucket("institution-domain/allowlist.json",
+          InstitutionDomainMap.class);
+    } catch (IOException e) {
+      throw new ServerErrorException("Could not load institution configuration",
+          HttpStatusCodes.STATUS_CODE_SERVER_ERROR, e);
+    }
+  }
+
+  public Institution findInstitutionForEmail(String email) {
+    String name = getInstitutionDomainMap().getInstitutionForEmail(email);
+    if (name != null) {
+      var institutions = institutionDAO.findInstitutionsByName(name);
+      if (institutions.size() == 1) {
+        return institutions.get(0);
+      }
+    }
+    return null;
   }
 
   public List<Institution> findAllInstitutions() {

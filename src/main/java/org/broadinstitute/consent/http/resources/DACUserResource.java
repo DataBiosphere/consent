@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.Inject;
+import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
@@ -15,6 +16,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService;
@@ -32,7 +34,7 @@ public class DACUserResource extends Resource {
   @POST
   @Consumes("application/json")
   @RolesAllowed({ADMIN})
-  public Response createDACUser(@Context UriInfo info, String json) {
+  public Response createDACUser(@Auth AuthUser authUser, @Context UriInfo info, String json) {
     try {
       User user = userService.createUser(new User(json));
       // Update email preference

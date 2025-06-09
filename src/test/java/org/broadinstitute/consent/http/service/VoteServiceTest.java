@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -11,12 +12,17 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.gson.JsonArray;
+import freemarker.template.TemplateException;
 import jakarta.ws.rs.NotFoundException;
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -48,8 +54,11 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -455,7 +464,61 @@ class VoteServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testNotifyResearchersOfDarApproval_2Dars_1Collection() throws Exception {
+  void testNotifyResearchersOfProgressReportApproval() throws TemplateException, IOException {
+    String referenceId1 = UUID.randomUUID().toString();
+
+    Vote v1 = new Vote();
+    v1.setVote(true);
+    v1.setType(VoteType.FINAL.getValue());
+    v1.setElectionId(1);
+    v1.setUserId(1);
+
+    Dataset d1 = new Dataset();
+    d1.setDatasetId(1);
+    d1.setName(randomAlphabetic(50));
+    d1.setAlias(1);
+    d1.setDataUse(new DataUseBuilder().setGeneralUse(false).setNonProfitUse(true).build());
+
+    Election e1 = new Election();
+    e1.setElectionId(1);
+    e1.setReferenceId(referenceId1);
+    e1.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    e1.setDatasetId(1);
+
+    DatasetProperty depositorProp = new DatasetProperty();
+    depositorProp.setPropertyName("Data Depositor");
+    depositorProp.setPropertyValue("depositor@test.com");
+    depositorProp.setPropertyType(PropertyType.String);
+
+    User researcher = new User();
+    researcher.setEmail("researcher@test.com");
+    researcher.setDisplayName("Researcher");
+    researcher.setUserId(1);
+
+    DataAccessRequest dar1 = new DataAccessRequest();
+    DataAccessRequestData data1 = new DataAccessRequestData();
+    dar1.addDatasetId(d1.getDatasetId());
+    dar1.setCollectionId(1);
+    dar1.setData(data1);
+    dar1.setSubmissionDate(Timestamp.from(Instant.now()));
+    dar1.setParentId(5);
+    dar1.setReferenceId(referenceId1);
+    d1.setProperties(Set.of(depositorProp));
+
+    when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(e1));
+    when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar1));
+    when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1));
+    when(userDAO.findUserById(any())).thenReturn(researcher);
+
+    initService();
+
+    service.sendDatasetApprovalNotifications(List.of(v1), researcher);
+
+    verify(emailService).sendResearcherProgressReportApproved(any(), any(), anyList(), any());
+  }
+
+  @Test
+  void testNotifyResearchersOfDarApproval_2Dars() throws Exception {
     String referenceId1 = UUID.randomUUID().toString();
     String referenceId2 = UUID.randomUUID().toString();
 
@@ -516,12 +579,6 @@ class VoteServiceTest extends AbstractTestHelper {
     dar2.setReferenceId(referenceId2);
     d2.setProperties(Set.of(depositorProp));
 
-    DarCollection c = new DarCollection();
-    c.setDarCollectionId(1);
-    c.addDar(dar1);
-    c.addDar(dar2);
-    c.setDarCode("DAR-CODE");
-
     User researcher = new User();
     researcher.setEmail("researcher@test.com");
     researcher.setDisplayName("Researcher");
@@ -529,14 +586,13 @@ class VoteServiceTest extends AbstractTestHelper {
 
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(e1, e2));
     when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar1, dar2));
-    when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c));
     when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1, d2));
     when(userDAO.findUserById(any())).thenReturn(researcher);
 
     initService();
     service.sendDatasetApprovalNotifications(List.of(v1, v2), researcher);
     // Since we have 1 collection with different DAR/Datasets, we should be sending 1 email
-    verify(emailService, times(1)).sendResearcherDarApproved(any(), any(), anyList(), any());
+    verify(emailService, times(2)).sendResearcherDarApproved(any(), any(), anyList(), any());
   }
 
   @Test
@@ -618,7 +674,6 @@ class VoteServiceTest extends AbstractTestHelper {
 
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(e1, e2));
     when(dataAccessRequestDAO.findByReferenceIds(any())).thenReturn(List.of(dar1, dar2));
-    when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(c1, c2));
     when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d1, d2));
     when(userDAO.findUserById(any())).thenReturn(researcher);
 
@@ -661,9 +716,7 @@ class VoteServiceTest extends AbstractTestHelper {
     // Since we have a false vote, we should not be sending any email
     verify(emailService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any());
     // Similar check for all DAO calls
-    verify(electionDAO, times(0)).findElectionsByIds(any());
-    verify(dataAccessRequestDAO, times(0)).findByReferenceIds(any());
-    verify(darCollectionDAO, times(0)).findDARCollectionByCollectionIds(any());
+    verify(dataAccessRequestDAO, times(1)).findByReferenceIds(any());
     verify(datasetDAO, times(0)).findDatasetsByIdList(any());
   }
 
@@ -700,9 +753,7 @@ class VoteServiceTest extends AbstractTestHelper {
     // Since we have a non-final vote, we should not be sending any email
     verify(emailService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any());
     // Similar check for all DAO calls
-    verify(electionDAO, times(0)).findElectionsByIds(any());
-    verify(dataAccessRequestDAO, times(0)).findByReferenceIds(any());
-    verify(darCollectionDAO, times(0)).findDARCollectionByCollectionIds(any());
+    verify(dataAccessRequestDAO, times(1)).findByReferenceIds(any());
     verify(datasetDAO, times(0)).findDatasetsByIdList(any());
   }
 
@@ -936,6 +987,30 @@ class VoteServiceTest extends AbstractTestHelper {
       fail(e.getMessage());
     }
   }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void testLogDARApprovalOrRejection(boolean voteValue) {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    Election election = new Election();
+    election.setElectionId(1);
+    election.setDatasetId(dataset.getDatasetId());
+    User user = new User();
+    Vote vote = new Vote();
+    vote.setVote(voteValue);
+    vote.setType(VoteType.FINAL.getValue());
+    vote.setElectionId(election.getElectionId());
+    when(electionDAO.findElectionsByIds(List.of())).thenReturn(List.of());
+    when(electionDAO.findElectionsByIds(List.of(election.getElectionId()))).thenReturn(List.of(election));
+    when(datasetDAO.findDatasetsByIdList(List.of())).thenReturn(List.of());
+    when(datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId()))).thenReturn(List.of(dataset));
+    ContainerRequest request = mock();
+
+    initService();
+    assertDoesNotThrow(() -> service.logDARApprovalOrRejection(user, List.of(vote), request));
+  }
+
 
   private void setUpUserAndElectionVotes(UserRoles userRoles) {
     User user = new User();

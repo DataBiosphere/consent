@@ -1,14 +1,11 @@
 package org.broadinstitute.consent.http.models;
 
 import com.google.gson.annotations.SerializedName;
-import java.util.Collection;
 
 public class NIHUserAccount {
 
   @SerializedName("linkedNihUsername")
   private String nihUsername;
-
-  private Collection<String> datasetPermissions;
 
   @SerializedName("linkExpireTime")
   private String eraExpiration;
@@ -18,10 +15,8 @@ public class NIHUserAccount {
   public NIHUserAccount() {
   }
 
-  public NIHUserAccount(String nihUsername, Collection<String> datasetPermissions, String eraExpiration,
-      Boolean status) {
+  public NIHUserAccount(String nihUsername, String eraExpiration, Boolean status) {
     this.nihUsername = nihUsername;
-    this.datasetPermissions = datasetPermissions;
     this.eraExpiration = eraExpiration;
     this.status = status;
   }
@@ -40,14 +35,6 @@ public class NIHUserAccount {
 
   public void setEraExpiration(String eraExpiration) {
     this.eraExpiration = eraExpiration;
-  }
-
-  public Collection<String> getDatasetPermissions() {
-    return datasetPermissions;
-  }
-
-  public void setDatasetPermissions(Collection<String> datasetPermissions) {
-    this.datasetPermissions = datasetPermissions;
   }
 
   public Boolean getStatus() {

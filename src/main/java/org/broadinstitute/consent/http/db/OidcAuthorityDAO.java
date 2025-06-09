@@ -36,7 +36,7 @@ public class OidcAuthorityDAO implements ConsentLogger {
   }
 
   @VisibleForTesting
-  void setOidcAuthorityConfiguration(OidcAuthorityConfiguration oidcAuthorityConfiguration) {
+  protected void setOidcAuthorityConfiguration(OidcAuthorityConfiguration oidcAuthorityConfiguration) {
     this.oidcAuthorityConfiguration = oidcAuthorityConfiguration;
   }
 

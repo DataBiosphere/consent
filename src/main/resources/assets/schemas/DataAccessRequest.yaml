@@ -22,6 +22,15 @@ properties:
   draft:
     type: boolean
     description: Draft status of this DAR
+  expired:
+    type: boolean
+    description: Expired status of this DAR
+  expiredAt:
+    type: number
+    description: When this DAR expires, in milliseconds since the epoch.  Present if the DAR is no longer a draft.
+  progressReport:
+    type: boolean
+    description: Indicator that this DAR is a progress report.
   darCode:
     type: string
     description: Unique DAR Code
@@ -30,6 +39,9 @@ properties:
     description: Map of elections tied to the DAR (electionid - election)
     items:
       $ref: './Election.yaml'
+  eraCommonsId:
+    type: string
+    description: The submitter's eraCommonsId at the time of request submission.
   projectTitle:
     type: string
     description: Project Title
@@ -148,12 +160,24 @@ properties:
   pubAcknowledgement:
     type: boolean
     description: Boolean value that represents user acknowledgement of publication requirements (if applicable)
+  piName:
+    type: string
+    description: Principal Investigator
+  piEmail:
+    type: string
+    description: Principal Investigator email
   itDirector:
     type: string
     description: IT Director
+  itDirectorEmail:
+    type: string
+    description: IT Director email
   signingOfficial:
     type: string
     description: Signing Official
+  signingOfficialEmail:
+    type: string
+    description: Signing Official email
   publication:
     type: boolean
     description: Publication Required
