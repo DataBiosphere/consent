@@ -2,9 +2,11 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import java.util.Map;
 import java.util.Objects;
+import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.mapper.NoSuchMapperException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
@@ -27,6 +29,12 @@ public class DarCollectionSummaryReducer implements
     String darReferenceId;
 
     try {
+      if (hasColumn(rowView, "closeout", String.class)) {
+        String string = rowView.getColumn("closeout", String.class);
+        CloseoutSupplement closeout = GsonUtil.getInstance().fromJson(string, CloseoutSupplement.class);
+        summary.setCloseoutSupplement(closeout);
+      }
+
       datasetId = rowView.getColumn("dd_datasetid", Integer.class);
       if (Objects.nonNull(datasetId)) {
         summary.addDatasetId(datasetId);
