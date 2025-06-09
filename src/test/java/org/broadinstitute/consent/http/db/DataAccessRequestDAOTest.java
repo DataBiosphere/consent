@@ -24,6 +24,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -717,6 +718,65 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         testDar1.getReferenceId());
     assertEquals(1, approvedDatasetIds.size());
     assertTrue(approvedDatasetIds.contains(dataset1.getDatasetId()));
+  }
+
+  @Test
+  void testFindDatasetApprovalsByDAR_ExcludeCloseouts() {
+    // Create a dar collection
+    User user = createUserWithInstitution();
+    String darCode = "DAR-" + randomInt(1, 10000);
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
+        new Date());
+
+    // Create an approved DAR on a dataset
+    Dataset dataset = createDataset();
+    DataAccessRequest parentDAR = createDataAccessRequest(user.getUserId(), collectionId);
+    dataAccessRequestDAO.insertDARDatasetRelation(parentDAR.getReferenceId(),
+        dataset.getDatasetId());
+    Election election = createDataAccessElection(parentDAR.getReferenceId(),
+        dataset.getDatasetId());
+    Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
+    Date now = new Date();
+    voteDAO.updateVote(true,
+        "",
+        now,
+        vote.getVoteId(),
+        false,
+        election.getElectionId(),
+        now,
+        false);
+    // Ensure we can find the approved dataset for the parent DAR
+    Set<Integer> approvedDatasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(
+        parentDAR.getReferenceId());
+    assertTrue(approvedDatasetIds.contains(dataset.getDatasetId()));
+
+    // Create a closeout DAR for the parent DAR
+    DataAccessRequest closeoutDAR = createProgressReport(user.getUserId(), collectionId,
+        parentDAR.getId());
+    CloseoutSupplement closeout = new CloseoutSupplement(List.of("Reason"), "Other Reason",
+        user.getUserId());
+    closeoutDAR.getData().setCloseoutSupplement(closeout);
+    dataAccessRequestDAO.updateDataByReferenceId(
+        closeoutDAR.getReferenceId(),
+        user.getUserId(),
+        now,
+        now,
+        now,
+        closeoutDAR.getData(),
+        randomAlphabetic(10)
+    );
+
+    // Ensure that we do NOT get the dataset from either the parent DAR
+    Set<Integer> noApprovedDatasetIds1 = dataAccessRequestDAO.findDatasetApprovalsByDar(
+        parentDAR.getReferenceId());
+    assertTrue(noApprovedDatasetIds1.isEmpty(),
+        "Parent DAR should not be included in dataset approvals");
+
+    // Ensure that we do NOT get the dataset from the closeout DAR
+    Set<Integer> noApprovedDatasetIds2 = dataAccessRequestDAO.findDatasetApprovalsByDar(
+        closeoutDAR.getReferenceId());
+    assertTrue(noApprovedDatasetIds2.isEmpty(),
+        "Closeout DAR should not be included in dataset approvals");
   }
 
   /**
