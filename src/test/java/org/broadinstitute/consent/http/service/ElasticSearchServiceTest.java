@@ -42,6 +42,7 @@ import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
+import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
@@ -52,6 +53,7 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
@@ -106,6 +108,9 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   @Mock
   private StudyDAO studyDAO;
 
+  @Mock
+  private LibraryCardDAO libraryCardDAO;
+
   @BeforeEach
   void initService() {
     service = new ElasticSearchService(
@@ -118,7 +123,8 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
         institutionDAO,
         datasetDAO,
         datasetServiceDAO,
-        studyDAO);
+        studyDAO,
+        libraryCardDAO);
   }
 
   private void mockElasticSearchResponse(String body) throws IOException {
@@ -338,6 +344,12 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
         datasetRecord.createUser);
     when(userDao.findUserById(datasetRecord.updateUser.getUserId())).thenReturn(
         datasetRecord.updateUser);
+    LibraryCard card1 = new LibraryCard();
+    card1.setUserId(dar1.getUserId());
+    LibraryCard card2 = new LibraryCard();
+    card2.setUserId(dar2.getUserId());
+    when(libraryCardDAO.findLibraryCardsByUserIds(
+        List.of(dar1.getUserId(), dar2.getUserId()))).thenReturn(List.of(card1, card2));
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
     when(ontologyService.translateDataUseSummary(any())).thenReturn(dataUseSummary);
     when(dataAccessRequestDAO.findApprovedDARsByDatasetId(any())).thenReturn(List.of(dar1, dar2));
@@ -407,7 +419,8 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(dacDAO.findById(any())).thenReturn(dac);
     when(userDao.findUserById(user.getUserId())).thenReturn(user);
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
-    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(datasetRecord.createUser);
+    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(
+        datasetRecord.createUser);
     assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
   }
 
@@ -495,7 +508,8 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(mockResponse.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(200);
 
-    try (var ignored = service.indexDatasets(List.of(dataset1.getDatasetId(), dataset2.getDatasetId()),
+    try (var ignored = service.indexDatasets(
+        List.of(dataset1.getDatasetId(), dataset2.getDatasetId()),
         datasetRecord.createUser)) {
       // Each dataset should be looked up once when defining the term and a second time
       // when updating the indexed date.

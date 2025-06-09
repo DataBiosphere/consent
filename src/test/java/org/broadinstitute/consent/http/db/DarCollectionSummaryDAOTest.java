@@ -17,6 +17,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -1081,6 +1082,34 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     DataAccessRequest progressReportDar = dataAccessRequestDAO.findByReferenceId(progressReportReferenceId);
     String progressReportReferenceId2 = createProgressReportFromDAR(progressReportDar).getReferenceId();
     validateSummaryObjectForResearcherWithParent(userId, progressReportReferenceId2);
+  }
+
+  @Test
+  void testGetDarCollectionSummaryForResearcherWithCloseout() {
+    Setup setup = createDarCollectionSummaryForUser();
+    Integer userId = setup.userId();
+    DarCollectionSummary summary = setup.summary();
+
+    // Create a child progress report with closeout supplement
+    DataAccessRequest parent = dataAccessRequestDAO.findByReferenceId(summary.getLatestReferenceId());
+    String referenceId = UUID.randomUUID().toString();
+    DataAccessRequestData data = parent.getData();
+    data.setCloseoutSupplement(new CloseoutSupplement(List.of("Closeout data"), "Closeout notes", 1));
+    dataAccessRequestDAO.insertProgressReport(
+        parent.getId(),
+        parent.getCollectionId(),
+        referenceId,
+        userId,
+        data);
+    // Insert dataset relations for the progress report
+    parent.getDatasetIds().forEach(datasetId -> {
+      dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
+    });
+
+    List<DarCollectionSummary> summariesForResearcher = darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(userId);
+    assertEquals(1, summariesForResearcher.size());
+    assertTrue(summariesForResearcher.get(0).getProgressReport());
+    assertNotNull(summariesForResearcher.get(0).getCloseoutSupplement());
   }
 
   @Test
