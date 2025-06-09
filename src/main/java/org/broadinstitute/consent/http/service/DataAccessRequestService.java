@@ -309,7 +309,11 @@ public class DataAccessRequestService implements ConsentLogger {
       }
 
     } catch (NotFoundException e) {
-      // do nothing.  we'll allow the SO to process a closeout even if the  user can't be found.
+      // log the state.  we'll allow the SO to process a closeout even if the  user can't be found.
+      logWarn(
+          String.format(
+              "Signing Official approving closeout %s for non-existent user %d",
+              dataAccessRequest.getReferenceId(), dataAccessRequest.getUserId()));
     }
   }
 
