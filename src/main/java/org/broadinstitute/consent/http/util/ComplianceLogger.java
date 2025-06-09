@@ -22,7 +22,8 @@ public class ComplianceLogger implements ConsentLogger {
     DAR_SUBMISSION,
     DAR_APPROVAL,
     DAR_REJECTION,
-    DAR_CANCELLATION
+    DAR_CANCELLATION,
+    CLOSEOUT_SO_APPROVAL
   }
 
   private static final String MESSAGE = """
@@ -100,6 +101,11 @@ public class ComplianceLogger implements ConsentLogger {
   public static void logDARCancellation(User user, List<Dataset> datasets, ContainerRequest request,
       int responseStatusCode) {
     getInstance().logEvent(user, datasets, request, responseStatusCode, ComplianceEvent.DAR_CANCELLATION);
+  }
+
+  public static void logCloseoutApprovalBySigningOfficial(User user, List<Dataset> datasets,
+      ContainerRequest request, int responseStatusCode) {
+    getInstance().logEvent(user, datasets, request, responseStatusCode, ComplianceEvent.CLOSEOUT_SO_APPROVAL);
   }
 
 }

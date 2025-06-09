@@ -19,6 +19,12 @@ properties:
   updateDate:
     type: number
     description: Update Date
+  closeoutSigningOfficialApprovedDate:
+    type: number
+    description: When the Signing Official approved the closeout, in milliseconds since the epoch.
+  closeoutSigningOfficialApprovedUserId:
+    type: number
+    description: The user ID of the Signing Official that approved the closeout.
   draft:
     type: boolean
     description: Draft status of this DAR

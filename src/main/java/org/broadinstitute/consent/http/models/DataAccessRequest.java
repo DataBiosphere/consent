@@ -83,6 +83,12 @@ public class DataAccessRequest {
   @JsonProperty
   private String eraCommonsId;
 
+  @JsonProperty
+  public Timestamp closeoutSigningOfficialApprovedDate;
+
+  @JsonProperty
+  public Integer closeoutSigningOfficialApprovedUserId;
+
   public DataAccessRequest() {
     this.elections = new HashMap<>();
   }
@@ -266,6 +272,21 @@ public class DataAccessRequest {
     this.eraCommonsId = eraCommonsId;
   }
 
+  public Integer getCloseoutSigningOfficialApprovedUserId() {
+    return closeoutSigningOfficialApprovedUserId;
+  }
+
+  public void setCloseoutSigningOfficialApprovedUserId(Integer closeoutSigningOfficialApprovedUserId) {
+    this.closeoutSigningOfficialApprovedUserId = closeoutSigningOfficialApprovedUserId;
+  }
+
+  public Timestamp getCloseoutSigningOfficialApprovedDate() {
+    return closeoutSigningOfficialApprovedDate;
+  }
+
+  public void setCloseoutSigningOfficialApprovedDate(Timestamp closeoutSigningOfficialApprovedDate) {
+    this.closeoutSigningOfficialApprovedDate = closeoutSigningOfficialApprovedDate;
+  }
 
   /**
    * Merges the DAR and the DAR Data into a single Map Ignores a series of deprecated keys Null
@@ -394,9 +415,7 @@ public class DataAccessRequest {
     if (Objects.nonNull(dar.getCreateDate())) {
       copy.put("createDate", dar.getCreateDate().getTime());
     }
-    if (Objects.nonNull(dar.getDraft())) {
-      copy.put("draft", dar.getDraft());
-    }
+    copy.put("draft", dar.getDraft());
     copy.put("expired", dar.getExpired());
     copy.put("expiredAt", dar.getExpiresAt());
     if (Objects.nonNull(dar.getId())) {
@@ -432,6 +451,12 @@ public class DataAccessRequest {
     if (dar.getEraCommonsId() != null) {
       copy.put("eraCommonsId", dar.getEraCommonsId());
     }
+    if (dar.getCloseoutSigningOfficialApprovedUserId() != null) {
+      copy.put("closeoutSigningOfficialApprovedUserId", dar.getCloseoutSigningOfficialApprovedUserId());
+    }
+    if (dar.getCloseoutSigningOfficialApprovedDate() != null) {
+      copy.put("closeoutSigningOfficialApprovedDate", dar.getCloseoutSigningOfficialApprovedUserId());
+    }
     return copy;
   }
 
@@ -441,4 +466,15 @@ public class DataAccessRequest {
     progressReport = !getDraft() && (getParentId() != null);
   }
 
+  public boolean getIsCloseoutProgressReport() {
+    return getProgressReport()
+        && this.getData() != null
+        && this.getData().getCloseoutSupplement() != null
+        && !this.getData().getCloseoutSupplement().reasons().isEmpty();
+  }
+
+  public boolean getHasSOCloseoutApproval() {
+    return this.getCloseoutSigningOfficialApprovedDate() != null
+        && this.getCloseoutSigningOfficialApprovedUserId() != null;
+  }
 }

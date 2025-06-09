@@ -1116,6 +1116,23 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(2, expiredDars.size());
   }
 
+  @Test
+  void testMarkSOApprovalOfCloseout() {
+    User user = createUserWithInstitution();
+    User signingOfficial = createUserWithInstitution();
+    Dataset dataset = createDataset(user.getUserId());
+    Integer collection = createDarCollection(user.getUserId());
+    DataAccessRequest darToStore = createDataAccessRequest(collection, user.getUserId(),
+        Date.from(Instant.now()));
+    dataAccessRequestDAO.insertDARDatasetRelation(darToStore.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.updateDarCloseoutSO(signingOfficial.getUserId(), darToStore.getReferenceId());
+
+    DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(darToStore.getReferenceId());
+
+    assertEquals(dar.getCloseoutSigningOfficialApprovedUserId(), signingOfficial.getUserId());
+    assertNotNull(dar.getCloseoutSigningOfficialApprovedDate());
+  }
+
   /**
    * Replace parent implementation of `createDataset()`
    *
