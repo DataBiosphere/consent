@@ -132,7 +132,7 @@ public class DataAccessRequestService implements ConsentLogger {
   public DataAccessRequest findByReferenceId(String referencedId) {
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referencedId);
     if (Objects.isNull(dar)) {
-      throw new NotFoundException("There does not exist a DAR with the given reference Id");
+      throw new NotFoundException("No data access request found for this reference Id");
     }
     return dar;
   }
@@ -283,6 +283,43 @@ public class DataAccessRequestService implements ConsentLogger {
     return findByReferenceId(referenceId);
   }
 
+  public void approveDataAccessRequestCloseout(User signingOfficial, String referenceId) {
+    DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
+    validateCloseoutApproval(signingOfficial, dar);
+    dataAccessRequestDAO.updateDarCloseoutSO(signingOfficial.getUserId(), referenceId);
+  }
+
+  @VisibleForTesting
+  protected void validateCloseoutApproval(User signingOfficial, DataAccessRequest dataAccessRequest) {
+    // Note: we will allow a signing official to approve their own closeout.
+
+    if (!dataAccessRequest.getIsCloseoutProgressReport()) {
+      throw new BadRequestException("Signing officials can only approve closeout progress reports.");
+    }
+
+    if (dataAccessRequest.getHasSOCloseoutApproval()) {
+      throw new BadRequestException("This progress report closeout has already been approved by a signing official.");
+    }
+
+    if (!signingOfficial.getUserId().equals(dataAccessRequest.getData().getCloseoutSupplement().signingOfficialId())) {
+      throw new BadRequestException("This request can only be approved by the signing official selected in the closeout request.");
+    }
+
+    try {
+      User submitter = userService.findUserById(dataAccessRequest.getUserId());
+      if (!submitter.getInstitutionId().equals(signingOfficial.getInstitutionId())) {
+        throw new BadRequestException("Signing Officials must be in the same institution as the creator of the closeout request.");
+      }
+
+    } catch (NotFoundException e) {
+      // log the state.  we'll allow the SO to process a closeout even if the  user can't be found.
+      logWarn(
+          String.format(
+              "Signing Official approving closeout %s for non-existent user %d",
+              dataAccessRequest.getReferenceId(), dataAccessRequest.getUserId()));
+    }
+  }
+
   public void validateProgressReport(User user, DataAccessRequest progressReport, DataAccessRequest parentDar) {
     validateCommonDarAndProgressReportElements(user, progressReport);
     validateInternalCollaborators(user, progressReport);
@@ -323,7 +360,7 @@ public class DataAccessRequestService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  public void validateInternalCollaborators(User user, DataAccessRequest progressReport) {
+  protected void validateInternalCollaborators(User user, DataAccessRequest progressReport) {
     List<String> errorSummary = getCollaboratorAndLibraryCardErrors(user, progressReport.getData());
 
     if (!errorSummary.isEmpty()) {

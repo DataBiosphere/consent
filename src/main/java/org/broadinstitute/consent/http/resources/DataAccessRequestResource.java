@@ -43,6 +43,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DaaService;
@@ -386,6 +387,24 @@ public class DataAccessRequestResource extends Resource {
       DataAccessRequest updatedDar = updateDarWithDocumentContents(DarDocumentType.IRB, user, dar,
           uploadInputStream, fileDetail);
       return Response.ok(updatedDar.convertToSimplifiedDar()).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @PUT
+  @RolesAllowed({SIGNINGOFFICIAL})
+  @Path("/approve_closeout/{referenceId}")
+  public Response approveCloseout(@Auth DuosUser duosUser,
+      @Context Request request,
+      @PathParam("referenceId") String referenceId) {
+    try {
+      dataAccessRequestService.approveDataAccessRequestCloseout(duosUser.getUser(), referenceId);
+      DataAccessRequest dar = getDarById(referenceId);
+      List<Dataset> datasets = datasetService.findDatasetsByIds(dar.getDatasetIds());
+      ComplianceLogger.logCloseoutApprovalBySigningOfficial(duosUser.getUser(), datasets,
+          (ContainerRequest) request, HttpStatusCodes.STATUS_CODE_OK);
+      return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

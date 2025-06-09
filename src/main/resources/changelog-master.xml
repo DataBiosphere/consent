@@ -184,4 +184,6 @@
     relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2025-23-unique-lc-user.xml"
     relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2025-06-05-save-so-closeout-approval.xml"
+    relativeToChangelogFile="true"/>
 </databaseChangeLog>

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db.mapper;
 
+import java.sql.Timestamp;
 import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.models.CloseoutSupplement;
@@ -53,6 +54,10 @@ public class DarCollectionSummaryReducer implements
         }
         hasOptionalColumn(rowView, "latest_dar_parent_id", Integer.class)
             .ifPresent(darParentId -> summary.addParentChildRelationship(darParentId, darReferenceId));
+        hasOptionalColumn(rowView, "latest_dar_closeout_approving_so_id", Integer.class)
+            .ifPresent(summary::setCloseoutSigningOfficialId);
+        hasOptionalColumn(rowView, "latest_dar_closeout_so_approval_timestamp", Timestamp.class)
+            .ifPresent(summary::setCloseoutSigningOfficialApprovalDate);
         darStatus = rowView.getColumn("dar_status", String.class);
         if (Objects.nonNull(darStatus)) {
           summary.addStatus(darStatus, darReferenceId);

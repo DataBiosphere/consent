@@ -50,6 +50,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
+import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
@@ -1151,6 +1152,109 @@ institution or library cards issued: Internal Collaborator member:  \
     assertDoesNotThrow(()->service.sendExpirationNotices());
 
     assertEquals(2, listAppender.list.size());
+  }
+
+  @Test
+  void testValidateCloseoutApproval_NonCloseout(){
+    User user = new User();
+    user.setUserId(123);
+    DataAccessRequest dar = new DataAccessRequest();
+    BadRequestException exception = assertThrows(BadRequestException.class, ()->service.validateCloseoutApproval(user, dar));
+    assertThat(exception.getMessage(), containsString("Signing officials can only approve closeout progress reports."));
+  }
+
+
+  @Test
+  void testValidateCloseoutApproval_AlreadyApproved(){
+    User user = new User();
+    user.setUserId(123);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    dar.setParentId(1);
+    dar.setCloseoutSigningOfficialApprovedDate(Timestamp.from(Instant.now()));
+    dar.setCloseoutSigningOfficialApprovedUserId(1);
+    DataAccessRequestData data =  new DataAccessRequestData();
+    data.setCloseoutSupplement(new CloseoutSupplement(List.of(""), "", 1));
+    dar.setData(data);
+
+    BadRequestException exception = assertThrows(BadRequestException.class, ()->service.validateCloseoutApproval(user, dar));
+    assertThat(exception.getMessage(), containsString("This progress report closeout has already been approved by a signing official."));
+  }
+
+  @Test
+  void testValidateCloseoutApproval_NotTheSelectedSigningOfficial(){
+    User user = new User();
+    user.setUserId(123);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    dar.setParentId(1);
+
+    DataAccessRequestData data =  new DataAccessRequestData();
+    data.setCloseoutSupplement(new CloseoutSupplement(List.of(""), "", 1));
+    dar.setData(data);
+
+    BadRequestException exception = assertThrows(BadRequestException.class, ()->service.validateCloseoutApproval(user, dar));
+    assertThat(
+        exception.getMessage(),
+        containsString(
+           "This request can only be approved by the signing official selected in the closeout request."));
+  }
+
+  @Test
+  void testValidateCloseoutApproval_NotInSameInstitution(){
+    User actor = new User();
+    actor.setUserId(123);
+    actor.setInstitutionId(1);
+    User darSubmitter = new User();
+    darSubmitter.setUserId(124);
+    darSubmitter.setInstitutionId(2);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setUserId(darSubmitter.getUserId());
+    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    dar.setParentId(1);
+
+    DataAccessRequestData data =  new DataAccessRequestData();
+    data.setCloseoutSupplement(new CloseoutSupplement(List.of(""), "", actor.getUserId()));
+    dar.setData(data);
+
+    when(userService.findUserById(darSubmitter.getUserId())).thenReturn(darSubmitter);
+    BadRequestException exception = assertThrows(BadRequestException.class, ()->service.validateCloseoutApproval(actor, dar));
+    assertThat(
+        exception.getMessage(),
+        containsString(
+            "Signing Officials must be in the same institution as the creator of the closeout request."));
+  }
+
+  @Test
+  void testValidateCloseoutApproval(){
+    CloseoutWithUserAndSigningOfficialApproval closeout = new CloseoutWithUserAndSigningOfficialApproval();
+
+    when(userService.findUserById(closeout.submitter.getUserId())).thenReturn(closeout.submitter);
+    assertDoesNotThrow(()->service.validateCloseoutApproval(closeout.actor, closeout.dar));
+  }
+
+  @Test
+  void approveDataAccessRequest() {
+    CloseoutWithUserAndSigningOfficialApproval closeout = new CloseoutWithUserAndSigningOfficialApproval();
+    when(userService.findUserById(closeout.submitter.getUserId())).thenReturn(closeout.submitter);
+    when(dataAccessRequestDAO.findByReferenceId(closeout.dar.referenceId)).thenReturn(closeout.dar);
+    assertDoesNotThrow(()->service.approveDataAccessRequestCloseout(closeout.actor, closeout.dar.getReferenceId()));
+  }
+
+  record  CloseoutWithUserAndSigningOfficialApproval(User actor, User submitter, DataAccessRequest dar) {
+    public CloseoutWithUserAndSigningOfficialApproval() {
+      this(new User(), new User(),  new DataAccessRequest());
+      actor.setUserId(123);
+      actor.setInstitutionId(1);
+      submitter.setUserId(124);
+      submitter.setInstitutionId(1);
+      dar.setUserId(submitter.getUserId());
+      dar.setSubmissionDate(Timestamp.from(Instant.now()));
+      dar.setParentId(1);
+      DataAccessRequestData data =  new DataAccessRequestData();
+      data.setCloseoutSupplement(new CloseoutSupplement(List.of(""), "", actor.getUserId()));
+      dar.setData(data);
+    }
   }
 
   private DataAccessRequest getMockedDar(String darCode, String referenceId, User user) {

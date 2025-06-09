@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.models;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -69,6 +71,46 @@ class DataAccessRequestTest {
     assertTrue(newData.getDSAcknowledgement());
     assertTrue(newData.getGSOAcknowledgement());
     assertNull(newData.getPubAcknowledgement());
+  }
+
+  @Test
+  void testIsCloseoutProgressReport_False() {
+    DataAccessRequest dar = new DataAccessRequest();
+    assertFalse(dar.getIsCloseoutProgressReport());
+  }
+
+  @Test
+  void testIsCloseoutProgressReport_FalseWithoutData() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    dar.setParentId(1);
+    assertFalse(dar.getIsCloseoutProgressReport());
+  }
+
+  @Test
+  void testIsCloseoutProgressReport_True() {
+    DataAccessRequest dar = new DataAccessRequest();
+    DataAccessRequestData darData = new DataAccessRequestData();
+    CloseoutSupplement supplement = new CloseoutSupplement(List.of("yes"), "", 1);
+    darData.setCloseoutSupplement(supplement);
+    dar.setData(darData);
+    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    dar.setParentId(1);
+    assertTrue(dar.getIsCloseoutProgressReport());
+  }
+
+  @Test
+  void testGetHasCloseoutApproval_False() {
+    DataAccessRequest dar = new DataAccessRequest();
+    assertFalse(dar.getHasSOCloseoutApproval());
+  }
+
+  @Test
+  void testGetHasCloseoutApproval_True() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setCloseoutSigningOfficialApprovedUserId(1);
+    dar.setCloseoutSigningOfficialApprovedDate(Timestamp.from(Instant.now()));
+    assertTrue(dar.getHasSOCloseoutApproval());
   }
 
 }

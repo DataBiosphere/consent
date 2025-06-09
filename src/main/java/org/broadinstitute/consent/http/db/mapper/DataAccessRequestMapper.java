@@ -38,6 +38,8 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
     }
     dar.setData(data);
     dar.setEraCommonsId(resultSet.getString("era_commons_id"));
+    dar.setCloseoutSigningOfficialApprovedDate(resultSet.getTimestamp("closeout_so_approval_timestamp"));
+    dar.setCloseoutSigningOfficialApprovedUserId(resultSet.getInt("closeout_approving_so_id"));
     return dar;
   }
 

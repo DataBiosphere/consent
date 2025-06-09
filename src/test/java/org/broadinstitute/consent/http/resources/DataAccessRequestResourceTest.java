@@ -50,6 +50,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -85,6 +86,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       UserRoles.Chairperson());
   private final List<UserRole> memberRoles = Collections.singletonList(UserRoles.Member());
   private final User user = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
+  private final DuosUser duosUser = new DuosUser(authUser, user);
   private final User admin = new User(2, adminUser.getEmail(), "Admin user", new Date(),
       adminRoles);
   private final User chairperson = new User(3, chairpersonUser.getEmail(), "Chairperson user",
@@ -1003,4 +1005,23 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     }
   }
 
+  @Test
+  void testApproveCloseout() {
+    String referenceId = UUID.randomUUID().toString();
+    doNothing().when(dataAccessRequestService).approveDataAccessRequestCloseout(user,referenceId);
+    when(dataAccessRequestService.findByReferenceId(referenceId)).thenReturn(new DataAccessRequest());
+    when(datasetService.findDatasetsByIds(any())).thenReturn(List.of());
+    try (Response response = resource.approveCloseout(duosUser, request, referenceId)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testApproveCloseoutThrows() {
+    String referenceId = UUID.randomUUID().toString();
+    doThrow(BadRequestException.class).when(dataAccessRequestService).approveDataAccessRequestCloseout(user,referenceId);
+    try (Response response = resource.approveCloseout(duosUser, request, referenceId)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
 }
