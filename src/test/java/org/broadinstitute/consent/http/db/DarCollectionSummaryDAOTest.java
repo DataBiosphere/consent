@@ -297,6 +297,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
     assertEquals(collectionOneId, summaries.get(0).getDarCollectionId());
+    assertNull(summaries.get(0).getCloseoutSigningOfficialApprovalDate());
+    assertNull(summaries.get(0).getCloseoutSigningOfficialApprovalId());
   }
 
   @Test
@@ -313,7 +315,9 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer collectionOneId = createDarCollection(userOneId);
     Integer collectionTwoId = createDarCollection(userTwoId);
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
+    dataAccessRequestDAO.updateDarCloseoutSO(userOneId, darOne.getReferenceId());
     DataAccessRequest darTwo = createDataAccessRequest(collectionTwoId, userTwoId);
+    dataAccessRequestDAO.updateDarCloseoutSO(userOneId, darTwo.getReferenceId());
 
     dataAccessRequestDAO.insertDARDatasetRelation(darOne.getReferenceId(), dataset.getDatasetId());
     dataAccessRequestDAO.insertDARDatasetRelation(darTwo.getReferenceId(),
@@ -345,6 +349,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
       Integer electionId = collectionOneElection.getElectionId();
       s.getElections().forEach((key, value) -> assertEquals(electionId, key));
       assertEquals(1, s.getDatasetCount());
+      assertEquals(userOneId, s.getCloseoutSigningOfficialApprovalId());
+      assertNotNull(s.getCloseoutSigningOfficialApprovalDate());
     });
   }
 

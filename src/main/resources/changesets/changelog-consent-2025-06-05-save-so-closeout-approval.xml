@@ -1,0 +1,12 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2025-06-05-save-so-closeout-approval" author="otchet-broad">
+    <addColumn tableName="data_access_request">
+      <column name="closeout_approving_so_id" type="bigint">
+        <constraints foreignKeyName="fk_so_user_id" referencedTableName="users" referencedColumnNames="user_id" nullable="true"/>
+      </column>
+      <column name="closeout_so_approval_timestamp" type="timestamp"/>
+    </addColumn>
+  </changeSet>
+</databaseChangeLog>

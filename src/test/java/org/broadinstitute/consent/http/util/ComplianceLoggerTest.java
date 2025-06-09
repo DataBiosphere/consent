@@ -107,6 +107,15 @@ class ComplianceLoggerTest extends AbstractTestHelper {
     assertThat(event.getFormattedMessage(), containsString(ComplianceEvent.DAR_CANCELLATION.toString()));
   }
 
+  @Test
+  void testLogSOCloseoutApproval() {
+    ComplianceLogger.logCloseoutApprovalBySigningOfficial(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
+    assertEquals(1, testAppender.getSize());
+    ILoggingEvent event = testAppender.getLoggedEvents().get(0);
+    assertMessageContainsValueFields(event);
+    assertThat(event.getFormattedMessage(), containsString(ComplianceEvent.CLOSEOUT_SO_APPROVAL.toString()));
+  }
+
   private static class TestAppender extends ListAppender<ILoggingEvent> {
     public void reset() {
       this.list.clear();

@@ -1,0 +1,19 @@
+put:
+  summary: Allows the signing official named in a closeout to approve the closeout.
+  tags:
+    - Data Access Request
+  parameters:
+    - name: referenceId
+      in: path
+      description: The reference Id of the closeout
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    200:
+      description: Approval recorded
+    400:
+      description: Error, consult response for details
+    401:
+      description: Unauthorized
