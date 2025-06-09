@@ -881,6 +881,60 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
             .size());
   }
 
+  @Test
+  void testFindApprovedDARsByDatasetId_ExcludeCloseouts() {
+    // Create a dar collection
+    User user = createUserWithInstitution();
+    String darCode = "DAR-" + randomInt(1, 10000);
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
+        new Date());
+
+    // Create an approved DAR on a dataset
+    Dataset dataset = createDataset();
+    DataAccessRequest parentDAR = createDataAccessRequest(user.getUserId(), collectionId);
+    dataAccessRequestDAO.insertDARDatasetRelation(parentDAR.getReferenceId(),
+        dataset.getDatasetId());
+    Election election = createDataAccessElection(parentDAR.getReferenceId(),
+        dataset.getDatasetId());
+    Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
+    Date now = new Date();
+    voteDAO.updateVote(true,
+        "",
+        now,
+        vote.getVoteId(),
+        false,
+        election.getElectionId(),
+        now,
+        false);
+    // Ensure we can find the parent DAR for the approved dataset
+    List<DataAccessRequest> approvedDARs = dataAccessRequestDAO.findApprovedDARsByDatasetId(
+        dataset.getDatasetId());
+    assertFalse(approvedDARs.isEmpty());
+    assertEquals(1, approvedDARs.size());
+    assertEquals(parentDAR.getReferenceId(), approvedDARs.get(0).getReferenceId());
+
+    // Create a closeout DAR from the parent DAR
+    DataAccessRequest closeoutDAR = createProgressReport(user.getUserId(), collectionId,
+        parentDAR.getId());
+    CloseoutSupplement closeout = new CloseoutSupplement(List.of("Reason"), "Other Reason",
+        user.getUserId());
+    closeoutDAR.getData().setCloseoutSupplement(closeout);
+    dataAccessRequestDAO.updateDataByReferenceId(
+        closeoutDAR.getReferenceId(),
+        user.getUserId(),
+        now,
+        now,
+        now,
+        closeoutDAR.getData(),
+        randomAlphabetic(10)
+    );
+
+    // Ensure we CANNOT find any DARs for the approved dataset
+    List<DataAccessRequest> nonApprovedDARs = dataAccessRequestDAO.findApprovedDARsByDatasetId(
+        dataset.getDatasetId());
+    assertTrue(nonApprovedDARs.isEmpty());
+  }
+
   // findAllDraftDataAccessRequests should exclude archived DARs
   @Test
   void testFindAllDraftsArchived() {
