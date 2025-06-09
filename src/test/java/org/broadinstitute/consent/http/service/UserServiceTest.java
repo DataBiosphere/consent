@@ -454,7 +454,7 @@ class UserServiceTest extends AbstractTestHelper {
     when(userDAO.findUserByEmail(any())).thenReturn(u);
 
     try {
-      service.deleteUserByEmail(randomAlphabetic(10));
+      service.deleteUserByEmail(randomAlphabetic(10), randomInt(1,100));
       verify(draftServiceDAO).deleteDraftsByUser(u);
       verify(ruleDAO, atLeastOnce()).auditedDeleteAllDACRuleSettingForUser(anyInt(), anyInt());
     } catch (Exception e) {
@@ -465,7 +465,7 @@ class UserServiceTest extends AbstractTestHelper {
   @Test
   void testDeleteUserFailure() {
     when(userDAO.findUserByEmail(any())).thenThrow(new NotFoundException());
-    assertThrows(NotFoundException.class, () -> service.deleteUserByEmail(randomAlphabetic(10)));
+    assertThrows(NotFoundException.class, () -> service.deleteUserByEmail(randomAlphabetic(10), randomInt(1,100)));
   }
 
   @Test

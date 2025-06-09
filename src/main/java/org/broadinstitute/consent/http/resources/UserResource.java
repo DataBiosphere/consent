@@ -40,6 +40,7 @@ import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -389,8 +390,8 @@ public class UserResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/{email}")
   @RolesAllowed(ADMIN)
-  public Response delete(@Auth AuthUser authUser, @PathParam("email") String email, @Context UriInfo info) {
-    userService.deleteUserByEmail(email);
+  public Response delete(@Auth DuosUser duosUser, @PathParam("email") String email, @Context UriInfo info) {
+    userService.deleteUserByEmail(email, duosUser.getUser().getUserId());
     return Response.ok().build();
   }
 

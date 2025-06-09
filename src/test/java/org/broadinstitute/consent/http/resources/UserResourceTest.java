@@ -34,6 +34,7 @@ import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
@@ -89,10 +90,15 @@ class UserResourceTest extends AbstractTestHelper {
       .setEmail(TEST_EMAIL)
       .setUserStatusInfo(userStatusInfo);
 
+  private final User testUser = new User();
+  private final DuosUser testDuosUser = new DuosUser(authUser, testUser);
+
   @BeforeEach
   void initResource() {
     userResource = new UserResource(samService, userService, datasetService,
         acknowledgementService);
+    testUser.setEmail(TEST_EMAIL);
+    testUser.setUserId(1);
   }
 
   @Test
@@ -227,7 +233,7 @@ class UserResourceTest extends AbstractTestHelper {
   void testDeleteUser() {
     doNothing().when(userService).deleteUserByEmail(any(), any());
 
-    Response response = userResource.delete(authUser, randomAlphabetic(10), uriInfo);
+    Response response = userResource.delete(testDuosUser, randomAlphabetic(10), uriInfo);
     assertEquals(200, response.getStatus());
   }
 
