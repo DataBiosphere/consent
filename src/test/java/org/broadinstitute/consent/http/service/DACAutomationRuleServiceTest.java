@@ -45,12 +45,27 @@ class DACAutomationRuleServiceTest {
   @Mock
   private DACAutomationRuleDAO mockRuleDAO;
 
+  @Mock
+  private EmailService emailService;
+
+  @Mock
+  private UseRestrictionConverter useRestrictionConverter;
+
   private DACAutomationRuleService service;
 
   @BeforeEach
   public void setUp() {
-    service = new DACAutomationRuleService(dataAccessRequestDAO,
-        datasetDAO, mockRuleDAO, electionDAO, voteDAO, voteServiceDAO);
+    service =
+        new DACAutomationRuleService(
+            dataAccessRequestDAO,
+            datasetDAO,
+            mockRuleDAO,
+            electionDAO,
+            voteDAO,
+            voteServiceDAO,
+            emailService,
+            useRestrictionConverter
+        );
   }
 
   @Test

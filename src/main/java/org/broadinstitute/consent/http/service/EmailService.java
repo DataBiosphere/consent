@@ -251,14 +251,12 @@ public class EmailService implements ConsentLogger {
   }
 
   public void sendDACAutomationApprovalResearcherMessage(
-      DarCollection darCollection,
-      List<Dataset> datasets,
       User researcher,
-      String dacName,
-      String automationRuleName,
-      User triggerUser) throws TemplateException, IOException {
-    //TODO: Finish this.
-    //sendMessage(new DACAutomationApprovalResearcherMessage());
+      List<DatasetMailDTO> datasets,
+      String darCode,
+      String dataUseRestriction
+    ) throws TemplateException, IOException {
+    sendMessage(new DACAutomationApprovalResearcherMessage(researcher, darCode, datasets, dataUseRestriction), researcher.getUserId());
   }
   /**
    * Send a message to a researcher that their data access request has expired.

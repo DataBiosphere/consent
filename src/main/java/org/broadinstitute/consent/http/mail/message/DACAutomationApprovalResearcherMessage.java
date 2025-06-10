@@ -7,70 +7,50 @@ import freemarker.template.Template;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.List;
+import java.util.Map;
+import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
 /**
  * This class is responsible for generating the email message to be sent to the researcher
  * when a DAC automation rule has been triggered and the datasets have been approved.
  */
-public class DACAutomationApprovalResearcherMessage {
+public class DACAutomationApprovalResearcherMessage extends MailMessage {
 
-  private final FreeMarkerTemplateHelper templateHelper;
-  private final DarCollection darCollection;
-  private final String dacName;
-  private final User researcher;
-  private final String serverUrl;
-  private final List<Dataset> datasets;
-  private final String automationRuleName;
-  private final String fromAddress;
-  private final Writer writer;
+  private static final String APPROVED_DAR = "Your DUOS Data Access Request Results";
+  private final String darCode;
+  private final List<DatasetMailDTO> datasets;
+  private final String dataUseRestriction;
 
   public DACAutomationApprovalResearcherMessage(
-      FreeMarkerTemplateHelper templateHelper,
-      DarCollection darCollection,
-      String dacName,
-      User researcher,
-      String serverUrl,
-      List<Dataset> datasets,
-      String automationRuleName,
-      String fromAddress) {
-    this.templateHelper = templateHelper;
-    this.darCollection = darCollection;
-    this.dacName = dacName;
-    this.researcher = researcher;
-    this.serverUrl = serverUrl;
+      User toUser, String darCode, List<DatasetMailDTO> datasets,
+      String dataUseRestriction) {
+    super(toUser, EmailType.DAC_AUTOMATION_APPROVAL);
+    this.darCode = darCode;
     this.datasets = datasets;
-    this.automationRuleName = automationRuleName;
-    this.fromAddress = fromAddress;
-    this.writer = new StringWriter();
+    this.dataUseRestriction = dataUseRestriction;
   }
 
-  // EmailService needs this to record the message contents
-  public Writer getWriter() {
-    return writer;
+  @Override
+  public String createSubject() {
+    return APPROVED_DAR;
   }
 
-  // Template processing requires a generic object with fields that map to the content
-  // in the html template.
-  private record Model(
-      DarCollection darCollection,
-      User researcher,
-      List<Dataset> datasets,
-      String dacName,
-      String automationRuleName,
-      String serverUrl) {
-    // TODO: We need the data use restrictions as well
+  @Override
+  public Object createModel(String serverUrl) {
+    return Map.of("researcherName", toUser.getDisplayName(),
+        "darCode", darCode,
+        "datasets", datasets,
+        "dataUseRestriction", dataUseRestriction,
+        "researcherEmail", toUser.getEmail());
   }
 
-  // Summary of the email message required by the SendGrid API
-  public Mail generateEmailMessage() throws Exception {
-    String subject = "DAC Automation Dataset Approval for Data Access Request %s".formatted(
-        darCollection.getDarCode());
-    //TODO: Fix me so I send a message
-    return new Mail();
+  @Override
+  public String getEntityReferenceId() {
+    return darCode;
   }
-
 }
