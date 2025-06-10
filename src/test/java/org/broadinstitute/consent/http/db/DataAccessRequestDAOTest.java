@@ -909,7 +909,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     // Ensure we can find the parent DAR for the approved dataset
     List<DataAccessRequest> approvedDARs = dataAccessRequestDAO.findApprovedDARsByDatasetId(
         dataset.getDatasetId());
-    assertFalse(approvedDARs.isEmpty());
     assertEquals(1, approvedDARs.size());
     assertEquals(parentDAR.getReferenceId(), approvedDARs.get(0).getReferenceId());
 
@@ -930,9 +929,9 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     );
 
     // Ensure we CANNOT find any DARs for the approved dataset
-    List<DataAccessRequest> nonApprovedDARs = dataAccessRequestDAO.findApprovedDARsByDatasetId(
+    List<DataAccessRequest> noApprovedDARs = dataAccessRequestDAO.findApprovedDARsByDatasetId(
         dataset.getDatasetId());
-    assertTrue(nonApprovedDARs.isEmpty());
+    assertTrue(noApprovedDARs.isEmpty());
   }
 
   // findAllDraftDataAccessRequests should exclude archived DARs
