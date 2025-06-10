@@ -166,7 +166,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         new Date(), dar.getData(), randomAlphabetic(10));
     dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
     assertNull(dar.getSubmissionDate());
-    assertEquals(true, dar.getDraft());
+    assertTrue(dar.getDraft());
     assertFalse(dar.getExpired());
     assertNull(dar.getExpiresAt());
   }
@@ -180,7 +180,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         new Date(),
         new Date(), dar.getData(), randomAlphabetic(10));
     dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-    assertEquals(false, dar.getDraft());
+    assertFalse(dar.getDraft());
     assertFalse(dar.getExpired());
     Timestamp expectedTimestamp = new Timestamp(
         dar.getSubmissionDate().getTime() + DataAccessRequest.EXPIRATION_DURATION_MILLIS);
@@ -193,11 +193,11 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     DataAccessRequest dar = new ArrayList<>(darColl.getDars().values()).get(0);
 
     dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-    assertEquals(false, dar.getDraft());
+    assertFalse(dar.getDraft());
     dataAccessRequestDAO.updateDataByReferenceId(dar.referenceId, dar.userId, new Date(), null,
         new Date(), dar.getData(), randomAlphabetic(10));
     dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-    assertEquals(true, dar.getDraft());
+    assertTrue(dar.getDraft());
     assertNull(dar.getSubmissionDate());
     assertFalse(dar.getExpired());
     assertNull(dar.getExpiresAt());
@@ -375,7 +375,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Integer collectionId = collection.getDarCollectionId();
     dataAccessRequestDAO.updateDraftToSubmittedForCollection(collectionId, referenceId);
     DataAccessRequest updatedDraft = dataAccessRequestDAO.findByReferenceId(referenceId);
-    assertEquals(false, updatedDraft.getDraft());
+    assertFalse(updatedDraft.getDraft());
     assertEquals(collectionId, updatedDraft.getCollectionId());
   }
 
