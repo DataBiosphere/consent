@@ -1,7 +1,10 @@
 package org.broadinstitute.consent.http.models;
 
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+import jakarta.ws.rs.BadRequestException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
@@ -113,4 +116,33 @@ class DataAccessRequestTest {
     assertTrue(dar.getHasSOCloseoutApproval());
   }
 
+  @Test
+  void testValidateCloseoutSupplement_Unset() {
+    DataAccessRequest dar = new DataAccessRequest();
+    DataAccessRequestData darData = new DataAccessRequestData();
+    darData.setCloseoutSupplement(null);
+    dar.setData(darData);
+    assertDoesNotThrow(() -> DataAccessRequest.validateCloseoutSupplement(dar.getData().getCloseoutSupplement()));
+  }
+
+  @Test
+  void testValidateCloseoutApprovalThrowsExceptionWithEmptyReasonsOtherTextSigningOfficial() {
+    CloseoutSupplement supplement = new CloseoutSupplement(List.of(), "", null);
+    BadRequestException exception = assertThrows(BadRequestException.class, () -> DataAccessRequest.validateCloseoutSupplement(supplement));
+    assertThat(exception.getMessage(), containsString("A closeout supplement must have values provided."));
+  }
+
+  @Test
+  void testValidateCloseoutApprovalThrowsExceptionWithEmptyReasons() {
+    CloseoutSupplement supplement = new CloseoutSupplement(List.of(), "", 1);
+    BadRequestException exception = assertThrows(BadRequestException.class, () -> DataAccessRequest.validateCloseoutSupplement(supplement));
+    assertThat(exception.getMessage(), containsString("A closeout supplement must have reasons provided."));
+  }
+
+  @Test
+  void testValidateCloseoutApprovalThrowsExceptionWithEmptySigningOfficial() {
+    CloseoutSupplement supplement = new CloseoutSupplement(List.of("test"), "", null);
+    BadRequestException exception = assertThrows(BadRequestException.class, () -> DataAccessRequest.validateCloseoutSupplement(supplement));
+    assertThat(exception.getMessage(), containsString("A closeout supplement must have a signing official id provided."));
+  }
 }
