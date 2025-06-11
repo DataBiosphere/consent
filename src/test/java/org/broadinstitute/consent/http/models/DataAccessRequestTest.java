@@ -140,6 +140,13 @@ class DataAccessRequestTest {
   }
 
   @Test
+  void testValidateCloseoutApprovalThrowsExceptionWithNullReasons() {
+    CloseoutSupplement supplement = new CloseoutSupplement(null, "", 1);
+    BadRequestException exception = assertThrows(BadRequestException.class, () -> DataAccessRequest.validateCloseoutSupplement(supplement));
+    assertThat(exception.getMessage(), containsString("A closeout supplement must have reasons provided."));
+  }
+
+  @Test
   void testValidateCloseoutApprovalThrowsExceptionWithEmptySigningOfficial() {
     CloseoutSupplement supplement = new CloseoutSupplement(List.of("test"), "", null);
     BadRequestException exception = assertThrows(BadRequestException.class, () -> DataAccessRequest.validateCloseoutSupplement(supplement));

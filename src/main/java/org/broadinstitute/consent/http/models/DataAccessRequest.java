@@ -411,14 +411,14 @@ public class DataAccessRequest {
       return;
     }
 
-    if (closeoutSupplement.reasons().isEmpty()
+    if ((Objects.isNull(closeoutSupplement.reasons()) || closeoutSupplement.reasons().isEmpty())
         && Objects.isNull(closeoutSupplement.signingOfficialId())
         && (Objects.isNull(closeoutSupplement.otherText())
             || closeoutSupplement.otherText().isEmpty())) {
       throw new BadRequestException("A closeout supplement must have values provided.");
     }
 
-    if (closeoutSupplement.reasons().isEmpty()) {
+    if (Objects.isNull(closeoutSupplement.reasons()) || closeoutSupplement.reasons().isEmpty()) {
       throw new BadRequestException("A closeout supplement must have reasons provided.");
     }
 
