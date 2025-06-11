@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -290,6 +291,10 @@ public class DacService implements ConsentLogger {
       }
     }
     return Collections.emptyList();
+  }
+
+  public Set<Dac> findByDatasetId(List<Integer> datasetIds) {
+    return dacDAO.findDacsForDatasetIds(datasetIds);
   }
 
 }

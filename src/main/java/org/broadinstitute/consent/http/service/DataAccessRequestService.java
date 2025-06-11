@@ -16,11 +16,13 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.bouncycastle.jcajce.provider.asymmetric.mldsa.MLDSAKeyFactorySpi.Hash;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -36,6 +38,7 @@ import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.Collaborator;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -284,6 +287,21 @@ public class DataAccessRequestService implements ConsentLogger {
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
     validateCloseoutApproval(signingOfficial, dar);
     dataAccessRequestDAO.updateDarCloseoutSO(signingOfficial.getUserId(), referenceId);
+    Set<User> chairs = new HashSet<>();
+    Set<Dac> dacs = dacService.findByDatasetId(dar.getDatasetIds());
+    dacs.forEach(dac -> chairs.addAll(dac.getChairpersons()));
+    chairs.forEach(
+        chairperson -> {
+          try {
+            emailService.sendSubmittedCloseoutMessage(
+                chairperson,
+                dar.getDarCode(),
+                dar.getReferenceId(),
+                serverUrl + "progress_report_application/%d".formatted(dar.getCollectionId()));
+          } catch (Exception e) {
+            logWarn("Unable to send close out message for Data Access Request " + referenceId, e);
+          }
+        });
   }
 
   @VisibleForTesting

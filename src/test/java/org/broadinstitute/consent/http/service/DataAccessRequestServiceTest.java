@@ -52,6 +52,7 @@ import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.Collaborator;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -112,6 +113,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   @Mock
   private InstitutionService institutionService;
   private DataAccessRequestService service;
+  private String serverUrl;
 
   private static Collaborator createCollaborator() {
     Collaborator validCollaborator = new Collaborator();
@@ -177,6 +179,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     container.setElectionDAO(electionDAO);
     container.setVoteDAO(voteDAO);
     container.setMatchDAO(matchDAO);
+    serverUrl = config.getServicesConfiguration().getLocalURL();
     service = new DataAccessRequestService(counterService, container, dacService,
         dataAccessRequestServiceDAO, userService, institutionService,  emailService, config);
   }
@@ -1232,11 +1235,17 @@ institution or library cards issued: Internal Collaborator member:  \
   }
 
   @Test
-  void approveDataAccessRequest() {
+  void approveDataAccessRequest() throws TemplateException, IOException {
     CloseoutWithUserAndSigningOfficialApproval closeout = new CloseoutWithUserAndSigningOfficialApproval();
+    Dac dac = new Dac();
+    User chair = new User(1, "chair@duos.org", "A Chair", new Date());
+    dac.setChairpersons(List.of(chair));
     when(userService.findUserById(closeout.submitter.getUserId())).thenReturn(closeout.submitter);
     when(dataAccessRequestDAO.findByReferenceId(closeout.dar.referenceId)).thenReturn(closeout.dar);
+    when(dacService.findByDatasetId(closeout.dar().getDatasetIds())).thenReturn(Set.of(dac));
     assertDoesNotThrow(()->service.approveDataAccessRequestCloseout(closeout.actor, closeout.dar.getReferenceId()));
+    verify(dacService).findByDatasetId(closeout.dar().getDatasetIds());
+    verify(emailService).sendSubmittedCloseoutMessage(chair, closeout.dar().getDarCode(), closeout.dar().getReferenceId(), serverUrl + "progress_report_application/%d".formatted(closeout.dar().getCollectionId()));
   }
 
   record  CloseoutWithUserAndSigningOfficialApproval(User actor, User submitter, DataAccessRequest dar) {
@@ -1249,6 +1258,10 @@ institution or library cards issued: Internal Collaborator member:  \
       dar.setUserId(submitter.getUserId());
       dar.setSubmissionDate(Timestamp.from(Instant.now()));
       dar.setParentId(1);
+      dar.setDatasetIds(List.of(1));
+      dar.setDarCode("DAR-0001");
+      dar.setCollectionId(4);
+      dar.setReferenceId(UUID.randomUUID().toString());
       DataAccessRequestData data =  new DataAccessRequestData();
       data.setCloseoutSupplement(new CloseoutSupplement(List.of(""), "", actor.getUserId()));
       dar.setData(data);
