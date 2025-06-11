@@ -317,7 +317,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
             signingOfficial,
             parentDar.getDarCode(),
             progressReport.getReferenceId(),
-            "local_url/progress_report_application/%d".formatted(progressReport.getCollectionId()));
+            "local_url/dar_application_review/%d".formatted(progressReport.getCollectionId()));
     verify(dataAccessRequestDAO)
         .insertProgressReport(
             parentDar.getId(),

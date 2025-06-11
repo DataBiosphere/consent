@@ -284,7 +284,7 @@ public class DataAccessRequestService implements ConsentLogger {
             userService.findUserById(
                 progressReport.getData().getCloseoutSupplement().signingOfficialId());
         emailService.sendSubmittedCloseoutMessage(
-            signingOfficialUser, parentDar.getDarCode(), referenceId, serverUrl + "progress_report_application/%d".formatted(parentDar.getCollectionId()));
+            signingOfficialUser, parentDar.getDarCode(), referenceId, serverUrl + "dar_application_review/%d".formatted(parentDar.getCollectionId()));
       } catch (TemplateException | IOException e) {
         throw new InternalServerErrorException(e);
       }
