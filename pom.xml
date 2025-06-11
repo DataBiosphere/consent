@@ -17,7 +17,7 @@
     <dropwizard.version>4.0.11</dropwizard.version>
     <logback.version>1.5.16</logback.version>
     <pact.version>4.6.17</pact.version>
-    <postgres.version>42.7.6</postgres.version>
+    <postgres.version>42.7.7</postgres.version>
     <surefire.version>3.5.3</surefire.version>
     <swagger.ui.version>5.22.0</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
