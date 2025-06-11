@@ -492,7 +492,7 @@ public class DataAccessRequest {
   }
 
   public boolean getIsCloseoutProgressReport() {
-    return getProgressReport()
+    return Objects.nonNull(getParentId())
         && this.getData() != null
         && this.getData().getCloseoutSupplement() != null
         && !this.getData().getCloseoutSupplement().reasons().isEmpty();

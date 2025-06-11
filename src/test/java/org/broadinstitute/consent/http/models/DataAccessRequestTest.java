@@ -85,7 +85,6 @@ class DataAccessRequestTest {
   @Test
   void testIsCloseoutProgressReport_FalseWithoutData() {
     DataAccessRequest dar = new DataAccessRequest();
-    dar.setSubmissionDate(Timestamp.from(Instant.now()));
     dar.setParentId(1);
     assertFalse(dar.getIsCloseoutProgressReport());
   }
@@ -97,7 +96,6 @@ class DataAccessRequestTest {
     CloseoutSupplement supplement = new CloseoutSupplement(List.of("yes"), "", 1);
     darData.setCloseoutSupplement(supplement);
     dar.setData(darData);
-    dar.setSubmissionDate(Timestamp.from(Instant.now()));
     dar.setParentId(1);
     assertTrue(dar.getIsCloseoutProgressReport());
   }
