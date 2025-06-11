@@ -736,15 +736,8 @@ institution or library cards issued: Internal Collaborator member:  \
     election.setElectionId(1);
     election.setReferenceId(referenceId);
     when(electionDAO.findElectionsByReferenceId(any())).thenReturn(List.of(election));
-    doNothing().when(voteDAO).deleteVotesByReferenceId(any());
-    doNothing().when(matchDAO).deleteMatchesByPurposeId(any());
-    doNothing().when(dataAccessRequestDAO).deleteByReferenceId(any());
 
-    try {
-      service.deleteByReferenceId(adminUser, referenceId);
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
+    assertThrows(NotAcceptableException.class, () -> service.deleteByReferenceId(referenceId));
   }
 
   @Test
@@ -757,7 +750,7 @@ institution or library cards issued: Internal Collaborator member:  \
     doNothing().when(dataAccessRequestDAO).deleteByReferenceId(any());
     doNothing().when(dataAccessRequestDAO).deleteDARDatasetRelationByReferenceId(any());
 
-    assertDoesNotThrow(() -> service.deleteByReferenceId(user, referenceId));
+    assertDoesNotThrow(() -> service.deleteByReferenceId(referenceId));
   }
 
   @Test
@@ -771,7 +764,7 @@ institution or library cards issued: Internal Collaborator member:  \
     when(electionDAO.findElectionsByReferenceId(any())).thenReturn(List.of(election));
 
     assertThrows(NotAcceptableException.class,
-        () -> service.deleteByReferenceId(user, referenceId));
+        () -> service.deleteByReferenceId(referenceId));
   }
 
   @Test

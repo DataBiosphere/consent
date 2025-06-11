@@ -553,8 +553,7 @@ public class DataAccessRequestResource extends Resource {
   public Response deleteDar(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
     try {
       validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), authUser, referenceId);
-      User user = findUserByEmail(authUser.getEmail());
-      dataAccessRequestService.deleteByReferenceId(user, referenceId);
+      dataAccessRequestService.deleteByReferenceId(referenceId);
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);

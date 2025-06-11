@@ -1036,7 +1036,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     assertTrue(dar.getDraft());
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
-    doNothing().when(dataAccessRequestService).deleteByReferenceId(user, dar.getReferenceId());
+    doNothing().when(dataAccessRequestService).deleteByReferenceId(dar.getReferenceId());
     try (Response response = resource.deleteDar(authUser, dar.getReferenceId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
