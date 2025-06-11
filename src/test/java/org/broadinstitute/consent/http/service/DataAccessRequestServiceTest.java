@@ -1236,16 +1236,25 @@ institution or library cards issued: Internal Collaborator member:  \
 
   @Test
   void approveDataAccessRequest() throws TemplateException, IOException {
-    CloseoutWithUserAndSigningOfficialApproval closeout = new CloseoutWithUserAndSigningOfficialApproval();
+    CloseoutWithUserAndSigningOfficialApproval closeout =
+        new CloseoutWithUserAndSigningOfficialApproval();
     Dac dac = new Dac();
     User chair = new User(1, "chair@duos.org", "A Chair", new Date());
     dac.setChairpersons(List.of(chair));
     when(userService.findUserById(closeout.submitter.getUserId())).thenReturn(closeout.submitter);
     when(dataAccessRequestDAO.findByReferenceId(closeout.dar.referenceId)).thenReturn(closeout.dar);
     when(dacService.findByDatasetId(closeout.dar().getDatasetIds())).thenReturn(Set.of(dac));
-    assertDoesNotThrow(()->service.approveDataAccessRequestCloseout(closeout.actor, closeout.dar.getReferenceId()));
+    assertDoesNotThrow(
+        () ->
+            service.approveDataAccessRequestCloseout(
+                closeout.actor, closeout.dar.getReferenceId()));
     verify(dacService).findByDatasetId(closeout.dar().getDatasetIds());
-    verify(emailService).sendSubmittedCloseoutMessage(chair, closeout.dar().getDarCode(), closeout.dar().getReferenceId(), serverUrl + "progress_report_application/%d".formatted(closeout.dar().getCollectionId()));
+    verify(emailService)
+        .sendSubmittedCloseoutMessage(
+            chair,
+            closeout.dar().getDarCode(),
+            closeout.dar().getReferenceId(),
+            serverUrl + "dar_application_review/%d".formatted(closeout.dar().getCollectionId()));
   }
 
   record  CloseoutWithUserAndSigningOfficialApproval(User actor, User submitter, DataAccessRequest dar) {

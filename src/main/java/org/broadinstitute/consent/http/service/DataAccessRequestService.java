@@ -297,7 +297,7 @@ public class DataAccessRequestService implements ConsentLogger {
                 chairperson,
                 dar.getDarCode(),
                 dar.getReferenceId(),
-                serverUrl + "progress_report_application/%d".formatted(dar.getCollectionId()));
+                serverUrl + "dar_application_review/%d".formatted(dar.getCollectionId()));
           } catch (Exception e) {
             logWarn("Unable to send close out message for Data Access Request " + referenceId, e);
           }
