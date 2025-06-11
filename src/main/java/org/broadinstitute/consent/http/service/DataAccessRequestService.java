@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
@@ -276,6 +277,19 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new BadRequestException(
           "Unable to create progress report for Data Access Request " + parentDar.getReferenceId());
     }
+
+    if (progressReport.getIsCloseoutProgressReport()) {
+      try {
+        User signingOfficialUser =
+            userService.findUserById(
+                progressReport.getData().getCloseoutSupplement().signingOfficialId());
+        emailService.sendSubmittedCloseoutMessage(
+            signingOfficialUser, parentDar.getDarCode(), referenceId, serverUrl + "dar_application_review/%d".formatted(parentDar.getCollectionId()));
+      } catch (TemplateException | IOException e) {
+        throw new InternalServerErrorException(e);
+      }
+    }
+
     syncDataAccessRequestDatasets(progressReportDatasetIds, referenceId);
     return findByReferenceId(referenceId);
   }
@@ -334,6 +348,23 @@ public class DataAccessRequestService implements ConsentLogger {
     if (progressReport.getData().getProgressReportSummary() == null ||
         progressReport.getData().getProgressReportSummary().isEmpty()) {
       throw new BadRequestException("Progress report summary is required");
+    }
+
+    if (progressReport.getIsCloseoutProgressReport()) {
+      Integer providedSigningOfficial =
+          progressReport.getData().getCloseoutSupplement().signingOfficialId();
+      try {
+        User selectedSigningOfficial = userService.findUserById(providedSigningOfficial);
+        if (!selectedSigningOfficial.getInstitutionId().equals(user.getInstitutionId())) {
+          throw new BadRequestException(
+              "The signing official selected in the closeout is not in the same institution as the submitter.");
+        }
+        if (!selectedSigningOfficial.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+          throw new BadRequestException("The selected signing official is not a signing official");
+        }
+      } catch (NotFoundException nfe) {
+        throw new BadRequestException("The selected signing official in the closeout was not found.");
+      }
     }
   }
 

@@ -439,7 +439,9 @@ public class DataAccessRequestResource extends Resource {
           ethicsFileDetails, payload, parentDar);
       DataAccessRequest progressReport = dataAccessRequestService.createProgressReport(user,
           payload, parentDar);
-      sendNewDarCollectionMessage(parentDar.getCollectionId());
+      if (Objects.nonNull(progressReport) && !progressReport.getIsCloseoutProgressReport()) {
+        sendNewDarCollectionMessage(parentDar.getCollectionId());
+      }
       return Response.ok(progressReport.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
