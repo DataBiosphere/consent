@@ -551,8 +551,8 @@ public class DataAccessRequestResource extends Resource {
   @Produces("application/json")
   @RolesAllowed({ADMIN, RESEARCHER})
   public Response deleteDar(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
-    validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), authUser, referenceId);
     try {
+      validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), authUser, referenceId);
       User user = findUserByEmail(authUser.getEmail());
       dataAccessRequestService.deleteByReferenceId(user, referenceId);
       return Response.ok().build();
@@ -700,6 +700,9 @@ public class DataAccessRequestResource extends Resource {
   private void validateAuthedRoleUser(final List<UserRoles> allowableRoles, AuthUser authUser,
       String referenceId) {
     DataAccessRequest dataAccessRequest = getDarById(referenceId);
+    if (!dataAccessRequest.getDraft()) {
+      throw new BadRequestException("Only draft data access requests can be deleted");
+    }
     User user = findUserByEmail(authUser.getEmail());
     if (Objects.nonNull(dataAccessRequest.getUserId()) && dataAccessRequest.getUserId() > 0) {
       super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
