@@ -73,8 +73,7 @@ public class DarCollectionService implements ConsentLogger {
   public DarCollectionService(DarCollectionDAO darCollectionDAO,
       DarCollectionServiceDAO collectionServiceDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO,
       DataAccessRequestDAO dataAccessRequestDAO, EmailService emailService, VoteDAO voteDAO,
-      MatchDAO matchDAO, DarCollectionSummaryDAO darCollectionSummaryDAO, UserDAO userDAO,
-      DacDAO dacDAO) {
+      MatchDAO matchDAO, DarCollectionSummaryDAO darCollectionSummaryDAO, UserDAO userDAO, DacDAO dacDAO) {
     this.darCollectionDAO = darCollectionDAO;
     this.collectionServiceDAO = collectionServiceDAO;
     this.datasetDAO = datasetDAO;
@@ -168,12 +167,11 @@ public class DarCollectionService implements ConsentLogger {
       s.addAction(DarCollectionActions.REVIEW);
       //if the latest DAR in the collection has at least one approved dataset,
       //include the create progress report action
-      Set<Integer> datasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(
-          s.getLatestReferenceId());
+      Set<Integer> datasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(s.getLatestReferenceId());
       // Can only create a progress report if there are approved datasets and no closeout supplement
       if (!datasetIds.isEmpty() && s.getCloseoutSupplement() == null) {
-        s.addAction(DarCollectionActions.CREATE_PROGRESS_REPORT);
-      }
+          s.addAction(DarCollectionActions.CREATE_PROGRESS_REPORT);
+        }
 
       //check dar statuses, if they're all canceled show revise (but only if there are no elections)
       if (electionCount == 0) {
@@ -246,7 +244,7 @@ public class DarCollectionService implements ConsentLogger {
       //if there are any open elections, show cancel and vote
       Map<String, Integer> statusCount = new HashMap<>();
       Map<Integer, Election> elections = s.getElections();
-      if (elections.isEmpty()) {
+      if (elections.size() == 0) {
         s.setStatus(DarCollectionStatus.SUBMITTED.getValue());
         s.addAction(DarCollectionActions.OPEN);
       } else {
@@ -297,7 +295,7 @@ public class DarCollectionService implements ConsentLogger {
    * Members can see summaries for datasets they have access to Signing Officials can see summaries
    * for researchers in their institution Researchers can see only their own summaries
    *
-   * @param user The user making the request
+   * @param user     The user making the request
    * @param role The role the user is making the request as
    * @return List of DarCollectionSummary objects
    */
@@ -524,7 +522,7 @@ public class DarCollectionService implements ConsentLogger {
   /**
    * Given a DarCollection, add its relevant datasets.
    *
-   * @param collection The list of DarCollections to iterate over.
+   * @param collection      The list of DarCollections to iterate over.
    * @return collection with datasets added
    */
   @VisibleForTesting
@@ -539,15 +537,15 @@ public class DarCollectionService implements ConsentLogger {
           .distinct()
           .collect(Collectors.toMap(Dataset::getDatasetId, Function.identity()));
 
-      Set<Dataset> collectionDatasets = collection.getDars().values().stream()
-          .map(DataAccessRequest::getDatasetIds)
-          .flatMap(Collection::stream)
-          .map(datasetMap::get)
-          .filter(Objects::nonNull) // filtering out nulls which were getting captured by map
-          .collect(Collectors.toSet());
-      DarCollection copy = collection.deepCopy();
-      copy.setDatasets(collectionDatasets);
-      return copy;
+        Set<Dataset> collectionDatasets = collection.getDars().values().stream()
+            .map(DataAccessRequest::getDatasetIds)
+            .flatMap(Collection::stream)
+            .map(datasetMap::get)
+            .filter(Objects::nonNull) // filtering out nulls which were getting captured by map
+            .collect(Collectors.toSet());
+        DarCollection copy = collection.deepCopy();
+        copy.setDatasets(collectionDatasets);
+        return copy;
     }
     // There were no datasets to add, so we return the original list
     return collection;
@@ -559,11 +557,10 @@ public class DarCollectionService implements ConsentLogger {
    *
    * @param user       The User initiating the cancel
    * @param collection The DarCollection
-   * @param role       The role of the user must be one of ADMIN, CHAIRPERSON, or RESEARCHER
+   * @param role       The role of the user, must be one of ADMIN, CHAIRPERSON, or RESEARCHER
    * @return The DarCollection that has been canceled
    */
-  public DarCollection cancelDarCollectionByRole(User user, DarCollection collection,
-      UserRoles role) {
+  public DarCollection cancelDarCollectionByRole(User user, DarCollection collection, UserRoles role) {
     Collection<DataAccessRequest> dars = collection.getDars().values();
     if (dars.isEmpty()) {
       logWarn("DAR Collection ID: [%s] does not have any associated DAR ids".formatted(
@@ -573,7 +570,8 @@ public class DarCollectionService implements ConsentLogger {
 
     return switch (role) {
       case ADMIN -> cancelDarCollectionElectionsAsAdmin(collection);
-      case CHAIRPERSON -> cancelDarCollectionElectionsAsChair(collection, user);
+      case CHAIRPERSON ->
+          cancelDarCollectionElectionsAsChair(collection, user);
       default -> cancelDarCollectionAsResearcher(collection, user);
     };
   }
@@ -586,7 +584,7 @@ public class DarCollectionService implements ConsentLogger {
    * decline or cancel the elections for the collection.
    *
    * @param collection The DarCollection
-   * @param user       the researcher requesting the cancel
+   * @param user the researcher requesting the cancel
    * @return The canceled DarCollection
    */
   private DarCollection cancelDarCollectionAsResearcher(DarCollection collection, User user) {
@@ -694,8 +692,7 @@ public class DarCollectionService implements ConsentLogger {
         List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(
             createdElectionReferenceIds);
         if (dar.getProgressReport()) {
-          emailService.sendProgressReportNewCollectionElectionMessage(voteUsers,
-              collection.getDarCode());
+          emailService.sendProgressReportNewCollectionElectionMessage(voteUsers, collection.getDarCode());
         } else {
           emailService.sendDarNewCollectionElectionMessage(voteUsers, collection.getDarCode());
         }
@@ -764,11 +761,9 @@ public class DarCollectionService implements ConsentLogger {
       if (dar.getProgressReport()) {
         // Use the reference ID to link the fact that this progress report will have been noted.
         // the DAR Code at this point will be ambiguous.
-        emailService.sendNewProgressReportRequestEmail(user, sendList, researcherName,
-            collection.getDarCode(), dar.getReferenceId());
+        emailService.sendNewProgressReportRequestEmail(user, sendList, researcherName, collection.getDarCode(), dar.getReferenceId());
       } else {
-        emailService.sendNewDARRequestEmail(user, sendList, researcherName,
-            collection.getDarCode());
+        emailService.sendNewDARRequestEmail(user, sendList, researcherName, collection.getDarCode());
       }
     }
   }
