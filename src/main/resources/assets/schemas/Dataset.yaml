@@ -24,10 +24,6 @@ properties:
   dacId:
     type: integer
     description: The id of the DAC this dataset belongs to, if defined.
-  consentId:
-    type: string
-    deprecated: true
-    description: The consent id.
   translatedDataUse:
     type: string
     description: The Data Use in a readable format
