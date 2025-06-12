@@ -22,10 +22,11 @@ properties:
     format: date-time
     description: The dataset creation date
   dacId:
-    type: string
+    type: integer
     description: The id of the DAC this dataset belongs to, if defined.
   consentId:
     type: string
+    deprecated: true
     description: The consent id.
   translatedDataUse:
     type: string
@@ -59,8 +60,9 @@ properties:
   study:
     $ref: "./Study.yaml"
   alias:
-    type: string
-    description: The dataset id, short format
+    type: integer
+    format: int32
+    description: The dataset alias
   datasetIdentifier:
     type: string
     description: The dataset identifier, long format
