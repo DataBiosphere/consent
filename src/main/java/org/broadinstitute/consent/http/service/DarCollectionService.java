@@ -118,22 +118,23 @@ public class DarCollectionService implements ConsentLogger {
     summaries.forEach(s -> {
       Map<String, Integer> statusCount = new HashMap<>();
       Map<Integer, Election> elections = s.getElections();
-      if (elections.isEmpty() && s.getCloseoutSupplement() == null) {
+      if (elections.isEmpty()) {
         s.addAction(DarCollectionActions.OPEN);
         s.setStatus(DarCollectionStatus.SUBMITTED.getValue());
       } else {
         elections.values().forEach(e -> {
           String status = e.getStatus();
           updateStatusCount(statusCount, status);
-          if (s.getCloseoutSupplement() == null) {
-            if (status.equals(ElectionStatus.OPEN.getValue())) {
-              s.addAction(DarCollectionActions.CANCEL);
-            } else {
-              s.addAction(DarCollectionActions.OPEN);
-            }
+          if (status.equals(ElectionStatus.OPEN.getValue())) {
+            s.addAction(DarCollectionActions.CANCEL);
+          } else {
+            s.addAction(DarCollectionActions.OPEN);
           }
         });
         determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
+      }
+      if (s.getCloseoutSupplement() != null) {
+        s.getActions().clear();
       }
     });
   }
@@ -247,28 +248,24 @@ public class DarCollectionService implements ConsentLogger {
       Map<Integer, Election> elections = s.getElections();
       if (elections.isEmpty()) {
         s.setStatus(DarCollectionStatus.SUBMITTED.getValue());
-        if (s.getCloseoutSupplement() == null) {
-          s.addAction(DarCollectionActions.OPEN);
-        }
+        s.addAction(DarCollectionActions.OPEN);
       } else {
-        if (elections.size() < s.getDatasetCount() && s.getCloseoutSupplement() == null) {
+        if (elections.size() < s.getDatasetCount()) {
           s.addAction(DarCollectionActions.OPEN);
         }
         elections.values().forEach(election -> {
           String statusString = election.getStatus();
           updateStatusCount(statusCount, statusString);
           ElectionStatus status = ElectionStatus.getStatusFromString(statusString);
-          if (s.getCloseoutSupplement() == null) {
-            switch (Objects.requireNonNull(status)) {
-              case CLOSED, CANCELED:
-                s.addAction(DarCollectionActions.OPEN);
-                break;
-              case OPEN:
-                s.addAction(DarCollectionActions.VOTE);
-                break;
-              default:
-                break;
-            }
+          switch (status) {
+            case CLOSED, CANCELED:
+              s.addAction(DarCollectionActions.OPEN);
+              break;
+            case OPEN:
+              s.addAction(DarCollectionActions.VOTE);
+              break;
+            default:
+              break;
           }
         });
         Integer closedCount = statusCount.get(ElectionStatus.CLOSED.getValue());
@@ -279,6 +276,9 @@ public class DarCollectionService implements ConsentLogger {
         }
 
         determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
+      }
+      if (s.getCloseoutSupplement() != null) {
+        s.getActions().clear();
       }
     });
   }
