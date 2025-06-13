@@ -799,6 +799,7 @@ institution or library cards issued: Internal Collaborator member:  \
     data.setReferenceId(dar.getReferenceId());
     dar.addDatasetId(1);
     data.setPiEmail(PI_EMAIL);
+    data.setPiCountryOfOperation("United States of America (the)");
     data.setItDirectorEmail(IT_EMAIL);
     data.setSigningOfficialEmail(SO_EMAIL);
     data.setForProfit(false);
@@ -1117,6 +1118,63 @@ institution or library cards issued: Internal Collaborator member:  \
             IllegalArgumentException.class,
             () -> service.validatePersonnelInstitutionAndLibraryCardRequirements(user, data));
     validateException(exception, badEmailAddress, List.of("Internal Collaborator"));
+  }
+
+  @Test
+  void testValidateGoodCountryOfOperrationDoesNotThrow() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail("j@example.com");
+    data.setPiCountryOfOperation("Canada");
+
+    Collaborator collaborator1 = new Collaborator();
+    collaborator1.setEmail("l@example.com");
+    collaborator1.setCountryOfOperation("United States of America (the)");
+    data.setInternalCollaborators(List.of(collaborator1));
+
+    Collaborator collaborator2 = new Collaborator();
+    collaborator2.setEmail("m@example.com");
+    collaborator2.setCountryOfOperation("Curaçao");
+    data.setLabCollaborators(List.of(collaborator2));
+
+    initService();
+        assertDoesNotThrow(() -> service.validateCountryOfOperation(data));
+
+  }
+
+  @Test
+  void testValidatePIAndCollaboratorCountryOfOperationThrowsForBadCountry() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail("j@example.com");
+    data.setPiCountryOfOperation("Atlantis");
+
+    Collaborator collaborator1 = new Collaborator();
+    collaborator1.setEmail("l@example.com");
+    collaborator1.setCountryOfOperation("Genovia");
+    data.setInternalCollaborators(List.of(collaborator1));
+
+    Collaborator collaborator2 = new Collaborator();
+    collaborator2.setEmail("m@example.com");
+    collaborator2.setCountryOfOperation("Narnia");
+    data.setLabCollaborators(List.of(collaborator2));
+
+    initService();
+
+    BadRequestException exception =
+        assertThrows(
+            BadRequestException.class,
+            () -> service.validateCountryOfOperation(data));
+
+    assertThat(exception.getMessage(), containsString("Principal Investigator"));
+    assertThat(exception.getMessage(), containsString("Atlantis"));
+    assertThat(exception.getMessage(), containsString(data.getPiEmail()));
+
+    assertThat(exception.getMessage(), containsString("Collaborator"));
+    assertThat(exception.getMessage(), containsString("Genovia"));
+    assertThat(exception.getMessage(), containsString(collaborator1.getEmail()));
+
+    assertThat(exception.getMessage(), containsString("Lab Staff"));
+    assertThat(exception.getMessage(), containsString("Narnia"));
+    assertThat(exception.getMessage(), containsString(collaborator2.getEmail()));
   }
 
   @Test

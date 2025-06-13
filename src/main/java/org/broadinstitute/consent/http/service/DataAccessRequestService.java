@@ -33,7 +33,6 @@ import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.InvalidEmailAddressException;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
@@ -51,6 +50,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.CountryValidator;
 import org.jdbi.v3.core.JdbiException;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
@@ -79,6 +79,7 @@ public class DataAccessRequestService implements ConsentLogger {
   private final UserDAO userDAO;
   private final UserService userService;
   private final DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
+  private final CountryValidator countryValidator;
 
   private final DacService dacService;
   private final String serverUrl;
@@ -99,6 +100,7 @@ public class DataAccessRequestService implements ConsentLogger {
     this.institutionService = institutionService;
     this.emailService = emailService;
     this.serverUrl = config.getServicesConfiguration().getLocalURL();
+    this.countryValidator = new CountryValidator();
   }
 
   public List<DataAccessRequest> findAllDraftDataAccessRequests() {
@@ -403,6 +405,30 @@ public class DataAccessRequestService implements ConsentLogger {
     validateCommonDarAndProgressReportElements(user, dar);
     validateNoKeyPersonnelDuplicates(dar.getData());
     validatePersonnelInstitutionAndLibraryCardRequirements(user, dar.getData());
+    validateCountryOfOperation(dar.getData());
+  }
+
+  protected void validateCountryOfOperation(DataAccessRequestData darData) {
+    List<String> errorSummary = new ArrayList<>();
+    if (!countryValidator.isInCountryList(darData.getPiCountryOfOperation())) {
+      errorSummary.add(
+          "Principal Investigator %s Country of Operation (%s) is not allowed"
+              .formatted(darData.getPiEmail(), darData.getPiCountryOfOperation()));
+    }
+
+    List<Collaborator> collaborators = darData.getLabAndInternalCollaborators();
+    collaborators.forEach(
+        collaborator -> {
+          if (!countryValidator.isInCountryList(collaborator.getCountryOfOperation())) {
+            errorSummary.add(
+                "Collaborator or Lab Staff Member %s Country of Operation (%s) is not allowed"
+                    .formatted(collaborator.getEmail(), collaborator.getCountryOfOperation()));
+          }
+        });
+
+    if (!errorSummary.isEmpty()) {
+      throw new BadRequestException(String.join(", ", errorSummary));
+    }
   }
 
   @VisibleForTesting
@@ -491,7 +517,6 @@ public class DataAccessRequestService implements ConsentLogger {
     verifyInstitution(submitterInstitution, piEmail, "Principal Investigator", invalidMembers);
     verifyInstitution(submitterInstitution, soEmail, "Signing Official", invalidMembers);
     verifyInstitution(submitterInstitution, itEmail, "IT Director", invalidMembers);
-
     invalidMembers.addAll(getCollaboratorAndLibraryCardErrors(user, darData));
 
     if (!invalidMembers.isEmpty()) {

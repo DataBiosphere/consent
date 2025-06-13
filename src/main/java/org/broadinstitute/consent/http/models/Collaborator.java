@@ -8,6 +8,7 @@ public class Collaborator {
   private String name;
   private String title;
   private String uuid;
+  private String countryOfOperation;
 
   public Boolean getApproverStatus() {
     return approverStatus;
@@ -55,5 +56,11 @@ public class Collaborator {
 
   public void setUuid(String uuid) {
     this.uuid = uuid;
+  }
+
+  public String getCountryOfOperation() { return countryOfOperation; }
+
+  public void setCountryOfOperation(String countryOfOperation) {
+    this.countryOfOperation = countryOfOperation;
   }
 }
