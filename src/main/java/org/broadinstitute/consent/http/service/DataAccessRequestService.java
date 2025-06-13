@@ -30,7 +30,6 @@ import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.InvalidEmailAddressException;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
@@ -105,7 +104,11 @@ public class DataAccessRequestService implements ConsentLogger {
     return dataAccessRequestDAO.findAllDraftsByUserId(userId);
   }
 
-  public void deleteByReferenceId(String referenceId) throws NotAcceptableException {
+  public void deleteDataAccessRequest(DataAccessRequest dataAccessRequest) throws NotAcceptableException {
+    String referenceId = dataAccessRequest.getReferenceId();
+    if (!dataAccessRequest.getDraft()) {
+      throw new BadRequestException("Only draft data access requests can be deleted");
+    }
     List<Election> elections = electionDAO.findElectionsByReferenceId(referenceId);
     if (!elections.isEmpty()) {
         String message = String.format(

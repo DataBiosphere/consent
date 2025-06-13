@@ -552,8 +552,8 @@ public class DataAccessRequestResource extends Resource {
   @RolesAllowed({ADMIN, RESEARCHER})
   public Response deleteDar(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
     try {
-      validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), authUser, referenceId);
-      dataAccessRequestService.deleteByReferenceId(referenceId);
+      DataAccessRequest dataAccessRequest = validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), authUser, referenceId);
+      dataAccessRequestService.deleteDataAccessRequest(dataAccessRequest);
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -695,13 +695,11 @@ public class DataAccessRequestResource extends Resource {
    * @param allowableRoles List of roles that would allow the user to access the resource
    * @param authUser       The AuthUser
    * @param referenceId    The referenceId of the resource.
+   * @return dataAccessRequest The data access request underlying the referenceId
    */
-  private void validateAuthedRoleUser(final List<UserRoles> allowableRoles, AuthUser authUser,
+  private DataAccessRequest validateAuthedRoleUser(final List<UserRoles> allowableRoles, AuthUser authUser,
       String referenceId) {
     DataAccessRequest dataAccessRequest = getDarById(referenceId);
-    if (!dataAccessRequest.getDraft()) {
-      throw new BadRequestException("Only draft data access requests can be deleted");
-    }
     User user = findUserByEmail(authUser.getEmail());
     if (Objects.nonNull(dataAccessRequest.getUserId()) && dataAccessRequest.getUserId() > 0) {
       super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
@@ -709,5 +707,6 @@ public class DataAccessRequestResource extends Resource {
       logWarn("DataAccessRequest '" + referenceId + "' has an invalid userId");
       super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
     }
+    return dataAccessRequest;
   }
 }

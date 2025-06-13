@@ -728,8 +728,10 @@ institution or library cards issued: Internal Collaborator member:  \
   }
 
   @Test
-  void testDeleteByReferenceIdAdmin() {
+  void testDeleteDataAccessRequestAdmin() {
     String referenceId = UUID.randomUUID().toString();
+    DataAccessRequest dataAccessRequest = new DataAccessRequest();
+    dataAccessRequest.setReferenceId(referenceId);
     User adminUser = new User();
     adminUser.setAdminRole();
     Election election = new Election();
@@ -737,12 +739,14 @@ institution or library cards issued: Internal Collaborator member:  \
     election.setReferenceId(referenceId);
     when(electionDAO.findElectionsByReferenceId(any())).thenReturn(List.of(election));
 
-    assertThrows(NotAcceptableException.class, () -> service.deleteByReferenceId(referenceId));
+    assertThrows(NotAcceptableException.class, () -> service.deleteDataAccessRequest(dataAccessRequest));
   }
 
   @Test
-  void testDeleteByReferenceIdResearcherSuccess() {
+  void testDeleteDataAccessRequestResearcherSuccess() {
     String referenceId = UUID.randomUUID().toString();
+    DataAccessRequest dataAccessRequest = new DataAccessRequest();
+    dataAccessRequest.setReferenceId(referenceId);
     User user = new User();
     user.setResearcherRole();
     when(electionDAO.findElectionsByReferenceId(any())).thenReturn(List.of());
@@ -750,12 +754,14 @@ institution or library cards issued: Internal Collaborator member:  \
     doNothing().when(dataAccessRequestDAO).deleteByReferenceId(any());
     doNothing().when(dataAccessRequestDAO).deleteDARDatasetRelationByReferenceId(any());
 
-    assertDoesNotThrow(() -> service.deleteByReferenceId(referenceId));
+    assertDoesNotThrow(() -> service.deleteDataAccessRequest(dataAccessRequest));
   }
 
   @Test
-  void testDeleteByReferenceIdResearcherFailure() {
+  void testDeleteDataAccessRequestResearcherFailure() {
     String referenceId = UUID.randomUUID().toString();
+    DataAccessRequest dataAccessRequest = new DataAccessRequest();
+    dataAccessRequest.setReferenceId(referenceId);
     User user = new User();
     user.setResearcherRole();
     Election election = new Election();
@@ -764,7 +770,18 @@ institution or library cards issued: Internal Collaborator member:  \
     when(electionDAO.findElectionsByReferenceId(any())).thenReturn(List.of(election));
 
     assertThrows(NotAcceptableException.class,
-        () -> service.deleteByReferenceId(referenceId));
+        () -> service.deleteDataAccessRequest(dataAccessRequest));
+  }
+
+  @Test
+  void testDeleteDataAccessRequestSubmittedDarFailure() {
+    String referenceId = UUID.randomUUID().toString();
+    DataAccessRequest dataAccessRequest = new DataAccessRequest();
+    dataAccessRequest.setReferenceId(referenceId);
+    dataAccessRequest.setSubmissionDate(Timestamp.from(Instant.now()));
+
+    assertThrows(BadRequestException.class,
+        () -> service.deleteDataAccessRequest(dataAccessRequest));
   }
 
   @Test

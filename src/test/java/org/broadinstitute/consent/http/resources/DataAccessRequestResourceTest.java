@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -1036,7 +1035,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     assertTrue(dar.getDraft());
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
-    doNothing().when(dataAccessRequestService).deleteByReferenceId(dar.getReferenceId());
+    doNothing().when(dataAccessRequestService).deleteDataAccessRequest(dar);
     try (Response response = resource.deleteDar(authUser, dar.getReferenceId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
@@ -1050,6 +1049,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     dar.setSubmissionDate(Timestamp.from(Instant.now()));
     assertFalse(dar.getDraft());
     when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    doThrow(BadRequestException.class).when(dataAccessRequestService).deleteDataAccessRequest(dar);
     try (Response response = resource.deleteDar(authUser, dar.getReferenceId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
