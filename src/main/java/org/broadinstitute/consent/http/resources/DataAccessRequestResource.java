@@ -553,10 +553,9 @@ public class DataAccessRequestResource extends Resource {
   @Produces("application/json")
   @RolesAllowed({ADMIN, RESEARCHER})
   public Response deleteDar(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
-    validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), authUser, referenceId);
     try {
-      User user = findUserByEmail(authUser.getEmail());
-      dataAccessRequestService.deleteByReferenceId(user, referenceId);
+      DataAccessRequest dataAccessRequest = validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), authUser, referenceId);
+      dataAccessRequestService.deleteDataAccessRequest(dataAccessRequest);
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -698,8 +697,9 @@ public class DataAccessRequestResource extends Resource {
    * @param allowableRoles List of roles that would allow the user to access the resource
    * @param authUser       The AuthUser
    * @param referenceId    The referenceId of the resource.
+   * @return dataAccessRequest The data access request underlying the referenceId
    */
-  private void validateAuthedRoleUser(final List<UserRoles> allowableRoles, AuthUser authUser,
+  private DataAccessRequest validateAuthedRoleUser(final List<UserRoles> allowableRoles, AuthUser authUser,
       String referenceId) {
     DataAccessRequest dataAccessRequest = getDarById(referenceId);
     User user = findUserByEmail(authUser.getEmail());
@@ -709,5 +709,6 @@ public class DataAccessRequestResource extends Resource {
       logWarn("DataAccessRequest '" + referenceId + "' has an invalid userId");
       super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
     }
+    return dataAccessRequest;
   }
 }
