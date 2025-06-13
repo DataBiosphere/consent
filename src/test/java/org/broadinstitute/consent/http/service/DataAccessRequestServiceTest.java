@@ -597,24 +597,27 @@ library card) eve@yetanotherdomain.org\
 
   @Test
   void validateCommonNullUserThrows() {
+    DataAccessRequest dar = generateDataAccessRequest();
     assertThrows(IllegalArgumentException.class, () ->
-        service.validateCommonDarAndProgressReportElements(null, generateDataAccessRequest())
+        service.validateCommonDarAndProgressReportElements(null, dar)
     );
   }
 
   @Test
   void validateCommonNullDarThrows() {
+    User user = createUserWithPrerequisites();
     assertThrows(IllegalArgumentException.class, () ->
-        service.validateCommonDarAndProgressReportElements(createUserWithPrerequisites(), null)
+        service.validateCommonDarAndProgressReportElements(user, null)
     );
   }
 
   @Test
   void validateCommonNullDarDataThrows() {
+    User user = createUserWithPrerequisites();
     DataAccessRequest dar = new DataAccessRequest();
     dar.setData(null);
     assertThrows(IllegalArgumentException.class, () ->
-        service.validateCommonDarAndProgressReportElements(createUserWithPrerequisites(), dar)
+        service.validateCommonDarAndProgressReportElements(user, dar)
     );
   }
 
