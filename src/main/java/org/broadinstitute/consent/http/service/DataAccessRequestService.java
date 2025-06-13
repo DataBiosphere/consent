@@ -23,7 +23,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.validator.routines.EmailValidator;
-import org.bouncycastle.jcajce.provider.asymmetric.mldsa.MLDSAKeyFactorySpi.Hash;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -386,12 +385,15 @@ public class DataAccessRequestService implements ConsentLogger {
     }
   }
 
-  private void validateCommonDarAndProgressReportElements(User user, DataAccessRequest dar) {
+  @VisibleForTesting
+  protected void validateCommonDarAndProgressReportElements(User user, DataAccessRequest dar) {
     if (Objects.isNull(user) || Objects.isNull(dar) || Objects.isNull(
         dar.getReferenceId()) || Objects.isNull(dar.getData())) {
       throw new IllegalArgumentException("User and DataAccessRequest are required");
     }
-
+    if (!Objects.equals(user.getEmail(), dar.getData().getPiEmail()) || !Objects.equals(user.getDisplayName(), dar.getData().getPiName())) {
+      throw new BadRequestException("The PI in the DAR must have the same name and email as the user submitting the DAR.");
+    }
     if (user.getLibraryCard() == null) {
       throw new NIHComplianceRuleException();
     }
