@@ -132,6 +132,9 @@ public class DarCollectionService implements ConsentLogger {
         });
         determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
       }
+      if (s.getCloseoutSupplement() != null) {
+        s.getActions().clear();
+      }
     });
   }
 
@@ -233,46 +236,70 @@ public class DarCollectionService implements ConsentLogger {
     });
   }
 
-
+  /**
+   * Process the DarCollectionSummaries for a chairperson. Note that this decorates the raw
+   * summaries with status and actions based on the elections present in each summary.
+   *
+   * @param summaries The list of DarCollectionSummaries to process
+   */
   private void processDarCollectionSummariesForChair(List<DarCollectionSummary> summaries) {
     summaries.forEach(s -> {
-      //if there are no elections, only show open
-      //if there is any closed or canceled elections, or if some datasets dont have an election, show open
-      //if there are any open elections, show cancel and vote
       Map<String, Integer> statusCount = new HashMap<>();
       Map<Integer, Election> elections = s.getElections();
-      if (elections.size() == 0) {
-        s.setStatus(DarCollectionStatus.SUBMITTED.getValue());
+      if (elections.size() < s.getDatasetCount()) {
         s.addAction(DarCollectionActions.OPEN);
-      } else {
-        if (elections.size() < s.getDatasetCount()) {
-          s.addAction(DarCollectionActions.OPEN);
-        }
-        elections.values().forEach(election -> {
-          String statusString = election.getStatus();
-          updateStatusCount(statusCount, statusString);
-          ElectionStatus status = ElectionStatus.getStatusFromString(statusString);
-          switch (status) {
-            case CLOSED, CANCELED:
-              s.addAction(DarCollectionActions.OPEN);
-              break;
-            case OPEN:
-              s.addAction(DarCollectionActions.VOTE);
-              break;
-            default:
-              break;
-          }
-        });
-        Integer closedCount = statusCount.get(ElectionStatus.CLOSED.getValue());
-        Integer openCount = statusCount.get(ElectionStatus.OPEN.getValue());
-        //add cancel if there are no closed elections and at least one open election
-        if (Objects.isNull(closedCount) && Objects.nonNull(openCount)) {
-          s.addAction(DarCollectionActions.CANCEL);
-        }
+      }
+      elections.values().forEach(election -> updateStatusCount(statusCount, election.getStatus()));
+      Integer closedCount = statusCount.get(ElectionStatus.CLOSED.getValue());
+      Integer openCount = statusCount.get(ElectionStatus.OPEN.getValue());
+      determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
+      updateSummaryActionsForChair(s, closedCount, openCount);
+    });
+  }
 
-        determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
+  /**
+   * Update the summary actions for a chairperson based on the summary and election counts.
+   *
+   * @param summary  The DarCollectionSummary to update
+   * @param closedCount The count of closed elections
+   * @param openCount The count of open elections
+   */
+  private void updateSummaryActionsForChair(
+      DarCollectionSummary summary,
+      Integer closedCount,
+      Integer openCount) {
+
+    // No actions can be taken on a closeout supplement
+    if (summary.getCloseoutSupplement() != null) {
+      summary.getActions().clear();
+      return;
+    }
+
+    // If there are no elections, only show open
+    if (summary.getElections().isEmpty()) {
+      summary.addAction(DarCollectionActions.OPEN);
+    }
+
+    // If there are closed or canceled elections, show open
+    // If there are any open elections, show vote
+    summary.getElections().values().forEach(election -> {
+      ElectionStatus status = ElectionStatus.getStatusFromString(election.getStatus());
+      switch (Objects.requireNonNull(status)) {
+        case CLOSED, CANCELED:
+          summary.addAction(DarCollectionActions.OPEN);
+          break;
+        case OPEN:
+          summary.addAction(DarCollectionActions.VOTE);
+          break;
+        default:
+          break;
       }
     });
+
+    // Add cancel if there are no closed elections and at least one open election
+    if (Objects.isNull(closedCount) && Objects.nonNull(openCount)) {
+      summary.addAction(DarCollectionActions.CANCEL);
+    }
   }
 
   private void processDarCollectionSummariesForSO(List<DarCollectionSummary> summaries) {

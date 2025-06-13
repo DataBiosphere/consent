@@ -111,21 +111,18 @@ public class DataAccessRequestService implements ConsentLogger {
     return dataAccessRequestDAO.findAllDraftsByUserId(userId);
   }
 
-  public void deleteByReferenceId(User user, String referenceId) throws NotAcceptableException {
+  public void deleteDataAccessRequest(DataAccessRequest dataAccessRequest) throws NotAcceptableException {
+    String referenceId = dataAccessRequest.getReferenceId();
+    if (!dataAccessRequest.getDraft()) {
+      throw new BadRequestException("Only draft data access requests can be deleted");
+    }
     List<Election> elections = electionDAO.findElectionsByReferenceId(referenceId);
     if (!elections.isEmpty()) {
-      // If the user is an admin, delete all votes and elections
-      if (user.hasUserRole(UserRoles.ADMIN)) {
-        voteDAO.deleteVotesByReferenceId(referenceId);
-        List<Integer> electionIds = elections.stream().map(Election::getElectionId).toList();
-        electionDAO.deleteElectionsByIds(electionIds);
-      } else {
         String message = String.format(
             "Unable to delete DAR: '%s', there are existing elections that reference it.",
             referenceId);
         logWarn(message);
         throw new NotAcceptableException(message);
-      }
     }
     matchDAO.deleteRationalesByPurposeIds(List.of(referenceId));
     matchDAO.deleteMatchesByPurposeId(referenceId);
