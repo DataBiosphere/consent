@@ -354,6 +354,7 @@ public class DataAccessRequestService implements ConsentLogger {
   public void validateProgressReport(User user, DataAccessRequest progressReport, DataAccessRequest parentDar) {
     validateCommonDarAndProgressReportElements(user, progressReport);
     validateInternalCollaborators(user, progressReport);
+    validateCountryOfOperation(progressReport.data, true);
 
     if (parentDar.getDraft()) {
       throw new BadRequestException(
@@ -405,12 +406,13 @@ public class DataAccessRequestService implements ConsentLogger {
     validateCommonDarAndProgressReportElements(user, dar);
     validateNoKeyPersonnelDuplicates(dar.getData());
     validatePersonnelInstitutionAndLibraryCardRequirements(user, dar.getData());
-    validateCountryOfOperation(dar.getData());
+    validateCountryOfOperation(dar.getData(), false);
   }
 
-  protected void validateCountryOfOperation(DataAccessRequestData darData) {
+  protected void validateCountryOfOperation(DataAccessRequestData darData, boolean skipPI) {
     List<String> errorSummary = new ArrayList<>();
-    if (!countryValidator.isInCountryList(darData.getPiCountryOfOperation())) {
+    // We will have progress reports that don't have country of operation set for the PI.
+    if (!skipPI && !countryValidator.isInCountryList(darData.getPiCountryOfOperation())) {
       errorSummary.add(
           "Principal Investigator %s Country of Operation (%s) is not allowed"
               .formatted(darData.getPiEmail(), darData.getPiCountryOfOperation()));

@@ -1124,7 +1124,7 @@ institution or library cards issued: Internal Collaborator member:  \
     data.setLabCollaborators(List.of(collaborator2));
 
     initService();
-    assertDoesNotThrow(() -> service.validateCountryOfOperation(data));
+    assertDoesNotThrow(() -> service.validateCountryOfOperation(data, false));
   }
 
   @Test
@@ -1146,7 +1146,7 @@ institution or library cards issued: Internal Collaborator member:  \
     BadRequestException exception =
         assertThrows(
             BadRequestException.class,
-            () -> service.validateCountryOfOperation(data));
+            () -> service.validateCountryOfOperation(data, false));
 
     assertThat(exception.getMessage(), containsString("Principal Investigator"));
     assertThat(exception.getMessage(), containsString("Atlantis"));
@@ -1159,6 +1159,15 @@ institution or library cards issued: Internal Collaborator member:  \
     assertThat(exception.getMessage(), containsString("Lab Staff"));
     assertThat(exception.getMessage(), containsString("Narnia"));
     assertThat(exception.getMessage(), containsString(collaborator2.email()));
+  }
+
+  @Test
+  void testValidatePIAndCollaboratorCountryOfOperationSkipPI() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail("j@example.com");
+    initService();
+
+    assertDoesNotThrow(() -> service.validateCountryOfOperation(data, true));
   }
 
   @Test
