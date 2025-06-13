@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CaseFormat;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -10,6 +11,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
+import jakarta.ws.rs.BadRequestException;
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -386,6 +388,7 @@ public class DataAccessRequest {
     originalDataCopy.setPresentations(newData.getPresentations());
     originalDataCopy.setDmi(newData.getDmi());
     originalDataCopy.setResearchPlans(newData.getResearchPlans());
+    validateCloseoutSupplement(newData.getCloseoutSupplement());
     originalDataCopy.setCloseoutSupplement(newData.getCloseoutSupplement());
     originalDataCopy.setPubAcknowledgement(newData.getPubAcknowledgement());
     originalDataCopy.setDSAcknowledgement(newData.getDSAcknowledgement());
@@ -400,6 +403,28 @@ public class DataAccessRequest {
 
     newDar.setData(originalDataCopy);
     return newDar;
+  }
+
+  @VisibleForTesting
+  protected static void validateCloseoutSupplement(CloseoutSupplement closeoutSupplement) {
+    if (Objects.isNull(closeoutSupplement)) {
+      return;
+    }
+
+    if ((Objects.isNull(closeoutSupplement.reasons()) || closeoutSupplement.reasons().isEmpty())
+        && Objects.isNull(closeoutSupplement.signingOfficialId())
+        && (Objects.isNull(closeoutSupplement.otherText())
+            || closeoutSupplement.otherText().isEmpty())) {
+      throw new BadRequestException("A closeout supplement must have values provided.");
+    }
+
+    if (Objects.isNull(closeoutSupplement.reasons()) || closeoutSupplement.reasons().isEmpty()) {
+      throw new BadRequestException("A closeout supplement must have reasons provided.");
+    }
+
+    if (Objects.isNull(closeoutSupplement.signingOfficialId())) {
+      throw new BadRequestException("A closeout supplement must have a signing official id provided.");
+    }
   }
 
 
@@ -467,7 +492,7 @@ public class DataAccessRequest {
   }
 
   public boolean getIsCloseoutProgressReport() {
-    return getProgressReport()
+    return Objects.nonNull(getParentId())
         && this.getData() != null
         && this.getData().getCloseoutSupplement() != null
         && !this.getData().getCloseoutSupplement().reasons().isEmpty();

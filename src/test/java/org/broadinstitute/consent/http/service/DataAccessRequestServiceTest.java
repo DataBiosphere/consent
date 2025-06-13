@@ -52,6 +52,7 @@ import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.Collaborator;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -112,6 +113,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   @Mock
   private InstitutionService institutionService;
   private DataAccessRequestService service;
+  private String serverUrl;
 
   private static Collaborator createCollaborator() {
     Collaborator validCollaborator = new Collaborator();
@@ -177,6 +179,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     container.setElectionDAO(electionDAO);
     container.setVoteDAO(voteDAO);
     container.setMatchDAO(matchDAO);
+    serverUrl = config.getServicesConfiguration().getLocalURL();
     service = new DataAccessRequestService(counterService, container, dacService,
         dataAccessRequestServiceDAO, userService, institutionService,  emailService, config);
   }
@@ -287,6 +290,49 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void createCloseoutProgressReport() throws TemplateException, IOException {
+    User user = createUserWithPrerequisites();
+    User signingOfficial = createUserWithPrerequisites();
+    signingOfficial.setInstitutionId(user.getInstitutionId());
+    signingOfficial.setSigningOfficialRole();
+    DataAccessRequest progressReport = generateProgressReport();
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setUserId(user.getUserId());
+    progressReport.setDatasetIds(List.of(3, 4, 5));
+    parentDar.setDatasetIds(List.of(3, 4, 5));
+    progressReport.setSubmissionDate(Timestamp.from(Instant.now()));
+    progressReport.setParentId(parentDar.getId());
+    progressReport.setCollectionId(parentDar.getCollectionId());
+    progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
+
+    when(userService.findUserById(2)).thenReturn(signingOfficial);
+    when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId()))
+        .thenReturn(progressReport);
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
+        .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
+
+    DataAccessRequest newDar = service.createProgressReport(user, progressReport, parentDar);
+
+    assertNotNull(newDar);
+    verify(emailService)
+        .sendSubmittedCloseoutMessage(
+            signingOfficial,
+            parentDar.getDarCode(),
+            progressReport.getReferenceId(),
+            "local_url/dar_application_review/%d".formatted(progressReport.getCollectionId()));
+    verify(dataAccessRequestDAO)
+        .insertProgressReport(
+            parentDar.getId(),
+            progressReport.getCollectionId(),
+            progressReport.getReferenceId(),
+            user.getUserId(),
+            progressReport.getData());
+    verify(dataAccessRequestDAO)
+        .insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
+  }
+
+  @Test
   void createProgressReportFailsIfNonApprovedDatasets() {
     DataAccessRequest parentDar = generateDataAccessRequest();
     DataAccessRequest progressReport = generateProgressReport();
@@ -335,8 +381,9 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = createUserWithPrerequisites();
     DataAccessRequest progressReport = generateProgressReport();
     DataAccessRequest parentDar = generateDataAccessRequest();
-    assertThrows(BadRequestException.class,
+    BadRequestException exception = assertThrows(BadRequestException.class,
         () -> service.validateProgressReport(user, progressReport, parentDar));
+    assertThat(exception.getMessage(), containsString("Cannot create a progress report for a draft Data Access Request"));
   }
 
   @Test
@@ -347,8 +394,9 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setUserId(user.getUserId());
-    assertThrows(BadRequestException.class,
+    BadRequestException exception = assertThrows(BadRequestException.class,
         () -> service.validateProgressReport(user, progressReport, parentDar));
+    assertThat(exception.getMessage(), containsString("At least one dataset is required"));
   }
 
   @Test
@@ -359,8 +407,9 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setUserId(user.getUserId());
-    assertThrows(BadRequestException.class,
+    BadRequestException exception = assertThrows(BadRequestException.class,
         () -> service.validateProgressReport(user, progressReport, parentDar));
+    assertThat(exception.getMessage(), containsString("Progress report summary is required"));
   }
 
   @Test
@@ -372,7 +421,100 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setDatasetIds(List.of(1, 2, 3));
     parentDar.setUserId(user.getUserId());
-    assertThrows(BadRequestException.class,
+    BadRequestException exception = assertThrows(BadRequestException.class,
+        () -> service.validateProgressReport(user, progressReport, parentDar));
+    assertThat(exception.getMessage(), containsString("Progress report can only be created for datasets in the parent DAR"));
+  }
+
+  @Test
+  void validateProgressReportCloseoutNotFoundSO(){
+    User user = createUserWithPrerequisites();
+    DataAccessRequest progressReport = generateProgressReport();
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setUserId(user.getUserId());
+    progressReport.setDatasetIds(List.of(3, 4, 5));
+    parentDar.setDatasetIds(List.of(3, 4, 5));
+    progressReport.setSubmissionDate(Timestamp.from(Instant.now()));
+    progressReport.setParentId(parentDar.getId());
+    progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
+
+    doThrow(NotFoundException.class).when(userService).findUserById(2);
+
+    BadRequestException exception = assertThrows(BadRequestException.class,
+        () -> service.validateProgressReport(user, progressReport, parentDar));
+    assertThat(
+        exception.getMessage(),
+        containsString("The selected signing official in the closeout was not found."));
+  }
+
+  @Test
+  void validateProgressReportCloseoutNotSameInstitutionSO(){
+    User user = createUserWithPrerequisites();
+    User signingOfficial =  createUserWithPrerequisites();
+    signingOfficial.setInstitutionId(user.getInstitutionId() + 1);
+    DataAccessRequest progressReport = generateProgressReport();
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setUserId(user.getUserId());
+    progressReport.setDatasetIds(List.of(3, 4, 5));
+    parentDar.setDatasetIds(List.of(3, 4, 5));
+    progressReport.setSubmissionDate(Timestamp.from(Instant.now()));
+    progressReport.setParentId(parentDar.getId());
+    progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
+
+    when(userService.findUserById(2)).thenReturn(signingOfficial);
+
+    BadRequestException exception = assertThrows(BadRequestException.class,
+        () -> service.validateProgressReport(user, progressReport, parentDar));
+    assertThat(
+        exception.getMessage(),
+        containsString("The signing official selected in the closeout is not in the same institution as the submitter."));
+  }
+
+  @Test
+  void validateProgressReportCloseoutSameInstitutionNotAnSO(){
+    User user = createUserWithPrerequisites();
+    User signingOfficial =  createUserWithPrerequisites();
+    signingOfficial.setInstitutionId(user.getInstitutionId());
+    DataAccessRequest progressReport = generateProgressReport();
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setUserId(user.getUserId());
+    progressReport.setDatasetIds(List.of(3, 4, 5));
+    parentDar.setDatasetIds(List.of(3, 4, 5));
+    progressReport.setSubmissionDate(Timestamp.from(Instant.now()));
+    progressReport.setParentId(parentDar.getId());
+    progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
+
+    when(userService.findUserById(2)).thenReturn(signingOfficial);
+
+    BadRequestException exception = assertThrows(BadRequestException.class,
+        () -> service.validateProgressReport(user, progressReport, parentDar));
+    assertThat(
+        exception.getMessage(),
+        containsString("The selected signing official is not a signing official"));
+  }
+
+  @Test
+  void validateProgressReportCloseout(){
+    User user = createUserWithPrerequisites();
+    User signingOfficial =  createUserWithPrerequisites();
+    signingOfficial.setInstitutionId(user.getInstitutionId());
+    signingOfficial.setSigningOfficialRole();
+    DataAccessRequest progressReport = generateProgressReport();
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setUserId(user.getUserId());
+    progressReport.setDatasetIds(List.of(3, 4, 5));
+    parentDar.setDatasetIds(List.of(3, 4, 5));
+    progressReport.setSubmissionDate(Timestamp.from(Instant.now()));
+    progressReport.setParentId(parentDar.getId());
+    progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
+
+    when(userService.findUserById(2)).thenReturn(signingOfficial);
+
+    assertDoesNotThrow(
         () -> service.validateProgressReport(user, progressReport, parentDar));
   }
 
@@ -1034,6 +1176,7 @@ institution or library cards issued: Internal Collaborator member:  \
 
   private User createUserWithPrerequisites() {
     User user = new User(1, "email@test.org", "Display Name", new Date());
+    user.setInstitutionId(1);
     Institution institution = new Institution();
     institution.setId(1);
     user.setInstitution(institution);
@@ -1242,11 +1385,26 @@ institution or library cards issued: Internal Collaborator member:  \
   }
 
   @Test
-  void approveDataAccessRequest() {
-    CloseoutWithUserAndSigningOfficialApproval closeout = new CloseoutWithUserAndSigningOfficialApproval();
+  void approveDataAccessRequest() throws TemplateException, IOException {
+    CloseoutWithUserAndSigningOfficialApproval closeout =
+        new CloseoutWithUserAndSigningOfficialApproval();
+    Dac dac = new Dac();
+    User chair = new User(1, "chair@duos.org", "A Chair", new Date());
+    dac.setChairpersons(List.of(chair));
     when(userService.findUserById(closeout.submitter.getUserId())).thenReturn(closeout.submitter);
     when(dataAccessRequestDAO.findByReferenceId(closeout.dar.referenceId)).thenReturn(closeout.dar);
-    assertDoesNotThrow(()->service.approveDataAccessRequestCloseout(closeout.actor, closeout.dar.getReferenceId()));
+    when(dacService.findByDatasetId(closeout.dar().getDatasetIds())).thenReturn(Set.of(dac));
+    assertDoesNotThrow(
+        () ->
+            service.approveDataAccessRequestCloseout(
+                closeout.actor, closeout.dar.getReferenceId()));
+    verify(dacService).findByDatasetId(closeout.dar().getDatasetIds());
+    verify(emailService)
+        .sendSubmittedCloseoutMessage(
+            chair,
+            closeout.dar().getDarCode(),
+            closeout.dar().getReferenceId(),
+            serverUrl + "dar_application_review/%d".formatted(closeout.dar().getCollectionId()));
   }
 
   record  CloseoutWithUserAndSigningOfficialApproval(User actor, User submitter, DataAccessRequest dar) {
@@ -1259,6 +1417,10 @@ institution or library cards issued: Internal Collaborator member:  \
       dar.setUserId(submitter.getUserId());
       dar.setSubmissionDate(Timestamp.from(Instant.now()));
       dar.setParentId(1);
+      dar.setDatasetIds(List.of(1));
+      dar.setDarCode("DAR-0001");
+      dar.setCollectionId(4);
+      dar.setReferenceId(UUID.randomUUID().toString());
       DataAccessRequestData data =  new DataAccessRequestData();
       data.setCloseoutSupplement(new CloseoutSupplement(List.of(""), "", actor.getUserId()));
       dar.setData(data);

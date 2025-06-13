@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
@@ -16,11 +17,13 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.bouncycastle.jcajce.provider.asymmetric.mldsa.MLDSAKeyFactorySpi.Hash;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -36,6 +39,7 @@ import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.Collaborator;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -273,6 +277,19 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new BadRequestException(
           "Unable to create progress report for Data Access Request " + parentDar.getReferenceId());
     }
+
+    if (progressReport.getIsCloseoutProgressReport()) {
+      try {
+        User signingOfficialUser =
+            userService.findUserById(
+                progressReport.getData().getCloseoutSupplement().signingOfficialId());
+        emailService.sendSubmittedCloseoutMessage(
+            signingOfficialUser, parentDar.getDarCode(), referenceId, serverUrl + "dar_application_review/%d".formatted(parentDar.getCollectionId()));
+      } catch (TemplateException | IOException e) {
+        throw new InternalServerErrorException(e);
+      }
+    }
+
     syncDataAccessRequestDatasets(progressReportDatasetIds, referenceId);
     return findByReferenceId(referenceId);
   }
@@ -281,6 +298,21 @@ public class DataAccessRequestService implements ConsentLogger {
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
     validateCloseoutApproval(signingOfficial, dar);
     dataAccessRequestDAO.updateDarCloseoutSO(signingOfficial.getUserId(), referenceId);
+    Set<User> chairs = new HashSet<>();
+    Set<Dac> dacs = dacService.findByDatasetId(dar.getDatasetIds());
+    dacs.forEach(dac -> chairs.addAll(dac.getChairpersons()));
+    chairs.forEach(
+        chairperson -> {
+          try {
+            emailService.sendSubmittedCloseoutMessage(
+                chairperson,
+                dar.getDarCode(),
+                dar.getReferenceId(),
+                serverUrl + "dar_application_review/%d".formatted(dar.getCollectionId()));
+          } catch (Exception e) {
+            logWarn("Unable to send close out message for Data Access Request " + referenceId, e);
+          }
+        });
   }
 
   @VisibleForTesting
@@ -331,6 +363,23 @@ public class DataAccessRequestService implements ConsentLogger {
     if (progressReport.getData().getProgressReportSummary() == null ||
         progressReport.getData().getProgressReportSummary().isEmpty()) {
       throw new BadRequestException("Progress report summary is required");
+    }
+
+    if (progressReport.getIsCloseoutProgressReport()) {
+      Integer providedSigningOfficial =
+          progressReport.getData().getCloseoutSupplement().signingOfficialId();
+      try {
+        User selectedSigningOfficial = userService.findUserById(providedSigningOfficial);
+        if (!selectedSigningOfficial.getInstitutionId().equals(user.getInstitutionId())) {
+          throw new BadRequestException(
+              "The signing official selected in the closeout is not in the same institution as the submitter.");
+        }
+        if (!selectedSigningOfficial.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+          throw new BadRequestException("The selected signing official is not a signing official");
+        }
+      } catch (NotFoundException nfe) {
+        throw new BadRequestException("The selected signing official in the closeout was not found.");
+      }
     }
   }
 

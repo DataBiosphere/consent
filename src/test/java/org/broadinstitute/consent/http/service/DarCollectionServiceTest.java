@@ -30,8 +30,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -583,6 +581,41 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testProcessDarCollectionSummariesForAdminWithCloseout() {
+    User user = new User();
+    user.setUserId(1);
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.setLatestReferenceId(UUID.randomUUID().toString());
+    summary.setCloseoutSupplement(new CloseoutSupplement(List.of("Closeout"), "Closeout", 1));
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForAdmin())
+        .thenReturn(List.of(summary));
+
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.ADMIN);
+
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    // Admin summary should not have any actions
+    assertTrue(summaries.get(0).getActions().isEmpty());
+  }
+
+  @Test
+  void testProcessDarCollectionSummariesForAdminWithoutCloseout() {
+    User user = new User();
+    user.setUserId(1);
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.setLatestReferenceId(UUID.randomUUID().toString());
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForAdmin())
+        .thenReturn(List.of(summary));
+
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.ADMIN);
+
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    // With no elections, there should be an Open action
+    assertTrue(summaries.get(0).getActions().contains(DarCollectionActions.OPEN.getValue()));
+  }
+
+  @Test
   void testProcessDarCollectionSummariesForResearcher() {
 
     // summaryOne -> in review (elections present)
@@ -1123,6 +1156,43 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testProcessDarCollectionSummariesForChairWithCloseout() {
+    User user = new User();
+    user.setUserId(1);
+    user.addRole(UserRoles.Chairperson());
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.setLatestReferenceId(UUID.randomUUID().toString());
+    summary.setCloseoutSupplement(new CloseoutSupplement(List.of("Closeout"), "Closeout", 1));
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForDAC(user.getUserId(), List.of()))
+        .thenReturn(List.of(summary));
+
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.CHAIRPERSON);
+
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    // Chair summary should not have any actions
+    assertTrue(summaries.get(0).getActions().isEmpty());
+  }
+
+  @Test
+  void testProcessDarCollectionSummariesForChairWithoutCloseout() {
+    User user = new User();
+    user.setUserId(1);
+    user.addRole(UserRoles.Chairperson());
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.setLatestReferenceId(UUID.randomUUID().toString());
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForDAC(user.getUserId(), List.of()))
+        .thenReturn(List.of(summary));
+
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.CHAIRPERSON);
+
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    // With no elections, there should be an Open action
+    assertTrue(summaries.get(0).getActions().contains(DarCollectionActions.OPEN.getValue()));
+  }
+
+  @Test
   void testGetSummaryForRoleByCollectionId_SO() {
     User user = new User();
     user.setUserId(1);
@@ -1407,18 +1477,18 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   private Dataset createDataset(Integer dacId) {
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100000));
+    dataset.setDatasetId(randomInt(1, 100000));
     dataset.setAlias(dataset.getDatasetId());
     dataset.setDatasetIdentifier();
     dataset.setDacId(dacId);
-    dataset.setName(String.format("Dataset %s-%s", RandomStringUtils.randomAlphabetic(10),
+    dataset.setName(String.format("Dataset %s-%s", randomAlphabetic(10),
         dataset.getDatasetId()));
     return dataset;
   }
 
   private User createUserWithRole(UserRoles userRoles, Integer dacId) {
     User user = new User();
-    user.setUserId(RandomUtils.nextInt(1, 100000));
+    user.setUserId(randomInt(1, 100000));
     user.setDisplayName(String.format("%s - %s", userRoles.getRoleName(), user.getUserId()));
     user.setEmail(String.format("%s@test.com", userRoles.getRoleName()));
     UserRole role = new UserRole(
