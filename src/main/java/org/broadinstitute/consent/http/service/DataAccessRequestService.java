@@ -419,10 +419,10 @@ public class DataAccessRequestService implements ConsentLogger {
     List<Collaborator> collaborators = darData.getLabAndInternalCollaborators();
     collaborators.forEach(
         collaborator -> {
-          if (!countryValidator.isInCountryList(collaborator.getCountryOfOperation())) {
+          if (!countryValidator.isInCountryList(collaborator.countryOfOperation())) {
             errorSummary.add(
                 "Collaborator or Lab Staff Member %s Country of Operation (%s) is not allowed"
-                    .formatted(collaborator.getEmail(), collaborator.getCountryOfOperation()));
+                    .formatted(collaborator.email(), collaborator.countryOfOperation()));
           }
         });
 
@@ -444,10 +444,10 @@ public class DataAccessRequestService implements ConsentLogger {
   private List<String> getCollaboratorAndLibraryCardErrors(User user, DataAccessRequestData darData) {
     List<String> errorSummary = new ArrayList<>();
     getErrorSummary(
-        darData.getInternalCollaborators().stream().map(Collaborator::getEmail).toList(), user.getInstitution(),
+        darData.getInternalCollaborators().stream().map(Collaborator::email).toList(), user.getInstitution(),
         INTERNAL_COLLABORATOR + " " + MEMBER + ": ", INTERNAL_COLLABORATOR + "  " + MEMBERS, errorSummary);
     getErrorSummary(
-        darData.getLabCollaborators().stream().map(Collaborator::getEmail).toList(), user.getInstitution(),
+        darData.getLabCollaborators().stream().map(Collaborator::email).toList(), user.getInstitution(),
         LAB_STAFF + " " + MEMBER + ": ", LAB_STAFF + " " + MEMBERS, errorSummary);
     return errorSummary;
   }

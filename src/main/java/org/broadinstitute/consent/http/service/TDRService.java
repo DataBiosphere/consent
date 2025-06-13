@@ -49,7 +49,7 @@ public class TDRService implements ConsentLogger {
         .map(DataAccessRequestData::getLabAndInternalCollaborators)
         .flatMap(List::stream)
         .filter(Objects::nonNull)
-        .map(Collaborator::getEmail)
+        .map(Collaborator::email)
         .filter(email -> !email.isBlank())
         // Sam has an endpoint for validating a single email at a time
         .map(email -> {
