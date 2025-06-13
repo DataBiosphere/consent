@@ -619,31 +619,9 @@ library card) eve@yetanotherdomain.org\
   }
 
   @Test
-  void validateCommonMismatchedEmailThrows() {
-    User validUser = createUserWithPrerequisites();
-    DataAccessRequest dar = generateDataAccessRequest();
-    dar.getData().setPiEmail("otheremail@example.com");
-    assertThrows(BadRequestException.class, () ->
-        service.validateCommonDarAndProgressReportElements(validUser, dar)
-    );
-  }
-
-  @Test
-  void validateCommonMismatchedDisplayNameThrows() {
-    User validUser = createUserWithPrerequisites();
-    DataAccessRequest dar = generateDataAccessRequest();
-    dar.getData().setPiName("Other Name");
-    assertThrows(BadRequestException.class, () ->
-        service.validateCommonDarAndProgressReportElements(validUser, dar)
-    );
-  }
-
-  @Test
   void validateCommonDoesNotThrow() {
     User validUser = createUserWithPrerequisites();
     DataAccessRequest validDar = generateDataAccessRequest();
-    validDar.getData().setPiName(validUser.getDisplayName());
-    validDar.getData().setPiEmail(validUser.getEmail());
     assertDoesNotThrow(() ->
         service.validateCommonDarAndProgressReportElements(validUser, validDar)
     );
@@ -694,6 +672,27 @@ library card) eve@yetanotherdomain.org\
     DataAccessRequest dar = generateDataAccessRequest();
     User user = new User(1, "email@test.org", "Display Name", new Date());
     assertThrows(NIHComplianceRuleException.class, () -> service.validateDar(user, dar));
+  }
+
+
+  @Test
+  void validateDarDifferentPiEmail() {
+    User validUser = createUserWithPrerequisites();
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.getData().setPiEmail("otheremail@example.com");
+    assertThrows(BadRequestException.class, () ->
+        service.validateDar(validUser, dar)
+    );
+  }
+
+  @Test
+  void validateDarDifferPiName() {
+    User validUser = createUserWithPrerequisites();
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.getData().setPiName("Other Name");
+    assertThrows(BadRequestException.class, () ->
+        service.validateDar(validUser, dar)
+    );
   }
 
   @Test
