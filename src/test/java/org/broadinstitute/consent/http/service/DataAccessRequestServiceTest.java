@@ -689,7 +689,7 @@ library card) eve@yetanotherdomain.org\
   }
 
   @Test
-  void validateDarDifferPiName() {
+  void validateDarDifferentPiName() {
     User validUser = createUserWithPrerequisites();
     DataAccessRequest dar = generateDataAccessRequest();
     dar.getData().setPiName("Other Name");
