@@ -438,7 +438,7 @@ paths:
 
   /api/dar/v2/progress_report/{parentReferenceId}:
     $ref: './paths/progressReport.yaml'
-  /api/dar/approve_closeout/{referenceId}:
+  /api/dar/{referenceId}/approveCloseout:
     $ref: './paths/approveCloseoutBySigningOfficial.yaml'
   /api/dataset/v2:
     $ref: './paths/datasetV2.yaml'
