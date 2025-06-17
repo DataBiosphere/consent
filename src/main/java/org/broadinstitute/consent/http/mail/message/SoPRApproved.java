@@ -16,7 +16,7 @@ public class SoPRApproved extends MailMessage {
   private final String dataUseRestriction;
 
   public SoPRApproved(User toUser, String darCode, User researcher, String referenceId, List<Dataset> datasets, String dataUseRestriction) {
-    super(toUser, EmailType.SO_DAR_APPROVED);
+    super(toUser, EmailType.SO_PROGRESS_REPORT_APPROVED);
     this.darCode = darCode;
     this.researcher = researcher;
     this.referenceId = referenceId;

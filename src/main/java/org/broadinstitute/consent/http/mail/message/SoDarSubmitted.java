@@ -41,5 +41,4 @@ public class SoDarSubmitted extends MailMessage {
   public String getEntityReferenceId() {
     return referenceId;
   }
-
 }
