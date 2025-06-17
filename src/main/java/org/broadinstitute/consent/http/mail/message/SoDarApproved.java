@@ -9,17 +9,11 @@ import org.broadinstitute.consent.http.models.User;
 public class SoDarApproved extends MailMessage {
 
   private static final String SUBJECT = "Your Institutional Researcher's Data Access Request %s is Approved";
-
   private final String darCode;
-
   private final User researcher;
-
   private final String referenceId;
-
   private final List<Dataset> datasets;
-
   private final String dataUseRestriction;
-
 
   public SoDarApproved(User toUser, String darCode, User researcher, String referenceId, List<Dataset> datasets, String dataUseRestriction) {
     super(toUser, EmailType.SO_DAR_APPROVED);

@@ -10,14 +10,12 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
-import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-
-class SoDarApprovedTest extends AbstractTestHelper {
+class SoDarSubmittedTest extends AbstractTestHelper {
 
   private FreeMarkerTemplateHelper helper;
 
@@ -27,13 +25,11 @@ class SoDarApprovedTest extends AbstractTestHelper {
 
   private List<Dataset> datasets;
 
-  private SoDarApproved message;
+  private SoDarSubmitted message;
 
   private final String darCode = "DAR-123";
 
   private final String referenceId = UUID.randomUUID().toString();
-
-  private final String dataUseRestriction = new DataUseBuilder().setGeneralUse(true).build().toString();
 
   @BeforeEach
   void setUp() {
@@ -55,14 +51,14 @@ class SoDarApprovedTest extends AbstractTestHelper {
 
   @Test
   void testMessageSubject() {
-    message = new SoDarApproved(toUser, darCode, researcher, referenceId, datasets, dataUseRestriction);
-    assertEquals("Your Institutional Researcher's Data Access Request %s is Approved".formatted(darCode), message.createSubject());
+    message = new SoDarSubmitted(toUser, darCode, researcher, referenceId, datasets);
+    assertEquals("Broad Data Use Oversight System - Signing Official - New Data Access Request Submitted From Your Institution", message.createSubject());
   }
 
   @Test
   void testGetSoDarApprovedTemplate() throws Exception {
     String linkUrl = "http://testServerUrl";
-    message = new SoDarApproved(toUser, darCode, researcher, referenceId, datasets, dataUseRestriction);
+    message = new SoDarSubmitted(toUser, darCode, researcher, referenceId, datasets);
 
     assertEquals(referenceId, message.getEntityReferenceId());
 
