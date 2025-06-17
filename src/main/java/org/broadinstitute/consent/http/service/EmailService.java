@@ -42,7 +42,10 @@ import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherCloseoutCompletedMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.SoDARApproved;
+import org.broadinstitute.consent.http.mail.message.SoPRSubmitted;
 import org.broadinstitute.consent.http.mail.message.SubmittedCloseoutMessage;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
@@ -244,6 +247,18 @@ public class EmailService implements ConsentLogger {
       User user, Map<String, List<String>> sendList, String researcherName, String darCode, String referenceId)
       throws TemplateException, IOException {
       sendMessage(new NewProgressReportRequestMessage(user, darCode, referenceId, sendList, researcherName),
+        user.getUserId());
+  }
+
+  public void sendNewSoDARRequestEmail(User user, String darCode, User researcher, String referenceId, List<Dataset> datasets, String dataUseRestriction)
+      throws TemplateException, IOException {
+        sendMessage(new SoDARApproved(user, darCode, researcher, referenceId, datasets, dataUseRestriction),
+        user.getUserId());
+  }
+
+  public void sendNewSoProgressReportRequestEmail(User user, String darCode, User researcher, String referenceId, List<Dataset> datasets)
+      throws TemplateException, IOException {
+      sendMessage(new SoPRSubmitted(user, darCode, researcher, referenceId, datasets),
         user.getUserId());
   }
 

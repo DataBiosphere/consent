@@ -10,16 +10,19 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collections;
@@ -52,6 +55,7 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
@@ -90,13 +94,15 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   @Mock
   private UserDAO userDAO;
   @Mock
+  private UseRestrictionConverter useRestrictionConverter;
+  @Mock
   private DacDAO dacDAO;
 
   @BeforeEach
   void setUp() {
     service = new DarCollectionService(darCollectionDAO, darCollectionServiceDAO, datasetDAO,
         electionDAO, dataAccessRequestDAO, emailService, voteDAO, matchDAO,
-        darCollectionSummaryDAO, userDAO, dacDAO);
+        darCollectionSummaryDAO, userDAO, dacDAO, useRestrictionConverter);
   }
 
   @Test
@@ -1433,6 +1439,113 @@ class DarCollectionServiceTest extends AbstractTestHelper {
             Map.of(dac.getName(), List.of(d1.getDatasetIdentifier(), d2.getDatasetIdentifier())),
             researcher.getDisplayName(),
             collection.getDarCode());
+  }
+
+  @Test
+  void testNotifySigningOfficialsNewCollectionMessage_DAR() throws TemplateException, IOException {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
+    when(datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId()))).thenReturn(List.of(dataset));
+
+    DarCollection collection = new DarCollection();
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(dataset.getDatasetId()));
+    collection.addDar(dar);
+
+    User researcher = createUserWithRole(UserRoles.RESEARCHER, null);
+    collection.setCreateUserId(researcher.getUserId());
+    researcher.setInstitutionId(1);
+    User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL, null);
+    signingOfficial.setEmailPreference(true);
+    when(userDAO.getSOsByInstitution(researcher.getInstitutionId())).thenReturn(List.of(signingOfficial));
+
+    service.notifySigningOfficialsNewCollectionMessage(collection, collection.getMostRecentDar(), researcher);
+    verify(emailService, never()).sendNewSoProgressReportRequestEmail(any(), any(), any(), any(), any());
+    verify(emailService, times(1)).sendNewSoDARRequestEmail(any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void testNotifySigningOfficialsNewCollectionMessage_PR() throws TemplateException, IOException {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
+    when(datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId()))).thenReturn(List.of(dataset));
+
+    DarCollection collection = new DarCollection();
+    collection.setDarCollectionId(1);
+    DataAccessRequest parent = new DataAccessRequest();
+    parent.setId(1);
+    parent.setCollectionId(collection.getDarCollectionId());
+    parent.setReferenceId(UUID.randomUUID().toString());
+    parent.setDatasetIds(List.of(dataset.getDatasetId()));
+    parent.setSubmissionDate(Timestamp.from(Instant.now()));
+    collection.addDar(parent);
+
+    DataAccessRequest child = new DataAccessRequest();
+    child.setReferenceId(UUID.randomUUID().toString());
+    child.setParentId(parent.getId());
+    child.setSubmissionDate(Timestamp.from(Instant.now()));
+    child.setCollectionId(collection.getDarCollectionId());
+    child.setDatasetIds(List.of(dataset.getDatasetId()));
+    collection.addDar(child);
+
+    User researcher = createUserWithRole(UserRoles.RESEARCHER, null);
+    collection.setCreateUserId(researcher.getUserId());
+    researcher.setInstitutionId(1);
+    User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL, null);
+    signingOfficial.setEmailPreference(true);
+    when(userDAO.getSOsByInstitution(researcher.getInstitutionId())).thenReturn(List.of(signingOfficial));
+
+    service.notifySigningOfficialsNewCollectionMessage(collection, collection.getMostRecentDar(), researcher);
+    verify(emailService, times(1)).sendNewSoProgressReportRequestEmail(any(), any(), any(), any(), any());
+    verify(emailService, never()).sendNewSoDARRequestEmail(any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void testNotifySigningOfficialsNewCollectionMessage_NoInstitution() throws TemplateException, IOException {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
+
+    DarCollection collection = new DarCollection();
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(dataset.getDatasetId()));
+    collection.addDar(dar);
+
+    User researcher = createUserWithRole(UserRoles.RESEARCHER, null);
+    collection.setCreateUserId(researcher.getUserId());
+
+    service.notifySigningOfficialsNewCollectionMessage(collection, collection.getMostRecentDar(), researcher);
+    verify(emailService, never()).sendNewSoProgressReportRequestEmail(any(), any(), any(), any(), any());
+    verify(emailService, never()).sendNewSoDARRequestEmail(any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void testNotifySigningOfficialsNewCollectionMessage_SO_Disabled() throws TemplateException, IOException {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
+    when(datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId()))).thenReturn(List.of(dataset));
+
+    DarCollection collection = new DarCollection();
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(dataset.getDatasetId()));
+    collection.addDar(dar);
+
+    User researcher = createUserWithRole(UserRoles.RESEARCHER, null);
+    collection.setCreateUserId(researcher.getUserId());
+    researcher.setInstitutionId(1);
+    User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL, null);
+    signingOfficial.setEmailPreference(false);
+    when(userDAO.getSOsByInstitution(researcher.getInstitutionId())).thenReturn(List.of(signingOfficial));
+
+    service.notifySigningOfficialsNewCollectionMessage(collection, collection.getMostRecentDar(), researcher);
+    verify(emailService, never()).sendNewSoProgressReportRequestEmail(any(), any(), any(), any(), any());
+    verify(emailService, never()).sendNewSoDARRequestEmail(any(), any(), any(), any(), any(), any());
   }
 
   private DarCollection generateMockDarCollection(Set<Dataset> datasets) {

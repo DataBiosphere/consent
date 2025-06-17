@@ -38,6 +38,7 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarCollectionActions;
 import org.broadinstitute.consent.http.enumeration.DarCollectionStatus;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
+import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -67,13 +68,15 @@ public class DarCollectionService implements ConsentLogger {
   private final EmailService emailService;
   private final MatchDAO matchDAO;
   private final UserDAO userDAO;
+  private final UseRestrictionConverter useRestrictionConverter;
   private final VoteDAO voteDAO;
 
   @Inject
   public DarCollectionService(DarCollectionDAO darCollectionDAO,
       DarCollectionServiceDAO collectionServiceDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO,
       DataAccessRequestDAO dataAccessRequestDAO, EmailService emailService, VoteDAO voteDAO,
-      MatchDAO matchDAO, DarCollectionSummaryDAO darCollectionSummaryDAO, UserDAO userDAO, DacDAO dacDAO) {
+      MatchDAO matchDAO, DarCollectionSummaryDAO darCollectionSummaryDAO, UserDAO userDAO,
+      DacDAO dacDAO, UseRestrictionConverter useRestrictionConverter) {
     this.darCollectionDAO = darCollectionDAO;
     this.collectionServiceDAO = collectionServiceDAO;
     this.datasetDAO = datasetDAO;
@@ -84,6 +87,7 @@ public class DarCollectionService implements ConsentLogger {
     this.matchDAO = matchDAO;
     this.darCollectionSummaryDAO = darCollectionSummaryDAO;
     this.userDAO = userDAO;
+    this.useRestrictionConverter = useRestrictionConverter;
     this.dacDAO = dacDAO;
   }
 
@@ -786,6 +790,55 @@ public class DarCollectionService implements ConsentLogger {
       } else {
         emailService.sendNewDARRequestEmail(user, sendList, researcherName, collection.getDarCode());
       }
+    }
+    if (researcher != null) {
+      if (researcher.getInstitutionId() == null) {
+        logWarn(
+            "Unable to send new DAR message to Signing Officials: Researcher does not have an institution id: %s".formatted(
+                collection.getCreateUserId()));
+        return;
+      }
+      // Notify the signing officials of the new collection
+      notifySigningOfficialsNewCollectionMessage(collection, dar, researcher);
+    } else {
+      logWarn(
+          "Unable to send new DAR message to Signing Officials: Researcher does not exist for user id: %s".formatted(
+              collection.getCreateUserId()));
+    }
+  }
+
+  @VisibleForTesting
+  protected void notifySigningOfficialsNewCollectionMessage(DarCollection collection,
+      DataAccessRequest dar, User researcher)
+      throws TemplateException, IOException {
+    if (researcher.getInstitutionId() != null) {
+      List<User> signingOfficials = userDAO.getSOsByInstitution(researcher.getInstitutionId());
+      List<Dataset> datasets = datasetDAO.findDatasetsByIdList(dar.getDatasetIds());
+      // Get all Data Use translations, distinctly in the case that there are several with the same
+      // data use, and then conjoin them for email display.
+      String translation = datasets.stream()
+          .map(dataset -> useRestrictionConverter.translateDataUse(dataset.getDataUse(),
+              DataUseTranslationType.DATASET))
+          .distinct()
+          .collect(Collectors.joining(";"));
+      for (User so : signingOfficials) {
+        if (Boolean.TRUE.equals(so.getEmailPreference())) {
+          if (dar.getProgressReport()) {
+            emailService.sendNewSoProgressReportRequestEmail(so, collection.getDarCode(),
+                researcher, dar.getReferenceId(), datasets);
+          } else {
+            emailService.sendNewSoDARRequestEmail(so, collection.getDarCode(), researcher,
+                dar.getReferenceId(), datasets, translation);
+          }
+        } else {
+          logWarn(
+              "Signing Official '%s' has notifications disabled.".formatted(so.getDisplayName()));
+        }
+      }
+    } else {
+      logWarn(
+          "Unable to send new DAR/PR message to Signing Officials: Researcher does not have an institution id: %s".formatted(
+              collection.getCreateUserId()));
     }
   }
 
