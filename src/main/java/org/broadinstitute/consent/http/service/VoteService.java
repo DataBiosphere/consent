@@ -319,7 +319,7 @@ public class VoteService implements ConsentLogger {
           logException("Error notifying custodians of dar approved email: " + e.getMessage(), e);
         }
         try {
-          notifySigningOfficialsOfApprovedDatasets(approvedDatasetsInDar, researcher, dar, darCode);
+          notifySigningOfficialsOfApprovedDatasets(approvedDatasetsInDar, researcher, dar, darCode, translation);
         } catch (Exception e) {
           logException("Error notifying signing officials of dar approved email: " + e.getMessage(), e);
         }
@@ -328,7 +328,9 @@ public class VoteService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  protected void notifySigningOfficialsOfApprovedDatasets(List<Dataset> datasets, User researcher, DataAccessRequest dar, String darCode) throws TemplateException, IOException {
+  protected void notifySigningOfficialsOfApprovedDatasets(List<Dataset> datasets, User researcher,
+      DataAccessRequest dar, String darCode, String translation)
+      throws TemplateException, IOException {
     if (researcher == null) {
       logWarn(
           "Unable to send new DAR/PR message to Signing Officials: Researcher does not exist: %s".formatted(
@@ -342,19 +344,14 @@ public class VoteService implements ConsentLogger {
       return;
     }
     List<User> signingOfficials = userDAO.getSOsByInstitution(researcher.getInstitutionId());
-    // Get all Data Use translations, distinctly in the case that there are several with the same
-    // data use, and then conjoin them for email display.
-    String translation = datasets.stream()
-        .map(dataset -> useRestrictionConverter.translateDataUse(dataset.getDataUse(),
-            DataUseTranslationType.DATASET))
-        .distinct()
-        .collect(Collectors.joining(";"));
     for (User so : signingOfficials) {
       if (Boolean.TRUE.equals(so.getEmailPreference())) {
         if (dar.getProgressReport()) {
-          emailService.sendNewSoProgressReportApprovedEmail(so, darCode, researcher, dar.getReferenceId(), datasets, translation);
+          emailService.sendNewSoProgressReportApprovedEmail(so, darCode, researcher,
+              dar.getReferenceId(), datasets, translation);
         } else {
-          emailService.sendNewSoDARApprovedEmail(so, darCode, researcher, dar.getReferenceId(), datasets, translation);
+          emailService.sendNewSoDARApprovedEmail(so, darCode, researcher, dar.getReferenceId(),
+              datasets, translation);
         }
       } else {
         logWarn(

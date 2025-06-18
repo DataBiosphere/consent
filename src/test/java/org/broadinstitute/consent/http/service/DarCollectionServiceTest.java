@@ -1440,7 +1440,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testNotifySigningOfficials_OfDARSubmission_DAR() throws TemplateException, IOException {
+  void testNotifySigningOfficialsOfDARSubmission_DAR() throws TemplateException, IOException {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
     dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
@@ -1467,7 +1467,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testNotifySigningOfficials_OfDARSubmission_PR() throws TemplateException, IOException {
+  void testNotifySigningOfficialsOfDARSubmission_PR() throws TemplateException, IOException {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
     dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
@@ -1505,7 +1505,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testNotifySigningOfficials_OfDARSubmission_NoInstitution() throws TemplateException, IOException {
+  void testNotifySigningOfficialsOfDARSubmission_NoInstitution() throws TemplateException, IOException {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
     dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
@@ -1527,7 +1527,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testNotifySigningOfficials_OfDARSubmission_SO_Disabled() throws TemplateException, IOException {
+  void testNotifySigningOfficialsOfDARSubmission_SO_Disabled() throws TemplateException, IOException {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
     dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
