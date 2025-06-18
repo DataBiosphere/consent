@@ -164,7 +164,7 @@ class InstitutionDAOTest extends DAOTestHelper {
   void testFindInstitutionsByNameTrimsInput() {
     Institution institution = createInstitution();
 
-    List<Institution> found = institutionDAO.findInstitutionsByName(String.format("  %s  ", institution.getName()));
+    List<Institution> found = institutionDAO.findInstitutionsByName("  " + institution.getName() + "  ");
     assertFalse(found.isEmpty());
     assertEquals(1, found.size());
     assertEquals(institution.getId(), found.get(0).getId());
