@@ -791,54 +791,46 @@ public class DarCollectionService implements ConsentLogger {
         emailService.sendNewDARRequestEmail(user, sendList, researcherName, collection.getDarCode());
       }
     }
-    if (researcher != null) {
-      if (researcher.getInstitutionId() == null) {
-        logWarn(
-            "Unable to send new DAR message to Signing Officials: Researcher does not have an institution id: %s".formatted(
-                collection.getCreateUserId()));
-        return;
-      }
-      // Notify the signing officials of the new collection
-      notifySigningOfficialsNewCollectionMessage(collection, dar, researcher);
-    } else {
-      logWarn(
-          "Unable to send new DAR message to Signing Officials: Researcher does not exist for user id: %s".formatted(
-              collection.getCreateUserId()));
-    }
+    notifySigningOfficials(collection, dar, researcher);
   }
 
   @VisibleForTesting
-  protected void notifySigningOfficialsNewCollectionMessage(DarCollection collection,
-      DataAccessRequest dar, User researcher)
-      throws TemplateException, IOException {
-    if (researcher.getInstitutionId() != null) {
-      List<User> signingOfficials = userDAO.getSOsByInstitution(researcher.getInstitutionId());
-      List<Dataset> datasets = datasetDAO.findDatasetsByIdList(dar.getDatasetIds());
-      // Get all Data Use translations, distinctly in the case that there are several with the same
-      // data use, and then conjoin them for email display.
-      String translation = datasets.stream()
-          .map(dataset -> useRestrictionConverter.translateDataUse(dataset.getDataUse(),
-              DataUseTranslationType.DATASET))
-          .distinct()
-          .collect(Collectors.joining(";"));
-      for (User so : signingOfficials) {
-        if (Boolean.TRUE.equals(so.getEmailPreference())) {
-          if (dar.getProgressReport()) {
-            emailService.sendNewSoProgressReportRequestEmail(so, collection.getDarCode(),
-                researcher, dar.getReferenceId(), datasets);
-          } else {
-            emailService.sendNewSoDARRequestEmail(so, collection.getDarCode(), researcher,
-                dar.getReferenceId(), datasets, translation);
-          }
-        } else {
-          logWarn(
-              "Signing Official '%s' has notifications disabled.".formatted(so.getDisplayName()));
-        }
-      }
-    } else {
+  protected void notifySigningOfficials(DarCollection collection, DataAccessRequest dar,
+      User researcher) throws TemplateException, IOException {
+    if (researcher == null) {
+      logWarn(
+          "Unable to send new DAR/PR message to Signing Officials: Researcher does not exist: %s".formatted(
+              collection.getCreateUserId()));
+      return;
+    }
+    if (researcher.getInstitutionId() == null) {
       logWarn(
           "Unable to send new DAR/PR message to Signing Officials: Researcher does not have an institution id: %s".formatted(
               collection.getCreateUserId()));
+      return;
+    }
+    List<User> signingOfficials = userDAO.getSOsByInstitution(researcher.getInstitutionId());
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(dar.getDatasetIds());
+    // Get all Data Use translations, distinctly in the case that there are several with the same
+    // data use, and then conjoin them for email display.
+    String translation = datasets.stream()
+        .map(dataset -> useRestrictionConverter.translateDataUse(dataset.getDataUse(),
+            DataUseTranslationType.DATASET))
+        .distinct()
+        .collect(Collectors.joining(";"));
+    for (User so : signingOfficials) {
+      if (Boolean.TRUE.equals(so.getEmailPreference())) {
+        if (dar.getProgressReport()) {
+          emailService.sendNewSoProgressReportRequestEmail(so, collection.getDarCode(),
+              researcher, dar.getReferenceId(), datasets);
+        } else {
+          emailService.sendNewSoDARRequestEmail(so, collection.getDarCode(), researcher,
+              dar.getReferenceId(), datasets, translation);
+        }
+      } else {
+        logWarn(
+            "Signing Official '%s' has notifications disabled.".formatted(so.getDisplayName()));
+      }
     }
   }
 
