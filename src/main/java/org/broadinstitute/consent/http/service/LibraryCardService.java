@@ -1,8 +1,10 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
+import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -11,25 +13,29 @@ import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.mail.message.NewLibraryCardIssuedMessage;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 
-public class LibraryCardService {
+public class LibraryCardService implements ConsentLogger {
 
   private final LibraryCardDAO libraryCardDAO;
   private final InstitutionDAO institutionDAO;
   private final InstitutionService institutionService;
   private final UserDAO userDAO;
+  private final EmailService emailService;
 
   @Inject
   public LibraryCardService(LibraryCardDAO libraryCardDAO, InstitutionDAO institutionDAO,
       InstitutionService institutionService,
-      UserDAO userDAO) {
+      UserDAO userDAO, EmailService emailService) {
     this.libraryCardDAO = libraryCardDAO;
     this.institutionDAO = institutionDAO;
     this.institutionService = institutionService;
     this.userDAO = userDAO;
+    this.emailService = emailService;
   }
 
   public LibraryCard createLibraryCard(LibraryCard libraryCard, User user) {
@@ -47,6 +53,14 @@ public class LibraryCardService {
         libraryCard.getUserEmail(),
         libraryCard.getCreateUserId(),
         createDate);
+    User toUser = userDAO.findUserByEmail(libraryCard.getUserEmail());
+    if (toUser != null) {
+      try {
+        emailService.sendNewLibraryCardIssuedMessage(toUser);
+      } catch (IOException | TemplateException e) {
+          logWarn("Failed to send library card issuance notification for user " + user.getUserId(), e);
+        }
+    }
     return libraryCardDAO.findLibraryCardById(id);
   }
 

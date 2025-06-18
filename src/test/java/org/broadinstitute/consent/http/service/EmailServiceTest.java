@@ -440,6 +440,28 @@ class EmailServiceTest extends AbstractTestHelper {
     );
   }
 
+  @Test
+  void testSendNewLibraryCardIssuedMessage() throws Exception {
+    User toUser = new User();
+    toUser.setDisplayName("Test User");
+    toUser.setEmail("test.user@test.com");
+    when(templateHelper.getTemplate(EmailType.NEW_LIBRARY_CARD_ISSUED.templateName)).thenReturn(mock());
+
+    service.sendNewLibraryCardIssuedMessage(toUser);
+    verify(sendGridAPI).sendMessage(any(Mail.class), eq(toUser.getEmail()));
+    verify(emailDAO).insert(
+        eq(toUser.getEmail()),
+        eq(null),
+        eq(toUser.getUserId()),
+        eq(EmailType.NEW_LIBRARY_CARD_ISSUED.getTypeInt()),
+        any(),
+        any(),
+        any(),
+        any(),
+        any()
+    );
+  }
+
   private List<MailMessage> generateMailMessageList() {
     return Collections.nCopies(2, generateMailMessage());
   }
