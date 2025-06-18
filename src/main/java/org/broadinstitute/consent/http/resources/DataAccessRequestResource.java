@@ -394,7 +394,7 @@ public class DataAccessRequestResource extends Resource {
 
   @PUT
   @RolesAllowed({SIGNINGOFFICIAL})
-  @Path("/approve_closeout/{referenceId}")
+  @Path("/{referenceId}/approveCloseout")
   public Response approveCloseout(@Auth DuosUser duosUser,
       @Context Request request,
       @PathParam("referenceId") String referenceId) {
