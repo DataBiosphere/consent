@@ -228,7 +228,8 @@ public class ConsentModule extends AbstractModule {
         providesMatchDAO(),
         providesDarCollectionSummaryDAO(),
         providesUserDAO(),
-        providesDacDAO());
+        providesDacDAO()
+    );
   }
 
   @Provides
