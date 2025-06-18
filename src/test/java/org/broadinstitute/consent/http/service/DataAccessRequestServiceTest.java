@@ -116,9 +116,11 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   private String serverUrl;
 
   private static Collaborator createCollaborator() {
-    Collaborator validCollaborator = new Collaborator();
-    validCollaborator.setEmail("collaborator@test.com");
-    return validCollaborator;
+    return createCollaborator("collaborator@test.com");
+  }
+
+  private static Collaborator createCollaborator(String email) {
+    return new Collaborator(null, email, null, null, null, null, "United States of America (the)");
   }
 
   private static DataAccessRequest createDataAccessRequest(
@@ -136,11 +138,9 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     data.setPiEmail(goodEmailAddress);
     data.setSigningOfficialEmail(goodEmailAddress);
     data.setItDirectorEmail(goodEmailAddress);
-    Collaborator collaborator = new Collaborator();
-    collaborator.setEmail(goodEmailAddress);
+    Collaborator collaborator = createCollaborator(goodEmailAddress);
     data.setInternalCollaborators(List.of(collaborator));
-    Collaborator labStaffMember = new Collaborator();
-    labStaffMember.setEmail(goodEmailAddress);
+    Collaborator labStaffMember = createCollaborator(goodEmailAddress);
     data.setLabCollaborators(List.of(labStaffMember));
     return data;
   }
@@ -152,15 +152,11 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     data.setPiEmail(goodEmailAddress);
     data.setSigningOfficialEmail(goodEmailAddress);
     data.setItDirectorEmail(goodEmailAddress);
-    Collaborator collaborator1 = new Collaborator();
-    collaborator1.setEmail(goodEmailAddress);
-    Collaborator collaborator2 = new Collaborator();
-    collaborator2.setEmail(goodEmailAddress);
+    Collaborator collaborator1 = createCollaborator(goodEmailAddress);
+    Collaborator collaborator2 = createCollaborator(goodEmailAddress);
     data.setLabCollaborators(List.of(collaborator1, collaborator2));
-    Collaborator labStaffMember = new Collaborator();
-    labStaffMember.setEmail(goodEmailAddress);
-    Collaborator labStaffMember2 = new Collaborator();
-    labStaffMember2.setEmail(badEmailAddress);
+    Collaborator labStaffMember = createCollaborator(goodEmailAddress);
+    Collaborator labStaffMember2 =createCollaborator(badEmailAddress);
     data.setLabCollaborators(List.of(labStaffMember, labStaffMember2));
     return data;
   }
@@ -537,26 +533,24 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.setDatasetIds(List.of(1, 2));
     DataAccessRequestData progressReportData = progressReport.getData();
-    Collaborator collaborator1 = new Collaborator();
-    collaborator1.setEmail("1" + user.getEmail());
+    Collaborator collaborator1 = createCollaborator("1" + user.getEmail());
     progressReportData.setInternalCollaborators(Collections.singletonList(collaborator1));
-    Collaborator collaborator2 = new Collaborator();
-    collaborator2.setEmail("2" + user.getEmail());
+    Collaborator collaborator2 = createCollaborator("2" + user.getEmail());
     progressReportData.setLabCollaborators(Collections.singletonList(collaborator2));
     User collaborator1User = createUserWithPrerequisites();
-    collaborator1User.setEmail(collaborator1.getEmail());
+    collaborator1User.setEmail(collaborator1.email());
     collaborator1User.setInstitutionId(user.getInstitutionId());
     collaborator1User.setLibraryCard(new LibraryCard());
     User collaborator2User = createUserWithPrerequisites();
-    collaborator2User.setEmail(collaborator2.getEmail());
+    collaborator2User.setEmail(collaborator2.email());
     collaborator2User.setInstitutionId(user.getInstitutionId());
     collaborator2User.setLibraryCard(new LibraryCard());
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setDatasetIds(List.of(1, 2, 3));
     parentDar.setUserId(user.getUserId());
-    when(userDAO.findUserByEmail(collaborator1.getEmail())).thenReturn(collaborator1User);
-    when(userDAO.findUserByEmail(collaborator2.getEmail())).thenReturn(collaborator2User);
+    when(userDAO.findUserByEmail(collaborator1.email())).thenReturn(collaborator1User);
+    when(userDAO.findUserByEmail(collaborator2.email())).thenReturn(collaborator2User);
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     assertDoesNotThrow(() -> service.validateProgressReport(user, progressReport, parentDar));
   }
@@ -567,17 +561,15 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.setDatasetIds(List.of(1, 2));
     DataAccessRequestData progressReportData = progressReport.getData();
-    Collaborator collaborator1 = new Collaborator();
-    collaborator1.setEmail("alice@1otherdomain.org");
+    Collaborator collaborator1 = createCollaborator("alice@1otherdomain.org");
     progressReportData.setInternalCollaborators(Collections.singletonList(collaborator1));
-    Collaborator collaborator2 = new Collaborator();
-    collaborator2.setEmail("eve@yetanotherdomain.org");
+    Collaborator collaborator2 = createCollaborator("eve@yetanotherdomain.org");
     progressReportData.setLabCollaborators(Collections.singletonList(collaborator2));
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setDatasetIds(List.of(1, 2, 3));
     parentDar.setUserId(user.getUserId());
-    when(userDAO.findUserByEmail(collaborator1.getEmail())).thenReturn(user);
+    when(userDAO.findUserByEmail(collaborator1.email())).thenReturn(user);
     when(institutionService.findInstitutionForEmail(any())).thenReturn(null);
     BadRequestException badRequestException = assertThrows(BadRequestException.class, () -> service.validateProgressReport(user, progressReport, parentDar));
     assertThat(
@@ -646,14 +638,14 @@ library card) eve@yetanotherdomain.org\
   void testValidateInternalCollaboratorsValid() {
     User requestingUser = createRequestingUser();
     Collaborator validCollaborator = createCollaborator();
-    User collaboratorUser = new User(2, validCollaborator.getEmail(), "Collaborator", new Date(),
+    User collaboratorUser = new User(2, validCollaborator.email(), "Collaborator", new Date(),
         roles);
     collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
     LibraryCard libraryCard = new LibraryCard();
     collaboratorUser.setLibraryCard(libraryCard);
     DataAccessRequest dar = createDataAccessRequest(List.of(validCollaborator));
     when(institutionService.findInstitutionForEmail(collaboratorUser.getEmail())).thenReturn(requestingUser.getInstitution());
-    when(userDAO.findUserByEmail(validCollaborator.getEmail())).thenReturn(collaboratorUser);
+    when(userDAO.findUserByEmail(validCollaborator.email())).thenReturn(collaboratorUser);
 
     assertDoesNotThrow(() -> service.validateInternalCollaborators(requestingUser, dar));
   }
@@ -662,13 +654,13 @@ library card) eve@yetanotherdomain.org\
   void testValidateInternalCollaboratorsLibraryCard_NoInstitution() {
     User requestingUser = createRequestingUser();
     Collaborator validCollaborator = createCollaborator();
-    User collaboratorUser = new User(2, validCollaborator.getEmail(), "Collaborator", new Date(),
+    User collaboratorUser = new User(2, validCollaborator.email(), "Collaborator", new Date(),
         roles);
     collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
     LibraryCard libraryCard = new LibraryCard();
     collaboratorUser.setLibraryCard(libraryCard);
     DataAccessRequest dar = createDataAccessRequest(List.of(validCollaborator));
-    when(userDAO.findUserByEmail(validCollaborator.getEmail())).thenReturn(collaboratorUser);
+    when(userDAO.findUserByEmail(validCollaborator.email())).thenReturn(collaboratorUser);
 
     BadRequestException exception = assertThrows(BadRequestException.class, () -> service.validateInternalCollaborators(requestingUser, dar));
     assertEquals("""
@@ -683,7 +675,7 @@ library card) eve@yetanotherdomain.org\
     User requestingUser = createRequestingUser();
     Collaborator invalidCollaborator = createCollaborator();
     DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
-    when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(null);
+    when(userDAO.findUserByEmail(invalidCollaborator.email())).thenReturn(null);
 
     BadRequestException exception =
         assertThrows(
@@ -696,7 +688,7 @@ library card) eve@yetanotherdomain.org\
     institution or library cards issued: Internal Collaborator member:  (missing institution) \
     %s, Internal Collaborator member:  (missing library card) %s\
     """
-            .formatted(invalidCollaborator.getEmail(), invalidCollaborator.getEmail()),
+            .formatted(invalidCollaborator.email(), invalidCollaborator.email()),
         exception.getMessage());
   }
 
@@ -704,12 +696,12 @@ library card) eve@yetanotherdomain.org\
   void testValidateInternalCollaboratorsNoLibraryCard() {
     User requestingUser = createRequestingUser();
     Collaborator invalidCollaborator = createCollaborator();
-    User collaboratorUser = new User(2, invalidCollaborator.getEmail(), "Collaborator", new Date(),
+    User collaboratorUser = new User(2, invalidCollaborator.email(), "Collaborator", new Date(),
         roles);
     collaboratorUser.setInstitutionId(requestingUser.getInstitutionId());
     DataAccessRequest dar = createDataAccessRequest(List.of(invalidCollaborator));
-    when(userDAO.findUserByEmail(invalidCollaborator.getEmail())).thenReturn(collaboratorUser);
-    when(institutionService.findInstitutionForEmail(invalidCollaborator.getEmail())).thenReturn(requestingUser.getInstitution());
+    when(userDAO.findUserByEmail(invalidCollaborator.email())).thenReturn(collaboratorUser);
+    when(institutionService.findInstitutionForEmail(invalidCollaborator.email())).thenReturn(requestingUser.getInstitution());
 
     BadRequestException exception = assertThrows(BadRequestException.class, () ->
         service.validateInternalCollaborators(requestingUser, dar)
@@ -799,6 +791,7 @@ institution or library cards issued: Internal Collaborator member:  \
     data.setReferenceId(dar.getReferenceId());
     dar.addDatasetId(1);
     data.setPiEmail(PI_EMAIL);
+    data.setPiCountryOfOperation("United States of America (the)");
     data.setItDirectorEmail(IT_EMAIL);
     data.setSigningOfficialEmail(SO_EMAIL);
     data.setForProfit(false);
@@ -1114,10 +1107,8 @@ institution or library cards issued: Internal Collaborator member:  \
     data.setPiEmail(goodEmailAddress);
     data.setSigningOfficialEmail(goodEmailAddress);
     data.setItDirectorEmail(goodEmailAddress);
-    Collaborator collaborator1 = new Collaborator();
-    collaborator1.setEmail(goodEmailAddress);
-    Collaborator collaborator2 = new Collaborator();
-    collaborator2.setEmail(badEmailAddress);
+    Collaborator collaborator1 = createCollaborator(goodEmailAddress);
+    Collaborator collaborator2 = createCollaborator(badEmailAddress);
     data.setInternalCollaborators(List.of(collaborator1, collaborator2));
     when(institutionService.findInstitutionForEmail(goodEmailAddress)).thenReturn(goodInstitution);
     when(institutionService.findInstitutionForEmail(badEmailAddress)).thenReturn(null);
@@ -1127,6 +1118,66 @@ institution or library cards issued: Internal Collaborator member:  \
             IllegalArgumentException.class,
             () -> service.validatePersonnelInstitutionAndLibraryCardRequirements(user, data));
     validateException(exception, badEmailAddress, List.of("Internal Collaborator"));
+  }
+
+  @Test
+  void testValidateGoodCountryOfOperationDoesNotThrow() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail("j@example.com");
+    data.setPiCountryOfOperation("Canada");
+
+    Collaborator collaborator1 = createCollaborator("l@example.com");
+    data.setInternalCollaborators(List.of(collaborator1));
+
+    Collaborator collaborator2 =
+        new Collaborator(null, "m@example.com", null, null, null, null, "Curaçao");
+    data.setLabCollaborators(List.of(collaborator2));
+
+    initService();
+    assertDoesNotThrow(() -> service.validateCountryOfOperation(data, false));
+  }
+
+  @Test
+  void testValidatePIAndCollaboratorCountryOfOperationThrowsForBadCountry() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail("j@example.com");
+    data.setPiCountryOfOperation("Atlantis");
+
+    Collaborator collaborator1 =
+        new Collaborator(null, "l@example.com", null, null, null, null, "Genovia");
+    data.setInternalCollaborators(List.of(collaborator1));
+
+    Collaborator collaborator2 =
+        new Collaborator(null, "m@example.com", null, null, null, null, "Narnia");
+    data.setLabCollaborators(List.of(collaborator2));
+
+    initService();
+
+    BadRequestException exception =
+        assertThrows(
+            BadRequestException.class,
+            () -> service.validateCountryOfOperation(data, false));
+
+    assertThat(exception.getMessage(), containsString("Principal Investigator"));
+    assertThat(exception.getMessage(), containsString("Atlantis"));
+    assertThat(exception.getMessage(), containsString(data.getPiEmail()));
+
+    assertThat(exception.getMessage(), containsString("Collaborator"));
+    assertThat(exception.getMessage(), containsString("Genovia"));
+    assertThat(exception.getMessage(), containsString(collaborator1.email()));
+
+    assertThat(exception.getMessage(), containsString("Lab Staff"));
+    assertThat(exception.getMessage(), containsString("Narnia"));
+    assertThat(exception.getMessage(), containsString(collaborator2.email()));
+  }
+
+  @Test
+  void testValidatePIAndCollaboratorCountryOfOperationSkipPI() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPiEmail("j@example.com");
+    initService();
+
+    assertDoesNotThrow(() -> service.validateCountryOfOperation(data, true));
   }
 
   @Test
