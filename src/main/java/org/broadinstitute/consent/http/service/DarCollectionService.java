@@ -788,22 +788,22 @@ public class DarCollectionService implements ConsentLogger {
         emailService.sendNewDARRequestEmail(user, sendList, researcherName, collection.getDarCode());
       }
     }
-    notifySigningOfficials(collection, dar, researcher);
+    notifySigningOfficialsOfDARSubmission(dar, researcher, collection.getDarCode());
   }
 
   @VisibleForTesting
-  protected void notifySigningOfficials(DarCollection collection, DataAccessRequest dar,
-      User researcher) throws TemplateException, IOException {
+  protected void notifySigningOfficialsOfDARSubmission(DataAccessRequest dar, User researcher,
+      String darCode) throws TemplateException, IOException {
     if (researcher == null) {
       logWarn(
           "Unable to send new DAR/PR message to Signing Officials: Researcher does not exist: %s".formatted(
-              collection.getCreateUserId()));
+              dar.getUserId()));
       return;
     }
     if (researcher.getInstitutionId() == null) {
       logWarn(
           "Unable to send new DAR/PR message to Signing Officials: Researcher does not have an institution id: %s".formatted(
-              collection.getCreateUserId()));
+              dar.getUserId()));
       return;
     }
     List<User> signingOfficials = userDAO.getSOsByInstitution(researcher.getInstitutionId());
@@ -811,11 +811,11 @@ public class DarCollectionService implements ConsentLogger {
     for (User so : signingOfficials) {
       if (Boolean.TRUE.equals(so.getEmailPreference())) {
         if (dar.getProgressReport()) {
-          emailService.sendNewSoProgressReportSubmittedEmail(so, collection.getDarCode(),
-              researcher, dar.getReferenceId(), datasets);
-        } else {
-          emailService.sendNewSoDARSubmittedEmail(so, collection.getDarCode(), researcher,
+          emailService.sendNewSoProgressReportSubmittedEmail(so, darCode, researcher,
               dar.getReferenceId(), datasets);
+        } else {
+          emailService.sendNewSoDARSubmittedEmail(so, darCode, researcher, dar.getReferenceId(),
+              datasets);
         }
       } else {
         logWarn(
