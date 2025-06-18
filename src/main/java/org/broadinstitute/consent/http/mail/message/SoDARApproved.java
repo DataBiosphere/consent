@@ -8,7 +8,7 @@ import org.broadinstitute.consent.http.models.User;
 
 public class SoDARApproved extends MailMessage {
 
-  private static final String SUBJECT = "Your Institutional Researcher's Data Access Request %s is Approved";
+  private static final String SUBJECT = "Broad Data Use Oversight System - Signing Official - Your Institutional Researcher's Data Access Request %s is Approved";
   private final String darCode;
   private final User researcher;
   private final String referenceId;

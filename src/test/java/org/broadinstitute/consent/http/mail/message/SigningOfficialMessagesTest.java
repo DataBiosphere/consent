@@ -7,6 +7,7 @@ import java.io.StringWriter;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
@@ -14,26 +15,26 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-
-class SoPRApprovedTest extends AbstractTestHelper {
+class SigningOfficialMessagesTest extends AbstractTestHelper {
 
   private FreeMarkerTemplateHelper helper;
 
-  private User toUser;
+  private static User toUser;
 
-  private User researcher;
+  private static User researcher;
 
-  private List<Dataset> datasets;
+  private static List<Dataset> datasets;
 
-  private SoPRApproved message;
+  private static final String DAR_CODE = "DAR-123";
 
-  private final String darCode = "DAR-123";
+  private static final String REFERENCE_ID = UUID.randomUUID().toString();
 
-  private final String referenceId = UUID.randomUUID().toString();
-
-  private final String dataUseRestriction = new DataUseBuilder().setGeneralUse(true).build().toString();
+  private static final String TRANSLATION = new DataUseBuilder().setGeneralUse(true).build()
+      .toString();
 
   @BeforeEach
   void setUp() {
@@ -53,30 +54,45 @@ class SoPRApprovedTest extends AbstractTestHelper {
     datasets = List.of(dataset);
   }
 
-  @Test
-  void testMessageSubject() {
-    message = new SoPRApproved(toUser, darCode, researcher, referenceId, datasets, dataUseRestriction);
-    assertEquals("Your Institutional Researcher's Progress Report %s is Approved".formatted(darCode), message.createSubject());
+  private static Stream<Arguments> provideSOMessages() {
+    return Stream.of(
+        Arguments.of(new SoDARApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
+            TRANSLATION)),
+        Arguments.of(new SoPRApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
+            TRANSLATION)),
+        Arguments.of(new SoDARSubmitted(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets)),
+        Arguments.of(new SoPRSubmitted(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets))
+    );
   }
 
-  @Test
-  void testGetSoPRApprovedTemplate() throws Exception {
-    String linkUrl = "http://testServerUrl";
-    message = new SoPRApproved(toUser, darCode, researcher, referenceId, datasets, dataUseRestriction);
+  @ParameterizedTest
+  @MethodSource("provideSOMessages")
+  void testMessageSubject(MailMessage message) {
+    assertTrue(
+        message.createSubject().contains("Broad Data Use Oversight System - Signing Official"));
+  }
 
-    assertEquals(referenceId, message.getEntityReferenceId());
-
+  @ParameterizedTest
+  @MethodSource("provideSOMessages")
+  void testMessageTemplate(MailMessage message) throws Exception {
+    var linkUrl = "http://testServerUrl";
     var template = helper.getTemplate(message.getTemplateName());
     var out = new StringWriter();
     template.process(message.createModel(linkUrl), out);
     String templateString = out.toString();
 
     assertTrue(templateString.contains(toUser.getDisplayName()));
-    assertTrue(templateString.contains(darCode));
+    assertTrue(templateString.contains(DAR_CODE));
     assertTrue(templateString.contains(researcher.getDisplayName()));
     datasets.forEach(dataset -> {
       assertTrue(templateString.contains(dataset.getName()));
       assertTrue(templateString.contains(dataset.getDatasetIdentifier()));
     });
+  }
+
+  @ParameterizedTest
+  @MethodSource("provideSOMessages")
+  void testMessageEntityReferenceId(MailMessage message) {
+    assertEquals(REFERENCE_ID, message.getEntityReferenceId());
   }
 }
