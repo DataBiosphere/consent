@@ -161,6 +161,41 @@ class InstitutionDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindInstitutionsByNameTrimsInput() {
+    Institution institution = createInstitution();
+
+    List<Institution> found = institutionDAO.findInstitutionsByName(String.format("  %s  ", institution.getName()));
+    assertFalse(found.isEmpty());
+    assertEquals(1, found.size());
+    assertEquals(institution.getId(), found.get(0).getId());
+  }
+
+  @Test
+  void testFindInstitutionsByNameTrimsDb() {
+    Institution institution = createInstitution();
+    User user = createUser();
+    institutionDAO.updateInstitutionById(
+        institution.getId(),
+        "  " + institution.getName() + "  ",
+        institution.getItDirectorEmail(),
+        institution.getItDirectorName(),
+        institution.getInstitutionUrl(),
+        institution.getDunsNumber(),
+        institution.getOrgChartUrl(),
+        institution.getVerificationUrl(),
+        institution.getVerificationFilename(),
+        institution.getOrganizationType().getValue(),
+        user.getUserId(),
+        new Date()
+    );
+    List<Institution> found = institutionDAO.findInstitutionsByName(institution.getName());
+    assertFalse(found.isEmpty());
+    assertEquals(1, found.size());
+    assertEquals(institution.getId(), found.get(0).getId());
+  }
+
+
+  @Test
   void testFindInstitutionsByName_Missing() {
     List<Institution> found = institutionDAO.findInstitutionsByName(
         RandomStringUtils.randomAlphabetic(10));
