@@ -3,10 +3,13 @@ package org.broadinstitute.consent.http.service;
 import static java.util.function.Predicate.not;
 
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import freemarker.template.TemplateException;
 import jakarta.ws.rs.NotFoundException;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -21,7 +24,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
-import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -33,9 +35,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Study;
@@ -53,7 +53,6 @@ import org.glassfish.jersey.server.ContainerRequest;
 public class VoteService implements ConsentLogger {
 
   private final UserDAO userDAO;
-  private final DarCollectionDAO darCollectionDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DatasetDAO datasetDAO;
   private final ElectionDAO electionDAO;
@@ -64,14 +63,11 @@ public class VoteService implements ConsentLogger {
   private final VoteServiceDAO voteServiceDAO;
 
   @Inject
-  public VoteService(UserDAO userDAO, DarCollectionDAO darCollectionDAO,
-      DataAccessRequestDAO dataAccessRequestDAO,
-      DatasetDAO datasetDAO, ElectionDAO electionDAO,
-      EmailService emailService, ElasticSearchService elasticSearchService,
-      UseRestrictionConverter useRestrictionConverter,
+  public VoteService(UserDAO userDAO, DataAccessRequestDAO dataAccessRequestDAO,
+      DatasetDAO datasetDAO, ElectionDAO electionDAO, EmailService emailService,
+      ElasticSearchService elasticSearchService, UseRestrictionConverter useRestrictionConverter,
       VoteDAO voteDAO, VoteServiceDAO voteServiceDAO) {
     this.userDAO = userDAO;
-    this.darCollectionDAO = darCollectionDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.datasetDAO = datasetDAO;
     this.electionDAO = electionDAO;
@@ -322,8 +318,49 @@ public class VoteService implements ConsentLogger {
         } catch (Exception e) {
           logException("Error notifying custodians of dar approved email: " + e.getMessage(), e);
         }
+        try {
+          notifySigningOfficialsOfApprovedDatasets(approvedDatasetsInDar, researcher, dar, darCode);
+        } catch (Exception e) {
+          logException("Error notifying signing officials of dar approved email: " + e.getMessage(), e);
+        }
       }
     });
+  }
+
+  @VisibleForTesting
+  protected void notifySigningOfficialsOfApprovedDatasets(List<Dataset> datasets, User researcher, DataAccessRequest dar, String darCode) throws TemplateException, IOException {
+    if (researcher == null) {
+      logWarn(
+          "Unable to send new DAR/PR message to Signing Officials: Researcher does not exist: %s".formatted(
+              dar.getUserId()));
+      return;
+    }
+    if (researcher.getInstitutionId() == null) {
+      logWarn(
+          "Unable to send new DAR/PR message to Signing Officials: Researcher does not have an institution id: %s".formatted(
+              dar.getUserId()));
+      return;
+    }
+    List<User> signingOfficials = userDAO.getSOsByInstitution(researcher.getInstitutionId());
+    // Get all Data Use translations, distinctly in the case that there are several with the same
+    // data use, and then conjoin them for email display.
+    String translation = datasets.stream()
+        .map(dataset -> useRestrictionConverter.translateDataUse(dataset.getDataUse(),
+            DataUseTranslationType.DATASET))
+        .distinct()
+        .collect(Collectors.joining(";"));
+    for (User so : signingOfficials) {
+      if (Boolean.TRUE.equals(so.getEmailPreference())) {
+        if (dar.getProgressReport()) {
+          emailService.sendNewSoProgressReportApprovedEmail(so, darCode, researcher, dar.getReferenceId(), datasets, translation);
+        } else {
+          emailService.sendNewSoDARApprovedEmail(so, darCode, researcher, dar.getReferenceId(), datasets, translation);
+        }
+      } else {
+        logWarn(
+            "Signing Official '%s' has notifications disabled.".formatted(so.getDisplayName()));
+      }
+    }
   }
 
   /**
@@ -441,7 +478,7 @@ public class VoteService implements ConsentLogger {
   private void validateVotesCanUpdate(List<Vote> votes) throws IllegalArgumentException {
     List<Election> elections = electionDAO.findElectionsByIds(votes.stream()
         .map(Vote::getElectionId)
-        .collect(Collectors.toList()));
+        .toList());
 
     // If there are any DataAccess elections in a non-open state, throw an error
     List<Election> nonOpenAccessElections = elections.stream()

@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
-import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -70,8 +69,6 @@ class VoteServiceTest extends AbstractTestHelper {
   @Mock
   private UserDAO userDAO;
   @Mock
-  private DarCollectionDAO darCollectionDAO;
-  @Mock
   private DataAccessRequestDAO dataAccessRequestDAO;
   @Mock
   private DatasetDAO datasetDAO;
@@ -91,7 +88,7 @@ class VoteServiceTest extends AbstractTestHelper {
   private User user;
 
   private void initService() {
-    service = new VoteService(userDAO, darCollectionDAO, dataAccessRequestDAO,
+    service = new VoteService(userDAO, dataAccessRequestDAO,
         datasetDAO, electionDAO, emailService, elasticSearchService,
         useRestrictionConverter, voteDAO, voteServiceDAO);
   }

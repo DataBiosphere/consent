@@ -43,6 +43,8 @@ import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressRe
 import org.broadinstitute.consent.http.mail.message.ResearcherCloseoutCompletedMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.SoDARApproved;
+import org.broadinstitute.consent.http.mail.message.SoDARSubmitted;
+import org.broadinstitute.consent.http.mail.message.SoPRApproved;
 import org.broadinstitute.consent.http.mail.message.SoPRSubmitted;
 import org.broadinstitute.consent.http.mail.message.SubmittedCloseoutMessage;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -250,15 +252,27 @@ public class EmailService implements ConsentLogger {
         user.getUserId());
   }
 
-  public void sendNewSoDARRequestEmail(User user, String darCode, User researcher, String referenceId, List<Dataset> datasets, String dataUseRestriction)
+  public void sendNewSoDARSubmittedEmail(User user, String darCode, User researcher, String referenceId, List<Dataset> datasets)
+      throws TemplateException, IOException {
+        sendMessage(new SoDARSubmitted(user, darCode, researcher, referenceId, datasets),
+        user.getUserId());
+  }
+
+  public void sendNewSoProgressReportSubmittedEmail(User user, String darCode, User researcher, String referenceId, List<Dataset> datasets)
+      throws TemplateException, IOException {
+      sendMessage(new SoPRSubmitted(user, darCode, researcher, referenceId, datasets),
+        user.getUserId());
+  }
+
+  public void sendNewSoDARApprovedEmail(User user, String darCode, User researcher, String referenceId, List<Dataset> datasets, String dataUseRestriction)
       throws TemplateException, IOException {
         sendMessage(new SoDARApproved(user, darCode, researcher, referenceId, datasets, dataUseRestriction),
         user.getUserId());
   }
 
-  public void sendNewSoProgressReportRequestEmail(User user, String darCode, User researcher, String referenceId, List<Dataset> datasets)
+  public void sendNewSoProgressReportApprovedEmail(User user, String darCode, User researcher, String referenceId, List<Dataset> datasets, String dataUseRestriction)
       throws TemplateException, IOException {
-      sendMessage(new SoPRSubmitted(user, darCode, researcher, referenceId, datasets),
+      sendMessage(new SoPRApproved(user, darCode, researcher, referenceId, datasets, dataUseRestriction),
         user.getUserId());
   }
 

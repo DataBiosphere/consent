@@ -94,15 +94,13 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   @Mock
   private UserDAO userDAO;
   @Mock
-  private UseRestrictionConverter useRestrictionConverter;
-  @Mock
   private DacDAO dacDAO;
 
   @BeforeEach
   void setUp() {
     service = new DarCollectionService(darCollectionDAO, darCollectionServiceDAO, datasetDAO,
         electionDAO, dataAccessRequestDAO, emailService, voteDAO, matchDAO,
-        darCollectionSummaryDAO, userDAO, dacDAO, useRestrictionConverter);
+        darCollectionSummaryDAO, userDAO, dacDAO);
   }
 
   @Test
@@ -1462,8 +1460,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(userDAO.getSOsByInstitution(researcher.getInstitutionId())).thenReturn(List.of(signingOfficial));
 
     service.notifySigningOfficials(collection, collection.getMostRecentDar(), researcher);
-    verify(emailService, never()).sendNewSoProgressReportRequestEmail(any(), any(), any(), any(), any());
-    verify(emailService, times(1)).sendNewSoDARRequestEmail(any(), any(), any(), any(), any(), any());
+    verify(emailService, never()).sendNewSoProgressReportSubmittedEmail(any(), any(), any(), any(), any());
+    verify(emailService, times(1)).sendNewSoDARSubmittedEmail(any(), any(), any(), any(), any());
   }
 
   @Test
@@ -1499,8 +1497,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(userDAO.getSOsByInstitution(researcher.getInstitutionId())).thenReturn(List.of(signingOfficial));
 
     service.notifySigningOfficials(collection, collection.getMostRecentDar(), researcher);
-    verify(emailService, times(1)).sendNewSoProgressReportRequestEmail(any(), any(), any(), any(), any());
-    verify(emailService, never()).sendNewSoDARRequestEmail(any(), any(), any(), any(), any(), any());
+    verify(emailService, times(1)).sendNewSoProgressReportSubmittedEmail(any(), any(), any(), any(), any());
+    verify(emailService, never()).sendNewSoDARSubmittedEmail(any(), any(), any(), any(), any());
   }
 
   @Test
@@ -1519,8 +1517,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     collection.setCreateUserId(researcher.getUserId());
 
     service.notifySigningOfficials(collection, collection.getMostRecentDar(), researcher);
-    verify(emailService, never()).sendNewSoProgressReportRequestEmail(any(), any(), any(), any(), any());
-    verify(emailService, never()).sendNewSoDARRequestEmail(any(), any(), any(), any(), any(), any());
+    verify(emailService, never()).sendNewSoProgressReportSubmittedEmail(any(), any(), any(), any(), any());
+    verify(emailService, never()).sendNewSoDARSubmittedEmail(any(), any(), any(), any(), any());
   }
 
   @Test
@@ -1544,8 +1542,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(userDAO.getSOsByInstitution(researcher.getInstitutionId())).thenReturn(List.of(signingOfficial));
 
     service.notifySigningOfficials(collection, collection.getMostRecentDar(), researcher);
-    verify(emailService, never()).sendNewSoProgressReportRequestEmail(any(), any(), any(), any(), any());
-    verify(emailService, never()).sendNewSoDARRequestEmail(any(), any(), any(), any(), any(), any());
+    verify(emailService, never()).sendNewSoProgressReportSubmittedEmail(any(), any(), any(), any(), any());
+    verify(emailService, never()).sendNewSoDARSubmittedEmail(any(), any(), any(), any(), any());
   }
 
   private DarCollection generateMockDarCollection(Set<Dataset> datasets) {

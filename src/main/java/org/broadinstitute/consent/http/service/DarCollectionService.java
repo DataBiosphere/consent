@@ -38,7 +38,6 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarCollectionActions;
 import org.broadinstitute.consent.http.enumeration.DarCollectionStatus;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
-import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -68,7 +67,6 @@ public class DarCollectionService implements ConsentLogger {
   private final EmailService emailService;
   private final MatchDAO matchDAO;
   private final UserDAO userDAO;
-  private final UseRestrictionConverter useRestrictionConverter;
   private final VoteDAO voteDAO;
 
   @Inject
@@ -76,7 +74,7 @@ public class DarCollectionService implements ConsentLogger {
       DarCollectionServiceDAO collectionServiceDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO,
       DataAccessRequestDAO dataAccessRequestDAO, EmailService emailService, VoteDAO voteDAO,
       MatchDAO matchDAO, DarCollectionSummaryDAO darCollectionSummaryDAO, UserDAO userDAO,
-      DacDAO dacDAO, UseRestrictionConverter useRestrictionConverter) {
+      DacDAO dacDAO) {
     this.darCollectionDAO = darCollectionDAO;
     this.collectionServiceDAO = collectionServiceDAO;
     this.datasetDAO = datasetDAO;
@@ -87,7 +85,6 @@ public class DarCollectionService implements ConsentLogger {
     this.matchDAO = matchDAO;
     this.darCollectionSummaryDAO = darCollectionSummaryDAO;
     this.userDAO = userDAO;
-    this.useRestrictionConverter = useRestrictionConverter;
     this.dacDAO = dacDAO;
   }
 
@@ -811,21 +808,14 @@ public class DarCollectionService implements ConsentLogger {
     }
     List<User> signingOfficials = userDAO.getSOsByInstitution(researcher.getInstitutionId());
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(dar.getDatasetIds());
-    // Get all Data Use translations, distinctly in the case that there are several with the same
-    // data use, and then conjoin them for email display.
-    String translation = datasets.stream()
-        .map(dataset -> useRestrictionConverter.translateDataUse(dataset.getDataUse(),
-            DataUseTranslationType.DATASET))
-        .distinct()
-        .collect(Collectors.joining(";"));
     for (User so : signingOfficials) {
       if (Boolean.TRUE.equals(so.getEmailPreference())) {
         if (dar.getProgressReport()) {
-          emailService.sendNewSoProgressReportRequestEmail(so, collection.getDarCode(),
+          emailService.sendNewSoProgressReportSubmittedEmail(so, collection.getDarCode(),
               researcher, dar.getReferenceId(), datasets);
         } else {
-          emailService.sendNewSoDARRequestEmail(so, collection.getDarCode(), researcher,
-              dar.getReferenceId(), datasets, translation);
+          emailService.sendNewSoDARSubmittedEmail(so, collection.getDarCode(), researcher,
+              dar.getReferenceId(), datasets);
         }
       } else {
         logWarn(
