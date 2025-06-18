@@ -54,7 +54,7 @@ class SigningOfficialMessagesTest extends AbstractTestHelper {
     datasets = List.of(dataset);
   }
 
-  private static Stream<Arguments> provideSOMessages() {
+  private static Stream<Arguments> messageProvider() {
     return Stream.of(
         Arguments.of(new SoDARApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
             TRANSLATION)),
@@ -66,14 +66,14 @@ class SigningOfficialMessagesTest extends AbstractTestHelper {
   }
 
   @ParameterizedTest
-  @MethodSource("provideSOMessages")
+  @MethodSource("messageProvider")
   void testMessageSubject(MailMessage message) {
     assertTrue(
         message.createSubject().contains("Broad Data Use Oversight System - Signing Official"));
   }
 
   @ParameterizedTest
-  @MethodSource("provideSOMessages")
+  @MethodSource("messageProvider")
   void testMessageTemplate(MailMessage message) throws Exception {
     var linkUrl = "http://testServerUrl";
     var template = helper.getTemplate(message.getTemplateName());
@@ -91,7 +91,7 @@ class SigningOfficialMessagesTest extends AbstractTestHelper {
   }
 
   @ParameterizedTest
-  @MethodSource("provideSOMessages")
+  @MethodSource("messageProvider")
   void testMessageEntityReferenceId(MailMessage message) {
     assertEquals(REFERENCE_ID, message.getEntityReferenceId());
   }
