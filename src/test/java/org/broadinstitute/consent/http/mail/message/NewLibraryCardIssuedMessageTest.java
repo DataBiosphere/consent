@@ -1,8 +1,10 @@
 package org.broadinstitute.consent.http.mail.message;
 
+
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import freemarker.template.TemplateException;
 import java.io.IOException;
@@ -16,7 +18,7 @@ import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class NewLibraryCardIssuedMessageTest {
+class NewLibraryCardIssuedMessageTest {
   private FreeMarkerTemplateHelper helper;
 
   @BeforeEach
@@ -34,7 +36,7 @@ public class NewLibraryCardIssuedMessageTest {
     toUser.setEmail("test.user@test.com");
     toUser.setUserId(1);
     String serverUrl = "http://localhost:8080/";
-    String expectedUrl = serverUrl+"datalibrary";
+    String expectedUrl = serverUrl + "datalibrary";
     var message = new NewLibraryCardIssuedMessage(toUser);
     assertEquals(toUser.getEmail(), message.getEntityReferenceId());
 
@@ -44,11 +46,21 @@ public class NewLibraryCardIssuedMessageTest {
     template.process(message.createModel(serverUrl), out);
     var templateString = out.toString();
     Document parsedTemplate = Jsoup.parse(templateString);
-    assertEquals("Broad Data Use Oversight System - Your Library Card Has Been Issued!",
+    assertEquals(
+        "Broad Data Use Oversight System - Your Library Card Has Been Issued!",
         parsedTemplate.title());
 
-    assertEquals("Hello %s,".formatted(toUser.getDisplayName()), getElementTextById(parsedTemplate, "displayName"));
-    assertThat(getElementTextById(parsedTemplate,"content"), contains(expectedUrl));
+    assertEquals(
+        "Hello %s,".formatted(toUser.getDisplayName()),
+        getElementTextById(parsedTemplate, "displayName"));
+    assertThat(
+        getElementTextById(parsedTemplate, "content"),
+        containsString(
+            "You can now initiate data access requests. Get started by searching for data you would like to access in the DUOS Data Library."));
+    assertTrue(
+        Objects.requireNonNull(parsedTemplate.getElementById("content"))
+            .html()
+            .contains(expectedUrl));
   }
 
   String getElementTextById(Document document, String id) {

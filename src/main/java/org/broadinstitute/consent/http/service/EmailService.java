@@ -48,7 +48,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
-import org.eclipse.jetty.util.IO;
 
 public class EmailService implements ConsentLogger {
 
@@ -313,9 +312,10 @@ public class EmailService implements ConsentLogger {
 
   /**
    * Send a message to the user when they are issued a library card
-   * @param toUser              The user to send the message to
-   * @throws TemplateException  Template processing exception
-   * @throws IOException        IOException when processing the template or sending the email
+   *
+   * @param toUser The user to send the message to
+   * @throws TemplateException Template processing exception
+   * @throws IOException IOException when processing the template or sending the email
    */
   public void sendNewLibraryCardIssuedMessage(User toUser) throws TemplateException, IOException {
     sendMessage(new NewLibraryCardIssuedMessage(toUser), toUser.getUserId());
