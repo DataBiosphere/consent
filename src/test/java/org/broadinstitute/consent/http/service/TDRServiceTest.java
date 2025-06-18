@@ -69,13 +69,13 @@ class TDRServiceTest extends AbstractTestHelper {
     DataAccessRequest dar1 = new DataAccessRequest();
     dar1.setUserId(user1.getUserId());
     DataAccessRequestData data = new DataAccessRequestData();
-    Collaborator lab = new Collaborator();
-    lab.setEmail("lab@gmail.com");
+    Collaborator lab =
+        new Collaborator(null, "lab@gmail.com", null, null, null, null, null);
     data.setLabCollaborators(List.of(lab));
-    Collaborator internal = new Collaborator();
-    internal.setEmail("internal@gmail.com");
+    Collaborator internal =
+        new Collaborator(null, "internal@gmail.com", null, null, null, null, null);
     LibraryCard libraryCard3 = new LibraryCard();
-    libraryCard3.setUserEmail(internal.getEmail());
+    libraryCard3.setUserEmail(internal.email());
     data.setInternalCollaborators(List.of(internal));
     dar1.setData(data);
     User user2 = new User();
@@ -101,10 +101,10 @@ class TDRServiceTest extends AbstractTestHelper {
 
     assertTrue(
         approvedUsersEmails.containsAll(
-            List.of(user1.getEmail(), user2.getEmail(), internal.getEmail())),
+            List.of(user1.getEmail(), user2.getEmail(), internal.email())),
         "Approved users should include user1, user2, and internal collaborator");
     assertFalse(
-        approvedUsersEmails.contains(lab.getEmail()),
+        approvedUsersEmails.contains(lab.email()),
         "Lab collaborator should not be included as they do not have a library card"
     );
   }
@@ -118,8 +118,7 @@ class TDRServiceTest extends AbstractTestHelper {
     DataAccessRequest dar1 = new DataAccessRequest();
     dar1.setUserId(user1.getUserId());
     DataAccessRequestData data = new DataAccessRequestData();
-    Collaborator lab = new Collaborator();
-    lab.setEmail(" ");
+    Collaborator lab = new Collaborator(null, " ", null, null, null, null, null);
     data.setLabCollaborators(List.of(lab));
     dar1.setData(data);
     User user2 = new User();

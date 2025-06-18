@@ -50,6 +50,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.CountryValidator;
 import org.jdbi.v3.core.JdbiException;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
@@ -78,6 +79,7 @@ public class DataAccessRequestService implements ConsentLogger {
   private final UserDAO userDAO;
   private final UserService userService;
   private final DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
+  private final CountryValidator countryValidator;
 
   private final DacService dacService;
   private final String serverUrl;
@@ -98,6 +100,7 @@ public class DataAccessRequestService implements ConsentLogger {
     this.institutionService = institutionService;
     this.emailService = emailService;
     this.serverUrl = config.getServicesConfiguration().getLocalURL();
+    this.countryValidator = new CountryValidator();
   }
 
   public List<DataAccessRequest> findAllDraftDataAccessRequests() {
@@ -348,6 +351,7 @@ public class DataAccessRequestService implements ConsentLogger {
   public void validateProgressReport(User user, DataAccessRequest progressReport, DataAccessRequest parentDar) {
     validateCommonDarAndProgressReportElements(user, progressReport);
     validateInternalCollaborators(user, progressReport);
+    validateCountryOfOperation(progressReport.data, true);
 
     if (parentDar.getDraft()) {
       throw new BadRequestException(
@@ -399,6 +403,31 @@ public class DataAccessRequestService implements ConsentLogger {
     validateCommonDarAndProgressReportElements(user, dar);
     validateNoKeyPersonnelDuplicates(dar.getData());
     validatePersonnelInstitutionAndLibraryCardRequirements(user, dar.getData());
+    validateCountryOfOperation(dar.getData(), false);
+  }
+
+  protected void validateCountryOfOperation(DataAccessRequestData darData, boolean skipPI) {
+    List<String> errorSummary = new ArrayList<>();
+    // We will have progress reports that don't have country of operation set for the PI.
+    if (!skipPI && !countryValidator.isInCountryList(darData.getPiCountryOfOperation())) {
+      errorSummary.add(
+          "Principal Investigator %s Country of Operation (%s) is not allowed"
+              .formatted(darData.getPiEmail(), darData.getPiCountryOfOperation()));
+    }
+
+    List<Collaborator> collaborators = darData.getLabAndInternalCollaborators();
+    collaborators.forEach(
+        collaborator -> {
+          if (!countryValidator.isInCountryList(collaborator.countryOfOperation())) {
+            errorSummary.add(
+                "Collaborator or Lab Staff Member %s Country of Operation (%s) is not allowed"
+                    .formatted(collaborator.email(), collaborator.countryOfOperation()));
+          }
+        });
+
+    if (!errorSummary.isEmpty()) {
+      throw new BadRequestException(String.join(", ", errorSummary));
+    }
   }
 
   @VisibleForTesting
@@ -414,10 +443,10 @@ public class DataAccessRequestService implements ConsentLogger {
   private List<String> getCollaboratorAndLibraryCardErrors(User user, DataAccessRequestData darData) {
     List<String> errorSummary = new ArrayList<>();
     getErrorSummary(
-        darData.getInternalCollaborators().stream().map(Collaborator::getEmail).toList(), user.getInstitution(),
+        darData.getInternalCollaborators().stream().map(Collaborator::email).toList(), user.getInstitution(),
         INTERNAL_COLLABORATOR + " " + MEMBER + ": ", INTERNAL_COLLABORATOR + "  " + MEMBERS, errorSummary);
     getErrorSummary(
-        darData.getLabCollaborators().stream().map(Collaborator::getEmail).toList(), user.getInstitution(),
+        darData.getLabCollaborators().stream().map(Collaborator::email).toList(), user.getInstitution(),
         LAB_STAFF + " " + MEMBER + ": ", LAB_STAFF + " " + MEMBERS, errorSummary);
     return errorSummary;
   }
@@ -487,7 +516,6 @@ public class DataAccessRequestService implements ConsentLogger {
     verifyInstitution(submitterInstitution, piEmail, "Principal Investigator", invalidMembers);
     verifyInstitution(submitterInstitution, soEmail, "Signing Official", invalidMembers);
     verifyInstitution(submitterInstitution, itEmail, "IT Director", invalidMembers);
-
     invalidMembers.addAll(getCollaboratorAndLibraryCardErrors(user, darData));
 
     if (!invalidMembers.isEmpty()) {

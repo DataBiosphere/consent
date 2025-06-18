@@ -20,8 +20,8 @@ class DataAccessRequestTest {
     parentDar.setCollectionId(100);
     DataAccessRequestData parentData = new DataAccessRequestData();
     parentData.setProjectTitle("Parent Project Title");
-    Collaborator collaborator = new Collaborator();
-    collaborator.setName("Parent Collaborator");
+    Collaborator collaborator =
+        new Collaborator(null, null, null, "Parent Collaborator", null, null, null);
     parentData.setInternalCollaborators(List.of(collaborator));
     parentData.setExternalCollaborators(List.of(collaborator));
     parentData.setLabCollaborators(List.of(collaborator));
