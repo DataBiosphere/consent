@@ -1020,6 +1020,78 @@ class VoteServiceTest extends AbstractTestHelper {
     verify(emailService, never()).sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any());
   }
 
+  @Test
+  void testNotifySigningOfficialsOfApprovedDatasets_NoResearcher() throws TemplateException, IOException {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
+
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(dataset.getDatasetId()));
+
+    service.notifySigningOfficialsOfApprovedDatasets(List.of(dataset), null, dar, "DAR-000123", "translation");
+    verify(emailService, never()).sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
+    verify(emailService, never()).sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void testNotifySigningOfficialsOfApprovedDatasets_NoInstitution() throws TemplateException, IOException {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
+
+    User researcher =  createUserWithRole(UserRoles.RESEARCHER);
+
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(dataset.getDatasetId()));
+
+    service.notifySigningOfficialsOfApprovedDatasets(List.of(dataset), researcher, dar, "DAR-000123", "translation");
+    verify(emailService, never()).sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
+    verify(emailService, never()).sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void testNotifySigningOfficialsOfApprovedDatasets_NoSigningOfficials() throws TemplateException, IOException {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
+
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(dataset.getDatasetId()));
+
+    User researcher =  createUserWithRole(UserRoles.RESEARCHER);
+    researcher.setInstitutionId(1);
+    when(userDAO.getSOsByInstitution(researcher.getInstitutionId())).thenReturn(List.of());
+
+    service.notifySigningOfficialsOfApprovedDatasets(List.of(dataset), researcher, dar, "DAR-000123", "translation");
+    verify(emailService, never()).sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
+    verify(emailService, never()).sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void testNotifySigningOfficialsOfApprovedDatasets_SigningOfficialEmailDisabled() throws TemplateException, IOException {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
+
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(dataset.getDatasetId()));
+
+    User researcher =  createUserWithRole(UserRoles.RESEARCHER);
+    researcher.setInstitutionId(1);
+    User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL);
+    signingOfficial.setEmailPreference(false);
+    when(userDAO.getSOsByInstitution(researcher.getInstitutionId())).thenReturn(List.of(signingOfficial));
+
+    service.notifySigningOfficialsOfApprovedDatasets(List.of(dataset), researcher, dar, "DAR-000123", "translation");
+    verify(emailService, never()).sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
+    verify(emailService, never()).sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any());
+  }
+
   private User createUserWithRole(UserRoles userRoles) {
     User newUser = new User();
     newUser.setUserId(randomInt(1, 1000));
