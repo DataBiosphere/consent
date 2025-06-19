@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -294,7 +295,9 @@ public class DacService implements ConsentLogger {
   }
 
   public Set<Dac> findByDatasetId(List<Integer> datasetIds) {
-    return dacDAO.findDacsForDatasetIds(datasetIds);
+    Set<Dac> returnSet = new HashSet<>();
+    dacDAO.findDacsForDatasetIds(datasetIds).forEach(dac -> returnSet.add(findById(dac.getDacId())));
+    return returnSet;
   }
 
 }
