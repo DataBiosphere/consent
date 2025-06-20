@@ -386,12 +386,12 @@ public class DataAccessRequestService implements ConsentLogger {
     }
   }
 
-  private void validateCommonDarAndProgressReportElements(User user, DataAccessRequest dar) {
+  @VisibleForTesting
+  protected void validateCommonDarAndProgressReportElements(User user, DataAccessRequest dar) {
     if (Objects.isNull(user) || Objects.isNull(dar) || Objects.isNull(
         dar.getReferenceId()) || Objects.isNull(dar.getData())) {
       throw new IllegalArgumentException("User and DataAccessRequest are required");
     }
-
     if (user.getLibraryCard() == null) {
       throw new NIHComplianceRuleException();
     }
@@ -401,6 +401,11 @@ public class DataAccessRequestService implements ConsentLogger {
 
   public void validateDar(User user, DataAccessRequest dar) {
     validateCommonDarAndProgressReportElements(user, dar);
+
+    if (!Objects.equals(user.getEmail(), dar.getData().getPiEmail()) || !Objects.equals(user.getDisplayName(), dar.getData().getPiName())) {
+      throw new BadRequestException("The PI in the DAR must have the same name and email as the user submitting the DAR.");
+    }
+
     validateNoKeyPersonnelDuplicates(dar.getData());
     validatePersonnelInstitutionAndLibraryCardRequirements(user, dar.getData());
     validateCountryOfOperation(dar.getData(), false);
