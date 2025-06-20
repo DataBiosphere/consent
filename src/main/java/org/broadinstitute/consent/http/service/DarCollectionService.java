@@ -169,7 +169,7 @@ public class DarCollectionService implements ConsentLogger {
       //include the create progress report action
       Set<Integer> datasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(s.getLatestReferenceId());
       // Can only create a progress report if there are approved datasets and no closeout supplement
-      if (!datasetIds.isEmpty() && s.getCloseoutSupplement() == null) {
+      if (!datasetIds.isEmpty() && s.getCloseoutSupplement() == null && s.getDatasetCount() > 0) {
           s.addAction(DarCollectionActions.CREATE_PROGRESS_REPORT);
         }
 
