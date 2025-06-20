@@ -295,9 +295,8 @@ public class DacService implements ConsentLogger {
   }
 
   public Set<Dac> findByDatasetId(List<Integer> datasetIds) {
-    Set<Dac> returnSet = new HashSet<>();
-    dacDAO.findDacsForDatasetIds(datasetIds).forEach(dac -> returnSet.add(findById(dac.getDacId())));
-    return returnSet;
+    return dacDAO.findDacsForDatasetIds(datasetIds).stream().map(dac -> findById(dac.getDacId())).collect(
+        Collectors.toUnmodifiableSet());
   }
 
 }
