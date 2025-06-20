@@ -119,6 +119,7 @@ public class DataAccessRequestData {
   private Boolean pubAcknowledgement;
   private String piName;
   private String piEmail;
+  private String piCountryOfOperation;
 
   @Override
   public String toString() {
@@ -385,6 +386,14 @@ public class DataAccessRequestData {
 
   public void setSortDate(Long sortDate) {
     this.sortDate = sortDate;
+  }
+
+  public String getPiCountryOfOperation() {
+    return piCountryOfOperation;
+  }
+
+  public void setPiCountryOfOperation(String piCountryOfOperation) {
+    this.piCountryOfOperation = piCountryOfOperation;
   }
 
   /**

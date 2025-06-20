@@ -1,9 +1,11 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -1021,6 +1023,35 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     String referenceId = UUID.randomUUID().toString();
     doThrow(BadRequestException.class).when(dataAccessRequestService).approveDataAccessRequestCloseout(user,referenceId);
     try (Response response = resource.approveCloseout(duosUser, request, referenceId)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testDeleteDraftDataAccessRequestForDraft() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setUserId(user.getUserId());
+    dar.setReferenceId(UUID.randomUUID().toString());
+    assertTrue(dar.getDraft());
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    doNothing().when(dataAccessRequestService).deleteDataAccessRequest(dar);
+    try (Response response = resource.deleteDar(authUser, dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testDeleteDraftDataAccessRequestThrowsForSubmittedDar() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setUserId(user.getUserId());
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    assertFalse(dar.getDraft());
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    doThrow(BadRequestException.class).when(dataAccessRequestService).deleteDataAccessRequest(dar);
+    try (Response response = resource.deleteDar(authUser, dar.getReferenceId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }

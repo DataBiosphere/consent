@@ -122,7 +122,7 @@ public class DarDecisionMetrics implements DecisionMetrics {
         (Objects.nonNull(dar.getData())) ?
             (int) dar.getData().getLabAndInternalCollaborators().stream()
                 .filter(Objects::nonNull)
-                .map(Collaborator::getEmail)
+                .map(Collaborator::email)
                 .filter(Objects::nonNull)
                 .map(String::toLowerCase)
                 .distinct()
