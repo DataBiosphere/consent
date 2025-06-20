@@ -47,7 +47,7 @@ class NewLibraryCardIssuedMessageTest {
     var templateString = out.toString();
     Document parsedTemplate = Jsoup.parse(templateString);
     assertEquals(
-        "Broad Data Use Oversight System - Your Library Card Has Been Issued!",
+        "Broad Data Use Oversight System - Your Library Card Has Been Issued",
         parsedTemplate.title());
 
     assertEquals(
