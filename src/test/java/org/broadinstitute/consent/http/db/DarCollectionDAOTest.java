@@ -205,6 +205,15 @@ class DarCollectionDAOTest extends DAOTestHelper {
 
     assertNotNull(darCollection.getMostRecentDar().getCloseoutSigningOfficialApprovedDate());
     assertEquals(user.getUserId(), darCollection.getMostRecentDar().getCloseoutSigningOfficialApprovedUserId());
+
+    DarCollection darCollectionByReferenceId = darCollectionDAO.findDARCollectionByReferenceId(testDar2.getReferenceId());
+    assertNotNull(darCollectionByReferenceId.getMostRecentDar().getCloseoutSigningOfficialApprovedDate());
+    assertEquals(user.getUserId(), darCollectionByReferenceId.getMostRecentDar().getCloseoutSigningOfficialApprovedUserId());
+
+    List<DarCollection> darCollectionList = darCollectionDAO.findDARCollectionByCollectionIds(List.of(testDar2.getCollectionId()));
+    assertEquals(1, darCollectionList.size());
+    assertNotNull(darCollectionList.get(0).getMostRecentDar().getCloseoutSigningOfficialApprovedDate());
+    assertEquals(user.getUserId(), darCollectionList.get(0).getMostRecentDar().getCloseoutSigningOfficialApprovedUserId());
   }
 
   @Test
