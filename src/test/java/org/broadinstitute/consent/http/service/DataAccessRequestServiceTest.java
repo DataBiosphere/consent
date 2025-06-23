@@ -81,6 +81,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   private static final String PI_EMAIL = "pi@example.broadinstitute.org";
   private static final String SO_EMAIL = "so@example.broadinstitute.org";
   private static final String IT_EMAIL = "it@example.broadinstitute.org";
+  private static final String USER_EMAIL = "email@test.org";
+  private static final String USER_NAME = "Display Name";
   private final List<UserRole> roles = List.of(UserRoles.Researcher());
   @Mock
   private CounterService counterService;
@@ -584,6 +586,54 @@ library card) eve@yetanotherdomain.org\
 """));
   }
 
+
+  @Test
+  void validateCommonNullUserThrows() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    assertThrows(IllegalArgumentException.class, () ->
+        service.validateCommonDarAndProgressReportElements(null, dar)
+    );
+  }
+
+  @Test
+  void validateCommonNullDarThrows() {
+    User user = createUserWithPrerequisites();
+    assertThrows(IllegalArgumentException.class, () ->
+        service.validateCommonDarAndProgressReportElements(user, null)
+    );
+  }
+
+  @Test
+  void validateCommonNullDarDataThrows() {
+    User user = createUserWithPrerequisites();
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setData(null);
+    assertThrows(IllegalArgumentException.class, () ->
+        service.validateCommonDarAndProgressReportElements(user, dar)
+    );
+  }
+
+  @Test
+  void validateCommonDoesNotThrow() {
+    User validUser = createUserWithPrerequisites();
+    DataAccessRequest validDar = generateDataAccessRequest();
+    assertDoesNotThrow(() ->
+        service.validateCommonDarAndProgressReportElements(validUser, validDar)
+    );
+  }
+
+  @Test
+  void validateCommonNoLibraryCard() {
+    User validUser = createRequestingUser();
+    DataAccessRequest validDar = generateDataAccessRequest();
+    validDar.getData().setPiName(validUser.getDisplayName());
+    validDar.getData().setPiEmail(validUser.getEmail());
+    assertThrows(NIHComplianceRuleException.class, () ->
+        service.validateCommonDarAndProgressReportElements(validUser, validDar)
+    );
+  }
+
+
   @Test
   void validateDarNullUser() {
     DataAccessRequest dar = generateDataAccessRequest();
@@ -617,6 +667,27 @@ library card) eve@yetanotherdomain.org\
     DataAccessRequest dar = generateDataAccessRequest();
     User user = new User(1, "email@test.org", "Display Name", new Date());
     assertThrows(NIHComplianceRuleException.class, () -> service.validateDar(user, dar));
+  }
+
+
+  @Test
+  void validateDarDifferentPiEmail() {
+    User validUser = createUserWithPrerequisites();
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.getData().setPiEmail("otheremail@example.com");
+    assertThrows(BadRequestException.class, () ->
+        service.validateDar(validUser, dar)
+    );
+  }
+
+  @Test
+  void validateDarDifferentPiName() {
+    User validUser = createUserWithPrerequisites();
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.getData().setPiName("Other Name");
+    assertThrows(BadRequestException.class, () ->
+        service.validateDar(validUser, dar)
+    );
   }
 
   @Test
@@ -790,8 +861,9 @@ institution or library cards issued: Internal Collaborator member:  \
     dar.setReferenceId(UUID.randomUUID().toString());
     data.setReferenceId(dar.getReferenceId());
     dar.addDatasetId(1);
-    data.setPiEmail(PI_EMAIL);
     data.setPiCountryOfOperation("United States of America (the)");
+    data.setPiName(USER_NAME);
+    data.setPiEmail(USER_EMAIL);
     data.setItDirectorEmail(IT_EMAIL);
     data.setSigningOfficialEmail(SO_EMAIL);
     data.setForProfit(false);
@@ -1226,7 +1298,7 @@ institution or library cards issued: Internal Collaborator member:  \
   }
 
   private User createUserWithPrerequisites() {
-    User user = new User(1, "email@test.org", "Display Name", new Date());
+    User user = new User(1, USER_EMAIL, USER_NAME, new Date());
     user.setInstitutionId(1);
     Institution institution = new Institution();
     institution.setId(1);
