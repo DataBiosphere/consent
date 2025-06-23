@@ -11,11 +11,15 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import java.io.IOException;
 import java.util.List;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
@@ -47,20 +51,23 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   private InstitutionService institutionService;
   @Mock
   private UserDAO userDAO;
+  @Mock
+  private EmailService emailService;
 
   @BeforeEach
   void initService() {
-    service = new LibraryCardService(libraryCardDAO, institutionDAO, institutionService, userDAO);
+    service = new LibraryCardService(libraryCardDAO, institutionDAO, institutionService, userDAO, emailService);
   }
 
   @Test
     // Test Admin LC create with userId and email
-  void testCreateLibraryCardFullUserDetailsAsAdmin() {
+  void testCreateLibraryCardFullUserDetailsAsAdmin() throws TemplateException, IOException {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
     user.setEmail("testemail");
     User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
+    when(userDAO.findUserByEmail(user.getEmail())).thenReturn(user);
 
     LibraryCard payload = testLibraryCard(user.getUserId());
     payload.setUserEmail(user.getEmail());
@@ -75,20 +82,23 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     verify(libraryCardDAO).insertLibraryCard(eq(user.getUserId()),
         eq(payload.getUserName()), eq(user.getEmail()),
         eq(payload.getCreateUserId()), any());
+    verify(emailService).sendNewLibraryCardIssuedMessage(user);
   }
 
   @Test
     // Test SO LC create with userId and email success case
-  void testCreateLibraryCardFullUserDetailsAsSOSameInstitution() {
+  void testCreateLibraryCardFullUserDetailsAsSOSameInstitution()
+      throws TemplateException, IOException {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
     user.setEmail("testemail");
     User soUser = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
     soUser.setInstitutionId(institution.getId());
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
+    when(userDAO.findUserByEmail(user.getEmail())).thenReturn(user);
     when(institutionDAO.findInstitutionById(institution.getId())).thenReturn(institution);
     when(institutionService.findInstitutionForEmail(user.getEmail())).thenReturn(institution);
-
+    doThrow(IOException.class).when(emailService).sendNewLibraryCardIssuedMessage(user);
     LibraryCard payload = testLibraryCard(user.getUserId());
     payload.setUserEmail(user.getEmail());
     payload.setUserName("username");
@@ -127,7 +137,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
 
   @Test
     //Test LC create with only user email (no userId)
-  void testCreateLibraryCardPartialUserDetailsEmail() {
+  void testCreateLibraryCardPartialUserDetailsEmail() throws TemplateException, IOException {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
     User adminUser = createUserWithRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName());
@@ -136,11 +146,13 @@ class LibraryCardServiceTest extends AbstractTestHelper {
 
     // last two calls in the function, no need to test within this service test file
     when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
+    when(userDAO.findUserByEmail(user.getEmail())).thenReturn(null);
 
     LibraryCard payload = testLibraryCard(user.getUserId());
     payload.setUserEmail(user.getEmail());
     service.createLibraryCard(payload, adminUser);
     verify(libraryCardDAO).insertLibraryCard(eq(null), eq(null), any(), eq(null), any());
+    verify(emailService, times(0)).sendNewLibraryCardIssuedMessage(user);
   }
 
   @Test
