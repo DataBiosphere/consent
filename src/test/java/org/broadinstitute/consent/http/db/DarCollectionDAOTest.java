@@ -188,6 +188,26 @@ class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindDarCollectionByIdWithSigningOfficial() {
+    User user = createUser();
+    var collectionWithDataset = createDarCollectionWithDataset(user);
+    DataAccessRequest testDar1 = (DataAccessRequest) collectionWithDataset.get(4);
+    Dataset dataset = (Dataset) collectionWithDataset.get(2);
+    DataAccessRequest testDar2 = createDAR(user, dataset, testDar1.getCollectionId());
+    dataAccessRequestDAO.updateDarCloseoutSO(user.getUserId(), testDar2.getReferenceId());
+
+    DataAccessRequest testDar2Stored = dataAccessRequestDAO.findByReferenceId(testDar2.getReferenceId());
+    assertNotNull(testDar2Stored.getCloseoutSigningOfficialApprovedUserId());
+    assertNotNull(testDar2Stored.getCloseoutSigningOfficialApprovedDate());
+
+    DarCollection darCollection = darCollectionDAO.findDARCollectionByCollectionId(
+        testDar2.getCollectionId());
+
+    assertNotNull(darCollection.getMostRecentDar().getCloseoutSigningOfficialApprovedDate());
+    assertEquals(user.getUserId(), darCollection.getMostRecentDar().getCloseoutSigningOfficialApprovedUserId());
+  }
+
+  @Test
   void testInsertDARCollection() {
     List<DarCollection> allBefore = darCollectionDAO.findAllDARCollections();
     assertTrue(allBefore.isEmpty());
