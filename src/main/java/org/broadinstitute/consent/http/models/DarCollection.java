@@ -24,6 +24,10 @@ public class DarCollection {
           +
           "dar.update_date AS dar_update_date, (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, "
           +
+          "dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date, "
+          +
+          "dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id, "
+          +
           "(regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' as projectTitle ";
 
   @JsonProperty
