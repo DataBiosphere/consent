@@ -809,17 +809,12 @@ public class DarCollectionService implements ConsentLogger {
     List<User> signingOfficials = userDAO.getSOsByInstitution(researcher.getInstitutionId());
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(dar.getDatasetIds());
     for (User so : signingOfficials) {
-      if (Boolean.TRUE.equals(so.getEmailPreference())) {
-        if (dar.getProgressReport()) {
-          emailService.sendNewSoProgressReportSubmittedEmail(so, darCode, researcher,
-              dar.getReferenceId(), datasets);
-        } else {
-          emailService.sendNewSoDARSubmittedEmail(so, darCode, researcher, dar.getReferenceId(),
-              datasets);
-        }
+      if (dar.getProgressReport()) {
+        emailService.sendNewSoProgressReportSubmittedEmail(so, darCode, researcher,
+            dar.getReferenceId(), datasets);
       } else {
-        logWarn(
-            "Signing Official '%s' has notifications disabled.".formatted(so.getDisplayName()));
+        emailService.sendNewSoDARSubmittedEmail(so, darCode, researcher, dar.getReferenceId(),
+            datasets);
       }
     }
   }

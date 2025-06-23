@@ -345,17 +345,12 @@ public class VoteService implements ConsentLogger {
     }
     List<User> signingOfficials = userDAO.getSOsByInstitution(researcher.getInstitutionId());
     for (User so : signingOfficials) {
-      if (Boolean.TRUE.equals(so.getEmailPreference())) {
-        if (dar.getProgressReport()) {
-          emailService.sendNewSoProgressReportApprovedEmail(so, darCode, researcher,
-              dar.getReferenceId(), datasets, translation);
-        } else {
-          emailService.sendNewSoDARApprovedEmail(so, darCode, researcher, dar.getReferenceId(),
-              datasets, translation);
-        }
+      if (dar.getProgressReport()) {
+        emailService.sendNewSoProgressReportApprovedEmail(so, darCode, researcher,
+            dar.getReferenceId(), datasets, translation);
       } else {
-        logWarn(
-            "Signing Official '%s' has notifications disabled.".formatted(so.getDisplayName()));
+        emailService.sendNewSoDARApprovedEmail(so, darCode, researcher, dar.getReferenceId(),
+            datasets, translation);
       }
     }
   }

@@ -1526,33 +1526,6 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     verify(emailService, never()).sendNewSoDARSubmittedEmail(any(), any(), any(), any(), any());
   }
 
-  @Test
-  void testNotifySigningOfficialsOfDARSubmission_SO_Disabled() throws TemplateException, IOException {
-    Dataset dataset = new Dataset();
-    dataset.setDatasetId(1);
-    dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
-    when(datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId()))).thenReturn(List.of(dataset));
-
-    DarCollection collection = new DarCollection();
-    collection.setDarCode("DAR-000123");
-    collection.setDarCollectionId(1);
-    DataAccessRequest dar = new DataAccessRequest();
-    dar.setReferenceId(UUID.randomUUID().toString());
-    dar.setDatasetIds(List.of(dataset.getDatasetId()));
-    collection.addDar(dar);
-
-    User researcher = createUserWithRole(UserRoles.RESEARCHER, null);
-    collection.setCreateUserId(researcher.getUserId());
-    researcher.setInstitutionId(1);
-    User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL, null);
-    signingOfficial.setEmailPreference(false);
-    when(userDAO.getSOsByInstitution(researcher.getInstitutionId())).thenReturn(List.of(signingOfficial));
-
-    service.notifySigningOfficialsOfDARSubmission(collection.getMostRecentDar(), researcher, collection.getDarCode());
-    verify(emailService, never()).sendNewSoProgressReportSubmittedEmail(any(), any(), any(), any(), any());
-    verify(emailService, never()).sendNewSoDARSubmittedEmail(any(), any(), any(), any(), any());
-  }
-
   private DarCollection generateMockDarCollection(Set<Dataset> datasets) {
     DarCollection collection = new DarCollection();
     collection.addDar(generateMockDarWithDatasetId(datasets));
