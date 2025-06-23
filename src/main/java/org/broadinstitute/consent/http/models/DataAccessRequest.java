@@ -401,6 +401,11 @@ public class DataAccessRequest {
     originalDataCopy.setIrbDocumentName(null);
     originalDataCopy.setIrbDocumentLocation(null);
 
+    // We need to update the reference ID in the DataAccessRequestData object with the new reference
+    // ID computed in this method so that the frontend can rely on the value set to point to this
+    // object and not the original DAR.
+    originalDataCopy.setReferenceId(referenceId);
+
     newDar.setData(originalDataCopy);
     return newDar;
   }

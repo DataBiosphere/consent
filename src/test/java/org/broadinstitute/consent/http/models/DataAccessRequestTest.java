@@ -63,6 +63,7 @@ class DataAccessRequestTest {
     assertEquals(List.of(), newData.getExternalCollaborators());
     assertEquals(List.of(), newData.getLabCollaborators());
     assertEquals("New Summary", newData.getProgressReportSummary());
+    assertEquals(newDar.getReferenceId(), newData.getReferenceId());
     assertEquals(List.of(1, 2), newDar.getDatasetIds());
     assertNull(newData.getCollaborationLetterName());
     assertNull(newData.getIrbDocumentName());
