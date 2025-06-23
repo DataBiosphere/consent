@@ -791,6 +791,85 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testProcessDarCollectionSummariesForSOWithPendingCloseout() {
+    User user = new User();
+    user.setUserId(1);
+    user.addRole(UserRoles.SigningOfficial());
+    user.setInstitutionId(1);
+
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.setLatestReferenceId(UUID.randomUUID().toString());
+
+    CloseoutSupplement closeoutSupplement = new CloseoutSupplement(
+        List.of("Closeout"), "Closeout", 1);
+    summary.setCloseoutSupplement(closeoutSupplement);
+
+    summary.setCloseoutSigningOfficialApprovalDate(null);
+
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId()))
+        .thenReturn(List.of(summary));
+
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.SIGNINGOFFICIAL);
+
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    Set<String> expectedActions = Set.of(DarCollectionActions.REVIEW_PROGRESS_REPORT.getValue());
+    assertEquals(expectedActions, summaries.get(0).getActions());
+  }
+
+  @Test
+  void testProcessDarCollectionSummariesForSOWithApprovedCloseout() {
+    User user = new User();
+    user.setUserId(1);
+    user.addRole(UserRoles.SigningOfficial());
+    user.setInstitutionId(1);
+
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.setLatestReferenceId(UUID.randomUUID().toString());
+
+    CloseoutSupplement closeoutSupplement = new CloseoutSupplement(
+        List.of("Closeout"), "Closeout", 1);
+    summary.setCloseoutSupplement(closeoutSupplement);
+
+    summary.setCloseoutSigningOfficialApprovalDate(new Timestamp(System.currentTimeMillis()));
+
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId()))
+        .thenReturn(List.of(summary));
+
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.SIGNINGOFFICIAL);
+
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    assertEquals(Set.of(), summaries.get(0).getActions());
+  }
+
+  @Test
+  void testProcessDarCollectionSummariesForChairWithApprovedCloseout() {
+    User user = new User();
+    user.setUserId(1);
+    user.addRole(UserRoles.Chairperson());
+
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.setLatestReferenceId(UUID.randomUUID().toString());
+
+    CloseoutSupplement closeoutSupplement = new CloseoutSupplement(
+        List.of("Closeout"), "Closeout", 1);
+    summary.setCloseoutSupplement(closeoutSupplement);
+
+    summary.setCloseoutSigningOfficialApprovalDate(new Timestamp(System.currentTimeMillis()));
+
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForDAC(user.getUserId(), List.of()))
+        .thenReturn(List.of(summary));
+
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.CHAIRPERSON);
+
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    Set<String> expectedActions = Set.of(DarCollectionActions.REVIEW_PROGRESS_REPORT.getValue());
+    assertEquals(expectedActions, summaries.get(0).getActions());
+  }
+
+  @Test
   void testProcessDarCollectionSummariesForAdmin() {
     //summaryOne -> all elections present and open
     //summaryTwo -> mix of open elections : absent/non-open elections (in process)

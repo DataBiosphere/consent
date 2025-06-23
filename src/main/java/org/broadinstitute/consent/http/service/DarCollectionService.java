@@ -270,9 +270,13 @@ public class DarCollectionService implements ConsentLogger {
       Integer closedCount,
       Integer openCount) {
 
-    // No actions can be taken on a closeout supplement
+    // By default, no actions can be taken on a closeout supplement
     if (summary.getCloseoutSupplement() != null) {
       summary.getActions().clear();
+      // If the SO has approved the closeout supplement, allow review of the progress report.
+      if (summary.getCloseoutSigningOfficialApprovalDate() != null) {
+        summary.addAction(DarCollectionActions.REVIEW_PROGRESS_REPORT);
+      }
       return;
     }
 
@@ -309,7 +313,15 @@ public class DarCollectionService implements ConsentLogger {
       s.getElections().values()
           .forEach(election -> updateStatusCount(statusCount, election.getStatus()));
       determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
+      updateSummaryActionsForSO(s);
     });
+  }
+
+  private void updateSummaryActionsForSO(DarCollectionSummary summary) {
+    // If the SO has not yet approved the closeout supplement, allow review of the progress report.
+    if (summary.getCloseoutSupplement() != null && summary.getCloseoutSigningOfficialApprovalDate() == null) {
+      summary.addAction(DarCollectionActions.REVIEW_PROGRESS_REPORT);
+    }
   }
 
   /**
