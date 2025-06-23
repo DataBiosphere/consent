@@ -35,6 +35,7 @@ import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
+import org.broadinstitute.consent.http.mail.message.NewLibraryCardIssuedMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewResearcherLibraryRequestMessage;
@@ -307,5 +308,16 @@ public class EmailService implements ConsentLogger {
   public void sendSubmittedCloseoutMessage(User toUser, String darId, String referenceId, String closeoutUrl)
       throws TemplateException, IOException {
     sendMessage(new SubmittedCloseoutMessage(toUser, darId, referenceId, closeoutUrl), toUser.getUserId());
+  }
+
+  /**
+   * Send a message to the user when they are issued a library card
+   *
+   * @param toUser The user to send the message to
+   * @throws TemplateException Template processing exception
+   * @throws IOException IOException when processing the template or sending the email
+   */
+  public void sendNewLibraryCardIssuedMessage(User toUser) throws TemplateException, IOException {
+    sendMessage(new NewLibraryCardIssuedMessage(toUser), toUser.getUserId());
   }
 }
