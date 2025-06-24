@@ -8,6 +8,8 @@ import com.google.gson.Gson;
 import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class InstitutionDomainMapTest {
 
@@ -79,5 +81,35 @@ public class InstitutionDomainMapTest {
 
     Set<String> emptyDomains = map.getDomainsForInstitution("Non-Existent Institution");
     assertNull(emptyDomains);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "test@BroadInstitute.ORG",
+      "test@Broad.mIt.eDu",
+      "TesT-User@BROADINSTITUTE.ORG"
+  })
+  void testGetInstitutionForEmail(String email) {
+    InstitutionDomainMap map = new InstitutionDomainMap();
+
+    Map<String, Set<String>> testMap = Map.of("Broad Institute", Set.of("broadinstitute.org", "broad.mit.edu"));
+    map.setInstitutionDomainMap(testMap);
+    String institution = map.getInstitutionForEmail(email);
+    assertEquals("Broad Institute".toLowerCase(), institution);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "test@B_roadInstitute.ORG",
+      "test@Broad.*mIt.eDu",
+      "TesT-User@BROAD1NSTITUTE.ORG"
+  })
+  void testGetInstitutionForEmailFailures(String email) {
+    InstitutionDomainMap map = new InstitutionDomainMap();
+
+    Map<String, Set<String>> testMap = Map.of("Broad Institute", Set.of("broadinstitute.org", "broad.mit.edu"));
+    map.setInstitutionDomainMap(testMap);
+    String institution = map.getInstitutionForEmail(email);
+    assertNull(institution);
   }
 }
