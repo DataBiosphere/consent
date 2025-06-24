@@ -2,13 +2,16 @@ package org.broadinstitute.consent.http.db;
 
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessRequestReducer;
+import org.broadinstitute.consent.http.db.mapper.ElectionMapper;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.Election;
 import org.jdbi.v3.json.Json;
 import org.jdbi.v3.json.internal.JsonArgumentFactory;
 import org.jdbi.v3.sqlobject.config.RegisterArgumentFactory;
@@ -99,50 +102,84 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   List<DataAccessRequest> findApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
 
   /**
-   * This query finds dataset ids on dar-dataset combinations where the most recent vote is true.
-   * This includes datasets that are a part of expired DARs, UNLIKE findApprovedDARsByDatasetId.
-   * The query accomplishes this by creating a view that is a grouping
-   * of election reference ids and LAST vote in the group of final votes for all data access
-   * elections. We need to group them due to the case of multiple elections on a dar-dataset
-   * request. Election 1 may have been denied. Election 2 may have been approved. Election 3 may
-   * have been denied again. When we partition over the election reference id, we'll get all final
-   * votes. The `LAST_VALUE` function selects the last result in the partition, which would be
-   * `FALSE` in the example above. Outside the JOIN, we filter on groupings where the final vote
-   * value is `TRUE` so the denied election in the example would be filtered out.
-   *
-   * @param darReferenceId The DARs reference UUID
-   * @return Set of approved Dataset Ids for the list of DARs
+   * @param darReferenceId The DAR reference id
+   * @return Set of the approved Dataset Ids for a DAR on the most recent data access elections.
    */
-  @SqlQuery(
-      """
-      SELECT dd.dataset_id
-      FROM data_access_request dar
-      INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
-      INNER JOIN (
-        SELECT DISTINCT e.reference_id, e.dataset_id, LAST_VALUE(v.vote)
-        OVER(
-          PARTITION BY e.dataset_id
-            ORDER BY v.createdate
-            RANGE BETWEEN
-              UNBOUNDED PRECEDING AND
-              UNBOUNDED FOLLOWING
-        ) last_vote
+  default Set<Integer> findDatasetApprovalsByDar(@Bind("darReferenceId") String darReferenceId) {
+    // Most recent data access elections
+    final String electionQuery = """
+        SELECT e.*
         FROM election e
-        INNER JOIN vote v ON e.election_id = v.electionid AND v.vote IS NOT NULL
+        INNER JOIN
+          (SELECT MAX(create_date) MAX_DATE FROM election e WHERE e.reference_id = :darReferenceId AND LOWER(e.election_type) = 'dataaccess' ) election_view
+          ON e.create_date = election_view.max_date
+        WHERE e.reference_id = :darReferenceId
         AND LOWER(e.election_type) = 'dataaccess'
-        AND LOWER(v.type) = 'final') final_access_vote ON
-          final_access_vote.reference_id = dar.reference_id AND
-          final_access_vote.dataset_id = dd.dataset_id
-      WHERE final_access_vote.last_vote = TRUE
-        AND dar.reference_id = :darReferenceId
-        AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
-        -- Exclude DARs that have a closeoutSupplement
-        AND dar.collection_id NOT IN (
-          SELECT DISTINCT collection_id
-          FROM data_access_request
-          WHERE (regexp_replace(data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'closeoutSupplement' IS NOT NULL)
-      """)
-  Set<Integer> findDatasetApprovalsByDar(@Bind("darReferenceId") String darReferenceId);
+        """;
+    // Approved final votes for election ids
+    final String approvedElectionIdsQuery = """
+        SELECT v.electionid
+        FROM vote v
+        WHERE v.electionid IN (<electionIds>)
+          AND LOWER(v.type) = 'final'
+          AND v.vote IS true
+        """;
+    // Ensure a valid Data Access Request
+    final String validDARQuery = """
+        SELECT dar.reference_id
+        FROM data_access_request dar
+        WHERE dar.reference_id = :darReferenceId
+          AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+          -- Exclude DARs that have a closeoutSupplement
+          AND dar.collection_id NOT IN (
+            SELECT DISTINCT collection_id
+            FROM data_access_request
+            WHERE (regexp_replace(data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'closeoutSupplement' IS NOT NULL)
+        """;
+
+    Set<Integer> approvedDatasetIds = new HashSet<>();
+
+    this.useHandle(handle -> {
+      // Filter out any invalid DARs - by definition, they will not have any approved dataset ids
+      List<String> validDARs = handle.createQuery(validDARQuery)
+          .bind("darReferenceId", darReferenceId)
+          .mapTo(String.class)
+          .stream()
+          .toList();
+      if (validDARs.isEmpty()) {
+        return;
+      }
+
+      // Find the most recent DataAccess elections for the DAR
+      List<Election> recentElections = handle.createQuery(electionQuery)
+          .bind("darReferenceId", darReferenceId)
+          .registerRowMapper(new ElectionMapper())
+          .mapTo(Election.class)
+          .list();
+
+      // Find the election ids with final votes for those elections
+      List<Integer> electionIds = recentElections.stream().map(Election::getElectionId).toList();
+      if (!electionIds.isEmpty()) {
+        List<Integer> approvedElectionIds = handle.createQuery(
+                approvedElectionIdsQuery)
+            .bindList("electionIds", electionIds)
+            .mapTo(Integer.class)
+            .list();
+
+        // Collect the dataset ids from the elections that have final votes
+        if (!approvedElectionIds.isEmpty()) {
+          approvedDatasetIds.addAll(recentElections
+              .stream()
+              .filter(e -> approvedElectionIds.contains(e.getElectionId()))
+              .map(Election::getDatasetId)
+              .distinct()
+              .toList()
+          );
+        }
+      }
+    });
+    return approvedDatasetIds;
+  }
 
   /**
    * This query finds submitted DARs based on a date range.  This would be useful if we wanted to

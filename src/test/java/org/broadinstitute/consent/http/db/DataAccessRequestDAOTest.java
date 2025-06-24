@@ -631,16 +631,16 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(testDar1.getReferenceId(), dataset2.getDatasetId());
     dataAccessRequestDAO.insertDARDatasetRelation(testDar1.getReferenceId(), dataset3.getDatasetId());
 
-    Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDatasetId());
+    // Set up all elections for a single DAR on multiple datasets
+    Date now = new Date();
+    Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDatasetId(), now);
     Vote v1 = createFinalVote(dataset1.getCreateUserId(), e1.getElectionId());
 
-    Election e2 = createDataAccessElection(testDar1.getReferenceId(), dataset2.getDatasetId());
+    Election e2 = createDataAccessElection(testDar1.getReferenceId(), dataset2.getDatasetId(), now);
     Vote v2 = createFinalVote(dataset2.getCreateUserId(), e2.getElectionId());
 
-    Election e3 = createDataAccessElection(testDar1.getReferenceId(), dataset3.getDatasetId());
+    Election e3 = createDataAccessElection(testDar1.getReferenceId(), dataset3.getDatasetId(), now);
     Vote v3 = createFinalVote(dataset3.getCreateUserId(), e3.getElectionId());
-
-    Date now = new Date();
 
     assertTrue(
         dataAccessRequestDAO.findDatasetApprovalsByDar(testDar1.getReferenceId())
@@ -1407,6 +1407,17 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         ElectionType.DATA_ACCESS.getValue(),
         ElectionStatus.OPEN.getValue(),
         new Date(),
+        referenceId,
+        datasetId
+    );
+    return electionDAO.findElectionById(electionId);
+  }
+
+  private Election createDataAccessElection(String referenceId, Integer datasetId, Date now) {
+    Integer electionId = electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        now,
         referenceId,
         datasetId
     );
