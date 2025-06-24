@@ -332,10 +332,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       """)
   List<Dataset> findDatasetsByAlias(@BindList(value = "aliases", onEmpty = EmptyHandling.NULL_STRING) List<Integer> aliases);
 
-  @Deprecated
-  @SqlBatch("INSERT INTO dataset (name, create_date, object_id, alias, data_use) VALUES (:name, :createDate, :objectId, :alias, :dataUse)")
-  void insertAll(@BindBean Collection<Dataset> datasets);
-
   @SqlUpdate("UPDATE dataset SET dac_id = :dacId WHERE dataset_id = :datasetId")
   void updateDatasetDacId(@Bind("datasetId") Integer datasetId, @Bind("dacId") Integer dacId);
 
