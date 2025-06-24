@@ -85,6 +85,7 @@ class InstitutionDomainMapTest {
 
   @ParameterizedTest
   @ValueSource(strings = {
+      "user_こ*@BroadInstitute.ORG",
       "test@BroadInstitute.ORG",
       "test@Broad.mIt.eDu",
       "TesT-User@BROADINSTITUTE.ORG"
@@ -100,6 +101,23 @@ class InstitutionDomainMapTest {
 
   @ParameterizedTest
   @ValueSource(strings = {
+      "user_こ*@Broadちnstitute.ORG",
+      "test@Broadちnstitute.ORG",
+      "test@Broad.mちt.eDu",
+      "TesT-User@BROADちNSTITUTE.ORG"
+  })
+  void testGetInstitutionForEmailWithUTF8Domains(String email) {
+    InstitutionDomainMap map = new InstitutionDomainMap();
+
+    Map<String, Set<String>> testMap = Map.of("Broad Institute", Set.of("broadちnstitute.org", "broad.mちt.edu"));
+    map.setInstitutionDomainMap(testMap);
+    String institution = map.getInstitutionForEmail(email);
+    assertEquals("Broad Institute", institution);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "t-ち-t@B_roadInstitute.ORG",
       "test@B_roadInstitute.ORG",
       "test@Broad.*mIt.eDu",
       "TesT-User@BROAD1NSTITUTE.ORG"
