@@ -27,9 +27,9 @@ public class InstitutionDomainMap {
   public String getInstitutionForEmail(String email) {
     String domain = email.substring(email.indexOf('@') + 1).toLowerCase();
     return institutionDomainMap.entrySet().stream()
-        .filter(entry -> entry.getValue().contains(domain))
+        .filter(entry -> entry.getValue().stream()
+            .anyMatch(d -> d.equalsIgnoreCase(domain)))
         .map(Map.Entry::getKey)
-        .map(String::toLowerCase)
         .findFirst()
         .orElse(null);
   }

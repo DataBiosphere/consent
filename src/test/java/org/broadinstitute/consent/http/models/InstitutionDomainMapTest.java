@@ -95,7 +95,7 @@ class InstitutionDomainMapTest {
     Map<String, Set<String>> testMap = Map.of("Broad Institute", Set.of("broadinstitute.org", "broad.mit.edu"));
     map.setInstitutionDomainMap(testMap);
     String institution = map.getInstitutionForEmail(email);
-    assertEquals("Broad Institute".toLowerCase(), institution);
+    assertEquals("Broad Institute", institution);
   }
 
   @ParameterizedTest
