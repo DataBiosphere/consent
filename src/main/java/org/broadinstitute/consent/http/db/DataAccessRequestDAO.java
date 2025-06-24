@@ -102,6 +102,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   List<DataAccessRequest> findApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
 
   /**
+   * Find the approved Dataset Ids for a DAR from the most recent data access elections.
+   *
    * @param darReferenceId The DAR reference id
    * @return Set of the approved Dataset Ids for a DAR on the most recent data access elections.
    */
@@ -157,7 +159,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           .mapTo(Election.class)
           .list();
 
-      // Find the election ids with final votes for those elections
+      // Find the election ids that have approved final votes
       List<Integer> electionIds = recentElections.stream().map(Election::getElectionId).toList();
       if (!electionIds.isEmpty()) {
         List<Integer> approvedElectionIds = handle.createQuery(
@@ -166,7 +168,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
             .mapTo(Integer.class)
             .list();
 
-        // Collect the dataset ids from the elections that have final votes
+        // Collect the dataset ids from the approved elections
         if (!approvedElectionIds.isEmpty()) {
           approvedDatasetIds.addAll(recentElections
               .stream()
