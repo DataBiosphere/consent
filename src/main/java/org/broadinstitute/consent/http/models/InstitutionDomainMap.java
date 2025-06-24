@@ -19,11 +19,17 @@ public class InstitutionDomainMap {
     return institutionDomainMap.get(institution);
   }
 
+  /**
+   * Returns the lower-cased institution name for a given email address.
+   * @param email the email address to check
+   * @return the institution name if found, otherwise null
+   */
   public String getInstitutionForEmail(String email) {
-    String domain = email.substring(email.indexOf('@') + 1);
+    String domain = email.substring(email.indexOf('@') + 1).toLowerCase();
     return institutionDomainMap.entrySet().stream()
         .filter(entry -> entry.getValue().contains(domain))
         .map(Map.Entry::getKey)
+        .map(String::toLowerCase)
         .findFirst()
         .orElse(null);
   }
