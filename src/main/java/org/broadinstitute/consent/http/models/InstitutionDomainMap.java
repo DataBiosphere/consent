@@ -20,7 +20,7 @@ public class InstitutionDomainMap {
   }
 
   /**
-   * Returns the lower-cased institution name for a given email address.
+   * Returns the institution name for a given email address.
    * @param email the email address to check
    * @return the institution name if found, otherwise null
    */
