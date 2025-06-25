@@ -242,13 +242,13 @@ paths:
       description: |
         Create Draft Data Access Request.
         Deprecated in favor of /api/dar/v3/draft
-      parameters:
-        - name: dar
-          in: body
-          description: The fields that represent a Data Access Request, json format.
-          required: true
-          schema:
-            $ref: './schemas/DataAccessRequest.yaml'
+      requestBody:
+        required: true
+        description: The fields that represent a Draft Data Access Request, json format.
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/DataAccessRequest.yaml'
       tags:
         - Data Access Request
       responses:
@@ -287,24 +287,25 @@ paths:
           required: true
           schema:
             type: string
-        - name: dar
-          in: body
-          description: The fields that represent a Data Access Request, json format.
-          required: true
-          schema:
-            $ref: './schemas/DataAccessRequest.yaml'
+      requestBody:
+        required: true
+        description: The fields that represent a Draft Data Access Request, json format.
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/DataAccessRequest.yaml'
       tags:
         - Data Access Request
       responses:
         201:
-          description: Returns the upated draft Data Access Request.
+          description: Returns the updated draft Data Access Request.
         403:
           description: Updates are restricted to the create user.
         500:
           description: Internal Server Error.
     get:
       summary: Get a Draft Data Access Request
-      description: Returns the Draft Data Access Request specified by the referencId
+      description: Returns the Draft Data Access Request specified by the referenceId
       parameters:
         - name: referenceId
           in: path
@@ -930,7 +931,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schema/DatasetMetrics'
+                $ref: './schemas/DatasetMetrics.yaml'
         404:
           description: Dataset with specified ID does not exist
         500:
