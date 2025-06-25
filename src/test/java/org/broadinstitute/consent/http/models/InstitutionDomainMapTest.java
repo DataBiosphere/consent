@@ -88,6 +88,7 @@ class InstitutionDomainMapTest {
       "user_こ*@BroadInstitute.ORG",
       "test@BroadInstitute.ORG",
       "test@Broad.mIt.eDu",
+      " test@Broad.mIt.eDu ",
       "TesT-User@BROADINSTITUTE.ORG"
   })
   void testGetInstitutionForEmail(String email) {
@@ -103,6 +104,7 @@ class InstitutionDomainMapTest {
   @ValueSource(strings = {
       "user_こ*@Broadちnstitute.ORG",
       "test@Broadちnstitute.ORG",
+      " test@Broad.mちt.eDu ",
       "test@Broad.mちt.eDu",
       "TesT-User@BROADちNSTITUTE.ORG"
   })
@@ -119,6 +121,7 @@ class InstitutionDomainMapTest {
   @ValueSource(strings = {
       "t-ち-t@B_roadInstitute.ORG",
       "test@B_roadInstitute.ORG",
+      " test@Broad.*mIt.eDu ",
       "test@Broad.*mIt.eDu",
       "TesT-User@BROAD1NSTITUTE.ORG"
   })
