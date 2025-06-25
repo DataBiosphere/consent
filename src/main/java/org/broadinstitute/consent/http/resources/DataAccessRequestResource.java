@@ -34,6 +34,8 @@ import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
@@ -44,6 +46,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DaaService;
@@ -434,6 +437,14 @@ public class DataAccessRequestResource extends Resource {
       if (!user.getUserId().equals(parentDar.getUserId())) {
         throw new ForbiddenException("User not authorized to update this Data Access Request");
       }
+      // Prevent creation if there are open elections for the parent DAR
+      List<Election> elections = dataAccessRequestService.findElectionsByReferenceId(parentDar.getReferenceId());
+      elections.stream()
+          .filter(election -> election.getStatus().equalsIgnoreCase(ElectionStatus.OPEN.getValue()))
+          .findFirst()
+          .ifPresent(election -> {
+            throw new BadRequestException("Cannot create a progress report for a DAR with an open election: " + election.getReferenceId());
+          });
       DataAccessRequest payload = DataAccessRequest.populateProgressReportFromJsonString(dar, parentDar);
       populateProgressReportWithDocuments(collabInputStream, collabFileDetails, ethicsInputStream,
           ethicsFileDetails, payload, parentDar);
