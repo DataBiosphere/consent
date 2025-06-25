@@ -170,7 +170,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               fso.deleted AS fso_deleted,
               fso.delete_user_id AS fso_delete_user_id
           FROM dataset d
-          INNER JOIN users u on d.create_user_id = u.user_id
+          LEFT JOIN users u on d.create_user_id = u.user_id
           LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
           LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
           LEFT JOIN dictionary k ON k.key_id = dp.property_key
@@ -217,7 +217,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
               k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id
           FROM dataset d
-          INNER JOIN users u on d.create_user_id = u.user_id
+          LEFT JOIN users u on d.create_user_id = u.user_id
           LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
           LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
           LEFT JOIN dictionary k ON k.key_id = dp.property_key
@@ -282,7 +282,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               fso.deleted AS fso_deleted,
               fso.delete_user_id AS fso_delete_user_id
           FROM dataset d
-          INNER JOIN users u on d.create_user_id = u.user_id
+          LEFT JOIN users u on d.create_user_id = u.user_id
           LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
           LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
           LEFT JOIN dictionary k ON k.key_id = dp.property_key
@@ -323,7 +323,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               fso.deleted AS fso_deleted,
               fso.delete_user_id AS fso_delete_user_id
           FROM dataset d
-          INNER JOIN users u on d.create_user_id = u.user_id
+          LEFT JOIN users u on d.create_user_id = u.user_id
           LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
           LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
           LEFT JOIN dictionary k ON k.key_id = dp.property_key
@@ -331,10 +331,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           WHERE d.alias IN (<aliases>)
       """)
   List<Dataset> findDatasetsByAlias(@BindList(value = "aliases", onEmpty = EmptyHandling.NULL_STRING) List<Integer> aliases);
-
-  @Deprecated
-  @SqlBatch("INSERT INTO dataset (name, create_date, object_id, alias, data_use) VALUES (:name, :createDate, :objectId, :alias, :dataUse)")
-  void insertAll(@BindBean Collection<Dataset> datasets);
 
   @SqlUpdate("UPDATE dataset SET dac_id = :dacId WHERE dataset_id = :datasetId")
   void updateDatasetDacId(@Bind("datasetId") Integer datasetId, @Bind("dacId") Integer dacId);
