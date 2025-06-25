@@ -73,7 +73,8 @@ public class DarCollectionService implements ConsentLogger {
   public DarCollectionService(DarCollectionDAO darCollectionDAO,
       DarCollectionServiceDAO collectionServiceDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO,
       DataAccessRequestDAO dataAccessRequestDAO, EmailService emailService, VoteDAO voteDAO,
-      MatchDAO matchDAO, DarCollectionSummaryDAO darCollectionSummaryDAO, UserDAO userDAO, DacDAO dacDAO) {
+      MatchDAO matchDAO, DarCollectionSummaryDAO darCollectionSummaryDAO, UserDAO userDAO,
+      DacDAO dacDAO) {
     this.darCollectionDAO = darCollectionDAO;
     this.collectionServiceDAO = collectionServiceDAO;
     this.datasetDAO = datasetDAO;
@@ -797,6 +798,35 @@ public class DarCollectionService implements ConsentLogger {
         emailService.sendNewProgressReportRequestEmail(user, sendList, researcherName, collection.getDarCode(), dar.getReferenceId());
       } else {
         emailService.sendNewDARRequestEmail(user, sendList, researcherName, collection.getDarCode());
+      }
+    }
+    notifySigningOfficialsOfDARSubmission(dar, researcher, collection.getDarCode());
+  }
+
+  @VisibleForTesting
+  protected void notifySigningOfficialsOfDARSubmission(DataAccessRequest dar, User researcher,
+      String darCode) throws TemplateException, IOException {
+    if (researcher == null) {
+      logWarn(
+          "Unable to send new DAR/PR message to Signing Officials: Researcher does not exist: %s".formatted(
+              dar.getUserId()));
+      return;
+    }
+    if (researcher.getInstitutionId() == null) {
+      logWarn(
+          "Unable to send new DAR/PR message to Signing Officials: Researcher does not have an institution id: %s".formatted(
+              dar.getUserId()));
+      return;
+    }
+    List<User> signingOfficials = userDAO.getSOsByInstitution(researcher.getInstitutionId());
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(dar.getDatasetIds());
+    for (User so : signingOfficials) {
+      if (dar.getProgressReport()) {
+        emailService.sendNewSoProgressReportSubmittedEmail(so, darCode, researcher,
+            dar.getReferenceId(), datasets);
+      } else {
+        emailService.sendNewSoDARSubmittedEmail(so, darCode, researcher, dar.getReferenceId(),
+            datasets);
       }
     }
   }

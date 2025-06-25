@@ -28,7 +28,12 @@ public enum EmailType {
   RESEARCHER_PROGRESS_REPORT_APPROVED(24, "researcher-progress-report-approved.html"),
   RESEARCHER_CLOSEOUT_COMPLETED(25, "researcher-closeout-completed.html"),
   SUBMITTED_CLOSEOUT(26, "submitted-closeout.html"),
-  NEW_LIBRARY_CARD_ISSUED(27, "new-library-card-issued.html");
+  NEW_LIBRARY_CARD_ISSUED(27, "new-library-card-issued.html"),
+  SO_DAR_SUBMITTED(28, "so-dar-submitted.html"),
+  SO_DAR_APPROVED(29, "so-dar-approved.html"),
+  SO_PROGRESS_REPORT_SUBMITTED(30, "so-progress-report-submitted.html"),
+  SO_PROGRESS_REPORT_APPROVED(31, "so-progress-report-approved.html"),
+  ;
 
   private final Integer typeInt;
   public final String templateName;
