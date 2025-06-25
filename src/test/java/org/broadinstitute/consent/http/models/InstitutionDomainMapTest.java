@@ -8,8 +8,10 @@ import com.google.gson.Gson;
 import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
-public class InstitutionDomainMapTest {
+class InstitutionDomainMapTest {
 
   @Test
   void testInstitutionDomainMapGetAndSet() {
@@ -79,5 +81,56 @@ public class InstitutionDomainMapTest {
 
     Set<String> emptyDomains = map.getDomainsForInstitution("Non-Existent Institution");
     assertNull(emptyDomains);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "user_こ*@BroadInstitute.ORG",
+      "test@BroadInstitute.ORG",
+      "test@Broad.mIt.eDu",
+      " test@Broad.mIt.eDu ",
+      "TesT-User@BROADINSTITUTE.ORG"
+  })
+  void testGetInstitutionForEmail(String email) {
+    InstitutionDomainMap map = new InstitutionDomainMap();
+
+    Map<String, Set<String>> testMap = Map.of("Broad Institute", Set.of("broadinstitute.org", "broad.mit.edu"));
+    map.setInstitutionDomainMap(testMap);
+    String institution = map.getInstitutionForEmail(email);
+    assertEquals("Broad Institute", institution);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "user_こ*@Broadちnstitute.ORG",
+      "test@Broadちnstitute.ORG",
+      " test@Broad.mちt.eDu ",
+      "test@Broad.mちt.eDu",
+      "TesT-User@BROADちNSTITUTE.ORG"
+  })
+  void testGetInstitutionForEmailWithUTF8Domains(String email) {
+    InstitutionDomainMap map = new InstitutionDomainMap();
+
+    Map<String, Set<String>> testMap = Map.of("Broad Institute", Set.of("broadちnstitute.org", "broad.mちt.edu"));
+    map.setInstitutionDomainMap(testMap);
+    String institution = map.getInstitutionForEmail(email);
+    assertEquals("Broad Institute", institution);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "t-ち-t@B_roadInstitute.ORG",
+      "test@B_roadInstitute.ORG",
+      " test@Broad.*mIt.eDu ",
+      "test@Broad.*mIt.eDu",
+      "TesT-User@BROAD1NSTITUTE.ORG"
+  })
+  void testGetInstitutionForEmailFailures(String email) {
+    InstitutionDomainMap map = new InstitutionDomainMap();
+
+    Map<String, Set<String>> testMap = Map.of("Broad Institute", Set.of("broadinstitute.org", "broad.mit.edu"));
+    map.setInstitutionDomainMap(testMap);
+    String institution = map.getInstitutionForEmail(email);
+    assertNull(institution);
   }
 }
