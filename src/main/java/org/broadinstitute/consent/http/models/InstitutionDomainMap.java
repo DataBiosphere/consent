@@ -25,7 +25,8 @@ public class InstitutionDomainMap {
    * @return the institution name if found, otherwise null
    */
   public String getInstitutionForEmail(String email) {
-    String domain = email.substring(email.indexOf('@') + 1).trim();
+    String trimmedEmail = email.trim();
+    String domain = trimmedEmail.substring(trimmedEmail.indexOf('@') + 1);
     return institutionDomainMap.entrySet().stream()
         .filter(entry -> entry.getValue().stream()
             .anyMatch(d -> d.equalsIgnoreCase(domain)))
