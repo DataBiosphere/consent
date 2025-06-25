@@ -494,7 +494,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     Election election = new Election();
     election.setStatus(ElectionStatus.OPEN.getValue());
     election.setReferenceId(parentDar.getReferenceId());
-    when(dataAccessRequestService.findElectionsByReferenceId(parentDar.getReferenceId())).thenReturn(List.of(election));
+    when(dataAccessRequestService.findOpenElectionsByReferenceId(parentDar.getReferenceId())).thenReturn(List.of(election));
     var collabFile = mockFormDataMultiPart("collab.txt");
     var ethicsFile = mockFormDataMultiPart("ethics.txt");
 

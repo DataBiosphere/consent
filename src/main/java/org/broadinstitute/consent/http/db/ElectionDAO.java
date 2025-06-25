@@ -117,10 +117,12 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
   List<Election> findLastElectionsByReferenceIds(
       @BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
 
-  @SqlQuery("SELECT DISTINCT e.* " +
-      "FROM election e " +
-      "WHERE LOWER(e.status) = 'open' " +
-      "AND e.reference_id IN (<referenceIds>) ")
+  @SqlQuery("""
+      SELECT DISTINCT e.*
+        FROM election e
+        WHERE LOWER(e.status) = 'open'
+        AND e.reference_id IN (<referenceIds>)
+      """)
   @UseRowMapper(ElectionMapper.class)
   List<Election> findOpenElectionsByReferenceIds(
       @BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
