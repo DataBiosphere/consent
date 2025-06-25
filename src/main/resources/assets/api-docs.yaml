@@ -1076,13 +1076,7 @@ components:
     SamUserInfo:
       $ref: './schemas/SamUserInfo.yaml'
     ErrorResponse:
-      properties:
-        message:
-          type: string
-          description: The error message
-        code:
-          type: integer
-          description: The response status code
+      $ref: './schemas/ErrorResponse.yaml'
     Version:
       type: object
       properties:

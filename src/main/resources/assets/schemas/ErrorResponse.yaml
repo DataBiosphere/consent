@@ -1,0 +1,7 @@
+properties:
+  message:
+    type: string
+    description: The error message
+  code:
+    type: integer
+    description: The response status code
