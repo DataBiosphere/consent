@@ -1,0 +1,15 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2025-06-26-expiration-canary" author="otchet">
+    <sql>
+      UPDATE data_access_request SET submission_date = '2024-09-30T12:00:00' WHERE id = 1947 AND reference_id='f802fd4d-13b4-4756-b67b-901db9d63146';
+    </sql>
+    <sql>
+      UPDATE data_access_request SET submission_date = '2024-09-30T12:00:00' WHERE id = 1536 AND reference_id='3880e9d1-9bfb-4ffa-9756-2c14cc168eaa';
+    </sql>
+    <sql>
+      UPDATE data_access_request SET submission_date = '2024-09-30T12:00:00' WHERE id = 4260 AND reference_id='cacf3703-04b6-42b9-add8-5a31b20ad058';
+    </sql>
+  </changeSet>
+</databaseChangeLog>
