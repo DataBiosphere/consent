@@ -752,7 +752,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertTrue(approvedDatasetIds.contains(dataset.getDatasetId()));
 
     // Create a closeout DAR for the parent DAR
-    DataAccessRequest closeoutDAR = createProgressReport(user.getUserId(), collectionId,
+    DataAccessRequest closeoutDAR = createProgressReport(user.getEraCommonsId(), user.getUserId(), collectionId,
         parentDAR.getId());
     CloseoutSupplement closeout = new CloseoutSupplement(List.of("Reason"), "Other Reason",
         user.getUserId());
@@ -914,7 +914,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(parentDAR.getReferenceId(), approvedDARs.get(0).getReferenceId());
 
     // Create a closeout DAR from the parent DAR
-    DataAccessRequest closeoutDAR = createProgressReport(user.getUserId(), collectionId,
+    DataAccessRequest closeoutDAR = createProgressReport(user.getEraCommonsId(), user.getUserId(), collectionId,
         parentDAR.getId());
     CloseoutSupplement closeout = new CloseoutSupplement(List.of("Reason"), "Other Reason",
         user.getUserId());
@@ -998,7 +998,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   void createProgressReport() {
     DarCollection darCollection = createDarCollection();
     DataAccessRequest dar = new ArrayList<>(darCollection.getDars().values()).get(0);
-    DataAccessRequest progressReport = createProgressReport(dar.getUserId(),
+    DataAccessRequest progressReport = createProgressReport(createUser().getEraCommonsId(), dar.getUserId(),
         darCollection.getDarCollectionId(),
         dar.getId());
 
@@ -1022,11 +1022,11 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Integer userId = dar.getUserId();
     Integer darCollectionId = darCollection.getDarCollectionId();
     Integer id = dar.getId();
-    DataAccessRequest progressReport = createProgressReport(userId, darCollectionId, id);
+    DataAccessRequest progressReport = createProgressReport(dar.getEraCommonsId(), userId, darCollectionId, id);
     assertNotNull(progressReport);
 
     // Insert of second progress report should fail.
-    assertThrows(JdbiException.class, () -> createProgressReport(userId, darCollectionId, id));
+    assertThrows(JdbiException.class, () -> createProgressReport(dar.getEraCommonsId(), userId, darCollectionId, id));
 
     // Check that the first progress report is not updated.
     DataAccessRequest firstProgressReport = dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId());
@@ -1290,7 +1290,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
-  private DataAccessRequest createProgressReport(Integer userId, Integer collectionId,
+  private DataAccessRequest createProgressReport(String eraCommonsId, Integer userId, Integer collectionId,
       Integer parentId) {
     DataAccessRequestData data = createDataAccessRequestData(
     );
@@ -1300,7 +1300,8 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         collectionId,
         referenceId,
         userId,
-        data);
+        data,
+        eraCommonsId);
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
