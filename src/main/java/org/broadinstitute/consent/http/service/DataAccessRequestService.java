@@ -671,4 +671,7 @@ public class DataAccessRequestService implements ConsentLogger {
     return user;
   }
 
+  public List<Election> findOpenElectionsByReferenceId(String referenceId) {
+    return electionDAO.findOpenElectionsByReferenceIds(List.of(referenceId));
+  }
 }

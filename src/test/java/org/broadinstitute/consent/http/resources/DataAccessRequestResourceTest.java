@@ -1,11 +1,10 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -44,6 +43,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -53,6 +53,7 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -482,6 +483,25 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     try (var response = resource.postProgressReport(authUser, "", "",
         null, null, null, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testPostProgressReportWithOpenElections() {
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    Election election = new Election();
+    election.setStatus(ElectionStatus.OPEN.getValue());
+    election.setReferenceId(parentDar.getReferenceId());
+    when(dataAccessRequestService.findOpenElectionsByReferenceId(parentDar.getReferenceId())).thenReturn(List.of(election));
+    var collabFile = mockFormDataMultiPart("collab.txt");
+    var ethicsFile = mockFormDataMultiPart("ethics.txt");
+
+    try (var response = resource.postProgressReport(authUser, "", "",
+        collabFile.getLeft(), collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+      assertTrue(response.getEntity().toString().contains("Cannot create a progress report for a DAR with an open election"));
     }
   }
 

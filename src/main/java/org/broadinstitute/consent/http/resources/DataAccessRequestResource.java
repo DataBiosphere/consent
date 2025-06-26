@@ -44,6 +44,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DaaService;
@@ -433,6 +434,11 @@ public class DataAccessRequestResource extends Resource {
       // needs to happen before docs are uploaded
       if (!user.getUserId().equals(parentDar.getUserId())) {
         throw new ForbiddenException("User not authorized to update this Data Access Request");
+      }
+      // Prevent creation if there are open elections for the parent DAR
+      List<Election> openElections = dataAccessRequestService.findOpenElectionsByReferenceId(parentDar.getReferenceId());
+      if (!openElections.isEmpty()) {
+        throw new BadRequestException("Cannot create a progress report for a DAR with an open election: " + parentDar.getReferenceId());
       }
       DataAccessRequest payload = DataAccessRequest.populateProgressReportFromJsonString(dar, parentDar);
       populateProgressReportWithDocuments(collabInputStream, collabFileDetails, ethicsInputStream,

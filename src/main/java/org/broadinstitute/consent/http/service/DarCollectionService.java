@@ -169,10 +169,12 @@ public class DarCollectionService implements ConsentLogger {
       //if the latest DAR in the collection has at least one approved dataset,
       //include the create progress report action
       Set<Integer> datasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(s.getLatestReferenceId());
-      // Can only create a progress report if there are approved datasets and no closeout supplement
-      if (!datasetIds.isEmpty() && s.getCloseoutSupplement() == null) {
-          s.addAction(DarCollectionActions.CREATE_PROGRESS_REPORT);
-        }
+      // Can only create a progress report if there are approved datasets, no closeout supplement,
+      // and no open elections.
+      boolean hasOpenElections = statusCount.getOrDefault(ElectionStatus.OPEN.getValue(), 0) > 0;
+      if (!hasOpenElections && !datasetIds.isEmpty() && s.getCloseoutSupplement() == null) {
+        s.addAction(DarCollectionActions.CREATE_PROGRESS_REPORT);
+      }
 
       //check dar statuses, if they're all canceled show revise (but only if there are no elections)
       if (electionCount == 0) {

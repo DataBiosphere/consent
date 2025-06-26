@@ -1343,11 +1343,14 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testGetSummaryForRoleNameByCollectionId_Researcher_PR() {
+  void testGetSummaryForRoleNameByCollectionIdForResearcher_PRWithClosedElections() {
     User user = new User();
     user.setUserId(1);
 
     DarCollectionSummary summary = createDarCollectionSummaryWithElections();
+    summary.getElections().values().forEach(election -> {
+      election.setStatus(ElectionStatus.CLOSED.getValue());
+    });
     summary.setLatestReferenceId("ref1");
     Integer collectionId = summary.getDarCollectionId();
 
@@ -1362,12 +1365,44 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertNotNull(summaryResult);
 
+    assertTrue(
+        summaryResult.getStatus().equalsIgnoreCase(DarCollectionStatus.COMPLETE.getValue()));
+
     // Verify that the create_progress_report action is included
     Set<String> expectedActions = Set.of(
         DarCollectionActions.REVIEW.getValue(),
         DarCollectionActions.CREATE_PROGRESS_REPORT.getValue());
+    assertEquals(expectedActions, summaryResult.getActions());
+  }
+
+  @Test
+  void testGetSummaryForRoleNameByCollectionIdForResearcher_PRWithOpenElections() {
+    User user = new User();
+    user.setUserId(1);
+
+    DarCollectionSummary summary = createDarCollectionSummaryWithElections();
+    summary.getElections().values().forEach(election -> {
+      election.setStatus(ElectionStatus.OPEN.getValue());
+    });
+    summary.setLatestReferenceId("ref1");
+    Integer collectionId = summary.getDarCollectionId();
+
+    when(darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId))
+        .thenReturn(summary);
+
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar("ref1"))
+        .thenReturn(Set.of(1));
+
+    DarCollectionSummary summaryResult = service.getSummaryForRoleByCollectionId(user,
+        UserRoles.RESEARCHER, collectionId);
+
+    assertNotNull(summaryResult);
+
     assertTrue(
         summaryResult.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
+
+    // Verify that the create_progress_report action is NOT included
+    Set<String> expectedActions = Set.of(DarCollectionActions.REVIEW.getValue());
     assertEquals(expectedActions, summaryResult.getActions());
   }
 

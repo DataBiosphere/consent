@@ -1,0 +1,14 @@
+properties:
+  updateDate:
+    type: string
+    format: date-time
+    description: The latest update date of the DAR
+  projectTitle:
+    type: string
+    description: The DAR project title
+  darCode:
+    type: string
+    description: The DAR code
+  nonTechRus:
+    type: string
+    description: The DAR non-technical research use statement
