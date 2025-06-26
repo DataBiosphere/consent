@@ -12,6 +12,15 @@ updates:
       action-dependencies:
         patterns:
           - "*"
+        update-types:
+          - "major"
+          - "minor"
+      action-patch-updates:
+        update-types:
+          - "patch"
+        schedule:
+          interval: cron
+          cronjob: "0 0 1,15 * *"
   - package-ecosystem: maven
     directory: "/"
     schedule:
@@ -26,6 +35,15 @@ updates:
       maven-dependencies:
         patterns:
           - "*"
+        update-types:
+          - "major"
+          - "minor"
+      maven-patch-updates:
+        update-types:
+          - "patch"
+        schedule:
+          interval: cron
+          cronjob: "0 0 1,15 * *"
   - package-ecosystem: docker
     directory: "/"
     schedule:
@@ -40,3 +58,12 @@ updates:
       docker-dependencies:
         patterns:
           - "*"
+        update-types:
+          - "major"
+          - "minor"
+      docker-patch-updates:
+        update-types:
+          - "patch"
+        schedule:
+          interval: cron
+          cronjob: "0 0 1,15 * *"
