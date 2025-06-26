@@ -1019,6 +1019,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   void insertProgressReport_WithExistingProgressReport() {
     DarCollection darCollection = createDarCollection();
     DataAccessRequest dar = darCollection.getDars().values().stream().findFirst().orElseThrow();
+    String eraCommonsId = dar.getEraCommonsId();
     Integer userId = dar.getUserId();
     Integer darCollectionId = darCollection.getDarCollectionId();
     Integer id = dar.getId();
@@ -1026,7 +1027,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertNotNull(progressReport);
 
     // Insert of second progress report should fail.
-    assertThrows(JdbiException.class, () -> createProgressReport(dar.getEraCommonsId(), userId, darCollectionId, id));
+    assertThrows(JdbiException.class, () -> createProgressReport(eraCommonsId, userId, darCollectionId, id));
 
     // Check that the first progress report is not updated.
     DataAccessRequest firstProgressReport = dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId());
