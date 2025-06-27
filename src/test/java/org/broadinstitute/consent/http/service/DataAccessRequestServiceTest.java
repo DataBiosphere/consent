@@ -282,7 +282,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     verify(dataAccessRequestDAO)
         .insertProgressReport(parentDar.getId(), progressReport.getCollectionId(),
             progressReport.getReferenceId(), user.getUserId(),
-            progressReport.getData());
+            progressReport.getData(), user.getEraCommonsId());
     verify(dataAccessRequestDAO).insertAllDarDatasets(
         argThat(new DarDatasetMatcher(progressReport)));
   }
@@ -325,7 +325,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
             progressReport.getCollectionId(),
             progressReport.getReferenceId(),
             user.getUserId(),
-            progressReport.getData());
+            progressReport.getData(),
+            user.getEraCommonsId());
     verify(dataAccessRequestDAO)
         .insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
   }
@@ -361,7 +362,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
             parentDar.getCollectionId(),
             progressReport.referenceId,
             user.getUserId(),
-            progressReport.data);
+            progressReport.data,
+            user.getEraCommonsId());
     assertThrows(BadRequestException.class, () -> service.createProgressReport(user, progressReport, parentDar));
   }
 

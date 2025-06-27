@@ -421,7 +421,8 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         dar.getCollectionId(),
         referenceId,
         dar.getUserId(),
-        dar.getData());
+        dar.getData(),
+        randomAlphabetic(8));
     DataAccessRequest progressReport = dataAccessRequestDAO.findByReferenceId(referenceId);
     dar.getDatasetIds().forEach(datasetId ->
       dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId)

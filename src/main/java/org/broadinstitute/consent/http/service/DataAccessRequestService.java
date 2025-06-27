@@ -274,7 +274,8 @@ public class DataAccessRequestService implements ConsentLogger {
           progressReport.getCollectionId(),
           referenceId,
           user.getUserId(),
-          progressReport.getData());
+          progressReport.getData(),
+          user.getEraCommonsId());
     } catch (JdbiException e) {
       throw new BadRequestException(
           "Unable to create progress report for Data Access Request " + parentDar.getReferenceId());

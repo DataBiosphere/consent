@@ -38,7 +38,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery(
       """
-          SELECT collection.dar_code, dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, 
+          SELECT collection.dar_code, dd.dataset_id, dar.id, dar.reference_id, dar.collection_id,
             dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
             (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, dar.era_commons_id,
             dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
@@ -182,7 +182,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
               SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
               dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-              (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code, 
+              (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code,
               dar.era_commons_id, dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
               FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
@@ -203,7 +203,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
               SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
               dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-              (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, 
+              (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
               collection.dar_code, dar.era_commons_id, dar.closeout_so_approval_timestamp,
               dar.closeout_approving_so_id
               FROM data_access_request dar
@@ -390,15 +390,16 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate(
       """
           INSERT INTO data_access_request
-            (parent_id, collection_id, reference_id, user_id, create_date, sort_date, submission_date, update_date, data)
-          VALUES (:parentId, :collectionId, :referenceId, :userId, now(), now(), now(), now(), to_jsonb(:data))
+            (parent_id, collection_id, reference_id, user_id, create_date, sort_date, submission_date, update_date, data, era_commons_id)
+          VALUES (:parentId, :collectionId, :referenceId, :userId, now(), now(), now(), now(), to_jsonb(:data), :eraCommonsId)
       """)
   void insertProgressReport(
       @Bind("parentId") Integer parentId,
       @Bind("collectionId") Integer collectionId,
       @Bind("referenceId") String referenceId,
       @Bind("userId") Integer userId,
-      @Bind("data") @Json DataAccessRequestData data);
+      @Bind("data") @Json DataAccessRequestData data,
+      @Bind("eraCommonsId") String eraCommonsId);
 
 
   /**
