@@ -400,7 +400,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testCreateLibraryCardForSigningOfficial() {
+  void testCreateLibraryCardForSigningOfficial() throws TemplateException, IOException {
     Institution institution = testInstitution();
     User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName());
     user.setInstitutionId(institution.getId());
@@ -411,6 +411,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     newLc.setId(1);
 
     when(userDAO.findUserById(anyInt())).thenReturn(user);
+    when(userDAO.findUserByEmail(user.getEmail())).thenReturn(user);
     when(institutionDAO.findInstitutionById(anyInt())).thenReturn(institution);
     when(institutionService.findInstitutionForEmail(user.getEmail())).thenReturn(institution);
     when(libraryCardDAO.findLibraryCardByUserId(anyInt())).thenReturn(null);
@@ -422,6 +423,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     LibraryCard card = service.createLibraryCardForSigningOfficial(user, signingOfficial);
     assertNotNull(card);
     assertEquals(card.getId(), newLc.getId());
+    verify(emailService).sendNewLibraryCardIssuedMessage(user);
   }
 
   @Test
