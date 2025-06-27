@@ -44,6 +44,7 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -493,6 +494,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
     Election election = new Election();
     election.setStatus(ElectionStatus.OPEN.getValue());
+    election.setElectionType(ElectionType.DATA_ACCESS.getValue());
     election.setReferenceId(parentDar.getReferenceId());
     when(dataAccessRequestService.findOpenElectionsByReferenceId(parentDar.getReferenceId())).thenReturn(List.of(election));
     var collabFile = mockFormDataMultiPart("collab.txt");

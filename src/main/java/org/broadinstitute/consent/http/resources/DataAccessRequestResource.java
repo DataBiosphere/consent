@@ -34,6 +34,7 @@ import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
@@ -435,9 +436,12 @@ public class DataAccessRequestResource extends Resource {
       if (!user.getUserId().equals(parentDar.getUserId())) {
         throw new ForbiddenException("User not authorized to update this Data Access Request");
       }
-      // Prevent creation if there are open elections for the parent DAR
+      // Prevent creation if there are open DataAccess elections for the parent DAR
       List<Election> openElections = dataAccessRequestService.findOpenElectionsByReferenceId(parentDar.getReferenceId());
-      if (!openElections.isEmpty()) {
+      boolean hasOpenDataAccessElections = openElections
+          .stream()
+          .anyMatch(election -> election.getElectionType().equalsIgnoreCase(ElectionType.DATA_ACCESS.getValue()));
+      if (hasOpenDataAccessElections) {
         throw new BadRequestException("Cannot create a progress report for a DAR with an open election: " + parentDar.getReferenceId());
       }
       DataAccessRequest payload = DataAccessRequest.populateProgressReportFromJsonString(dar, parentDar);
