@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -119,6 +120,7 @@ public class StudyResource extends Resource {
   @Path("/{studyId}")
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
+  @Timed
   public Response getStudyById(@PathParam("studyId") Integer studyId) {
     try {
       Study study = datasetService.getStudyWithDatasetsById(studyId);
@@ -175,6 +177,7 @@ public class StudyResource extends Resource {
   @Path("/registration/{studyId}")
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
+  @Timed
   public Response getRegistrationFromStudy(@Auth AuthUser authUser,
       @PathParam("studyId") Integer studyId) {
     try {
@@ -195,6 +198,7 @@ public class StudyResource extends Resource {
   @Produces({MediaType.APPLICATION_JSON})
   @Path("/{studyId}")
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  @Timed
   /*
    * This endpoint accepts a json instance of a dataset-registration-schema_v1.json schema.
    * With that object, we can fully update the study/datasets from the provided values.
