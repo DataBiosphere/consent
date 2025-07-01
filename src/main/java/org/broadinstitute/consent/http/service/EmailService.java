@@ -36,6 +36,7 @@ import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
+import org.broadinstitute.consent.http.mail.message.NewLibraryCardIssuedMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewResearcherLibraryRequestMessage;
@@ -43,6 +44,10 @@ import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherCloseoutCompletedMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.SoDARApproved;
+import org.broadinstitute.consent.http.mail.message.SoDARSubmitted;
+import org.broadinstitute.consent.http.mail.message.SoPRApproved;
+import org.broadinstitute.consent.http.mail.message.SoPRSubmitted;
 import org.broadinstitute.consent.http.mail.message.SubmittedCloseoutMessage;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -250,6 +255,76 @@ public class EmailService implements ConsentLogger {
         user.getUserId());
   }
 
+  /**
+   * Send a message to a Signing Official that a new Data Access Request has been submitted.
+   *
+   * @param user The user to send the message to
+   * @param darCode The Data Access Request code which is submitted
+   * @param researcher The researcher whose DAR has been submitted
+   * @param referenceId The reference ID of the DAR
+   * @param datasets The datasets associated with the DAR
+   * @throws TemplateException Template processing exception
+   * @throws IOException IOException when processing the template or sending the email
+   */
+  public void sendNewSoDARSubmittedEmail(User user, String darCode, User researcher, String referenceId, List<Dataset> datasets)
+      throws TemplateException, IOException {
+        sendMessage(new SoDARSubmitted(user, darCode, researcher, referenceId, datasets),
+        user.getUserId());
+  }
+
+  /**
+   * Send a message to a Signing Official that a new progress report has been submitted.
+   *
+   * @param user The user to send the message to
+   * @param darCode The Data Access Request code for which the progress report is submitted
+   * @param researcher The researcher whose progress report has been submitted
+   * @param referenceId The reference ID of the progress report
+   * @param datasets The datasets associated with the progress report
+   * @throws TemplateException Template processing exception
+   * @throws IOException IOException when processing the template or sending the email
+   */
+  public void sendNewSoProgressReportSubmittedEmail(User user, String darCode, User researcher, String referenceId, List<Dataset> datasets)
+      throws TemplateException, IOException {
+      sendMessage(new SoPRSubmitted(user, darCode, researcher, referenceId, datasets),
+        user.getUserId());
+  }
+
+  /**
+   * Send a message to a Signing Official that a new Data Access Request has been approved.
+   *
+   * @param user The user to send the message to
+   * @param darCode The Data Access Request code which is approved
+   * @param researcher The researcher whose DAR has been approved
+   * @param referenceId The reference ID of the DAR
+   * @param datasets The datasets associated with the DAR
+   * @param dataUseRestriction The data use restriction associated with the datasets in the DAR
+   * @throws TemplateException Template processing exception
+   * @throws IOException IOException when processing the template or sending the email
+   */
+  public void sendNewSoDARApprovedEmail(User user, String darCode, User researcher, String referenceId, List<Dataset> datasets, String dataUseRestriction)
+      throws TemplateException, IOException {
+        sendMessage(new SoDARApproved(user, darCode, researcher, referenceId, datasets, dataUseRestriction),
+        user.getUserId());
+  }
+
+  /**
+   * Send a message to a Signing Official that a new progress report has been approved.
+   *
+   * @param user The user to send the message to
+   * @param darCode The Data Access Request code for which the progress report is approved
+   * @param researcher The researcher whose progress report has been approved
+   * @param referenceId The reference ID of the progress report
+   * @param datasets The datasets associated with the progress report
+   * @param dataUseRestriction The data use restriction associated with the datasets in the progress report
+   * @throws TemplateException Template processing exception
+   * @throws IOException IOException when processing the template or sending the email
+   */
+  public void sendNewSoProgressReportApprovedEmail(User user, String darCode, User researcher, String referenceId, List<Dataset> datasets, String dataUseRestriction)
+      throws TemplateException, IOException {
+      sendMessage(new SoPRApproved(user, darCode, researcher, referenceId, datasets, dataUseRestriction),
+        user.getUserId());
+  }
+
   public void sendDACAutomationApprovalResearcherMessage(
       User researcher,
       List<DatasetMailDTO> datasets,
@@ -318,5 +393,16 @@ public class EmailService implements ConsentLogger {
   public void sendSubmittedCloseoutMessage(User toUser, String darId, String referenceId, String closeoutUrl)
       throws TemplateException, IOException {
     sendMessage(new SubmittedCloseoutMessage(toUser, darId, referenceId, closeoutUrl), toUser.getUserId());
+  }
+
+  /**
+   * Send a message to the user when they are issued a library card
+   *
+   * @param toUser The user to send the message to
+   * @throws TemplateException Template processing exception
+   * @throws IOException IOException when processing the template or sending the email
+   */
+  public void sendNewLibraryCardIssuedMessage(User toUser) throws TemplateException, IOException {
+    sendMessage(new NewLibraryCardIssuedMessage(toUser), toUser.getUserId());
   }
 }

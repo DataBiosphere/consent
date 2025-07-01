@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
@@ -16,6 +17,7 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -36,6 +38,7 @@ import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.Collaborator;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -47,6 +50,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.CountryValidator;
 import org.jdbi.v3.core.JdbiException;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
@@ -75,6 +79,7 @@ public class DataAccessRequestService implements ConsentLogger {
   private final UserDAO userDAO;
   private final UserService userService;
   private final DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
+  private final CountryValidator countryValidator;
 
   private final DacService dacService;
   private final DACAutomationRuleService ruleService;
@@ -97,6 +102,7 @@ public class DataAccessRequestService implements ConsentLogger {
     this.institutionService = institutionService;
     this.emailService = emailService;
     this.serverUrl = config.getServicesConfiguration().getLocalURL();
+    this.countryValidator = new CountryValidator();
   }
 
   public List<DataAccessRequest> findAllDraftDataAccessRequests() {
@@ -107,21 +113,18 @@ public class DataAccessRequestService implements ConsentLogger {
     return dataAccessRequestDAO.findAllDraftsByUserId(userId);
   }
 
-  public void deleteByReferenceId(User user, String referenceId) throws NotAcceptableException {
+  public void deleteDataAccessRequest(DataAccessRequest dataAccessRequest) throws NotAcceptableException {
+    String referenceId = dataAccessRequest.getReferenceId();
+    if (!dataAccessRequest.getDraft()) {
+      throw new BadRequestException("Only draft data access requests can be deleted");
+    }
     List<Election> elections = electionDAO.findElectionsByReferenceId(referenceId);
     if (!elections.isEmpty()) {
-      // If the user is an admin, delete all votes and elections
-      if (user.hasUserRole(UserRoles.ADMIN)) {
-        voteDAO.deleteVotesByReferenceId(referenceId);
-        List<Integer> electionIds = elections.stream().map(Election::getElectionId).toList();
-        electionDAO.deleteElectionsByIds(electionIds);
-      } else {
         String message = String.format(
             "Unable to delete DAR: '%s', there are existing elections that reference it.",
             referenceId);
         logWarn(message);
         throw new NotAcceptableException(message);
-      }
     }
     matchDAO.deleteRationalesByPurposeIds(List.of(referenceId));
     matchDAO.deleteMatchesByPurposeId(referenceId);
@@ -274,11 +277,25 @@ public class DataAccessRequestService implements ConsentLogger {
           progressReport.getCollectionId(),
           referenceId,
           user.getUserId(),
-          progressReport.getData());
+          progressReport.getData(),
+          user.getEraCommonsId());
     } catch (JdbiException e) {
       throw new BadRequestException(
           "Unable to create progress report for Data Access Request " + parentDar.getReferenceId());
     }
+
+    if (progressReport.getIsCloseoutProgressReport()) {
+      try {
+        User signingOfficialUser =
+            userService.findUserById(
+                progressReport.getData().getCloseoutSupplement().signingOfficialId());
+        emailService.sendSubmittedCloseoutMessage(
+            signingOfficialUser, parentDar.getDarCode(), referenceId, serverUrl + "dar_application_review/%d".formatted(parentDar.getCollectionId()));
+      } catch (TemplateException | IOException e) {
+        throw new InternalServerErrorException(e);
+      }
+    }
+
     syncDataAccessRequestDatasets(progressReportDatasetIds, referenceId);
     return findByReferenceId(referenceId);
   }
@@ -287,6 +304,21 @@ public class DataAccessRequestService implements ConsentLogger {
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
     validateCloseoutApproval(signingOfficial, dar);
     dataAccessRequestDAO.updateDarCloseoutSO(signingOfficial.getUserId(), referenceId);
+    Set<User> chairs = new HashSet<>();
+    Set<Dac> dacs = dacService.findByDatasetId(dar.getDatasetIds());
+    dacs.forEach(dac -> chairs.addAll(dac.getChairpersons()));
+    chairs.forEach(
+        chairperson -> {
+          try {
+            emailService.sendSubmittedCloseoutMessage(
+                chairperson,
+                dar.getDarCode(),
+                dar.getReferenceId(),
+                serverUrl + "dar_application_review/%d".formatted(dar.getCollectionId()));
+          } catch (Exception e) {
+            logWarn("Unable to send close out message for Data Access Request " + referenceId, e);
+          }
+        });
   }
 
   @VisibleForTesting
@@ -323,6 +355,7 @@ public class DataAccessRequestService implements ConsentLogger {
   public void validateProgressReport(User user, DataAccessRequest progressReport, DataAccessRequest parentDar) {
     validateCommonDarAndProgressReportElements(user, progressReport);
     validateInternalCollaborators(user, progressReport);
+    validateCountryOfOperation(progressReport.data, true);
 
     if (parentDar.getDraft()) {
       throw new BadRequestException(
@@ -338,14 +371,31 @@ public class DataAccessRequestService implements ConsentLogger {
         progressReport.getData().getProgressReportSummary().isEmpty()) {
       throw new BadRequestException("Progress report summary is required");
     }
+
+    if (progressReport.getIsCloseoutProgressReport()) {
+      Integer providedSigningOfficial =
+          progressReport.getData().getCloseoutSupplement().signingOfficialId();
+      try {
+        User selectedSigningOfficial = userService.findUserById(providedSigningOfficial);
+        if (!selectedSigningOfficial.getInstitutionId().equals(user.getInstitutionId())) {
+          throw new BadRequestException(
+              "The signing official selected in the closeout is not in the same institution as the submitter.");
+        }
+        if (!selectedSigningOfficial.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+          throw new BadRequestException("The selected signing official is not a signing official");
+        }
+      } catch (NotFoundException nfe) {
+        throw new BadRequestException("The selected signing official in the closeout was not found.");
+      }
+    }
   }
 
-  private void validateCommonDarAndProgressReportElements(User user, DataAccessRequest dar) {
+  @VisibleForTesting
+  protected void validateCommonDarAndProgressReportElements(User user, DataAccessRequest dar) {
     if (Objects.isNull(user) || Objects.isNull(dar) || Objects.isNull(
         dar.getReferenceId()) || Objects.isNull(dar.getData())) {
       throw new IllegalArgumentException("User and DataAccessRequest are required");
     }
-
     if (user.getLibraryCard() == null) {
       throw new NIHComplianceRuleException();
     }
@@ -355,8 +405,38 @@ public class DataAccessRequestService implements ConsentLogger {
 
   public void validateDar(User user, DataAccessRequest dar) {
     validateCommonDarAndProgressReportElements(user, dar);
+
+    if (!Objects.equals(user.getEmail(), dar.getData().getPiEmail()) || !Objects.equals(user.getDisplayName(), dar.getData().getPiName())) {
+      throw new BadRequestException("The PI in the DAR must have the same name and email as the user submitting the DAR.");
+    }
+
     validateNoKeyPersonnelDuplicates(dar.getData());
     validatePersonnelInstitutionAndLibraryCardRequirements(user, dar.getData());
+    validateCountryOfOperation(dar.getData(), false);
+  }
+
+  protected void validateCountryOfOperation(DataAccessRequestData darData, boolean skipPI) {
+    List<String> errorSummary = new ArrayList<>();
+    // We will have progress reports that don't have country of operation set for the PI.
+    if (!skipPI && !countryValidator.isInCountryList(darData.getPiCountryOfOperation())) {
+      errorSummary.add(
+          "Principal Investigator %s Country of Operation (%s) is not allowed"
+              .formatted(darData.getPiEmail(), darData.getPiCountryOfOperation()));
+    }
+
+    List<Collaborator> collaborators = darData.getLabAndInternalCollaborators();
+    collaborators.forEach(
+        collaborator -> {
+          if (!countryValidator.isInCountryList(collaborator.countryOfOperation())) {
+            errorSummary.add(
+                "Collaborator or Lab Staff Member %s Country of Operation (%s) is not allowed"
+                    .formatted(collaborator.email(), collaborator.countryOfOperation()));
+          }
+        });
+
+    if (!errorSummary.isEmpty()) {
+      throw new BadRequestException(String.join(", ", errorSummary));
+    }
   }
 
   @VisibleForTesting
@@ -372,10 +452,10 @@ public class DataAccessRequestService implements ConsentLogger {
   private List<String> getCollaboratorAndLibraryCardErrors(User user, DataAccessRequestData darData) {
     List<String> errorSummary = new ArrayList<>();
     getErrorSummary(
-        darData.getInternalCollaborators().stream().map(Collaborator::getEmail).toList(), user.getInstitution(),
+        darData.getInternalCollaborators().stream().map(Collaborator::email).toList(), user.getInstitution(),
         INTERNAL_COLLABORATOR + " " + MEMBER + ": ", INTERNAL_COLLABORATOR + "  " + MEMBERS, errorSummary);
     getErrorSummary(
-        darData.getLabCollaborators().stream().map(Collaborator::getEmail).toList(), user.getInstitution(),
+        darData.getLabCollaborators().stream().map(Collaborator::email).toList(), user.getInstitution(),
         LAB_STAFF + " " + MEMBER + ": ", LAB_STAFF + " " + MEMBERS, errorSummary);
     return errorSummary;
   }
@@ -445,7 +525,6 @@ public class DataAccessRequestService implements ConsentLogger {
     verifyInstitution(submitterInstitution, piEmail, "Principal Investigator", invalidMembers);
     verifyInstitution(submitterInstitution, soEmail, "Signing Official", invalidMembers);
     verifyInstitution(submitterInstitution, itEmail, "IT Director", invalidMembers);
-
     invalidMembers.addAll(getCollaboratorAndLibraryCardErrors(user, darData));
 
     if (!invalidMembers.isEmpty()) {
@@ -596,4 +675,7 @@ public class DataAccessRequestService implements ConsentLogger {
     return user;
   }
 
+  public List<Election> findOpenElectionsByReferenceId(String referenceId) {
+    return electionDAO.findOpenElectionsByReferenceIds(List.of(referenceId));
+  }
 }

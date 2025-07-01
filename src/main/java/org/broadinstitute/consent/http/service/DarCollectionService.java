@@ -73,7 +73,8 @@ public class DarCollectionService implements ConsentLogger {
   public DarCollectionService(DarCollectionDAO darCollectionDAO,
       DarCollectionServiceDAO collectionServiceDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO,
       DataAccessRequestDAO dataAccessRequestDAO, EmailService emailService, VoteDAO voteDAO,
-      MatchDAO matchDAO, DarCollectionSummaryDAO darCollectionSummaryDAO, UserDAO userDAO, DacDAO dacDAO) {
+      MatchDAO matchDAO, DarCollectionSummaryDAO darCollectionSummaryDAO, UserDAO userDAO,
+      DacDAO dacDAO) {
     this.darCollectionDAO = darCollectionDAO;
     this.collectionServiceDAO = collectionServiceDAO;
     this.datasetDAO = datasetDAO;
@@ -132,6 +133,9 @@ public class DarCollectionService implements ConsentLogger {
         });
         determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
       }
+      if (s.getCloseoutSupplement() != null) {
+        s.getActions().clear();
+      }
     });
   }
 
@@ -165,10 +169,12 @@ public class DarCollectionService implements ConsentLogger {
       //if the latest DAR in the collection has at least one approved dataset,
       //include the create progress report action
       Set<Integer> datasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(s.getLatestReferenceId());
-      // Can only create a progress report if there are approved datasets and no closeout supplement
-      if (!datasetIds.isEmpty() && s.getCloseoutSupplement() == null) {
-          s.addAction(DarCollectionActions.CREATE_PROGRESS_REPORT);
-        }
+      // Can only create a progress report if there are approved datasets, no closeout supplement,
+      // and no open elections.
+      boolean hasOpenElections = statusCount.getOrDefault(ElectionStatus.OPEN.getValue(), 0) > 0;
+      if (!hasOpenElections && !datasetIds.isEmpty() && s.getCloseoutSupplement() == null) {
+        s.addAction(DarCollectionActions.CREATE_PROGRESS_REPORT);
+      }
 
       //check dar statuses, if they're all canceled show revise (but only if there are no elections)
       if (electionCount == 0) {
@@ -233,46 +239,74 @@ public class DarCollectionService implements ConsentLogger {
     });
   }
 
-
+  /**
+   * Process the DarCollectionSummaries for a chairperson. Note that this decorates the raw
+   * summaries with status and actions based on the elections present in each summary.
+   *
+   * @param summaries The list of DarCollectionSummaries to process
+   */
   private void processDarCollectionSummariesForChair(List<DarCollectionSummary> summaries) {
     summaries.forEach(s -> {
-      //if there are no elections, only show open
-      //if there is any closed or canceled elections, or if some datasets dont have an election, show open
-      //if there are any open elections, show cancel and vote
       Map<String, Integer> statusCount = new HashMap<>();
       Map<Integer, Election> elections = s.getElections();
-      if (elections.size() == 0) {
-        s.setStatus(DarCollectionStatus.SUBMITTED.getValue());
+      if (elections.size() < s.getDatasetCount()) {
         s.addAction(DarCollectionActions.OPEN);
-      } else {
-        if (elections.size() < s.getDatasetCount()) {
-          s.addAction(DarCollectionActions.OPEN);
-        }
-        elections.values().forEach(election -> {
-          String statusString = election.getStatus();
-          updateStatusCount(statusCount, statusString);
-          ElectionStatus status = ElectionStatus.getStatusFromString(statusString);
-          switch (status) {
-            case CLOSED, CANCELED:
-              s.addAction(DarCollectionActions.OPEN);
-              break;
-            case OPEN:
-              s.addAction(DarCollectionActions.VOTE);
-              break;
-            default:
-              break;
-          }
-        });
-        Integer closedCount = statusCount.get(ElectionStatus.CLOSED.getValue());
-        Integer openCount = statusCount.get(ElectionStatus.OPEN.getValue());
-        //add cancel if there are no closed elections and at least one open election
-        if (Objects.isNull(closedCount) && Objects.nonNull(openCount)) {
-          s.addAction(DarCollectionActions.CANCEL);
-        }
+      }
+      elections.values().forEach(election -> updateStatusCount(statusCount, election.getStatus()));
+      Integer closedCount = statusCount.get(ElectionStatus.CLOSED.getValue());
+      Integer openCount = statusCount.get(ElectionStatus.OPEN.getValue());
+      determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
+      updateSummaryActionsForChair(s, closedCount, openCount);
+    });
+  }
 
-        determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
+  /**
+   * Update the summary actions for a chairperson based on the summary and election counts.
+   *
+   * @param summary  The DarCollectionSummary to update
+   * @param closedCount The count of closed elections
+   * @param openCount The count of open elections
+   */
+  private void updateSummaryActionsForChair(
+      DarCollectionSummary summary,
+      Integer closedCount,
+      Integer openCount) {
+
+    // By default, no actions can be taken on a closeout supplement
+    if (summary.getCloseoutSupplement() != null) {
+      summary.getActions().clear();
+      // If the SO has approved the closeout supplement, allow review of the progress report.
+      if (summary.getCloseoutSigningOfficialApprovalDate() != null) {
+        summary.addAction(DarCollectionActions.REVIEW_PROGRESS_REPORT);
+      }
+      return;
+    }
+
+    // If there are no elections, only show open
+    if (summary.getElections().isEmpty()) {
+      summary.addAction(DarCollectionActions.OPEN);
+    }
+
+    // If there are closed or canceled elections, show open
+    // If there are any open elections, show vote
+    summary.getElections().values().forEach(election -> {
+      ElectionStatus status = ElectionStatus.getStatusFromString(election.getStatus());
+      switch (Objects.requireNonNull(status)) {
+        case CLOSED, CANCELED:
+          summary.addAction(DarCollectionActions.OPEN);
+          break;
+        case OPEN:
+          summary.addAction(DarCollectionActions.VOTE);
+          break;
+        default:
+          break;
       }
     });
+
+    // Add cancel if there are no closed elections and at least one open election
+    if (Objects.isNull(closedCount) && Objects.nonNull(openCount)) {
+      summary.addAction(DarCollectionActions.CANCEL);
+    }
   }
 
   private void processDarCollectionSummariesForSO(List<DarCollectionSummary> summaries) {
@@ -281,7 +315,15 @@ public class DarCollectionService implements ConsentLogger {
       s.getElections().values()
           .forEach(election -> updateStatusCount(statusCount, election.getStatus()));
       determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
+      updateSummaryActionsForSO(s);
     });
+  }
+
+  private void updateSummaryActionsForSO(DarCollectionSummary summary) {
+    // If the SO has not yet approved the closeout supplement, allow review of the progress report.
+    if (summary.getCloseoutSupplement() != null && summary.getCloseoutSigningOfficialApprovalDate() == null) {
+      summary.addAction(DarCollectionActions.REVIEW_PROGRESS_REPORT);
+    }
   }
 
   /**
@@ -758,6 +800,35 @@ public class DarCollectionService implements ConsentLogger {
         emailService.sendNewProgressReportRequestEmail(user, sendList, researcherName, collection.getDarCode(), dar.getReferenceId());
       } else {
         emailService.sendNewDARRequestEmail(user, sendList, researcherName, collection.getDarCode());
+      }
+    }
+    notifySigningOfficialsOfDARSubmission(dar, researcher, collection.getDarCode());
+  }
+
+  @VisibleForTesting
+  protected void notifySigningOfficialsOfDARSubmission(DataAccessRequest dar, User researcher,
+      String darCode) throws TemplateException, IOException {
+    if (researcher == null) {
+      logWarn(
+          "Unable to send new DAR/PR message to Signing Officials: Researcher does not exist: %s".formatted(
+              dar.getUserId()));
+      return;
+    }
+    if (researcher.getInstitutionId() == null) {
+      logWarn(
+          "Unable to send new DAR/PR message to Signing Officials: Researcher does not have an institution id: %s".formatted(
+              dar.getUserId()));
+      return;
+    }
+    List<User> signingOfficials = userDAO.getSOsByInstitution(researcher.getInstitutionId());
+    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(dar.getDatasetIds());
+    for (User so : signingOfficials) {
+      if (dar.getProgressReport()) {
+        emailService.sendNewSoProgressReportSubmittedEmail(so, darCode, researcher,
+            dar.getReferenceId(), datasets);
+      } else {
+        emailService.sendNewSoDARSubmittedEmail(so, darCode, researcher, dar.getReferenceId(),
+            datasets);
       }
     }
   }

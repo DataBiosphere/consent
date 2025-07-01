@@ -34,6 +34,7 @@ import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
@@ -44,6 +45,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DaaService;
@@ -394,7 +396,7 @@ public class DataAccessRequestResource extends Resource {
 
   @PUT
   @RolesAllowed({SIGNINGOFFICIAL})
-  @Path("/approve_closeout/{referenceId}")
+  @Path("/{referenceId}/approveCloseout")
   public Response approveCloseout(@Auth DuosUser duosUser,
       @Context Request request,
       @PathParam("referenceId") String referenceId) {
@@ -434,12 +436,22 @@ public class DataAccessRequestResource extends Resource {
       if (!user.getUserId().equals(parentDar.getUserId())) {
         throw new ForbiddenException("User not authorized to update this Data Access Request");
       }
+      // Prevent creation if there are open DataAccess elections for the parent DAR
+      List<Election> openElections = dataAccessRequestService.findOpenElectionsByReferenceId(parentDar.getReferenceId());
+      boolean hasOpenDataAccessElections = openElections
+          .stream()
+          .anyMatch(election -> election.getElectionType().equalsIgnoreCase(ElectionType.DATA_ACCESS.getValue()));
+      if (hasOpenDataAccessElections) {
+        throw new BadRequestException("Cannot create a progress report for a DAR with an open election: " + parentDar.getReferenceId());
+      }
       DataAccessRequest payload = DataAccessRequest.populateProgressReportFromJsonString(dar, parentDar);
       populateProgressReportWithDocuments(collabInputStream, collabFileDetails, ethicsInputStream,
           ethicsFileDetails, payload, parentDar);
       DataAccessRequest progressReport = dataAccessRequestService.createProgressReport(user,
           payload, parentDar);
-      sendNewDarCollectionMessage(parentDar.getCollectionId());
+      if (Objects.nonNull(progressReport) && !progressReport.getIsCloseoutProgressReport()) {
+        sendNewDarCollectionMessage(parentDar.getCollectionId());
+      }
       return Response.ok(progressReport.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -551,10 +563,9 @@ public class DataAccessRequestResource extends Resource {
   @Produces("application/json")
   @RolesAllowed({ADMIN, RESEARCHER})
   public Response deleteDar(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
-    validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), authUser, referenceId);
     try {
-      User user = findUserByEmail(authUser.getEmail());
-      dataAccessRequestService.deleteByReferenceId(user, referenceId);
+      DataAccessRequest dataAccessRequest = validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), authUser, referenceId);
+      dataAccessRequestService.deleteDataAccessRequest(dataAccessRequest);
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -696,8 +707,9 @@ public class DataAccessRequestResource extends Resource {
    * @param allowableRoles List of roles that would allow the user to access the resource
    * @param authUser       The AuthUser
    * @param referenceId    The referenceId of the resource.
+   * @return dataAccessRequest The data access request underlying the referenceId
    */
-  private void validateAuthedRoleUser(final List<UserRoles> allowableRoles, AuthUser authUser,
+  private DataAccessRequest validateAuthedRoleUser(final List<UserRoles> allowableRoles, AuthUser authUser,
       String referenceId) {
     DataAccessRequest dataAccessRequest = getDarById(referenceId);
     User user = findUserByEmail(authUser.getEmail());
@@ -707,5 +719,6 @@ public class DataAccessRequestResource extends Resource {
       logWarn("DataAccessRequest '" + referenceId + "' has an invalid userId");
       super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
     }
+    return dataAccessRequest;
   }
 }

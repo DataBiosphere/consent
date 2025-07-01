@@ -186,4 +186,6 @@
     relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2025-06-05-save-so-closeout-approval.xml"
     relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2025-06-26-expiration-canary.xml"
+    relativeToChangelogFile="true" />
 </databaseChangeLog>

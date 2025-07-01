@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -42,6 +43,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
+import org.broadinstitute.consent.http.enumeration.ElectionStatus;
+import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -51,6 +54,7 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -480,6 +484,26 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     try (var response = resource.postProgressReport(authUser, "", "",
         null, null, null, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testPostProgressReportWithOpenElections() {
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    Election election = new Election();
+    election.setStatus(ElectionStatus.OPEN.getValue());
+    election.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    election.setReferenceId(parentDar.getReferenceId());
+    when(dataAccessRequestService.findOpenElectionsByReferenceId(parentDar.getReferenceId())).thenReturn(List.of(election));
+    var collabFile = mockFormDataMultiPart("collab.txt");
+    var ethicsFile = mockFormDataMultiPart("ethics.txt");
+
+    try (var response = resource.postProgressReport(authUser, "", "",
+        collabFile.getLeft(), collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+      assertTrue(response.getEntity().toString().contains("Cannot create a progress report for a DAR with an open election"));
     }
   }
 
@@ -1021,6 +1045,35 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     String referenceId = UUID.randomUUID().toString();
     doThrow(BadRequestException.class).when(dataAccessRequestService).approveDataAccessRequestCloseout(user,referenceId);
     try (Response response = resource.approveCloseout(duosUser, request, referenceId)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testDeleteDraftDataAccessRequestForDraft() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setUserId(user.getUserId());
+    dar.setReferenceId(UUID.randomUUID().toString());
+    assertTrue(dar.getDraft());
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    doNothing().when(dataAccessRequestService).deleteDataAccessRequest(dar);
+    try (Response response = resource.deleteDar(authUser, dar.getReferenceId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testDeleteDraftDataAccessRequestThrowsForSubmittedDar() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setUserId(user.getUserId());
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setSubmissionDate(Timestamp.from(Instant.now()));
+    assertFalse(dar.getDraft());
+    when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    doThrow(BadRequestException.class).when(dataAccessRequestService).deleteDataAccessRequest(dar);
+    try (Response response = resource.deleteDar(authUser, dar.getReferenceId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }

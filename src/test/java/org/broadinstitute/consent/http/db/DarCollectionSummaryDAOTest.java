@@ -55,7 +55,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
         dar.getCollectionId(),
         referenceId,
         dar.getUserId(),
-        dar.getData());
+        dar.getData(),
+        dar.getEraCommonsId());
     DataAccessRequest progressReport = dataAccessRequestDAO.findByReferenceId(referenceId);
     dar.getDatasetIds().forEach(datasetId -> {
       dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
@@ -1100,7 +1101,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
         parent.getCollectionId(),
         referenceId,
         userId,
-        data);
+        data,
+        parent.getEraCommonsId());
     // Insert dataset relations for the progress report
     parent.getDatasetIds().forEach(datasetId -> {
       dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);

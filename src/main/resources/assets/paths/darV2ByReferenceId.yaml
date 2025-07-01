@@ -55,9 +55,7 @@ put:
 delete:
   summary: Delete DAR by Reference Id
   description: | 
-    Deletes the DAR by reference id. If the user is the owner, and a researcher, the DAR
-    will only be deleted if there are no elections created for it. If the user is an Admin,
-    all votes and elections associated to the DAR will also be deleted.
+    Deletes a draft DAR by reference id. Admins may delete all drafts, researchers can only delete their own drafts.
   parameters:
     - name: referenceId
       in: path
@@ -78,6 +76,8 @@ delete:
       description: Forbidden
     404:
       description: The requested DAR couldn't be found.
+    400:
+      description: Only drafts can be deleted.
     406:
       description: There are existing resources that reference this Data Access Request
     500:

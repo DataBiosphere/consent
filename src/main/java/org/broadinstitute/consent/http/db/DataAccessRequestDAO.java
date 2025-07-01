@@ -38,7 +38,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery(
       """
-          SELECT collection.dar_code, dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, 
+          SELECT collection.dar_code, dd.dataset_id, dar.id, dar.reference_id, dar.collection_id,
             dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
             (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, dar.era_commons_id,
             dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
@@ -64,34 +64,38 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @return List of approved DARs for the dataset
    */
   @UseRowReducer(DataAccessRequestReducer.class)
-  @SqlQuery(
-      """
-              SELECT dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
-                dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
-                dd.dataset_id, collection.dar_code, dar.era_commons_id,
-                dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
-              FROM data_access_request dar
-              LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
-              INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id AND dd.dataset_id = :datasetId
-              INNER JOIN (
-                SELECT DISTINCT e.reference_id, LAST_VALUE(v.vote)
-                OVER(
-                  PARTITION BY e.reference_id
-                    ORDER BY v.createdate
-                    RANGE BETWEEN
-                      UNBOUNDED PRECEDING AND
-                      UNBOUNDED FOLLOWING
-                ) last_vote
-                FROM election e
-                INNER JOIN vote v ON e.election_id = v.electionid AND v.vote IS NOT NULL
-                WHERE e.dataset_id = :datasetId
-                AND LOWER(e.election_type) = 'dataaccess'
-                AND LOWER(v.type) = 'final') final_access_vote ON final_access_vote.reference_id = dar.reference_id
-              WHERE dar.submission_date > now() - interval '1 year'
-              AND final_access_vote.last_vote = TRUE
-              AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
-          """)
+  @SqlQuery("""
+      SELECT dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
+        dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
+        (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
+        dd.dataset_id, collection.dar_code, dar.era_commons_id,
+        dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
+      FROM data_access_request dar
+      LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
+      INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id AND dd.dataset_id = :datasetId
+      INNER JOIN (
+        SELECT DISTINCT e.reference_id, LAST_VALUE(v.vote)
+        OVER(
+          PARTITION BY e.reference_id
+            ORDER BY v.createdate
+            RANGE BETWEEN
+              UNBOUNDED PRECEDING AND
+              UNBOUNDED FOLLOWING
+        ) last_vote
+        FROM election e
+        INNER JOIN vote v ON e.election_id = v.electionid AND v.vote IS NOT NULL
+        WHERE e.dataset_id = :datasetId
+        AND LOWER(e.election_type) = 'dataaccess'
+        AND LOWER(v.type) = 'final') final_access_vote ON final_access_vote.reference_id = dar.reference_id
+      WHERE dar.submission_date > now() - interval '1 year'
+      AND final_access_vote.last_vote = TRUE
+      AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+      -- Exclude DARs that have a closeoutSupplement
+      AND dar.collection_id NOT IN (
+        SELECT DISTINCT collection_id
+        FROM data_access_request
+        WHERE (regexp_replace(data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'closeoutSupplement' IS NOT NULL)
+      """)
   List<DataAccessRequest> findApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
 
   /**
@@ -132,6 +136,11 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       WHERE final_access_vote.last_vote = TRUE
         AND dar.reference_id = :darReferenceId
         AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+        -- Exclude DARs that have a closeoutSupplement
+        AND dar.collection_id NOT IN (
+          SELECT DISTINCT collection_id
+          FROM data_access_request
+          WHERE (regexp_replace(data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'closeoutSupplement' IS NOT NULL)
       """)
   Set<Integer> findDatasetApprovalsByDar(@Bind("darReferenceId") String darReferenceId);
 
@@ -173,7 +182,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
               SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
               dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-              (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code, 
+              (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code,
               dar.era_commons_id, dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
               FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
@@ -194,7 +203,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
               SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
               dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-              (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, 
+              (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
               collection.dar_code, dar.era_commons_id, dar.closeout_so_approval_timestamp,
               dar.closeout_approving_so_id
               FROM data_access_request dar
@@ -381,15 +390,16 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate(
       """
           INSERT INTO data_access_request
-            (parent_id, collection_id, reference_id, user_id, create_date, sort_date, submission_date, update_date, data)
-          VALUES (:parentId, :collectionId, :referenceId, :userId, now(), now(), now(), now(), to_jsonb(:data))
+            (parent_id, collection_id, reference_id, user_id, create_date, sort_date, submission_date, update_date, data, era_commons_id)
+          VALUES (:parentId, :collectionId, :referenceId, :userId, now(), now(), now(), now(), to_jsonb(:data), :eraCommonsId)
       """)
   void insertProgressReport(
       @Bind("parentId") Integer parentId,
       @Bind("collectionId") Integer collectionId,
       @Bind("referenceId") String referenceId,
       @Bind("userId") Integer userId,
-      @Bind("data") @Json DataAccessRequestData data);
+      @Bind("data") @Json DataAccessRequestData data,
+      @Bind("eraCommonsId") String eraCommonsId);
 
 
   /**

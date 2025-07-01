@@ -24,6 +24,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -165,7 +166,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         new Date(), dar.getData(), randomAlphabetic(10));
     dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
     assertNull(dar.getSubmissionDate());
-    assertEquals(true, dar.getDraft());
+    assertTrue(dar.getDraft());
     assertFalse(dar.getExpired());
     assertNull(dar.getExpiresAt());
   }
@@ -179,7 +180,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         new Date(),
         new Date(), dar.getData(), randomAlphabetic(10));
     dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-    assertEquals(false, dar.getDraft());
+    assertFalse(dar.getDraft());
     assertFalse(dar.getExpired());
     Timestamp expectedTimestamp = new Timestamp(
         dar.getSubmissionDate().getTime() + DataAccessRequest.EXPIRATION_DURATION_MILLIS);
@@ -192,11 +193,11 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     DataAccessRequest dar = new ArrayList<>(darColl.getDars().values()).get(0);
 
     dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-    assertEquals(false, dar.getDraft());
+    assertFalse(dar.getDraft());
     dataAccessRequestDAO.updateDataByReferenceId(dar.referenceId, dar.userId, new Date(), null,
         new Date(), dar.getData(), randomAlphabetic(10));
     dar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
-    assertEquals(true, dar.getDraft());
+    assertTrue(dar.getDraft());
     assertNull(dar.getSubmissionDate());
     assertFalse(dar.getExpired());
     assertNull(dar.getExpiresAt());
@@ -233,6 +234,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertFalse(dars.isEmpty());
     assertEquals(3, dars.size());
     dars.forEach(dar -> assertNotNull(dar.getDarCode()));
+    dars.forEach(dar -> assertNull(dar.getParentId()));
   }
 
   @Test
@@ -374,7 +376,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Integer collectionId = collection.getDarCollectionId();
     dataAccessRequestDAO.updateDraftToSubmittedForCollection(collectionId, referenceId);
     DataAccessRequest updatedDraft = dataAccessRequestDAO.findByReferenceId(referenceId);
-    assertEquals(false, updatedDraft.getDraft());
+    assertFalse(updatedDraft.getDraft());
     assertEquals(collectionId, updatedDraft.getCollectionId());
   }
 
@@ -719,6 +721,65 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertTrue(approvedDatasetIds.contains(dataset1.getDatasetId()));
   }
 
+  @Test
+  void testFindDatasetApprovalsByDAR_ExcludeCloseouts() {
+    // Create a dar collection
+    User user = createUserWithInstitution();
+    String darCode = "DAR-" + randomInt(1, 10000);
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
+        new Date());
+
+    // Create an approved DAR on a dataset
+    Dataset dataset = createDataset();
+    DataAccessRequest parentDAR = createDataAccessRequest(user.getUserId(), collectionId);
+    dataAccessRequestDAO.insertDARDatasetRelation(parentDAR.getReferenceId(),
+        dataset.getDatasetId());
+    Election election = createDataAccessElection(parentDAR.getReferenceId(),
+        dataset.getDatasetId());
+    Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
+    Date now = new Date();
+    voteDAO.updateVote(true,
+        "",
+        now,
+        vote.getVoteId(),
+        false,
+        election.getElectionId(),
+        now,
+        false);
+    // Ensure we can find the approved dataset for the parent DAR
+    Set<Integer> approvedDatasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(
+        parentDAR.getReferenceId());
+    assertTrue(approvedDatasetIds.contains(dataset.getDatasetId()));
+
+    // Create a closeout DAR for the parent DAR
+    DataAccessRequest closeoutDAR = createProgressReport(user.getEraCommonsId(), user.getUserId(), collectionId,
+        parentDAR.getId());
+    CloseoutSupplement closeout = new CloseoutSupplement(List.of("Reason"), "Other Reason",
+        user.getUserId());
+    closeoutDAR.getData().setCloseoutSupplement(closeout);
+    dataAccessRequestDAO.updateDataByReferenceId(
+        closeoutDAR.getReferenceId(),
+        user.getUserId(),
+        now,
+        now,
+        now,
+        closeoutDAR.getData(),
+        randomAlphabetic(10)
+    );
+
+    // Ensure that we do NOT get the dataset from the parent DAR
+    Set<Integer> noApprovedDatasetIds1 = dataAccessRequestDAO.findDatasetApprovalsByDar(
+        parentDAR.getReferenceId());
+    assertTrue(noApprovedDatasetIds1.isEmpty(),
+        "Parent DAR should not be included in dataset approvals");
+
+    // Ensure that we do NOT get the dataset from the closeout DAR
+    Set<Integer> noApprovedDatasetIds2 = dataAccessRequestDAO.findDatasetApprovalsByDar(
+        closeoutDAR.getReferenceId());
+    assertTrue(noApprovedDatasetIds2.isEmpty(),
+        "Closeout DAR should not be included in dataset approvals");
+  }
+
   /**
    * Tests the case where a user has been approved for access, then denied access, and that the user
    * does not show up as an approved user for the dataset.
@@ -821,6 +882,59 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
             .size());
   }
 
+  @Test
+  void testFindApprovedDARsByDatasetId_ExcludeCloseouts() {
+    // Create a dar collection
+    User user = createUserWithInstitution();
+    String darCode = "DAR-" + randomInt(1, 10000);
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
+        new Date());
+
+    // Create an approved DAR on a dataset
+    Dataset dataset = createDataset();
+    DataAccessRequest parentDAR = createDataAccessRequest(user.getUserId(), collectionId);
+    dataAccessRequestDAO.insertDARDatasetRelation(parentDAR.getReferenceId(),
+        dataset.getDatasetId());
+    Election election = createDataAccessElection(parentDAR.getReferenceId(),
+        dataset.getDatasetId());
+    Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
+    Date now = new Date();
+    voteDAO.updateVote(true,
+        "",
+        now,
+        vote.getVoteId(),
+        false,
+        election.getElectionId(),
+        now,
+        false);
+    // Ensure we can find the parent DAR for the approved dataset
+    List<DataAccessRequest> approvedDARs = dataAccessRequestDAO.findApprovedDARsByDatasetId(
+        dataset.getDatasetId());
+    assertEquals(1, approvedDARs.size());
+    assertEquals(parentDAR.getReferenceId(), approvedDARs.get(0).getReferenceId());
+
+    // Create a closeout DAR from the parent DAR
+    DataAccessRequest closeoutDAR = createProgressReport(user.getEraCommonsId(), user.getUserId(), collectionId,
+        parentDAR.getId());
+    CloseoutSupplement closeout = new CloseoutSupplement(List.of("Reason"), "Other Reason",
+        user.getUserId());
+    closeoutDAR.getData().setCloseoutSupplement(closeout);
+    dataAccessRequestDAO.updateDataByReferenceId(
+        closeoutDAR.getReferenceId(),
+        user.getUserId(),
+        now,
+        now,
+        now,
+        closeoutDAR.getData(),
+        randomAlphabetic(10)
+    );
+
+    // Ensure we CANNOT find any DARs for the approved dataset
+    List<DataAccessRequest> noApprovedDARs = dataAccessRequestDAO.findApprovedDARsByDatasetId(
+        dataset.getDatasetId());
+    assertTrue(noApprovedDARs.isEmpty());
+  }
+
   // findAllDraftDataAccessRequests should exclude archived DARs
   @Test
   void testFindAllDraftsArchived() {
@@ -884,7 +998,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   void createProgressReport() {
     DarCollection darCollection = createDarCollection();
     DataAccessRequest dar = new ArrayList<>(darCollection.getDars().values()).get(0);
-    DataAccessRequest progressReport = createProgressReport(dar.getUserId(),
+    DataAccessRequest progressReport = createProgressReport(createUser().getEraCommonsId(), dar.getUserId(),
         darCollection.getDarCollectionId(),
         dar.getId());
 
@@ -905,14 +1019,15 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   void insertProgressReport_WithExistingProgressReport() {
     DarCollection darCollection = createDarCollection();
     DataAccessRequest dar = darCollection.getDars().values().stream().findFirst().orElseThrow();
+    String eraCommonsId = dar.getEraCommonsId();
     Integer userId = dar.getUserId();
     Integer darCollectionId = darCollection.getDarCollectionId();
     Integer id = dar.getId();
-    DataAccessRequest progressReport = createProgressReport(userId, darCollectionId, id);
+    DataAccessRequest progressReport = createProgressReport(dar.getEraCommonsId(), userId, darCollectionId, id);
     assertNotNull(progressReport);
 
     // Insert of second progress report should fail.
-    assertThrows(JdbiException.class, () -> createProgressReport(userId, darCollectionId, id));
+    assertThrows(JdbiException.class, () -> createProgressReport(eraCommonsId, userId, darCollectionId, id));
 
     // Check that the first progress report is not updated.
     DataAccessRequest firstProgressReport = dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId());
@@ -1176,7 +1291,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
-  private DataAccessRequest createProgressReport(Integer userId, Integer collectionId,
+  private DataAccessRequest createProgressReport(String eraCommonsId, Integer userId, Integer collectionId,
       Integer parentId) {
     DataAccessRequestData data = createDataAccessRequestData(
     );
@@ -1186,7 +1301,8 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         collectionId,
         referenceId,
         userId,
-        data);
+        data,
+        eraCommonsId);
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 

@@ -11,10 +11,12 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -294,6 +296,11 @@ public class DacService implements ConsentLogger {
       }
     }
     return Collections.emptyList();
+  }
+
+  public Set<Dac> findByDatasetId(List<Integer> datasetIds) {
+    return dacDAO.findDacsForDatasetIds(datasetIds).stream().map(dac -> findById(dac.getDacId())).collect(
+        Collectors.toUnmodifiableSet());
   }
 
 }
