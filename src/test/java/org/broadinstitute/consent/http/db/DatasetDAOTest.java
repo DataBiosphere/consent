@@ -824,10 +824,60 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testGetApprovedDatasets_user_without_library_card() {
+    User user = createUser();
+
+    Dataset dataset1 = createDataset(false);
+    Dataset dataset2 = createDataset(true);
+    Dataset dataset3 = createDataset(false);
+    Dataset dataset4 = createDataset(true);
+
+    Timestamp timestamp = new Timestamp(new Date().getTime());
+
+    Dac dac1 = insertDac();
+    datasetDAO.updateDataset(dataset1.getDatasetId(), dataset1.getDatasetName(), timestamp,
+        user.getUserId(), dac1.getDacId());
+    datasetDAO.updateDataset(dataset2.getDatasetId(), dataset2.getDatasetName(), timestamp,
+        user.getUserId(), dac1.getDacId());
+
+    Dac dac2 = insertDac();
+    datasetDAO.updateDataset(dataset3.getDatasetId(), dataset3.getDatasetName(), timestamp,
+        user.getUserId(), dac2.getDacId());
+    datasetDAO.updateDataset(dataset4.getDatasetId(), dataset4.getDatasetName(), timestamp,
+        user.getUserId(), dac2.getDacId());
+
+    DarCollection dar1 = createDarCollectionWithDatasets(dac1.getDacId(), user, List.of(dataset1));
+    DarCollection dar2 = createDarCollectionWithDatasets(dac2.getDacId(), user,
+        List.of(dataset2, dataset3));
+    DarCollection dar3 = createDarCollectionWithDatasets(dac2.getDacId(), user, List.of(dataset4));
+    List<DarCollection> allDarCollections = List.of(dar1, dar2, dar3);
+
+    Map<Integer, Boolean> expectedFinalVotesForDatasets = Map.of(dataset1.getDatasetId(), false,
+        dataset2.getDatasetId(), false, dataset3.getDatasetId(), true, dataset4.getDatasetId(),
+        true);
+
+    Map<Integer, Election> elections = new HashMap<>();
+
+    for (DarCollection dar : allDarCollections) {
+      for (Map.Entry<String, DataAccessRequest> e : dar.getDars().entrySet()) {
+        for (Integer id : e.getValue().getDatasetIds()) {
+          elections.put(id, createDataAccessElectionWithVotes(e.getKey(), id, user.getUserId(),
+              expectedFinalVotesForDatasets.get(id)));
+        }
+      }
+    }
+
+    List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
+    assertNotNull(approvedDatasets);
+    assertEquals(0, approvedDatasets.size());
+  }
+
+  @Test
   void testGetApprovedDatasets() {
 
     // user with a mix of approved and unapproved datasets
     User user = createUser();
+    libraryCardDAO.insertLibraryCard(user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
 
     Dataset dataset1 = createDataset(false);
     Dataset dataset2 = createDataset(true);
@@ -877,11 +927,9 @@ class DatasetDAOTest extends DAOTestHelper {
         datasetDAO.findDatasetByAlias(approvedDataset.getAlias()).getDacApproval()));
 
     ApprovedDataset expectedApprovedDataset1 = new ApprovedDataset(dataset3.getAlias(),
-        dar2.getDarCode(), dataset3.getDatasetName(), dac2.getName(),
-        elections.get(dataset3.getDatasetId()).getLastUpdate());
+        dar2.getDarCode(), dataset3.getDatasetName(), dac2.getName());
     ApprovedDataset expectedApprovedDataset2 = new ApprovedDataset(dataset4.getAlias(),
-        dar3.getDarCode(), dataset4.getDatasetName(), dac2.getName(),
-        elections.get(dataset4.getDatasetId()).getLastUpdate());
+        dar3.getDarCode(), dataset4.getDatasetName(), dac2.getName());
     Map<Integer, ApprovedDataset> expectedDatasets = Map.of(dataset3.getAlias(),
         expectedApprovedDataset1, dataset4.getAlias(), expectedApprovedDataset2);
 

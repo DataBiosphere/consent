@@ -14,8 +14,7 @@ public class ApprovedDatasetMapper implements RowMapper<ApprovedDataset> {
       rs.getInt("alias"),
       rs.getString("dar_code"),
       rs.getString("dataset_name"),
-      rs.getString("dac_name"),
-      rs.getDate("update_date")
+      rs.getString("dac_name")
     );
   }
 }
