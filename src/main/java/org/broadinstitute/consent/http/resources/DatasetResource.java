@@ -86,6 +86,7 @@ public class DatasetResource extends Resource {
   @Produces({MediaType.APPLICATION_JSON})
   @Path("/v3")
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  @Timed
   /*
    * This endpoint accepts a json instance of a dataset-registration-schema_v1.json schema.
    * With that object, we can fully create datasets from the provided values.
@@ -264,6 +265,7 @@ public class DatasetResource extends Resource {
   @Path("/registration/{datasetIdentifier}")
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
+  @Timed
   public Response getRegistrationFromDatasetIdentifier(@Auth AuthUser authUser,
       @PathParam("datasetIdentifier") String datasetIdentifier) {
     try {
