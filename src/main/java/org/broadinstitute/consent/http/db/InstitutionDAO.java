@@ -248,6 +248,19 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
       """)
   Institution findInstitutionWithSOById(@Bind("institutionId") Integer institutionId);
 
-  @SqlUpdate("DELETE FROM institution WHERE create_user = :userId OR update_user = :userId")
-  void deleteAllInstitutionsByUser(@Bind("userId") Integer userId);
+  default void deleteAllInstitutionsByUser(@Bind("userId") Integer userId) throws SQLException {
+    final String domainDeleteQuery = """
+        DELETE FROM institution_domains
+        WHERE institution_id IN (SELECT institution_id FROM institution WHERE create_user = :userId OR update_user = :userId)
+        """;
+    final String institutionDeleteQuery = """
+        DELETE FROM institution WHERE create_user = :userId OR update_user = :userId
+        """;
+    getHandle().useTransaction(handle -> {
+      handle.getConnection().setAutoCommit(false);
+      handle.createUpdate(domainDeleteQuery).bind("userId", userId).execute();
+      handle.createUpdate(institutionDeleteQuery).bind("userId", userId).execute();
+      handle.getConnection().commit();
+    });
+  }
 }

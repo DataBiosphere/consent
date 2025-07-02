@@ -3,10 +3,10 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -203,11 +203,28 @@ class InstitutionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDeleteInstitutionByUserId() {
+  void testDeleteInstitutionByUserId() throws SQLException {
     Institution institution = createInstitution();
     Integer userId = institution.getCreateUserId();
     institutionDAO.deleteAllInstitutionsByUser(userId);
     assertNull(institutionDAO.findInstitutionById(institution.getId()));
+  }
+
+  @Test
+  void testDeleteInstitutionWithDomainsByUserId() throws SQLException {
+    Institution institution = createInstitution();
+    institution.setDomains(List.of("domain1.com", "domain2.com"));
+    institutionDAO.updateFullInstitution(institution, institution.getCreateUserId());
+    Integer userId = institution.getCreateUserId();
+    institutionDAO.deleteAllInstitutionsByUser(userId);
+    assertNull(institutionDAO.findInstitutionById(institution.getId()));
+    jdbi.useHandle(handle -> {
+      List<String> domains = handle.createQuery("SELECT domain FROM institution_domains WHERE institution_id = :id")
+          .bind("id", institution.getId())
+          .mapTo(String.class)
+          .list();
+      assertTrue(domains.isEmpty(), "Domains should be deleted when institution is deleted");
+    });
   }
 
   @Test
