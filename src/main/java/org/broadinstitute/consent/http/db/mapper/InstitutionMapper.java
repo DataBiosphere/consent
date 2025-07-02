@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.models.Institution;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -69,7 +70,10 @@ public class InstitutionMapper implements RowMapper<Institution>, RowMapperHelpe
       institution.setUpdateDate(resultSet.getDate("update_date"));
     }
     if (hasColumn(resultSet, "domain")) {
-      institution.addDomain(resultSet.getString("domain"));
+      String domain = resultSet.getString("domain");
+      if (!StringUtils.isBlank(domain)) {
+        institution.addDomain(domain);
+      }
     }
 
     institutionMap.put(institution.getId(), institution);
