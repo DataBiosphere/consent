@@ -981,7 +981,6 @@ class DatasetResourceTest extends AbstractTestHelper {
     Dataset dataset = study.getDatasets().stream().findFirst().orElse(null);
     assertNotNull(dataset);
     when(datasetService.findDatasetByIdentifier(any())).thenReturn(dataset);
-    when(datasetService.findStudyById(any())).thenReturn(study);
 
     initResource();
     Response response = resource.getRegistrationFromDatasetIdentifier(authUser,
@@ -991,11 +990,9 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Test
   void testGetRegistrationFromDatasetIdentifierStudyNotFound() {
-    Study study = createMockStudy();
-    Dataset dataset = study.getDatasets().stream().findFirst().orElse(null);
+    Dataset dataset = createMockDataset();
     assertNotNull(dataset);
     when(datasetService.findDatasetByIdentifier(any())).thenReturn(dataset);
-    when(datasetService.findStudyById(any())).thenThrow(new NotFoundException());
 
     initResource();
     Response response = resource.getRegistrationFromDatasetIdentifier(authUser,
@@ -1256,12 +1253,7 @@ class DatasetResourceTest extends AbstractTestHelper {
    * Study mock
    */
   private Study createMockStudy() {
-    Dataset dataset = new Dataset();
-    dataset.setDatasetId(100);
-    dataset.setAlias(10);
-    dataset.setDatasetIdentifier();
-    dataset.setDacId(1);
-    dataset.setDataUse(new DataUse());
+    Dataset dataset = createMockDataset();
 
     Study study = new Study();
     study.setName(randomAlphabetic(10));
@@ -1290,9 +1282,18 @@ class DatasetResourceTest extends AbstractTestHelper {
     dataCustodianEmailProperty.setValue(List.of(randomAlphabetic(10)));
 
     study.addProperties(phenotypeProperty, speciesProperty, dataCustodianEmailProperty);
-
     dataset.setStudy(study);
+    study.addDatasets(List.of(dataset));
+    return study;
+  }
 
+  private Dataset createMockDataset() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(100);
+    dataset.setAlias(10);
+    dataset.setDatasetIdentifier();
+    dataset.setDacId(1);
+    dataset.setDataUse(new DataUse());
     DatasetProperty accessManagementProp = new DatasetProperty();
     accessManagementProp.setSchemaProperty("accessManagement");
     accessManagementProp.setPropertyType(PropertyType.String);
@@ -1309,8 +1310,6 @@ class DatasetResourceTest extends AbstractTestHelper {
     numParticipantsProp.setPropertyValue(20);
 
     dataset.setProperties(Set.of(accessManagementProp, dataLocationProp, numParticipantsProp));
-    study.addDatasets(List.of(dataset));
-
-    return study;
+    return dataset;
   }
 }
