@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
 
 @ExtendWith(MockitoExtension.class)
 class InstitutionDAOTest extends DAOTestHelper {
@@ -277,4 +279,70 @@ class InstitutionDAOTest extends DAOTestHelper {
       assertTrue(insertedInstitution.getDomains().contains(domain));
     });
   }
+
+  @Test
+  void testInsertFullInstitutionUniqueDomainException_Case1() {
+    User user = createUser();
+    Institution institution = new Institution();
+    institution.setName("Test Institution");
+    institution.setItDirectorName("Test Director");
+    institution.setItDirectorEmail("email");
+    institution.setInstitutionUrl("http://testinstitution.com");
+    institution.setDunsNumber(123456789);
+    institution.setOrgChartUrl("http://testinstitution.com/orgchart");
+    institution.setVerificationUrl("http://testinstitution.com/verification");
+    institution.setVerificationFilename("verification.pdf");
+    institution.setOrganizationType(OrganizationType.FOR_PROFIT);
+    institution.setDomains(List.of("domain1.com", "domain1.com"));
+    try {
+      institutionDAO.insertFullInstitution(institution, user.getUserId());
+    } catch (Exception e) {
+      assertEquals(PSQLState.UNIQUE_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
+    }
+  }
+
+  @Test
+  void testUpdateFullInstitution() throws Exception {
+    User user = createUser();
+    Institution institution = new Institution();
+    institution.setName("Test Institution");
+    institution.setItDirectorName("Test Director");
+    institution.setItDirectorEmail("email");
+    institution.setInstitutionUrl("http://testinstitution.com");
+    institution.setDunsNumber(123456789);
+    institution.setOrgChartUrl("http://testinstitution.com/orgchart");
+    institution.setVerificationUrl("http://testinstitution.com/verification");
+    institution.setVerificationFilename("verification.pdf");
+    institution.setOrganizationType(OrganizationType.NON_PROFIT);
+    institution.setDomains(List.of("domain1.com", "domain2.com"));
+
+    Institution insertedInstitution = institutionDAO.insertFullInstitution(institution, user.getUserId());
+
+    insertedInstitution.setName("Updated Institution");
+    insertedInstitution.setItDirectorName("Updated Director");
+    insertedInstitution.setItDirectorEmail("updatedemail");
+    insertedInstitution.setInstitutionUrl("http://updatedinstitution.com");
+    insertedInstitution.setDunsNumber(987654321);
+    insertedInstitution.setOrgChartUrl("http://updatedinstitution.com/orgchart");
+    insertedInstitution.setVerificationUrl("http://updatedinstitution.com/verification");
+    insertedInstitution.setVerificationFilename("updated_verification.pdf");
+    insertedInstitution.setOrganizationType(OrganizationType.FOR_PROFIT);
+    institution.setDomains(List.of("new.domain1.com", "new.domain2.com", "new.domain3.com"));
+
+    Institution updatedInstitution = institutionDAO.updateFullInstitution(insertedInstitution, user.getUserId());
+
+    assertEquals(updatedInstitution.getName(), insertedInstitution.getName());
+    assertEquals(updatedInstitution.getItDirectorName(), insertedInstitution.getItDirectorName());
+    assertEquals(updatedInstitution.getItDirectorEmail(), insertedInstitution.getItDirectorEmail());
+    assertEquals(updatedInstitution.getInstitutionUrl(), insertedInstitution.getInstitutionUrl());
+    assertEquals(updatedInstitution.getDunsNumber(), insertedInstitution.getDunsNumber());
+    assertEquals(updatedInstitution.getOrgChartUrl(), insertedInstitution.getOrgChartUrl());
+    assertEquals(updatedInstitution.getVerificationUrl(), insertedInstitution.getVerificationUrl());
+    assertEquals(updatedInstitution.getVerificationFilename(), insertedInstitution.getVerificationFilename());
+    assertEquals(updatedInstitution.getDomains().size(), insertedInstitution.getDomains().size());
+    updatedInstitution.getDomains().forEach(domain -> {
+      assertTrue(insertedInstitution.getDomains().contains(domain));
+    });
+  }
+
 }

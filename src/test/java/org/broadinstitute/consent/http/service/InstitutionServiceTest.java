@@ -82,13 +82,15 @@ class InstitutionServiceTest {
   }
 
   @Test
-  void testUpdateInstitutionById() {
+  void testUpdateInstitutionById() throws Exception {
     Institution mockInstitution = initMockModel();
-    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
+    mockInstitution.setId(1);
+    when(institutionDAO.findInstitutionById(mockInstitution.getId())).thenReturn(mockInstitution);
+    when(institutionDAO.updateFullInstitution(mockInstitution, 1)).thenReturn(mockInstitution);
     initService();
     mockInstitution.setUpdateDate(new Date());
     //doNothing is default for void methods, no need to mock InstitutionDAO.updateInstitutionById
-    Institution updatedInstitution = service.updateInstitutionById(mockInstitution, 1, 1);
+    Institution updatedInstitution = service.updateInstitutionById(mockInstitution, mockInstitution.getId(), 1);
     assertNotNull(updatedInstitution);
   }
 

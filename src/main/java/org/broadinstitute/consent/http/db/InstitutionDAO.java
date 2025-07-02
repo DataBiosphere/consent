@@ -45,6 +45,15 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
       @Bind("createUser") Integer createUser,
       @Bind("createDate") Date createDate);
 
+  /**
+   * Inserts a full institution record, including domains, into the database. This is the preferred
+   * method for inserting institutions as it handles all necessary fields and relationships.
+   *
+   * @param institution Populated Institution object containing all necessary fields.
+   * @param userId The create_user id
+   * @return The inserted Institution object
+   * @throws SQLException The exception thrown if the insert fails.
+   */
   default Institution insertFullInstitution(Institution institution, Integer userId) throws SQLException {
     Date now = new Date();
     AtomicReference<Integer> institutionId = new AtomicReference<>();
@@ -110,6 +119,51 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
       @Bind("organizationType") String organizationType,
       @Bind("updateUser") Integer updateUser,
       @Bind("updateDate") Date updateDate);
+
+  /**
+   * Updates all fields of an institution, including its domains. This is the preferred method for
+   * updating institutions as it handles all necessary fields and relationships.
+   *
+   * @param institution The institution to update
+   * @param userId The update_user_id
+   * @return The updated Institution object
+   */
+  default Institution updateFullInstitution(Institution institution, Integer userId)
+      throws SQLException {
+    Date now = new Date();
+    Integer institutionId = institution.getId();
+    getHandle().useTransaction(handle -> {
+      handle.getConnection().setAutoCommit(false);
+      updateInstitutionById(
+          institution.getId(),
+          institution.getName(),
+          institution.getItDirectorName(),
+          institution.getItDirectorEmail(),
+          institution.getInstitutionUrl(),
+          institution.getDunsNumber(),
+          institution.getOrgChartUrl(),
+          institution.getVerificationUrl(),
+          institution.getVerificationFilename(),
+          (Objects.nonNull(institution.getOrganizationType()) ? institution.getOrganizationType()
+              .getValue() : null),
+          userId,
+          now);
+      handle.createUpdate("DELETE FROM institution_domains WHERE institution_id = :institutionId")
+          .bind("institutionId", institutionId)
+          .execute();
+      if (institution.getDomains() != null) {
+        String insertDomainQuery = """
+            INSERT INTO institution_domains (institution_id, domain) VALUES (:institutionId, :domain)
+            """;
+        institution.getDomains().forEach(domain -> handle.createUpdate(insertDomainQuery)
+            .bind("institutionId", institutionId)
+            .bind("domain", domain)
+            .execute());
+      }
+      handle.getConnection().commit();
+    });
+    return findInstitutionById(institutionId);
+  }
 
   @SqlUpdate("DELETE FROM institution WHERE institution_id = :institutionId")
   void deleteInstitutionById(@Bind("institutionId") Integer institutionId);

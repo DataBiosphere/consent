@@ -45,23 +45,12 @@ public class InstitutionService {
     isInstitutionNull(targetInstitution);
     checkUserId(userId);
     checkForEmptyName(institutionPayload);
-    Date updateDate = new Date();
-    institutionDAO.updateInstitutionById(
-        id,
-        institutionPayload.getName(),
-        institutionPayload.getItDirectorEmail(),
-        institutionPayload.getItDirectorName(),
-        institutionPayload.getInstitutionUrl(),
-        institutionPayload.getDunsNumber(),
-        institutionPayload.getOrgChartUrl(),
-        institutionPayload.getVerificationUrl(),
-        institutionPayload.getVerificationFilename(),
-        (Objects.nonNull(institutionPayload.getOrganizationType())
-            ? institutionPayload.getOrganizationType().getValue() : null),
-        userId,
-        updateDate
-    );
-    return institutionDAO.findInstitutionById(id);
+    try {
+      return institutionDAO.updateFullInstitution(institutionPayload, userId);
+    } catch (SQLException e) {
+      throw new ServerErrorException("Could not update institution",
+          HttpStatusCodes.STATUS_CODE_SERVER_ERROR, e);
+    }
   }
 
   public void deleteInstitutionById(Integer id) {
