@@ -274,14 +274,11 @@ public class DatasetResource extends Resource {
         throw new NotFoundException(
             "No dataset exists for dataset identifier: " + datasetIdentifier);
       }
-      Study study;
-      if (dataset.getStudy() != null && dataset.getStudy().getStudyId() != null) {
-        study = datasetService.findStudyById(dataset.getStudy().getStudyId());
-      } else {
+      if (dataset.getStudy() == null || dataset.getStudy().getStudyId() == null) {
         throw new NotFoundException("No study exists for dataset identifier: " + datasetIdentifier);
       }
       DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1Builder().build(
-          study, List.of(dataset));
+          dataset.getStudy(), List.of(dataset));
       String entity = GsonUtil.buildGsonNullSerializer().toJson(registration);
       return Response.ok().entity(entity).build();
     } catch (Exception e) {
