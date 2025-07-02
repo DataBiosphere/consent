@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
@@ -52,9 +53,9 @@ class InstitutionServiceTest {
   }
 
   @Test
-  void testCreateInstitutionSuccess() {
+  void testCreateInstitutionSuccess() throws Exception {
     Institution mockInstitution = initMockModel();
-    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
+    when(institutionDAO.insertFullInstitution(mockInstitution, 1)).thenReturn(mockInstitution);
     initService();
     Institution institution = service.createInstitution(mockInstitution, 1);
     assertNotNull(institution);

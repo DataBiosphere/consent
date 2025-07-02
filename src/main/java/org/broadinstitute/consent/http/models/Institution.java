@@ -19,14 +19,6 @@ public class Institution {
           " i.create_date as i_create_date, " +
           " i.update_date as i_update_date ";
 
-  public static final String QUERY_FIELDS_WITH_LCI_PREFIX =
-      " lci.institution_id as lci_id, " +
-          " lci.institution_name as lci_name, " +
-          " lci.it_director_name as lci_it_director_name, " +
-          " lci.it_director_email as lci_it_director_email, " +
-          " lci.create_date as lci_create_date, " +
-          " lci.update_date as lci_update_date ";
-
   private Integer id;
   private String name;
   private String itDirectorName;
@@ -38,6 +30,7 @@ public class Institution {
   private String verificationUrl;
   private String verificationFilename;
   private OrganizationType organizationType;
+  private List<String> domains;
   private Date createDate;
   private Integer createUserId;
   private Date updateDate;
@@ -205,6 +198,23 @@ public class Institution {
 
   public void setOrganizationType(OrganizationType organizationType) {
     this.organizationType = organizationType;
+  }
+
+  public List<String> getDomains() {
+    return domains;
+  }
+
+  public void setDomains(List<String> domains) {
+    this.domains = domains;
+  }
+
+  public void addDomain(String domain) {
+    if (Objects.isNull(domains)) {
+      this.setDomains(new ArrayList<>());
+    }
+    if (!domains.contains(domain)) {
+      domains.add(domain);
+    }
   }
 
   public Date getCreateDate() {

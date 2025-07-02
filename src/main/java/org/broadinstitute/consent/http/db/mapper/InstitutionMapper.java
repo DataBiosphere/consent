@@ -68,6 +68,9 @@ public class InstitutionMapper implements RowMapper<Institution>, RowMapperHelpe
     if (hasColumn(resultSet, "update_date")) {
       institution.setUpdateDate(resultSet.getDate("update_date"));
     }
+    if (hasColumn(resultSet, "domain")) {
+      institution.addDomain(resultSet.getString("domain"));
+    }
 
     institutionMap.put(institution.getId(), institution);
     return institution;

@@ -9,8 +9,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
@@ -198,7 +196,7 @@ class InstitutionDAOTest extends DAOTestHelper {
   @Test
   void testFindInstitutionsByName_Missing() {
     List<Institution> found = institutionDAO.findInstitutionsByName(
-        RandomStringUtils.randomAlphabetic(10));
+        randomAlphabetic(10));
     assertTrue(found.isEmpty());
   }
 
@@ -212,7 +210,6 @@ class InstitutionDAOTest extends DAOTestHelper {
 
   @Test
   void testFindInstitutionWithSOById() {
-    Institution institution = createInstitution();
     User user = createUserWithInstitution();
     Institution institutionWithSO = institutionDAO.findInstitutionWithSOById(user.getInstitutionId());
     assertEquals(1, institutionWithSO.getSigningOfficials().size());
@@ -221,14 +218,14 @@ class InstitutionDAOTest extends DAOTestHelper {
 
   private Institution createInstitution() {
     User createUser = createUser();
-    Integer id = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
+    Integer id = institutionDAO.insertInstitution(randomAlphabetic(20),
         "itDirectorName",
         "itDirectorEmail",
-        RandomStringUtils.randomAlphabetic(10),
+        randomAlphabetic(10),
         new Random().nextInt(),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
         OrganizationType.NON_PROFIT.getValue(),
         createUser.getUserId(),
         createUser.getCreateDate());
@@ -249,5 +246,35 @@ class InstitutionDAOTest extends DAOTestHelper {
         new Date()
     );
     return institutionDAO.findInstitutionById(id);
+  }
+
+  @Test
+  void testInsertFullInstitution() throws Exception {
+    User user = createUser();
+    Institution institution = new Institution();
+    institution.setName("Test Institution");
+    institution.setItDirectorName("Test Director");
+    institution.setItDirectorEmail("email");
+    institution.setInstitutionUrl("http://testinstitution.com");
+    institution.setDunsNumber(123456789);
+    institution.setOrgChartUrl("http://testinstitution.com/orgchart");
+    institution.setVerificationUrl("http://testinstitution.com/verification");
+    institution.setVerificationFilename("verification.pdf");
+    institution.setOrganizationType(OrganizationType.NON_PROFIT);
+    institution.setDomains(List.of("domain1.com", "domain2.com"));
+    Institution insertedInstitution = institutionDAO.insertFullInstitution(institution, user.getUserId());
+
+    assertEquals(institution.getName(), insertedInstitution.getName());
+    assertEquals(institution.getItDirectorName(), insertedInstitution.getItDirectorName());
+    assertEquals(institution.getItDirectorEmail(), insertedInstitution.getItDirectorEmail());
+    assertEquals(institution.getInstitutionUrl(), insertedInstitution.getInstitutionUrl());
+    assertEquals(institution.getDunsNumber(), insertedInstitution.getDunsNumber());
+    assertEquals(institution.getOrgChartUrl(), insertedInstitution.getOrgChartUrl());
+    assertEquals(institution.getVerificationUrl(), insertedInstitution.getVerificationUrl());
+    assertEquals(institution.getVerificationFilename(), insertedInstitution.getVerificationFilename());
+    assertEquals(institution.getDomains().size(), insertedInstitution.getDomains().size());
+    institution.getDomains().forEach(domain -> {
+      assertTrue(insertedInstitution.getDomains().contains(domain));
+    });
   }
 }
