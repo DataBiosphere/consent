@@ -14,7 +14,6 @@ public class InstitutionMapper implements RowMapper<Institution>, RowMapperHelpe
 
   private final Map<Integer, Institution> institutionMap = new HashMap<>();
 
-
   @Override
   public Institution map(ResultSet resultSet, StatementContext statementContext)
       throws SQLException {
@@ -28,46 +27,24 @@ public class InstitutionMapper implements RowMapper<Institution>, RowMapperHelpe
       institution = new Institution();
       institution.setId(institutionId);
     }
-    if (hasColumn(resultSet, "institution_name")) {
-      institution.setName(resultSet.getString("institution_name"));
-    }
-    if (hasColumn(resultSet, "it_director_name")) {
-      institution.setItDirectorName(resultSet.getString("it_director_name"));
-    }
-    if (hasColumn(resultSet, "it_director_email")) {
-      institution.setItDirectorEmail(resultSet.getString("it_director_email"));
-    }
-    if (hasColumn(resultSet, "institution_url")) {
-      institution.setInstitutionUrl(resultSet.getString("institution_url"));
-    }
+    setStringFieldValue(resultSet, "institution_name", institution::setName);
+    setStringFieldValue(resultSet, "it_director_name", institution::setItDirectorName);
+    setStringFieldValue(resultSet, "it_director_email", institution::setItDirectorEmail);
+    setStringFieldValue(resultSet, "institution_url", institution::setInstitutionUrl);
+    setStringFieldValue(resultSet, "org_chart_url", institution::setOrgChartUrl);
+    setStringFieldValue(resultSet, "verification_url", institution::setVerificationUrl);
+    setStringFieldValue(resultSet, "verification_filename", institution::setVerificationFilename);
+    setNonZeroFieldValue(resultSet, "create_user", institution::setCreateUserId);
+    setNonZeroFieldValue(resultSet, "update_user", institution::setUpdateUserId);
+    setDateFieldValue(resultSet, "create_date", institution::setCreateDate);
+    setDateFieldValue(resultSet, "update_date", institution::setUpdateDate);
     if (hasColumn(resultSet, "duns_number")) {
       institution.setDunsNumber(resultSet.getInt("duns_number"));
-    }
-    if (hasColumn(resultSet, "org_chart_url")) {
-      institution.setOrgChartUrl(resultSet.getString("org_chart_url"));
-    }
-    if (hasColumn(resultSet, "verification_url")) {
-      institution.setVerificationUrl(resultSet.getString("verification_url"));
-    }
-    if (hasColumn(resultSet, "verification_filename")) {
-      institution.setVerificationFilename(resultSet.getString("verification_filename"));
     }
     if (hasColumn(resultSet, "organization_type")) {
       OrganizationType type = OrganizationType.getOrganizationTypeFromString(
           resultSet.getString("organization_type"));
       institution.setOrganizationType(type);
-    }
-    if (hasNonZeroColumn(resultSet, "create_user")) {
-      institution.setCreateUserId(resultSet.getInt("create_user"));
-    }
-    if (hasColumn(resultSet, "create_date")) {
-      institution.setCreateDate(resultSet.getDate("create_date"));
-    }
-    if (hasNonZeroColumn(resultSet, "update_user")) {
-      institution.setUpdateUserId(resultSet.getInt("update_user"));
-    }
-    if (hasColumn(resultSet, "update_date")) {
-      institution.setUpdateDate(resultSet.getDate("update_date"));
     }
     if (hasColumn(resultSet, "domain")) {
       String domain = resultSet.getString("domain");
@@ -75,9 +52,7 @@ public class InstitutionMapper implements RowMapper<Institution>, RowMapperHelpe
         institution.addDomain(domain);
       }
     }
-
     institutionMap.put(institution.getId(), institution);
     return institution;
   }
-
 }
