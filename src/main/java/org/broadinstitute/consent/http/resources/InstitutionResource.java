@@ -92,6 +92,7 @@ public class InstitutionResource extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @Path("/{id}")
+  @RolesAllowed(ADMIN)
   public Response patchInstitution(@Auth DuosUser duosUser, @PathParam("id") Integer id,
       String institution) {
     try {
