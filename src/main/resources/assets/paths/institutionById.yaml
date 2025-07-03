@@ -22,6 +22,39 @@ get:
       description: Institution not found
     500:
       description: Internal Server Error
+patch:
+    summary: Institution PATCH
+    description: |
+      Updates institution based on id and json payload. 
+      Does not update signing officials of an institution
+      # Note: This is a partial update, so not all fields are required. Fields
+      that are provided with empty values (strings or arrays) will be cleared.
+    tags:
+        - Institutions
+    parameters:
+        - name: id
+          in: path
+          description: Institution ID
+          required: true
+          schema:
+              type: integer
+    requestBody:
+        description: |
+          Required JSON payload representing updated Institution fields.
+        required: true
+        content:
+          application/json:
+              schema:
+                $ref: '../schemas/Institution.yaml'
+    responses:
+        200:
+          description: Updates and returns target institution
+        400:
+          description: Bad Request
+        404:
+          description: Institution not found
+        500:
+          description: Internal Server Error
 put:
   summary: Institution UPDATE
   description: Updates institution based on id and json payload. Does not update signing officials of an institution

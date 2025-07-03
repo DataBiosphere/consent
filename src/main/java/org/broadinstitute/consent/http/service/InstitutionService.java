@@ -6,7 +6,6 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
