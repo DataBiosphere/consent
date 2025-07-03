@@ -23,7 +23,7 @@ public class InstitutionMapper implements RowMapper<Institution>, RowMapperHelpe
     setStringFieldValue(resultSet, "org_chart_url", institution::setOrgChartUrl);
     setStringFieldValue(resultSet, "verification_url", institution::setVerificationUrl);
     setStringFieldValue(resultSet, "verification_filename", institution::setVerificationFilename);
-    setNonZeroFieldValue(resultSet, "institution_duns_number", institution::setDunsNumber);
+    setNonZeroFieldValue(resultSet, "duns_number", institution::setDunsNumber);
     setNonZeroFieldValue(resultSet, "create_user", institution::setCreateUserId);
     setNonZeroFieldValue(resultSet, "update_user", institution::setUpdateUserId);
     setDateFieldValue(resultSet, "create_date", institution::setCreateDate);
