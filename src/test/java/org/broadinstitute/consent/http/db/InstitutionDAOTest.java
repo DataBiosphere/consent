@@ -363,6 +363,6 @@ class InstitutionDAOTest extends DAOTestHelper {
 
     updatedInstitution.setDomains(null); // Reset domains to test deletion
     Institution reloadedInstitution = institutionDAO.updateFullInstitution(updatedInstitution, user.getUserId());
-    assertTrue(reloadedInstitution.getDomains().isEmpty(), "Domains should be empty after update");
+    assertNull(reloadedInstitution.getDomains(), "Domains should be empty after update");
   }
 }
