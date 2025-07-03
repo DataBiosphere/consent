@@ -275,4 +275,13 @@ class InstitutionResourceTest {
           mockInstitution.getId(), duosUser.getUserId());
     }
   }
+
+  @Test
+  void testUpdateInstitutionDomainsBadJson () {
+    try (var response = resource.updateInstitutionDomains(duosUser, "bad json")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+      verify(institutionService, never()).findAllInstitutionsByName(any());
+      verify(institutionService, never()).updateInstitutionById(any(), any(), any());
+    }
+  }
 }
