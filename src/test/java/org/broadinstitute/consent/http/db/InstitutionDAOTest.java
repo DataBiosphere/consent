@@ -344,7 +344,7 @@ class InstitutionDAOTest extends DAOTestHelper {
     insertedInstitution.setVerificationUrl("http://updatedinstitution.com/verification");
     insertedInstitution.setVerificationFilename("updated_verification.pdf");
     insertedInstitution.setOrganizationType(OrganizationType.FOR_PROFIT);
-    institution.setDomains(List.of("new.domain1.com", "new.domain2.com", "new.domain3.com"));
+    insertedInstitution.setDomains(List.of("new.domain1.com", "new.domain2.com", "new.domain3.com"));
 
     Institution updatedInstitution = institutionDAO.updateFullInstitution(insertedInstitution, user.getUserId());
 
@@ -360,6 +360,9 @@ class InstitutionDAOTest extends DAOTestHelper {
     updatedInstitution.getDomains().forEach(domain -> {
       assertTrue(insertedInstitution.getDomains().contains(domain));
     });
-  }
 
+    updatedInstitution.setDomains(null); // Reset domains to test deletion
+    Institution reloadedInstitution = institutionDAO.updateFullInstitution(updatedInstitution, user.getUserId());
+    assertTrue(reloadedInstitution.getDomains().isEmpty(), "Domains should be empty after update");
+  }
 }
