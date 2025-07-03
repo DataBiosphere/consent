@@ -236,16 +236,24 @@ public class Institution {
    *                 all required fields populated.
    */
   public Institution mergeUpdatableFields(Institution existing) {
+    // These fields are not updatable, so we set them directly from the existing institution.
     this.setId(existing.getId());
-    if (this.getName() == null) {
+    this.setCreateDate(existing.getCreateDate());
+    this.setCreateUserId(existing.getCreateUserId());
+    this.setUpdateDate(existing.getUpdateDate());
+    this.setUpdateUserId(existing.getUpdateUserId());
+
+    // The following fields are updatable, so we merge them from the existing institution.
+    // Institution.name is not nullable, but it is updatable to a valid value.
+    if (this.getName() == null || StringUtils.isBlank(this.getName()) ) {
       this.setName(existing.getName());
-    }
-    if (this.getDunsNumber() == null) {
-      this.setDunsNumber(existing.getDunsNumber());
     }
     mergeStringField(this::getItDirectorName, existing::getItDirectorName, this::setItDirectorName);
     mergeStringField(this::getItDirectorEmail, existing::getItDirectorEmail,
         this::setItDirectorEmail);
+    if (this.getDunsNumber() == null) {
+      this.setDunsNumber(existing.getDunsNumber());
+    }
     mergeStringField(this::getInstitutionUrl, existing::getInstitutionUrl, this::setInstitutionUrl);
     mergeStringField(this::getOrgChartUrl, existing::getOrgChartUrl, this::setOrgChartUrl);
     mergeStringField(this::getVerificationUrl, existing::getVerificationUrl,
