@@ -81,7 +81,7 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
             .bind("domain", domain)
             .execute());
       }
-      handle.getConnection().commit();
+      handle.commit();
       institutionId.set(id);
     });
     if (institutionId.get() != null) {
@@ -159,7 +159,7 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
             .bind("domain", domain)
             .execute());
       }
-      handle.getConnection().commit();
+      handle.commit();
     });
     return findInstitutionById(institutionId);
   }
@@ -259,7 +259,7 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
       handle.getConnection().setAutoCommit(false);
       handle.createUpdate(domainDeleteQuery).bind("userId", userId).execute();
       handle.createUpdate(institutionDeleteQuery).bind("userId", userId).execute();
-      handle.getConnection().commit();
+      handle.commit();
     });
   }
 }
