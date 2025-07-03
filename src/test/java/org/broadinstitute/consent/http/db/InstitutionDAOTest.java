@@ -164,7 +164,8 @@ class InstitutionDAOTest extends DAOTestHelper {
   void testFindInstitutionsByNameTrimsInput() {
     Institution institution = createInstitution();
 
-    List<Institution> found = institutionDAO.findInstitutionsByName("  " + institution.getName() + "  ");
+    List<Institution> found = institutionDAO.findInstitutionsByName(
+        "  " + institution.getName() + "  ");
     assertFalse(found.isEmpty());
     assertEquals(1, found.size());
     assertEquals(institution.getId(), found.get(0).getId());
@@ -219,7 +220,8 @@ class InstitutionDAOTest extends DAOTestHelper {
     institutionDAO.deleteAllInstitutionsByUser(userId);
     assertNull(institutionDAO.findInstitutionById(institution.getId()));
     jdbi.useHandle(handle -> {
-      List<String> domains = handle.createQuery("SELECT domain FROM institution_domains WHERE institution_id = :id")
+      List<String> domains = handle.createQuery(
+              "SELECT domain FROM institution_domains WHERE institution_id = :id")
           .bind("id", institution.getId())
           .mapTo(String.class)
           .list();
@@ -230,9 +232,11 @@ class InstitutionDAOTest extends DAOTestHelper {
   @Test
   void testFindInstitutionWithSOById() {
     User user = createUserWithInstitution();
-    Institution institutionWithSO = institutionDAO.findInstitutionWithSOById(user.getInstitutionId());
+    Institution institutionWithSO = institutionDAO.findInstitutionWithSOById(
+        user.getInstitutionId());
     assertEquals(1, institutionWithSO.getSigningOfficials().size());
-    assertEquals(user.getDisplayName(), institutionWithSO.getSigningOfficials().get(0).getDisplayName());
+    assertEquals(user.getDisplayName(),
+        institutionWithSO.getSigningOfficials().get(0).getDisplayName());
   }
 
   private Institution createInstitution() {
@@ -281,7 +285,8 @@ class InstitutionDAOTest extends DAOTestHelper {
     institution.setVerificationFilename("verification.pdf");
     institution.setOrganizationType(OrganizationType.NON_PROFIT);
     institution.setDomains(List.of("domain1.com", "domain2.com"));
-    Institution insertedInstitution = institutionDAO.insertFullInstitution(institution, user.getUserId());
+    Institution insertedInstitution = institutionDAO.insertFullInstitution(institution,
+        user.getUserId());
 
     assertEquals(institution.getName(), insertedInstitution.getName());
     assertEquals(institution.getItDirectorName(), insertedInstitution.getItDirectorName());
@@ -290,11 +295,11 @@ class InstitutionDAOTest extends DAOTestHelper {
     assertEquals(institution.getDunsNumber(), insertedInstitution.getDunsNumber());
     assertEquals(institution.getOrgChartUrl(), insertedInstitution.getOrgChartUrl());
     assertEquals(institution.getVerificationUrl(), insertedInstitution.getVerificationUrl());
-    assertEquals(institution.getVerificationFilename(), insertedInstitution.getVerificationFilename());
+    assertEquals(institution.getVerificationFilename(),
+        insertedInstitution.getVerificationFilename());
     assertEquals(institution.getDomains().size(), insertedInstitution.getDomains().size());
-    institution.getDomains().forEach(domain -> {
-      assertTrue(insertedInstitution.getDomains().contains(domain));
-    });
+    institution.getDomains()
+        .forEach(domain -> assertTrue(insertedInstitution.getDomains().contains(domain)));
   }
 
   @Test
@@ -314,7 +319,8 @@ class InstitutionDAOTest extends DAOTestHelper {
     try {
       institutionDAO.insertFullInstitution(institution, user.getUserId());
     } catch (Exception e) {
-      assertEquals(PSQLState.UNIQUE_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
+      assertEquals(PSQLState.UNIQUE_VIOLATION.getState(),
+          ((PSQLException) e.getCause()).getSQLState());
     }
   }
 
@@ -333,7 +339,8 @@ class InstitutionDAOTest extends DAOTestHelper {
     institution.setOrganizationType(OrganizationType.NON_PROFIT);
     institution.setDomains(List.of("domain1.com", "domain2.com"));
 
-    Institution insertedInstitution = institutionDAO.insertFullInstitution(institution, user.getUserId());
+    Institution insertedInstitution = institutionDAO.insertFullInstitution(institution,
+        user.getUserId());
 
     insertedInstitution.setName("Updated Institution");
     insertedInstitution.setItDirectorName("Updated Director");
@@ -344,9 +351,11 @@ class InstitutionDAOTest extends DAOTestHelper {
     insertedInstitution.setVerificationUrl("http://updatedinstitution.com/verification");
     insertedInstitution.setVerificationFilename("updated_verification.pdf");
     insertedInstitution.setOrganizationType(OrganizationType.FOR_PROFIT);
-    insertedInstitution.setDomains(List.of("new.domain1.com", "new.domain2.com", "new.domain3.com"));
+    insertedInstitution.setDomains(
+        List.of("new.domain1.com", "new.domain2.com", "new.domain3.com"));
 
-    Institution updatedInstitution = institutionDAO.updateFullInstitution(insertedInstitution, user.getUserId());
+    Institution updatedInstitution = institutionDAO.updateFullInstitution(insertedInstitution,
+        user.getUserId());
 
     assertEquals(updatedInstitution.getName(), insertedInstitution.getName());
     assertEquals(updatedInstitution.getItDirectorName(), insertedInstitution.getItDirectorName());
@@ -355,14 +364,15 @@ class InstitutionDAOTest extends DAOTestHelper {
     assertEquals(updatedInstitution.getDunsNumber(), insertedInstitution.getDunsNumber());
     assertEquals(updatedInstitution.getOrgChartUrl(), insertedInstitution.getOrgChartUrl());
     assertEquals(updatedInstitution.getVerificationUrl(), insertedInstitution.getVerificationUrl());
-    assertEquals(updatedInstitution.getVerificationFilename(), insertedInstitution.getVerificationFilename());
+    assertEquals(updatedInstitution.getVerificationFilename(),
+        insertedInstitution.getVerificationFilename());
     assertEquals(updatedInstitution.getDomains().size(), insertedInstitution.getDomains().size());
-    updatedInstitution.getDomains().forEach(domain -> {
-      assertTrue(insertedInstitution.getDomains().contains(domain));
-    });
+    updatedInstitution.getDomains()
+        .forEach(domain -> assertTrue(insertedInstitution.getDomains().contains(domain)));
 
     updatedInstitution.setDomains(null); // Reset domains to test deletion
-    Institution reloadedInstitution = institutionDAO.updateFullInstitution(updatedInstitution, user.getUserId());
+    Institution reloadedInstitution = institutionDAO.updateFullInstitution(updatedInstitution,
+        user.getUserId());
     assertNull(reloadedInstitution.getDomains(), "Domains should be empty after update");
   }
 }
