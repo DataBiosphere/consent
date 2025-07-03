@@ -537,6 +537,8 @@ paths:
     $ref: './paths/institutions.yaml'
   /api/institutions/{id}:
     $ref: './paths/institutionById.yaml'
+  /api/institutions/domains:
+    $ref: './paths/institutionsDomains.yaml'
   /api/libraryCards:
     get:
       summary: Library Card INDEX resource

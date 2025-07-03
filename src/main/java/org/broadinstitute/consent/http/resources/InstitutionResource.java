@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
@@ -14,10 +15,12 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.List;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.InstitutionDomainMap;
 import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.util.InstitutionUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -112,6 +115,38 @@ public class InstitutionResource extends Resource {
     try {
       institutionService.deleteInstitutionById(id);
       return Response.status(204).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Consumes("application/json")
+  @Produces("application/json")
+  @Path("/domains")
+  @RolesAllowed(ADMIN)
+  public Response updateInstitutionDomains(@Auth DuosUser duosUser, String institutionDomainMap) {
+    try {
+      List<Institution> updatedInstitutions = new ArrayList<>();
+      InstitutionDomainMap domainMap = GsonUtil.getInstance().fromJson(institutionDomainMap, InstitutionDomainMap.class);
+      domainMap.getInstitutionDomainMap().forEach((institutionName, value) -> {
+        List<String> domains = value.stream().toList();
+        List<Institution> institutions = institutionService.findAllInstitutionsByName(
+            institutionName);
+        if (institutions.isEmpty()) {
+          logWarn("No institution found with name: [%s]".formatted(institutionName));
+        } else if (institutions.size() == 1) {
+          Institution institution = institutions.get(0);
+          institution.setDomains(domains);
+          updatedInstitutions.add(institutionService.updateInstitutionById(
+              institution,
+              institution.getId(),
+              duosUser.getUserId()));
+        } else {
+          logWarn("Multiple institutions found with name: [%s]".formatted(institutionName));
+        }
+      });
+      return Response.ok(updatedInstitutions).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
