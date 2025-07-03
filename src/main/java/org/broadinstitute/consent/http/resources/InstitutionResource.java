@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
