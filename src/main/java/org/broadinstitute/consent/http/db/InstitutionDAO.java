@@ -93,7 +93,6 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
   @SqlUpdate("""
       UPDATE institution
       SET
-        institution_id = :institutionId,
         institution_name = :institutionName,
         it_director_name = :itDirectorName,
         it_director_email = :itDirectorEmail,
