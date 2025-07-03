@@ -27,8 +27,19 @@ patch:
     description: |
       Updates institution based on id and json payload. 
       Does not update signing officials of an institution
-      # Note: This is a partial update, so not all fields are required. Fields
-      that are provided with empty values (strings or arrays) will be cleared.
+      ## Note: This is a partial update, so not all fields are required. 
+      Fields that are provided with empty values (strings or arrays) will be cleared.
+      #### Updatable fields:
+      * name: If empty, no update will occur
+      * itDirectorName
+      * itDirectorEmail
+      * institutionUrl
+      * dunsNumber: Set to 0 to clear value
+      * orgChartUrl
+      * verificationUrl
+      * verificationFileName
+      * organizationType
+      * domains: Set to empty array to clear domains
     tags:
         - Institutions
     parameters:
@@ -46,6 +57,18 @@ patch:
           application/json:
               schema:
                 $ref: '../schemas/Institution.yaml'
+              example: {
+                "name": "New Name",
+                "itDirectorName": "New IT Director",
+                "itDirectorEmail": "New IT Director Email",
+                "institutionUrl": "https://new-institution-url.edu",
+                "dunsNumber": 0,
+                "orgChartUrl": "https://new-org-chart-url.edu",
+                "verificationUrl": "https://new-verification-url.edu",
+                "verificationFileName": "new-verification-file.pdf",
+                "organizationType": "For-Profit",
+                "domains": ["domain1.edu", "domain2.edu"]
+              }
     responses:
         200:
           description: Updates and returns target institution
