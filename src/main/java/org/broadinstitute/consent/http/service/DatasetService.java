@@ -41,11 +41,9 @@ import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyConversion;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-
 
 public class DatasetService implements ConsentLogger {
 
@@ -73,13 +71,6 @@ public class DatasetService implements ConsentLogger {
     this.studyDAO = studyDAO;
     this.datasetServiceDAO = datasetServiceDAO;
     this.userDAO = userDAO;
-  }
-
-  public Set<DatasetDTO> findDatasetsByDacIds(List<Integer> dacIds) {
-    if (CollectionUtils.isEmpty(dacIds)) {
-      throw new BadRequestException("No dataset IDs provided");
-    }
-    return datasetDAO.findDatasetsByDacIds(dacIds);
   }
 
   public List<Dataset> findDatasetListByDacIds(List<Integer> dacIds) {
@@ -214,7 +205,8 @@ public class DatasetService implements ConsentLogger {
         sendDatasetApprovalNotificationEmail(dataset, user, approval);
       }
     } catch (Exception e) {
-      logException("Unable to notifier Data Submitter of dataset approval status: %s".formatted(dataset.getDatasetIdentifier()), e);
+      logException("Unable to notifier Data Submitter of dataset approval status: %s".formatted(
+          dataset.getDatasetIdentifier()), e);
     }
     return datasetReturn;
   }
@@ -235,8 +227,7 @@ public class DatasetService implements ConsentLogger {
             dac.getName(),
             dataset.getDatasetIdentifier(),
             dacEmail);
-      }
-      else {
+      } else {
         logWarn("Unable to send dataset denied email to DAC: " + dac.getDacId());
       }
     }
@@ -269,7 +260,8 @@ public class DatasetService implements ConsentLogger {
             }
             output.write("\n".getBytes());
           } catch (IOException e) {
-            logException("Error writing dataset to streaming output, dataset id: " + d.getDatasetId(), e);
+            logException(
+                "Error writing dataset to streaming output, dataset id: " + d.getDatasetId(), e);
           }
         });
       });
@@ -353,7 +345,8 @@ public class DatasetService implements ConsentLogger {
 
     if (studyConversion.getNumberOfParticipants() != null) {
       // Handle "# of participants"
-      legacyPropConversion(dictionaries, dataset, "# of participants", "numberOfParticipants", PropertyType.Number,
+      legacyPropConversion(dictionaries, dataset, "# of participants", "numberOfParticipants",
+          PropertyType.Number,
           studyConversion.getNumberOfParticipants().toString());
     }
 
@@ -397,20 +390,23 @@ public class DatasetService implements ConsentLogger {
           custodians);
     }
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds());
-    datasets.forEach(dataset -> elasticSearchService.synchronizeDatasetInESIndex(dataset, user, false));
+    datasets.forEach(
+        dataset -> elasticSearchService.synchronizeDatasetInESIndex(dataset, user, false));
     return studyDAO.findStudyById(studyId);
   }
 
   /**
    * Ensure that all requested datasetIds exist in the user's list of accepted DAAs
-   * @param user The requesting User
+   *
+   * @param user       The requesting User
    * @param datasetIds The list of dataset ids the user is requesting access to
    */
   public void enforceDAARestrictions(User user, List<Integer> datasetIds) {
     List<Integer> userDaaDatasetIds = daaDAO.findDaaDatasetIdsByUserId(user.getUserId());
     boolean containsAll = new HashSet<>(userDaaDatasetIds).containsAll(datasetIds);
     if (!containsAll) {
-      throw new BadRequestException("User does not have appropriate Data Access Agreements for provided datasets");
+      throw new BadRequestException(
+          "User does not have appropriate Data Access Agreements for provided datasets");
     }
   }
 

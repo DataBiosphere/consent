@@ -32,8 +32,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
@@ -44,7 +42,6 @@ import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -122,18 +119,7 @@ public class UserResource extends Resource {
   @Produces("application/json")
   @RolesAllowed({CHAIRPERSON, MEMBER})
   public Response getDatasetsFromUserDacs(@Auth AuthUser authUser) {
-    try {
-      Set<DatasetDTO> datasets;
-      User user = userService.findUserByEmail(authUser.getEmail());
-      List<Integer> dacIds = user.getRoles().stream()
-          .filter(r -> Objects.nonNull(r.getDacId()))
-          .map(UserRole::getDacId)
-          .collect(Collectors.toList());
-      datasets = dacIds.isEmpty() ? Set.of() : datasetService.findDatasetsByDacIds(dacIds);
-      return Response.ok().entity(datasets).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
+    return getDatasetsFromUserDacsV2(authUser);
   }
 
   @GET
