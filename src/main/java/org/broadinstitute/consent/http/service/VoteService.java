@@ -474,27 +474,6 @@ public class VoteService implements ConsentLogger {
             userRole.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()));
   }
 
-  /**
-   * Convenience method to ensure Vote non-nullable values are populated
-   *
-   * @param vote The Vote to validate
-   */
-  private void validateVote(Vote vote) {
-    if (Objects.isNull(vote) ||
-        Objects.isNull(vote.getVoteId()) ||
-        Objects.isNull(vote.getUserId()) ||
-        Objects.isNull(vote.getElectionId())) {
-      throw new IllegalArgumentException("Invalid vote: " + vote);
-    }
-    if (Objects.isNull(voteDAO.findVoteById(vote.getVoteId()))) {
-      throw new IllegalArgumentException("No vote exists with the id of " + vote.getVoteId());
-    }
-  }
-
-  private void notFoundException(Integer voteId) {
-    throw new NotFoundException("Could not find vote for specified id. Vote id: " + voteId);
-  }
-
   public void logDARApprovalOrRejection(User user, List<Vote> updatedVotes,
       ContainerRequest request) {
     List<Integer> approvedElectionIds = updatedVotes.stream()

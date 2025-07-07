@@ -1014,7 +1014,7 @@ class DatasetDAOTest extends DAOTestHelper {
     datasetDAO.updateDatasetApproval(true, Instant.now(), chairperson2.getUserId(), dataset3.getDatasetId());
     datasetDAO.updateDatasetApproval(true, Instant.now(), chairperson2.getUserId(), dataset4.getDatasetId());
 
-    DarCollection darCollection = createDarCollectionWithDatasetsNewModel(dac1.getDacId(), user, List.of(dataset1, dataset2, dataset3, dataset4));
+    DarCollection darCollection = createDarCollectionWithDatasetsNewModel(user, List.of(dataset1, dataset2, dataset3, dataset4));
     assertEquals(0, datasetDAO.getApprovedDatasets(user.getUserId()).size());
 
     // Simulate 2 DAC 1 elections for yesterday
@@ -1215,7 +1215,7 @@ class DatasetDAOTest extends DAOTestHelper {
     return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
   }
 
-  private DarCollection createDarCollectionWithDatasetsNewModel(int dacId, User user, List<Dataset> datasets) {
+  private DarCollection createDarCollectionWithDatasetsNewModel(User user, List<Dataset> datasets) {
     String darCode = "DAR-" + randomInt(1, 999999);
     Date now = new Date();
     Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
