@@ -447,17 +447,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       @Bind("updateDate") Timestamp updateDate,
       @Bind("updateUserId") Integer updateUserId);
 
-//  @Deprecated
-//  @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
-//  @SqlQuery("""
-//      SELECT d.*, k.key, dp.property_value, d.dac_id
-//      FROM dataset d
-//      LEFT OUTER JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
-//      LEFT OUTER JOIN dictionary k ON k.key_id = dp.property_key
-//      WHERE d.dataset_id = :datasetId ORDER BY d.dataset_id, k.display_order
-//      """)
-//  Set<DatasetDTO> findDatasetDTOWithPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
-
   @UseRowMapper(DatasetPropertyMapper.class)
   @SqlQuery(
       " SELECT p.*, d.key FROM dataset_property p " +
@@ -472,22 +461,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlQuery("SELECT * FROM dataset WHERE LOWER(name) = LOWER(:name)")
   Dataset getDatasetByName(@Bind("name") String name);
 
-//  /**
-//   * DACs -> Datasets Datasets -> DatasetProperties -> Dictionary
-//   *
-//   * @return Set of datasets, with properties, that are associated with the provided DAC IDs
-//   */
-//  @Deprecated
-//  @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
-//  @SqlQuery("""
-//      SELECT d.*, k.key, p.property_value, d.dac_id
-//      FROM dataset d
-//      LEFT OUTER JOIN dataset_property p ON p.dataset_id = d.dataset_id
-//      LEFT OUTER JOIN dictionary k ON k.key_id = p.property_key
-//      WHERE d.dac_id IN (<dacIds>)
-//      """)
-//  Set<DatasetDTO> findDatasetsByDacIds(@BindList(value = "dacIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> dacIds);
-
   @UseRowReducer(DatasetReducer.class)
   @SqlQuery("""
       SELECT distinct d.*, k.key, p.property_value, d.dac_id
@@ -497,22 +470,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       WHERE d.dac_id IN (<dacIds>)
       """)
   List<Dataset> findDatasetListByDacIds(@BindList(value = "dacIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> dacIds);
-
-//  /**
-//   * DACs -> Datasets -> DatasetProperties -> Dictionary
-//   *
-//   * @return Set of datasets, with properties, that are associated to any Dac.
-//   */
-//  @Deprecated
-//  @UseRowMapper(DatasetDTOWithPropertiesMapper.class)
-//  @SqlQuery("""
-//      SELECT distinct d.*, k.key, p.property_value, d.dac_id
-//      FROM dataset d
-//      LEFT JOIN dataset_property p ON p.dataset_id = d.dataset_id
-//      LEFT JOIN dictionary k ON k.key_id = p.property_key
-//      WHERE d.dac_id IS NOT NULL
-//      """)
-//  Set<DatasetDTO> findDatasetsWithDacs();
 
   @SqlUpdate(
       "UPDATE dataset " +
