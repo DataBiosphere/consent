@@ -549,9 +549,9 @@ FROM data_access_request dar
          INNER JOIN dataset d on d.dataset_id = dd.dataset_id
          INNER JOIN dac on dac.dac_id = d.dac_id
          INNER JOIN (
-                SELECT DISTINCT e.reference_id, LAST_VALUE(v.vote)
+                SELECT DISTINCT e.reference_id, e.dataset_id, LAST_VALUE(v.vote)
                     OVER(
-                        PARTITION BY e.reference_id
+                        PARTITION BY e.reference_id, e.dataset_id
                         ORDER BY v.createdate
                         RANGE BETWEEN
                             UNBOUNDED PRECEDING AND
@@ -560,7 +560,7 @@ FROM data_access_request dar
                   FROM election e
                     INNER JOIN vote v ON e.election_id = v.electionid AND v.vote IS NOT NULL
                     AND LOWER(e.election_type) = 'dataaccess'
-                    AND LOWER(v.type) = 'final') final_access_vote ON final_access_vote.reference_id = dar.reference_id
+                    AND LOWER(v.type) = 'final') final_access_vote ON final_access_vote.reference_id = dar.reference_id AND final_access_vote.dataset_id = dd.dataset_id
 WHERE dar.submission_date > now() - interval '1 year'
   AND final_access_vote.last_vote = TRUE
   AND dar.user_id = :userId

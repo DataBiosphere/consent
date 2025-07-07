@@ -72,22 +72,22 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
         dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
       FROM data_access_request dar
       LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
-      INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id AND dd.dataset_id = :datasetId
-      INNER JOIN (
-        SELECT DISTINCT e.reference_id, LAST_VALUE(v.vote)
-        OVER(
-          PARTITION BY e.reference_id
-            ORDER BY v.createdate
-            RANGE BETWEEN
-              UNBOUNDED PRECEDING AND
-              UNBOUNDED FOLLOWING
-        ) last_vote
-        FROM election e
-        INNER JOIN vote v ON e.election_id = v.electionid AND v.vote IS NOT NULL
-        WHERE e.dataset_id = :datasetId
-        AND LOWER(e.election_type) = 'dataaccess'
-        AND LOWER(v.type) = 'final') final_access_vote ON final_access_vote.reference_id = dar.reference_id
-      WHERE dar.submission_date > now() - interval '1 year'
+      INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
+               INNER JOIN (
+                SELECT DISTINCT e.reference_id, e.dataset_id, LAST_VALUE(v.vote)
+                    OVER(
+                        PARTITION BY e.reference_id, e.dataset_id
+                        ORDER BY v.createdate
+                        RANGE BETWEEN
+                            UNBOUNDED PRECEDING AND
+                            UNBOUNDED FOLLOWING
+                        ) last_vote
+                  FROM election e
+                    INNER JOIN vote v ON e.election_id = v.electionid AND v.vote IS NOT NULL
+                    AND LOWER(e.election_type) = 'dataaccess'
+                    AND LOWER(v.type) = 'final') final_access_vote ON final_access_vote.reference_id = dar.reference_id AND final_access_vote.dataset_id = dd.dataset_id
+      WHERE dd.dataset_id = :datasetId
+      AND dar.submission_date > now() - interval '1 year'
       AND final_access_vote.last_vote = TRUE
       AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
       -- Exclude DARs that have a closeoutSupplement

@@ -79,40 +79,6 @@ public class VoteService implements ConsentLogger {
   }
 
   /**
-   * @param vote Vote to update
-   * @return The updated Vote
-   */
-  public Vote updateVote(Vote vote) {
-    validateVote(vote);
-    Date now = new Date();
-    voteDAO.updateVote(
-        vote.getVote(),
-        vote.getRationale(),
-        Objects.isNull(vote.getUpdateDate()) ? now : vote.getUpdateDate(),
-        vote.getVoteId(),
-        vote.getIsReminderSent(),
-        vote.getElectionId(),
-        Objects.isNull(vote.getCreateDate()) ? now : vote.getCreateDate(),
-        vote.getHasConcerns()
-    );
-    return voteDAO.findVoteById(vote.getVoteId());
-  }
-
-
-  public Vote updateVote(Vote rec, Integer voteId, String referenceId)
-      throws IllegalArgumentException {
-    if (voteDAO.checkVoteById(referenceId, voteId) == null) {
-      notFoundException(voteId);
-    }
-    Vote vote = voteDAO.findVoteById(voteId);
-    Date updateDate = rec.getVote() == null ? null : new Date();
-    String rationale = StringUtils.isNotEmpty(rec.getRationale()) ? rec.getRationale() : null;
-    voteDAO.updateVote(rec.getVote(), rationale, updateDate, voteId, false, vote.getElectionId(),
-        vote.getCreateDate(), rec.getHasConcerns());
-    return voteDAO.findVoteById(voteId);
-  }
-
-  /**
    * Create votes for an election
    *
    * @param election       The Election
