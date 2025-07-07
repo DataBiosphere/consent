@@ -24,6 +24,8 @@ import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.ByteArrayOutputStream;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -41,6 +43,7 @@ import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -449,7 +452,15 @@ class DatasetServiceTest extends AbstractTestHelper {
   void testGetApprovedDatasets() {
     User user = new User(1, "test@domain.com", "Test User", new Date(),
         List.of(UserRoles.Researcher()));
-    ApprovedDataset example = new ApprovedDataset(1, "sampleDarId", "sampleName", "sampleDac");
+    ApprovedDataset example =
+        new ApprovedDataset(
+            1,
+            "sampleDarId",
+            "sampleName",
+            "sampleDac",
+            Timestamp.from(
+                Instant.ofEpochMilli(
+                    Instant.now().toEpochMilli() + DataAccessRequest.EXPIRATION_DURATION_MILLIS)));
     when(datasetDAO.getApprovedDatasets(anyInt())).thenReturn(List.of(example));
     assertEquals(1, datasetService.getApprovedDatasets(user).size());
     assertTrue(datasetService.getApprovedDatasets(user).get(0).isApprovedDatasetEqual(example));

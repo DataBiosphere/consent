@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
+import java.sql.Timestamp;
+
 public class ApprovedDataset {
 
   private int alias;
@@ -7,13 +9,15 @@ public class ApprovedDataset {
   private String datasetName;
   private String dacName;
   private String datasetIdentifier;
+  private final Timestamp expirationDate;
 
-  public ApprovedDataset(int alias, String darId, String datasetName, String dacName) {
+  public ApprovedDataset(int alias, String darId, String datasetName, String dacName, Timestamp expirationDate) {
     this.alias = alias;
     this.darCode = darId;
     this.datasetName = datasetName;
     this.dacName = dacName;
     this.datasetIdentifier = Dataset.parseAliasToIdentifier(alias);
+    this.expirationDate = expirationDate;
   }
 
   public int getAlias() {
@@ -55,6 +59,11 @@ public class ApprovedDataset {
   public void setDatasetIdentifier(String datasetIdentifier) {
     this.datasetIdentifier = datasetIdentifier;
   }
+
+  public Timestamp getExpirationDate() {
+    return expirationDate;
+  }
+
 
   public Boolean isApprovedDatasetEqual(ApprovedDataset that) {
     return this.getAlias() == that.getAlias()

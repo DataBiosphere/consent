@@ -928,9 +928,9 @@ class DatasetDAOTest extends DAOTestHelper {
         datasetDAO.findDatasetByAlias(approvedDataset.getAlias()).getDacApproval()));
 
     ApprovedDataset expectedApprovedDataset1 = new ApprovedDataset(dataset3.getAlias(),
-        dar2.getDarCode(), dataset3.getDatasetName(), dac2.getName());
+        dar2.getDarCode(), dataset3.getDatasetName(), dac2.getName(), dar2.getMostRecentDar().getExpiresAt());
     ApprovedDataset expectedApprovedDataset2 = new ApprovedDataset(dataset4.getAlias(),
-        dar3.getDarCode(), dataset4.getDatasetName(), dac2.getName());
+        dar3.getDarCode(), dataset4.getDatasetName(), dac2.getName(), dar3.getMostRecentDar().getExpiresAt());
     Map<Integer, ApprovedDataset> expectedDatasets = Map.of(dataset3.getAlias(),
         expectedApprovedDataset1, dataset4.getAlias(), expectedApprovedDataset2);
 
@@ -1029,7 +1029,10 @@ class DatasetDAOTest extends DAOTestHelper {
     Integer voteId1 = voteDAO.insertVote(chairperson1.getUserId(), electionId1, VoteType.FINAL.getValue());
     voteDAO.updateVote(true, "rationale", yesterday, voteId1, false, electionId1, yesterday, false);
     electionDAO.updateElectionById(electionId1, ElectionStatus.CLOSED.getValue(), yesterday);
-    assertEquals(1, datasetDAO.getApprovedDatasets(user.getUserId()).size());
+    List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
+    assertEquals(1, approvedDatasets.size());
+    assertEquals(darCollection.getMostRecentDar().getExpiresAt(), approvedDatasets.get(0).getExpirationDate());
+
 
     Integer electionId2 = electionDAO.insertElection(
         ElectionType.DATA_ACCESS.getValue(),
@@ -1068,9 +1071,9 @@ class DatasetDAOTest extends DAOTestHelper {
     voteDAO.updateVote(true, "rationale", today, voteId4, false, electionId4, today, false);
     electionDAO.updateElectionById(electionId4, ElectionStatus.CLOSED.getValue(), today);
 
-    List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
-    assertNotNull(approvedDatasets);
-    assertEquals(4, approvedDatasets.size());
+    List<ApprovedDataset> approvedDatasets2 = datasetDAO.getApprovedDatasets(user.getUserId());
+    assertNotNull(approvedDatasets2);
+    assertEquals(4, approvedDatasets2.size());
 
     // manually age the dar off
     jdbi.useHandle(handle -> {
@@ -1078,8 +1081,8 @@ class DatasetDAOTest extends DAOTestHelper {
     });
 
     // confirm the expiration part of the query works.
-    List<ApprovedDataset> approvedDatasets2 = datasetDAO.getApprovedDatasets(user.getUserId());
-    assertEquals(0, approvedDatasets2.size());
+    List<ApprovedDataset> approvedDatasets3 = datasetDAO.getApprovedDatasets(user.getUserId());
+    assertEquals(0, approvedDatasets3.size());
 
     DataAccessRequest recentDar = darCollection.getMostRecentDar();
 
@@ -1087,8 +1090,8 @@ class DatasetDAOTest extends DAOTestHelper {
     DataAccessRequest progressReport = createProgressReport(recentDar.getData(), recentDar.getEraCommonsId(), recentDar.getUserId(), recentDar.getCollectionId(), recentDar.getId(), recentDar.getDatasetIds());
 
     // ensure we still have no approved datasets.
-    List<ApprovedDataset> approvedDatasets3 = datasetDAO.getApprovedDatasets(user.getUserId());
-    assertEquals(0, approvedDatasets3.size());
+    List<ApprovedDataset> approvedDatasets4 = datasetDAO.getApprovedDatasets(user.getUserId());
+    assertEquals(0, approvedDatasets4.size());
 
     // Simulate 2 DAC 2 elections for today
     // vote yes on dataset 3
@@ -1102,7 +1105,9 @@ class DatasetDAOTest extends DAOTestHelper {
     Integer voteId5 = voteDAO.insertVote(chairperson2.getUserId(), electionId5, VoteType.FINAL.getValue());
     voteDAO.updateVote(true, "rationale", today, voteId5, false, electionId5, today, false);
     electionDAO.updateElectionById(electionId5, ElectionStatus.CLOSED.getValue(), today);
-    assertEquals(1, datasetDAO.getApprovedDatasets(user.getUserId()).size());
+    List<ApprovedDataset> approvedDatasets5 = datasetDAO.getApprovedDatasets(user.getUserId());
+    assertEquals(1, approvedDatasets5.size());
+    assertEquals(progressReport.getExpiresAt(), approvedDatasets5.get(0).getExpirationDate());
 
     Integer electionId6 = electionDAO.insertElection(
         ElectionType.DATA_ACCESS.getValue(),
@@ -1116,9 +1121,9 @@ class DatasetDAOTest extends DAOTestHelper {
     voteDAO.updateVote(false, "rationale", today, voteId6, false, electionId6, today, false);
     electionDAO.updateElectionById(electionId6, ElectionStatus.CLOSED.getValue(), today);
 
-    List<ApprovedDataset> approvedDatasets4 = datasetDAO.getApprovedDatasets(user.getUserId());
-    assertNotNull(approvedDatasets4);
-    assertEquals(1, approvedDatasets4.size());
+    List<ApprovedDataset> approvedDatasets6 = datasetDAO.getApprovedDatasets(user.getUserId());
+    assertNotNull(approvedDatasets6);
+    assertEquals(1, approvedDatasets6.size());
 
     List<DataAccessRequest> dataset3Dars = dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset3.getDatasetId());
     assertEquals(1, dataset3Dars.size());

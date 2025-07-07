@@ -541,7 +541,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @UseRowReducer(ApprovedDatasetReducer.class)
   @SqlQuery(
 """
-SELECT DISTINCT c.dar_code, d.alias, d.name as dataset_name, dac.name as dac_name
+SELECT DISTINCT c.dar_code, d.alias, d.name as dataset_name, dac.name as dac_name, dar.submission_date
 FROM data_access_request dar
          LEFT JOIN dar_collection c on dar.collection_id = c.collection_id
          INNER JOIN library_card lc on dar.user_id = lc.user_id

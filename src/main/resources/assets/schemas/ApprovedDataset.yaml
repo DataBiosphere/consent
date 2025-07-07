@@ -13,3 +13,6 @@ properties:
   dacName:
     type: string
     description: The dac name
+  expirationDate:
+    type: number
+    description: When, in milliseconds from the epoch, the current access will expire

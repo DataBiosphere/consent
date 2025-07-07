@@ -22,6 +22,7 @@ import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -33,6 +34,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
@@ -948,7 +950,15 @@ class UserResourceTest extends AbstractTestHelper {
 
   @Test
   void testGetApprovedDatasets() {
-    ApprovedDataset example = new ApprovedDataset(1, "sampleDarId", "sampleName", "sampleDac");
+    ApprovedDataset example =
+        new ApprovedDataset(
+            1,
+            "sampleDarId",
+            "sampleName",
+            "sampleDac",
+            Timestamp.from(
+                Instant.ofEpochMilli(
+                    Instant.now().toEpochMilli() + DataAccessRequest.EXPIRATION_DURATION_MILLIS)));
     when(datasetService.getApprovedDatasets(any())).thenReturn(List.of(example));
 
     Response response = userResource.getApprovedDatasets(authUser);
