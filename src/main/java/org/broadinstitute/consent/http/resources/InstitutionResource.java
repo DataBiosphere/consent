@@ -137,10 +137,14 @@ public class InstitutionResource extends Resource {
         } else if (institutions.size() == 1) {
           Institution institution = institutions.get(0);
           institution.setDomains(domains);
-          updatedInstitutions.add(institutionService.updateInstitutionById(
-              institution,
-              institution.getId(),
-              duosUser.getUserId()));
+          try {
+            updatedInstitutions.add(institutionService.updateInstitutionById(
+                institution,
+                institution.getId(),
+                duosUser.getUserId()));
+          } catch (Exception e) {
+            logException("Failed to update institution: [%s] with domains: %s".formatted(institutionName, domains), e);
+          }
         } else {
           logWarn("Multiple institutions found with name: [%s]".formatted(institutionName));
         }

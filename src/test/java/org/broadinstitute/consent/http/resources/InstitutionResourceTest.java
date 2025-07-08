@@ -235,7 +235,7 @@ class InstitutionResourceTest {
   }
 
   @Test
-  void testUpdateInstitutionDomains() {
+  void testUpdateInstitutionDomains() throws Exception {
     Institution mockInstitution = mockInstitutionSetup();
     String institutionDomainMapJson = """
         {
@@ -256,7 +256,7 @@ class InstitutionResourceTest {
   }
 
   @Test
-  void testUpdateInstitutionDomainsMissingInstitution() {
+  void testUpdateInstitutionDomainsMissingInstitution() throws Exception {
     Institution mockInstitution = mockInstitutionSetup();
     String institutionDomainMapJson = """
         {
@@ -277,7 +277,7 @@ class InstitutionResourceTest {
   }
 
   @Test
-  void testUpdateInstitutionDomainsBadJson () {
+  void testUpdateInstitutionDomainsBadJson() throws Exception {
     try (var response = resource.updateInstitutionDomains(duosUser, "bad json")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
       verify(institutionService, never()).findAllInstitutionsByName(any());
