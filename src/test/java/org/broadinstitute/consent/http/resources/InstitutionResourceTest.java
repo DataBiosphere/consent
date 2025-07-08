@@ -166,7 +166,7 @@ class InstitutionResourceTest {
   }
 
   @Test
-  void testUpdateInstitution() {
+  void testUpdateInstitution() throws Exception {
     Institution mockInstitution = mockInstitutionSetup();
     when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenReturn(
         mockInstitution);
@@ -179,7 +179,7 @@ class InstitutionResourceTest {
   }
 
   @Test
-  void testUpdateInstitutionNotFound() {
+  void testUpdateInstitutionNotFound() throws Exception {
     Exception error = new NotFoundException("Institution not found");
     Institution mockInstitution = mockInstitutionSetup();
     when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
@@ -191,7 +191,7 @@ class InstitutionResourceTest {
   }
 
   @Test
-  void testUpdateInstiutionNullName() {
+  void testUpdateInstiutionNullName() throws Exception {
     Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
     Institution mockInstitution = mockInstitutionSetup();
     mockInstitution.setName(null);
@@ -204,7 +204,7 @@ class InstitutionResourceTest {
   }
 
   @Test
-  void testUpdateInstiutionBlankName() {
+  void testUpdateInstiutionBlankName() throws Exception {
     Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
     Institution mockInstitution = mockInstitutionSetup();
     mockInstitution.setName("");
