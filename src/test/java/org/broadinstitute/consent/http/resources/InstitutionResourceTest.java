@@ -160,7 +160,7 @@ class InstitutionResourceTest {
   }
 
   @Test
-  void testPatchInstitution() {
+  void testPatchInstitution() throws Exception {
     Institution mockInstitution = mockInstitutionSetup();
     mockInstitution.setId(1);
     when(institutionService.findInstitutionById(mockInstitution.getId())).thenReturn(
@@ -204,7 +204,7 @@ class InstitutionResourceTest {
   }
 
   @Test
-  void testPatchInstitutionServerError() {
+  void testPatchInstitutionServerError() throws Exception {
     Institution mockInstitution = mockInstitutionSetup();
     mockInstitution.setId(1);
     when(institutionService.findInstitutionById(mockInstitution.getId())).thenReturn(
@@ -221,7 +221,7 @@ class InstitutionResourceTest {
   }
 
   @Test
-  void testUpdateInstitution() {
+  void testUpdateInstitution() throws Exception {
     Institution mockInstitution = mockInstitutionSetup();
     when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenReturn(
         mockInstitution);
@@ -234,7 +234,7 @@ class InstitutionResourceTest {
   }
 
   @Test
-  void testUpdateInstitutionNotFound() {
+  void testUpdateInstitutionNotFound() throws Exception {
     Exception error = new NotFoundException("Institution not found");
     Institution mockInstitution = mockInstitutionSetup();
     when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
@@ -246,7 +246,7 @@ class InstitutionResourceTest {
   }
 
   @Test
-  void testUpdateInstiutionNullName() {
+  void testUpdateInstiutionNullName() throws Exception {
     Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
     Institution mockInstitution = mockInstitutionSetup();
     mockInstitution.setName(null);
@@ -259,7 +259,7 @@ class InstitutionResourceTest {
   }
 
   @Test
-  void testUpdateInstiutionBlankName() {
+  void testUpdateInstiutionBlankName() throws Exception {
     Exception error = new IllegalArgumentException("Institution name cannot be null or empty");
     Institution mockInstitution = mockInstitutionSetup();
     mockInstitution.setName("");

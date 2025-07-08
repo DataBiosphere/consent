@@ -39,17 +39,12 @@ public class InstitutionService {
   }
 
   public Institution updateInstitutionById(Institution institutionPayload, Integer id,
-      Integer userId) {
+      Integer userId) throws SQLException {
     Institution targetInstitution = institutionDAO.findInstitutionById(id);
     isInstitutionNull(targetInstitution);
     checkUserId(userId);
     checkForEmptyName(institutionPayload);
-    try {
-      return institutionDAO.updateFullInstitution(institutionPayload, userId);
-    } catch (SQLException e) {
-      throw new ServerErrorException("Could not update institution",
-          HttpStatusCodes.STATUS_CODE_SERVER_ERROR, e);
-    }
+    return institutionDAO.updateFullInstitution(institutionPayload, userId);
   }
 
   public void deleteInstitutionById(Integer id) {
