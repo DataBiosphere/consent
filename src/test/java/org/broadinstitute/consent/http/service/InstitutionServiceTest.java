@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
@@ -52,9 +53,9 @@ class InstitutionServiceTest {
   }
 
   @Test
-  void testCreateInstitutionSuccess() {
+  void testCreateInstitutionSuccess() throws Exception {
     Institution mockInstitution = initMockModel();
-    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
+    when(institutionDAO.insertFullInstitution(mockInstitution, 1)).thenReturn(mockInstitution);
     initService();
     Institution institution = service.createInstitution(mockInstitution, 1);
     assertNotNull(institution);
@@ -81,13 +82,15 @@ class InstitutionServiceTest {
   }
 
   @Test
-  void testUpdateInstitutionById() {
+  void testUpdateInstitutionById() throws Exception {
     Institution mockInstitution = initMockModel();
-    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
+    mockInstitution.setId(1);
+    when(institutionDAO.findInstitutionById(mockInstitution.getId())).thenReturn(mockInstitution);
+    when(institutionDAO.updateFullInstitution(mockInstitution, 1)).thenReturn(mockInstitution);
     initService();
     mockInstitution.setUpdateDate(new Date());
     //doNothing is default for void methods, no need to mock InstitutionDAO.updateInstitutionById
-    Institution updatedInstitution = service.updateInstitutionById(mockInstitution, 1, 1);
+    Institution updatedInstitution = service.updateInstitutionById(mockInstitution, mockInstitution.getId(), 1);
     assertNotNull(updatedInstitution);
   }
 

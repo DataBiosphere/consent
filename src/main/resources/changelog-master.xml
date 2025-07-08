@@ -186,6 +186,8 @@
     relativeToChangelogFile="true"/>
   <include file="changesets/changelog-consent-2025-06-26-expiration-canary.xml"
     relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2025-07-02-institution-domains.xml"
+    relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2025-07-07-election-idx-refId-datasetd.xml"
     relativeToChangelogFile="true" />
 </databaseChangeLog>

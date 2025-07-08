@@ -31,6 +31,11 @@ properties:
     type: string
     enum: [ For-Profit, Nonprofit ]
     description: Organizational structure of institution
+  domains:
+    type: array
+    items:
+      type: string
+      description: Domains associated with the institution. Must be unique across all institutions.
   createUser:
     type: integer
     description: Id of user who created the Institution record

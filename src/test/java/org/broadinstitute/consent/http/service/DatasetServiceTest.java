@@ -92,25 +92,6 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testFindDatasetsByDacIds() {
-    when(datasetDAO.findDatasetsByDacIds(anyList())).thenReturn(Collections.emptySet());
-
-    assertDoesNotThrow(() -> datasetService.findDatasetsByDacIds(List.of(1, 2, 3)));
-  }
-
-  @Test
-  void testFindDatasetsByDacIdsEmptyList() {
-    List<Integer> emptyList = Collections.emptyList();
-    assertThrows(BadRequestException.class,
-        () -> datasetService.findDatasetsByDacIds(emptyList));
-  }
-
-  @Test
-  void testFindDatasetsByDacIdsNullList() {
-    assertThrows(BadRequestException.class, () -> datasetService.findDatasetsByDacIds(null));
-  }
-
-  @Test
   void testFindDatasetListByDacIds() {
     when(datasetDAO.findDatasetListByDacIds(anyList())).thenReturn(List.of());
 

@@ -4,6 +4,7 @@ import com.google.gson.JsonSyntaxException;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
 import org.apache.commons.text.StringEscapeUtils;
@@ -125,4 +126,24 @@ public interface RowMapperHelper extends ConsentLogger {
     return data;
   }
 
+  default void setStringFieldValue(ResultSet resultSet, String columnName,
+      java.util.function.Consumer<String> setter) throws SQLException {
+    if (hasColumn(resultSet, columnName)) {
+      setter.accept(resultSet.getString(columnName));
+    }
+  }
+
+  default void setNonZeroFieldValue(ResultSet resultSet, String columnName,
+      java.util.function.IntConsumer setter) throws SQLException {
+    if (hasNonZeroColumn(resultSet, columnName)) {
+      setter.accept(resultSet.getInt(columnName));
+    }
+  }
+
+  default void setDateFieldValue(ResultSet resultSet, String columnName,
+      java.util.function.Consumer<Date> setter) throws SQLException {
+    if (hasColumn(resultSet, columnName)) {
+      setter.accept(resultSet.getDate(columnName));
+    }
+  }
 }

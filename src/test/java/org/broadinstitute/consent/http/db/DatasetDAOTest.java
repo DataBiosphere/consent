@@ -46,7 +46,6 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.jdbi.v3.core.statement.Update;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -657,23 +656,6 @@ class DatasetDAOTest extends DAOTestHelper {
     List<String> dsNames = datasetDAO.findAllDatasetNames();
     assertTrue(dsNames.contains(ds1.getDatasetName()));
     assertTrue(dsNames.contains(ds2.getDatasetName()));
-  }
-
-  @Test
-  void testFindDatasetsByDacIds() {
-    Dataset dataset = insertDataset();
-    Dac dac = insertDac();
-
-    Dataset datasetTwo = insertDataset();
-    Dac dacTwo = insertDac();
-
-    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
-    datasetDAO.updateDatasetDacId(datasetTwo.getDatasetId(), dacTwo.getDacId());
-
-    List<Integer> datasetIds = List.of(dataset.getDatasetId(), datasetTwo.getDatasetId());
-    Set<DatasetDTO> datasets = datasetDAO.findDatasetsByDacIds(
-        List.of(dac.getDacId(), dacTwo.getDacId()));
-    datasets.forEach(d -> assertTrue(datasetIds.contains(d.getDatasetId())));
   }
 
   @Test
