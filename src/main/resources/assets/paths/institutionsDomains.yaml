@@ -1,0 +1,35 @@
+post:
+  summary: Institution DOMAIN Update resource
+  description: Updates existing domains for all institutions provided in the JSON payload.
+  tags:
+    - Institutions
+  requestBody:
+    description: Required JSON payload representing map of institution names to list of domains.
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            institutionDomainMap:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: string
+          example:
+            {
+              "institutionDomainMap": {
+                "Institution A": ["domain1.com", "domain2.com"],
+                "Institution B": ["domain3.com"]
+              }
+            }
+  responses:
+    200:
+      description: Updates all institutions' domains and returns the updated records.
+    400:
+      description: Bad Request
+    409:
+      description: Conflict Error
+    500:
+      description: Internal Server Error
