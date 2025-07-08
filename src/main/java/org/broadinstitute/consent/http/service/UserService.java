@@ -268,7 +268,13 @@ public class UserService implements ConsentLogger {
           String.format("Unable to delete all drafts and files for userId %d. Error was: %s",
               userId, e.getMessage()), e);
     }
-    institutionDAO.deleteAllInstitutionsByUser(userId);
+    try {
+      institutionDAO.deleteAllInstitutionsByUser(userId);
+    } catch (Exception e) {
+      logException(
+          String.format("Unable to delete all institutions for userId %d. Error was: %s",
+              userId, e.getMessage()), e);
+    }
     userPropertyDAO.deleteAllPropertiesByUser(userId);
     libraryCardDAO.deleteAllLibraryCardsByUser(userId);
     acknowledgementDAO.deleteAllAcknowledgementsByUser(userId);

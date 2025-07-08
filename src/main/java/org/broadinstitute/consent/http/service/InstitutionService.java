@@ -5,6 +5,7 @@ import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -31,47 +32,20 @@ public class InstitutionService {
   public Institution createInstitution(Institution institution, Integer userId) {
     checkForEmptyName(institution);
     checkUserId(userId);
-    Date createTimestamp = new Date();
-    Integer id = institutionDAO.insertInstitution(
-        institution.getName(),
-        institution.getItDirectorName(),
-        institution.getItDirectorEmail(),
-        institution.getInstitutionUrl(),
-        institution.getDunsNumber(),
-        institution.getOrgChartUrl(),
-        institution.getVerificationUrl(),
-        institution.getVerificationFilename(),
-        (Objects.nonNull(institution.getOrganizationType()) ? institution.getOrganizationType()
-            .getValue() : null),
-        userId,
-        createTimestamp
-    );
-    return institutionDAO.findInstitutionById(id);
+    try {
+      return institutionDAO.insertFullInstitution(institution, userId);
+    } catch (SQLException e) {
+      throw new ServerErrorException("Could not create institution", HttpStatusCodes.STATUS_CODE_SERVER_ERROR, e);
+    }
   }
 
   public Institution updateInstitutionById(Institution institutionPayload, Integer id,
-      Integer userId) {
+      Integer userId) throws SQLException {
     Institution targetInstitution = institutionDAO.findInstitutionById(id);
     isInstitutionNull(targetInstitution);
     checkUserId(userId);
     checkForEmptyName(institutionPayload);
-    Date updateDate = new Date();
-    institutionDAO.updateInstitutionById(
-        id,
-        institutionPayload.getName(),
-        institutionPayload.getItDirectorEmail(),
-        institutionPayload.getItDirectorName(),
-        institutionPayload.getInstitutionUrl(),
-        institutionPayload.getDunsNumber(),
-        institutionPayload.getOrgChartUrl(),
-        institutionPayload.getVerificationUrl(),
-        institutionPayload.getVerificationFilename(),
-        (Objects.nonNull(institutionPayload.getOrganizationType())
-            ? institutionPayload.getOrganizationType().getValue() : null),
-        userId,
-        updateDate
-    );
-    return institutionDAO.findInstitutionById(id);
+    return institutionDAO.updateFullInstitution(institutionPayload, userId);
   }
 
   public void deleteInstitutionById(Integer id) {

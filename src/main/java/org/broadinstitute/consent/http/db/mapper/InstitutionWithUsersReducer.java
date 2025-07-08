@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.db.mapper;
 import java.sql.Timestamp;
 import java.util.Map;
 import java.util.Objects;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
@@ -12,7 +13,8 @@ import org.jdbi.v3.core.result.RowView;
 /**
  * Set the create user and update user on an institution
  */
-public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Integer, Institution> {
+public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Integer, Institution>,
+    RowMapperHelper {
 
   @Override
   public void accumulate(Map<Integer, Institution> map, RowView rowView) {
@@ -41,7 +43,12 @@ public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Inte
       SimplifiedUser so_user = rowView.getRow(SimplifiedUser.class);
       institution.addSigningOfficial(so_user);
     }
-
+    if (hasColumn(rowView, "domain", String.class)) {
+      String domain = rowView.getColumn("domain", String.class);
+      if (!StringUtils.isBlank(domain)) {
+        institution.addDomain(domain);
+      }
+    }
   }
 
 }
