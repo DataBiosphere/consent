@@ -8,6 +8,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -82,6 +83,25 @@ public class InstitutionResource extends Resource {
       }
       Institution newInstitution = institutionService.createInstitution(payload, duosUser.getUser().getUserId());
       return Response.ok().entity(newInstitution).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @PATCH
+  @Consumes("application/json")
+  @Produces("application/json")
+  @Path("/{id}")
+  @RolesAllowed(ADMIN)
+  public Response patchInstitution(@Auth DuosUser duosUser, @PathParam("id") Integer id,
+      String institution) {
+    try {
+      Institution existingInstitution = institutionService.findInstitutionById(id);
+      Institution payload = GsonUtil.getInstance().fromJson(institution, Institution.class);
+      Institution mergedPayload = payload.mergeUpdatableFields(existingInstitution);
+      Institution updatedInstitution = institutionService.updateInstitutionById(mergedPayload, id,
+          duosUser.getUserId());
+      return Response.ok().entity(updatedInstitution).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

@@ -7,7 +7,9 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
+import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ServerErrorException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -154,6 +156,67 @@ class InstitutionResourceTest {
     try (var response = resource.createInstitution(duosUser,
         GsonUtil.getInstance().toJson(mockInstitution))) {
       assertEquals(409, response.getStatus());
+    }
+  }
+
+  @Test
+  void testPatchInstitution() throws Exception {
+    Institution mockInstitution = mockInstitutionSetup();
+    mockInstitution.setId(1);
+    when(institutionService.findInstitutionById(mockInstitution.getId())).thenReturn(
+        mockInstitution);
+    when(institutionService.updateInstitutionById(mockInstitution, mockInstitution.getId(),
+        duosUser.getUserId())).thenReturn(
+        mockInstitution);
+    initResource();
+    try (var response = resource.patchInstitution(duosUser, 1,
+        GsonUtil.getInstance().toJson(mockInstitution))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertNotNull(response.getEntity().toString());
+    }
+  }
+
+  @Test
+  void testPatchInstitutionNotFound() {
+    Institution mockInstitution = mockInstitutionSetup();
+    mockInstitution.setId(1);
+    when(institutionService.findInstitutionById(mockInstitution.getId())).thenThrow(
+        new NotFoundException("Institution not found"));
+    initResource();
+    try (var response = resource.patchInstitution(duosUser, 1,
+        GsonUtil.getInstance().toJson(mockInstitution))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+      assertNotNull(response.getEntity().toString());
+    }
+  }
+
+  @Test
+  void testPatchInstitutionBadRequest() {
+    Institution mockInstitution = mockInstitutionSetup();
+    mockInstitution.setId(1);
+    when(institutionService.findInstitutionById(mockInstitution.getId())).thenReturn(
+        mockInstitution);
+    initResource();
+    try (var response = resource.patchInstitution(duosUser, 1, "bad json")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+      assertNotNull(response.getEntity().toString());
+    }
+  }
+
+  @Test
+  void testPatchInstitutionServerError() throws Exception {
+    Institution mockInstitution = mockInstitutionSetup();
+    mockInstitution.setId(1);
+    when(institutionService.findInstitutionById(mockInstitution.getId())).thenReturn(
+        mockInstitution);
+    when(institutionService.updateInstitutionById(mockInstitution, mockInstitution.getId(),
+        duosUser.getUserId())).thenThrow(
+        new ServerErrorException(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
+    initResource();
+    try (var response = resource.patchInstitution(duosUser, 1,
+        GsonUtil.getInstance().toJson(mockInstitution))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+      assertNotNull(response.getEntity().toString());
     }
   }
 
