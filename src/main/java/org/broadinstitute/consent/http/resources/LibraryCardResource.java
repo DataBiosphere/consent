@@ -80,7 +80,7 @@ public class LibraryCardResource extends Resource {
   @POST
   @Consumes("application/json")
   @Produces("application/json")
-  @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
+  @RolesAllowed({SIGNINGOFFICIAL})
   public Response createLibraryCard(@Auth AuthUser authUser, String libraryCard) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
