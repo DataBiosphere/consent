@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -17,9 +16,9 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 
 public class MetricsService {
 
@@ -71,8 +70,8 @@ public class MetricsService {
     DatasetMetrics metrics = new DatasetMetrics();
 
     //get datasetDTO with properties and data use restrictions
-    Set<DatasetDTO> datasets = dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(datasetId);
-    if (datasets == null || datasets.isEmpty()) {
+    Dataset dataset = dataSetDAO.findDatasetById(datasetId);
+    if (dataset == null) {
       throw new NotFoundException("Dataset with specified ID does not exist.");
     }
 
@@ -101,7 +100,7 @@ public class MetricsService {
     } else {
       metrics.setElections(Collections.emptyList());
     }
-    metrics.setDataset(datasets.iterator().next());
+    metrics.setDataset(dataset);
     metrics.setDars(darInfo);
     return metrics;
   }

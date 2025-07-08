@@ -2,20 +2,19 @@ package org.broadinstitute.consent.http.models;
 
 
 import java.util.List;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.MetricsService.DarMetricsSummary;
 
 public class DatasetMetrics {
 
-  private DatasetDTO dataset;
+  private Dataset dataset;
   private List<DarMetricsSummary> dars;
   private List<Election> elections;
 
-  public DatasetDTO getDataset() {
+  public Dataset getDataset() {
     return dataset;
   }
 
-  public void setDataset(DatasetDTO dataset) {
+  public void setDataset(Dataset dataset) {
     this.dataset = dataset;
   }
 
