@@ -38,6 +38,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -240,7 +241,7 @@ class VoteServiceTest extends AbstractTestHelper {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(closedAccessElection));
 
     List<Vote> voteList = List.of(v);
-    assertThrows(IllegalArgumentException.class,
+    assertThrows(ConsentConflictException.class,
         () -> service.updateVotesWithValue(voteList, true, "rationale", user));
   }
 
@@ -263,7 +264,7 @@ class VoteServiceTest extends AbstractTestHelper {
         List.of(openAccessElection, closedAccessElection, canceledAccessElection));
 
     List<Vote> voteList = List.of(v);
-    assertThrows(IllegalArgumentException.class,
+    assertThrows(ConsentConflictException.class,
         () -> service.updateVotesWithValue(voteList, true, "rationale", user));
   }
 
@@ -371,7 +372,7 @@ class VoteServiceTest extends AbstractTestHelper {
     election.setStatus(ElectionStatus.CLOSED.getValue());
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
     List<Integer> votes = List.of(1);
-    assertThrows(IllegalArgumentException.class,
+    assertThrows(ConsentConflictException.class,
         () -> service.updateRationaleByVoteIds(votes, "rationale"));
   }
 
@@ -382,7 +383,7 @@ class VoteServiceTest extends AbstractTestHelper {
     election.setStatus(ElectionStatus.OPEN.getValue());
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
     List<Integer> votes = List.of(1);
-    assertThrows(IllegalArgumentException.class,
+    assertThrows(ConsentConflictException.class,
         () -> service.updateRationaleByVoteIds(votes, "rationale"));
   }
 
