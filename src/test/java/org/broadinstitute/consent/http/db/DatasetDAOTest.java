@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.gson.JsonObject;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -806,10 +807,60 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testGetApprovedDatasets_user_without_library_card() {
+    User user = createUser();
+
+    Dataset dataset1 = createDataset(false);
+    Dataset dataset2 = createDataset(true);
+    Dataset dataset3 = createDataset(false);
+    Dataset dataset4 = createDataset(true);
+
+    Timestamp timestamp = new Timestamp(new Date().getTime());
+
+    Dac dac1 = insertDac();
+    datasetDAO.updateDataset(dataset1.getDatasetId(), dataset1.getDatasetName(), timestamp,
+        user.getUserId(), dac1.getDacId());
+    datasetDAO.updateDataset(dataset2.getDatasetId(), dataset2.getDatasetName(), timestamp,
+        user.getUserId(), dac1.getDacId());
+
+    Dac dac2 = insertDac();
+    datasetDAO.updateDataset(dataset3.getDatasetId(), dataset3.getDatasetName(), timestamp,
+        user.getUserId(), dac2.getDacId());
+    datasetDAO.updateDataset(dataset4.getDatasetId(), dataset4.getDatasetName(), timestamp,
+        user.getUserId(), dac2.getDacId());
+
+    DarCollection dar1 = createDarCollectionWithDatasets(dac1.getDacId(), user, List.of(dataset1));
+    DarCollection dar2 = createDarCollectionWithDatasets(dac2.getDacId(), user,
+        List.of(dataset2, dataset3));
+    DarCollection dar3 = createDarCollectionWithDatasets(dac2.getDacId(), user, List.of(dataset4));
+    List<DarCollection> allDarCollections = List.of(dar1, dar2, dar3);
+
+    Map<Integer, Boolean> expectedFinalVotesForDatasets = Map.of(dataset1.getDatasetId(), false,
+        dataset2.getDatasetId(), false, dataset3.getDatasetId(), true, dataset4.getDatasetId(),
+        true);
+
+    Map<Integer, Election> elections = new HashMap<>();
+
+    for (DarCollection dar : allDarCollections) {
+      for (Map.Entry<String, DataAccessRequest> e : dar.getDars().entrySet()) {
+        for (Integer id : e.getValue().getDatasetIds()) {
+          elections.put(id, createDataAccessElectionWithVotes(e.getKey(), id, user.getUserId(),
+              expectedFinalVotesForDatasets.get(id)));
+        }
+      }
+    }
+
+    List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
+    assertNotNull(approvedDatasets);
+    assertEquals(0, approvedDatasets.size());
+  }
+
+  @Test
   void testGetApprovedDatasets() {
 
     // user with a mix of approved and unapproved datasets
     User user = createUser();
+    libraryCardDAO.insertLibraryCard(user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
 
     Dataset dataset1 = createDataset(false);
     Dataset dataset2 = createDataset(true);
@@ -859,11 +910,9 @@ class DatasetDAOTest extends DAOTestHelper {
         datasetDAO.findDatasetByAlias(approvedDataset.getAlias()).getDacApproval()));
 
     ApprovedDataset expectedApprovedDataset1 = new ApprovedDataset(dataset3.getAlias(),
-        dar2.getDarCode(), dataset3.getDatasetName(), dac2.getName(),
-        elections.get(dataset3.getDatasetId()).getLastUpdate());
+        dar2.getDarCode(), dataset3.getDatasetName(), dac2.getName(), dar2.getMostRecentDar().getExpiresAt());
     ApprovedDataset expectedApprovedDataset2 = new ApprovedDataset(dataset4.getAlias(),
-        dar3.getDarCode(), dataset4.getDatasetName(), dac2.getName(),
-        elections.get(dataset4.getDatasetId()).getLastUpdate());
+        dar3.getDarCode(), dataset4.getDatasetName(), dac2.getName(), dar3.getMostRecentDar().getExpiresAt());
     Map<Integer, ApprovedDataset> expectedDatasets = Map.of(dataset3.getAlias(),
         expectedApprovedDataset1, dataset4.getAlias(), expectedApprovedDataset2);
 
@@ -915,6 +964,171 @@ class DatasetDAOTest extends DAOTestHelper {
     User user = createUser();
     List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
     assertEquals(0, approvedDatasets.size());
+
+  }
+
+  @Test
+  void testGetApprovedDatasetsForMultiDACElections() {
+    Date now = new Date();
+    // user with a mix of approved and unapproved datasets
+    User user = createUser();
+    User chairperson1 = createUser();
+    User chairperson2 = createUser();
+    libraryCardDAO.insertLibraryCard(user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), now);
+
+    Dataset dataset1 = createDataset(true);
+    Dataset dataset2 = createDataset(true);
+    Dataset dataset3 = createDataset(true);
+    Dataset dataset4 = createDataset(true);
+
+    Timestamp timestamp = new Timestamp(now.getTime());
+
+    Dac dac1 = insertDac();
+    datasetDAO.updateDataset(dataset1.getDatasetId(), dataset1.getDatasetName(), timestamp, chairperson1.getUserId(), dac1.getDacId());
+    datasetDAO.updateDataset(dataset2.getDatasetId(), dataset2.getDatasetName(), timestamp, chairperson1.getUserId(), dac1.getDacId());
+    datasetDAO.updateDatasetApproval(true, Instant.now(), chairperson1.getUserId(), dataset1.getDatasetId());
+    datasetDAO.updateDatasetApproval(true, Instant.now(), chairperson1.getUserId(), dataset2.getDatasetId());
+
+
+    Dac dac2 = insertDac();
+    datasetDAO.updateDataset(dataset3.getDatasetId(), dataset3.getDatasetName(), timestamp, chairperson2.getUserId(), dac2.getDacId());
+    datasetDAO.updateDataset(dataset4.getDatasetId(), dataset4.getDatasetName(), timestamp, chairperson2.getUserId(), dac2.getDacId());
+    datasetDAO.updateDatasetApproval(true, Instant.now(), chairperson2.getUserId(), dataset3.getDatasetId());
+    datasetDAO.updateDatasetApproval(true, Instant.now(), chairperson2.getUserId(), dataset4.getDatasetId());
+
+    DarCollection darCollection = createDarCollectionWithDatasetsNewModel(user, List.of(dataset1, dataset2, dataset3, dataset4));
+    assertEquals(0, datasetDAO.getApprovedDatasets(user.getUserId()).size());
+
+    // Simulate 2 DAC 1 elections for yesterday
+    Date yesterday = Date.from(Instant.now().minus(1, ChronoUnit.DAYS));
+    Integer electionId1 = electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        yesterday,
+        darCollection.getMostRecentDar().getReferenceId(),
+        dataset1.getDatasetId()
+    );
+    Integer voteId1 = voteDAO.insertVote(chairperson1.getUserId(), electionId1, VoteType.FINAL.getValue());
+    voteDAO.updateVote(true, "rationale", yesterday, voteId1, false, electionId1, yesterday, false);
+    electionDAO.updateElectionById(electionId1, ElectionStatus.CLOSED.getValue(), yesterday);
+    List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
+    assertEquals(1, approvedDatasets.size());
+    assertEquals(darCollection.getMostRecentDar().getExpiresAt(), approvedDatasets.get(0).getExpirationDate());
+
+
+    Integer electionId2 = electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        yesterday,
+        darCollection.getMostRecentDar().getReferenceId(),
+        dataset2.getDatasetId()
+    );
+    Integer voteId2 = voteDAO.insertVote(chairperson1.getUserId(), electionId2, VoteType.FINAL.getValue());
+    voteDAO.updateVote(true, "rationale", yesterday, voteId2, false, electionId1, yesterday, false);
+    electionDAO.updateElectionById(electionId2, ElectionStatus.CLOSED.getValue(), yesterday);
+    assertEquals(2, datasetDAO.getApprovedDatasets(user.getUserId()).size());
+
+    // Simulate 2 DAC 2 elections for today
+    Date today = new Date();
+    Integer electionId3 = electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        today,
+        darCollection.getMostRecentDar().getReferenceId(),
+        dataset3.getDatasetId()
+    );
+    Integer voteId3 = voteDAO.insertVote(chairperson2.getUserId(), electionId3, VoteType.FINAL.getValue());
+    voteDAO.updateVote(true, "rationale", today, voteId3, false, electionId3, today, false);
+    electionDAO.updateElectionById(electionId3, ElectionStatus.CLOSED.getValue(), today);
+    assertEquals(3, datasetDAO.getApprovedDatasets(user.getUserId()).size());
+
+    Integer electionId4 = electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        today,
+        darCollection.getMostRecentDar().getReferenceId(),
+        dataset4.getDatasetId()
+    );
+    Integer voteId4 = voteDAO.insertVote(chairperson2.getUserId(), electionId4, VoteType.FINAL.getValue());
+    voteDAO.updateVote(true, "rationale", today, voteId4, false, electionId4, today, false);
+    electionDAO.updateElectionById(electionId4, ElectionStatus.CLOSED.getValue(), today);
+
+    List<ApprovedDataset> approvedDatasets2 = datasetDAO.getApprovedDatasets(user.getUserId());
+    assertNotNull(approvedDatasets2);
+    assertEquals(4, approvedDatasets2.size());
+
+    // manually age the dar off
+    jdbi.useHandle(handle -> {
+      handle.createUpdate("UPDATE data_access_request SET submission_date=CURRENT_DATE - INTERVAL '365 days' WHERE data_access_request.reference_id = ?").bind(0, darCollection.getMostRecentDar().getReferenceId()).execute();
+    });
+
+    // confirm the expiration part of the query works.
+    List<ApprovedDataset> approvedDatasets3 = datasetDAO.getApprovedDatasets(user.getUserId());
+    assertEquals(0, approvedDatasets3.size());
+
+    DataAccessRequest recentDar = darCollection.getMostRecentDar();
+
+    // submit a progress report.
+    DataAccessRequest progressReport = createProgressReport(recentDar.getData(), recentDar.getEraCommonsId(), recentDar.getUserId(), recentDar.getCollectionId(), recentDar.getId(), recentDar.getDatasetIds());
+
+    // ensure we still have no approved datasets.
+    List<ApprovedDataset> approvedDatasets4 = datasetDAO.getApprovedDatasets(user.getUserId());
+    assertEquals(0, approvedDatasets4.size());
+
+    // Simulate 2 DAC 2 elections for today
+    // vote yes on dataset 3
+    Integer electionId5 = electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        today,
+        progressReport.getReferenceId(),
+        dataset3.getDatasetId()
+    );
+    Integer voteId5 = voteDAO.insertVote(chairperson2.getUserId(), electionId5, VoteType.FINAL.getValue());
+    voteDAO.updateVote(true, "rationale", today, voteId5, false, electionId5, today, false);
+    electionDAO.updateElectionById(electionId5, ElectionStatus.CLOSED.getValue(), today);
+    List<ApprovedDataset> approvedDatasets5 = datasetDAO.getApprovedDatasets(user.getUserId());
+    assertEquals(1, approvedDatasets5.size());
+    assertEquals(progressReport.getExpiresAt(), approvedDatasets5.get(0).getExpirationDate());
+
+    Integer electionId6 = electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        today,
+        progressReport.getReferenceId(),
+        dataset4.getDatasetId()
+    );
+    Integer voteId6 = voteDAO.insertVote(chairperson2.getUserId(), electionId6, VoteType.FINAL.getValue());
+    // vote no on dataset 4
+    voteDAO.updateVote(false, "rationale", today, voteId6, false, electionId6, today, false);
+    electionDAO.updateElectionById(electionId6, ElectionStatus.CLOSED.getValue(), today);
+
+    List<ApprovedDataset> approvedDatasets6 = datasetDAO.getApprovedDatasets(user.getUserId());
+    assertNotNull(approvedDatasets6);
+    assertEquals(1, approvedDatasets6.size());
+
+    List<DataAccessRequest> dataset3Dars = dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset3.getDatasetId());
+    assertEquals(1, dataset3Dars.size());
+
+    List<DataAccessRequest> dataset4Dars = dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset4.getDatasetId());
+    assertEquals(0, dataset4Dars.size());
+
+    today = new Date();  //adjust the date into the future or the LAST_VALUE won't work correctly.
+    // make a new election for dataset 3 and now vote no
+    Integer electionId7 = electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        today,
+        progressReport.getReferenceId(),
+        dataset3.getDatasetId()
+    );
+    Integer voteId7 = voteDAO.insertVote(chairperson2.getUserId(), electionId7, VoteType.FINAL.getValue());
+    voteDAO.updateVote(false, "rationale", today, voteId7, false, electionId7, today, false);
+    electionDAO.updateElectionById(electionId7, ElectionStatus.CLOSED.getValue(), today);
+    assertEquals(0, datasetDAO.getApprovedDatasets(user.getUserId()).size());
+
+    dataset3Dars = dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset3.getDatasetId());
+    assertEquals(0, dataset3Dars.size());
 
   }
 
@@ -985,6 +1199,16 @@ class DatasetDAOTest extends DAOTestHelper {
       createDataAccessRequestWithDatasetAndCollectionInfo(collectionId, dataset.getDatasetId(),
           user.getUserId());
     });
+    return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
+  }
+
+  private DarCollection createDarCollectionWithDatasetsNewModel(User user, List<Dataset> datasets) {
+    String darCode = "DAR-" + randomInt(1, 999999);
+    Date now = new Date();
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
+        now);
+    List<Integer> datsetIds = datasets.stream().map(Dataset::getDatasetId).toList();
+    createDataAccessRequestNewModel(collectionId, datsetIds, user.getUserId());
     return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
   }
 
@@ -1150,6 +1374,33 @@ class DatasetDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, new Date(),
         new Date(), new Date(), new Date(), data, randomAlphabetic(10));
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
+  }
+
+  private void createDataAccessRequestNewModel(int collectionId, List<Integer> datasetIds, int userId) {
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setProjectTitle(randomAlphabetic(10));
+    String referenceId = randomAlphabetic(20);
+    Date now = new Date();
+    dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, now, now, now, now, data, randomAlphabetic(10));
+    datasetIds.forEach(datasetId -> {
+      dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
+    });
+  }
+
+  private DataAccessRequest createProgressReport(DataAccessRequestData data, String eraCommonsId, Integer userId, Integer collectionId,
+      Integer parentId, List<Integer> datasetIds) {
+    String referenceId = UUID.randomUUID().toString();
+    dataAccessRequestDAO.insertProgressReport(
+        parentId,
+        collectionId,
+        referenceId,
+        userId,
+        data,
+        eraCommonsId);
+    datasetIds.forEach(datasetId -> {
+      dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
+    });
+    return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
   private void createDatasetProperties(Integer datasetId) {
