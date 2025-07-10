@@ -395,10 +395,12 @@ class InstitutionDAOTest extends DAOTestHelper {
     User user = createUser();
     Institution fullInstitution = institutionDAO.insertFullInstitution(institution, user.getUserId());
 
-    Institution foundInstitution = institutionDAO.findInstitutionByDomain(domain.toUpperCase());
-    assertEquals(fullInstitution.getId(), foundInstitution.getId());
+    Institution foundInstitution1 = institutionDAO.findInstitutionByDomain(domain.toUpperCase());
+    assertEquals(fullInstitution.getId(), foundInstitution1.getId());
+    assertTrue(foundInstitution1.getDomains().contains(domain), "Domain should be found in institution's domains");
     Institution foundInstitution2 = institutionDAO.findInstitutionByDomain(domain.toLowerCase());
     assertEquals(fullInstitution.getId(), foundInstitution2.getId());
+    assertTrue(foundInstitution2.getDomains().contains(domain), "Domain should be found in institution's domains");
     Institution notFoundInstitution = institutionDAO.findInstitutionByDomain("nonexistentdomain.org");
     assertNull(notFoundInstitution, "Should return null for non-existent domain");
   }
