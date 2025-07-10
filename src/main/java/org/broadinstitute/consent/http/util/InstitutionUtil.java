@@ -49,7 +49,16 @@ public class InstitutionUtil implements ConsentLogger {
             || fieldName.equals("signingOfficials")
             || fieldName.equals("displayName")
             || fieldName.equals("userId")
-            || fieldName.equals("email"));
+            || fieldName.equals("email")
+            || fieldName.equals("itDirectorName")
+            || fieldName.equals("itDirectorEmail")
+            || fieldName.equals("institutionUrl")
+            || fieldName.equals("dunsNumber")
+            || fieldName.equals("orgChartUrl")
+            || fieldName.equals("verificationUrl")
+            || fieldName.equals("verificationFilename")
+            || fieldName.equals("organizationType")
+            || fieldName.equals("domains"));
       }
 
       // NOTE: shouldSkipClass is mandatory when creating an ExclusionStrategy
