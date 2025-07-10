@@ -28,16 +28,6 @@ public class InstitutionUtil implements ConsentLogger {
     return gson.addSerializationExclusionStrategy(strategy).create();
   }
 
-  public Boolean checkIfAdmin(User user) {
-    List<UserRole> roles = user.getRoles();
-    if (roles == null || roles.isEmpty()) {
-      logWarn("User has no roles: " + user.getEmail());
-      return false;
-    }
-    return roles.stream()
-        .anyMatch((userRole) -> Objects.equals(userRole.getRoleId(), UserRoles.ADMIN.getRoleId()));
-  }
-
   private ExclusionStrategy getSerializationExclusionStrategy(Boolean isAdmin) {
     return new ExclusionStrategy() {
       @Override

@@ -17,6 +17,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Institution;
@@ -47,7 +48,7 @@ public class InstitutionResource extends Resource {
   @PermitAll
   public Response getInstitutions(@Auth DuosUser duosUser) {
     try {
-      Boolean isAdmin = institutionUtil.checkIfAdmin(duosUser.getUser());
+      Boolean isAdmin = duosUser.getUser().hasUserRole(UserRoles.ADMIN);
       Gson gson = institutionUtil.getGsonBuilder(isAdmin);
       List<Institution> institutions = institutionService.findAllInstitutions();
       return Response.ok().entity(gson.toJson(institutions)).build();
@@ -62,7 +63,7 @@ public class InstitutionResource extends Resource {
   @PermitAll
   public Response getInstitution(@Auth DuosUser duosUser, @PathParam("id") Integer id) {
     try {
-      Boolean isAdmin = institutionUtil.checkIfAdmin(duosUser.getUser());
+      Boolean isAdmin = duosUser.getUser().hasUserRole(UserRoles.ADMIN);
       Gson gson = institutionUtil.getGsonBuilder(isAdmin);
       Institution institution = institutionService.findInstitutionById(id);
       return Response.ok().entity(gson.toJson(institution)).build();

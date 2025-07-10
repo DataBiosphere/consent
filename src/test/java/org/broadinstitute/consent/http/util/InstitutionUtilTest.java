@@ -1,17 +1,10 @@
 package org.broadinstitute.consent.http.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.Gson;
-import java.util.Collections;
 import java.util.Date;
-import java.util.List;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Institution;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,12 +12,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class InstitutionUtilTest {
-
-  private final List<UserRole> adminRoles = Collections.singletonList(UserRoles.Admin());
-  private final List<UserRole> researcherRoles = Collections.singletonList(UserRoles.Researcher());
-  private final User adminUser = new User(1, "Admin", "Display Name", new Date(), adminRoles);
-  private final User researcherUser = new User(1, "Researcher", "Display Name", new Date(),
-      researcherRoles);
 
   private InstitutionUtil util;
 
@@ -41,14 +28,6 @@ class InstitutionUtilTest {
 
   private void initUtil() {
     util = new InstitutionUtil();
-  }
-
-  @Test
-  void testCheckIfAdminAdmin() {
-    initUtil();
-    assertTrue(util.checkIfAdmin(adminUser));
-    assertFalse(util.checkIfAdmin(researcherUser));
-    assertFalse(util.checkIfAdmin(new User()));
   }
 
   @Test
