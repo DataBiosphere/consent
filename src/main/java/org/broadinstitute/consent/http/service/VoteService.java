@@ -34,6 +34,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -433,7 +434,7 @@ public class VoteService implements ConsentLogger {
     return findVotesByIds(voteIds);
   }
 
-  private void validateVotesCanUpdate(List<Vote> votes) throws IllegalArgumentException {
+  private void validateVotesCanUpdate(List<Vote> votes) throws ConsentConflictException {
     List<Election> elections = electionDAO.findElectionsByIds(votes.stream()
         .map(Vote::getElectionId)
         .toList());
@@ -444,8 +445,8 @@ public class VoteService implements ConsentLogger {
         .filter(election -> !election.getStatus().equals(ElectionStatus.OPEN.getValue()))
         .toList();
     if (!nonOpenAccessElections.isEmpty()) {
-      throw new IllegalArgumentException(
-          "There are non-open Data Access elections for provided votes");
+      throw new ConsentConflictException(
+          "One or more of these votes are associated with elections not open for voting.");
     }
 
     // If there are non-DataAccess or non-RP elections, throw an error
@@ -454,8 +455,8 @@ public class VoteService implements ConsentLogger {
         .filter(election -> !election.getElectionType().equals(ElectionType.RP.getValue()))
         .toList();
     if (!disallowedElections.isEmpty()) {
-      throw new IllegalArgumentException(
-          "There are non-Data Access/RP elections for provided votes");
+      throw new ConsentConflictException(
+          "There are unsupported election types for the votes provided");
     }
   }
 
