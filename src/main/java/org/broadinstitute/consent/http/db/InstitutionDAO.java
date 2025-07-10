@@ -262,4 +262,14 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
       handle.commit();
     });
   }
+
+  @UseRowReducer(InstitutionReducer.class)
+  @SqlQuery("""
+      SELECT i.*
+      FROM institution i
+      INNER JOIN institution_domains d ON d.institution_id = i.institution_id
+      WHERE LOWER(d.domain) = LOWER(:domain)
+      LIMIT 1
+      """)
+  Institution findInstitutionByDomain(@Bind("domain") String domain);
 }

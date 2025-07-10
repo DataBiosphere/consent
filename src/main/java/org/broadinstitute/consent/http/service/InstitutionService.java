@@ -4,28 +4,23 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
-import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Institution;
-import org.broadinstitute.consent.http.models.InstitutionDomainMap;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 
 public class InstitutionService {
 
   private final InstitutionDAO institutionDAO;
   private final UserDAO userDAO;
-  private final GCSService store;
 
   @Inject
-  public InstitutionService(InstitutionDAO institutionDAO, UserDAO userDAO, GCSService store) {
+  public InstitutionService(InstitutionDAO institutionDAO, UserDAO userDAO) {
     this.institutionDAO = institutionDAO;
     this.userDAO = userDAO;
-    this.store = store;
   }
 
   public Institution createInstitution(Institution institution, Integer userId) {
@@ -65,25 +60,10 @@ public class InstitutionService {
     return institution;
   }
 
-  private InstitutionDomainMap getInstitutionDomainMap() {
-    try {
-      return store.readJsonFileFromBucket("institution-domain/allowlist.json",
-          InstitutionDomainMap.class);
-    } catch (IOException e) {
-      throw new ServerErrorException("Could not load institution configuration",
-          HttpStatusCodes.STATUS_CODE_SERVER_ERROR, e);
-    }
-  }
-
   public Institution findInstitutionForEmail(String email) {
-    String name = getInstitutionDomainMap().getInstitutionForEmail(email);
-    if (name != null) {
-      var institutions = institutionDAO.findInstitutionsByName(name);
-      if (institutions.size() == 1) {
-        return institutions.get(0);
-      }
-    }
-    return null;
+    String trimmedEmail = email.trim();
+    String domain = trimmedEmail.substring(trimmedEmail.indexOf('@') + 1);
+    return institutionDAO.findInstitutionByDomain(domain);
   }
 
   public List<Institution> findAllInstitutions() {

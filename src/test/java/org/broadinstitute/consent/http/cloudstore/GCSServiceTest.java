@@ -138,25 +138,4 @@ class GCSServiceTest {
     boolean deleted = service.deleteDocument(RandomStringUtils.random(10));
     assertTrue(deleted);
   }
-
-  @Test
-  void testReadJsonFileFromBucket() throws Exception {
-    String testJson = """
-        {
-          "hello": "world",
-          "foo": "bar"
-        }
-        """;
-
-    when(blob.getContent()).thenReturn(testJson.getBytes());
-    when(storage.get(any(BlobId.class))).thenReturn(blob);
-
-    initStore();
-
-    var result = service.readJsonFileFromBucket("test.json", Map.class);
-
-    assertNotNull(result);
-    assertEquals(2, result.size());
-    assertEquals("world", result.get("hello"));
-  }
 }

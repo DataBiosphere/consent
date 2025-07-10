@@ -15,6 +15,8 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
@@ -374,5 +376,30 @@ class InstitutionDAOTest extends DAOTestHelper {
     Institution reloadedInstitution = institutionDAO.updateFullInstitution(updatedInstitution,
         user.getUserId());
     assertNull(reloadedInstitution.getDomains(), "Domains should be empty after update");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"testdoMain.com", "AnotherDomain.com", "uniÇodé.c©m", "Broad.mちt.eDu"})
+  void testFindInstitutionByDomain(String domain) throws Exception {
+    Institution institution = new Institution();
+    institution.setName("Test Institution");
+    institution.setItDirectorName("Test Director");
+    institution.setItDirectorEmail("email");
+    institution.setInstitutionUrl("http://testinstitution.com");
+    institution.setDunsNumber(123456789);
+    institution.setOrgChartUrl("http://testinstitution.com/orgchart");
+    institution.setVerificationUrl("http://testinstitution.com/verification");
+    institution.setVerificationFilename("verification.pdf");
+    institution.setOrganizationType(OrganizationType.NON_PROFIT);
+    institution.setDomains(List.of(domain));
+    User user = createUser();
+    Institution fullInstitution = institutionDAO.insertFullInstitution(institution, user.getUserId());
+
+    Institution foundInstitution = institutionDAO.findInstitutionByDomain(domain.toUpperCase());
+    assertEquals(fullInstitution.getId(), foundInstitution.getId());
+    Institution foundInstitution2 = institutionDAO.findInstitutionByDomain(domain.toLowerCase());
+    assertEquals(fullInstitution.getId(), foundInstitution2.getId());
+    Institution notFoundInstitution = institutionDAO.findInstitutionByDomain("nonexistentdomain.org");
+    assertNull(notFoundInstitution, "Should return null for non-existent domain");
   }
 }
