@@ -292,7 +292,6 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
                LEFT JOIN user_role ur ON ur.user_id = so.user_id
                WHERE ur.role_id = 7) so ON i.institution_id = so.so_institution_id
       WHERE LOWER(d.domain) = LOWER(:domain)
-      LIMIT 1
       """)
   Institution findInstitutionByDomain(@Bind("domain") String domain);
 }
