@@ -164,7 +164,11 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
     return findInstitutionById(institutionId);
   }
 
-  @SqlUpdate("DELETE FROM institution WHERE institution_id = :institutionId")
+  @SqlUpdate(
+  """
+     WITH domain_deletes AS (DELETE FROM institution_domains d WHERE d.institution_id = :institutionId)
+     DELETE FROM institution WHERE institution_id = :institutionId
+  """)
   void deleteInstitutionById(@Bind("institutionId") Integer institutionId);
 
   @UseRowReducer(InstitutionReducer.class)
