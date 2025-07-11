@@ -108,6 +108,18 @@ class InstitutionDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testDeleteInstitutionById_WithDomain() throws SQLException {
+    Institution institution = createInstitution();
+    institution.setDomains(List.of("domain1", "domain2"));
+    institutionDAO.updateFullInstitution(institution, institution.getCreateUserId());
+    assertEquals(
+        institution.getDomains(),
+        institutionDAO.findInstitutionById(institution.getId()).getDomains());
+    institutionDAO.deleteInstitutionById(institution.getId());
+    assertNull(institutionDAO.findInstitutionById(institution.getId()));
+  }
+
+  @Test
   void testFindInstitutionById() {
     Institution institution = createInstitution();
     Integer id = institution.getId();
