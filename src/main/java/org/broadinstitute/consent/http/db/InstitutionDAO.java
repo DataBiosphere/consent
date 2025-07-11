@@ -294,4 +294,12 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
       WHERE LOWER(d.domain) = LOWER(:domain)
       """)
   Institution findInstitutionByDomain(@Bind("domain") String domain);
+
+  @SqlQuery("""
+      SELECT distinct i.institution_id
+      FROM institution i
+      INNER JOIN institution_domains d ON d.institution_id = i.institution_id
+      WHERE LOWER(d.domain) = LOWER(:domain)
+      """)
+  Integer findInstitutionIdByDomain(@Bind("domain") String domain);
 }

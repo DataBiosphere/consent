@@ -381,17 +381,7 @@ class InstitutionDAOTest extends DAOTestHelper {
   @ParameterizedTest
   @ValueSource(strings = {"testdoMain.com", "AnotherDomain.com", "uniÇodé.c©m", "Broad.mちt.eDu"})
   void testFindInstitutionByDomain(String domain) throws Exception {
-    Institution institution = new Institution();
-    institution.setName("Test Institution");
-    institution.setItDirectorName("Test Director");
-    institution.setItDirectorEmail("email");
-    institution.setInstitutionUrl("http://testinstitution.com");
-    institution.setDunsNumber(123456789);
-    institution.setOrgChartUrl("http://testinstitution.com/orgchart");
-    institution.setVerificationUrl("http://testinstitution.com/verification");
-    institution.setVerificationFilename("verification.pdf");
-    institution.setOrganizationType(OrganizationType.NON_PROFIT);
-    institution.setDomains(List.of(domain));
+    Institution institution = createMockInstitution(domain);
     User user = createUser();
     Institution fullInstitution = institutionDAO.insertFullInstitution(institution, user.getUserId());
 
@@ -403,5 +393,35 @@ class InstitutionDAOTest extends DAOTestHelper {
     assertTrue(foundInstitution2.getDomains().contains(domain), "Domain should be found in institution's domains");
     Institution notFoundInstitution = institutionDAO.findInstitutionByDomain("nonexistentdomain.org");
     assertNull(notFoundInstitution, "Should return null for non-existent domain");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"testdoMain.com", "AnotherDomain.com", "uniÇodé.c©m", "Broad.mちt.eDu"})
+  void testFindInstitutionIdByDomain(String domain) throws Exception {
+    Institution institution = createMockInstitution(domain);
+    User user = createUser();
+    Institution fullInstitution = institutionDAO.insertFullInstitution(institution, user.getUserId());
+
+    Integer foundId1 = institutionDAO.findInstitutionIdByDomain(domain.toUpperCase());
+    assertEquals(fullInstitution.getId(), foundId1);
+    Integer foundId2 = institutionDAO.findInstitutionIdByDomain(domain.toLowerCase());
+    assertEquals(fullInstitution.getId(), foundId2);
+    Integer notFoundId = institutionDAO.findInstitutionIdByDomain("nonexistentdomain.org");
+    assertNull(notFoundId, "Should return null for non-existent domain");
+  }
+
+  private Institution createMockInstitution(String domain) {
+    Institution institution = new Institution();
+    institution.setName("Test Institution");
+    institution.setItDirectorName("Test Director");
+    institution.setItDirectorEmail("email");
+    institution.setInstitutionUrl("http://testinstitution.com");
+    institution.setDunsNumber(123456789);
+    institution.setOrgChartUrl("http://testinstitution.com/orgchart");
+    institution.setVerificationUrl("http://testinstitution.com/verification");
+    institution.setVerificationFilename("verification.pdf");
+    institution.setOrganizationType(OrganizationType.NON_PROFIT);
+    institution.setDomains(List.of(domain));
+    return institution;
   }
 }

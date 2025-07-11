@@ -60,10 +60,32 @@ public class InstitutionService {
     return institution;
   }
 
+  /**
+   * Finds the institution for a given email address. This method returns a fully populated
+   * institution with signing officials, users, and domains.
+   *
+   * @param email the email address to search for
+   * @return The Institution associated with the email's domain, or null if not found
+   */
   public Institution findInstitutionForEmail(String email) {
+    return institutionDAO.findInstitutionByDomain(trimmedEmailDomain(email));
+  }
+
+  /**
+   * Finds the institution ID for a given email address. This is a simplified version of the more
+   * expansive findInstitutionForEmail method that will only return just the ID for verification and
+   * validation of a user's institutional affiliation and library card assignments.
+   *
+   * @param email the email address to search for
+   * @return The Institution ID associated with the email's domain, or null if not found
+   */
+  public Integer findInstitutionIdForEmail(String email) {
+    return institutionDAO.findInstitutionIdByDomain(trimmedEmailDomain(email));
+  }
+
+  private String trimmedEmailDomain(String email) {
     String trimmedEmail = email.trim();
-    String domain = trimmedEmail.substring(trimmedEmail.indexOf('@') + 1);
-    return institutionDAO.findInstitutionByDomain(domain);
+    return trimmedEmail.substring(trimmedEmail.indexOf('@') + 1);
   }
 
   public List<Institution> findAllInstitutions() {
