@@ -886,7 +886,7 @@ class UserServiceTest extends AbstractTestHelper {
     Institution institutionFromEmail = new Institution();
     institutionFromEmail.setId(1);
     testUser.setInstitutionId(1);
-    assertFalse(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail));
+    assertFalse(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail.getId()));
   }
 
   @Test
@@ -895,7 +895,7 @@ class UserServiceTest extends AbstractTestHelper {
     Institution institutionFromEmail = new Institution();
     institutionFromEmail.setId(1);
     testUser.setInstitutionId(2);
-    assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail));
+    assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail.getId()));
     verify(userDAO).updateInstitutionId(testUser.getUserId(), institutionFromEmail.getId());
   }
 
@@ -916,7 +916,7 @@ class UserServiceTest extends AbstractTestHelper {
     when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
     when(institutionService.findInstitutionForEmail(signingOfficial.getEmail())).thenReturn(institutionFromDatabase);
 
-    assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail));
+    assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail.getId()));
     verify(userServiceDAO).updateInstitutionAndClearLibraryCardForUser(testUser.getUserId(), institutionFromEmail.getId());
   }
 
@@ -935,7 +935,7 @@ class UserServiceTest extends AbstractTestHelper {
 
     when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(null);
 
-    assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail));
+    assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail.getId()));
     verify(userServiceDAO).updateInstitutionAndClearLibraryCardForUser(testUser.getUserId(), institutionFromEmail.getId());
   }
 
@@ -955,7 +955,7 @@ class UserServiceTest extends AbstractTestHelper {
     when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
     when(institutionService.findInstitutionForEmail(signingOfficial.getEmail())).thenReturn(institutionFromEmail);
 
-    assertFalse(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail));
+    assertFalse(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail.getId()));
   }
 
 
@@ -975,7 +975,7 @@ class UserServiceTest extends AbstractTestHelper {
     when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
     when(institutionService.findInstitutionForEmail(signingOfficial.getEmail())).thenReturn(null);
 
-    assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail));
+    assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail.getId()));
     verify(userDAO, times(0)).updateInstitutionId(any(), any());
     verify(libraryCardDAO).deleteAllLibraryCardsByUser(testUser.getUserId());
   }
@@ -984,7 +984,7 @@ class UserServiceTest extends AbstractTestHelper {
   void needsLibraryCardRemovedForUser() {
     User testUser = generateUser();
     Institution institution = new Institution();
-    assertFalse(service.needsLibraryCardRemovedForUser(testUser, institution));
+    assertFalse(service.needsLibraryCardRemovedForUser(testUser, institution.getId()));
   }
 
   @Test
@@ -998,7 +998,7 @@ class UserServiceTest extends AbstractTestHelper {
     testUser.setLibraryCard(lc);
 
     when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(null);
-    assertTrue(service.needsLibraryCardRemovedForUser(testUser, institution));
+    assertTrue(service.needsLibraryCardRemovedForUser(testUser, institution.getId()));
   }
 
   @Test
@@ -1013,11 +1013,11 @@ class UserServiceTest extends AbstractTestHelper {
     testUser.setInstitution(institutionFromEmail);
 
     Institution soInstitution = new Institution();
-    institutionFromEmail.setId(2);
+    soInstitution.setId(2);
 
     when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
     when(institutionService.findInstitutionForEmail(signingOfficial.getEmail())).thenReturn(soInstitution);
-    assertTrue(service.needsLibraryCardRemovedForUser(testUser, institutionFromEmail));
+    assertTrue(service.needsLibraryCardRemovedForUser(testUser, institutionFromEmail.getId()));
   }
 
   public static Stream<Arguments> testEnforceInstitutionAndLibraryCardVariations() {
@@ -1046,8 +1046,13 @@ class UserServiceTest extends AbstractTestHelper {
     testUser.setLibraryCard(card);
     User alteredUser = new User();
     alteredUser.setEmail(testUser.getEmail());
-    when(institutionService.findInstitutionForEmail(testUser.getEmail()))
-        .thenReturn(institutionFromMap);
+    if (institutionFromMap != null) {
+      when(institutionService.findInstitutionIdForEmail(testUser.getEmail()))
+          .thenReturn(institutionFromMap.getId());
+    } else {
+      when(institutionService.findInstitutionIdForEmail(testUser.getEmail()))
+          .thenReturn(null);
+    }
     if (expectsUserMod) {
       when(userDAO.findUserByEmail(testUser.getEmail())).thenReturn(testUser, alteredUser);
       validateAlteredUserIsReturned(

@@ -18,20 +18,4 @@ public class InstitutionDomainMap {
   public Set<String> getDomainsForInstitution(String institution) {
     return institutionDomainMap.get(institution);
   }
-
-  /**
-   * Returns the institution name for a given email address.
-   * @param email the email address to check
-   * @return the institution name if found, otherwise null
-   */
-  public String getInstitutionForEmail(String email) {
-    String trimmedEmail = email.trim();
-    String domain = trimmedEmail.substring(trimmedEmail.indexOf('@') + 1);
-    return institutionDomainMap.entrySet().stream()
-        .filter(entry -> entry.getValue().stream()
-            .anyMatch(d -> d.equalsIgnoreCase(domain)))
-        .map(Map.Entry::getKey)
-        .findFirst()
-        .orElse(null);
-  }
 }

@@ -4,11 +4,6 @@ import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import java.util.List;
-import java.util.Objects;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class InstitutionUtil implements ConsentLogger {
@@ -28,16 +23,6 @@ public class InstitutionUtil implements ConsentLogger {
     return gson.addSerializationExclusionStrategy(strategy).create();
   }
 
-  public Boolean checkIfAdmin(User user) {
-    List<UserRole> roles = user.getRoles();
-    if (roles == null || roles.isEmpty()) {
-      logWarn("User has no roles: " + user.getEmail());
-      return false;
-    }
-    return roles.stream()
-        .anyMatch((userRole) -> Objects.equals(userRole.getRoleId(), UserRoles.ADMIN.getRoleId()));
-  }
-
   private ExclusionStrategy getSerializationExclusionStrategy(Boolean isAdmin) {
     return new ExclusionStrategy() {
       @Override
@@ -49,7 +34,16 @@ public class InstitutionUtil implements ConsentLogger {
             || fieldName.equals("signingOfficials")
             || fieldName.equals("displayName")
             || fieldName.equals("userId")
-            || fieldName.equals("email"));
+            || fieldName.equals("email")
+            || fieldName.equals("itDirectorName")
+            || fieldName.equals("itDirectorEmail")
+            || fieldName.equals("institutionUrl")
+            || fieldName.equals("dunsNumber")
+            || fieldName.equals("orgChartUrl")
+            || fieldName.equals("verificationUrl")
+            || fieldName.equals("verificationFilename")
+            || fieldName.equals("organizationType")
+            || fieldName.equals("domains"));
       }
 
       // NOTE: shouldSkipClass is mandatory when creating an ExclusionStrategy
