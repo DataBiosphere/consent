@@ -371,15 +371,6 @@ public class UserResource extends Resource {
     }
   }
 
-  @DELETE
-  @Produces(MediaType.APPLICATION_JSON)
-  @Path("/{email}")
-  @RolesAllowed(ADMIN)
-  public Response delete(@Auth AuthUser authUser, @PathParam("email") String email, @Context UriInfo info) {
-    userService.deleteUserByEmail(email);
-    return Response.ok().build();
-  }
-
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/signing-officials")
