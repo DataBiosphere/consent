@@ -784,26 +784,6 @@ paths:
           description: Server error.
   /api/user/{userId}/{roleId}:
     $ref: './paths/userRole.yaml'
-  /api/user/{email}:
-    delete:
-      summary: Delete User by email
-      description: Deletes the user identified by the email.
-      parameters:
-        - name: email
-          in: path
-          description: The email of the user.
-          required: true
-          schema:
-            type: string
-      tags:
-        - User
-      responses:
-        200:
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: string
   /api/user/acknowledgements/{key}:
     get:
       summary: Get Acknowledgement by key

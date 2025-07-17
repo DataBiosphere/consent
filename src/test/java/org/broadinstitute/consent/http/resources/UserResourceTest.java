@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -225,15 +224,6 @@ class UserResourceTest extends AbstractTestHelper {
 
     try (Response response = userResource.createResearcher(uriInfo, authUser)) {
       assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
-    }
-  }
-
-  @Test
-  void testDeleteUser() {
-    doNothing().when(userService).deleteUserByEmail(any());
-
-    try (Response response = userResource.delete(authUser, randomAlphabetic(10), uriInfo)) {
-      assertEquals(200, response.getStatus());
     }
   }
 
