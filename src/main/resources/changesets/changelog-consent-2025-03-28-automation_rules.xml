@@ -99,9 +99,9 @@
       <column name="state" value="AVAILABLE"/>
     </insert>
     <rollback>
-      <delete tableName="dac_automation_rules">
-        <where>rule = 'GRU_V1'</where>
-      </delete>
+      <sql>
+        DELETE FROM dac_automation_rules WHERE rule IN ('GRU_V1', 'HMB_V1', 'HMB_DSV1', 'GRU_DSV1');
+      </sql>
     </rollback>
   </changeSet>
 </databaseChangeLog>
