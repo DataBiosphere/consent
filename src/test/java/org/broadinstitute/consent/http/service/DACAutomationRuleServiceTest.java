@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -344,6 +345,33 @@ class DACAutomationRuleServiceTest {
         anyList(),
         any(Dataset.class)
     );
+  }
+
+  @Test
+  void testGetRuleImplementation() {
+    DACAutomationRule gruRule = makeDacAutomationRuleGRU();
+
+    RuleImplementationInterface implementation = DACAutomationRuleService.getRuleImplementation(gruRule);
+
+    assertNotNull(implementation);
+    assertEquals(DACAutomationRuleType.GRU_V1, implementation.getRuleType());
+    assertEquals(GeneralResearchUseV1.class, implementation.getClass());
+  }
+
+  @Test
+  void testGetRuleImplementationException() {
+    // Create a mock rule with a type that doesn't have an implementation
+    DACAutomationRule mockRule = mock(DACAutomationRule.class);
+    DACAutomationRuleType mockType = mock(DACAutomationRuleType.class);
+    when(mockRule.ruleType()).thenReturn(mockType);
+    when(mockType.toString()).thenReturn("MOCK_TYPE");
+
+    IllegalArgumentException exception = assertThrows(
+        IllegalArgumentException.class,
+        () -> DACAutomationRuleService.getRuleImplementation(mockRule));
+    assertEquals(
+        "No rule implementation found for type: MOCK_TYPE",
+        exception.getMessage());
   }
 
   private void mockInsertElection(DataAccessRequest dar, Dataset dataset, Integer electionId) {

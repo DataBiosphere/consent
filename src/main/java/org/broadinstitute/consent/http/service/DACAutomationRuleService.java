@@ -143,18 +143,25 @@ public class DACAutomationRuleService implements ConsentLogger {
   @VisibleForTesting
   protected void applyRule(DACAutomationRule rule, Dataset dataset, DataAccessRequest dar,
       List<Dataset> datasetsAuthorized) {
+    RuleImplementationInterface ruleImplementation = getRuleImplementation(rule);
+    boolean shouldApprove = ruleImplementation.compare(dataset, dar);
+    if (shouldApprove) {
+      openElectionAndApprove(rule, ruleImplementation, dar, datasetsAuthorized, dataset);
+    } else {
+      logInfo(String.format("Rule %s not triggered for DAC id: %s and dataset id: %s", rule.ruleType(), dataset.getDacId(),
+          dataset.getDatasetId()));
+    }
+  }
+
+  @VisibleForTesting
+  protected static RuleImplementationInterface getRuleImplementation(
+      DACAutomationRule rule) {
     DACAutomationRuleType type = rule.ruleType();
-    List<RuleImplementationInterface> ruleImplementations = Rules.implementationList.stream()
-        .filter(r -> r.getRuleType().equals(type)).toList();
-    ruleImplementations.forEach(ruleImplementation -> {
-      boolean shouldApprove = ruleImplementation.compare(dataset, dar);
-      if (shouldApprove) {
-        openElectionAndApprove(rule, ruleImplementation, dar, datasetsAuthorized, dataset);
-      } else {
-        logInfo(String.format("Rule %s not triggered for DAC id: %s and dataset id: %s", rule.ruleType(), dataset.getDacId(),
-            dataset.getDatasetId()));
-      }
-    });
+    return Rules.implementationList.stream()
+        .filter(r -> r.getRuleType().equals(type))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException(
+            String.format("No rule implementation found for type: %s", type)));
   }
 
   @VisibleForTesting
