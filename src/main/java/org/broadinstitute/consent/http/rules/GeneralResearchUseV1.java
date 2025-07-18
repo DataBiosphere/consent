@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.rules;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
-import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 
 public class GeneralResearchUseV1 implements RuleImplementationInterface {
