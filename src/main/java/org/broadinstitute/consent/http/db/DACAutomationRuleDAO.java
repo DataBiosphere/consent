@@ -37,7 +37,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
         """;
     try (
         var audit = handle.createUpdate(auditSql);
-        var delete = handle.createUpdate(insertSql)
+        var insert = handle.createUpdate(insertSql)
     ) {
       audit
           .bind("dacId", dacId)
@@ -46,7 +46,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
           .bind("auditType", RuleAuditAction.ADD)
           .bind("actionDate", activationDate)
           .execute();
-      id = handle.createUpdate(insertSql)
+      id = insert
           .bind("dacId", dacId)
           .bind("ruleId", ruleId)
           .bind("userId", userId)
@@ -75,8 +75,8 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
         DELETE FROM dac_rule_settings WHERE dac_id = :dacId AND rule_id = :ruleId
         """;
     try (
-        var audit = getHandle().createUpdate(auditSql);
-        var delete = getHandle().createUpdate(deleteSql)
+        var audit = handle.createUpdate(auditSql);
+        var delete = handle.createUpdate(deleteSql)
     ) {
       audit
           .bind("dacId", dacId)
@@ -111,8 +111,8 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
         """;
     Integer count;
     try (
-        var audit = getHandle().createUpdate(auditSql);
-        var delete = getHandle().createUpdate(deleteSql)
+        var audit = handle.createUpdate(auditSql);
+        var delete = handle.createUpdate(deleteSql)
     ) {
       audit
           .bind("dacId", dacId)
@@ -147,8 +147,8 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
         """;
     Integer count;
     try (
-        var audit = getHandle().createUpdate(auditSql);
-        var delete = getHandle().createUpdate(deleteSql)
+        var audit = handle.createUpdate(auditSql);
+        var delete = handle.createUpdate(deleteSql)
     ) {
       audit
           .bind("auditUserId", auditUserId)
