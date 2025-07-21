@@ -25,7 +25,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       Instant activationDate) {
     Handle handle = getHandle();
     Integer id;
-    String insertAuditSql = """
+    String auditSql = """
         INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
         VALUES (:auditType::rule_audit_action, :dacId, :ruleId, :auditUserId, :actionDate)
         """;
@@ -34,10 +34,10 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
         VALUES (:dacId, :ruleId, :userId, current_timestamp)
         """;
     try (
-        var insertAudit = handle.createUpdate(insertAuditSql);
+        var audit = handle.createUpdate(auditSql);
         var insertRule = handle.createUpdate(insertRuleSql)
     ) {
-      insertAudit
+      audit
           .bind("dacId", dacId)
           .bind("ruleId", ruleId)
           .bind("auditUserId", userId)
@@ -63,7 +63,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
 
   default void auditedDeleteDACRuleSetting(int dacId, int ruleId, int auditUserId) {
     Handle handle = getHandle();
-    String deleteAuditSql = """
+    String auditSql = """
         INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
         SELECT :auditType::rule_audit_action, s.dac_id, s.rule_id, :auditUserId, current_timestamp
         FROM dac_rule_settings s
@@ -73,10 +73,10 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
         DELETE FROM dac_rule_settings WHERE dac_id = :dacId AND rule_id = :ruleId
         """;
     try (
-        var insertAudit = handle.createUpdate(deleteAuditSql);
+        var audit = handle.createUpdate(auditSql);
         var deleteRule = handle.createUpdate(deleteRuleSql)
     ) {
-      insertAudit
+      audit
           .bind("dacId", dacId)
           .bind("ruleId", ruleId)
           .bind("auditUserId", auditUserId)
@@ -98,7 +98,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
   default Integer auditedDeleteDACRuleSettingByUser(int dacId, int userId, int auditUserId) {
     Handle handle = getHandle();
     // Note that we're logging the audit user as the user for the audit record
-    String insertAuditSql = """
+    String auditSql = """
         INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
         SELECT :auditType::rule_audit_action, s.dac_id, s.rule_id, :auditUserId, current_timestamp
         FROM dac_rule_settings s
@@ -109,10 +109,10 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
         """;
     Integer count;
     try (
-        var insertAudit = handle.createUpdate(insertAuditSql);
+        var audit = handle.createUpdate(auditSql);
         var deleteRule = handle.createUpdate(deleteRuleSql)
     ) {
-      insertAudit
+      audit
           .bind("dacId", dacId)
           .bind("userId", userId)
           .bind("auditUserId", auditUserId)
@@ -134,7 +134,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
 
   default Integer auditedDeleteAllDACRuleSettingForUser(int userId, int auditUserId) {
     Handle handle = getHandle();
-    String insertAuditSql = """
+    String auditSql = """
         INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
         SELECT :auditType::rule_audit_action, s.dac_id, s.rule_id, :auditUserId, current_timestamp
         FROM dac_rule_settings s
@@ -145,10 +145,10 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
         """;
     Integer count;
     try (
-        var insertAudit = handle.createUpdate(insertAuditSql);
+        var audit = handle.createUpdate(auditSql);
         var deleteRules = handle.createUpdate(deleteRulesSql)
     ) {
-      insertAudit
+      audit
           .bind("auditUserId", auditUserId)
           .bind("userId", userId)
           .bind("auditType", RuleAuditAction.REMOVE)
