@@ -1486,8 +1486,6 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     Election electionTwo = new Election();
     electionTwo.setElectionId(2);
     electionTwo.setStatus(ElectionStatus.CANCELED.getValue());
-    summary.addDatasetElection(electionOne);
-    summary.addDatasetElection(electionTwo);
     summary.addElection(electionOne);
     summary.addElection(electionTwo);
     summary.addDatasetId(datasetOne.getDatasetId());
