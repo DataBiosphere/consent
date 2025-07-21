@@ -62,7 +62,6 @@ public class DarCollectionSummary {
   // Normally unused by the UI, but used in data population. Can be included in the JSON response
   // if needed by using a GsonBuilder without `excludeFieldsWithoutExposeAnnotation`.
   private List<Vote> votes;
-  private final Map<Integer, Election> datasetElections;
   private Map<Integer, Election> elections;
   private final Map<String, String> darStatuses;
   private CloseoutSupplement closeoutSupplement;
@@ -70,7 +69,6 @@ public class DarCollectionSummary {
   public DarCollectionSummary() {
     this.votes = new ArrayList<>();
     this.actions = new HashSet<>();
-    this.datasetElections = new HashMap<>();
     this.elections = new HashMap<>();
     this.datasetIds = new HashSet<>();
     this.referenceIds = new HashSet<>();
@@ -110,31 +108,6 @@ public class DarCollectionSummary {
 
   public void addVote(Vote vote) {
     this.votes.add(vote);
-  }
-
-  // Compute a new dataset election if it does not exist, or update the existing one to be
-  // the latest election for that dataset. Older dataset elections are discarded.
-  public void addDatasetElection(Election election) {
-    if (this.datasetElections.isEmpty() || !this.datasetElections.containsKey(election.getDatasetId())) {
-      this.datasetElections.put(election.getDatasetId(), election);
-    } else {
-      this.datasetElections.computeIfPresent(
-          election.getDatasetId(),
-          (key, existingElection) -> {
-            // Prefer comparing the creation date, id is an acceptable fallback
-            if (election.getCreateDate() != null && existingElection.getCreateDate() != null && election.getCreateDate().after(existingElection.getCreateDate())) {
-              return election;
-            } else if (election.getElectionId() > existingElection.getElectionId()) {
-              return election;
-            }
-            return existingElection;
-          }
-      );
-    }
-  }
-
-  public Map<Integer, Election> getDatasetElections() {
-    return datasetElections;
   }
 
   public void addElection(Election election) {
