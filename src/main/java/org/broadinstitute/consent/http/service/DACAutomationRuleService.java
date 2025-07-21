@@ -167,7 +167,6 @@ public class DACAutomationRuleService implements ConsentLogger {
   @VisibleForTesting
   protected void openElectionAndApprove(DACAutomationRule rule, RuleImplementationInterface ruleImplementation,
       DataAccessRequest dar, List<Dataset> datasetsAuthorized, Dataset dataset) {
-    // TODO _ Check on new election type ...
     int electionId = electionDAO.insertElection(ElectionType.DATA_ACCESS.getValue(),
         ElectionStatus.OPEN.getValue(), new Date(), dar.getReferenceId(), dataset.getDatasetId());
     int voteId = voteDAO.insertVote(rule.enabledByUserId(), electionId,

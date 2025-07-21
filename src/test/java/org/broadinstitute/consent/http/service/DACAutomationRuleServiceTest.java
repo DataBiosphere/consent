@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -75,7 +76,7 @@ class DACAutomationRuleServiceTest {
   private User user;
 
   @Mock
-  private DACAutomationRuleDAO mockRuleDAO;
+  private DACAutomationRuleDAO ruleDAO;
 
   @Mock
   private EmailService emailService;
@@ -91,7 +92,7 @@ class DACAutomationRuleServiceTest {
         new DACAutomationRuleService(
             dataAccessRequestDAO,
             datasetDAO,
-            mockRuleDAO,
+            ruleDAO,
             electionDAO,
             voteDAO,
             voteServiceDAO,
@@ -102,7 +103,7 @@ class DACAutomationRuleServiceTest {
 
   @Test
   void testFindAll() {
-    when(mockRuleDAO.findAll()).thenReturn(List.of(
+    when(ruleDAO.findAll()).thenReturn(List.of(
         new DACAutomationRule(1, DACAutomationRuleType.GRU_V1, "Test Rule", RuleState.AVAILABLE,
             null, null, null, null)));
 
@@ -113,7 +114,7 @@ class DACAutomationRuleServiceTest {
 
   @Test
   void testFindById() {
-    when(mockRuleDAO.findAllDACAutomationRulesByDACId(1)).thenReturn(List.of(
+    when(ruleDAO.findAllDACAutomationRulesByDACId(1)).thenReturn(List.of(
         new DACAutomationRule(1, DACAutomationRuleType.GRU_V1, "Test Rule", RuleState.AVAILABLE,
             null, null, null, null)));
     List<DACAutomationRule> rules = service.findAllByDacId(1);
@@ -123,10 +124,10 @@ class DACAutomationRuleServiceTest {
 
   @Test
   void testToggleRuleFromOffToOn() {
-    when(mockRuleDAO.findAllDACAutomationRulesByDACId(1)).thenReturn(List.of(
+    when(ruleDAO.findAllDACAutomationRulesByDACId(1)).thenReturn(List.of(
         new DACAutomationRule(1, DACAutomationRuleType.GRU_V1, "Test Rule", RuleState.AVAILABLE,
             null, null, null, null)));
-    when(mockRuleDAO.auditedInsertDACRuleSetting(anyInt(), anyInt(), anyInt(), any())).thenReturn(
+    when(ruleDAO.auditedInsertDACRuleSetting(anyInt(), anyInt(), anyInt(), any())).thenReturn(
         1);
     AutomationRuleToggleResponse result = service.toggleRule(
         1, 1, user);
@@ -137,10 +138,10 @@ class DACAutomationRuleServiceTest {
 
   @Test
   void testToggleRuleFromOnToOff() {
-    when(mockRuleDAO.findAllDACAutomationRulesByDACId(1)).thenReturn(List.of(
+    when(ruleDAO.findAllDACAutomationRulesByDACId(1)).thenReturn(List.of(
         new DACAutomationRule(1, DACAutomationRuleType.GRU_V1, "Test Rule", RuleState.AVAILABLE,
             Timestamp.from(Instant.now()), 1, "alice", "alice@fake.org")));
-    doNothing().when(mockRuleDAO).auditedDeleteDACRuleSetting(anyInt(), anyInt(), anyInt());
+    doNothing().when(ruleDAO).auditedDeleteDACRuleSetting(anyInt(), anyInt(), anyInt());
     AutomationRuleToggleResponse result = service.toggleRule(1, 1, user);
     Assertions.assertFalse(result.isRuleEnabled());
     assertEquals(1, result.getRuleId());
@@ -149,21 +150,21 @@ class DACAutomationRuleServiceTest {
 
   @Test
   void testRemoveChairpersonFromDAC() {
-    when(mockRuleDAO.auditedDeleteDACRuleSettingByUser(1, 1, 1)).thenReturn(1);
+    when(ruleDAO.auditedDeleteDACRuleSettingByUser(1, 1, 1)).thenReturn(1);
     Integer countRemoved = service.removeChairpersonFromDAC(1, 1, 1);
     assertEquals(1, countRemoved);
   }
 
   @Test
   void testAuditedRemoveChairpersonFromDAC() {
-    when(mockRuleDAO.auditedDeleteDACRuleSettingByUser(1, 1, 2)).thenReturn(1);
+    when(ruleDAO.auditedDeleteDACRuleSettingByUser(1, 1, 2)).thenReturn(1);
     Integer countRemoved = service.auditedRemoveChairpersonFromDAC(1, 1, 2);
     assertEquals(1, countRemoved);
   }
 
   @Test
   void testRemoveChairpersonUser() {
-    when(mockRuleDAO.auditedDeleteAllDACRuleSettingForUser(1, 1)).thenReturn(2);
+    when(ruleDAO.auditedDeleteAllDACRuleSettingForUser(1, 1)).thenReturn(2);
     Integer count = service.removeChairpersonUser(1, 1);
     assertEquals(2, count);
   }
@@ -193,8 +194,8 @@ class DACAutomationRuleServiceTest {
         )
     );
 
-    when(mockRuleDAO.findAutomationAuditsForDac(dacId, pageSize, offset)).thenReturn(mockAudits);
-    when(mockRuleDAO.findCountOfAutomationAuditsForDac(dacId)).thenReturn(totalCount);
+    when(ruleDAO.findAutomationAuditsForDac(dacId, pageSize, offset)).thenReturn(mockAudits);
+    when(ruleDAO.findCountOfAutomationAuditsForDac(dacId)).thenReturn(totalCount);
 
     AuditPageResults results = service.findAuditRecords(dacId, pageSize, page);
 
@@ -203,6 +204,61 @@ class DACAutomationRuleServiceTest {
     assertEquals(totalCount, results.getTotalRecords());
     assertEquals(pageSize, results.getPageSize());
     assertEquals(page, results.getPage());
+  }
+
+  @Test
+  void testTriggerDACRuleSettings() {
+    User researcher = makeResearcher();
+    DataAccessRequest dar = makeDAR();
+    String referenceId = dar.getReferenceId();
+    List<Integer> datasetIds = List.of(1, 2);
+    Dataset dataset1 = makeDataset(1, "Dataset One", 3);
+    Dataset dataset2 = makeDataset(2, "Dataset Two", 4);
+    DACAutomationRule activeRule = makeDacAutomationRuleGRU(); // This has enabledByUserId=1
+    DACAutomationRule inactiveRule = new DACAutomationRule(2, DACAutomationRuleType.GRU_V1,
+        "Inactive Rule", RuleState.AVAILABLE, null, null, null, null);
+
+    when(dataAccessRequestDAO.findByReferenceId(referenceId)).thenReturn(dar);
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset1);
+    when(datasetDAO.findDatasetById(2)).thenReturn(dataset2);
+    when(ruleDAO.findAllDACAutomationRulesByDACId(dataset1.getDacId())).thenReturn(List.of(activeRule));
+    when(ruleDAO.findAllDACAutomationRulesByDACId(dataset2.getDacId())).thenReturn(List.of(inactiveRule));
+
+    DACAutomationRuleService serviceSpy = spy(service);
+    // in order to test sending the email we need to add to the datasetsAuthorized list
+    List<Dataset> datasetsAuthorized = new ArrayList<>();
+    doAnswer(inv -> {
+      List<Dataset> datasets = inv.getArgument(3);
+      datasets.add(dataset1);
+      return null;
+    }).when(serviceSpy).applyRule(activeRule, dataset1, dar, datasetsAuthorized);
+    doNothing().when(serviceSpy).sendEmail(researcher, List.of(dataset1), dar);
+
+    serviceSpy.triggerDACRuleSettings(researcher, datasetIds, referenceId);
+
+    verify(serviceSpy, never()).applyRule(eq(inactiveRule), any(), any(), any());
+  }
+
+  @Test
+  void testTriggerDACRuleSettingsNoAuthorizedDatasets() {
+    User researcher = makeResearcher();
+    DataAccessRequest dar = makeDAR();
+    String referenceId = dar.getReferenceId();
+    List<Integer> datasetIds = List.of(1);
+    Dataset dataset = makeDataset(1, "Test Dataset");
+    DACAutomationRule inactiveRule = new DACAutomationRule(1, DACAutomationRuleType.GRU_V1,
+        "Inactive Rule", RuleState.AVAILABLE, null, null, null, null);
+
+    when(dataAccessRequestDAO.findByReferenceId(referenceId)).thenReturn(dar);
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
+    when(ruleDAO.findAllDACAutomationRulesByDACId(dataset.getDacId())).thenReturn(List.of(inactiveRule));
+
+    DACAutomationRuleService serviceSpy = spy(service);
+
+    serviceSpy.triggerDACRuleSettings(researcher, datasetIds, referenceId);
+
+    verify(serviceSpy, never()).applyRule(any(), any(), any(), any());
+    verify(serviceSpy, never()).sendEmail(any(), any(), any());
   }
 
   @Test
@@ -414,7 +470,7 @@ class DACAutomationRuleServiceTest {
     return dar;
   }
 
-  private static Dataset makeDataset(int id, String name) {
+  private static Dataset makeDataset(int id, String name, int dacId) {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(id);
     dataset.setName(name);
@@ -422,8 +478,11 @@ class DACAutomationRuleServiceTest {
     DataUse gruDataUse = new DataUse();
     gruDataUse.setGeneralUse(true);
     dataset.setDataUse(gruDataUse);
-    dataset.setDacId(0);
+    dataset.setDacId(dacId);
     return dataset;
+  }
+  private static Dataset makeDataset(int id, String name) {
+    return makeDataset(id, name, 0);
   }
 
 }
