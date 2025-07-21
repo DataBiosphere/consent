@@ -471,6 +471,11 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       """)
   List<Dataset> findDatasetListByDacIds(@BindList(value = "dacIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> dacIds);
 
+  @SqlQuery("""
+      SELECT distinct d.dataset_id FROM dataset d WHERE d.dac_id IN (<dacIds>)
+      """)
+  List<Integer> findDatasetIdsByDacIds(@BindList(value = "dacIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> dacIds);
+
   @SqlUpdate(
       "UPDATE dataset " +
           "SET dac_approval = :dacApproval, " +

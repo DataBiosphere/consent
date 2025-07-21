@@ -1053,7 +1053,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
           return d;
         })
         .toList();
-    when(datasetDAO.findDatasetListByDacIds(any())).thenReturn(datasets);
+    when(datasetDAO.findDatasetIdsByDacIds(any())).thenReturn(datasets.stream().map(Dataset::getDatasetId).toList());
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDAC(any(), any()))
         .thenReturn(List.of(summary, summaryTwo, summaryThree, summaryFour));
 
@@ -1176,13 +1176,13 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDAC(any(), any()))
         .thenReturn(
             List.of(summaryOne, summaryTwo, summaryThree, summaryFour, summaryFive, summarySix));
-    when(datasetDAO.findDatasetListByDacIds(any())).thenReturn(List.of(datasetOne,
-        datasetTwo,
-        datasetThree,
-        datasetFour,
-        datasetFive,
-        datasetFive,
-        datasetSix));
+    when(datasetDAO.findDatasetIdsByDacIds(any())).thenReturn(List.of(datasetOne.getDatasetId(),
+        datasetTwo.getDatasetId(),
+        datasetThree.getDatasetId(),
+        datasetFour.getDatasetId(),
+        datasetFive.getDatasetId(),
+        datasetFive.getDatasetId(),
+        datasetSix.getDatasetId()));
 
     List<DarCollectionSummary> summaries = service.getSummariesForRole(user,
         UserRoles.CHAIRPERSON);
@@ -1420,7 +1420,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(user.getUserId(),
         List.of(), collectionId))
         .thenReturn(summary);
-    when(datasetDAO.findDatasetListByDacIds(any())).thenReturn(List.of());
+    when(datasetDAO.findDatasetIdsByDacIds(any())).thenReturn(List.of());
 
     DarCollectionSummary summaryResult = service.getSummaryForRoleByCollectionId(user,
         UserRoles.CHAIRPERSON, collectionId);

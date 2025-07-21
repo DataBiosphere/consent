@@ -46,8 +46,6 @@ properties:
   progressReport:
     type: boolean
     description: Indicator true when the collection contains a progress report.
-  closeoutSupplement:
-    $ref: '../schemas/CloseOutSupplement.yaml'
   closeoutSigningOfficialApprovedDate:
     type: number
     description: When the Signing Official approved the closeout, in milliseconds since the epoch.
