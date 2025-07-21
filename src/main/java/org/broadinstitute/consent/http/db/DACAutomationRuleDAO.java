@@ -37,6 +37,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
         var audit = handle.createUpdate(auditSql);
         var insertRule = handle.createUpdate(insertRuleSql)
     ) {
+      handle.begin();
       audit
           .bind("dacId", dacId)
           .bind("ruleId", ruleId)
@@ -76,6 +77,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
         var audit = handle.createUpdate(auditSql);
         var deleteRule = handle.createUpdate(deleteRuleSql)
     ) {
+      handle.begin();
       audit
           .bind("dacId", dacId)
           .bind("ruleId", ruleId)
@@ -112,6 +114,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
         var audit = handle.createUpdate(auditSql);
         var deleteRule = handle.createUpdate(deleteRuleSql)
     ) {
+      handle.begin();
       audit
           .bind("dacId", dacId)
           .bind("userId", userId)
@@ -148,6 +151,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
         var audit = handle.createUpdate(auditSql);
         var deleteRules = handle.createUpdate(deleteRulesSql)
     ) {
+      handle.begin();
       audit
           .bind("auditUserId", auditUserId)
           .bind("userId", userId)

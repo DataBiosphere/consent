@@ -54,6 +54,27 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testAuditedInsertDACRuleSettingRollback() {
+    Integer dacId = createRandomDAC();
+    List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAll();
+    List<DACAutomationRuleAudit> auditRecords = dacAutomationRuleDAO.findAutomationAuditsForDac(
+        dacId, 5, 0
+    );
+    Assertions.assertEquals(0, auditRecords.size());
+
+    // Use -1 userId to force a failure and trigger a rollback
+    Assertions.assertThrows(Exception.class, () ->
+        dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId, rulesByDacId.get(0).id(), -1, Instant.now())
+    );
+
+    List<DACAutomationRuleAudit> auditRecordsAfter = dacAutomationRuleDAO.findAutomationAuditsForDac(
+        dacId, 5, 0
+    );
+
+    Assertions.assertEquals(0, auditRecordsAfter.size());
+  }
+
+  @Test
   void testFindRulesByDacIdAddSetting() {
     Integer dacId = createRandomDAC();
     List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
