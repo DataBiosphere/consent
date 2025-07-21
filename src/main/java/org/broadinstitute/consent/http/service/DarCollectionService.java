@@ -382,12 +382,7 @@ public class DarCollectionService implements ConsentLogger {
         .map(UserRole::getDacId)
         .filter(Objects::nonNull)
         .toList();
-    return Stream.of(roleDacIds)
-        .filter(Predicate.not(List::isEmpty))
-        .map(datasetDAO::findDatasetListByDacIds)
-        .flatMap(List::stream)
-        .map(Dataset::getDatasetId)
-        .toList();
+    return datasetDAO.findDatasetIdsByDacIds(roleDacIds);
   }
 
   /**

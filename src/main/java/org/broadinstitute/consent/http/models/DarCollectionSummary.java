@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
+import com.google.gson.annotations.Expose;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -16,64 +16,54 @@ import org.broadinstitute.consent.http.enumeration.DarCollectionActions;
 
 public class DarCollectionSummary {
 
-  @JsonProperty
+  @Expose
   private Integer darCollectionId;
-
-  @JsonProperty
+  @Expose
   private Set<String> referenceIds;
-
-  @JsonProperty
+  @Expose
   private String darCode;
-
-  @JsonProperty
+  @Expose
   private String name;
-
-  @JsonProperty
+  @Expose
   private Timestamp submissionDate;
-
-  @JsonProperty
+  @Expose
   private boolean expired;
-
-  @JsonProperty
+  @Expose
   private Timestamp expiresAt;
-
-  @JsonProperty
+  @Expose
   private String researcherName;
-
-  @JsonProperty
+  @Expose
   private String institutionName;
-
-  @JsonProperty
+  @Expose
   private String status;
-
-  @JsonProperty
+  @Expose
   private Set<String> actions;
-
-  @JsonProperty
+  @Expose
   private int datasetCount;
-
+  @Expose
   private final Map<Integer, Set<String>> parentToReferenceIds;
-
-  @JsonProperty
+  @Expose
   private boolean progressReport;
-
-  @JsonProperty
+  @Expose
   private String latestReferenceId;
-
-  @JsonProperty
+  @Expose
   private Integer closeoutSigningOfficialId;
-
-  @JsonProperty
+  @Expose
   private Timestamp closeoutSigningOfficialApprovalDate;
-
+  @Expose
   private List<String> dacNames;
-
+  @Expose
   private Integer researcherId;
+  @Expose
   private Integer institutionId;
+  @Expose
   private Set<Integer> datasetIds;
+
+  // Normally unused by the UI, but used in data population. Can be included in the JSON response
+  // if needed by using a GsonBuilder without `excludeFieldsWithoutExposeAnnotation`.
   private List<Vote> votes;
   private Map<Integer, Election> elections;
-  private Map<String, String> darStatuses;
+  private final Map<String, String> darStatuses;
   private CloseoutSupplement closeoutSupplement;
 
   public DarCollectionSummary() {

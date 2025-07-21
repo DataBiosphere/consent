@@ -676,6 +676,26 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindDatasetIdsByDacIds() {
+    Dataset dataset = insertDataset();
+    Dac dac = insertDac();
+
+    Dataset datasetTwo = insertDataset();
+    Dac dacTwo = insertDac();
+
+    Dataset datasetThree = insertDataset();
+
+    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
+    datasetDAO.updateDatasetDacId(datasetTwo.getDatasetId(), dacTwo.getDacId());
+
+    List<Integer> datasetIds = List.of(dataset.getDatasetId(), datasetTwo.getDatasetId());
+    List<Integer> foundDatasetIds = datasetDAO.findDatasetIdsByDacIds(
+        List.of(dac.getDacId(), dacTwo.getDacId()));
+    assertTrue(datasetIds.containsAll(foundDatasetIds));
+    assertFalse(foundDatasetIds.contains(datasetThree.getDatasetId()));
+  }
+
+  @Test
   void testUpdateDatasetDataUse() {
     Dataset dataset = insertDataset();
     DataUse oldDataUse = dataset.getDataUse();
