@@ -10,9 +10,7 @@ import org.broadinstitute.consent.http.rules.RuleAuditAction;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 @RegisterRowMapper(DACAutomationRuleMapper.class)
@@ -27,26 +25,26 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       Instant activationDate) {
     Handle handle = getHandle();
     Integer id;
-    String auditSql = """
+    String insertAuditSql = """
         INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
         VALUES (:auditType::rule_audit_action, :dacId, :ruleId, :auditUserId, :actionDate)
         """;
-    String insertSql = """
+    String insertRuleSql = """
         INSERT INTO dac_rule_settings (dac_id, rule_id, user_id, activation_date)
         VALUES (:dacId, :ruleId, :userId, current_timestamp)
         """;
     try (
-        var audit = handle.createUpdate(auditSql);
-        var insert = handle.createUpdate(insertSql)
+        var insertAudit = handle.createUpdate(insertAuditSql);
+        var insertRule = handle.createUpdate(insertRuleSql)
     ) {
-      audit
+      insertAudit
           .bind("dacId", dacId)
           .bind("ruleId", ruleId)
           .bind("auditUserId", userId)
           .bind("auditType", RuleAuditAction.ADD)
           .bind("actionDate", activationDate)
           .execute();
-      id = insert
+      id = insertRule
           .bind("dacId", dacId)
           .bind("ruleId", ruleId)
           .bind("userId", userId)
@@ -65,26 +63,26 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
 
   default void auditedDeleteDACRuleSetting(int dacId, int ruleId, int auditUserId) {
     Handle handle = getHandle();
-    String auditSql = """
+    String deleteAuditSql = """
         INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
         SELECT :auditType::rule_audit_action, s.dac_id, s.rule_id, :auditUserId, current_timestamp
         FROM dac_rule_settings s
         WHERE s.dac_id = :dacId AND s.rule_id = :ruleId
         """;
-    String deleteSql = """
+    String deleteRuleSql = """
         DELETE FROM dac_rule_settings WHERE dac_id = :dacId AND rule_id = :ruleId
         """;
     try (
-        var audit = handle.createUpdate(auditSql);
-        var delete = handle.createUpdate(deleteSql)
+        var insertAudit = handle.createUpdate(deleteAuditSql);
+        var deleteRule = handle.createUpdate(deleteRuleSql)
     ) {
-      audit
+      insertAudit
           .bind("dacId", dacId)
           .bind("ruleId", ruleId)
           .bind("auditUserId", auditUserId)
           .bind("auditType", RuleAuditAction.REMOVE)
           .execute();
-      delete
+      deleteRule
           .bind("dacId", dacId)
           .bind("ruleId", ruleId)
           .execute();
@@ -100,27 +98,27 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
   default Integer auditedDeleteDACRuleSettingByUser(int dacId, int userId, int auditUserId) {
     Handle handle = getHandle();
     // Note that we're logging the audit user as the user for the audit record
-    String auditSql = """
+    String insertAuditSql = """
         INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
         SELECT :auditType::rule_audit_action, s.dac_id, s.rule_id, :auditUserId, current_timestamp
         FROM dac_rule_settings s
         WHERE s.dac_id = :dacId  AND s.user_id = :userId;
         """;
-    String deleteSql = """
+    String deleteRuleSql = """
         DELETE FROM dac_rule_settings WHERE dac_id = :dacId  AND user_id = :userId
         """;
     Integer count;
     try (
-        var audit = handle.createUpdate(auditSql);
-        var delete = handle.createUpdate(deleteSql)
+        var insertAudit = handle.createUpdate(insertAuditSql);
+        var deleteRule = handle.createUpdate(deleteRuleSql)
     ) {
-      audit
+      insertAudit
           .bind("dacId", dacId)
           .bind("userId", userId)
           .bind("auditUserId", auditUserId)
           .bind("auditType", RuleAuditAction.REMOVE)
           .execute();
-      count = delete
+      count = deleteRule
           .bind("dacId", dacId)
           .bind("userId", userId)
           .execute();
@@ -136,26 +134,26 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
 
   default Integer auditedDeleteAllDACRuleSettingForUser(int userId, int auditUserId) {
     Handle handle = getHandle();
-    String auditSql = """
+    String insertAuditSql = """
         INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
         SELECT :auditType::rule_audit_action, s.dac_id, s.rule_id, :auditUserId, current_timestamp
         FROM dac_rule_settings s
         WHERE s.user_id = :userId;
         """;
-    String deleteSql = """
+    String deleteRulesSql = """
         DELETE FROM dac_rule_settings WHERE user_id = :userId
         """;
     Integer count;
     try (
-        var audit = handle.createUpdate(auditSql);
-        var delete = handle.createUpdate(deleteSql)
+        var insertAudit = handle.createUpdate(insertAuditSql);
+        var deleteRules = handle.createUpdate(deleteRulesSql)
     ) {
-      audit
+      insertAudit
           .bind("auditUserId", auditUserId)
           .bind("userId", userId)
           .bind("auditType", RuleAuditAction.REMOVE)
           .execute();
-      count = delete
+      count = deleteRules
           .bind("userId", userId)
           .execute();
       handle.commit();
