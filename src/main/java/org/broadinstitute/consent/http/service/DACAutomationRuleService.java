@@ -2,11 +2,9 @@ package org.broadinstitute.consent.http.service;
 
 import static java.util.Objects.isNull;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
-import freemarker.template.TemplateException;
 import jakarta.ws.rs.InternalServerErrorException;
-import jakarta.ws.rs.NotFoundException;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -115,48 +113,73 @@ public class DACAutomationRuleService implements ConsentLogger {
       rules.forEach(rule -> {
         boolean isActive = rule.enabledByUserId() != null;
         if (isActive) {
-          DACAutomationRuleType type = rule.ruleType();
-          List<RuleImplementationInterface> ruleImplementations = Rules.implementationList.stream()
-              .filter(r -> r.getRuleType().equals(type)).toList();
-          ruleImplementations.forEach(ruleImplementation -> {
-            boolean shouldApprove = ruleImplementation.compare(dataset, dar);
-            if (shouldApprove) {
-              // TODO _ Check on new election type ...
-              int electionId = electionDAO.insertElection(ElectionType.DATA_ACCESS.getValue(),
-                  ElectionStatus.OPEN.getValue(), new Date(), dar.getReferenceId(), datasetId);
-              int voteId = voteDAO.insertVote(rule.enabledByUserId(), electionId,
-                  VoteType.DACBOTAPPROVE.getValue());
-              Vote vote = voteDAO.findVoteById(voteId);
-              try {
-                voteServiceDAO.updateVotesWithValue(List.of(vote), true, String.format("DACBot Approval using rule: %s", ruleImplementation.getRuleType()));
-                datasetsAuthorized.add(dataset);
-              } catch (SQLException e) {
-                logException("Error updating vote", e);
-              }
-              // TODO: Add better logging
-              logInfo(String.format("Rule %s triggered for DAC id: %s and dataset id: %s", rule.ruleType(), dataset.getDacId(), datasetId));
-            } else {
-              logInfo(String.format("Rule %s not triggered for DAC id: %s and dataset id: %s", rule.ruleType(), dataset.getDacId(), datasetId));
-            }
-          });
+          applyRule(rule, dataset, dar, datasetsAuthorized);
         }
       });
     });
 
     if (!datasetsAuthorized.isEmpty()) {
-      try {
-        emailService.sendDACAutomationApprovalResearcherMessage(researcher, datasetsAuthorized.stream()
-            .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
-            .toList(), dar.getDarCode(), datasetsAuthorized.stream()
-            .map(dataset -> useRestrictionConverter.translateDataUse(dataset.getDataUse(), DataUseTranslationType.DATASET))
-            .distinct()
-            .collect(Collectors.joining(";")));
-      } catch (Exception e) {
-        logWarn(e.getMessage());
-        logWarn(e.getCause().getMessage());
-        throw new InternalServerErrorException(
-            "Error while sending Dac Automation messages.", e);
-      }
+      sendEmail(researcher, datasetsAuthorized, dar);
     }
+  }
+
+  @VisibleForTesting
+  protected void sendEmail(User researcher, List<Dataset> datasetsAuthorized, DataAccessRequest dar) {
+    try {
+      emailService.sendDACAutomationApprovalResearcherMessage(researcher, datasetsAuthorized.stream()
+          .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
+          .toList(), dar.getDarCode(), datasetsAuthorized.stream()
+          .map(dataset -> useRestrictionConverter.translateDataUse(dataset.getDataUse(), DataUseTranslationType.DATASET))
+          .distinct()
+          .collect(Collectors.joining(";")));
+    } catch (Exception e) {
+      logWarn(e.getMessage());
+      logWarn(e.getCause().getMessage());
+      throw new InternalServerErrorException(
+          "Error while sending Dac Automation messages.", e);
+    }
+  }
+
+  @VisibleForTesting
+  protected void applyRule(DACAutomationRule rule, Dataset dataset, DataAccessRequest dar,
+      List<Dataset> datasetsAuthorized) {
+    RuleImplementationInterface ruleImplementation = getRuleImplementation(rule);
+    boolean shouldApprove = ruleImplementation.compare(dataset, dar);
+    if (shouldApprove) {
+      openElectionAndApprove(rule, ruleImplementation, dar, datasetsAuthorized, dataset);
+    } else {
+      logInfo(String.format("Rule %s not triggered for DAC id: %s and dataset id: %s", rule.ruleType(), dataset.getDacId(),
+          dataset.getDatasetId()));
+    }
+  }
+
+  @VisibleForTesting
+  protected static RuleImplementationInterface getRuleImplementation(
+      DACAutomationRule rule) {
+    DACAutomationRuleType type = rule.ruleType();
+    return Rules.implementationList.stream()
+        .filter(r -> r.getRuleType().equals(type))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException(
+            String.format("No rule implementation found for type: %s", type)));
+  }
+
+  @VisibleForTesting
+  protected void openElectionAndApprove(DACAutomationRule rule, RuleImplementationInterface ruleImplementation,
+      DataAccessRequest dar, List<Dataset> datasetsAuthorized, Dataset dataset) {
+    int electionId = electionDAO.insertElection(ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(), new Date(), dar.getReferenceId(), dataset.getDatasetId());
+    int voteId = voteDAO.insertVote(rule.enabledByUserId(), electionId,
+        VoteType.DACBOTAPPROVE.getValue());
+    Vote vote = voteDAO.findVoteById(voteId);
+    try {
+      voteServiceDAO.updateVotesWithValue(List.of(vote), true, String.format("DACBot Approval using rule: %s", ruleImplementation.getRuleType()));
+      datasetsAuthorized.add(dataset);
+    } catch (SQLException e) {
+      logException("Error updating vote", e);
+    }
+    // TODO: Add better logging
+    logInfo(String.format("Rule %s triggered for DAC id: %s and dataset id: %s", rule.ruleType(), dataset.getDacId(),
+        dataset.getDatasetId()));
   }
 }
