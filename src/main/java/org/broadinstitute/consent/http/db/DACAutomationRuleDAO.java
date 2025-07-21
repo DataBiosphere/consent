@@ -23,14 +23,6 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       """)
   List<DACAutomationRule> findAll();
 
-  @SqlUpdate("""
-      INSERT INTO dac_rule_settings (dac_id, rule_id, user_id, activation_date) VALUES (:dacId, :ruleId, :userId, current_timestamp)
-      """)
-  @GetGeneratedKeys
-  Integer useAuditedInsertDACRuleSettingInsteadOfThisMethod(@Bind("dacId") int dacId,
-      @Bind("ruleId") int ruleId,
-      @Bind("userId") int userId);
-
   default Integer auditedInsertDACRuleSetting(int dacId, int ruleId, int userId,
       Instant activationDate) {
     Handle handle = getHandle();
@@ -39,7 +31,14 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
         INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
         VALUES (:auditType::rule_audit_action, :dacId, :ruleId, :auditUserId, :actionDate)
         """;
-    try (var audit = getHandle().createUpdate(auditSql)) {
+    String insertSql = """
+        INSERT INTO dac_rule_settings (dac_id, rule_id, user_id, activation_date)
+        VALUES (:dacId, :ruleId, :userId, current_timestamp)
+        """;
+    try (
+        var audit = handle.createUpdate(auditSql);
+        var delete = handle.createUpdate(insertSql)
+    ) {
       audit
           .bind("dacId", dacId)
           .bind("ruleId", ruleId)
@@ -47,7 +46,13 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
           .bind("auditType", RuleAuditAction.ADD)
           .bind("actionDate", activationDate)
           .execute();
-      id = useAuditedInsertDACRuleSettingInsteadOfThisMethod(dacId, ruleId, userId);
+      id = handle.createUpdate(insertSql)
+          .bind("dacId", dacId)
+          .bind("ruleId", ruleId)
+          .bind("userId", userId)
+          .executeAndReturnGeneratedKeys("id")
+          .mapTo(Integer.class)
+          .one();
       handle.commit();
     } catch (Exception e) {
       handle.rollback();
@@ -58,12 +63,6 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
     return id;
   }
 
-  @SqlUpdate("""
-      DELETE FROM dac_rule_settings WHERE dac_id = :dacId AND rule_id = :ruleId
-      """)
-  void useAuditedDeleteDACRuleSettingInsteadOfThisMethod(@Bind("dacId") int dacId,
-      @Bind("ruleId") int ruleId);
-
   default void auditedDeleteDACRuleSetting(int dacId, int ruleId, int auditUserId) {
     Handle handle = getHandle();
     String auditSql = """
@@ -72,14 +71,23 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
         FROM dac_rule_settings s
         WHERE s.dac_id = :dacId AND s.rule_id = :ruleId
         """;
-    try (var audit = getHandle().createUpdate(auditSql)) {
+    String deleteSql = """
+        DELETE FROM dac_rule_settings WHERE dac_id = :dacId AND rule_id = :ruleId
+        """;
+    try (
+        var audit = getHandle().createUpdate(auditSql);
+        var delete = getHandle().createUpdate(deleteSql)
+    ) {
       audit
           .bind("dacId", dacId)
           .bind("ruleId", ruleId)
           .bind("auditUserId", auditUserId)
           .bind("auditType", RuleAuditAction.REMOVE)
           .execute();
-      useAuditedDeleteDACRuleSettingInsteadOfThisMethod(dacId, ruleId);
+      delete
+          .bind("dacId", dacId)
+          .bind("ruleId", ruleId)
+          .execute();
       handle.commit();
     } catch (Exception e) {
       handle.rollback();
@@ -88,12 +96,6 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       handle.close();
     }
   }
-
-  @SqlUpdate("""
-      DELETE FROM dac_rule_settings WHERE dac_id = :dacId  AND user_id = :userId
-      """)
-  Integer useAuditedDeleteDACRuleSettingByUserInsteadOfThisMethod(@Bind("dacId") int dacId,
-      @Bind("userId") int userId);
 
   default Integer auditedDeleteDACRuleSettingByUser(int dacId, int userId, int auditUserId) {
     Handle handle = getHandle();
@@ -104,15 +106,24 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
         FROM dac_rule_settings s
         WHERE s.dac_id = :dacId  AND s.user_id = :userId;
         """;
+    String deleteSql = """
+        DELETE FROM dac_rule_settings WHERE dac_id = :dacId  AND user_id = :userId
+        """;
     Integer count;
-    try (var audit = getHandle().createUpdate(auditSql)) {
+    try (
+        var audit = getHandle().createUpdate(auditSql);
+        var delete = getHandle().createUpdate(deleteSql)
+    ) {
       audit
           .bind("dacId", dacId)
           .bind("userId", userId)
           .bind("auditUserId", auditUserId)
           .bind("auditType", RuleAuditAction.REMOVE)
           .execute();
-      count = useAuditedDeleteDACRuleSettingByUserInsteadOfThisMethod(dacId, userId);
+      count = delete
+          .bind("dacId", dacId)
+          .bind("userId", userId)
+          .execute();
       handle.commit();
     } catch (Exception e) {
       handle.rollback();
@@ -123,11 +134,6 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
     return count;
   }
 
-  @SqlUpdate("""
-      DELETE FROM dac_rule_settings WHERE user_id = :userId 
-      """)
-  Integer useAuditedDeleteAllDACRuleSettingForUserInsteadOfThisMethod(@Bind("userId") int userId);
-
   default Integer auditedDeleteAllDACRuleSettingForUser(int userId, int auditUserId) {
     Handle handle = getHandle();
     String auditSql = """
@@ -136,14 +142,22 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
         FROM dac_rule_settings s
         WHERE s.user_id = :userId;
         """;
+    String deleteSql = """
+        DELETE FROM dac_rule_settings WHERE user_id = :userId
+        """;
     Integer count;
-    try (var audit = getHandle().createUpdate(auditSql)) {
+    try (
+        var audit = getHandle().createUpdate(auditSql);
+        var delete = getHandle().createUpdate(deleteSql)
+    ) {
       audit
           .bind("auditUserId", auditUserId)
           .bind("userId", userId)
           .bind("auditType", RuleAuditAction.REMOVE)
           .execute();
-      count = useAuditedDeleteAllDACRuleSettingForUserInsteadOfThisMethod(userId);
+      count = delete
+          .bind("userId", userId)
+          .execute();
       handle.commit();
     } catch (Exception e) {
       handle.rollback();
