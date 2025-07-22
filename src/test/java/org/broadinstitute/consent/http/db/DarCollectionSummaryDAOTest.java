@@ -161,7 +161,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer collectionOneElectionId = collectionOneElection.getElectionId();
     Integer collectionOnePrevElectionId = collectionOnePrevElection.getElectionId();
     Election excludedElection = createElection(ElectionType.DATA_ACCESS,
-        ElectionStatus.CANCELED.getValue(), //tied to excluded dataset, it should not be pulled in
+        ElectionStatus.CLOSED.getValue(), //tied to excluded dataset, it should not be pulled in
         excludedDar.getReferenceId(), excludedDataset.getDatasetId());
     Election collectionTwoElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.OPEN.getValue(),
