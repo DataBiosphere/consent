@@ -153,7 +153,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
         excludedDataset.getDatasetId());
 
     Election collectionOnePrevElection = createElection(ElectionType.DATA_ACCESS,
-        ElectionStatus.CLOSED.getValue(),
+        ElectionStatus.CANCELED.getValue(),
         darOne.getReferenceId(),
         dataset.getDatasetId()); //non-latest dataset, need to make sure this isn't pulled into query results
     Election collectionOneElection = createElection(ElectionType.DATA_ACCESS,
@@ -161,7 +161,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer collectionOneElectionId = collectionOneElection.getElectionId();
     Integer collectionOnePrevElectionId = collectionOnePrevElection.getElectionId();
     Election excludedElection = createElection(ElectionType.DATA_ACCESS,
-        ElectionStatus.CLOSED.getValue(), //tied to excluded dataset, it should not be pulled in
+        ElectionStatus.CANCELED.getValue(), //tied to excluded dataset, it should not be pulled in
         excludedDar.getReferenceId(), excludedDataset.getDatasetId());
     Election collectionTwoElection = createElection(ElectionType.DATA_ACCESS,
         ElectionStatus.OPEN.getValue(),
@@ -219,12 +219,13 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
             collectionTwoVoteThree.getVoteId());
         electionId = collectionTwoElection.getElectionId();
       }
-      assertTrue(s.getElections().containsKey(electionId));
-      targetVotes.forEach((voteId) -> {
-        assertTrue(s.getVotes().stream()
-            .anyMatch(v -> v.getVoteId().equals(voteId)));
-      });
-      assertEquals(1, s.getDatasetCount());
+      s.getElections().entrySet().stream()
+          .forEach((e) -> {
+            assertEquals(electionId, e.getKey());
+          });
+      s.getVotes().forEach((v) -> {
+        assertTrue(targetVotes.contains(v.getVoteId()));
+      });      assertEquals(1, s.getDatasetCount());
     });
   }
 
