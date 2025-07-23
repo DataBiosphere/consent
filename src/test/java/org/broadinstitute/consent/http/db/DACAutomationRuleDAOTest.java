@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleAudit;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.rules.RuleAuditAction;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,6 +52,30 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     Assertions.assertEquals(user.getEmail(), auditRecords.get(0).email());
     Assertions.assertEquals(user.getDisplayName(), auditRecords.get(0).displayName());
     Assertions.assertEquals(1, dacAutomationRuleDAO.findCountOfAutomationAuditsForDac(dacId1));
+  }
+
+  @Test
+  void testAuditedInsertDACRuleSettingRollback() {
+    Integer dacId = createRandomDAC();
+    List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAll();
+    List<DACAutomationRuleAudit> auditRecords = dacAutomationRuleDAO.findAutomationAuditsForDac(
+        dacId, 5, 0
+    );
+    Assertions.assertEquals(0, auditRecords.size());
+
+    Integer ruleId = rulesByDacId.get(0).id();
+    Instant now = Instant.now();
+
+    // Use -1 userId to force a failure and trigger a rollback
+    Assertions.assertThrows(UnableToExecuteStatementException.class, () ->
+        dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId, ruleId, -1, now)
+    );
+
+    List<DACAutomationRuleAudit> auditRecordsAfter = dacAutomationRuleDAO.findAutomationAuditsForDac(
+        dacId, 5, 0
+    );
+
+    Assertions.assertEquals(0, auditRecordsAfter.size());
   }
 
   @Test
