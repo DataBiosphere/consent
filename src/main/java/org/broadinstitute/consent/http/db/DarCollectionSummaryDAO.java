@@ -78,7 +78,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       -- Votes for DAC User
       LEFT JOIN vote v
         ON e.election_id = v.electionid
-        AND (LOWER(v.type) = 'final' OR (v.user_id = :currentUserId OR v.voteid IS NULL))
+        AND (LOWER(v.type) = 'final' OR v.user_id = :currentUserId)
       -- Restrict DARs to the datasets available to the DAC User
       INNER JOIN dar_dataset dd
         ON latest_dar.reference_id = dd.reference_id
