@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.db.mapper.DACAutomationRuleMapper;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleAudit;
 import org.broadinstitute.consent.http.rules.RuleAuditAction;
+import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -21,57 +22,39 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       """)
   List<DACAutomationRule> findAll();
 
-  default Integer auditedInsertDACRuleSetting(int dacId, int ruleId, int userId,
-      Instant activationDate) {
-    return withHandle(handle -> {
-      try {
-        handle.getConnection().setAutoCommit(false);
-      } catch (SQLException e) {
-        throw new RuntimeException("Error setting database connection", e);
-      }
-
+  default Integer auditedInsertDACRuleSetting(int dacId, int ruleId, int userId, Instant activationDate) {
+    return inTransaction(d -> {
+      Handle handle = getHandle();
       String auditSql = """
-          INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
-          VALUES (:auditType::rule_audit_action, :dacId, :ruleId, :auditUserId, :actionDate)
-          """;
+        INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
+        VALUES (:auditType::rule_audit_action, :dacId, :ruleId, :auditUserId, :actionDate)
+        """;
       String insertRuleSql = """
-          INSERT INTO dac_rule_settings (dac_id, rule_id, user_id, activation_date)
-          VALUES (:dacId, :ruleId, :userId, current_timestamp)
-          """;
-      try (
-          var audit = handle.createUpdate(auditSql);
-          var insertRule = handle.createUpdate(insertRuleSql)
-      ) {
-        audit
-            .bind("dacId", dacId)
-            .bind("ruleId", ruleId)
-            .bind("auditUserId", userId)
-            .bind("auditType", RuleAuditAction.ADD)
-            .bind("actionDate", activationDate)
-            .execute();
-        Integer id = insertRule
-            .bind("dacId", dacId)
-            .bind("ruleId", ruleId)
-            .bind("userId", userId)
-            .executeAndReturnGeneratedKeys("id")
-            .mapTo(Integer.class)
-            .one();
-        handle.commit();
-        return id;
-      } catch (Exception e) {
-        handle.rollback();
-        throw e;
-      }
+        INSERT INTO dac_rule_settings (dac_id, rule_id, user_id, activation_date)
+        VALUES (:dacId, :ruleId, :userId, current_timestamp)
+        """;
+
+      handle.createUpdate(auditSql)
+          .bind("dacId", dacId)
+          .bind("ruleId", ruleId)
+          .bind("auditUserId", userId)
+          .bind("auditType", RuleAuditAction.ADD)
+          .bind("actionDate", activationDate)
+          .execute();
+
+      return handle.createUpdate(insertRuleSql)
+          .bind("dacId", dacId)
+          .bind("ruleId", ruleId)
+          .bind("userId", userId)
+          .executeAndReturnGeneratedKeys("id")
+          .mapTo(Integer.class)
+          .one();
     });
   }
 
   default void auditedDeleteDACRuleSetting(int dacId, int ruleId, int auditUserId) {
-    withHandle(handle -> {
-      try {
-        handle.getConnection().setAutoCommit(false);
-      } catch (SQLException e) {
-        throw new RuntimeException("Error setting database connection", e);
-      }
+    useTransaction(d -> {
+      Handle handle = getHandle();
       String auditSql = """
           INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
           SELECT :auditType::rule_audit_action, s.dac_id, s.rule_id, :auditUserId, current_timestamp
@@ -81,36 +64,24 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       String deleteRuleSql = """
           DELETE FROM dac_rule_settings WHERE dac_id = :dacId AND rule_id = :ruleId
           """;
-      try (
-          var audit = handle.createUpdate(auditSql);
-          var deleteRule = handle.createUpdate(deleteRuleSql)
-      ) {
-        audit
+
+        handle.createUpdate(auditSql)
             .bind("dacId", dacId)
             .bind("ruleId", ruleId)
             .bind("auditUserId", auditUserId)
             .bind("auditType", RuleAuditAction.REMOVE)
             .execute();
-        deleteRule
+        handle.createUpdate(deleteRuleSql)
             .bind("dacId", dacId)
             .bind("ruleId", ruleId)
             .execute();
         handle.commit();
-      } catch (Exception e) {
-        handle.rollback();
-        throw e;
-      }
-      return null;
     });
   }
 
   default Integer auditedDeleteDACRuleSettingByUser(int dacId, int userId, int auditUserId) {
-    return withHandle(handle -> {
-      try {
-        handle.getConnection().setAutoCommit(false);
-      } catch (SQLException e) {
-        throw new RuntimeException("Error setting database connection", e);
-      }
+    return inTransaction(d -> {
+      Handle handle = getHandle();
       // Note that we're logging the audit user as the user for the audit record
       String auditSql = """
           INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
@@ -121,37 +92,23 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       String deleteRuleSql = """
           DELETE FROM dac_rule_settings WHERE dac_id = :dacId  AND user_id = :userId
           """;
-      Integer count;
-      try (
-          var audit = handle.createUpdate(auditSql);
-          var deleteRule = handle.createUpdate(deleteRuleSql)
-      ) {
-        audit
-            .bind("dacId", dacId)
-            .bind("userId", userId)
-            .bind("auditUserId", auditUserId)
-            .bind("auditType", RuleAuditAction.REMOVE)
-            .execute();
-        count = deleteRule
-            .bind("dacId", dacId)
-            .bind("userId", userId)
-            .execute();
-        handle.commit();
-      } catch (Exception e) {
-        handle.rollback();
-        throw e;
-      }
-      return count;
+
+      handle.createUpdate(auditSql)
+          .bind("dacId", dacId)
+          .bind("userId", userId)
+          .bind("auditUserId", auditUserId)
+          .bind("auditType", RuleAuditAction.REMOVE)
+          .execute();
+      return handle.createUpdate(deleteRuleSql)
+          .bind("dacId", dacId)
+          .bind("userId", userId)
+          .execute();
     });
   }
 
   default Integer auditedDeleteAllDACRuleSettingForUser(int userId, int auditUserId) {
-    return withHandle(handle -> {
-      try {
-        handle.getConnection().setAutoCommit(false);
-      } catch (SQLException e) {
-        throw new RuntimeException("Error setting database connection", e);
-      }
+    return inTransaction(d -> {
+      Handle handle = getHandle();
       String auditSql = """
           INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
           SELECT :auditType::rule_audit_action, s.dac_id, s.rule_id, :auditUserId, current_timestamp
@@ -162,24 +119,14 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
           DELETE FROM dac_rule_settings WHERE user_id = :userId
           """;
       Integer count;
-      try (
-          var audit = handle.createUpdate(auditSql);
-          var deleteRules = handle.createUpdate(deleteRulesSql)
-      ) {
-        audit
-            .bind("auditUserId", auditUserId)
-            .bind("userId", userId)
-            .bind("auditType", RuleAuditAction.REMOVE)
-            .execute();
-        count = deleteRules
-            .bind("userId", userId)
-            .execute();
-        handle.commit();
-      } catch (Exception e) {
-        handle.rollback();
-        throw e;
-      }
-      return count;
+      handle.createUpdate(auditSql)
+          .bind("auditUserId", auditUserId)
+          .bind("userId", userId)
+          .bind("auditType", RuleAuditAction.REMOVE)
+          .execute();
+      return handle.createUpdate(deleteRulesSql)
+          .bind("userId", userId)
+          .execute();
     });
   }
 
