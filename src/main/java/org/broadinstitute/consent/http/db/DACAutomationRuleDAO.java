@@ -27,7 +27,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       try {
         handle.getConnection().setAutoCommit(false);
       } catch (SQLException e) {
-        throw new RuntimeException(e);
+        throw new RuntimeException("Error setting database connection", e);
       }
 
       String auditSql = """
@@ -70,7 +70,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       try {
         handle.getConnection().setAutoCommit(false);
       } catch (SQLException e) {
-        throw new RuntimeException(e);
+        throw new RuntimeException("Error setting database connection", e);
       }
       String auditSql = """
           INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
@@ -109,7 +109,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       try {
         handle.getConnection().setAutoCommit(false);
       } catch (SQLException e) {
-        throw new RuntimeException(e);
+        throw new RuntimeException("Error setting database connection", e);
       }
       // Note that we're logging the audit user as the user for the audit record
       String auditSql = """
@@ -150,7 +150,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       try {
         handle.getConnection().setAutoCommit(false);
       } catch (SQLException e) {
-        throw new RuntimeException(e);
+        throw new RuntimeException("Error setting database connection", e);
       }
       String auditSql = """
           INSERT INTO dac_rule_audit (action, dac_id, rule_id, user_id, action_date)
