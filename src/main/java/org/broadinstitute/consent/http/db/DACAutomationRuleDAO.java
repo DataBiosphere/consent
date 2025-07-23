@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DACAutomationRuleAuditMapper;
