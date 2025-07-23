@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleAudit;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.rules.RuleAuditAction;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,7 +64,7 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     Assertions.assertEquals(0, auditRecords.size());
 
     // Use -1 userId to force a failure and trigger a rollback
-    Assertions.assertThrows(Exception.class, () ->
+    Assertions.assertThrows(UnableToExecuteStatementException.class, () ->
         dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId, rulesByDacId.get(0).id(), -1, Instant.now())
     );
 
