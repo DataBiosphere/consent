@@ -63,9 +63,12 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     );
     Assertions.assertEquals(0, auditRecords.size());
 
+    Integer ruleId = rulesByDacId.get(0).id();
+    Instant now = Instant.now();
+
     // Use -1 userId to force a failure and trigger a rollback
     Assertions.assertThrows(UnableToExecuteStatementException.class, () ->
-        dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId, rulesByDacId.get(0).id(), -1, Instant.now())
+        dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId, ruleId, -1, now)
     );
 
     List<DACAutomationRuleAudit> auditRecordsAfter = dacAutomationRuleDAO.findAutomationAuditsForDac(
