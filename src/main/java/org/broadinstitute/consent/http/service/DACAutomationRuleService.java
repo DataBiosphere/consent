@@ -17,6 +17,7 @@ import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -34,7 +35,9 @@ import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.rules.RuleImplementationInterface;
 import org.broadinstitute.consent.http.rules.Rules;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
+import org.broadinstitute.consent.http.util.ComplianceLogger;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.glassfish.jersey.server.ContainerRequest;
 
 public class DACAutomationRuleService implements ConsentLogger {
 
@@ -46,12 +49,13 @@ public class DACAutomationRuleService implements ConsentLogger {
   private final VoteServiceDAO voteServiceDAO;
   private final EmailService emailService;
   private final UseRestrictionConverter useRestrictionConverter;
+  private final UserDAO userDAO;
 
   @Inject
   public DACAutomationRuleService(DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO datasetDAO,
       DACAutomationRuleDAO ruleDAO, ElectionDAO electionDAO, VoteDAO voteDAO,
       VoteServiceDAO voteServiceDAO, EmailService emailService,
-      UseRestrictionConverter useRestrictionConverter) {
+      UseRestrictionConverter useRestrictionConverter, UserDAO userDAO) {
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.datasetDAO = datasetDAO;
     this.ruleDAO = ruleDAO;
@@ -60,6 +64,7 @@ public class DACAutomationRuleService implements ConsentLogger {
     this.voteServiceDAO = voteServiceDAO;
     this.emailService = emailService;
     this.useRestrictionConverter = useRestrictionConverter;
+    this.userDAO = userDAO;
   }
 
   public List<DACAutomationRule> findAll() {
@@ -104,7 +109,7 @@ public class DACAutomationRuleService implements ConsentLogger {
         ruleDAO.findCountOfAutomationAuditsForDac(dacId), pageSize, page);
   }
 
-  public void triggerDACRuleSettings(User researcher, List<Integer> datasetIds, String referenceId) {
+  public void triggerDACRuleSettings(User researcher, List<Integer> datasetIds, String referenceId, ContainerRequest request) {
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
     List<Dataset> datasetsAuthorized = new ArrayList<>();
     datasetIds.forEach(datasetId -> {
@@ -113,7 +118,7 @@ public class DACAutomationRuleService implements ConsentLogger {
       rules.forEach(rule -> {
         boolean isActive = rule.enabledByUserId() != null;
         if (isActive) {
-          applyRule(rule, dataset, dar, datasetsAuthorized);
+          applyRule(rule, dataset, dar, datasetsAuthorized, request);
         }
       });
     });
@@ -142,11 +147,11 @@ public class DACAutomationRuleService implements ConsentLogger {
 
   @VisibleForTesting
   protected void applyRule(DACAutomationRule rule, Dataset dataset, DataAccessRequest dar,
-      List<Dataset> datasetsAuthorized) {
+      List<Dataset> datasetsAuthorized, ContainerRequest request) {
     RuleImplementationInterface ruleImplementation = getRuleImplementation(rule);
     boolean shouldApprove = ruleImplementation.compare(dataset, dar);
     if (shouldApprove) {
-      openElectionAndApprove(rule, ruleImplementation, dar, datasetsAuthorized, dataset);
+      openElectionAndApprove(rule, ruleImplementation, dar, datasetsAuthorized, dataset, request);
     } else {
       logInfo(String.format("Rule %s not triggered for DAC id: %s and dataset id: %s", rule.ruleType(), dataset.getDacId(),
           dataset.getDatasetId()));
@@ -166,7 +171,7 @@ public class DACAutomationRuleService implements ConsentLogger {
 
   @VisibleForTesting
   protected void openElectionAndApprove(DACAutomationRule rule, RuleImplementationInterface ruleImplementation,
-      DataAccessRequest dar, List<Dataset> datasetsAuthorized, Dataset dataset) {
+      DataAccessRequest dar, List<Dataset> datasetsAuthorized, Dataset dataset, ContainerRequest request) {
     int electionId = electionDAO.insertElection(ElectionType.DATA_ACCESS.getValue(),
         ElectionStatus.OPEN.getValue(), new Date(), dar.getReferenceId(), dataset.getDatasetId());
     int voteId = voteDAO.insertVote(rule.enabledByUserId(), electionId,
@@ -178,7 +183,8 @@ public class DACAutomationRuleService implements ConsentLogger {
     } catch (SQLException e) {
       logException("Error updating vote", e);
     }
-    // TODO: Add better logging
+    User user = userDAO.findUserById(rule.enabledByUserId());
+    ComplianceLogger.logRadarApproval(user, datasetsAuthorized, request, 200);
     logInfo(String.format("Rule %s triggered for DAC id: %s and dataset id: %s", rule.ruleType(), dataset.getDacId(),
         dataset.getDatasetId()));
   }
