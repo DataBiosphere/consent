@@ -4,7 +4,9 @@ import static java.util.Objects.isNull;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
+import freemarker.template.TemplateException;
 import jakarta.ws.rs.InternalServerErrorException;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -17,6 +19,7 @@ import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -42,6 +45,7 @@ public class DACAutomationRuleService implements ConsentLogger {
   private final DatasetDAO datasetDAO;
   private final DACAutomationRuleDAO ruleDAO;
   private final ElectionDAO electionDAO;
+  private final UserDAO userDAO;
   private final VoteDAO voteDAO;
   private final VoteServiceDAO voteServiceDAO;
   private final EmailService emailService;
@@ -49,13 +53,14 @@ public class DACAutomationRuleService implements ConsentLogger {
 
   @Inject
   public DACAutomationRuleService(DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO datasetDAO,
-      DACAutomationRuleDAO ruleDAO, ElectionDAO electionDAO, VoteDAO voteDAO,
+      DACAutomationRuleDAO ruleDAO, ElectionDAO electionDAO, UserDAO userDAO, VoteDAO voteDAO,
       VoteServiceDAO voteServiceDAO, EmailService emailService,
       UseRestrictionConverter useRestrictionConverter) {
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.datasetDAO = datasetDAO;
     this.ruleDAO = ruleDAO;
     this.electionDAO = electionDAO;
+    this.userDAO = userDAO;
     this.voteDAO = voteDAO;
     this.voteServiceDAO = voteServiceDAO;
     this.emailService = emailService;
@@ -126,18 +131,34 @@ public class DACAutomationRuleService implements ConsentLogger {
   @VisibleForTesting
   protected void sendEmail(User researcher, List<Dataset> datasetsAuthorized, DataAccessRequest dar) {
     try {
-      emailService.sendDACAutomationApprovalResearcherMessage(researcher, datasetsAuthorized.stream()
-          .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
-          .toList(), dar.getDarCode(), datasetsAuthorized.stream()
+      String translations = datasetsAuthorized.stream()
           .map(dataset -> useRestrictionConverter.translateDataUse(dataset.getDataUse(), DataUseTranslationType.DATASET))
           .distinct()
-          .collect(Collectors.joining(";")));
+          .collect(Collectors.joining(";"));
+      emailService.sendDACAutomationApprovalResearcherMessage(researcher, datasetsAuthorized.stream()
+          .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
+          .toList(), dar.getDarCode(), translations);
+      notifySigningOfficials(researcher, datasetsAuthorized, dar, translations);
+      emailService.sendDataCustodianApprovalMessage();
     } catch (Exception e) {
       logWarn(e.getMessage());
       logWarn(e.getCause().getMessage());
       throw new InternalServerErrorException(
           "Error while sending Dac Automation messages.", e);
     }
+  }
+
+  private void notifySigningOfficials(User researcher, List<Dataset> datasetsAuthorized, DataAccessRequest dar,
+      String translations) {
+    List<User> signingOfficials = userDAO.getSOsByInstitution(researcher.getInstitutionId());
+    signingOfficials.forEach(signingOfficial -> {
+      try {
+        emailService.sendNewSoDARRADARApprovedEmail(signingOfficial, dar.getDarCode(), researcher, dar.getReferenceId(),
+            datasetsAuthorized, translations);
+      } catch (TemplateException | IOException e) {
+       logWarn(String.format("Unable to notify Signing Official %s about RADAR approval for DAR %s", signingOfficial.getEmail(), dar.getDarCode()));
+      }
+    });
   }
 
   @VisibleForTesting

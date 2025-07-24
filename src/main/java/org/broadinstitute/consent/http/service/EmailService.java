@@ -303,8 +303,13 @@ public class EmailService implements ConsentLogger {
    */
   public void sendNewSoDARApprovedEmail(User user, String darCode, User researcher, String referenceId, List<Dataset> datasets, String dataUseRestriction)
       throws TemplateException, IOException {
-        sendMessage(new SoDARApproved(user, darCode, researcher, referenceId, datasets, dataUseRestriction),
+        sendMessage(new SoDARApproved(user, darCode, researcher, referenceId, datasets, dataUseRestriction, false),
         user.getUserId());
+  }
+
+  public void sendNewSoDARRADARApprovedEmail(User so, String darCode, User researcher, String referenceId, List<Dataset> datasets, String dataUseRestriction)
+    throws TemplateException, IOException {
+       sendMessage(new SoDARApproved(so, darCode, researcher, referenceId, datasets, dataUseRestriction, true), so.getUserId());
   }
 
   /**

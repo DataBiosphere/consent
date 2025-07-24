@@ -31,6 +31,7 @@ import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -69,6 +70,8 @@ class DACAutomationRuleServiceTest {
   @Mock
   private ElectionDAO electionDAO;
   @Mock
+  private UserDAO userDAO;
+  @Mock
   private VoteDAO voteDAO;
   @Mock
   private VoteServiceDAO voteServiceDAO;
@@ -94,6 +97,7 @@ class DACAutomationRuleServiceTest {
             datasetDAO,
             ruleDAO,
             electionDAO,
+            userDAO,
             voteDAO,
             voteServiceDAO,
             emailService,
@@ -319,6 +323,7 @@ class DACAutomationRuleServiceTest {
   @Test
   void testSendEmail() throws TemplateException, IOException {
     User researcher = makeResearcher();
+    User signingOfficial = makeSigningOfficial();
     DataAccessRequest dar = makeDAR();
     Dataset dataset1 = makeDataset(1, "Dataset One");
     Dataset dataset2 = makeDataset(2, "Dataset Two");
@@ -329,6 +334,7 @@ class DACAutomationRuleServiceTest {
         .thenReturn("General Research Use");
     when(useRestrictionConverter.translateDataUse(dataset2.getDataUse(), DataUseTranslationType.DATASET))
         .thenReturn("General Research Use");
+    when(userDAO.getSOsByInstitution(any())).thenReturn(List.of(signingOfficial));
 
     service.sendEmail(researcher, datasetsAuthorized, dar);
 
@@ -344,6 +350,14 @@ class DACAutomationRuleServiceTest {
         eq("DAR-123"),
         eq("General Research Use")
     );
+    verify(emailService)
+        .sendNewSoDARRADARApprovedEmail(
+            eq(signingOfficial),
+            eq(dar.getDarCode()),
+            eq(researcher),
+            eq(dar.getReferenceId()),
+            eq(datasetsAuthorized),
+            eq("General Research Use"));
   }
 
   @Test
@@ -457,6 +471,12 @@ class DACAutomationRuleServiceTest {
     User researcher = new User();
     researcher.setDisplayName("Test Researcher");
     return researcher;
+  }
+
+  private static User makeSigningOfficial() {
+    User signingOfficial = new User();
+    signingOfficial.setDisplayName("Test Signing Official");
+    return signingOfficial;
   }
 
   private static DataAccessRequest makeDAR() {
