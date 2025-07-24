@@ -95,7 +95,7 @@ class DACAutomationRuleServiceTest {
   private DACAutomationRuleService service;
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     service =
         new DACAutomationRuleService(
             dataAccessRequestDAO,
@@ -395,6 +395,14 @@ class DACAutomationRuleServiceTest {
     );
 
     serviceSpy.applyRule(rule, datasetGru, darHmb, datasetsAuthorized, request);
+    verify(serviceSpy).openElectionAndApprove(
+        any(DACAutomationRule.class),
+        any(RuleImplementationInterface.class),
+        any(DataAccessRequest.class),
+        anyList(),
+        any(Dataset.class),
+        any(ContainerRequest.class)
+    );
   }
 
   @Test
