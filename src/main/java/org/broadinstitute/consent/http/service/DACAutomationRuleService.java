@@ -170,10 +170,10 @@ public class DACAutomationRuleService implements ConsentLogger {
     int electionId = electionDAO.insertElection(ElectionType.DATA_ACCESS.getValue(),
         ElectionStatus.OPEN.getValue(), new Date(), dar.getReferenceId(), dataset.getDatasetId());
     int voteId = voteDAO.insertVote(rule.enabledByUserId(), electionId,
-        VoteType.DACBOTAPPROVE.getValue());
+        VoteType.RADARAPPROVE.getValue());
     Vote vote = voteDAO.findVoteById(voteId);
     try {
-      voteServiceDAO.updateVotesWithValue(List.of(vote), true, String.format("DACBot Approval using rule: %s", ruleImplementation.getRuleType()));
+      voteServiceDAO.updateVotesWithValue(List.of(vote), true, String.format("Rule Automated DAR (RADAR) Approval using rule: %s", ruleImplementation.getRuleType()));
       datasetsAuthorized.add(dataset);
     } catch (SQLException e) {
       logException("Error updating vote", e);

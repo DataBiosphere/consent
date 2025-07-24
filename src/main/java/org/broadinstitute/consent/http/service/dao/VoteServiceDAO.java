@@ -66,7 +66,7 @@ public class VoteServiceDAO {
                       voteUpdate.bind("voteId", vote.getVoteId());
                       voteUpdate.execute();
                       if (vote.getType().equalsIgnoreCase(VoteType.FINAL.getValue())
-                          || vote.getType().equalsIgnoreCase(VoteType.DACBOTAPPROVE.getValue())) {
+                          || vote.getType().equalsIgnoreCase(VoteType.RADARAPPROVE.getValue())) {
                         Update electionUpdate = h.createUpdate(updateElectionStatus);
                         electionUpdate.bind("status", ElectionStatus.CLOSED.getValue());
                         electionUpdate.bind("electionId", vote.getElectionId());

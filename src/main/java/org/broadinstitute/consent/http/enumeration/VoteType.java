@@ -4,7 +4,7 @@ import org.broadinstitute.consent.http.resources.Resource;
 
 public enum VoteType {
 
-  DAC("DAC"), FINAL("FINAL"), DACBOTAPPROVE("DACBOTAPPROVE"), AGREEMENT("AGREEMENT"), CHAIRPERSON(Resource.CHAIRPERSON);
+  DAC("DAC"), FINAL("FINAL"), RADARAPPROVE("RADARAPPROVE"), AGREEMENT("AGREEMENT"), CHAIRPERSON(Resource.CHAIRPERSON);
 
   private final String value;
 
