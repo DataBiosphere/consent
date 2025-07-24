@@ -192,4 +192,6 @@
     relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2025-07-10-institution-domains-add-foreign-key.xml"
     relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2025-07-23-vote-type-election-type-indices.xml"
+    relativeToChangelogFile="true" />
 </databaseChangeLog>

@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -338,7 +337,6 @@ public class DarCollectionService implements ConsentLogger {
   public List<DarCollectionSummary> getSummariesForRole(User user, UserRoles role) {
     final List<DarCollectionSummary> summaries;
     Integer userId = user.getUserId();
-    List<Integer> datasetIds;
     switch (role) {
       case ADMIN:
         summaries = darCollectionSummaryDAO.getDarCollectionSummariesForAdmin();
@@ -349,13 +347,11 @@ public class DarCollectionService implements ConsentLogger {
         processDarCollectionSummariesForSO(summaries);
         break;
       case CHAIRPERSON:
-        datasetIds = getDatasetIdsForUserAndRoleId(user, UserRoles.CHAIRPERSON.getRoleId());
-        summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
+        summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(userId, UserRoles.CHAIRPERSON.getRoleId());
         processDarCollectionSummariesForChair(summaries);
         break;
       case MEMBER:
-        datasetIds = getDatasetIdsForUserAndRoleId(user, UserRoles.MEMBER.getRoleId());
-        summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDAC(userId, datasetIds);
+        summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(userId, UserRoles.MEMBER.getRoleId());
         processDarCollectionSummariesForMember(summaries, userId);
         break;
       case RESEARCHER:
