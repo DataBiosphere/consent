@@ -569,12 +569,24 @@ class UserResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testDeleteRoleFromUser_InvalidRole() {
+  void testDeleteRoleFromUserDacRoleId() {
     User user = createUserWithRole();
     User activeUser = createUserWithRole();
     activeUser.setAdminRole();
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(activeUser);
+    when(userService.findUserById(user.getUserId())).thenReturn(user);
 
-    try (Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(), 20)) {
+    try (Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(), 2)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testDeleteRoleFromUserInvalidRoleId() {
+    User activeUser = createUserWithRole();
+    activeUser.setAdminRole();
+
+    try (Response response = userResource.deleteRoleFromUser(authUser, 1, 1000)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -742,16 +754,6 @@ class UserResourceTest extends AbstractTestHelper {
     try (Response response = userResource.deleteRoleFromUser(authUser, 1,
         UserRoles.ADMIN.getRoleId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-    }
-  }
-
-  @Test
-  void testDeleteRoleFromUserInvalidRoleId() {
-    User activeUser = createUserWithRole();
-    activeUser.setAdminRole();
-
-    try (Response response = userResource.deleteRoleFromUser(authUser, 1, 1000)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
 

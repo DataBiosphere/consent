@@ -300,7 +300,7 @@ public class UserResource extends Resource {
       } else if (activeUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
         if (!UserRoles.isValidSoAdjustableRoleId(targetRole)) {
           throw new ForbiddenException(
-              "A Signing Official may only remove the following role ids: [6, 7, 8] ");
+              "A Signing Official may only remove the following role ids: [7, 8, 9] ");
         }
         if (Objects.equals(user.getUserId(), activeUser.getUserId())
             && (UserRoles.getUserRoleFromId(roleId) == UserRoles.SIGNINGOFFICIAL)) {
