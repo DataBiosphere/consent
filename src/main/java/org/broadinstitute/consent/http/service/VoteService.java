@@ -34,6 +34,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -76,40 +77,6 @@ public class VoteService implements ConsentLogger {
     this.useRestrictionConverter = useRestrictionConverter;
     this.voteDAO = voteDAO;
     this.voteServiceDAO = voteServiceDAO;
-  }
-
-  /**
-   * @param vote Vote to update
-   * @return The updated Vote
-   */
-  public Vote updateVote(Vote vote) {
-    validateVote(vote);
-    Date now = new Date();
-    voteDAO.updateVote(
-        vote.getVote(),
-        vote.getRationale(),
-        Objects.isNull(vote.getUpdateDate()) ? now : vote.getUpdateDate(),
-        vote.getVoteId(),
-        vote.getIsReminderSent(),
-        vote.getElectionId(),
-        Objects.isNull(vote.getCreateDate()) ? now : vote.getCreateDate(),
-        vote.getHasConcerns()
-    );
-    return voteDAO.findVoteById(vote.getVoteId());
-  }
-
-
-  public Vote updateVote(Vote rec, Integer voteId, String referenceId)
-      throws IllegalArgumentException {
-    if (voteDAO.checkVoteById(referenceId, voteId) == null) {
-      notFoundException(voteId);
-    }
-    Vote vote = voteDAO.findVoteById(voteId);
-    Date updateDate = rec.getVote() == null ? null : new Date();
-    String rationale = StringUtils.isNotEmpty(rec.getRationale()) ? rec.getRationale() : null;
-    voteDAO.updateVote(rec.getVote(), rationale, updateDate, voteId, false, vote.getElectionId(),
-        vote.getCreateDate(), rec.getHasConcerns());
-    return voteDAO.findVoteById(voteId);
   }
 
   /**
@@ -467,7 +434,7 @@ public class VoteService implements ConsentLogger {
     return findVotesByIds(voteIds);
   }
 
-  private void validateVotesCanUpdate(List<Vote> votes) throws IllegalArgumentException {
+  private void validateVotesCanUpdate(List<Vote> votes) throws ConsentConflictException {
     List<Election> elections = electionDAO.findElectionsByIds(votes.stream()
         .map(Vote::getElectionId)
         .toList());
@@ -478,8 +445,8 @@ public class VoteService implements ConsentLogger {
         .filter(election -> !election.getStatus().equals(ElectionStatus.OPEN.getValue()))
         .toList();
     if (!nonOpenAccessElections.isEmpty()) {
-      throw new IllegalArgumentException(
-          "There are non-open Data Access elections for provided votes");
+      throw new ConsentConflictException(
+          "One or more of these votes are associated with elections not open for voting.");
     }
 
     // If there are non-DataAccess or non-RP elections, throw an error
@@ -488,8 +455,8 @@ public class VoteService implements ConsentLogger {
         .filter(election -> !election.getElectionType().equals(ElectionType.RP.getValue()))
         .toList();
     if (!disallowedElections.isEmpty()) {
-      throw new IllegalArgumentException(
-          "There are non-Data Access/RP elections for provided votes");
+      throw new ConsentConflictException(
+          "There are unsupported election types for the votes provided");
     }
   }
 
@@ -506,27 +473,6 @@ public class VoteService implements ConsentLogger {
         stream().
         anyMatch(userRole -> Objects.nonNull(userRole.getRoleId()) &&
             userRole.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId()));
-  }
-
-  /**
-   * Convenience method to ensure Vote non-nullable values are populated
-   *
-   * @param vote The Vote to validate
-   */
-  private void validateVote(Vote vote) {
-    if (Objects.isNull(vote) ||
-        Objects.isNull(vote.getVoteId()) ||
-        Objects.isNull(vote.getUserId()) ||
-        Objects.isNull(vote.getElectionId())) {
-      throw new IllegalArgumentException("Invalid vote: " + vote);
-    }
-    if (Objects.isNull(voteDAO.findVoteById(vote.getVoteId()))) {
-      throw new IllegalArgumentException("No vote exists with the id of " + vote.getVoteId());
-    }
-  }
-
-  private void notFoundException(Integer voteId) {
-    throw new NotFoundException("Could not find vote for specified id. Vote id: " + voteId);
   }
 
   public void logDARApprovalOrRejection(User user, List<Vote> updatedVotes,

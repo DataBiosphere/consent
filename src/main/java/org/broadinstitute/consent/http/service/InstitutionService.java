@@ -4,74 +4,42 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
-import java.io.IOException;
-import java.util.Date;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
-import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Institution;
-import org.broadinstitute.consent.http.models.InstitutionDomainMap;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 
 public class InstitutionService {
 
   private final InstitutionDAO institutionDAO;
   private final UserDAO userDAO;
-  private final GCSService store;
 
   @Inject
-  public InstitutionService(InstitutionDAO institutionDAO, UserDAO userDAO, GCSService store) {
+  public InstitutionService(InstitutionDAO institutionDAO, UserDAO userDAO) {
     this.institutionDAO = institutionDAO;
     this.userDAO = userDAO;
-    this.store = store;
   }
 
   public Institution createInstitution(Institution institution, Integer userId) {
     checkForEmptyName(institution);
     checkUserId(userId);
-    Date createTimestamp = new Date();
-    Integer id = institutionDAO.insertInstitution(
-        institution.getName(),
-        institution.getItDirectorName(),
-        institution.getItDirectorEmail(),
-        institution.getInstitutionUrl(),
-        institution.getDunsNumber(),
-        institution.getOrgChartUrl(),
-        institution.getVerificationUrl(),
-        institution.getVerificationFilename(),
-        (Objects.nonNull(institution.getOrganizationType()) ? institution.getOrganizationType()
-            .getValue() : null),
-        userId,
-        createTimestamp
-    );
-    return institutionDAO.findInstitutionById(id);
+    try {
+      return institutionDAO.insertFullInstitution(institution, userId);
+    } catch (SQLException e) {
+      throw new ServerErrorException("Could not create institution", HttpStatusCodes.STATUS_CODE_SERVER_ERROR, e);
+    }
   }
 
   public Institution updateInstitutionById(Institution institutionPayload, Integer id,
-      Integer userId) {
+      Integer userId) throws SQLException {
     Institution targetInstitution = institutionDAO.findInstitutionById(id);
     isInstitutionNull(targetInstitution);
     checkUserId(userId);
     checkForEmptyName(institutionPayload);
-    Date updateDate = new Date();
-    institutionDAO.updateInstitutionById(
-        id,
-        institutionPayload.getName(),
-        institutionPayload.getItDirectorEmail(),
-        institutionPayload.getItDirectorName(),
-        institutionPayload.getInstitutionUrl(),
-        institutionPayload.getDunsNumber(),
-        institutionPayload.getOrgChartUrl(),
-        institutionPayload.getVerificationUrl(),
-        institutionPayload.getVerificationFilename(),
-        (Objects.nonNull(institutionPayload.getOrganizationType())
-            ? institutionPayload.getOrganizationType().getValue() : null),
-        userId,
-        updateDate
-    );
-    return institutionDAO.findInstitutionById(id);
+    return institutionDAO.updateFullInstitution(institutionPayload, userId);
   }
 
   public void deleteInstitutionById(Integer id) {
@@ -92,25 +60,32 @@ public class InstitutionService {
     return institution;
   }
 
-  private InstitutionDomainMap getInstitutionDomainMap() {
-    try {
-      return store.readJsonFileFromBucket("institution-domain/allowlist.json",
-          InstitutionDomainMap.class);
-    } catch (IOException e) {
-      throw new ServerErrorException("Could not load institution configuration",
-          HttpStatusCodes.STATUS_CODE_SERVER_ERROR, e);
-    }
+  /**
+   * Finds the institution for a given email address. This method returns a fully populated
+   * institution with signing officials, users, and domains.
+   *
+   * @param email the email address to search for
+   * @return The Institution associated with the email's domain, or null if not found
+   */
+  public Institution findInstitutionForEmail(String email) {
+    return institutionDAO.findInstitutionByDomain(trimmedEmailDomain(email));
   }
 
-  public Institution findInstitutionForEmail(String email) {
-    String name = getInstitutionDomainMap().getInstitutionForEmail(email);
-    if (name != null) {
-      var institutions = institutionDAO.findInstitutionsByName(name);
-      if (institutions.size() == 1) {
-        return institutions.get(0);
-      }
-    }
-    return null;
+  /**
+   * Finds the institution ID for a given email address. This is a simplified version of the more
+   * expansive findInstitutionForEmail method that will only return just the ID for verification and
+   * validation of a user's institutional affiliation and library card assignments.
+   *
+   * @param email the email address to search for
+   * @return The Institution ID associated with the email's domain, or null if not found
+   */
+  public Integer findInstitutionIdForEmail(String email) {
+    return institutionDAO.findInstitutionIdByDomain(trimmedEmailDomain(email));
+  }
+
+  private String trimmedEmailDomain(String email) {
+    String trimmedEmail = email.trim();
+    return trimmedEmail.substring(trimmedEmail.indexOf('@') + 1);
   }
 
   public List<Institution> findAllInstitutions() {

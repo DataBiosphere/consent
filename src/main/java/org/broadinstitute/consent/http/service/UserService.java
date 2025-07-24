@@ -272,7 +272,13 @@ public class UserService implements ConsentLogger {
           String.format("Unable to delete all drafts and files for userId %d. Error was: %s",
               userId, e.getMessage()), e);
     }
-    institutionDAO.deleteAllInstitutionsByUser(userId);
+    try {
+      institutionDAO.deleteAllInstitutionsByUser(userId);
+    } catch (Exception e) {
+      logException(
+          String.format("Unable to delete all institutions for userId %d. Error was: %s",
+              userId, e.getMessage()), e);
+    }
     userPropertyDAO.deleteAllPropertiesByUser(userId);
     libraryCardDAO.deleteAllLibraryCardsByUser(userId);
     acknowledgementDAO.deleteAllAcknowledgementsByUser(userId);
@@ -461,7 +467,7 @@ public class UserService implements ConsentLogger {
    */
   public User enforceInstitutionAndLibraryCardRules(String email) {
     User user;
-    Institution institutionFromEmail = institutionService.findInstitutionForEmail(email);
+    Integer institutionId = institutionService.findInstitutionIdForEmail(email);
     try {
       user = findUserByEmail(email);
     } catch (NotFoundException nfe) {
@@ -470,8 +476,8 @@ public class UserService implements ConsentLogger {
 
     boolean modifiedUser = false;
 
-    if (institutionFromEmail != null) {
-      if (handleUserWithInstitutionInMap(user, institutionFromEmail)) {
+    if (institutionId != null) {
+      if (handleUserWithInstitutionInMap(user, institutionId)) {
         modifiedUser = true;
       }
     } else {
@@ -488,15 +494,14 @@ public class UserService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  protected boolean handleUserWithInstitutionInMap(User user, Institution institutionFromEmail) {
-    boolean needsLCRemoved = needsLibraryCardRemovedForUser(user, institutionFromEmail);
-    boolean needsInstitutionAssigned = !institutionFromEmail.getId()
-        .equals(user.getInstitutionId());
+  protected boolean handleUserWithInstitutionInMap(User user, Integer institutionId) {
+    boolean needsLCRemoved = needsLibraryCardRemovedForUser(user, institutionId);
+    boolean needsInstitutionAssigned = !institutionId.equals(user.getInstitutionId());
 
     if (needsInstitutionAssigned && needsLCRemoved) {
-      userServiceDAO.updateInstitutionAndClearLibraryCardForUser(user.getUserId(), institutionFromEmail.getId());
+      userServiceDAO.updateInstitutionAndClearLibraryCardForUser(user.getUserId(), institutionId);
     } else if (needsInstitutionAssigned) {
-      userDAO.updateInstitutionId(user.getUserId(), institutionFromEmail.getId());
+      userDAO.updateInstitutionId(user.getUserId(), institutionId);
     } else if (needsLCRemoved) {
       libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
     }
@@ -505,13 +510,13 @@ public class UserService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  protected boolean needsLibraryCardRemovedForUser(User user, Institution userInstitution) {
+  protected boolean needsLibraryCardRemovedForUser(User user, Integer userInstitutionId) {
     boolean needsLCRemoved = false;
     if (hasLibraryCard(user)) {
       try {
         User lcIssuer = findUserById(user.getLibraryCard().getCreateUserId());
         Institution lcIssuerInstitution = institutionService.findInstitutionForEmail(lcIssuer.getEmail());
-        if (!userInstitution.equals(lcIssuerInstitution)) {
+        if (lcIssuerInstitution == null || !userInstitutionId.equals(lcIssuerInstitution.getId())) {
           needsLCRemoved = true;
         }
       } catch (NotFoundException nfe) {

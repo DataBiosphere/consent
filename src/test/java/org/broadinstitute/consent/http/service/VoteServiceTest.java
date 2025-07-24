@@ -20,7 +20,6 @@ import static org.mockito.Mockito.when;
 
 import com.google.gson.JsonArray;
 import freemarker.template.TemplateException;
-import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -39,6 +38,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -94,44 +94,6 @@ class VoteServiceTest extends AbstractTestHelper {
     service = new VoteService(userDAO, dataAccessRequestDAO,
         datasetDAO, electionDAO, emailService, elasticSearchService,
         useRestrictionConverter, voteDAO, voteServiceDAO);
-  }
-
-  @Test
-  void testUpdateVote() {
-    Vote v = new Vote();
-    v.setVoteId(randomInt(1, 10));
-    v.setUserId(randomInt(1, 10));
-    v.setElectionId(randomInt(1, 10));
-    v.setIsReminderSent(false);
-    v.setVote(false);
-    when(voteDAO.findVoteById(anyInt())).thenReturn(v);
-
-    Vote vote = service.updateVote(v);
-    assertNotNull(vote);
-  }
-
-  @Test
-  void testUpdateVote_InvalidReferenceId() {
-    when(voteDAO.checkVoteById("test", 11))
-        .thenReturn(null);
-    Vote v = setUpTestVote(false, false);
-
-    assertThrows(NotFoundException.class, () -> service.updateVote(v, 11, "test"));
-  }
-
-  @Test
-  void testUpdateVote_ByReferenceId() {
-    Vote v = new Vote();
-    v.setVoteId(randomInt(1, 10));
-    v.setUserId(randomInt(1, 10));
-    v.setElectionId(randomInt(1, 10));
-    v.setIsReminderSent(false);
-    v.setVote(false);
-    when(voteDAO.findVoteById(anyInt())).thenReturn(v);
-    when(voteDAO.checkVoteById("test", v.getVoteId())).thenReturn(v.getVoteId());
-
-    Vote vote = service.updateVote(v, v.getVoteId(), "test");
-    assertNotNull(vote);
   }
 
   @Test
@@ -192,16 +154,6 @@ class VoteServiceTest extends AbstractTestHelper {
     // Chairperson as a dac member
     // Final vote
     assertEquals(3, votes.size());
-  }
-
-  @Test
-  void testMemberCreateVotesDataAccessManualReview() {
-    setUpUserAndElectionVotes(UserRoles.MEMBER);
-
-    List<Vote> votes = service.createVotes(new Election(), ElectionType.DATA_ACCESS, false);
-    assertFalse(votes.isEmpty());
-    // Should create 1 member vote
-    assertEquals(1, votes.size());
   }
 
   @Test
@@ -289,7 +241,7 @@ class VoteServiceTest extends AbstractTestHelper {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(closedAccessElection));
 
     List<Vote> voteList = List.of(v);
-    assertThrows(IllegalArgumentException.class,
+    assertThrows(ConsentConflictException.class,
         () -> service.updateVotesWithValue(voteList, true, "rationale", user));
   }
 
@@ -312,7 +264,7 @@ class VoteServiceTest extends AbstractTestHelper {
         List.of(openAccessElection, closedAccessElection, canceledAccessElection));
 
     List<Vote> voteList = List.of(v);
-    assertThrows(IllegalArgumentException.class,
+    assertThrows(ConsentConflictException.class,
         () -> service.updateVotesWithValue(voteList, true, "rationale", user));
   }
 
@@ -419,9 +371,9 @@ class VoteServiceTest extends AbstractTestHelper {
     election.setElectionType(ElectionType.DATA_ACCESS.getValue());
     election.setStatus(ElectionStatus.CLOSED.getValue());
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
-
-    assertThrows(IllegalArgumentException.class,
-        () -> service.updateRationaleByVoteIds(List.of(1), "rationale"));
+    List<Integer> votes = List.of(1);
+    assertThrows(ConsentConflictException.class,
+        () -> service.updateRationaleByVoteIds(votes, "rationale"));
   }
 
   @Test
@@ -430,9 +382,9 @@ class VoteServiceTest extends AbstractTestHelper {
     election.setElectionType(ElectionType.TRANSLATE_DUL.getValue());
     election.setStatus(ElectionStatus.OPEN.getValue());
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
-
-    assertThrows(IllegalArgumentException.class,
-        () -> service.updateRationaleByVoteIds(List.of(1), "rationale"));
+    List<Integer> votes = List.of(1);
+    assertThrows(ConsentConflictException.class,
+        () -> service.updateRationaleByVoteIds(votes, "rationale"));
   }
 
   @Test
@@ -956,7 +908,7 @@ class VoteServiceTest extends AbstractTestHelper {
     Election election = new Election();
     election.setElectionId(1);
     election.setDatasetId(dataset.getDatasetId());
-    User user = new User();
+    User localUser = new User();
     Vote vote = new Vote();
     vote.setVote(voteValue);
     vote.setType(VoteType.FINAL.getValue());
@@ -967,7 +919,7 @@ class VoteServiceTest extends AbstractTestHelper {
     when(datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId()))).thenReturn(List.of(dataset));
     ContainerRequest request = mock();
 
-    assertDoesNotThrow(() -> service.logDARApprovalOrRejection(user, List.of(vote), request));
+    assertDoesNotThrow(() -> service.logDARApprovalOrRejection(localUser, List.of(vote), request));
   }
 
   @Test
@@ -1084,14 +1036,14 @@ class VoteServiceTest extends AbstractTestHelper {
   }
 
   private void setUpUserAndElectionVotes(UserRoles userRoles) {
-    User user = new User();
-    user.setUserId(randomInt(1, 10));
+    User localUser = new User();
+    localUser.setUserId(randomInt(1, 10));
     UserRole chairRole = new UserRole();
-    chairRole.setUserId(user.getUserId());
+    chairRole.setUserId(localUser.getUserId());
     chairRole.setRoleId(userRoles.getRoleId());
     chairRole.setName(userRoles.getRoleName());
-    user.setRoles(Collections.singletonList(chairRole));
-    when(userDAO.findNonDacUsersEnabledToVote()).thenReturn(Collections.singleton(user));
+    localUser.setRoles(Collections.singletonList(chairRole));
+    when(userDAO.findNonDacUsersEnabledToVote()).thenReturn(Collections.singleton(localUser));
     Vote v = new Vote();
     v.setVoteId(1);
     when(voteDAO.findVoteById(anyInt())).thenReturn(v);

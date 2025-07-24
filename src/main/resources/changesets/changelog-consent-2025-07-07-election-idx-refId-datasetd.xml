@@ -1,0 +1,10 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2025-07-07-election-idx-refId-datasetd" author="otchet">
+    <createIndex tableName="election" indexName="referenceId-datasetId_index">
+      <column name="reference_id"/>
+      <column name="dataset_id"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>

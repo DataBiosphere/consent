@@ -8,16 +8,20 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.List;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.InstitutionDomainMap;
 import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.util.InstitutionUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -44,7 +48,7 @@ public class InstitutionResource extends Resource {
   @PermitAll
   public Response getInstitutions(@Auth DuosUser duosUser) {
     try {
-      Boolean isAdmin = institutionUtil.checkIfAdmin(duosUser.getUser());
+      Boolean isAdmin = duosUser.getUser().hasUserRole(UserRoles.ADMIN);
       Gson gson = institutionUtil.getGsonBuilder(isAdmin);
       List<Institution> institutions = institutionService.findAllInstitutions();
       return Response.ok().entity(gson.toJson(institutions)).build();
@@ -59,7 +63,7 @@ public class InstitutionResource extends Resource {
   @PermitAll
   public Response getInstitution(@Auth DuosUser duosUser, @PathParam("id") Integer id) {
     try {
-      Boolean isAdmin = institutionUtil.checkIfAdmin(duosUser.getUser());
+      Boolean isAdmin = duosUser.getUser().hasUserRole(UserRoles.ADMIN);
       Gson gson = institutionUtil.getGsonBuilder(isAdmin);
       Institution institution = institutionService.findInstitutionById(id);
       return Response.ok().entity(gson.toJson(institution)).build();
@@ -82,6 +86,25 @@ public class InstitutionResource extends Resource {
       }
       Institution newInstitution = institutionService.createInstitution(payload, duosUser.getUser().getUserId());
       return Response.ok().entity(newInstitution).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @PATCH
+  @Consumes("application/json")
+  @Produces("application/json")
+  @Path("/{id}")
+  @RolesAllowed(ADMIN)
+  public Response patchInstitution(@Auth DuosUser duosUser, @PathParam("id") Integer id,
+      String institution) {
+    try {
+      Institution existingInstitution = institutionService.findInstitutionById(id);
+      Institution payload = GsonUtil.getInstance().fromJson(institution, Institution.class);
+      Institution mergedPayload = payload.mergeUpdatableFields(existingInstitution);
+      Institution updatedInstitution = institutionService.updateInstitutionById(mergedPayload, id,
+          duosUser.getUserId());
+      return Response.ok().entity(updatedInstitution).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -112,6 +135,42 @@ public class InstitutionResource extends Resource {
     try {
       institutionService.deleteInstitutionById(id);
       return Response.status(204).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Consumes("application/json")
+  @Produces("application/json")
+  @Path("/domains")
+  @RolesAllowed(ADMIN)
+  public Response updateInstitutionDomains(@Auth DuosUser duosUser, String institutionDomainMap) {
+    try {
+      List<Institution> updatedInstitutions = new ArrayList<>();
+      InstitutionDomainMap domainMap = GsonUtil.getInstance().fromJson(institutionDomainMap, InstitutionDomainMap.class);
+      domainMap.getInstitutionDomainMap().forEach((institutionName, value) -> {
+        List<String> domains = value.stream().toList();
+        List<Institution> institutions = institutionService.findAllInstitutionsByName(
+            institutionName);
+        if (institutions.isEmpty()) {
+          logWarn("No institution found with name: [%s]".formatted(institutionName));
+        } else if (institutions.size() == 1) {
+          Institution institution = institutions.get(0);
+          institution.setDomains(domains);
+          try {
+            updatedInstitutions.add(institutionService.updateInstitutionById(
+                institution,
+                institution.getId(),
+                duosUser.getUserId()));
+          } catch (Exception e) {
+            logException("Failed to update institution: [%s] with domains: %s".formatted(institutionName, domains), e);
+          }
+        } else {
+          logWarn("Multiple institutions found with name: [%s]".formatted(institutionName));
+        }
+      });
+      return Response.ok(updatedInstitutions).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

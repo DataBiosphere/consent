@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 
 @ExtendWith(MockitoExtension.class)
-class GCSServiceTest {
+class GCSServiceTest extends AbstractTestHelper {
 
   @Mock
   private Storage storage;
@@ -71,10 +71,9 @@ class GCSServiceTest {
 
   @Test
   void testGetDocument() throws Exception {
-    String fileName = RandomStringUtils.randomAlphanumeric(10);
-    String fileContent = RandomStringUtils.randomAlphanumeric(10);
+    String fileName = randomAlphanumeric(10);
+    String fileContent = randomAlphanumeric(10);
     String urlString = "http://localhost/bucket/" + fileName;
-    Blob blob = mock(Blob.class);
     when(blob.getContent()).thenReturn((fileContent).getBytes());
     when(storage.get(any(BlobId.class))).thenReturn(blob);
 
@@ -87,8 +86,7 @@ class GCSServiceTest {
 
   @Test
   void testGetDocument_ByBlobId() throws Exception {
-    String fileContent = RandomStringUtils.randomAlphanumeric(10);
-    Blob blob = mock(Blob.class);
+    String fileContent = randomAlphanumeric(10);
     when(blob.getContent()).thenReturn((fileContent).getBytes());
     when(storage.get(any(BlobId.class))).thenReturn(blob);
 
@@ -101,10 +99,10 @@ class GCSServiceTest {
 
   @Test
   void testGetDocuments() throws Exception {
-    String fileName1 = RandomStringUtils.randomAlphanumeric(10);
-    String fileName2 = RandomStringUtils.randomAlphanumeric(10);
-    String fileContent1 = RandomStringUtils.randomAlphanumeric(10);
-    String fileContent2 = RandomStringUtils.randomAlphanumeric(10);
+    String fileName1 = randomAlphanumeric(10);
+    String fileName2 = randomAlphanumeric(10);
+    String fileContent1 = randomAlphanumeric(10);
+    String fileContent2 = randomAlphanumeric(10);
 
     Blob blob1 = mock(Blob.class);
     BlobId blobId1 = BlobId.of("bucket", fileName1);
@@ -128,35 +126,13 @@ class GCSServiceTest {
 
   @Test
   void testDeleteDocument() {
-    String fileName = RandomStringUtils.random(10, true, false);
-    Blob blob = mock(Blob.class);
+    String fileName = randomAlphabetic(10);
     BlobId blobId = BlobId.of("bucket", fileName);
     when(blob.getBlobId()).thenReturn(blobId);
     when(storage.get(any(BlobId.class))).thenReturn(blob);
     when(storage.delete(any(BlobId.class))).thenReturn(true);
     initStore();
-    boolean deleted = service.deleteDocument(RandomStringUtils.random(10));
+    boolean deleted = service.deleteDocument(randomAlphabetic(10));
     assertTrue(deleted);
-  }
-
-  @Test
-  void testReadJsonFileFromBucket() throws Exception {
-    String testJson = """
-        {
-          "hello": "world",
-          "foo": "bar"
-        }
-        """;
-
-    when(blob.getContent()).thenReturn(testJson.getBytes());
-    when(storage.get(any(BlobId.class))).thenReturn(blob);
-
-    initStore();
-
-    var result = service.readJsonFileFromBucket("test.json", Map.class);
-
-    assertNotNull(result);
-    assertEquals(2, result.size());
-    assertEquals("world", result.get("hello"));
   }
 }

@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Institution;
@@ -38,11 +37,8 @@ class InstitutionServiceTest {
   @Mock
   private UserDAO userDAO;
 
-  @Mock
-  private GCSService store;
-
   private void initService() {
-    service = new InstitutionService(institutionDAO, userDAO, store);
+    service = new InstitutionService(institutionDAO, userDAO);
   }
 
   private Institution initMockModel() {
@@ -52,9 +48,9 @@ class InstitutionServiceTest {
   }
 
   @Test
-  void testCreateInstitutionSuccess() {
+  void testCreateInstitutionSuccess() throws Exception {
     Institution mockInstitution = initMockModel();
-    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
+    when(institutionDAO.insertFullInstitution(mockInstitution, 1)).thenReturn(mockInstitution);
     initService();
     Institution institution = service.createInstitution(mockInstitution, 1);
     assertNotNull(institution);
@@ -81,13 +77,15 @@ class InstitutionServiceTest {
   }
 
   @Test
-  void testUpdateInstitutionById() {
+  void testUpdateInstitutionById() throws Exception {
     Institution mockInstitution = initMockModel();
-    when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
+    mockInstitution.setId(1);
+    when(institutionDAO.findInstitutionById(mockInstitution.getId())).thenReturn(mockInstitution);
+    when(institutionDAO.updateFullInstitution(mockInstitution, 1)).thenReturn(mockInstitution);
     initService();
     mockInstitution.setUpdateDate(new Date());
     //doNothing is default for void methods, no need to mock InstitutionDAO.updateInstitutionById
-    Institution updatedInstitution = service.updateInstitutionById(mockInstitution, 1, 1);
+    Institution updatedInstitution = service.updateInstitutionById(mockInstitution, mockInstitution.getId(), 1);
     assertNotNull(updatedInstitution);
   }
 

@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.codahale.metrics.annotation.Timed;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
@@ -31,6 +32,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.ComplianceLogger;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.server.ContainerRequest;
 
 @Path("api/collections")
@@ -56,7 +58,9 @@ public class DarCollectionResource extends Resource {
       User user = userService.findUserByEmail(authUser.getEmail());
       var role = validateUserHasRoleName(user, roleName);
       List<DarCollectionSummary> summaries = darCollectionService.getSummariesForRole(user, role);
-      return Response.ok().entity(summaries).build();
+      // When querying in list context, we only want the exposed fields
+      Gson gson = GsonUtil.gsonBuilderWithAdapters().excludeFieldsWithoutExposeAnnotation().create();
+      return Response.ok().entity(gson.toJson(summaries)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

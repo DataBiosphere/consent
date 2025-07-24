@@ -11,7 +11,6 @@ import java.util.Objects;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.mail.message.NewLibraryCardIssuedMessage;
 import org.broadinstitute.consent.http.models.Institution;
@@ -40,12 +39,9 @@ public class LibraryCardService implements ConsentLogger {
 
   public LibraryCard createLibraryCard(LibraryCard libraryCard, User user) {
     throwIfNull(libraryCard);
-    boolean isAdmin = checkIsAdmin(user);
     checkIfCardExists(libraryCard);
     processUserOnNewLC(libraryCard);
-    if (!isAdmin) {
-      checkForValidInstitution(user.getInstitutionId(), libraryCard.getUserEmail());
-    }
+    checkForValidInstitution(user.getInstitutionId(), libraryCard.getUserEmail());
     Date createDate = new Date();
     Integer id = libraryCardDAO.insertLibraryCard(
         libraryCard.getUserId(),
@@ -182,39 +178,23 @@ public class LibraryCardService implements ConsentLogger {
   }
 
   // Helper method to process user data on create LC payload.
-  // Needed since CREATE has a unique situation where admins can create LCs without an active
-  // user (save with userEmail instead).
   private void processUserOnNewLC(LibraryCard card) {
-    if (card.getUserId() == null) {
-      // No user ID is provided, email must exist in card request.
-      if (card.getUserEmail() == null) {
-        throw new BadRequestException();
-      }
-      // If a user is found, update the card to have the correct userId associated.
-      User user = userDAO.findUserByEmail(card.getUserEmail());
-      if (user != null) {
-        card.setUserId(user.getUserId());
-      }
-    } else {
-      // check if userId exists
-      User user = userDAO.findUserById(card.getUserId());
-      if (user == null) {
-        throw new BadRequestException();
-      }
-      if (card.getUserEmail() == null) {
-        // if no email is provided in the card request, use the one from the user.
-        card.setUserEmail(user.getEmail());
-      } else if (!(user.getEmail().equalsIgnoreCase(card.getUserEmail()))) {
-        // Emails do not match, throw an error.
-        throw new ConsentConflictException();
-      }
-      card.setUserName(user.getDisplayName());
+    // Both userId and userEmail should always be present
+    if (card.getUserId() == null || card.getUserEmail() == null) {
+      throw new BadRequestException();
     }
-  }
 
-  private boolean checkIsAdmin(User user) {
-    return user.getRoles()
-        .stream()
-        .anyMatch(role -> role.getName().equalsIgnoreCase(UserRoles.ADMIN.getRoleName()));
+    // Verify user exists
+    User user = userDAO.findUserById(card.getUserId());
+    if (user == null) {
+      throw new BadRequestException();
+    }
+
+    // Verify emails match
+    if (!user.getEmail().equalsIgnoreCase(card.getUserEmail())) {
+      throw new ConsentConflictException();
+    }
+
+    card.setUserName(user.getDisplayName());
   }
 }

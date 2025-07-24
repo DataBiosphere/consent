@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.models;
 
-import java.util.Date;
+import java.sql.Timestamp;
 
 public class ApprovedDataset {
 
@@ -8,17 +8,16 @@ public class ApprovedDataset {
   private String darCode;
   private String datasetName;
   private String dacName;
-  private Date approvalDate;
   private String datasetIdentifier;
+  private final Timestamp expirationDate;
 
-  public ApprovedDataset(int alias, String darId, String datasetName, String dacName,
-      Date approvalDate) {
+  public ApprovedDataset(int alias, String darId, String datasetName, String dacName, Timestamp expirationDate) {
     this.alias = alias;
     this.darCode = darId;
     this.datasetName = datasetName;
     this.dacName = dacName;
-    this.approvalDate = approvalDate;
     this.datasetIdentifier = Dataset.parseAliasToIdentifier(alias);
+    this.expirationDate = expirationDate;
   }
 
   public int getAlias() {
@@ -53,14 +52,6 @@ public class ApprovedDataset {
     this.dacName = dacName;
   }
 
-  public Date getApprovalDate() {
-    return approvalDate;
-  }
-
-  public void setApprovalDate(Date approvalDate) {
-    this.approvalDate = approvalDate;
-  }
-
   public String getDatasetIdentifier() {
     return datasetIdentifier;
   }
@@ -69,13 +60,17 @@ public class ApprovedDataset {
     this.datasetIdentifier = datasetIdentifier;
   }
 
+  public Timestamp getExpirationDate() {
+    return expirationDate;
+  }
+
+
   public Boolean isApprovedDatasetEqual(ApprovedDataset that) {
     return this.getAlias() == that.getAlias()
         && this.getDatasetName().equals(that.getDatasetName())
         && this.getDatasetIdentifier().equals(that.getDatasetIdentifier())
         && this.getDarCode().equals(that.getDarCode())
-        && this.getDacName().equals(that.getDacName())
-        && (this.getApprovalDate().compareTo(that.getApprovalDate()) == 0);
+        && this.getDacName().equals(that.getDacName());
   }
 
 }

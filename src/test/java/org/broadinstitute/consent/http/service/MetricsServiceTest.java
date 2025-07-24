@@ -8,29 +8,20 @@ import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.NotFoundException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
-import org.broadinstitute.consent.http.models.dto.DatasetPropertyDTO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -59,14 +50,14 @@ class MetricsServiceTest extends AbstractTestHelper {
 
   @Test
   void testGenerateDatasetMetrics() {
-    List<DataAccessRequest> dars = generateDars(1);
-    List<Election> election = generateElection(dars.get(0).getReferenceId());
-    Set<DatasetDTO> dataset = new HashSet<>(generateDatasetDTO(1));
+    DataAccessRequest dar = generateDar();
+    List<Election> election = generateElection(dar.getReferenceId());
+    Dataset dataset = generateDataset();
     DarCollection collection = new DarCollection();
     collection.setDarCode("DAR-" + randomInt(1, 999999999));
 
-    when(dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(dataset);
-    when(darDAO.findApprovedDARsByDatasetId(any())).thenReturn(dars);
+    when(dataSetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+    when(darDAO.findApprovedDARsByDatasetId(any())).thenReturn(List.of(dar));
     when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(collection));
     when(electionDAO.findLastElectionsByReferenceIdsAndType(any(), eq("DataAccess"))).thenReturn(
         election);
@@ -74,16 +65,15 @@ class MetricsServiceTest extends AbstractTestHelper {
     initService();
     DatasetMetrics metrics = service.generateDatasetMetrics(1);
 
-    assertEquals(metrics.getDars().get(0).projectTitle,
-        dars.get(0).getData().getProjectTitle());
+    assertEquals(metrics.getDars().get(0).projectTitle, dar.getData().getProjectTitle());
     assertEquals(metrics.getDars().get(0).darCode, collection.getDarCode());
     assertEquals(metrics.getElections(), election);
-    assertEquals(metrics.getDataset(), dataset.iterator().next());
+    assertEquals(metrics.getDataset(), dataset);
   }
 
   @Test
   void testGenerateDatasetMetricsNotFound() {
-    when(dataSetDAO.findDatasetDTOWithPropertiesByDatasetId(any())).thenReturn(new HashSet<>());
+    when(dataSetDAO.findDatasetById(any())).thenReturn(null);
 
     initService();
     assertThrows(NotFoundException.class, () -> {
@@ -91,73 +81,26 @@ class MetricsServiceTest extends AbstractTestHelper {
     });
   }
 
-  private Dac generateDac() {
-    Dac dac = new Dac();
-    dac.setDacId(1);
-    dac.setDescription("description");
-    dac.setName("dac1");
-    User chairUser = new User();
-    chairUser.setUserId(1);
-    chairUser.setEmail("chair@test.org");
-    chairUser.setDisplayName("Chair");
-    chairUser.setChairpersonRole();
-    User memberUser = new User();
-    memberUser.setUserId(2);
-    memberUser.setEmail("member@test.org");
-    memberUser.setDisplayName("Member");
-    memberUser.setMemberRole();
-    dac.setChairpersons(Collections.singletonList(chairUser));
-    dac.setMembers(Collections.singletonList(memberUser));
-    return dac;
+  private DataAccessRequest generateDar() {
+    String referenceId = UUID.randomUUID().toString();
+    List<Integer> datasetIds = Collections.singletonList(1);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setId(1);
+    dar.setReferenceId(referenceId);
+    DataAccessRequestData data = new DataAccessRequestData();
+    dar.setDatasetIds(datasetIds);
+    data.setReferenceId(referenceId);
+    data.setProjectTitle(UUID.randomUUID().toString());
+    dar.setData(data);
+    return dar;
   }
 
-  private List<DatasetDTO> generateDatasetDTO(int datasetCount) {
-    Dac dac = generateDac();
-    return generateDatasets(datasetCount).stream()
-        .map(
-            ds -> {
-              DatasetDTO dto = new DatasetDTO();
-              dto.setDacId(dac.getDacId());
-              dto.setAlias(ds.getAlias());
-              dto.setDatasetId(ds.getDatasetId());
-              DatasetPropertyDTO name = new DatasetPropertyDTO("Dataset Name", ds.getName());
-              DatasetPropertyDTO consent = new DatasetPropertyDTO("Consent ID", ds.getName());
-              dto.setProperties(Arrays.asList(name, consent));
-              return dto;
-            })
-        .collect(Collectors.toList());
-  }
-
-  private List<DataAccessRequest> generateDars(int count) {
-    return IntStream.range(1, count + 1)
-        .mapToObj(
-            i -> {
-              String referenceId = UUID.randomUUID().toString();
-              List<Integer> datasetIds = Collections.singletonList(i);
-              DataAccessRequest dar = new DataAccessRequest();
-              dar.setId(count);
-              dar.setReferenceId(referenceId);
-              DataAccessRequestData data = new DataAccessRequestData();
-              dar.setDatasetIds(datasetIds);
-              data.setReferenceId(referenceId);
-              data.setProjectTitle(UUID.randomUUID().toString());
-              dar.setData(data);
-              return dar;
-            })
-        .collect(Collectors.toList());
-  }
-
-  private List<Dataset> generateDatasets(int count) {
-    return IntStream.range(1, count + 1)
-        .mapToObj(
-            i -> {
-              Dataset d = new Dataset();
-              d.setAlias(count);
-              d.setDatasetId(count);
-              d.setName(UUID.randomUUID().toString());
-              return d;
-            })
-        .collect(Collectors.toList());
+  private Dataset generateDataset() {
+    Dataset d = new Dataset();
+    d.setAlias(1);
+    d.setDatasetId(1);
+    d.setName(UUID.randomUUID().toString());
+    return d;
   }
 
   private List<Election> generateElection(String ref) {
