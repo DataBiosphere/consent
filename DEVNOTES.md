@@ -59,12 +59,12 @@ Or, if not using docker:
 java -jar /path/to/consent.jar server /path/to/config/file
 ```
 
-Visit local swagger page: https://local.broadinstitute.org:27443/swagger/
+Visit local swagger page: https://local.dsde-dev.broadinstitute.org:27443/swagger/
 
 ### Debugging
 
 Port 7777 is open in the configured docker compose.
-Set up a remote debug configuration pointing to `local.broadinstitute.org`
+Set up a remote debug configuration pointing to `local.dsde-dev.broadinstitute.org`
 and the defaults should be correct.
 
 ### Developing with a local Elastic Search instance:
