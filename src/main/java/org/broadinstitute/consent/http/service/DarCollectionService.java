@@ -437,7 +437,6 @@ public class DarCollectionService implements ConsentLogger {
           DataAccessRequestData.class);
       newData.setStatus(null);
       newData.setReferenceId(d.getReferenceId());
-      newData.setSortDate(now.getTime());
       dataAccessRequestDAO.updateDataByReferenceId(
           d.getReferenceId(),
           d.getUserId(),

@@ -686,7 +686,6 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     draft.setCreateDate(new Timestamp(new Date().getTime()));
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle(randomAlphabetic(10));
-    data.setCreateDate(draft.getCreateDate().getTime());
     draft.setData(data);
     when(dataAccessRequestDAO.findAllDraftsByUserId(any())).thenReturn(List.of(draft));
     when(darCollectionSummaryDAO.getDarCollectionSummariesForResearcher(any())).thenReturn(

@@ -29,7 +29,7 @@ public class DataAccessRequestData {
           "eraAuthorized", "nihUsername", "linkedIn", "orcid", "researcherGate", "datasetDetail",
           "datasets", "datasetId", "validRestriction", "restriction", "translatedUseRestriction",
           "createDate", "sortDate", "additionalEmail", "checkNotifications", "partialDarCode",
-          "darCode", "dar_code");
+          "darCode", "dar_code", "createDate", "sortDate");
 
   @Deprecated
   private String referenceId;
@@ -71,10 +71,6 @@ public class DataAccessRequestData {
   private Object restriction;
   @SerializedName(value = "validRestriction", alternate = "valid_restriction")
   private Boolean validRestriction;
-  @Deprecated
-  private Long createDate;
-  @Deprecated
-  private Long sortDate;
   @Deprecated
   @SerializedName(value = "datasetIds", alternate = {"datasetId", "datasetid"})
   private List<Integer> datasetIds;
@@ -347,22 +343,6 @@ public class DataAccessRequestData {
 
   public void setValidRestriction(Boolean validRestriction) {
     this.validRestriction = validRestriction;
-  }
-
-  public Long getCreateDate() {
-    return createDate;
-  }
-
-  public void setCreateDate(Long createDate) {
-    this.createDate = createDate;
-  }
-
-  public Long getSortDate() {
-    return sortDate;
-  }
-
-  public void setSortDate(Long sortDate) {
-    this.sortDate = sortDate;
   }
 
   public String getPiCountryOfOperation() {
