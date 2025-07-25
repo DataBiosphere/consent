@@ -102,8 +102,8 @@ public class VoteResource extends Resource {
         voteUpdateLCCheck(votes);
       }
 
-      if (votes.stream().anyMatch(vote -> vote.getType() != null  && vote.getType().equalsIgnoreCase(VoteType.DACBOTAPPROVE.getValue()))) {
-        return createExceptionResponse(new BadRequestException("Manual DACBot Approval is not permitted"));
+      if (votes.stream().anyMatch(vote -> vote.getType() != null  && vote.getType().equalsIgnoreCase(VoteType.RADAR_APPROVE.getValue()))) {
+        return createExceptionResponse(new BadRequestException("Manual Rule Automated DAR (RADAR) Approval is not permitted"));
       }
 
       List<Vote> updatedVotes = voteService.updateVotesWithValue(votes, voteUpdate.getVote(),

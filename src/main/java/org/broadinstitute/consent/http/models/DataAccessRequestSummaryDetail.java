@@ -123,7 +123,7 @@ public class DataAccessRequestSummaryDetail implements SummaryDetail {
             .findFirst();
     Optional<Vote> dacbotApproveVote =
         getAccessVotes().stream()
-            .filter(v -> v.getType().equalsIgnoreCase(VoteType.DACBOTAPPROVE.getValue()))
+            .filter(v -> v.getType().equalsIgnoreCase(VoteType.RADAR_APPROVE.getValue()))
             .filter(v -> Objects.nonNull(v.getVote()))
             .findFirst();
     Optional<User> chairpersonUser =

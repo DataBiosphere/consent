@@ -273,7 +273,7 @@ class DACAutomationRuleServiceTest {
     mockInsertElection(dar, dataset, electionId);
 
     Integer voteId = 5;
-    when(voteDAO.insertVote(rule.enabledByUserId(), electionId, VoteType.DACBOTAPPROVE.getValue()))
+    when(voteDAO.insertVote(rule.enabledByUserId(), electionId, VoteType.RADAR_APPROVE.getValue()))
         .thenReturn(voteId);
 
     Vote vote = mockFindVoteById(voteId);
@@ -283,7 +283,7 @@ class DACAutomationRuleServiceTest {
     verify(voteServiceDAO).updateVotesWithValue(
           List.of(vote),
           true,
-          "DACBot Approval using rule: GRU_V1");
+          "Rule Automated DAR (RADAR) Approval using rule: GRU_V1");
     assertEquals(1, datasetsAuthorized.size());
     assertEquals(dataset, datasetsAuthorized.get(0));
   }
@@ -300,7 +300,7 @@ class DACAutomationRuleServiceTest {
     mockInsertElection(dar, dataset, electionId);
 
     Integer voteId = 5;
-    when(voteDAO.insertVote(rule.enabledByUserId(), electionId, VoteType.DACBOTAPPROVE.getValue()))
+    when(voteDAO.insertVote(rule.enabledByUserId(), electionId, VoteType.RADAR_APPROVE.getValue()))
         .thenReturn(voteId);
 
     Vote vote = mockFindVoteById(voteId);
@@ -308,7 +308,7 @@ class DACAutomationRuleServiceTest {
     doThrow(new SQLException("Test error")).when(voteServiceDAO).updateVotesWithValue(
           List.of(vote),
           true,
-          "DACBot Approval using rule: GRU_V1");
+          "Rule Automated DAR (RADAR) Approval using rule: GRU_V1");
 
     service.openElectionAndApprove(rule, ruleImplementation, dar, datasetsAuthorized, dataset);
 
