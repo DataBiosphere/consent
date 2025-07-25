@@ -273,7 +273,7 @@ class DACAutomationRuleServiceTest {
     mockInsertElection(dar, dataset, electionId);
 
     Integer voteId = 5;
-    when(voteDAO.insertVote(rule.enabledByUserId(), electionId, VoteType.RADARAPPROVE.getValue()))
+    when(voteDAO.insertVote(rule.enabledByUserId(), electionId, VoteType.RADAR_APPROVE.getValue()))
         .thenReturn(voteId);
 
     Vote vote = mockFindVoteById(voteId);
@@ -300,7 +300,7 @@ class DACAutomationRuleServiceTest {
     mockInsertElection(dar, dataset, electionId);
 
     Integer voteId = 5;
-    when(voteDAO.insertVote(rule.enabledByUserId(), electionId, VoteType.RADARAPPROVE.getValue()))
+    when(voteDAO.insertVote(rule.enabledByUserId(), electionId, VoteType.RADAR_APPROVE.getValue()))
         .thenReturn(voteId);
 
     Vote vote = mockFindVoteById(voteId);

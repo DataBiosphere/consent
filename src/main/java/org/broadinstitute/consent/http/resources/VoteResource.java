@@ -102,7 +102,7 @@ public class VoteResource extends Resource {
         voteUpdateLCCheck(votes);
       }
 
-      if (votes.stream().anyMatch(vote -> vote.getType() != null  && vote.getType().equalsIgnoreCase(VoteType.RADARAPPROVE.getValue()))) {
+      if (votes.stream().anyMatch(vote -> vote.getType() != null  && vote.getType().equalsIgnoreCase(VoteType.RADAR_APPROVE.getValue()))) {
         return createExceptionResponse(new BadRequestException("Manual Rule Automated DAR (RADAR) Approval is not permitted"));
       }
 

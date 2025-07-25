@@ -170,7 +170,7 @@ public class DACAutomationRuleService implements ConsentLogger {
     int electionId = electionDAO.insertElection(ElectionType.DATA_ACCESS.getValue(),
         ElectionStatus.OPEN.getValue(), new Date(), dar.getReferenceId(), dataset.getDatasetId());
     int voteId = voteDAO.insertVote(rule.enabledByUserId(), electionId,
-        VoteType.RADARAPPROVE.getValue());
+        VoteType.RADAR_APPROVE.getValue());
     Vote vote = voteDAO.findVoteById(voteId);
     try {
       voteServiceDAO.updateVotesWithValue(List.of(vote), true, String.format("Rule Automated DAR (RADAR) Approval using rule: %s", ruleImplementation.getRuleType()));
