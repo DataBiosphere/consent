@@ -435,7 +435,6 @@ public class DarCollectionService implements ConsentLogger {
       Date now = new Date();
       DataAccessRequestData newData = new Gson().fromJson(d.getData().toString(),
           DataAccessRequestData.class);
-      newData.setDarCode(null);
       newData.setStatus(null);
       newData.setReferenceId(d.getReferenceId());
       newData.setSortDate(now.getTime());
