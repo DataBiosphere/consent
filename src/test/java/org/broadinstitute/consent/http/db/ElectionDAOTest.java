@@ -23,7 +23,6 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -717,11 +716,6 @@ class ElectionDAOTest extends DAOTestHelper {
   private DataAccessRequest createDataAccessRequest(Integer userId, Integer collectionId) {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle("Project Title: " + randomAlphabetic(50));
-    DatasetEntry entry = new DatasetEntry();
-    entry.setKey("key");
-    entry.setValue("value");
-    entry.setLabel("label");
-    data.setDatasets(List.of(entry));
     data.setHmb(true);
     data.setMethods(false);
     String referenceId = UUID.randomUUID().toString();

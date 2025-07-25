@@ -67,7 +67,6 @@ public class DataAccessRequestData {
   private Boolean hmb;
   private String status;
   private Boolean poa;
-  private List<DatasetEntry> datasets;
   @SerializedName(value = "darCode", alternate = "dar_code")
   private String darCode;
   private Object restriction;
@@ -333,17 +332,6 @@ public class DataAccessRequestData {
 
   public void setHmb(Boolean hmb) {
     this.hmb = hmb;
-  }
-
-  public List<DatasetEntry> getDatasets() {
-    if (Objects.isNull(datasets)) {
-      return Collections.emptyList();
-    }
-    return datasets;
-  }
-
-  public void setDatasets(List<DatasetEntry> datasets) {
-    this.datasets = datasets;
   }
 
   @Deprecated
