@@ -23,6 +23,9 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
     if (hasNonZeroColumn(rowView, "dac_id")) {
       dataset.setDacId(rowView.getColumn("dac_id", Integer.class));
     }
+    if(hasColumn(rowView, "dac_name", String.class)) {
+      dataset.setDacName(rowView.getColumn("dac_name", String.class));
+    }
     if (hasColumn(rowView, "data_use", String.class)) {
       dataset.setDataUse(dataUseParser.parseDataUse(rowView.getColumn("data_use", String.class)));
     }

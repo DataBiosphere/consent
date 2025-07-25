@@ -166,13 +166,15 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
               fso.update_date AS fso_update_date,
               fso.update_user_id AS fso_update_user_id,
               fso.deleted AS fso_deleted,
-              fso.delete_user_id AS fso_delete_user_id
+              fso.delete_user_id AS fso_delete_user_id,
+              dac.name as dac_name
           FROM dataset d
           LEFT JOIN users u on d.create_user_id = u.user_id
           LEFT JOIN (SELECT DISTINCT dataset_id AS id FROM dar_dataset) dar_ds_ids ON dar_ds_ids.id = d.dataset_id
           LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
           LEFT JOIN dictionary k ON k.key_id = dp.property_key
           LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
+          LEFT JOIN dac ON d.dac_id = dac.dac_id
           WHERE d.dataset_id in (<datasetIds>)
           ORDER BY d.dataset_id
       """)

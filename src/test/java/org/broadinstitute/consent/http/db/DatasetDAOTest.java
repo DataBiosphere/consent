@@ -327,6 +327,7 @@ class DatasetDAOTest extends DAOTestHelper {
     assertFalse(datasets.isEmpty());
     assertEquals(1, datasets.size());
     assertEquals(dac.getDacId(), datasets.get(0).getDacId());
+    assertEquals(dac.getName(), datasets.get(0).getDacName());
     assertFalse(datasets.get(0).getProperties().isEmpty());
     assertNotNull(datasets.get(0).getCreateUser());
   }

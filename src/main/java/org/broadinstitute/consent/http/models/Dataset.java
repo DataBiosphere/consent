@@ -41,7 +41,10 @@ public class Dataset implements ConsentLogger {
   public DataUse dataUse;
 
   private String translatedDataUse;
+
   private Integer dacId;
+
+  private String dacName;
 
   private Boolean deletable;
 
@@ -242,9 +245,13 @@ public class Dataset implements ConsentLogger {
     return dacId;
   }
 
+  public String getDacName() { return dacName; }
+
   public void setDacId(Integer dacId) {
     this.dacId = dacId;
   }
+
+  public void setDacName(String dacName) { this.dacName = dacName; }
 
   public String getTranslatedDataUse() {
     return translatedDataUse;
