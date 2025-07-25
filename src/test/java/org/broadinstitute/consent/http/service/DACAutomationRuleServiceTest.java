@@ -31,6 +31,7 @@ import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
@@ -52,6 +53,7 @@ import org.broadinstitute.consent.http.rules.RuleAuditAction;
 import org.broadinstitute.consent.http.rules.RuleImplementationInterface;
 import org.broadinstitute.consent.http.rules.RuleState;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
+import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -84,10 +86,16 @@ class DACAutomationRuleServiceTest {
   @Mock
   private UseRestrictionConverter useRestrictionConverter;
 
+  @Mock
+  private UserDAO userDAO;
+
+  @Mock
+  private ContainerRequest request;
+
   private DACAutomationRuleService service;
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     service =
         new DACAutomationRuleService(
             dataAccessRequestDAO,
@@ -97,7 +105,8 @@ class DACAutomationRuleServiceTest {
             voteDAO,
             voteServiceDAO,
             emailService,
-            useRestrictionConverter
+            useRestrictionConverter,
+            userDAO
         );
   }
 
@@ -231,12 +240,12 @@ class DACAutomationRuleServiceTest {
       List<Dataset> datasets = inv.getArgument(3);
       datasets.add(dataset1);
       return null;
-    }).when(serviceSpy).applyRule(activeRule, dataset1, dar, datasetsAuthorized);
+    }).when(serviceSpy).applyRule(activeRule, dataset1, dar, datasetsAuthorized, request);
     doNothing().when(serviceSpy).sendEmail(researcher, List.of(dataset1), dar);
 
-    serviceSpy.triggerDACRuleSettings(researcher, datasetIds, referenceId);
+    serviceSpy.triggerDACRuleSettings(researcher, datasetIds, referenceId, request);
 
-    verify(serviceSpy, never()).applyRule(eq(inactiveRule), any(), any(), any());
+    verify(serviceSpy, never()).applyRule(eq(inactiveRule), any(), any(), any(), any());
   }
 
   @Test
@@ -255,9 +264,9 @@ class DACAutomationRuleServiceTest {
 
     DACAutomationRuleService serviceSpy = spy(service);
 
-    serviceSpy.triggerDACRuleSettings(researcher, datasetIds, referenceId);
+    serviceSpy.triggerDACRuleSettings(researcher, datasetIds, referenceId, request);
 
-    verify(serviceSpy, never()).applyRule(any(), any(), any(), any());
+    verify(serviceSpy, never()).applyRule(any(), any(), any(), any(), any());
     verify(serviceSpy, never()).sendEmail(any(), any(), any());
   }
 
@@ -275,10 +284,12 @@ class DACAutomationRuleServiceTest {
     Integer voteId = 5;
     when(voteDAO.insertVote(rule.enabledByUserId(), electionId, VoteType.RADAR_APPROVE.getValue()))
         .thenReturn(voteId);
+    user.setEraCommonsId("eraCommonsId");
+    when(userDAO.findUserById(rule.enabledByUserId())).thenReturn(user);
 
     Vote vote = mockFindVoteById(voteId);
 
-    service.openElectionAndApprove(rule, ruleImplementation, dar, datasetsAuthorized, dataset);
+    service.openElectionAndApprove(rule, ruleImplementation, dar, datasetsAuthorized, dataset, request);
 
     verify(voteServiceDAO).updateVotesWithValue(
           List.of(vote),
@@ -302,6 +313,8 @@ class DACAutomationRuleServiceTest {
     Integer voteId = 5;
     when(voteDAO.insertVote(rule.enabledByUserId(), electionId, VoteType.RADAR_APPROVE.getValue()))
         .thenReturn(voteId);
+    user.setEraCommonsId("eraCommonsId");
+    when(userDAO.findUserById(rule.enabledByUserId())).thenReturn(user);
 
     Vote vote = mockFindVoteById(voteId);
 
@@ -310,7 +323,7 @@ class DACAutomationRuleServiceTest {
           true,
           "Rule Automated DAR (RADAR) Approval using rule: GRU_V1");
 
-    service.openElectionAndApprove(rule, ruleImplementation, dar, datasetsAuthorized, dataset);
+    service.openElectionAndApprove(rule, ruleImplementation, dar, datasetsAuthorized, dataset, request);
 
     assertEquals(0, datasetsAuthorized.size());
   }
@@ -377,10 +390,19 @@ class DACAutomationRuleServiceTest {
         any(GeneralResearchUseV1.class),
         eq(darHmb),
         eq(datasetsAuthorized),
-        eq(datasetGru)
+        eq(datasetGru),
+        eq(request)
     );
 
-    serviceSpy.applyRule(rule, datasetGru, darHmb, datasetsAuthorized);
+    serviceSpy.applyRule(rule, datasetGru, darHmb, datasetsAuthorized, request);
+    verify(serviceSpy).openElectionAndApprove(
+        any(DACAutomationRule.class),
+        any(RuleImplementationInterface.class),
+        any(DataAccessRequest.class),
+        anyList(),
+        any(Dataset.class),
+        any(ContainerRequest.class)
+    );
   }
 
   @Test
@@ -392,14 +414,15 @@ class DACAutomationRuleServiceTest {
     List<Dataset> datasetsAuthorized = new ArrayList<>();
 
     DACAutomationRuleService serviceSpy = spy(service);
-    serviceSpy.applyRule(rule, datasetGru, darNotHmb, datasetsAuthorized);
+    serviceSpy.applyRule(rule, datasetGru, darNotHmb, datasetsAuthorized, request);
 
     verify(serviceSpy, never()).openElectionAndApprove(
         any(DACAutomationRule.class),
         any(RuleImplementationInterface.class),
         any(DataAccessRequest.class),
         anyList(),
-        any(Dataset.class)
+        any(Dataset.class),
+        any(ContainerRequest.class)
     );
   }
 

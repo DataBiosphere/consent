@@ -120,6 +120,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   private UriBuilder builder;
   @Mock
   private User mockUser;
+  @Mock
+  private ContainerRequest containerRequest;
   private DataAccessRequestResource resource;
 
   @BeforeEach
@@ -147,7 +149,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       DataAccessRequestData data = new DataAccessRequestData();
       data.setReferenceId(dar.getReferenceId());
       dar.setData(data);
-      when(dataAccessRequestService.createDataAccessRequest(any(), any()))
+      when(dataAccessRequestService.createDataAccessRequest(any(), any(), any()))
           .thenReturn(dar);
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
       doNothing().when(darCollectionService).sendNewDARCollectionMessage(any());
@@ -175,7 +177,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     dar.setData(data);
     dar.setSubmissionDate(Timestamp.from(Instant.now()));
     doThrow(new SubmittedDARCannotBeEditedException()).when(dataAccessRequestService)
-        .createDataAccessRequest(any(), any());
+        .createDataAccessRequest(any(), any(), any());
 
     try (var response = resource.createDataAccessRequest(authUser, request, info, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
@@ -190,7 +192,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     userWithCards.setLibraryCard(new LibraryCard());
     when(userService.findUserByEmail(any())).thenReturn(userWithCards);
     doThrow(new BadRequestException()).when(dataAccessRequestService)
-        .createDataAccessRequest(eq(user), any());
+        .createDataAccessRequest(eq(user), any(), any());
 
     try (var response = resource.createDataAccessRequest(authUser, request, info, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
@@ -908,7 +910,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       DataAccessRequestData data = new DataAccessRequestData();
       data.setReferenceId(dar.getReferenceId());
       dar.setData(data);
-      when(dataAccessRequestService.createDataAccessRequest(any(), any()))
+      when(dataAccessRequestService.createDataAccessRequest(any(), any(), any()))
           .thenReturn(dar);
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
       doNothing().when(darCollectionService).sendNewDARCollectionMessage(any());
@@ -918,7 +920,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       fail("Initialization Exception: " + e.getMessage());
     }
 
-    try (Response response = resource.createDataAccessRequestWithDAARestrictions(authUser, info,
+    try (Response response = resource.createDataAccessRequestWithDAARestrictions(authUser, containerRequest,
+        info,
         "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
@@ -941,8 +944,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       fail("Initialization Exception: " + e.getMessage());
     }
 
-    try (Response response = resource.createDataAccessRequestWithDAARestrictions(authUser, info,
-        "")) {
+    try (Response response = resource.createDataAccessRequestWithDAARestrictions(authUser,
+        containerRequest, info, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
