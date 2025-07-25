@@ -245,13 +245,17 @@ public class Dataset implements ConsentLogger {
     return dacId;
   }
 
-  public String getDacName() { return dacName; }
-
   public void setDacId(Integer dacId) {
     this.dacId = dacId;
   }
 
-  public void setDacName(String dacName) { this.dacName = dacName; }
+  public String getDacName() {
+    return dacName;
+  }
+
+  public void setDacName(String dacName) {
+    this.dacName = dacName;
+  }
 
   public String getTranslatedDataUse() {
     return translatedDataUse;

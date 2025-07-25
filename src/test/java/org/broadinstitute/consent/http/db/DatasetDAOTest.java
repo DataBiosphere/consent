@@ -86,6 +86,7 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset foundDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNotNull(foundDataset);
     assertEquals(dac.getDacId(), foundDataset.getDacId());
+    assertEquals(dac.getName(), foundDataset.getDacName());
     assertFalse(foundDataset.getProperties().isEmpty());
     assertTrue(foundDataset.getDeletable());
     assertNotNull(foundDataset.getCreateUser());
