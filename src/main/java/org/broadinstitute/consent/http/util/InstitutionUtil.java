@@ -4,7 +4,6 @@ import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.DomainValidator;
@@ -80,17 +79,44 @@ public class InstitutionUtil implements ConsentLogger {
     }
 
     // Validate that the domain is not a subdomain
-    if (domain.split("\\.").length > 1) {
+    if (domain.split("\\.").length > 2) {
       return false;
     }
 
     return true;
   }
 
+  /**
+   * Canonicalizes an institution name by normalizing quotes and handling UTF-8 characters.
+   * - Replaces curly quotes with straight quotes
+   * - Replaces double quotes with single quotes
+   * - Handles UTF-8 characters properly
+   * - Name is required (cannot be null or blank)
+   *
+   * @param name The institution name to canonicalize
+   * @return The canonicalized name, or null if input is invalid
+   */
   public static String canonicalizeName(String name) {
-    //replace
+    // Validate that name is not null or blank
+    if (StringUtils.isBlank(name)) {
+      return null;
+    }
 
-    return null;
+    String canonicalized = name.trim();
+
+    // Replace curly/smart quotes with straight quotes
+    canonicalized = canonicalized
+        .replace("\u201C", "'")  // Left double quotation mark
+        .replace("\u201D", "'")  // Right double quotation mark
+        .replace("\u2018", "'")  // Left single quotation mark
+        .replace("\u2019", "'")  // Right single quotation mark
+        .replace("\u201A", "'")  // Single low-9 quotation mark
+        .replace("\u201E", "'"); // Double low-9 quotation mark
+
+    // Replace double quotes with single quotes
+    canonicalized = canonicalized.replace("\"", "'");
+
+    return canonicalized;
   }
 
   /**

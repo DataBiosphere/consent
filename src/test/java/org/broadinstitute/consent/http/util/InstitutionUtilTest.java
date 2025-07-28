@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.Gson;
@@ -93,21 +94,13 @@ class InstitutionUtilTest {
     assertFalse(InstitutionUtil.isValidInstitutionDomain("domain withaspace.com"));
   }
 
-//  @Test
-//  void testCanonicalizeDomain() {
-//    assertEquals("example.com", InstitutionUtil.canonicalizeDomain("EXAMPLE.COM"));
-//    assertEquals("test.edu", InstitutionUtil.canonicalizeDomain("Test.Edu"));
-//    assertEquals("google.org", InstitutionUtil.canonicalizeDomain("  google.org  "));
-//    assertEquals("university.net", InstitutionUtil.canonicalizeDomain("  UNIVERSITY.NET  "));
-//  }
-
   @Test
   void testGetInvalidInstitutionDomainsAllValid() {
     initUtil();
     Institution institution = new Institution();
     institution.setDomains(Arrays.asList("example.com", "test.edu", "google.org"));
 
-    List<String> invalidDomains = util.getInvalidInstitutionDomains(institution);
+    List<String> invalidDomains = InstitutionUtil.getInvalidInstitutionDomains(institution);
     assertTrue(invalidDomains.isEmpty());
   }
 
@@ -116,21 +109,22 @@ class InstitutionUtilTest {
     initUtil();
     Institution institution = new Institution();
     institution.setDomains(Arrays.asList(
-        "example.com",        // valid
+        "broadinstitute.org", // valid
+        "uconn.edu",          // valid
         "sub.example.com",    // invalid (subdomain)
-        "test.edu",           // valid
+        "www.test.edu",       // invalid (subdomain)
         "invalid",            // invalid (no TLD)
-        "google.org",         // valid
         "",                   // invalid (empty)
-        "www.test.edu"        // invalid (subdomain)
+        null                  // invalid (null)
     ));
 
     List<String> invalidDomains = InstitutionUtil.getInvalidInstitutionDomains(institution);
-    assertEquals(4, invalidDomains.size());
+    assertEquals(5, invalidDomains.size());
     assertTrue(invalidDomains.contains("sub.example.com"));
     assertTrue(invalidDomains.contains("invalid"));
     assertTrue(invalidDomains.contains(""));
     assertTrue(invalidDomains.contains("www.test.edu"));
+    assertTrue(invalidDomains.contains(null));
   }
 
   @Test
@@ -141,5 +135,44 @@ class InstitutionUtilTest {
 
     List<String> invalidDomains = InstitutionUtil.getInvalidInstitutionDomains(institution);
     assertTrue(invalidDomains.isEmpty());
+  }
+
+  @Test
+  void testCanonicalizeNameValidInput() {
+    assertEquals("Harvard University", InstitutionUtil.canonicalizeName("Harvard University"));
+    assertEquals("University of Connecticut", InstitutionUtil.canonicalizeName("  University of Connecticut  "));
+  }
+
+  @Test
+  void testCanonicalizeNameCurlyQuotes() {
+    // Test left/right double quotation marks
+    assertEquals("A 'Real' University", InstitutionUtil.canonicalizeName("A \"Real\" University"));
+
+    // Test left/right single quotation marks
+    assertEquals("St. John's University", InstitutionUtil.canonicalizeName("St. John’s University"));
+    assertEquals("Mount St. Mary's College", InstitutionUtil.canonicalizeName("Mount St. Mary's College"));
+
+    // Test low-9 quotation marks
+    assertEquals("Test 'Quote' School", InstitutionUtil.canonicalizeName("Test ‚Quote„ School"));
+  }
+
+  @Test
+  void testCanonicalizeNameDoubleToSingleQuotes() {
+    assertEquals("The 'Elite' University", InstitutionUtil.canonicalizeName("The \"Elite\" University"));
+    assertEquals("Harvard 'School' of Medicine", InstitutionUtil.canonicalizeName("Harvard \"School\" of Medicine"));
+  }
+
+  @Test
+  void testCanonicalizeNameInvalidInput() {
+    assertNull(InstitutionUtil.canonicalizeName(null));
+    assertNull(InstitutionUtil.canonicalizeName(""));
+    assertNull(InstitutionUtil.canonicalizeName("   "));
+    assertNull(InstitutionUtil.canonicalizeName("\t\n"));
+  }
+
+  @Test
+  void testCanonicalizeNameWhitespace() {
+    assertEquals("Trimmed University", InstitutionUtil.canonicalizeName("  Trimmed University  "));
+    assertEquals("Spaced College", InstitutionUtil.canonicalizeName("\t Spaced College \n"));
   }
 }
