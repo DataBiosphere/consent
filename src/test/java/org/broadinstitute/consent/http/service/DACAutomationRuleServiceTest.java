@@ -329,7 +329,7 @@ class DACAutomationRuleServiceTest {
     when(userDAO.findUserById(rule.enabledByUserId())).thenReturn(user);
 
     Vote vote = mockFindVoteById(voteId);
-
+    when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(vote));
     Vote openedVote = service.openElectionAndApprove(rule, ruleImplementation, dar, dataset, request);
 
     assertEquals(vote, openedVote);
@@ -363,7 +363,7 @@ class DACAutomationRuleServiceTest {
   }
 
   @Test
-  void testApplyRuleApprove() {
+  void testApplyRuleApprove() throws SQLException {
     User dacChair = new User();
     dacChair.setEraCommonsId("eraCommonsId");
     DACAutomationRule rule = makeDacAutomationRuleGRU();
@@ -371,6 +371,7 @@ class DACAutomationRuleServiceTest {
     DataAccessRequest darHmb = makeDAR();
     Vote vote = new Vote();
     vote.setType(VoteType.RADAR_APPROVE.getValue());
+    vote.setVote(true);
 
     when(electionDAO.insertElection(eq(ElectionType.DATA_ACCESS.getValue()),
         eq(ElectionStatus.OPEN.getValue()), any(), eq(darHmb.getReferenceId()), eq(datasetGru.getDatasetId()))).thenReturn(1);
@@ -379,6 +380,7 @@ class DACAutomationRuleServiceTest {
         VoteType.RADAR_APPROVE.getValue())).thenReturn(1);
     when(voteDAO.findVoteById(1)).thenReturn(vote);
     when(userDAO.findUserById(rule.enabledByUserId())).thenReturn(user);
+    when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(vote));
     Optional<Vote> appliedVote = service.applyRule(rule, datasetGru, darHmb, request);
     assertTrue(appliedVote.isPresent());
     assertEquals(vote, appliedVote.get());
@@ -464,6 +466,7 @@ class DACAutomationRuleServiceTest {
   private Vote mockFindVoteById(Integer voteId) {
     Vote vote = new Vote();
     vote.setVoteId(voteId);
+    vote.setVote(true);
     when(voteDAO.findVoteById(voteId)).thenReturn(vote);
     return vote;
   }
