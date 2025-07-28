@@ -68,23 +68,29 @@ public class InstitutionUtil implements ConsentLogger {
    * @return true if the domain is valid and is not a subdomain, false otherwise
    */
   public static boolean isValidInstitutionDomain(String domain) {
+    // Validate that the domain is not null or empty
     if (StringUtils.isBlank(domain)) {
       return false;
     }
 
+    // Validate the domain format
     DomainValidator validator = DomainValidator.getInstance();
     if (!validator.isValid(domain)) {
       return false;
     }
 
-    // todo: use a better way to check for subdomains
-    long dotCount = domain.chars().filter(ch -> ch == '.').count();
-    return dotCount == 1;
+    // Validate that the domain is not a subdomain
+    if (domain.split("\\.").length > 1) {
+      return false;
+    }
+
+    return true;
   }
 
-  public static String canonicalizeDomain(String domain) {
-    //todo
-    return domain.toLowerCase().trim();
+  public static String canonicalizeName(String name) {
+    //replace
+
+    return null;
   }
 
   /**
