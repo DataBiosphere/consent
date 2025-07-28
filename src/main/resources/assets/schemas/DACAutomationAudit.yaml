@@ -1,0 +1,21 @@
+type: object
+properties:
+  action:
+    type: string
+    enum:
+      - ADD
+      - REMOVE
+    description: 'When the rule was turned on, ADD.  When the rule was turned off, REMOVE.'
+  actionDate:
+    type: integer
+    description: 'When the audit event was generated, in the number of seconds since the epoch.'
+  rule:
+    type: integer
+    description: 'The id of the rule that was toggled.'
+  email:
+    type: string
+    format: email
+    description: 'The email address of the user performing the action.'
+  displayName:
+    type: string
+    description: 'The name of the user performing the action.'

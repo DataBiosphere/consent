@@ -1,0 +1,15 @@
+type: object
+properties:
+  auditRecords:
+      type: array
+      items:
+        $ref: '../schemas/DACAutomationAudit.yaml'
+  totalRecords:
+    type: integer
+    description: "The total number of audit entries for this DAC"
+  pageSize:
+    type: integer
+    description: "The value of the pageSize query parameter used in this request."
+  page:
+    type: integer
+    description: "The page number of results"

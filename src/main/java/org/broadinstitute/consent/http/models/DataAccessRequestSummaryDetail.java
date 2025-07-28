@@ -121,6 +121,11 @@ public class DataAccessRequestSummaryDetail implements SummaryDetail {
             .filter(v -> v.getType().equalsIgnoreCase(VoteType.FINAL.getValue()))
             .filter(v -> Objects.nonNull(v.getVote()))
             .findFirst();
+    Optional<Vote> dacbotApproveVote =
+        getAccessVotes().stream()
+            .filter(v -> v.getType().equalsIgnoreCase(VoteType.RADAR_APPROVE.getValue()))
+            .filter(v -> Objects.nonNull(v.getVote()))
+            .findFirst();
     Optional<User> chairpersonUser =
         finalVote.flatMap(
             vote ->
@@ -141,6 +146,7 @@ public class DataAccessRequestSummaryDetail implements SummaryDetail {
       builder.append(nullToString(null)).append(TAB);
     }
     appendVoteDetails(finalVote, builder);
+    appendVoteDetails(dacbotApproveVote, builder);
     if (Objects.nonNull(getMatchObject())) {
       builder.append(booleanToString(getMatchObject().getMatch())).append(TAB);
     } else {

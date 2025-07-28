@@ -51,6 +51,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.CountryValidator;
+import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.JdbiException;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
@@ -82,11 +83,12 @@ public class DataAccessRequestService implements ConsentLogger {
   private final CountryValidator countryValidator;
 
   private final DacService dacService;
+  private final DACAutomationRuleService ruleService;
   private final String serverUrl;
 
   @Inject
   public DataAccessRequestService(CounterService counterService, DAOContainer container,
-      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO, UserService userService, InstitutionService institutionService, EmailService emailService, ConsentConfiguration config) {
+      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO, UserService userService, InstitutionService institutionService, EmailService emailService, DACAutomationRuleService ruleService, ConsentConfiguration config) {
     this.counterService = counterService;
     this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
     this.darCollectionDAO = container.getDarCollectionDAO();
@@ -96,6 +98,7 @@ public class DataAccessRequestService implements ConsentLogger {
     this.userDAO = container.getUserDAO();
     this.dacService = dacService;
     this.dataAccessRequestServiceDAO = dataAccessRequestServiceDAO;
+    this.ruleService = ruleService;
     this.userService = userService;
     this.institutionService = institutionService;
     this.emailService = emailService;
@@ -200,7 +203,7 @@ public class DataAccessRequestService implements ConsentLogger {
    * @param dataAccessRequest DataAccessRequest with populated DAR data
    * @return The created DAR.
    */
-  public DataAccessRequest createDataAccessRequest(User user, DataAccessRequest dataAccessRequest) {
+  public DataAccessRequest createDataAccessRequest(User user, DataAccessRequest dataAccessRequest, ContainerRequest request) {
     validateDar(user, dataAccessRequest);
 
     Date now = new Date();
@@ -247,6 +250,8 @@ public class DataAccessRequestService implements ConsentLogger {
           user.getEraCommonsId());
     }
     syncDataAccessRequestDatasets(datasetIds, referenceId);
+    // enable this when we're ready to turn on the feature
+    //ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request);
     return findByReferenceId(referenceId);
   }
 

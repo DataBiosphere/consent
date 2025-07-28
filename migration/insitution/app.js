@@ -15,7 +15,7 @@ const { hideBin } = require('yargs/helpers')
  *   node app.js \
  *     --file=./institutions.txt
  *     --token=`gcloud auth print-access-token` \
- *     --host=https://local.broadinstitute.org:27443 \
+ *     --host=https://local.dsde-dev.broadinstitute.org:27443 \
  *
  *
  * EXAMPLE LINE IN FILE:

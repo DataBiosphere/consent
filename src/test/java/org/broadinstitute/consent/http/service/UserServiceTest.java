@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
@@ -35,6 +36,7 @@ import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
+import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
@@ -112,6 +114,9 @@ class UserServiceTest extends AbstractTestHelper {
 
   @Mock
   private InstitutionService institutionService;
+  @Mock
+  private DACAutomationRuleDAO ruleDAO;
+
 
   private UserService service;
 
@@ -119,7 +124,7 @@ class UserServiceTest extends AbstractTestHelper {
   void initService() {
     service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO,
         libraryCardDAO, acknowledgementDAO, fileStorageObjectDAO, samDAO, userServiceDAO, daaDAO,
-        draftServiceDAO, institutionService);
+        draftServiceDAO, institutionService, ruleDAO);
   }
 
   @Test
@@ -449,8 +454,9 @@ class UserServiceTest extends AbstractTestHelper {
     when(userDAO.findUserByEmail(any())).thenReturn(u);
 
     try {
-      service.deleteUserByEmail(randomAlphabetic(10));
+      service.deleteUserByEmail(randomAlphabetic(10), randomInt(1,100));
       verify(draftServiceDAO).deleteDraftsByUser(u);
+      verify(ruleDAO, atLeastOnce()).auditedDeleteAllDACRuleSettingForUser(anyInt(), anyInt());
     } catch (Exception e) {
       fail("Should not fail: " + e.getMessage());
     }
@@ -459,7 +465,7 @@ class UserServiceTest extends AbstractTestHelper {
   @Test
   void testDeleteUserFailure() {
     when(userDAO.findUserByEmail(any())).thenThrow(new NotFoundException());
-    assertThrows(NotFoundException.class, () -> service.deleteUserByEmail(randomAlphabetic(10)));
+    assertThrows(NotFoundException.class, () -> service.deleteUserByEmail(randomAlphabetic(10), randomInt(1,100)));
   }
 
   @Test

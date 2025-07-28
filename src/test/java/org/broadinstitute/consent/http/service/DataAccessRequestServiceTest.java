@@ -65,6 +65,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
+import org.glassfish.jersey.server.ContainerRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.BeforeEach;
@@ -114,6 +115,10 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   private UserService userService;
   @Mock
   private InstitutionService institutionService;
+  @Mock
+  private DACAutomationRuleService ruleService;
+  @Mock
+  private ContainerRequest request;
   private DataAccessRequestService service;
   private String serverUrl;
 
@@ -179,7 +184,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     container.setMatchDAO(matchDAO);
     serverUrl = config.getServicesConfiguration().getLocalURL();
     service = new DataAccessRequestService(counterService, container, dacService,
-        dataAccessRequestServiceDAO, userService, institutionService,  emailService, config);
+        dataAccessRequestServiceDAO, userService, institutionService,  emailService, ruleService, config);
   }
 
   @Test
@@ -193,7 +198,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
     doNothing().when(dataAccessRequestDAO)
         .updateDataByReferenceId(any(), any(), any(), any(), any(), any(), any());
-    DataAccessRequest newDar = service.createDataAccessRequest(user, dar);
+    DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
     assertNotNull(newDar);
   }
 
@@ -214,7 +219,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     doNothing().when(dataAccessRequestDAO)
         .insertDataAccessRequest(anyInt(), anyString(), anyInt(), any(Date.class), any(Date.class),
             any(Date.class), any(Date.class), any(DataAccessRequestData.class), anyString());
-    DataAccessRequest newDar = service.createDataAccessRequest(user, dar);
+    DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
     assertNotNull(newDar);
   }
 
@@ -230,7 +235,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
     assertThrows(SubmittedDARCannotBeEditedException.class,
-        () -> service.createDataAccessRequest(user, dar));
+        () -> service.createDataAccessRequest(user, dar, request));
   }
 
   @Test
@@ -238,7 +243,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = generateDataAccessRequest();
     User user = createUserWithPrerequisites();
     doThrow(BadRequestException.class).when(userService).validateActiveERACredentials(user);
-    assertThrows(BadRequestException.class, () -> service.createDataAccessRequest(user, dar));
+    assertThrows(BadRequestException.class, () -> service.createDataAccessRequest(user, dar, request));
   }
 
   @Test
@@ -262,7 +267,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     dar.setReferenceId("id");
     User user = new User(1, "email@test.org", "Display Name", new Date());
     assertThrows(NIHComplianceRuleException.class,
-        () -> service.createDataAccessRequest(user, dar));
+        () -> service.createDataAccessRequest(user, dar, request));
   }
 
   @Test

@@ -69,6 +69,14 @@ paths:
     $ref: 'paths/daaUpdateByDacId.yaml'
   /api/dac:
     $ref: 'paths/dac.yaml'
+  /api/dac/rules:
+    $ref: './paths/dacRules.yaml'
+  /api/dac/{dacId}/rules:
+    $ref: './paths/dacRulesById.yaml'
+  /api/dac/{dacId}/rules/audit:
+    $ref: './paths/dacRuleAuditsById.yaml'
+  /api/dac/{dacId}/rules/{ruleId}/toggle:
+    $ref: './paths/dacRuleToggle.yaml'
   /api/dac/{dacId}:
     $ref: 'paths/dacById.yaml'
   /api/dac/{dacId}/dataset/{datasetId}:

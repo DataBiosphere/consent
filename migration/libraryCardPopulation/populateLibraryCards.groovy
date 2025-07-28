@@ -13,7 +13,7 @@ import static groovyx.net.http.util.SslUtils.ignoreSslIssues
  * Sample Usage:
  *   groovy populateLibraryCards.groovy \
  *     `gcloud auth print-access-token` \
- *     https://local.broadinstitute.org:27443 \
+ *     https://local.dsde-dev.broadinstitute.org:27443 \
  *     '/path/to/fileOfLibraryCards'
  *
  * EXAMPLE LINE IN FILE:

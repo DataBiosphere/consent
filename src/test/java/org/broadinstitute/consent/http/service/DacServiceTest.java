@@ -29,6 +29,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -83,9 +85,12 @@ class DacServiceTest extends AbstractTestHelper {
   @Mock
   private DacServiceDAO dacServiceDAO;
 
+  @Mock
+  private DACAutomationRuleDAO  ruleDAO;
+
   private void initService() {
     service = new DacService(dacDAO, userDAO, dataSetDAO, electionDAO, dataAccessRequestDAO,
-        voteService, daaService, dacServiceDAO);
+        voteService, daaService, dacServiceDAO, ruleDAO);
   }
 
   @Test
@@ -201,9 +206,9 @@ class DacServiceTest extends AbstractTestHelper {
     dac.setName("DAC name");
     dac.setAssociatedDaa(daa);
     when(dacDAO.findById(any())).thenReturn(dac);
-    doThrow(new IllegalArgumentException()).when(dacServiceDAO).deleteDacAndDaas(any());
+    doThrow(new IllegalArgumentException()).when(dacServiceDAO).deleteDacAndDaas(any(), any());
     initService();
-    assertThrows(IllegalArgumentException.class, () -> service.deleteDac(dac.getDacId()));
+    assertThrows(IllegalArgumentException.class, () -> service.deleteDac(any(), dac.getDacId()));
   }
 
   @ParameterizedTest
@@ -226,9 +231,9 @@ class DacServiceTest extends AbstractTestHelper {
     initService();
 
     if (dac.getName().toLowerCase().contains("broad")) {
-      assertThrows(IllegalArgumentException.class, () -> service.deleteDac(dac.getDacId()));
+      assertThrows(IllegalArgumentException.class, () -> service.deleteDac(any(), dac.getDacId()));
     } else {
-      assertDoesNotThrow(() -> service.deleteDac(dac.getDacId()));
+      assertDoesNotThrow(() -> service.deleteDac(any(), dac.getDacId()));
     }
   }
 
@@ -298,7 +303,7 @@ class DacServiceTest extends AbstractTestHelper {
     initService();
 
     try {
-      service.removeDacMember(role, member, dac);
+      service.removeDacMember(role, member, dac, 1);
     } catch (Exception e) {
       fail();
     }
@@ -316,15 +321,17 @@ class DacServiceTest extends AbstractTestHelper {
     dac.setMembers(Collections.singletonList(getDacUsers().get(1)));
     doNothing().when(dacDAO).removeDacMember(anyInt());
     doNothing().when(voteService).deleteOpenDacVotesForUser(any(), any());
+    when(ruleDAO.auditedDeleteDACRuleSettingByUser(anyInt(), anyInt(), anyInt())).thenReturn(1);
     initService();
 
     try {
-      service.removeDacMember(role, chair1, dac);
+      service.removeDacMember(role, chair1, dac, 1);
     } catch (Exception e) {
       fail();
     }
     verify(dacDAO, atLeastOnce()).removeDacMember(anyInt());
     verify(voteService, atLeastOnce()).deleteOpenDacVotesForUser(any(), any());
+    verify(ruleDAO, atLeastOnce()).auditedDeleteDACRuleSettingByUser(anyInt(), anyInt(), anyInt());
   }
 
   @Test
@@ -337,9 +344,10 @@ class DacServiceTest extends AbstractTestHelper {
     initService();
 
     assertThrows(BadRequestException.class, () -> {
-      service.removeDacMember(role, chair, dac);
+      service.removeDacMember(role, chair, dac, 1);
       verify(dacDAO, times(0)).removeDacMember(anyInt());
       verify(voteService, times(0)).deleteOpenDacVotesForUser(any(), any());
+      verify(ruleDAO, times(0)).auditedDeleteDACRuleSettingByUser(anyInt(), anyInt(), anyInt());
     });
   }
 
