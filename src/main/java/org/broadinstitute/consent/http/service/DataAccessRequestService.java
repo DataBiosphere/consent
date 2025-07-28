@@ -250,8 +250,7 @@ public class DataAccessRequestService implements ConsentLogger {
           user.getEraCommonsId());
     }
     syncDataAccessRequestDatasets(datasetIds, referenceId);
-    // TODO: enable this when we're ready to turn on the feature
-    //ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request);
+    ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request);
     return findByReferenceId(referenceId);
   }
 

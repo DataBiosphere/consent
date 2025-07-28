@@ -126,26 +126,31 @@ public class DACAutomationRuleService implements ConsentLogger {
 
   public void triggerDACRuleSettings(
       User researcher, List<Integer> datasetIds, String referenceId, ContainerRequest request) {
-    DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
-    List<Vote> approvalVotes = new ArrayList<>();
-    datasetIds.forEach(
-        datasetId -> {
-          Dataset dataset = datasetDAO.findDatasetById(datasetId);
-          List<DACAutomationRule> rules =
-              ruleDAO.findAllDACAutomationRulesByDACId(dataset.getDacId());
-          rules.forEach(
-              rule -> {
-                boolean isActive = rule.enabledByUserId() != null;
-                if (isActive) {
-                  Optional<Vote> optionalVote = applyRule(rule, dataset, dar, request);
-                  optionalVote.ifPresent(approvalVotes::add);
-                }
-              });
-        });
+    try {
+      DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
+      List<Vote> approvalVotes = new ArrayList<>();
+      datasetIds.forEach(
+          datasetId -> {
+            Dataset dataset = datasetDAO.findDatasetById(datasetId);
+            List<DACAutomationRule> rules =
+                ruleDAO.findAllDACAutomationRulesByDACId(dataset.getDacId());
+            rules.forEach(
+                rule -> {
+                  boolean isActive = rule.enabledByUserId() != null;
+                  if (isActive) {
+                    Optional<Vote> optionalVote = applyRule(rule, dataset, dar, request);
+                    optionalVote.ifPresent(approvalVotes::add);
+                  }
+                });
+          });
 
-    if (!approvalVotes.isEmpty()) {
-      voteService.sendDatasetApprovalNotifications(approvalVotes, researcher);
+      if (!approvalVotes.isEmpty()) {
+        voteService.sendDatasetApprovalNotifications(approvalVotes, researcher);
+      }
+    } catch (Exception e) {
+      logWarn("Error triggering DAC Rule Settings", e);
     }
+
   }
 
   @VisibleForTesting

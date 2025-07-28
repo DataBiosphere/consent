@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -295,6 +296,20 @@ class DACAutomationRuleServiceTest {
     serviceSpy.triggerDACRuleSettings(researcher, datasetIds, referenceId, request);
 
     verify(serviceSpy, never()).applyRule(any(), any(), any(), any());
+  }
+
+  @Test
+  void testTriggerDACRuleSettings_does_not_throw(){
+    User researcher = makeResearcher();
+    DataAccessRequest dar = makeDAR();
+    String referenceId = dar.getReferenceId();
+    List<Integer> datasetIds = List.of(1);
+
+    doThrow(new RuntimeException("Test exception"))
+        .when(dataAccessRequestDAO)
+        .findByReferenceId(referenceId);
+
+    assertDoesNotThrow(() -> service.triggerDACRuleSettings(researcher, datasetIds, referenceId, request));
   }
 
   @Test
