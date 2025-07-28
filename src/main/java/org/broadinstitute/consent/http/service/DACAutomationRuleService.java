@@ -67,6 +67,17 @@ public class DACAutomationRuleService implements ConsentLogger {
     this.useRestrictionConverter = useRestrictionConverter;
   }
 
+  @VisibleForTesting
+  protected static RuleImplementationInterface getRuleImplementation(
+      DACAutomationRule rule) {
+    DACAutomationRuleType type = rule.ruleType();
+    return Rules.implementationList.stream()
+        .filter(r -> r.getRuleType().equals(type))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException(
+            String.format("No rule implementation found for type: %s", type)));
+  }
+
   public List<DACAutomationRule> findAll() {
     return ruleDAO.findAll();
   }
@@ -143,17 +154,6 @@ public class DACAutomationRuleService implements ConsentLogger {
           dataset.getDatasetId()));
     }
     return Optional.empty();
-  }
-
-  @VisibleForTesting
-  protected static RuleImplementationInterface getRuleImplementation(
-      DACAutomationRule rule) {
-    DACAutomationRuleType type = rule.ruleType();
-    return Rules.implementationList.stream()
-        .filter(r -> r.getRuleType().equals(type))
-        .findFirst()
-        .orElseThrow(() -> new IllegalArgumentException(
-            String.format("No rule implementation found for type: %s", type)));
   }
 
   @VisibleForTesting

@@ -36,11 +36,17 @@ public class DataCustodianApprovalMessage extends MailMessage {
 
   @Override
   public Object createModel(String serverUrl) {
-    return Map.of("datasets", datasets,
-        "dataDepositorName", dataDepositorName,
-        "darCode", darCode,
-        "researcherEmail", researcherEmail,
-        "radarText", radarText);
+    return Map.of(
+        "datasets",
+        datasets,
+        "dataDepositorName",
+        dataDepositorName,
+        "darCode",
+        darCode,
+        "researcherEmail",
+        researcherEmail,
+        "radarText",
+        radarText);
   }
 
   @Override

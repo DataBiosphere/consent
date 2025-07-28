@@ -13,9 +13,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.Update;
 
-/**
- * Handle transactional, multi-table queries for vote operations.
- */
+/** Handle transactional, multi-table queries for vote operations. */
 public class VoteServiceDAO {
 
   private final Jdbi jdbi;
@@ -31,7 +29,7 @@ public class VoteServiceDAO {
    * Update vote values. 'FINAL' votes impact elections so matching elections marked as
    * ElectionStatus.CLOSED as well.
    *
-   * @param votes     List of Votes to update values and rationales for
+   * @param votes List of Votes to update values and rationales for
    * @param voteValue Value to update the votes to
    * @param rationale Value to update the rationales to. Only update if non-null.
    * @return The updated Vote
@@ -48,9 +46,12 @@ public class VoteServiceDAO {
           handle.getConnection().setAutoCommit(false);
           handle.useTransaction(
               h -> {
-                final String updateVoteWithRationale = "UPDATE vote SET vote = :vote, updatedate = :updateDate, rationale = :rationale WHERE voteid = :voteId";
-                final String updateVoteWithoutRationale = "UPDATE vote SET vote = :vote, updatedate = :updateDate WHERE voteid = :voteId";
-                final String updateElectionStatus = "UPDATE election SET status = :status WHERE election_id = :electionId";
+                final String updateVoteWithRationale =
+                    "UPDATE vote SET vote = :vote, updatedate = :updateDate, rationale = :rationale WHERE voteid = :voteId";
+                final String updateVoteWithoutRationale =
+                    "UPDATE vote SET vote = :vote, updatedate = :updateDate WHERE voteid = :voteId";
+                final String updateElectionStatus =
+                    "UPDATE election SET status = :status WHERE election_id = :electionId";
                 final Date now = new Date();
                 votes.forEach(
                     vote -> {

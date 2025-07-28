@@ -65,8 +65,8 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
-import org.jetbrains.annotations.NotNull;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -1534,6 +1534,14 @@ institution or library cards issued: Internal Collaborator member:  \
             serverUrl + "dar_application_review/%d".formatted(closeout.dar().getCollectionId()));
   }
 
+  private DataAccessRequest getMockedDar(String darCode, String referenceId, User user) {
+    DataAccessRequest dar = mock(DataAccessRequest.class);
+    when(dar.getReferenceId()).thenReturn(referenceId);
+    when(dar.getDarCode()).thenReturn(darCode);
+    when(dar.getUserId()).thenReturn(user.getUserId());
+    return dar;
+  }
+
   record  CloseoutWithUserAndSigningOfficialApproval(User actor, User submitter, DataAccessRequest dar) {
     public CloseoutWithUserAndSigningOfficialApproval() {
       this(new User(), new User(),  new DataAccessRequest());
@@ -1552,14 +1560,6 @@ institution or library cards issued: Internal Collaborator member:  \
       data.setCloseoutSupplement(new CloseoutSupplement(List.of(""), "", actor.getUserId()));
       dar.setData(data);
     }
-  }
-
-  private DataAccessRequest getMockedDar(String darCode, String referenceId, User user) {
-    DataAccessRequest dar = mock(DataAccessRequest.class);
-    when(dar.getReferenceId()).thenReturn(referenceId);
-    when(dar.getDarCode()).thenReturn(darCode);
-    when(dar.getUserId()).thenReturn(user.getUserId());
-    return dar;
   }
 
   static class DarDatasetMatcher implements ArgumentMatcher<List<DarDataset>> {

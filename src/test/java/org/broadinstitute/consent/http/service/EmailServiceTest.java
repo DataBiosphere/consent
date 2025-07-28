@@ -51,6 +51,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class EmailServiceTest extends AbstractTestHelper {
 
+  private static final String SERVER_URL = "http://localhost:8000/#/";
+  private static final String FROM = "from@duos";
   private EmailService service;
   @Mock
   private UserDAO userDAO;
@@ -58,12 +60,8 @@ class EmailServiceTest extends AbstractTestHelper {
   private MailMessageDAO emailDAO;
   @Mock
   private SendGridAPI sendGridAPI;
-
   @Mock
   private FreeMarkerTemplateHelper templateHelper;
-
-  private static final String SERVER_URL = "http://localhost:8000/#/";
-  private static final String FROM = "from@duos";
 
   @BeforeEach
   void initService() {

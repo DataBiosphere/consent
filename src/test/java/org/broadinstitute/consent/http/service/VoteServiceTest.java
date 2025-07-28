@@ -71,34 +71,32 @@ class VoteServiceTest extends AbstractTestHelper {
 
   private VoteService service;
 
-  @Mock
-  private UserDAO userDAO;
-  @Mock
-  private DacDAO dacDAO;
-  @Mock
-  private DataAccessRequestDAO dataAccessRequestDAO;
-  @Mock
-  private DatasetDAO datasetDAO;
-  @Mock
-  private ElectionDAO electionDAO;
-  @Mock
-  private EmailService emailService;
-  @Mock
-  private ElasticSearchService elasticSearchService;
-  @Mock
-  private UseRestrictionConverter useRestrictionConverter;
-  @Mock
-  private VoteDAO voteDAO;
-  @Mock
-  private VoteServiceDAO voteServiceDAO;
-  @Mock
-  private User user;
+  @Mock private UserDAO userDAO;
+  @Mock private DacDAO dacDAO;
+  @Mock private DataAccessRequestDAO dataAccessRequestDAO;
+  @Mock private DatasetDAO datasetDAO;
+  @Mock private ElectionDAO electionDAO;
+  @Mock private EmailService emailService;
+  @Mock private ElasticSearchService elasticSearchService;
+  @Mock private UseRestrictionConverter useRestrictionConverter;
+  @Mock private VoteDAO voteDAO;
+  @Mock private VoteServiceDAO voteServiceDAO;
+  @Mock private User user;
 
   @BeforeEach
   void initService() {
-    service = new VoteService(userDAO, dacDAO, dataAccessRequestDAO,
-        datasetDAO, electionDAO, emailService, elasticSearchService,
-        useRestrictionConverter, voteDAO, voteServiceDAO);
+    service =
+        new VoteService(
+            userDAO,
+            dacDAO,
+            dataAccessRequestDAO,
+            datasetDAO,
+            electionDAO,
+            emailService,
+            elasticSearchService,
+            useRestrictionConverter,
+            voteDAO,
+            voteServiceDAO);
   }
 
   @Test
@@ -246,10 +244,10 @@ class VoteServiceTest extends AbstractTestHelper {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(closedAccessElection));
 
     List<Vote> voteList = List.of(v);
-    assertThrows(ConsentConflictException.class,
+    assertThrows(
+        ConsentConflictException.class,
         () -> service.updateVotesWithValue(voteList, true, "rationale", user));
   }
-
 
   @Test
   void testUpdateVotesWithValue_MultipleElectionsDifferentStatuses() {
@@ -265,11 +263,12 @@ class VoteServiceTest extends AbstractTestHelper {
     Election canceledAccessElection = new Election();
     canceledAccessElection.setElectionType(ElectionType.DATA_ACCESS.getValue());
     canceledAccessElection.setStatus(ElectionStatus.CANCELED.getValue());
-    when(electionDAO.findElectionsByIds(any())).thenReturn(
-        List.of(openAccessElection, closedAccessElection, canceledAccessElection));
+    when(electionDAO.findElectionsByIds(any()))
+        .thenReturn(List.of(openAccessElection, closedAccessElection, canceledAccessElection));
 
     List<Vote> voteList = List.of(v);
-    assertThrows(ConsentConflictException.class,
+    assertThrows(
+        ConsentConflictException.class,
         () -> service.updateVotesWithValue(voteList, true, "rationale", user));
   }
 
@@ -337,7 +336,6 @@ class VoteServiceTest extends AbstractTestHelper {
     }
   }
 
-
   @Test
   void testUpdateRationaleByVoteIds() {
     doNothing().when(voteDAO).updateRationaleByVoteIds(any(), any());
@@ -377,8 +375,8 @@ class VoteServiceTest extends AbstractTestHelper {
     election.setStatus(ElectionStatus.CLOSED.getValue());
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
     List<Integer> votes = List.of(1);
-    assertThrows(ConsentConflictException.class,
-        () -> service.updateRationaleByVoteIds(votes, "rationale"));
+    assertThrows(
+        ConsentConflictException.class, () -> service.updateRationaleByVoteIds(votes, "rationale"));
   }
 
   @Test
@@ -388,8 +386,8 @@ class VoteServiceTest extends AbstractTestHelper {
     election.setStatus(ElectionStatus.OPEN.getValue());
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of(election));
     List<Integer> votes = List.of(1);
-    assertThrows(ConsentConflictException.class,
-        () -> service.updateRationaleByVoteIds(votes, "rationale"));
+    assertThrows(
+        ConsentConflictException.class, () -> service.updateRationaleByVoteIds(votes, "rationale"));
   }
 
   @Test
@@ -518,7 +516,8 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.sendDatasetApprovalNotifications(List.of(v1, v2), researcher);
     // Since we have 1 collection with different DAR/Datasets, we should be sending 1 email
-    verify(emailService, times(2)).sendResearcherDarApproved(any(), any(), anyList(), any(), anyBoolean());
+    verify(emailService, times(2))
+        .sendResearcherDarApproved(any(), any(), anyList(), any(), anyBoolean());
   }
 
   @Test
@@ -605,7 +604,8 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.sendDatasetApprovalNotifications(List.of(v1, v2), researcher);
     // Since we have 2 collections with different DAR/Datasets, we should be sending 2 emails
-    verify(emailService, times(2)).sendResearcherDarApproved(any(), any(), anyList(), any(), anyBoolean());
+    verify(emailService, times(2))
+        .sendResearcherDarApproved(any(), any(), anyList(), any(), anyBoolean());
   }
 
   @Test
@@ -692,9 +692,9 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.sendDatasetApprovalNotifications(List.of(v1, v2), researcher);
     // Since we have 2 collections with different DAR/Datasets, we should be sending 2 emails
-    verify(emailService, times(2)).sendResearcherDarApproved(any(), any(), anyList(), any(), eq(true));
+    verify(emailService, times(2))
+        .sendResearcherDarApproved(any(), any(), anyList(), any(), eq(true));
   }
-
 
   @Test
   void testNotifyResearchersOfDarApproval_FalseVote() throws Exception {
@@ -726,7 +726,8 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.sendDatasetApprovalNotifications(List.of(v1), user);
     // Since we have a false vote, we should not be sending any email
-    verify(emailService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any(), anyBoolean());
+    verify(emailService, times(0))
+        .sendResearcherDarApproved(any(), any(), anyList(), any(), anyBoolean());
     // Similar check for all DAO calls
     verify(dataAccessRequestDAO, times(1)).findByReferenceIds(any());
     verify(datasetDAO, times(0)).findDatasetsByIdList(any());
@@ -762,7 +763,8 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.sendDatasetApprovalNotifications(List.of(v1), user);
     // Since we have a non-final vote, we should not be sending any email
-    verify(emailService, times(0)).sendResearcherDarApproved(any(), any(), anyList(), any(), anyBoolean());
+    verify(emailService, times(0))
+        .sendResearcherDarApproved(any(), any(), anyList(), any(), anyBoolean());
     // Similar check for all DAO calls
     verify(dataAccessRequestDAO, times(1)).findByReferenceIds(any());
     verify(datasetDAO, times(0)).findDatasetsByIdList(any());
@@ -806,14 +808,8 @@ class VoteServiceTest extends AbstractTestHelper {
 
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code", false);
-      verify(emailService, times(1)).sendDataCustodianApprovalMessage(
-          any(),
-          any(),
-          any(),
-          any(),
-          any(),
-          eq(false)
-      );
+      verify(emailService, times(1))
+          .sendDataCustodianApprovalMessage(any(), any(), any(), any(), any(), eq(false));
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -855,15 +851,13 @@ class VoteServiceTest extends AbstractTestHelper {
     when(userDAO.findUserById(submitterNotFound.getUserId())).thenReturn(null);
 
     List<Dataset> datasetsList = List.of(d1, d2);
-    assertThrows(IllegalArgumentException.class,
-        () -> service.notifyCustodiansOfApprovedDatasets(datasetsList, researcher, "Dar Code", false));
-    verify(emailService, times(0)).sendDataCustodianApprovalMessage(
-        any(),
-        any(),
-        any(),
-        any(),
-        any(),
-        anyBoolean());
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            service.notifyCustodiansOfApprovedDatasets(
+                datasetsList, researcher, "Dar Code", false));
+    verify(emailService, times(0))
+        .sendDataCustodianApprovalMessage(any(), any(), any(), any(), any(), anyBoolean());
   }
 
   @Test
@@ -911,19 +905,13 @@ class VoteServiceTest extends AbstractTestHelper {
 
     when(userDAO.findUserById(studySubmitter.getUserId())).thenReturn(studySubmitter);
     when(userDAO.findUserById(datasetSubmitter.getUserId())).thenReturn(datasetSubmitter);
-    when(userDAO.findUsersByEmailList(List.of(custodian.getEmail()))).thenReturn(
-        List.of(custodian));
+    when(userDAO.findUsersByEmailList(List.of(custodian.getEmail())))
+        .thenReturn(List.of(custodian));
 
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", false);
-      verify(emailService, times(3)).sendDataCustodianApprovalMessage(
-          any(),
-          any(),
-          any(),
-          any(),
-          any(),
-          eq(false)
-      );
+      verify(emailService, times(3))
+          .sendDataCustodianApprovalMessage(any(), any(), any(), any(), any(), eq(false));
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -974,19 +962,13 @@ class VoteServiceTest extends AbstractTestHelper {
 
     when(userDAO.findUserById(studySubmitter.getUserId())).thenReturn(studySubmitter);
     when(userDAO.findUserById(datasetSubmitter.getUserId())).thenReturn(datasetSubmitter);
-    when(userDAO.findUsersByEmailList(List.of(custodian.getEmail()))).thenReturn(
-        List.of(custodian));
+    when(userDAO.findUsersByEmailList(List.of(custodian.getEmail())))
+        .thenReturn(List.of(custodian));
 
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", true);
-      verify(emailService, times(3)).sendDataCustodianApprovalMessage(
-          any(),
-          any(),
-          any(),
-          any(),
-          any(),
-          eq(true)
-      );
+      verify(emailService, times(3))
+          .sendDataCustodianApprovalMessage(any(), any(), any(), any(), any(), eq(true));
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -1042,19 +1024,13 @@ class VoteServiceTest extends AbstractTestHelper {
 
     when(userDAO.findUserById(studySubmitter.getUserId())).thenReturn(studySubmitter);
     when(userDAO.findUserById(datasetSubmitter.getUserId())).thenReturn(datasetSubmitter);
-    when(userDAO.findUsersByEmailList(List.of(custodian.getEmail()))).thenReturn(
-        List.of(custodian));
+    when(userDAO.findUsersByEmailList(List.of(custodian.getEmail())))
+        .thenReturn(List.of(custodian));
 
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", false);
-      verify(emailService, times(3)).sendDataCustodianApprovalMessage(
-          any(),
-          any(),
-          any(),
-          any(),
-          any(),
-          eq(false)
-      );
+      verify(emailService, times(3))
+          .sendDataCustodianApprovalMessage(any(), any(), any(), any(), any(), eq(false));
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -1074,9 +1050,11 @@ class VoteServiceTest extends AbstractTestHelper {
     vote.setType(VoteType.FINAL.getValue());
     vote.setElectionId(election.getElectionId());
     when(electionDAO.findElectionsByIds(List.of())).thenReturn(List.of());
-    when(electionDAO.findElectionsByIds(List.of(election.getElectionId()))).thenReturn(List.of(election));
+    when(electionDAO.findElectionsByIds(List.of(election.getElectionId())))
+        .thenReturn(List.of(election));
     when(datasetDAO.findDatasetsByIdList(List.of())).thenReturn(List.of());
-    when(datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId()))).thenReturn(List.of(dataset));
+    when(datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId())))
+        .thenReturn(List.of(dataset));
     ContainerRequest request = mock();
 
     assertDoesNotThrow(() -> service.logDARApprovalOrRejection(localUser, List.of(vote), request));
@@ -1092,19 +1070,24 @@ class VoteServiceTest extends AbstractTestHelper {
     dar.setReferenceId(UUID.randomUUID().toString());
     dar.setDatasetIds(List.of(dataset.getDatasetId()));
 
-    User researcher =  createUserWithRole(UserRoles.RESEARCHER);
+    User researcher = createUserWithRole(UserRoles.RESEARCHER);
     researcher.setInstitutionId(1);
     User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL);
     signingOfficial.setEmailPreference(true);
-    when(userDAO.getSOsByInstitution(researcher.getInstitutionId())).thenReturn(List.of(signingOfficial));
+    when(userDAO.getSOsByInstitution(researcher.getInstitutionId()))
+        .thenReturn(List.of(signingOfficial));
 
-    service.notifySigningOfficialsOfApprovedDatasets(List.of(dataset), researcher, dar, "DAR-000123", "translation", false);
-    verify(emailService, never()).sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
-    verify(emailService, times(1)).sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), eq(false));
+    service.notifySigningOfficialsOfApprovedDatasets(
+        List.of(dataset), researcher, dar, "DAR-000123", "translation", false);
+    verify(emailService, never())
+        .sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
+    verify(emailService, times(1))
+        .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), eq(false));
   }
 
   @Test
-  void testNotifySigningOfficialsOfRADARApprovedDatasets_DAR() throws TemplateException, IOException {
+  void testNotifySigningOfficialsOfRADARApprovedDatasets_DAR()
+      throws TemplateException, IOException {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
     dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
@@ -1113,22 +1096,25 @@ class VoteServiceTest extends AbstractTestHelper {
     dar.setReferenceId(UUID.randomUUID().toString());
     dar.setDatasetIds(List.of(dataset.getDatasetId()));
 
-    User researcher =  createUserWithRole(UserRoles.RESEARCHER);
+    User researcher = createUserWithRole(UserRoles.RESEARCHER);
     researcher.setInstitutionId(1);
     User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL);
     signingOfficial.setEmailPreference(true);
-    when(userDAO.getSOsByInstitution(researcher.getInstitutionId())).thenReturn(List.of(signingOfficial));
+    when(userDAO.getSOsByInstitution(researcher.getInstitutionId()))
+        .thenReturn(List.of(signingOfficial));
 
-    service.notifySigningOfficialsOfApprovedDatasets(List.of(dataset), researcher, dar, "DAR-000123", "translation", true);
-    verify(emailService, never()).sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
-    verify(emailService, times(1)).sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), eq(true));
+    service.notifySigningOfficialsOfApprovedDatasets(
+        List.of(dataset), researcher, dar, "DAR-000123", "translation", true);
+    verify(emailService, never())
+        .sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
+    verify(emailService, times(1))
+        .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), eq(true));
   }
 
   @Test
   void testNotifyDACOfRadarApprovals_not_RADAR() throws TemplateException, IOException {
 
-    service.notifyDACOfRadarApprovals(
-        List.of(new Dataset()), new User(), "", "", false);
+    service.notifyDACOfRadarApprovals(List.of(new Dataset()), new User(), "", "", false);
     verify(emailService, never()).sendNewDARRADARApprovalToDAC(any(), any(), any(), any(), any());
   }
 
@@ -1209,19 +1195,24 @@ class VoteServiceTest extends AbstractTestHelper {
     child.setSubmissionDate(Timestamp.from(Instant.now()));
     child.setDatasetIds(List.of(dataset.getDatasetId()));
 
-    User researcher =  createUserWithRole(UserRoles.RESEARCHER);
+    User researcher = createUserWithRole(UserRoles.RESEARCHER);
     researcher.setInstitutionId(1);
     User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL);
     signingOfficial.setEmailPreference(true);
-    when(userDAO.getSOsByInstitution(researcher.getInstitutionId())).thenReturn(List.of(signingOfficial));
+    when(userDAO.getSOsByInstitution(researcher.getInstitutionId()))
+        .thenReturn(List.of(signingOfficial));
 
-    service.notifySigningOfficialsOfApprovedDatasets(List.of(dataset), researcher, child, "DAR-000123", "translation", false);
-    verify(emailService, times(1)).sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
-    verify(emailService, never()).sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
+    service.notifySigningOfficialsOfApprovedDatasets(
+        List.of(dataset), researcher, child, "DAR-000123", "translation", false);
+    verify(emailService, times(1))
+        .sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
+    verify(emailService, never())
+        .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
   }
 
   @Test
-  void testNotifySigningOfficialsOfApprovedDatasets_NoResearcher() throws TemplateException, IOException {
+  void testNotifySigningOfficialsOfApprovedDatasets_NoResearcher()
+      throws TemplateException, IOException {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
     dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
@@ -1230,30 +1221,38 @@ class VoteServiceTest extends AbstractTestHelper {
     dar.setReferenceId(UUID.randomUUID().toString());
     dar.setDatasetIds(List.of(dataset.getDatasetId()));
 
-    service.notifySigningOfficialsOfApprovedDatasets(List.of(dataset), null, dar, "DAR-000123", "translation", false);
-    verify(emailService, never()).sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
-    verify(emailService, never()).sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
+    service.notifySigningOfficialsOfApprovedDatasets(
+        List.of(dataset), null, dar, "DAR-000123", "translation", false);
+    verify(emailService, never())
+        .sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
+    verify(emailService, never())
+        .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
   }
 
   @Test
-  void testNotifySigningOfficialsOfApprovedDatasets_NoInstitution() throws TemplateException, IOException {
+  void testNotifySigningOfficialsOfApprovedDatasets_NoInstitution()
+      throws TemplateException, IOException {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
     dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
 
-    User researcher =  createUserWithRole(UserRoles.RESEARCHER);
+    User researcher = createUserWithRole(UserRoles.RESEARCHER);
 
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
     dar.setDatasetIds(List.of(dataset.getDatasetId()));
 
-    service.notifySigningOfficialsOfApprovedDatasets(List.of(dataset), researcher, dar, "DAR-000123", "translation", false);
-    verify(emailService, never()).sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
-    verify(emailService, never()).sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
+    service.notifySigningOfficialsOfApprovedDatasets(
+        List.of(dataset), researcher, dar, "DAR-000123", "translation", false);
+    verify(emailService, never())
+        .sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
+    verify(emailService, never())
+        .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
   }
 
   @Test
-  void testNotifySigningOfficialsOfApprovedDatasets_NoSigningOfficials() throws TemplateException, IOException {
+  void testNotifySigningOfficialsOfApprovedDatasets_NoSigningOfficials()
+      throws TemplateException, IOException {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
     dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
@@ -1262,13 +1261,16 @@ class VoteServiceTest extends AbstractTestHelper {
     dar.setReferenceId(UUID.randomUUID().toString());
     dar.setDatasetIds(List.of(dataset.getDatasetId()));
 
-    User researcher =  createUserWithRole(UserRoles.RESEARCHER);
+    User researcher = createUserWithRole(UserRoles.RESEARCHER);
     researcher.setInstitutionId(1);
     when(userDAO.getSOsByInstitution(researcher.getInstitutionId())).thenReturn(List.of());
 
-    service.notifySigningOfficialsOfApprovedDatasets(List.of(dataset), researcher, dar, "DAR-000123", "translation", false);
-    verify(emailService, never()).sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
-    verify(emailService, never()).sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
+    service.notifySigningOfficialsOfApprovedDatasets(
+        List.of(dataset), researcher, dar, "DAR-000123", "translation", false);
+    verify(emailService, never())
+        .sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
+    verify(emailService, never())
+        .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
   }
 
   private User createUserWithRole(UserRoles userRoles) {
@@ -1306,5 +1308,4 @@ class VoteServiceTest extends AbstractTestHelper {
     v.setVote(vote);
     return v;
   }
-
 }

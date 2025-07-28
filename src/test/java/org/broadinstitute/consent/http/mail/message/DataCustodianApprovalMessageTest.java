@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.mail.message;
 
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -94,6 +93,7 @@ class DataCustodianApprovalMessageTest {
     assertTrue(
         Objects.requireNonNull(parsedTemplate.getElementById("content"))
             .text()
-            .contains("researcher@email.com was RADAR approved by the DAC for the following datasets"));
+            .contains(
+                "researcher@email.com was RADAR approved by the DAC for the following datasets"));
   }
 }

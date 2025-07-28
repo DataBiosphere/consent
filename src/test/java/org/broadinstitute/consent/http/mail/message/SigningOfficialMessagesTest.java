@@ -24,20 +24,27 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 class SigningOfficialMessagesTest extends AbstractTestHelper {
 
-  private FreeMarkerTemplateHelper helper;
-
-  private static User toUser;
-
-  private static User researcher;
-
-  private static List<Dataset> datasets;
-
   private static final String DAR_CODE = "DAR-123";
-
   private static final String REFERENCE_ID = UUID.randomUUID().toString();
-
   private static final String TRANSLATION = new DataUseBuilder().setGeneralUse(true).build()
       .toString();
+  private static User toUser;
+  private static User researcher;
+  private static List<Dataset> datasets;
+  private FreeMarkerTemplateHelper helper;
+
+  private static Stream<Arguments> messageProvider() {
+    return Stream.of(
+        Arguments.of(new SoDARApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
+            TRANSLATION, false)),
+        Arguments.of(new SoDARApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
+            TRANSLATION, true)),
+        Arguments.of(new SoPRApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
+            TRANSLATION)),
+        Arguments.of(new SoDARSubmitted(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets)),
+        Arguments.of(new SoPRSubmitted(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets))
+    );
+  }
 
   @BeforeEach
   void setUp() {
@@ -55,19 +62,6 @@ class SigningOfficialMessagesTest extends AbstractTestHelper {
     dataset.setAlias(1);
     dataset.setDatasetIdentifier();
     datasets = List.of(dataset);
-  }
-
-  private static Stream<Arguments> messageProvider() {
-    return Stream.of(
-        Arguments.of(new SoDARApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
-            TRANSLATION, false)),
-        Arguments.of(new SoDARApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
-            TRANSLATION, true)),
-        Arguments.of(new SoPRApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
-            TRANSLATION)),
-        Arguments.of(new SoDARSubmitted(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets)),
-        Arguments.of(new SoPRSubmitted(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets))
-    );
   }
 
   @ParameterizedTest

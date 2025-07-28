@@ -32,6 +32,7 @@ public class DatasetMailDTO {
   public int hashCode() {
     return Objects.hash(identifier, name);
   }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

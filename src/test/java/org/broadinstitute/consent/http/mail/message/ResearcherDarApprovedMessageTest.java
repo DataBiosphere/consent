@@ -67,7 +67,9 @@ class ResearcherDarApprovedMessageTest extends AbstractTestHelper {
         parsedTemplate.title());
     assertEquals(
         "Hello " + researcherUserName + ",", getElementTextById(parsedTemplate, "userName"));
-    assertTrue(templateString.contains("Your data access request application " + darCode + " was approved"));
+    assertTrue(
+        templateString.contains(
+            "Your data access request application " + darCode + " was approved"));
     assertTrue(templateString.contains(datasetId));
     assertTrue(templateString.contains(datasetName));
     assertTrue(templateString.contains(researcherEmail));
@@ -99,7 +101,9 @@ class ResearcherDarApprovedMessageTest extends AbstractTestHelper {
         parsedTemplate.title());
     assertEquals(
         "Hello " + researcherUserName + ",", getElementTextById(parsedTemplate, "userName"));
-    assertTrue(templateString.contains("Your data access request application " + darCode + " was RADAR approved"));
+    assertTrue(
+        templateString.contains(
+            "Your data access request application " + darCode + " was RADAR approved"));
     assertTrue(templateString.contains(datasetId));
     assertTrue(templateString.contains(datasetName));
     assertTrue(templateString.contains(researcherEmail));
