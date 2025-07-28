@@ -51,6 +51,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.CountryValidator;
+import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.JdbiException;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
@@ -202,7 +203,7 @@ public class DataAccessRequestService implements ConsentLogger {
    * @param dataAccessRequest DataAccessRequest with populated DAR data
    * @return The created DAR.
    */
-  public DataAccessRequest createDataAccessRequest(User user, DataAccessRequest dataAccessRequest) {
+  public DataAccessRequest createDataAccessRequest(User user, DataAccessRequest dataAccessRequest, ContainerRequest request) {
     validateDar(user, dataAccessRequest);
 
     Date now = new Date();
@@ -249,7 +250,8 @@ public class DataAccessRequestService implements ConsentLogger {
           user.getEraCommonsId());
     }
     syncDataAccessRequestDatasets(datasetIds, referenceId);
-    ruleService.triggerDACRuleSettings(user, datasetIds, referenceId);
+    // TODO: enable this when we're ready to turn on the feature
+    //ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request);
     return findByReferenceId(referenceId);
   }
 

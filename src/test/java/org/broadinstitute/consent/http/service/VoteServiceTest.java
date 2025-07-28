@@ -615,13 +615,13 @@ class VoteServiceTest extends AbstractTestHelper {
 
     Vote v1 = new Vote();
     v1.setVote(true);
-    v1.setType(VoteType.DACBOTAPPROVE.getValue());
+    v1.setType(VoteType.RADAR_APPROVE.getValue());
     v1.setElectionId(1);
     v1.setUserId(1);
 
     Vote v2 = new Vote();
     v2.setVote(true);
-    v2.setType(VoteType.DACBOTAPPROVE.getValue());
+    v2.setType(VoteType.RADAR_APPROVE.getValue());
     v2.setElectionId(2);
     v2.setUserId(1);
 

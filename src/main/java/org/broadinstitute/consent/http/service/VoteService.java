@@ -234,7 +234,7 @@ public class VoteService implements ConsentLogger {
    */
   public void sendDatasetApprovalNotifications(List<Vote> votes, User user) {
     boolean radarApproved =
-        votes.stream().anyMatch(v -> VoteType.DACBOTAPPROVE.getValue().equals(v.getType()));
+        votes.stream().anyMatch(v -> VoteType.RADAR_APPROVE.getValue().equals(v.getType()));
     List<Integer> finalElectionIds =
         votes.stream()
             .filter(
@@ -242,7 +242,7 @@ public class VoteService implements ConsentLogger {
             .filter(
                 v ->
                     VoteType.FINAL.getValue().equalsIgnoreCase(v.getType())
-                        || VoteType.DACBOTAPPROVE.getValue().equalsIgnoreCase(v.getType()))
+                        || VoteType.RADAR_APPROVE.getValue().equalsIgnoreCase(v.getType()))
             .map(Vote::getElectionId)
             .distinct()
             .collect(Collectors.toList());

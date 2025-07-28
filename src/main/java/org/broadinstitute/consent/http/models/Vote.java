@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class Vote {
@@ -162,6 +163,25 @@ public class Vote {
   @Override
   public String toString() {
     return new Gson().toJson(this);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(voteId, vote, userId, createDate, updateDate, electionId, rationale, type, isReminderSent);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Vote otherVote = (Vote) o;
+    if (!Objects.equals(voteId, otherVote.voteId)) return false;
+    if (!Objects.equals(electionId, otherVote.electionId)) return false;
+    if (!Objects.equals(userId, otherVote.userId)) return false;
+    if (!Objects.equals(createDate, otherVote.createDate)) return false;
+    if (!Objects.equals(updateDate, otherVote.updateDate)) return false;
+    if (!Objects.equals(rationale, otherVote.rationale)) return false;
+    return Objects.equals(type, otherVote.type);
   }
 
 
