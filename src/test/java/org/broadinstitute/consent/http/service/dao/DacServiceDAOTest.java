@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -21,6 +22,8 @@ import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.rules.DACAutomationRule;
+import org.broadinstitute.consent.http.rules.RuleState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,6 +50,7 @@ class DacServiceDAOTest extends DAOTestHelper {
     //    * Institution
     //  * DAC Member and Chairperson
     //  * Dataset associated to the DAC
+    //  * DatasetAutomationRules associated to the DAC
     List<Dac> dacs = createMockDACs();
     List<Integer> createdDatasetIds = new ArrayList<>();
     dacs.forEach(dac -> {
@@ -57,7 +61,8 @@ class DacServiceDAOTest extends DAOTestHelper {
           "dac email: " + RandomStringUtils.randomAlphabetic(10),
           new Date());
       // Data Access Agreement
-      int daaId = daaDAO.createDaa(superUser.getUserId(), new Date().toInstant(), superUser.getUserId(), new Date().toInstant(), dacId);
+      int daaId = daaDAO.createDaa(superUser.getUserId(), new Date().toInstant(),
+          superUser.getUserId(), new Date().toInstant(), dacId);
       // DAC->DAA Association.
       daaDAO.createDacDaaRelation(dacId, daaId);
       // Library Card User
@@ -100,9 +105,18 @@ class DacServiceDAOTest extends DAOTestHelper {
           dacId);
       createdDatasetIds.add(datasetId);
       datasetDAO.updateDatasetDacId(datasetId, dacId);
+      Optional<DACAutomationRule> activeAutomation = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
+          dacId).stream().filter(r -> r.ruleState() == RuleState.AVAILABLE).findFirst();
+      assertTrue(activeAutomation.isPresent());
+      dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId, activeAutomation.get().id(),
+          chair.getUserId(), Instant.now());
     });
     dacDAO.findAll().forEach(dac -> {
-      assertDoesNotThrow(() -> serviceDAO.deleteDacAndDaas(dac), "Delete should not fail");
+      assertDoesNotThrow(() -> serviceDAO.deleteDacAndDaas(superUser, dac),
+          "Delete should not fail");
+      List<DACAutomationRule> rules = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
+          dac.getDacId()).stream().filter(r -> r.enabledByUserId() != null).toList();
+      assertTrue(rules.isEmpty(), "There should be no dac automation rules enabled by users.");
       List<Dataset> datasets = datasetDAO.findDatasetListByDacIds(List.of(dac.getDacId()));
       assertTrue(datasets.isEmpty());
       List<User> members = dacDAO.findMembersByDacId(dac.getDacId());
@@ -112,7 +126,8 @@ class DacServiceDAOTest extends DAOTestHelper {
       // Assert that there are no DAAs that reference this DAC
       daaDAO.findAll().forEach(d -> {
         List<Integer> daaDacIds = d.getDacs().stream().map(Dac::getDacId).toList();
-        assertFalse(daaDacIds.contains(dac.getDacId()), "There should be no DAAs that have DACs matching this deleted Dac ID");
+        assertFalse(daaDacIds.contains(dac.getDacId()),
+            "There should be no DAAs that have DACs matching this deleted Dac ID");
       });
       // Assert that there are no Library Cards with DAAs that reference this DAC
       libraryCardDAO.findAllLibraryCards().forEach(lc -> {
@@ -121,7 +136,8 @@ class DacServiceDAOTest extends DAOTestHelper {
           daaIds.forEach(daaId -> {
             DataAccessAgreement innerDaa = daaDAO.findById(daaId);
             List<Integer> innerDacIds = innerDaa.getDacs().stream().map(Dac::getDacId).toList();
-            assertFalse(innerDacIds.contains(dac.getDacId()), "There should be no Library Cards with DAAs that have DACs matching this deleted Dac ID");
+            assertFalse(innerDacIds.contains(dac.getDacId()),
+                "There should be no Library Cards with DAAs that have DACs matching this deleted Dac ID");
           });
         }
       });

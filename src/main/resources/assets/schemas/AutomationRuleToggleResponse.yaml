@@ -1,0 +1,19 @@
+type: object
+properties:
+  ruleId:
+    type: integer
+    description: The rule number modified
+  isRuleEnabled:
+    type: boolean
+    description: True if the rule was activated, false if the rule was deactivated
+  enabledTime:
+    type: integer
+    description: When the rule was enabled, in number of seconds since the epoch
+  displayName:
+    type: string
+    description: The name of the user enabling the rule
+  email:
+    type: string
+    format: email
+    description: The email address of the user enabling the rule.
+

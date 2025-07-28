@@ -21,6 +21,7 @@ public class ComplianceLogger implements ConsentLogger {
   public enum ComplianceEvent {
     DAR_SUBMISSION,
     DAR_APPROVAL,
+    RADAR_APPROVAL,
     DAR_REJECTION,
     DAR_CANCELLATION,
     CLOSEOUT_SO_APPROVAL
@@ -86,6 +87,11 @@ public class ComplianceLogger implements ConsentLogger {
   public static void logDARApproval(User user, List<Dataset> datasets, ContainerRequest request,
       int responseStatusCode) {
     getInstance().logEvent(user, datasets, request, responseStatusCode, ComplianceEvent.DAR_APPROVAL);
+  }
+
+  public static void logRadarApproval(User user, List<Dataset> datasets, ContainerRequest request,
+      int responseStatusCode) {
+    getInstance().logEvent(user, datasets, request, responseStatusCode, ComplianceEvent.RADAR_APPROVAL);
   }
 
   public static void logDARRejection(User user, List<Dataset> datasets, ContainerRequest request,

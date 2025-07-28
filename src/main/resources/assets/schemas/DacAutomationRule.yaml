@@ -1,0 +1,38 @@
+type: object
+properties:
+  id:
+    type: integer
+    description: 'The rule ID'
+  ruleType:
+    type: string
+    enum:
+      - GRU_V1
+      - HMB_V1
+  description:
+    type: string
+    description: 'A narrative of the rule.'
+  ruleState:
+    type: string
+    enum:
+      - AVAILABLE
+      - DEPRECATED
+      - UNAVAILABLE
+  activationDate:
+    type: integer
+    nullable: true
+    description: 'When the rule was most recently activated, in the number of seconds since the epoch.'
+  enabledByUserId:
+    type: integer
+    nullable: true
+    description: 'The id of the user who last enabled the rule'
+  displayName:
+    type: string
+    nullable: true
+    description: 'The name of the user who last enabled the rule'
+  userEmail:
+    type: string
+    format: email
+    description: 'The email address of the user who last enabled the rule.'
+
+
+

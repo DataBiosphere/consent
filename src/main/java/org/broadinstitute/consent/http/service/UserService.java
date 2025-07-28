@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
+import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
@@ -68,13 +69,14 @@ public class UserService implements ConsentLogger {
   private final DaaDAO daaDAO;
   private final DraftServiceDAO draftServiceDAO;
   private final InstitutionService institutionService;
+  private final DACAutomationRuleDAO ruleDAO;
 
   @Inject
   public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO,
       VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO,
       AcknowledgementDAO acknowledgementDAO, FileStorageObjectDAO fileStorageObjectDAO,
       SamDAO samDAO, UserServiceDAO userServiceDAO, DaaDAO daaDAO, DraftServiceDAO draftServiceDAO,
-      InstitutionService institutionService) {
+      InstitutionService institutionService, DACAutomationRuleDAO ruleDAO) {
     this.userDAO = userDAO;
     this.userPropertyDAO = userPropertyDAO;
     this.userRoleDAO = userRoleDAO;
@@ -88,6 +90,7 @@ public class UserService implements ConsentLogger {
     this.daaDAO = daaDAO;
     this.draftServiceDAO = draftServiceDAO;
     this.institutionService = institutionService;
+    this.ruleDAO = ruleDAO;
   }
 
   /**
@@ -121,6 +124,7 @@ public class UserService implements ConsentLogger {
       }
 
       // Handle Roles
+      //TODO: Confirm if we need to prevent removing the chairperson role through this.  We have other business logic in the application that checks to see if there's at least one other chairperson on a DAC.
       if (Objects.nonNull(userUpdateFields.getUserRoleIds())) {
         List<Integer> currentRoleIds = userRoleDAO.findRolesByUserId(userId).stream()
             .map(UserRole::getRoleId).toList();
@@ -242,7 +246,7 @@ public class UserService implements ConsentLogger {
     return users.stream().map(SimplifiedUser::new).toList();
   }
 
-  public void deleteUserByEmail(String email) {
+  public void deleteUserByEmail(String email, Integer auditUserId) {
     User user = userDAO.findUserByEmail(email);
     if (user == null) {
       throw new NotFoundException("The user for the specified E-Mail address does not exist");
@@ -279,6 +283,7 @@ public class UserService implements ConsentLogger {
     libraryCardDAO.deleteAllLibraryCardsByUser(userId);
     acknowledgementDAO.deleteAllAcknowledgementsByUser(userId);
     fileStorageObjectDAO.deleteAllUserFiles(userId);
+    ruleDAO.auditedDeleteAllDACRuleSettingForUser(userId, auditUserId);
     userDAO.deleteUserById(userId);
   }
 
@@ -310,6 +315,7 @@ public class UserService implements ConsentLogger {
     }
     return userDAO.findUsersByInstitution(institutionId);
   }
+
 
   public void deleteUserRole(User authUser, Integer userId, Integer roleId) {
     userRoleDAO.removeSingleUserRole(userId, roleId);

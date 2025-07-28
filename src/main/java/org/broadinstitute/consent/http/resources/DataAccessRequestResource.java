@@ -117,7 +117,7 @@ public class DataAccessRequestResource extends Resource {
       User user = findUserByEmail(authUser.getEmail());
 
       DataAccessRequest payload = populateDarFromJsonString(user, dar);
-      DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload);
+      DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload, (ContainerRequest) request);
       sendNewDarCollectionMessage(newDar.getCollectionId());
       URI uri = info.getRequestUriBuilder().build();
       matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
@@ -135,16 +135,20 @@ public class DataAccessRequestResource extends Resource {
   @RolesAllowed(RESEARCHER)
   @Path("/v3")
   public Response createDataAccessRequestWithDAARestrictions(
-      @Auth AuthUser authUser, @Context UriInfo info, String dar) {
+      @Auth AuthUser authUser,
+      @Context Request request,
+      @Context UriInfo info, String dar) {
     try {
       User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest payload = populateDarFromJsonString(user, dar);
       // DAA Enforcement
       datasetService.enforceDAARestrictions(user, payload.getDatasetIds());
-      DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload);
+      DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload, (ContainerRequest) request);
       sendNewDarCollectionMessage(newDar.getCollectionId());
       URI uri = info.getRequestUriBuilder().build();
       matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
+      List<Dataset> datasets = datasetService.findDatasetsByIds(newDar.getDatasetIds());
+      ComplianceLogger.logDARSubmission(user, datasets, ((ContainerRequest) request), HttpStatusCodes.STATUS_CODE_CREATED);
       return Response.created(uri).entity(newDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

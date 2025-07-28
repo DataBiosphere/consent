@@ -1,0 +1,30 @@
+put:
+  summary: Toggles a rule from on to off or off to on.
+  parameters:
+    - name: dacId
+      in: path
+      description: The DAC Id
+      required: true
+      schema:
+        type: integer
+    - name: ruleId
+      in: path
+      description: The rule Id
+      required: true
+      schema:
+        type: integer
+  tags:
+    - DAC
+  responses:
+    200:
+      description: The Data Access Committee automatic processing rules matching the provided ID
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/AutomationRuleToggleResponse.yaml'
+    403:
+      description: The user is not authorized to set this value
+    401:
+      description: No DAC found with the given ID
+    500:
+      description: Internal Server Error
