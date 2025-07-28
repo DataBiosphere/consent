@@ -8,13 +8,11 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
-import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,8 +20,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -54,6 +52,7 @@ import org.glassfish.jersey.server.ContainerRequest;
 public class VoteService implements ConsentLogger {
 
   private final UserDAO userDAO;
+  private final DacDAO dacDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DatasetDAO datasetDAO;
   private final ElectionDAO electionDAO;
@@ -64,11 +63,12 @@ public class VoteService implements ConsentLogger {
   private final VoteServiceDAO voteServiceDAO;
 
   @Inject
-  public VoteService(UserDAO userDAO, DataAccessRequestDAO dataAccessRequestDAO,
+  public VoteService(UserDAO userDAO, DacDAO dacDAO, DataAccessRequestDAO dataAccessRequestDAO,
       DatasetDAO datasetDAO, ElectionDAO electionDAO, EmailService emailService,
       ElasticSearchService elasticSearchService, UseRestrictionConverter useRestrictionConverter,
       VoteDAO voteDAO, VoteServiceDAO voteServiceDAO) {
     this.userDAO = userDAO;
+    this.dacDAO = dacDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.datasetDAO = datasetDAO;
     this.electionDAO = electionDAO;
@@ -216,10 +216,10 @@ public class VoteService implements ConsentLogger {
    * @param user  The user sending approval notifications
    */
   public void sendDatasetApprovalNotifications(List<Vote> votes, User user) {
-
+    boolean radarApproved = votes.stream().anyMatch(v -> VoteType.DACBOTAPPROVE.getValue().equals(v.getType()));
     List<Integer> finalElectionIds = votes.stream()
         .filter(Vote::getVote) // Safety check to ensure we're only emailing for approved election
-        .filter(v -> VoteType.FINAL.getValue().equalsIgnoreCase(v.getType()))
+        .filter(v -> VoteType.FINAL.getValue().equalsIgnoreCase(v.getType()) || VoteType.DACBOTAPPROVE.getValue().equalsIgnoreCase(v.getType()))
         .map(Vote::getElectionId)
         .distinct()
         .collect(Collectors.toList());
@@ -275,28 +275,70 @@ public class VoteService implements ConsentLogger {
                 translation);
           } else {
             emailService.sendResearcherDarApproved(darCode, researcherId, datasetMailDTOs,
-                translation);
+                translation, radarApproved);
           }
         } catch (Exception e) {
           logException("Error sending researcher dar approved email: " + e.getMessage(), e);
         }
         try {
-          notifyCustodiansOfApprovedDatasets(approvedDatasetsInDar, researcher, darCode);
+          notifyCustodiansOfApprovedDatasets(approvedDatasetsInDar, researcher, darCode, radarApproved);
         } catch (Exception e) {
           logException("Error notifying custodians of dar approved email: " + e.getMessage(), e);
         }
         try {
-          notifySigningOfficialsOfApprovedDatasets(approvedDatasetsInDar, researcher, dar, darCode, translation);
+          notifySigningOfficialsOfApprovedDatasets(approvedDatasetsInDar, researcher, dar, darCode, translation, radarApproved);
         } catch (Exception e) {
           logException("Error notifying signing officials of dar approved email: " + e.getMessage(), e);
+        }
+        try {
+          notifyDACOfRadarApprovals(approvedDatasetsInDar, researcher, dar.getReferenceId(), darCode, radarApproved);
+        } catch (Exception e) {
+          logException("Error notifying DAC of dar approved email: " + e.getMessage(), e);
         }
       }
     });
   }
 
   @VisibleForTesting
+  protected void notifyDACOfRadarApprovals(
+      List<Dataset> approvedDatasets,
+      User researcher,
+      String referenceId,
+      String darCode,
+      boolean radarApproved) {
+    if (!radarApproved) {
+      return;
+    }
+    Map<Integer, Set<DatasetMailDTO>> dacIdToDatasetMap = new HashMap<>();
+    approvedDatasets.forEach(
+        approvedDataset ->
+            dacIdToDatasetMap
+                .computeIfAbsent(approvedDataset.getDacId(), d -> new HashSet<>())
+                .add(
+                    new DatasetMailDTO(
+                        approvedDataset.getName(), approvedDataset.getDatasetIdentifier())));
+    dacIdToDatasetMap.forEach(
+        (dacId, datasets) -> {
+          List<User> members = dacDAO.findMembersByDacId(dacId);
+          members.forEach(
+              member -> {
+                try {
+                  emailService.sendNewDARRADARApprovalToDAC(
+                      member,
+                      darCode,
+                      referenceId,
+                      datasets.stream().toList(),
+                      researcher);
+                } catch (TemplateException | IOException e) {
+                  logWarn("Error sending DAR approval to DAC: " + e.getMessage(), e);
+                }
+              });
+        });
+  }
+
+  @VisibleForTesting
   protected void notifySigningOfficialsOfApprovedDatasets(List<Dataset> datasets, User researcher,
-      DataAccessRequest dar, String darCode, String translation)
+      DataAccessRequest dar, String darCode, String translation, boolean radarApproved)
       throws TemplateException, IOException {
     if (researcher == null) {
       logWarn(
@@ -317,7 +359,7 @@ public class VoteService implements ConsentLogger {
             dar.getReferenceId(), datasets, translation);
       } else {
         emailService.sendNewSoDARApprovedEmail(so, darCode, researcher, dar.getReferenceId(),
-            datasets, translation);
+            datasets, translation, radarApproved);
       }
     }
   }
@@ -330,8 +372,9 @@ public class VoteService implements ConsentLogger {
    * @param darCode    The DAR Collection Code
    * @throws IllegalArgumentException when there are no custodians or depositors to notify
    */
+  @VisibleForTesting
   protected void notifyCustodiansOfApprovedDatasets(List<Dataset> datasets, User researcher,
-      String darCode) throws IllegalArgumentException {
+      String darCode, boolean radarApproved) throws IllegalArgumentException {
     Map<User, HashSet<Dataset>> custodianMap = new HashMap<>();
 
     // Find all the data custodians and submitters to notify for each dataset
@@ -409,7 +452,8 @@ public class VoteService implements ConsentLogger {
             darCode,
             datasetMailDTOs,
             entry.getKey().getDisplayName(),
-            researcher.getEmail());
+            researcher.getEmail(),
+            radarApproved);
       } catch (Exception e) {
         logException("Error sending custodian approval email: " + e.getMessage(), e);
       }

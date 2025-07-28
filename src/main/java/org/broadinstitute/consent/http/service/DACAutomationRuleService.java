@@ -45,23 +45,23 @@ public class DACAutomationRuleService implements ConsentLogger {
   private final DatasetDAO datasetDAO;
   private final DACAutomationRuleDAO ruleDAO;
   private final ElectionDAO electionDAO;
-  private final UserDAO userDAO;
   private final VoteDAO voteDAO;
+  private final VoteService voteService;
   private final VoteServiceDAO voteServiceDAO;
   private final EmailService emailService;
   private final UseRestrictionConverter useRestrictionConverter;
 
   @Inject
   public DACAutomationRuleService(DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO datasetDAO,
-      DACAutomationRuleDAO ruleDAO, ElectionDAO electionDAO, UserDAO userDAO, VoteDAO voteDAO,
-      VoteServiceDAO voteServiceDAO, EmailService emailService,
+      DACAutomationRuleDAO ruleDAO, ElectionDAO electionDAO, VoteDAO voteDAO,
+      VoteServiceDAO voteServiceDAO, EmailService emailService, VoteService voteService,
       UseRestrictionConverter useRestrictionConverter) {
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.datasetDAO = datasetDAO;
     this.ruleDAO = ruleDAO;
     this.electionDAO = electionDAO;
-    this.userDAO = userDAO;
     this.voteDAO = voteDAO;
+    this.voteService = voteService;
     this.voteServiceDAO = voteServiceDAO;
     this.emailService = emailService;
     this.useRestrictionConverter = useRestrictionConverter;
@@ -111,67 +111,38 @@ public class DACAutomationRuleService implements ConsentLogger {
 
   public void triggerDACRuleSettings(User researcher, List<Integer> datasetIds, String referenceId) {
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
-    List<Dataset> datasetsAuthorized = new ArrayList<>();
+    List<Vote> approvalVotes = new ArrayList<>();
     datasetIds.forEach(datasetId -> {
       Dataset dataset = datasetDAO.findDatasetById(datasetId);
       List<DACAutomationRule> rules = ruleDAO.findAllDACAutomationRulesByDACId(dataset.getDacId());
       rules.forEach(rule -> {
         boolean isActive = rule.enabledByUserId() != null;
         if (isActive) {
-          applyRule(rule, dataset, dar, datasetsAuthorized);
+          Optional<Vote> optionalVote = applyRule(rule, dataset, dar);
+          optionalVote.ifPresent(approvalVotes::add);
         }
       });
     });
 
-    if (!datasetsAuthorized.isEmpty()) {
-      sendEmail(researcher, datasetsAuthorized, dar);
+    if (!approvalVotes.isEmpty()) {
+      voteService.sendDatasetApprovalNotifications(approvalVotes, researcher);
     }
   }
 
   @VisibleForTesting
-  protected void sendEmail(User researcher, List<Dataset> datasetsAuthorized, DataAccessRequest dar) {
-    try {
-      String translations = datasetsAuthorized.stream()
-          .map(dataset -> useRestrictionConverter.translateDataUse(dataset.getDataUse(), DataUseTranslationType.DATASET))
-          .distinct()
-          .collect(Collectors.joining(";"));
-      emailService.sendDACAutomationApprovalResearcherMessage(researcher, datasetsAuthorized.stream()
-          .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
-          .toList(), dar.getDarCode(), translations);
-      notifySigningOfficials(researcher, datasetsAuthorized, dar, translations);
-      emailService.sendDataCustodianApprovalMessage();
-    } catch (Exception e) {
-      logWarn(e.getMessage());
-      logWarn(e.getCause().getMessage());
-      throw new InternalServerErrorException(
-          "Error while sending Dac Automation messages.", e);
-    }
-  }
-
-  private void notifySigningOfficials(User researcher, List<Dataset> datasetsAuthorized, DataAccessRequest dar,
-      String translations) {
-    List<User> signingOfficials = userDAO.getSOsByInstitution(researcher.getInstitutionId());
-    signingOfficials.forEach(signingOfficial -> {
-      try {
-        emailService.sendNewSoDARRADARApprovedEmail(signingOfficial, dar.getDarCode(), researcher, dar.getReferenceId(),
-            datasetsAuthorized, translations);
-      } catch (TemplateException | IOException e) {
-       logWarn(String.format("Unable to notify Signing Official %s about RADAR approval for DAR %s", signingOfficial.getEmail(), dar.getDarCode()));
-      }
-    });
-  }
-
-  @VisibleForTesting
-  protected void applyRule(DACAutomationRule rule, Dataset dataset, DataAccessRequest dar,
-      List<Dataset> datasetsAuthorized) {
+  protected Optional<Vote> applyRule(DACAutomationRule rule, Dataset dataset, DataAccessRequest dar) {
     RuleImplementationInterface ruleImplementation = getRuleImplementation(rule);
     boolean shouldApprove = ruleImplementation.compare(dataset, dar);
     if (shouldApprove) {
-      openElectionAndApprove(rule, ruleImplementation, dar, datasetsAuthorized, dataset);
+      Vote v = openElectionAndApprove(rule, ruleImplementation, dar, dataset);
+      if (v != null) {
+        return Optional.of(v);
+      }
     } else {
       logInfo(String.format("Rule %s not triggered for DAC id: %s and dataset id: %s", rule.ruleType(), dataset.getDacId(),
           dataset.getDatasetId()));
     }
+    return Optional.empty();
   }
 
   @VisibleForTesting
@@ -186,8 +157,8 @@ public class DACAutomationRuleService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  protected void openElectionAndApprove(DACAutomationRule rule, RuleImplementationInterface ruleImplementation,
-      DataAccessRequest dar, List<Dataset> datasetsAuthorized, Dataset dataset) {
+  protected Vote openElectionAndApprove(DACAutomationRule rule, RuleImplementationInterface ruleImplementation,
+      DataAccessRequest dar, Dataset dataset) {
     int electionId = electionDAO.insertElection(ElectionType.DATA_ACCESS.getValue(),
         ElectionStatus.OPEN.getValue(), new Date(), dar.getReferenceId(), dataset.getDatasetId());
     int voteId = voteDAO.insertVote(rule.enabledByUserId(), electionId,
@@ -195,12 +166,13 @@ public class DACAutomationRuleService implements ConsentLogger {
     Vote vote = voteDAO.findVoteById(voteId);
     try {
       voteServiceDAO.updateVotesWithValue(List.of(vote), true, String.format("DACBot Approval using rule: %s", ruleImplementation.getRuleType()));
-      datasetsAuthorized.add(dataset);
     } catch (SQLException e) {
       logException("Error updating vote", e);
+      return null;
     }
     // TODO: Add better logging
     logInfo(String.format("Rule %s triggered for DAC id: %s and dataset id: %s", rule.ruleType(), dataset.getDacId(),
         dataset.getDatasetId()));
+    return vote;
   }
 }
