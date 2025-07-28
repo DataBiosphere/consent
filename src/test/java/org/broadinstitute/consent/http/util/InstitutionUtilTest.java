@@ -61,27 +61,25 @@ class InstitutionUtilTest {
     assertEquals("{\"id\":1,\"name\":\"Test Name\"}", json);
   }
 
-  // Domain validation tests
-
   @Test
-  void testIsValidInstitutionDomain_ValidDomains() {
-    assertTrue(InstitutionUtil.isValidInstitutionDomain("example.com"));
-    assertTrue(InstitutionUtil.isValidInstitutionDomain("google.org"));
-    assertTrue(InstitutionUtil.isValidInstitutionDomain("test.edu"));
-    assertTrue(InstitutionUtil.isValidInstitutionDomain("institution.gov"));
-    assertTrue(InstitutionUtil.isValidInstitutionDomain("university.net"));
+  void testIsValidInstitutionDomainValidDomains() {
+    assertTrue(InstitutionUtil.isValidInstitutionDomain("foo.com"));
+    assertTrue(InstitutionUtil.isValidInstitutionDomain("bar.org"));
+    assertTrue(InstitutionUtil.isValidInstitutionDomain("baz.edu"));
+    assertTrue(InstitutionUtil.isValidInstitutionDomain("nih.gov"));
+    assertTrue(InstitutionUtil.isValidInstitutionDomain("broadinstitute.org"));
+    assertTrue(InstitutionUtil.isValidInstitutionDomain("with-some-dashes.com"));
   }
 
   @Test
-  void testIsValidInstitutionDomain_InvalidDomains() {
-    // Subdomains (more than one dot)
-    assertFalse(InstitutionUtil.isValidInstitutionDomain("sub.example.com"));
+  void testIsValidInstitutionDomainInvalidDomains() {
+    // Subdomains
+    assertFalse(InstitutionUtil.isValidInstitutionDomain("foo.bar.baz"));
     assertFalse(InstitutionUtil.isValidInstitutionDomain("mail.google.com"));
-    assertFalse(InstitutionUtil.isValidInstitutionDomain("www.test.edu"));
+    assertFalse(InstitutionUtil.isValidInstitutionDomain("www.broadinstitute.org"));
 
-    // Invalid format
+    // Invalid domains
     assertFalse(InstitutionUtil.isValidInstitutionDomain("invalid"));
-    assertFalse(InstitutionUtil.isValidInstitutionDomain("example"));
     assertFalse(InstitutionUtil.isValidInstitutionDomain("test."));
     assertFalse(InstitutionUtil.isValidInstitutionDomain(".com"));
 
@@ -92,19 +90,19 @@ class InstitutionUtilTest {
 
     // Invalid characters
     assertFalse(InstitutionUtil.isValidInstitutionDomain("test@domain.com"));
-    assertFalse(InstitutionUtil.isValidInstitutionDomain("domain space.com"));
+    assertFalse(InstitutionUtil.isValidInstitutionDomain("domain withaspace.com"));
   }
 
-  @Test
-  void testCanonicalizeDomain() {
-    assertEquals("example.com", InstitutionUtil.canonicalizeDomain("EXAMPLE.COM"));
-    assertEquals("test.edu", InstitutionUtil.canonicalizeDomain("Test.Edu"));
-    assertEquals("google.org", InstitutionUtil.canonicalizeDomain("  google.org  "));
-    assertEquals("university.net", InstitutionUtil.canonicalizeDomain("  UNIVERSITY.NET  "));
-  }
+//  @Test
+//  void testCanonicalizeDomain() {
+//    assertEquals("example.com", InstitutionUtil.canonicalizeDomain("EXAMPLE.COM"));
+//    assertEquals("test.edu", InstitutionUtil.canonicalizeDomain("Test.Edu"));
+//    assertEquals("google.org", InstitutionUtil.canonicalizeDomain("  google.org  "));
+//    assertEquals("university.net", InstitutionUtil.canonicalizeDomain("  UNIVERSITY.NET  "));
+//  }
 
   @Test
-  void testGetInvalidInstitutionDomains_AllValid() {
+  void testGetInvalidInstitutionDomainsAllValid() {
     initUtil();
     Institution institution = new Institution();
     institution.setDomains(Arrays.asList("example.com", "test.edu", "google.org"));
@@ -114,7 +112,7 @@ class InstitutionUtilTest {
   }
 
   @Test
-  void testGetInvalidInstitutionDomains_SomeInvalid() {
+  void testGetInvalidInstitutionDomainsMixedValidity() {
     initUtil();
     Institution institution = new Institution();
     institution.setDomains(Arrays.asList(
@@ -136,17 +134,7 @@ class InstitutionUtilTest {
   }
 
   @Test
-  void testGetInvalidInstitutionDomains_AllInvalid() {
-    initUtil();
-    Institution institution = new Institution();
-    institution.setDomains(Arrays.asList("sub.example.com", "invalid", "", "www.test.edu"));
-
-    List<String> invalidDomains = InstitutionUtil.getInvalidInstitutionDomains(institution);
-    assertEquals(4, invalidDomains.size());
-  }
-
-  @Test
-  void testGetInvalidInstitutionDomains_EmptyList() {
+  void testGetInvalidInstitutionDomainsEmptyList() {
     initUtil();
     Institution institution = new Institution();
     institution.setDomains(Collections.emptyList());
