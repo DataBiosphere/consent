@@ -4,6 +4,11 @@ import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.validator.routines.DomainValidator;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class InstitutionUtil implements ConsentLogger {
@@ -54,5 +59,43 @@ public class InstitutionUtil implements ConsentLogger {
         return false;
       }
     };
+  }
+
+  /**
+   * Validates that a given domain is valid
+   *
+   * @param domain The domain string to validate
+   * @return true if the domain is valid and is not a subdomain, false otherwise
+   */
+  public static boolean isValidInstitutionDomain(String domain) {
+    if (StringUtils.isBlank(domain)) {
+      return false;
+    }
+
+    DomainValidator validator = DomainValidator.getInstance();
+    if (!validator.isValid(domain)) {
+      return false;
+    }
+
+    // todo: use a better way to check for subdomains
+    long dotCount = domain.chars().filter(ch -> ch == '.').count();
+    return dotCount == 1;
+  }
+
+  public static String canonicalizeDomain(String domain) {
+    //todo
+    return domain.toLowerCase().trim();
+  }
+
+  /**
+   * Validates all domains in this institution's domain list and returns invalid ones.
+   *
+   * @param institution The institution to validate domains for.
+   * @return List of invalid domains.
+   */
+  public static List<String> getInvalidInstitutionDomains(Institution institution) {
+    return institution.getDomains().stream()
+        .filter(domain -> !isValidInstitutionDomain(domain))
+        .collect(java.util.stream.Collectors.toList());
   }
 }
