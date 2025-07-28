@@ -7,7 +7,6 @@ import freemarker.template.Template;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.List;
-import java.util.Objects;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.User;
@@ -17,7 +16,7 @@ import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class DACMembersDARRADARApprovedMessageTest {
+class DACMembersDARRADARApprovedMessageTest {
 
   private FreeMarkerTemplateHelper helper;
 

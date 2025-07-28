@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.mail.message;
 import java.util.List;
 import java.util.Map;
 import org.broadinstitute.consent.http.enumeration.EmailType;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
