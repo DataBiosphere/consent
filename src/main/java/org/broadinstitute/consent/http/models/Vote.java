@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class Vote {
