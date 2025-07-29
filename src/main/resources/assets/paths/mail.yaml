@@ -41,7 +41,6 @@ get:
           - SO_DAR_APPROVED
           - SO_PROGRESS_REPORT_SUBMITTED
           - SO_PROGRESS_REPORT_APPROVED
-          - DAC_AUTOMATION_APPROVAL
           - DAC_RADAR_APPROVED
     - name: limit
       in: query
