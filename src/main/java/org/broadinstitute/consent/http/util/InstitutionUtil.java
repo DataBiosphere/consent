@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.util;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
@@ -61,32 +62,6 @@ public class InstitutionUtil implements ConsentLogger {
   }
 
   /**
-   * Validates that a given domain is valid
-   *
-   * @param domain The domain string to validate
-   * @return true if the domain is valid and is not a subdomain, false otherwise
-   */
-  public static boolean isValidInstitutionDomain(String domain) {
-    // Validate that the domain is not null or empty
-    if (StringUtils.isBlank(domain)) {
-      return false;
-    }
-
-    // Validate the domain format
-    DomainValidator validator = DomainValidator.getInstance();
-    if (!validator.isValid(domain)) {
-      return false;
-    }
-
-    // Validate that the domain is not a subdomain
-    if (domain.split("\\.").length > 2) {
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
    * Canonicalizes an institution name by normalizing quotes and handling UTF-8 characters.
    * - Replaces curly quotes with straight quotes
    * - Replaces double quotes with single quotes
@@ -96,7 +71,7 @@ public class InstitutionUtil implements ConsentLogger {
    * @param name The institution name to canonicalize
    * @return The canonicalized name, or null if input is invalid
    */
-  public static String canonicalizeName(String name) {
+  public static String canonicalizeInstitutionName(String name) {
     // Validate that name is not null or blank
     if (StringUtils.isBlank(name)) {
       return null;
@@ -120,12 +95,30 @@ public class InstitutionUtil implements ConsentLogger {
   }
 
   /**
+   * Validates that a given domain is valid
+   *
+   * @param domain The domain string to validate
+   * @return true if the domain is valid, false otherwise
+   */
+  protected static boolean isValidInstitutionDomain(String domain) {
+    // Validate that the domain is not null or empty
+    if (StringUtils.isBlank(domain)) {
+      return false;
+    }
+
+    // Validate the domain format
+    DomainValidator validator = DomainValidator.getInstance();
+    return validator.isValid(domain);
+  }
+
+  /**
    * Validates all domains in this institution's domain list and returns invalid ones.
    *
    * @param institution The institution to validate domains for.
    * @return List of invalid domains.
    */
-  public static List<String> getInvalidInstitutionDomains(Institution institution) {
+  public static List<String> validateInstitutionDomains(Institution institution) {
+    //TODO: also check for duplicates in the domain list
     return institution.getDomains().stream()
         .filter(domain -> !isValidInstitutionDomain(domain))
         .collect(java.util.stream.Collectors.toList());

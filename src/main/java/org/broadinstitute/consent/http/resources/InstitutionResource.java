@@ -102,7 +102,7 @@ public class InstitutionResource extends Resource {
       Institution existingInstitution = institutionService.findInstitutionById(id);
       Institution payload = GsonUtil.getInstance().fromJson(institution, Institution.class);
       //TODO maybe run this validation elsewhere? like on Institution.setDomains?
-      List<String> invalidDomains = InstitutionUtil.getInvalidInstitutionDomains(payload);
+      List<String> invalidDomains = InstitutionUtil.validateInstitutionDomains(payload);
       if( invalidDomains != null && !invalidDomains.isEmpty()) {
         throw new ConsentConflictException("Invalid domain(s) provided for institution: " + String.join(", ", invalidDomains));
       }

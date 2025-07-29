@@ -231,7 +231,7 @@ class InstitutionResourceTest {
 
   @Test
   void testPatchInstitutionInvalidDomains() {
-    List<String> invalidDomains = List.of("invalid-domain", "foo.bar.com");
+    List<String> invalidDomains = List.of("invalid-domain", "foo_bar.com");
     List<String> validDomains = List.of("valid-domain.com", "baz.com");
     List<String> allDomains = new ArrayList<>();
     allDomains.addAll(validDomains);
