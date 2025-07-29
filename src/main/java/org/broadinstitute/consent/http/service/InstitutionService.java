@@ -25,8 +25,13 @@ public class InstitutionService {
   }
 
   public Institution createInstitution(Institution institution, Integer userId) {
-    checkForEmptyName(institution);
     checkUserId(userId);
+    // Name validation
+    checkForEmptyName(institution);
+    String canonicalName = InstitutionUtil.canonicalizeInstitutionName(institution.getName());
+    institution.setName(canonicalName);
+
+    // Domain validation
     InstitutionUtil.validateInstitutionDomains(institution);
     checkDomainUniqueness(institution);
     try {
@@ -38,10 +43,16 @@ public class InstitutionService {
 
   public Institution updateInstitutionById(Institution institutionPayload, Integer id,
       Integer userId) throws SQLException {
+    checkUserId(userId);
     Institution targetInstitution = institutionDAO.findInstitutionById(id);
     isInstitutionNull(targetInstitution);
-    checkUserId(userId);
+
+    // Name validation
     checkForEmptyName(institutionPayload);
+    String canonicalName = InstitutionUtil.canonicalizeInstitutionName(institutionPayload.getName());
+    institutionPayload.setName(canonicalName);
+
+    // Domain validation
     InstitutionUtil.validateInstitutionDomains(institutionPayload);
     checkDomainUniqueness(institutionPayload);
     return institutionDAO.updateFullInstitution(institutionPayload, userId);
