@@ -95,7 +95,6 @@ public class InstitutionUtil implements ConsentLogger {
    * @return List of invalid domains.
    */
   public static List<String> getInvalidInstitutionDomains(Institution institution) {
-    //TODO: also check for duplicates in the domain list
     if (institution.getDomains() == null) {
       return List.of();
     }

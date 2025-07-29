@@ -40,9 +40,9 @@ public class InstitutionService {
       Integer userId) throws SQLException {
     Institution targetInstitution = institutionDAO.findInstitutionById(id);
     isInstitutionNull(targetInstitution);
-    InstitutionUtil.validateInstitutionDomains(institutionPayload);
     checkUserId(userId);
     checkForEmptyName(institutionPayload);
+    InstitutionUtil.validateInstitutionDomains(institutionPayload);
     checkDomainUniqueness(institutionPayload);
     return institutionDAO.updateFullInstitution(institutionPayload, userId);
   }
