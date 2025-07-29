@@ -28,6 +28,7 @@ public class InstitutionService {
     checkForEmptyName(institution);
     checkUserId(userId);
     InstitutionUtil.validateInstitutionDomains(institution);
+    checkForDomainConflicts(institution, null);
     try {
       return institutionDAO.insertFullInstitution(institution, userId);
     } catch (SQLException e) {
@@ -42,6 +43,7 @@ public class InstitutionService {
     InstitutionUtil.validateInstitutionDomains(institutionPayload);
     checkUserId(userId);
     checkForEmptyName(institutionPayload);
+    checkForDomainConflicts(institutionPayload, id);
     return institutionDAO.updateFullInstitution(institutionPayload, userId);
   }
 
@@ -115,6 +117,30 @@ public class InstitutionService {
   private void isInstitutionNull(Institution institution) {
     if (Objects.isNull(institution)) {
       throw new NotFoundException("Institution not found");
+    }
+  }
+
+  private void checkForDomainConflicts(Institution institution, Integer institutionId) {
+    if (institution.getDomains() == null || institution.getDomains().isEmpty()) {
+      return;
+    }
+
+    //TODO make this more efficient?
+    List<String> conflictingDomains = institution.getDomains().stream()
+        .map(domain -> {
+          Institution existingInstitution = institutionDAO.findInstitutionByDomain(domain);
+          if (existingInstitution != null &&
+              (!existingInstitution.getId().equals(institutionId))) {
+            return domain;
+          }
+          return null;
+        })
+        .filter(Objects::nonNull)
+        .toList();
+
+    if (!conflictingDomains.isEmpty()) {
+      throw new IllegalArgumentException(
+          "Domain(s) already associated with another institution: " + String.join(", ", conflictingDomains));
     }
   }
 }
