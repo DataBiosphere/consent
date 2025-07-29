@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
-import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -36,7 +35,7 @@ public class VoteServiceDAO {
    * @throws IllegalArgumentException when there are non-open elections on any of the votes
    */
   public List<Vote> updateVotesWithValue(List<Vote> votes, boolean voteValue, String rationale)
-      throws IllegalArgumentException, SQLException {
+      throws IllegalArgumentException {
     // Update all votes in an atomic transaction, rollback on all if any fail
     jdbi.useTransaction(
         h -> {
