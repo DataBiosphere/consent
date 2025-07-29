@@ -168,13 +168,13 @@ public class VoteService implements ConsentLogger {
     List<Integer> openElectionIds =
         electionDAO.findOpenElectionsByDacId(dac.getDacId()).stream()
             .map(Election::getElectionId)
-            .collect(Collectors.toList());
+            .toList();
     if (!openElectionIds.isEmpty()) {
       List<Integer> openUserVoteIds =
           voteDAO.findVotesByElectionIds(openElectionIds).stream()
               .filter(v -> v.getUserId().equals(user.getUserId()))
               .map(Vote::getVoteId)
-              .collect(Collectors.toList());
+              .toList();
       if (!openUserVoteIds.isEmpty()) {
         voteDAO.removeVotesByIds(openUserVoteIds);
       }
@@ -245,21 +245,17 @@ public class VoteService implements ConsentLogger {
                         || VoteType.RADAR_APPROVE.getValue().equalsIgnoreCase(v.getType()))
             .map(Vote::getElectionId)
             .distinct()
-            .collect(Collectors.toList());
+            .toList();
 
     List<Election> finalElections = electionDAO.findElectionsByIds(finalElectionIds);
 
     List<String> finalElectionReferenceIds =
-        finalElections.stream()
-            .map(Election::getReferenceId)
-            .distinct()
-            .collect(Collectors.toList());
+        finalElections.stream().map(Election::getReferenceId).distinct().toList();
 
     List<DataAccessRequest> dars =
         dataAccessRequestDAO.findByReferenceIds(finalElectionReferenceIds);
 
-    List<Integer> datasetIds =
-        finalElections.stream().map(Election::getDatasetId).collect(Collectors.toList());
+    List<Integer> datasetIds = finalElections.stream().map(Election::getDatasetId).toList();
     List<Dataset> datasets =
         datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
 
