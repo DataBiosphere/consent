@@ -26,7 +26,7 @@ public class DataCustodianApprovalMessage extends MailMessage {
     this.datasets = datasets;
     this.dataDepositorName = dataDepositorName;
     this.researcherEmail = researcherEmail;
-    this.radarText = radarApproved ? "RADAR " : "";
+    this.radarText = radarApproved ? "Rule Automated DAR (RADAR) " : "";
   }
 
   @Override

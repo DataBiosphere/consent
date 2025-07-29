@@ -75,6 +75,7 @@ class ResearcherDarApprovedMessageTest extends AbstractTestHelper {
     assertTrue(templateString.contains(researcherEmail));
   }
 
+  @Test
   void testGetResearcherRADARApprovedTemplate() throws Exception {
     String researcherUserName = randomAlphabetic(10);
     String researcherEmail = randomAlphabetic(10);
@@ -97,13 +98,13 @@ class ResearcherDarApprovedMessageTest extends AbstractTestHelper {
     Document parsedTemplate = Jsoup.parse(templateString);
 
     assertEquals(
-        "Broad Data Use Oversight System - Researcher - Your access to a dataset was RADAR approved",
+        "Broad Data Use Oversight System - Researcher - Your access to a dataset was Rule Automated DAR (RADAR) approved",
         parsedTemplate.title());
     assertEquals(
         "Hello " + researcherUserName + ",", getElementTextById(parsedTemplate, "userName"));
     assertTrue(
         templateString.contains(
-            "Your data access request application " + darCode + " was RADAR approved"));
+            "Your data access request application " + darCode + " was Rule Automated DAR (RADAR) approved"));
     assertTrue(templateString.contains(datasetId));
     assertTrue(templateString.contains(datasetName));
     assertTrue(templateString.contains(researcherEmail));

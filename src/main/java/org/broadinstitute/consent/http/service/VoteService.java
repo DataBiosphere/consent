@@ -217,7 +217,7 @@ public class VoteService implements ConsentLogger {
         }
       }
       return updatedVotes;
-    } catch (SQLException e) {
+    } catch (Exception e) {
       throw new IllegalArgumentException("Unable to update election votes.");
     }
   }

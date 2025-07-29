@@ -45,7 +45,7 @@ class DACMembersDARRADARApprovedMessageTest {
 
     var message = new DACMembersDARRADARApprovedMessage(toUser, darCode, researcherUser, referenceId, datasetMailDTOs);
     assertEquals(referenceId, message.getEntityReferenceId());
-    assertEquals("Broad Data Use Oversight System - Data Access Committee - Data Access Request DAR-0001 is RADAR Approved", message.createSubject());
+    assertEquals("Broad Data Use Oversight System - Data Access Committee - Data Access Request DAR-0001 is Rule Automated DAR (RADAR) Approved", message.createSubject());
 
     Template template = helper.getTemplate(message.getTemplateName());
     Writer out = new StringWriter();
@@ -53,7 +53,7 @@ class DACMembersDARRADARApprovedMessageTest {
     String templateContent = out.toString();
     Document parsedTemplate = Jsoup.parse(templateContent);
 
-    assertEquals("Broad Data Use Oversight System - Data Access Committee - Access to a dataset was RADAR approved", parsedTemplate.title());
+    assertEquals("Broad Data Use Oversight System - Data Access Committee - Access to a dataset was Rule Automated DAR (RADAR) approved", parsedTemplate.title());
 
     assertTrue(templateContent.contains(researcherUser.getDisplayName()));
 

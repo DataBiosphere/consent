@@ -31,7 +31,7 @@ public class SoDARApproved extends MailMessage {
     this.referenceId = referenceId;
     this.datasets = datasets;
     this.dataUseRestriction = dataUseRestriction;
-    this.radarText = radarApproved ? "RADAR " : "";
+    this.radarText = radarApproved ? "Rule Automated DAR (RADAR) " : "";
   }
 
   @Override

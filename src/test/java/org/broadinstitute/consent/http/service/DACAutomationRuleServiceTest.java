@@ -19,7 +19,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Date;
@@ -313,7 +312,7 @@ class DACAutomationRuleServiceTest {
   }
 
   @Test
-  void testOpenElectionAndApprove() throws SQLException {
+  void testOpenElectionAndApprove() {
     DACAutomationRule rule = makeDacAutomationRuleGRU();
     RuleImplementationInterface ruleImplementation = new GeneralResearchUseV1();
     DataAccessRequest dar = makeDAR();
@@ -340,7 +339,7 @@ class DACAutomationRuleServiceTest {
   }
 
   @Test
-  void testOpenElectionAndApproveException() throws SQLException {
+  void testOpenElectionAndApproveException() {
     DACAutomationRule rule = makeDacAutomationRuleGRU();
     RuleImplementationInterface ruleImplementation = new GeneralResearchUseV1();
     DataAccessRequest dar = makeDAR();
@@ -355,17 +354,15 @@ class DACAutomationRuleServiceTest {
 
     Vote vote = mockFindVoteById(voteId);
 
-    doThrow(new SQLException("Test error")).when(voteServiceDAO).updateVotesWithValue(
-          List.of(vote),
-          true,
-          "Rule Automated DAR (RADAR) Approval using rule: GRU_V1");
+    doThrow(new RuntimeException("Test error"))
+        .when(voteServiceDAO)
+        .updateVotesWithValue(
+            List.of(vote), true, "Rule Automated DAR (RADAR) Approval using rule: GRU_V1");
     assertNull(service.openElectionAndApprove(rule, ruleImplementation, dar, dataset, request));
   }
 
   @Test
-  void testApplyRuleApprove() throws SQLException {
-    User dacChair = new User();
-    dacChair.setEraCommonsId("eraCommonsId");
+  void testApplyRuleApprove() {
     DACAutomationRule rule = makeDacAutomationRuleGRU();
     Dataset datasetGru = makeDataset();
     DataAccessRequest darHmb = makeDAR();
@@ -387,7 +384,7 @@ class DACAutomationRuleServiceTest {
   }
 
   @Test
-  void testApplyRule_Error_In_Vote() throws SQLException {
+  void testApplyRule_Error_In_Vote() {
     DACAutomationRule rule = makeDacAutomationRuleGRU();
     Dataset datasetGru = makeDataset();
     DataAccessRequest darHmb = makeDAR();
@@ -401,7 +398,9 @@ class DACAutomationRuleServiceTest {
         VoteType.RADAR_APPROVE.getValue())).thenReturn(1);
     when(voteDAO.findVoteById(1)).thenReturn(vote);
 
-    doThrow(new SQLException("Test error")).when(voteServiceDAO).updateVotesWithValue(any(), anyBoolean(), any());
+    doThrow(new RuntimeException("Test error"))
+        .when(voteServiceDAO)
+        .updateVotesWithValue(any(), anyBoolean(), any());
 
     Optional<Vote> appliedVote = service.applyRule(rule, datasetGru, darHmb, request);
     assertTrue(appliedVote.isEmpty());

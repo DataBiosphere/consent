@@ -204,9 +204,9 @@ class VoteServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testUpdateVotesWithValue_NoRationale() throws Exception {
+  void testUpdateVotesWithValue_NoRationale() {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
-    Vote v = setUpTestVote(true, true);
+    Vote v = setUpTestVote();
     when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(v));
 
     Election accessElection = new Election();
@@ -225,7 +225,7 @@ class VoteServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testUpdateVotesWithValue_emptyList() throws Exception {
+  void testUpdateVotesWithValue_emptyList() {
     when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of());
 
     List<Vote> votes = service.updateVotesWithValue(List.of(), true, "rationale", user);
@@ -236,7 +236,7 @@ class VoteServiceTest extends AbstractTestHelper {
   @Test
   void testUpdateVotesWithValue_ClosedElection() {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
-    Vote v = setUpTestVote(true, true);
+    Vote v = setUpTestVote();
 
     Election closedAccessElection = new Election();
     closedAccessElection.setElectionType(ElectionType.DATA_ACCESS.getValue());
@@ -252,7 +252,7 @@ class VoteServiceTest extends AbstractTestHelper {
   @Test
   void testUpdateVotesWithValue_MultipleElectionsDifferentStatuses() {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
-    Vote v = setUpTestVote(true, true);
+    Vote v = setUpTestVote();
 
     Election openAccessElection = new Election();
     openAccessElection.setElectionType(ElectionType.DATA_ACCESS.getValue());
@@ -273,34 +273,34 @@ class VoteServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testUpdateVotesWithValue_OpenRPElection() throws Exception {
+  void testUpdateVotesWithValue_OpenRPElection() {
     testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.OPEN);
   }
 
   @Test
-  void testUpdateVotesWithValue_ClosedRPElection() throws Exception {
+  void testUpdateVotesWithValue_ClosedRPElection() {
     testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.CLOSED);
   }
 
   @Test
-  void testUpdateVotesWithValue_CanceledRPElection() throws Exception {
+  void testUpdateVotesWithValue_CanceledRPElection() {
     testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.CANCELED);
   }
 
   @Test
-  void testUpdateVotesWithValue_FinalRPElection() throws Exception {
+  void testUpdateVotesWithValue_FinalRPElection() {
     testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.FINAL);
   }
 
   @Test
-  void testUpdateVotesWithValue_PendingApprovalRPElection() throws Exception {
+  void testUpdateVotesWithValue_PendingApprovalRPElection() {
     testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus.PENDING_APPROVAL);
   }
 
   @Test
-  void testUpdateVotesWithValue_MultipleElectionTypes() throws Exception {
+  void testUpdateVotesWithValue_MultipleElectionTypes() {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
-    Vote v = setUpTestVote(true, true);
+    Vote v = setUpTestVote();
     when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(v));
 
     Election accessElection = new Election();
@@ -318,10 +318,9 @@ class VoteServiceTest extends AbstractTestHelper {
     }
   }
 
-  private void testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus status)
-      throws Exception {
+  private void testUpdateVotesWithValue_RPElectionWithStatus(ElectionStatus status) {
     when(electionDAO.findElectionsByIds(any())).thenReturn(List.of());
-    Vote v = setUpTestVote(true, true);
+    Vote v = setUpTestVote();
     when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(v));
 
     Election rpElection = new Election();
@@ -1299,13 +1298,13 @@ class VoteServiceTest extends AbstractTestHelper {
     when(voteDAO.findVoteById(anyInt())).thenReturn(v);
   }
 
-  private Vote setUpTestVote(Boolean vote, Boolean reminderSent) {
+  private Vote setUpTestVote() {
     Vote v = new Vote();
     v.setVoteId(randomInt(1, 10));
     v.setUserId(randomInt(1, 10));
     v.setElectionId(randomInt(1, 10));
-    v.setIsReminderSent(reminderSent);
-    v.setVote(vote);
+    v.setIsReminderSent(true);
+    v.setVote(true);
     return v;
   }
 }
