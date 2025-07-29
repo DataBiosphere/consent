@@ -1,11 +1,14 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.NotFoundException;
@@ -191,6 +194,93 @@ class InstitutionServiceTest {
     assertTrue(service.findAllInstitutions().isEmpty());
   }
 
+  @Test
+  void testCreateInstitutionDomainUniquenessAllUnique() {
+    Institution mockInstitution = initMockModel();
+    mockInstitution.setDomains(List.of("broadinstitute.org", "broad.mit.edu"));
+
+    when(institutionDAO.findInstitutionIdByDomain("broadinstitute.org")).thenReturn(null);
+    when(institutionDAO.findInstitutionIdByDomain("broad.mit.edu")).thenReturn(null);
+
+    initService();
+
+    assertDoesNotThrow(() -> {
+      service.createInstitution(mockInstitution, 1);
+    });
+  }
+
+  @Test
+  void testCreateInstitutionDomainUniquenessSomeUnique() {
+    Institution mockInstitution = initMockModel();
+    mockInstitution.setDomains(List.of("broadinstitute.org", "broad.mit.edu"));
+
+    when(institutionDAO.findInstitutionIdByDomain("broadinstitute.org")).thenReturn(2);
+    when(institutionDAO.findInstitutionIdByDomain("broad.mit.edu")).thenReturn(null);
+
+    initService();
+
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+      service.createInstitution(mockInstitution, 1);
+    });
+
+    assertTrue(exception.getMessage().contains("broadinstitute.org"));
+    assertFalse(exception.getMessage().contains("broad.mit.edu"));
+  }
+
+  @Test
+  void testCreateInstitutionDomainUniquenessNoneUnique() {
+    Institution mockInstitution = initMockModel();
+    mockInstitution.setDomains(List.of("broadinstitute.org", "broad.mit.edu"));
+
+    when(institutionDAO.findInstitutionIdByDomain("broadinstitute.org")).thenReturn(2);
+    when(institutionDAO.findInstitutionIdByDomain("broad.mit.edu")).thenReturn(2);
+
+    initService();
+
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+      service.createInstitution(mockInstitution, 1);
+    });
+
+    assertTrue(exception.getMessage().contains("broadinstitute.org"));
+    assertTrue(exception.getMessage().contains("broad.mit.edu"));
+  }
+
+  @Test
+  void testCheckDomainUniquenessUpdateSameInstitution() throws Exception {
+    Institution mockInstitution = initMockModel();
+    mockInstitution.setId(1);
+    mockInstitution.setDomains(List.of("broadinstitute.org"));
+
+    // If we're updating the same institution, it should not throw an error
+    when(institutionDAO.findInstitutionIdByDomain("broadinstitute.org")).thenReturn(1);
+    when(institutionDAO.findInstitutionById(1)).thenReturn(mockInstitution);
+    when(institutionDAO.updateFullInstitution(mockInstitution, 1)).thenReturn(mockInstitution);
+
+    initService();
+
+    assertDoesNotThrow(() -> {
+      service.updateInstitutionById(mockInstitution, 1, 1);
+    });
+  }
+
+  @Test
+  void testCheckDomainUniquenessUpdateDifferentInstitution() {
+    Institution mockInstitution = initMockModel();
+    mockInstitution.setId(1);
+    mockInstitution.setDomains(List.of("broadinstitute.org"));
+
+    when(institutionDAO.findInstitutionIdByDomain("broadinstitute.org")).thenReturn(2);
+    when(institutionDAO.findInstitutionById(1)).thenReturn(mockInstitution);
+
+    initService();
+
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+      service.updateInstitutionById(mockInstitution, 1, 1);
+    });
+
+    assertEquals("Domain(s) already associated with another institution: broadinstitute.org",
+        exception.getMessage());
+  }
 
   /**
    * @return A list of 5 dacs

@@ -28,7 +28,7 @@ public class InstitutionService {
     checkForEmptyName(institution);
     checkUserId(userId);
     InstitutionUtil.validateInstitutionDomains(institution);
-    checkForDomainConflicts(institution, null);
+    checkDomainUniqueness(institution);
     try {
       return institutionDAO.insertFullInstitution(institution, userId);
     } catch (SQLException e) {
@@ -43,7 +43,7 @@ public class InstitutionService {
     InstitutionUtil.validateInstitutionDomains(institutionPayload);
     checkUserId(userId);
     checkForEmptyName(institutionPayload);
-    checkForDomainConflicts(institutionPayload, id);
+    checkDomainUniqueness(institutionPayload);
     return institutionDAO.updateFullInstitution(institutionPayload, userId);
   }
 
@@ -120,27 +120,28 @@ public class InstitutionService {
     }
   }
 
-  private void checkForDomainConflicts(Institution institution, Integer institutionId) {
+  private void checkDomainUniqueness(Institution institution) {
     if (institution.getDomains() == null || institution.getDomains().isEmpty()) {
       return;
     }
 
-    //TODO make this more efficient?
     List<String> conflictingDomains = institution.getDomains().stream()
         .map(domain -> {
-          Institution existingInstitution = institutionDAO.findInstitutionByDomain(domain);
-          if (existingInstitution != null &&
-              (!existingInstitution.getId().equals(institutionId))) {
+          Integer existingInstitutionId = institutionDAO.findInstitutionIdByDomain(domain);
+          if (existingInstitutionId != null && !existingInstitutionId.equals(institution.getId())) {
+            // Return the domain if it conflicts with another institution.
+            // If the domain is already associated with the institution being updated, it's not a conflict.
             return domain;
           }
-          return null;
+          return null; // No conflict
         })
         .filter(Objects::nonNull)
         .toList();
 
     if (!conflictingDomains.isEmpty()) {
       throw new IllegalArgumentException(
-          "Domain(s) already associated with another institution: " + String.join(", ", conflictingDomains));
+          "Domain(s) already associated with another institution: " + String.join(", ",
+              conflictingDomains));
     }
   }
 }
