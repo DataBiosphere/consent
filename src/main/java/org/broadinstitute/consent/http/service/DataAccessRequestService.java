@@ -264,7 +264,7 @@ public class DataAccessRequestService implements ConsentLogger {
    * @param parentDar         The parent DataAccessRequest
    * @return The created progress report.
    */
-  public DataAccessRequest createProgressReport(User user, DataAccessRequest progressReport, DataAccessRequest parentDar) {
+  public DataAccessRequest createProgressReport(User user, DataAccessRequest progressReport, DataAccessRequest parentDar, ContainerRequest request) {
     validateProgressReport(user, progressReport, parentDar);
 
     String referenceId = progressReport.getReferenceId();
@@ -296,6 +296,10 @@ public class DataAccessRequestService implements ConsentLogger {
       } catch (TemplateException | IOException e) {
         throw new InternalServerErrorException(e);
       }
+    }
+
+    if (!progressReport.getIsCloseoutProgressReport() && !progressReport.getHasDMI()) {
+      ruleService.triggerDACRuleSettings(user, progressReportDatasetIds, referenceId, request);
     }
 
     syncDataAccessRequestDatasets(progressReportDatasetIds, referenceId);

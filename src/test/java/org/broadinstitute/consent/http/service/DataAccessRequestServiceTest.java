@@ -16,6 +16,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -282,12 +283,13 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId())).thenReturn(progressReport);
     when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId())).thenReturn(
         Set.copyOf(progressReport.getDatasetIds()));
-    DataAccessRequest newDar = service.createProgressReport(user, progressReport, parentDar);
+    DataAccessRequest newDar = service.createProgressReport(user, progressReport, parentDar, request);
     assertNotNull(newDar);
     verify(dataAccessRequestDAO)
         .insertProgressReport(parentDar.getId(), progressReport.getCollectionId(),
             progressReport.getReferenceId(), user.getUserId(),
             progressReport.getData(), user.getEraCommonsId());
+    verify(ruleService).triggerDACRuleSettings(user, progressReport.getDatasetIds(), progressReport.getReferenceId(), request);
     verify(dataAccessRequestDAO).insertAllDarDatasets(
         argThat(new DarDatasetMatcher(progressReport)));
   }
@@ -315,7 +317,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
         .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
 
-    DataAccessRequest newDar = service.createProgressReport(user, progressReport, parentDar);
+    DataAccessRequest newDar = service.createProgressReport(user, progressReport, parentDar, request);
 
     assertNotNull(newDar);
     verify(emailService)
@@ -332,6 +334,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
             user.getUserId(),
             progressReport.getData(),
             user.getEraCommonsId());
+    verify(ruleService, never()).triggerDACRuleSettings(any(), any(), any(), any());
     verify(dataAccessRequestDAO)
         .insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
   }
@@ -346,7 +349,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = createUserWithPrerequisites();
     parentDar.setUserId(user.getUserId());
     when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId())).thenReturn(Set.of());
-    assertThrows(BadRequestException.class, () -> service.createProgressReport(user, progressReport, parentDar));
+    assertThrows(BadRequestException.class, () -> service.createProgressReport(user, progressReport, parentDar, request));
   }
 
   @Test
@@ -369,7 +372,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
             user.getUserId(),
             progressReport.data,
             user.getEraCommonsId());
-    assertThrows(BadRequestException.class, () -> service.createProgressReport(user, progressReport, parentDar));
+    assertThrows(BadRequestException.class, () -> service.createProgressReport(user, progressReport, parentDar, request));
   }
 
   private User createRequestingUser() {
