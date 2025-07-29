@@ -5,6 +5,7 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -101,11 +102,6 @@ public class InstitutionResource extends Resource {
     try {
       Institution existingInstitution = institutionService.findInstitutionById(id);
       Institution payload = GsonUtil.getInstance().fromJson(institution, Institution.class);
-      //TODO maybe run this validation elsewhere? like on Institution.setDomains?
-      List<String> invalidDomains = InstitutionUtil.validateInstitutionDomains(payload);
-      if( invalidDomains != null && !invalidDomains.isEmpty()) {
-        throw new ConsentConflictException("Invalid domain(s) provided for institution: " + String.join(", ", invalidDomains));
-      }
       Institution mergedPayload = payload.mergeUpdatableFields(existingInstitution);
       Institution updatedInstitution = institutionService.updateInstitutionById(mergedPayload, id,
           duosUser.getUserId());

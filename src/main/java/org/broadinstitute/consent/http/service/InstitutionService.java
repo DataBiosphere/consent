@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+import org.broadinstitute.consent.http.util.InstitutionUtil;
 
 public class InstitutionService {
 
@@ -26,6 +27,7 @@ public class InstitutionService {
   public Institution createInstitution(Institution institution, Integer userId) {
     checkForEmptyName(institution);
     checkUserId(userId);
+    InstitutionUtil.validateInstitutionDomains(institution);
     try {
       return institutionDAO.insertFullInstitution(institution, userId);
     } catch (SQLException e) {
@@ -37,6 +39,7 @@ public class InstitutionService {
       Integer userId) throws SQLException {
     Institution targetInstitution = institutionDAO.findInstitutionById(id);
     isInstitutionNull(targetInstitution);
+    InstitutionUtil.validateInstitutionDomains(institutionPayload);
     checkUserId(userId);
     checkForEmptyName(institutionPayload);
     return institutionDAO.updateFullInstitution(institutionPayload, userId);

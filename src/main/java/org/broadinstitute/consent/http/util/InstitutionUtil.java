@@ -1,10 +1,10 @@
 package org.broadinstitute.consent.http.util;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import jakarta.ws.rs.BadRequestException;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.DomainValidator;
@@ -117,10 +117,18 @@ public class InstitutionUtil implements ConsentLogger {
    * @param institution The institution to validate domains for.
    * @return List of invalid domains.
    */
-  public static List<String> validateInstitutionDomains(Institution institution) {
+  public static List<String> getInvalidInstitutionDomains(Institution institution) {
     //TODO: also check for duplicates in the domain list
     return institution.getDomains().stream()
         .filter(domain -> !isValidInstitutionDomain(domain))
         .collect(java.util.stream.Collectors.toList());
+  }
+
+  public static void validateInstitutionDomains(Institution institution) {
+    List<String> invalidDomains = getInvalidInstitutionDomains(institution);
+    if (!invalidDomains.isEmpty()) {
+      throw new BadRequestException(
+          "Invalid domain(s) provided for institution: " + String.join(", ", invalidDomains));
+    }
   }
 }

@@ -245,7 +245,7 @@ class InstitutionResourceTest {
 
     try (var response = resource.patchInstitution(duosUser, 1,
         GsonUtil.getInstance().toJson(mockInstitution))) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
       assertTrue(
           response.getEntity().toString().contains("Invalid domain(s) provided for institution"));
 

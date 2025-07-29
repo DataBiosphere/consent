@@ -92,17 +92,17 @@ class InstitutionUtilTest {
   }
 
   @Test
-  void testValidateInstitutionDomainsAllValid() {
+  void testGetInvalidInstitutionDomainsAllValid() {
     initUtil();
     Institution institution = new Institution();
     institution.setDomains(Arrays.asList("example.com", "test.edu", "google.org"));
 
-    List<String> invalidDomains = InstitutionUtil.validateInstitutionDomains(institution);
+    List<String> invalidDomains = InstitutionUtil.getInvalidInstitutionDomains(institution);
     assertTrue(invalidDomains.isEmpty());
   }
 
   @Test
-  void testValidateInstitutionDomainsMixedValidity() {
+  void testGetInvalidInstitutionDomainsMixedValidity() {
     initUtil();
     Institution institution = new Institution();
     institution.setDomains(Arrays.asList(
@@ -115,7 +115,7 @@ class InstitutionUtilTest {
         null                  // invalid (null)
     ));
 
-    List<String> invalidDomains = InstitutionUtil.validateInstitutionDomains(institution);
+    List<String> invalidDomains = InstitutionUtil.getInvalidInstitutionDomains(institution);
     assertEquals(3, invalidDomains.size());
     assertTrue(invalidDomains.contains("invalid"));
     assertTrue(invalidDomains.contains(""));
@@ -123,12 +123,12 @@ class InstitutionUtilTest {
   }
 
   @Test
-  void testValidateInstitutionDomainsEmptyList() {
+  void testGetInvalidInstitutionDomainsEmptyList() {
     initUtil();
     Institution institution = new Institution();
     institution.setDomains(Collections.emptyList());
 
-    List<String> invalidDomains = InstitutionUtil.validateInstitutionDomains(institution);
+    List<String> invalidDomains = InstitutionUtil.getInvalidInstitutionDomains(institution);
     assertTrue(invalidDomains.isEmpty());
   }
 
