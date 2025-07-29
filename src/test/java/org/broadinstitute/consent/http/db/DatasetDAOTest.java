@@ -1423,7 +1423,6 @@ class DatasetDAOTest extends DAOTestHelper {
     Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
         dataUse.toString(), null);
     createDatasetProperties(id);
-    datasetDAO.findDatasetById(id);
   }
 
   private void createDataAccessElectionWithVotes(String referenceId, Integer datasetId,
@@ -1440,7 +1439,6 @@ class DatasetDAOTest extends DAOTestHelper {
         new Date(), false);
     electionDAO.updateElectionById(electionId, ElectionStatus.CLOSED.getValue(), new Date());
     datasetDAO.updateDatasetApproval(finalVoteApproval, Instant.now(), userId, datasetId);
-    electionDAO.findElectionById(electionId);
   }
 
 }
