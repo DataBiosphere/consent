@@ -25,7 +25,7 @@ public class ResearcherDarApprovedMessage extends MailMessage {
     this.darCode = darCode;
     this.datasets = datasets;
     this.dataUseRestriction = dataUseRestriction;
-    this.radarText = radarApproved ? "RADAR " : "";
+    this.radarText = radarApproved ? "Rule Automated DAR (RADAR) " : "";
   }
 
   @Override

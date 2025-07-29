@@ -105,7 +105,7 @@ class SigningOfficialMessagesTest extends AbstractTestHelper {
     template.process(message.createModel(linkUrl), out);
     String templateString = out.toString();
 
-    assertEquals(2, StringUtils.countMatches(templateString," RADAR "));
+    assertEquals(2, StringUtils.countMatches(templateString," Rule Automated DAR (RADAR) "));
     assertFalse(templateString.contains("radarText"));
   }
 
