@@ -13,13 +13,19 @@ public class ResearcherDarApprovedMessage extends MailMessage {
   private final String darCode;
   private final List<DatasetMailDTO> datasets;
   private final String dataUseRestriction;
+  private final String radarText;
 
-  public ResearcherDarApprovedMessage(User toUser, String darCode, List<DatasetMailDTO> datasets,
-      String dataUseRestriction) {
+  public ResearcherDarApprovedMessage(
+      User toUser,
+      String darCode,
+      List<DatasetMailDTO> datasets,
+      String dataUseRestriction,
+      boolean radarApproved) {
     super(toUser, EmailType.RESEARCHER_DAR_APPROVED);
     this.darCode = darCode;
     this.datasets = datasets;
     this.dataUseRestriction = dataUseRestriction;
+    this.radarText = radarApproved ? "Rule Automated DAR (RADAR) " : "";
   }
 
   @Override
@@ -29,11 +35,19 @@ public class ResearcherDarApprovedMessage extends MailMessage {
 
   @Override
   public Object createModel(String serverUrl) {
-    return Map.of("researcherName", toUser.getDisplayName(),
-        "darCode", darCode,
-        "datasets", datasets,
-        "dataUseRestriction", dataUseRestriction,
-        "researcherEmail", toUser.getEmail());
+    return Map.of(
+        "researcherName",
+        toUser.getDisplayName(),
+        "darCode",
+        darCode,
+        "datasets",
+        datasets,
+        "dataUseRestriction",
+        dataUseRestriction,
+        "radarText",
+        radarText,
+        "researcherEmail",
+        toUser.getEmail());
   }
 
   @Override

@@ -10,19 +10,38 @@ get:
       schema:
         type: string
         enum:
-         - COLLECT
-         - NEW_CASE
-         - REMINDER
-         - NEW_DAR
-         - DISABLED_DATASET
-         - CLOSED_DATASET_ELECTION
-         - DATA_CUSTODIAN_APPROVAL
-         - RESEARCHER_DAR_APPROVED
-         - ADMIN_FLAGGED_DAR_APPROVED
-         - DAR_CANCEL
-         - DELEGATE_RESPONSIBILITIES
-         - NEW_RESEARCHER
-         - RESEARCHER_APPROVED
+          - COLLECT
+          - NEW_CASE
+          - REMINDER
+          - NEW_DAR
+          - DISABLED_DATASET
+          - CLOSED_DATASET_ELECTION
+          - DATA_CUSTODIAN_APPROVAL
+          - RESEARCHER_DAR_APPROVED
+          - ADMIN_FLAGGED_DAR_APPROVED
+          - DAR_CANCEL
+          - DELEGATE_RESPONSIBILITIES
+          - NEW_RESEARCHER
+          - RESEARCHER_APPROVED
+          - NEW_DATASET
+          - NEW_DAA_REQUEST
+          - NEW_DAA_UPLOAD_RESEARCHER
+          - NEW_DAA_UPLOAD_SO
+          - DATASET_DENIED
+          - DATASET_APPROVED
+          - DAR_EXPIRED
+          - DAR_EXPIRATION_REMINDER
+          - NEW_PROGRESS_REPORT_REQUEST
+          - NEW_PROGRESS_REPORT_CASE
+          - RESEARCHER_PROGRESS_REPORT_APPROVED
+          - RESEARCHER_CLOSEOUT_COMPLETED
+          - SUBMITTED_CLOSEOUT
+          - NEW_LIBRARY_CARD_ISSUED
+          - SO_DAR_SUBMITTED
+          - SO_DAR_APPROVED
+          - SO_PROGRESS_REPORT_SUBMITTED
+          - SO_PROGRESS_REPORT_APPROVED
+          - DAC_RADAR_APPROVED
     - name: limit
       in: query
       description: Number of results to return.  Defaults to 20 if unset.

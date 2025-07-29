@@ -33,6 +33,7 @@ import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,6 +51,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class EmailServiceTest extends AbstractTestHelper {
 
+  private static final String SERVER_URL = "http://localhost:8000/#/";
+  private static final String FROM = "from@duos";
   private EmailService service;
   @Mock
   private UserDAO userDAO;
@@ -57,12 +60,8 @@ class EmailServiceTest extends AbstractTestHelper {
   private MailMessageDAO emailDAO;
   @Mock
   private SendGridAPI sendGridAPI;
-
   @Mock
   private FreeMarkerTemplateHelper templateHelper;
-
-  private static final String SERVER_URL = "http://localhost:8000/#/";
-  private static final String FROM = "from@duos";
 
   @BeforeEach
   void initService() {
@@ -460,6 +459,39 @@ class EmailServiceTest extends AbstractTestHelper {
         any(),
         any()
     );
+  }
+
+  @Test
+  void testSendNewDARRADARApprovalToDAC() throws Exception {
+    User toUser = new User();
+    toUser.setUserId(1);
+    toUser.setDisplayName("Test User");
+    toUser.setEmail("test.user@test.com");
+    User researcherUser = new User();
+    researcherUser.setDisplayName("Research User");
+
+    String referenceId = "abc-123";
+
+    when(templateHelper.getTemplate(EmailType.DAC_RADAR_APPROVED.templateName)).thenReturn(mock());
+
+    service.sendNewDARRADARApprovalToDAC(
+        toUser,
+        "DAR-00001",
+        referenceId,
+        List.of(new DatasetMailDTO("dataset-name", "DUOS-00123")),
+        researcherUser);
+    verify(sendGridAPI).sendMessage(any(Mail.class), eq(toUser.getEmail()));
+    verify(emailDAO)
+        .insert(
+            eq(referenceId),
+            eq(null),
+            eq(toUser.getUserId()),
+            eq(EmailType.DAC_RADAR_APPROVED.getTypeInt()),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
   }
 
   private List<MailMessage> generateMailMessageList() {

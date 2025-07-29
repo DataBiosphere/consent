@@ -1,12 +1,14 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
@@ -17,15 +19,11 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import freemarker.template.TemplateException;
-import jakarta.ws.rs.InternalServerErrorException;
-import java.io.IOException;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -33,7 +31,6 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
@@ -81,18 +78,56 @@ class DACAutomationRuleServiceTest {
   private DACAutomationRuleDAO ruleDAO;
 
   @Mock
-  private EmailService emailService;
-
-  @Mock
-  private UseRestrictionConverter useRestrictionConverter;
-
-  @Mock
   private UserDAO userDAO;
+
+  @Mock
+  private VoteService voteService;
 
   @Mock
   private ContainerRequest request;
 
   private DACAutomationRuleService service;
+
+  private static DACAutomationRule makeDacAutomationRuleGRU() {
+    return new DACAutomationRule(1, DACAutomationRuleType.GRU_V1,
+        "Test Rule", RuleState.AVAILABLE, Timestamp.from(Instant.now()), 1, "admin",
+        "admin@example.com");
+  }
+
+  private static User makeResearcher() {
+    User researcher = new User();
+    researcher.setUserId(1);
+    researcher.setInstitutionId(1);
+    researcher.setDisplayName("Test Researcher");
+    return researcher;
+  }
+
+  private static DataAccessRequest makeDAR() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setDarCode("DAR-123");
+    String darId = UUID.randomUUID().toString();
+    dar.setReferenceId(darId);
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setHmb(true);
+    dar.setData(data);
+    return dar;
+  }
+
+  private static Dataset makeDataset(int id, String name, int dacId) {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(id);
+    dataset.setName(name);
+    dataset.setAlias(id);
+    DataUse gruDataUse = new DataUse();
+    gruDataUse.setGeneralUse(true);
+    dataset.setDataUse(gruDataUse);
+    dataset.setDacId(dacId);
+    return dataset;
+  }
+
+  private static Dataset makeDataset() {
+    return makeDataset(1, "Test Dataset", 0);
+  }
 
   @BeforeEach
   void setUp() {
@@ -102,11 +137,10 @@ class DACAutomationRuleServiceTest {
             datasetDAO,
             ruleDAO,
             electionDAO,
+            userDAO,
             voteDAO,
             voteServiceDAO,
-            emailService,
-            useRestrictionConverter,
-            userDAO
+            voteService
         );
   }
 
@@ -140,7 +174,7 @@ class DACAutomationRuleServiceTest {
         1);
     AutomationRuleToggleResponse result = service.toggleRule(
         1, 1, user);
-    Assertions.assertTrue(result.isRuleEnabled());
+    assertTrue(result.isRuleEnabled());
     assertEquals(1, result.getRuleId());
     Assertions.assertTrue(result.getEnabledTime() > 1);
   }
@@ -235,17 +269,11 @@ class DACAutomationRuleServiceTest {
 
     DACAutomationRuleService serviceSpy = spy(service);
     // in order to test sending the email we need to add to the datasetsAuthorized list
-    List<Dataset> datasetsAuthorized = new ArrayList<>();
-    doAnswer(inv -> {
-      List<Dataset> datasets = inv.getArgument(3);
-      datasets.add(dataset1);
-      return null;
-    }).when(serviceSpy).applyRule(activeRule, dataset1, dar, datasetsAuthorized, request);
-    doNothing().when(serviceSpy).sendEmail(researcher, List.of(dataset1), dar);
+    doAnswer(inv -> Optional.of(new Vote())).when(serviceSpy).applyRule(activeRule, dataset1, dar, request);
 
     serviceSpy.triggerDACRuleSettings(researcher, datasetIds, referenceId, request);
 
-    verify(serviceSpy, never()).applyRule(eq(inactiveRule), any(), any(), any(), any());
+    verify(serviceSpy, never()).applyRule(eq(inactiveRule), any(), any(), any());
   }
 
   @Test
@@ -254,7 +282,7 @@ class DACAutomationRuleServiceTest {
     DataAccessRequest dar = makeDAR();
     String referenceId = dar.getReferenceId();
     List<Integer> datasetIds = List.of(1);
-    Dataset dataset = makeDataset(1, "Test Dataset");
+    Dataset dataset = makeDataset();
     DACAutomationRule inactiveRule = new DACAutomationRule(1, DACAutomationRuleType.GRU_V1,
         "Inactive Rule", RuleState.AVAILABLE, null, null, null, null);
 
@@ -266,17 +294,29 @@ class DACAutomationRuleServiceTest {
 
     serviceSpy.triggerDACRuleSettings(researcher, datasetIds, referenceId, request);
 
-    verify(serviceSpy, never()).applyRule(any(), any(), any(), any(), any());
-    verify(serviceSpy, never()).sendEmail(any(), any(), any());
+    verify(serviceSpy, never()).applyRule(any(), any(), any(), any());
   }
 
   @Test
-  void testOpenElectionAndApprove() throws SQLException {
+  void testTriggerDACRuleSettings_does_not_throw(){
+    User researcher = makeResearcher();
+    DataAccessRequest dar = makeDAR();
+    String referenceId = dar.getReferenceId();
+    List<Integer> datasetIds = List.of(1);
+
+    doThrow(new RuntimeException("Test exception"))
+        .when(dataAccessRequestDAO)
+        .findByReferenceId(referenceId);
+
+    assertDoesNotThrow(() -> service.triggerDACRuleSettings(researcher, datasetIds, referenceId, request));
+  }
+
+  @Test
+  void testOpenElectionAndApprove() {
     DACAutomationRule rule = makeDacAutomationRuleGRU();
     RuleImplementationInterface ruleImplementation = new GeneralResearchUseV1();
     DataAccessRequest dar = makeDAR();
-    List<Dataset> datasetsAuthorized = new ArrayList<>();
-    Dataset dataset = makeDataset(1, "Test Dataset");
+    Dataset dataset = makeDataset();
 
     Integer electionId = 4;
     mockInsertElection(dar, dataset, electionId);
@@ -288,24 +328,22 @@ class DACAutomationRuleServiceTest {
     when(userDAO.findUserById(rule.enabledByUserId())).thenReturn(user);
 
     Vote vote = mockFindVoteById(voteId);
+    when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(vote));
+    Vote openedVote = service.openElectionAndApprove(rule, ruleImplementation, dar, dataset, request);
 
-    service.openElectionAndApprove(rule, ruleImplementation, dar, datasetsAuthorized, dataset, request);
-
+    assertEquals(vote, openedVote);
     verify(voteServiceDAO).updateVotesWithValue(
           List.of(vote),
           true,
           "Rule Automated DAR (RADAR) Approval using rule: GRU_V1");
-    assertEquals(1, datasetsAuthorized.size());
-    assertEquals(dataset, datasetsAuthorized.get(0));
   }
 
   @Test
-  void testOpenElectionAndApproveException() throws SQLException {
+  void testOpenElectionAndApproveException() {
     DACAutomationRule rule = makeDacAutomationRuleGRU();
     RuleImplementationInterface ruleImplementation = new GeneralResearchUseV1();
     DataAccessRequest dar = makeDAR();
-    List<Dataset> datasetsAuthorized = new ArrayList<>();
-    Dataset dataset = makeDataset(1, "Test Dataset");
+    Dataset dataset = makeDataset();
 
     Integer electionId = 4;
     mockInsertElection(dar, dataset, electionId);
@@ -313,114 +351,75 @@ class DACAutomationRuleServiceTest {
     Integer voteId = 5;
     when(voteDAO.insertVote(rule.enabledByUserId(), electionId, VoteType.RADAR_APPROVE.getValue()))
         .thenReturn(voteId);
-    user.setEraCommonsId("eraCommonsId");
-    when(userDAO.findUserById(rule.enabledByUserId())).thenReturn(user);
 
     Vote vote = mockFindVoteById(voteId);
 
-    doThrow(new SQLException("Test error")).when(voteServiceDAO).updateVotesWithValue(
-          List.of(vote),
-          true,
-          "Rule Automated DAR (RADAR) Approval using rule: GRU_V1");
-
-    service.openElectionAndApprove(rule, ruleImplementation, dar, datasetsAuthorized, dataset, request);
-
-    assertEquals(0, datasetsAuthorized.size());
-  }
-
-
-  @Test
-  void testSendEmail() throws TemplateException, IOException {
-    User researcher = makeResearcher();
-    DataAccessRequest dar = makeDAR();
-    Dataset dataset1 = makeDataset(1, "Dataset One");
-    Dataset dataset2 = makeDataset(2, "Dataset Two");
-
-    List<Dataset> datasetsAuthorized = List.of(dataset1, dataset2);
-
-    when(useRestrictionConverter.translateDataUse(dataset1.getDataUse(), DataUseTranslationType.DATASET))
-        .thenReturn("General Research Use");
-    when(useRestrictionConverter.translateDataUse(dataset2.getDataUse(), DataUseTranslationType.DATASET))
-        .thenReturn("General Research Use");
-
-    service.sendEmail(researcher, datasetsAuthorized, dar);
-
-    verify(emailService).sendDACAutomationApprovalResearcherMessage(
-        eq(researcher),
-        argThat(dtos ->
-            dtos.size() == 2 &&
-                dtos.get(0).getName().equals("Dataset One") &&
-                dtos.get(0).getIdentifier().equals("DUOS-000001") &&
-                dtos.get(1).getName().equals("Dataset Two") &&
-                dtos.get(1).getIdentifier().equals("DUOS-000002")
-        ),
-        eq("DAR-123"),
-        eq("General Research Use")
-    );
-  }
-
-  @Test
-  void testSendEmailException() throws TemplateException, IOException {
-    User researcher = makeResearcher();
-    DataAccessRequest dar = makeDAR();
-    List<Dataset> datasetsAuthorized = List.of();
-
-    Exception cause = new RuntimeException("Email service unavailable");
-    Exception testException = new RuntimeException("Failed to send email", cause);
-    doThrow(testException).when(emailService).sendDACAutomationApprovalResearcherMessage(
-        researcher, List.of(), "DAR-123", "");
-
-    InternalServerErrorException thrown = assertThrows(InternalServerErrorException.class,
-        () -> service.sendEmail(researcher, datasetsAuthorized, dar));
-
-    assertEquals("Error while sending Dac Automation messages.", thrown.getMessage());
-    assertEquals(testException, thrown.getCause());
+    doThrow(new RuntimeException("Test error"))
+        .when(voteServiceDAO)
+        .updateVotesWithValue(
+            List.of(vote), true, "Rule Automated DAR (RADAR) Approval using rule: GRU_V1");
+    assertNull(service.openElectionAndApprove(rule, ruleImplementation, dar, dataset, request));
   }
 
   @Test
   void testApplyRuleApprove() {
     DACAutomationRule rule = makeDacAutomationRuleGRU();
-    Dataset datasetGru = makeDataset(1, "Test Dataset");
+    Dataset datasetGru = makeDataset();
     DataAccessRequest darHmb = makeDAR();
-    List<Dataset> datasetsAuthorized = new ArrayList<>();
+    Vote vote = new Vote();
+    vote.setType(VoteType.RADAR_APPROVE.getValue());
+    vote.setVote(true);
 
-    DACAutomationRuleService serviceSpy = spy(service);
-    doNothing().when(serviceSpy).openElectionAndApprove(
-        eq(rule),
-        any(GeneralResearchUseV1.class),
-        eq(darHmb),
-        eq(datasetsAuthorized),
-        eq(datasetGru),
-        eq(request)
-    );
+    when(electionDAO.insertElection(eq(ElectionType.DATA_ACCESS.getValue()),
+        eq(ElectionStatus.OPEN.getValue()), any(), eq(darHmb.getReferenceId()), eq(datasetGru.getDatasetId()))).thenReturn(1);
 
-    serviceSpy.applyRule(rule, datasetGru, darHmb, datasetsAuthorized, request);
-    verify(serviceSpy).openElectionAndApprove(
-        any(DACAutomationRule.class),
-        any(RuleImplementationInterface.class),
-        any(DataAccessRequest.class),
-        anyList(),
-        any(Dataset.class),
-        any(ContainerRequest.class)
-    );
+    when(voteDAO.insertVote(rule.enabledByUserId(), 1,
+        VoteType.RADAR_APPROVE.getValue())).thenReturn(1);
+    when(voteDAO.findVoteById(1)).thenReturn(vote);
+    when(userDAO.findUserById(rule.enabledByUserId())).thenReturn(user);
+    when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(vote));
+    Optional<Vote> appliedVote = service.applyRule(rule, datasetGru, darHmb, request);
+    assertTrue(appliedVote.isPresent());
+    assertEquals(vote, appliedVote.get());
+  }
+
+  @Test
+  void testApplyRule_Error_In_Vote() {
+    DACAutomationRule rule = makeDacAutomationRuleGRU();
+    Dataset datasetGru = makeDataset();
+    DataAccessRequest darHmb = makeDAR();
+    Vote vote = new Vote();
+    vote.setType(VoteType.RADAR_APPROVE.getValue());
+
+    when(electionDAO.insertElection(eq(ElectionType.DATA_ACCESS.getValue()),
+        eq(ElectionStatus.OPEN.getValue()), any(), eq(darHmb.getReferenceId()), eq(datasetGru.getDatasetId()))).thenReturn(1);
+
+    when(voteDAO.insertVote(rule.enabledByUserId(), 1,
+        VoteType.RADAR_APPROVE.getValue())).thenReturn(1);
+    when(voteDAO.findVoteById(1)).thenReturn(vote);
+
+    doThrow(new RuntimeException("Test error"))
+        .when(voteServiceDAO)
+        .updateVotesWithValue(any(), anyBoolean(), any());
+
+    Optional<Vote> appliedVote = service.applyRule(rule, datasetGru, darHmb, request);
+    assertTrue(appliedVote.isEmpty());
   }
 
   @Test
   void testApplyRuleNotApprove() {
     DACAutomationRule rule = makeDacAutomationRuleGRU();
-    Dataset datasetGru = makeDataset(1, "Test Dataset");
+    Dataset datasetGru = makeDataset();
     DataAccessRequest darNotHmb = makeDAR();
     darNotHmb.getData().setHmb(false);
-    List<Dataset> datasetsAuthorized = new ArrayList<>();
 
     DACAutomationRuleService serviceSpy = spy(service);
-    serviceSpy.applyRule(rule, datasetGru, darNotHmb, datasetsAuthorized, request);
+    serviceSpy.applyRule(rule, datasetGru, darNotHmb, request);
 
     verify(serviceSpy, never()).openElectionAndApprove(
         any(DACAutomationRule.class),
         any(RuleImplementationInterface.class),
         any(DataAccessRequest.class),
-        anyList(),
         any(Dataset.class),
         any(ContainerRequest.class)
     );
@@ -466,46 +465,9 @@ class DACAutomationRuleServiceTest {
   private Vote mockFindVoteById(Integer voteId) {
     Vote vote = new Vote();
     vote.setVoteId(voteId);
+    vote.setVote(true);
     when(voteDAO.findVoteById(voteId)).thenReturn(vote);
     return vote;
-  }
-
-  private static DACAutomationRule makeDacAutomationRuleGRU() {
-    return new DACAutomationRule(1, DACAutomationRuleType.GRU_V1,
-        "Test Rule", RuleState.AVAILABLE, Timestamp.from(Instant.now()), 1, "admin",
-        "admin@example.com");
-  }
-
-  private static User makeResearcher() {
-    User researcher = new User();
-    researcher.setDisplayName("Test Researcher");
-    return researcher;
-  }
-
-  private static DataAccessRequest makeDAR() {
-    DataAccessRequest dar = new DataAccessRequest();
-    dar.setDarCode("DAR-123");
-    String darId = UUID.randomUUID().toString();
-    dar.setReferenceId(darId);
-    DataAccessRequestData data = new DataAccessRequestData();
-    data.setHmb(true);
-    dar.setData(data);
-    return dar;
-  }
-
-  private static Dataset makeDataset(int id, String name, int dacId) {
-    Dataset dataset = new Dataset();
-    dataset.setDatasetId(id);
-    dataset.setName(name);
-    dataset.setAlias(id);
-    DataUse gruDataUse = new DataUse();
-    gruDataUse.setGeneralUse(true);
-    dataset.setDataUse(gruDataUse);
-    dataset.setDacId(dacId);
-    return dataset;
-  }
-  private static Dataset makeDataset(int id, String name) {
-    return makeDataset(id, name, 0);
   }
 
 }
