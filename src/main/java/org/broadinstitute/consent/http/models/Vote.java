@@ -165,25 +165,6 @@ public class Vote {
     return new Gson().toJson(this);
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(voteId, vote, userId, createDate, updateDate, electionId, rationale, type, isReminderSent);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    Vote otherVote = (Vote) o;
-    if (!Objects.equals(voteId, otherVote.voteId)) return false;
-    if (!Objects.equals(electionId, otherVote.electionId)) return false;
-    if (!Objects.equals(userId, otherVote.userId)) return false;
-    if (!Objects.equals(createDate, otherVote.createDate)) return false;
-    if (!Objects.equals(updateDate, otherVote.updateDate)) return false;
-    if (!Objects.equals(rationale, otherVote.rationale)) return false;
-    return Objects.equals(type, otherVote.type);
-  }
-
 
   public static class VoteUpdate {
 
