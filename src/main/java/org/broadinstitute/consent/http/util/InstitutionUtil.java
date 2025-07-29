@@ -62,53 +62,30 @@ public class InstitutionUtil implements ConsentLogger {
   }
 
   /**
-   * Canonicalizes an institution name by normalizing quotes and handling UTF-8 characters.
-   * - Replaces curly quotes with straight quotes
-   * - Replaces double quotes with single quotes
-   * - Handles UTF-8 characters properly
-   * - Name is required (cannot be null or blank)
+   * Canonicalizes an institution name by normalizing quotes and trimming whitespace.
    *
    * @param name The institution name to canonicalize
-   * @return The canonicalized name, or null if input is invalid
+   * @return The canonicalized name
    */
   public static String canonicalizeInstitutionName(String name) {
     // Validate that name is not null or blank
     if (StringUtils.isBlank(name)) {
-      return null;
+      throw new BadRequestException("Institution name cannot be null or blank");
     }
 
     String canonicalized = name.trim();
 
-    // Replace curly/smart quotes with straight quotes
-    canonicalized = canonicalized
-        .replace("\u201C", "'")  // Left double quotation mark
-        .replace("\u201D", "'")  // Right double quotation mark
-        .replace("\u2018", "'")  // Left single quotation mark
-        .replace("\u2019", "'")  // Right single quotation mark
-        .replace("\u201A", "'")  // Single low-9 quotation mark
-        .replace("\u201E", "'"); // Double low-9 quotation mark
-
-    // Replace double quotes with single quotes
-    canonicalized = canonicalized.replace("\"", "'");
+    // Replace curly and double quotes with single straight quotes
+    // u201C (Left double quotation mark)
+    // u201D (Right double quotation mark)
+    // u2018 (Left single quotation mark)
+    // u2019 (Right single quotation mark)
+    // u201A (Single low-9 quotation mark)
+    // u201E (Double low-9 quotation mark)
+    // " (Straight double quote)
+    canonicalized = canonicalized.replaceAll("[\u201C\u201D\u2018\u2019\u201A\u201E\"]", "'");
 
     return canonicalized;
-  }
-
-  /**
-   * Validates that a given domain is valid
-   *
-   * @param domain The domain string to validate
-   * @return true if the domain is valid, false otherwise
-   */
-  protected static boolean isValidInstitutionDomain(String domain) {
-    // Validate that the domain is not null or empty
-    if (StringUtils.isBlank(domain)) {
-      return false;
-    }
-
-    // Validate the domain format
-    DomainValidator validator = DomainValidator.getInstance();
-    return validator.isValid(domain);
   }
 
   /**
@@ -119,8 +96,14 @@ public class InstitutionUtil implements ConsentLogger {
    */
   public static List<String> getInvalidInstitutionDomains(Institution institution) {
     //TODO: also check for duplicates in the domain list
+    if (institution.getDomains() == null) {
+      return List.of();
+    }
+
+    DomainValidator validator = DomainValidator.getInstance();
+
     return institution.getDomains().stream()
-        .filter(domain -> !isValidInstitutionDomain(domain))
+        .filter(domain -> !validator.isValid(domain))
         .collect(java.util.stream.Collectors.toList());
   }
 

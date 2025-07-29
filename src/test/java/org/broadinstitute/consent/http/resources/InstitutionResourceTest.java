@@ -15,7 +15,6 @@ import static org.mockito.Mockito.when;
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -25,7 +24,6 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -226,33 +224,6 @@ class InstitutionResourceTest {
         GsonUtil.getInstance().toJson(mockInstitution))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
       assertNotNull(response.getEntity().toString());
-    }
-  }
-
-  @Test
-  void testPatchInstitutionInvalidDomains() {
-    List<String> invalidDomains = List.of("invalid-domain", "foo_bar.com");
-    List<String> validDomains = List.of("valid-domain.com", "baz.com");
-    List<String> allDomains = new ArrayList<>();
-    allDomains.addAll(validDomains);
-    allDomains.addAll(invalidDomains);
-
-    Institution mockInstitution = mockInstitutionSetup();
-    mockInstitution.setId(1);
-    when(institutionService.findInstitutionById(mockInstitution.getId())).thenReturn(
-        mockInstitution);
-    mockInstitution.setDomains(allDomains);
-
-    try (var response = resource.patchInstitution(duosUser, 1,
-        GsonUtil.getInstance().toJson(mockInstitution))) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-      assertTrue(
-          response.getEntity().toString().contains("Invalid domain(s) provided for institution"));
-
-      invalidDomains.forEach(
-          domain -> assertTrue(response.getEntity().toString().contains(domain)));
-      validDomains.forEach(
-          domain -> Assertions.assertFalse(response.getEntity().toString().contains(domain)));
     }
   }
 
