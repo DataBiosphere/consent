@@ -103,7 +103,7 @@ public class InstitutionUtil implements ConsentLogger {
 
     return institution.getDomains().stream()
         .filter(domain -> !validator.isValid(domain))
-        .collect(java.util.stream.Collectors.toList());
+        .toList();
   }
 
   public static void validateInstitutionDomains(Institution institution) {
