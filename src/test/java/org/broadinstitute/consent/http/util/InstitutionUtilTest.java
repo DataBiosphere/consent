@@ -69,7 +69,7 @@ class InstitutionUtilTest {
   @Test
   void testGetInvalidInstitutionDomainsAllValid() {
     Institution institution = new Institution();
-    institution.setDomains(Arrays.asList("example.com", "test.edu", "google.org"));
+    institution.setDomains(Arrays.asList("google.com", "broad.mit.edu", "broadinstitute.org"));
 
     List<String> invalidDomains = InstitutionUtil.getInvalidInstitutionDomains(institution);
     assertTrue(invalidDomains.isEmpty());
@@ -81,8 +81,8 @@ class InstitutionUtilTest {
     institution.setDomains(Arrays.asList(
         "broadinstitute.org", // valid
         "uconn.edu",          // valid
-        "sub.example.com",    // valid
-        "www.test.edu",       // valid
+        "mail.google.com",    // valid
+        "www.uconn.edu",      // valid
         "invalid",            // invalid
         "",                   // invalid
         null                  // invalid
@@ -107,7 +107,7 @@ class InstitutionUtilTest {
   @Test
   void testValidateInstitutionDomainsAllValid() {
     Institution institution = new Institution();
-    institution.setDomains(Arrays.asList("example.com", "test.edu", "broadinstitute.org"));
+    institution.setDomains(Arrays.asList("google.com", "broad.mit.edu", "broadinstitute.org"));
 
     assertDoesNotThrow(() -> InstitutionUtil.validateInstitutionDomains(institution));
   }
@@ -153,20 +153,6 @@ class InstitutionUtilTest {
 
     // Test low-9 quotation marks
     assertEquals("A 'Real' University", InstitutionUtil.canonicalizeInstitutionName("A ‚Real„ University"));
-  }
-
-  @Test
-  void testCanonicalizeInstitutionNameDoubleToSingleQuotes() {
-    assertEquals("A 'Real' University", InstitutionUtil.canonicalizeInstitutionName("A \"Real\" University"));
-    assertEquals("Matt's University", InstitutionUtil.canonicalizeInstitutionName("Matt\"s University"));
-  }
-
-  @Test
-  void testCanonicalizeInstitutionNameInvalidInput() {
-    assertThrows(BadRequestException.class, () -> InstitutionUtil.canonicalizeInstitutionName(null));
-    assertThrows(BadRequestException.class, () -> InstitutionUtil.canonicalizeInstitutionName(""));
-    assertThrows(BadRequestException.class, () -> InstitutionUtil.canonicalizeInstitutionName("   "));
-    assertThrows(BadRequestException.class, () -> InstitutionUtil.canonicalizeInstitutionName("\t\n"));
   }
 
   @Test

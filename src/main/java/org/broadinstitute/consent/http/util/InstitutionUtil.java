@@ -68,21 +68,16 @@ public class InstitutionUtil implements ConsentLogger {
    * @return The canonicalized name
    */
   public static String canonicalizeInstitutionName(String name) {
-    // Validate that name is not null or blank
-    if (StringUtils.isBlank(name)) {
-      throw new BadRequestException("Institution name cannot be null or blank");
-    }
-
     String canonicalized = name.trim();
 
-    // Replace curly and double quotes with single straight quotes
-    // u201C (Left double quotation mark)
-    // u201D (Right double quotation mark)
-    // u2018 (Left single quotation mark)
-    // u2019 (Right single quotation mark)
-    // u201A (Single low-9 quotation mark)
-    // u201E (Double low-9 quotation mark)
-    // " (Straight double quote)
+    // Replace the following characters with a single quote:
+    // u201C (Left double quotation)
+    // u201D (Right double quotation)
+    // u2018 (Left single quotation)
+    // u2019 (Right single quotation)
+    // u201A (Single low-9 quotation)
+    // u201E (Double low-9 quotation)
+    // "     (Straight double quotation)
     canonicalized = canonicalized.replaceAll("[\u201C\u201D\u2018\u2019\u201A\u201E\"]", "'");
 
     return canonicalized;
@@ -94,7 +89,7 @@ public class InstitutionUtil implements ConsentLogger {
    * @param institution The institution to validate domains for.
    * @return List of invalid domains.
    */
-  public static List<String> getInvalidInstitutionDomains(Institution institution) {
+  protected static List<String> getInvalidInstitutionDomains(Institution institution) {
     if (institution.getDomains() == null) {
       return List.of();
     }
