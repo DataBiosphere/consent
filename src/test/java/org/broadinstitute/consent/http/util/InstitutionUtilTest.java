@@ -83,7 +83,7 @@ class InstitutionUtilTest {
         "uconn.edu",          // valid
         "mail.google.com",    // valid
         "www.uconn.edu",      // valid
-        "café.com",      //valid
+        "café.com",           // valid
         "invalid",            // invalid
         "",                   // invalid
         null                  // invalid
@@ -121,7 +121,7 @@ class InstitutionUtilTest {
         "uconn.edu",          // valid
         "sub.example.com",    // valid
         "www.test.edu",       // valid
-        "café.com",     //valid
+        "café.com",           // valid
         "invalid",            // invalid
         "",                   // invalid
         null                  // invalid

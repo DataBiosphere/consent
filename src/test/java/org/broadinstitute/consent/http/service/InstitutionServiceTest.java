@@ -201,6 +201,7 @@ class InstitutionServiceTest {
 
     when(institutionDAO.findInstitutionIdByDomain("broadinstitute.org")).thenReturn(null);
     when(institutionDAO.findInstitutionIdByDomain("broad.mit.edu")).thenReturn(null);
+    when(institutionDAO.findInstitutionIdByDomain("café.com")).thenReturn(null);
 
     initService();
 
