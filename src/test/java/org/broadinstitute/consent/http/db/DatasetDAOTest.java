@@ -631,15 +631,15 @@ class DatasetDAOTest extends DAOTestHelper {
   void testFindAllStudyNames() {
     Dataset ds1 = insertDataset();
     String ds1Name = randomAlphabetic(20);
-    createDatasetProperty(ds1.getDatasetId(),  ds1Name);
+    createStringDatasetProperty(ds1.getDatasetId(),  ds1Name);
 
     Dataset ds2 = insertDataset();
     String ds2Name = randomAlphabetic(25);
-    createDatasetProperty(ds2.getDatasetId(), ds2Name);
+    createStringDatasetProperty(ds2.getDatasetId(), ds2Name);
 
     Dataset ds3 = insertDataset();
     String ds3Name = randomAlphabetic(15);
-    createDatasetProperty(ds3.getDatasetId(), ds3Name);
+    createStringDatasetProperty(ds3.getDatasetId(), ds3Name);
 
     Study study = insertStudyWithProperties();
 
@@ -1273,7 +1273,7 @@ class DatasetDAOTest extends DAOTestHelper {
     return fileStorageObjectDAO.findFileById(newFileStorageObjectId);
   }
 
-  protected void createDatasetProperty(Integer datasetId, String value) {
+  protected void createStringDatasetProperty(Integer datasetId, String value) {
     List<DatasetProperty> list = new ArrayList<>();
     PropertyType type = PropertyType.String;
     DatasetProperty dsp = new DatasetProperty();
