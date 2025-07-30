@@ -153,6 +153,10 @@ public class InstitutionService {
       return;
     }
 
+    if (institution.getDomains().stream().distinct().count() < institution.getDomains().size()) {
+      throw new IllegalArgumentException("Institution domains must be unique");
+    }
+
     List<String> conflictingDomains = institution.getDomains().stream()
         .map(domain -> {
           Integer existingInstitutionId = institutionDAO.findInstitutionIdByDomain(domain);

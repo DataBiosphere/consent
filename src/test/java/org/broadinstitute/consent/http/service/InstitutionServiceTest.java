@@ -356,6 +356,23 @@ class InstitutionServiceTest {
     assertTrue(exception.getMessage().contains("An institution exists with the name of 'Broad Institute'"));
   }
 
+  @Test
+  void testCreateInstitutionDuplicateDomainsInPayload() {
+    Institution newInstitution = initMockModel();
+    newInstitution.setName("Broad Institute");
+    newInstitution.setDomains(List.of("broadinstitute.org", "broadinstitute.org"));
+
+    when(institutionDAO.findInstitutionsByName("Broad Institute")).thenReturn(Collections.emptyList());
+
+    initService();
+
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+      service.createInstitution(newInstitution, 1);
+    });
+
+    assertEquals("Institution domains must be unique", exception.getMessage());
+  }
+
   /**
    * @return A list of 5 dacs
    */
