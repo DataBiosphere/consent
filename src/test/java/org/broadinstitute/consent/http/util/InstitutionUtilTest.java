@@ -83,6 +83,7 @@ class InstitutionUtilTest {
         "uconn.edu",          // valid
         "mail.google.com",    // valid
         "www.uconn.edu",      // valid
+        "café.com",      //valid
         "invalid",            // invalid
         "",                   // invalid
         null                  // invalid
