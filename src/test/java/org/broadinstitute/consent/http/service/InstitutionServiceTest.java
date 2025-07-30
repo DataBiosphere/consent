@@ -197,7 +197,7 @@ class InstitutionServiceTest {
   @Test
   void testCreateInstitutionDomainUniquenessAllUnique() {
     Institution mockInstitution = initMockModel();
-    mockInstitution.setDomains(List.of("broadinstitute.org", "broad.mit.edu"));
+    mockInstitution.setDomains(List.of("broadinstitute.org", "broad.mit.edu", "café.com"));
 
     when(institutionDAO.findInstitutionIdByDomain("broadinstitute.org")).thenReturn(null);
     when(institutionDAO.findInstitutionIdByDomain("broad.mit.edu")).thenReturn(null);
