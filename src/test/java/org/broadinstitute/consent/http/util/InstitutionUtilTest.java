@@ -121,6 +121,7 @@ class InstitutionUtilTest {
         "uconn.edu",          // valid
         "sub.example.com",    // valid
         "www.test.edu",       // valid
+        "café.com",     //valid
         "invalid",            // invalid
         "",                   // invalid
         null                  // invalid
