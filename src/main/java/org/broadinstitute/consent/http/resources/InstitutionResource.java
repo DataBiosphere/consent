@@ -18,7 +18,6 @@ import jakarta.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.InstitutionDomainMap;
@@ -79,11 +78,6 @@ public class InstitutionResource extends Resource {
   public Response createInstitution(@Auth DuosUser duosUser, String institution) {
     try {
       Institution payload = GsonUtil.getInstance().fromJson(institution, Institution.class);
-      List<Institution> conflicts = institutionService.findAllInstitutionsByName(payload.getName());
-      if (!conflicts.isEmpty()) {
-        throw new ConsentConflictException(
-            "An institution exists with the name of '" + payload.getName() + "'");
-      }
       Institution newInstitution = institutionService.createInstitution(payload, duosUser.getUser().getUserId());
       return Response.ok().entity(newInstitution).build();
     } catch (Exception e) {

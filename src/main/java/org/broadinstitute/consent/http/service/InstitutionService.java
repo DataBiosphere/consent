@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Objects;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.util.InstitutionUtil;
@@ -28,6 +29,7 @@ public class InstitutionService {
     checkUserId(userId);
     // Name validation
     checkForEmptyName(institution);
+    checkNameUniqueness(institution);
     String canonicalName = InstitutionUtil.canonicalizeInstitutionName(institution.getName());
     institution.setName(canonicalName);
 
@@ -49,6 +51,7 @@ public class InstitutionService {
 
     // Name validation
     checkForEmptyName(institutionPayload);
+    checkNameUniqueness(institutionPayload);
     String canonicalName = InstitutionUtil.canonicalizeInstitutionName(institutionPayload.getName());
     institutionPayload.setName(canonicalName);
 
@@ -128,6 +131,17 @@ public class InstitutionService {
   private void isInstitutionNull(Institution institution) {
     if (Objects.isNull(institution)) {
       throw new NotFoundException("Institution not found");
+    }
+  }
+
+  private void checkNameUniqueness(Institution institution) {
+    List<Institution> conflicts = findAllInstitutionsByName(institution.getName());
+    // We need to make sure that any found institutions are not the same as the one being updated
+    conflicts.removeIf(existingInstitution ->
+        institution.getId() != null && existingInstitution.getId().equals(institution.getId()));
+    if (!conflicts.isEmpty()) {
+      throw new ConsentConflictException(
+          "An institution exists with the name of '" + institution.getName() + "'");
     }
   }
 
