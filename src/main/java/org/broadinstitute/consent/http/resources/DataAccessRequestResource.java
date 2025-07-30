@@ -423,6 +423,7 @@ public class DataAccessRequestResource extends Resource {
   @RolesAllowed({RESEARCHER})
   public Response postProgressReport(
       @Auth AuthUser authUser,
+      @Context Request request,
       @PathParam("parentReferenceId") String parentReferenceId,
       @FormDataParam("dar") String dar,
       @FormDataParam("collaboratorRequiredFile") InputStream collabInputStream,
@@ -452,10 +453,13 @@ public class DataAccessRequestResource extends Resource {
       populateProgressReportWithDocuments(collabInputStream, collabFileDetails, ethicsInputStream,
           ethicsFileDetails, payload, parentDar);
       DataAccessRequest progressReport = dataAccessRequestService.createProgressReport(user,
-          payload, parentDar);
+          payload, parentDar, (ContainerRequest) request);
       if (Objects.nonNull(progressReport) && !progressReport.getIsCloseoutProgressReport()) {
         sendNewDarCollectionMessage(parentDar.getCollectionId());
       }
+      List<Dataset> datasets = datasetService.findDatasetsByIds(progressReport.getDatasetIds());
+      ComplianceLogger.logDARSubmission(user, datasets, ((ContainerRequest) request),
+          HttpStatusCodes.STATUS_CODE_CREATED);
       return Response.ok(progressReport.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

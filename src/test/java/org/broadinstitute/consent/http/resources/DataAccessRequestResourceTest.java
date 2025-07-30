@@ -424,12 +424,14 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     DataAccessRequest parentDar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
     DataAccessRequest childDar = generateDataAccessRequest();
-    when(dataAccessRequestService.createProgressReport(eq(user), any(), eq(parentDar))).thenReturn(
+    when(dataAccessRequestService.createProgressReport(eq(user), any(), eq(parentDar), eq(request))).thenReturn(
         childDar);
+    // datasets retrieved for the compliance logger
+    when(datasetService.findDatasetsByIds(childDar.getDatasetIds())).thenReturn(List.of());
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
 
-    try (var response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
+    try (var response = resource.postProgressReport(authUser, request, "", "", collabFile.getLeft(),
         collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
@@ -444,7 +446,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
 
-    Response response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
+    Response response = resource.postProgressReport(authUser, request,"", "", collabFile.getLeft(),
         collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight());
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
   }
@@ -456,7 +458,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
 
-    try (var response = resource.postProgressReport(authUser, "", "", collabFile.getLeft(),
+    try (var response = resource.postProgressReport(authUser, request,"", "", collabFile.getLeft(),
         collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
@@ -471,7 +473,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     var collabFile = mockFormDataMultiPart("collab.txt");
     var ethicsFile = mockFormDataMultiPart("ethics.txt");
 
-    try (var response = resource.postProgressReport(authUser, "", invalidDar,
+    try (var response = resource.postProgressReport(authUser, request,"", invalidDar,
         collabFile.getLeft(), collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
       assertTrue(response.getEntity().toString().contains("Unable to parse DAR from JSON string"));
@@ -483,7 +485,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     doThrow(BadRequestException.class).when(userService).validateActiveERACredentials(user);
 
-    try (var response = resource.postProgressReport(authUser, "", "",
+    try (var response = resource.postProgressReport(authUser, request,"", "",
         null, null, null, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
@@ -502,7 +504,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     var collabFile = mockFormDataMultiPart("collab.txt");
     var ethicsFile = mockFormDataMultiPart("ethics.txt");
 
-    try (var response = resource.postProgressReport(authUser, "", "",
+    try (var response = resource.postProgressReport(authUser, request,"", "",
         collabFile.getLeft(), collabFile.getRight(), ethicsFile.getLeft(), ethicsFile.getRight())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
       assertTrue(response.getEntity().toString().contains("Cannot create a progress report for a DAR with an open election"));

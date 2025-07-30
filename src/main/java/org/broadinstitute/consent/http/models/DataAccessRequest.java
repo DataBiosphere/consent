@@ -507,4 +507,11 @@ public class DataAccessRequest {
     return this.getCloseoutSigningOfficialApprovedDate() != null
         && this.getCloseoutSigningOfficialApprovedUserId() != null;
   }
+
+  public boolean getHasDMI() {
+    return this.getData() != null
+        && this.getData().getDmi() != null
+        && this.getData().getDmi().incidents() != null
+        && !this.getData().getDmi().incidents().isEmpty();
+  }
 }

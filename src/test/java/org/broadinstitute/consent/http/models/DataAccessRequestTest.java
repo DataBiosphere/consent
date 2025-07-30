@@ -116,6 +116,50 @@ class DataAccessRequestTest {
   }
 
   @Test
+  void testGetHasDMI_NoData() {
+    DataAccessRequest dar = new DataAccessRequest();
+    assertFalse(dar.getHasDMI());
+  }
+
+  @Test
+  void testGetHasDMI_NoDMI() {
+    DataAccessRequest dar = new DataAccessRequest();
+    DataAccessRequestData data = new DataAccessRequestData();
+    dar.setData(data);
+    assertFalse(dar.getHasDMI());
+  }
+
+  @Test
+  void testGetHasDMI_NullIncidents() {
+    DataAccessRequest dar = new DataAccessRequest();
+    DataAccessRequestData data = new DataAccessRequestData();
+    DataManagementIncident dmi = new DataManagementIncident(null, null);
+    data.setDmi(dmi);
+    dar.setData(data);
+    assertFalse(dar.getHasDMI());
+  }
+
+  @Test
+  void testGetHasDMI_EmptyIncidents() {
+    DataAccessRequest dar = new DataAccessRequest();
+    DataAccessRequestData data = new DataAccessRequestData();
+    DataManagementIncident dmi = new DataManagementIncident(List.of(), null);
+    data.setDmi(dmi);
+    dar.setData(data);
+    assertFalse(dar.getHasDMI());
+  }
+
+  @Test
+  void testGetHasDMI_HasIncidents() {
+    DataAccessRequest dar = new DataAccessRequest();
+    DataAccessRequestData data = new DataAccessRequestData();
+    DataManagementIncident dmi = new DataManagementIncident(List.of("Incident 1"), null);
+    data.setDmi(dmi);
+    dar.setData(data);
+    assertTrue(dar.getHasDMI());
+  }
+
+  @Test
   void testValidateCloseoutSupplement_Unset() {
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData darData = new DataAccessRequestData();
