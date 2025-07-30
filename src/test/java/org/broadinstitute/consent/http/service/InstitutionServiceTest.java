@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.NotFoundException;
@@ -21,6 +20,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
@@ -281,6 +281,79 @@ class InstitutionServiceTest {
 
     assertEquals("Domain(s) already associated with another institution: broadinstitute.org",
         exception.getMessage());
+  }
+
+  @Test
+  void testCreateInstitutionNameUniqueness() {
+    Institution newInstitution = initMockModel();
+    newInstitution.setName("Broad Institute");
+
+    when(institutionDAO.findInstitutionsByName("Broad Institute")).thenReturn(Collections.emptyList());
+
+    initService();
+
+    assertDoesNotThrow(() -> {
+      service.createInstitution(newInstitution, 1);
+    });
+  }
+
+  @Test
+  void testCreateInstitutionNameUniquenessConflict() {
+    Institution newInstitution = initMockModel();
+    newInstitution.setName("Broad Institute");
+
+    Institution existingConflictingInstitution = new Institution();
+    existingConflictingInstitution.setId(2);
+    existingConflictingInstitution.setName("Broad Institute");
+
+    when(institutionDAO.findInstitutionsByName("Broad Institute")).thenReturn(List.of(existingConflictingInstitution));
+
+    initService();
+
+    ConsentConflictException exception = assertThrows(ConsentConflictException.class, () -> {
+      service.createInstitution(newInstitution, 1);
+    });
+
+    assertTrue(exception.getMessage().contains("An institution exists with the name of 'Broad Institute'"));
+  }
+
+  @Test
+  void testUpdateInstitutionNameUniqueness() throws Exception {
+    Institution updatedInstitution = initMockModel();
+    updatedInstitution.setId(1);
+    updatedInstitution.setName("Broad Institute");
+
+    when(institutionDAO.findInstitutionById(1)).thenReturn(updatedInstitution);
+    when(institutionDAO.findInstitutionsByName("Broad Institute")).thenReturn(Collections.emptyList());
+    when(institutionDAO.updateFullInstitution(updatedInstitution, 1)).thenReturn(updatedInstitution);
+
+    initService();
+
+    assertDoesNotThrow(() -> {
+      service.updateInstitutionById(updatedInstitution, 1, 1);
+    });
+  }
+
+  @Test
+  void testUpdateInstitutionNameUniquenessConflict() {
+    Institution updatedInstitution = initMockModel();
+    updatedInstitution.setId(1);
+    updatedInstitution.setName("Broad Institute");
+
+    Institution existingConflictingInstitution = new Institution();
+    existingConflictingInstitution.setId(2);
+    existingConflictingInstitution.setName("Broad Institute");
+
+    when(institutionDAO.findInstitutionById(1)).thenReturn(updatedInstitution);
+    when(institutionDAO.findInstitutionsByName("Broad Institute")).thenReturn(List.of(existingConflictingInstitution));
+
+    initService();
+
+    ConsentConflictException exception = assertThrows(ConsentConflictException.class, () -> {
+      service.updateInstitutionById(updatedInstitution, 1, 1);
+    });
+
+    assertTrue(exception.getMessage().contains("An institution exists with the name of 'Broad Institute'"));
   }
 
   /**

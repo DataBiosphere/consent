@@ -135,10 +135,13 @@ public class InstitutionService {
   }
 
   private void checkNameUniqueness(Institution institution) {
-    List<Institution> conflicts = findAllInstitutionsByName(institution.getName());
-    // We need to make sure that any found institutions are not the same as the one being updated
-    conflicts.removeIf(existingInstitution ->
-        institution.getId() != null && existingInstitution.getId().equals(institution.getId()));
+    List<Institution> conflicts = findAllInstitutionsByName(institution.getName())
+        .stream()
+        // Filter out the institution being updated, so it doesn't conflict with itself
+        .filter(existingInstitution ->
+            !existingInstitution.getId().equals(institution.getId()))
+        .toList();
+
     if (!conflicts.isEmpty()) {
       throw new ConsentConflictException(
           "An institution exists with the name of '" + institution.getName() + "'");
