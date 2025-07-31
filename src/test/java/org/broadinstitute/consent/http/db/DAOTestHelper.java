@@ -28,6 +28,8 @@ import org.jdbi.v3.gson2.Gson2Config;
 import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestPlan;
@@ -257,4 +259,30 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   protected Institution getUserInstitution(User user) {
     return institutionDAO.findInstitutionById(user.getInstitutionId());
   }
+
+  protected void updateVote(@Bind("vote") Boolean vote,
+      @Bind("rationale") String rationale,
+      @Bind("updateDate") Date updateDate,
+      @Bind("voteId") Integer voteId,
+      @Bind("reminderSent") boolean reminder,
+      @Bind("electionId") Integer electionId,
+      @Bind("createDate") Date createDate,
+      @Bind("hasConcerns") Boolean hasConcerns) {
+    jdbi.useHandle(handle -> {
+      String sql = """
+          update vote set vote = :vote, updateDate = :updateDate, rationale = :rationale, reminderSent = :reminderSent, createDate = :createDate, has_concerns = :hasConcerns where voteId = :voteId
+          """;
+      handle.createUpdate(sql)
+          .bind("vote", vote)
+          .bind("rationale", rationale)
+          .bind("updateDate", updateDate)
+          .bind("voteId", voteId)
+          .bind("reminderSent", reminder)
+          .bind("electionId", electionId)
+          .bind("createDate", createDate)
+          .bind("hasConcerns", hasConcerns)
+          .execute();
+    });
+  }
+
 }
