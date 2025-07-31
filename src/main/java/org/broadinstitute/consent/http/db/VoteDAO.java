@@ -44,7 +44,7 @@ public interface VoteDAO extends Transactional<VoteDAO> {
   Integer checkVoteById(@Bind("referenceId") String referenceId,
       @Bind("voteId") Integer voteId);
 
-  @SqlUpdate("insert into vote (user_id, electionId, type, reminderSent) values (:userId, :electionId, :type, false)")
+  @SqlUpdate("INSERT INTO vote (user_id, electionid, type, remindersent, createdate) VALUES (:userId, :electionId, :type, false, current_timestamp)")
   @GetGeneratedKeys
   Integer insertVote(@Bind("userId") Integer userId,
       @Bind("electionId") Integer electionId,

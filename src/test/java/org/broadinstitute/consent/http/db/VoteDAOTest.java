@@ -50,6 +50,10 @@ class VoteDAOTest extends DAOTestHelper {
 
     Vote foundVote = voteDAO.findVoteById(vote.getVoteId());
     assertNotNull(foundVote);
+    assertNotNull(foundVote.getCreateDate());
+    assertEquals(user.getUserId(), foundVote.getUserId());
+    assertEquals(election.getElectionId(), foundVote.getElectionId());
+    assertEquals(VoteType.DAC.getValue(), foundVote.getType());
   }
 
   @Test
