@@ -2,14 +2,12 @@ package org.broadinstitute.consent.http.util;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.Gson;
 import jakarta.ws.rs.BadRequestException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -22,6 +20,25 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class InstitutionUtilTest {
+
+  private static final List<String> VALID_DOMAINS = Arrays.asList(
+      "café.com",
+      "broad.mit.edu",
+      "broadinstitute.org",
+      "mail.google.com",
+      "www.broadinstitute.org"
+  );
+
+  private static final List<String> INVALID_DOMAINS = Arrays.asList(
+      "invalid",
+      "",
+      null
+  );
+
+  private static final List<String> MIXED_VALIDITY_DOMAINS = new ArrayList<String>() {{
+    addAll(VALID_DOMAINS);
+    addAll(INVALID_DOMAINS);
+  }};
 
   private InstitutionUtil util;
 
@@ -69,7 +86,7 @@ class InstitutionUtilTest {
   @Test
   void testGetInvalidInstitutionDomainsAllValid() {
     Institution institution = new Institution();
-    institution.setDomains(Arrays.asList("google.com", "broad.mit.edu", "broadinstitute.org"));
+    institution.setDomains(VALID_DOMAINS);
 
     List<String> invalidDomains = InstitutionUtil.getInvalidInstitutionDomains(institution);
     assertTrue(invalidDomains.isEmpty());
@@ -78,22 +95,13 @@ class InstitutionUtilTest {
   @Test
   void testGetInvalidInstitutionDomainsMixedValidity() {
     Institution institution = new Institution();
-    institution.setDomains(Arrays.asList(
-        "broadinstitute.org", // valid
-        "uconn.edu",          // valid
-        "mail.google.com",    // valid
-        "www.uconn.edu",      // valid
-        "café.com",           // valid
-        "invalid",            // invalid
-        "",                   // invalid
-        null                  // invalid
-    ));
+    institution.setDomains(MIXED_VALIDITY_DOMAINS);
 
     List<String> invalidDomains = InstitutionUtil.getInvalidInstitutionDomains(institution);
     assertEquals(3, invalidDomains.size());
-    assertTrue(invalidDomains.contains("invalid"));
-    assertTrue(invalidDomains.contains(""));
-    assertTrue(invalidDomains.contains(null));
+    INVALID_DOMAINS.forEach(domain -> {
+      assertTrue(invalidDomains.contains(domain));
+    });
   }
 
   @Test
@@ -108,7 +116,7 @@ class InstitutionUtilTest {
   @Test
   void testValidateInstitutionDomainsAllValid() {
     Institution institution = new Institution();
-    institution.setDomains(Arrays.asList("google.com", "broad.mit.edu", "broadinstitute.org"));
+    institution.setDomains(VALID_DOMAINS);
 
     assertDoesNotThrow(() -> InstitutionUtil.validateInstitutionDomains(institution));
   }
@@ -116,16 +124,7 @@ class InstitutionUtilTest {
   @Test
   void testValidateInstitutionDomainsContainsInvalid() {
     Institution institution = new Institution();
-    institution.setDomains(Arrays.asList(
-        "broadinstitute.org", // valid
-        "uconn.edu",          // valid
-        "sub.example.com",    // valid
-        "www.test.edu",       // valid
-        "café.com",           // valid
-        "invalid",            // invalid
-        "",                   // invalid
-        null                  // invalid
-    ));
+    institution.setDomains(MIXED_VALIDITY_DOMAINS);
 
     Exception exception = null;
     try {
