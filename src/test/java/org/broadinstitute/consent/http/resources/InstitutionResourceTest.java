@@ -18,6 +18,7 @@ import jakarta.ws.rs.ServerErrorException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Institution;
@@ -158,7 +159,9 @@ class InstitutionResourceTest {
   @Test
   void testCreateInstitutionDuplicate() {
     Institution mockInstitution = mockInstitutionSetup();
-    when(institutionService.findAllInstitutionsByName(any())).thenReturn(List.of(mockInstitution));
+    ConsentConflictException conflictException = new ConsentConflictException(
+        "An institution exists with the name of '" + mockInstitution.getName() + "'");
+    when(institutionService.createInstitution(any(), anyInt())).thenThrow(conflictException);
 
     try (var response = resource.createInstitution(duosUser,
         GsonUtil.getInstance().toJson(mockInstitution))) {

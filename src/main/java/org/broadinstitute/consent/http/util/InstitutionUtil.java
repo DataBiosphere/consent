@@ -4,6 +4,11 @@ import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import jakarta.ws.rs.BadRequestException;
+import java.util.List;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.validator.routines.DomainValidator;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class InstitutionUtil implements ConsentLogger {
@@ -54,5 +59,53 @@ public class InstitutionUtil implements ConsentLogger {
         return false;
       }
     };
+  }
+
+  /**
+   * Canonicalizes an institution name by normalizing quotes and trimming whitespace.
+   *
+   * @param name The institution name to canonicalize
+   * @return The canonicalized name
+   */
+  public static String canonicalizeInstitutionName(String name) {
+    String canonicalized = name.trim();
+
+    // Replace the following characters with a single quote:
+    // u201C (Left double quotation)
+    // u201D (Right double quotation)
+    // u2018 (Left single quotation)
+    // u2019 (Right single quotation)
+    // u201A (Single low-9 quotation)
+    // u201E (Double low-9 quotation)
+    // "     (Straight double quotation)
+    canonicalized = canonicalized.replaceAll("[\u201C\u201D\u2018\u2019\u201A\u201E\"]", "'");
+
+    return canonicalized;
+  }
+
+  /**
+   * Validates all domains in this institution's domain list and returns invalid ones.
+   *
+   * @param institution The institution to validate domains for.
+   * @return List of invalid domains.
+   */
+  protected static List<String> getInvalidInstitutionDomains(Institution institution) {
+    if (institution.getDomains() == null) {
+      return List.of();
+    }
+
+    DomainValidator validator = DomainValidator.getInstance();
+
+    return institution.getDomains().stream()
+        .filter(domain -> !validator.isValid(domain))
+        .toList();
+  }
+
+  public static void validateInstitutionDomains(Institution institution) {
+    List<String> invalidDomains = getInvalidInstitutionDomains(institution);
+    if (!invalidDomains.isEmpty()) {
+      throw new BadRequestException(
+          "Invalid domain(s) provided for institution: " + String.join(", ", invalidDomains));
+    }
   }
 }

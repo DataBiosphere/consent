@@ -9,8 +9,10 @@ import java.util.List;
 import java.util.Objects;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+import org.broadinstitute.consent.http.util.InstitutionUtil;
 
 public class InstitutionService {
 
@@ -24,8 +26,16 @@ public class InstitutionService {
   }
 
   public Institution createInstitution(Institution institution, Integer userId) {
-    checkForEmptyName(institution);
     checkUserId(userId);
+    // Name validation
+    checkForEmptyName(institution);
+    checkNameUniqueness(institution);
+    String canonicalName = InstitutionUtil.canonicalizeInstitutionName(institution.getName());
+    institution.setName(canonicalName);
+
+    // Domain validation
+    InstitutionUtil.validateInstitutionDomains(institution);
+    checkDomainUniqueness(institution);
     try {
       return institutionDAO.insertFullInstitution(institution, userId);
     } catch (SQLException e) {
@@ -35,10 +45,19 @@ public class InstitutionService {
 
   public Institution updateInstitutionById(Institution institutionPayload, Integer id,
       Integer userId) throws SQLException {
+    checkUserId(userId);
     Institution targetInstitution = institutionDAO.findInstitutionById(id);
     isInstitutionNull(targetInstitution);
-    checkUserId(userId);
+
+    // Name validation
     checkForEmptyName(institutionPayload);
+    checkNameUniqueness(institutionPayload);
+    String canonicalName = InstitutionUtil.canonicalizeInstitutionName(institutionPayload.getName());
+    institutionPayload.setName(canonicalName);
+
+    // Domain validation
+    InstitutionUtil.validateInstitutionDomains(institutionPayload);
+    checkDomainUniqueness(institutionPayload);
     return institutionDAO.updateFullInstitution(institutionPayload, userId);
   }
 
@@ -112,6 +131,49 @@ public class InstitutionService {
   private void isInstitutionNull(Institution institution) {
     if (Objects.isNull(institution)) {
       throw new NotFoundException("Institution not found");
+    }
+  }
+
+  private void checkNameUniqueness(Institution institution) {
+    List<Institution> conflicts = findAllInstitutionsByName(institution.getName())
+        .stream()
+        // Filter out the institution being updated, so it doesn't conflict with itself
+        .filter(existingInstitution ->
+            !existingInstitution.getId().equals(institution.getId()))
+        .toList();
+
+    if (!conflicts.isEmpty()) {
+      throw new ConsentConflictException(
+          "An institution exists with the name of '" + institution.getName() + "'");
+    }
+  }
+
+  private void checkDomainUniqueness(Institution institution) {
+    if (institution.getDomains() == null || institution.getDomains().isEmpty()) {
+      return;
+    }
+
+    if (institution.getDomains().stream().distinct().count() < institution.getDomains().size()) {
+      throw new IllegalArgumentException("Institution domains must be unique");
+    }
+
+    List<String> conflictingDomains = institution.getDomains().stream()
+        .map(domain -> {
+          Integer existingInstitutionId = institutionDAO.findInstitutionIdByDomain(domain);
+          if (existingInstitutionId != null && !existingInstitutionId.equals(institution.getId())) {
+            // Return the domain if it conflicts with another institution.
+            // If the domain is already associated with the institution being updated, it's not a conflict.
+            return domain;
+          }
+          return null; // No conflict
+        })
+        .filter(Objects::nonNull)
+        .toList();
+
+    if (!conflictingDomains.isEmpty()) {
+      throw new IllegalArgumentException(
+          "Domain(s) already associated with another institution: " + String.join(", ",
+              conflictingDomains));
     }
   }
 }
