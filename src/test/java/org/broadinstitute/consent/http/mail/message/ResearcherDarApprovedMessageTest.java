@@ -75,6 +75,7 @@ class ResearcherDarApprovedMessageTest extends AbstractTestHelper {
     assertTrue(templateString.contains(researcherEmail));
   }
 
+  @Test
   void testGetResearcherRADARApprovedTemplate() throws Exception {
     String researcherUserName = randomAlphabetic(10);
     String researcherEmail = randomAlphabetic(10);

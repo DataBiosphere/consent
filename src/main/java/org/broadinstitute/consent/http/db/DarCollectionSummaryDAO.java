@@ -78,7 +78,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       -- Votes for DAC User
       LEFT JOIN vote v
         ON e.election_id = v.electionid
-        AND (LOWER(v.type) = 'final' OR v.user_id = :currentUserId)
+        AND (LOWER(v.type) IN ('final', 'radar_approve') OR v.user_id = :currentUserId)
       -- Restrict DARs to the datasets available to the DAC User
       INNER JOIN dar_dataset dd
         ON latest_dar.reference_id = dd.reference_id
@@ -314,7 +314,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       WHERE c.collection_id= :collectionId
         AND dd.dataset_id IN (<datasetIds>)
         AND (e.latest = e.election_id OR e.election_id IS NULL)
-        AND (LOWER(v.type) = 'final' OR (v.user_id = :currentUserId OR v.voteid IS NULL))
+        AND (LOWER(v.type) IN ('final', 'radar_approve') OR (v.user_id = :currentUserId OR v.voteid IS NULL))
       GROUP BY
         c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id,
         latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,

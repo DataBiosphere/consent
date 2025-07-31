@@ -511,7 +511,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         false);
 
     Election e2 = createDataAccessElection(testDar2.getReferenceId(), dataset2.getDatasetId());
-    Vote v2 = createFinalVote(dataset2.getCreateUserId(), e2.getElectionId());
+    Vote v2 = createVote(dataset2.getCreateUserId(), e2.getElectionId(), VoteType.RADAR_APPROVE);
     now = new Date();
     voteDAO.updateVote(true,
         "",
@@ -527,6 +527,12 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(1, dars.size());
     assertTrue(dars.get(0).getDatasetIds().contains(dataset1.getDatasetId()));
     assertEquals(darCode1, dars.get(0).getDarCode());
+
+    List<DataAccessRequest> returnedDARs = dataAccessRequestDAO.findApprovedDARsByDatasetId(
+        dataset2.getDatasetId());
+    assertEquals(1, returnedDARs.size());
+    assertTrue(returnedDARs.get(0).getDatasetIds().contains(dataset2.getDatasetId()));
+    assertEquals(darCode2, returnedDARs.get(0).getDarCode());
   }
 
   @Test
@@ -632,7 +638,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(testDar1.getReferenceId(), dataset3.getDatasetId());
 
     Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDatasetId());
-    Vote v1 = createFinalVote(dataset1.getCreateUserId(), e1.getElectionId());
+    Vote v1 = createVote(dataset1.getCreateUserId(), e1.getElectionId(), VoteType.RADAR_APPROVE);
 
     Election e2 = createDataAccessElection(testDar1.getReferenceId(), dataset2.getDatasetId());
     Vote v2 = createFinalVote(dataset2.getCreateUserId(), e2.getElectionId());
@@ -1400,7 +1406,11 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   private Vote createFinalVote(Integer userId, Integer electionId) {
-    Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
+    return createVote(userId, electionId, VoteType.FINAL);
+  }
+
+  private Vote createVote(Integer userId, Integer electionId, VoteType voteType) {
+    Integer voteId = voteDAO.insertVote(userId, electionId, voteType.getValue());
     return voteDAO.findVoteById(voteId);
   }
 
