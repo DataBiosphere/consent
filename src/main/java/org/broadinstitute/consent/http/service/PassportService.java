@@ -55,8 +55,8 @@ public class PassportService {
     if (user == null) {
       return new PassportClaim(List.of());
     }
-    List<LibraryCard> libraryCards = libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
-    user.setLibraryCards(libraryCards);
+    LibraryCard libraryCards = libraryCardDAO.findLibraryCardByUserId(user.getUserId());
+    user.setLibraryCard(libraryCards);
     if (user.getInstitutionId() != null) {
       Institution i = institutionDAO.findInstitutionById(user.getInstitutionId());
       user.setInstitution(i);

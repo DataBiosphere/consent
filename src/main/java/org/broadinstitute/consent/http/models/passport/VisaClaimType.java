@@ -4,7 +4,7 @@ import java.util.List;
 
 public interface VisaClaimType {
   String type();
-  Integer asserted();
+  Long asserted();
   String value();
   String source();
   String by();

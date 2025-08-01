@@ -21,14 +21,11 @@ public class AffiliationAndRole implements VisaClaimType {
   }
 
   @Override
-  public Integer asserted() {
-    if (user.getLibraryCards() != null) {
-      Optional<LibraryCard> maybeLc = user.getLibraryCards().stream().findFirst();
-      return maybeLc
-          .map(libraryCard -> Long.valueOf(libraryCard.getCreateDate().getTime()).intValue())
-          .orElseGet(() -> Long.valueOf(user.getCreateDate().getTime()).intValue());
-    }
-    return null;
+  public Long asserted() {
+    var assertedDate = Optional.ofNullable(user.getLibraryCard())
+        .map(LibraryCard::getCreateDate)
+        .orElse(user.getCreateDate());
+    return assertedDate.getTime();
   }
 
   // TODO Look for a better way to get the user's institutional domain. This is
@@ -51,7 +48,7 @@ public class AffiliationAndRole implements VisaClaimType {
 
   @Override
   public String by() {
-    if (user.getLibraryCards() == null || user.getLibraryCards().isEmpty()) {
+    if (user.getLibraryCard() == null) {
       return VisaBy.system.name();
     }
     return VisaBy.so.name();
