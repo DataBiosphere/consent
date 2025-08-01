@@ -5,7 +5,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 
 /**
- * https://github.com/ga4gh-duri/ga4gh-duri.github.io/blob/master/researcher_ids/ga4gh_passport_v1.md#affiliationandrole
+ * <a href="https://github.com/ga4gh-duri/ga4gh-duri.github.io/blob/master/researcher_ids/ga4gh_passport_v1.md#affiliationandrole">AffiliationAndRole</a>
  */
 public class AffiliationAndRole implements VisaClaimType {
 
@@ -17,7 +17,7 @@ public class AffiliationAndRole implements VisaClaimType {
 
   @Override
   public String type() {
-    return "AffiliationAndRole";
+    return VisaClaimTypes.AFFILIATION_AND_ROLE.type;
   }
 
   @Override

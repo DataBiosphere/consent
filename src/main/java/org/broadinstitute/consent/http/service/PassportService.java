@@ -23,6 +23,9 @@ import org.broadinstitute.consent.http.models.passport.VisaClaimType;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
+/**
+ * <a href="https://ga4gh.github.io/data-security/ga4gh-passport">GA4GH Passport</a>
+ */
 public class PassportService implements ConsentLogger {
 
   public static final String ISS = "https://duos.org";

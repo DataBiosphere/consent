@@ -5,7 +5,7 @@ import java.util.Date;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 
 /**
- * https://github.com/ga4gh-duri/ga4gh-duri.github.io/blob/master/researcher_ids/ga4gh_passport_v1.md#controlledaccessgrants
+ * <a href="https://github.com/ga4gh-duri/ga4gh-duri.github.io/blob/master/researcher_ids/ga4gh_passport_v1.md#controlledaccessgrants">ControlledAccessGrants</a>
  */
 public class ControlledAccessGrants implements VisaClaimType {
 
@@ -17,7 +17,7 @@ public class ControlledAccessGrants implements VisaClaimType {
 
   @Override
   public String type() {
-    return "ControlledAccessGrants";
+    return VisaClaimTypes.CONTROLLED_ACCESS_GRANTS.type;
   }
 
   @Override
