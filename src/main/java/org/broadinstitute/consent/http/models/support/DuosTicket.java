@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.models.support;
 
-import com.google.gson.ExclusionStrategy;
-import com.google.gson.FieldAttributes;
-import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.zendesk.client.v2.model.Ticket;
 
 /**
@@ -19,26 +19,22 @@ import org.zendesk.client.v2.model.Ticket;
  */
 public class DuosTicket {
 
-  private final Ticket request;
-  private final ExclusionStrategy strategy = new ExclusionStrategy() {
-    @Override
-    public boolean shouldSkipField(FieldAttributes f) {
-      return f.getName().equals("hasIncidents");
-    }
-
-    @Override
-    public boolean shouldSkipClass(Class<?> aClass) {
-      return false;
-    }
-  };
+  public final Ticket request;
 
   public DuosTicket(Ticket request) {
     this.request = request;
   }
 
   public String toString() {
-    return GsonUtil.gsonBuilderWithAdapters().addSerializationExclusionStrategy(strategy).create()
-        .toJson(this);
+    // we must use Jackson here instead of Gson because the zendesk Ticket class uses
+    // JsonProperty annotations that are not compatible with Gson
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.setSerializationInclusion(Include.NON_NULL);
+    try {
+      return mapper.writeValueAsString(this);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 }

@@ -3,7 +3,8 @@ updates:
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: weekly
+      interval: cron
+      cronjob: "0 0 1,15 * *"
     open-pull-requests-limit: 10
     target-branch: develop
     commit-message:
@@ -12,10 +13,17 @@ updates:
       action-dependencies:
         patterns:
           - "*"
+        update-types:
+          - "major"
+          - "minor"
+      action-patch-updates:
+        update-types:
+          - "patch"
   - package-ecosystem: maven
     directory: "/"
     schedule:
-      interval: weekly
+      interval: cron
+      cronjob: "0 0 1,15 * *"
     open-pull-requests-limit: 10
     target-branch: develop
     labels:
@@ -26,10 +34,17 @@ updates:
       maven-dependencies:
         patterns:
           - "*"
+        update-types:
+          - "major"
+          - "minor"
+      maven-patch-updates:
+        update-types:
+          - "patch"
   - package-ecosystem: docker
     directory: "/"
     schedule:
-      interval: weekly
+      interval: cron
+      cronjob: "0 0 1,15 * *"
     open-pull-requests-limit: 10
     target-branch: develop
     labels:
@@ -40,3 +55,9 @@ updates:
       docker-dependencies:
         patterns:
           - "*"
+        update-types:
+          - "major"
+          - "minor"
+      docker-patch-updates:
+        update-types:
+          - "patch"

@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
@@ -17,6 +18,7 @@ import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -185,63 +187,31 @@ class LibraryCardResourceTest {
   }
 
   @Test
-  void testUpdateLibraryCard() {
-    LibraryCard mockCard = mockLibraryCardSetup();
-    String payload = GsonUtil.getInstance().toJson(mockCard);
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(libraryCardService.updateLibraryCard(any(LibraryCard.class), anyInt(), anyInt()))
-        .thenReturn(mockCard);
-    initResource();
-    Response response = resource.updateLibraryCard(authUser, 1, payload);
-    String json = response.getEntity().toString();
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    assertNotNull(json);
-  }
-
-  @Test
-  void testUpdateLibraryCardThrowsIllegalArgumentException() {
-    LibraryCard mockCard = mockLibraryCardSetup();
-    String payload = GsonUtil.getInstance().toJson(mockCard);
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(libraryCardService.updateLibraryCard(any(LibraryCard.class), anyInt(), anyInt()))
-        .thenThrow(new IllegalArgumentException());
-    initResource();
-    Response response = resource.updateLibraryCard(authUser, 1, payload);
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-  }
-
-  @Test
-  void testUpdateLibraryCardThrowsNotFoundException() {
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(libraryCardService.updateLibraryCard(any(LibraryCard.class), anyInt(), anyInt()))
-        .thenThrow(new NotFoundException());
-    String payload = GsonUtil.getInstance().toJson(mockLibraryCardSetup());
-    initResource();
-    Response response = resource.updateLibraryCard(authUser, 1, payload);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-  }
-
-  @Test
-  void testUpdateLibraryCardThrowsUniqueViolation() {
-    UnableToExecuteStatementException exception = generateUniqueViolationException();
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(libraryCardService.updateLibraryCard(any(LibraryCard.class), anyInt(), anyInt()))
-        .thenThrow(exception);
-    String payload = GsonUtil.getInstance().toJson(mockLibraryCardSetup());
-    initResource();
-    Response response = resource.updateLibraryCard(authUser, 1, payload);
-    assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());
-  }
-
-  @Test
   void deleteLibraryCard() {
     LibraryCard card = mockLibraryCardSetup();
+    card.setId(1);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
     initResource();
 
-    Response response = resource.deleteLibraryCard(authUser, 1);
+    Response response = resource.deleteLibraryCard(authUser, card.getId());
     assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
+    verify(libraryCardService).deleteLibraryCardById(card.getId());
+  }
+
+  @Test
+  void deleteLibraryCardUserNotFound() {
+    LibraryCard card = mockLibraryCardSetup();
+    card.setId(1);
+    card.setUserId(null);
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+    when(userService.findUserById(null)).thenThrow(new NotFoundException());
+    when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
+    initResource();
+
+    Response response = resource.deleteLibraryCard(authUser, card.getId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
+    verify(libraryCardService).deleteLibraryCardById(card.getId());
   }
 
   @Test
@@ -260,11 +230,19 @@ class LibraryCardResourceTest {
   void deleteLibraryCardThrowsForbiddenException() {
     LibraryCard card = mockLibraryCardSetup();
     User soUser = mockSOUser();
-    soUser.setInstitutionId(1);
-    card.setInstitutionId(2);
+    Institution soInstitution = new Institution();
+    soInstitution.setId(1);
+    soUser.setInstitution(soInstitution);
+    soUser.setInstitutionId(soInstitution.getId());
+    // Mocks that the user is in a different institution than the SO
+    Institution lcUserInstitution = new Institution();
+    lcUserInstitution.setId(2);
+    lcUser.setInstitution(lcUserInstitution);
+    lcUser.setInstitutionId(lcUserInstitution.getId());
 
     when(userService.findUserByEmail(anyString())).thenReturn(soUser);
     when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
+    when(userService.findUserById(card.getUserId())).thenReturn(lcUser);
 
     initResource();
     Response response = resource.deleteLibraryCard(authUser, 1);

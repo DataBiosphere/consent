@@ -22,9 +22,18 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
         dar.setCollectionId(collectionId);
       }
     }
-    dar.setParentId(resultSet.getString("parent_id"));
-    dar.setDraft(resultSet.getBoolean("draft"));
-    dar.setUserId(resultSet.getInt("user_id"));
+    if (hasColumn(resultSet, "dar_code")) {
+      dar.setDarCode(resultSet.getString("dar_code"));
+    }
+
+    if (hasNonZeroColumn(resultSet,"parent_id")) {
+      dar.setParentId(resultSet.getInt("parent_id"));
+    }
+
+    if (hasNonZeroColumn(resultSet, "user_id")) {
+      dar.setUserId(resultSet.getInt("user_id"));
+    }
+
     dar.setCreateDate(resultSet.getTimestamp("create_date"));
     dar.setSortDate(resultSet.getTimestamp("sort_date"));
     dar.setSubmissionDate(resultSet.getTimestamp("submission_date"));
@@ -35,6 +44,9 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
       dar.addDatasetId(resultSet.getInt("dataset_id"));
     }
     dar.setData(data);
+    dar.setEraCommonsId(resultSet.getString("era_commons_id"));
+    dar.setCloseoutSigningOfficialApprovedDate(resultSet.getTimestamp("closeout_so_approval_timestamp"));
+    dar.setCloseoutSigningOfficialApprovedUserId(resultSet.getInt("closeout_approving_so_id"));
     return dar;
   }
 

@@ -8,6 +8,7 @@ import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -20,7 +21,7 @@ public interface UserPropertyDAO extends Transactional<UserPropertyDAO> {
     SELECT * FROM user_property WHERE user_id = :userId AND property_key IN (<keys>)
     """)
   List<UserProperty> findUserPropertiesByUserIdAndPropertyKeys(@Bind("userId") Integer userId,
-      @BindList("keys") List<String> keys);
+      @BindList(value = "keys", onEmpty = EmptyHandling.NULL_STRING) List<String> keys);
 
   @SqlBatch("""
           INSERT INTO user_property (user_id, property_key, property_value)
@@ -28,7 +29,7 @@ public interface UserPropertyDAO extends Transactional<UserPropertyDAO> {
           ON CONFLICT (user_id, property_key)
           DO UPDATE SET property_value = :propertyValue
       """)
-  void insertAll(@BindBean Collection<UserProperty> researcherProperties);
+  void insertAll(@BindBean Collection<UserProperty> userProperties);
 
   @SqlUpdate("""
     DELETE FROM user_property WHERE user_id = :userId
@@ -38,5 +39,5 @@ public interface UserPropertyDAO extends Transactional<UserPropertyDAO> {
   @SqlBatch("""
     DELETE FROM user_property WHERE user_id = :userId AND property_key = :propertyKey
     """)
-  void deletePropertiesByUserAndKey(@BindBean Collection<UserProperty> researcherProperties);
+  void deletePropertiesByUserAndKey(@BindBean Collection<UserProperty> userProperties);
 }

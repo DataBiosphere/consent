@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.codahale.metrics.annotation.Timed;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
@@ -27,10 +28,8 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -87,6 +86,7 @@ public class DatasetResource extends Resource {
   @Produces({MediaType.APPLICATION_JSON})
   @Path("/v3")
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  @Timed
   /*
    * This endpoint accepts a json instance of a dataset-registration-schema_v1.json schema.
    * With that object, we can fully create datasets from the provided values.
@@ -210,6 +210,7 @@ public class DatasetResource extends Resource {
         throw new BadRequestException("Properties are invalid");
       }
       Dataset patched = datasetRegistrationService.patchDataset(datasetId, user, patch);
+      elasticSearchService.synchronizeDatasetInESIndex(patched, user, false);
       return Response.ok(patched).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -264,6 +265,7 @@ public class DatasetResource extends Resource {
   @Path("/registration/{datasetIdentifier}")
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
+  @Timed
   public Response getRegistrationFromDatasetIdentifier(@Auth AuthUser authUser,
       @PathParam("datasetIdentifier") String datasetIdentifier) {
     try {
@@ -272,14 +274,11 @@ public class DatasetResource extends Resource {
         throw new NotFoundException(
             "No dataset exists for dataset identifier: " + datasetIdentifier);
       }
-      Study study;
-      if (dataset.getStudy() != null && dataset.getStudy().getStudyId() != null) {
-        study = datasetService.findStudyById(dataset.getStudy().getStudyId());
-      } else {
+      if (dataset.getStudy() == null || dataset.getStudy().getStudyId() == null) {
         throw new NotFoundException("No study exists for dataset identifier: " + datasetIdentifier);
       }
       DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1Builder().build(
-          study, List.of(dataset));
+          dataset.getStudy(), List.of(dataset));
       String entity = GsonUtil.buildGsonNullSerializer().toJson(registration);
       return Response.ok().entity(entity).build();
     } catch (Exception e) {
@@ -378,11 +377,10 @@ public class DatasetResource extends Resource {
         logException(e);
         return createExceptionResponse(e);
       }
-      try {
-        elasticSearchService.deleteIndex(datasetId);
-      } catch (IOException e) {
-        logException(e);
-        return createExceptionResponse(e);
+      try (var deleteResponse = elasticSearchService.deleteIndex(datasetId, user.getUserId())) {
+        if (!HttpStatusCodes.isSuccess(deleteResponse.getStatus())) {
+          logWarn("Unable to delete index for dataset: " + datasetId);
+        }
       }
       return Response.ok().build();
     } catch (Exception e) {
@@ -393,10 +391,11 @@ public class DatasetResource extends Resource {
   @POST
   @Path("/index")
   @RolesAllowed(ADMIN)
-  public Response indexDatasets() {
+  public Response indexDatasets(@Auth AuthUser authUser) {
     try {
+      User user = userService.findUserByEmail(authUser.getEmail());
       var datasetIds = datasetService.findAllDatasetIds();
-      StreamingOutput indexResponse = elasticSearchService.indexDatasetIds(datasetIds);
+      StreamingOutput indexResponse = elasticSearchService.indexDatasetIds(datasetIds, user);
       return Response.ok(indexResponse, MediaType.APPLICATION_JSON).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -406,10 +405,10 @@ public class DatasetResource extends Resource {
   @POST
   @Path("/index/{datasetId}")
   @RolesAllowed(ADMIN)
-  public Response indexDataset(@PathParam("datasetId") Integer datasetId) {
+  public Response indexDataset(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId) {
     try {
-      var dataset = datasetService.findDatasetById(datasetId);
-      return elasticSearchService.indexDataset(dataset);
+      User user = userService.findUserByEmail(authUser.getEmail());
+      return elasticSearchService.indexDataset(datasetId, user);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -418,9 +417,10 @@ public class DatasetResource extends Resource {
   @DELETE
   @Path("/index/{datasetId}")
   @RolesAllowed(ADMIN)
-  public Response deleteDatasetIndex(@PathParam("datasetId") Integer datasetId) {
+  public Response deleteDatasetIndex(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId) {
     try {
-      return elasticSearchService.deleteIndex(datasetId);
+      User user = userService.findUserByEmail(authUser.getEmail());
+      return elasticSearchService.deleteIndex(datasetId, user.getUserId());
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -491,7 +491,8 @@ public class DatasetResource extends Resource {
   @Path("/{id}/reprocess/datause")
   public Response syncDataUseTranslation(@Auth AuthUser authUser, @PathParam("id") Integer id) {
     try {
-      Dataset ds = datasetService.syncDatasetDataUseTranslation(id);
+      User user = userService.findUserByEmail(authUser.getEmail());
+      Dataset ds = datasetService.syncDatasetDataUseTranslation(id, user);
       return Response.ok(ds).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

@@ -12,46 +12,25 @@ import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.RequestFailedException;
-import org.broadinstitute.consent.http.WithMockServer;
+import org.broadinstitute.consent.http.MockServerTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.util.HttpClientUtil.SimpleResponse;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Delay;
 import org.mockserver.verify.VerificationTimes;
-import org.testcontainers.containers.MockServerContainer;
 
 @ExtendWith(MockitoExtension.class)
-class HttpClientUtilTest implements WithMockServer {
+class HttpClientUtilTest extends MockServerTestHelper {
 
+  private final String statusUrl = String.format("http://%s:%s/", CONTAINER.getHost(),
+      CONTAINER.getServerPort());
   private HttpClientUtil clientUtil;
-
-  private MockServerClient mockServerClient;
-
-  private static final MockServerContainer container = new MockServerContainer(IMAGE);
-
-  private final String statusUrl = String.format("http://%s:%s/", container.getHost(),
-      container.getServerPort());
-
-  @BeforeAll
-  static void setUp() {
-    container.start();
-  }
-
-  @AfterAll
-  static void tearDown() {
-    container.stop();
-  }
 
   @BeforeEach
   void init() {
-    mockServerClient = new MockServerClient(container.getHost(), container.getServerPort());
-    mockServerClient.reset();
     ServicesConfiguration configuration = new ServicesConfiguration();
     configuration.setTimeoutSeconds(1);
     clientUtil = new HttpClientUtil(configuration);

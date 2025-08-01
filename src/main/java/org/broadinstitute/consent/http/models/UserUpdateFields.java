@@ -18,15 +18,12 @@ public class UserUpdateFields {
   protected static final List<Integer> IGNORE_ROLE_IDS = List.of(UserRoles.CHAIRPERSON.getRoleId(),
       UserRoles.MEMBER.getRoleId());
   private static final List<Integer> VALID_ROLE_IDS = Arrays.stream(UserRoles.values())
-      .map(UserRoles::getRoleId).collect(Collectors.toList());
+      .map(UserRoles::getRoleId).toList();
   private String displayName;
   private Integer institutionId;
   private Boolean emailPreference;
   private List<Integer> userRoleIds;
   private String eraCommonsId;
-  private Integer selectedSigningOfficialId;
-  private String suggestedInstitution;
-  private String suggestedSigningOfficial;
   private Boolean daaAcceptance;
 
   public UserUpdateFields() {
@@ -72,30 +69,6 @@ public class UserUpdateFields {
     this.eraCommonsId = eraCommonsId;
   }
 
-  public Integer getSelectedSigningOfficialId() {
-    return selectedSigningOfficialId;
-  }
-
-  public void setSelectedSigningOfficialId(Integer selectedSigningOfficialId) {
-    this.selectedSigningOfficialId = selectedSigningOfficialId;
-  }
-
-  public String getSuggestedInstitution() {
-    return suggestedInstitution;
-  }
-
-  public void setSuggestedInstitution(String suggestedInstitution) {
-    this.suggestedInstitution = suggestedInstitution;
-  }
-
-  public String getSuggestedSigningOfficial() {
-    return suggestedSigningOfficial;
-  }
-
-  public void setSuggestedSigningOfficial(String suggestedSigningOfficial) {
-    this.suggestedSigningOfficial = suggestedSigningOfficial;
-  }
-
   public Boolean getDaaAcceptance() {
     return daaAcceptance;
   }
@@ -106,27 +79,6 @@ public class UserUpdateFields {
 
   public List<UserProperty> buildUserProperties(Integer userId) {
     List<UserProperty> userProps = new ArrayList<>();
-    if (Objects.nonNull(this.getSelectedSigningOfficialId())) {
-      UserProperty prop = new UserProperty();
-      prop.setUserId(userId);
-      prop.setPropertyKey(UserFields.SELECTED_SIGNING_OFFICIAL_ID.getValue());
-      prop.setPropertyValue(this.getSelectedSigningOfficialId().toString());
-      userProps.add(prop);
-    }
-    if (Objects.nonNull(this.getSuggestedSigningOfficial())) {
-      UserProperty prop = new UserProperty();
-      prop.setUserId(userId);
-      prop.setPropertyKey(UserFields.SUGGESTED_SIGNING_OFFICIAL.getValue());
-      prop.setPropertyValue(this.getSuggestedSigningOfficial());
-      userProps.add(prop);
-    }
-    if (Objects.nonNull(this.getSuggestedInstitution())) {
-      UserProperty prop = new UserProperty();
-      prop.setUserId(userId);
-      prop.setPropertyKey(UserFields.SUGGESTED_INSTITUTION.getValue());
-      prop.setPropertyValue(this.getSuggestedInstitution());
-      userProps.add(prop);
-    }
     if (Objects.nonNull(this.getDaaAcceptance())) {
       UserProperty prop = new UserProperty();
       prop.setUserId(userId);
@@ -177,6 +129,25 @@ public class UserUpdateFields {
                   VALID_ROLE_IDS.contains(
                       id);                            // Only remove roles we know about
             })
-        .collect(Collectors.toList());
+        .toList();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    UserUpdateFields that = (UserUpdateFields) o;
+    return Objects.equals(displayName, that.displayName) && Objects.equals(institutionId,
+        that.institutionId) && Objects.equals(emailPreference, that.emailPreference)
+        && Objects.equals(userRoleIds, that.userRoleIds) && Objects.equals(eraCommonsId,
+        that.eraCommonsId) && Objects.equals(daaAcceptance, that.daaAcceptance);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(displayName, institutionId, emailPreference, userRoleIds, eraCommonsId,
+        daaAcceptance);
   }
 }

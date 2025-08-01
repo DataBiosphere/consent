@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CaseFormat;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -10,6 +11,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
+import jakarta.ws.rs.BadRequestException;
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -18,11 +20,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @JsonInclude(Include.NON_NULL)
 public class DataAccessRequest {
+
+  public static final long EXPIRATION_DURATION_MILLIS = TimeUnit.DAYS.toMillis(365);
 
   @JsonProperty
   public Integer id;
@@ -34,13 +40,25 @@ public class DataAccessRequest {
   public Integer collectionId;
 
   @JsonProperty
-  public String parentId;
+  public Integer parentId;
 
   @JsonProperty
   public DataAccessRequestData data;
 
   @JsonProperty
-  public Boolean draft;
+  public String darCode;
+
+  @JsonProperty
+  public Boolean draft = true;
+
+  @JsonProperty
+  public Boolean progressReport = false;
+
+  @JsonProperty
+  public Boolean expired = false;
+
+  @JsonProperty
+  public Timestamp expiresAt;
 
   @JsonProperty
   public Integer userId;
@@ -60,12 +78,18 @@ public class DataAccessRequest {
 
   @JsonProperty
   public Timestamp updateDate;
-
-  @JsonProperty
-  private Map<Integer, Election> elections;
-
   @JsonProperty
   public List<Integer> datasetIds;
+  @JsonProperty
+  private Map<Integer, Election> elections;
+  @JsonProperty
+  private String eraCommonsId;
+
+  @JsonProperty
+  public Timestamp closeoutSigningOfficialApprovedDate;
+
+  @JsonProperty
+  public Integer closeoutSigningOfficialApprovedUserId;
 
   public DataAccessRequest() {
     this.elections = new HashMap<>();
@@ -103,12 +127,13 @@ public class DataAccessRequest {
     this.collectionId = collectionId;
   }
 
-  public String getParentId() {
+  public Integer getParentId() {
     return parentId;
   }
 
-  public void setParentId(String parentId) {
+  public void setParentId(Integer parentId) {
     this.parentId = parentId;
+    updateProgressReportState();
   }
 
   public DataAccessRequestData getData() {
@@ -119,12 +144,16 @@ public class DataAccessRequest {
     this.data = data;
   }
 
-  public Boolean getDraft() {
+  public boolean getDraft() {
     return draft;
   }
 
-  public void setDraft(Boolean draft) {
-    this.draft = draft;
+  public boolean getExpired() {
+    return expired;
+  }
+
+  public Timestamp getExpiresAt() {
+    return expiresAt;
   }
 
   public Integer getUserId() {
@@ -157,7 +186,16 @@ public class DataAccessRequest {
 
   public void setSubmissionDate(Timestamp submissionDate) {
     this.submissionDate = submissionDate;
+    draft = submissionDate == null;
+    expired = submissionDate != null
+        && submissionDate.before(
+        new Timestamp(System.currentTimeMillis() - EXPIRATION_DURATION_MILLIS));
+    expiresAt = (submissionDate != null) ? new Timestamp(
+        submissionDate.getTime() + EXPIRATION_DURATION_MILLIS) : null;
+    updateProgressReportState();
   }
+
+  public boolean getProgressReport() { return progressReport; }
 
   public Timestamp getUpdateDate() {
     return updateDate;
@@ -167,12 +205,12 @@ public class DataAccessRequest {
     this.updateDate = updateDate;
   }
 
-  public void setElections(Map<Integer, Election> elections) {
-    this.elections = elections;
-  }
-
   public Map<Integer, Election> getElections() {
     return elections;
+  }
+
+  public void setElections(Map<Integer, Election> elections) {
+    this.elections = elections;
   }
 
   public void addElection(Election election) {
@@ -193,6 +231,10 @@ public class DataAccessRequest {
       return List.of();
     }
     return datasetIds;
+  }
+
+  public void setDatasetIds(List<Integer> datasetIds) {
+    this.datasetIds = datasetIds;
   }
 
   public void addDatasetId(Integer id) {
@@ -216,8 +258,36 @@ public class DataAccessRequest {
     }
   }
 
-  public void setDatasetIds(List<Integer> datasetIds) {
-    this.datasetIds = datasetIds;
+  public void setDarCode(String darCode) {
+    this.darCode = darCode;
+  }
+
+  public String getDarCode() {
+    return darCode;
+  }
+
+  public String getEraCommonsId() {
+    return eraCommonsId;
+  }
+
+  public void setEraCommonsId(String eraCommonsId) {
+    this.eraCommonsId = eraCommonsId;
+  }
+
+  public Integer getCloseoutSigningOfficialApprovedUserId() {
+    return closeoutSigningOfficialApprovedUserId;
+  }
+
+  public void setCloseoutSigningOfficialApprovedUserId(Integer closeoutSigningOfficialApprovedUserId) {
+    this.closeoutSigningOfficialApprovedUserId = closeoutSigningOfficialApprovedUserId;
+  }
+
+  public Timestamp getCloseoutSigningOfficialApprovedDate() {
+    return closeoutSigningOfficialApprovedDate;
+  }
+
+  public void setCloseoutSigningOfficialApprovedDate(Timestamp closeoutSigningOfficialApprovedDate) {
+    this.closeoutSigningOfficialApprovedDate = closeoutSigningOfficialApprovedDate;
   }
 
   /**
@@ -288,6 +358,82 @@ public class DataAccessRequest {
   }
 
   /**
+   * Populate a new Data Access Request from the JSON string and the parent Data Access Request.
+   * Copies all the data from the parent dar, then overwrites the collaborators and datasets. Adds
+   * all progress report specific fields.
+   *
+   * @param json      The JSON string to populate the new Progress Report.
+   * @param parentDar The parent Data Access Request to copy data from.
+   * @return A new Progress Report populated with the provided JSON string and parent DAR data.
+   */
+  public static DataAccessRequest populateProgressReportFromJsonString(String json,
+      DataAccessRequest parentDar) {
+    DataAccessRequest newDar = new DataAccessRequest();
+    DataAccessRequestData newData = DataAccessRequestData.populateDARData(json);
+    DataAccessRequestData originalDataCopy = DataAccessRequestData.fromString(
+        parentDar.getData().toString());
+
+    String referenceId = UUID.randomUUID().toString();
+    newDar.setReferenceId(referenceId);
+    newDar.setParentId(parentDar.getId());
+    newDar.setCollectionId(parentDar.getCollectionId());
+
+    newDar.addDatasetIds(newData.getDatasetIds());
+    originalDataCopy.setInternalCollaborators(newData.getInternalCollaborators());
+    originalDataCopy.setExternalCollaborators(newData.getExternalCollaborators());
+    originalDataCopy.setLabCollaborators(newData.getLabCollaborators());
+    originalDataCopy.setProgressReportSummary(newData.getProgressReportSummary());
+    originalDataCopy.setIntellectualPropertySummary(newData.getIntellectualPropertySummary());
+    originalDataCopy.setPublications(newData.getPublications());
+    originalDataCopy.setPresentations(newData.getPresentations());
+    originalDataCopy.setDmi(newData.getDmi());
+    originalDataCopy.setResearchPlans(newData.getResearchPlans());
+    validateCloseoutSupplement(newData.getCloseoutSupplement());
+    originalDataCopy.setCloseoutSupplement(newData.getCloseoutSupplement());
+    originalDataCopy.setPubAcknowledgement(newData.getPubAcknowledgement());
+    originalDataCopy.setDSAcknowledgement(newData.getDSAcknowledgement());
+    originalDataCopy.setGSOAcknowledgement(newData.getGSOAcknowledgement());
+
+    // These values will be updated in populateProgressReportWithDocuments if documents exist.
+    // Its important we don't copy over the parent values so those documents are not deleted.
+    originalDataCopy.setCollaborationLetterName(null);
+    originalDataCopy.setCollaborationLetterLocation(null);
+    originalDataCopy.setIrbDocumentName(null);
+    originalDataCopy.setIrbDocumentLocation(null);
+
+    // We need to update the reference ID in the DataAccessRequestData object with the new reference
+    // ID computed in this method so that the frontend can rely on the value set to point to this
+    // object and not the original DAR.
+    originalDataCopy.setReferenceId(referenceId);
+
+    newDar.setData(originalDataCopy);
+    return newDar;
+  }
+
+  @VisibleForTesting
+  protected static void validateCloseoutSupplement(CloseoutSupplement closeoutSupplement) {
+    if (Objects.isNull(closeoutSupplement)) {
+      return;
+    }
+
+    if ((Objects.isNull(closeoutSupplement.reasons()) || closeoutSupplement.reasons().isEmpty())
+        && Objects.isNull(closeoutSupplement.signingOfficialId())
+        && (Objects.isNull(closeoutSupplement.otherText())
+            || closeoutSupplement.otherText().isEmpty())) {
+      throw new BadRequestException("A closeout supplement must have values provided.");
+    }
+
+    if (Objects.isNull(closeoutSupplement.reasons()) || closeoutSupplement.reasons().isEmpty()) {
+      throw new BadRequestException("A closeout supplement must have reasons provided.");
+    }
+
+    if (Objects.isNull(closeoutSupplement.signingOfficialId())) {
+      throw new BadRequestException("A closeout supplement must have a signing official id provided.");
+    }
+  }
+
+
+  /**
    * Make a shallow copy of the dar. This is mostly a workaround for problems serializing dates when
    * calling Gson.toJson on `this`
    *
@@ -299,9 +445,9 @@ public class DataAccessRequest {
     if (Objects.nonNull(dar.getCreateDate())) {
       copy.put("createDate", dar.getCreateDate().getTime());
     }
-    if (Objects.nonNull(dar.getDraft())) {
-      copy.put("draft", dar.getDraft());
-    }
+    copy.put("draft", dar.getDraft());
+    copy.put("expired", dar.getExpired());
+    copy.put("expiredAt", dar.getExpiresAt());
     if (Objects.nonNull(dar.getId())) {
       copy.put("id", dar.getId());
     }
@@ -329,6 +475,43 @@ public class DataAccessRequest {
     if (Objects.nonNull(dar.getParentId())) {
       copy.put("parentId", dar.getParentId());
     }
+    if (Objects.nonNull(dar.getDarCode())) {
+      copy.put("darCode", dar.getDarCode());
+    }
+    if (dar.getEraCommonsId() != null) {
+      copy.put("eraCommonsId", dar.getEraCommonsId());
+    }
+    if (dar.getCloseoutSigningOfficialApprovedUserId() != null) {
+      copy.put("closeoutSigningOfficialApprovedUserId", dar.getCloseoutSigningOfficialApprovedUserId());
+    }
+    if (dar.getCloseoutSigningOfficialApprovedDate() != null) {
+      copy.put("closeoutSigningOfficialApprovedDate", dar.getCloseoutSigningOfficialApprovedUserId());
+    }
     return copy;
+  }
+
+  // Simple state machine for determining if the Data Access Request
+  // is a progress report.
+  private void updateProgressReportState() {
+    progressReport = !getDraft() && (getParentId() != null);
+  }
+
+  public boolean getIsCloseoutProgressReport() {
+    return Objects.nonNull(getParentId())
+        && this.getData() != null
+        && this.getData().getCloseoutSupplement() != null
+        && !this.getData().getCloseoutSupplement().reasons().isEmpty();
+  }
+
+  public boolean getHasSOCloseoutApproval() {
+    return this.getCloseoutSigningOfficialApprovedDate() != null
+        && this.getCloseoutSigningOfficialApprovedUserId() != null;
+  }
+
+  public boolean getHasDMI() {
+    return this.getData() != null
+        && this.getData().getDmi() != null
+        && this.getData().getDmi().incidents() != null
+        && !this.getData().getDmi().incidents().isEmpty();
   }
 }

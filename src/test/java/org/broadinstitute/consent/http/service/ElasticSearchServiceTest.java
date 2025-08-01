@@ -8,9 +8,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -21,42 +24,48 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpVersion;
 import org.apache.http.StatusLine;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.http.nio.entity.NStringEntity;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
+import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.models.ontology.DataUseTerm;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -65,7 +74,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class ElasticSearchServiceTest {
+class ElasticSearchServiceTest extends AbstractTestHelper {
 
   private ElasticSearchService service;
 
@@ -92,10 +101,18 @@ class ElasticSearchServiceTest {
 
   @Mock
   private DatasetDAO datasetDAO;
+
+  @Mock
+  private DatasetServiceDAO datasetServiceDAO;
+
   @Mock
   private StudyDAO studyDAO;
 
-  private void initService() {
+  @Mock
+  private LibraryCardDAO libraryCardDAO;
+
+  @BeforeEach
+  void initService() {
     service = new ElasticSearchService(
         esClient,
         esConfig,
@@ -105,13 +122,15 @@ class ElasticSearchServiceTest {
         ontologyService,
         institutionDAO,
         datasetDAO,
-        studyDAO);
+        datasetServiceDAO,
+        studyDAO,
+        libraryCardDAO);
   }
 
-  private void mockElasticSearchResponse(int statusCode, String body) throws IOException {
+  private void mockElasticSearchResponse(String body) throws IOException {
     Response response = mock(Response.class);
-    String reasonPhrase = fromStatusCode(statusCode).getReasonPhrase();
-    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, statusCode, reasonPhrase);
+    String reasonPhrase = fromStatusCode(200).getReasonPhrase();
+    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, reasonPhrase);
     HttpEntity entity = new NStringEntity(body, ContentType.APPLICATION_JSON);
 
     when(esClient.performRequest(any())).thenReturn(response);
@@ -121,15 +140,15 @@ class ElasticSearchServiceTest {
 
   private Institution createInstitution() {
     Institution institution = new Institution();
-    institution.setId(RandomUtils.nextInt(1, 1000));
+    institution.setId(randomInt(1, 1000));
     return institution;
   }
 
   private User createUser(int start, int max) {
     User user = new User();
-    user.setUserId(RandomUtils.nextInt(start, max));
-    user.setDisplayName(RandomStringUtils.randomAlphabetic(10));
-    user.setEmail(RandomStringUtils.randomAlphabetic(10));
+    user.setUserId(randomInt(start, max));
+    user.setDisplayName(randomAlphabetic(10));
+    user.setEmail(randomAlphabetic(10));
     Institution i = createInstitution();
     user.setInstitution(i);
     user.setInstitutionId(i.getId());
@@ -138,11 +157,11 @@ class ElasticSearchServiceTest {
 
   private Dataset createDataset(User user, User updateUser, DataUse dataUse, Dac dac) {
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(1, 100));
+    dataset.setDatasetId(randomInt(1, 100));
     dataset.setAlias(dataset.getDatasetId());
     dataset.setDatasetIdentifier();
     dataset.setDeletable(true);
-    dataset.setName(RandomStringUtils.randomAlphabetic(10));
+    dataset.setName(randomAlphabetic(10));
     dataset.setDatasetName(dataset.getName());
     dataset.setDacId(dac.getDacId());
     dataset.setDacApproval(true);
@@ -155,18 +174,18 @@ class ElasticSearchServiceTest {
 
   private Dac createDac() {
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(1, 100));
-    dac.setName(RandomStringUtils.randomAlphabetic(10));
+    dac.setDacId(randomInt(1, 100));
+    dac.setName(randomAlphabetic(10));
     return dac;
   }
 
   private Study createStudy(User user) {
     Study study = new Study();
-    study.setName(RandomStringUtils.randomAlphabetic(10));
-    study.setDescription(RandomStringUtils.randomAlphabetic(20));
-    study.setStudyId(RandomUtils.nextInt(1, 100));
-    study.setPiName(RandomStringUtils.randomAlphabetic(10));
-    study.setDataTypes(List.of(RandomStringUtils.randomAlphabetic(10)));
+    study.setName(randomAlphabetic(10));
+    study.setDescription(randomAlphabetic(20));
+    study.setStudyId(randomInt(1, 100));
+    study.setPiName(randomAlphabetic(10));
+    study.setDataTypes(List.of(randomAlphabetic(10)));
     study.setPublicVisibility(true);
     study.setCreateUserEmail(user.getEmail());
     study.setCreateUserId(user.getUserId());
@@ -182,11 +201,11 @@ class ElasticSearchServiceTest {
       case Boolean -> prop.setValue(true);
       case Json -> {
         var val = new JsonArray();
-        val.add(RandomStringUtils.randomAlphabetic(10));
+        val.add(randomAlphabetic(10));
         prop.setValue(val);
       }
-      case Number -> prop.setValue(RandomUtils.nextInt(1, 100));
-      default -> prop.setValue(RandomStringUtils.randomAlphabetic(10));
+      case Number -> prop.setValue(randomInt(1, 100));
+      default -> prop.setValue(randomAlphabetic(10));
     }
     return prop;
   }
@@ -199,8 +218,8 @@ class ElasticSearchServiceTest {
     prop.setPropertyName(propertyName);
     switch (type) {
       case Boolean -> prop.setPropertyValue(true);
-      case Number -> prop.setPropertyValue(RandomUtils.nextInt(1, 100));
-      default -> prop.setPropertyValue(RandomStringUtils.randomAlphabetic(10));
+      case Number -> prop.setPropertyValue(randomInt(1, 100));
+      default -> prop.setPropertyValue(randomAlphabetic(10));
     }
     return prop;
   }
@@ -225,12 +244,12 @@ class ElasticSearchServiceTest {
     User updateUser = createUser(101, 200);
     Dac dac = createDac();
     Study study = createStudy(user);
-    study.setProperties(Set.of(
+    study.addProperties(
         createStudyProperty("dbGaPPhsID", PropertyType.String),
         createStudyProperty("phenotypeIndication", PropertyType.String),
         createStudyProperty("species", PropertyType.String),
         createStudyProperty("dataCustodianEmail", PropertyType.Json)
-    ));
+    );
     Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
     dataset.setProperties(Set.of(
         createDatasetProperty("accessManagement", PropertyType.Boolean, "accessManagement"),
@@ -257,7 +276,6 @@ class ElasticSearchServiceTest {
         datasetRecord.updateUser.getInstitution());
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
 
-    initService();
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
     assertEquals(datasetRecord.createUser.getUserId(), term.getCreateUserId());
     assertEquals(datasetRecord.createUser.getDisplayName(), term.getCreateUserDisplayName());
@@ -284,7 +302,6 @@ class ElasticSearchServiceTest {
         datasetRecord.updateUser);
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
 
-    initService();
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
     assertEquals(datasetRecord.study.getDescription(), term.getStudy().getDescription());
     assertEquals(datasetRecord.study.getName(), term.getStudy().getStudyName());
@@ -327,10 +344,15 @@ class ElasticSearchServiceTest {
         datasetRecord.createUser);
     when(userDao.findUserById(datasetRecord.updateUser.getUserId())).thenReturn(
         datasetRecord.updateUser);
+    LibraryCard card1 = new LibraryCard();
+    card1.setUserId(dar1.getUserId());
+    LibraryCard card2 = new LibraryCard();
+    card2.setUserId(dar2.getUserId());
+    when(libraryCardDAO.findLibraryCardsByUserIds(
+        List.of(dar1.getUserId(), dar2.getUserId()))).thenReturn(List.of(card1, card2));
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
     when(ontologyService.translateDataUseSummary(any())).thenReturn(dataUseSummary);
     when(dataAccessRequestDAO.findApprovedDARsByDatasetId(any())).thenReturn(List.of(dar1, dar2));
-    initService();
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
 
     assertEquals(datasetRecord.dataset.getDatasetId(), term.getDatasetId());
@@ -368,7 +390,6 @@ class ElasticSearchServiceTest {
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
     when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(
         datasetRecord.createUser);
-    initService();
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
 
     assertEquals(datasetRecord.dataset.getDacApproval(), term.getDacApproval());
@@ -383,23 +404,23 @@ class ElasticSearchServiceTest {
     User updateUser = createUser(101, 200);
     Dac dac = createDac();
     Study study = createStudy(user);
-    study.setProperties(Set.of(
+    study.addProperties(
         createStudyProperty("phenotypeIndication", PropertyType.String),
         createStudyProperty("species", PropertyType.String),
         createStudyProperty("dataCustodianEmail", PropertyType.Json)
-    ));
+    );
     Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
     dataset.setProperties(Set.of(
         createDatasetProperty("numberOfParticipants", PropertyType.String, "# of participants"),
         createDatasetProperty("url", PropertyType.String, "url")
     ));
     dataset.setStudy(study);
-    DatasetRecord record = new DatasetRecord(user, updateUser, dac, dataset, study);
+    DatasetRecord datasetRecord = new DatasetRecord(user, updateUser, dac, dataset, study);
     when(dacDAO.findById(any())).thenReturn(dac);
     when(userDao.findUserById(user.getUserId())).thenReturn(user);
-    when(dacDAO.findById(any())).thenReturn(record.dac);
-    when(userDao.findUserById(record.createUser.getUserId())).thenReturn(record.createUser);
-    initService();
+    when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
+    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(
+        datasetRecord.createUser);
     assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
   }
 
@@ -414,7 +435,6 @@ class ElasticSearchServiceTest {
     when(dataAccessRequestDAO.findApprovedDARsByDatasetId(any())).thenReturn(
         List.of());
 
-    initService();
     DatasetTerm term = service.toDatasetTerm(dataset);
 
     assertEquals(dataset.getDatasetId(), term.getDatasetId());
@@ -424,7 +444,6 @@ class ElasticSearchServiceTest {
   @Test
   void testToDatasetTermNullDatasetProps() {
     Dataset dataset = new Dataset();
-    initService();
     assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
   }
 
@@ -432,11 +451,10 @@ class ElasticSearchServiceTest {
   void testToDatasetTermNullStudyProps() {
     Dataset dataset = new Dataset();
     Study study = new Study();
-    study.setName(RandomStringUtils.randomAlphabetic(10));
-    study.setDescription(RandomStringUtils.randomAlphabetic(20));
-    study.setStudyId(RandomUtils.nextInt(1, 100));
+    study.setName(randomAlphabetic(10));
+    study.setDescription(randomAlphabetic(20));
+    study.setStudyId(randomInt(1, 100));
     dataset.setStudy(study);
-    initService();
     assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
   }
 
@@ -444,34 +462,60 @@ class ElasticSearchServiceTest {
   ArgumentCaptor<Request> request;
 
   @Test
-  void testIndexDatasets() throws IOException {
+  void testIndexDatasetTerms() throws IOException {
     DatasetTerm term1 = new DatasetTerm();
     term1.setDatasetId(1);
     DatasetTerm term2 = new DatasetTerm();
     term2.setDatasetId(2);
-
-    String datasetIndexName = RandomStringUtils.randomAlphabetic(10);
+    User user = new User();
+    user.setUserId(1);
+    String datasetIndexName = randomAlphabetic(10);
 
     when(esConfig.getDatasetIndexName()).thenReturn(datasetIndexName);
-    mockElasticSearchResponse(200, "");
+    mockElasticSearchResponse("");
 
-    initService();
-    service.indexDatasetTerms(List.of(term1, term2));
+    try (var response = service.indexDatasetTerms(List.of(term1, term2), user)) {
+      verify(esClient).performRequest(request.capture());
+      Request capturedRequest = request.getValue();
+      assertEquals("PUT", capturedRequest.getMethod());
+      assertEquals("""
+              { "index": {"_type": "dataset", "_id": "1"} }
+              {"datasetId":1}
+              { "index": {"_type": "dataset", "_id": "2"} }
+              {"datasetId":2}
+              
+              """,
+          new String(capturedRequest.getEntity().getContent().readAllBytes(),
+              StandardCharsets.UTF_8));
+    }
+  }
 
-    verify(esClient).performRequest(request.capture());
+  @Test
+  void testIndexDatasets() throws Exception {
+    DatasetRecord datasetRecord = createDatasetRecord();
+    Dataset dataset1 = datasetRecord.dataset;
+    Dataset dataset2 = createDataset(datasetRecord.createUser, datasetRecord.updateUser,
+        new DataUseBuilder().setGeneralUse(true).build(), datasetRecord.dac);
+    dataset2.setStudy(datasetRecord.study);
+    when(datasetDAO.findDatasetById(dataset1.getDatasetId())).thenReturn(dataset1);
+    when(datasetDAO.findDatasetById(dataset2.getDatasetId())).thenReturn(dataset2);
+    when(userDao.findUserById(dataset1.getCreateUserId())).thenReturn(datasetRecord.createUser);
+    when(userDao.findUserById(dataset2.getCreateUserId())).thenReturn(datasetRecord.createUser);
+    org.elasticsearch.client.Response mockResponse = mock();
+    when(esClient.performRequest(any())).thenReturn(mockResponse);
+    when(mockResponse.getEntity()).thenReturn(new StringEntity("response body"));
+    StatusLine statusLine = mock();
+    when(mockResponse.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(200);
 
-    Request capturedRequest = request.getValue();
-
-    assertEquals("PUT", capturedRequest.getMethod());
-    assertEquals("""
-            { "index": {"_type": "dataset", "_id": "1"} }
-            {"datasetId":1}
-            { "index": {"_type": "dataset", "_id": "2"} }
-            {"datasetId":2}
-                        
-            """,
-        new String(capturedRequest.getEntity().getContent().readAllBytes(),
-            StandardCharsets.UTF_8));
+    try (var ignored = service.indexDatasets(
+        List.of(dataset1.getDatasetId(), dataset2.getDatasetId()),
+        datasetRecord.createUser)) {
+      // Each dataset should be looked up once when defining the term and a second time
+      // when updating the indexed date.
+      verify(datasetDAO, times(2)).findDatasetById(dataset1.getDatasetId());
+      verify(datasetDAO, times(2)).findDatasetById(dataset2.getDatasetId());
+    }
   }
 
   @Test
@@ -485,20 +529,19 @@ class ElasticSearchServiceTest {
      *  more classes and methods. Alternately, it is possible to just mock the Gson parsing, but
      *  this seems to affect the results of the other tests.
      */
-    mockElasticSearchResponse(200, "{\"valid\":true,\"hits\":{\"hits\":[]}}");
+    mockElasticSearchResponse("{\"valid\":true,\"hits\":{\"hits\":[]}}");
 
-    initService();
-    var response = service.searchDatasets(query);
-    assertEquals(200, response.getStatus());
+    try (var response = service.searchDatasets(query)) {
+      assertEquals(200, response.getStatus());
+    }
   }
 
   @Test
   void testValidateQuery() throws IOException {
     String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
 
-    mockElasticSearchResponse(200, "{\"valid\":true}");
+    mockElasticSearchResponse("{\"valid\":true}");
 
-    initService();
     assertTrue(service.validateQuery(query));
   }
 
@@ -506,9 +549,8 @@ class ElasticSearchServiceTest {
   void testValidateQueryWithFromAndSize() throws IOException {
     String query = "{ \"from\": 0, \"size\": 100, \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
 
-    mockElasticSearchResponse(200, "{\"valid\":true}");
+    mockElasticSearchResponse("{\"valid\":true}");
 
-    initService();
     assertTrue(service.validateQuery(query));
   }
 
@@ -522,7 +564,6 @@ class ElasticSearchServiceTest {
     when(esClient.performRequest(any())).thenReturn(response);
     when(response.getStatusLine()).thenReturn(status);
 
-    initService();
     assertThrows(IOException.class, () -> service.validateQuery(query));
   }
 
@@ -530,17 +571,18 @@ class ElasticSearchServiceTest {
   void testValidateQueryInvalid() throws IOException {
     String query = "{ \"bad\": [\"and\", \"invalid\"] }";
 
-    mockElasticSearchResponse(200, "{\"valid\":false}");
+    mockElasticSearchResponse("{\"valid\":false}");
 
-    initService();
     assertFalse(service.validateQuery(query));
   }
 
   @Test
   void testIndexDatasetIds() throws Exception {
+    User user = new User();
+    user.setUserId(1);
     Gson gson = GsonUtil.buildGson();
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(10, 100));
+    dataset.setDatasetId(randomInt(10, 100));
     String esResponseBody = """
           {
             "took": 2,
@@ -566,11 +608,9 @@ class ElasticSearchServiceTest {
           }
         """;
 
-    initService();
-
     when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
     mockESClientResponse(200, esResponseBody.formatted(dataset.getDatasetId()));
-    StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDatasetId()));
+    StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDatasetId()), user);
     var baos = new ByteArrayOutputStream();
     output.write(baos);
     var entityString = baos.toString();
@@ -591,14 +631,15 @@ class ElasticSearchServiceTest {
 
   @Test
   void testIndexDatasetIdsErrors() throws Exception {
+    User user = new User();
+    user.setUserId(1);
     Gson gson = GsonUtil.buildGson();
     Dataset dataset = new Dataset();
-    dataset.setDatasetId(RandomUtils.nextInt(10, 100));
+    dataset.setDatasetId(randomInt(10, 100));
     when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
     mockESClientResponse(500, "error condition");
-    initService();
 
-    StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDatasetId()));
+    StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDatasetId()), user);
     var baos = new ByteArrayOutputStream();
     output.write(baos);
     JsonArray jsonArray = gson.fromJson(baos.toString(), JsonArray.class);
@@ -623,25 +664,51 @@ class ElasticSearchServiceTest {
 
   @Test
   void testIndexStudyWithDatasets() {
+    User user = new User();
+    user.setUserId(1);
     Study study = new Study();
     study.setStudyId(1);
     Dataset d = new Dataset();
     d.setDatasetId(1);
     study.addDatasetId(d.getDatasetId());
     when(studyDAO.findStudyById(any())).thenReturn(study);
-    when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(d));
 
-    initService();
-    assertDoesNotThrow(() -> service.indexStudy(1));
+    assertDoesNotThrow(() -> service.indexStudy(1, user));
   }
 
   @Test
   void testIndexStudyWithNoDatasets() {
+    User user = new User();
+    user.setUserId(1);
     Study study = new Study();
     study.setStudyId(1);
     when(studyDAO.findStudyById(any())).thenReturn(study);
 
-    initService();
-    assertDoesNotThrow(() -> service.indexStudy(1));
+    assertDoesNotThrow(() -> {
+      try (var response = service.indexStudy(1, user)) {
+        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+      }
+    });
   }
+
+  @Test
+  void testUpdateDatasetIndexDateWithValue() {
+    assertDoesNotThrow(() -> service.updateDatasetIndexDate(1, 1, Instant.now()));
+  }
+
+  @Test
+  void testDeleteDatasetIndexWhenDatasetExists() throws Exception {
+    Dataset dataset = new Dataset();
+    when(datasetDAO.findDatasetById(any())).thenReturn(dataset);
+    assertDoesNotThrow(() -> service.updateDatasetIndexDate(1, 1, null));
+    verify(datasetServiceDAO).updateDatasetIndex(any(), any(), any());
+  }
+
+  @Test
+  void testDeleteDatasetIndexWhenDatasetIsNull() throws Exception {
+    when(datasetDAO.findDatasetById(any())).thenReturn(null);
+    assertDoesNotThrow(() -> service.updateDatasetIndexDate(1, 1, null));
+    verify(datasetServiceDAO, never()).updateDatasetIndex(any(), any(), any());
+  }
+
 }

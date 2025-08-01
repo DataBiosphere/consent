@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class LibraryCard {
@@ -10,8 +11,6 @@ public class LibraryCard {
   public static final String QUERY_FIELDS_WITH_LC_PREFIX =
       " lc.id AS lc_id, " +
           " lc.user_id AS lc_user_id, " +
-          " lc.institution_id AS lc_institution_id, " +
-          " lc.era_commons_id AS lc_era_commons_id, " +
           " lc.user_name AS lc_user_name, " +
           " lc.user_email AS lc_user_email, " +
           " lc.create_user_id AS lc_create_user_id, " +
@@ -20,19 +19,13 @@ public class LibraryCard {
 
   private Integer id;
   private Integer userId;
-  private Integer institutionId;
-  private String eraCommonsId;
   private String userName;
   private String userEmail;
   private Date createDate;
   private Integer createUserId;
   private Date updateDate;
   private Integer updateUserId;
-
-  private Institution institution;
-
   private List<Integer> daaIds;
-
   private List<DataAccessAgreement> daas;
 
   public LibraryCard() {
@@ -54,22 +47,6 @@ public class LibraryCard {
 
   public void setUserId(Integer userId) {
     this.userId = userId;
-  }
-
-  public Integer getInstitutionId() {
-    return institutionId;
-  }
-
-  public void setInstitutionId(Integer institutionId) {
-    this.institutionId = institutionId;
-  }
-
-  public String getEraCommonsId() {
-    return eraCommonsId;
-  }
-
-  public void setEraCommonsId(String eraCommonsId) {
-    this.eraCommonsId = eraCommonsId;
   }
 
   public String getUserName() {
@@ -120,12 +97,6 @@ public class LibraryCard {
     this.updateUserId = updateUser;
   }
 
-  public Institution getInstitution() {
-    return institution;
-  }
-
-  public void setInstitution(Institution institution) {this.institution = institution;}
-
   public List<Integer> getDaaIds() {return daaIds;}
 
   public void setDaaIds(List<Integer> daaIds) {this.daaIds = daaIds;}
@@ -144,6 +115,12 @@ public class LibraryCard {
     }
     LibraryCard other = (LibraryCard) libraryCard;
     return new EqualsBuilder().append(id, other.getId()).isEquals();
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, userId, userName, userEmail, createDate, createUserId, updateDate,
+        updateUserId, daaIds);
   }
 
   public void addDaa(Integer daaId) {

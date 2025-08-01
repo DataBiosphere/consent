@@ -1,8 +1,9 @@
 package org.broadinstitute.consent.http.models;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
+import com.google.gson.annotations.Expose;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,44 +16,55 @@ import org.broadinstitute.consent.http.enumeration.DarCollectionActions;
 
 public class DarCollectionSummary {
 
-  @JsonProperty
+  @Expose
   private Integer darCollectionId;
-
-  @JsonProperty
+  @Expose
   private Set<String> referenceIds;
-
-  @JsonProperty
+  @Expose
   private String darCode;
-
-  @JsonProperty
+  @Expose
   private String name;
-
-  @JsonProperty
+  @Expose
   private Timestamp submissionDate;
-
-  @JsonProperty
+  @Expose
+  private boolean expired;
+  @Expose
+  private Timestamp expiresAt;
+  @Expose
   private String researcherName;
-
-  @JsonProperty
+  @Expose
   private String institutionName;
-
-  @JsonProperty
+  @Expose
   private String status;
-
-  @JsonProperty
+  @Expose
   private Set<String> actions;
-
-  @JsonProperty
+  @Expose
   private int datasetCount;
-
+  @Expose
+  private final Map<Integer, Set<String>> parentToReferenceIds;
+  @Expose
+  private boolean progressReport;
+  @Expose
+  private String latestReferenceId;
+  @Expose
+  private Integer closeoutSigningOfficialId;
+  @Expose
+  private Timestamp closeoutSigningOfficialApprovalDate;
+  @Expose
   private List<String> dacNames;
-
+  @Expose
   private Integer researcherId;
+  @Expose
   private Integer institutionId;
+  @Expose
   private Set<Integer> datasetIds;
+
+  // Normally unused by the UI, but used in data population. Can be included in the JSON response
+  // if needed by using a GsonBuilder without `excludeFieldsWithoutExposeAnnotation`.
   private List<Vote> votes;
   private Map<Integer, Election> elections;
-  private Map<String, String> darStatuses;
+  private final Map<String, String> darStatuses;
+  private CloseoutSupplement closeoutSupplement;
 
   public DarCollectionSummary() {
     this.votes = new ArrayList<>();
@@ -61,6 +73,7 @@ public class DarCollectionSummary {
     this.datasetIds = new HashSet<>();
     this.referenceIds = new HashSet<>();
     this.darStatuses = new HashMap<>();
+    this.parentToReferenceIds = new HashMap<>();
     this.datasetCount = 0;
   }
 
@@ -80,8 +93,17 @@ public class DarCollectionSummary {
     this.referenceIds.add(id);
   }
 
+  public void addParentChildRelationship(Integer parentId, String childReferenceId) {
+    parentToReferenceIds.computeIfAbsent(parentId, k -> new HashSet<>()).add(childReferenceId);
+    updateProgressReportStatus();
+  }
+
+  private Map<Integer, Set<String>> getParentToReferenceIds() {
+    return parentToReferenceIds;
+  }
+
   public void setReferenceIds(Set<String> referenceIds) {
-    this.referenceIds = referenceIds;
+    this.referenceIds = new HashSet<>(referenceIds);
   }
 
   public void addVote(Vote vote) {
@@ -134,6 +156,36 @@ public class DarCollectionSummary {
 
   public void setSubmissionDate(Timestamp submissionDate) {
     this.submissionDate = submissionDate;
+    if (submissionDate != null) {
+      this.expiresAt = Timestamp.from(Instant.ofEpochMilli(submissionDate.getTime() + DataAccessRequest.EXPIRATION_DURATION_MILLIS));
+      this.expired = this.expiresAt.before(Timestamp.from(Instant.now()));
+    }
+    updateProgressReportStatus();
+  }
+
+  public void setCloseoutSigningOfficialId(Integer darCloseoutSigningOfficialApprovalId) {
+    this.closeoutSigningOfficialId = darCloseoutSigningOfficialApprovalId;
+  }
+
+  public Timestamp getCloseoutSigningOfficialApprovalDate() {
+    return closeoutSigningOfficialApprovalDate;
+  }
+
+  public void setCloseoutSigningOfficialApprovalDate(
+      Timestamp darCloseoutSigningOfficialApprovalDate) {
+    this.closeoutSigningOfficialApprovalDate = darCloseoutSigningOfficialApprovalDate;
+  }
+
+  public Integer getCloseoutSigningOfficialApprovalId() {
+    return closeoutSigningOfficialId;
+  }
+
+  public boolean isExpired() {
+    return expired;
+  }
+
+  public Timestamp getExpiresAt() {
+    return expiresAt;
   }
 
   public String getResearcherName() {
@@ -202,9 +254,8 @@ public class DarCollectionSummary {
     this.actions = actions;
   }
 
-  public void addAction(String action) {
-    String newAction = DarCollectionActions.valueOf(action.toUpperCase()).getValue();
-    actions.add(newAction);
+  public void addAction(DarCollectionActions action) {
+    actions.add(action.getValue());
   }
 
   public void addStatus(String status, String referenceId) {
@@ -230,6 +281,31 @@ public class DarCollectionSummary {
     if (!this.dacNames.contains(dacName)) {
       this.dacNames.add(dacName);
     }
+  }
+
+  public boolean getProgressReport() {
+    return progressReport;
+  }
+
+  public String getLatestReferenceId() {
+    return latestReferenceId;
+  }
+
+  public void setLatestReferenceId(String latestReferenceId) {
+    this.latestReferenceId = latestReferenceId;
+  }
+
+  public CloseoutSupplement getCloseoutSupplement() {
+    return closeoutSupplement;
+  }
+
+  public void setCloseoutSupplement(
+      CloseoutSupplement closeoutSupplement) {
+    this.closeoutSupplement = closeoutSupplement;
+  }
+
+  private void updateProgressReportStatus() {
+    progressReport = !getParentToReferenceIds().isEmpty() && Objects.nonNull(getSubmissionDate());
   }
 
   @Override

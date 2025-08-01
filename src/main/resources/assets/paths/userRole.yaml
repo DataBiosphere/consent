@@ -52,7 +52,7 @@ put:
 delete:
   summary: Delete a role from a user
   description: Delete a role from a user, specified by given userId. Available to Admin and Signing Official roles.  
-    Signing Officials may remove user roles [6, 7, 8] for users in their organization.  They may not remove the
+    Signing Officials may remove user roles [7, 8, 9] for users in their organization.  They may not remove the
     Signing Official role from themselves.
   parameters:
     - name: userId

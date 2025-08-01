@@ -49,12 +49,12 @@ public class GCSService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  public void setStorage(Storage storage) {
+  protected void setStorage(Storage storage) {
     this.storage = storage;
   }
 
   @VisibleForTesting
-  public void setConfig(StoreConfiguration config) {
+  protected void setConfig(StoreConfiguration config) {
     this.config = config;
   }
 

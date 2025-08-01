@@ -69,6 +69,14 @@ paths:
     $ref: 'paths/daaUpdateByDacId.yaml'
   /api/dac:
     $ref: 'paths/dac.yaml'
+  /api/dac/rules:
+    $ref: './paths/dacRules.yaml'
+  /api/dac/{dacId}/rules:
+    $ref: './paths/dacRulesById.yaml'
+  /api/dac/{dacId}/rules/audit:
+    $ref: './paths/dacRuleAuditsById.yaml'
+  /api/dac/{dacId}/rules/{ruleId}/toggle:
+    $ref: './paths/dacRuleToggle.yaml'
   /api/dac/{dacId}:
     $ref: 'paths/dacById.yaml'
   /api/dac/{dacId}/dataset/{datasetId}:
@@ -242,13 +250,13 @@ paths:
       description: |
         Create Draft Data Access Request.
         Deprecated in favor of /api/dar/v3/draft
-      parameters:
-        - name: dar
-          in: body
-          description: The fields that represent a Data Access Request, json format.
-          required: true
-          schema:
-            $ref: './schemas/DataAccessRequest.yaml'
+      requestBody:
+        required: true
+        description: The fields that represent a Draft Data Access Request, json format.
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/DataAccessRequest.yaml'
       tags:
         - Data Access Request
       responses:
@@ -287,24 +295,25 @@ paths:
           required: true
           schema:
             type: string
-        - name: dar
-          in: body
-          description: The fields that represent a Data Access Request, json format.
-          required: true
-          schema:
-            $ref: './schemas/DataAccessRequest.yaml'
+      requestBody:
+        required: true
+        description: The fields that represent a Draft Data Access Request, json format.
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/DataAccessRequest.yaml'
       tags:
         - Data Access Request
       responses:
         201:
-          description: Returns the upated draft Data Access Request.
+          description: Returns the updated draft Data Access Request.
         403:
           description: Updates are restricted to the create user.
         500:
           description: Internal Server Error.
     get:
       summary: Get a Draft Data Access Request
-      description: Returns the Draft Data Access Request specified by the referencId
+      description: Returns the Draft Data Access Request specified by the referenceId
       parameters:
         - name: referenceId
           in: path
@@ -438,7 +447,8 @@ paths:
 
   /api/dar/v2/progress_report/{parentReferenceId}:
     $ref: './paths/progressReport.yaml'
-
+  /api/dar/{referenceId}/approveCloseout:
+    $ref: './paths/approveCloseoutBySigningOfficial.yaml'
   /api/dataset/v2:
     $ref: './paths/datasetV2.yaml'
   /api/dataset/v3:
@@ -511,10 +521,6 @@ paths:
     $ref: './paths/tdrDatasetApprovedUsers.yaml'
   /api/tdr/{identifier}:
     $ref: './paths/tdrDataset.yaml'
-  /api/tdr/dar/draft:
-    $ref: './paths/tdrDraftDAR.yaml'
-  /api/tdr/v2/dar/draft:
-    $ref: './paths/tdrV2DraftDAR.yaml'
   /api/emailNotifier/reminderMessage/{voteId}:
     post:
       summary: Send Reminder Email
@@ -533,11 +539,14 @@ paths:
           description: Email successfully sent
         500:
           description: Server error.
-
+  /api/emailNotifier/darExpirationNotices:
+    $ref: './paths/darExpirationNotices.yaml'
   /api/institutions:
     $ref: './paths/institutions.yaml'
   /api/institutions/{id}:
     $ref: './paths/institutionById.yaml'
+  /api/institutions/domains:
+    $ref: './paths/institutionsDomains.yaml'
   /api/libraryCards:
     get:
       summary: Library Card INDEX resource
@@ -609,43 +618,6 @@ paths:
           description: User not authorized
         404:
           description: Library Card not found
-        500:
-          description: Internal server error
-    put:
-      summary: Library Card PUT resource
-      description: Update target Library Card based on id parameter and user provided json
-      tags:
-        - Library Card
-        - Admin
-      parameters:
-        - name: id
-          in: path
-          description: Library Card ID
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        description: 'JSON representation of updated Library Card state'
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LibraryCard'
-      responses:
-        200:
-          description: Library Card PUT request success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LibraryCard'
-        400:
-          description: Bad request (Issues with json payload)
-        401:
-          description: User not authorized
-        404:
-          description: Library Card not found
-        409:
-          description: Library Card payload conflicts with an existing record
         500:
           description: Internal server error
     delete:
@@ -822,26 +794,6 @@ paths:
           description: Server error.
   /api/user/{userId}/{roleId}:
     $ref: './paths/userRole.yaml'
-  /api/user/{email}:
-    delete:
-      summary: Delete User by email
-      description: Deletes the user identified by the email.
-      parameters:
-        - name: email
-          in: path
-          description: The email of the user.
-          required: true
-          schema:
-            type: string
-      tags:
-        - User
-      responses:
-        200:
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: string
   /api/user/acknowledgements/{key}:
     get:
       summary: Get Acknowledgement by key
@@ -938,35 +890,7 @@ paths:
         500:
           description: Error processing the request.
   /api/nih:
-    delete:
-      summary: Delete Era Commons Account
-      description: Removes only Era Commons Account related information from the logued user, requesting this action
-      tags:
-        - User
-        - eRA Commons
-        - Nih
-      responses:
-        200:
-          description: Returns an empty response if the operation was successful
-    post:
-      summary: Store NIH information
-      description: Save user's eRA Commons account
-      parameters:
-        - name: nihAccount
-          in: body
-          description: NIH Account information
-          required: true
-          schema:
-            $ref: '#/components/schemas/NIHUserAccount'
-      tags:
-        - User
-        - eRA Commons
-        - Nih
-      responses:
-        200:
-          description: Returns eRA Commons Account information. Map<String, String> format
-        404:
-          description: The user doesn't exist in the system
+    $ref: './paths/nih.yaml'
   /api/sam/register/self:
     $ref: './paths/samRegisterSelf.yaml'
   /api/sam/register/self/diagnostics:
@@ -981,36 +905,6 @@ paths:
     $ref: './paths/votes.yaml'
   /api/votes/rationale:
     $ref: './paths/votesRationale.yaml'
-  /metrics/dac/decision:
-    get:
-      summary: Dac Decision Metrics
-      description: Dac Decision Metrics
-      tags:
-        - Metrics
-      responses:
-        200:
-          description: Dac Decision Metrics
-          content:
-            text/plain:
-              schema:
-                type: string
-        500:
-          description: Internal Server Error
-  /metrics/dar/decision:
-    get:
-      summary: DAR Decision Metrics
-      description: DAR Decision Metrics
-      tags:
-        - Metrics
-      responses:
-        200:
-          description: DAR Decision Metrics
-          content:
-            text/plain:
-              schema:
-                type: string
-        500:
-          description: Internal Server Error
   /metrics/dataset/{datasetId}:
     get:
       summary: Dataset Metrics
@@ -1029,7 +923,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schema/DatasetMetrics'
+                $ref: './schemas/DatasetMetrics.yaml'
         404:
           description: Dataset with specified ID does not exist
         500:
@@ -1163,22 +1057,7 @@ components:
     UserRole:
       $ref: './schemas/UserRole.yaml'
     NIHUserAccount:
-      type: object
-      properties:
-        nihUsername:
-          type: string
-          description: Nih account associated name.
-        datasetPermissions:
-          type: array
-          items:
-            type: string
-          description: NIH dataset access permissions.
-        status:
-          type: string
-          description: Flag to determine if a user is authorized.
-        eraExpiration:
-          type: string
-          description: Contains the eRA account expiration date in miliseconds. This will be 30 days from the user's authentication.
+      $ref: './schemas/NIHUserAccount.yaml'
     Vote:
       $ref: './schemas/Vote.yaml'
     MatchResult:
@@ -1190,13 +1069,7 @@ components:
     SamUserInfo:
       $ref: './schemas/SamUserInfo.yaml'
     ErrorResponse:
-      properties:
-        message:
-          type: string
-          description: The error message
-        code:
-          type: integer
-          description: The response status code
+      $ref: './schemas/ErrorResponse.yaml'
     Version:
       type: object
       properties:

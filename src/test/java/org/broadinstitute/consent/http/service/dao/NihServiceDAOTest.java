@@ -1,7 +1,8 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
@@ -52,9 +53,7 @@ class NihServiceDAOTest extends DAOTestHelper {
     userDAO.updateEraCommonsId(user.getUserId(), commonsId);
     userPropertyDAO.insertAll(List.of(prop1, prop2));
     // Create Library Card
-    Integer institutionId = institutionDAO.insertInstitution("name", "name", "email", "url", 1,
-        "url", "url", "file", "type", user.getUserId(), new Date());
-    libraryCardDAO.insertLibraryCard(user.getUserId(), institutionId, commonsId,
+    libraryCardDAO.insertLibraryCard(user.getUserId(),
         user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
 
     // Build a new NIHUserAccount to update
@@ -91,9 +90,8 @@ class NihServiceDAOTest extends DAOTestHelper {
     User updatedUser = userDAO.findUserById(user.getUserId());
     assertEquals(updatedUser.getEraCommonsId(), userAccount.getNihUsername());
 
-    List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
-    assertFalse(cards.isEmpty());
-    assertEquals(cards.get(0).getEraCommonsId(), userAccount.getNihUsername());
+    LibraryCard card = libraryCardDAO.findLibraryCardByUserId(user.getUserId());
+    assertNotNull(card);
   }
 
   @Test
@@ -136,8 +134,8 @@ class NihServiceDAOTest extends DAOTestHelper {
     assertEquals(updatedUser.getEraCommonsId(), userAccount.getNihUsername());
 
     // ensure that we did not make any LC updates
-    List<LibraryCard> cards = libraryCardDAO.findLibraryCardsByUserId(user.getUserId());
-    assertTrue(cards.isEmpty());
+    LibraryCard card = libraryCardDAO.findLibraryCardByUserId(user.getUserId());
+    assertNull(card);
   }
 
   @Test

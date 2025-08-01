@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.codahale.metrics.annotation.Timed;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
@@ -8,7 +9,6 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
@@ -17,8 +17,9 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.Request;
 import jakarta.ws.rs.core.Response;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
@@ -30,6 +31,9 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.util.ComplianceLogger;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.glassfish.jersey.server.ContainerRequest;
 
 @Path("api/collections")
 public class DarCollectionResource extends Resource {
@@ -52,10 +56,11 @@ public class DarCollectionResource extends Resource {
       @PathParam("roleName") String roleName) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      validateUserHasRoleName(user, roleName);
-      List<DarCollectionSummary> summaries = darCollectionService.getSummariesForRoleName(user,
-          roleName);
-      return Response.ok().entity(summaries).build();
+      var role = validateUserHasRoleName(user, roleName);
+      List<DarCollectionSummary> summaries = darCollectionService.getSummariesForRole(user, role);
+      // When querying in list context, we only want the exposed fields
+      Gson gson = GsonUtil.gsonBuilderWithAdapters().excludeFieldsWithoutExposeAnnotation().create();
+      return Response.ok().entity(gson.toJson(summaries)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -70,31 +75,21 @@ public class DarCollectionResource extends Resource {
       @PathParam("roleName") String roleName, @PathParam("collectionId") Integer collectionId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      validateUserHasRoleName(user,
-          roleName); //throws BadRequestException if user does not have roleName
-      DarCollectionSummary summary = darCollectionService.getSummaryForRoleNameByCollectionId(user,
-          roleName, collectionId);
+      // throws BadRequestException if user does not have roleName
+      var role = validateUserHasRoleName(user, roleName);
+      DarCollectionSummary summary = darCollectionService.getSummaryForRoleByCollectionId(user, role, collectionId);
 
-      boolean allowedAccess;
-      switch (roleName) {
-        case Resource.ADMIN:
-          allowedAccess = true;
-          break;
-        case Resource.CHAIRPERSON:
-        case Resource.MEMBER:
+      boolean allowedAccess = switch (role) {
+        case ADMIN -> true;
+        case CHAIRPERSON, MEMBER -> {
           List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByDACUser(user);
-          allowedAccess = summary.getDatasetIds().stream().anyMatch(userDatasetIds::contains);
-          break;
-        case Resource.SIGNINGOFFICIAL:
-          allowedAccess = Objects.nonNull(user.getInstitutionId()) &&
-              user.getInstitutionId().equals(summary.getInstitutionId());
-          break;
-        case Resource.RESEARCHER:
-          allowedAccess = user.getUserId().equals(summary.getResearcherId());
-          break;
-        default:
-          throw new BadRequestException("Invalid role selection: " + roleName);
-      }
+          yield summary.getDatasetIds().stream().anyMatch(userDatasetIds::contains);
+        }
+        case SIGNINGOFFICIAL -> Objects.nonNull(user.getInstitutionId()) &&
+            user.getInstitutionId().equals(summary.getInstitutionId());
+        case RESEARCHER -> user.getUserId().equals(summary.getResearcherId());
+        default -> throw new BadRequestException("Invalid role selection: " + roleName);
+      };
       if (!allowedAccess) {
         // user has role but is not allowed to view collection; throw NotFoundException to avoid leaking existence
         throw new NotFoundException(
@@ -185,6 +180,7 @@ public class DarCollectionResource extends Resource {
   @RolesAllowed({ADMIN, CHAIRPERSON, RESEARCHER})
   public Response cancelDarCollectionByCollectionId(
       @Auth AuthUser authUser,
+      @Context Request request,
       @PathParam("id") Integer collectionId,
       @QueryParam("roleName") String roleName) {
     try {
@@ -194,30 +190,13 @@ public class DarCollectionResource extends Resource {
 
       // Default to the least impactful role if none provided.
       UserRoles actingRole = UserRoles.RESEARCHER;
-      if (Objects.nonNull(roleName)) {
-        validateUserHasRoleName(user, roleName);
-        UserRoles requestedRole = UserRoles.getUserRoleFromName(roleName);
-        if (Objects.nonNull(requestedRole)) {
-          actingRole = requestedRole;
-        }
+      if (roleName != null) {
+        actingRole = validateUserHasRoleName(user, roleName);
       }
 
-      DarCollection cancelledCollection;
-      switch (actingRole) {
-        case ADMIN:
-          cancelledCollection = darCollectionService.cancelDarCollectionElectionsAsAdmin(
-              collection);
-          break;
-        case CHAIRPERSON:
-          cancelledCollection = darCollectionService.cancelDarCollectionElectionsAsChair(collection,
-              user);
-          break;
-        default:
-          validateUserIsCreator(user, collection);
-          cancelledCollection = darCollectionService.cancelDarCollectionAsResearcher(collection);
-          break;
-      }
-
+      DarCollection cancelledCollection = darCollectionService.cancelDarCollectionByRole(user, collection, actingRole);
+      ComplianceLogger.logDARCancellation(user, cancelledCollection.getDatasets().stream().toList(),
+              (ContainerRequest) request, Response.Status.OK.getStatusCode());
       return Response.ok().entity(cancelledCollection).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -283,11 +262,8 @@ public class DarCollectionResource extends Resource {
   // We don't want to leak existence so throw a not found if someone tries to
   // view another user's collection.
   private void validateUserIsCreator(User user, DarCollection collection) {
-    try {
-      validateAuthedRoleUser(Collections.emptyList(), user, collection.getCreateUserId());
-    } catch (ForbiddenException e) {
+    if (!user.getUserId().equals(collection.getCreateUserId())) {
       throw new NotFoundException();
     }
   }
-
 }

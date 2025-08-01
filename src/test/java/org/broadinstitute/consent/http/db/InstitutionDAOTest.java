@@ -6,18 +6,20 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
 
 @ExtendWith(MockitoExtension.class)
 class InstitutionDAOTest extends DAOTestHelper {
@@ -108,6 +110,18 @@ class InstitutionDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testDeleteInstitutionById_WithDomain() throws SQLException {
+    Institution institution = createInstitution();
+    institution.setDomains(List.of("domain1", "domain2"));
+    institutionDAO.updateFullInstitution(institution, institution.getCreateUserId());
+    assertEquals(
+        institution.getDomains(),
+        institutionDAO.findInstitutionById(institution.getId()).getDomains());
+    institutionDAO.deleteInstitutionById(institution.getId());
+    assertNull(institutionDAO.findInstitutionById(institution.getId()));
+  }
+
+  @Test
   void testFindInstitutionById() {
     Institution institution = createInstitution();
     Integer id = institution.getId();
@@ -147,7 +161,7 @@ class InstitutionDAOTest extends DAOTestHelper {
     assertEquals(1, institution.getSigningOfficials().size());
     assertEquals(user.getInstitutionId(), institution.getId());
     assertEquals(user.getDisplayName(),
-        institution.getSigningOfficials().get(0).displayName);
+        institution.getSigningOfficials().get(0).getDisplayName());
   }
 
   @Test
@@ -161,14 +175,50 @@ class InstitutionDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindInstitutionsByNameTrimsInput() {
+    Institution institution = createInstitution();
+
+    List<Institution> found = institutionDAO.findInstitutionsByName(
+        "  " + institution.getName() + "  ");
+    assertFalse(found.isEmpty());
+    assertEquals(1, found.size());
+    assertEquals(institution.getId(), found.get(0).getId());
+  }
+
+  @Test
+  void testFindInstitutionsByNameTrimsDb() {
+    Institution institution = createInstitution();
+    User user = createUser();
+    institutionDAO.updateInstitutionById(
+        institution.getId(),
+        "  " + institution.getName() + "  ",
+        institution.getItDirectorEmail(),
+        institution.getItDirectorName(),
+        institution.getInstitutionUrl(),
+        institution.getDunsNumber(),
+        institution.getOrgChartUrl(),
+        institution.getVerificationUrl(),
+        institution.getVerificationFilename(),
+        institution.getOrganizationType().getValue(),
+        user.getUserId(),
+        new Date()
+    );
+    List<Institution> found = institutionDAO.findInstitutionsByName(institution.getName());
+    assertFalse(found.isEmpty());
+    assertEquals(1, found.size());
+    assertEquals(institution.getId(), found.get(0).getId());
+  }
+
+
+  @Test
   void testFindInstitutionsByName_Missing() {
     List<Institution> found = institutionDAO.findInstitutionsByName(
-        RandomStringUtils.randomAlphabetic(10));
+        randomAlphabetic(10));
     assertTrue(found.isEmpty());
   }
 
   @Test
-  void testDeleteInstitutionByUserId() {
+  void testDeleteInstitutionByUserId() throws SQLException {
     Institution institution = createInstitution();
     Integer userId = institution.getCreateUserId();
     institutionDAO.deleteAllInstitutionsByUser(userId);
@@ -176,24 +226,43 @@ class InstitutionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindInstitutionWithSOById() {
+  void testDeleteInstitutionWithDomainsByUserId() throws SQLException {
     Institution institution = createInstitution();
+    institution.setDomains(List.of("domain1.com", "domain2.com"));
+    institutionDAO.updateFullInstitution(institution, institution.getCreateUserId());
+    Integer userId = institution.getCreateUserId();
+    institutionDAO.deleteAllInstitutionsByUser(userId);
+    assertNull(institutionDAO.findInstitutionById(institution.getId()));
+    jdbi.useHandle(handle -> {
+      List<String> domains = handle.createQuery(
+              "SELECT domain FROM institution_domains WHERE institution_id = :id")
+          .bind("id", institution.getId())
+          .mapTo(String.class)
+          .list();
+      assertTrue(domains.isEmpty(), "Domains should be deleted when institution is deleted");
+    });
+  }
+
+  @Test
+  void testFindInstitutionWithSOById() {
     User user = createUserWithInstitution();
-    Institution institutionWithSO = institutionDAO.findInstitutionWithSOById(user.getInstitutionId());
+    Institution institutionWithSO = institutionDAO.findInstitutionWithSOById(
+        user.getInstitutionId());
     assertEquals(1, institutionWithSO.getSigningOfficials().size());
-    assertEquals(user.getDisplayName(), institutionWithSO.getSigningOfficials().get(0).displayName);
+    assertEquals(user.getDisplayName(),
+        institutionWithSO.getSigningOfficials().get(0).getDisplayName());
   }
 
   private Institution createInstitution() {
     User createUser = createUser();
-    Integer id = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
+    Integer id = institutionDAO.insertInstitution(randomAlphabetic(20),
         "itDirectorName",
         "itDirectorEmail",
-        RandomStringUtils.randomAlphabetic(10),
+        randomAlphabetic(10),
         new Random().nextInt(),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
+        randomAlphabetic(10),
         OrganizationType.NON_PROFIT.getValue(),
         createUser.getUserId(),
         createUser.getCreateDate());
@@ -216,25 +285,155 @@ class InstitutionDAOTest extends DAOTestHelper {
     return institutionDAO.findInstitutionById(id);
   }
 
-  private User createUserWithInstitution() {
-    int i1 = RandomUtils.nextInt(5, 10);
-    String email = RandomStringUtils.randomAlphabetic(i1);
-    String name = RandomStringUtils.randomAlphabetic(10);
-    Integer userId = userDAO.insertUser(email, name, new Date());
-    Integer institutionId = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
-        "itDirectorName",
-        "itDirectorEmail",
-        RandomStringUtils.randomAlphabetic(10),
-        new Random().nextInt(),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        OrganizationType.NON_PROFIT.getValue(),
-        userId,
-        new Date());
-    userDAO.updateUser(name, userId, institutionId);
-    userRoleDAO.insertSingleUserRole(7, userId);
-    return userDAO.findUserById(userId);
+  @Test
+  void testInsertFullInstitution() throws Exception {
+    User user = createUser();
+    Institution institution = new Institution();
+    institution.setName("Test Institution");
+    institution.setItDirectorName("Test Director");
+    institution.setItDirectorEmail("email");
+    institution.setInstitutionUrl("http://testinstitution.com");
+    institution.setDunsNumber(123456789);
+    institution.setOrgChartUrl("http://testinstitution.com/orgchart");
+    institution.setVerificationUrl("http://testinstitution.com/verification");
+    institution.setVerificationFilename("verification.pdf");
+    institution.setOrganizationType(OrganizationType.NON_PROFIT);
+    institution.setDomains(List.of("domain1.com", "domain2.com"));
+    Institution insertedInstitution = institutionDAO.insertFullInstitution(institution,
+        user.getUserId());
+
+    assertEquals(institution.getName(), insertedInstitution.getName());
+    assertEquals(institution.getItDirectorName(), insertedInstitution.getItDirectorName());
+    assertEquals(institution.getItDirectorEmail(), insertedInstitution.getItDirectorEmail());
+    assertEquals(institution.getInstitutionUrl(), insertedInstitution.getInstitutionUrl());
+    assertEquals(institution.getDunsNumber(), insertedInstitution.getDunsNumber());
+    assertEquals(institution.getOrgChartUrl(), insertedInstitution.getOrgChartUrl());
+    assertEquals(institution.getVerificationUrl(), insertedInstitution.getVerificationUrl());
+    assertEquals(institution.getVerificationFilename(),
+        insertedInstitution.getVerificationFilename());
+    assertEquals(institution.getDomains().size(), insertedInstitution.getDomains().size());
+    institution.getDomains()
+        .forEach(domain -> assertTrue(insertedInstitution.getDomains().contains(domain)));
   }
 
+  @Test
+  void testInsertFullInstitutionUniqueDomainException_Case1() {
+    User user = createUser();
+    Institution institution = new Institution();
+    institution.setName("Test Institution");
+    institution.setItDirectorName("Test Director");
+    institution.setItDirectorEmail("email");
+    institution.setInstitutionUrl("http://testinstitution.com");
+    institution.setDunsNumber(123456789);
+    institution.setOrgChartUrl("http://testinstitution.com/orgchart");
+    institution.setVerificationUrl("http://testinstitution.com/verification");
+    institution.setVerificationFilename("verification.pdf");
+    institution.setOrganizationType(OrganizationType.FOR_PROFIT);
+    institution.setDomains(List.of("domain1.com", "domain1.com"));
+    try {
+      institutionDAO.insertFullInstitution(institution, user.getUserId());
+    } catch (Exception e) {
+      assertEquals(PSQLState.UNIQUE_VIOLATION.getState(),
+          ((PSQLException) e.getCause()).getSQLState());
+    }
+  }
+
+  @Test
+  void testUpdateFullInstitution() throws Exception {
+    User user = createUser();
+    Institution institution = new Institution();
+    institution.setName("Test Institution");
+    institution.setItDirectorName("Test Director");
+    institution.setItDirectorEmail("email");
+    institution.setInstitutionUrl("http://testinstitution.com");
+    institution.setDunsNumber(123456789);
+    institution.setOrgChartUrl("http://testinstitution.com/orgchart");
+    institution.setVerificationUrl("http://testinstitution.com/verification");
+    institution.setVerificationFilename("verification.pdf");
+    institution.setOrganizationType(OrganizationType.NON_PROFIT);
+    institution.setDomains(List.of("domain1.com", "domain2.com"));
+
+    Institution insertedInstitution = institutionDAO.insertFullInstitution(institution,
+        user.getUserId());
+
+    insertedInstitution.setName("Updated Institution");
+    insertedInstitution.setItDirectorName("Updated Director");
+    insertedInstitution.setItDirectorEmail("updatedemail");
+    insertedInstitution.setInstitutionUrl("http://updatedinstitution.com");
+    insertedInstitution.setDunsNumber(987654321);
+    insertedInstitution.setOrgChartUrl("http://updatedinstitution.com/orgchart");
+    insertedInstitution.setVerificationUrl("http://updatedinstitution.com/verification");
+    insertedInstitution.setVerificationFilename("updated_verification.pdf");
+    insertedInstitution.setOrganizationType(OrganizationType.FOR_PROFIT);
+    insertedInstitution.setDomains(
+        List.of("new.domain1.com", "new.domain2.com", "new.domain3.com"));
+
+    Institution updatedInstitution = institutionDAO.updateFullInstitution(insertedInstitution,
+        user.getUserId());
+
+    assertEquals(updatedInstitution.getName(), insertedInstitution.getName());
+    assertEquals(updatedInstitution.getItDirectorName(), insertedInstitution.getItDirectorName());
+    assertEquals(updatedInstitution.getItDirectorEmail(), insertedInstitution.getItDirectorEmail());
+    assertEquals(updatedInstitution.getInstitutionUrl(), insertedInstitution.getInstitutionUrl());
+    assertEquals(updatedInstitution.getDunsNumber(), insertedInstitution.getDunsNumber());
+    assertEquals(updatedInstitution.getOrgChartUrl(), insertedInstitution.getOrgChartUrl());
+    assertEquals(updatedInstitution.getVerificationUrl(), insertedInstitution.getVerificationUrl());
+    assertEquals(updatedInstitution.getVerificationFilename(),
+        insertedInstitution.getVerificationFilename());
+    assertEquals(updatedInstitution.getDomains().size(), insertedInstitution.getDomains().size());
+    updatedInstitution.getDomains()
+        .forEach(domain -> assertTrue(insertedInstitution.getDomains().contains(domain)));
+
+    updatedInstitution.setDomains(null); // Reset domains to test deletion
+    Institution reloadedInstitution = institutionDAO.updateFullInstitution(updatedInstitution,
+        user.getUserId());
+    assertNull(reloadedInstitution.getDomains(), "Domains should be empty after update");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"testdoMain.com", "AnotherDomain.com", "uniÇodé.c©m", "Broad.mちt.eDu"})
+  void testFindInstitutionByDomain(String domain) throws Exception {
+    Institution institution = createMockInstitution(domain);
+    User user = createUser();
+    Institution fullInstitution = institutionDAO.insertFullInstitution(institution, user.getUserId());
+
+    Institution foundInstitution1 = institutionDAO.findInstitutionByDomain(domain.toUpperCase());
+    assertEquals(fullInstitution.getId(), foundInstitution1.getId());
+    assertTrue(foundInstitution1.getDomains().contains(domain), "Domain should be found in institution's domains");
+    Institution foundInstitution2 = institutionDAO.findInstitutionByDomain(domain.toLowerCase());
+    assertEquals(fullInstitution.getId(), foundInstitution2.getId());
+    assertTrue(foundInstitution2.getDomains().contains(domain), "Domain should be found in institution's domains");
+    Institution notFoundInstitution = institutionDAO.findInstitutionByDomain("nonexistentdomain.org");
+    assertNull(notFoundInstitution, "Should return null for non-existent domain");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"testdoMain.com", "AnotherDomain.com", "uniÇodé.c©m", "Broad.mちt.eDu"})
+  void testFindInstitutionIdByDomain(String domain) throws Exception {
+    Institution institution = createMockInstitution(domain);
+    User user = createUser();
+    Institution fullInstitution = institutionDAO.insertFullInstitution(institution, user.getUserId());
+
+    Integer foundId1 = institutionDAO.findInstitutionIdByDomain(domain.toUpperCase());
+    assertEquals(fullInstitution.getId(), foundId1);
+    Integer foundId2 = institutionDAO.findInstitutionIdByDomain(domain.toLowerCase());
+    assertEquals(fullInstitution.getId(), foundId2);
+    Integer notFoundId = institutionDAO.findInstitutionIdByDomain("nonexistentdomain.org");
+    assertNull(notFoundId, "Should return null for non-existent domain");
+  }
+
+  private Institution createMockInstitution(String domain) {
+    Institution institution = new Institution();
+    institution.setName("Test Institution");
+    institution.setItDirectorName("Test Director");
+    institution.setItDirectorEmail("email");
+    institution.setInstitutionUrl("http://testinstitution.com");
+    institution.setDunsNumber(123456789);
+    institution.setOrgChartUrl("http://testinstitution.com/orgchart");
+    institution.setVerificationUrl("http://testinstitution.com/verification");
+    institution.setVerificationFilename("verification.pdf");
+    institution.setOrganizationType(OrganizationType.NON_PROFIT);
+    institution.setDomains(List.of(domain));
+    return institution;
+  }
 }

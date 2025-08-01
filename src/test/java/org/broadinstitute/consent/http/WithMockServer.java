@@ -23,6 +23,24 @@ public interface WithMockServer {
   DockerImageName IMAGE =
       DockerImageName.parse("mockserver/mockserver:mockserver-" + getMockServerVersion());
 
+  static String getMockServerVersion() {
+    String version = "5.15.0";
+    String versionPropName = "mockserver.version";
+    try (InputStream is = WithMockServer.class.getResourceAsStream("/mvn.properties")) {
+      Properties p = new Properties();
+      p.load(is);
+      if (StringUtils.isNotEmpty(p.getProperty(versionPropName))) {
+        version = p.getProperty(versionPropName);
+      } else {
+        log.warn(versionPropName + " is not configured correctly, defaulting to: " + version);
+      }
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      log.warn("Defaulting to: " + version);
+    }
+    return version;
+  }
+
   default void stop(MockServerContainer container) {
     if (Objects.nonNull(container) && container.isRunning()) {
       container.stop();
@@ -55,23 +73,5 @@ public interface WithMockServer {
     } catch (IOException ignore) {
       //
     }
-  }
-
-  static String getMockServerVersion() {
-    String version = "5.12.0";
-    String versionPropName = "mockserver.version";
-    try (InputStream is = WithMockServer.class.getResourceAsStream("/mvn.properties")) {
-      Properties p = new Properties();
-      p.load(is);
-      if (StringUtils.isNotEmpty(p.getProperty(versionPropName))) {
-        version = p.getProperty(versionPropName);
-      } else {
-        log.warn(versionPropName + " is not configured correctly, defaulting to: " + version);
-      }
-    } catch (Exception e) {
-      log.error(e.getMessage());
-      log.warn("Defaulting to: " + version);
-    }
-    return version;
   }
 }

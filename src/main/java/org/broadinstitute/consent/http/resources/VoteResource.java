@@ -10,6 +10,8 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.Request;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Objects;
@@ -23,6 +25,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
+import org.glassfish.jersey.server.ContainerRequest;
 
 @Path("api/votes")
 public class VoteResource extends Resource {
@@ -47,6 +50,7 @@ public class VoteResource extends Resource {
    * votes match the list of ids provided
    *
    * @param authUser The AuthUser
+   * @param request  The request
    * @param json     The boolean value to update votes to, string value for all rationales, and list
    *                 of vote ids, in json format
    * @return Response with results of the update.
@@ -55,7 +59,10 @@ public class VoteResource extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @RolesAllowed({CHAIRPERSON, MEMBER})
-  public Response updateVotes(@Auth AuthUser authUser, String json) {
+  public Response updateVotes(
+      @Auth AuthUser authUser,
+      @Context Request request,
+      String json) {
     Vote.VoteUpdate voteUpdate;
     try {
       voteUpdate = gson.fromJson(json, Vote.VoteUpdate.class);
@@ -95,8 +102,13 @@ public class VoteResource extends Resource {
         voteUpdateLCCheck(votes);
       }
 
+      if (votes.stream().anyMatch(vote -> vote.getType() != null  && vote.getType().equalsIgnoreCase(VoteType.RADAR_APPROVE.getValue()))) {
+        return createExceptionResponse(new BadRequestException("Manual Rule Automated DAR (RADAR) Approval is not permitted"));
+      }
+
       List<Vote> updatedVotes = voteService.updateVotesWithValue(votes, voteUpdate.getVote(),
-          voteUpdate.getRationale());
+          voteUpdate.getRationale(), user);
+      voteService.logDARApprovalOrRejection(user, updatedVotes, (ContainerRequest) request);
       return Response.ok().entity(updatedVotes).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

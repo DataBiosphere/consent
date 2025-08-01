@@ -351,7 +351,7 @@ class DacResourceTest {
         .build();
     when(dacService.findById(1)).thenReturn(dac);
 
-    try (Response response = dacResource.findById(dac.getDacId())) {
+    try (Response response = dacResource.findById(authUser, dac.getDacId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -361,7 +361,7 @@ class DacResourceTest {
     when(dacService.findById(1)).thenReturn(null);
 
     assertThrows(NotFoundException.class, () -> {
-      dacResource.findById(1);
+      dacResource.findById(authUser, 1);
     });
   }
 
@@ -374,7 +374,7 @@ class DacResourceTest {
         .build();
     when(dacService.findById(1)).thenReturn(dac);
 
-    try (Response response = dacResource.deleteDac(dac.getDacId())) {
+    try (Response response = dacResource.deleteDac(authUser, dac.getDacId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
@@ -385,7 +385,7 @@ class DacResourceTest {
     when(dacService.findById(1)).thenReturn(null);
 
     assertThrows(NotFoundException.class, () -> {
-      dacResource.deleteDac(1);
+      dacResource.deleteDac(authUser, 1);
     });
   }
 
@@ -623,7 +623,7 @@ class DacResourceTest {
     when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
     when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
         .thenReturn(dataset);
-    when(elasticSearchService.indexDataset(any())).thenReturn(Response.ok().build());
+    when(elasticSearchService.indexDataset(any(), any())).thenReturn(Response.ok().build());
     try (Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(GsonUtil.buildGson().toJson(dataset), response.getEntity());
@@ -644,7 +644,7 @@ class DacResourceTest {
     when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
     when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
         .thenReturn(datasetResponse);
-    when(elasticSearchService.indexDataset(any())).thenReturn(Response.ok().build());
+    when(elasticSearchService.indexDataset(any(), any())).thenReturn(Response.ok().build());
     try (Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(GsonUtil.buildGson().toJson(datasetResponse), response.getEntity());
@@ -681,7 +681,7 @@ class DacResourceTest {
     when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
     when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
         .thenReturn(datasetResponse);
-    when(elasticSearchService.indexDataset(any())).thenReturn(Response.serverError().build());
+    when(elasticSearchService.indexDataset(any(), any())).thenReturn(Response.serverError().build());
     try (Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(GsonUtil.buildGson().toJson(datasetResponse), response.getEntity());
@@ -702,7 +702,7 @@ class DacResourceTest {
     when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
     when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
         .thenReturn(datasetResponse);
-    when(elasticSearchService.indexDataset(any())).thenThrow(new IOException("Something went wrong"));
+    when(elasticSearchService.indexDataset(any(), any())).thenThrow(new IOException("Something went wrong"));
     try (Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(GsonUtil.buildGson().toJson(datasetResponse), response.getEntity());

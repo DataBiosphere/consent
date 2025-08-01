@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -21,7 +22,6 @@ import jakarta.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -120,6 +120,7 @@ public class StudyResource extends Resource {
   @Path("/{studyId}")
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
+  @Timed
   public Response getStudyById(@PathParam("studyId") Integer studyId) {
     try {
       Study study = datasetService.getStudyWithDatasetsById(studyId);
@@ -135,7 +136,7 @@ public class StudyResource extends Resource {
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   public Response deleteStudyById(@Auth AuthUser authUser, @PathParam("studyId") Integer studyId) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      final User user = userService.findUserByEmail(authUser.getEmail());
       Study study = datasetService.getStudyWithDatasetsById(studyId);
 
       if (Objects.isNull(study)) {
@@ -157,15 +158,15 @@ public class StudyResource extends Resource {
       Set<Integer> studyDatasetIds = study.getDatasetIds();
       datasetService.deleteStudy(study, user);
       // Remove from ES index
-      if (studyDatasetIds != null) {
-        studyDatasetIds.forEach(id -> {
-          try {
-            elasticSearchService.deleteIndex(id);
-          } catch (IOException e) {
-            logException(e);
+      studyDatasetIds.forEach(id -> {
+        try (Response indexResponse = elasticSearchService.deleteIndex(id, user.getUserId())) {
+          if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
+            logWarn("Non-OK response when deleting index for dataset with id: " + id);
           }
-        });
-      }
+        } catch (IOException e) {
+          logException(e);
+        }
+      });
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -176,6 +177,7 @@ public class StudyResource extends Resource {
   @Path("/registration/{studyId}")
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
+  @Timed
   public Response getRegistrationFromStudy(@Auth AuthUser authUser,
       @PathParam("studyId") Integer studyId) {
     try {
@@ -196,6 +198,7 @@ public class StudyResource extends Resource {
   @Produces({MediaType.APPLICATION_JSON})
   @Path("/{studyId}")
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  @Timed
   /*
    * This endpoint accepts a json instance of a dataset-registration-schema_v1.json schema.
    * With that object, we can fully update the study/datasets from the provided values.
@@ -222,7 +225,7 @@ public class StudyResource extends Resource {
             registration,
             user,
             files);
-        try (Response indexResponse = elasticSearchService.indexStudy(studyId))  {
+        try (Response indexResponse = elasticSearchService.indexStudy(studyId, user))  {
           if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
             logWarn("Non-OK response when reindexing study with id: " + studyId);
           }

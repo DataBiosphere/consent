@@ -11,11 +11,14 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -44,12 +47,13 @@ public class DacService implements ConsentLogger {
   private final VoteService voteService;
   private final DaaService daaService;
   private final DacServiceDAO dacServiceDAO;
+  private final DACAutomationRuleDAO ruleDAO;
 
   @Inject
   public DacService(DacDAO dacDAO, UserDAO userDAO, DatasetDAO dataSetDAO,
       ElectionDAO electionDAO, DataAccessRequestDAO dataAccessRequestDAO,
       VoteService voteService, DaaService daaService,
-      DacServiceDAO dacServiceDAO) {
+      DacServiceDAO dacServiceDAO, DACAutomationRuleDAO ruleDAO) {
     this.dacDAO = dacDAO;
     this.userDAO = userDAO;
     this.dataSetDAO = dataSetDAO;
@@ -58,6 +62,7 @@ public class DacService implements ConsentLogger {
     this.voteService = voteService;
     this.daaService = daaService;
     this.dacServiceDAO = dacServiceDAO;
+    this.ruleDAO = ruleDAO;
   }
 
   public List<Dac> findAll() {
@@ -73,17 +78,6 @@ public class DacService implements ConsentLogger {
   public List<User> findAllDACUsersBySearchString(String term) {
     return dacDAO.findAllDACUsersBySearchString(term).stream().distinct()
         .collect(Collectors.toList());
-  }
-
-  /**
-   * Retrieve a list of Dacs that contain a Dac, the list of chairperson users for the Dac, and a
-   * list of member users for the Dac.
-   *
-   * @return List of Dac objects
-   */
-  public List<Dac> findAllDacsWithMembers() {
-    List<Dac> dacs = dacDAO.findAll();
-    return addMemberInfoToDacs(dacs);
   }
 
   private List<Dac> addMemberInfoToDacs(List<Dac> dacs) {
@@ -181,14 +175,14 @@ public class DacService implements ConsentLogger {
     dacDAO.updateDac(name, description, email, updateDate, dacId);
   }
 
-  public void deleteDac(Integer dacId) throws IllegalArgumentException, SQLException {
+  public void deleteDac(User user, Integer dacId) throws IllegalArgumentException, SQLException {
     Dac fullDac = dacDAO.findById(dacId);
     // TODO: Broad DAC logic will be updated with DCJ-498 to not be reliant on name
     if (fullDac.getName().toLowerCase().contains("broad")) {
       throw new IllegalArgumentException("This is the Broad DAC, which can not be deleted.");
     }
     try {
-      dacServiceDAO.deleteDacAndDaas(fullDac);
+      dacServiceDAO.deleteDacAndDaas(user, fullDac);
     } catch (IllegalArgumentException e) {
       String logMessage = "Could not find DAC with the provided id: " + dacId;
       logException(logMessage, e);
@@ -247,11 +241,12 @@ public class DacService implements ConsentLogger {
     return userDAO.findUserById(updatedUser.getUserId());
   }
 
-  public void removeDacMember(Role role, User user, Dac dac) throws BadRequestException {
+  public void removeDacMember(Role role, User user, Dac dac, Integer auditUser) throws BadRequestException {
     if (role.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId())) {
       if (dac.getChairpersons().size() <= 1) {
         throw new BadRequestException("Dac requires at least one chairperson.");
       }
+      ruleDAO.auditedDeleteDACRuleSettingByUser(dac.getDacId(), user.getUserId(), auditUser);
     }
     List<UserRole> dacRoles = user.
         getRoles().
@@ -259,7 +254,7 @@ public class DacService implements ConsentLogger {
         filter(r -> Objects.nonNull(r.getDacId())).
         filter(r -> r.getDacId().equals(dac.getDacId())).
         filter(r -> r.getRoleId().equals(role.getRoleId())).
-        collect(Collectors.toList());
+        toList();
     dacRoles.forEach(userRole -> dacDAO.removeDacMember(userRole.getUserRoleId()));
     voteService.deleteOpenDacVotesForUser(dac, user);
   }
@@ -301,6 +296,11 @@ public class DacService implements ConsentLogger {
       }
     }
     return Collections.emptyList();
+  }
+
+  public Set<Dac> findByDatasetId(List<Integer> datasetIds) {
+    return dacDAO.findDacsForDatasetIds(datasetIds).stream().map(dac -> findById(dac.getDacId())).collect(
+        Collectors.toUnmodifiableSet());
   }
 
 }

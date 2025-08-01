@@ -25,5 +25,7 @@ put:
       description: Bad Request (invalid input)
     404:
       description: Not Found
+    409:
+      description: Conflict Error
     500:
       description: Internal Error

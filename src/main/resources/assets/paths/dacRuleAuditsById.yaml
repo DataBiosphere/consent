@@ -1,0 +1,37 @@
+get:
+  summary: Get DAC automation rule audits by DAC ID
+  description: View the audit entries for a DAC's automation rules
+  parameters:
+    - name: dacId
+      in: path
+      description: 'The DAC Id'
+      required: true
+      schema:
+        type: integer
+    - name: page
+      in: query
+      description: 'The page number'
+      schema:
+        type: integer
+    - name: pageSize
+      in: query
+      description: 'The number of entries in a page.'
+      schema:
+        type: integer
+  tags:
+    - DAC
+  responses:
+    200:
+      description: The Data Access Committee automatic processing audit rules matching the provided ID, filtered to page and pages size.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/DACAutomationAudit.yaml'
+    403:
+      description: The user is not authorized to retrieve these settings
+    401:
+      description: No DAC found with the given ID
+    500:
+      description: Internal Server Error

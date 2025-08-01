@@ -1,138 +1,102 @@
 package org.broadinstitute.consent.http.service.mail;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mockConstruction;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
+import com.google.api.client.http.HttpStatusCodes;
+import com.sendgrid.Request;
+import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
-import java.io.Writer;
+import com.sendgrid.helpers.mail.Mail;
+import java.io.IOException;
+import java.util.Map;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
+import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class SendGridAPITest {
 
+  private static final String FROM = "from@broadinstitute.org";
   private static final String TO = "to@broadinstitute.org";
-  private static final String ID = "DUL-123";
-  private static final String TYPE = "Data Use Limitations";
-  private SendGridAPI sendGridAPI;
+  private static final Response RESPONSE = new Response();
 
-  @Mock
   private SendGrid sendGrid;
-
-  @Mock
-  private Writer template;
+  private SendGridAPI sendGridAPI;
 
   @Mock
   private UserDAO userDAO;
 
   @BeforeEach
   void setUp() throws Exception {
-    // For most tests, we don't want to actually make an external call to SendGrid.
-    configureApi(false);
-  }
-
-  private void configureApi(boolean active) {
     MailConfiguration config = new MailConfiguration();
-    config.setSendGridApiKey("test");
-    config.setGoogleAccount("from@broadinstitute.org");
-    config.setActivateEmailNotifications(active);
-    sendGridAPI = new SendGridAPI(config, userDAO);
-    sendGridAPI.setSendGrid(sendGrid);
+    config.setGoogleAccount(FROM);
+    config.setActivateEmailNotifications(true);
+    try (var mockedSendGrid = mockConstruction(SendGrid.class)) {
+      sendGridAPI = new SendGridAPI(config, userDAO);
+      sendGrid = mockedSendGrid.constructed().get(0);
+    }
+    when(userDAO.findUserByEmail(TO)).thenReturn(new User());
+    when(sendGrid.makeCall(any())).thenReturn(RESPONSE);
   }
 
   @Test
-  void testNewCaseMessage() {
-    try {
-      sendGridAPI.sendNewCaseMessage(TO, ID, TYPE, template);
-    } catch (Exception e) {
-      fail("Should not throw exception");
-    }
+  void sendMessage() throws Exception {
+    String messageBody = "This is a test message";
+    Mail mail = new Mail() {
+      @Override
+      public String build()  {
+        return messageBody;
+      }
+    };
+    assertEquals(RESPONSE, sendGridAPI.sendMessage(mail, TO));
+    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+    verify(sendGrid).makeCall(requestCaptor.capture());
+    assertEquals(messageBody, requestCaptor.getValue().getBody());
   }
 
   @Test
-  void testReminderMessage() {
-    try {
-      sendGridAPI.sendReminderMessage(TO, ID, TYPE, template);
-    } catch (Exception e) {
-      fail("Should not throw exception");
-    }
+  void sendMessageUserMissing() {
+    reset(userDAO);
+    reset(sendGrid);
+    assertNull(sendGridAPI.sendMessage(null, TO));
+    verifyNoInteractions(sendGrid);
   }
 
   @Test
-  void testDisabledDatasetMessage() {
-    try {
-      sendGridAPI.sendDisabledDatasetMessage(TO, ID, TYPE, template);
-    } catch (Exception e) {
-      fail("Should not throw exception");
-    }
+  void sendMessageUserDisabledEmails() {
+    User user = new User();
+    user.setEmailPreference(false);
+    when(userDAO.findUserByEmail(TO)).thenReturn(user);
+    reset(sendGrid);
+    assertNull(sendGridAPI.sendMessage(new Mail(), TO));
+    verifyNoInteractions(sendGrid);
   }
 
   @Test
-  void testNewDARRequests() {
-    try {
-      sendGridAPI.sendNewDARRequests(TO, ID, TYPE, template);
-    } catch (Exception e) {
-      fail("Should not throw exception");
-    }
+  void sendMessageApiError() throws Exception {
+    Response response = new Response(400, "", Map.of());
+    when(sendGrid.makeCall(any())).thenReturn(response);
+    assertEquals(response, sendGridAPI.sendMessage(new Mail(), TO));
   }
 
   @Test
-  void testNewResearcherApprovedMessage() {
-    try {
-      sendGridAPI.sendNewResearcherApprovedMessage(TO, template, "Test");
-    } catch (Exception e) {
-      fail("Should not throw exception");
-    }
+  void sendMessageExceptionThrown() throws Exception {
+    when(sendGrid.makeCall(any())).thenThrow(new IOException());
+    var response = sendGridAPI.sendMessage(new Mail(), TO);
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatusCode());
   }
-
-  @Test
-  void testSendDataCustodianApprovalMessage() {
-    try {
-      sendGridAPI.sendDataCustodianApprovalMessage(TO, "Test", template);
-    } catch (Exception e) {
-      fail("Should not throw exception");
-    }
-  }
-
-  @Test
-  void testSendDatasetSubmittedMessage() {
-    try {
-      sendGridAPI.sendDatasetSubmittedMessage(TO, template);
-    } catch (Exception e) {
-      fail("Should not throw exception");
-    }
-  }
-
-  @Test
-  void testSendDaaRequestMessage() {
-    try {
-      sendGridAPI.sendDaaRequestMessage(TO, template, "1");
-    } catch (Exception  e) {
-      fail("Should not throw exception");
-    }
-  }
-
-  @Test
-  void testSendNewDAAUploadSOMessage() {
-    try {
-      sendGridAPI.sendNewDAAUploadSOMessage(TO, template, "Test DAC");
-    } catch (Exception  e) {
-      fail("Should not throw exception");
-    }
-  }
-
-  @Test
-  void testSendNewDAAUploadResearcherMessage() {
-    try {
-      sendGridAPI.sendNewDAAUploadResearcherMessage(TO, template, "Test DAC");
-    } catch (Exception  e) {
-      fail("Should not throw exception");
-    }
-  }
-
 }

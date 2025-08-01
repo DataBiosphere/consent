@@ -5,20 +5,21 @@ import org.apache.commons.lang3.RandomUtils;
 
 public abstract class AbstractTestHelper {
 
-  public String randomAlphabetic(int length) {
+  public static boolean enableTestContainers() {
+    String defaultProp = "true";
+    return Boolean.parseBoolean(System.getProperty("enableTestContainers", defaultProp));
+  }
+
+  public static String randomAlphabetic(int length) {
     return RandomStringUtils.secureStrong().nextAlphabetic(length);
   }
 
-  public String randomAlphanumeric(int length) {
+  public static String randomAlphanumeric(int length) {
     return RandomStringUtils.secureStrong().nextAlphanumeric(length);
   }
 
-  public int randomInt(int startInclusive, int endExclusive) {
+  public static int randomInt(int startInclusive, int endExclusive) {
     return RandomUtils.secureStrong().randomInt(startInclusive, endExclusive);
-  }
-
-  public long randomLong() {
-    return RandomUtils.secureStrong().randomLong();
   }
 
 }

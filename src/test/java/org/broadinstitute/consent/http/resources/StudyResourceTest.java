@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -42,7 +43,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class StudyResourceTest {
+class StudyResourceTest extends AbstractTestHelper {
 
   @Mock
   private DatasetService datasetService;
@@ -62,32 +63,42 @@ class StudyResourceTest {
   @Mock
   private User user;
 
+  @Mock
+  private Response response;
+
   private StudyResource resource;
 
   private void initResource() {
-    resource = new StudyResource(datasetService, userService, datasetRegistrationService, elasticSearchService);
+    resource = new StudyResource(datasetService, userService, datasetRegistrationService,
+        elasticSearchService);
   }
 
   @Test
   void testUpdateCustodiansSuccess() {
     initResource();
-    Response response = resource.updateCustodians(authUser, 1, "[\"user_1@test.com\", \"user_2@test.com\"]");
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    try (var response = resource.updateCustodians(authUser, 1,
+        "[\"user_1@test.com\", \"user_2@test.com\"]")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
   }
 
   @Test
   void testUpdateCustodiansInvalidEmails() {
     initResource();
-    Response response = resource.updateCustodians(authUser, 1, "[\"user_1\", \"@test.com\"]");
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    try (var response = resource.updateCustodians(authUser, 1, "[\"user_1\", \"@test.com\"]")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
   }
 
   @Test
   void testUpdateCustodiansNotFound() {
-    when(datasetService.updateStudyCustodians(any(), any(), any())).thenThrow(new NotFoundException("Study not found"));
+    when(datasetService.updateStudyCustodians(any(), any(), any())).thenThrow(
+        new NotFoundException("Study not found"));
     initResource();
-    Response response = resource.updateCustodians(authUser, 1, "[\"user_1@test.com\", \"user_2@test.com\"]");
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    try (var response = resource.updateCustodians(authUser, 1,
+        "[\"user_1@test.com\", \"user_2@test.com\"]")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
@@ -97,8 +108,9 @@ class StudyResourceTest {
     study.setName("asdfasdfasdfasdfasdfasdf");
     when(datasetService.getStudyWithDatasetsById(1)).thenReturn(study);
     initResource();
-    Response response = resource.getStudyById(1);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    try (var response = resource.getStudyById(1)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
   }
 
   @Test
@@ -112,16 +124,17 @@ class StudyResourceTest {
     List<Dataset> datasets = List.of(ds1, ds2, ds3);
 
     Study study = new Study();
-    study.setName(RandomStringUtils.randomAlphabetic(10));
+    study.setName(randomAlphabetic(10));
     study.setStudyId(12345);
-    study.setDatasetIds(Set.of(1, 2, 3));
+    study.addDatasetIds(Set.of(1, 2, 3));
 
     when(datasetService.getStudyWithDatasetsById(12345)).thenReturn(study);
 
     initResource();
-    Response response = resource.getStudyById(12345);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    assertEquals(study.getDatasetIds().size(), datasets.size());
+    try (var response = resource.getStudyById(12345)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(study.getDatasetIds().size(), datasets.size());
+    }
   }
 
   @Test
@@ -129,8 +142,9 @@ class StudyResourceTest {
     when(datasetService.getStudyWithDatasetsById(1)).thenThrow(new NotFoundException());
 
     initResource();
-    Response response = resource.getStudyById(1);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    try (var response = resource.getStudyById(1)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
@@ -139,8 +153,9 @@ class StudyResourceTest {
     when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
 
     initResource();
-    Response response = resource.getRegistrationFromStudy(authUser, 1);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    try (var response = resource.getRegistrationFromStudy(authUser, 1)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
   }
 
   @Test
@@ -150,8 +165,9 @@ class StudyResourceTest {
     when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
 
     initResource();
-    Response response = resource.getRegistrationFromStudy(authUser, 1);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    try (var response = resource.getRegistrationFromStudy(authUser, 1)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
   }
 
   @Test
@@ -160,8 +176,9 @@ class StudyResourceTest {
     when(datasetService.getStudyWithDatasetsById(any())).thenThrow(new NotFoundException());
 
     initResource();
-    Response response = resource.getRegistrationFromStudy(authUser, study.getStudyId());
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    try (var response = resource.getRegistrationFromStudy(authUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
   }
 
   @ParameterizedTest
@@ -182,14 +199,15 @@ class StudyResourceTest {
           DatasetRegistrationSchemaV1.class);
       List<Integer> datasetIds = schemaV1.getConsentGroups().stream()
           .map(ConsentGroup::getDatasetId).toList();
-      study.setDatasetIds(Set.of(datasetIds.get(0) + 1));
+      study.addDatasetIds(Set.of(datasetIds.get(0) + 1));
     }
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(datasetRegistrationService.findStudyById(any())).thenReturn(study);
     initResource();
 
-    Response response = resource.updateStudyByRegistration(authUser, null, 1, input);
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    try (var response = resource.updateStudyByRegistration(authUser, null, 1, input)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
   }
 
   @Test
@@ -204,13 +222,15 @@ class StudyResourceTest {
         .map(ConsentGroup::getDatasetId)
         .filter(Objects::nonNull)
         .collect(Collectors.toSet());
-    study.setDatasetIds(datasetIds);
+    study.getDatasetIds().clear();
+    study.addDatasetIds(datasetIds);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(datasetRegistrationService.findStudyById(any())).thenReturn(study);
     initResource();
 
-    Response response = resource.updateStudyByRegistration(authUser, null, 1, input);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    try (var response = resource.updateStudyByRegistration(authUser, null, 1, input)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
   }
 
   @Test
@@ -222,11 +242,12 @@ class StudyResourceTest {
     admin.setAdminRole();
     admin.setUserId(study.getCreateUserId());
     when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(response);
     initResource();
 
-    try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
+    try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-      verify(elasticSearchService, atLeastOnce()).deleteIndex(any());
+      verify(elasticSearchService, times(1)).deleteIndex(any(), any());
     }
   }
 
@@ -235,9 +256,9 @@ class StudyResourceTest {
     Study study = createMockStudy();
     initResource();
 
-    try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
+    try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-      verify(elasticSearchService, never()).deleteIndex(any());
+      verify(elasticSearchService, never()).deleteIndex(any(), any());
     }
   }
 
@@ -252,9 +273,9 @@ class StudyResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(chair);
     initResource();
 
-    try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
+    try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-      verify(elasticSearchService, never()).deleteIndex(any());
+      verify(elasticSearchService, never()).deleteIndex(any(), any());
     }
   }
 
@@ -269,9 +290,9 @@ class StudyResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(admin);
     initResource();
 
-    try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
+    try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-      verify(elasticSearchService, never()).deleteIndex(any());
+      verify(elasticSearchService, never()).deleteIndex(any(), any());
     }
   }
 
@@ -286,9 +307,9 @@ class StudyResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(admin);
     initResource();
 
-    try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
+    try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-      verify(elasticSearchService, never()).deleteIndex(any());
+      verify(elasticSearchService, never()).deleteIndex(any(), any());
     }
   }
 
@@ -296,7 +317,7 @@ class StudyResourceTest {
   @Test
   void testDeleteStudyByIdNoDatasets() throws Exception {
     Study study = createMockStudy();
-    study.setDatasetIds(Set.of());
+    study.getDatasetIds().clear();
     study.getDatasets().clear();
     when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
     User admin = new User();
@@ -305,9 +326,9 @@ class StudyResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(admin);
     initResource();
 
-    try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
+    try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-      verify(elasticSearchService, never()).deleteIndex(any());
+      verify(elasticSearchService, never()).deleteIndex(any(), any());
     }
   }
 
@@ -320,12 +341,12 @@ class StudyResourceTest {
     admin.setAdminRole();
     admin.setUserId(study.getCreateUserId());
     when(userService.findUserByEmail(any())).thenReturn(admin);
-    when(elasticSearchService.deleteIndex(any())).thenThrow(new IOException());
+    when(elasticSearchService.deleteIndex(any(), any())).thenThrow(new IOException());
     initResource();
 
-    try (Response response = resource.deleteStudyById(authUser, study.getStudyId())) {
+    try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-      verify(elasticSearchService, atLeastOnce()).deleteIndex(any());
+      verify(elasticSearchService, atLeastOnce()).deleteIndex(any(), any());
     }
   }
 
@@ -342,32 +363,32 @@ class StudyResourceTest {
     dataset.setDataUse(new DataUse());
 
     Study study = new Study();
-    study.setName(RandomStringUtils.randomAlphabetic(10));
-    study.setDescription(RandomStringUtils.randomAlphabetic(20));
+    study.setName(randomAlphabetic(10));
+    study.setDescription(randomAlphabetic(20));
     study.setStudyId(12345);
-    study.setPiName(RandomStringUtils.randomAlphabetic(10));
-    study.setDataTypes(List.of(RandomStringUtils.randomAlphabetic(10)));
+    study.setPiName(randomAlphabetic(10));
+    study.setDataTypes(List.of(randomAlphabetic(10)));
     study.setCreateUserId(9);
-    study.setCreateUserEmail(RandomStringUtils.randomAlphabetic(10));
+    study.setCreateUserEmail(randomAlphabetic(10));
     study.setPublicVisibility(true);
-    study.setDatasetIds(Set.of(dataset.getDatasetId()));
+    study.addDatasetIds(Set.of(dataset.getDatasetId()));
 
     StudyProperty phenotypeProperty = new StudyProperty();
     phenotypeProperty.setKey("phenotypeIndication");
     phenotypeProperty.setType(PropertyType.String);
-    phenotypeProperty.setValue(RandomStringUtils.randomAlphabetic(10));
+    phenotypeProperty.setValue(randomAlphabetic(10));
 
     StudyProperty speciesProperty = new StudyProperty();
     speciesProperty.setKey("species");
     speciesProperty.setType(PropertyType.String);
-    speciesProperty.setValue(RandomStringUtils.randomAlphabetic(10));
+    speciesProperty.setValue(randomAlphabetic(10));
 
     StudyProperty dataCustodianEmailProperty = new StudyProperty();
     dataCustodianEmailProperty.setKey("dataCustodianEmail");
     dataCustodianEmailProperty.setType(PropertyType.Json);
-    dataCustodianEmailProperty.setValue(List.of(RandomStringUtils.randomAlphabetic(10)));
+    dataCustodianEmailProperty.setValue(List.of(randomAlphabetic(10)));
 
-    study.setProperties(Set.of(phenotypeProperty, speciesProperty, dataCustodianEmailProperty));
+    study.addProperties(phenotypeProperty, speciesProperty, dataCustodianEmailProperty);
 
     dataset.setStudy(study);
 

@@ -1,0 +1,26 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2025-07-10-institution-domains-cleanup-data" author="otchet">
+    <sql>
+      DELETE
+      FROM INSTITUTION_DOMAINS
+      WHERE INSTITUTION_DOMAINS.INSTITUTION_ID IN (SELECT INSTITUTION_DOMAINS.INSTITUTION_ID
+                                                   FROM INSTITUTION_DOMAINS
+                                                          LEFT OUTER JOIN INSTITUTION ON
+                                                     INSTITUTION_DOMAINS.INSTITUTION_ID =
+                                                     INSTITUTION.INSTITUTION_ID
+                                                   WHERE
+                                                     INSTITUTION.INSTITUTION_ID IS NULL)
+    </sql>
+  </changeSet>
+  <changeSet id="changelog-consent-2025-07-10-institution-domains-add-foreign-key" author="otchet">
+    <modifyDataType
+      columnName="institution_id"
+      newDataType="bigint"
+      tableName="institution_domains"/>
+    <addForeignKeyConstraint baseTableName="institution_domains" baseColumnNames="institution_id"
+      referencedTableName="institution" referencedColumnNames="institution_id"
+      constraintName="fkInstitutionId"/>
+  </changeSet>
+</databaseChangeLog>

@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.resources;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -33,8 +32,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
@@ -45,7 +42,6 @@ import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
-import org.broadinstitute.consent.http.models.dto.DatasetDTO;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -123,18 +119,7 @@ public class UserResource extends Resource {
   @Produces("application/json")
   @RolesAllowed({CHAIRPERSON, MEMBER})
   public Response getDatasetsFromUserDacs(@Auth AuthUser authUser) {
-    try {
-      Set<DatasetDTO> datasets;
-      User user = userService.findUserByEmail(authUser.getEmail());
-      List<Integer> dacIds = user.getRoles().stream()
-          .filter(r -> Objects.nonNull(r.getDacId()))
-          .map(UserRole::getDacId)
-          .collect(Collectors.toList());
-      datasets = dacIds.isEmpty() ? Set.of() : datasetService.findDatasetsByDacIds(dacIds);
-      return Response.ok().entity(datasets).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
+    return getDatasetsFromUserDacsV2(authUser);
   }
 
   @GET
@@ -162,7 +147,7 @@ public class UserResource extends Resource {
   @GET
   @Path("/{userId}")
   @Produces("application/json")
-  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, DATASUBMITTER})
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, DATASUBMITTER, SIGNINGOFFICIAL})
   public Response getUserById(@Auth AuthUser authUser, @PathParam("userId") Integer userId) {
     try {
       JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
@@ -229,13 +214,14 @@ public class UserResource extends Resource {
       User user = userService.findUserByEmail(authUser.getEmail());
       UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
 
+      // Users cannot update their own institution id through this service
+      if (userUpdateFields.getInstitutionId() != null) {
+        throw new BadRequestException("Institution ID is not updatable");
+      }
+
       if (Objects.nonNull(userUpdateFields.getUserRoleIds()) && !user.hasUserRole(
           UserRoles.ADMIN)) {
         throw new BadRequestException("Cannot change user's roles.");
-      }
-
-      if (!canUpdateInstitution(user, userUpdateFields.getInstitutionId())) {
-        throw new BadRequestException("Cannot update user's institution id.");
       }
 
       user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
@@ -246,24 +232,6 @@ public class UserResource extends Resource {
       return Response.ok().entity(gson.toJson(jsonUser)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
-    }
-  }
-
-  @VisibleForTesting
-  protected boolean canUpdateInstitution(User user, Integer newInstitutionId) {
-    if ((!Objects.isNull(user.getUserId()) || !Objects.isNull(newInstitutionId)) && !Objects.equals(
-        user.getInstitutionId(), newInstitutionId)) {
-      if (user.hasUserRole(UserRoles.ADMIN)) {
-        return true; // admins can do everything.
-      }
-      if (user.hasUserRole(UserRoles.SIGNINGOFFICIAL) || user.hasUserRole(UserRoles.ITDIRECTOR)) {
-        // can only update institution if not set.
-        return Objects.isNull(user.getInstitutionId()) && Objects.nonNull(newInstitutionId);
-      }
-      // User is not restricted based on role
-      return true;
-    } else {
-      return true; // no op, no change, supports keeping no institution set to no institution.
     }
   }
 
@@ -282,23 +250,10 @@ public class UserResource extends Resource {
       User activeUser = userService.findUserByEmail(authUser.getEmail());
       User user = userService.findUserById(userId);
       List<Integer> currentUserRoleIds = user.getUserRoleIdsFromUser();
-      if (activeUser.hasUserRole(UserRoles.ADMIN) && UserRoles.isValidNonDACRoleId(roleId)) {
+      if ((activeUser.hasUserRole(UserRoles.ADMIN) && UserRoles.isValidNonDACRoleId(targetRole)) ||
+          signingOfficialMeetsRequirements(targetRole, activeUser, user)) {
         if (!currentUserRoleIds.contains(roleId)) {
-          userService.insertUserRoles(Collections.singletonList(role), user.getUserId());
-          return getUserResponse(authUser, userId);
-        } else {
-          return Response.notModified().build();
-        }
-      } else if (signingOfficialMeetsRequirements(roleId, activeUser, user)) {
-        // update the user role with the active user's institution id.
-        if (!currentUserRoleIds.contains(roleId)) {
-          // update the user's institution if it was set to null and add the role.
-          if (Optional.ofNullable(user.getInstitutionId()).isEmpty()) {
-            userService.insertRoleAndInstitutionForUser(role, activeUser.getInstitutionId(),
-                user.getUserId());
-          } else {
-            userService.insertUserRoles(Collections.singletonList(role), user.getUserId());
-          }
+          userService.insertRoleAndInstitutionForUser(role, user);
           return getUserResponse(authUser, userId);
         } else {
           return Response.notModified().build();
@@ -311,13 +266,12 @@ public class UserResource extends Resource {
     }
   }
 
-  private static boolean signingOfficialMeetsRequirements(Integer roleId, User activeUser,
+  private static boolean signingOfficialMeetsRequirements(UserRoles role, User activeUser,
       User user) {
     return activeUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)
-        && Objects.nonNull(activeUser.getInstitutionId())
-        && UserRoles.isValidSoAdjustableRoleId(roleId)
-        && (Objects.equals(user.getInstitutionId(), activeUser.getInstitutionId()) ||
-        Optional.ofNullable(user.getInstitutionId()).isEmpty());
+        && activeUser.getInstitutionId() != null
+        && UserRoles.isValidSoAdjustableRoleId(role)
+        && (user.getInstitutionId() == null || user.getInstitutionId().equals(activeUser.getInstitutionId()));
   }
 
   private Response getUserResponse(AuthUser authUser, Integer userId) {
@@ -339,14 +293,14 @@ public class UserResource extends Resource {
       User activeUser = userService.findUserByEmail(authUser.getEmail());
       User user = userService.findUserById(userId);
       if (activeUser.hasUserRole(UserRoles.ADMIN)) {
-        if (!UserRoles.isValidNonDACRoleId(roleId)) {
+        if (!UserRoles.isValidNonDACRoleId(targetRole)) {
           throw new BadRequestException("Invalid Role Id");
         }
         return doDelete(authUser, userId, roleId, activeUser, user);
       } else if (activeUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
-        if (!UserRoles.isValidSoAdjustableRoleId(roleId)) {
+        if (!UserRoles.isValidSoAdjustableRoleId(targetRole)) {
           throw new ForbiddenException(
-              "A Signing Official may only remove the following role ids: [6, 7, 8] ");
+              "A Signing Official may only remove the following role ids: [7, 8, 9] ");
         }
         if (Objects.equals(user.getUserId(), activeUser.getUserId())
             && (UserRoles.getUserRoleFromId(roleId) == UserRoles.SIGNINGOFFICIAL)) {
@@ -415,15 +369,6 @@ public class UserResource extends Resource {
           .entity(new Error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()))
           .build();
     }
-  }
-
-  @DELETE
-  @Produces(MediaType.APPLICATION_JSON)
-  @Path("/{email}")
-  @RolesAllowed(ADMIN)
-  public Response delete(@PathParam("email") String email, @Context UriInfo info) {
-    userService.deleteUserByEmail(email);
-    return Response.ok().build();
   }
 
   @GET

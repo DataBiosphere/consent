@@ -53,7 +53,12 @@ public class Dataset implements ConsentLogger {
   private Boolean dacApproval;
 
   private User createUser;
+
+  private Integer studyId;
+
   private Study study;
+
+  private Date indexedDate;
 
   public Dataset() {
   }
@@ -339,10 +344,26 @@ public class Dataset implements ConsentLogger {
     this.study = study;
   }
 
+  public Integer getStudyId() {
+    return studyId;
+  }
+
+  public void setStudyId(Integer studyId) {
+    this.studyId = studyId;
+  }
+
+  public Date getIndexedDate() {
+    return indexedDate;
+  }
+
+  public void setIndexedDate(Date indexedDate) {
+    this.indexedDate = indexedDate;
+  }
+
   /**
    * Determine if the user is a dataset/study creator
    *
-   * @param user    User
+   * @param user User
    * @return User is a creator of the dataset/study
    */
   public boolean isCustodian(User user) {
@@ -374,7 +395,7 @@ public class Dataset implements ConsentLogger {
         getStudy().getCreateUserId());
   }
 
-    @Override
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;

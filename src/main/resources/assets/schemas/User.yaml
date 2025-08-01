@@ -20,9 +20,12 @@ properties:
     type: array
     items:
       $ref: './UserRole.yaml'
-  researcherProperties:
+  properties:
     $ref: './UserProperties.yaml'
+  libraryCard:
+    $ref: './LibraryCard.yaml'
   libraryCards:
+    deprecated: true
     type: array
     items:
       $ref: './LibraryCard.yaml'

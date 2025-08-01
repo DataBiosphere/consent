@@ -8,8 +8,8 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -80,7 +80,7 @@ public class LibraryCardResource extends Resource {
   @POST
   @Consumes("application/json")
   @Produces("application/json")
-  @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
+  @RolesAllowed({SIGNINGOFFICIAL})
   public Response createLibraryCard(@Auth AuthUser authUser, String libraryCard) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
@@ -93,24 +93,6 @@ public class LibraryCardResource extends Resource {
     }
   }
 
-  @PUT
-  @Consumes("application/json")
-  @Produces("application/json")
-  @Path("/{id}")
-  @RolesAllowed(ADMIN)
-  public Response updateLibraryCard(@Auth AuthUser authUser, @PathParam("id") Integer id,
-      String libraryCard) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      LibraryCard payload = GsonUtil.getInstance().fromJson(libraryCard, LibraryCard.class);
-      LibraryCard updatedLibraryCard = libraryCardService.updateLibraryCard(payload, id,
-          user.getUserId());
-      return Response.ok().entity(updatedLibraryCard).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
   @DELETE
   @Produces("application/json")
   @Path("/{id}")
@@ -118,9 +100,15 @@ public class LibraryCardResource extends Resource {
   public Response deleteLibraryCard(@Auth AuthUser authUser, @PathParam("id") Integer id) {
     User user = userService.findUserByEmail(authUser.getEmail());
     LibraryCard card = libraryCardService.findLibraryCardById(id);
+    User lcUser = null;
     try {
-      // If user is not an admin and LC institutionID doesn't match the users's throw an exception
-      if (!checkIsAdmin(user) && !card.getInstitutionId().equals(user.getInstitutionId())) {
+      lcUser = userService.findUserById(card.getUserId());
+    } catch (NotFoundException nfe) {
+      // LC User can be null - do not need to error here
+    }
+    try {
+      // If user is not an admin and SO institutionID doesn't match the user's throw an exception
+      if (lcUser != null && !checkIsAdmin(user) && !lcUser.getInstitution().equals(user.getInstitution())) {
         throw new ForbiddenException("You are not authorized to delete this library card");
       }
       libraryCardService.deleteLibraryCardById(id);
@@ -130,7 +118,7 @@ public class LibraryCardResource extends Resource {
     }
   }
 
-  private Boolean checkIsAdmin(User user) {
+  private boolean checkIsAdmin(User user) {
     return user.getRoles()
         .stream()
         .anyMatch(role -> role.getName().equalsIgnoreCase(UserRoles.ADMIN.getRoleName()));

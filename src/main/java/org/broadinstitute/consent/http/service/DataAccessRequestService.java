@@ -1,70 +1,109 @@
 package org.broadinstitute.consent.http.service;
 
-import com.google.gson.Gson;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
+import freemarker.template.TemplateException;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
-import java.sql.SQLException;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import org.apache.commons.validator.routines.EmailValidator;
+import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
-import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.DarStatus;
+import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.InvalidEmailAddressException;
+import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
+import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
+import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
+import org.broadinstitute.consent.http.models.Collaborator;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.CountryValidator;
+import org.glassfish.jersey.server.ContainerRequest;
+import org.jdbi.v3.core.JdbiException;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
 public class DataAccessRequestService implements ConsentLogger {
-
+  public static final String EXPIRE_WARN_INTERVAL = "11 months";
+  public static final String EXPIRE_NOTICE_INTERVAL = "1 year";
+  protected static final Timestamp MINIMUM_SUBMITTED_DATE_FOR_DAR_EXPIRATIONS = Timestamp.from(
+      Instant.ofEpochSecond(
+          LocalDate.of(2024, 9, 30).toEpochSecond(LocalTime.of(0, 0, 0, 0), ZoneOffset.UTC)));
+  private static final String MEMBER = "member";
+  private static final String MEMBERS = MEMBER + "s: ";
+  public static final String ALL_LISTED_PERSONNEL_MUST_SHARE_THE_SAME_INSTITUTION =
+  """
+  All listed personnel must share the same institutional affiliation and have a library card.  The following list of \
+  roles and members must have email addresses associated with your institution or library cards issued:\s""";
+  private static final String INTERNAL_COLLABORATOR = "Internal Collaborator";
+  private static final String LAB_STAFF = "Lab staff";
   private final CounterService counterService;
-  private final DatasetDAO datasetDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DarCollectionDAO darCollectionDAO;
   private final ElectionDAO electionDAO;
+  private final InstitutionService institutionService;
+  private final EmailService emailService;
   private final MatchDAO matchDAO;
-  private final UserDAO userDAO;
   private final VoteDAO voteDAO;
-  private final InstitutionDAO institutionDAO;
+  private final UserDAO userDAO;
+  private final UserService userService;
   private final DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
+  private final CountryValidator countryValidator;
 
   private final DacService dacService;
-  private final DataAccessReportsParser dataAccessReportsParser;
+  private final DACAutomationRuleService ruleService;
+  private final String serverUrl;
 
   @Inject
   public DataAccessRequestService(CounterService counterService, DAOContainer container,
-      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO,
-      UseRestrictionConverter useRestrictionConverter) {
+      DacService dacService, DataAccessRequestServiceDAO dataAccessRequestServiceDAO, UserService userService, InstitutionService institutionService, EmailService emailService, DACAutomationRuleService ruleService, ConsentConfiguration config) {
     this.counterService = counterService;
     this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
     this.darCollectionDAO = container.getDarCollectionDAO();
-    this.datasetDAO = container.getDatasetDAO();
     this.electionDAO = container.getElectionDAO();
     this.matchDAO = container.getMatchDAO();
-    this.userDAO = container.getUserDAO();
     this.voteDAO = container.getVoteDAO();
-    this.institutionDAO = container.getInstitutionDAO();
+    this.userDAO = container.getUserDAO();
     this.dacService = dacService;
-    this.dataAccessReportsParser = new DataAccessReportsParser(datasetDAO, useRestrictionConverter);
     this.dataAccessRequestServiceDAO = dataAccessRequestServiceDAO;
+    this.ruleService = ruleService;
+    this.userService = userService;
+    this.institutionService = institutionService;
+    this.emailService = emailService;
+    this.serverUrl = config.getServicesConfiguration().getLocalURL();
+    this.countryValidator = new CountryValidator();
   }
 
   public List<DataAccessRequest> findAllDraftDataAccessRequests() {
@@ -75,21 +114,18 @@ public class DataAccessRequestService implements ConsentLogger {
     return dataAccessRequestDAO.findAllDraftsByUserId(userId);
   }
 
-  public void deleteByReferenceId(User user, String referenceId) throws NotAcceptableException {
+  public void deleteDataAccessRequest(DataAccessRequest dataAccessRequest) throws NotAcceptableException {
+    String referenceId = dataAccessRequest.getReferenceId();
+    if (!dataAccessRequest.getDraft()) {
+      throw new BadRequestException("Only draft data access requests can be deleted");
+    }
     List<Election> elections = electionDAO.findElectionsByReferenceId(referenceId);
     if (!elections.isEmpty()) {
-      // If the user is an admin, delete all votes and elections
-      if (user.hasUserRole(UserRoles.ADMIN)) {
-        voteDAO.deleteVotesByReferenceId(referenceId);
-        List<Integer> electionIds = elections.stream().map(Election::getElectionId).toList();
-        electionDAO.deleteElectionsByIds(electionIds);
-      } else {
         String message = String.format(
             "Unable to delete DAR: '%s', there are existing elections that reference it.",
             referenceId);
         logWarn(message);
         throw new NotAcceptableException(message);
-      }
     }
     matchDAO.deleteRationalesByPurposeIds(List.of(referenceId));
     matchDAO.deleteMatchesByPurposeId(referenceId);
@@ -100,24 +136,28 @@ public class DataAccessRequestService implements ConsentLogger {
   public DataAccessRequest findByReferenceId(String referencedId) {
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referencedId);
     if (Objects.isNull(dar)) {
-      throw new NotFoundException("There does not exist a DAR with the given reference Id");
+      throw new NotFoundException("No data access request found for this reference Id");
     }
     return dar;
   }
 
-  //NOTE: rewrite method into new servicedao method on another ticket
+  //NOTE: rewrite method into new service DAO method on another ticket
   public DataAccessRequest insertDraftDataAccessRequest(User user, DataAccessRequest dar) {
-    if (Objects.isNull(user) || Objects.isNull(dar) || Objects.isNull(dar.getReferenceId())
-        || Objects.isNull(dar.getData())) {
+    if (Objects.isNull(user) || Objects.isNull(dar) || Objects.isNull(
+        dar.getReferenceId()) || Objects.isNull(dar.getData())) {
       throw new IllegalArgumentException("User and DataAccessRequest are required");
     }
+
+    if (user.getLibraryCard() == null) {
+      throw new LibraryCardRequiredException();
+    }
+
     Date now = new Date();
     dataAccessRequestDAO.insertDraftDataAccessRequest(
         dar.getReferenceId(),
         user.getUserId(),
         now,
         now,
-        null,
         now,
         dar.getData()
     );
@@ -146,80 +186,6 @@ public class DataAccessRequestService implements ConsentLogger {
   }
 
   /**
-   * Create a new Draft DAR from the canceled DARs present in source DarCollection.
-   *
-   * @param user             The User
-   * @param sourceCollection The source DarCollection
-   * @return New DataAccessRequest in draft status
-   */
-  public DataAccessRequest createDraftDarFromCanceledCollection(User user,
-      DarCollection sourceCollection) {
-    if (Objects.isNull(sourceCollection.getDars()) || sourceCollection.getDars().isEmpty()) {
-      throw new IllegalArgumentException("Source Collection must contain at least a single DAR");
-    }
-    DataAccessRequest sourceDar = new ArrayList<>(sourceCollection.getDars().values()).get(0);
-    DataAccessRequestData sourceData = sourceDar.getData();
-    if (Objects.isNull(sourceData)) {
-      throw new IllegalArgumentException(
-          "Source Collection must contain at least a single DAR with a populated data");
-    }
-
-    // Find all dataset ids for canceled DARs in the collection
-    List<Integer> datasetIds = sourceCollection
-        .getDars().values().stream()
-        .filter(d -> DarStatus.CANCELED.getValue().equalsIgnoreCase(d.getData().getStatus()))
-        .map(DataAccessRequest::getDatasetIds)
-        .flatMap(Collection::stream)
-        .toList();
-    if (datasetIds.isEmpty()) {
-      throw new IllegalArgumentException(
-          "Source Collection must contain references to at least a single canceled DAR's dataset");
-    }
-
-    List<String> canceledReferenceIds = sourceCollection
-        .getDars().values().stream()
-        .filter(d -> DarStatus.CANCELED.getValue().equalsIgnoreCase(d.getData().getStatus()))
-        .map(DataAccessRequest::getReferenceId)
-        .toList();
-    List<Integer> electionIds = electionDAO.getElectionIdsByReferenceIds(canceledReferenceIds);
-    if (!electionIds.isEmpty()) {
-      String errorMessage = "Found 'Open' elections for canceled DARs in collection id: "
-          + sourceCollection.getDarCollectionId();
-      logWarn(errorMessage);
-      throw new IllegalArgumentException(errorMessage);
-    }
-
-    List<String> sourceReferenceIds = sourceCollection
-        .getDars().values().stream()
-        .map(DataAccessRequest::getReferenceId)
-        .toList();
-    dataAccessRequestDAO.archiveByReferenceIds(sourceReferenceIds);
-
-    String referenceId = UUID.randomUUID().toString();
-    Date now = new Date();
-    // Clone the dar's data object and reset values that need to be updated for the clone
-    DataAccessRequestData newData = new Gson().fromJson(sourceData.toString(),
-        DataAccessRequestData.class);
-    newData.setDarCode(null);
-    newData.setStatus(null);
-    newData.setReferenceId(referenceId);
-    newData.setCreateDate(now.getTime());
-    newData.setSortDate(now.getTime());
-    dataAccessRequestDAO.insertDraftDataAccessRequest(
-        referenceId,
-        user.getUserId(),
-        now,
-        now,
-        null,
-        now,
-        newData
-    );
-    syncDataAccessRequestDatasets(datasetIds, referenceId);
-
-    return findByReferenceId(referenceId);
-  }
-
-  /**
    * @param user User
    * @return List<DataAccessRequest>
    */
@@ -231,31 +197,23 @@ public class DataAccessRequestService implements ConsentLogger {
   /**
    * Generate a DataAccessRequest from the provided DAR. The provided DAR may or may not exist in
    * draft form, so it covers both cases of converting an existing draft to submitted and creating a
-   * brand new DAR from scratch.
+   * brand-new DAR from scratch.
    *
-   * @param user              The create User
+   * @param user              The creating User
    * @param dataAccessRequest DataAccessRequest with populated DAR data
    * @return The created DAR.
    */
-  public DataAccessRequest createDataAccessRequest(User user, DataAccessRequest dataAccessRequest) {
-    if (Objects.isNull(user) || Objects.isNull(dataAccessRequest) || Objects.isNull(
-        dataAccessRequest.getReferenceId()) || Objects.isNull(dataAccessRequest.getData())) {
-      throw new IllegalArgumentException("User and DataAccessRequest are required");
-    }
-
-    if (Objects.isNull(user.getLibraryCards()) || user.getLibraryCards().isEmpty()) {
-      throw new IllegalArgumentException("User must have a library card.");
-    }
+  public DataAccessRequest createDataAccessRequest(User user, DataAccessRequest dataAccessRequest, ContainerRequest request) {
+    validateDar(user, dataAccessRequest);
 
     Date now = new Date();
-    long nowTime = now.getTime();
     DataAccessRequestData darData = dataAccessRequest.getData();
-    if (Objects.isNull(darData.getCreateDate())) {
-      darData.setCreateDate(nowTime);
-    }
-    darData.setSortDate(nowTime);
+
     DataAccessRequest existingDar = dataAccessRequestDAO.findByReferenceId(
         dataAccessRequest.getReferenceId());
+    if (existingDar != null && !existingDar.getDraft()) {
+      throw new SubmittedDARCannotBeEditedException();
+    }
     Integer collectionId;
     // Only create a new DarCollection if we haven't done so already
     if (Objects.nonNull(existingDar) && Objects.nonNull(existingDar.getCollectionId())) {
@@ -263,35 +221,248 @@ public class DataAccessRequestService implements ConsentLogger {
     } else {
       String darCodeSequence = "DAR-" + counterService.getNextDarSequence();
       collectionId = darCollectionDAO.insertDarCollection(darCodeSequence, user.getUserId(), now);
-      darData.setDarCode(darCodeSequence);
     }
     String referenceId;
     List<Integer> datasetIds = dataAccessRequest.getDatasetIds();
     if (Objects.nonNull(existingDar)) {
       referenceId = dataAccessRequest.getReferenceId();
-      dataAccessRequestDAO.updateDraftForCollection(collectionId,
+      dataAccessRequestDAO.updateDraftToSubmittedForCollection(collectionId,
           referenceId);
       dataAccessRequestDAO.updateDataByReferenceId(
           referenceId,
           user.getUserId(),
-          new Date(darData.getSortDate()),
           now,
           now,
-          darData);
+          now,
+          darData,
+          user.getEraCommonsId());
     } else {
       referenceId = UUID.randomUUID().toString();
       dataAccessRequestDAO.insertDataAccessRequest(
           collectionId,
           referenceId,
           user.getUserId(),
-          new Date(darData.getCreateDate()),
-          new Date(darData.getSortDate()),
           now,
           now,
-          darData);
+          now,
+          now,
+          darData,
+          user.getEraCommonsId());
     }
     syncDataAccessRequestDatasets(datasetIds, referenceId);
+    ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request);
     return findByReferenceId(referenceId);
+  }
+
+  /**
+   * Create a progress report for the given DataAccessRequest.
+   * The parent DAR is just passed in for validation purposes.
+   *
+   * @param user              The User
+   * @param progressReport    The DataAccessRequest
+   * @param parentDar         The parent DataAccessRequest
+   * @return The created progress report.
+   */
+  public DataAccessRequest createProgressReport(User user, DataAccessRequest progressReport, DataAccessRequest parentDar, ContainerRequest request) {
+    validateProgressReport(user, progressReport, parentDar);
+
+    String referenceId = progressReport.getReferenceId();
+    List<Integer> progressReportDatasetIds = progressReport.getDatasetIds();
+    Set<Integer> darDatasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId());
+    if (!darDatasetIds.containsAll(progressReportDatasetIds)) {
+      throw new BadRequestException("Progress report can only be created for approved datasets in the parent DAR");
+    }
+    try {
+      dataAccessRequestDAO.insertProgressReport(
+          progressReport.getParentId(),
+          progressReport.getCollectionId(),
+          referenceId,
+          user.getUserId(),
+          progressReport.getData(),
+          user.getEraCommonsId());
+    } catch (JdbiException e) {
+      throw new BadRequestException(
+          "Unable to create progress report for Data Access Request " + parentDar.getReferenceId());
+    }
+
+    if (progressReport.getIsCloseoutProgressReport()) {
+      try {
+        User signingOfficialUser =
+            userService.findUserById(
+                progressReport.getData().getCloseoutSupplement().signingOfficialId());
+        emailService.sendSubmittedCloseoutMessage(
+            signingOfficialUser, parentDar.getDarCode(), referenceId, serverUrl + "dar_application_review/%d".formatted(parentDar.getCollectionId()));
+      } catch (TemplateException | IOException e) {
+        throw new InternalServerErrorException(e);
+      }
+    }
+
+    if (!progressReport.getIsCloseoutProgressReport() && !progressReport.getHasDMI()) {
+      ruleService.triggerDACRuleSettings(user, progressReportDatasetIds, referenceId, request);
+    }
+
+    syncDataAccessRequestDatasets(progressReportDatasetIds, referenceId);
+    return findByReferenceId(referenceId);
+  }
+
+  public void approveDataAccessRequestCloseout(User signingOfficial, String referenceId) {
+    DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
+    validateCloseoutApproval(signingOfficial, dar);
+    dataAccessRequestDAO.updateDarCloseoutSO(signingOfficial.getUserId(), referenceId);
+    Set<User> chairs = new HashSet<>();
+    Set<Dac> dacs = dacService.findByDatasetId(dar.getDatasetIds());
+    dacs.forEach(dac -> chairs.addAll(dac.getChairpersons()));
+    chairs.forEach(
+        chairperson -> {
+          try {
+            emailService.sendSubmittedCloseoutMessage(
+                chairperson,
+                dar.getDarCode(),
+                dar.getReferenceId(),
+                serverUrl + "dar_application_review/%d".formatted(dar.getCollectionId()));
+          } catch (Exception e) {
+            logWarn("Unable to send close out message for Data Access Request " + referenceId, e);
+          }
+        });
+  }
+
+  @VisibleForTesting
+  protected void validateCloseoutApproval(User signingOfficial, DataAccessRequest dataAccessRequest) {
+    // Note: we will allow a signing official to approve their own closeout.
+
+    if (!dataAccessRequest.getIsCloseoutProgressReport()) {
+      throw new BadRequestException("Signing officials can only approve closeout progress reports.");
+    }
+
+    if (dataAccessRequest.getHasSOCloseoutApproval()) {
+      throw new BadRequestException("This progress report closeout has already been approved by a signing official.");
+    }
+
+    if (!signingOfficial.getUserId().equals(dataAccessRequest.getData().getCloseoutSupplement().signingOfficialId())) {
+      throw new BadRequestException("This request can only be approved by the signing official selected in the closeout request.");
+    }
+
+    try {
+      User submitter = userService.findUserById(dataAccessRequest.getUserId());
+      if (!submitter.getInstitutionId().equals(signingOfficial.getInstitutionId())) {
+        throw new BadRequestException("Signing Officials must be in the same institution as the creator of the closeout request.");
+      }
+
+    } catch (NotFoundException e) {
+      // log the state.  we'll allow the SO to process a closeout even if the  user can't be found.
+      logWarn(
+          String.format(
+              "Signing Official approving closeout %s for non-existent user %d",
+              dataAccessRequest.getReferenceId(), dataAccessRequest.getUserId()));
+    }
+  }
+
+  public void validateProgressReport(User user, DataAccessRequest progressReport, DataAccessRequest parentDar) {
+    validateCommonDarAndProgressReportElements(user, progressReport);
+    validateInternalCollaborators(user, progressReport);
+    validateCountryOfOperation(progressReport.data, true);
+
+    if (parentDar.getDraft()) {
+      throw new BadRequestException(
+          "Cannot create a progress report for a draft Data Access Request");
+    }
+    if (progressReport.getDatasetIds() == null || progressReport.getDatasetIds().isEmpty() ) {
+      throw new BadRequestException("At least one dataset is required");
+    }
+    if (!Set.copyOf(parentDar.getDatasetIds()).containsAll(progressReport.getDatasetIds())) {
+      throw new BadRequestException("Progress report can only be created for datasets in the parent DAR");
+    }
+    if (progressReport.getData().getProgressReportSummary() == null ||
+        progressReport.getData().getProgressReportSummary().isEmpty()) {
+      throw new BadRequestException("Progress report summary is required");
+    }
+
+    if (progressReport.getIsCloseoutProgressReport()) {
+      Integer providedSigningOfficial =
+          progressReport.getData().getCloseoutSupplement().signingOfficialId();
+      try {
+        User selectedSigningOfficial = userService.findUserById(providedSigningOfficial);
+        if (!selectedSigningOfficial.getInstitutionId().equals(user.getInstitutionId())) {
+          throw new BadRequestException(
+              "The signing official selected in the closeout is not in the same institution as the submitter.");
+        }
+        if (!selectedSigningOfficial.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+          throw new BadRequestException("The selected signing official is not a signing official");
+        }
+      } catch (NotFoundException nfe) {
+        throw new BadRequestException("The selected signing official in the closeout was not found.");
+      }
+    }
+  }
+
+  @VisibleForTesting
+  protected void validateCommonDarAndProgressReportElements(User user, DataAccessRequest dar) {
+    if (Objects.isNull(user) || Objects.isNull(dar) || Objects.isNull(
+        dar.getReferenceId()) || Objects.isNull(dar.getData())) {
+      throw new IllegalArgumentException("User and DataAccessRequest are required");
+    }
+    if (user.getLibraryCard() == null) {
+      throw new NIHComplianceRuleException();
+    }
+
+    userService.validateActiveERACredentials(user);
+  }
+
+  public void validateDar(User user, DataAccessRequest dar) {
+    validateCommonDarAndProgressReportElements(user, dar);
+
+    if (!Objects.equals(user.getEmail(), dar.getData().getPiEmail()) || !Objects.equals(user.getDisplayName(), dar.getData().getPiName())) {
+      throw new BadRequestException("The PI in the DAR must have the same name and email as the user submitting the DAR.");
+    }
+
+    validateNoKeyPersonnelDuplicates(dar.getData());
+    validatePersonnelInstitutionAndLibraryCardRequirements(user, dar.getData());
+    validateCountryOfOperation(dar.getData(), false);
+  }
+
+  protected void validateCountryOfOperation(DataAccessRequestData darData, boolean skipPI) {
+    List<String> errorSummary = new ArrayList<>();
+    // We will have progress reports that don't have country of operation set for the PI.
+    if (!skipPI && !countryValidator.isInCountryList(darData.getPiCountryOfOperation())) {
+      errorSummary.add(
+          "Principal Investigator %s Country of Operation (%s) is not allowed"
+              .formatted(darData.getPiEmail(), darData.getPiCountryOfOperation()));
+    }
+
+    List<Collaborator> collaborators = darData.getLabAndInternalCollaborators();
+    collaborators.forEach(
+        collaborator -> {
+          if (!countryValidator.isInCountryList(collaborator.countryOfOperation())) {
+            errorSummary.add(
+                "Collaborator or Lab Staff Member %s Country of Operation (%s) is not allowed"
+                    .formatted(collaborator.email(), collaborator.countryOfOperation()));
+          }
+        });
+
+    if (!errorSummary.isEmpty()) {
+      throw new BadRequestException(String.join(", ", errorSummary));
+    }
+  }
+
+  @VisibleForTesting
+  protected void validateInternalCollaborators(User user, DataAccessRequest progressReport) {
+    List<String> errorSummary = getCollaboratorAndLibraryCardErrors(user, progressReport.getData());
+
+    if (!errorSummary.isEmpty()) {
+      throw new BadRequestException( ALL_LISTED_PERSONNEL_MUST_SHARE_THE_SAME_INSTITUTION
+          + String.join(", ", errorSummary));
+    }
+  }
+
+  private List<String> getCollaboratorAndLibraryCardErrors(User user, DataAccessRequestData darData) {
+    List<String> errorSummary = new ArrayList<>();
+    getErrorSummary(
+        darData.getInternalCollaborators().stream().map(Collaborator::email).toList(), user.getInstitution(),
+        INTERNAL_COLLABORATOR + " " + MEMBER + ": ", INTERNAL_COLLABORATOR + "  " + MEMBERS, errorSummary);
+    getErrorSummary(
+        darData.getLabCollaborators().stream().map(Collaborator::email).toList(), user.getInstitution(),
+        LAB_STAFF + " " + MEMBER + ": ", LAB_STAFF + " " + MEMBERS, errorSummary);
+    return errorSummary;
   }
 
   /**
@@ -302,6 +473,9 @@ public class DataAccessRequestService implements ConsentLogger {
    * @return The updated DataAccessRequest
    */
   public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar) {
+    if (!dar.getDraft()) {
+      throw new SubmittedDARCannotBeEditedException();
+    }
     try {
       return dataAccessRequestServiceDAO.updateByReferenceId(user, dar);
     } catch (SQLException e) {
@@ -314,8 +488,199 @@ public class DataAccessRequestService implements ConsentLogger {
     }
   }
 
+  /**
+   * Validates that PI email is not duplicated with SO or IT Director emails
+   *
+   * @param darData The data access request data to validate
+   * @throws IllegalArgumentException if duplicate emails are found
+   */
+  public void validateNoKeyPersonnelDuplicates(DataAccessRequestData darData) {
+    EmailValidator emailValidator = EmailValidator.getInstance();
+
+    String piEmail = darData.getPiEmail();
+    String soEmail = darData.getSigningOfficialEmail();
+    String itEmail = darData.getItDirectorEmail();
+
+    if (!emailValidator.isValid(piEmail) || !emailValidator.isValid(soEmail)
+        || !emailValidator.isValid(itEmail)) {
+      throw new IllegalArgumentException(
+          "Principal Investigator, Signing Official, and IT Director emails must be valid");
+    }
+
+    if (piEmail.equalsIgnoreCase(soEmail)) {
+      throw new IllegalArgumentException(
+          "Principal Investigator email cannot be the same as Signing Official email");
+    }
+
+    if (piEmail.equalsIgnoreCase(itEmail)) {
+      throw new IllegalArgumentException(
+          "Principal Investigator email cannot be the same as IT Director email");
+    }
+  }
+
+  @VisibleForTesting
+  protected void validatePersonnelInstitutionAndLibraryCardRequirements(User user, DataAccessRequestData darData) {
+    Institution submitterInstitution = user.getInstitution();
+    String piEmail = darData.getPiEmail();
+    String soEmail = darData.getSigningOfficialEmail();
+    String itEmail = darData.getItDirectorEmail();
+
+    List<String> invalidMembers = new ArrayList<>();
+
+    verifyInstitution(submitterInstitution, piEmail, "Principal Investigator", invalidMembers);
+    verifyInstitution(submitterInstitution, soEmail, "Signing Official", invalidMembers);
+    verifyInstitution(submitterInstitution, itEmail, "IT Director", invalidMembers);
+    invalidMembers.addAll(getCollaboratorAndLibraryCardErrors(user, darData));
+
+    if (!invalidMembers.isEmpty()) {
+      throw new IllegalArgumentException(
+          ALL_LISTED_PERSONNEL_MUST_SHARE_THE_SAME_INSTITUTION
+              + String.join(", ", invalidMembers));
+    }
+  }
+
+  private void verifyInstitution(Institution submitterInstitution, String email, String role, List<String> invalidMembers) {
+    if (emailDoesNotMatchInstitution(submitterInstitution, email)) {
+      invalidMembers.add(role + ": " + email);
+    }
+  }
+
+  private List<String> findCollaboratorsWithoutLibraryCards(List<String> usersToCheck) {
+    List<String> usersWithoutLibraryCards = new ArrayList<>();
+    usersToCheck.forEach(email -> {
+      User collabUser = userDAO.findUserByEmail(email);
+      if (collabUser == null || collabUser.getLibraryCard() == null) {
+        usersWithoutLibraryCards.add(email);
+      }
+    });
+    return usersWithoutLibraryCards;
+  }
+
+  private void getErrorSummary(
+      List<String> emails,
+      Institution institution,
+      String categorySingular,
+      String categoryPlural,
+      List<String> invalidMembers) {
+    List<String> institutionErrors = findEmailAddressesNotInInstitution(emails, institution);
+    List<String> libraryCardErrors = findCollaboratorsWithoutLibraryCards(emails);
+
+    if (!institutionErrors.isEmpty()) {
+      String missingInstitution = " (missing institution) ";
+      invalidMembers.add(buildSingleErrorFromErrorList(institutionErrors, categorySingular + missingInstitution, categoryPlural + missingInstitution));
+    }
+
+    if (!libraryCardErrors.isEmpty()) {
+      String missingLibraryCard = " (missing library card) ";
+      invalidMembers.add(buildSingleErrorFromErrorList(libraryCardErrors, categorySingular + missingLibraryCard, categoryPlural + missingLibraryCard));
+    }
+  }
+
+  private List<String> findEmailAddressesNotInInstitution(
+      List<String> emailAddresses, Institution institution) {
+    ArrayList<String> errors = new ArrayList<>();
+    emailAddresses.forEach(
+        collaborator -> {
+          if (emailDoesNotMatchInstitution(institution, collaborator)) {
+            errors.add(collaborator);
+          }
+        });
+    return errors;
+  }
+
+  private String buildSingleErrorFromErrorList(
+      List<String> errors, String categorySingular, String categoryPlural) {
+    StringBuilder msg = new StringBuilder();
+    if (errors.size() == 1) {
+      msg.append(categorySingular);
+    } else if (errors.size() > 1) {
+      msg.append(categoryPlural);
+    }
+    msg.append(String.join(", ", errors));
+    return msg.toString();
+  }
+
+  private boolean emailDoesNotMatchInstitution(Institution institution, String email) {
+    Institution foundInstitution = institutionService.findInstitutionForEmail(email);
+    if (foundInstitution == null || institution == null) {
+      return true;
+    }
+    return !institution.equals(foundInstitution);
+  }
+
   public Collection<DataAccessRequest> getApprovedDARsForDataset(Dataset dataset) {
     return dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset.getDatasetId());
   }
 
+  public void sendExpirationNotices() {
+    sendDARExpirationReminderNotices();
+    sendDARExpirationNotices();
+  }
+
+  private void sendDARExpirationNotices() {
+    EmailType emailType = EmailType.DAR_EXPIRED;
+    sendDARMessageToList(emailType, EXPIRE_NOTICE_INTERVAL);
+  }
+
+  private void sendDARExpirationReminderNotices() {
+    EmailType emailType = EmailType.DAR_EXPIRATION_REMINDER;
+    sendDARMessageToList(emailType, EXPIRE_WARN_INTERVAL);
+  }
+
+  private void sendDARMessageToList(EmailType type, String interval) {
+    List<DataAccessRequest> expiredDars =
+        dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
+            type.getTypeInt(), interval, MINIMUM_SUBMITTED_DATE_FOR_DAR_EXPIRATIONS);
+    expiredDars.forEach(
+        expiredDar -> {
+          try {
+            String referenceId = expiredDar.getReferenceId();
+            User user = userDAO.findUserById(expiredDar.getUserId());
+            String darCode = expiredDar.getDarCode();
+            String userName = user.getDisplayName();
+            if (user.getEmail() == null) {
+              throw new InvalidEmailAddressException(
+                  String.format(
+                      "Email address for user %d (%s) not found for expiring warning.  DAR reference id: %s",
+                      expiredDar.getUserId(), userName, referenceId));
+            }
+            switch (type) {
+              case DAR_EXPIRATION_REMINDER:
+                emailService.sendDarExpirationReminderMessage(
+                    user, darCode, user.getUserId(), referenceId);
+                break;
+              case DAR_EXPIRED:
+                emailService.sendDarExpiredMessage(user, darCode, user.getUserId(), referenceId);
+                break;
+              default:
+                break;
+            }
+          } catch (Exception e) {
+            logException(e);
+          }
+        });
+  }
+
+  public void sendReminderMessage(Integer voteId) throws IOException, TemplateException {
+    Vote vote = voteDAO.findVoteById(voteId);
+    Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
+    DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(
+        election.getReferenceId());
+    User user = findUserById(vote.getUserId());
+    String voteUrl = serverUrl + "dar_collection/%d".formatted(collection.getDarCollectionId());
+    emailService.sendReminderMessage(user, vote, collection.getDarCode(), election.getElectionType(), voteUrl);
+    voteDAO.updateVoteReminderFlag(voteId, true);
+  }
+
+  private User findUserById(Integer id) throws IllegalArgumentException {
+    User user = userDAO.findUserById(id);
+    if (user == null) {
+      throw new NotFoundException("Could not find dacUser for specified id : " + id);
+    }
+    return user;
+  }
+
+  public List<Election> findOpenElectionsByReferenceId(String referenceId) {
+    return electionDAO.findOpenElectionsByReferenceIds(List.of(referenceId));
+  }
 }

@@ -338,7 +338,7 @@ class VoteDAOTest extends DAOTestHelper {
     Dataset dataset = createDataset();
     Dac dac = createDac();
     datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
-    User user4 = createUserWithRole(UserRoles.RESEARCHER.getRoleId());
+    User user4 = createUser();
     String darCode = "DAR-1234567890";
     Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user4.getUserId(),
         new Date());
@@ -411,10 +411,22 @@ class VoteDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindVoteUsersByElectionReferenceIdList_Empty() {
+  void testFindVoteUsersByElectionReferenceIdList_Invalid() {
     // Empty case
     List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(
         List.of("invalid reference id"));
+    assertTrue(voteUsers.isEmpty());
+  }
+
+  @Test
+  void testFindVoteUsersByElectionReferenceIdList_Empty() {
+    List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(List.of());
+    assertTrue(voteUsers.isEmpty());
+  }
+
+  @Test
+  void testFindVoteUsersByElectionReferenceIdList_Null() {
+    List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(null);
     assertTrue(voteUsers.isEmpty());
   }
 
@@ -471,7 +483,7 @@ class VoteDAOTest extends DAOTestHelper {
     data.setProjectTitle(RandomStringUtils.randomAlphabetic(10));
     String referenceId = RandomStringUtils.randomAlphanumeric(20);
     dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, new Date(),
-        new Date(), new Date(), new Date(), data);
+        new Date(), new Date(), new Date(), data, randomAlphabetic(10));
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
@@ -550,25 +562,4 @@ class VoteDAOTest extends DAOTestHelper {
     );
     return electionDAO.findElectionById(electionId);
   }
-
-  private User createUserWithRoleInDac(Integer roleId, Integer dacId) {
-    User user = createUserWithRole(roleId);
-    dacDAO.addDacMember(roleId, user.getUserId(), dacId);
-    return user;
-  }
-
-  private User createUserWithRole(Integer roleId) {
-    int i1 = RandomUtils.nextInt(5, 10);
-    int i2 = RandomUtils.nextInt(5, 10);
-    int i3 = RandomUtils.nextInt(3, 5);
-    String email = RandomStringUtils.randomAlphabetic(i1) +
-        "@" +
-        RandomStringUtils.randomAlphabetic(i2) +
-        "." +
-        RandomStringUtils.randomAlphabetic(i3);
-    Integer userId = userDAO.insertUser(email, "display name", new Date());
-    userRoleDAO.insertSingleUserRole(roleId, userId);
-    return userDAO.findUserById(userId);
-  }
-
 }

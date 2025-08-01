@@ -1,0 +1,107 @@
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="changelog-consent-2025-03-28-automation_rules.xml.cs1" author="grushton">
+    <sql>
+      CREATE TYPE dac_rule_type as ENUM ('GRU_V1', 'HMB_V1', 'HMB_DSV1', 'GRU_DSV1');
+      CREATE TYPE rule_state as ENUM ('AVAILABLE', 'DEPRECATED', 'UNAVAILABLE');
+      CREATE TYPE rule_audit_action as enum ('ADD', 'REMOVE');
+    </sql>
+    <createTable tableName="dac_automation_rules">
+      <column name="id" type="bigint" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="rule" type="dac_rule_type">
+        <constraints nullable="false"/>
+      </column>
+      <column name="description" type="text">
+        <constraints nullable="false"/>
+      </column>
+      <column name="state" type="rule_state">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <createTable tableName="dac_rule_settings">
+      <column name="id" type="bigint" autoIncrement="true"/>
+      <column name="dac_id" type="bigint"/>
+      <column name="rule_id" type="bigint"/>
+      <column name="user_id" type="bigint"/>
+      <column name="activation_date" type="timestamp" defaultValueDate="current_timestamp"/>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="dac_rule_settings" baseColumnNames="dac_id"
+      constraintName="fk_dac_rule_dac_id"
+      deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+      referencedTableName="dac" referencedColumnNames="dac_id"
+      referencesUniqueColumn="true"/>
+    <addForeignKeyConstraint baseTableName="dac_rule_settings" baseColumnNames="rule_id"
+      constraintName="fk_dac_rule_rule_id"
+      deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+      referencedTableName="dac_automation_rules" referencedColumnNames="id"
+      referencesUniqueColumn="true"/>
+    <addForeignKeyConstraint baseTableName="dac_rule_settings" baseColumnNames="user_id"
+      constraintName="fk_dac_rule_user_id"
+      deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+      referencedColumnNames="user_id" referencedTableName="users"
+      referencesUniqueColumn="true"/>
+    <createIndex tableName="dac_rule_settings" indexName="idx_dac_rule_settings_dac_id">
+      <column name="dac_id"/>
+    </createIndex>
+    <createIndex tableName="dac_rule_settings" indexName="idx_dac_rule_settings_rule_id">
+      <column name="rule_id"/>
+    </createIndex>
+    <createTable tableName="dac_rule_audit">
+      <column name="id" type="bigint" autoIncrement="true">
+        <constraints primaryKey="true" primaryKeyName="pk_dac_rule_audit"/>
+      </column>
+      <column name="action" type="rule_audit_action"/>
+      <column name="dac_id" type="bigint"/>
+      <column name="rule_id" type="bigint"/>
+      <column name="user_id" type="bigint"/>
+      <column name="action_date" type="timestamp" defaultValueDate="current_timestamp"/>
+    </createTable>
+    <createIndex tableName="dac_rule_audit" indexName="idx_dac_rule_audit_dac_id_and_action_date_descending">
+      <column name="dac_id"/>
+      <column name="action_date" descending="true" />
+    </createIndex>
+    <rollback>
+      <dropTable tableName="dac_automation_rules" cascadeConstraints="true"/>
+      <dropTable tableName="dac_rule_settings" cascadeConstraints="true"/>
+      <dropTable tableName="dac_rule_audit" cascadeConstraints="true"/>
+      <sql>drop type if exists dac_automation_rule;</sql>
+      <sql>drop type if exists rule_state;</sql>
+    </rollback>
+  </changeSet>
+  <changeSet id="changelog-consent-2025-03-28-automation_rules.xml.cs2" author="grushton">
+    <insert tableName="dac_automation_rules">
+      <column name="rule" value="GRU_V1"/>
+      <column name="description"
+        value="Automatically approve Data Access Requests (DARs) when the requested datasets’ data use term is only **General Research Use (GRU)** with no modifiers (i.e. IRB, COL, GSO, NPU etc.), and the primary purpose of the DAR’s research use statement (RUS) is **Health/Medical/Biomedical Use (HMB)** only with no ethical concerns designated."/>
+      <column name="state" value="AVAILABLE"/>
+    </insert>
+    <insert tableName="dac_automation_rules">
+      <column name="rule" value="HMB_V1"/>
+      <column name="description"
+        value="Automatically approve Data Access Requests (DARs) when the requested datasets’ data use term is only **Health/Medical/Biomedical Use (HMB)** with no modifiers (i.e. IRB, COL, GSO, NPU etc.), and the primary purpose of the DAR’s research use statement (RUS) is **Health/Medical/Biomedical Use (HMB)** only with no ethical concerns designated."/>
+      <column name="state" value="AVAILABLE"/>
+    </insert>
+    <insert tableName="dac_automation_rules">
+      <column name="rule" value="GRU_DSV1"/>
+      <column name="description"
+        value="Automatically approve Data Access Requests (DARs) when the requested datasets’ data use term is only **General Research Use (GRU)** with no modifiers (i.e. IRB, COL, GSO, NPU etc.), and the primary purpose of the DAR’s research use statement (RUS) is **Disease Specific (DS) with one or more selected diseases** with no ethical concerns designated."/>
+      <column name="state" value="AVAILABLE"/>
+    </insert>
+    <insert tableName="dac_automation_rules">
+      <column name="rule" value="HMB_DSV1"/>
+      <column name="description"
+        value="Automatically approve Data Access Requests (DARs) when the requested datasets’ data use term is only **Health/Medical/Biomedical Use (HMB)** with no modifiers (i.e. IRB, COL, GSO, NPU etc.), and the primary purpose of the DAR’s research use statement (RUS) is **Disease Specific (DS) with one or more selected diseases** only with no ethical concerns designated."/>
+      <column name="state" value="AVAILABLE"/>
+    </insert>
+    <rollback>
+      <sql>
+        DELETE FROM dac_automation_rules WHERE rule IN ('GRU_V1', 'HMB_V1', 'HMB_DSV1', 'GRU_DSV1');
+      </sql>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

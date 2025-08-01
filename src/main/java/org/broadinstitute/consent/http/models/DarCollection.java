@@ -3,11 +3,11 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.Gson;
 import java.sql.Timestamp;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -19,10 +19,15 @@ public class DarCollection {
   public static final String DAR_FILTER_QUERY_COLUMNS =
       "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
           +
-          "dar.parent_id AS dar_parent_id, dar.draft AS dar_draft, dar.user_id AS dar_userId, " +
+          "dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, " +
           "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
           +
-          "dar.update_date AS dar_update_date, (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, " +
+          "dar.update_date AS dar_update_date, (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, "
+          +
+          "dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date, "
+          +
+          "dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id, "
+          +
           "(regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' as projectTitle ";
 
   @JsonProperty
@@ -47,7 +52,7 @@ public class DarCollection {
   private Integer updateUserId;
 
   @JsonProperty
-  private Map<String, DataAccessRequest> dars;
+  private final Map<String, DataAccessRequest> dars = new HashMap<>();
 
   @JsonProperty
   private Set<Dataset> datasets;
@@ -120,39 +125,29 @@ public class DarCollection {
   }
 
   public Map<String, DataAccessRequest> getDars() {
-    if (Objects.isNull(dars)) {
-      return new HashMap<>();
-    }
     return dars;
   }
 
-  public void setDars(Map<String, DataAccessRequest> dars) {
-    this.dars = dars;
+  public void addDar(DataAccessRequest dar) {
+    dars.putIfAbsent(dar.getReferenceId(), dar);
   }
 
-  public void addDar(DataAccessRequest dar) {
-    if (Objects.isNull(dars)) {
-      this.setDars(new HashMap<>());
-    }
-    if (Objects.nonNull(dar)) {
-      String referenceId = dar.getReferenceId();
-      DataAccessRequest savedDar = dars.get(referenceId);
-      if (Objects.isNull(savedDar)) {
-        dars.put(referenceId, dar);
-      }
-    }
+  public DataAccessRequest getMostRecentDar() {
+    return dars.values().stream()
+        .max(Comparator.comparing(DataAccessRequest::getSubmissionDate))
+        .orElse(null);
   }
 
   public void addDataset(Dataset dataset) {
     this.datasets.add(dataset);
   }
 
-  public void setDatasets(Set<Dataset> datasets) {
-    this.datasets = datasets;
-  }
-
   public Set<Dataset> getDatasets() {
     return datasets;
+  }
+
+  public void setDatasets(Set<Dataset> datasets) {
+    this.datasets = datasets;
   }
 
   @Override

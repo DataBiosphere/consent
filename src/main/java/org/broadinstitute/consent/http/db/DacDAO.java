@@ -21,6 +21,7 @@ import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -84,6 +85,7 @@ public interface DacDAO extends Transactional<DacDAO> {
       LEFT JOIN dac_daa dd ON dac.dac_id = dd.dac_id
       LEFT JOIN data_access_agreement daa ON dd.daa_id = daa.daa_id
       LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+      ORDER BY dac.name
       """)
   List<Dac> findAll();
 
@@ -248,14 +250,9 @@ public interface DacDAO extends Transactional<DacDAO> {
 
   @UseRowMapper(UserRoleMapper.class)
   @SqlQuery(
-      "SELECT ur.*, r.name FROM user_role ur INNER JOIN roles r ON ur.role_id = r.role_id WHERE ur.user_id = :userId")
-  List<UserRole> findUserRolesForUser(@Bind("userId") Integer userId);
-
-  @UseRowMapper(UserRoleMapper.class)
-  @SqlQuery(
       "SELECT ur.*, r.name FROM user_role ur "
           + " INNER JOIN roles r ON ur.role_id = r.role_id WHERE ur.user_id IN (<userIds>)")
-  List<UserRole> findUserRolesForUsers(@BindList("userIds") List<Integer> userIds);
+  List<UserRole> findUserRolesForUsers(@BindList(value = "userIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> userIds);
 
   /**
    * Find the Dacs for these datasets.
@@ -270,7 +267,7 @@ public interface DacDAO extends Transactional<DacDAO> {
       INNER JOIN dataset ds ON d.dac_id = ds.dac_id
       WHERE ds.dataset_id IN (<datasetIds>)
       """)
-  Set<Dac> findDacsForDatasetIds(@BindList("datasetIds") List<Integer> datasetIds);
+  Set<Dac> findDacsForDatasetIds(@BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> datasetIds);
 
   @RegisterRowMapper(DacMapper.class)
   @SqlQuery("""

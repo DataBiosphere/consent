@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.models.Match;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -48,16 +49,7 @@ public interface MatchDAO extends Transactional<MatchDAO> {
           " ON e.reference_id = match_entity.purpose " +
           " WHERE match_entity.purpose IN (<purposeIds>) AND e.election_id = latest")
   List<Match> findMatchesForLatestDataAccessElectionsByPurposeIds(
-      @BindList("purposeIds") List<String> purposeIds);
-
-  @UseRowReducer(MatchReducer.class)
-  @SqlQuery("""
-      SELECT m.*, r.*
-            FROM match_entity m
-            LEFT JOIN match_rationale r on r.match_entity_id = m.matchid
-            WHERE m.purpose IN (<purposeId>)
-      """)
-  List<Match> findMatchesForPurposeIds(@BindList("purposeId") List<String> purposeId);
+      @BindList(value = "purposeIds", onEmpty = EmptyHandling.NULL_STRING) List<String> purposeIds);
 
   @SqlUpdate("""
         INSERT INTO match_entity
@@ -81,10 +73,10 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   void deleteMatchesByPurposeId(@Bind("purposeId") String purposeId);
 
   @SqlUpdate("DELETE FROM match_entity WHERE purpose IN (<purposeIds>)")
-  void deleteMatchesByPurposeIds(@BindList("purposeIds") List<String> purposeIds);
+  void deleteMatchesByPurposeIds(@BindList(value = "purposeIds", onEmpty = EmptyHandling.NULL_STRING) List<String> purposeIds);
 
   @SqlUpdate("DELETE FROM match_rationale WHERE match_entity_id in (SELECT matchid FROM match_entity WHERE purpose IN (<purposeIds>)) ")
-  void deleteRationalesByPurposeIds(@BindList("purposeIds") List<String> purposeIds);
+  void deleteRationalesByPurposeIds(@BindList(value = "purposeIds", onEmpty = EmptyHandling.NULL_STRING) List<String> purposeIds);
 
   @SqlQuery("SELECT COUNT(*) FROM match_entity WHERE matchentity = :matchEntity AND failed = 'FALSE' ")
   Integer countMatchesByResult(@Bind("matchEntity") Boolean matchEntity);

@@ -21,8 +21,8 @@ import java.util.Collections;
 import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
@@ -42,7 +42,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DaaResourceTest {
+class DaaResourceTest extends AbstractTestHelper {
 
   @Mock
   private DaaService daaService;
@@ -64,7 +64,7 @@ class DaaResourceTest {
     when(info.getBaseUriBuilder()).thenReturn(builder);
     when(builder.replacePath(any())).thenReturn(builder);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
     User admin = new User();
     admin.setAdminRole();
     FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
@@ -87,7 +87,7 @@ class DaaResourceTest {
     when(info.getBaseUriBuilder()).thenReturn(builder);
     when(builder.replacePath(any())).thenReturn(builder);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
     User admin = new User();
     admin.setChairpersonRoleWithDAC(dac.getDacId());
     FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
@@ -105,7 +105,7 @@ class DaaResourceTest {
   void testCreateDaaForDac_InvalidChairCase() {
     UriInfo info = mock(UriInfo.class);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
     User admin = new User();
     admin.setChairpersonRoleWithDAC(1);
     FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
@@ -123,7 +123,7 @@ class DaaResourceTest {
     UriInfo info = mock(UriInfo.class);
     UriBuilder builder = mock(UriBuilder.class);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
     User admin = new User();
     admin.setAdminRole();
     FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
@@ -140,7 +140,7 @@ class DaaResourceTest {
   void testCreateDaaForDac_UserWithoutInstitution() {
     UriInfo info = mock(UriInfo.class);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
     User admin = new User();
     admin.setAdminRole();
     FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
@@ -192,31 +192,31 @@ class DaaResourceTest {
 
  @Test
   void testFindDaaByDaaId() {
-    int expectedDaaId = RandomUtils.nextInt(10, 100);
+    int expectedDaaId = randomInt(10, 100);
     DataAccessAgreement expectedDaa = new DataAccessAgreement();
     expectedDaa.setDaaId(expectedDaaId);
     when(daaService.findById(expectedDaaId)).thenReturn(expectedDaa);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.findById(expectedDaaId);
+    Response response = resource.findById(authUser, expectedDaaId);
     assert response.getStatus() == HttpStatus.SC_OK;
     assertEquals(expectedDaa, response.getEntity());
   }
 
   @Test
   void testFindDaaByDaaIdInvalidId() {
-    int invalidId = RandomUtils.nextInt(10, 100);
+    int invalidId = randomInt(10, 100);
     when(daaService.findById(invalidId)).thenThrow(new NotFoundException());
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.findById(invalidId);
+    Response response = resource.findById(authUser, invalidId);
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
 
   @Test
   void testFindDaaFileByDaaId() throws IOException {
-    int expectedDaaId = RandomUtils.nextInt(10, 100);
+    int expectedDaaId = randomInt(10, 100);
     DataAccessAgreement expectedDaa = new DataAccessAgreement();
     expectedDaa.setDaaId(expectedDaaId);
     String fileName = RandomStringUtils.randomAlphanumeric(10) + ".txt";
@@ -239,7 +239,7 @@ class DaaResourceTest {
 
   @Test
   void testFindDaaFileByDaaIdInvalid() {
-    int invalidId = RandomUtils.nextInt(10, 100);
+    int invalidId = randomInt(10, 100);
     when(daaService.findFileById(invalidId)).thenThrow(new NotFoundException());
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -249,7 +249,7 @@ class DaaResourceTest {
 
   @Test
   void testFindDaaFileByDaaIdDatabaseError() {
-    int expectedDaaId = RandomUtils.nextInt(10, 100);
+    int expectedDaaId = randomInt(10, 100);
     when(daaService.findFileById(expectedDaaId)).thenThrow(new RuntimeException());
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -264,7 +264,7 @@ class DaaResourceTest {
     when(info.getBaseUriBuilder()).thenReturn(builder);
     when(builder.replacePath(any())).thenReturn(builder);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
     User admin = new User();
     admin.setAdminRole();
     admin.setInstitutionId(1);
@@ -277,12 +277,11 @@ class DaaResourceTest {
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(1);
     LibraryCard lc = new LibraryCard();
-    lc.setInstitutionId(1);
     lc.setId(1);
+    researcher.setLibraryCard(lc);
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
-    when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
@@ -296,7 +295,7 @@ class DaaResourceTest {
     when(info.getBaseUriBuilder()).thenReturn(builder);
     when(builder.replacePath(any())).thenReturn(builder);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
     User admin = new User();
     admin.setSigningOfficialRole();
     admin.setInstitutionId(1);
@@ -309,11 +308,10 @@ class DaaResourceTest {
     daa.setDaaId(1);
     LibraryCard lc = new LibraryCard();
     lc.setId(1);
-    lc.setInstitutionId(1);
+    researcher.setLibraryCard(lc);
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
-    when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
@@ -325,7 +323,7 @@ class DaaResourceTest {
     UriInfo info = mock(UriInfo.class);
     UriBuilder builder = mock(UriBuilder.class);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
     User admin = new User();
     admin.setSigningOfficialRole();
     admin.setInstitutionId(2);
@@ -336,7 +334,6 @@ class DaaResourceTest {
     daa.setDaaId(1);
     LibraryCard lc = new LibraryCard();
     lc.setId(1);
-    lc.setInstitutionId(1);
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
@@ -351,7 +348,7 @@ class DaaResourceTest {
     UriInfo info = mock(UriInfo.class);
     UriBuilder builder = mock(UriBuilder.class);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
     User admin = new User();
     admin.setResearcherRole();
     admin.setInstitutionId(2);
@@ -362,7 +359,6 @@ class DaaResourceTest {
     daa.setDaaId(1);
     LibraryCard lc = new LibraryCard();
     lc.setId(1);
-    lc.setInstitutionId(1);
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
@@ -375,9 +371,8 @@ class DaaResourceTest {
   @Test
   void testCreateLibraryCardDaaRelation_InvalidDaaIdCase() {
     UriInfo info = mock(UriInfo.class);
-    UriBuilder builder = mock(UriBuilder.class);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
     User admin = new User();
     admin.setSigningOfficialRole();
     admin.setInstitutionId(1);
@@ -388,12 +383,10 @@ class DaaResourceTest {
     daa.setDaaId(1);
     LibraryCard lc = new LibraryCard();
     lc.setId(1);
-    lc.setInstitutionId(1);
+    researcher.setLibraryCard(lc);
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
-    when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
-
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  4);
@@ -407,7 +400,7 @@ class DaaResourceTest {
     when(info.getBaseUriBuilder()).thenReturn(builder);
     when(builder.replacePath(any())).thenReturn(builder);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
     User admin = new User();
     admin.setSigningOfficialRole();
     admin.setInstitutionId(1);
@@ -418,16 +411,11 @@ class DaaResourceTest {
     daa.setDaaId(1);
     LibraryCard lc = new LibraryCard();
     lc.setId(1);
-    lc.setInstitutionId(2);
-    LibraryCard newLc = new LibraryCard();
-    newLc.setId(2);
-    newLc.setInstitutionId(1);
+    researcher.setLibraryCard(lc);
 
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
-    when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(Collections.singletonList(lc));
-    when(libraryCardService.createLibraryCardForSigningOfficial(any(), any())).thenReturn(newLc);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     Response response = resource.createLibraryCardDaaRelation(info, authUser, daa.getDaaId(),  admin.getUserId());
@@ -441,7 +429,7 @@ class DaaResourceTest {
     when(info.getBaseUriBuilder()).thenReturn(builder);
     when(builder.replacePath(any())).thenReturn(builder);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
     User admin = new User();
     admin.setSigningOfficialRole();
     admin.setInstitutionId(1);
@@ -452,12 +440,9 @@ class DaaResourceTest {
     daa.setDaaId(1);
     LibraryCard newLc = new LibraryCard();
     newLc.setId(1);
-    newLc.setInstitutionId(1);
-
 
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(userService.findUserById(any())).thenReturn(researcher);
-    when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(List.of());
     when(libraryCardService.createLibraryCardForSigningOfficial(any(), any())).thenReturn(newLc);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
@@ -467,30 +452,29 @@ class DaaResourceTest {
 
   @Test
   void testDeleteDaaValidUser() {
-    Integer daaId = RandomUtils.nextInt(10, 100);
+    Integer daaId = randomInt(10, 100);
 
     User user = new User();
+    user.setUserId(1);
     user.setAdminRole();
 
     LibraryCard libraryCard = new LibraryCard();
     libraryCard.setUserId(user.getUserId());
     libraryCard.setDaaIds(List.of(daaId));
+    user.setLibraryCard(libraryCard);
 
-    when(userService.findUserByEmail(any())).thenReturn(user);
-    when(libraryCardService.findLibraryCardsByUserId(any())).thenReturn(List.of(libraryCard));
+    when(userService.findUserById(any())).thenReturn(user);
     doNothing().when(libraryCardService).removeDaaFromLibraryCard(any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.deleteDaaForUser(authUser, daaId, RandomUtils.nextInt(10, 100));
+    Response response = resource.deleteDaaForUser(authUser, daaId, randomInt(10, 100));
     assert response.getStatus() == HttpStatus.SC_OK;
   }
 
   @Test
   void testDeleteDaaForInvalidUser() {
-    when(userService.findUserByEmail(any())).thenThrow(new RuntimeException("Internal server error"));
-
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.deleteDaaForUser(authUser, RandomUtils.nextInt(10, 100), RandomUtils.nextInt(10, 100));
+    Response response = resource.deleteDaaForUser(authUser, randomInt(10, 100), randomInt(10, 100));
     assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
   }
 
@@ -499,13 +483,13 @@ class DaaResourceTest {
     User user = new User();
     LibraryCard lc = new LibraryCard();
     user.setResearcherRole();
-    user.setInstitutionId(RandomUtils.nextInt(0,10));
-    user.addLibraryCard(lc);
+    user.setInstitutionId(randomInt(0,10));
+    user.setLibraryCard(lc);
     when(userService.findUserByEmail(any())).thenReturn(user);
     doNothing().when(daaService).sendDaaRequestEmails(any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.sendDaaRequestMessage(authUser, RandomUtils.nextInt(10, 100));
+    Response response = resource.sendDaaRequestMessage(authUser, randomInt(10, 100));
     assert response.getStatus() == HttpStatus.SC_OK;
   }
 
@@ -516,7 +500,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.sendDaaRequestMessage(authUser, RandomUtils.nextInt(10, 100));
+    Response response = resource.sendDaaRequestMessage(authUser, randomInt(10, 100));
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
 
@@ -525,13 +509,13 @@ class DaaResourceTest {
     User user = new User();
     LibraryCard lc = new LibraryCard();
     user.setResearcherRole();
-    user.setInstitutionId(RandomUtils.nextInt(0,10));
-    user.addLibraryCard(lc);
+    user.setInstitutionId(randomInt(0,10));
+    user.setLibraryCard(lc);
     when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new NotFoundException()).when(daaService).sendDaaRequestEmails(any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.sendDaaRequestMessage(authUser, RandomUtils.nextInt(10, 100));
+    Response response = resource.sendDaaRequestMessage(authUser, randomInt(10, 100));
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
 
@@ -540,24 +524,24 @@ class DaaResourceTest {
     User user = new User();
     LibraryCard lc = new LibraryCard();
     user.setResearcherRole();
-    user.setInstitutionId(RandomUtils.nextInt(0,10));
-    user.addLibraryCard(lc);
+    user.setInstitutionId(randomInt(0,10));
+    user.setLibraryCard(lc);
     when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new Exception()).when(daaService).sendDaaRequestEmails(any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.sendDaaRequestMessage(authUser, RandomUtils.nextInt(10, 100));
+    Response response = resource.sendDaaRequestMessage(authUser, randomInt(10, 100));
     assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
   }
 
   @Test
   void testSendDaaRequestMessageAssociationAlreadyExists() throws Exception {
     User user = new User();
-    int daaId = RandomUtils.nextInt(10, 100);
+    int daaId = randomInt(10, 100);
     LibraryCard lc = new LibraryCard();
     lc.setDaaIds(List.of(daaId));
     user.setResearcherRole();
-    user.setLibraryCards(List.of(lc));
+    user.setLibraryCard(lc);
     when(userService.findUserByEmail(any())).thenReturn(user);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
@@ -568,76 +552,76 @@ class DaaResourceTest {
   @Test
   void testSendNewDAAMessage() throws Exception {
     User user = new User();
-    int dacId = RandomUtils.nextInt(10,20);
+    int dacId = randomInt(10,20);
     Dac dac = new Dac();
     dac.setDacId(dacId);
-    dac.setName(RandomStringUtils.randomAlphabetic(10));
+    dac.setName(randomAlphabetic(10));
     user.setChairpersonRoleWithDAC(dacId);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dacService.findById(any())).thenReturn(dac);
     doNothing().when(daaService).sendNewDaaEmails(any(), any(), any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.sendNewDaaMessage(authUser, dacId,  RandomUtils.nextInt(10, 100), RandomStringUtils.randomAlphabetic(10));
+    Response response = resource.sendNewDaaMessage(authUser, dacId,  randomInt(10, 100), randomAlphabetic(10));
     assert response.getStatus() == HttpStatus.SC_OK;
   }
 
   @Test
   void testSendNewDAAMessageUserNotFound() {
     User user = new User();
-    int dacId = RandomUtils.nextInt(10,20);
+    int dacId = randomInt(10,20);
     user.setChairpersonRoleWithDAC(dacId);
     when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.sendNewDaaMessage(authUser, dacId,  RandomUtils.nextInt(10, 100), RandomStringUtils.randomAlphabetic(10));
+    Response response = resource.sendNewDaaMessage(authUser, dacId,  randomInt(10, 100), randomAlphabetic(10));
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
 
   @Test
   void testSendNewDAAMessageDacNotFound() {
     User user = new User();
-    int dacId = RandomUtils.nextInt(10,20);
+    int dacId = randomInt(10,20);
     user.setChairpersonRoleWithDAC(dacId);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dacService.findById(dacId)).thenThrow(new NotFoundException());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.sendNewDaaMessage(authUser, dacId, RandomUtils.nextInt(10, 100), RandomStringUtils.randomAlphabetic(10));
+    Response response = resource.sendNewDaaMessage(authUser, dacId, randomInt(10, 100), randomAlphabetic(10));
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
 
   @Test
   void testSendNewDAAMessageDaaNotFound() throws Exception {
     User user = new User();
-    int dacId = RandomUtils.nextInt(10,20);
+    int dacId = randomInt(10,20);
     Dac dac = new Dac();
     dac.setDacId(dacId);
-    dac.setName(RandomStringUtils.randomAlphabetic(10));
+    dac.setName(randomAlphabetic(10));
     user.setChairpersonRoleWithDAC(dacId);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dacService.findById(dacId)).thenReturn(dac);
     doThrow(new NotFoundException()).when(daaService).sendNewDaaEmails(any(), any(), any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.sendNewDaaMessage(authUser, dacId, RandomUtils.nextInt(10, 100), RandomStringUtils.randomAlphabetic(10));
+    Response response = resource.sendNewDaaMessage(authUser, dacId, randomInt(10, 100), randomAlphabetic(10));
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
 
   @Test
   void testSendNewDAAMessageEmailError() throws Exception {
     User user = new User();
-    int dacId = RandomUtils.nextInt(10,20);
+    int dacId = randomInt(10,20);
     Dac dac = new Dac();
     dac.setDacId(dacId);
-    dac.setName(RandomStringUtils.randomAlphabetic(10));
+    dac.setName(randomAlphabetic(10));
     user.setChairpersonRoleWithDAC(dacId);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(dacService.findById(dacId)).thenReturn(dac);
     doThrow(new Exception()).when(daaService).sendNewDaaEmails(any(), any(), any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.sendNewDaaMessage(authUser, dacId, RandomUtils.nextInt(10, 100), RandomStringUtils.randomAlphabetic(10));
+    Response response = resource.sendNewDaaMessage(authUser, dacId, randomInt(10, 100), randomAlphabetic(10));
     assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
   }
 
@@ -667,7 +651,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
     when(daaService.findById(daaId)).thenReturn(new DataAccessAgreement());
-    when(libraryCardService.addDaaToUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+    when(libraryCardService.addDaaToUserLibraryCard(any(), any(), any())).thenReturn(null);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -766,7 +750,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
     when(daaService.findById(daaId)).thenReturn(new DataAccessAgreement());
-    when(libraryCardService.removeDaaFromUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+    when(libraryCardService.removeDaaFromUserLibraryCard(any(), any())).thenReturn(null);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -792,7 +776,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
     when(daaService.findById(daaId)).thenReturn(new DataAccessAgreement());
-    when(libraryCardService.removeDaaFromUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+    when(libraryCardService.removeDaaFromUserLibraryCard(any(), any())).thenReturn(null);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -874,7 +858,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenReturn(researcher);
     when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
-    when(libraryCardService.addDaaToUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+    when(libraryCardService.addDaaToUserLibraryCard(any(), any(), any())).thenReturn(null);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -901,7 +885,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenReturn(researcher);
     when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
-    when(libraryCardService.addDaaToUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+    when(libraryCardService.addDaaToUserLibraryCard(any(), any(), any())).thenReturn(null);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -966,7 +950,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenReturn(researcher);
     when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
-    when(libraryCardService.removeDaaFromUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+    when(libraryCardService.removeDaaFromUserLibraryCard(any(), any())).thenReturn(null);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -993,7 +977,7 @@ class DaaResourceTest {
     when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenReturn(researcher);
     when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
-    when(libraryCardService.removeDaaFromUserLibraryCardByInstitution(any(), any(), any())).thenReturn(List.of());
+    when(libraryCardService.removeDaaFromUserLibraryCard(any(), any())).thenReturn(null);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -1041,11 +1025,11 @@ class DaaResourceTest {
 
   @Test
   void testAddDacToDaaAdmin() {
-    int daaId = RandomUtils.nextInt(10, 100);
+    int daaId = randomInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
 
     User admin = new User();
     admin.setAdminRole();
@@ -1061,11 +1045,11 @@ class DaaResourceTest {
 
   @Test
   void testAddDacToDaaChairperson() {
-    int daaId = RandomUtils.nextInt(10, 100);
+    int daaId = randomInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
 
     User chairperson = new User();
     chairperson.setChairpersonRoleWithDAC(dac.getDacId());
@@ -1081,13 +1065,13 @@ class DaaResourceTest {
 
   @Test
   void testAddDacToDaaChairpersonNoMatchingDac() {
-    int daaId = RandomUtils.nextInt(10, 100);
+    int daaId = randomInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
 
     User chairperson = new User();
-    chairperson.setChairpersonRoleWithDAC(RandomUtils.nextInt(100,200));
+    chairperson.setChairpersonRoleWithDAC(randomInt(100,200));
 
     when(userService.findUserByEmail(any())).thenReturn(chairperson);
 
@@ -1099,10 +1083,9 @@ class DaaResourceTest {
 
   @Test
   void testAddDacToDaaFromUserForbidden() {
-    int daaId = RandomUtils.nextInt(10, 100);
-    DataAccessAgreement daa = new DataAccessAgreement();
+    int daaId = randomInt(10, 100);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
 
     User researcher = new User();
     researcher.setResearcherRole();
@@ -1117,10 +1100,10 @@ class DaaResourceTest {
 
   @Test
   void testAddDacToDaaDaaNotFound() {
-    int daaId = RandomUtils.nextInt(10, 100);
+    int daaId = randomInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
 
     User admin = new User();
     admin.setAdminRole();
@@ -1136,10 +1119,10 @@ class DaaResourceTest {
 
   @Test
   void testAddDacToDaaDacNotFound() {
-    int daaId = RandomUtils.nextInt(10, 100);
+    int daaId = randomInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
 
     User admin = new User();
     admin.setAdminRole();
@@ -1154,11 +1137,11 @@ class DaaResourceTest {
 
   @Test
   void testAddDacToDaaAlreadyExists() {
-    int daaId = RandomUtils.nextInt(10, 100);
+    int daaId = randomInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
 
     User admin = new User();
     admin.setAdminRole();
@@ -1174,17 +1157,17 @@ class DaaResourceTest {
 
   @Test
   void testAddDacToDaaDaaWithDacs() {
-    int daaId = RandomUtils.nextInt(10, 100);
+    int daaId = randomInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     Dac dac1 = new Dac();
-    dac1.setDacId(RandomUtils.nextInt(10, 100));
+    dac1.setDacId(randomInt(10, 100));
     Dac dac2 = new Dac();
-    dac2.setDacId(RandomUtils.nextInt(10, 100));
+    dac2.setDacId(randomInt(10, 100));
     daa.addDac(dac1);
     daa.addDac(dac2);
     Dac dac3 = new Dac();
-    dac3.setDacId(RandomUtils.nextInt(10, 100));
+    dac3.setDacId(randomInt(10, 100));
 
     User admin = new User();
     admin.setAdminRole();
@@ -1200,11 +1183,11 @@ class DaaResourceTest {
 
   @Test
   void testRemoveDacFromDaaAdmin() throws Exception {
-    int daaId = RandomUtils.nextInt(10, 100);
+    int daaId = randomInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
     daa.addDac(dac);
 
     User admin = new User();
@@ -1221,11 +1204,11 @@ class DaaResourceTest {
 
   @Test
   void testRemoveDacFromDaaChairperson() throws Exception {
-    int daaId = RandomUtils.nextInt(10, 100);
+    int daaId = randomInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
     daa.addDac(dac);
 
     User chairperson = new User();
@@ -1242,15 +1225,15 @@ class DaaResourceTest {
 
   @Test
   void testRemoveDacFromDaaChairpersonNoMatchingDac() {
-    int daaId = RandomUtils.nextInt(10, 100);
+    int daaId = randomInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
     daa.addDac(dac);
 
     User chairperson = new User();
-    chairperson.setChairpersonRoleWithDAC(RandomUtils.nextInt(100,200));
+    chairperson.setChairpersonRoleWithDAC(randomInt(100,200));
 
     when(userService.findUserByEmail(any())).thenReturn(chairperson);
 
@@ -1262,11 +1245,11 @@ class DaaResourceTest {
 
   @Test
   void testRemoveDacFromDaaFromUserForbidden() {
-    int daaId = RandomUtils.nextInt(10, 100);
+    int daaId = randomInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
     daa.addDac(dac);
 
     User researcher = new User();
@@ -1282,11 +1265,11 @@ class DaaResourceTest {
 
   @Test
   void testRemoveDacFromDaaDaaNotFound() {
-    int daaId = RandomUtils.nextInt(10, 100);
+    int daaId = randomInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
     daa.addDac(dac);
 
     User admin = new User();
@@ -1303,11 +1286,11 @@ class DaaResourceTest {
 
   @Test
   void testRemoveDacFromDaaDacNotFound() {
-    int daaId = RandomUtils.nextInt(10, 100);
+    int daaId = randomInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
     daa.addDac(dac);
 
     User admin = new User();
@@ -1323,11 +1306,11 @@ class DaaResourceTest {
 
   @Test
   void testRemoveDacFromDaaDoesNotExist() throws Exception {
-    int daaId = RandomUtils.nextInt(10, 100);
+    int daaId = randomInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     Dac dac = new Dac();
-    dac.setDacId(RandomUtils.nextInt(10, 100));
+    dac.setDacId(randomInt(10, 100));
 
     User admin = new User();
     admin.setAdminRole();
@@ -1343,7 +1326,7 @@ class DaaResourceTest {
 
   @Test
   void testDeleteDaaAdmin() {
-    int daaId = RandomUtils.nextInt(10, 100);
+    int daaId = randomInt(10, 100);
 
     User admin = new User();
     admin.setAdminRole();
@@ -1362,7 +1345,7 @@ class DaaResourceTest {
 
   @Test
   void testDeleteDaaDaaNotFound() {
-    int daaId = RandomUtils.nextInt(10, 100);
+    int daaId = randomInt(10, 100);
 
     User admin = new User();
     admin.setAdminRole();
@@ -1379,7 +1362,7 @@ class DaaResourceTest {
 
   @Test
   void testDeleteDaaForbiddenUser() {
-    int daaId = RandomUtils.nextInt(10, 100);
+    int daaId = randomInt(10, 100);
 
     User researcher = new User();
     researcher.setResearcherRole();

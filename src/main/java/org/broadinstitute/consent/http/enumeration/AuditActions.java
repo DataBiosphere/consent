@@ -6,7 +6,9 @@ public enum AuditActions {
   DELETE("delete"),
   REMOVE("remove"),
   REPLACE("replace"),
-  UPDATE("update");
+  UPDATE("update"),
+  INDEXED("indexed"),
+  DEINDEXED("deindexed");
 
   private final String value;
 

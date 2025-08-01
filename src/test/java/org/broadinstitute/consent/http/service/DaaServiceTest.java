@@ -12,6 +12,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
@@ -212,8 +213,8 @@ class DaaServiceTest {
     when(user.getInstitutionId()).thenReturn(1);
 
     SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
-    signingOfficial.displayName = "Official Name";
-    signingOfficial.email = "official@example.com";
+    signingOfficial.setDisplayName("Official Name");
+    signingOfficial.setEmail("official@example.com");
 
     Institution institution = mock(Institution.class);
     when(institution.getSigningOfficials()).thenReturn(List.of(signingOfficial));
@@ -226,12 +227,10 @@ class DaaServiceTest {
     when(daa.getFile()).thenReturn(file);
     when(daaDAO.findById(any())).thenReturn(daa);
 
-    doNothing().when(emailService).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
-
     initService();
 
     assertDoesNotThrow(() -> service.sendDaaRequestEmails(user, 1));
-    verify(emailService, times(1)).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
+    verify(emailService).sendDaaRequestMessage(any(), any(), any(), any());
   }
 
   @Test
@@ -240,12 +239,12 @@ class DaaServiceTest {
     when(user.getInstitutionId()).thenReturn(1);
 
     SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
-    signingOfficial.displayName = "Official Name";
-    signingOfficial.email = "official@example.com";
+    signingOfficial.setDisplayName("Official Name");
+    signingOfficial.setEmail("official@example.com");
 
     SimplifiedUser signingOfficial2 = mock(SimplifiedUser.class);
-    signingOfficial2.displayName = "Official Name2";
-    signingOfficial2.email = "official2@example.com";
+    signingOfficial2.setDisplayName("Official Name2");
+    signingOfficial2.setEmail("official2@example.com");
 
     Institution institution = mock(Institution.class);
     when(institution.getSigningOfficials()).thenReturn(List.of(signingOfficial, signingOfficial2));
@@ -258,12 +257,10 @@ class DaaServiceTest {
     when(daa.getFile()).thenReturn(file);
     when(daaDAO.findById(any())).thenReturn(daa);
 
-    doNothing().when(emailService).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
-
     initService();
 
     assertDoesNotThrow(() -> service.sendDaaRequestEmails(user, 1));
-    verify(emailService, times(2)).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
+    verify(emailService, times(2)).sendDaaRequestMessage(any(), any(), any(), any());
   }
 
   @Test
@@ -271,22 +268,22 @@ class DaaServiceTest {
     User user = mock(User.class);
 
     SimplifiedUser researcher = mock(SimplifiedUser.class);
-    researcher.displayName = "Official Name";
-    researcher.email = "official@example.com";
-    researcher.institutionId = RandomUtils.nextInt(0,50);
+    researcher.setDisplayName("Official Name");
+    researcher.setEmail("official@example.com");
+    researcher.setInstitutionId(RandomUtils.nextInt(0,50));
 
     SimplifiedUser researcher2 = mock(SimplifiedUser.class);
-    researcher2.displayName = "Official Name2";
-    researcher2.email = "official2@example.com";
-    researcher2.institutionId = RandomUtils.nextInt(0,50);
+    researcher2.setDisplayName("Official Name2");
+    researcher2.setEmail("official2@example.com");
+    researcher2.setInstitutionId(RandomUtils.nextInt(0,50));
 
     SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
-    signingOfficial.displayName = "Official Name";
-    signingOfficial.email = "official@example.com";
+    signingOfficial.setDisplayName("Official Name");
+    signingOfficial.setEmail("official@example.com");
 
     SimplifiedUser signingOfficial2 = mock(SimplifiedUser.class);
-    signingOfficial2.displayName = "Official Name2";
-    signingOfficial2.email = "official2@example.com";
+    signingOfficial2.setDisplayName("Official Name2");
+    signingOfficial2.setEmail("official2@example.com");
 
     DataAccessAgreement daa = mock(DataAccessAgreement.class);
     FileStorageObject file = mock(FileStorageObject.class);
@@ -299,8 +296,8 @@ class DaaServiceTest {
     when(userService.getUsersByDaaId(any())).thenReturn(List.of(researcher, researcher2));
     when(userService.findSOsByInstitutionId(any())).thenReturn(List.of(signingOfficial, signingOfficial2));
     assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
-    verify(emailService, times(2)).sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any(), any());
-    verify(emailService, times(2)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any(), any());
+    verify(emailService, times(2)).sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any());
+    verify(emailService, times(2)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any());
   }
 
   @Test
@@ -308,17 +305,17 @@ class DaaServiceTest {
     User user = mock(User.class);
 
     SimplifiedUser researcher = mock(SimplifiedUser.class);
-    researcher.displayName = "Official Name";
-    researcher.email = "official@example.com";
-    researcher.institutionId = RandomUtils.nextInt(0,50);
+    researcher.setDisplayName("Official Name");
+    researcher.setEmail("official@example.com");
+    researcher.setInstitutionId(RandomUtils.nextInt(0,50));
 
     SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
-    signingOfficial.displayName = "Official Name";
-    signingOfficial.email = "official@example.com";
+    signingOfficial.setDisplayName("Official Name");
+    signingOfficial.setEmail("official@example.com");
 
     SimplifiedUser signingOfficial2 = mock(SimplifiedUser.class);
-    signingOfficial2.displayName = "Official Name2";
-    signingOfficial2.email = "official2@example.com";
+    signingOfficial2.setDisplayName("Official Name2");
+    signingOfficial2.setEmail("official2@example.com");
 
     DataAccessAgreement daa = mock(DataAccessAgreement.class);
     FileStorageObject file = mock(FileStorageObject.class);
@@ -331,8 +328,8 @@ class DaaServiceTest {
     when(userService.getUsersByDaaId(any())).thenReturn(List.of(researcher));
     when(userService.findSOsByInstitutionId(any())).thenReturn(List.of(signingOfficial, signingOfficial2));
     assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
-    verify(emailService, times(1)).sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any(), any());
-    verify(emailService, times(2)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any(), any());
+    verify(emailService, times(1)).sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any());
+    verify(emailService, times(2)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any());
   }
 
   @Test
@@ -358,8 +355,7 @@ class DaaServiceTest {
 
     when(userService.getUsersByDaaId(any())).thenReturn(List.of());
     assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
-    verify(emailService, times(0)).sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any(), any());
-    verify(emailService, times(0)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any(), any());
+    verifyNoInteractions(emailService);
   }
 
   @Test
@@ -380,8 +376,8 @@ class DaaServiceTest {
     when(user.getInstitutionId()).thenReturn(1);
 
     SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
-    signingOfficial.displayName = "Official Name";
-    signingOfficial.email = "official@example.com";
+    signingOfficial.setDisplayName("Official Name");
+    signingOfficial.setEmail("official@example.com");
 
     Institution institution = mock(Institution.class);
     when(institution.getSigningOfficials()).thenReturn(List.of(signingOfficial));
@@ -394,12 +390,10 @@ class DaaServiceTest {
     when(daa.getFile()).thenReturn(file);
     when(daaDAO.findById(any())).thenReturn(daa);
 
-    doNothing().when(emailService).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
-
     initService();
 
     assertDoesNotThrow(() -> service.sendDaaRequestEmails(user, 1));
-    verify(emailService, times(1)).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
+    verify(emailService).sendDaaRequestMessage(any(), any(), any(), any());
   }
 
   @Test
@@ -408,12 +402,12 @@ class DaaServiceTest {
     when(user.getInstitutionId()).thenReturn(1);
 
     SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
-    signingOfficial.displayName = "Official Name";
-    signingOfficial.email = "official@example.com";
+    signingOfficial.setDisplayName("Official Name");
+    signingOfficial.setEmail("official@example.com");
 
     SimplifiedUser signingOfficial2 = mock(SimplifiedUser.class);
-    signingOfficial2.displayName = "Official Name2";
-    signingOfficial2.email = "official2@example.com";
+    signingOfficial2.setDisplayName("Official Name2");
+    signingOfficial2.setEmail("official2@example.com");
 
     Institution institution = mock(Institution.class);
     when(institution.getSigningOfficials()).thenReturn(List.of(signingOfficial, signingOfficial2));
@@ -426,12 +420,10 @@ class DaaServiceTest {
     when(daa.getFile()).thenReturn(file);
     when(daaDAO.findById(any())).thenReturn(daa);
 
-    doNothing().when(emailService).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
-
     initService();
 
     assertDoesNotThrow(() -> service.sendDaaRequestEmails(user, 1));
-    verify(emailService, times(2)).sendDaaRequestMessage(any(), any(), any(), any(), any(), any());
+    verify(emailService, times(2)).sendDaaRequestMessage(any(), any(), any(), any());
   }
 
   @Test

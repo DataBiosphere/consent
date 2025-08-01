@@ -1,14 +1,8 @@
 type: object
 properties:
   eraAuthorized:
-    type: string
+    type: boolean
   eraExpiration:
     type: string
-  suggestedInstitution:
-    type: string
-  suggestedSigningOfficial:
-    type: string
-  selectedSigningOfficial:
-    type: string
   daaAcceptance:
-    type: string
+    type: boolean

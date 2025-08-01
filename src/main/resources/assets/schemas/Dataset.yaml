@@ -16,14 +16,14 @@ properties:
     format: int32
     description: The create user id, if available
   createUser:
-    description: The create user, if available
     $ref: './User.yaml'
+  createDate:
+    type: string
+    format: date-time
+    description: The dataset creation date
   dacId:
-    type: string
+    type: integer
     description: The id of the DAC this dataset belongs to, if defined.
-  consentId:
-    type: string
-    description: The consent id.
   translatedDataUse:
     type: string
     description: The Data Use in a readable format
@@ -49,12 +49,16 @@ properties:
         propertyValue: http://...
       - propertyName: Sample Collection ID
         propertyValue: SC-000
+  studyId:
+    type: integer
+    format: int32
+    description: The dataset's study id.
   study:
     $ref: "./Study.yaml"
-    description: The study which produced this dataset.
   alias:
-    type: string
-    description: The dataset id, short format
+    type: integer
+    format: int32
+    description: The dataset alias
   datasetIdentifier:
     type: string
     description: The dataset identifier, long format
@@ -67,7 +71,17 @@ properties:
   dacApproval:
     type: boolean
     description: DAC approval/disapproval for this dataset
-  nihCertificationFile:
+  nihInstitutionalCertificationFile:
     $ref: './FileStorageObject.yaml'
-  alternativeDataSharingPlanFile:
-    $ref: './FileStorageObject.yaml'
+  updateUserId:
+    type: integer
+    format: int32
+    description: The update user id, if available
+  updateDate:
+    type: string
+    format: date-time
+    description: The dataset update date
+  indexedDate:
+    type: string
+    format: date-time
+    description: The dataset index date

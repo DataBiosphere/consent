@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
@@ -7,6 +8,8 @@ import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -20,6 +23,7 @@ import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
+import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Dac;
@@ -27,6 +31,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
@@ -37,6 +42,7 @@ import org.broadinstitute.consent.http.models.elastic_search.InstitutionTerm;
 import org.broadinstitute.consent.http.models.elastic_search.StudyTerm;
 import org.broadinstitute.consent.http.models.elastic_search.UserTerm;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
+import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.elasticsearch.client.Request;
@@ -52,7 +58,9 @@ public class ElasticSearchService implements ConsentLogger {
   private final OntologyService ontologyService;
   private final InstitutionDAO institutionDAO;
   private final DatasetDAO datasetDAO;
+  private final DatasetServiceDAO datasetServiceDAO;
   private final StudyDAO studyDAO;
+  private final LibraryCardDAO libraryCardDAO;
 
   public ElasticSearchService(
       RestClient esClient,
@@ -63,7 +71,9 @@ public class ElasticSearchService implements ConsentLogger {
       OntologyService ontologyService,
       InstitutionDAO institutionDAO,
       DatasetDAO datasetDAO,
-      StudyDAO studyDAO) {
+      DatasetServiceDAO datasetServiceDAO,
+      StudyDAO studyDAO,
+      LibraryCardDAO libraryCardDAO) {
     this.esClient = esClient;
     this.esConfig = esConfig;
     this.dacDAO = dacDAO;
@@ -72,15 +82,17 @@ public class ElasticSearchService implements ConsentLogger {
     this.ontologyService = ontologyService;
     this.institutionDAO = institutionDAO;
     this.datasetDAO = datasetDAO;
+    this.datasetServiceDAO = datasetServiceDAO;
     this.studyDAO = studyDAO;
+    this.libraryCardDAO = libraryCardDAO;
   }
 
 
-  private static final String bulkHeader = """
+  private static final String BULK_HEADER = """
       { "index": {"_type": "dataset", "_id": "%d"} }
       """;
 
-  private static final String deleteQuery = """
+  private static final String DELETE_QUERY = """
       { "query": { "bool": { "must": [ { "match": { "_type": "dataset" } }, { "match": { "_id": "%d" } } ] } } }
       """;
 
@@ -95,12 +107,13 @@ public class ElasticSearchService implements ConsentLogger {
     return Response.status(status).entity(body).build();
   }
 
-  public Response indexDatasetTerms(List<DatasetTerm> datasets) throws IOException {
+  public Response indexDatasetTerms(List<DatasetTerm> datasets, User user) throws IOException {
     List<String> bulkApiCall = new ArrayList<>();
 
     datasets.forEach(dsTerm -> {
-      bulkApiCall.add(bulkHeader.formatted(dsTerm.getDatasetId()));
+      bulkApiCall.add(BULK_HEADER.formatted(dsTerm.getDatasetId()));
       bulkApiCall.add(GsonUtil.getInstance().toJson(dsTerm) + "\n");
+      updateDatasetIndexDate(dsTerm.getDatasetId(), user.getUserId(), Instant.now());
     });
 
     Request bulkRequest = new Request(
@@ -114,13 +127,14 @@ public class ElasticSearchService implements ConsentLogger {
     return performRequest(bulkRequest);
   }
 
-  public Response deleteIndex(Integer datasetId) throws IOException {
+  public Response deleteIndex(Integer datasetId, Integer userId) throws IOException {
     Request deleteRequest = new Request(
         HttpMethod.POST,
         "/" + esConfig.getDatasetIndexName() + "/_delete_by_query");
     deleteRequest.setEntity(new NStringEntity(
-        deleteQuery.formatted(datasetId),
+        DELETE_QUERY.formatted(datasetId),
         ContentType.APPLICATION_JSON));
+    updateDatasetIndexDate(datasetId, userId, null);
     return performRequest(deleteRequest);
   }
 
@@ -243,49 +257,73 @@ public class ElasticSearchService implements ConsentLogger {
     return new InstitutionTerm(institution.getId(), institution.getName());
   }
 
-  public Response indexDataset(Dataset dataset) throws IOException {
-    return indexDatasetTerms(List.of(toDatasetTerm(dataset)));
+  /**
+   * Synchronize the dataset in the ES index. This will only index the dataset if it has been
+   * previously indexed, UNLESS the force argument is true which means it will index the dataset
+   * and update the dataset's last indexed date value.
+   *
+   * @param dataset The Dataset
+   * @param user    The User
+   * @param force   Boolean to force the index update regardless of dataset's indexed date status.
+   */
+  public void synchronizeDatasetInESIndex(Dataset dataset, User user, boolean force) {
+    if (force || dataset.getIndexedDate() != null) {
+      try (var response = indexDataset(dataset.getDatasetId(), user)) {
+        if (!HttpStatusCodes.isSuccess(response.getStatus())) {
+          logWarn("Response error, unable to index dataset: %s".formatted(dataset.getDatasetId()));
+        }
+      } catch (IOException e) {
+        logWarn("Exception, unable to index dataset: %s".formatted(dataset.getDatasetId()));
+      }
+    }
   }
 
-  public Response indexDatasets(List<Dataset> datasets) throws IOException {
-    List<DatasetTerm> datasetTerms = datasets.stream().map(this::toDatasetTerm).toList();
-    return indexDatasetTerms(datasetTerms);
+  public Response indexDataset(Integer datasetId, User user) throws IOException {
+    return indexDatasets(List.of(datasetId), user);
+  }
+
+  public Response indexDatasets(List<Integer> datasetIds, User user) throws IOException {
+    // Datasets in list context may not have their study populated, so we need to ensure that is
+    // true before trying to index them in ES.
+    List<DatasetTerm> datasetTerms = datasetIds.stream()
+        .map(datasetDAO::findDatasetById)
+        .map(this::toDatasetTerm)
+        .toList();
+    return indexDatasetTerms(datasetTerms, user);
   }
 
   /**
    * Sequentially index datasets to ElasticSearch by ID list. Note that this is intended for large
    * lists of dataset ids. For small sets of datasets (i.e. <~25), it is efficient to index them in
-   * bulk using the {@link #indexDatasets(List)} method.
+   * bulk using the {@link #indexDatasets(List, User)} method.
    *
    * @param datasetIds List of Dataset IDs to index
    * @return StreamingOutput of ElasticSearch responses from indexing datasets
    */
-  public StreamingOutput indexDatasetIds(List<Integer> datasetIds) {
+  public StreamingOutput indexDatasetIds(List<Integer> datasetIds, User user) {
     Integer lastDatasetId = datasetIds.get(datasetIds.size() - 1);
     return output -> {
       output.write("[".getBytes());
       datasetIds.forEach(id -> {
-        Dataset dataset = datasetDAO.findDatasetById(id);
-        try (Response response = indexDataset(dataset)) {
+        try (Response response = indexDataset(id, user)) {
           output.write(response.getEntity().toString().getBytes());
           if (!id.equals(lastDatasetId)) {
             output.write(",".getBytes());
           }
           output.write("\n".getBytes());
         } catch (IOException e) {
-          logException("Error indexing dataset term for dataset id: %d ".formatted(dataset.getDatasetId()), e);
+          logException("Error indexing dataset term for dataset id: %d ".formatted(id), e);
         }
       });
       output.write("]".getBytes());
     };
   }
 
-  public Response indexStudy(Integer studyId) {
+  public Response indexStudy(Integer studyId, User user) {
     Study study = studyDAO.findStudyById(studyId);
     // The dao call above does not populate its datasets so we need to check for datasetIds
-    if (study != null && study.getDatasetIds() != null && !study.getDatasetIds().isEmpty()) {
-      List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds().stream().toList());
-      try (Response response = indexDatasets(datasets)) {
+    if (study != null && !study.getDatasetIds().isEmpty()) {
+      try (Response response = indexDatasets(study.getDatasetIds().stream().toList(), user)) {
         return response;
       } catch (Exception e) {
         logException(String.format("Failed to index datasets for study id: %d", studyId), e);
@@ -337,7 +375,11 @@ public class ElasticSearchService implements ConsentLogger {
         .toList();
 
     if (!approvedUserIds.isEmpty()) {
-      term.setApprovedUserIds(approvedUserIds);
+      List<Integer> approvedLCUserIds = libraryCardDAO.findLibraryCardsByUserIds(approvedUserIds)
+          .stream()
+          .map(LibraryCard::getUserId)
+          .toList();
+      term.setApprovedUserIds(approvedLCUserIds);
     }
 
     if (Objects.nonNull(dataset.getDataUse())) {
@@ -381,6 +423,20 @@ public class ElasticSearchService implements ConsentLogger {
     );
 
     return term;
+  }
+
+  protected void updateDatasetIndexDate(Integer datasetId, Integer userId, Instant indexDate)
+      {
+    // It is possible that a dataset has been deleted. If so, we don't want to try and update it.
+    Dataset dataset = datasetDAO.findDatasetById(datasetId);
+    if (dataset != null) {
+      try {
+        datasetServiceDAO.updateDatasetIndex(datasetId, userId, indexDate);
+      } catch (SQLException e) {
+        // We don't want to send these to Sentry, but we do want to log them for follow up off cycle
+        logWarn("Error updating dataset indexed date for dataset id: %d ".formatted(datasetId), e);
+      }
+    }
   }
 
   Optional<DatasetProperty> findDatasetProperty(Collection<DatasetProperty> props,

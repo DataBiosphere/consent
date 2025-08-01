@@ -133,7 +133,7 @@ public class DacResource extends Resource {
   @Path("{dacId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
-  public Response findById(@PathParam("dacId") Integer dacId) {
+  public Response findById(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId) {
     Dac dac = findDacById(dacId);
     return Response.ok().entity(unmarshal(dac)).build();
   }
@@ -142,10 +142,11 @@ public class DacResource extends Resource {
   @Path("{dacId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN})
-  public Response deleteDac(@PathParam("dacId") Integer dacId) {
+  public Response deleteDac(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId) {
     findDacById(dacId);
+    User user = userService.findUserByEmail(authUser.getEmail());
     try {
-      dacService.deleteDac(dacId);
+      dacService.deleteDac(user, dacId);
     } catch (Exception e) {
       logger.log(Level.SEVERE, "Error deleting DAC with id: " + dacId + "; " + e);
       return Response.status(500)
@@ -181,8 +182,9 @@ public class DacResource extends Resource {
     User user = findDacUser(userId);
     Dac dac = findDacById(dacId);
     checkUserRoleInDac(dac, authUser);
+    User auditUser = userService.findUserByEmail(authUser.getEmail());
     try {
-      dacService.removeDacMember(role, user, dac);
+      dacService.removeDacMember(role, user, dac, auditUser.getUserId());
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -216,8 +218,9 @@ public class DacResource extends Resource {
     User user = findDacUser(userId);
     Dac dac = findDacById(dacId);
     checkUserRoleInDac(dac, authUser);
+    User auditUser = userService.findUserByEmail(authUser.getEmail());
     try {
-      dacService.removeDacMember(role, user, dac);
+      dacService.removeDacMember(role, user, dac, auditUser.getUserId());
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -239,7 +242,7 @@ public class DacResource extends Resource {
   @Path("users/{term}")
   @Produces("application/json")
   @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
-  public Response filterUsers(@PathParam("term") String term) {
+  public Response filterUsers(@Auth AuthUser authUser, @PathParam("term") String term) {
     List<User> users = dacService.findAllDACUsersBySearchString(term);
     return Response.ok().entity(users).build();
   }
@@ -270,7 +273,7 @@ public class DacResource extends Resource {
         throw new BadRequestException("Invalid request payload");
       }
       Dataset updatedDataset = datasetService.approveDataset(dataset, user, payload.getApproval());
-      try (Response indexResponse = elasticSearchService.indexDataset(updatedDataset))  {
+      try (Response indexResponse = elasticSearchService.indexDataset(updatedDataset.getDatasetId(), user))  {
         if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
           logWarn("Non-OK response when reindexing dataset with id: " + datasetId);
         }

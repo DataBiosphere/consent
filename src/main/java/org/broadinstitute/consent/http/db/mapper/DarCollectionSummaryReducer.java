@@ -1,10 +1,13 @@
 package org.broadinstitute.consent.http.db.mapper;
 
+import java.sql.Timestamp;
 import java.util.Map;
 import java.util.Objects;
+import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.mapper.NoSuchMapperException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
@@ -27,6 +30,12 @@ public class DarCollectionSummaryReducer implements
     String darReferenceId;
 
     try {
+      if (hasColumn(rowView, "closeout", String.class)) {
+        String string = rowView.getColumn("closeout", String.class);
+        CloseoutSupplement closeout = GsonUtil.getInstance().fromJson(string, CloseoutSupplement.class);
+        summary.setCloseoutSupplement(closeout);
+      }
+
       datasetId = rowView.getColumn("dd_datasetid", Integer.class);
       if (Objects.nonNull(datasetId)) {
         summary.addDatasetId(datasetId);
@@ -39,11 +48,16 @@ public class DarCollectionSummaryReducer implements
       }
 
       try {
-        darReferenceId = rowView.getColumn("dar_reference_id", String.class);
+        darReferenceId = rowView.getColumn("latest_dar_reference_id", String.class);
         if (Objects.nonNull(darReferenceId)) {
-          summary.addReferenceId(darReferenceId);
+          summary.setLatestReferenceId(darReferenceId);
         }
-
+        hasOptionalColumn(rowView, "latest_dar_parent_id", Integer.class)
+            .ifPresent(darParentId -> summary.addParentChildRelationship(darParentId, darReferenceId));
+        hasOptionalColumn(rowView, "latest_dar_closeout_approving_so_id", Integer.class)
+            .ifPresent(summary::setCloseoutSigningOfficialId);
+        hasOptionalColumn(rowView, "latest_dar_closeout_so_approval_timestamp", Timestamp.class)
+            .ifPresent(summary::setCloseoutSigningOfficialApprovalDate);
         darStatus = rowView.getColumn("dar_status", String.class);
         if (Objects.nonNull(darStatus)) {
           summary.addStatus(darStatus, darReferenceId);

@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.cloud.storage.BlobId;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -219,7 +220,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
     assertEquals(1, datasets.size());
 
-    Dataset dataset1 = datasets.get(0);
+    Dataset dataset1 = datasetDAO.findDatasetById(createdIds.get(0));
 
     assertNotNull(dataset1.getStudy());
     Study s = dataset1.getStudy();
@@ -275,7 +276,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
     assertEquals(1, datasets.size());
 
-    Dataset dataset1 = datasets.get(0);
+    Dataset dataset1 = datasetDAO.findDatasetById(createdIds.get(0));
 
     assertNotNull(dataset1.getStudy());
     Study s = dataset1.getStudy();
@@ -348,7 +349,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
     assertEquals(1, datasets.size());
 
-    Dataset dataset1 = datasets.get(0);
+    Dataset dataset1 = datasetDAO.findDatasetById(createdIds.get(0));
 
     assertNotNull(dataset1.getStudy());
     Study s = dataset1.getStudy();
@@ -730,6 +731,21 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testDeleteStudyWithNoDatasets() throws Exception {
+    // Registration process creates a study and dataset with properties
+    Study study = createStudy(List.of());
+    // Delete any created datasets
+    study.getDatasetIds().forEach(id -> {
+      datasetDAO.deleteDatasetPropertiesByDatasetId(id);
+      datasetDAO.deleteDatasetById(id);
+    });
+    // Ensure that study deletion succeeds
+    serviceDAO.deleteStudy(study, createUser());
+    Study deletedStudy = studyDAO.findStudyById(study.getStudyId());
+    assertNull(deletedStudy);
+  }
+
+  @Test
   void testExecuteUpdateDatasetWithNullName() throws Exception {
     // This creates a study with a single dataset:
     Study study = createStudy(List.of());
@@ -946,6 +962,38 @@ class DatasetServiceDAOTest extends DAOTestHelper {
         audits.stream().anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.UPDATE.name())));
   }
 
+  @Test
+  void testUpdateDatasetIndexWithDate() throws Exception {
+    Dataset dataset = createDataset();
+    serviceDAO.updateDatasetIndex(dataset.getDatasetId(), dataset.getCreateUserId(), Instant.now());
+    Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
+
+    // Validate that the indexed date is updated
+    assertNotNull(updatedDataset.getIndexedDate());
+
+    // Validate that an INDEXED audit record was added:
+    List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(updatedDataset.getDatasetId());
+    assertFalse(audits.isEmpty());
+    assertTrue(
+        audits.stream().anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.INDEXED.name())));
+  }
+
+  @Test
+  void testUpdateDatasetIndexWithNull() throws Exception {
+    Dataset dataset = createDataset();
+    serviceDAO.updateDatasetIndex(dataset.getDatasetId(), dataset.getCreateUserId(), null);
+    Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
+
+    // Validate that the indexed date is null
+    assertNull(updatedDataset.getIndexedDate());
+
+    // Validate that a DEINDEXED audit record was added:
+    List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(updatedDataset.getDatasetId());
+    assertFalse(audits.isEmpty());
+    assertTrue(
+        audits.stream().anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.DEINDEXED.name())));
+  }
+
   /**
    * Helper method to create a study with two props and one dataset
    *
@@ -995,8 +1043,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
     List<Integer> createdIds = serviceDAO.insertDatasetRegistration(studyInsert,
         List.of(datasetInsert));
-    List<Dataset> createdDatasets = datasetDAO.findDatasetsByIdList(createdIds);
-    return createdDatasets.get(0).getStudy();
+    Dataset createdDataset = datasetDAO.findDatasetById(createdIds.get(0));
+    return createdDataset.getStudy();
   }
 
   private Dataset createDataset() {

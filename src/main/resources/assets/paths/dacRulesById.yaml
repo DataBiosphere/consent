@@ -1,0 +1,27 @@
+get:
+  summary: Get DAC automation rules by ID
+  description: View the rules available and their state
+  parameters:
+    - name: dacId
+      in: path
+      description: The DAC Id
+      required: true
+      schema:
+        type: integer
+  tags:
+    - DAC
+  responses:
+    200:
+      description: The Data Access Committee automatic processing rules matching the provided ID
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/DacAutomationRule.yaml'
+    403:
+      description: The user is not authorized to retrieve these settings
+    401:
+      description: No DAC found with the given ID
+    500:
+      description: Internal Server Error
