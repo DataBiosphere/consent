@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.models.passport;
 
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
-import java.util.Calendar;
 import java.util.Date;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 
@@ -44,6 +42,6 @@ public class ControlledAccessGrants implements VisaClaimType {
 
   @Override
   public String by() {
-    return VisaBy.dac.name();
+    return VisaBy.DAC.name().toLowerCase();
   }
 }

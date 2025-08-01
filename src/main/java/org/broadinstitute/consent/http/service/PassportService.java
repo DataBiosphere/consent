@@ -82,8 +82,8 @@ public class PassportService {
           VisaClaimType grant = new ControlledAccessGrants(d);
           VisaClaim claim = new VisaClaim(grant.type(), grant.asserted(), grant.value(), grant.source(), grant.by());
           Instant now = Instant.now();
-          Integer iat = Long.valueOf(now.toEpochMilli()).intValue();
-          Integer exp = Long.valueOf(now.plusSeconds(3600).toEpochMilli()).intValue();
+          Long iat = now.toEpochMilli();
+          Long exp = now.plusSeconds(3600).toEpochMilli();
           return new Visa(ISS, user.getEmail(), iat, exp, claim);
         }).toList();
   }
@@ -112,8 +112,8 @@ public class PassportService {
     VisaClaimType affiliationAndRole = new AffiliationAndRole(user);
     VisaClaim affiliationClaim = new VisaClaim(affiliationAndRole.type(), affiliationAndRole.asserted(), affiliationAndRole.value(), affiliationAndRole.source(), affiliationAndRole.by());
     Instant now = Instant.now();
-    Integer iat = Long.valueOf(now.toEpochMilli()).intValue();
-    Integer exp = Long.valueOf(now.plusSeconds(3600).toEpochMilli()).intValue();
+    Long iat = now.toEpochMilli();
+    Long exp = now.plusSeconds(3600).toEpochMilli();
     return new Visa(ISS, user.getEmail(), iat, exp, affiliationClaim);
   }
 }

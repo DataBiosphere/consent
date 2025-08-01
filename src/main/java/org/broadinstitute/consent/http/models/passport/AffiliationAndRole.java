@@ -49,8 +49,8 @@ public class AffiliationAndRole implements VisaClaimType {
   @Override
   public String by() {
     if (user.getLibraryCard() == null) {
-      return VisaBy.system.name();
+      return VisaBy.SYSTEM.name().toLowerCase();
     }
-    return VisaBy.so.name();
+    return VisaBy.SO.name().toLowerCase();
   }
 }
