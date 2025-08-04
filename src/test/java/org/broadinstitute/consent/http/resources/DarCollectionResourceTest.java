@@ -1,10 +1,12 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
@@ -266,6 +268,182 @@ class DarCollectionResourceTest extends AbstractTestHelper {
 
     Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  void testGetCollectionWithAllElectionsById() {
+    DarCollection collection = mockDarCollection();
+    collection.setCreateUser(researcher);
+    collection.setCreateUserId(researcher.getUserId());
+
+    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
+    when(darCollectionService.getCollectionWithAllDataAccessElectionsById(collection.getDarCollectionId())).thenReturn(collection);
+    initResource();
+
+    Response response = resource.getCollectionWithAllElectionsById(authUser, collection.getDarCollectionId());
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  void testGetCollectionWithAllElectionsById_CollectionNotFound() {
+    when(darCollectionService.getCollectionWithAllDataAccessElectionsById(anyInt())).thenThrow(new NotFoundException("Collection not found"));
+    initResource();
+
+    Response response = resource.getCollectionWithAllElectionsById(authUser, 1);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  void testGetCollectionWithAllElectionsById_ServiceException() {
+    when(darCollectionService.getCollectionWithAllDataAccessElectionsById(anyInt()))
+        .thenThrow(new RuntimeException("Service error"));
+    initResource();
+
+    Response response = resource.getCollectionWithAllElectionsById(authUser, 1);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+  }
+
+  @Test
+  void testGetCollectionWithAllElectionsById_UserNotAuthorized() {
+    DarCollection collection = mockDarCollection();
+    User creator = new User(2, "creator@example.com", "Creator", new Date(),
+        List.of(UserRoles.Researcher()));
+    collection.setCreateUser(creator);
+    collection.setCreateUserId(creator.getUserId()); // Different user
+    initResource();
+
+    when(darCollectionService.getCollectionWithAllDataAccessElectionsById(
+        collection.getDarCollectionId())).thenReturn(collection); when(userService.findUserByEmail(authUser.getEmail())).thenReturn(researcher);
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(researcher);
+    when(darCollectionService.findDatasetIdsByDACUser(researcher)).thenReturn(List.of()); // No datasets
+
+    Response response = resource.getCollectionWithAllElectionsById(authUser, 1);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  void testValidateRequestingUserForDarCollection_Admin() {
+    AuthUser authUser = new AuthUser("admin@example.com");
+    DarCollection collection = new DarCollection();
+    collection.setCreateUserId(1); // Different from admin's ID
+    User admin = new User(2, authUser.getEmail(), "Admin User", new Date(),
+        List.of(UserRoles.Admin()));
+    initResource();
+
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(admin);
+
+    resource.validateRequestingUserForDarCollection(authUser, collection);
+
+    verify(userService).findUserByEmail(authUser.getEmail());
+  }
+
+  @Test
+  void testValidateRequestingUserForDarCollection_SigningOfficial() {
+    AuthUser authUser = new AuthUser("so@example.com");
+    User so = new User(1, authUser.getEmail(), "Signing Official", new Date(),
+        List.of(UserRoles.SigningOfficial()));
+    so.setInstitutionId(123);
+    User creator = new User(2, "creator@example.com", "Creator", new Date(),
+        List.of(UserRoles.Researcher()));
+    creator.setInstitutionId(123); // Same institution as SO
+    initResource();
+
+    DarCollection collection = new DarCollection();
+    collection.setCreateUserId(2);
+    collection.setCreateUser(creator);
+
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(so);
+
+    resource.validateRequestingUserForDarCollection(authUser, collection);
+
+    verify(userService).findUserByEmail(authUser.getEmail());
+  }
+
+  @Test
+  void testValidateRequestingUserForDarCollection_DacMember() {
+    AuthUser authUser = new AuthUser("dac@example.com");
+    User dacMember = new User(1, authUser.getEmail(), "DAC Member", new Date(),
+        List.of(UserRoles.Member()));
+    DarCollection collection = new DarCollection();
+    User creator = new User(2, "creator@example.com", "Create User", new Date(),
+        List.of(UserRoles.Researcher()));
+    creator.setInstitutionId(123);
+    collection.setCreateUser(creator); // Different user
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(42);
+    collection.addDataset(dataset);
+    initResource();
+
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(dacMember);
+    when(darCollectionService.findDatasetIdsByDACUser(dacMember)).thenReturn(List.of(42, 43));
+
+    resource.validateRequestingUserForDarCollection(authUser, collection);
+
+    verify(userService).findUserByEmail(authUser.getEmail());
+    verify(darCollectionService).findDatasetIdsByDACUser(dacMember);
+  }
+
+  @Test
+  void testValidateRequestingUserForDarCollection_Creator() {
+    AuthUser authUser = new AuthUser("creator@example.com");
+    User creator = new User(1, authUser.getEmail(), "Creator", new Date(),
+        List.of(UserRoles.Researcher()));
+    creator.setInstitutionId(123);
+    DarCollection collection = new DarCollection();
+    collection.setCreateUser(creator);
+    collection.setCreateUserId(1); // Same as creator's ID
+    initResource();
+
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(creator);
+
+    resource.validateRequestingUserForDarCollection(authUser, collection);
+
+    verify(userService).findUserByEmail(authUser.getEmail());
+  }
+
+  @Test
+  void testValidateRequestingUserForDarCollection_Unauthorized() {
+    AuthUser authUser = new AuthUser("unauthorized@example.com");
+    User unauthorized = new User(1, authUser.getEmail(), "Unauthorized", new Date(),
+        List.of(UserRoles.Researcher()));
+    DarCollection collection = new DarCollection();
+    User creator = new User(2, "creator@example.com", "Create User", new Date(),
+        List.of(UserRoles.Researcher()));
+    creator.setInstitutionId(123);
+    collection.setCreateUser(creator);
+    collection.setCreateUserId(2); // Different user
+    initResource();
+
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(unauthorized);
+    when(darCollectionService.findDatasetIdsByDACUser(unauthorized)).thenReturn(List.of()); // No datasets
+
+    assertThrows(NotFoundException.class, () ->
+        resource.validateRequestingUserForDarCollection(authUser, collection));
+  }
+
+  @Test
+  void testValidateRequestingUserForDarCollection_SigningOfficialDifferentInstitution() {
+    AuthUser authUser = new AuthUser("so@example.com");
+    User so = new User(1, authUser.getEmail(), "Signing Official", new Date(),
+        List.of(UserRoles.SigningOfficial()));
+    so.setInstitutionId(123);
+    User creator = new User(2, "creator@example.com", "Creator", new Date(),
+        List.of(UserRoles.Researcher()));
+    creator.setInstitutionId(456); // Different institution
+    DarCollection collection = new DarCollection();
+    collection.setCreateUserId(2);
+    collection.setCreateUser(creator);
+    initResource();
+
+    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(so);
+    when(darCollectionService.findDatasetIdsByDACUser(so)).thenReturn(List.of()); // No datasets
+
+    assertThrows(NotFoundException.class, () ->
+        resource.validateRequestingUserForDarCollection(authUser, collection));
   }
 
 

@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
@@ -111,17 +112,36 @@ public class DarCollectionResource extends Resource {
       @PathParam("collectionId") Integer collectionId) {
     try {
       DarCollection collection = darCollectionService.getByCollectionId(collectionId);
-      User user = userService.findUserByEmail(authUser.getEmail());
-
-      if (user.hasUserRole(UserRoles.ADMIN) || checkSoPermissionsForCollection(user, collection)
-          || checkDacPermissionsForCollection(user, collection)) {
-        return Response.ok().entity(collection).build();
-      }
-      validateUserIsCreator(user, collection);
+      validateRequestingUserForDarCollection(authUser, collection);
       return Response.ok().entity(collection).build();
-
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Path("{collectionId}")
+  @Produces("application/json")
+  @PermitAll
+  public Response getCollectionWithAllElectionsById(
+      @Auth AuthUser authUser,
+      @PathParam("collectionId") Integer collectionId) {
+    try {
+      DarCollection collection = darCollectionService.getCollectionWithAllDataAccessElectionsById(collectionId);
+      validateRequestingUserForDarCollection(authUser, collection);
+      return Response.ok().entity(collection).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @VisibleForTesting
+  protected void validateRequestingUserForDarCollection(AuthUser authUser, DarCollection collection) {
+    User user = userService.findUserByEmail(authUser.getEmail());
+    if (!user.hasUserRole(UserRoles.ADMIN) && !checkSoPermissionsForCollection(user, collection)
+        && !checkDacPermissionsForCollection(user, collection)) {
+      // If the user is not an admin, SO, or DAC member, they must be the creator of the collection
+      validateUserIsCreator(user, collection);
     }
   }
 
