@@ -118,7 +118,6 @@ public class DACAutomationRuleResource extends Resource {
   }
 
   private void validateAdminOrChairForDAC(User user, Integer dacId) {
-    //TODO: harmonize this with the logic in the DACResource so we're consistent.
     boolean isAdminOrChair = user.hasUserRole(UserRoles.ADMIN) || isChairOfDAC(user, dacId);
     if (!isAdminOrChair) {
       throw new ForbiddenException("User does not have access to the specified DAC ID");
@@ -143,11 +142,7 @@ public class DACAutomationRuleResource extends Resource {
   }
 
   private boolean isChairOfDAC(User user, Integer dacId) {
-    return Stream.ofNullable(user.getRoles())
-        .flatMap(List::stream)
-        .filter(r -> r.getRoleId().equals(UserRoles.Chairperson().getRoleId()))
-        .map(UserRole::getDacId)
-        .anyMatch(id -> Objects.equals(id, dacId));
+    return user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), dacId);
   }
 
 }
