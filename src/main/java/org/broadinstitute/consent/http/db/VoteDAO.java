@@ -50,12 +50,6 @@ public interface VoteDAO extends Transactional<VoteDAO> {
       @Bind("electionId") Integer electionId,
       @Bind("type") String type);
 
-  @SqlUpdate("DELETE FROM vote v WHERE electionId IN (SELECT election_id FROM election WHERE reference_id = :referenceId) ")
-  void deleteVotesByReferenceId(@Bind("referenceId") String referenceId);
-
-  @SqlUpdate("DELETE FROM vote v WHERE electionId IN (SELECT election_id FROM election WHERE reference_id IN (<referenceIds>)) ")
-  void deleteVotesByReferenceIds(@BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
-
   @SqlUpdate("update vote set reminderSent = :reminderSent where voteId = :voteId")
   void updateVoteReminderFlag(@Bind("voteId") Integer voteId,
       @Bind("reminderSent") boolean reminderSent);

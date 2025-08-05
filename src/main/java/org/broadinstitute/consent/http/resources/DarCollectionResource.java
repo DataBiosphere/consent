@@ -125,21 +125,6 @@ public class DarCollectionResource extends Resource {
     }
   }
 
-  @DELETE
-  @Path("{collectionId}")
-  @Produces("application/json")
-  @RolesAllowed({ADMIN, RESEARCHER})
-  public Response deleteDarCollection(@Auth AuthUser authUser,
-      @PathParam("collectionId") Integer collectionId) {
-    try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      darCollectionService.deleteByCollectionId(user, collectionId);
-      return Response.ok().build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
   private boolean checkDacPermissionsForCollection(User user, DarCollection collection) {
     // finds datasetIds for user based on the DACs they belong to
     List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByDACUser(user);
