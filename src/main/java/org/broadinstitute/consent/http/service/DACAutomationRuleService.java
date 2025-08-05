@@ -4,7 +4,6 @@ import static java.util.Objects.isNull;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
@@ -21,6 +20,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
+import org.broadinstitute.consent.http.models.BannedCountriesList;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
@@ -157,8 +157,9 @@ public class DACAutomationRuleService implements ConsentLogger {
   protected Optional<Vote> applyRule(
       DACAutomationRule rule, Dataset dataset, DataAccessRequest dar, ContainerRequest request) {
     RuleImplementationInterface ruleImplementation = getRuleImplementation(rule);
+    boolean darContainsBannedCountry = containsBannedCountry(dar);
     boolean shouldApprove = ruleImplementation.compare(dataset, dar);
-    if (shouldApprove) {
+    if (shouldApprove && !darContainsBannedCountry) {
       Vote v = openElectionAndApprove(rule, ruleImplementation, dar, dataset, request);
       if (v != null) {
         return Optional.of(v);
@@ -166,10 +167,24 @@ public class DACAutomationRuleService implements ConsentLogger {
     } else {
       logInfo(
           String.format(
-              "Rule %s not triggered for DAC id: %s and dataset id: %s",
-              rule.ruleType(), dataset.getDacId(), dataset.getDatasetId()));
+              "Rule %s not triggered for DAC id: %s and dataset id: %s with contains banned country: %b",
+              rule.ruleType(),
+              dataset.getDacId(),
+              dataset.getDatasetId(),
+              darContainsBannedCountry));
     }
     return Optional.empty();
+  }
+
+  private boolean containsBannedCountry(DataAccessRequest dar) {
+    return dar.getData().getInternalCollaborators().stream()
+        .anyMatch(
+            collaborator ->
+              BannedCountriesList.bannedCountriesCFR.contains(
+                  collaborator.countryOfOperation().toLowerCase()) ||
+                  BannedCountriesList.bannedCountriesISO3166.contains(
+                      collaborator.countryOfOperation().toLowerCase())
+            );
   }
 
   @VisibleForTesting
