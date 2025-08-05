@@ -72,9 +72,6 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @SqlUpdate("DELETE FROM match_entity WHERE purpose = :purposeId")
   void deleteMatchesByPurposeId(@Bind("purposeId") String purposeId);
 
-  @SqlUpdate("DELETE FROM match_entity WHERE purpose IN (<purposeIds>)")
-  void deleteMatchesByPurposeIds(@BindList(value = "purposeIds", onEmpty = EmptyHandling.NULL_STRING) List<String> purposeIds);
-
   @SqlUpdate("DELETE FROM match_rationale WHERE match_entity_id in (SELECT matchid FROM match_entity WHERE purpose IN (<purposeIds>)) ")
   void deleteRationalesByPurposeIds(@BindList(value = "purposeIds", onEmpty = EmptyHandling.NULL_STRING) List<String> purposeIds);
 
