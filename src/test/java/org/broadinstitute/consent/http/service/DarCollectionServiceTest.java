@@ -161,35 +161,35 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
 
   @Test
-  void testGetCollectionWithAllDataAccessElectionsById() {
+  void testGetCollectionWithAllElectionsByCollectionId() {
     Integer collectionId = 1;
     DarCollection collection = new DarCollection();
     collection.setDarCollectionId(collectionId);
-    when(darCollectionDAO.findCollectionWithAllDataAccessElectionsById(collectionId)).thenReturn(collection);
+    when(darCollectionDAO.findCollectionWithAllElectionsByCollectionId(collectionId)).thenReturn(collection);
 
-    DarCollection result = service.getCollectionWithAllDataAccessElectionsById(collectionId);
+    DarCollection result = service.getCollectionWithAllElectionsByCollectionId(collectionId);
     assertNotNull(result);
     assertEquals(collectionId, result.getDarCollectionId());
   }
 
   @Test
-  void testGetCollectionWithAllDataAccessElectionsById_NotFound() {
+  void testGetCollectionWithAllElectionsByCollectionId_NotFound() {
     Integer collectionId = 1;
-    when(darCollectionDAO.findCollectionWithAllDataAccessElectionsById(collectionId)).thenReturn(null);
+    when(darCollectionDAO.findCollectionWithAllElectionsByCollectionId(collectionId)).thenReturn(null);
 
     assertThrows(NotFoundException.class, () ->
-        service.getCollectionWithAllDataAccessElectionsById(collectionId));
+        service.getCollectionWithAllElectionsByCollectionId(collectionId));
   }
 
   @Test
-  void testGetCollectionWithAllDataAccessElectionsById_ServiceException() {
+  void testGetCollectionWithAllElectionsByCollectionId_ServiceException() {
     Integer collectionId = 1;
     RuntimeException expectedException = new RuntimeException("Test exception");
-    when(darCollectionDAO.findCollectionWithAllDataAccessElectionsById(collectionId))
+    when(darCollectionDAO.findCollectionWithAllElectionsByCollectionId(collectionId))
         .thenThrow(expectedException);
 
     RuntimeException exception = assertThrows(RuntimeException.class, () ->
-        service.getCollectionWithAllDataAccessElectionsById(collectionId));
+        service.getCollectionWithAllElectionsByCollectionId(collectionId));
     assertEquals(expectedException, exception);
   }
 

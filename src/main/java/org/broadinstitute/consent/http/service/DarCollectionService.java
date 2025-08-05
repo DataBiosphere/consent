@@ -546,8 +546,8 @@ public class DarCollectionService implements ConsentLogger {
     return addDatasetsToCollection(collection);
   }
 
-  public DarCollection getCollectionWithAllDataAccessElectionsById(Integer collectionId) {
-    DarCollection collection = darCollectionDAO.findCollectionWithAllDataAccessElectionsById(collectionId);
+  public DarCollection getCollectionWithAllElectionsByCollectionId(Integer collectionId) {
+    DarCollection collection = darCollectionDAO.findCollectionWithAllElectionsByCollectionId(collectionId);
     if (Objects.isNull(collection)) {
       throw new NotFoundException(
           "Collection with the collection id of " + collectionId + " was not found");

@@ -123,11 +123,11 @@ public class DarCollectionResource extends Resource {
   @Path("{collectionId}/electionHistory")
   @Produces("application/json")
   @PermitAll
-  public Response getCollectionWithAllElectionsById(
+  public Response getCollectionWithAllElectionsByCollectionId(
       @Auth AuthUser authUser,
       @PathParam("collectionId") Integer collectionId) {
     try {
-      DarCollection collection = darCollectionService.getCollectionWithAllDataAccessElectionsById(collectionId);
+      DarCollection collection = darCollectionService.getCollectionWithAllElectionsByCollectionId(collectionId);
       validateRequestingUserForDarCollection(authUser, collection);
       return Response.ok().entity(collection).build();
     } catch (Exception e) {

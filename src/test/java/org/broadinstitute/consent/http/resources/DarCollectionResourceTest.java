@@ -271,43 +271,43 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testGetCollectionWithAllElectionsById() {
+  void testGetCollectionWithAllElectionsByCollectionId() {
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
 
     when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-    when(darCollectionService.getCollectionWithAllDataAccessElectionsById(collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getCollectionWithAllElectionsByCollectionId(collection.getDarCollectionId())).thenReturn(collection);
     initResource();
 
-    Response response = resource.getCollectionWithAllElectionsById(authUser, collection.getDarCollectionId());
+    Response response = resource.getCollectionWithAllElectionsByCollectionId(authUser, collection.getDarCollectionId());
 
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
   @Test
-  void testGetCollectionWithAllElectionsById_CollectionNotFound() {
-    when(darCollectionService.getCollectionWithAllDataAccessElectionsById(anyInt())).thenThrow(new NotFoundException("Collection not found"));
+  void testGetCollectionWithAllElectionsById_CollectionNotFoundCollection() {
+    when(darCollectionService.getCollectionWithAllElectionsByCollectionId(anyInt())).thenThrow(new NotFoundException("Collection not found"));
     initResource();
 
-    Response response = resource.getCollectionWithAllElectionsById(authUser, 1);
+    Response response = resource.getCollectionWithAllElectionsByCollectionId(authUser, 1);
 
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
   @Test
-  void testGetCollectionWithAllElectionsById_ServiceException() {
-    when(darCollectionService.getCollectionWithAllDataAccessElectionsById(anyInt()))
+  void testGetCollectionWithAllElectionsByCollectionId_ServiceException() {
+    when(darCollectionService.getCollectionWithAllElectionsByCollectionId(anyInt()))
         .thenThrow(new RuntimeException("Service error"));
     initResource();
 
-    Response response = resource.getCollectionWithAllElectionsById(authUser, 1);
+    Response response = resource.getCollectionWithAllElectionsByCollectionId(authUser, 1);
 
     assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
   }
 
   @Test
-  void testGetCollectionWithAllElectionsById_UserNotAuthorized() {
+  void testGetCollectionWithAllElectionsByCollectionId_UserNotAuthorized() {
     DarCollection collection = mockDarCollection();
     User creator = new User(2, "creator@example.com", "Creator", new Date(),
         List.of(UserRoles.Researcher()));
@@ -315,12 +315,12 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setCreateUserId(creator.getUserId()); // Different user
     initResource();
 
-    when(darCollectionService.getCollectionWithAllDataAccessElectionsById(
+    when(darCollectionService.getCollectionWithAllElectionsByCollectionId(
         collection.getDarCollectionId())).thenReturn(collection); when(userService.findUserByEmail(authUser.getEmail())).thenReturn(researcher);
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(researcher);
     when(darCollectionService.findDatasetIdsByDACUser(researcher)).thenReturn(List.of()); // No datasets
 
-    Response response = resource.getCollectionWithAllElectionsById(authUser, 1);
+    Response response = resource.getCollectionWithAllElectionsByCollectionId(authUser, 1);
 
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }

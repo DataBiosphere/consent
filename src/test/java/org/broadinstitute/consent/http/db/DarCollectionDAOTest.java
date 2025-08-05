@@ -212,7 +212,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
     assertNotNull(darCollectionByReferenceId.getMostRecentDar().getCloseoutSigningOfficialApprovedDate());
     assertEquals(user.getUserId(), darCollectionByReferenceId.getMostRecentDar().getCloseoutSigningOfficialApprovedUserId());
 
-    DarCollection darCollectionWithElectionsById = darCollectionDAO.findCollectionWithAllDataAccessElectionsById(
+    DarCollection darCollectionWithElectionsById = darCollectionDAO.findCollectionWithAllElectionsByCollectionId(
         testDar2.getCollectionId());
     assertNotNull(darCollectionWithElectionsById.getMostRecentDar().getCloseoutSigningOfficialApprovedDate());
     assertEquals(user.getUserId(), darCollectionWithElectionsById.getMostRecentDar().getCloseoutSigningOfficialApprovedUserId());
@@ -224,12 +224,12 @@ class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindCollectionWithAllDataAccessElectionsById() {
+  void testFindCollectionWithAllElectionsByCollectionId() {
     // creates 3 dars, one dar has 2 elections, one cancelled, one open, the rest with no elections
     // each election has one vote (final)
     // uses findDarCollectionById internally
     DarCollection collection = createDarCollectionMultipleUserProperties();
-    DarCollection returned = darCollectionDAO.findCollectionWithAllDataAccessElectionsById(
+    DarCollection returned = darCollectionDAO.findCollectionWithAllElectionsByCollectionId(
         collection.getDarCollectionId());
     assertNotNull(returned);
     // all values should be the same as the collection returned by findDarCollectionById
@@ -255,7 +255,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindCollectionWithAllDataAccessElectionsByIdLC() {
+  void testFindCollectionWithAllElectionsByCollectionIdLC() {
     User user = createUser();
     createLibraryCard(user);
     User updatedUser = userDAO.findUserById(user.getUserId());
@@ -264,7 +264,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
         new Date());
     createDataAccessRequest(updatedUser.getUserId(), collectionId);
 
-    DarCollection collection = darCollectionDAO.findCollectionWithAllDataAccessElectionsById(collectionId);
+    DarCollection collection = darCollectionDAO.findCollectionWithAllElectionsByCollectionId(collectionId);
     User returnedUser = collection.getCreateUser();
     assertEquals(updatedUser, returnedUser);
 
@@ -274,8 +274,8 @@ class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindCollectionWithAllDataAccessElectionsByIdNegative() {
-    DarCollection returned = darCollectionDAO.findCollectionWithAllDataAccessElectionsById(
+  void testFindCollectionWithAllElectionsByCollectionIdNegative() {
+    DarCollection returned = darCollectionDAO.findCollectionWithAllElectionsByCollectionId(
         randomInt(1000, 2000));
     assertNull(returned);
   }

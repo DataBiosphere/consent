@@ -253,7 +253,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           + "WHERE c.collection_id = :collectionId "
           + "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )"
   )
-  DarCollection findCollectionWithAllDataAccessElectionsById(@Bind("collectionId") Integer collectionId);
+  DarCollection findCollectionWithAllElectionsByCollectionId(@Bind("collectionId") Integer collectionId);
 
   /**
    * Create a new DAR Collection with the given dar code, create user ID, and create date
