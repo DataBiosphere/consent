@@ -19,3 +19,4 @@ get:
             $ref: '../schemas/DarCollection.yaml'
     404:
       description: Not Found
+

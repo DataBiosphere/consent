@@ -227,12 +227,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
       @Bind("updateUserId") Integer updateUserId,
       @Bind("updateDate") Date updateDate);
 
-  /**
-   * Delete the DAR Collection with the given collection ID
-   */
-  @SqlUpdate("DELETE FROM dar_collection WHERE collection_id = :collectionId")
-  void deleteByCollectionId(@Bind("collectionId") Integer collectionId);
-
 }
 
 
