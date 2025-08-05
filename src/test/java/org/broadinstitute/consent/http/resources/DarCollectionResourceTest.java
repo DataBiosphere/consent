@@ -320,14 +320,14 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(researcher);
     when(darCollectionService.findDatasetIdsByDACUser(researcher)).thenReturn(List.of()); // No datasets
 
-    Response response = resource.getCollectionWithAllElectionsByCollectionId(authUser, 1);
+    Response response = resource.getCollectionWithAllElectionsByCollectionId(authUser,
+        collection.getDarCollectionId());
 
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
   @Test
   void testValidateRequestingUserForDarCollection_Admin() {
-    AuthUser authUser = new AuthUser("admin@example.com");
     DarCollection collection = new DarCollection();
     collection.setCreateUserId(1); // Different from admin's ID
     User admin = new User(2, authUser.getEmail(), "Admin User", new Date(),
@@ -343,7 +343,6 @@ class DarCollectionResourceTest extends AbstractTestHelper {
 
   @Test
   void testValidateRequestingUserForDarCollection_SigningOfficial() {
-    AuthUser authUser = new AuthUser("so@example.com");
     User so = new User(1, authUser.getEmail(), "Signing Official", new Date(),
         List.of(UserRoles.SigningOfficial()));
     so.setInstitutionId(123);
@@ -365,7 +364,6 @@ class DarCollectionResourceTest extends AbstractTestHelper {
 
   @Test
   void testValidateRequestingUserForDarCollection_DacMember() {
-    AuthUser authUser = new AuthUser("dac@example.com");
     User dacMember = new User(1, authUser.getEmail(), "DAC Member", new Date(),
         List.of(UserRoles.Member()));
     DarCollection collection = new DarCollection();
@@ -389,7 +387,6 @@ class DarCollectionResourceTest extends AbstractTestHelper {
 
   @Test
   void testValidateRequestingUserForDarCollection_Creator() {
-    AuthUser authUser = new AuthUser("creator@example.com");
     User creator = new User(1, authUser.getEmail(), "Creator", new Date(),
         List.of(UserRoles.Researcher()));
     creator.setInstitutionId(123);
@@ -407,7 +404,6 @@ class DarCollectionResourceTest extends AbstractTestHelper {
 
   @Test
   void testValidateRequestingUserForDarCollection_Unauthorized() {
-    AuthUser authUser = new AuthUser("unauthorized@example.com");
     User unauthorized = new User(1, authUser.getEmail(), "Unauthorized", new Date(),
         List.of(UserRoles.Researcher()));
     DarCollection collection = new DarCollection();
@@ -427,7 +423,6 @@ class DarCollectionResourceTest extends AbstractTestHelper {
 
   @Test
   void testValidateRequestingUserForDarCollection_SigningOfficialDifferentInstitution() {
-    AuthUser authUser = new AuthUser("so@example.com");
     User so = new User(1, authUser.getEmail(), "Signing Official", new Date(),
         List.of(UserRoles.SigningOfficial()));
     so.setInstitutionId(123);
