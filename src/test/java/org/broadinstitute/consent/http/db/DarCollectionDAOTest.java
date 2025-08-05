@@ -10,7 +10,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -210,6 +212,11 @@ class DarCollectionDAOTest extends DAOTestHelper {
     assertNotNull(darCollectionByReferenceId.getMostRecentDar().getCloseoutSigningOfficialApprovedDate());
     assertEquals(user.getUserId(), darCollectionByReferenceId.getMostRecentDar().getCloseoutSigningOfficialApprovedUserId());
 
+    DarCollection darCollectionWithElectionsById = darCollectionDAO.findCollectionWithAllDataAccessElectionsById(
+        testDar2.getCollectionId());
+    assertNotNull(darCollectionWithElectionsById.getMostRecentDar().getCloseoutSigningOfficialApprovedDate());
+    assertEquals(user.getUserId(), darCollectionWithElectionsById.getMostRecentDar().getCloseoutSigningOfficialApprovedUserId());
+
     List<DarCollection> darCollectionList = darCollectionDAO.findDARCollectionByCollectionIds(List.of(testDar2.getCollectionId()));
     assertEquals(1, darCollectionList.size());
     assertNotNull(darCollectionList.get(0).getMostRecentDar().getCloseoutSigningOfficialApprovedDate());
@@ -218,25 +225,26 @@ class DarCollectionDAOTest extends DAOTestHelper {
 
   @Test
   void testFindCollectionWithAllDataAccessElectionsById() {
+    // creates 3 dars, one dar has 2 elections, one cancelled, one open, the rest with no elections
+    // each election has one vote (final)
+    // uses findDarCollectionById internally
     DarCollection collection = createDarCollectionMultipleUserProperties();
     DarCollection returned = darCollectionDAO.findCollectionWithAllDataAccessElectionsById(
         collection.getDarCollectionId());
     assertNotNull(returned);
-    assertNotNull(returned.getMostRecentDar().getEraCommonsId());
-    assertEquals(collection.getDarCode(), returned.getDarCode());
-    assertEquals(collection.getCreateUserId(), returned.getCreateUserId());
-    generateDatasetElectionForCollection(collection);
-    List<Election> elections = getElectionsFromCollection(collection);
+    // all values should be the same as the collection returned by findDarCollectionById
+    // except the collection returned by findCollectionWithAllDataAccessElectionsById will include
+    // both the created elections
+    assertCollectionEqualExceptForElections(collection, returned);
+    List<Election> elections = getElectionsFromCollection(returned)
+        .stream()
+        .sorted(Comparator.comparing(Election::getCreateDate))
+        .toList();
     assertEquals(2, elections.size());
-    List<Election> datasetElections = getDatasetElectionsFromElection(elections);
-    assertTrue(datasetElections.isEmpty());
-
-//    Election election = elections.get(0);
-//    List<Vote> votes = new ArrayList<>(election.getVotes().values());
-//    Vote vote = votes.get(0);
-//    assertEquals(1, votes.size());
-//    assertEquals("Open", election.getStatus());
-//    assertEquals(election.getElectionId(), vote.getElectionId());
+    Election firstElection = elections.get(0);
+    assertExpectedElection(firstElection, ElectionStatus.CANCELED.getValue());
+    Election secondElection = elections.get(1);
+    assertExpectedElection(secondElection, ElectionStatus.OPEN.getValue());
 
     List<UserProperty> userProperties = returned.getCreateUser().getProperties();
     assertFalse(userProperties.isEmpty());
@@ -270,35 +278,6 @@ class DarCollectionDAOTest extends DAOTestHelper {
     DarCollection returned = darCollectionDAO.findCollectionWithAllDataAccessElectionsById(
         randomInt(1000, 2000));
     assertNull(returned);
-  }
-
-  @Test
-  void testFindFindCollectionWithAllDataAccessElectionsByIdWithSO() {
-    User user = createUser();
-    var collectionWithDataset = createDarCollectionWithDataset(user);
-    DataAccessRequest testDar1 = (DataAccessRequest) collectionWithDataset.get(4);
-    Dataset dataset = (Dataset) collectionWithDataset.get(2);
-    DataAccessRequest testDar2 = createDAR(user, dataset, testDar1.getCollectionId());
-    dataAccessRequestDAO.updateDarCloseoutSO(user.getUserId(), testDar2.getReferenceId());
-
-    DataAccessRequest testDar2Stored = dataAccessRequestDAO.findByReferenceId(testDar2.getReferenceId());
-    assertNotNull(testDar2Stored.getCloseoutSigningOfficialApprovedUserId());
-    assertNotNull(testDar2Stored.getCloseoutSigningOfficialApprovedDate());
-
-    DarCollection darCollection = darCollectionDAO.findDARCollectionByCollectionId(
-        testDar2.getCollectionId());
-
-    assertNotNull(darCollection.getMostRecentDar().getCloseoutSigningOfficialApprovedDate());
-    assertEquals(user.getUserId(), darCollection.getMostRecentDar().getCloseoutSigningOfficialApprovedUserId());
-
-    DarCollection darCollectionByReferenceId = darCollectionDAO.findDARCollectionByReferenceId(testDar2.getReferenceId());
-    assertNotNull(darCollectionByReferenceId.getMostRecentDar().getCloseoutSigningOfficialApprovedDate());
-    assertEquals(user.getUserId(), darCollectionByReferenceId.getMostRecentDar().getCloseoutSigningOfficialApprovedUserId());
-
-    List<DarCollection> darCollectionList = darCollectionDAO.findDARCollectionByCollectionIds(List.of(testDar2.getCollectionId()));
-    assertEquals(1, darCollectionList.size());
-    assertNotNull(darCollectionList.get(0).getMostRecentDar().getCloseoutSigningOfficialApprovedDate());
-    assertEquals(user.getUserId(), darCollectionList.get(0).getMostRecentDar().getCloseoutSigningOfficialApprovedUserId());
   }
 
   @Test
@@ -696,5 +675,27 @@ class DarCollectionDAOTest extends DAOTestHelper {
         datasetId
     );
     return electionDAO.findElectionById(electionId);
+  }
+
+  private void assertExpectedElection(Election e, String status) {
+    assertNotNull(e.getElectionId());
+    assertNotNull(e.getCreateDate());
+    assertNotNull(e.getReferenceId());
+    assertEquals(ElectionType.DATA_ACCESS.getValue(), e.getElectionType());
+    assertEquals(status, e.getStatus());
+    List<Vote> votes = e.getVotes().values().stream().toList();
+    assertEquals(1, votes.size());
+    Vote vote = votes.get(0);
+    assertNotNull(vote.getVoteId());
+    assertEquals(VoteType.FINAL.getValue(), vote.getType());
+    assertNotNull(vote.getCreateDate());
+    assertNotNull(vote.getUserId());
+    assertEquals(vote.getElectionId(), e.getElectionId());
+  }
+
+  private void assertCollectionEqualExceptForElections(DarCollection collection, DarCollection returned) {
+    collection.deepCopy().getDars().values().forEach(dar -> dar.setElections(new HashMap<>()));
+    returned.deepCopy().getDars().values().forEach(dar -> dar.setElections(new HashMap<>()));
+    assertEquals(collection, returned);
   }
 }

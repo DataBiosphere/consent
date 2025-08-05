@@ -120,7 +120,7 @@ public class DarCollectionResource extends Resource {
   }
 
   @GET
-  @Path("{collectionId}")
+  @Path("{collectionId}/electionHistory")
   @Produces("application/json")
   @PermitAll
   public Response getCollectionWithAllElectionsById(
