@@ -118,14 +118,16 @@ public class DACAutomationRuleResource extends Resource {
   }
 
   private void validateAdminOrChairForDAC(User user, Integer dacId) {
-    boolean isAdminOrChair = user.hasUserRole(UserRoles.ADMIN) || isChairOfDAC(user, dacId);
+    boolean isAdminOrChair =
+        user.hasUserRole(UserRoles.ADMIN)
+            || user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), dacId);
     if (!isAdminOrChair) {
       throw new ForbiddenException("User does not have access to the specified DAC ID");
     }
   }
 
   private void validateIsChairOfDAC(User user, Integer dacId) {
-    if (!isChairOfDAC(user, dacId)) {
+    if (Boolean.FALSE.equals(user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), dacId))) {
       throw new ForbiddenException("User does not have access to the specified DAC ID");
     }
   }
@@ -139,10 +141,6 @@ public class DACAutomationRuleResource extends Resource {
       throw new IllegalArgumentException("PageSize must be less than or equal to 100");
     }
 
-  }
-
-  private boolean isChairOfDAC(User user, Integer dacId) {
-    return user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), dacId);
   }
 
 }
