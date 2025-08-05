@@ -248,7 +248,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           + "SELECT * FROM election "
           + "WHERE LOWER(election.election_type) = 'dataaccess'"
           + ") AS e "
-          + "ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id)"
+          + "ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id) "
           + "LEFT JOIN vote v "
           + "ON v.electionid = e.election_id "
           + "LEFT JOIN users du "
