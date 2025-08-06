@@ -29,6 +29,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -112,8 +113,14 @@ public class DarCollectionResource extends Resource {
       @PathParam("collectionId") Integer collectionId) {
     try {
       DarCollection collection = darCollectionService.getByCollectionId(collectionId);
-      validateRequestingUserForDarCollection(authUser, collection);
+      User user = userService.findUserByEmail(authUser.getEmail());
+      if (user.hasUserRole(UserRoles.ADMIN) || checkSoPermissionsForCollection(user, collection)
+          || checkDacPermissionsForCollection(user, collection)) {
+        return Response.ok().entity(collection).build();
+      }
+      validateUserIsCreator(user, collection);
       return Response.ok().entity(collection).build();
+
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -122,13 +129,13 @@ public class DarCollectionResource extends Resource {
   @GET
   @Path("{collectionId}/electionHistory")
   @Produces("application/json")
-  @PermitAll
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
   public Response getCollectionWithAllElectionsByCollectionId(
-      @Auth AuthUser authUser,
+      @Auth DuosUser authUser,
       @PathParam("collectionId") Integer collectionId) {
     try {
       DarCollection collection = darCollectionService.getCollectionWithAllElectionsByCollectionId(collectionId);
-      validateRequestingUserForDarCollection(authUser, collection);
+      validateRequestingUserForElectionHistory(authUser, collection);
       return Response.ok().entity(collection).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -136,12 +143,10 @@ public class DarCollectionResource extends Resource {
   }
 
   @VisibleForTesting
-  protected void validateRequestingUserForDarCollection(AuthUser authUser, DarCollection collection) {
-    User user = userService.findUserByEmail(authUser.getEmail());
-    if (!user.hasUserRole(UserRoles.ADMIN) && !checkSoPermissionsForCollection(user, collection)
-        && !checkDacPermissionsForCollection(user, collection)) {
-      // If the user is not an admin, SO, or DAC member, they must be the creator of the collection
-      validateUserIsCreator(user, collection);
+  protected void validateRequestingUserForElectionHistory(DuosUser duosUser, DarCollection collection) {
+    User user = duosUser.getUser();
+    if (!user.hasUserRole(UserRoles.ADMIN) && !checkDacPermissionsForCollection(user, collection)) {
+      throw new NotFoundException();
     }
   }
 
