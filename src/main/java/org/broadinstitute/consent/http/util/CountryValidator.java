@@ -29,7 +29,7 @@ public class CountryValidator {
           "russian federation (the)",
           "venezuela (bolivarian republic of)");
   private static final Set<String> bannedCountriesCFR =
-      Set.of("china", "cuba", "hong kong", "iran", "macao", "north korea", "russia", "venezuela");
+      Set.of("china", "cuba", "hong kong", "iran", "macao", "macau", "north korea", "russia", "venezuela");
 
   public CountryValidator() {
     try (InputStream is = getClass().getClassLoader().getResourceAsStream(FILEPATH)) {
