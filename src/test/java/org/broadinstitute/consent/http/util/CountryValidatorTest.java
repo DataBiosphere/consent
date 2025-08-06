@@ -26,7 +26,7 @@ class CountryValidatorTest {
   void testIsInBannedCountryList_PI() {
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData darData = new DataAccessRequestData();
-    darData.setPiCountryOfOperation("Russia");
+    darData.setPiCountryOfOperation("Hong Kong");
     dar.setData(darData);
     assertTrue(CountryValidator.containsBannedCountry(dar));
   }
