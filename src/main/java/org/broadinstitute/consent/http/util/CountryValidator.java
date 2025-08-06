@@ -23,11 +23,11 @@ public class CountryValidator {
           "china",
           "cuba",
           "hong kong",
-          "iran, (islamic republic of)",
+          "iran (islamic republic of)",
           "Korea (the democratic people's republic of)",
           "macao",
           "russian federation (the)",
-          "venezuela, (bolivarian republic of)");
+          "venezuela (bolivarian republic of)");
   private static final Set<String> bannedCountriesCFR =
       Set.of("china", "cuba", "hong kong", "iran", "Macao", "north korea", "russia", "venezuela");
 
