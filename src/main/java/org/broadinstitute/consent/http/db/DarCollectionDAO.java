@@ -220,38 +220,40 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
-      // nosemgrep
-      "SELECT c.*, "
-          + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-          + Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR
-          + UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR
-          + LibraryCard.QUERY_FIELDS_WITH_LC_PREFIX + QUERY_FIELD_SEPARATOR
-          + "dd.dataset_id, "
-          + "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
-          + "dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, dar.era_commons_id AS dar_era_commons_id, "
-          + "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
-          + "dar.update_date AS dar_update_date, (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, "
-          + "dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date, "
-          + "dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id, "
-          + "e.election_id AS e_election_id, e.reference_id AS e_reference_id, e.status AS e_status, e.create_date AS e_create_date, "
-          + "e.last_update AS e_last_update, e.dataset_id AS e_dataset_id, e.election_type AS e_election_type, "
-          + "v.voteid as v_vote_id, v.vote as v_vote, v.user_id as v_user_id, v.rationale as v_rationale, v.electionid as v_election_id, "
-          + "v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type, du.display_name as v_display_name "
-          + "FROM dar_collection c "
-          + "INNER JOIN users u ON c.create_user_id = u.user_id "
-          + "LEFT JOIN user_property up ON u.user_id = up.user_id "
-          + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
-          + "LEFT JOIN library_card lc ON u.user_id = lc.user_id "
-          + "INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
-          + "LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
-          + "LEFT JOIN election e "
-          + "ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id) "
-          + "LEFT JOIN vote v "
-          + "ON v.electionid = e.election_id "
-          + "LEFT JOIN users du "
-          + "ON du.user_id = v.user_id "
-          + "WHERE c.collection_id = :collectionId "
-          + "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )"
+      """
+
+    SELECT c.*,
+       u.user_id as u_user_id, u.email as u_email, u.display_name as u_display_name, u.create_date as u_create_date, u.email_preference as u_email_preference, u.institution_id as u_institution_id, u.era_commons_id as u_era_commons_id,
+       i.institution_id as i_id, i.institution_name as i_name, i.it_director_name as i_it_director_name, i.it_director_email as i_it_director_email, i.create_date as i_create_date, i.update_date as i_update_date,
+       up.property_id AS up_property_id, up.user_id AS up_user_id, up.property_key as up_property_key, up.property_value AS up_property_value,
+       lc.id as lc_id, lc.user_id as lc_user_id, lc.user_name as lc_user_name, lc.user_email as lc_user_email, lc.create_user_id as lc_create_user_id, lc.create_date as lc_create_date, lc.update_date as lc_update_date, lc.update_user_id as lc_update_user_id,
+       dd.dataset_id,
+       dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id,
+       dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, dar.era_commons_id AS dar_era_commons_id,
+       dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date,
+       dar.update_date AS dar_update_date, (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
+       dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date,
+       dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id,
+       e.election_id AS e_election_id, e.reference_id AS e_reference_id, e.status AS e_status, e.create_date AS e_create_date,
+       e.last_update AS e_last_update, e.dataset_id AS e_dataset_id, e.election_type AS e_election_type,
+       v.voteid as v_vote_id, v.vote as v_vote, v.user_id as v_user_id, v.rationale as v_rationale, v.electionid as v_election_id,
+       v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type, du.display_name as v_display_name
+    FROM dar_collection c
+    INNER JOIN users u ON c.create_user_id = u.user_id
+    LEFT JOIN user_property up ON u.user_id = up.user_id
+    LEFT JOIN institution i ON i.institution_id = u.institution_id
+    LEFT JOIN library_card lc ON u.user_id = lc.user_id
+    INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id
+    LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
+    LEFT JOIN election e
+      ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id)
+    LEFT JOIN vote v
+      ON v.electionid = e.election_id
+    LEFT JOIN users du
+      ON du.user_id = v.user_id
+    WHERE c.collection_id = :collectionId
+    AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )
+"""
   )
   DarCollection findCollectionWithAllElectionsByCollectionId(@Bind("collectionId") Integer collectionId);
 
