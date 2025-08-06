@@ -1,10 +1,10 @@
 package org.broadinstitute.consent.http.util;
 
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -51,7 +51,15 @@ class CountryValidatorTest {
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData darData = new DataAccessRequestData();
     darData.setInternalCollaborators(
-        List.of(new Collaborator(true, "test@test.com", "test", "Test", "Test", "12345", "Russian Federation (the)")));
+        List.of(
+            new Collaborator(
+                true,
+                "test@test.com",
+                "test",
+                "Test",
+                "Test",
+                "12345",
+                "Russian Federation (the)")));
     dar.setData(darData);
     assertTrue(CountryValidator.containsBannedCountry(dar));
   }
@@ -61,7 +69,8 @@ class CountryValidatorTest {
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData darData = new DataAccessRequestData();
     darData.setInternalCollaborators(
-        List.of(new Collaborator(true, "test@test.com", "test", "Test", "Test", "12345", "Genovia")));
+        List.of(
+            new Collaborator(true, "test@test.com", "test", "Test", "Test", "12345", "Genovia")));
     dar.setData(darData);
     assertFalse(CountryValidator.containsBannedCountry(dar));
   }
@@ -71,7 +80,8 @@ class CountryValidatorTest {
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData darData = new DataAccessRequestData();
     darData.setLabCollaborators(
-        List.of(new Collaborator(true, "test@test.com", "test", "Test", "Test", "12345", "Genovia")));
+        List.of(
+            new Collaborator(true, "test@test.com", "test", "Test", "Test", "12345", "Genovia")));
     dar.setData(darData);
     assertFalse(CountryValidator.containsBannedCountry(dar));
   }
@@ -87,9 +97,11 @@ class CountryValidatorTest {
 
   @Test
   void testBannedCountryListIsValid() throws IOException {
-    String fileContents = Files.readString(Path.of("src/main/resources/assets/ISO-3166-countries.json"));
-    CountryValidator.bannedCountriesISO3166.forEach(country -> {
-      assertTrue(fileContents.toLowerCase().contains(country));
-      });
+    String fileContents =
+        Files.readString(Path.of("src/main/resources/assets/ISO-3166-countries.json"));
+    CountryValidator.bannedCountriesISO3166.forEach(
+        country -> {
+          assertThat(fileContents.toLowerCase(), containsString(country));
+        });
   }
 }
