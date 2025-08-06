@@ -13,13 +13,10 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Stream;
 import javax.annotation.security.RolesAllowed;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.rules.AuditPageResults;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.service.DACAutomationRuleService;
@@ -120,14 +117,14 @@ public class DACAutomationRuleResource extends Resource {
   private void validateAdminOrChairForDAC(User user, Integer dacId) {
     boolean isAdminOrChair =
         user.hasUserRole(UserRoles.ADMIN)
-            || user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), dacId);
+            || user.verifyDACRole(UserRoles.CHAIRPERSON.getRoleName(), dacId);
     if (!isAdminOrChair) {
       throw new ForbiddenException("User does not have access to the specified DAC ID");
     }
   }
 
   private void validateIsChairOfDAC(User user, Integer dacId) {
-    if (Boolean.FALSE.equals(user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), dacId))) {
+    if (!user.verifyDACRole(UserRoles.CHAIRPERSON.getRoleName(), dacId)) {
       throw new ForbiddenException("User does not have access to the specified DAC ID");
     }
   }

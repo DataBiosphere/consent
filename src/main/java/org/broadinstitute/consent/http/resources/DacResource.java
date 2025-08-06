@@ -106,7 +106,7 @@ public class DacResource extends Resource {
       }
       // Ensure that the user can only update a DAC they're a chairperson for.
       if (!user.hasUserRole(UserRoles.ADMIN)) {
-        if (!user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), dac.getDacId())) {
+        if (!user.verifyDACRole(UserRoles.CHAIRPERSON.getRoleName(), dac.getDacId())) {
           throw new NotAuthorizedException(
               "You do not have the required permissions to update DAC");
         }
@@ -261,7 +261,7 @@ public class DacResource extends Resource {
         //Vague message is intentional, don't want to reveal too much info
         throw new NotFoundException("Dataset not found");
       }
-      Boolean userHasRole = user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), dacId);
+      boolean userHasRole = user.verifyDACRole(UserRoles.CHAIRPERSON.getRoleName(), dacId);
       if (!userHasRole) {
         throw new NotFoundException("User role not found");
       }
