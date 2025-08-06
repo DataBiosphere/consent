@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models.passport;
 
 import java.time.temporal.ChronoUnit;
+import java.util.Calendar;
 import java.util.Date;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 
@@ -23,9 +24,10 @@ public class ControlledAccessGrants implements VisaClaimType {
   @Override
   public Long asserted() {
     if (approvedDataset.getExpirationDate() != null) {
-      var expiration = new Date(approvedDataset.getExpirationDate().getTime());
-      var asserted = expiration.toInstant().minus(1, ChronoUnit.YEARS);
-      return asserted.toEpochMilli();
+      var calendar = Calendar.getInstance();
+      calendar.setTime(approvedDataset.getExpirationDate());
+      calendar.set(Calendar.YEAR, calendar.get(Calendar.YEAR) - 1);
+      return calendar.getTimeInMillis();
     }
     return null;
   }
