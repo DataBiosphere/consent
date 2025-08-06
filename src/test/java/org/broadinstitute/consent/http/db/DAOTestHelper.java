@@ -257,4 +257,26 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   protected Institution getUserInstitution(User user) {
     return institutionDAO.findInstitutionById(user.getInstitutionId());
   }
+
+  protected void updateVote(Boolean vote, String rationale, Date updateDate, Integer voteId,
+      boolean reminder, Integer electionId, Date createDate, Boolean hasConcerns) {
+    jdbi.useHandle(handle -> {
+      String sql = """
+              UPDATE vote
+              SET vote = :vote, updatedate = :updateDate, rationale = :rationale, remindersent = :reminderSent, createdate = :createDate, has_concerns = :hasConcerns
+              WHERE voteId = :voteId
+          """;
+      handle.createUpdate(sql)
+          .bind("vote", vote)
+          .bind("rationale", rationale)
+          .bind("updateDate", updateDate)
+          .bind("voteId", voteId)
+          .bind("reminderSent", reminder)
+          .bind("electionId", electionId)
+          .bind("createDate", createDate)
+          .bind("hasConcerns", hasConcerns)
+          .execute();
+    });
+  }
+
 }

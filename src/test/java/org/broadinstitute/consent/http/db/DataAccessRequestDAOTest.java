@@ -501,7 +501,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDatasetId());
     Vote v1 = createFinalVote(dataset1.getCreateUserId(), e1.getElectionId());
     Date now = new Date();
-    voteDAO.updateVote(true,
+    updateVote(true,
         "",
         now,
         v1.getVoteId(),
@@ -513,7 +513,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Election e2 = createDataAccessElection(testDar2.getReferenceId(), dataset2.getDatasetId());
     Vote v2 = createVote(dataset2.getCreateUserId(), e2.getElectionId(), VoteType.RADAR_APPROVE);
     now = new Date();
-    voteDAO.updateVote(true,
+    updateVote(true,
         "",
         now,
         v2.getVoteId(),
@@ -570,7 +570,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDatasetId());
     Vote v1 = createFinalVote(dataset1.getCreateUserId(), e1.getElectionId());
     Date now = new Date();
-    voteDAO.updateVote(true,
+    updateVote(true,
         "",
         now,
         v1.getVoteId(),
@@ -582,7 +582,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Election e2 = createDataAccessElection(testDar2.getReferenceId(), dataset2.getDatasetId());
     Vote v2 = createFinalVote(dataset2.getCreateUserId(), e2.getElectionId());
     now = new Date();
-    voteDAO.updateVote(true,
+    updateVote(true,
         "",
         now,
         v2.getVoteId(),
@@ -607,7 +607,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Election e3 = createDataAccessElection(testDar3.getReferenceId(), dataset2.getDatasetId());
     Vote v3 = createFinalVote(dataset2.getCreateUserId(), e3.getElectionId());
     now = new Date();
-    voteDAO.updateVote(true,
+    updateVote(true,
         "",
         now,
         v3.getVoteId(),
@@ -652,7 +652,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.findDatasetApprovalsByDar(testDar1.getReferenceId())
             .isEmpty());
 
-    voteDAO.updateVote(true,
+    updateVote(true,
         "",
         now,
         v1.getVoteId(),
@@ -666,7 +666,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(1, approvedDatasetIds.size());
     assertTrue(approvedDatasetIds.contains(dataset1.getDatasetId()));
 
-    voteDAO.updateVote(true,
+    updateVote(true,
         "",
         now,
         v2.getVoteId(),
@@ -682,7 +682,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertTrue(approvedDatasetIds.contains(dataset2.getDatasetId()));
 
 
-    voteDAO.updateVote(false,
+    updateVote(false,
         "",
         now,
         v3.getVoteId(),
@@ -712,7 +712,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
 
     Date now = new Date();
 
-    voteDAO.updateVote(true,
+    updateVote(true,
         "",
         now,
         v1.getVoteId(),
@@ -744,7 +744,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataset.getDatasetId());
     Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
     Date now = new Date();
-    voteDAO.updateVote(true,
+    updateVote(true,
         "",
         now,
         vote.getVoteId(),
@@ -800,7 +800,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDatasetId());
     Vote v1 = createFinalVote(dataset1.getCreateUserId(), e1.getElectionId());
     Date now = new Date();
-    voteDAO.updateVote(true,
+    updateVote(true,
         "",
         now,
         v1.getVoteId(),
@@ -816,7 +816,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Election e2 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDatasetId());
     Vote v2 = createFinalVote(dataset1.getCreateUserId(), e2.getElectionId());
     now = new Date();
-    voteDAO.updateVote(false,
+    updateVote(false,
         "",
         now,
         v2.getVoteId(),
@@ -843,7 +843,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDatasetId());
     Vote v1 = createFinalVote(dataset1.getCreateUserId(), e1.getElectionId());
     Date now = new Date();
-    voteDAO.updateVote(true,
+    updateVote(true,
         "",
         now,
         v1.getVoteId(),
@@ -873,7 +873,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDatasetId());
     Vote v1 = createFinalVote(dataset1.getCreateUserId(), e1.getElectionId());
     Date now = new Date();
-    voteDAO.updateVote(true,
+    updateVote(true,
         "",
         now,
         v1.getVoteId(),
@@ -905,7 +905,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataset.getDatasetId());
     Vote vote = createFinalVote(dataset.getCreateUserId(), election.getElectionId());
     Date now = new Date();
-    voteDAO.updateVote(true,
+    updateVote(true,
         "",
         now,
         vote.getVoteId(),

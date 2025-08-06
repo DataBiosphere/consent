@@ -49,7 +49,6 @@ public class DarCollectionServiceDAO {
    */
   public List<String> createElectionsForDarByUser(User user, DataAccessRequest dar)
       throws SQLException {
-    final Date now = new Date();
     boolean isAdmin = user.hasUserRole(UserRoles.ADMIN);
     List<String> createdElectionReferenceIds = new ArrayList<>();
     // If the user is not an admin, we need to know what datasets they have access to.
@@ -97,20 +96,20 @@ public class DarCollectionServiceDAO {
                     .stream().map(Election::getElectionId)
                     .toList();
                 if (!oldElectionIds.isEmpty()) {
-                  electionDAO.archiveElectionByIds(oldElectionIds, now);
+                  electionDAO.archiveElectionByIds(oldElectionIds, new Date());
                 }
                 List<User> voteUsers = findVoteUsersForDataset(datasetId);
                 inserts.add(createElectionInsert(handle, ElectionType.DATA_ACCESS.getValue(),
-                    dar.getReferenceId(), now, datasetId));
+                    dar.getReferenceId(), datasetId));
                 inserts.addAll(createVoteInsertsForUsers(handle, voteUsers,
-                    ElectionType.DATA_ACCESS.getValue(), dar.getReferenceId(), datasetId, now,
+                    ElectionType.DATA_ACCESS.getValue(), dar.getReferenceId(), datasetId,
                     dar.requiresManualReview()));
                 inserts.add(
                     createElectionInsert(handle, ElectionType.RP.getValue(), dar.getReferenceId(),
-                        now, datasetId));
+                        datasetId));
                 inserts.addAll(
                     createVoteInsertsForUsers(handle, voteUsers, ElectionType.RP.getValue(),
-                        dar.getReferenceId(), datasetId, now,
+                        dar.getReferenceId(), datasetId,
                         dar.requiresManualReview()));
                 createdElectionReferenceIds.add(dar.getReferenceId());
               }
@@ -122,26 +121,25 @@ public class DarCollectionServiceDAO {
   }
 
   private List<Update> createVoteInsertsForUsers(Handle handle, List<User> voteUsers,
-      String electionType, String referenceId, Integer datasetId, Date now,
-      Boolean isManualReview) {
+      String electionType, String referenceId, Integer datasetId, Boolean isManualReview) {
     List<Update> userVotes = new ArrayList<>();
     voteUsers.forEach(
         u -> {
           // All users get a minimum of one DAC vote type for both RP and DataAccess election types
           userVotes.add(createVoteInsert(handle, VoteType.DAC.getValue(), electionType, referenceId,
-              datasetId, now, u.getUserId()));
+              datasetId, u.getUserId()));
           // Chairpersons get a Chairperson vote for both RP and DataAccess election types
           if (u.hasUserRole(UserRoles.CHAIRPERSON)) {
             userVotes.add(
                 createVoteInsert(handle, VoteType.CHAIRPERSON.getValue(), electionType, referenceId,
-                    datasetId, now, u.getUserId()));
+                    datasetId, u.getUserId()));
             // Chairpersons get Final and Agreement votes for DataAccess elections
             if (ElectionType.DATA_ACCESS.getValue().equals(electionType)) {
               userVotes.add(createVoteInsert(handle, VoteType.FINAL.getValue(),
-                  ElectionType.DATA_ACCESS.getValue(), referenceId, datasetId, now, u.getUserId()));
+                  ElectionType.DATA_ACCESS.getValue(), referenceId, datasetId, u.getUserId()));
               if (!isManualReview) {
                 userVotes.add(createVoteInsert(handle, VoteType.AGREEMENT.getValue(),
-                    ElectionType.DATA_ACCESS.getValue(), referenceId, datasetId, now,
+                    ElectionType.DATA_ACCESS.getValue(), referenceId, datasetId,
                     u.getUserId()));
               }
             }
@@ -151,10 +149,10 @@ public class DarCollectionServiceDAO {
   }
 
   private Update createVoteInsert(Handle handle, String voteType, String electionType,
-      String referenceId, Integer datasetId, Date now, Integer userId) {
+      String referenceId, Integer datasetId, Integer userId) {
     final String sql =
         " INSERT INTO vote (createdate, user_id, electionid, type, remindersent) "
-            + " (SELECT :createDate, :userId, election_id, :voteType, false "
+            + " (SELECT current_timestamp, :userId, election_id, :voteType, false "
             + "  FROM election "
             + "  WHERE election_type = :electionType "
             + "  AND reference_id = :referenceId "
@@ -162,7 +160,6 @@ public class DarCollectionServiceDAO {
             + "  ORDER BY create_date desc "
             + "  LIMIT 1) ";
     Update insert = handle.createUpdate(sql);
-    insert.bind("createDate", now);
     insert.bind("userId", userId);
     insert.bind("voteType", voteType);
     insert.bind("electionType", electionType);
@@ -182,11 +179,11 @@ public class DarCollectionServiceDAO {
   }
 
   private Update createElectionInsert(
-      Handle handle, String electionType, String referenceId, Date now, Integer datasetId) {
+      Handle handle, String electionType, String referenceId, Integer datasetId) {
     final String sql =
         " INSERT INTO election "
             + "        (election_type, status, create_date, reference_id, dataset_id, version) "
-            + " VALUES (:electionType, :status, :createDate, :referenceId, :datasetId, "
+            + " VALUES (:electionType, :status, current_timestamp, :referenceId, :datasetId, "
             + "         (SELECT coalesce (MAX(version), 0) + 1 "
             + "          FROM election AS election_version "
             + "          WHERE reference_id = :referenceId "
@@ -196,7 +193,6 @@ public class DarCollectionServiceDAO {
     Update insert = handle.createUpdate(sql);
     insert.bind("electionType", electionType);
     insert.bind("referenceId", referenceId);
-    insert.bind("createDate", now);
     insert.bind("datasetId", datasetId);
     insert.bind("status", ElectionStatus.OPEN.getValue());
     return insert;

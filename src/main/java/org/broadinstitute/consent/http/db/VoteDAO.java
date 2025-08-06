@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.VoteMapper;
 import org.broadinstitute.consent.http.models.User;
@@ -45,29 +44,11 @@ public interface VoteDAO extends Transactional<VoteDAO> {
   Integer checkVoteById(@Bind("referenceId") String referenceId,
       @Bind("voteId") Integer voteId);
 
-  @SqlUpdate("insert into vote (user_id, electionId, type, reminderSent) values (:userId, :electionId, :type, false)")
+  @SqlUpdate("INSERT INTO vote (user_id, electionid, type, remindersent, createdate) VALUES (:userId, :electionId, :type, false, current_timestamp)")
   @GetGeneratedKeys
   Integer insertVote(@Bind("userId") Integer userId,
       @Bind("electionId") Integer electionId,
       @Bind("type") String type);
-
-  @SqlUpdate("DELETE FROM vote v WHERE electionId IN (SELECT election_id FROM election WHERE reference_id = :referenceId) ")
-  void deleteVotesByReferenceId(@Bind("referenceId") String referenceId);
-
-  @SqlUpdate("DELETE FROM vote v WHERE electionId IN (SELECT election_id FROM election WHERE reference_id IN (<referenceIds>)) ")
-  void deleteVotesByReferenceIds(@BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
-
-
-  @SqlUpdate("update vote set vote = :vote, updateDate = :updateDate, rationale = :rationale, reminderSent = :reminderSent, createDate = :createDate, has_concerns = :hasConcerns where voteId = :voteId")
-  void updateVote(@Bind("vote") Boolean vote,
-      @Bind("rationale") String rationale,
-      @Bind("updateDate") Date updateDate,
-      @Bind("voteId") Integer voteId,
-      @Bind("reminderSent") boolean reminder,
-      @Bind("electionId") Integer electionId,
-      @Bind("createDate") Date createDate,
-      @Bind("hasConcerns") Boolean hasConcerns);
-
 
   @SqlUpdate("update vote set reminderSent = :reminderSent where voteId = :voteId")
   void updateVoteReminderFlag(@Bind("voteId") Integer voteId,

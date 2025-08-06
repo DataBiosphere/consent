@@ -26,7 +26,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
-import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.jupiter.api.Test;
@@ -254,7 +253,7 @@ class ElectionDAOTest extends DAOTestHelper {
     Election e = createDataAccessElection(dar.getReferenceId(), d.getDatasetId());
     Integer voteId = voteDAO.insertVote(u.getUserId(), e.getElectionId(),
         VoteType.FINAL.getValue());
-    voteDAO.updateVote(true, "rationale", new Date(), voteId, false, e.getElectionId(), new Date(),
+    updateVote(true, "rationale", new Date(), voteId, false, e.getElectionId(), new Date(),
         false);
     Vote v = voteDAO.findVoteById(voteId);
 
@@ -454,26 +453,6 @@ class ElectionDAOTest extends DAOTestHelper {
 
     assertEquals(1, elections.size());
     assertEquals(elections.get(0).getElectionId(), lcElection.getElectionId());
-  }
-
-  @Test
-  void testDeleteByReferenceIds() {
-    Dataset dataset = createDataset();
-    DataAccessRequest dar = createDataAccessRequestV3();
-    String referenceId = dar.getReferenceId();
-    Integer datasetId = dataset.getDatasetId();
-    Election accessElection = createDataAccessElection(referenceId, datasetId);
-    Election rpElection = createRPElection(referenceId, datasetId);
-
-    List<Election> elections = electionDAO.findOpenElectionsByReferenceIds(
-        List.of(dar.referenceId));
-    assertEquals(2, elections.size());
-
-    electionDAO.deleteElectionsByIds(
-        List.of(accessElection.getElectionId(), rpElection.getElectionId()));
-
-    elections = electionDAO.findOpenElectionsByReferenceIds(List.of(dar.referenceId));
-    assertEquals(0, elections.size());
   }
 
   @Test
@@ -692,7 +671,7 @@ class ElectionDAOTest extends DAOTestHelper {
 
   private Vote createPopulatedChairpersonVote(Integer userId, Integer electionId) {
     Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.CHAIRPERSON.getValue());
-    voteDAO.updateVote(true, "rationale", new Date(), voteId, false, electionId, new Date(), false);
+    updateVote(true, "rationale", new Date(), voteId, false, electionId, new Date(), false);
     return voteDAO.findVoteById(voteId);
   }
 
@@ -767,15 +746,15 @@ class ElectionDAOTest extends DAOTestHelper {
     datasetDAO.insertDatasetProperties(list);
   }
 
-  private LibraryCard createLibraryCard(User user) {
+  private void createLibraryCard(User user) {
     Integer id = libraryCardDAO.insertLibraryCard(user.getUserId(),
         user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
-    return libraryCardDAO.findLibraryCardById(id);
+    libraryCardDAO.findLibraryCardById(id);
   }
 
-  private Vote createFinalVote(Integer userId, Integer electionId) {
+  private void createFinalVote(Integer userId, Integer electionId) {
     Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
-    return voteDAO.findVoteById(voteId);
+    voteDAO.findVoteById(voteId);
   }
 
   private Dataset createDatasetWithDac(Integer dacId) {

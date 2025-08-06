@@ -13,13 +13,10 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Stream;
 import javax.annotation.security.RolesAllowed;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.rules.AuditPageResults;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.service.DACAutomationRuleService;
@@ -118,15 +115,16 @@ public class DACAutomationRuleResource extends Resource {
   }
 
   private void validateAdminOrChairForDAC(User user, Integer dacId) {
-    //TODO: harmonize this with the logic in the DACResource so we're consistent.
-    boolean isAdminOrChair = user.hasUserRole(UserRoles.ADMIN) || isChairOfDAC(user, dacId);
+    boolean isAdminOrChair =
+        user.hasUserRole(UserRoles.ADMIN)
+            || user.verifyDACRole(UserRoles.CHAIRPERSON.getRoleName(), dacId);
     if (!isAdminOrChair) {
       throw new ForbiddenException("User does not have access to the specified DAC ID");
     }
   }
 
   private void validateIsChairOfDAC(User user, Integer dacId) {
-    if (!isChairOfDAC(user, dacId)) {
+    if (!user.verifyDACRole(UserRoles.CHAIRPERSON.getRoleName(), dacId)) {
       throw new ForbiddenException("User does not have access to the specified DAC ID");
     }
   }
@@ -140,14 +138,6 @@ public class DACAutomationRuleResource extends Resource {
       throw new IllegalArgumentException("PageSize must be less than or equal to 100");
     }
 
-  }
-
-  private boolean isChairOfDAC(User user, Integer dacId) {
-    return Stream.ofNullable(user.getRoles())
-        .flatMap(List::stream)
-        .filter(r -> r.getRoleId().equals(UserRoles.Chairperson().getRoleId()))
-        .map(UserRole::getDacId)
-        .anyMatch(id -> Objects.equals(id, dacId));
   }
 
 }

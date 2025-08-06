@@ -196,4 +196,6 @@
     relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2025-07-23-vote-type-election-type-indices.xml"
     relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2025-07-31-vote-create-date-index.xml"
+    relativeToChangelogFile="true" />
 </databaseChangeLog>
