@@ -24,7 +24,7 @@ public class CountryValidator {
           "cuba",
           "hong kong",
           "iran (islamic republic of)",
-          "Korea (the democratic people's republic of)",
+          "korea (the democratic people's republic of)",
           "macao",
           "russian federation (the)",
           "venezuela (bolivarian republic of)");
