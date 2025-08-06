@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import net.gcardone.junidecode.Junidecode;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -335,7 +334,7 @@ public class User {
     if (Objects.isNull(this.getRoles())) {
       return false;
     } else {
-      return this.getRoles().stream().anyMatch((r) -> r.getRoleId().equals(role.getRoleId()));
+      return this.getRoles().stream().anyMatch(r -> r.getRoleId().equals(role.getRoleId()));
     }
   }
 
@@ -347,20 +346,21 @@ public class User {
     return this.getRoles()
         .stream()
         .map(UserRole::getRoleId)
-        .collect(Collectors.toList());
+        .toList();
   }
 
   @Transient
-  public Boolean checkIfUserHasRole(String roleName, Integer dacId) {
+  public boolean verifyDACRole(String roleName, Integer dacId) {
     UserRoles role = UserRoles.getUserRoleFromName(roleName);
-    List<UserRole> roles = getRoles();
-    List<UserRole> targetRoles = roles.stream()
-        .filter((r) -> {
-          return r.getName().equals(role.getRoleName())
-              && r.getRoleId().equals(role.getRoleId())
-              && Objects.equals(r.getDacId(), dacId);
-        })
-        .collect(Collectors.toList());
+    List<UserRole> currentRoles = getRoles();
+    if (Objects.isNull(currentRoles) || Objects.isNull(role)) {
+      return false;
+    }
+    List<UserRole> targetRoles = currentRoles.stream()
+        .filter(r -> r.getName().equals(role.getRoleName())
+            && r.getRoleId().equals(role.getRoleId())
+            && Objects.equals(r.getDacId(), dacId))
+        .toList();
     return !targetRoles.isEmpty();
 
   }
