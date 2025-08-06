@@ -20,7 +20,6 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
-import org.broadinstitute.consent.http.models.BannedCountriesList;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
@@ -33,6 +32,7 @@ import org.broadinstitute.consent.http.rules.Rules;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.util.ComplianceLogger;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.CountryValidator;
 import org.glassfish.jersey.server.ContainerRequest;
 
 public class DACAutomationRuleService implements ConsentLogger {
@@ -157,7 +157,7 @@ public class DACAutomationRuleService implements ConsentLogger {
   protected Optional<Vote> applyRule(
       DACAutomationRule rule, Dataset dataset, DataAccessRequest dar, ContainerRequest request) {
     RuleImplementationInterface ruleImplementation = getRuleImplementation(rule);
-    boolean darContainsBannedCountry = containsBannedCountry(dar);
+    boolean darContainsBannedCountry = CountryValidator.containsBannedCountry(dar);
     boolean shouldApprove = ruleImplementation.compare(dataset, dar);
     if (shouldApprove && !darContainsBannedCountry) {
       Vote v = openElectionAndApprove(rule, ruleImplementation, dar, dataset, request);
@@ -174,17 +174,6 @@ public class DACAutomationRuleService implements ConsentLogger {
               darContainsBannedCountry));
     }
     return Optional.empty();
-  }
-
-  private boolean containsBannedCountry(DataAccessRequest dar) {
-    return dar.getData().getInternalCollaborators().stream()
-        .anyMatch(
-            collaborator ->
-              BannedCountriesList.bannedCountriesCFR.contains(
-                  collaborator.countryOfOperation().toLowerCase()) ||
-                  BannedCountriesList.bannedCountriesISO3166.contains(
-                      collaborator.countryOfOperation().toLowerCase())
-            );
   }
 
   @VisibleForTesting
