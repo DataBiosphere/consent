@@ -221,7 +221,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
       """
-
     SELECT c.*,
        u.user_id as u_user_id, u.email as u_email, u.display_name as u_display_name, u.create_date as u_create_date, u.email_preference as u_email_preference, u.institution_id as u_institution_id, u.era_commons_id as u_era_commons_id,
        i.institution_id as i_id, i.institution_name as i_name, i.it_director_name as i_it_director_name, i.it_director_email as i_it_director_email, i.create_date as i_create_date, i.update_date as i_update_date,

@@ -285,28 +285,25 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     initResource();
 
     Response response = resource.getCollectionWithAllElectionsByCollectionId(duosAdmin, collection.getDarCollectionId());
-
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
   @Test
   void testGetCollectionWithAllElectionsById_CollectionNotFoundCollection() {
-    when(darCollectionService.getCollectionWithAllElectionsByCollectionId(anyInt())).thenThrow(new NotFoundException("Collection not found"));
     initResource();
+    when(darCollectionService.getCollectionWithAllElectionsByCollectionId(anyInt())).thenThrow(new NotFoundException("Collection not found"));
 
     Response response = resource.getCollectionWithAllElectionsByCollectionId(duosResearcher, 1);
-
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
   @Test
   void testGetCollectionWithAllElectionsByCollectionId_ServiceException() {
+    initResource();
     when(darCollectionService.getCollectionWithAllElectionsByCollectionId(anyInt()))
         .thenThrow(new RuntimeException("Service error"));
-    initResource();
 
     Response response = resource.getCollectionWithAllElectionsByCollectionId(duosResearcher, 1);
-
     assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
   }
 
@@ -323,7 +320,6 @@ class DarCollectionResourceTest extends AbstractTestHelper {
 
     Response response = resource.getCollectionWithAllElectionsByCollectionId(duosResearcher,
         collection.getDarCollectionId());
-
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -356,7 +352,6 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     when(darCollectionService.findDatasetIdsByDACUser(dacMember)).thenReturn(List.of(42, 43));
 
     resource.validateRequestingUserForElectionHistory(duosMember, collection);
-
     verify(darCollectionService).findDatasetIdsByDACUser(dacMember);
   }
 
