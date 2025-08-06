@@ -467,66 +467,6 @@ public class DarCollectionService implements ConsentLogger {
     return datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
   }
 
-  public void deleteByCollectionId(User user, Integer collectionId)
-      throws NotAcceptableException, NotAuthorizedException, NotFoundException {
-    DarCollection coll = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
-    if (coll == null) {
-      throw new NotFoundException("DAR Collection does not exist at that id.");
-    }
-
-    // ensure the user is capable of deleting the collection
-    if (!user.hasUserRole(UserRoles.ADMIN) && !coll.getCreateUserId().equals(user.getUserId())) {
-      throw new NotAuthorizedException("Not authorized to delete DAR Collection.");
-    }
-
-    // get the reference ids of the dars in the collection
-    List<String> referenceIds =
-        coll.getDars().values().stream().map(DataAccessRequest::getReferenceId).distinct()
-            .collect(toList());
-
-    // ensure there are no elections; if there are, will attempt to delete (must be admin)
-    ensureNoElections(user, referenceIds);
-
-    // no elections left & user has perms => safe to delete collection
-
-    // delete DARs
-    matchDAO.deleteRationalesByPurposeIds(referenceIds);
-    matchDAO.deleteMatchesByPurposeIds(referenceIds);
-    dataAccessRequestDAO.deleteDARDatasetRelationByReferenceIds(referenceIds);
-    dataAccessRequestDAO.deleteByReferenceIds(referenceIds);
-
-    // delete collection
-    darCollectionDAO.deleteByCollectionId(collectionId);
-  }
-
-  // checks if there are any elections for any of the DARs in the referenceIds; if so,
-  // will attempt to delete them (must be admin to delete)
-  private void ensureNoElections(User user, List<String> referenceIds)
-      throws NotAcceptableException {
-    // get elections across all reference ids
-    List<Election> allElections = electionDAO.findElectionsByReferenceIds(referenceIds);
-
-    // if there are already no elections, we're done!
-    if (allElections.isEmpty()) {
-      return;
-    }
-
-    // if there are any elections, we need to delete them.
-    // only admins can delete elections; make sure user is an admin
-    if (!user.hasUserRole(UserRoles.ADMIN)) {
-      throw new NotAcceptableException("Cannot delete DAR with elections.");
-    }
-
-    // delete all votes
-    voteDAO.deleteVotesByReferenceIds(referenceIds);
-
-    // delete all elections
-    List<Integer> electionIds = allElections.stream().map(Election::getElectionId)
-        .collect(toList());
-
-    electionDAO.deleteElectionsByIds(electionIds);
-
-  }
 
   public DarCollection getByReferenceId(String referenceId) {
     DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);
