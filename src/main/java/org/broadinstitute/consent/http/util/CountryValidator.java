@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.util;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.JsonParseException;
@@ -18,7 +19,8 @@ public class CountryValidator {
 
   // For the list of countries banned, see
   // https://www.ecfr.gov/current/title-28/chapter-I/part-202/subpart-F/section-202.601
-  private static final Set<String> bannedCountriesISO3166 =
+  @VisibleForTesting
+  protected static final Set<String> bannedCountriesISO3166 =
       Set.of(
           "china",
           "cuba",

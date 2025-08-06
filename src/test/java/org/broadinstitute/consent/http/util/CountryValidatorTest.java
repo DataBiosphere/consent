@@ -3,6 +3,11 @@ package org.broadinstitute.consent.http.util;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -78,5 +83,13 @@ class CountryValidatorTest {
     darData.setPiCountryOfOperation("Genovia");
     dar.setData(darData);
     assertFalse(CountryValidator.containsBannedCountry(dar));
+  }
+
+  @Test
+  void testBannedCountryListIsValid() throws IOException {
+    String fileContents = Files.readString(Path.of("src/main/resources/assets/ISO-3166-countries.json"));
+    CountryValidator.bannedCountriesISO3166.forEach(country -> {
+      assertTrue(fileContents.toLowerCase().contains(country));
+      });
   }
 }
