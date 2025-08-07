@@ -4,7 +4,6 @@ import static java.util.Objects.isNull;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
@@ -33,6 +32,7 @@ import org.broadinstitute.consent.http.rules.Rules;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.util.ComplianceLogger;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.CountryValidator;
 import org.glassfish.jersey.server.ContainerRequest;
 
 public class DACAutomationRuleService implements ConsentLogger {
@@ -157,8 +157,9 @@ public class DACAutomationRuleService implements ConsentLogger {
   protected Optional<Vote> applyRule(
       DACAutomationRule rule, Dataset dataset, DataAccessRequest dar, ContainerRequest request) {
     RuleImplementationInterface ruleImplementation = getRuleImplementation(rule);
+    boolean darContainsBannedCountry = CountryValidator.containsBannedCountry(dar);
     boolean shouldApprove = ruleImplementation.compare(dataset, dar);
-    if (shouldApprove) {
+    if (shouldApprove && !darContainsBannedCountry) {
       Vote v = openElectionAndApprove(rule, ruleImplementation, dar, dataset, request);
       if (v != null) {
         return Optional.of(v);
@@ -166,8 +167,11 @@ public class DACAutomationRuleService implements ConsentLogger {
     } else {
       logInfo(
           String.format(
-              "Rule %s not triggered for DAC id: %s and dataset id: %s",
-              rule.ruleType(), dataset.getDacId(), dataset.getDatasetId()));
+              "Rule %s not triggered for DAC id: %s and dataset id: %s with contains banned country: %b",
+              rule.ruleType(),
+              dataset.getDacId(),
+              dataset.getDatasetId(),
+              darContainsBannedCountry));
     }
     return Optional.empty();
   }
