@@ -456,26 +456,6 @@ class ElectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDeleteByReferenceIds() {
-    Dataset dataset = createDataset();
-    DataAccessRequest dar = createDataAccessRequestV3();
-    String referenceId = dar.getReferenceId();
-    Integer datasetId = dataset.getDatasetId();
-    Election accessElection = createDataAccessElection(referenceId, datasetId);
-    Election rpElection = createRPElection(referenceId, datasetId);
-
-    List<Election> elections = electionDAO.findOpenElectionsByReferenceIds(
-        List.of(dar.referenceId));
-    assertEquals(2, elections.size());
-
-    electionDAO.deleteElectionsByIds(
-        List.of(accessElection.getElectionId(), rpElection.getElectionId()));
-
-    elections = electionDAO.findOpenElectionsByReferenceIds(List.of(dar.referenceId));
-    assertEquals(0, elections.size());
-  }
-
-  @Test
   void testInsertAndFindElection() {
 
     Dac dac = createDac();

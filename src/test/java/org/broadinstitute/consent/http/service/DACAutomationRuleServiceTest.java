@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -35,6 +36,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
+import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -152,7 +154,7 @@ class DACAutomationRuleServiceTest {
 
     List<DACAutomationRule> rules = service.findAll();
     Assertions.assertNotNull(rules);
-    Assertions.assertFalse(rules.isEmpty());
+    assertFalse(rules.isEmpty());
   }
 
   @Test
@@ -162,7 +164,7 @@ class DACAutomationRuleServiceTest {
             null, null, null, null)));
     List<DACAutomationRule> rules = service.findAllByDacId(1);
     Assertions.assertNotNull(rules);
-    Assertions.assertFalse(rules.isEmpty());
+    assertFalse(rules.isEmpty());
   }
 
   @Test
@@ -186,7 +188,7 @@ class DACAutomationRuleServiceTest {
             Timestamp.from(Instant.now()), 1, "alice", "alice@fake.org")));
     doNothing().when(ruleDAO).auditedDeleteDACRuleSetting(anyInt(), anyInt(), anyInt());
     AutomationRuleToggleResponse result = service.toggleRule(1, 1, user);
-    Assertions.assertFalse(result.isRuleEnabled());
+    assertFalse(result.isRuleEnabled());
     assertEquals(1, result.getRuleId());
     assertEquals(-1, result.getEnabledTime());
   }
@@ -366,6 +368,11 @@ class DACAutomationRuleServiceTest {
     DACAutomationRule rule = makeDacAutomationRuleGRU();
     Dataset datasetGru = makeDataset();
     DataAccessRequest darHmb = makeDAR();
+    DataAccessRequestData darData = darHmb.getData();
+    Collaborator bannedActor =
+        new Collaborator(true, "test", "test", "test", "test", "123", "United States of America");
+    darData.setInternalCollaborators(List.of(bannedActor));
+    darHmb.setData(darData);
     Vote vote = new Vote();
     vote.setType(VoteType.RADAR_APPROVE.getValue());
     vote.setVote(true);
@@ -381,6 +388,36 @@ class DACAutomationRuleServiceTest {
     Optional<Vote> appliedVote = service.applyRule(rule, datasetGru, darHmb, request);
     assertTrue(appliedVote.isPresent());
     assertEquals(vote, appliedVote.get());
+  }
+
+  @Test
+  void testApplyRuleApprove_Banned_CFR_Country_Fails() {
+    DACAutomationRule rule = makeDacAutomationRuleGRU();
+    Dataset datasetGru = makeDataset();
+    DataAccessRequest darHmb = makeDAR();
+    DataAccessRequestData darData = darHmb.getData();
+    Collaborator bannedActor =
+        new Collaborator(true, "test", "test", "test", "test", "123", "russia");
+    darData.setInternalCollaborators(List.of(bannedActor));
+    darHmb.setData(darData);
+
+    Optional<Vote> appliedVote = service.applyRule(rule, datasetGru, darHmb, request);
+    assertFalse(appliedVote.isPresent());
+  }
+
+  @Test
+  void testApplyRuleApprove_Banned_ISO_Country_Fails() {
+    DACAutomationRule rule = makeDacAutomationRuleGRU();
+    Dataset datasetGru = makeDataset();
+    DataAccessRequest darHmb = makeDAR();
+    DataAccessRequestData darData = darHmb.getData();
+    Collaborator bannedActor =
+        new Collaborator(true, "test", "test", "test", "test", "123", "russian federation (the)");
+    darData.setInternalCollaborators(List.of(bannedActor));
+    darHmb.setData(darData);
+
+    Optional<Vote> appliedVote = service.applyRule(rule, datasetGru, darHmb, request);
+    assertFalse(appliedVote.isPresent());
   }
 
   @Test

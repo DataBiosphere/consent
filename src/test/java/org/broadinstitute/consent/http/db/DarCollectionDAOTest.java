@@ -341,27 +341,6 @@ class DarCollectionDAOTest extends DAOTestHelper {
     }
   }
 
-  @Test
-  void testDeleteByCollectionId() {
-    DarCollection collection = createDarCollection();
-    collection.getDars().keySet()
-        .forEach(k -> dataAccessRequestDAO.deleteDARDatasetRelationByReferenceId(k));
-    dataAccessRequestDAO.deleteByCollectionId(collection.getDarCollectionId());
-    darCollectionDAO.deleteByCollectionId(collection.getDarCollectionId());
-    assertNull(
-        darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId()));
-  }
-
-  @Test
-  void testDeleteByCollectionIdNegative() {
-    try {
-      darCollectionDAO.deleteByCollectionId(randomInt(100, 1000));
-    } catch (Exception e) {
-      assertEquals(PSQLState.UNIQUE_VIOLATION.getState(),
-          ((PSQLException) e.getCause()).getSQLState());
-    }
-  }
-
   // local method to create a test DAR
   DataAccessRequest createDAR(User user, Dataset dataset, Integer collectionId) {
     Timestamp now = new Timestamp(new Date().getTime());

@@ -36,9 +36,6 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       @Bind("referenceId") String referenceId,
       @Bind("datasetId") Integer datasetId);
 
-  @SqlUpdate("DELETE FROM election WHERE election_id in (<electionIds>)")
-  void deleteElectionsByIds(@BindList(value = "electionIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> electionIds);
-
   @SqlUpdate("UPDATE election SET status = :status, last_update = :lastUpdate WHERE election_id = :electionId ")
   void updateElectionById(@Bind("electionId") Integer electionId,
       @Bind("status") String status,

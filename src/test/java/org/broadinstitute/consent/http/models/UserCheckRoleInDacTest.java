@@ -13,30 +13,30 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class UserCheckRoleInDacTest {
 
   @Test
-  void testCheckIfUserHasRole_RoleNotFound() {
+  void testVerifyDACRole_RoleNotFound() {
     User user = new User();
     user.setAdminRole();
-    Boolean isUserChair = user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), 2);
+    boolean isUserChair = user.verifyDACRole(UserRoles.CHAIRPERSON.getRoleName(), 2);
     assertFalse(isUserChair);
   }
 
   @Test
-  void testCheckIfUserHasRole_RoleTypeFoundDifferentDacId() {
+  void testVerifyDACRole_RoleTypeFoundDifferentDacId() {
     User user = new User();
     user.setChairpersonRoleWithDAC(1);
-    Boolean isUserChair = user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), 2);
+    boolean isUserChair = user.verifyDACRole(UserRoles.CHAIRPERSON.getRoleName(), 2);
     assertFalse(isUserChair);
   }
 
   @Test
-  void testCheckIfUserHasRole() {
+  void testVerifyDACRole() {
     User user = new User();
     UserRole chairRole = UserRoles.Chairperson();
     chairRole.setDacId(1);
     UserRole adminRole = UserRoles.Admin();
     user.setRoles(List.of(chairRole, adminRole));
-    Boolean isUserChair = user.checkIfUserHasRole(UserRoles.CHAIRPERSON.getRoleName(), 1);
-    Boolean isUserAdmin = user.checkIfUserHasRole(UserRoles.ADMIN.getRoleName(), null);
+    boolean isUserChair = user.verifyDACRole(UserRoles.CHAIRPERSON.getRoleName(), 1);
+    boolean isUserAdmin = user.verifyDACRole(UserRoles.ADMIN.getRoleName(), null);
     assertTrue(isUserChair);
     assertTrue(isUserAdmin);
   }
