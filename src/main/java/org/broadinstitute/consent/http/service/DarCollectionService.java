@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static java.util.stream.Collectors.toList;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
 import com.google.gson.Gson;
@@ -481,8 +479,7 @@ public class DarCollectionService implements ConsentLogger {
 
     // get the reference ids of the dars in the collection
     List<String> referenceIds =
-        coll.getDars().values().stream().map(DataAccessRequest::getReferenceId).distinct()
-            .collect(toList());
+        coll.getDars().values().stream().map(DataAccessRequest::getReferenceId).distinct().toList();
 
     // ensure there are no elections; if there are, will attempt to delete (must be admin)
     ensureNoElections(user, referenceIds);
@@ -521,8 +518,7 @@ public class DarCollectionService implements ConsentLogger {
     voteDAO.deleteVotesByReferenceIds(referenceIds);
 
     // delete all elections
-    List<Integer> electionIds = allElections.stream().map(Election::getElectionId)
-        .collect(toList());
+    List<Integer> electionIds = allElections.stream().map(Election::getElectionId).toList();
 
     electionDAO.deleteElectionsByIds(electionIds);
 
