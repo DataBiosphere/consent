@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
@@ -28,6 +29,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.UserService;
@@ -122,6 +124,30 @@ public class DarCollectionResource extends Resource {
 
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Path("{collectionId}/electionHistory")
+  @Produces("application/json")
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
+  public Response getCollectionWithAllElectionsByCollectionId(
+      @Auth DuosUser authUser,
+      @PathParam("collectionId") Integer collectionId) {
+    try {
+      DarCollection collection = darCollectionService.getCollectionWithAllElectionsByCollectionId(collectionId);
+      validateRequestingUserForElectionHistory(authUser, collection);
+      return Response.ok().entity(collection).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @VisibleForTesting
+  protected void validateRequestingUserForElectionHistory(DuosUser duosUser, DarCollection collection) {
+    User user = duosUser.getUser();
+    if (!user.hasUserRole(UserRoles.ADMIN) && !checkDacPermissionsForCollection(user, collection)) {
+      throw new NotFoundException();
     }
   }
 

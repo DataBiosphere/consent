@@ -31,6 +31,8 @@ security:
 paths:
   /api/collections/{collectionId}:
     $ref: './paths/collection.yaml'
+  /api/collections/{collectionId}/electionHistory:
+    $ref: './paths/collectionWithElectionHistoryByCollectionId.yaml'
   /api/collections/dar/{referenceId}:
     $ref: './paths/collectionByReferenceId.yaml'
   /api/collections/role/{roleName}/summary:

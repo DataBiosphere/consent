@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
@@ -126,6 +125,72 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         .sorted()
         .toList();
     assertEquals(datasetIds, collectionDatasetIds);
+  }
+
+  @Test
+  void testGetByCollectionId() {
+    Integer collectionId = 1;
+    DarCollection collection = new DarCollection();
+    collection.setDarCollectionId(collectionId);
+    when(darCollectionDAO.findDARCollectionByCollectionId(collectionId)).thenReturn(collection);
+    DarCollection result = service.getByCollectionId(collectionId);
+    assertNotNull(result);
+    assertEquals(collectionId, result.getDarCollectionId());
+  }
+
+  @Test
+  void testGetByCollectionId_NotFound() {
+    Integer collectionId = 1;
+    when(darCollectionDAO.findDARCollectionByCollectionId(collectionId)).thenReturn(null);
+
+    assertThrows(NotFoundException.class, () ->
+        service.getByCollectionId(collectionId));
+  }
+
+  @Test
+  void testGetCollectionById_ServiceException() {
+    Integer collectionId = 1;
+    RuntimeException expectedException = new RuntimeException("Test exception");
+    when(darCollectionDAO.findDARCollectionByCollectionId(collectionId))
+        .thenThrow(expectedException);
+
+    RuntimeException exception = assertThrows(RuntimeException.class, () ->
+        service.getByCollectionId(collectionId));
+    assertEquals(expectedException, exception);
+  }
+
+
+  @Test
+  void testGetCollectionWithAllElectionsByCollectionId() {
+    Integer collectionId = 1;
+    DarCollection collection = new DarCollection();
+    collection.setDarCollectionId(collectionId);
+    when(darCollectionDAO.findCollectionWithAllElectionsByCollectionId(collectionId)).thenReturn(collection);
+
+    DarCollection result = service.getCollectionWithAllElectionsByCollectionId(collectionId);
+    assertNotNull(result);
+    assertEquals(collectionId, result.getDarCollectionId());
+  }
+
+  @Test
+  void testGetCollectionWithAllElectionsByCollectionId_NotFound() {
+    Integer collectionId = 1;
+    when(darCollectionDAO.findCollectionWithAllElectionsByCollectionId(collectionId)).thenReturn(null);
+
+    assertThrows(NotFoundException.class, () ->
+        service.getCollectionWithAllElectionsByCollectionId(collectionId));
+  }
+
+  @Test
+  void testGetCollectionWithAllElectionsByCollectionId_ServiceException() {
+    Integer collectionId = 1;
+    RuntimeException expectedException = new RuntimeException("Test exception");
+    when(darCollectionDAO.findCollectionWithAllElectionsByCollectionId(collectionId))
+        .thenThrow(expectedException);
+
+    RuntimeException exception = assertThrows(RuntimeException.class, () ->
+        service.getCollectionWithAllElectionsByCollectionId(collectionId));
+    assertEquals(expectedException, exception);
   }
 
   @Test
