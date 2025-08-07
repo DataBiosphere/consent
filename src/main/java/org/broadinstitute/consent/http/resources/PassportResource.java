@@ -8,7 +8,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.passport.PassportClaim;
 import org.broadinstitute.consent.http.service.PassportService;
 
@@ -25,13 +25,12 @@ public class PassportResource extends Resource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
-  public Response getPassport(@Auth AuthUser authUser) {
+  public Response getPassport(@Auth DuosUser duosUser) {
     try {
-      PassportClaim passport = passportService.generatePassport(authUser);
+      PassportClaim passport = passportService.generatePassport(duosUser);
       return Response.ok().entity(passport).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
   }
-
 }

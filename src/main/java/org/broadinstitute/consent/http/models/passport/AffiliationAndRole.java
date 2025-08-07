@@ -28,9 +28,9 @@ public class AffiliationAndRole implements VisaClaimType {
     return assertedDate.getTime();
   }
 
-  // TODO Look for a better way to get the user's institutional domain. This is
-  // not captured currently in our Institution model so we use email domain as
-  // a proxy for institutional domain
+  // TODO
+  //    Is there a better way to get the user's singular institutional domain?
+  //    Institutions can have multiple domains, e.g. "broadinstitute.org" and "broad.mit.edu".
   @Override
   public String value() {
     String[] splitEmail = user.getEmail().split("@");
