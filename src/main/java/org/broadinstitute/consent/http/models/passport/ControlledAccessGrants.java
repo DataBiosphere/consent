@@ -1,9 +1,8 @@
 package org.broadinstitute.consent.http.models.passport;
 
-import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
-import java.util.Date;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
+import org.broadinstitute.consent.http.service.PassportService;
 
 /**
  * <a href="https://github.com/ga4gh-duri/ga4gh-duri.github.io/blob/master/researcher_ids/ga4gh_passport_v1.md#controlledaccessgrants">ControlledAccessGrants</a>
@@ -34,7 +33,7 @@ public class ControlledAccessGrants implements VisaClaimType {
 
   @Override
   public String value() {
-    return String.format("https://duos.org/dataset/%s", approvedDataset.getDatasetIdentifier());
+    return String.format("%s/dataset/%s", PassportService.ISS, approvedDataset.getDatasetIdentifier());
   }
 
   @Override

@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models.passport;
 import java.util.Optional;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.PassportService;
 
 /**
  * <a href="https://github.com/ga4gh-duri/ga4gh-duri.github.io/blob/master/researcher_ids/ga4gh_passport_v1.md#affiliationandrole">AffiliationAndRole</a>
@@ -43,7 +44,7 @@ public class AffiliationAndRole implements VisaClaimType {
 
   @Override
   public String source() {
-    return "https://duos.org/";
+    return PassportService.ISS;
   }
 
   @Override
