@@ -11,6 +11,10 @@
       -- Previously, we selected these values out of the response.
       -- Going forward, we'll be preventing inserts and updates with problematic values
       UPDATE data_access_request SET data = (SELECT (regexp_replace(data #>> '{}', '\\\\u0000', '', 'g'))::jsonb);
+      -- Create indexes on commonly queried fields
+      CREATE INDEX idx_dar_data_project_title ON data_access_request USING GIN ((data -> 'projectTitle'));
+      CREATE INDEX idx_dar_data_status ON data_access_request USING GIN ((data -> 'status'));
+      CREATE INDEX idx_dar_data_closeout ON data_access_request USING GIN ((data -> 'closeoutSupplement'));
     </sql>
   </changeSet>
 </databaseChangeLog>
