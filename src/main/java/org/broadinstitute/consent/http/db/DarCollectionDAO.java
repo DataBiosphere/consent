@@ -137,7 +137,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
         dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date,
         dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id,
         dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date,
-        dar.update_date AS dar_update_date, dar.data as data, dd.dataset_id
+        dar.update_date AS dar_update_date, dar.data AS data, dd.dataset_id
         FROM dar_collection c
         INNER JOIN users u ON c.create_user_id = u.user_id
         LEFT JOIN user_property up ON u.user_id = up.user_id
