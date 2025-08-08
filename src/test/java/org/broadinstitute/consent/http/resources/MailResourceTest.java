@@ -11,8 +11,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
@@ -23,7 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class MailResourceTest {
+class MailResourceTest extends AbstractTestHelper {
 
   @Mock
   private EmailService emailService;
@@ -49,6 +48,23 @@ class MailResourceTest {
     initResource();
     when(emailService.fetchEmailMessagesByType(any(), any(), any())).thenReturn(new ArrayList<>());
     Response response = mailResource.getEmailByType(authUser, EmailType.COLLECT, null, null);
+    assertEquals(200, response.getStatus());
+  }
+
+  @Test
+  void test_MailResourceByUser() {
+    initResource();
+    when(emailService.fetchEmailMessagesByUserId(any(), any(), any())).thenReturn(
+        generateMailMessageList());
+    Response response = mailResource.getEmailByUser(authUser, 1, null, null);
+    assertEquals(200, response.getStatus());
+  }
+
+  @Test
+  void test_MailResourceByUserEmptyListResponse() {
+    initResource();
+    when(emailService.fetchEmailMessagesByUserId(any(), any(), any())).thenReturn(new ArrayList<>());
+    Response response = mailResource.getEmailByUser(authUser, 1, null, null);
     assertEquals(200, response.getStatus());
   }
 
@@ -113,14 +129,14 @@ class MailResourceTest {
 
   private MailMessage generateMailMessage(String emailType) {
     return new MailMessage(
-        RandomUtils.nextInt(),
-        RandomUtils.nextInt(),
-        RandomUtils.nextInt(),
+        nextInt(),
+        nextInt(),
+        nextInt(),
         emailType,
         new Date(),
-        RandomStringUtils.randomAlphanumeric(10),
-        RandomStringUtils.randomAlphanumeric(10),
-        RandomUtils.nextInt(),
+        randomAlphanumeric(10),
+        randomAlphanumeric(10),
+        nextInt(),
         new Date()
     );
   }

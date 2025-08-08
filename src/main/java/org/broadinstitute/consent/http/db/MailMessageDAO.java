@@ -43,6 +43,16 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
 
   @SqlQuery("""
       SELECT entity_reference_id, email_entity_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date FROM email_entity e
+      WHERE user_id = :userId
+      ORDER BY create_date DESC
+      OFFSET :offset
+      LIMIT :limit
+      """)
+  List<MailMessage> fetchMessagesByUserId(@Bind("userId") Integer userId,
+      @Bind("limit") Integer limit, @Bind("offset") Integer offset);
+
+  @SqlQuery("""
+      SELECT entity_reference_id, email_entity_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date FROM email_entity e
       WHERE create_date BETWEEN SYMMETRIC :start AND :end
       ORDER BY create_date DESC
       OFFSET :offset
