@@ -32,9 +32,9 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         v.voteid as v_vote_id, dd.dataset_id as dd_datasetid,
         v.user_id as v_user_id, v.vote as v_vote, v.electionid as v_election_id,
         v.createdate as v_create_date,v.updatedate as v_update_date, v.type as v_type,
-        (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name,
-        (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'status' AS dar_status,
-        (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'closeoutSupplement' AS closeout,
+        latest_dar.data ->> 'projectTitle' AS name,
+        latest_dar.data ->> 'status' AS dar_status,
+        latest_dar.data ->> 'closeoutSupplement' AS closeout,
         ARRAY_AGG(dar_all.reference_id) AS reference_ids
       FROM dar_collection c
       -- DAR Collection Researcher join
@@ -114,9 +114,9 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                e.dataset_id,
                e.reference_id,
                dd.dataset_id as dd_datasetid,
-               (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name,
-               (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'status' AS dar_status,
-               (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'closeoutSupplement' AS closeout,
+               latest_dar.data ->> 'projectTitle' AS name,
+               latest_dar.data ->> 'status' AS dar_status,
+               latest_dar.data ->> 'closeoutSupplement' AS closeout,
                ARRAY_AGG(dar_all.reference_id) AS reference_ids
               FROM dar_collection c
               INNER JOIN users u
@@ -173,9 +173,9 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               e.status,
               e.dataset_id,
               dd.dataset_id AS dd_datasetid,
-              (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name,
-              (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'status' AS dar_status,
-              (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'closeoutSupplement' AS closeout,
+              latest_dar.data ->> 'projectTitle' AS name,
+              latest_dar.data ->> 'status' AS dar_status,
+              latest_dar.data ->> 'closeoutSupplement' AS closeout,
               dac.name AS dac_name,
               ARRAY_AGG(dar_all.reference_id) AS reference_ids
           FROM dar_collection c
@@ -229,9 +229,9 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               e.dataset_id,
               e.reference_id AS election_reference_id,
               dd.dataset_id AS dd_datasetid,
-              (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name,
-              (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'status' AS dar_status,
-              (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'closeoutSupplement' AS closeout,
+              latest_dar.data ->> 'projectTitle' AS name,
+              latest_dar.data ->> 'status' AS dar_status,
+              latest_dar.data ->> 'closeoutSupplement' AS closeout,
               ARRAY_AGG(dar_all.reference_id) AS reference_ids
           FROM
               dar_collection c
@@ -281,9 +281,9 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         u.display_name as researcher_name, u.user_id as researcher_id,
         i.institution_name, i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, v.voteid as v_vote_id, dd.dataset_id as dd_datasetid,
         v.user_id as v_user_id, v.vote as v_vote, v.electionid as v_election_id, v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type,
-        (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name,
-        (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'status' AS dar_status,
-        (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'closeoutSupplement' AS closeout,
+        latest_dar.data ->> 'projectTitle' AS name,
+        latest_dar.data ->> 'status' AS dar_status,
+        latest_dar.data ->> 'closeoutSupplement' AS closeout,
         ARRAY_AGG(dar_all.reference_id) AS reference_ids
       FROM dar_collection c
       INNER JOIN users u
@@ -342,9 +342,9 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                 latest_dar.closeout_so_approval_timestamp as latest_dar_closeout_so_approval_timestamp,
                 u.display_name as researcher_name,
                 u.user_id as researcher_id, i.institution_name, i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid,
-                (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' AS name,
-                (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'status' AS dar_status,
-                (regexp_replace(latest_dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'closeoutSupplement' AS closeout,
+                latest_dar.data ->> 'projectTitle' AS name,
+                latest_dar.data ->> 'status' AS dar_status,
+                latest_dar.data ->> 'closeoutSupplement' AS closeout,
                 ARRAY_AGG(dar_all.reference_id) AS reference_ids
               FROM dar_collection c
               INNER JOIN users u

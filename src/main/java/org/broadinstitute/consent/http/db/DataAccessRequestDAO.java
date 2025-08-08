@@ -40,7 +40,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
           SELECT collection.dar_code, dd.dataset_id, dar.id, dar.reference_id, dar.collection_id,
             dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-            (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, dar.era_commons_id,
+            dar.data, dar.era_commons_id,
             dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
           FROM data_access_request dar
           LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
@@ -67,7 +67,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery("""
       SELECT dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
         dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-        (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
+        dar.data,
         dd.dataset_id, collection.dar_code, dar.era_commons_id,
         dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
       FROM data_access_request dar
@@ -94,7 +94,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       AND dar.collection_id NOT IN (
         SELECT DISTINCT collection_id
         FROM data_access_request
-        WHERE (regexp_replace(data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'closeoutSupplement' IS NOT NULL)
+        WHERE data ->> 'closeoutSupplement' IS NOT NULL)
       """)
   List<DataAccessRequest> findApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
 
@@ -140,7 +140,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
         AND dar.collection_id NOT IN (
           SELECT DISTINCT collection_id
           FROM data_access_request
-          WHERE (regexp_replace(data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'closeoutSupplement' IS NOT NULL)
+          WHERE data ->> 'closeoutSupplement' IS NOT NULL)
       """)
   Set<Integer> findDatasetApprovalsByDar(@Bind("darReferenceId") String darReferenceId);
 
@@ -157,7 +157,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
               SELECT dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
                 dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
+                data,
                 dd.dataset_id, collection.dar_code, dar.era_commons_id,
                 dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
               FROM data_access_request dar
@@ -182,7 +182,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
               SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
               dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-              (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code,
+              dar.data, collection.dar_code,
               dar.era_commons_id, dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
               FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
@@ -203,7 +203,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
               SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
               dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-              (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
+              dar.data,
               collection.dar_code, dar.era_commons_id, dar.closeout_so_approval_timestamp,
               dar.closeout_approving_so_id
               FROM data_access_request dar
@@ -227,7 +227,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
               SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
                 dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-                (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
+                dar.data,
                 collection.dar_code, dar.era_commons_id, dar.closeout_so_approval_timestamp,
                 dar.closeout_approving_so_id
               FROM data_access_request dar
@@ -248,7 +248,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       """
           SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
-            (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, collection.dar_code,
+            dar.data, collection.dar_code,
             dar.era_commons_id, dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
           FROM data_access_request dar
           LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
@@ -273,7 +273,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate(
       """
           UPDATE data_access_request
-          SET data = to_jsonb(regexp_replace(:data, '\\\\u0000', '', 'g')), user_id = :userId, sort_date = :sortDate,
+          SET data = regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb, user_id = :userId, sort_date = :sortDate,
             submission_date = :submissionDate, update_date = :updateDate, era_commons_id = :eraCommonsId
           WHERE reference_id = :referenceId
       """)
@@ -303,8 +303,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
 
   @SqlUpdate(
       """
-          UPDATE data_access_request dar
-          SET data=jsonb_set((regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb, '{status}', '"Canceled"')
+          UPDATE data_access_request
+          SET data = jsonb_set(data, '{status}', '"Canceled"'::jsonb)
           WHERE reference_id IN (<referenceIds>)
       """)
   void cancelByReferenceIds(@BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
@@ -336,7 +336,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           INSERT INTO data_access_request
             (reference_id, user_id, create_date, sort_date, update_date, data)
           VALUES (:referenceId, :userId, :createDate, :sortDate,
-            :updateDate, to_jsonb(:data))
+            :updateDate, regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb)
       """)
   void insertDraftDataAccessRequest(
       @Bind("referenceId") String referenceId,
@@ -364,7 +364,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           INSERT INTO data_access_request
             (collection_id, reference_id, user_id, create_date, sort_date, submission_date, update_date, data, era_commons_id)
           VALUES (:collectionId, :referenceId, :userId, :createDate, :sortDate,
-            :submissionDate, :updateDate, to_jsonb(:data), :eraCommonsId)
+            :submissionDate, :updateDate, regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb, :eraCommonsId)
       """)
   void insertDataAccessRequest(
       @Bind("collectionId") Integer collectionId,
@@ -391,7 +391,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
           INSERT INTO data_access_request
             (parent_id, collection_id, reference_id, user_id, create_date, sort_date, submission_date, update_date, data, era_commons_id)
-          VALUES (:parentId, :collectionId, :referenceId, :userId, now(), now(), now(), now(), to_jsonb(:data), :eraCommonsId)
+          VALUES (:parentId, :collectionId, :referenceId, :userId, now(), now(), now(), now(), regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb, :eraCommonsId)
       """)
   void insertProgressReport(
       @Bind("parentId") Integer parentId,

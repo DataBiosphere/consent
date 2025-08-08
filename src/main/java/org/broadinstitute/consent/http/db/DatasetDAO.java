@@ -527,7 +527,7 @@ WHERE dar.submission_date > now() - interval '1 year'
   AND dar.collection_id NOT IN (
     SELECT DISTINCT collection_id
     FROM data_access_request
-    WHERE (regexp_replace(data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'closeoutSupplement' IS NOT NULL)
+    WHERE data ->> 'closeoutSupplement' IS NOT NULL)
   """)
   List<ApprovedDataset> getApprovedDatasets(@Bind("userId") Integer userId);
 

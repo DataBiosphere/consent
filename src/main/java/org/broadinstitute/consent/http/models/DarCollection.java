@@ -22,13 +22,13 @@ public class DarCollection {
           "dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, " +
           "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
           +
-          "dar.update_date AS dar_update_date, (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data, "
+          "dar.update_date AS dar_update_date, dar.data AS data, "
           +
           "dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date, "
           +
           "dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id, "
           +
-          "(regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'projectTitle' as projectTitle ";
+          "dar.data ->> 'projectTitle' as projectTitle ";
 
   @JsonProperty
   private Integer darCollectionId;
