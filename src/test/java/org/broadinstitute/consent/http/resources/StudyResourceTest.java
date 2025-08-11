@@ -182,7 +182,7 @@ class StudyResourceTest extends AbstractTestHelper {
     Study study = createMockStudy();
     when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
 
-    try (var response = resource.getRegistrationFromStudy(authUser, 1)) {
+    try (var response = resource.getRegistrationFromStudy(duosUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -193,7 +193,7 @@ class StudyResourceTest extends AbstractTestHelper {
     study.getDatasets().clear();
     when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
 
-    try (var response = resource.getRegistrationFromStudy(authUser, 1)) {
+    try (var response = resource.getRegistrationFromStudy(duosUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -203,8 +203,36 @@ class StudyResourceTest extends AbstractTestHelper {
     Study study = createMockStudy();
     when(datasetService.getStudyWithDatasetsById(any())).thenThrow(new NotFoundException());
 
-    try (var response = resource.getRegistrationFromStudy(authUser, study.getStudyId())) {
+    try (var response = resource.getRegistrationFromStudy(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetRegistrationFromStudyNotPublicGeneralUser() {
+    Study study = createMockStudy();
+    study.setPublicVisibility(false);
+    User generalUser = new User();
+    generalUser.setUserId(randomInt(1000, 1100));
+    when(duosUser.getUser()).thenReturn(generalUser);
+    when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
+
+    try (var response = resource.getRegistrationFromStudy(duosUser, 1)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetRegistrationFromStudyNotPublicCreateUser() {
+    Study study = createMockStudy();
+    study.setPublicVisibility(false);
+    User generalUser = new User();
+    generalUser.setUserId(study.getCreateUserId());
+    when(duosUser.getUser()).thenReturn(generalUser);
+    when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
+
+    try (var response = resource.getRegistrationFromStudy(duosUser, 1)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
 
