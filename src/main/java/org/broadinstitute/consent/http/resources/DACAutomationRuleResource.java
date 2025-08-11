@@ -97,7 +97,7 @@ public class DACAutomationRuleResource extends Resource {
   @PUT
   @Path("{dacId}/rules/{ruleId}/toggle")
   @Produces(MediaType.APPLICATION_JSON)
-  @RolesAllowed({Resource.ADMIN, Resource.CHAIRPERSON})
+  @RolesAllowed({Resource.CHAIRPERSON})
   public Response toggleRule(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId,
       @PathParam("ruleId") Integer ruleId) {
     try {
