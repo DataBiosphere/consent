@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -26,6 +27,7 @@ import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -51,6 +53,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -259,6 +262,30 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     ));
     dataset.setStudy(study);
     return new DatasetRecord(user, updateUser, dac, dataset, study);
+  }
+
+
+  @Test
+  void testAsyncESIndexUpdate() {
+    DatasetRecord datasetRecord = createDatasetRecord();
+    datasetRecord.dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
+    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(
+        datasetRecord.createUser);
+    when(userDao.findUserById(datasetRecord.updateUser.getUserId())).thenReturn(
+        datasetRecord.updateUser);
+    when(
+        institutionDAO.findInstitutionById(datasetRecord.createUser.getInstitutionId())).thenReturn(
+        datasetRecord.createUser.getInstitution());
+    when(
+        institutionDAO.findInstitutionById(datasetRecord.updateUser.getInstitutionId())).thenReturn(
+        datasetRecord.updateUser.getInstitution());
+    when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
+    when(datasetDAO.findDatasetById(datasetRecord.dataset.getDatasetId())).thenReturn(datasetRecord.dataset);
+    ElasticSearchService elasticSearchSpy = spy(service);
+    // Call the async method ...
+    elasticSearchSpy.asyncDatasetInESIndex(datasetRecord.dataset.getDatasetId(), datasetRecord.createUser, true);
+    // Ensure that the synchronous method was called with the expected parameters
+    verify(elasticSearchSpy).synchronizeDatasetInESIndex(datasetRecord.dataset, datasetRecord.dataset.getCreateUser(), true);
   }
 
   @Test

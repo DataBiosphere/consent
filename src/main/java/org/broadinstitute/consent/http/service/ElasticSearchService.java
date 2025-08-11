@@ -1,6 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
@@ -16,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
@@ -50,6 +57,7 @@ import org.elasticsearch.client.RestClient;
 
 public class ElasticSearchService implements ConsentLogger {
 
+  private final ExecutorService executorService;
   private final RestClient esClient;
   private final ElasticSearchConfiguration esConfig;
   private final DacDAO dacDAO;
@@ -74,6 +82,7 @@ public class ElasticSearchService implements ConsentLogger {
       DatasetServiceDAO datasetServiceDAO,
       StudyDAO studyDAO,
       LibraryCardDAO libraryCardDAO) {
+    this.executorService = Executors.newCachedThreadPool();
     this.esClient = esClient;
     this.esConfig = esConfig;
     this.dacDAO = dacDAO;
@@ -255,6 +264,31 @@ public class ElasticSearchService implements ConsentLogger {
       return null;
     }
     return new InstitutionTerm(institution.getId(), institution.getName());
+  }
+
+  public void asyncDatasetInESIndex(Integer datasetId, User user, boolean force) {
+    ListeningExecutorService listeningExecutorService = MoreExecutors.listeningDecorator(
+        executorService);
+    ListenableFuture<Dataset> syncFuture =
+        listeningExecutorService.submit(() -> {
+          Dataset dataset = datasetDAO.findDatasetById(datasetId);
+          synchronizeDatasetInESIndex(dataset, user, force);
+          return dataset;
+        });
+    Futures.addCallback(
+        syncFuture,
+        new FutureCallback<>() {
+          @Override
+          public void onSuccess(Dataset d) {
+            logInfo("Successfully synchronized dataset in ES index: %s".formatted(d.getDatasetIdentifier()));
+          }
+          @Override
+          public void onFailure(Throwable t) {
+            logWarn("Failed to synchronize dataset in ES index: %s".formatted(datasetId) + ": " + t.getMessage());
+          }
+        },
+        listeningExecutorService
+    );
   }
 
   /**

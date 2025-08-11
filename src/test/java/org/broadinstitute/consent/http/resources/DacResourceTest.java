@@ -18,12 +18,11 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DacBuilder;
@@ -42,7 +41,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DacResourceTest {
+class DacResourceTest extends AbstractTestHelper {
 
   @Mock
   private DacService dacService;
@@ -579,7 +578,7 @@ class DacResourceTest {
     Dataset dataset = new Dataset();
     dataset.setDacId(2);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
+    when(datasetService.findDatasetWithoutFSOInformation(anyInt())).thenReturn(dataset);
 
     try (Response response = dacResource.approveDataset(authUser, 1, 1, "test")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -593,7 +592,7 @@ class DacResourceTest {
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
+    when(datasetService.findDatasetWithoutFSOInformation(anyInt())).thenReturn(dataset);
     try (Response response = dacResource.approveDataset(authUser, 1, 1, "test")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
@@ -606,24 +605,23 @@ class DacResourceTest {
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
+    when(datasetService.findDatasetWithoutFSOInformation(anyInt())).thenReturn(dataset);
     try (Response response = dacResource.approveDataset(authUser, 1, 1, "{}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
 
   @Test
-  void testApproveDataset_AlreadyApproved_TrueSubmission() throws Exception {
+  void testApproveDataset_AlreadyApproved_TrueSubmission() {
     User user = new User();
     user.setChairpersonRoleWithDAC(1);
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
     dataset.setDacApproval(true);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
+    when(datasetService.findDatasetWithoutFSOInformation(anyInt())).thenReturn(dataset);
     when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
         .thenReturn(dataset);
-    when(elasticSearchService.indexDataset(any(), any())).thenReturn(Response.ok().build());
     try (Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(GsonUtil.buildGson().toJson(dataset), response.getEntity());
@@ -631,7 +629,7 @@ class DacResourceTest {
   }
 
   @Test
-  void testApproveDataset() throws Exception {
+  void testApproveDataset() {
     User user = new User();
     user.setChairpersonRoleWithDAC(1);
     Dataset dataset = new Dataset();
@@ -641,10 +639,9 @@ class DacResourceTest {
     dataset.setDacId(1);
     dataset.setDacApproval(false);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
+    when(datasetService.findDatasetWithoutFSOInformation(anyInt())).thenReturn(dataset);
     when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
         .thenReturn(datasetResponse);
-    when(elasticSearchService.indexDataset(any(), any())).thenReturn(Response.ok().build());
     try (Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(GsonUtil.buildGson().toJson(datasetResponse), response.getEntity());
@@ -659,7 +656,7 @@ class DacResourceTest {
     dataset.setDacId(1);
     dataset.setDacApproval(true);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
+    when(datasetService.findDatasetWithoutFSOInformation(anyInt())).thenReturn(dataset);
     when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
         .thenThrow(ForbiddenException.class);
     try (Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: false}")) {
@@ -668,7 +665,7 @@ class DacResourceTest {
   }
 
   @Test
-  void testApproveDataset_ElasticSearchNonSuccessResponseDoesNotFail() throws Exception {
+  void testApproveDataset_ElasticSearchNonSuccessResponseDoesNotFail() {
     User user = new User();
     user.setChairpersonRoleWithDAC(1);
     Dataset dataset = new Dataset();
@@ -678,10 +675,9 @@ class DacResourceTest {
     dataset.setDacId(1);
     dataset.setDacApproval(false);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
+    when(datasetService.findDatasetWithoutFSOInformation(anyInt())).thenReturn(dataset);
     when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
         .thenReturn(datasetResponse);
-    when(elasticSearchService.indexDataset(any(), any())).thenReturn(Response.serverError().build());
     try (Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(GsonUtil.buildGson().toJson(datasetResponse), response.getEntity());
@@ -689,7 +685,7 @@ class DacResourceTest {
   }
 
   @Test
-  void testApproveDataset_ElasticSearchExceptionDoesNotFail() throws Exception {
+  void testApproveDataset_ElasticSearchExceptionDoesNotFail() {
     User user = new User();
     user.setChairpersonRoleWithDAC(1);
     Dataset dataset = new Dataset();
@@ -699,10 +695,9 @@ class DacResourceTest {
     dataset.setDacId(1);
     dataset.setDacApproval(false);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(datasetService.findDatasetById(anyInt())).thenReturn(dataset);
+    when(datasetService.findDatasetWithoutFSOInformation(anyInt())).thenReturn(dataset);
     when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
         .thenReturn(datasetResponse);
-    when(elasticSearchService.indexDataset(any(), any())).thenThrow(new IOException("Something went wrong"));
     try (Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(GsonUtil.buildGson().toJson(datasetResponse), response.getEntity());
@@ -715,7 +710,7 @@ class DacResourceTest {
 
   private Dac buildDac(User chair) {
     Dac dac = new DacBuilder()
-        .setDacId(RandomUtils.nextInt())
+        .setDacId(nextInt())
         .setName("name")
         .setDescription("description")
         .build();
@@ -727,7 +722,7 @@ class DacResourceTest {
 
   private User buildAdmin(AuthUser authUser) {
     User user = buildUser();
-    user.setUserId(RandomUtils.nextInt());
+    user.setUserId(nextInt());
     user.setEmail(authUser.getEmail());
     user.setAdminRole();
     return user;
@@ -735,7 +730,7 @@ class DacResourceTest {
 
   private User buildChair(AuthUser authUser) {
     User user = buildUser();
-    user.setUserId(RandomUtils.nextInt());
+    user.setUserId(nextInt());
     user.setEmail(authUser.getEmail());
     user.setChairpersonRole();
     return user;
@@ -743,7 +738,7 @@ class DacResourceTest {
 
   private User buildUser() {
     User user = new User();
-    user.setUserId(RandomUtils.nextInt());
+    user.setUserId(nextInt());
     return user;
   }
 }

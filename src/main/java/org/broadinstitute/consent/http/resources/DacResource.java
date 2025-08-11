@@ -16,7 +16,6 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -256,7 +255,7 @@ public class DacResource extends Resource {
       @PathParam("datasetId") Integer datasetId, String json) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      Dataset dataset = datasetService.findDatasetById(datasetId);
+      Dataset dataset = datasetService.findDatasetWithoutFSOInformation(datasetId);
       if (Objects.isNull(dataset) || !Objects.equals(dataset.getDacId(), dacId)) {
         //Vague message is intentional, don't want to reveal too much info
         throw new NotFoundException("Dataset not found");
@@ -273,13 +272,6 @@ public class DacResource extends Resource {
         throw new BadRequestException("Invalid request payload");
       }
       Dataset updatedDataset = datasetService.approveDataset(dataset, user, payload.getApproval());
-      try (Response indexResponse = elasticSearchService.indexDataset(updatedDataset.getDatasetId(), user))  {
-        if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
-          logWarn("Non-OK response when reindexing dataset with id: " + datasetId);
-        }
-      } catch (Exception e) {
-        logException("Exception re-indexing datasets from dataset id: " + datasetId, e);
-      }
       return Response.ok().entity(unmarshal(updatedDataset)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
