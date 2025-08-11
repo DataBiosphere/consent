@@ -226,9 +226,9 @@ class StudyResourceTest extends AbstractTestHelper {
   void testGetRegistrationFromStudyNotPublicCreateUser() {
     Study study = createMockStudy();
     study.setPublicVisibility(false);
-    User generalUser = new User();
-    generalUser.setUserId(study.getCreateUserId());
-    when(duosUser.getUser()).thenReturn(generalUser);
+    User createUser = new User();
+    createUser.setUserId(study.getCreateUserId());
+    when(duosUser.getUser()).thenReturn(createUser);
     when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
 
     try (var response = resource.getRegistrationFromStudy(duosUser, 1)) {
