@@ -30,6 +30,7 @@ import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyConversion;
 import org.broadinstitute.consent.http.models.User;
@@ -121,9 +122,16 @@ public class StudyResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
   @Timed
-  public Response getStudyById(@PathParam("studyId") Integer studyId) {
+  public Response getStudyById(@Auth DuosUser duosUser, @PathParam("studyId") Integer studyId) {
     try {
       Study study = datasetService.getStudyWithDatasetsById(studyId);
+      boolean isPublic = study.getPublicVisibility() != null && study.getPublicVisibility();
+      if (!isPublic) {
+        User user = duosUser.getUser();
+        if (!study.getCreateUserId().equals(user.getUserId())) {
+          throw new NotFoundException("Study not found");
+        }
+      }
       return Response.ok(study).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

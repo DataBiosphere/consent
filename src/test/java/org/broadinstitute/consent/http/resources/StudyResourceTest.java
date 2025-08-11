@@ -23,6 +23,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
@@ -35,11 +36,13 @@ import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,18 +67,18 @@ class StudyResourceTest extends AbstractTestHelper {
   private User user;
 
   @Mock
-  private Response response;
+  private DuosUser duosUser;
 
   private StudyResource resource;
 
-  private void initResource() {
+  @BeforeEach
+  void setUp() {
     resource = new StudyResource(datasetService, userService, datasetRegistrationService,
         elasticSearchService);
   }
 
   @Test
   void testUpdateCustodiansSuccess() {
-    initResource();
     try (var response = resource.updateCustodians(authUser, 1,
         "[\"user_1@test.com\", \"user_2@test.com\"]")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -84,7 +87,6 @@ class StudyResourceTest extends AbstractTestHelper {
 
   @Test
   void testUpdateCustodiansInvalidEmails() {
-    initResource();
     try (var response = resource.updateCustodians(authUser, 1, "[\"user_1\", \"@test.com\"]")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
@@ -94,7 +96,7 @@ class StudyResourceTest extends AbstractTestHelper {
   void testUpdateCustodiansNotFound() {
     when(datasetService.updateStudyCustodians(any(), any(), any())).thenThrow(
         new NotFoundException("Study not found"));
-    initResource();
+
     try (var response = resource.updateCustodians(authUser, 1,
         "[\"user_1@test.com\", \"user_2@test.com\"]")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -105,10 +107,11 @@ class StudyResourceTest extends AbstractTestHelper {
   void testGetStudyByIdNoDatasets() {
     Study study = new Study();
     study.setStudyId(1);
+    study.setPublicVisibility(true);
     study.setName("asdfasdfasdfasdfasdfasdf");
     when(datasetService.getStudyWithDatasetsById(1)).thenReturn(study);
-    initResource();
-    try (var response = resource.getStudyById(1)) {
+
+    try (var response = resource.getStudyById(duosUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -127,11 +130,11 @@ class StudyResourceTest extends AbstractTestHelper {
     study.setName(randomAlphabetic(10));
     study.setStudyId(12345);
     study.addDatasetIds(Set.of(1, 2, 3));
+    study.setPublicVisibility(true);
 
     when(datasetService.getStudyWithDatasetsById(12345)).thenReturn(study);
 
-    initResource();
-    try (var response = resource.getStudyById(12345)) {
+    try (var response = resource.getStudyById(duosUser, 12345)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(study.getDatasetIds().size(), datasets.size());
     }
@@ -141,9 +144,36 @@ class StudyResourceTest extends AbstractTestHelper {
   void testGetStudyByIdNotFound() {
     when(datasetService.getStudyWithDatasetsById(1)).thenThrow(new NotFoundException());
 
-    initResource();
-    try (var response = resource.getStudyById(1)) {
+    try (var response = resource.getStudyById(duosUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetStudyByIdNotPublicGeneralUser() {
+    Study study = createMockStudy();
+    study.setPublicVisibility(false);
+    User generalUser = new User();
+    generalUser.setUserId(randomInt(1000, 1100));
+    when(duosUser.getUser()).thenReturn(generalUser);
+    when(datasetService.getStudyWithDatasetsById(1)).thenReturn(study);
+
+    try (var response = resource.getStudyById(duosUser, 1)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
+  void testGetStudyByIdNotPublicCreateUser() {
+    Study study = createMockStudy();
+    study.setPublicVisibility(false);
+    User createUser = new User();
+    createUser.setUserId(study.getCreateUserId());
+    when(duosUser.getUser()).thenReturn(createUser);
+    when(datasetService.getStudyWithDatasetsById(1)).thenReturn(study);
+
+    try (var response = resource.getStudyById(duosUser, 1)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
 
@@ -152,7 +182,6 @@ class StudyResourceTest extends AbstractTestHelper {
     Study study = createMockStudy();
     when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
 
-    initResource();
     try (var response = resource.getRegistrationFromStudy(authUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
@@ -164,7 +193,6 @@ class StudyResourceTest extends AbstractTestHelper {
     study.getDatasets().clear();
     when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
 
-    initResource();
     try (var response = resource.getRegistrationFromStudy(authUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
@@ -175,7 +203,6 @@ class StudyResourceTest extends AbstractTestHelper {
     Study study = createMockStudy();
     when(datasetService.getStudyWithDatasetsById(any())).thenThrow(new NotFoundException());
 
-    initResource();
     try (var response = resource.getRegistrationFromStudy(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
@@ -203,7 +230,6 @@ class StudyResourceTest extends AbstractTestHelper {
     }
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(datasetRegistrationService.findStudyById(any())).thenReturn(study);
-    initResource();
 
     try (var response = resource.updateStudyByRegistration(authUser, null, 1, input)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
@@ -226,7 +252,6 @@ class StudyResourceTest extends AbstractTestHelper {
     study.addDatasetIds(datasetIds);
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(datasetRegistrationService.findStudyById(any())).thenReturn(study);
-    initResource();
 
     try (var response = resource.updateStudyByRegistration(authUser, null, 1, input)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -242,8 +267,8 @@ class StudyResourceTest extends AbstractTestHelper {
     admin.setAdminRole();
     admin.setUserId(study.getCreateUserId());
     when(userService.findUserByEmail(any())).thenReturn(admin);
-    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(response);
-    initResource();
+    Response esResponse = Mockito.mock(Response.class);
+    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(esResponse);
 
     try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -254,7 +279,6 @@ class StudyResourceTest extends AbstractTestHelper {
   @Test
   void testDeleteStudyByIdNotFound() throws Exception {
     Study study = createMockStudy();
-    initResource();
 
     try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -271,7 +295,6 @@ class StudyResourceTest extends AbstractTestHelper {
     chair.setChairpersonRole();
     chair.setUserId(study.getCreateUserId() + 1);
     when(userService.findUserByEmail(any())).thenReturn(chair);
-    initResource();
 
     try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -288,7 +311,6 @@ class StudyResourceTest extends AbstractTestHelper {
     admin.setAdminRole();
     admin.setUserId(study.getCreateUserId());
     when(userService.findUserByEmail(any())).thenReturn(admin);
-    initResource();
 
     try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
@@ -305,7 +327,6 @@ class StudyResourceTest extends AbstractTestHelper {
     admin.setAdminRole();
     admin.setUserId(study.getCreateUserId());
     when(userService.findUserByEmail(any())).thenReturn(admin);
-    initResource();
 
     try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -324,7 +345,6 @@ class StudyResourceTest extends AbstractTestHelper {
     admin.setAdminRole();
     admin.setUserId(study.getCreateUserId());
     when(userService.findUserByEmail(any())).thenReturn(admin);
-    initResource();
 
     try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -342,7 +362,6 @@ class StudyResourceTest extends AbstractTestHelper {
     admin.setUserId(study.getCreateUserId());
     when(userService.findUserByEmail(any())).thenReturn(admin);
     when(elasticSearchService.deleteIndex(any(), any())).thenThrow(new IOException());
-    initResource();
 
     try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
