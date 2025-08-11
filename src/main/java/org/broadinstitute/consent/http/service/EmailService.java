@@ -129,6 +129,11 @@ public class EmailService implements ConsentLogger {
     return emailDAO.fetchMessagesByType(emailType.getTypeInt(), limit, offset);
   }
 
+  public List<org.broadinstitute.consent.http.models.mail.MailMessage> fetchEmailMessagesByUserId(
+      Integer userId, Integer limit, Integer offset) {
+    return emailDAO.fetchMessagesByUserId(userId, limit, offset);
+  }
+
   public List<org.broadinstitute.consent.http.models.mail.MailMessage> fetchEmailMessagesByCreateDate(
       Date start, Date end, Integer limit,
       Integer offset) {

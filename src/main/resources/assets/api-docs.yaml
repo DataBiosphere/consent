@@ -47,6 +47,8 @@ paths:
     $ref: './paths/resubmitCollectionByCollectionId.yaml'
   /api/mail/type/{type}:
     $ref: './paths/mailByType.yaml'
+  /api/mail/user/{userId}:
+    $ref: './paths/mailByUserId.yaml'
   /api/mail/range:
     $ref: './paths/mailByRange.yaml'
   /api/daa:
