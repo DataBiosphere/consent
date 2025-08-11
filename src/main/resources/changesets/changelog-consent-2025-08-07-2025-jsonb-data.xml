@@ -1,0 +1,42 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2025-07-31-vote-create-date-index_part_1" author="grushton">
+    <addColumn tableName="data_access_request">
+      <column name="data_bak" type="jsonb"/>
+    </addColumn>
+    <sql>
+      UPDATE data_access_request SET data_bak = data;
+    </sql>
+    <rollback>
+      <dropColumn tableName="data_access_request" columnName="data_bak"/>
+    </rollback>
+  </changeSet>
+  <changeSet id="changelog-consent-2025-07-31-vote-create-date-index_part_2" author="grushton">
+    <sql>
+      -- Existing data has unsupported characters.
+      -- Previously, we selected these values out of the response.
+      -- Going forward, we'll be preventing inserts and updates with problematic values
+      UPDATE data_access_request SET data = (SELECT (regexp_replace(data #>> '{}', '\\u0000', '', 'g'))::jsonb);
+    </sql>
+    <rollback>
+      <sql>
+        UPDATE data_access_request SET data = data_bak;
+      </sql>
+    </rollback>
+  </changeSet>
+  <changeSet id="changelog-consent-2025-07-31-vote-create-date-index_part_3" author="grushton">
+    <sql>
+      CREATE INDEX idx_dar_data_project_title ON data_access_request USING GIN ((data -> 'projectTitle'));
+      CREATE INDEX idx_dar_data_status ON data_access_request USING GIN ((data -> 'status'));
+      CREATE INDEX idx_dar_data_closeout ON data_access_request USING GIN ((data -> 'closeoutSupplement'));
+    </sql>
+    <rollback>
+      <sql>
+        DROP INDEX idx_dar_data_project_title;
+        DROP INDEX idx_dar_data_status;
+        DROP INDEX idx_dar_data_closeout;
+      </sql>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

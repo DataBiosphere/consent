@@ -19,8 +19,6 @@ import static org.mockito.Mockito.when;
 
 import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.NotAcceptableException;
-import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.sql.Timestamp;
