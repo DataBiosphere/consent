@@ -33,7 +33,7 @@ public class DataAccessRequestServiceDAO {
     String referenceId = dar.getReferenceId();
     final String updateDataByReferenceId = """
           UPDATE data_access_request
-          SET data = regexp_replace(:data, '\\\\\\\\u0000', '', 'g')::jsonb, user_id = :userId, sort_date = :sortDate,
+          SET data = regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb, user_id = :userId, sort_date = :sortDate,
           submission_date = :submissionDate, update_date = :updateDate
           WHERE reference_id = :referenceId
         """;
