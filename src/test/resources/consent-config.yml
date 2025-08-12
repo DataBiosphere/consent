@@ -40,6 +40,7 @@ services:
   localURL: http://localhost:8000/#/
   ontologyURL: http://localhost:8180/
   samUrl: https://localhost:8181/
+  ecmUrl: http://localhost:8182/
 mailConfiguration:
   activateEmailNotifications: false
   googleAccount: test@gmail.com

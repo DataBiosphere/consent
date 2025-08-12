@@ -29,6 +29,9 @@ public class ServicesConfiguration {
   @NotNull
   private String samUrl;
 
+  @NotNull
+  private String ecmUrl;
+
   /**
    * This represents the max time we'll wait for an external status check to return. If it does not
    * return, we assume a degradation in the overall service. This can be overridden in local
@@ -80,6 +83,14 @@ public class ServicesConfiguration {
 
   public void setSamUrl(String samUrl) {
     this.samUrl = samUrl;
+  }
+
+  public String getEcmUrl() {
+    return ecmUrl;
+  }
+
+  public void setEcmUrl(String ecmUrl) {
+    this.ecmUrl = ecmUrl;
   }
 
   public String getV1ResourceTypesUrl() {
