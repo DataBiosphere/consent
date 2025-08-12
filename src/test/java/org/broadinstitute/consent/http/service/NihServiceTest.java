@@ -110,6 +110,18 @@ class NihServiceTest extends MockServerTestHelper {
   }
 
   @Test
+  void testSyncAccountInvalidECMResponse() {
+    User user = new User();
+    user.setUserId(1);
+    when(userDAO.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    mockServerClient.when(request())
+        .respond(response()
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+            .withBody(GsonUtil.getInstance().toJson("bad response")));
+    assertThrows(ServerErrorException.class, () -> service.syncAccount(authUser));
+  }
+
+  @Test
   void testAuthenticateNih_InvalidUser() {
     AuthUser testUser = new AuthUser("test@test.com");
     assertThrows(NotFoundException.class,

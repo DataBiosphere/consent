@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
@@ -18,6 +19,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -54,7 +56,14 @@ public class NihService implements ConsentLogger {
       throw new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
     }
     String body = response.parseAsString();
-    LinkInfo linkInfo = GsonUtil.getInstance().fromJson(body, LinkInfo.class);
+    LinkInfo linkInfo;
+    try {
+      linkInfo = GsonUtil.getInstance().fromJson(body, LinkInfo.class);
+    } catch (Exception e) {
+      logWarn("Failed to parse ECM response: " + body);
+      throw new ServerErrorException("Invalid response from ECM RAS Provider",
+          HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+    }
     NIHUserAccount nihAccount = new NIHUserAccount(
         linkInfo.externalUserId(), linkInfo.expirationTimestamp(), linkInfo.authenticated());
     serviceDAO.updateUserNihStatus(user, nihAccount);
