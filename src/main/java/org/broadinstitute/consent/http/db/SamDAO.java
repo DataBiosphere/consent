@@ -44,7 +44,7 @@ public class SamDAO implements ConsentLogger {
   public final Integer readTimeoutMilliseconds;
 
   public SamDAO(HttpClientUtil clientUtil, ServicesConfiguration configuration) {
-    this.executorService = Executors.newCachedThreadPool();
+    this.executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     this.clientUtil = clientUtil;
     this.configuration = configuration;
     // Defaults to 10 seconds
