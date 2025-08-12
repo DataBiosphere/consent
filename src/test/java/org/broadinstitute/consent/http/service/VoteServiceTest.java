@@ -438,7 +438,7 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.sendDatasetApprovalNotifications(List.of(v1), researcher);
 
-    verify(emailService).sendResearcherProgressReportApproved(any(), any(), anyList(), any());
+    verify(emailService).sendResearcherProgressReportApproved(any(), any(), anyList(), any(), anyBoolean());
   }
 
   @Test

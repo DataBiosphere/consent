@@ -157,11 +157,12 @@ public class EmailService implements ConsentLogger {
       String darCode,
       Integer researcherId,
       List<DatasetMailDTO> datasets,
-      String dataUseRestriction)
+      String dataUseRestriction,
+      boolean radarApproved)
       throws TemplateException, IOException {
     User user = userDAO.findUserById(researcherId);
     sendMessage(
-        new ResearcherApprovedProgressReportMessage(user, darCode, datasets, dataUseRestriction), researcherId);
+        new ResearcherApprovedProgressReportMessage(user, darCode, datasets, dataUseRestriction, radarApproved), researcherId);
   }
 
   public void sendDataCustodianApprovalMessage(

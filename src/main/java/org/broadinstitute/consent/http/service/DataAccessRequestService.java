@@ -297,11 +297,12 @@ public class DataAccessRequestService implements ConsentLogger {
       }
     }
 
+    syncDataAccessRequestDatasets(progressReportDatasetIds, referenceId);
+
     if (!progressReport.getIsCloseoutProgressReport() && !progressReport.getHasDMI()) {
       ruleService.triggerDACRuleSettings(user, progressReportDatasetIds, referenceId, request);
     }
 
-    syncDataAccessRequestDatasets(progressReportDatasetIds, referenceId);
     return findByReferenceId(referenceId);
   }
 
