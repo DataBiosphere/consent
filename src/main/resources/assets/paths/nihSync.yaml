@@ -3,7 +3,6 @@ get:
   description: Synchronizes the user's account with known NIH linked account
   tags:
     - User
-    - eRA Commons
     - Nih
   responses:
     200:
@@ -12,7 +11,5 @@ get:
         application/json:
           schema:
             $ref: '../schemas/User.yaml'
-    400:
-      description: Unable to validate the user's google identity.
     500:
       description: Server error.

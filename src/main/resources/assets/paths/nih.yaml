@@ -3,7 +3,6 @@ delete:
   description: Removes only eRA Commons Account related information from the authenticated user requesting this action
   tags:
     - User
-    - eRA Commons
     - Nih
   responses:
     200:
@@ -20,7 +19,6 @@ post:
           $ref: '../schemas/NIHUserAccount.yaml'
   tags:
     - User
-    - eRA Commons
     - Nih
   responses:
     200:
