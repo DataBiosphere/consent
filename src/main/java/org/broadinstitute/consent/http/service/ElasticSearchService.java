@@ -82,7 +82,7 @@ public class ElasticSearchService implements ConsentLogger {
       DatasetServiceDAO datasetServiceDAO,
       StudyDAO studyDAO,
       LibraryCardDAO libraryCardDAO) {
-    this.executorService = Executors.newCachedThreadPool();
+    this.executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     this.esClient = esClient;
     this.esConfig = esConfig;
     this.dacDAO = dacDAO;
