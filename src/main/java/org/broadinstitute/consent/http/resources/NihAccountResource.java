@@ -5,6 +5,7 @@ import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -28,6 +29,19 @@ public class NihAccountResource extends Resource {
   public NihAccountResource(NihService nihService, UserService userService) {
     this.nihService = nihService;
     this.userService = userService;
+  }
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("sync")
+  @PermitAll
+  public Response syncAccount(@Auth AuthUser authUser) {
+    try {
+      User user = nihService.syncAccount(authUser);
+      return Response.ok(user).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
   }
 
   @POST

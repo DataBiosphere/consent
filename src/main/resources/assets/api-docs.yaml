@@ -893,6 +893,8 @@ paths:
           description: Error processing the request.
   /api/nih:
     $ref: './paths/nih.yaml'
+  /api/nih/sync:
+    $ref: './paths/nihSync.yaml'
   /api/sam/register/self:
     $ref: './paths/samRegisterSelf.yaml'
   /api/sam/register/self/diagnostics:

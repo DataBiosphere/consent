@@ -615,7 +615,9 @@ public class ConsentModule extends AbstractModule {
     return new NihService(
         providesUserDAO(),
         providesUserPropertyDAO(),
-        providesNIHServiceDAO());
+        providesNIHServiceDAO(),
+        providesHttpClientUtil(),
+        config.getServicesConfiguration());
   }
 
   @Provides

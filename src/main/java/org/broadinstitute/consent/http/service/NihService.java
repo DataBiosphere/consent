@@ -1,14 +1,19 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpResponse;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ServerErrorException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
@@ -16,21 +21,44 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
+import org.broadinstitute.consent.http.models.ecm.LinkInfo;
 import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.HttpClientUtil;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class NihService implements ConsentLogger {
 
   private final UserDAO userDAO;
   private final UserPropertyDAO userPropertyDAO;
   private final NihServiceDAO serviceDAO;
+  private final HttpClientUtil clientUtil;
+  private final ServicesConfiguration configuration;
 
   @Inject
-  public NihService(UserDAO userDAO, UserPropertyDAO userPropertyDAO,
-      NihServiceDAO serviceDAO) {
+  public NihService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, NihServiceDAO serviceDAO,
+      HttpClientUtil clientUtil, ServicesConfiguration configuration) {
     this.userDAO = userDAO;
     this.userPropertyDAO = userPropertyDAO;
     this.serviceDAO = serviceDAO;
+    this.clientUtil = clientUtil;
+    this.configuration = configuration;
+  }
+
+  public User syncAccount(AuthUser authUser) throws Exception {
+    User user = userDAO.findUserByEmail(authUser.getEmail());
+    GenericUrl ecmRasProviderUrl = new GenericUrl(configuration.getEcmRasProviderUrl());
+    HttpRequest request = clientUtil.buildGetRequest(ecmRasProviderUrl, authUser);
+    HttpResponse response = clientUtil.handleHttpRequest(request);
+    if (!response.isSuccessStatusCode()) {
+      throw new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
+    }
+    String body = response.parseAsString();
+    LinkInfo linkInfo = GsonUtil.getInstance().fromJson(body, LinkInfo.class);
+    NIHUserAccount nihAccount = new NIHUserAccount(
+        linkInfo.externalUserId(), linkInfo.expirationTimestamp(), linkInfo.authenticated());
+    serviceDAO.updateUserNihStatus(user, nihAccount);
+    return userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues());
   }
 
   public void validateNihUserAccount(NIHUserAccount nihAccount, AuthUser authUser)

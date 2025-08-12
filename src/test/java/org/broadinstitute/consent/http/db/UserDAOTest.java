@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -26,6 +27,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.Test;
@@ -63,6 +65,37 @@ class UserDAOTest extends DAOTestHelper {
     assertNotNull(queriedUser3.getInstitutionId());
     assert (queriedUser3.getInstitution().getId()).equals(user3.getInstitution().getId());
   }
+
+  @Test
+  void testFindUserWithPropertiesById() {
+    User user = createUserWithInstitution();
+    int lcId = libraryCardDAO.insertLibraryCard(user.getUserId(), user.getDisplayName(),
+        user.getEmail(), user.getUserId(), new Date());
+    UserProperty eraExpProp = new UserProperty();
+    eraExpProp.setPropertyKey(UserFields.ERA_EXPIRATION_DATE.getValue());
+    eraExpProp.setPropertyValue(Instant.now().toString());
+    eraExpProp.setUserId(user.getUserId());
+    UserProperty eraAuthProp = new UserProperty();
+    eraAuthProp.setPropertyKey(UserFields.ERA_STATUS.getValue());
+    eraAuthProp.setPropertyValue("true");
+    eraAuthProp.setUserId(user.getUserId());
+    userPropertyDAO.insertAll(List.of(eraExpProp, eraAuthProp));
+
+    User foundUser = userDAO.findUserWithPropertiesById(user.getUserId(),
+        UserFields.getValues());
+    assertNotNull(foundUser);
+    assertFalse(foundUser.getRoles().isEmpty());
+    assertEquals(lcId, foundUser.getLibraryCard().getId());
+    assertEquals(user.getInstitutionId(), foundUser.getInstitutionId());
+    assertFalse(foundUser.getProperties().isEmpty());
+    assertTrue(foundUser.getProperties().stream()
+        .anyMatch(p -> p.getPropertyKey().equals(UserFields.ERA_EXPIRATION_DATE.getValue())
+            && p.getPropertyValue().equals(eraExpProp.getPropertyValue())));
+    assertTrue(foundUser.getProperties().stream()
+        .anyMatch(p -> p.getPropertyKey().equals(UserFields.ERA_STATUS.getValue())
+            && p.getPropertyValue().equals(eraAuthProp.getPropertyValue())));
+  }
+
 
   @Test
   void testFindUserByIdWithLibraryCard() {

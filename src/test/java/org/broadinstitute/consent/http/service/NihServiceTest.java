@@ -3,22 +3,33 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
 
+import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ServerErrorException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import org.broadinstitute.consent.http.MockServerTestHelper;
+import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
+import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
+import org.broadinstitute.consent.http.models.ecm.LinkInfo;
 import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
+import org.broadinstitute.consent.http.util.HttpClientUtil;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,7 +37,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class NihServiceTest {
+class NihServiceTest extends MockServerTestHelper {
 
   @Mock
   private UserDAO userDAO;
@@ -43,18 +54,66 @@ class NihServiceTest {
 
   @BeforeEach
   void setUp() {
+    ServicesConfiguration servicesConfig = new ServicesConfiguration();
+    servicesConfig.setTimeoutSeconds(1);
+    servicesConfig.setEcmUrl(
+        "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
     nihUserAccount = new NIHUserAccount("nih username", new Date().toString(), true);
     authUser = new AuthUser("test@test.com");
+    service = new NihService(userDAO, userPropertyDAO, nihServiceDAO,
+        new HttpClientUtil(servicesConfig), servicesConfig);
+    mockServerClient.reset();
   }
 
-  private void initService() {
-    service = new NihService(userDAO, userPropertyDAO, nihServiceDAO);
+  @Test
+  void testSyncAccount() throws Exception {
+    User user = new User();
+    user.setUserId(1);
+    when(userDAO.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues())).thenReturn(user);
+    LinkInfo ecmResponse = new LinkInfo("test", "test", true);
+    NIHUserAccount nihAccount = new NIHUserAccount(
+        ecmResponse.externalUserId(), ecmResponse.expirationTimestamp(), ecmResponse.authenticated());
+    mockServerClient.when(request())
+        .respond(response()
+            .withStatusCode(200)
+            .withBody(GsonUtil.getInstance().toJson(ecmResponse)));
+    User syncedUser = service.syncAccount(authUser);
+    assertEquals(user.getUserId(), syncedUser.getUserId());
+    verify(nihServiceDAO).updateUserNihStatus(user, nihAccount);
+  }
+
+  @Test
+  void testSyncAccountBadRequestError() {
+    User user = new User();
+    user.setUserId(1);
+    when(userDAO.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    LinkInfo ecmResponse = new LinkInfo("test", "test", true);
+    mockServerClient.when(request())
+        .respond(response()
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_BAD_REQUEST)
+            .withBody(GsonUtil.getInstance().toJson(ecmResponse)));
+    assertThrows(BadRequestException.class, () -> service.syncAccount(authUser));
+  }
+
+  @Test
+  void testSyncAccountServerError() {
+    User user = new User();
+    user.setUserId(1);
+    when(userDAO.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    LinkInfo ecmResponse = new LinkInfo("test", "test", true);
+    mockServerClient.when(request())
+        .respond(response()
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
+            .withBody(GsonUtil.getInstance().toJson(ecmResponse)));
+    assertThrows(ServerErrorException.class, () -> service.syncAccount(authUser));
   }
 
   @Test
   void testAuthenticateNih_InvalidUser() {
-    initService();
-    assertThrows(NotFoundException.class, () -> service.authenticateNih(nihUserAccount, new AuthUser("test@test.com"), 1));
+    AuthUser testUser = new AuthUser("test@test.com");
+    assertThrows(NotFoundException.class,
+        () -> service.authenticateNih(nihUserAccount, testUser, 1));
   }
 
   @Test
@@ -64,7 +123,6 @@ class NihServiceTest {
     User user = new User();
     user.setUserId(1);
     when(userDAO.findUserById(any())).thenReturn(user);
-    initService();
     try {
       List<UserProperty> properties = service.authenticateNih(nihUserAccount, authUser,
           user.getUserId());
@@ -82,14 +140,12 @@ class NihServiceTest {
     user.setUserId(1);
     when(userDAO.findUserById(any())).thenReturn(user);
     nihUserAccount.setNihUsername("");
-    initService();
     assertThrows(BadRequestException.class,
         () -> service.authenticateNih(nihUserAccount, authUser, 1));
   }
 
   @Test
   void testAuthenticateNih_BadRequestNullAccount() {
-    initService();
     assertThrows(BadRequestException.class, () -> service.authenticateNih(null, authUser, 1));
   }
 
@@ -97,7 +153,6 @@ class NihServiceTest {
   void testAuthenticateNih_BadRequestNullAccountExpiration() {
     NIHUserAccount account = new NIHUserAccount();
     account.setStatus(true);
-    initService();
     assertThrows(BadRequestException.class, () -> service.authenticateNih(account, authUser, 1));
   }
 
@@ -106,14 +161,12 @@ class NihServiceTest {
     User user = new User();
     user.setUserId(1);
     when(userDAO.findUserById(any())).thenReturn(user);
-    initService();
     service.deleteNihAccountById(1);
     verify(userPropertyDAO, times(1)).deletePropertiesByUserAndKey(any());
   }
 
   @Test
   void testDeleteNihAccountByIdNotFound() {
-    initService();
     assertThrows(NotFoundException.class, () -> service.deleteNihAccountById(1));
   }
 }
