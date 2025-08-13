@@ -1079,7 +1079,7 @@ class VoteServiceTest extends AbstractTestHelper {
     service.notifySigningOfficialsOfApprovedDatasets(
         List.of(dataset), researcher, dar, "DAR-000123", "translation", false);
     verify(emailService, never())
-        .sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
+        .sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
     verify(emailService, times(1))
         .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), eq(false));
   }
@@ -1105,7 +1105,7 @@ class VoteServiceTest extends AbstractTestHelper {
     service.notifySigningOfficialsOfApprovedDatasets(
         List.of(dataset), researcher, dar, "DAR-000123", "translation", true);
     verify(emailService, never())
-        .sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
+        .sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
     verify(emailService, times(1))
         .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), eq(true));
   }
@@ -1204,7 +1204,7 @@ class VoteServiceTest extends AbstractTestHelper {
     service.notifySigningOfficialsOfApprovedDatasets(
         List.of(dataset), researcher, child, "DAR-000123", "translation", false);
     verify(emailService, times(1))
-        .sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
+        .sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
     verify(emailService, never())
         .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
   }
@@ -1223,7 +1223,7 @@ class VoteServiceTest extends AbstractTestHelper {
     service.notifySigningOfficialsOfApprovedDatasets(
         List.of(dataset), null, dar, "DAR-000123", "translation", false);
     verify(emailService, never())
-        .sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
+        .sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
     verify(emailService, never())
         .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
   }
@@ -1244,7 +1244,7 @@ class VoteServiceTest extends AbstractTestHelper {
     service.notifySigningOfficialsOfApprovedDatasets(
         List.of(dataset), researcher, dar, "DAR-000123", "translation", false);
     verify(emailService, never())
-        .sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
+        .sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
     verify(emailService, never())
         .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
   }
@@ -1267,7 +1267,7 @@ class VoteServiceTest extends AbstractTestHelper {
     service.notifySigningOfficialsOfApprovedDatasets(
         List.of(dataset), researcher, dar, "DAR-000123", "translation", false);
     verify(emailService, never())
-        .sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any());
+        .sendNewSoProgressReportApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
     verify(emailService, never())
         .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
   }
