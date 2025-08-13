@@ -30,6 +30,7 @@ import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyConversion;
 import org.broadinstitute.consent.http.models.User;
@@ -75,7 +76,7 @@ public class StudyResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN})
   public Response convertToStudy(@Auth AuthUser authUser,
-    @PathParam("datasetIdentifier") String datasetIdentifier, String json) {
+      @PathParam("datasetIdentifier") String datasetIdentifier, String json) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       Dataset dataset = datasetService.findDatasetByIdentifier(datasetIdentifier);
@@ -97,7 +98,7 @@ public class StudyResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN})
   public Response updateCustodians(@Auth AuthUser authUser,
-    @PathParam("studyId") Integer studyId, String json) {
+      @PathParam("studyId") Integer studyId, String json) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       Gson gson = new Gson();
@@ -121,9 +122,10 @@ public class StudyResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
   @Timed
-  public Response getStudyById(@PathParam("studyId") Integer studyId) {
+  public Response getStudyById(@Auth DuosUser duosUser, @PathParam("studyId") Integer studyId) {
     try {
       Study study = datasetService.getStudyWithDatasetsById(studyId);
+      checkPublicVisibilityForUser(study, duosUser.getUser());
       return Response.ok(study).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -149,9 +151,10 @@ public class StudyResource extends Resource {
         throw new NotFoundException("Study not found");
       }
 
-      boolean deletable = (study.getDatasets() == null || study.getDatasets().isEmpty()) || study.getDatasets()
-          .stream()
-          .allMatch(Dataset::getDeletable);
+      boolean deletable =
+          (study.getDatasets() == null || study.getDatasets().isEmpty()) || study.getDatasets()
+              .stream()
+              .allMatch(Dataset::getDeletable);
       if (!deletable) {
         throw new BadRequestException("Study has datasets that are in use and cannot be deleted.");
       }
@@ -178,10 +181,11 @@ public class StudyResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
   @Timed
-  public Response getRegistrationFromStudy(@Auth AuthUser authUser,
+  public Response getRegistrationFromStudy(@Auth DuosUser duosUser,
       @PathParam("studyId") Integer studyId) {
     try {
       Study study = datasetService.getStudyWithDatasetsById(studyId);
+      checkPublicVisibilityForUser(study, duosUser.getUser());
       List<Dataset> datasets =
           Objects.nonNull(study.getDatasets()) ? study.getDatasets().stream().toList() : List.of();
       DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1Builder().build(
@@ -214,7 +218,8 @@ public class StudyResource extends Resource {
 
       // Manually validate the schema from an editing context. Validation with the schema tools
       // enforces it in a creation context but doesn't work for editing purposes.
-      DatasetRegistrationSchemaV1UpdateValidator updateValidator = new DatasetRegistrationSchemaV1UpdateValidator(datasetService);
+      DatasetRegistrationSchemaV1UpdateValidator updateValidator = new DatasetRegistrationSchemaV1UpdateValidator(
+          datasetService);
       DatasetRegistrationSchemaV1 registration = updateValidator.deserializeRegistration(json);
 
       if (updateValidator.validate(existingStudy, registration)) {
@@ -225,7 +230,7 @@ public class StudyResource extends Resource {
             registration,
             user,
             files);
-        try (Response indexResponse = elasticSearchService.indexStudy(studyId, user))  {
+        try (Response indexResponse = elasticSearchService.indexStudy(studyId, user)) {
           if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
             logWarn("Non-OK response when reindexing study with id: " + studyId);
           }
@@ -238,6 +243,13 @@ public class StudyResource extends Resource {
       }
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  private void checkPublicVisibilityForUser(Study study, User user) {
+    boolean isPublic = study.getPublicVisibility() != null && study.getPublicVisibility();
+    if (!isPublic && !study.getCreateUserId().equals(user.getUserId())) {
+      throw new NotFoundException("Study not found");
     }
   }
 }

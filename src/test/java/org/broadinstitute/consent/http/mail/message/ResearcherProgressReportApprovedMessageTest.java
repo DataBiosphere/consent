@@ -36,7 +36,7 @@ class ResearcherProgressReportApprovedMessageTest extends AbstractTestHelper {
 
   @Test
   void testMessageSubject() {
-    var message = new ResearcherApprovedProgressReportMessage(new User(), "DAR-123", List.of(), "");
+    var message = new ResearcherApprovedProgressReportMessage(new User(), "DAR-123", List.of(), "", false);
     assertEquals("Your DUOS Progress Report Results", message.createSubject());
   }
 
@@ -53,7 +53,7 @@ class ResearcherProgressReportApprovedMessageTest extends AbstractTestHelper {
 
     var message =
         new ResearcherApprovedProgressReportMessage(
-            researcher, darCode, List.of(new DatasetMailDTO(datasetName, datasetId)), "");
+            researcher, darCode, List.of(new DatasetMailDTO(datasetName, datasetId)), "", false);
     assertEquals(darCode, message.getEntityReferenceId());
 
     Template template = helper.getTemplate(message.getTemplateName());
@@ -68,6 +68,39 @@ class ResearcherProgressReportApprovedMessageTest extends AbstractTestHelper {
     assertEquals(
         "Hello " + researcherUserName + ",", getElementTextById(parsedTemplate, "userName"));
     assertTrue(templateString.contains("Your progress report application " + darCode + " was approved"));
+    assertTrue(templateString.contains(datasetId));
+    assertTrue(templateString.contains(datasetName));
+    assertTrue(templateString.contains(researcherEmail));
+  }
+
+  @Test
+  void testGetResearcherRADARApprovedTemplate() throws Exception {
+    String researcherUserName = randomAlphabetic(10);
+    String researcherEmail = randomAlphabetic(10);
+    String darCode = randomAlphabetic(10);
+    String datasetName = randomAlphabetic(10);
+    String datasetId = randomAlphabetic(10);
+    User researcher = new User();
+    researcher.setDisplayName(researcherUserName);
+    researcher.setEmail(researcherEmail);
+
+    var message =
+        new ResearcherApprovedProgressReportMessage(
+            researcher, darCode, List.of(new DatasetMailDTO(datasetName, datasetId)), "", true);
+    assertEquals(darCode, message.getEntityReferenceId());
+
+    Template template = helper.getTemplate(message.getTemplateName());
+    Writer out = new StringWriter();
+    template.process(message.createModel(""), out);
+    String templateString = out.toString();
+    Document parsedTemplate = Jsoup.parse(templateString);
+
+    assertEquals(
+        "Broad Data Use Oversight System - Researcher - Your access to a dataset was Rule Automated DAR (RADAR) approved",
+        parsedTemplate.title());
+    assertEquals(
+        "Hello " + researcherUserName + ",", getElementTextById(parsedTemplate, "userName"));
+    assertTrue(templateString.contains("Your progress report application " + darCode + " was Rule Automated DAR (RADAR) approved"));
     assertTrue(templateString.contains(datasetId));
     assertTrue(templateString.contains(datasetName));
     assertTrue(templateString.contains(researcherEmail));

@@ -157,11 +157,12 @@ public class EmailService implements ConsentLogger {
       String darCode,
       Integer researcherId,
       List<DatasetMailDTO> datasets,
-      String dataUseRestriction)
+      String dataUseRestriction,
+      boolean radarApproved)
       throws TemplateException, IOException {
     User user = userDAO.findUserById(researcherId);
     sendMessage(
-        new ResearcherApprovedProgressReportMessage(user, darCode, datasets, dataUseRestriction), researcherId);
+        new ResearcherApprovedProgressReportMessage(user, darCode, datasets, dataUseRestriction, radarApproved), researcherId);
   }
 
   public void sendDataCustodianApprovalMessage(
@@ -325,9 +326,9 @@ public class EmailService implements ConsentLogger {
    * @throws TemplateException Template processing exception
    * @throws IOException IOException when processing the template or sending the email
    */
-  public void sendNewSoProgressReportApprovedEmail(User user, String darCode, User researcher, String referenceId, List<Dataset> datasets, String dataUseRestriction)
+  public void sendNewSoProgressReportApprovedEmail(User user, String darCode, User researcher, String referenceId, List<Dataset> datasets, String dataUseRestriction, boolean radarApproved)
       throws TemplateException, IOException {
-      sendMessage(new SoPRApproved(user, darCode, researcher, referenceId, datasets, dataUseRestriction),
+      sendMessage(new SoPRApproved(user, darCode, researcher, referenceId, datasets, dataUseRestriction, radarApproved),
         user.getUserId());
   }
 
