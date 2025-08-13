@@ -12,7 +12,6 @@ import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -69,10 +68,12 @@ class NihServiceTest extends MockServerTestHelper {
     User user = new User();
     user.setUserId(1);
     when(userDAO.findUserByEmail(authUser.getEmail())).thenReturn(user);
-    when(userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues())).thenReturn(user);
+    when(userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues())).thenReturn(
+        user);
     LinkInfo ecmResponse = new LinkInfo("test", "test", true);
     NIHUserAccount nihAccount = new NIHUserAccount(
-        ecmResponse.externalUserId(), ecmResponse.expirationTimestamp(), ecmResponse.authenticated());
+        ecmResponse.externalUserId(), ecmResponse.expirationTimestamp(),
+        ecmResponse.authenticated());
     mockServerClient.when(request())
         .respond(response()
             .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
@@ -125,18 +126,14 @@ class NihServiceTest extends MockServerTestHelper {
     User user = new User();
     user.setUserId(1);
     when(userDAO.findUserByEmail(authUser.getEmail())).thenReturn(user);
-    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
-    when(userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues())).thenReturn(user);
+    when(userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues())).thenReturn(
+        user);
     mockServerClient.when(request())
         .respond(response()
             .withStatusCode(HttpStatusCodes.STATUS_CODE_NOT_FOUND));
     User syncedUser = service.syncAccount(authUser);
     assertEquals(user.getUserId(), syncedUser.getUserId());
-    verify(userDAO).updateEraCommonsId(user.getUserId(), null);
-    List<UserProperty> properties = new ArrayList<>();
-    properties.add(new UserProperty(user.getUserId(), UserFields.ERA_EXPIRATION_DATE.getValue()));
-    properties.add(new UserProperty(user.getUserId(), UserFields.ERA_STATUS.getValue()));
-    verify(userPropertyDAO).deletePropertiesByUserAndKey(properties);
+    verify(nihServiceDAO).deleteNihAccountById(user.getUserId());
   }
 
   @Test
@@ -184,23 +181,5 @@ class NihServiceTest extends MockServerTestHelper {
     NIHUserAccount account = new NIHUserAccount();
     account.setStatus(true);
     assertThrows(BadRequestException.class, () -> service.authenticateNih(account, authUser, 1));
-  }
-
-  @Test
-  void testDeleteNihAccountById() {
-    User user = new User();
-    user.setUserId(1);
-    when(userDAO.findUserById(any())).thenReturn(user);
-    service.deleteNihAccountById(1);
-    verify(userDAO).updateEraCommonsId(user.getUserId(), null);
-    List<UserProperty> properties = new ArrayList<>();
-    properties.add(new UserProperty(user.getUserId(), UserFields.ERA_EXPIRATION_DATE.getValue()));
-    properties.add(new UserProperty(user.getUserId(), UserFields.ERA_STATUS.getValue()));
-    verify(userPropertyDAO).deletePropertiesByUserAndKey(properties);
-  }
-
-  @Test
-  void testDeleteNihAccountByIdNotFound() {
-    assertThrows(NotFoundException.class, () -> service.deleteNihAccountById(1));
   }
 }

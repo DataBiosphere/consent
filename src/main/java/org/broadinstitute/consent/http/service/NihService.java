@@ -8,7 +8,6 @@ import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -99,14 +98,7 @@ public class NihService implements ConsentLogger {
   }
 
   public void deleteNihAccountById(Integer userId) {
-    List<UserProperty> properties = new ArrayList<>();
-    properties.add(new UserProperty(userId, UserFields.ERA_EXPIRATION_DATE.getValue()));
-    properties.add(new UserProperty(userId, UserFields.ERA_STATUS.getValue()));
-    if (userDAO.findUserById(userId) == null) {
-      throw new NotFoundException("User with id: " + userId + " does not exist");
-    }
-    userDAO.updateEraCommonsId(userId, null);
-    userPropertyDAO.deletePropertiesByUserAndKey(properties);
+    serviceDAO.deleteNihAccountById(userId);
   }
 
 

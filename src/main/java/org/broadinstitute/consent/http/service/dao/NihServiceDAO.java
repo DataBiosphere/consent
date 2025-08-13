@@ -42,4 +42,17 @@ public class NihServiceDAO implements ConsentLogger {
       userDAO.updateEraCommonsId(user.getUserId(), nihAccount.getNihUsername());
     });
   }
+
+  public void deleteNihAccountById(Integer userId) {
+    jdbi.useTransaction(handler -> {
+      UserDAO userDAO = handler.attach(UserDAO.class);
+      UserPropertyDAO userPropertyDAO = handler.attach(UserPropertyDAO.class);
+      Collection<UserProperty> properties = List.of(
+          new UserProperty(userId, UserFields.ERA_EXPIRATION_DATE.getValue()),
+          new UserProperty(userId, UserFields.ERA_STATUS.getValue())
+      );
+      userDAO.updateEraCommonsId(userId, null);
+      userPropertyDAO.deletePropertiesByUserAndKey(properties);
+    });
+  }
 }
