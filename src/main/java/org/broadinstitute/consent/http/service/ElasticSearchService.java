@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
@@ -51,13 +50,15 @@ import org.broadinstitute.consent.http.models.elastic_search.UserTerm;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.ThreadUtils;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RestClient;
 
 public class ElasticSearchService implements ConsentLogger {
 
-  private final ExecutorService executorService;
+  private final ExecutorService executorService = new ThreadUtils().getExecutorService(
+      ElasticSearchService.class);
   private final RestClient esClient;
   private final ElasticSearchConfiguration esConfig;
   private final DacDAO dacDAO;
@@ -82,7 +83,6 @@ public class ElasticSearchService implements ConsentLogger {
       DatasetServiceDAO datasetServiceDAO,
       StudyDAO studyDAO,
       LibraryCardDAO libraryCardDAO) {
-    this.executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     this.esClient = esClient;
     this.esConfig = esConfig;
     this.dacDAO = dacDAO;
@@ -280,11 +280,14 @@ public class ElasticSearchService implements ConsentLogger {
         new FutureCallback<>() {
           @Override
           public void onSuccess(Dataset d) {
-            logInfo("Successfully synchronized dataset in ES index: %s".formatted(d.getDatasetIdentifier()));
+            logInfo("Successfully synchronized dataset in ES index: %s".formatted(
+                d.getDatasetIdentifier()));
           }
+
           @Override
           public void onFailure(Throwable t) {
-            logWarn("Failed to synchronize dataset in ES index: %s".formatted(datasetId) + ": " + t.getMessage());
+            logWarn("Failed to synchronize dataset in ES index: %s".formatted(datasetId) + ": "
+                + t.getMessage());
           }
         },
         listeningExecutorService
@@ -293,8 +296,8 @@ public class ElasticSearchService implements ConsentLogger {
 
   /**
    * Synchronize the dataset in the ES index. This will only index the dataset if it has been
-   * previously indexed, UNLESS the force argument is true which means it will index the dataset
-   * and update the dataset's last indexed date value.
+   * previously indexed, UNLESS the force argument is true which means it will index the dataset and
+   * update the dataset's last indexed date value.
    *
    * @param dataset The Dataset
    * @param user    The User
@@ -439,7 +442,9 @@ public class ElasticSearchService implements ConsentLogger {
           try {
             term.setParticipantCount(Integer.valueOf(value));
           } catch (NumberFormatException e) {
-            logWarn(String.format("Unable to coerce participant count to integer: %s for dataset: %s", value, dataset.getDatasetIdentifier()));
+            logWarn(
+                String.format("Unable to coerce participant count to integer: %s for dataset: %s",
+                    value, dataset.getDatasetIdentifier()));
           }
         }
     );
@@ -459,8 +464,7 @@ public class ElasticSearchService implements ConsentLogger {
     return term;
   }
 
-  protected void updateDatasetIndexDate(Integer datasetId, Integer userId, Instant indexDate)
-      {
+  protected void updateDatasetIndexDate(Integer datasetId, Integer userId, Instant indexDate) {
     // It is possible that a dataset has been deleted. If so, we don't want to try and update it.
     Dataset dataset = datasetDAO.findDatasetById(datasetId);
     if (dataset != null) {
@@ -486,7 +490,7 @@ public class ElasticSearchService implements ConsentLogger {
   Optional<DatasetProperty> findFirstDatasetPropertyByName(Collection<DatasetProperty> props,
       String propertyName) {
     return
-        (props == null) ? Optional.empty(): props
+        (props == null) ? Optional.empty() : props
             .stream()
             .filter(p -> p.getPropertyName().equalsIgnoreCase(propertyName))
             .findFirst();

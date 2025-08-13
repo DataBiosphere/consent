@@ -21,7 +21,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.sam.EmailResponse;
@@ -32,19 +31,20 @@ import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
+import org.broadinstitute.consent.http.util.ThreadUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class SamDAO implements ConsentLogger {
 
-  private final ExecutorService executorService;
+  private final ExecutorService executorService = new ThreadUtils().getExecutorService(
+      SamDAO.class);
   private final HttpClientUtil clientUtil;
   private final ServicesConfiguration configuration;
   private final Integer connectTimeoutMilliseconds;
   public final Integer readTimeoutMilliseconds;
 
   public SamDAO(HttpClientUtil clientUtil, ServicesConfiguration configuration) {
-    this.executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     this.clientUtil = clientUtil;
     this.configuration = configuration;
     // Defaults to 10 seconds
@@ -117,11 +117,13 @@ public class SamDAO implements ConsentLogger {
       JsonElement messageElement = JsonParser.parseString(body).getAsJsonObject().get("message");
       String message = messageElement != null ? messageElement.getAsString() : body;
       if (message.contains("Cannot update azureB2cId")) {
-        return String.format("Email: %s. You may have previously signed in with a different authentication provider (Google or Microsoft). Please sign in with that provider. For more information visit: https://support.terra.bio/hc/en-us/community/posts/24089648317467-Cannot-update-azureB2cId-for-user", authUser.getEmail());
+        return String.format(
+            "Email: %s. You may have previously signed in with a different authentication provider (Google or Microsoft). Please sign in with that provider. For more information visit: https://support.terra.bio/hc/en-us/community/posts/24089648317467-Cannot-update-azureB2cId-for-user",
+            authUser.getEmail());
       }
       return String.format(errorMsg + " %s.", message);
     } catch (JsonSyntaxException e) {  // If the body is not a valid JSON
-      return  String.format(errorMsg + " %s.", body);
+      return String.format(errorMsg + " %s.", body);
     }
   }
 
@@ -140,7 +142,8 @@ public class SamDAO implements ConsentLogger {
 
           @Override
           public void onFailure(@NonNull Throwable throwable) {
-            logWarn("Async Post Registration Failure for user: " + authUser.getEmail() + "; " + throwable.getMessage());
+            logWarn("Async Post Registration Failure for user: " + authUser.getEmail() + "; "
+                + throwable.getMessage());
           }
         },
         listeningExecutorService);
@@ -163,7 +166,8 @@ public class SamDAO implements ConsentLogger {
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
     HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
-      logException(String.format("Error getting Terms of Service: %s for user %s", response.getStatusMessage(), authUser.getEmail()),
+      logException(String.format("Error getting Terms of Service: %s for user %s",
+              response.getStatusMessage(), authUser.getEmail()),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
     String body = response.parseAsString();
@@ -175,7 +179,8 @@ public class SamDAO implements ConsentLogger {
     HttpRequest request = clientUtil.buildPutRequest(genericUrl, new EmptyContent(), authUser);
     HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
-      logException(String.format("Error accepting Terms of Service: %s for user %s", response.getStatusMessage(), authUser.getEmail()),
+      logException(String.format("Error accepting Terms of Service: %s for user %s",
+              response.getStatusMessage(), authUser.getEmail()),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
     return response.getStatusCode();
@@ -187,7 +192,8 @@ public class SamDAO implements ConsentLogger {
     HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
       logException(
-          String.format("Error removing Terms of Service: %s for user %s", response.getStatusMessage(), authUser.getEmail()),
+          String.format("Error removing Terms of Service: %s for user %s",
+              response.getStatusMessage(), authUser.getEmail()),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
     return response.getStatusCode();
@@ -207,9 +213,9 @@ public class SamDAO implements ConsentLogger {
   }
 
   /**
-   * Private method to handle the general case of sending requests to Sam.
-   * We inject timeouts here to prevent Sam from impacting API performance.
-   * The default is 10 seconds which should be more than enough for Sam calls.
+   * Private method to handle the general case of sending requests to Sam. We inject timeouts here
+   * to prevent Sam from impacting API performance. The default is 10 seconds which should be more
+   * than enough for Sam calls.
    *
    * @param request The HttpRequest
    * @return The HttpResponse

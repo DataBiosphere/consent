@@ -271,15 +271,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     datasetRecord.dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
     when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(
         datasetRecord.createUser);
-    when(userDao.findUserById(datasetRecord.updateUser.getUserId())).thenReturn(
-        datasetRecord.updateUser);
-    when(
-        institutionDAO.findInstitutionById(datasetRecord.createUser.getInstitutionId())).thenReturn(
-        datasetRecord.createUser.getInstitution());
-    when(
-        institutionDAO.findInstitutionById(datasetRecord.updateUser.getInstitutionId())).thenReturn(
-        datasetRecord.updateUser.getInstitution());
-    when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
     when(datasetDAO.findDatasetById(datasetRecord.dataset.getDatasetId())).thenReturn(datasetRecord.dataset);
     ElasticSearchService elasticSearchSpy = spy(service);
     // Call the async method ...
