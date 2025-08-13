@@ -12,7 +12,7 @@ public class ThreadUtils implements ConsentLogger {
    *
    * @return A new ExecutorService instance.
    */
-  public ExecutorService getExecutorService(Class clazz) {
+  public <T> ExecutorService getExecutorService(Class<T> clazz) {
     ExecutorService executorService = Executors.newFixedThreadPool(
         Runtime.getRuntime().availableProcessors());
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
