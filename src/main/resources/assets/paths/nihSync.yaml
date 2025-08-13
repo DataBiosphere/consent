@@ -1,6 +1,6 @@
 get:
-  summary: Synchronize NIH Account
-  description: Synchronizes the user's account with known NIH linked account
+  summary: Get Synchronized User NIH Account
+  description: Get a synchronized user account fetches known linked accounts
   tags:
     - User
     - Nih

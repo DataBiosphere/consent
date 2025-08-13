@@ -63,10 +63,9 @@ public class NihAccountResource extends Resource {
   @DELETE
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
-  public Response deleteNihAccount(@Auth AuthUser user) {
+  public Response deleteNihAccount(@Auth AuthUser authUser) {
     try {
-      User dacUser = userService.findUserByEmail(user.getEmail());
-      nihService.deleteNihAccountById(dacUser.getUserId());
+      nihService.deleteNihAccountById(authUser);
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);

@@ -112,7 +112,7 @@ class NihAccountResourceTest {
   @Test
   void testDeleteNihAccountError() {
     when(userService.findUserByEmail(any())).thenReturn(user);
-    doThrow(new RuntimeException()).when(nihService).deleteNihAccountById(any());
+    doThrow(new RuntimeException()).when(nihService).deleteNihAccountById(authUser);
     resource = new NihAccountResource(nihService, userService);
     try (var response = resource.deleteNihAccount(authUser)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());

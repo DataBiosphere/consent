@@ -8,6 +8,7 @@ import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
+import java.time.Instant;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -55,12 +56,10 @@ public class NihService implements ConsentLogger {
         throw new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
       }
       String body = response.parseAsString();
-      LinkInfo linkInfo = parseLinkInfo(body);
-      NIHUserAccount nihAccount = new NIHUserAccount(
-          linkInfo.externalUserId(), linkInfo.expirationTimestamp(), linkInfo.authenticated());
+      NIHUserAccount nihAccount = parseNihUserAccount(body);
       serviceDAO.updateUserNihStatus(user, nihAccount);
     } catch (NotFoundException e) {
-      deleteNihAccountById(user.getUserId());
+      serviceDAO.deleteNihAccountById(user.getUserId());
     }
     return userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues());
   }
@@ -97,8 +96,26 @@ public class NihService implements ConsentLogger {
     }
   }
 
-  public void deleteNihAccountById(Integer userId) {
-    serviceDAO.deleteNihAccountById(userId);
+  public void deleteNihAccountById(AuthUser authUser) {
+    User user = userDAO.findUserByEmail(authUser.getEmail());
+    // Delete linkage locally
+    serviceDAO.deleteNihAccountById(user.getUserId());
+    try {
+      // Delete linkage from ECM
+      GenericUrl ecmRasProviderUrl = new GenericUrl(configuration.getEcmRasProviderUrl());
+      HttpRequest request = clientUtil.buildDeleteRequest(ecmRasProviderUrl, authUser);
+      HttpResponse response = clientUtil.handleHttpRequest(request);
+      if (!response.isSuccessStatusCode()) {
+        throw new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
+      }
+    } catch (Exception e) {
+      logWarn(
+          "Failed to delete NIH account for user: " + authUser.getEmail() + " - " + e.getMessage());
+      throw new ServerErrorException(
+          "Failed to delete NIH account for user: " + authUser.getEmail(),
+          HttpStatusCodes.STATUS_CODE_SERVER_ERROR, e);
+    }
+
   }
 
 
@@ -111,9 +128,14 @@ public class NihService implements ConsentLogger {
     return String.valueOf(expires.getTime());
   }
 
-  private LinkInfo parseLinkInfo(String body) {
+  private NIHUserAccount parseNihUserAccount(String body) {
     try {
-      return GsonUtil.getInstance().fromJson(body, LinkInfo.class);
+      LinkInfo linkInfo = GsonUtil.getInstance().fromJson(body, LinkInfo.class);
+      // LinkInfo expirationTimestamp is in a date string.
+      // Historically, we store this value as epoch milliseconds
+      Instant instant = Instant.parse(linkInfo.expirationTimestamp());
+      return new NIHUserAccount(
+          linkInfo.externalUserId(), String.valueOf(instant.toEpochMilli()), linkInfo.authenticated());
     } catch (Exception e) {
       logWarn("Failed to parse ECM response: " + body);
       throw new ServerErrorException("Invalid response from ECM RAS Provider",

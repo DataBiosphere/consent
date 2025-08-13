@@ -1,6 +1,6 @@
 delete:
   summary: Delete eRA Commons Account
-  description: Removes only eRA Commons Account related information from the authenticated user requesting this action
+  description: Removes Linked Account information for the authenticated user
   tags:
     - User
     - Nih
@@ -8,6 +8,7 @@ delete:
     200:
       description: Returns an empty response if the operation was successful
 post:
+  deprecated: true
   summary: Store eRA Commons information
   description: Save user's eRA Commons account
   requestBody:
