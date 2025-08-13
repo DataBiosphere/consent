@@ -326,9 +326,9 @@ public class EmailService implements ConsentLogger {
    * @throws TemplateException Template processing exception
    * @throws IOException IOException when processing the template or sending the email
    */
-  public void sendNewSoProgressReportApprovedEmail(User user, String darCode, User researcher, String referenceId, List<Dataset> datasets, String dataUseRestriction)
+  public void sendNewSoProgressReportApprovedEmail(User user, String darCode, User researcher, String referenceId, List<Dataset> datasets, String dataUseRestriction, boolean radarApproved)
       throws TemplateException, IOException {
-      sendMessage(new SoPRApproved(user, darCode, researcher, referenceId, datasets, dataUseRestriction),
+      sendMessage(new SoPRApproved(user, darCode, researcher, referenceId, datasets, dataUseRestriction, radarApproved),
         user.getUserId());
   }
 

@@ -388,7 +388,7 @@ public class VoteService implements ConsentLogger {
     for (User so : signingOfficials) {
       if (dar.getProgressReport()) {
         emailService.sendNewSoProgressReportApprovedEmail(
-            so, darCode, researcher, dar.getReferenceId(), datasets, translation);
+            so, darCode, researcher, dar.getReferenceId(), datasets, translation, radarApproved);
       } else {
         emailService.sendNewSoDARApprovedEmail(
             so, darCode, researcher, dar.getReferenceId(), datasets, translation, radarApproved);
