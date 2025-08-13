@@ -50,22 +50,19 @@ public class NihService implements ConsentLogger {
     User user = userDAO.findUserByEmail(authUser.getEmail());
     GenericUrl ecmRasProviderUrl = new GenericUrl(configuration.getEcmRasProviderUrl());
     HttpRequest request = clientUtil.buildGetRequest(ecmRasProviderUrl, authUser);
-    HttpResponse response = clientUtil.handleHttpRequest(request);
-    if (!response.isSuccessStatusCode()) {
-      throw new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
-    }
-    String body = response.parseAsString();
-    LinkInfo linkInfo;
     try {
-      linkInfo = GsonUtil.getInstance().fromJson(body, LinkInfo.class);
-    } catch (Exception e) {
-      logWarn("Failed to parse ECM response: " + body);
-      throw new ServerErrorException("Invalid response from ECM RAS Provider",
-          HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+      HttpResponse response = clientUtil.handleHttpRequest(request);
+      if (!response.isSuccessStatusCode()) {
+        throw new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
+      }
+      String body = response.parseAsString();
+      LinkInfo linkInfo = parseLinkInfo(body);
+      NIHUserAccount nihAccount = new NIHUserAccount(
+          linkInfo.externalUserId(), linkInfo.expirationTimestamp(), linkInfo.authenticated());
+      serviceDAO.updateUserNihStatus(user, nihAccount);
+    } catch (NotFoundException e) {
+      deleteNihAccountById(user.getUserId());
     }
-    NIHUserAccount nihAccount = new NIHUserAccount(
-        linkInfo.externalUserId(), linkInfo.expirationTimestamp(), linkInfo.authenticated());
-    serviceDAO.updateUserNihStatus(user, nihAccount);
     return userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues());
   }
 
@@ -108,6 +105,7 @@ public class NihService implements ConsentLogger {
     if (userDAO.findUserById(userId) == null) {
       throw new NotFoundException("User with id: " + userId + " does not exist");
     }
+    userDAO.updateEraCommonsId(userId, null);
     userPropertyDAO.deletePropertiesByUserAndKey(properties);
   }
 
@@ -121,4 +119,13 @@ public class NihService implements ConsentLogger {
     return String.valueOf(expires.getTime());
   }
 
+  private LinkInfo parseLinkInfo(String body) {
+    try {
+      return GsonUtil.getInstance().fromJson(body, LinkInfo.class);
+    } catch (Exception e) {
+      logWarn("Failed to parse ECM response: " + body);
+      throw new ServerErrorException("Invalid response from ECM RAS Provider",
+          HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+    }
+  }
 }

@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockserver.model.HttpRequest.request;
@@ -13,6 +12,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -75,7 +75,7 @@ class NihServiceTest extends MockServerTestHelper {
         ecmResponse.externalUserId(), ecmResponse.expirationTimestamp(), ecmResponse.authenticated());
     mockServerClient.when(request())
         .respond(response()
-            .withStatusCode(200)
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
             .withBody(GsonUtil.getInstance().toJson(ecmResponse)));
     User syncedUser = service.syncAccount(authUser);
     assertEquals(user.getUserId(), syncedUser.getUserId());
@@ -121,6 +121,25 @@ class NihServiceTest extends MockServerTestHelper {
   }
 
   @Test
+  void testSyncAccountECMNotFound() throws Exception {
+    User user = new User();
+    user.setUserId(1);
+    when(userDAO.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
+    when(userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues())).thenReturn(user);
+    mockServerClient.when(request())
+        .respond(response()
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_NOT_FOUND));
+    User syncedUser = service.syncAccount(authUser);
+    assertEquals(user.getUserId(), syncedUser.getUserId());
+    verify(userDAO).updateEraCommonsId(user.getUserId(), null);
+    List<UserProperty> properties = new ArrayList<>();
+    properties.add(new UserProperty(user.getUserId(), UserFields.ERA_EXPIRATION_DATE.getValue()));
+    properties.add(new UserProperty(user.getUserId(), UserFields.ERA_STATUS.getValue()));
+    verify(userPropertyDAO).deletePropertiesByUserAndKey(properties);
+  }
+
+  @Test
   void testAuthenticateNih_InvalidUser() {
     AuthUser testUser = new AuthUser("test@test.com");
     assertThrows(NotFoundException.class,
@@ -139,7 +158,7 @@ class NihServiceTest extends MockServerTestHelper {
           user.getUserId());
       assertEquals(1, properties.size());
       assertEquals(Integer.valueOf(1), properties.get(0).getPropertyId());
-      verify(nihServiceDAO, times(1)).updateUserNihStatus(user, nihUserAccount);
+      verify(nihServiceDAO).updateUserNihStatus(user, nihUserAccount);
     } catch (BadRequestException bre) {
       assert false;
     }
@@ -173,7 +192,11 @@ class NihServiceTest extends MockServerTestHelper {
     user.setUserId(1);
     when(userDAO.findUserById(any())).thenReturn(user);
     service.deleteNihAccountById(1);
-    verify(userPropertyDAO, times(1)).deletePropertiesByUserAndKey(any());
+    verify(userDAO).updateEraCommonsId(user.getUserId(), null);
+    List<UserProperty> properties = new ArrayList<>();
+    properties.add(new UserProperty(user.getUserId(), UserFields.ERA_EXPIRATION_DATE.getValue()));
+    properties.add(new UserProperty(user.getUserId(), UserFields.ERA_STATUS.getValue()));
+    verify(userPropertyDAO).deletePropertiesByUserAndKey(properties);
   }
 
   @Test
