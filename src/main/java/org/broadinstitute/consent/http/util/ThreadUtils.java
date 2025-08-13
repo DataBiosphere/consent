@@ -16,7 +16,7 @@ public class ThreadUtils implements ConsentLogger {
     ExecutorService executorService = Executors.newFixedThreadPool(
         Runtime.getRuntime().availableProcessors());
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      logInfo("Shutting down  %s executor service".formatted(clazz.getSimpleName()));
+      logInfo("Shutting down %s executor service".formatted(clazz.getSimpleName()));
       executorService.shutdown();
     }));
     return executorService;
