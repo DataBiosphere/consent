@@ -12,6 +12,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -70,9 +71,11 @@ class NihServiceTest extends MockServerTestHelper {
     when(userDAO.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues())).thenReturn(
         user);
-    LinkInfo ecmResponse = new LinkInfo("test", "test", true);
+    String timestamp = "2025-08-28T16:54:22.064+00:00";
+    LinkInfo ecmResponse = new LinkInfo("test", timestamp, true);
     NIHUserAccount nihAccount = new NIHUserAccount(
-        ecmResponse.externalUserId(), ecmResponse.expirationTimestamp(),
+        ecmResponse.externalUserId(),
+        String.valueOf(Instant.parse(timestamp).toEpochMilli()),
         ecmResponse.authenticated());
     mockServerClient.when(request())
         .respond(response()
