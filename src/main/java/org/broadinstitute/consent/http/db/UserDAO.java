@@ -99,7 +99,7 @@ public interface UserDAO extends Transactional<UserDAO> {
       LEFT JOIN institution i ON u.institution_id = i.institution_id
       LEFT JOIN library_card lc ON lc.user_id = u.user_id
       LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
-      INNER JOIN user_property up ON up.user_id = u.user_id AND up.property_key IN (<keys>)
+      LEFT JOIN user_property up ON up.user_id = u.user_id AND up.property_key IN (<keys>)
       WHERE u.user_id = :userId
       """)
   User findUserWithPropertiesById(@Bind("userId") Integer userId, @BindList(value = "keys", onEmpty = EmptyHandling.NULL_STRING) List<String> keys);
