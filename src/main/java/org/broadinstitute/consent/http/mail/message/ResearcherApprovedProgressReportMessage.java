@@ -13,13 +13,15 @@ public class ResearcherApprovedProgressReportMessage extends MailMessage {
   private final String darCode;
   private final List<DatasetMailDTO> datasets;
   private final String dataUseRestriction;
+  private final String radarText;
 
   public ResearcherApprovedProgressReportMessage(User toUser, String darCode, List<DatasetMailDTO> datasets,
-      String dataUseRestriction) {
+      String dataUseRestriction, boolean radarApproved) {
     super(toUser, EmailType.RESEARCHER_PROGRESS_REPORT_APPROVED);
     this.darCode = darCode;
     this.datasets = datasets;
     this.dataUseRestriction = dataUseRestriction;
+    this.radarText = radarApproved ? "Rule Automated DAR (RADAR) " : "";
   }
 
   @Override
@@ -33,6 +35,7 @@ public class ResearcherApprovedProgressReportMessage extends MailMessage {
         "darCode", darCode,
         "datasets", datasets,
         "dataUseRestriction", dataUseRestriction,
+        "radarText", radarText,
         "researcherEmail", toUser.getEmail());
   }
 
