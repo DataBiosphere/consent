@@ -104,15 +104,6 @@ class NihAccountResourceTest {
   }
 
   @Test
-  void testDeleteNihAccountNoAuth() {
-    doThrow(new RuntimeException()).when(nihService).deleteNihAccountById(duosUser);
-    resource = new NihAccountResource(nihService, userService);
-    try (var response = resource.deleteNihAccount(duosUser)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
-    }
-  }
-
-  @Test
   void testDeleteNihAccountError() {
     doThrow(new RuntimeException()).when(nihService).deleteNihAccountById(duosUser);
     resource = new NihAccountResource(nihService, userService);
