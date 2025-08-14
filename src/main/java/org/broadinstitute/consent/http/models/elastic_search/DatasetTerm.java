@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.models.elastic_search;
 
-import java.util.List;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 
 public class DatasetTerm {
@@ -19,7 +18,6 @@ public class DatasetTerm {
   private Integer dacId;
   private Boolean dacApproval;
   private String accessManagement;
-  private List<Integer> approvedUserIds;
   private StudyTerm study;
   private UserTerm submitter;
   private UserTerm updateUser;
@@ -127,14 +125,6 @@ public class DatasetTerm {
 
   public void setAccessManagement(String accessManagement) {
     this.accessManagement = accessManagement;
-  }
-
-  public List<Integer> getApprovedUserIds() {
-    return approvedUserIds;
-  }
-
-  public void setApprovedUserIds(List<Integer> approvedUsers) {
-    this.approvedUserIds = approvedUsers;
   }
 
   public StudyTerm getStudy() {

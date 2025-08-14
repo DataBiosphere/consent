@@ -39,10 +39,8 @@ import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.db.DacDAO;
-import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
-import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
@@ -91,9 +89,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   private DacDAO dacDAO;
 
   @Mock
-  private DataAccessRequestDAO dataAccessRequestDAO;
-
-  @Mock
   private UserDAO userDao;
 
   @Mock
@@ -108,23 +103,18 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   @Mock
   private StudyDAO studyDAO;
 
-  @Mock
-  private LibraryCardDAO libraryCardDAO;
-
   @BeforeEach
   void initService() {
     service = new ElasticSearchService(
         esClient,
         esConfig,
         dacDAO,
-        dataAccessRequestDAO,
         userDao,
         ontologyService,
         institutionDAO,
         datasetDAO,
         datasetServiceDAO,
-        studyDAO,
-        libraryCardDAO);
+        studyDAO);
   }
 
   private void mockElasticSearchResponse(String body) throws IOException {
@@ -337,7 +327,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     dar1.setUserId(1);
     DataAccessRequest dar2 = new DataAccessRequest();
     dar2.setUserId(2);
-    List<Integer> approvedUserIds = List.of(dar1.getUserId(), dar2.getUserId());
     DataUseSummary dataUseSummary = createDataUseSummary();
     DatasetRecord datasetRecord = createDatasetRecord();
     when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(
@@ -348,11 +337,8 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     card1.setUserId(dar1.getUserId());
     LibraryCard card2 = new LibraryCard();
     card2.setUserId(dar2.getUserId());
-    when(libraryCardDAO.findLibraryCardsByUserIds(
-        List.of(dar1.getUserId(), dar2.getUserId()))).thenReturn(List.of(card1, card2));
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
     when(ontologyService.translateDataUseSummary(any())).thenReturn(dataUseSummary);
-    when(dataAccessRequestDAO.findApprovedDARsByDatasetId(any())).thenReturn(List.of(dar1, dar2));
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
 
     assertEquals(datasetRecord.dataset.getDatasetId(), term.getDatasetId());
@@ -381,7 +367,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     assertTrue(accessManagementProp.isPresent());
     assertEquals(accessManagementProp.get().getPropertyValue().toString(),
         term.getAccessManagement());
-    assertEquals(approvedUserIds, term.getApprovedUserIds());
   }
 
   @Test
@@ -431,9 +416,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     dataset.setAlias(10);
     dataset.setDatasetIdentifier();
     dataset.setProperties(Set.of());
-
-    when(dataAccessRequestDAO.findApprovedDARsByDatasetId(any())).thenReturn(
-        List.of());
 
     DatasetTerm term = service.toDatasetTerm(dataset);
 
