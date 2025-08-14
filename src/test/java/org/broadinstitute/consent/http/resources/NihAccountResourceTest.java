@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.BadRequestException;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.NihService;
@@ -35,21 +36,24 @@ class NihAccountResourceTest {
   @Mock
   private AuthUser authUser;
 
+  @Mock
+  private DuosUser duosUser;
+
   private NihAccountResource resource;
 
   @Test
   void testSyncAccountSuccess() {
     resource = new NihAccountResource(nihService, userService);
-    try (var response = resource.syncAccount(authUser)) {
+    try (var response = resource.syncAccount(duosUser)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
 
   @Test
   void testSyncAccountNoAuth() throws Exception {
-    when(nihService.syncAccount(authUser)).thenThrow(new RuntimeException());
+    when(nihService.syncAccount(duosUser)).thenThrow(new RuntimeException());
     resource = new NihAccountResource(nihService, userService);
-    try (var response = resource.syncAccount(authUser)) {
+    try (var response = resource.syncAccount(duosUser)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
   }
@@ -94,25 +98,25 @@ class NihAccountResourceTest {
   @Test
   void testDeleteNihAccountSuccess() {
     resource = new NihAccountResource(nihService, userService);
-    try (var response = resource.deleteNihAccount(authUser)) {
+    try (var response = resource.deleteNihAccount(duosUser)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
 
   @Test
   void testDeleteNihAccountNoAuth() {
-    doThrow(new RuntimeException()).when(nihService).deleteNihAccountById(authUser);
+    doThrow(new RuntimeException()).when(nihService).deleteNihAccountById(duosUser);
     resource = new NihAccountResource(nihService, userService);
-    try (var response = resource.deleteNihAccount(authUser)) {
+    try (var response = resource.deleteNihAccount(duosUser)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
   }
 
   @Test
   void testDeleteNihAccountError() {
-    doThrow(new RuntimeException()).when(nihService).deleteNihAccountById(authUser);
+    doThrow(new RuntimeException()).when(nihService).deleteNihAccountById(duosUser);
     resource = new NihAccountResource(nihService, userService);
-    try (var response = resource.deleteNihAccount(authUser)) {
+    try (var response = resource.deleteNihAccount(duosUser)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
   }

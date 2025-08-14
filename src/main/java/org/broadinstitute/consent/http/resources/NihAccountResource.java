@@ -13,6 +13,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -35,9 +36,9 @@ public class NihAccountResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("sync")
   @PermitAll
-  public Response syncAccount(@Auth AuthUser authUser) {
+  public Response syncAccount(@Auth DuosUser duosUser) {
     try {
-      User user = nihService.syncAccount(authUser);
+      User user = nihService.syncAccount(duosUser);
       return Response.ok(user).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -63,9 +64,9 @@ public class NihAccountResource extends Resource {
   @DELETE
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
-  public Response deleteNihAccount(@Auth AuthUser authUser) {
+  public Response deleteNihAccount(@Auth DuosUser duosUser) {
     try {
-      nihService.deleteNihAccountById(authUser);
+      nihService.deleteNihAccountById(duosUser);
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);

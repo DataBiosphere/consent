@@ -22,6 +22,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -47,6 +48,9 @@ class NihServiceTest extends MockServerTestHelper {
   @Mock
   private NihServiceDAO nihServiceDAO;
 
+  @Mock
+  private DuosUser duosUser;
+
   private NihService service;
   private NIHUserAccount nihUserAccount;
   private AuthUser authUser;
@@ -68,7 +72,7 @@ class NihServiceTest extends MockServerTestHelper {
   void testSyncAccount() throws Exception {
     User user = new User();
     user.setUserId(1);
-    when(userDAO.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(duosUser.getUser()).thenReturn(user);
     when(userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues())).thenReturn(
         user);
     String timestamp = "2025-08-28T16:54:22.064+00:00";
@@ -81,7 +85,7 @@ class NihServiceTest extends MockServerTestHelper {
         .respond(response()
             .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
             .withBody(GsonUtil.getInstance().toJson(ecmResponse)));
-    User syncedUser = service.syncAccount(authUser);
+    User syncedUser = service.syncAccount(duosUser);
     assertEquals(user.getUserId(), syncedUser.getUserId());
     verify(nihServiceDAO).updateUserNihStatus(user, nihAccount);
   }
@@ -90,51 +94,51 @@ class NihServiceTest extends MockServerTestHelper {
   void testSyncAccountBadRequestError() {
     User user = new User();
     user.setUserId(1);
-    when(userDAO.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(duosUser.getUser()).thenReturn(user);
     LinkInfo ecmResponse = new LinkInfo("test", "test", true);
     mockServerClient.when(request())
         .respond(response()
             .withStatusCode(HttpStatusCodes.STATUS_CODE_BAD_REQUEST)
             .withBody(GsonUtil.getInstance().toJson(ecmResponse)));
-    assertThrows(BadRequestException.class, () -> service.syncAccount(authUser));
+    assertThrows(BadRequestException.class, () -> service.syncAccount(duosUser));
   }
 
   @Test
   void testSyncAccountServerError() {
     User user = new User();
     user.setUserId(1);
-    when(userDAO.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(duosUser.getUser()).thenReturn(user);
     LinkInfo ecmResponse = new LinkInfo("test", "test", true);
     mockServerClient.when(request())
         .respond(response()
             .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
             .withBody(GsonUtil.getInstance().toJson(ecmResponse)));
-    assertThrows(ServerErrorException.class, () -> service.syncAccount(authUser));
+    assertThrows(ServerErrorException.class, () -> service.syncAccount(duosUser));
   }
 
   @Test
   void testSyncAccountInvalidECMResponse() {
     User user = new User();
     user.setUserId(1);
-    when(userDAO.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(duosUser.getUser()).thenReturn(user);
     mockServerClient.when(request())
         .respond(response()
             .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
             .withBody(GsonUtil.getInstance().toJson("bad response")));
-    assertThrows(ServerErrorException.class, () -> service.syncAccount(authUser));
+    assertThrows(ServerErrorException.class, () -> service.syncAccount(duosUser));
   }
 
   @Test
   void testSyncAccountECMNotFound() throws Exception {
     User user = new User();
     user.setUserId(1);
-    when(userDAO.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(duosUser.getUser()).thenReturn(user);
     when(userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues())).thenReturn(
         user);
     mockServerClient.when(request())
         .respond(response()
             .withStatusCode(HttpStatusCodes.STATUS_CODE_NOT_FOUND));
-    User syncedUser = service.syncAccount(authUser);
+    User syncedUser = service.syncAccount(duosUser);
     assertEquals(user.getUserId(), syncedUser.getUserId());
     verify(nihServiceDAO).deleteNihAccountById(user.getUserId());
   }

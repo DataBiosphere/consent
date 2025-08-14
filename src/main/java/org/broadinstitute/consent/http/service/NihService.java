@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -46,10 +47,10 @@ public class NihService implements ConsentLogger {
     this.configuration = configuration;
   }
 
-  public User syncAccount(AuthUser authUser) throws Exception {
-    User user = userDAO.findUserByEmail(authUser.getEmail());
+  public  User syncAccount(DuosUser duosUser) throws Exception {
+    User user = duosUser.getUser();
     GenericUrl ecmRasProviderUrl = new GenericUrl(configuration.getEcmRasProviderUrl());
-    HttpRequest request = clientUtil.buildGetRequest(ecmRasProviderUrl, authUser);
+    HttpRequest request = clientUtil.buildGetRequest(ecmRasProviderUrl, duosUser);
     try {
       HttpResponse response = clientUtil.handleHttpRequest(request);
       if (!response.isSuccessStatusCode()) {
@@ -96,23 +97,23 @@ public class NihService implements ConsentLogger {
     }
   }
 
-  public void deleteNihAccountById(AuthUser authUser) {
-    User user = userDAO.findUserByEmail(authUser.getEmail());
+  public void deleteNihAccountById(DuosUser duosUser) {
+    User user = duosUser.getUser();
     // Delete linkage locally
     serviceDAO.deleteNihAccountById(user.getUserId());
     try {
       // Delete linkage from ECM
       GenericUrl ecmRasProviderUrl = new GenericUrl(configuration.getEcmRasProviderUrl());
-      HttpRequest request = clientUtil.buildDeleteRequest(ecmRasProviderUrl, authUser);
+      HttpRequest request = clientUtil.buildDeleteRequest(ecmRasProviderUrl, duosUser);
       HttpResponse response = clientUtil.handleHttpRequest(request);
       if (!response.isSuccessStatusCode()) {
         throw new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
       }
     } catch (Exception e) {
       logWarn(
-          "Failed to delete NIH account for user: " + authUser.getEmail() + " - " + e.getMessage());
+          "Failed to delete NIH account for user: " + duosUser.getEmail() + " - " + e.getMessage());
       throw new ServerErrorException(
-          "Failed to delete NIH account for user: " + authUser.getEmail(),
+          "Failed to delete NIH account for user: " + duosUser.getEmail(),
           HttpStatusCodes.STATUS_CODE_SERVER_ERROR, e);
     }
 
