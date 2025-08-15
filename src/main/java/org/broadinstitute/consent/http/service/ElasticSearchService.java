@@ -26,18 +26,14 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.db.DacDAO;
-import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
-import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Dac;
-import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Institution;
-import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
@@ -62,38 +58,32 @@ public class ElasticSearchService implements ConsentLogger {
   private final RestClient esClient;
   private final ElasticSearchConfiguration esConfig;
   private final DacDAO dacDAO;
-  private final DataAccessRequestDAO dataAccessRequestDAO;
   private final UserDAO userDAO;
   private final OntologyService ontologyService;
   private final InstitutionDAO institutionDAO;
   private final DatasetDAO datasetDAO;
   private final DatasetServiceDAO datasetServiceDAO;
   private final StudyDAO studyDAO;
-  private final LibraryCardDAO libraryCardDAO;
 
   public ElasticSearchService(
       RestClient esClient,
       ElasticSearchConfiguration esConfig,
       DacDAO dacDAO,
-      DataAccessRequestDAO dataAccessRequestDAO,
       UserDAO userDao,
       OntologyService ontologyService,
       InstitutionDAO institutionDAO,
       DatasetDAO datasetDAO,
       DatasetServiceDAO datasetServiceDAO,
-      StudyDAO studyDAO,
-      LibraryCardDAO libraryCardDAO) {
+      StudyDAO studyDAO) {
     this.esClient = esClient;
     this.esConfig = esConfig;
     this.dacDAO = dacDAO;
-    this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.userDAO = userDao;
     this.ontologyService = ontologyService;
     this.institutionDAO = institutionDAO;
     this.datasetDAO = datasetDAO;
     this.datasetServiceDAO = datasetServiceDAO;
     this.studyDAO = studyDAO;
-    this.libraryCardDAO = libraryCardDAO;
   }
 
 
@@ -404,20 +394,6 @@ public class ElasticSearchService implements ConsentLogger {
       }
       term.setDac(toDacTerm(dac));
     });
-
-    List<Integer> approvedUserIds = dataAccessRequestDAO
-        .findApprovedDARsByDatasetId(dataset.getDatasetId())
-        .stream()
-        .map(DataAccessRequest::getUserId)
-        .toList();
-
-    if (!approvedUserIds.isEmpty()) {
-      List<Integer> approvedLCUserIds = libraryCardDAO.findLibraryCardsByUserIds(approvedUserIds)
-          .stream()
-          .map(LibraryCard::getUserId)
-          .toList();
-      term.setApprovedUserIds(approvedLCUserIds);
-    }
 
     if (Objects.nonNull(dataset.getDataUse())) {
       DataUseSummary summary = ontologyService.translateDataUseSummary(dataset.getDataUse());
