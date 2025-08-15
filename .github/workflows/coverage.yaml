@@ -40,7 +40,9 @@ jobs:
         if: github.actor != 'dependabot[bot]'
         env:
           COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
         run: |
           mvn -v
           mvn clean jacoco:prepare-agent test jacoco:report coveralls:report -DrepoToken=$COVERALLS_TOKEN  --batch-mode
+          mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Pcoverage
