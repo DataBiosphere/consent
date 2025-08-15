@@ -44,5 +44,4 @@ jobs:
           MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
         run: |
           mvn -v
-          mvn clean jacoco:prepare-agent test jacoco:report coveralls:report -DrepoToken=$COVERALLS_TOKEN  --batch-mode
-          mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Pcoverage
+          mvn clean jacoco:prepare-agent test jacoco:report coveralls:report org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -DrepoToken=$COVERALLS_TOKEN --batch-mode

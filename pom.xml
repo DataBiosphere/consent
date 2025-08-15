@@ -25,6 +25,7 @@
     <junit.version>5.13.4</junit.version>
     <io.grpc.version>1.58.0</io.grpc.version>
     <mockito.version>5.18.0</mockito.version>
+    <sonar.plugin.version>5.1.0.4751</sonar.plugin.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -345,6 +346,15 @@
         </executions>
       </plugin>
     </plugins>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.sonarsource.scanner.maven</groupId>
+          <artifactId>sonar-maven-plugin</artifactId>
+          <version>${sonar.plugin.version}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
   </build>
 
   <dependencyManagement>
