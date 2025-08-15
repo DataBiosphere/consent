@@ -28,6 +28,9 @@
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <sonar.organization>broad-databiosphere</sonar.organization>
+    <sonar.projectKey>DataBiosphere_consent</sonar.projectKey>
+    <sonar.projectName>consent</sonar.projectName>
   </properties>
 
   <profiles>
