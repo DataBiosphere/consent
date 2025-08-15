@@ -23,7 +23,7 @@ jobs:
           REPO_NAME: ${{ github.event.repository.name }}
           RUN_ID: ${{ github.run_id }}
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
       - uses: actions/setup-java@v4
