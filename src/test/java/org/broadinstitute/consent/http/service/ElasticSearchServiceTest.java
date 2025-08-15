@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -259,6 +260,21 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     ));
     dataset.setStudy(study);
     return new DatasetRecord(user, updateUser, dac, dataset, study);
+  }
+
+
+  @Test
+  void testAsyncESIndexUpdate() {
+    DatasetRecord datasetRecord = createDatasetRecord();
+    datasetRecord.dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
+    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(
+        datasetRecord.createUser);
+    when(datasetDAO.findDatasetById(datasetRecord.dataset.getDatasetId())).thenReturn(datasetRecord.dataset);
+    ElasticSearchService elasticSearchSpy = spy(service);
+    // Call the async method ...
+    elasticSearchSpy.asyncDatasetInESIndex(datasetRecord.dataset.getDatasetId(), datasetRecord.createUser, true);
+    // Ensure that the synchronous method was called with the expected parameters
+    verify(elasticSearchSpy).synchronizeDatasetInESIndex(datasetRecord.dataset, datasetRecord.dataset.getCreateUser(), true);
   }
 
   @Test

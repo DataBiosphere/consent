@@ -124,6 +124,17 @@ public class DatasetService implements ConsentLogger {
     return datasetDAO.findDatasetById(id);
   }
 
+  /**
+   * Find the dataset without files by its ID. This method is intended to return a minimal
+   * dataset for performance reasons, avoiding the retrieval of full FSO information.
+   *
+   * @param id Dataset ID
+   * @return The updated Dataset object
+   */
+  public Dataset findDatasetWithoutFSOInformation(Integer id) {
+    return datasetDAO.findDatasetWithoutFSOInformation(id);
+  }
+
   public Dataset updateDatasetDataUse(User user, Integer datasetId, DataUse dataUse) {
     Dataset d = datasetDAO.findDatasetById(datasetId);
     if (d == null) {
@@ -191,8 +202,8 @@ public class DatasetService implements ConsentLogger {
     //If it has, simply returned the dataset in the argument (which was already queried for in the resource)
     if (currentApprovalState == null || !currentApprovalState) {
       datasetDAO.updateDatasetApproval(approval, Instant.now(), user.getUserId(), datasetId);
-      elasticSearchService.synchronizeDatasetInESIndex(dataset, user, true);
-      datasetReturn = datasetDAO.findDatasetById(datasetId);
+      elasticSearchService.asyncDatasetInESIndex(datasetId, user, true);
+      datasetReturn = datasetDAO.findDatasetWithoutFSOInformation(datasetId);
     } else {
       if (approval == null || !approval) {
         throw new IllegalArgumentException("Dataset is already approved");

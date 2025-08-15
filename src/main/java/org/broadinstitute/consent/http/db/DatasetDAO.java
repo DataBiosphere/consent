@@ -48,6 +48,47 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
   String CHAIRPERSON = Resource.CHAIRPERSON;
 
+  /**
+   * Find a for Dataset Approval by id.
+   * @param datasetId The dataset id
+   * @return Dataset
+   */
+  @UseRowReducer(DatasetReducer.class)
+  @SqlQuery("""
+          SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
+              d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
+              d.study_id, d.indexed_date,
+              u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
+              u.create_date AS u_create_date, u.email_preference AS u_email_preference,
+              u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
+              k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
+              s.study_id AS s_study_id,
+              s.name AS s_name,
+              s.description AS s_description,
+              s.data_types AS s_data_types,
+              s.pi_name AS s_pi_name,
+              s.create_user_id AS s_create_user_id,
+              s.create_date AS s_create_date,
+              s.update_user_id AS s_user_id,
+              s.update_date AS s_update_date,
+              s.public_visibility AS s_public_visibility,
+              s_dataset.dataset_id AS s_dataset_id,
+              sp.study_property_id AS sp_study_property_id,
+              sp.study_id AS sp_study_id,
+              sp.key AS sp_key,
+              sp.value AS sp_value,
+              sp.type AS sp_type
+      FROM dataset d
+      LEFT JOIN users u on d.create_user_id = u.user_id
+      LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+      LEFT JOIN dictionary k ON k.key_id = dp.property_key
+      LEFT JOIN study s ON s.study_id = d.study_id
+      LEFT JOIN study_property sp ON sp.study_id = s.study_id
+      LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
+      WHERE d.dataset_id = :datasetId
+      """)
+  Dataset findDatasetWithoutFSOInformation(@Bind("datasetId") Integer datasetId);
+
   @UseRowMapper(DatasetStudySummaryMapper.class)
   @SqlQuery("""
       SELECT d.dataset_id, d.name AS dataset_name, d.alias, s.study_id, s.name AS study_name

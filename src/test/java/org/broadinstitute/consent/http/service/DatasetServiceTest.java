@@ -295,7 +295,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     updatedDataset.setDatasetId(1);
     updatedDataset.setDacApproval(payloadBool);
 
-    when(datasetDAO.findDatasetById(any())).thenReturn(updatedDataset);
+    when(datasetDAO.findDatasetWithoutFSOInformation(dataset.getDatasetId())).thenReturn(updatedDataset);
     dataset.setAlias(1);
     dataset.setDacId(3);
     Dac dac = new Dac();
@@ -327,7 +327,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     updatedDataset.setDatasetId(1);
     updatedDataset.setDacApproval(payloadBool);
 
-    when(datasetDAO.findDatasetById(any())).thenReturn(updatedDataset);
+    when(datasetDAO.findDatasetWithoutFSOInformation(dataset.getDatasetId())).thenReturn(updatedDataset);
     dataset.setAlias(1);
     dataset.setDacId(3);
     Dac dac = new Dac();
@@ -361,7 +361,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     updatedDataset.setDatasetId(1);
     updatedDataset.setDacApproval(payloadBool);
 
-    when(datasetDAO.findDatasetById(any())).thenReturn(updatedDataset);
+    when(datasetDAO.findDatasetWithoutFSOInformation(dataset.getDatasetId())).thenReturn(updatedDataset);
     dataset.setAlias(1);
     dataset.setDacId(3);
     Dac dac = new Dac();

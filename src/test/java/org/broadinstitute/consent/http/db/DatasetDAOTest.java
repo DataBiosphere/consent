@@ -57,6 +57,30 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DatasetDAOTest extends DAOTestHelper {
 
   @Test
+  void testFindDatasetWithoutFSOInformation() {
+    // The query under test specifically excludes FSO information
+    // and INCLUDES User, Study, and Properties information
+    Dataset dataset = insertDataset();
+    Study study = insertStudyWithProperties();
+    datasetDAO.updateStudyId(dataset.getDatasetId(), study.getStudyId());
+    createFileStorageObject(study.getUuid().toString(),
+        FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+    createFileStorageObject(
+        dataset.getDatasetId().toString(),
+        FileCategory.NIH_INSTITUTIONAL_CERTIFICATION
+    );
+    Dataset foundDataset = datasetDAO.findDatasetWithoutFSOInformation(dataset.getDatasetId());
+    // Explicitly check queried entities
+    assertNotNull(foundDataset.getProperties());
+    assertNotNull(foundDataset.getStudy().getProperties());
+    assertEquals(study.getStudyId(), foundDataset.getStudy().getStudyId());
+    assertEquals(dataset.getCreateUserId(), foundDataset.getCreateUser().getUserId());
+    // Explicitly check un-queried entities
+    assertNull(foundDataset.getNihInstitutionalCertificationFile());
+    assertNull(foundDataset.getStudy().getAlternativeDataSharingPlan());
+  }
+
+  @Test
   void testFindAllDatasetStudySummariesDatasetAndStudy() {
     Dataset dataset = insertDataset();
     Study study = insertStudyWithProperties();
