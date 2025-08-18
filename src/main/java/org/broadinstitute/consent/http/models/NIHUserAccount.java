@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import com.google.gson.annotations.SerializedName;
+import java.util.Objects;
 
 public class NIHUserAccount {
 
@@ -45,4 +46,17 @@ public class NIHUserAccount {
     this.status = status;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof NIHUserAccount that)) {
+      return false;
+    }
+    return Objects.equals(nihUsername, that.nihUsername) && Objects.equals(
+        eraExpiration, that.eraExpiration) && Objects.equals(status, that.status);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(nihUsername, eraExpiration, status);
+  }
 }

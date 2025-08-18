@@ -5,6 +5,7 @@ import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -12,6 +13,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
@@ -28,6 +30,19 @@ public class NihAccountResource extends Resource {
   public NihAccountResource(NihService nihService, UserService userService) {
     this.nihService = nihService;
     this.userService = userService;
+  }
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("sync")
+  @PermitAll
+  public Response syncAccount(@Auth DuosUser duosUser) {
+    try {
+      User user = nihService.syncAccount(duosUser);
+      return Response.ok(user).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
   }
 
   @POST
@@ -49,10 +64,9 @@ public class NihAccountResource extends Resource {
   @DELETE
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
-  public Response deleteNihAccount(@Auth AuthUser user) {
+  public Response deleteNihAccount(@Auth DuosUser duosUser) {
     try {
-      User dacUser = userService.findUserByEmail(user.getEmail());
-      nihService.deleteNihAccountById(dacUser.getUserId());
+      nihService.deleteNihAccountById(duosUser);
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);

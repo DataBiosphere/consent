@@ -17,6 +17,7 @@ public class ServicesConfiguration {
   public static final String ACCEPT_TOS_PATH = "api/termsOfService/v1/user/self/accept";
   public static final String REJECT_TOS_PATH = "api/termsOfService/v1/user/self/reject";
   public static final String SAM_V1_USER_EMAIL = "api/users/v1";
+  public static final String ECM_RAS_PROVIDER = "/api/oauth/v1/ras";
   // nosemgrep
   public static final String BROAD_ZENDESK_URL = "https://broadinstitute.zendesk.com";
 
@@ -91,6 +92,10 @@ public class ServicesConfiguration {
 
   public void setEcmUrl(String ecmUrl) {
     this.ecmUrl = ecmUrl;
+  }
+
+  public String getEcmRasProviderUrl() {
+    return getEcmUrl() + ECM_RAS_PROVIDER;
   }
 
   public String getV1ResourceTypesUrl() {

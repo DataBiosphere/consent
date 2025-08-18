@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -61,6 +62,47 @@ public interface UserDAO extends Transactional<UserDAO> {
       WHERE u.user_id = :userId
       """)
   User findUserById(@Bind("userId") Integer userId);
+
+  @RegisterBeanMapper(value = User.class, prefix = "u")
+  @RegisterBeanMapper(value = UserRole.class)
+  @RegisterBeanMapper(value = Institution.class, prefix = "i")
+  @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
+  @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
+  @UseRowReducer(UserWithRolesReducer.class)
+  @SqlQuery("""
+      SELECT
+          u.user_id as u_user_id,
+          u.email as u_email,
+          u.display_name as u_display_name,
+          u.create_date as u_create_date,
+          u.email_preference as u_email_preference,
+          u.institution_id as u_institution_id,
+          u.era_commons_id as u_era_commons_id,
+          i.institution_id as i_id,
+          i.institution_name as i_name,
+          i.it_director_name as i_it_director_name,
+          i.it_director_email as i_it_director_email,
+          i.create_date as i_create_date,
+          i.update_date as i_update_date,
+          ur.user_role_id as ur_user_role_id, ur.user_id as ur_user_id,
+          ur.role_id as ur_role_id, ur.dac_id as ur_dac_id, r.name as ur_name,
+          lc.id AS lc_id, lc.user_id AS lc_user_id,
+          lc.user_name AS lc_user_name, lc.user_email AS lc_user_email,
+          lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date,
+          lc.update_user_id AS lc_update_user_id,
+          ld.daa_id as lc_daa_id,
+          up.property_id as up_property_id, up.property_key as up_property_key,
+          up.property_value as up_property_value
+      FROM users u
+      LEFT JOIN user_role ur ON ur.user_id = u.user_id
+      LEFT JOIN roles r ON r.role_id = ur.role_id
+      LEFT JOIN institution i ON u.institution_id = i.institution_id
+      LEFT JOIN library_card lc ON lc.user_id = u.user_id
+      LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+      LEFT JOIN user_property up ON up.user_id = u.user_id AND up.property_key IN (<keys>)
+      WHERE u.user_id = :userId
+      """)
+  User findUserWithPropertiesById(@Bind("userId") Integer userId, @BindList(value = "keys", onEmpty = EmptyHandling.NULL_STRING) List<String> keys);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @UseRowReducer(UserWithRolesReducer.class)
