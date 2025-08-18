@@ -32,38 +32,43 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.sam.SamService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 @Path("api/user")
 public class UserResource extends Resource {
 
   private final UserService userService;
-  private final Gson gson = new Gson();
+  private final Gson gson = GsonUtil.getInstance();
   private final SamService samService;
   private final DatasetService datasetService;
   private final AcknowledgementService acknowledgementService;
+  private final NihService nihService;
 
   @Inject
   public UserResource(SamService samService, UserService userService,
-      DatasetService datasetService, AcknowledgementService acknowledgementService) {
+      DatasetService datasetService, AcknowledgementService acknowledgementService,
+      NihService nihService) {
     this.samService = samService;
     this.userService = userService;
     this.datasetService = datasetService;
     this.acknowledgementService = acknowledgementService;
+    this.nihService = nihService;
   }
 
   @GET
@@ -99,15 +104,13 @@ public class UserResource extends Resource {
   @Produces("application/json")
   @PermitAll
   @Timed
-  public Response getUser(@Auth AuthUser authUser) {
+  public Response getUser(@Auth DuosUser duosUser) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      if (Objects.isNull(authUser.getUserStatusInfo())) {
-        samService.asyncPostRegistrationInfo(authUser);
+      if (Objects.isNull(duosUser.getUserStatusInfo())) {
+        samService.asyncPostRegistrationInfo(duosUser);
       }
-      JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser,
-          user.getUserId());
-      return Response.ok(gson.toJson(userJson)).build();
+      User syncedUser = nihService.syncAccount(duosUser);
+      return Response.ok(gson.toJson(syncedUser)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -132,7 +135,7 @@ public class UserResource extends Resource {
       List<Integer> dacIds = user.getRoles().stream()
           .map(UserRole::getDacId)
           .filter(Objects::nonNull)
-          .collect(Collectors.toList());
+          .toList();
       List<Dataset> datasets =
           dacIds.isEmpty() ? List.of() : datasetService.findDatasetListByDacIds(dacIds);
       if (datasets.isEmpty()) {
@@ -189,14 +192,12 @@ public class UserResource extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @RolesAllowed({ADMIN})
-  public Response update(@Auth AuthUser authUser, @Context UriInfo info,
-      @PathParam("id") Integer userId, String json) {
+  public Response update(@Auth AuthUser authUser, @PathParam("id") Integer userId, String json) {
     try {
       UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
       // Ensure that we have a real user with this ID, fail if we do not.
       userService.findUserById(userId);
       User updatedUser = userService.updateUserFieldsById(userUpdateFields, userId);
-      Gson gson = new Gson();
       JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser,
           updatedUser.getUserId());
       return Response.ok().entity(gson.toJson(jsonUser)).build();
@@ -209,7 +210,7 @@ public class UserResource extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @PermitAll
-  public Response updateSelf(@Auth AuthUser authUser, @Context UriInfo info, String json) {
+  public Response updateSelf(@Auth AuthUser authUser, String json) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
@@ -225,7 +226,6 @@ public class UserResource extends Resource {
       }
 
       user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
-      Gson gson = new Gson();
       JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser,
           user.getUserId());
 
@@ -271,7 +271,8 @@ public class UserResource extends Resource {
     return activeUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)
         && activeUser.getInstitutionId() != null
         && UserRoles.isValidSoAdjustableRoleId(role)
-        && (user.getInstitutionId() == null || user.getInstitutionId().equals(activeUser.getInstitutionId()));
+        && (user.getInstitutionId() == null || user.getInstitutionId()
+        .equals(activeUser.getInstitutionId()));
   }
 
   private Response getUserResponse(AuthUser authUser, Integer userId) {
@@ -344,7 +345,8 @@ public class UserResource extends Resource {
           entity(new Error("Unable to verify google identity",
               Response.Status.BAD_REQUEST.getStatusCode())).
           build();
-    }    try {
+    }
+    try {
       if (userService.findUserByEmail(authUser.getEmail()) != null) {
         return Response.
             status(Response.Status.CONFLICT).

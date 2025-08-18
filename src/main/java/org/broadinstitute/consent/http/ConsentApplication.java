@@ -20,6 +20,7 @@ import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.text.MessageFormat;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -41,7 +42,6 @@ import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.filters.RequestHeaderCacheFilter;
 import org.broadinstitute.consent.http.filters.ResponseServerFilter;
 import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
@@ -139,7 +139,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         LOGGER.error("Unable to bootstrap sentry logging.");
       }
     } catch (Exception e) {
-      LOGGER.error("Exception loading sentry properties: " + e.getMessage());
+      LOGGER.error(MessageFormat.format("Exception loading sentry properties: {0}", e.getMessage()));
     }
     new ConsentApplication().run(args);
     LOGGER.info("Consent Application Started");
@@ -151,7 +151,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     try {
       initializeLiquibase(config);
     } catch (LiquibaseException | SQLException e) {
-      LOGGER.error("Exception initializing liquibase: " + e);
+      LOGGER.error(MessageFormat.format("Exception initializing liquibase: {0}", e));
     }
 
     // Previously, this code was working around a dropwizard+Guice issue with singletons and JDBI.
@@ -237,7 +237,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(new StatusResource(env.healthChecks()));
     env.jersey().register(injector.getInstance(SupportResource.class));
     env.jersey().register(
-        new UserResource(samService, userService, datasetService, acknowledgementService));
+        new UserResource(samService, userService, datasetService, acknowledgementService, nihService));
     env.jersey().register(new TosResource(samService));
     env.jersey().register(injector.getInstance(VersionResource.class));
     env.jersey().register(new VoteResource(userService, voteService, electionService));
@@ -305,7 +305,9 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     if (Objects.isNull(changeLogFile) || changeLogFile.trim().isEmpty()) {
       changeLogFile = "changelog-master.xml";
     }
-    LOGGER.info("Initializing db with: " + changeLogFile);
+    if (LOGGER.isInfoEnabled()) {
+      LOGGER.info(MessageFormat.format("Initializing db with: {0}", changeLogFile));
+    }
     return changeLogFile;
   }
 

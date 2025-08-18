@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
@@ -35,11 +36,13 @@ import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -80,6 +83,9 @@ class UserResourceTest extends AbstractTestHelper {
   @Mock
   private AcknowledgementService acknowledgementService;
 
+  @Mock
+  private NihService nihService;
+
   private static final String TEST_EMAIL = "test@gmail.com";
 
   private final Gson gson = GsonUtil.getInstance();
@@ -92,16 +98,18 @@ class UserResourceTest extends AbstractTestHelper {
 
   @BeforeEach
   void initResource() {
-    userResource = new UserResource(samService, userService, datasetService,
-        acknowledgementService);
+    userResource = new UserResource(samService, userService, datasetService, acknowledgementService,
+        nihService);
   }
 
   @Test
-  void testGetMe() {
+  void testGetMe() throws Exception {
     User user = createUserWithRole();
-    when(userService.findUserByEmail(any())).thenReturn(user);
+    DuosUser duosUser = new DuosUser(authUser, user);
 
-    Response response = userResource.getUser(authUser);
+    Response response = userResource.getUser(duosUser);
+    verify(samService).asyncPostRegistrationInfo(duosUser);
+    verify(nihService).syncAccount(duosUser);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
@@ -455,8 +463,7 @@ class UserResourceTest extends AbstractTestHelper {
     when(userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId())).thenReturn(
         gson.toJsonTree(user).getAsJsonObject());
 
-    try (Response response = userResource.updateSelf(authUser, uriInfo,
-        gson.toJson(userUpdateFields))) {
+    try (Response response = userResource.updateSelf(authUser, gson.toJson(userUpdateFields))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -481,7 +488,7 @@ class UserResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(userService.updateUserFieldsById(any(), any())).thenThrow(exception);
 
-    try (var response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields))) {
+    try (var response = userResource.updateSelf(authUser, gson.toJson(userUpdateFields))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -493,7 +500,7 @@ class UserResourceTest extends AbstractTestHelper {
     userUpdateFields.setUserRoleIds(List.of(1)); // any roles
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
 
-    try (var response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields))) {
+    try (var response = userResource.updateSelf(authUser, gson.toJson(userUpdateFields))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -507,7 +514,7 @@ class UserResourceTest extends AbstractTestHelper {
     userUpdateFields.setInstitutionId(20);
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
 
-    try (var response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields))) {
+    try (var response = userResource.updateSelf(authUser, gson.toJson(userUpdateFields))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -521,7 +528,7 @@ class UserResourceTest extends AbstractTestHelper {
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
         gson.toJsonTree(user).getAsJsonObject());
 
-    try (Response response = userResource.update(authUser, uriInfo, user.getUserId(),
+    try (Response response = userResource.update(authUser, user.getUserId(),
         gson.toJson(userUpdateFields))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
@@ -532,7 +539,7 @@ class UserResourceTest extends AbstractTestHelper {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenThrow(new NotFoundException());
 
-    try (Response response = userResource.update(authUser, uriInfo, user.getUserId(), "")) {
+    try (Response response = userResource.update(authUser, user.getUserId(), "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
@@ -541,7 +548,7 @@ class UserResourceTest extends AbstractTestHelper {
   void testUpdateUserInvalidJson() {
     User user = createUserWithRole();
 
-    try (Response response = userResource.update(authUser, uriInfo, user.getUserId(), "}{][")) {
+    try (Response response = userResource.update(authUser, user.getUserId(), "}{][")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
