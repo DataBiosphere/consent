@@ -52,7 +52,6 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 public class UserService implements ConsentLogger {
 
   public static final String LIBRARY_CARD_FIELD = "libraryCard";
-  public static final String LIBRARY_CARDS_FIELD = "libraryCards";
   public static final String USER_PROPERTIES_FIELD = "properties";
   public static final String USER_STATUS_INFO_FIELD = "userStatusInfo";
 
@@ -345,8 +344,6 @@ public class UserService implements ConsentLogger {
     if (user.getLibraryCard() != null) {
       JsonObject libraryCardJson = gson.toJsonTree(user.getLibraryCard()).getAsJsonObject();
       userJson.add(LIBRARY_CARD_FIELD, libraryCardJson);
-      // Note that this is provided for backwards compatibility with the UI and will be removed
-      userJson.add(LIBRARY_CARDS_FIELD, gson.toJsonTree(List.of(libraryCardJson)));
     }
     if (authUser.getEmail().equalsIgnoreCase(user.getEmail()) && Objects.nonNull(
         authUser.getUserStatusInfo())) {

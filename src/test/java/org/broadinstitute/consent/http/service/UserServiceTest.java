@@ -686,7 +686,6 @@ class UserServiceTest extends AbstractTestHelper {
         user.getUserId());
     assertNotNull(userJson);
     assertTrue(userJson.get(UserService.LIBRARY_CARD_FIELD).getAsJsonObject().isJsonObject());
-    assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
     assertTrue(
         userJson.get(UserService.USER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
     assertTrue(userJson.get(UserService.USER_STATUS_INFO_FIELD).getAsJsonObject().isJsonObject());
@@ -708,7 +707,6 @@ class UserServiceTest extends AbstractTestHelper {
         user.getUserId());
     assertNotNull(userJson);
     assertTrue(userJson.get(UserService.LIBRARY_CARD_FIELD).getAsJsonObject().isJsonObject());
-    assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
     assertTrue(
         userJson.get(UserService.USER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
     assertNull(userJson.get(UserService.USER_STATUS_INFO_FIELD));
