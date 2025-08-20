@@ -872,7 +872,9 @@ paths:
         400:
           description: The request isn't in the proper format.
         401:
-          description: Unauthorized, log in and try the operation again.
+          description: |
+            Unauthorized, log in and try the operation again.
+            Closeout Acknowledgements can only be submitted by Chairpersons
         500:
           description: Error processing the request.
     get:

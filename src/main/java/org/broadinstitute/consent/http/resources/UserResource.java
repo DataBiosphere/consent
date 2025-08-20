@@ -461,8 +461,8 @@ public class UserResource extends Resource {
 
     if (keys.stream().anyMatch(k -> k.startsWith(AcknowledgementService.DAR_CLOSEOUT_CHAIR_REF))
         && !user.hasUserRole(UserRoles.CHAIRPERSON)) {
-      return Response.status(Status.BAD_REQUEST)
-          .entity(new Error("Invalid acknowledgement", HttpStatusCodes.STATUS_CODE_BAD_REQUEST))
+      return Response.status(Status.UNAUTHORIZED)
+          .entity(new Error("Invalid acknowledgement", HttpStatusCodes.STATUS_CODE_UNAUTHORIZED))
           .build();
     }
 

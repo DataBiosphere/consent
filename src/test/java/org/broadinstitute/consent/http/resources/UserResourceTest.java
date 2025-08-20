@@ -851,7 +851,7 @@ class UserResourceTest extends AbstractTestHelper {
 
     String jsonString = userResource.unmarshal(List.of(acknowledgementKey));
     try (Response response = userResource.postAcknowledgements(duosUser, jsonString)) {
-      assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+      assertEquals(Status.UNAUTHORIZED.getStatusCode(), response.getStatus());
     }
   }
 
