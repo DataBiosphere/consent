@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import freemarker.template.TemplateException;
+import jakarta.ws.rs.BadRequestException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -37,26 +38,33 @@ public class AcknowledgementService implements ConsentLogger {
 
   public Map<String, Acknowledgement> makeAcknowledgements(List<String> keys, User user) {
     Integer userId = user.getUserId();
+    keys.forEach(key -> handleCloseoutAcknowledgement(key, user));
     for (String key : keys) {
       acknowledgementDAO.upsertAcknowledgement(key, userId);
     }
     List<Acknowledgement> acknowledgementList = acknowledgementDAO.findAcknowledgementsForUser(keys,
         userId);
-    acknowledgementList.forEach(
-        ack -> {
-          if (ack.getAckKey().startsWith(DAR_CLOSEOUT_CHAIR_REF)) {
-            String referenceId = ack.getAckKey().replace(DAR_CLOSEOUT_CHAIR_REF, "");
-            DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
-            try {
-              emailService.sendResearcherCloseoutCompletedMessage(user, dar.getDarCode(), referenceId);
-            } catch (IOException | TemplateException e) {
-              // Log the error but do not fail the acknowledgement creation
-              logException("Unable to send researcher closeout completed message for DAR %s".formatted(dar.getDarCode()), e);
-            }
-          }
-        }
-    );
     return acknowledgementListToMap(acknowledgementList);
+  }
+
+  private void handleCloseoutAcknowledgement(String key, User user) {
+    if (key.startsWith(DAR_CLOSEOUT_CHAIR_REF)) {
+      String referenceId = key.replace(DAR_CLOSEOUT_CHAIR_REF, "");
+      DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
+      // Is this acknowledged already?
+      Acknowledgement existingAck = acknowledgementDAO.findAcknowledgementsByKeyForUser(key, user.getUserId());
+      if (existingAck != null) {
+        throw new BadRequestException("Closeout acknowledgement already exists for %s".formatted(dar.getDarCode()));
+      }
+      if (!dar.getIsCloseoutProgressReport()) {
+        throw new BadRequestException("Closeout acknowledgement is only valid for closeout progress reports for DAR %s".formatted(dar.getDarCode()));
+      }
+      try {
+        emailService.sendResearcherCloseoutCompletedMessage(user, dar.getDarCode(), referenceId);
+      } catch (IOException | TemplateException e) {
+        logException("Unable to send researcher closeout completed message for DAR %s".formatted(dar.getDarCode()), e);
+      }
+    }
   }
 
   private Map<String, Acknowledgement> acknowledgementListToMap(
