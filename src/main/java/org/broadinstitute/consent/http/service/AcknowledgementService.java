@@ -51,7 +51,6 @@ public class AcknowledgementService implements ConsentLogger {
     if (key.startsWith(DAR_CLOSEOUT_CHAIR_REF)) {
       String referenceId = key.replace(DAR_CLOSEOUT_CHAIR_REF, "");
       DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
-      // Is this acknowledged already?
       Acknowledgement existingAck = acknowledgementDAO.findAcknowledgementsByKeyForUser(key, user.getUserId());
       if (existingAck != null) {
         throw new BadRequestException("Closeout acknowledgement already exists for %s".formatted(dar.getDarCode()));
