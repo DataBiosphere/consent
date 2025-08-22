@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -21,10 +19,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
-import java.io.ByteArrayOutputStream;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collections;
@@ -211,33 +207,6 @@ class DatasetServiceTest extends AbstractTestHelper {
     } catch (IllegalArgumentException e) {
       assertTrue(true);
     }
-  }
-
-  @Test
-  void testFindAllDatasetsAsStreamingOutput() throws Exception {
-    var datasets = getDatasets(randomInt(10, 20));
-    when(datasetDAO.findAllDatasetIds()).thenReturn(
-        datasets.stream().map(Dataset::getDatasetId).toList());
-    datasets.forEach(
-        d -> when(datasetDAO.findDatasetsByIdList(List.of(d.getDatasetId()))).thenReturn(
-            List.of(d)));
-    // The following forces the number of calls to datasetDAO.findDatasetsByIdList to be the same as
-    // the number of datasets generated in the test.
-    datasetService.setDatasetBatchSize(1);
-
-    var output = datasetService.findAllDatasetsAsStreamingOutput();
-    var baos = new ByteArrayOutputStream();
-    output.write(baos);
-    var datasetsJson = baos.toString();
-    var listOfDatasetsType = new TypeToken<List<Dataset>>() {
-    }.getType();
-    var gson = GsonUtil.buildGson();
-    List<Dataset> returnedDatasets = gson.fromJson(datasetsJson, listOfDatasetsType);
-    assertFalse(returnedDatasets.isEmpty());
-    assertEquals(datasets.size(), returnedDatasets.size());
-    assertThat(returnedDatasets, contains(datasets.toArray()));
-    datasets.forEach(d -> assertTrue(returnedDatasets.contains(d)));
-    verify(datasetDAO, times(datasets.size())).findDatasetsByIdList(any());
   }
 
   @Test
@@ -658,26 +627,6 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   private List<Dataset> getDatasets() {
     return IntStream.range(1, 3)
-        .mapToObj(i -> {
-          Dataset dataset = new Dataset();
-          dataset.setDatasetId(i);
-          dataset.setName("Test Dataset " + i);
-          dataset.setProperties(Collections.emptySet());
-          return dataset;
-        }).toList();
-  }
-
-  /**
-   * Minimum count is 1
-   *
-   * @param count The number of required datasets
-   * @return List of datasets with minimum default mocked fields.
-   */
-  private List<Dataset> getDatasets(Integer count) {
-    if (count < 1) {
-      count = 1;
-    }
-    return IntStream.range(1, count + 1)
         .mapToObj(i -> {
           Dataset dataset = new Dataset();
           dataset.setDatasetId(i);

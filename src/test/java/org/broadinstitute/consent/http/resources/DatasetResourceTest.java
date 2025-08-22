@@ -1,8 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.contains;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -28,7 +25,6 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -724,28 +720,6 @@ class DatasetResourceTest extends AbstractTestHelper {
 
     try (var response = resource.updateDatasetDataUse(new AuthUser(), 1, du.toString())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
-    }
-  }
-
-  @Test
-  void testFindAllDatasetsStreaming() throws Exception {
-    var dataset = new Dataset();
-    dataset.setDatasetId(randomInt(100, 1000));
-    final Gson gson = GsonUtil.buildGson();
-    StreamingOutput output = out -> out.write(gson.toJson(List.of(dataset)).getBytes());
-    when(datasetService.findAllDatasetsAsStreamingOutput()).thenReturn(output);
-
-    try (var response = resource.findAllDatasetsStreaming(authUser)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-      var entity = (StreamingOutput) response.getEntity();
-      var baos = new ByteArrayOutputStream();
-      entity.write(baos);
-      var entityString = baos.toString();
-      Type listOfDatasetsType = new TypeToken<List<Dataset>>() {
-      }.getType();
-      List<Dataset> returnedDatasets = gson.fromJson(entityString, listOfDatasetsType);
-      assertThat(returnedDatasets, hasSize(1));
-      assertThat(returnedDatasets, contains(dataset));
     }
   }
 

@@ -453,8 +453,6 @@ paths:
     $ref: './paths/progressReport.yaml'
   /api/dar/{referenceId}/approveCloseout:
     $ref: './paths/approveCloseoutBySigningOfficial.yaml'
-  /api/dataset/v2:
-    $ref: './paths/datasetV2.yaml'
   /api/dataset/v3:
     $ref: './paths/datasetV3.yaml'
   /api/dataset/v3/{datasetId}:

@@ -4,14 +4,12 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.StreamingOutput;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -295,33 +293,6 @@ public class DatasetService implements ConsentLogger {
 
   public List<Integer> findAllDatasetIds() {
     return datasetDAO.findAllDatasetIds();
-  }
-
-  public StreamingOutput findAllDatasetsAsStreamingOutput() {
-    List<Integer> datasetIds = datasetDAO.findAllDatasetIds();
-    final List<List<Integer>> datasetIdSubLists = Lists.partition(datasetIds, datasetBatchSize);
-    final List<Integer> lastSubList = datasetIdSubLists.get(datasetIdSubLists.size() - 1);
-    final Integer lastIndex = lastSubList.get(lastSubList.size() - 1);
-    Gson gson = GsonUtil.buildGson();
-    return output -> {
-      output.write("[".getBytes());
-      datasetIdSubLists.forEach(subList -> {
-        List<Dataset> datasets = findDatasetsByIds(subList);
-        datasets.forEach(d -> {
-          try {
-            output.write(gson.toJson(d).getBytes());
-            if (!Objects.equals(d.getDatasetId(), lastIndex)) {
-              output.write(",".getBytes());
-            }
-            output.write("\n".getBytes());
-          } catch (IOException e) {
-            logException(
-                "Error writing dataset to streaming output, dataset id: " + d.getDatasetId(), e);
-          }
-        });
-      });
-      output.write("]".getBytes());
-    };
   }
 
   public Study getStudyWithDatasetsById(Integer studyId) {

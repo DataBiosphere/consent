@@ -218,20 +218,6 @@ public class DatasetResource extends Resource {
   @GET
   @Produces("application/json")
   @PermitAll
-  @Path("/v2")
-  public Response findAllDatasetsStreaming(@Auth AuthUser authUser) {
-    try {
-      userService.findUserByEmail(authUser.getEmail());
-      StreamingOutput streamedDatasets = datasetService.findAllDatasetsAsStreamingOutput();
-      return Response.ok().entity(streamedDatasets).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Produces("application/json")
-  @PermitAll
   @Path("/v3")
   public Response findAllDatasetStudySummaries(@Auth AuthUser authUser) {
     try {
