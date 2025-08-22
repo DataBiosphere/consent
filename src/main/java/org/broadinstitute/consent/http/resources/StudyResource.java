@@ -247,7 +247,7 @@ public class StudyResource extends Resource {
   }
 
   private void checkPublicVisibilityForUser(Study study, User user) {
-    boolean isPublic = study.getPublicVisibility() != null && study.getPublicVisibility();
+    boolean isPublic = datasetService.isCreatorOrCustodian(user, study);
     if (!isPublic && !study.getCreateUserId().equals(user.getUserId())) {
       throw new NotFoundException("Study not found");
     }

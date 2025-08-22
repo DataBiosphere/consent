@@ -108,8 +108,11 @@ class StudyResourceTest extends AbstractTestHelper {
     Study study = new Study();
     study.setStudyId(1);
     study.setPublicVisibility(true);
+    study.setCreateUserId(1);
     study.setName("asdfasdfasdfasdfasdfasdf");
     when(datasetService.getStudyWithDatasetsById(1)).thenReturn(study);
+    when(duosUser.getUser()).thenReturn(user);
+    when(user.getUserId()).thenReturn(study.getCreateUserId());
 
     try (var response = resource.getStudyById(duosUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -131,8 +134,11 @@ class StudyResourceTest extends AbstractTestHelper {
     study.setStudyId(12345);
     study.addDatasetIds(Set.of(1, 2, 3));
     study.setPublicVisibility(true);
+    study.setCreateUserId(9);
 
     when(datasetService.getStudyWithDatasetsById(12345)).thenReturn(study);
+    when(duosUser.getUser()).thenReturn(user);
+    when(user.getUserId()).thenReturn(study.getCreateUserId());
 
     try (var response = resource.getStudyById(duosUser, 12345)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -181,6 +187,8 @@ class StudyResourceTest extends AbstractTestHelper {
   void testGetRegistrationFromStudy() {
     Study study = createMockStudy();
     when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
+    when(duosUser.getUser()).thenReturn(user);
+    when(user.getUserId()).thenReturn(study.getCreateUserId());
 
     try (var response = resource.getRegistrationFromStudy(duosUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -192,6 +200,8 @@ class StudyResourceTest extends AbstractTestHelper {
     Study study = createMockStudy();
     study.getDatasets().clear();
     when(datasetService.getStudyWithDatasetsById(any())).thenReturn(study);
+    when(duosUser.getUser()).thenReturn(user);
+    when(user.getUserId()).thenReturn(study.getCreateUserId());
 
     try (var response = resource.getRegistrationFromStudy(duosUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());

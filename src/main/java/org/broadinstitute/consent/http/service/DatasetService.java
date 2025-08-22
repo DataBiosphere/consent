@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -104,7 +103,6 @@ public class DatasetService implements ConsentLogger {
     return verifyPublicVisibilityAccess(d, user);
   }
 
-  @VisibleForTesting
   protected Dataset verifyPublicVisibilityAccess(Dataset dataset, User user) {
     // If there is no study, we can't verify visibility, so return the dataset
     if (dataset.getStudy() == null) {
@@ -121,7 +119,6 @@ public class DatasetService implements ConsentLogger {
     return dataset;
   }
 
-  @VisibleForTesting
   protected boolean isCreatorOrCustodian(User user, Dataset dataset) {
     if (dataset.getCreateUserId().equals(user.getUserId())) {
       return true;
@@ -129,10 +126,14 @@ public class DatasetService implements ConsentLogger {
     if (dataset.getStudy() == null) {
       return false;
     }
-    if (dataset.getStudy().getCreateUserId().equals(user.getUserId())) {
+    return isCreatorOrCustodian(user, dataset.getStudy());
+  }
+
+  public boolean isCreatorOrCustodian(User user, Study study) {
+    if (study.getCreateUserId().equals(user.getUserId())) {
       return true;
     }
-    Optional<StudyProperty> custodianProp = dataset.getStudy().getProperties().stream()
+    Optional<StudyProperty> custodianProp = study.getProperties().stream()
         .filter(p -> p.getKey().equals(dataCustodianEmail))
         .findFirst();
     if (custodianProp.isPresent()) {
