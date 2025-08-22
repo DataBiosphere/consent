@@ -171,10 +171,10 @@ public class DatasetResource extends Resource {
   @Produces({MediaType.APPLICATION_JSON})
   @Path("/{datasetId}")
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
-  public Response patchByDatasetUpdate(@Auth AuthUser authUser,
+  public Response patchByDatasetUpdate(@Auth DuosUser duosUser,
       @PathParam("datasetId") Integer datasetId, String json) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       Dataset existingDataset = datasetService.findDatasetById(user, datasetId);
       if (existingDataset == null) {
         throw new NotFoundException("Could not find the dataset with id: " + datasetId);
@@ -360,9 +360,9 @@ public class DatasetResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/{datasetId}")
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
-  public Response delete(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId) {
+  public Response delete(@Auth DuosUser duosUser, @PathParam("datasetId") Integer datasetId) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       Dataset dataset = datasetService.findDatasetById(user, datasetId);
       if (Objects.nonNull(dataset.getDeletable()) && !dataset.getDeletable()) {
         throw new BadRequestException("Dataset is in use and cannot be deleted.");
