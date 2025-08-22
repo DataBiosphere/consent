@@ -2,7 +2,7 @@ Consent Web Services
 ====================
 
 [![Build Status](https://circleci.com/gh/DataBiosphere/consent.svg?style=svg)](https://circleci.com/gh/DataBiosphere/consent)
-[![Coverage Status](https://coveralls.io/repos/github/DataBiosphere/consent/badge.svg?branch=develop)](https://coveralls.io/github/DataBiosphere/consent?branch=develop)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DataBiosphere_consent&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=DataBiosphere_consent)
 
 # Consent Web Services API
 
