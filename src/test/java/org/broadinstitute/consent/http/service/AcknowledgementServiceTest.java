@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -178,6 +179,37 @@ class AcknowledgementServiceTest extends AbstractTestHelper {
     List<String> keys = List.of(ack1.getAckKey());
     assertThrows(BadRequestException.class, () -> acknowledgementService.makeAcknowledgements(keys, user));
     verify(emailService, never()).sendResearcherCloseoutCompletedMessage(any(), anyString(), anyString());
+  }
+
+  @Test
+  void testMakeCloseoutAcknowledgementPreviouslyAcknowledgedByDifferentChair() throws Exception {
+    Date now = new Date();
+    Timestamp timestamp = new Timestamp(now.getTime());
+    List<UserRole> roles = List.of(UserRoles.Chairperson());
+    User chair1 = new User(3, "chair1@domain.com", "Chair 1", now, roles);
+    User chair2 = new User(4, "chair2@domain.com", "Chair 2", now, roles);
+    DataAccessRequest dar1 = new DataAccessRequest();
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setCloseoutSupplement(new CloseoutSupplement(List.of("reason"), "details", 1));
+    dar1.setReferenceId(UUID.randomUUID().toString());
+    dar1.setDarCode("DAR-" + randomInt(100, 1000));
+    dar1.setData(data);
+    dar1.setParentId(1);
+
+    // Record acknowledgement for chair1, but not Chair 2.
+    // Chair 2 can re-use the same key for the same DAR.
+    String ackKey = AcknowledgementService.DAR_CLOSEOUT_CHAIR_REF + dar1.getReferenceId();
+    Acknowledgement ack1 = new Acknowledgement();
+    ack1.setUserId(chair1.getUserId());
+    ack1.setAckKey(ackKey);
+    ack1.setFirstAcknowledged(timestamp);
+    // This is technically a no-op, but we want to document a chair1 ack for test clarity
+    acknowledgementDAO.upsertAcknowledgement(ack1.getAckKey(), chair1.getUserId());
+    when(acknowledgementDAO.findAcknowledgementsByKeyForUser(ackKey, chair2.getUserId())).thenReturn(null);
+    when(dataAccessRequestDAO.findByReferenceId(dar1.getReferenceId())).thenReturn(dar1);
+
+    acknowledgementService.makeAcknowledgements(List.of(ackKey), chair2);
+    verify(emailService).sendResearcherCloseoutCompletedMessage(chair2, dar1.getDarCode(), dar1.getReferenceId());
   }
 
   @Test
