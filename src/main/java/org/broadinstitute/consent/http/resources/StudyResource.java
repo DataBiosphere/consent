@@ -75,11 +75,11 @@ public class StudyResource extends Resource {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN})
-  public Response convertToStudy(@Auth AuthUser authUser,
+  public Response convertToStudy(@Auth DuosUser duosUser,
       @PathParam("datasetIdentifier") String datasetIdentifier, String json) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      Dataset dataset = datasetService.findDatasetByIdentifier(datasetIdentifier);
+      User user = duosUser.getUser();
+      Dataset dataset = datasetService.findDatasetByIdentifier(user, datasetIdentifier);
       StudyConversion studyConversion = new Gson().fromJson(json, StudyConversion.class);
       Study study = datasetService.convertDatasetToStudy(user, dataset, studyConversion);
       return Response.ok(study).build();

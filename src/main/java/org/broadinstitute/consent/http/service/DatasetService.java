@@ -3,8 +3,10 @@ package org.broadinstitute.consent.http.service;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAuthorizedException;
@@ -88,7 +90,8 @@ public class DatasetService implements ConsentLogger {
    * @return the Dataset with the given identifier, if found.
    * @throws IllegalArgumentException if datasetIdentifier is invalid
    */
-  public Dataset findDatasetByIdentifier(String datasetIdentifier) throws IllegalArgumentException {
+  public Dataset findDatasetByIdentifier(User user, String datasetIdentifier)
+      throws IllegalArgumentException {
     Integer alias = Dataset.parseIdentifierToAlias(datasetIdentifier);
     Dataset d = datasetDAO.findDatasetByAlias(alias);
     if (d == null) {
@@ -100,7 +103,51 @@ public class DatasetService implements ConsentLogger {
     if (!Objects.equals(d.getDatasetIdentifier(), datasetIdentifier)) {
       return null;
     }
-    return d;
+    return verifyPublicVisibilityAccess(d, user);
+  }
+
+  @VisibleForTesting
+  protected Dataset verifyPublicVisibilityAccess(Dataset dataset, User user) {
+    // If there is no study, we can't verify visibility, so return the dataset
+    if (dataset.getStudy() == null) {
+      return dataset;
+    }
+    // If not visible, check that the user is authorized to see it
+    if (Boolean.FALSE.equals(dataset.getStudy().getPublicVisibility())) {
+      if (isCreatorOrCustodian(user, dataset)) {
+        return dataset;
+      } else {
+        return null;
+      }
+    }
+    return dataset;
+  }
+
+  @VisibleForTesting
+  protected boolean isCreatorOrCustodian(User user, Dataset dataset) {
+    if (dataset.getCreateUserId().equals(user.getUserId())) {
+      return true;
+    }
+    if (dataset.getStudy() == null) {
+      return false;
+    }
+    if (dataset.getStudy().getCreateUserId().equals(user.getUserId())) {
+      return true;
+    }
+    Optional<StudyProperty> custodianProp = dataset.getStudy().getProperties().stream()
+        .filter(p -> p.getKey().equals(dataCustodianEmail))
+        .findFirst();
+    if (custodianProp.isPresent()) {
+      Gson gson = GsonUtil.getInstance();
+      // prop is a JsonArray of Strings
+      List<String> custodians = gson.fromJson(custodianProp.get().getValue().toString(), new TypeToken<List<String>>() {}.getType());
+      for (String custodian : custodians) {
+        if (user.getEmail().equals(custodian.trim())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public Dataset getDatasetByName(String name) {
@@ -116,17 +163,13 @@ public class DatasetService implements ConsentLogger {
     return datasetDAO.findAllDatasetNames();
   }
 
-  public Study findStudyById(Integer id) {
-    return studyDAO.findStudyById(id);
-  }
-
   public Dataset findDatasetById(Integer id) {
     return datasetDAO.findDatasetById(id);
   }
 
   /**
-   * Find the dataset without files by its ID. This method is intended to return a minimal
-   * dataset for performance reasons, avoiding the retrieval of full FSO information.
+   * Find the dataset without files by its ID. This method is intended to return a minimal dataset
+   * for performance reasons, avoiding the retrieval of full FSO information.
    *
    * @param id Dataset ID
    * @return The updated Dataset object

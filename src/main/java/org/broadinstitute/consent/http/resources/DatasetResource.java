@@ -269,7 +269,8 @@ public class DatasetResource extends Resource {
   public Response getRegistrationFromDatasetIdentifier(@Auth AuthUser authUser,
       @PathParam("datasetIdentifier") String datasetIdentifier) {
     try {
-      Dataset dataset = datasetService.findDatasetByIdentifier(datasetIdentifier);
+      User user = userService.findUserByEmail(authUser.getEmail());
+      Dataset dataset = datasetService.findDatasetByIdentifier(user, datasetIdentifier);
       if (Objects.isNull(dataset)) {
         throw new NotFoundException(
             "No dataset exists for dataset identifier: " + datasetIdentifier);

@@ -20,6 +20,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
@@ -51,6 +52,7 @@ import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -146,11 +148,15 @@ class DatasetServiceTest extends AbstractTestHelper {
   @Test
   void testFindDatasetByIdentifier() {
     Dataset d = new Dataset();
+    d.setCreateUserId(1);
     d.setAlias(3);
     d.setDatasetIdentifier();
+    Study study = new Study();
+    study.setPublicVisibility(Boolean.TRUE);
+    d.setStudy(study);
     when(datasetDAO.findDatasetByAlias(3)).thenReturn(d);
 
-    assertEquals(d, datasetService.findDatasetByIdentifier("DUOS-000003"));
+    assertEquals(d, datasetService.findDatasetByIdentifier(mockUser, "DUOS-000003"));
   }
 
   @Test
@@ -160,14 +166,14 @@ class DatasetServiceTest extends AbstractTestHelper {
     d.setDatasetIdentifier();
     when(datasetDAO.findDatasetByAlias(3)).thenReturn(d);
 
-    assertNull(datasetService.findDatasetByIdentifier("DUOS-0003"));
+    assertNull(datasetService.findDatasetByIdentifier(mockUser, "DUOS-0003"));
   }
 
   @Test
   void testFindDatasetByIdentifier_NoDataset() {
     when(datasetDAO.findDatasetByAlias(3)).thenReturn(null);
 
-    assertNull(datasetService.findDatasetByIdentifier("DUOS-00003"));
+    assertNull(datasetService.findDatasetByIdentifier(mockUser, "DUOS-00003"));
   }
 
   @Test
@@ -494,6 +500,158 @@ class DatasetServiceTest extends AbstractTestHelper {
     List<Integer> secondExpectedList = List.of(2, 3, 4, 5);
     assertThrows(BadRequestException.class,
         () -> datasetService.enforceDAARestrictions(user, secondExpectedList));
+  }
+
+  @Test
+  void testVerifyPublicVisibilityAccess_NoStudy() {
+    User datasetCreator = new User();
+    datasetCreator.setUserId(1);
+    datasetCreator.setEmail("dsCreator@email.com");
+    Dataset dataset = new Dataset();
+    dataset.setCreateUserId(datasetCreator.getUserId());
+
+    Dataset verfiedDataset = datasetService.verifyPublicVisibilityAccess(dataset, datasetCreator);
+    assertEquals(dataset.getDatasetId(), verfiedDataset.getDatasetId());
+  }
+
+  @Test
+  void testVerifyPublicVisibilityAccess_VisibleTrue() {
+    User user = new User();
+    user.setUserId(1);
+    user.setEmail("user@email.com");
+
+    User datasetCreator = new User();
+    datasetCreator.setUserId(2);
+    datasetCreator.setEmail("dsCreator@email.com");
+    Dataset dataset = new Dataset();
+    dataset.setCreateUserId(datasetCreator.getUserId());
+    User studyCreator = new User();
+    studyCreator.setUserId(3);
+    studyCreator.setEmail("sCreator#email.com");
+    Study study = new Study();
+    study.setStudyId(studyCreator.getUserId());
+    study.setCreateUserEmail(studyCreator.getEmail());
+    study.setCreateUserId(studyCreator.getUserId());
+    study.setPublicVisibility(Boolean.TRUE);
+    dataset.setStudy(study);
+
+    Dataset verfiedDataset = datasetService.verifyPublicVisibilityAccess(dataset, user);
+    assertEquals(dataset.getDatasetId(), verfiedDataset.getDatasetId());
+  }
+
+  @Test
+  void testVerifyPublicVisibilityAccess_VisibleNull() {
+    User user = new User();
+    user.setUserId(1);
+    user.setEmail("user@email.com");
+
+    User datasetCreator = new User();
+    datasetCreator.setUserId(2);
+    datasetCreator.setEmail("dsCreator@email.com");
+    Dataset dataset = new Dataset();
+    dataset.setCreateUserId(datasetCreator.getUserId());
+    User studyCreator = new User();
+    studyCreator.setUserId(3);
+    studyCreator.setEmail("sCreator#email.com");
+    Study study = new Study();
+    study.setStudyId(studyCreator.getUserId());
+    study.setCreateUserEmail(studyCreator.getEmail());
+    study.setCreateUserId(studyCreator.getUserId());
+    dataset.setStudy(study);
+
+    Dataset verfiedDataset = datasetService.verifyPublicVisibilityAccess(dataset, user);
+    assertEquals(dataset.getDatasetId(), verfiedDataset.getDatasetId());
+  }
+
+  @Test
+  void testVerifyPublicVisibilityAccess_VisibleFalse() {
+    User user = new User();
+    user.setUserId(1);
+    user.setEmail("user@email.com");
+
+    User datasetCreator = new User();
+    datasetCreator.setUserId(2);
+    datasetCreator.setEmail("dsCreator@email.com");
+    Dataset dataset = new Dataset();
+    dataset.setCreateUserId(datasetCreator.getUserId());
+    User studyCreator = new User();
+    studyCreator.setUserId(3);
+    studyCreator.setEmail("sCreator#email.com");
+    Study study = new Study();
+    study.setStudyId(studyCreator.getUserId());
+    study.setCreateUserEmail(studyCreator.getEmail());
+    study.setCreateUserId(studyCreator.getUserId());
+    study.setPublicVisibility(Boolean.FALSE);
+    dataset.setStudy(study);
+
+    Dataset verfiedDataset = datasetService.verifyPublicVisibilityAccess(dataset, user);
+    assertNull(verfiedDataset);
+  }
+
+  @Test
+  void testIsCreatorOrCustodian_DatasetCreator() {
+    User datasetCreator = new User();
+    datasetCreator.setUserId(1);
+    datasetCreator.setEmail("dsCreator@email.com");
+    Dataset dataset = new Dataset();
+    dataset.setCreateUserId(datasetCreator.getUserId());
+    User studyCreator = new User();
+    studyCreator.setUserId(2);
+    studyCreator.setEmail("sCreator#email.com");
+    Study study = new Study();
+    study.setStudyId(studyCreator.getUserId());
+    study.setCreateUserEmail(studyCreator.getEmail());
+    study.setCreateUserId(studyCreator.getUserId());
+    dataset.setStudy(study);
+
+    boolean isCreateUser = datasetService.isCreatorOrCustodian(datasetCreator, dataset);
+    assertTrue(isCreateUser);
+  }
+
+  @Test
+  void testIsCreatorOrCustodian_StudyCreator() {
+    User datasetCreator = new User();
+    datasetCreator.setUserId(1);
+    datasetCreator.setEmail("test@email.com");
+    Dataset dataset = new Dataset();
+    dataset.setCreateUserId(datasetCreator.getUserId());
+    User studyCreator = new User();
+    studyCreator.setUserId(2);
+    studyCreator.setEmail("sCreator#email.com");
+    Study study = new Study();
+    study.setStudyId(studyCreator.getUserId());
+    study.setCreateUserEmail(studyCreator.getEmail());
+    study.setCreateUserId(studyCreator.getUserId());
+    dataset.setStudy(study);
+
+    boolean isCreateUser = datasetService.isCreatorOrCustodian(studyCreator, dataset);
+    assertTrue(isCreateUser);
+  }
+
+  @Test
+  void testIsCreatorOrCustodian_Custodian() {
+    Gson gson = GsonUtil.getInstance();
+    User studyCreator = new User();
+    studyCreator.setUserId(1);
+    studyCreator.setEmail("test@email.com");
+    User custodian = new User();
+    custodian.setUserId(2);
+    custodian.setEmail("custodian@test.com");
+    Dataset dataset = new Dataset();
+    dataset.setCreateUserId(studyCreator.getUserId());
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setCreateUserEmail(studyCreator.getEmail());
+    study.setCreateUserId(studyCreator.getUserId());
+    StudyProperty prop = new StudyProperty();
+    prop.setKey(DatasetRegistrationSchemaV1Builder.dataCustodianEmail);
+    prop.setType(PropertyType.Json);
+    prop.setValue(gson.toJson(List.of(custodian.getEmail())));
+    study.addProperties(prop);
+    dataset.setStudy(study);
+
+    boolean isCustodian = datasetService.isCreatorOrCustodian(custodian, dataset);
+    assertTrue(isCustodian);
   }
 
   /* Helper functions */

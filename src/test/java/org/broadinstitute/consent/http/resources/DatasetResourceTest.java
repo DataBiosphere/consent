@@ -980,7 +980,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     Study study = createMockStudy();
     Dataset dataset = study.getDatasets().stream().findFirst().orElse(null);
     assertNotNull(dataset);
-    when(datasetService.findDatasetByIdentifier(any())).thenReturn(dataset);
+    when(datasetService.findDatasetByIdentifier(any(), any())).thenReturn(dataset);
 
     initResource();
     Response response = resource.getRegistrationFromDatasetIdentifier(authUser,
@@ -992,7 +992,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   void testGetRegistrationFromDatasetIdentifierStudyNotFound() {
     Dataset dataset = createMockDataset();
     assertNotNull(dataset);
-    when(datasetService.findDatasetByIdentifier(any())).thenReturn(dataset);
+    when(datasetService.findDatasetByIdentifier(any(), any())).thenReturn(dataset);
 
     initResource();
     Response response = resource.getRegistrationFromDatasetIdentifier(authUser,
@@ -1005,7 +1005,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     Study study = createMockStudy();
     Dataset dataset = study.getDatasets().stream().findFirst().orElse(null);
     assertNotNull(dataset);
-    when(datasetService.findDatasetByIdentifier(any())).thenReturn(null);
+    when(datasetService.findDatasetByIdentifier(any(), any())).thenReturn(null);
 
     initResource();
     Response response = resource.getRegistrationFromDatasetIdentifier(authUser,
