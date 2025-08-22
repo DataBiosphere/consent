@@ -139,7 +139,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     when(datasetDAO.findDatasetById(getDatasets().get(0).getDatasetId()))
         .thenReturn(getDatasets().get(0));
 
-    Dataset dataset = datasetService.findDatasetById(1);
+    Dataset dataset = datasetService.findDatasetById(mockUser, 1);
 
     assertNotNull(dataset);
     assertEquals(dataset.getName(), getDatasets().get(0).getName());

@@ -163,8 +163,9 @@ public class DatasetService implements ConsentLogger {
     return datasetDAO.findAllDatasetNames();
   }
 
-  public Dataset findDatasetById(Integer id) {
-    return datasetDAO.findDatasetById(id);
+  public Dataset findDatasetById(User user, Integer id) {
+    Dataset dataset = datasetDAO.findDatasetById(id);
+    return verifyPublicVisibilityAccess(dataset, user);
   }
 
   /**

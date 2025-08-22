@@ -450,7 +450,7 @@ public class DataAccessRequestResource extends Resource {
         throw new BadRequestException("Cannot create a progress report for a DAR with an open election: " + parentDar.getReferenceId());
       }
       DataAccessRequest payload = DataAccessRequest.populateProgressReportFromJsonString(dar, parentDar);
-      populateProgressReportWithDocuments(collabInputStream, collabFileDetails, ethicsInputStream,
+      populateProgressReportWithDocuments(user, collabInputStream, collabFileDetails, ethicsInputStream,
           ethicsFileDetails, payload, parentDar);
       DataAccessRequest progressReport = dataAccessRequestService.createProgressReport(user,
           payload, parentDar, (ContainerRequest) request);
@@ -480,12 +480,12 @@ public class DataAccessRequestResource extends Resource {
     logException("Exception sending email for collection id: " + collectionId, e);
   }
 
-  public void populateProgressReportWithDocuments(InputStream collabInputStream,
+  public void populateProgressReportWithDocuments(User user, InputStream collabInputStream,
       FormDataContentDisposition collabFileDetails, InputStream ethicsInputStream,
       FormDataContentDisposition ethicsFileDetails, DataAccessRequest childDar,
       DataAccessRequest parentDar) throws IOException {
     for (Integer datasetId : childDar.getDatasetIds()) {
-      Dataset dataset = datasetService.findDatasetById(datasetId);
+      Dataset dataset = datasetService.findDatasetById(user, datasetId);
       if (dataset == null) {
         throw new NotFoundException("Dataset " + datasetId + " not found");
       }

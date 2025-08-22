@@ -46,6 +46,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetSummary;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
@@ -87,6 +88,8 @@ class DatasetResourceTest extends AbstractTestHelper {
   @Mock
   private User user;
 
+  private final DuosUser duosUser = new DuosUser(authUser, user);
+
   @Mock
   private Response mockResponse;
 
@@ -106,7 +109,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     dataset.setDatasetId(randomInt(1, 100));
     dataset.setName(randomAlphabetic(10));
     dataset.setCreateUserId(user.getUserId());
-    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
 
     initResource();
     try (Response response = resource.patchByDatasetUpdate(authUser, 1, "")) {
@@ -123,7 +126,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     dataset.setDatasetId(randomInt(1, 100));
     dataset.setName(randomAlphabetic(10));
     dataset.setCreateUserId(user.getUserId());
-    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
 
     initResource();
     try (Response response = resource.patchByDatasetUpdate(authUser, 1, "}{")) {
@@ -141,7 +144,6 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Test
   void testPatchByDatasetUpdate_userNotFound() {
-    when(datasetService.findDatasetById(any())).thenReturn(new Dataset());
     when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
     initResource();
     try (Response response = resource.patchByDatasetUpdate(authUser, 1, "{}")) {
@@ -154,7 +156,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(randomInt(1, 10));
 
-    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(user.getUserId()).thenReturn(randomInt(1, 10));
     // This ensures the dataset create user is NOT the current authUser
@@ -181,7 +183,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     dataLocationProp.setPropertyValue(DataLocation.NOT_DETERMINED.value());
     dataset.setProperties(Set.of(dataLocationProp));
 
-    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
     DatasetPatch patch = new DatasetPatch(dataset.getDatasetName(),
         dataset.getProperties().stream().toList());
 
@@ -211,7 +213,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     dataLocationProp.setPropertyValue(DataLocation.NOT_DETERMINED.value());
     dataset.setProperties(Set.of(dataLocationProp));
 
-    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
 
     DatasetProperty patchProp = new DatasetProperty();
     patchProp.setPropertyName("data location");
@@ -249,7 +251,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     dataLocationProp.setPropertyValue(DataLocation.NOT_DETERMINED.value());
     dataset.setProperties(Set.of(dataLocationProp));
 
-    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
 
     DatasetProperty patchProp = new DatasetProperty();
     patchProp.setPropertyName("data location");
@@ -287,7 +289,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     dataLocationProp.setPropertyValue(DataLocation.NOT_DETERMINED.value());
     dataset.setProperties(Set.of(dataLocationProp));
 
-    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
 
     DatasetProperty patchProp = new DatasetProperty();
     patchProp.setPropertyName("data location");
@@ -318,7 +320,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     dataset.setDatasetId(randomInt(1, 100));
     dataset.setName(randomAlphabetic(10));
     dataset.setIndexedDate(new Date());
-    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
     String newName = randomAlphabetic(20);
     DatasetPatch patch = new DatasetPatch(newName, List.of());
 
@@ -350,7 +352,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     invalidProp.setPropertyValue(AccessManagement.OPEN.value());
     dataset.setProperties(Set.of(invalidProp));
 
-    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
 
     DatasetProperty patchProp = new DatasetProperty();
     patchProp.setPropertyName("invalid");
@@ -415,11 +417,11 @@ class DatasetResourceTest extends AbstractTestHelper {
 
     when(user.hasUserRole(UserRoles.ADMIN)).thenReturn(true);
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
-    when(datasetService.findDatasetById(any())).thenReturn(dataSet);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataSet);
     when(elasticSearchService.deleteIndex(any(), any())).thenReturn(mockResponse);
 
     initResource();
-    try (var response = resource.delete(authUser, 1, null)) {
+    try (var response = resource.delete(authUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -436,11 +438,11 @@ class DatasetResourceTest extends AbstractTestHelper {
     when(user.getRoles()).thenReturn(List.of(role));
 
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
-    when(datasetService.findDatasetById(any())).thenReturn(dataSet);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataSet);
     when(elasticSearchService.deleteIndex(any(), any())).thenReturn(mockResponse);
 
     initResource();
-    try (var response = resource.delete(authUser, 1, null)) {
+    try (var response = resource.delete(authUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -454,10 +456,10 @@ class DatasetResourceTest extends AbstractTestHelper {
     when(user.getRoles()).thenReturn(List.of(role));
 
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
-    when(datasetService.findDatasetById(any())).thenReturn(dataSet);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataSet);
 
     initResource();
-    try (var response = resource.delete(authUser, 1, null)) {
+    try (var response = resource.delete(authUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
@@ -473,10 +475,10 @@ class DatasetResourceTest extends AbstractTestHelper {
     when(user.getRoles()).thenReturn(List.of(role));
 
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
-    when(datasetService.findDatasetById(any())).thenReturn(dataSet);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataSet);
 
     initResource();
-    try (var response = resource.delete(authUser, 1, null)) {
+    try (var response = resource.delete(authUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
@@ -493,10 +495,10 @@ class DatasetResourceTest extends AbstractTestHelper {
     when(user.getRoles()).thenReturn(List.of(role));
 
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
-    when(datasetService.findDatasetById(any())).thenReturn(dataSet);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataSet);
 
     initResource();
-    try (var response = resource.delete(authUser, 1, null)) {
+    try (var response = resource.delete(authUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
@@ -618,19 +620,19 @@ class DatasetResourceTest extends AbstractTestHelper {
     Dataset ds = new Dataset();
     ds.setDatasetId(1);
     ds.setName("asdfasdfasdfasdfasdfasdf");
-    when(datasetService.findDatasetById(1)).thenReturn(ds);
+    when(datasetService.findDatasetById(duosUser.getUser(), 1)).thenReturn(ds);
     initResource();
-    Response response = resource.getDataset(1);
+    Response response = resource.getDataset(duosUser, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertEquals(ds, response.getEntity());
   }
 
   @Test
   void testGetDatasetNotFound() {
-    when(datasetService.findDatasetById(1)).thenReturn(null);
+    when(datasetService.findDatasetById(duosUser.getUser(), 1)).thenReturn(null);
 
     initResource();
-    Response response = resource.getDataset(1);
+    Response response = resource.getDataset(duosUser, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -740,7 +742,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   void testUpdateDatasetDataUse_OK() {
     when(userService.findUserByEmail(any())).thenReturn(new User());
     Dataset d = new Dataset();
-    when(datasetService.findDatasetById(any())).thenReturn(d);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(d);
     when(datasetService.updateDatasetDataUse(any(), any(), any())).thenReturn(d);
 
     initResource();
@@ -764,7 +766,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   void testUpdateDatasetDataUse_BadRequestService() {
     when(userService.findUserByEmail(any())).thenReturn(new User());
     Dataset d = new Dataset();
-    when(datasetService.findDatasetById(any())).thenReturn(d);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(d);
     when(datasetService.updateDatasetDataUse(any(), any(), any())).thenThrow(
         new IllegalArgumentException());
 
@@ -778,7 +780,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   @Test
   void testUpdateDatasetDataUse_NotFound() {
     when(userService.findUserByEmail(any())).thenReturn(new User());
-    when(datasetService.findDatasetById(any())).thenThrow(new NotFoundException());
+    when(datasetService.findDatasetById(any(), any())).thenThrow(new NotFoundException());
 
     initResource();
     String duString = new DataUseBuilder().setGeneralUse(true).build().toString();
@@ -793,7 +795,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     Dataset d = new Dataset();
     DataUse du = new DataUseBuilder().setGeneralUse(true).build();
     d.setDataUse(du);
-    when(datasetService.findDatasetById(any())).thenReturn(d);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(d);
 
     initResource();
     try (var response = resource.updateDatasetDataUse(new AuthUser(), 1, du.toString())) {
@@ -1016,10 +1018,9 @@ class DatasetResourceTest extends AbstractTestHelper {
   @Test
   void testUpdateDatasetByDatasetIntakeSuccess() throws SQLException, IOException {
     Dataset preexistingDataset = new Dataset();
-    when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
+    when(datasetService.findDatasetById(any(), anyInt())).thenReturn(preexistingDataset);
     when(datasetRegistrationService.updateDataset(any(), any(), any(), any())).thenReturn(
         preexistingDataset);
-    when(userService.findUserByEmail(any())).thenReturn(user);
     when(user.getUserId()).thenReturn(1);
     String json = createDataset(user);
 
@@ -1035,7 +1036,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
     initResource();
 
-    try (var response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json)) {
+    try (var response = resource.updateByDatasetUpdate(duosUser, 1, formDataMultiPart, json)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(Optional.of(preexistingDataset).get(), response.getEntity());
     }
@@ -1045,7 +1046,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   void testUpdateDatasetWithNoJson() {
     FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
     initResource();
-    try (var response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, "")) {
+    try (var response = resource.updateByDatasetUpdate(duosUser, 1, formDataMultiPart, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -1055,7 +1056,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     String json = createInvalidDataset(user);
     FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
     initResource();
-    try (var response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json)) {
+    try (var response = resource.updateByDatasetUpdate(duosUser, 1, formDataMultiPart, json)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -1076,11 +1077,10 @@ class DatasetResourceTest extends AbstractTestHelper {
 
     FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
     when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
-    when(datasetService.findDatasetById(any())).thenReturn(dataset);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
     when(datasetRegistrationService.updateDataset(any(), any(), any(), any())).thenReturn(dataset);
-    when(userService.findUserByEmail(any())).thenReturn(user);
     initResource();
-    try (var response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart,
+    try (var response = resource.updateByDatasetUpdate(duosUser, 1, formDataMultiPart,
         "{\"properties\":[]}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
@@ -1090,10 +1090,10 @@ class DatasetResourceTest extends AbstractTestHelper {
   void testUpdateDatasetWIthDatasetIdNotFound() {
     FormDataMultiPart formDataMultiPart = mock(FormDataMultiPart.class);
     String json = createDatasetRegistrationMock(user);
-    when(datasetService.findDatasetById(anyInt())).thenReturn(null);
+    when(datasetService.findDatasetById(any(), anyInt())).thenReturn(null);
 
     initResource();
-    try (var response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json)) {
+    try (var response = resource.updateByDatasetUpdate(duosUser, 1, formDataMultiPart, json)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
@@ -1101,8 +1101,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   @Test
   void testUpdateDatasetInvalidFileName() {
     Dataset preexistingDataset = new Dataset();
-    when(datasetService.findDatasetById(anyInt())).thenReturn(preexistingDataset);
-    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(datasetService.findDatasetById(any(), anyInt())).thenReturn(preexistingDataset);
     when(user.getUserId()).thenReturn(1);
     String json = createDatasetRegistrationMock(user);
 
@@ -1118,7 +1117,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     when(formDataMultiPart.getFields()).thenReturn(Map.of("file", List.of(formDataBodyPart)));
     initResource();
 
-    try (var response = resource.updateByDatasetUpdate(authUser, 1, formDataMultiPart, json)) {
+    try (var response = resource.updateByDatasetUpdate(duosUser, 1, formDataMultiPart, json)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
