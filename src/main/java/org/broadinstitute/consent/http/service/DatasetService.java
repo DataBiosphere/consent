@@ -288,22 +288,24 @@ public class DatasetService implements ConsentLogger {
 
   }
 
-  public List<Dataset> findDatasetsByIds(List<Integer> datasetIds) {
-    return datasetDAO.findDatasetsByIdList(datasetIds);
+  public List<Dataset> findDatasetsByIds(User user, List<Integer> datasetIds) {
+    return datasetDAO.findDatasetsByIdList(datasetIds).stream().filter(
+        d -> verifyPublicVisibilityAccess(d, user) != null
+    ).toList();
   }
 
   public List<Integer> findAllDatasetIds() {
     return datasetDAO.findAllDatasetIds();
   }
 
-  public Study getStudyWithDatasetsById(Integer studyId) {
+  public Study getStudyWithDatasetsById(User user, Integer studyId) {
     try {
       Study study = studyDAO.findStudyById(studyId);
       if (study == null) {
         throw new NotFoundException("Study not found");
       }
       if (study.getDatasetIds() != null && !study.getDatasetIds().isEmpty()) {
-        List<Dataset> datasets = findDatasetsByIds(new ArrayList<>(study.getDatasetIds()));
+        List<Dataset> datasets = findDatasetsByIds(user, new ArrayList<>(study.getDatasetIds()));
         study.addDatasets(datasets);
       }
       return study;

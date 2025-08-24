@@ -124,7 +124,7 @@ public class StudyResource extends Resource {
   @Timed
   public Response getStudyById(@Auth DuosUser duosUser, @PathParam("studyId") Integer studyId) {
     try {
-      Study study = datasetService.getStudyWithDatasetsById(studyId);
+      Study study = datasetService.getStudyWithDatasetsById(duosUser.getUser(), studyId);
       checkPublicVisibilityForUser(study, duosUser.getUser());
       return Response.ok(study).build();
     } catch (Exception e) {
@@ -139,7 +139,7 @@ public class StudyResource extends Resource {
   public Response deleteStudyById(@Auth AuthUser authUser, @PathParam("studyId") Integer studyId) {
     try {
       final User user = userService.findUserByEmail(authUser.getEmail());
-      Study study = datasetService.getStudyWithDatasetsById(studyId);
+      Study study = datasetService.getStudyWithDatasetsById(user, studyId);
 
       if (Objects.isNull(study)) {
         throw new NotFoundException("Study not found");
@@ -184,7 +184,7 @@ public class StudyResource extends Resource {
   public Response getRegistrationFromStudy(@Auth DuosUser duosUser,
       @PathParam("studyId") Integer studyId) {
     try {
-      Study study = datasetService.getStudyWithDatasetsById(studyId);
+      Study study = datasetService.getStudyWithDatasetsById(duosUser.getUser(), studyId);
       checkPublicVisibilityForUser(study, duosUser.getUser());
       List<Dataset> datasets =
           Objects.nonNull(study.getDatasets()) ? study.getDatasets().stream().toList() : List.of();

@@ -389,19 +389,19 @@ class DatasetServiceTest extends AbstractTestHelper {
   @Test
   void testGetStudyWithDatasetsById() {
     when(studyDAO.findStudyById(anyInt())).thenReturn(new Study());
-    assertDoesNotThrow(() -> datasetService.getStudyWithDatasetsById(1));
+    assertDoesNotThrow(() -> datasetService.getStudyWithDatasetsById(mockUser, 1));
   }
 
   @Test
   void testGetStudyWithDatasetsByIdNFE() {
     when(studyDAO.findStudyById(anyInt())).thenReturn(null);
-    assertThrows(NotFoundException.class, () -> datasetService.getStudyWithDatasetsById(1));
+    assertThrows(NotFoundException.class, () -> datasetService.getStudyWithDatasetsById(mockUser, 1));
   }
 
   @Test
   void testGetStudyWithDatasetsByIdGeneralException() {
     when(studyDAO.findStudyById(anyInt())).thenThrow(new RuntimeException("General Exception"));
-    assertThrows(Exception.class, () -> datasetService.getStudyWithDatasetsById(1));
+    assertThrows(Exception.class, () -> datasetService.getStudyWithDatasetsById(mockUser, 1));
   }
 
   @Test

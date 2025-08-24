@@ -582,9 +582,9 @@ class DatasetResourceTest extends AbstractTestHelper {
     ds3.setDatasetId(3);
     List<Dataset> datasets = List.of(ds1, ds2, ds3);
 
-    when(datasetService.findDatasetsByIds(List.of(1, 2, 3))).thenReturn(datasets);
+    when(datasetService.findDatasetsByIds(duosUser.getUser(), List.of(1, 2, 3))).thenReturn(datasets);
 
-    Response response = resource.getDatasets(List.of(1, 2, 3));
+    Response response = resource.getDatasets(duosUser, List.of(1, 2, 3));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertEquals(datasets, response.getEntity());
   }
@@ -599,9 +599,9 @@ class DatasetResourceTest extends AbstractTestHelper {
     ds3.setDatasetId(3);
     List<Dataset> datasets = List.of(ds1, ds2, ds3);
 
-    when(datasetService.findDatasetsByIds(List.of(1, 1, 2, 2, 3, 3))).thenReturn(datasets);
+    when(datasetService.findDatasetsByIds(duosUser.getUser(), List.of(1, 1, 2, 2, 3, 3))).thenReturn(datasets);
 
-    Response response = resource.getDatasets(List.of(1, 1, 2, 2, 3, 3));
+    Response response = resource.getDatasets(duosUser, List.of(1, 1, 2, 2, 3, 3));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertEquals(datasets, response.getEntity());
   }
@@ -613,12 +613,12 @@ class DatasetResourceTest extends AbstractTestHelper {
     Dataset ds2 = new Dataset();
     ds2.setDatasetId(2);
 
-    when(datasetService.findDatasetsByIds(List.of(1, 1, 2, 2, 3, 3))).thenReturn(List.of(
+    when(datasetService.findDatasetsByIds(duosUser.getUser(), List.of(1, 1, 2, 2, 3, 3))).thenReturn(List.of(
         ds1,
         ds2
     ));
 
-    Response response = resource.getDatasets(List.of(1, 1, 2, 2, 3, 3));
+    Response response = resource.getDatasets(duosUser, List.of(1, 1, 2, 2, 3, 3));
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     assertTrue(((Error) response.getEntity()).message().contains("3"));
     assertFalse(((Error) response.getEntity()).message().contains("2"));
@@ -633,12 +633,12 @@ class DatasetResourceTest extends AbstractTestHelper {
     Dataset ds3 = new Dataset();
     ds3.setDatasetId(3);
 
-    when(datasetService.findDatasetsByIds(List.of(1, 2, 3, 4))).thenReturn(List.of(
+    when(datasetService.findDatasetsByIds(duosUser.getUser(), List.of(1, 2, 3, 4))).thenReturn(List.of(
         ds1,
         ds3
     ));
 
-    Response response = resource.getDatasets(List.of(1, 2, 3, 4));
+    Response response = resource.getDatasets(duosUser, List.of(1, 2, 3, 4));
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     assertTrue(((Error) response.getEntity()).message().contains("4"));
     assertFalse(((Error) response.getEntity()).message().contains("3"));
@@ -653,14 +653,14 @@ class DatasetResourceTest extends AbstractTestHelper {
     Dataset ds3 = new Dataset();
     ds3.setDatasetId(3);
 
-    when(datasetService.findDatasetsByIds(any())).thenReturn(List.of(
+    List<Integer> input = new ArrayList<>(List.of(1, 2, 3, 4));
+    input.add(null);
+    when(datasetService.findDatasetsByIds(duosUser.getUser(), input)).thenReturn(List.of(
         ds1,
         ds3
     ));
 
-    List<Integer> input = new ArrayList<>(List.of(1, 2, 3, 4));
-    input.add(null);
-    Response response = resource.getDatasets(input);
+    Response response = resource.getDatasets(duosUser, input);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     assertTrue(((Error) response.getEntity()).message().contains("4"));
     assertFalse(((Error) response.getEntity()).message().contains("3"));

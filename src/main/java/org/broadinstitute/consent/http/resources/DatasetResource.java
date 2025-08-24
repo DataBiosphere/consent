@@ -202,7 +202,8 @@ public class DatasetResource extends Resource {
       List<String> existingNames = datasetService.findAllDatasetNames();
       if (patch.name() != null && !patch.name().equals(existingDataset.getName())
           && existingNames.contains(patch.name())) {
-        throw new BadRequestException("The new name for this dataset already exists: " + patch.name());
+        throw new BadRequestException(
+            "The new name for this dataset already exists: " + patch.name());
       }
       if (!patch.validateProperties()) {
         throw new BadRequestException("Properties are invalid");
@@ -275,10 +276,10 @@ public class DatasetResource extends Resource {
   @Path("/batch")
   @Produces("application/json")
   @PermitAll
-  public Response getDatasets(@QueryParam("ids") List<Integer> datasetIds) {
+  public Response getDatasets(@Auth DuosUser duosUser,
+      @QueryParam("ids") List<Integer> datasetIds) {
     try {
-      List<Dataset> datasets = datasetService.findDatasetsByIds(datasetIds);
-
+      List<Dataset> datasets = datasetService.findDatasetsByIds(duosUser.getUser(), datasetIds);
       Set<Integer> foundIds = datasets.stream().map(Dataset::getDatasetId)
           .collect(Collectors.toSet());
       if (!foundIds.containsAll(datasetIds)) {
@@ -401,7 +402,8 @@ public class DatasetResource extends Resource {
   @DELETE
   @Path("/index/{datasetId}")
   @RolesAllowed(ADMIN)
-  public Response deleteDatasetIndex(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId) {
+  public Response deleteDatasetIndex(@Auth AuthUser authUser,
+      @PathParam("datasetId") Integer datasetId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       return elasticSearchService.deleteIndex(datasetId, user.getUserId());

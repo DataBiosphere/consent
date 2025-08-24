@@ -427,7 +427,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(dataAccessRequestService.createProgressReport(eq(user), any(), eq(parentDar), eq(request))).thenReturn(
         childDar);
     // datasets retrieved for the compliance logger
-    when(datasetService.findDatasetsByIds(childDar.getDatasetIds())).thenReturn(List.of());
+    when(datasetService.findDatasetsByIds(user, childDar.getDatasetIds())).thenReturn(List.of());
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
 
@@ -1037,9 +1037,9 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testApproveCloseout() {
     String referenceId = UUID.randomUUID().toString();
-    doNothing().when(dataAccessRequestService).approveDataAccessRequestCloseout(user,referenceId);
+    doNothing().when(dataAccessRequestService).approveDataAccessRequestCloseout(user, referenceId);
     when(dataAccessRequestService.findByReferenceId(referenceId)).thenReturn(new DataAccessRequest());
-    when(datasetService.findDatasetsByIds(any())).thenReturn(List.of());
+    when(datasetService.findDatasetsByIds(user, List.of())).thenReturn(List.of());
     try (Response response = resource.approveCloseout(duosUser, request, referenceId)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
