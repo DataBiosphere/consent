@@ -55,7 +55,6 @@ public class DatasetService implements ConsentLogger {
   private final StudyDAO studyDAO;
   private final DatasetServiceDAO datasetServiceDAO;
   private final UserDAO userDAO;
-  public Integer datasetBatchSize = 50;
 
   @Inject
   public DatasetService(DatasetDAO dataSetDAO, DaaDAO daaDAO, DacDAO dacDAO, ElasticSearchService
@@ -563,10 +562,6 @@ public class DatasetService implements ConsentLogger {
               p.getValue().toString()));
     }
     return studyId;
-  }
-
-  public void setDatasetBatchSize(Integer datasetBatchSize) {
-    this.datasetBatchSize = datasetBatchSize;
   }
 
 }
