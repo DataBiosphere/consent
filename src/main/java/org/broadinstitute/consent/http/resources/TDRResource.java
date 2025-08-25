@@ -4,6 +4,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.Path;
@@ -33,7 +34,7 @@ public class TDRResource extends Resource {
 
   @GET
   @Produces("application/json")
-  @PermitAll
+  @RolesAllowed({ADMIN, SERVICE_ACCOUNT})
   @Path("/{identifier}/approved/users")
   @Timed
   public Response getApprovedUsers(@Auth DuosUser duosUser,
