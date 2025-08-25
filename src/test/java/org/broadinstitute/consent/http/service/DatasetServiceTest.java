@@ -503,6 +503,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     study.setCreateUserId(studyCreator.getUserId());
     study.setPublicVisibility(Boolean.TRUE);
     dataset.setStudy(study);
+    dataset.setStudyId(study.getStudyId());
 
     Dataset verfiedDataset = datasetService.verifyPublicVisibilityAccess(dataset, user);
     assertEquals(dataset.getDatasetId(), verfiedDataset.getDatasetId());
@@ -527,6 +528,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     study.setCreateUserEmail(studyCreator.getEmail());
     study.setCreateUserId(studyCreator.getUserId());
     dataset.setStudy(study);
+    dataset.setStudyId(study.getStudyId());
 
     Dataset verfiedDataset = datasetService.verifyPublicVisibilityAccess(dataset, user);
     assertEquals(dataset.getDatasetId(), verfiedDataset.getDatasetId());
@@ -545,13 +547,14 @@ class DatasetServiceTest extends AbstractTestHelper {
     dataset.setCreateUserId(datasetCreator.getUserId());
     User studyCreator = new User();
     studyCreator.setUserId(3);
-    studyCreator.setEmail("sCreator#email.com");
+    studyCreator.setEmail("sCreator@email.com");
     Study study = new Study();
     study.setStudyId(studyCreator.getUserId());
     study.setCreateUserEmail(studyCreator.getEmail());
     study.setCreateUserId(studyCreator.getUserId());
     study.setPublicVisibility(Boolean.FALSE);
     dataset.setStudy(study);
+    dataset.setStudyId(study.getStudyId());
 
     Dataset verfiedDataset = datasetService.verifyPublicVisibilityAccess(dataset, user);
     assertNull(verfiedDataset);
@@ -572,6 +575,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     study.setCreateUserEmail(studyCreator.getEmail());
     study.setCreateUserId(studyCreator.getUserId());
     dataset.setStudy(study);
+    dataset.setStudyId(study.getStudyId());
 
     boolean isCreateUser = datasetService.isCreatorOrCustodian(datasetCreator, dataset);
     assertTrue(isCreateUser);
@@ -592,6 +596,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     study.setCreateUserEmail(studyCreator.getEmail());
     study.setCreateUserId(studyCreator.getUserId());
     dataset.setStudy(study);
+    dataset.setStudyId(study.getStudyId());
 
     boolean isCreateUser = datasetService.isCreatorOrCustodian(studyCreator, dataset);
     assertTrue(isCreateUser);
@@ -618,6 +623,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     prop.setValue(gson.toJson(List.of(custodian.getEmail())));
     study.addProperties(prop);
     dataset.setStudy(study);
+    dataset.setStudyId(study.getStudyId());
 
     boolean isCustodian = datasetService.isCreatorOrCustodian(custodian, dataset);
     assertTrue(isCustodian);

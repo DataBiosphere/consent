@@ -104,8 +104,12 @@ public class DatasetService implements ConsentLogger {
 
   protected Dataset verifyPublicVisibilityAccess(Dataset dataset, User user) {
     // If there is no study, we can't verify visibility, so return the dataset
-    if (dataset.getStudy() == null) {
+    if (dataset.getStudyId() == null) {
       return dataset;
+    }
+    // Study isn't always populated, so fetch it if necessary
+    if (dataset.getStudy() == null) {
+      dataset.setStudy(studyDAO.findStudyById(dataset.getStudyId()));
     }
     // If not visible, check that the user is authorized to see it
     if (Boolean.FALSE.equals(dataset.getStudy().getPublicVisibility())) {
