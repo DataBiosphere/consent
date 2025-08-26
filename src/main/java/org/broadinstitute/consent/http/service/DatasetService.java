@@ -142,7 +142,7 @@ public class DatasetService implements ConsentLogger {
     if (custodianProp.isPresent()) {
       Gson gson = GsonUtil.getInstance();
       // prop is a JsonArray of Strings
-      List<String> custodians = gson.fromJson(custodianProp.get().getValue().toString(), new TypeToken<List<String>>() {}.getType());
+      List<String> custodians = gson.fromJson(custodianProp.get().getValue().toString(), new TypeToken<>(){}.getType());
       for (String custodian : custodians) {
         if (user.getEmail().equals(custodian.trim())) {
           return true;
