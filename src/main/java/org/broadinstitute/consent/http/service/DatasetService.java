@@ -130,13 +130,14 @@ public class DatasetService implements ConsentLogger {
     if (dataset.getCreateUserId().equals(user.getUserId())) {
       return true;
     }
-    if (dataset.getStudy() == null) {
-      return false;
-    }
     return isCreatorOrCustodian(user, dataset.getStudy());
   }
 
   public boolean isCreatorOrCustodian(User user, Study study) {
+    // User's cannot be a creator or custodian if the study is null
+    if (study == null) {
+      return false;
+    }
     if (study.getCreateUserId().equals(user.getUserId())) {
       return true;
     }
