@@ -145,7 +145,6 @@ public class DatasetResource extends Resource {
         throw new BadRequestException("Dataset is required");
       }
       DatasetUpdate update = new DatasetUpdate(json);
-
       User user = duosUser.getUser();
       Dataset datasetExists = datasetService.findDatasetById(user, datasetId);
       if (Objects.isNull(datasetExists)) {

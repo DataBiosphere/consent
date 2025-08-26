@@ -472,6 +472,30 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testVerifyPublicVisibilityAccess_Admin() {
+    User admin = new User();
+    admin.setUserId(1);
+    admin.setEmail("admin@email.com");
+    // Without the admin role this test condition would fail.
+    admin.setAdminRole();
+    Dataset dataset = new Dataset();
+    dataset.setCreateUserId(2);
+    User studyCreator = new User();
+    studyCreator.setUserId(3);
+    studyCreator.setEmail("sCreator#email.com");
+    Study study = new Study();
+    study.setStudyId(studyCreator.getUserId());
+    study.setCreateUserEmail(studyCreator.getEmail());
+    study.setCreateUserId(studyCreator.getUserId());
+    study.setPublicVisibility(Boolean.FALSE);
+    dataset.setStudy(study);
+    dataset.setStudyId(study.getStudyId());
+
+    Dataset verfiedDataset = datasetService.verifyPublicVisibilityAccess(dataset, admin);
+    assertEquals(dataset.getDatasetId(), verfiedDataset.getDatasetId());
+  }
+
+  @Test
   void testVerifyPublicVisibilityAccess_NoStudy() {
     User datasetCreator = new User();
     datasetCreator.setUserId(1);

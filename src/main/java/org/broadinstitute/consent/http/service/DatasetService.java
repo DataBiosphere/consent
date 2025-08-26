@@ -103,6 +103,10 @@ public class DatasetService implements ConsentLogger {
   }
 
   protected Dataset verifyPublicVisibilityAccess(Dataset dataset, User user) {
+    // Admins
+    if (user.hasUserRole(UserRoles.ADMIN)) {
+      return dataset;
+    }
     // If there is no study, we can't verify visibility, so return the dataset
     if (dataset.getStudyId() == null) {
       return dataset;
