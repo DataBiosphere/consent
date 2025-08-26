@@ -309,7 +309,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
     AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )
     """
   )
-  DarCollection findCollectionWithElectionsByCollectionIdAndDatasetIds(@BindList(value = "datasetIds") List<Integer> datasetIds, @Bind("collectionId") Integer collectionId);
+  DarCollection findCollectionWithElectionsByCollectionIdAndDatasetIds(@BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> datasetIds, @Bind("collectionId") Integer collectionId);
 
   /**
    * Create a new DAR Collection with the given dar code, create user ID, and create date

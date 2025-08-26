@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -872,10 +873,21 @@ class DarCollectionDAOTest extends DAOTestHelper {
   }
 
   private void assertCollectionEqualExceptForElections(DarCollection collection, DarCollection returned) {
+    // datasets cannot be serialized by deepCopy
+    Set<Dataset> collectionDatasets = collection.getDatasets();
+    collection.setDatasets(null);
     DarCollection collectionCopy = collection.deepCopy();
     collectionCopy.getDars().values().forEach(dar -> dar.setElections(new HashMap<>()));
+    collection.setDatasets(collectionDatasets);
+    collectionCopy.setDatasets(collectionDatasets);
+
+    Set<Dataset> returnedDatasets = returned.getDatasets();
+    returned.setDatasets(null);
     DarCollection returnedCopy = returned.deepCopy();
     returnedCopy.getDars().values().forEach(dar -> dar.setElections(new HashMap<>()));
+    returned.setDatasets(returnedDatasets);
+    returnedCopy.setDatasets(returnedDatasets);
+
     assertEquals(collectionCopy, returnedCopy);
   }
 }
