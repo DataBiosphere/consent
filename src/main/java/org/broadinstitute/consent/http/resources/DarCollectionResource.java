@@ -9,7 +9,6 @@ import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
@@ -31,6 +30,7 @@ import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.ComplianceLogger;
@@ -135,8 +135,16 @@ public class DarCollectionResource extends Resource {
       @Auth DuosUser authUser,
       @PathParam("collectionId") Integer collectionId) {
     try {
-      DarCollection collection = darCollectionService.getCollectionWithAllElectionsByCollectionId(collectionId);
-      validateRequestingUserForElectionHistory(authUser, collection);
+      List<UserRole> roles = authUser.getUser().getRoles();
+      boolean isAdmin = roles.stream().anyMatch(r -> r.getName().equals(UserRoles.ADMIN.name()));
+      if (isAdmin) {
+        DarCollection collection = darCollectionService.getCollectionWithAllElectionsByCollectionId(collectionId);
+        return Response.ok().entity(collection).build();
+      }
+      // if user is only a member or chair, get the list of datasets they have access to
+      // this will be used to filter the collection's elections
+      List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByDACUser(authUser.getUser());
+      DarCollection collection = darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(userDatasetIds, collectionId);
       return Response.ok().entity(collection).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

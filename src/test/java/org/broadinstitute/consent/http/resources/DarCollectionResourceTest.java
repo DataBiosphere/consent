@@ -264,7 +264,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testGetCollectionWithAllElectionsByCollectionId() {
+  void testGetCollectionWithAllElectionsByCollectionIdAdmin() {
     DarCollection collection = mockDarCollection();
     User admin = new User(2, authUser.getEmail(), "Admin User", new Date(),
         List.of(UserRoles.Admin()));
@@ -273,6 +273,23 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setCreateUserId(researcher.getUserId());
 
     when(darCollectionService.getCollectionWithAllElectionsByCollectionId(collection.getDarCollectionId())).thenReturn(collection);
+
+    Response response = resource.getCollectionWithAllElectionsByCollectionId(duosAdmin, collection.getDarCollectionId());
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  void testGetCollectionWithAllElectionsByCollectionIdDacMember() {
+    DarCollection collection = mockDarCollection();
+    List<Integer> userDatasetIds = List.of(1, 2);
+    User admin = new User(2, authUser.getEmail(), "Dac Member User", new Date(),
+        List.of(UserRoles.Member()));
+    DuosUser duosAdmin = new DuosUser(authUser, admin);
+    collection.setCreateUser(researcher);
+    collection.setCreateUserId(researcher.getUserId());
+
+    when(darCollectionService.findDatasetIdsByDACUser(any())).thenReturn(userDatasetIds);
+    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(userDatasetIds, collection.getDarCollectionId())).thenReturn(collection);
 
     Response response = resource.getCollectionWithAllElectionsByCollectionId(duosAdmin, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
