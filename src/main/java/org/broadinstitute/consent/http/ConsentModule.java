@@ -562,7 +562,9 @@ public class ConsentModule extends AbstractModule {
   @Provides
   AcknowledgementService providesAcknowledgementService() {
     return new AcknowledgementService(
-        providesAcknowledgementDAO()
+        providesAcknowledgementDAO(),
+        providesDataAccessRequestDAO(),
+        providesEmailService()
     );
   }
 

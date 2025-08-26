@@ -24,8 +24,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriInfo;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,6 +38,7 @@ import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -271,7 +272,8 @@ public class UserResource extends Resource {
     return activeUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)
         && activeUser.getInstitutionId() != null
         && UserRoles.isValidSoAdjustableRoleId(role)
-        && (user.getInstitutionId() == null || user.getInstitutionId().equals(activeUser.getInstitutionId()));
+        && (user.getInstitutionId() == null || user.getInstitutionId()
+        .equals(activeUser.getInstitutionId()));
   }
 
   private Response getUserResponse(AuthUser authUser, Integer userId) {
@@ -344,7 +346,8 @@ public class UserResource extends Resource {
           entity(new Error("Unable to verify google identity",
               Response.Status.BAD_REQUEST.getStatusCode())).
           build();
-    }    try {
+    }
+    try {
       if (userService.findUserByEmail(authUser.getEmail()) != null) {
         return Response.
             status(Response.Status.CONFLICT).
@@ -444,12 +447,11 @@ public class UserResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/acknowledgements")
   @PermitAll
-  public Response postAcknowledgements(@Auth AuthUser authUser, String json) {
+  public Response postAcknowledgements(@Auth DuosUser duosUser, String json) {
+    User user = duosUser.getUser();
     ArrayList<String> keys;
     try {
-      Type listOfStringsType = new TypeToken<ArrayList<String>>() {
-      }.getType();
-      keys = gson.fromJson(json, listOfStringsType);
+      keys = gson.fromJson(json, new TypeToken<>() {});
       if (keys == null || keys.isEmpty()) {
         return Response.status(Response.Status.BAD_REQUEST).build();
       }
@@ -457,8 +459,14 @@ public class UserResource extends Resource {
       return Response.status(Response.Status.BAD_REQUEST).build();
     }
 
+    if (keys.stream().anyMatch(k -> k.startsWith(AcknowledgementService.DAR_CLOSEOUT_CHAIR_REF))
+        && !user.hasUserRole(UserRoles.CHAIRPERSON)) {
+      return Response.status(Status.UNAUTHORIZED)
+          .entity(new Error("Invalid acknowledgement", HttpStatusCodes.STATUS_CODE_UNAUTHORIZED))
+          .build();
+    }
+
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
       Map<String, Acknowledgement> acknowledgementMap = acknowledgementService.makeAcknowledgements(
           keys, user);
       return Response.ok().entity(acknowledgementMap).build();
