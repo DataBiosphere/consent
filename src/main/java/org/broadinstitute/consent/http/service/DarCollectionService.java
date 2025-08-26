@@ -524,9 +524,8 @@ public class DarCollectionService implements ConsentLogger {
             .map(datasetMap::get)
             .filter(Objects::nonNull) // filtering out nulls which were getting captured by map
             .collect(Collectors.toSet());
-        DarCollection copy = collection.deepCopy();
-        copy.setDatasets(collectionDatasets);
-        return copy;
+        collection.setDatasets(collectionDatasets);
+        return collection.deepCopy();
     }
     // There were no datasets to add, so we return the original list
     return collection;

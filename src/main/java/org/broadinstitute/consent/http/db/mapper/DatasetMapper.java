@@ -22,7 +22,7 @@ public class DatasetMapper implements RowMapper<Dataset>, RowMapperHelper {
     dataset.setObjectId(r.getString("object_id"));
     dataset.setName(r.getString("name"));
     if (hasColumn(r, "create_date")) {
-      dataset.setCreateDate(r.getDate("create_date"));
+      dataset.setCreateDate(r.getTimestamp("create_date"));
     }
     if (hasNonZeroColumn(r, "create_user_id")) {
       dataset.setCreateUserId(r.getInt("create_user_id"));
