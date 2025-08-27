@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.codahale.metrics.annotation.Timed;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
@@ -30,7 +29,6 @@ import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.ComplianceLogger;
@@ -135,9 +133,7 @@ public class DarCollectionResource extends Resource {
       @Auth DuosUser authUser,
       @PathParam("collectionId") Integer collectionId) {
     try {
-      List<UserRole> roles = authUser.getUser().getRoles();
-      boolean isAdmin = roles.stream().anyMatch(r -> r.getName().equals(UserRoles.ADMIN.name()));
-      if (isAdmin) {
+      if (authUser.getUser().hasUserRole(UserRoles.ADMIN)) {
         DarCollection collection = darCollectionService.getCollectionWithAllElectionsByCollectionId(collectionId);
         return Response.ok().entity(collection).build();
       }
@@ -145,17 +141,12 @@ public class DarCollectionResource extends Resource {
       // this will be used to filter the collection's elections
       List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByDACUser(authUser.getUser());
       DarCollection collection = darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(userDatasetIds, collectionId);
+      if (!checkDacPermissionsForCollection(authUser.getUser(), collection)) {
+        throw new NotFoundException();
+      }
       return Response.ok().entity(collection).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
-    }
-  }
-
-  @VisibleForTesting
-  protected void validateRequestingUserForElectionHistory(DuosUser duosUser, DarCollection collection) {
-    User user = duosUser.getUser();
-    if (!user.hasUserRole(UserRoles.ADMIN) && !checkDacPermissionsForCollection(user, collection)) {
-      throw new NotFoundException();
     }
   }
 

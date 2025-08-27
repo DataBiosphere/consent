@@ -1,12 +1,10 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
@@ -282,22 +280,27 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   void testGetCollectionWithAllElectionsByCollectionIdDacMember() {
     DarCollection collection = mockDarCollection();
     List<Integer> userDatasetIds = List.of(1, 2);
-    User admin = new User(2, authUser.getEmail(), "Dac Member User", new Date(),
+    User member = new User(2, authUser.getEmail(), "Dac Member User", new Date(),
         List.of(UserRoles.Member()));
-    DuosUser duosAdmin = new DuosUser(authUser, admin);
+    DuosUser duosMember = new DuosUser(authUser, member);
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
+    Dataset dataset1 = new Dataset();
+    dataset1.setDatasetId(1);
+    collection.setDatasets(Set.of(dataset1));
 
-    when(darCollectionService.findDatasetIdsByDACUser(any())).thenReturn(userDatasetIds);
+    when(darCollectionService.findDatasetIdsByDACUser(member)).thenReturn(userDatasetIds);
     when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(userDatasetIds, collection.getDarCollectionId())).thenReturn(collection);
 
-    Response response = resource.getCollectionWithAllElectionsByCollectionId(duosAdmin, collection.getDarCollectionId());
+    Response response = resource.getCollectionWithAllElectionsByCollectionId(duosMember, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
   @Test
   void testGetCollectionWithAllElectionsById_CollectionNotFoundCollection() {
-    when(darCollectionService.getCollectionWithAllElectionsByCollectionId(anyInt())).thenThrow(new NotFoundException("Collection not found"));
+    when(darCollectionService.findDatasetIdsByDACUser(duosResearcher.getUser())).thenReturn(List.of());
+    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(List.of(), 1))
+        .thenThrow(new NotFoundException("Collection not found"));
 
     Response response = resource.getCollectionWithAllElectionsByCollectionId(duosResearcher, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -305,7 +308,8 @@ class DarCollectionResourceTest extends AbstractTestHelper {
 
   @Test
   void testGetCollectionWithAllElectionsByCollectionId_ServiceException() {
-    when(darCollectionService.getCollectionWithAllElectionsByCollectionId(anyInt()))
+    when(darCollectionService.findDatasetIdsByDACUser(duosResearcher.getUser())).thenReturn(List.of());
+    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(List.of(), 1))
         .thenThrow(new RuntimeException("Service error"));
 
     Response response = resource.getCollectionWithAllElectionsByCollectionId(duosResearcher, 1);
@@ -318,55 +322,13 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
 
-    when(darCollectionService.getCollectionWithAllElectionsByCollectionId(
+    when(darCollectionService.findDatasetIdsByDACUser(researcher)).thenReturn(List.of());
+    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(List.of(),
         collection.getDarCollectionId())).thenReturn(collection);
-    when(darCollectionService.findDatasetIdsByDACUser(researcher)).thenReturn(List.of()); // No datasets
 
     Response response = resource.getCollectionWithAllElectionsByCollectionId(duosResearcher,
         collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-  }
-
-  @Test
-  void testValidateRequestingUserForElectionHistory_Admin() {
-    DarCollection collection = new DarCollection();
-    collection.setCreateUserId(1); // Different from admin's ID
-    User admin = new User(2, authUser.getEmail(), "Admin User", new Date(),
-        List.of(UserRoles.Admin()));
-    DuosUser duosAdmin = new DuosUser(authUser, admin);
-
-    resource.validateRequestingUserForElectionHistory(duosAdmin, collection);
-  }
-
-  @Test
-  void testValidateRequestingUserForElectionHistory_DacMember() {
-    User dacMember = new User(1, authUser.getEmail(), "DAC Member", new Date(),
-        List.of(UserRoles.Member()));
-    DuosUser duosMember = new DuosUser(authUser, dacMember);
-    DarCollection collection = new DarCollection();
-    User creator = new User(2, "creator@example.com", "Create User", new Date(),
-        List.of(UserRoles.Researcher()));
-    collection.setCreateUser(creator); // Different from DAC member's ID
-    Dataset dataset = new Dataset();
-    dataset.setDatasetId(42);
-    collection.addDataset(dataset);
-
-    when(darCollectionService.findDatasetIdsByDACUser(dacMember)).thenReturn(List.of(42, 43));
-
-    resource.validateRequestingUserForElectionHistory(duosMember, collection);
-    verify(darCollectionService).findDatasetIdsByDACUser(dacMember);
-  }
-
-  @Test
-  void testValidateRequestingUserForElectionHistory_Unauthorized() {
-    DarCollection collection = new DarCollection();
-    collection.setCreateUser(researcher);
-    collection.setCreateUserId(1);
-
-    when(darCollectionService.findDatasetIdsByDACUser(researcher)).thenReturn(List.of());
-
-    assertThrows(NotFoundException.class, () ->
-        resource.validateRequestingUserForElectionHistory(duosResearcher, collection));
   }
 
   @Test
