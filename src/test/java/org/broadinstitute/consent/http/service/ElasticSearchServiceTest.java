@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -264,7 +265,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     // Call the async method ...
     elasticSearchSpy.asyncDatasetInESIndex(datasetRecord.dataset.getDatasetId(), datasetRecord.createUser, true);
     // Ensure that the synchronous method was called with the expected parameters
-    verify(elasticSearchSpy).synchronizeDatasetInESIndex(datasetRecord.dataset, datasetRecord.dataset.getCreateUser(), true);
+    verify(elasticSearchSpy, timeout(1000)).synchronizeDatasetInESIndex(datasetRecord.dataset, datasetRecord.dataset.getCreateUser(), true);
   }
 
   @Test
