@@ -3,13 +3,12 @@ package org.broadinstitute.consent.http.service;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.StreamingOutput;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -56,7 +55,6 @@ public class DatasetService implements ConsentLogger {
   private final StudyDAO studyDAO;
   private final DatasetServiceDAO datasetServiceDAO;
   private final UserDAO userDAO;
-  public Integer datasetBatchSize = 50;
 
   @Inject
   public DatasetService(DatasetDAO dataSetDAO, DaaDAO daaDAO, DacDAO dacDAO, ElasticSearchService
@@ -88,7 +86,8 @@ public class DatasetService implements ConsentLogger {
    * @return the Dataset with the given identifier, if found.
    * @throws IllegalArgumentException if datasetIdentifier is invalid
    */
-  public Dataset findDatasetByIdentifier(String datasetIdentifier) throws IllegalArgumentException {
+  public Dataset findDatasetByIdentifier(User user, String datasetIdentifier)
+      throws IllegalArgumentException {
     Integer alias = Dataset.parseIdentifierToAlias(datasetIdentifier);
     Dataset d = datasetDAO.findDatasetByAlias(alias);
     if (d == null) {
@@ -100,7 +99,62 @@ public class DatasetService implements ConsentLogger {
     if (!Objects.equals(d.getDatasetIdentifier(), datasetIdentifier)) {
       return null;
     }
-    return d;
+    return verifyPublicVisibilityAccess(d, user);
+  }
+
+  protected Dataset verifyPublicVisibilityAccess(Dataset dataset, User user) {
+    // Admins
+    if (user.hasUserRole(UserRoles.ADMIN)) {
+      return dataset;
+    }
+    // If there is no study, we can't verify visibility, so return the dataset
+    if (dataset.getStudyId() == null) {
+      return dataset;
+    }
+    // Study isn't always populated, so fetch it if necessary
+    if (dataset.getStudy() == null) {
+      dataset.setStudy(studyDAO.findStudyById(dataset.getStudyId()));
+    }
+    // If not visible, check that the user is authorized to see it
+    if (Boolean.FALSE.equals(dataset.getStudy().getPublicVisibility())) {
+      if (isCreatorOrCustodian(user, dataset)) {
+        return dataset;
+      } else {
+        return null;
+      }
+    }
+    return dataset;
+  }
+
+  protected boolean isCreatorOrCustodian(User user, Dataset dataset) {
+    if (dataset.getCreateUserId().equals(user.getUserId())) {
+      return true;
+    }
+    return isCreatorOrCustodian(user, dataset.getStudy());
+  }
+
+  public boolean isCreatorOrCustodian(User user, Study study) {
+    // User's cannot be a creator or custodian if the study is null
+    if (study == null) {
+      return false;
+    }
+    if (study.getCreateUserId().equals(user.getUserId())) {
+      return true;
+    }
+    Optional<StudyProperty> custodianProp = study.getProperties().stream()
+        .filter(p -> p.getKey().equals(dataCustodianEmail))
+        .findFirst();
+    if (custodianProp.isPresent()) {
+      Gson gson = GsonUtil.getInstance();
+      // prop is a JsonArray of Strings
+      List<String> custodians = gson.fromJson(custodianProp.get().getValue().toString(), new TypeToken<>(){}.getType());
+      for (String custodian : custodians) {
+        if (user.getEmail().equals(custodian.trim())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public Dataset getDatasetByName(String name) {
@@ -116,17 +170,14 @@ public class DatasetService implements ConsentLogger {
     return datasetDAO.findAllDatasetNames();
   }
 
-  public Study findStudyById(Integer id) {
-    return studyDAO.findStudyById(id);
-  }
-
-  public Dataset findDatasetById(Integer id) {
-    return datasetDAO.findDatasetById(id);
+  public Dataset findDatasetById(User user, Integer id) {
+    Dataset dataset = datasetDAO.findDatasetById(id);
+    return verifyPublicVisibilityAccess(dataset, user);
   }
 
   /**
-   * Find the dataset without files by its ID. This method is intended to return a minimal
-   * dataset for performance reasons, avoiding the retrieval of full FSO information.
+   * Find the dataset without files by its ID. This method is intended to return a minimal dataset
+   * for performance reasons, avoiding the retrieval of full FSO information.
    *
    * @param id Dataset ID
    * @return The updated Dataset object
@@ -245,49 +296,24 @@ public class DatasetService implements ConsentLogger {
 
   }
 
-  public List<Dataset> findDatasetsByIds(List<Integer> datasetIds) {
-    return datasetDAO.findDatasetsByIdList(datasetIds);
+  public List<Dataset> findDatasetsByIds(User user, List<Integer> datasetIds) {
+    return datasetDAO.findDatasetsByIdList(datasetIds).stream().filter(
+        d -> verifyPublicVisibilityAccess(d, user) != null
+    ).toList();
   }
 
   public List<Integer> findAllDatasetIds() {
     return datasetDAO.findAllDatasetIds();
   }
 
-  public StreamingOutput findAllDatasetsAsStreamingOutput() {
-    List<Integer> datasetIds = datasetDAO.findAllDatasetIds();
-    final List<List<Integer>> datasetIdSubLists = Lists.partition(datasetIds, datasetBatchSize);
-    final List<Integer> lastSubList = datasetIdSubLists.get(datasetIdSubLists.size() - 1);
-    final Integer lastIndex = lastSubList.get(lastSubList.size() - 1);
-    Gson gson = GsonUtil.buildGson();
-    return output -> {
-      output.write("[".getBytes());
-      datasetIdSubLists.forEach(subList -> {
-        List<Dataset> datasets = findDatasetsByIds(subList);
-        datasets.forEach(d -> {
-          try {
-            output.write(gson.toJson(d).getBytes());
-            if (!Objects.equals(d.getDatasetId(), lastIndex)) {
-              output.write(",".getBytes());
-            }
-            output.write("\n".getBytes());
-          } catch (IOException e) {
-            logException(
-                "Error writing dataset to streaming output, dataset id: " + d.getDatasetId(), e);
-          }
-        });
-      });
-      output.write("]".getBytes());
-    };
-  }
-
-  public Study getStudyWithDatasetsById(Integer studyId) {
+  public Study getStudyWithDatasetsById(User user, Integer studyId) {
     try {
       Study study = studyDAO.findStudyById(studyId);
       if (study == null) {
         throw new NotFoundException("Study not found");
       }
       if (study.getDatasetIds() != null && !study.getDatasetIds().isEmpty()) {
-        List<Dataset> datasets = findDatasetsByIds(new ArrayList<>(study.getDatasetIds()));
+        List<Dataset> datasets = findDatasetsByIds(user, new ArrayList<>(study.getDatasetIds()));
         study.addDatasets(datasets);
       }
       return study;
@@ -545,10 +571,6 @@ public class DatasetService implements ConsentLogger {
               p.getValue().toString()));
     }
     return studyId;
-  }
-
-  public void setDatasetBatchSize(Integer datasetBatchSize) {
-    this.datasetBatchSize = datasetBatchSize;
   }
 
 }
