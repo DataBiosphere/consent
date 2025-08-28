@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -254,7 +255,7 @@ class StudyResourceTest extends AbstractTestHelper {
       DataResourceTestData.registrationWithExistingCGDataUse,
       DataResourceTestData.registrationWithExistingCG
   })
-  void testUpdateStudyByRegistrationInvalid(String input) {
+  void testUpdateStudyByRegistrationInvalidInput(String input) {
     Study study = createMockStudy();
     // for DataResourceTestData.registrationWithExistingCG, manipulate the dataset ids to simulate
     // a dataset deletion
@@ -267,7 +268,13 @@ class StudyResourceTest extends AbstractTestHelper {
       study.addDatasetIds(Set.of(datasetIds.get(0) + 1));
     }
     when(userService.findUserByEmail(any())).thenReturn(user);
+    User createUser = new User();
+    createUser.setUserId(study.getCreateUserId());
+    createUser.setEmail("creator@test.com");
+    when(authUser.getEmail()).thenReturn(createUser.getEmail());
+    when(userService.findUserByEmail(createUser.getEmail())).thenReturn(createUser);
     when(datasetRegistrationService.findStudyById(study.getStudyId())).thenReturn(study);
+    when(datasetService.isCreatorOrCustodian(createUser, study)).thenReturn(true);
 
     try (var response = resource.updateStudyByRegistration(authUser, null, study.getStudyId(), input)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
@@ -275,7 +282,7 @@ class StudyResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testUpdateStudyByRegistration() {
+  void testUpdateStudyByRegistrationCreatorOrCustodian() {
     String input = DataResourceTestData.validRegistration;
     Study study = createMockStudy();
     Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
@@ -288,11 +295,71 @@ class StudyResourceTest extends AbstractTestHelper {
         .collect(Collectors.toSet());
     study.getDatasetIds().clear();
     study.addDatasetIds(datasetIds);
-    when(userService.findUserByEmail(any())).thenReturn(user);
-    when(datasetRegistrationService.findStudyById(any())).thenReturn(study);
+    User createUser = new User();
+    createUser.setUserId(study.getCreateUserId());
+    createUser.setEmail("creator@test.com");
+    when(authUser.getEmail()).thenReturn(createUser.getEmail());
+    when(userService.findUserByEmail(createUser.getEmail())).thenReturn(createUser);
+    when(datasetRegistrationService.findStudyById(study.getStudyId())).thenReturn(study);
+    when(datasetService.isCreatorOrCustodian(createUser, study)).thenReturn(true);
 
-    try (var response = resource.updateStudyByRegistration(authUser, null, 1, input)) {
+    try (var response = resource.updateStudyByRegistration(authUser, null, study.getStudyId(), input)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testUpdateStudyByRegistrationAdmin() {
+    String input = DataResourceTestData.validRegistration;
+    Study study = createMockStudy();
+    Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
+    DatasetRegistrationSchemaV1 schemaV1 = gson.fromJson(input, DatasetRegistrationSchemaV1.class);
+    Set<Integer> datasetIds = schemaV1
+        .getConsentGroups()
+        .stream()
+        .map(ConsentGroup::getDatasetId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+    study.getDatasetIds().clear();
+    study.addDatasetIds(datasetIds);
+    User createUser = new User();
+    createUser.setUserId(study.getCreateUserId());
+    createUser.setEmail("creator@test.com");
+    createUser.addRole(UserRoles.Admin());
+    when(authUser.getEmail()).thenReturn(createUser.getEmail());
+    when(userService.findUserByEmail(createUser.getEmail())).thenReturn(createUser);
+    when(datasetRegistrationService.findStudyById(study.getStudyId())).thenReturn(study);
+
+    try (var response = resource.updateStudyByRegistration(authUser, null, study.getStudyId(), input)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testUpdateStudyByRegistrationNotCreatorOrAdmin() {
+    String input = DataResourceTestData.validRegistration;
+    Study study = createMockStudy();
+    Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
+    DatasetRegistrationSchemaV1 schemaV1 = gson.fromJson(input, DatasetRegistrationSchemaV1.class);
+    Set<Integer> datasetIds = schemaV1
+        .getConsentGroups()
+        .stream()
+        .map(ConsentGroup::getDatasetId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+    study.getDatasetIds().clear();
+    study.addDatasetIds(datasetIds);
+    User createUser = new User();
+    createUser.setUserId(study.getCreateUserId() + 100);
+    createUser.setEmail("chair@test.com");
+    createUser.addRole(UserRoles.Chairperson());
+    when(authUser.getEmail()).thenReturn(createUser.getEmail());
+    when(userService.findUserByEmail(createUser.getEmail())).thenReturn(createUser);
+    when(datasetRegistrationService.findStudyById(study.getStudyId())).thenReturn(study);
+    when(datasetService.isCreatorOrCustodian(createUser, study)).thenReturn(false);
+
+    try (var response = resource.updateStudyByRegistration(authUser, null, study.getStudyId(), input)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
 

@@ -215,6 +215,11 @@ public class StudyResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       Study existingStudy = datasetRegistrationService.findStudyById(studyId);
+      boolean canUpdateStudy = user.hasUserRole(UserRoles.ADMIN) ||
+          datasetService.isCreatorOrCustodian(user, existingStudy);
+      if (!canUpdateStudy) {
+        throw new NotFoundException("Study with ID " + studyId + " is not found");
+      }
 
       // Manually validate the schema from an editing context. Validation with the schema tools
       // enforces it in a creation context but doesn't work for editing purposes.
