@@ -91,8 +91,8 @@ public class DatasetService implements ConsentLogger {
   }
 
   /**
-   * TODO: Refactor this to throw a NotFoundException instead of returning null Finds a Dataset by a
-   * formatted dataset identifier.
+   * TODO: Refactor this to throw a NotFoundException instead of returning null
+   * Finds a Dataset by a formatted dataset identifier.
    *
    * @param datasetIdentifier The formatted identifier, e.g. DUOS-123456
    * @return the Dataset with the given identifier, if found.

@@ -15,7 +15,7 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 
-public class DatasetAuthorizationReaderDAOTest extends DAOTestHelper {
+class DatasetAuthorizationReaderDAOTest extends DAOTestHelper {
 
   @Test
   void testInsertDatasetAuthorizationRecord() {
