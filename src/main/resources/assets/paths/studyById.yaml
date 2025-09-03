@@ -42,6 +42,7 @@ put:
       See [/api/dataset/studyNames](#/Study/findAllStudyNames) for a list of existing study names.
       Data Use fields can only be modified using Admin permissions. See 
       [/api/dataset/{id}/datause](#/Admin/updateDatasetDataUse) to update a dataset's Data Use.
+      Studies are updatable by Admins, Creators, and Datat Custodians
       
       The following fields are not modifiable:
       * Data Submitter Name/Email
@@ -58,8 +59,6 @@ put:
           type: object
           properties:
             dataset:
-              description: Required dataset registration json schema instance
-              type: object
               $ref: '../schemas/DatasetRegistrationSchemaV1.yaml'
             alternativeDataSharingPlan:
               description: Optional alternative data sharing plan
