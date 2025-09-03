@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -32,6 +33,7 @@ import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.db.DatasetAuthorizationReaderDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -44,6 +46,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetAuthorizationReader;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
@@ -62,31 +65,32 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   private DatasetService datasetService;
 
-  @Mock
-  private DatasetDAO datasetDAO;
-  @Mock
-  private DaaDAO daaDAO;
-  @Mock
-  private DacDAO dacDAO;
-  @Mock
-  private ElasticSearchService elasticSearchService;
-  @Mock
-  private EmailService emailService;
-  @Mock
-  private OntologyService ontologyService;
-  @Mock
-  private StudyDAO studyDAO;
-  @Mock
-  private DatasetServiceDAO datasetServiceDAO;
-  @Mock
-  private UserDAO userDAO;
-  @Mock
-  private User mockUser;
+  @Mock private DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
+  @Mock private DatasetDAO datasetDAO;
+  @Mock private DaaDAO daaDAO;
+  @Mock private DacDAO dacDAO;
+  @Mock private ElasticSearchService elasticSearchService;
+  @Mock private EmailService emailService;
+  @Mock private OntologyService ontologyService;
+  @Mock private StudyDAO studyDAO;
+  @Mock private DatasetServiceDAO datasetServiceDAO;
+  @Mock private UserDAO userDAO;
+  @Mock private User mockUser;
 
   @BeforeEach
   void initService() {
-    datasetService = new DatasetService(datasetDAO, daaDAO, dacDAO, elasticSearchService,
-        emailService, ontologyService, studyDAO, datasetServiceDAO, userDAO);
+    datasetService =
+        new DatasetService(
+            datasetAuthorizationReaderDAO,
+            datasetDAO,
+            daaDAO,
+            dacDAO,
+            elasticSearchService,
+            emailService,
+            ontologyService,
+            studyDAO,
+            datasetServiceDAO,
+            userDAO);
   }
 
   @Test
@@ -99,8 +103,8 @@ class DatasetServiceTest extends AbstractTestHelper {
   @Test
   void testFindDatasetListByDacIdsEmptyList() {
     List<Integer> emptyList = Collections.emptyList();
-    assertThrows(BadRequestException.class,
-        () -> datasetService.findDatasetListByDacIds(emptyList));
+    assertThrows(
+        BadRequestException.class, () -> datasetService.findDatasetListByDacIds(emptyList));
   }
 
   @Test
@@ -121,8 +125,7 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   @Test
   void testFindStudyNames() {
-    when(datasetDAO.findAllStudyNames())
-        .thenReturn(Set.of("Hi", "Hello"));
+    when(datasetDAO.findAllStudyNames()).thenReturn(Set.of("Hi", "Hello"));
 
     Set<String> returned = datasetService.findAllStudyNames();
 
@@ -191,19 +194,18 @@ class DatasetServiceTest extends AbstractTestHelper {
     when(datasetDAO.findDatasetById(any())).thenReturn(new Dataset());
     User u = new User();
     Stream.of(
-        UserRoles.CHAIRPERSON,
-        UserRoles.MEMBER,
-        UserRoles.RESEARCHER,
-        UserRoles.SIGNINGOFFICIAL,
-        UserRoles.DATASUBMITTER,
-        UserRoles.ITDIRECTOR,
-        UserRoles.ALUMNI
-    ).forEach(r -> u.addRole(new UserRole(r.getRoleId(), r.getRoleName())));
+            UserRoles.CHAIRPERSON,
+            UserRoles.MEMBER,
+            UserRoles.RESEARCHER,
+            UserRoles.SIGNINGOFFICIAL,
+            UserRoles.DATASUBMITTER,
+            UserRoles.ITDIRECTOR,
+            UserRoles.ALUMNI)
+        .forEach(r -> u.addRole(new UserRole(r.getRoleId(), r.getRoleName())));
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     try {
       datasetService.updateDatasetDataUse(u, 1, dataUse);
-      fail(
-          "Should have thrown an exception on datasetService.updateDatasetDataUse()");
+      fail("Should have thrown an exception on datasetService.updateDatasetDataUse()");
     } catch (IllegalArgumentException e) {
       assertTrue(true);
     }
@@ -230,11 +232,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertEquals(dataset.getUpdateUserId(), datasetResult.getUpdateUserId());
     assertEquals(dataset.getDacApproval(), datasetResult.getDacApproval());
     assertEquals(dataset.getUpdateDate(), datasetResult.getUpdateDate());
-    verify(emailService, times(0)).sendDatasetApprovedMessage(
-        any(),
-        any(),
-        any()
-    );
+    verify(emailService, times(0)).sendDatasetApprovedMessage(any(), any(), any());
   }
 
   @Test
@@ -243,8 +241,8 @@ class DatasetServiceTest extends AbstractTestHelper {
     User user = new User();
     dataset.setDacApproval(true);
 
-    assertThrows(IllegalArgumentException.class,
-        () -> datasetService.approveDataset(dataset, user, false));
+    assertThrows(
+        IllegalArgumentException.class, () -> datasetService.approveDataset(dataset, user, false));
   }
 
   @Test
@@ -253,8 +251,8 @@ class DatasetServiceTest extends AbstractTestHelper {
     User user = new User();
     dataset.setDacApproval(true);
 
-    assertThrows(IllegalArgumentException.class,
-        () -> datasetService.approveDataset(dataset, user, null));
+    assertThrows(
+        IllegalArgumentException.class, () -> datasetService.approveDataset(dataset, user, null));
   }
 
   @Test
@@ -270,7 +268,8 @@ class DatasetServiceTest extends AbstractTestHelper {
     updatedDataset.setDatasetId(1);
     updatedDataset.setDacApproval(payloadBool);
 
-    when(datasetDAO.findDatasetWithoutFSOInformation(dataset.getDatasetId())).thenReturn(updatedDataset);
+    when(datasetDAO.findDatasetWithoutFSOInformation(dataset.getDatasetId()))
+        .thenReturn(updatedDataset);
     dataset.setAlias(1);
     dataset.setDacId(3);
     Dac dac = new Dac();
@@ -282,11 +281,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertTrue(returnedDataset.getDacApproval());
 
     // send approved email
-    verify(emailService, times(1)).sendDatasetApprovedMessage(
-        user,
-        "DAC NAME",
-        "DUOS-000001"
-    );
+    verify(emailService, times(1)).sendDatasetApprovedMessage(user, "DAC NAME", "DUOS-000001");
   }
 
   @Test
@@ -302,7 +297,8 @@ class DatasetServiceTest extends AbstractTestHelper {
     updatedDataset.setDatasetId(1);
     updatedDataset.setDacApproval(payloadBool);
 
-    when(datasetDAO.findDatasetWithoutFSOInformation(dataset.getDatasetId())).thenReturn(updatedDataset);
+    when(datasetDAO.findDatasetWithoutFSOInformation(dataset.getDatasetId()))
+        .thenReturn(updatedDataset);
     dataset.setAlias(1);
     dataset.setDacId(3);
     Dac dac = new Dac();
@@ -315,12 +311,8 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertFalse(returnedDataset.getDacApproval());
 
     // send denied email
-    verify(emailService, times(1)).sendDatasetDeniedMessage(
-        user,
-        "DAC NAME",
-        "DUOS-000001",
-        "dacEmail@gmail.com"
-    );
+    verify(emailService, times(1))
+        .sendDatasetDeniedMessage(user, "DAC NAME", "DUOS-000001", "dacEmail@gmail.com");
   }
 
   @Test
@@ -336,7 +328,8 @@ class DatasetServiceTest extends AbstractTestHelper {
     updatedDataset.setDatasetId(1);
     updatedDataset.setDacApproval(payloadBool);
 
-    when(datasetDAO.findDatasetWithoutFSOInformation(dataset.getDatasetId())).thenReturn(updatedDataset);
+    when(datasetDAO.findDatasetWithoutFSOInformation(dataset.getDatasetId()))
+        .thenReturn(updatedDataset);
     dataset.setAlias(1);
     dataset.setDacId(3);
     Dac dac = new Dac();
@@ -348,13 +341,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertFalse(returnedDataset.getDacApproval());
 
     // do not send denied email
-    verify(emailService, times(0)).sendDatasetDeniedMessage(
-        user,
-        "DAC NAME",
-        "DUOS-000001",
-        ""
-    );
-
+    verify(emailService, times(0)).sendDatasetDeniedMessage(user, "DAC NAME", "DUOS-000001", "");
   }
 
   @Test
@@ -363,7 +350,8 @@ class DatasetServiceTest extends AbstractTestHelper {
     ds.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
 
     when(datasetDAO.findDatasetById(1)).thenReturn(ds);
-    String translation = """
+    String translation =
+        """
         Samples are restricted for use under the following conditions:
         Data is limited for health/medical/biomedical research. [HMB]
         Data use is limited for studying: cancerophobia [DS]
@@ -371,8 +359,8 @@ class DatasetServiceTest extends AbstractTestHelper {
         Data use for methods development research irrespective of the specified data use limitations is not prohibited.
         Restrictions for use as a control set for diseases other than those defined were not specified.
         """;
-    when(ontologyService.translateDataUse(ds.getDataUse(),
-        DataUseTranslationType.DATASET)).thenReturn(translation);
+    when(ontologyService.translateDataUse(ds.getDataUse(), DataUseTranslationType.DATASET))
+        .thenReturn(translation);
 
     datasetService.syncDatasetDataUseTranslation(1, mockUser);
 
@@ -382,8 +370,8 @@ class DatasetServiceTest extends AbstractTestHelper {
   @Test
   void testSyncDataUseTranslationNotFound() {
     when(datasetDAO.findDatasetById(1)).thenReturn(null);
-    assertThrows(NotFoundException.class,
-        () -> datasetService.syncDatasetDataUseTranslation(1, mockUser));
+    assertThrows(
+        NotFoundException.class, () -> datasetService.syncDatasetDataUseTranslation(1, mockUser));
   }
 
   @Test
@@ -395,7 +383,8 @@ class DatasetServiceTest extends AbstractTestHelper {
   @Test
   void testGetStudyWithDatasetsByIdNFE() {
     when(studyDAO.findStudyById(anyInt())).thenReturn(null);
-    assertThrows(NotFoundException.class, () -> datasetService.getStudyWithDatasetsById(mockUser, 1));
+    assertThrows(
+        NotFoundException.class, () -> datasetService.getStudyWithDatasetsById(mockUser, 1));
   }
 
   @Test
@@ -406,8 +395,8 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   @Test
   void testGetApprovedDatasets() {
-    User user = new User(1, "test@domain.com", "Test User", new Date(),
-        List.of(UserRoles.Researcher()));
+    User user =
+        new User(1, "test@domain.com", "Test User", new Date(), List.of(UserRoles.Researcher()));
     ApprovedDataset example =
         new ApprovedDataset(
             1,
@@ -456,18 +445,20 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   @Test
   void testEnforceDAARestrictions() {
-    final User user = new User(1, "test@domain.com", "Test User", new Date(),
-        List.of(UserRoles.Researcher()));
+    final User user =
+        new User(1, "test@domain.com", "Test User", new Date(), List.of(UserRoles.Researcher()));
     when(daaDAO.findDaaDatasetIdsByUserId(any())).thenReturn(List.of(1, 2, 3));
 
     assertDoesNotThrow(() -> datasetService.enforceDAARestrictions(user, List.of(1)));
     assertDoesNotThrow(() -> datasetService.enforceDAARestrictions(user, List.of(1, 2)));
     assertDoesNotThrow(() -> datasetService.enforceDAARestrictions(user, List.of(1, 2, 3)));
     List<Integer> firstExpectedList = List.of(1, 2, 3, 4);
-    assertThrows(BadRequestException.class,
+    assertThrows(
+        BadRequestException.class,
         () -> datasetService.enforceDAARestrictions(user, firstExpectedList));
     List<Integer> secondExpectedList = List.of(2, 3, 4, 5);
-    assertThrows(BadRequestException.class,
+    assertThrows(
+        BadRequestException.class,
         () -> datasetService.enforceDAARestrictions(user, secondExpectedList));
   }
 
@@ -653,16 +644,31 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertTrue(isCustodian);
   }
 
+  @Test
+  void testIsAuthorizedToListUsers() {
+    when(datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetIdAndUserId(anyLong(), anyLong())).thenReturn(new DatasetAuthorizationReader(1, 1, 1, 1, Timestamp.from(Instant.now())));
+    assertTrue(datasetService.isAuthorizedToListUsers(1, 1));
+  }
+
+  @Test
+  void testIsAuthorizedToListUsersNotFound() {
+    when(datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetIdAndUserId(anyLong(), anyLong())).thenReturn(null);
+    assertFalse(datasetService.isAuthorizedToListUsers(1, 1));
+  }
+
+
   /* Helper functions */
 
   private List<Dataset> getDatasets() {
     return IntStream.range(1, 3)
-        .mapToObj(i -> {
-          Dataset dataset = new Dataset();
-          dataset.setDatasetId(i);
-          dataset.setName("Test Dataset " + i);
-          dataset.setProperties(Collections.emptySet());
-          return dataset;
-        }).toList();
+        .mapToObj(
+            i -> {
+              Dataset dataset = new Dataset();
+              dataset.setDatasetId(i);
+              dataset.setName("Test Dataset " + i);
+              dataset.setProperties(Collections.emptySet());
+              return dataset;
+            })
+        .toList();
   }
 }

@@ -55,6 +55,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.Da
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
+import org.broadinstitute.consent.http.service.TDRService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -78,6 +79,9 @@ class DatasetResourceTest extends AbstractTestHelper {
   private ElasticSearchService elasticSearchService;
 
   @Mock
+  private TDRService tdrService;
+
+  @Mock
   private UserService userService;
 
   @Mock
@@ -91,7 +95,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   @BeforeEach
   void initResource() {
     resource = new DatasetResource(datasetService, userService,
-        datasetRegistrationService, elasticSearchService);
+        datasetRegistrationService, elasticSearchService, tdrService);
   }
 
   @Test

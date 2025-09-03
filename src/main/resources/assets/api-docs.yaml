@@ -511,6 +511,12 @@ paths:
     $ref: './paths/datasetSummaryAutocomplete.yaml'
   /api/dataset/search/index:
     $ref: './paths/datasetSearchIndex.yaml'
+  /api/dataset/{id}/authorizedAccessReaders:
+    $ref: './paths/datasetAuthorizedReaders.yaml'
+  /api/dataset/{id}/authorizedAccessReaders/{userId}:
+    $ref: './paths/datasetAuthorizedReadersAddDelete.yaml'
+  /api/dataset/{identifier}/authorizedUsers:
+    $ref: './paths/datasetAuthorizedUsers.yaml'
   /api/draft/v1:
     $ref: './paths/draftIndex.yaml'
   /api/draft/v1/{draftUUID}:

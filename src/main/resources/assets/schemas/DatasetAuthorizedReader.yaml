@@ -1,0 +1,17 @@
+type: object
+properties:
+  id:
+    type: number
+    description: The identifying number of this entry
+  datasetId:
+    type: number
+    description: The identifying number of the dataset
+  userId:
+    type: number
+    description: The identifying number of the user allowed to check access
+  createdBy:
+    type: number
+    description: The identifying number of the user granting this authorization
+  createdDate:
+    type: number
+    description: When this rule was created in, milliseconds since the epoch

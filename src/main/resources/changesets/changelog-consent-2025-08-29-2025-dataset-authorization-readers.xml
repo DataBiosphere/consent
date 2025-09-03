@@ -1,0 +1,18 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2025-08-29-2025-dataset-authorized-readers" author="otchet-broad">
+  <createTable tableName="dataset_authorized_readers">
+    <column name="id" autoIncrement="true" type="bigint"/>
+    <column name="dataset_id" type="bigint"/>
+    <column name="user_id" type="bigint" />
+    <column name="created_by" type="bigint" />
+    <column name="created_date" type="timestamp" defaultValue="now()"/>
+  </createTable>
+    <addForeignKeyConstraint baseTableName="dataset_authorized_readers" baseColumnNames="dataset_id" constraintName="fkAuthorizedReadersDatasetId"
+      referencedTableName="dataset" referencedColumnNames="dataset_id"/>
+    <addForeignKeyConstraint baseTableName="dataset_authorized_readers" baseColumnNames="user_id" constraintName="fkAuthorizedReadersUserId"
+      referencedTableName="users" referencedColumnNames="user_id" />
+    <addUniqueConstraint tableName="dataset_authorized_readers" columnNames="dataset_id, user_id" />
+  </changeSet>
+</databaseChangeLog>
