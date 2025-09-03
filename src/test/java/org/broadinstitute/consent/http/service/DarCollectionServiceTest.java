@@ -157,7 +157,6 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertEquals(expectedException, exception);
   }
 
-
   @Test
   void testGetCollectionWithAllElectionsByCollectionId() {
     Integer collectionId = 1;
@@ -188,6 +187,43 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     RuntimeException exception = assertThrows(RuntimeException.class, () ->
         service.getCollectionWithAllElectionsByCollectionId(collectionId));
+    assertEquals(expectedException, exception);
+  }
+
+
+  @Test
+  void testGetCollectionWithElectionsByCollectionIdAndDatasetIds() {
+    Integer collectionId = 1;
+    DarCollection collection = new DarCollection();
+    collection.setDarCollectionId(collectionId);
+    List<Integer> datasetIds = List.of(1, 2, 3);
+    when(darCollectionDAO.findCollectionWithElectionsByCollectionIdAndDatasetIds(datasetIds, collectionId)).thenReturn(collection);
+
+    DarCollection result = service.getCollectionWithElectionsByCollectionIdAndDatasetIds(datasetIds, collectionId);
+    assertNotNull(result);
+    assertEquals(collectionId, result.getDarCollectionId());
+  }
+
+  @Test
+  void testGetCollectionWithElectionsByCollectionIdAndDatasetIds_NotFound() {
+    Integer collectionId = 1;
+    List<Integer> datasetIds = List.of(1, 2, 3);
+    when(darCollectionDAO.findCollectionWithElectionsByCollectionIdAndDatasetIds(datasetIds, collectionId)).thenReturn(null);
+
+    assertThrows(NotFoundException.class, () ->
+        service.getCollectionWithElectionsByCollectionIdAndDatasetIds(datasetIds, collectionId));
+  }
+
+  @Test
+  void testGetCollectionWithElectionsByCollectionIdAndDatasetIds_ServiceException() {
+    Integer collectionId = 1;
+    List<Integer> datasetIds = List.of(1, 2, 3);
+    RuntimeException expectedException = new RuntimeException("Test exception");
+    when(darCollectionDAO.findCollectionWithElectionsByCollectionIdAndDatasetIds(datasetIds, collectionId))
+        .thenThrow(expectedException);
+
+    RuntimeException exception = assertThrows(RuntimeException.class, () ->
+        service.getCollectionWithElectionsByCollectionIdAndDatasetIds(datasetIds, collectionId));
     assertEquals(expectedException, exception);
   }
 
