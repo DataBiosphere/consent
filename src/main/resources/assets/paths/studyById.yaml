@@ -77,6 +77,8 @@ put:
             $ref: '../schemas/Study.yaml'
     400:
       description: Bad Request when schema is invalid or the required consent groups are not provided.
+    403:
+      description: Forbidden
     404:
       description: Not Found
     500:

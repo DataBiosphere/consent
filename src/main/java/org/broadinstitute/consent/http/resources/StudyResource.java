@@ -10,6 +10,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.PUT;
@@ -218,7 +219,7 @@ public class StudyResource extends Resource {
       boolean canUpdateStudy = user.hasUserRole(UserRoles.ADMIN) ||
           datasetService.isCreatorOrCustodian(user, existingStudy);
       if (!canUpdateStudy) {
-        throw new NotFoundException("Study with ID " + studyId + " is not found");
+        throw new ForbiddenException("Study with ID " + studyId + " is not updatable");
       }
 
       // Manually validate the schema from an editing context. Validation with the schema tools

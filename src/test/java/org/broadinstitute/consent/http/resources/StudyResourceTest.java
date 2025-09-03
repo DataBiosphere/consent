@@ -359,7 +359,7 @@ class StudyResourceTest extends AbstractTestHelper {
     when(datasetService.isCreatorOrCustodian(createUser, study)).thenReturn(false);
 
     try (var response = resource.updateStudyByRegistration(authUser, null, study.getStudyId(), input)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
   }
 
