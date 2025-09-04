@@ -58,6 +58,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGro
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
+import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
@@ -1088,9 +1089,46 @@ class DatasetResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testRemoveAuthorizedReadersThrowns(){
+  void testRemoveAuthorizedReadersThrows(){
     doThrow(new RuntimeException("Some Exception")).when(datasetService).removeAuthorizedAccessReader(anyLong(), anyLong());
     Response response = resource.removeAuthorizedReaders(duosUser, 1, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+  }
+
+  @Test
+  void testGetAuthorizedUsers() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    when(datasetService.findDatasetByIdentifier(any(), any())).thenReturn(dataset);
+    when(datasetService.isAuthorizedToListUsers(any(), any())).thenReturn(true);
+    when(tdrService.getApprovedUsersForDataset(any(), any())).thenReturn(new ApprovedUsers(List.of()));
+    Response response = resource.getAuthorizedUsers(duosUser, "ABC");
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+
+  @Test
+  void testGetAuthorizedUsersDatasetNotFound() {
+    when(datasetService.findDatasetByIdentifier(any(), any())).thenReturn(null);
+    Response response = resource.getAuthorizedUsers(duosUser, "ABC");
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  void testGetAuthorizedUsersNotAuthorized() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    when(datasetService.findDatasetByIdentifier(any(), any())).thenReturn(dataset);
+    when(datasetService.isAuthorizedToListUsers(any(), any())).thenReturn(false);
+    Response response = resource.getAuthorizedUsers(duosUser, "ABC");
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+  }
+
+  @Test
+  void testGetAuthorizedUsersDatasetThrows() {
+    doThrow(new RuntimeException("Some exception"))
+        .when(datasetService).findDatasetByIdentifier(any(), any());
+    Response response = resource.getAuthorizedUsers(duosUser, "ABC");
     assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
   }
 
