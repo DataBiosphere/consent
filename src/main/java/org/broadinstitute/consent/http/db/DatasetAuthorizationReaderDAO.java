@@ -38,9 +38,9 @@ INSERT INTO dataset_authorized_readers (dataset_id, user_id, created_by) VALUES 
 """)
   @GetGeneratedKeys
   long addAuthorizedReaderToDataset(
-      @Bind("datasetId") int datasetId,
-      @Bind("userId") int userId,
-      @Bind("operatorId") int operatorId);
+      @Bind("datasetId") long datasetId,
+      @Bind("userId") long userId,
+      @Bind("operatorId") long operatorId);
 
   @SqlUpdate(
 """

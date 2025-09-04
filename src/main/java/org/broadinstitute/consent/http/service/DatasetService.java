@@ -644,7 +644,7 @@ public class DatasetService implements ConsentLogger {
   }
 
   public DatasetAuthorizationReader addAuthorizedReader(
-      int id, Integer userId, Integer operatorId) {
+      long id, long userId, long operatorId) {
     long recordId =
         datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(id, userId, operatorId);
     return datasetAuthorizationReaderDAO.findAuthorizedReaderByRecordId(recordId);
@@ -655,7 +655,7 @@ public class DatasetService implements ConsentLogger {
         datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetIdAndUserId(datasetId, userId));
   }
 
-  public void removeAuthorizedAccessReader(int datasetId, Integer userId) {
+  public void removeAuthorizedAccessReader(long datasetId, long userId) {
     datasetAuthorizationReaderDAO.deleteByDatasetAndUserId(datasetId, userId);
   }
 }

@@ -656,6 +656,24 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertFalse(datasetService.isAuthorizedToListUsers(1, 1));
   }
 
+  @Test
+  void testAddAuthorizedReader() {
+    DatasetAuthorizationReader dauthr =
+        new DatasetAuthorizationReader(1, 1, 1, 1, Timestamp.from(Instant.now()));
+    when(datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(anyInt(), anyInt(), anyInt()))
+        .thenReturn(dauthr.id());
+    when(datasetAuthorizationReaderDAO.findAuthorizedReaderByRecordId(anyLong()))
+        .thenReturn(dauthr);
+    DatasetAuthorizationReader response = datasetService.addAuthorizedReader(1, 1, 1);
+    assertNotNull(response);
+    assertEquals(dauthr, response);
+  }
+
+  @Test
+  void testRemoveAuthorizedAccessReader() {
+    doNothing().when(datasetAuthorizationReaderDAO).deleteByDatasetAndUserId(anyLong(), anyLong());
+    datasetAuthorizationReaderDAO.deleteByDatasetAndUserId(1, 1);
+  }
 
   /* Helper functions */
 

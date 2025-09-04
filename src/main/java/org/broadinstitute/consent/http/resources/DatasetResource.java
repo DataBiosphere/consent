@@ -529,7 +529,11 @@ public class DatasetResource extends Resource {
   @RolesAllowed(ADMIN)
   @Path("/{id}/authorizedAccessReaders")
   public Response getAuthorizedReaders(@Auth DuosUser duosUser, @PathParam("id") Long id) {
-    return Response.ok(datasetService.getAuthorizationReaders(id)).build();
+    try{
+      return Response.ok(datasetService.getAuthorizationReaders(id)).build();
+    } catch (Exception e) {
+     return createExceptionResponse(e);
+    }
   }
 
   @PUT
@@ -538,15 +542,20 @@ public class DatasetResource extends Resource {
   @Path("/{id}/authorizedAccessReaders/{userId}")
   public Response addAuthorizedReaders(
       @Auth DuosUser duosUser,
-      @PathParam("id") int datasetId,
-      @PathParam("userId") Integer userId) {
-    User targetUser = userService.findUserById(userId);
-    if (!targetUser.hasUserRole(UserRoles.SERVICE_ACCOUNT)) {
-      return Response.status(Status.CONFLICT).build();
+      @PathParam("id") long datasetId,
+      @PathParam("userId") int userId) {
+    try {
+      User targetUser = userService.findUserById(userId);
+      if (targetUser == null || !targetUser.hasUserRole(UserRoles.SERVICE_ACCOUNT)) {
+        return Response.status(Status.CONFLICT).build();
+      }
+      return Response.ok(
+              datasetService.addAuthorizedReader(datasetId, userId, duosUser.getUser().getUserId()))
+          .build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
     }
-    return Response.ok(
-            datasetService.addAuthorizedReader(datasetId, userId, duosUser.getUser().getUserId()))
-        .build();
+
   }
 
   @DELETE
@@ -555,8 +564,8 @@ public class DatasetResource extends Resource {
   @Path("/{id}/authorizedAccessReaders/{userId}")
   public Response removeAuthorizedReaders(
       @Auth DuosUser duosUser,
-      @PathParam("id") int datasetId,
-      @PathParam("userId") Integer userId) {
+      @PathParam("id") long datasetId,
+      @PathParam("userId") long userId) {
     try {
       datasetService.removeAuthorizedAccessReader(datasetId, userId);
       return Response.ok().build();
@@ -570,13 +579,17 @@ public class DatasetResource extends Resource {
   @RolesAllowed(SERVICE_ACCOUNT)
   @Path("/{identifier}/authorizedUsers")
   public Response getAuthorizedUsers(@Auth DuosUser duosUser, @PathParam("identifier") String datasetIdentifier) {
-    Dataset dataset = datasetService.findDatasetByIdentifier(duosUser.getUser(), datasetIdentifier);
-    if (Objects.isNull(dataset)) {
-      return Response.status(Response.Status.NOT_FOUND).build();
+    try {
+      Dataset dataset = datasetService.findDatasetByIdentifier(duosUser.getUser(), datasetIdentifier);
+      if (Objects.isNull(dataset)) {
+        return Response.status(Response.Status.NOT_FOUND).build();
+      }
+      if (!datasetService.isAuthorizedToListUsers(dataset.getDatasetId(), duosUser.getUser().getUserId())) {
+        return Response.status(Response.Status.FORBIDDEN).build();
+      }
+      return Response.ok(tdrService.getApprovedUsersForDataset(duosUser, dataset)).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
     }
-    if (!datasetService.isAuthorizedToListUsers(dataset.getDatasetId(), duosUser.getUser().getUserId())) {
-      return Response.status(Response.Status.FORBIDDEN).build();
-    }
-    return Response.ok(tdrService.getApprovedUsersForDataset(duosUser, dataset)).build();
   }
 }
