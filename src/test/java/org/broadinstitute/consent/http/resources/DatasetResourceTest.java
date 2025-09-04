@@ -1044,11 +1044,11 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Test
   void testAddAuthorizedReadersNotServiceAccount(){
-    User user = new User();
-    user.setUserId(1);
-    user.addRole(
+    User readerUser = new User();
+    readerUser.setUserId(1);
+    readerUser.addRole(
         new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
-    when(userService.findUserById(any())).thenReturn(user);
+    when(userService.findUserById(any())).thenReturn(readerUser);
     Response response = resource.addAuthorizedReaders(duosUser, 1, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());
   }

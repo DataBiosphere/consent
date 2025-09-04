@@ -672,7 +672,7 @@ class DatasetServiceTest extends AbstractTestHelper {
   @Test
   void testRemoveAuthorizedAccessReader() {
     doNothing().when(datasetAuthorizationReaderDAO).deleteByDatasetAndUserId(anyLong(), anyLong());
-    datasetAuthorizationReaderDAO.deleteByDatasetAndUserId(1, 1);
+    assertDoesNotThrow(() -> datasetAuthorizationReaderDAO.deleteByDatasetAndUserId(1, 1));
   }
 
   /* Helper functions */
