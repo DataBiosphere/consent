@@ -10,6 +10,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.PUT;
@@ -215,6 +216,11 @@ public class StudyResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       Study existingStudy = datasetRegistrationService.findStudyById(studyId);
+      boolean canUpdateStudy = user.hasUserRole(UserRoles.ADMIN) ||
+          datasetService.isCreatorOrCustodian(user, existingStudy);
+      if (!canUpdateStudy) {
+        throw new ForbiddenException("Study with ID " + studyId + " is not updatable");
+      }
 
       // Manually validate the schema from an editing context. Validation with the schema tools
       // enforces it in a creation context but doesn't work for editing purposes.
