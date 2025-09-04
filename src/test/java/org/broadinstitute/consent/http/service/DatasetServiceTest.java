@@ -660,7 +660,7 @@ class DatasetServiceTest extends AbstractTestHelper {
   void testAddAuthorizedReader() {
     DatasetAuthorizationReader dauthr =
         new DatasetAuthorizationReader(1, 1, 1, 1, Timestamp.from(Instant.now()));
-    when(datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(anyInt(), anyInt(), anyInt()))
+    when(datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(anyLong(), anyLong(), anyLong()))
         .thenReturn(dauthr.id());
     when(datasetAuthorizationReaderDAO.findAuthorizedReaderByRecordId(anyLong()))
         .thenReturn(dauthr);
