@@ -577,8 +577,8 @@ public class DatasetResource extends Resource {
   @GET
   @Produces("application/json")
   @RolesAllowed(SERVICE_ACCOUNT)
-  @Path("/{identifier}/authorizedUsers")
-  public Response getAuthorizedUsers(@Auth DuosUser duosUser, @PathParam("identifier") String datasetIdentifier) {
+  @Path("/{identifier}/approvedUsers")
+  public Response getApprovedUsers(@Auth DuosUser duosUser, @PathParam("identifier") String datasetIdentifier) {
     try {
       Dataset dataset = datasetService.findDatasetByIdentifier(duosUser.getUser(), datasetIdentifier);
       if (Objects.isNull(dataset)) {
