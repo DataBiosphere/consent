@@ -110,7 +110,7 @@ public class DarCollectionResource extends Resource {
       @PathParam("collectionId") Integer collectionId) {
     try {
       User user = duosUser.getUser();
-      DarCollection collection = darCollectionService.getByCollectionId(collectionId);
+      DarCollection collection = darCollectionService.getByCollectionId(user, collectionId);
       if (user.hasUserRole(UserRoles.ADMIN) || checkSoPermissionsForCollection(user, collection)
           || checkDacPermissionsForCollection(user, collection)) {
         return Response.ok().entity(collection).build();
@@ -190,7 +190,7 @@ public class DarCollectionResource extends Resource {
       @QueryParam("roleName") String roleName) {
     try {
       User user = duosUser.getUser();
-      DarCollection collection = darCollectionService.getByCollectionId(collectionId);
+      DarCollection collection = darCollectionService.getByCollectionId(user, collectionId);
       isCollectionPresent(collection);
 
       // Default to the least impactful role if none provided.
@@ -216,7 +216,7 @@ public class DarCollectionResource extends Resource {
       @PathParam("id") Integer collectionId) {
     try {
       User user = duosUser.getUser();
-      DarCollection sourceCollection = darCollectionService.getByCollectionId(collectionId);
+      DarCollection sourceCollection = darCollectionService.getByCollectionId(user, collectionId);
       isCollectionPresent(sourceCollection);
       validateUserIsCreator(user, sourceCollection);
       validateCollectionIsCanceled(sourceCollection);
@@ -236,7 +236,7 @@ public class DarCollectionResource extends Resource {
       @PathParam("collectionId") Integer collectionId) {
     try {
       User user = duosUser.getUser();
-      DarCollection sourceCollection = darCollectionService.getByCollectionId(collectionId);
+      DarCollection sourceCollection = darCollectionService.getByCollectionId(user, collectionId);
       isCollectionPresent(sourceCollection);
       DarCollection updatedCollection = darCollectionService.createElectionsForDarCollection(user,
           sourceCollection);

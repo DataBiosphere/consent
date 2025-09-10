@@ -473,7 +473,8 @@ public class DarCollectionService implements ConsentLogger {
     return addDatasetsToCollection(collection);
   }
 
-  public DarCollection getByCollectionId(Integer collectionId) {
+  public DarCollection getByCollectionId(User user, Integer collectionId) {
+    // TODO: add user-specific vote filtering into find by id method
     DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     if (Objects.isNull(collection)) {
       throw new NotFoundException(
@@ -549,7 +550,7 @@ public class DarCollectionService implements ConsentLogger {
     }
 
     return switch (role) {
-      case ADMIN -> cancelDarCollectionElectionsAsAdmin(collection);
+      case ADMIN -> cancelDarCollectionElectionsAsAdmin(collection, user);
       case CHAIRPERSON ->
           cancelDarCollectionElectionsAsChair(collection, user);
       default -> cancelDarCollectionAsResearcher(collection, user);
@@ -594,7 +595,7 @@ public class DarCollectionService implements ConsentLogger {
       dataAccessRequestDAO.cancelByReferenceIds(activeDarIds);
     }
 
-    return getByCollectionId(collection.getDarCollectionId());
+    return getByCollectionId(user, collection.getDarCollectionId());
   }
 
   /**
@@ -605,14 +606,14 @@ public class DarCollectionService implements ConsentLogger {
    * @param collection The DarCollection
    * @return The DarCollection whose elections have been canceled
    */
-  private DarCollection cancelDarCollectionElectionsAsAdmin(DarCollection collection) {
+  private DarCollection cancelDarCollectionElectionsAsAdmin(DarCollection collection, User user) {
     Collection<DataAccessRequest> dars = collection.getDars().values();
     List<String> referenceIds = dars.stream().map(DataAccessRequest::getReferenceId).toList();
 
     // Cancel all DAR elections
     cancelElectionsForReferenceIds(referenceIds);
 
-    return getByCollectionId(collection.getDarCollectionId());
+    return getByCollectionId(user, collection.getDarCollectionId());
   }
 
   /**
@@ -643,7 +644,7 @@ public class DarCollectionService implements ConsentLogger {
     // Cancel filtered DAR elections
     cancelElectionsForReferenceIds(referenceIds);
 
-    return getByCollectionId(collection.getDarCollectionId());
+    return getByCollectionId(user, collection.getDarCollectionId());
   }
 
   /**

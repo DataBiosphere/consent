@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -127,33 +128,36 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   @Test
   void testGetByCollectionId() {
+    User user = mock(User.class);
     Integer collectionId = 1;
     DarCollection collection = new DarCollection();
     collection.setDarCollectionId(collectionId);
     when(darCollectionDAO.findDARCollectionByCollectionId(collectionId)).thenReturn(collection);
-    DarCollection result = service.getByCollectionId(collectionId);
+    DarCollection result = service.getByCollectionId(user, collectionId);
     assertNotNull(result);
     assertEquals(collectionId, result.getDarCollectionId());
   }
 
   @Test
   void testGetByCollectionId_NotFound() {
+    User user = mock(User.class);
     Integer collectionId = 1;
     when(darCollectionDAO.findDARCollectionByCollectionId(collectionId)).thenReturn(null);
 
     assertThrows(NotFoundException.class, () ->
-        service.getByCollectionId(collectionId));
+        service.getByCollectionId(user, collectionId));
   }
 
   @Test
   void testGetCollectionById_ServiceException() {
+    User user = mock(User.class);
     Integer collectionId = 1;
     RuntimeException expectedException = new RuntimeException("Test exception");
     when(darCollectionDAO.findDARCollectionByCollectionId(collectionId))
         .thenThrow(expectedException);
 
     RuntimeException exception = assertThrows(RuntimeException.class, () ->
-        service.getByCollectionId(collectionId));
+        service.getByCollectionId(user, collectionId));
     assertEquals(expectedException, exception);
   }
 
