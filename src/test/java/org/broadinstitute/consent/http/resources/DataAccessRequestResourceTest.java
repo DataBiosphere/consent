@@ -427,7 +427,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     when(dataAccessRequestService.createProgressReport(eq(user), any(), eq(parentDar), eq(request))).thenReturn(
         childDar);
     // datasets retrieved for the compliance logger
-    when(datasetService.findDatasetsByIds(childDar.getDatasetIds())).thenReturn(List.of());
+    when(datasetService.findDatasetsByIds(user, childDar.getDatasetIds())).thenReturn(List.of());
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
 
@@ -530,8 +530,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
         .setEthicsApprovalRequired(false).build();
     dataset2.setDataUse(dataUse2); // No documents required
 
-    when(datasetService.findDatasetById(1)).thenReturn(dataset1);
-    when(datasetService.findDatasetById(2)).thenReturn(dataset2);
+    when(datasetService.findDatasetById(mockUser, 1)).thenReturn(dataset1);
+    when(datasetService.findDatasetById(mockUser, 2)).thenReturn(dataset2);
 
     String fileType = "text/plain";
     InputStream collabInputStream = IOUtils.toInputStream("collab content",
@@ -549,7 +549,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     BlobId blobId = BlobId.of("bucket", "location");
     when(gcsService.storeDocument(eq(collabInputStream), eq(fileType), any())).thenReturn(blobId);
     when(gcsService.storeDocument(eq(ethicsInputStream), eq(fileType), any())).thenReturn(blobId);
-    resource.populateProgressReportWithDocuments(
+    resource.populateProgressReportWithDocuments(mockUser,
         collabInputStream, collabFileDetails, ethicsInputStream, ethicsFileDetails, childDar,
         parentDar);
     verify(gcsService, times(2)).storeDocument(any(), any(), any());
@@ -569,10 +569,10 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
         .setCollaboratorRequired(true)
         .setEthicsApprovalRequired(false).build();
     dataset.setDataUse(dataUse); // Collaboration document required
-    when(datasetService.findDatasetById(1)).thenReturn(dataset);
+    when(datasetService.findDatasetById(mockUser, 1)).thenReturn(dataset);
 
     BadRequestException exception = assertThrows(BadRequestException.class, () -> resource.populateProgressReportWithDocuments(
-        null, null, null, null, childDar, parentDar));
+        mockUser, null, null, null, null, childDar, parentDar));
 
     assertEquals("Collaboration document is required", exception.getMessage());
   }
@@ -591,10 +591,10 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
         .setCollaboratorRequired(false)
         .setEthicsApprovalRequired(true).build();
     dataset.setDataUse(dataUse); // Ethics approval document required
-    when(datasetService.findDatasetById(1)).thenReturn(dataset);
+    when(datasetService.findDatasetById(mockUser, 1)).thenReturn(dataset);
 
     BadRequestException exception = assertThrows(BadRequestException.class, () -> resource.populateProgressReportWithDocuments(
-        null, null, null, null, childDar, parentDar));
+        mockUser, null, null, null, null, childDar, parentDar));
 
     assertEquals("Ethics approval document is required", exception.getMessage());
   }
@@ -608,10 +608,10 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
     Dataset dataset = new Dataset();
     dataset.setDataUse(null); // Ethics approval document required
-    when(datasetService.findDatasetById(1)).thenReturn(dataset);
+    when(datasetService.findDatasetById(mockUser, 1)).thenReturn(dataset);
 
     BadRequestException exception = assertThrows(BadRequestException.class, () -> resource.populateProgressReportWithDocuments(
-        null, null, null, null, childDar, parentDar));
+        mockUser, null, null, null, null, childDar, parentDar));
 
     assertEquals("Dataset 1 is missing data use(s)", exception.getMessage());
   }
@@ -621,10 +621,10 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     DataAccessRequest parentDar = generateDataAccessRequest();
     DataAccessRequest childDar = generateDataAccessRequest();
     childDar.setDatasetIds(List.of(1));
-    when(datasetService.findDatasetById(1)).thenReturn(null);
+    when(datasetService.findDatasetById(mockUser, 1)).thenReturn(null);
 
     NotFoundException exception = assertThrows(NotFoundException.class, () -> resource.populateProgressReportWithDocuments(
-        null, null, null, null, childDar, parentDar));
+        mockUser, null, null, null, null, childDar, parentDar));
 
     assertEquals("Dataset 1 not found", exception.getMessage());
   }
@@ -669,7 +669,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
     dataset.setDataUse(dataUse);
-    when(datasetService.findDatasetById(1)).thenReturn(dataset);
+    when(datasetService.findDatasetById(mockUser, 1)).thenReturn(dataset);
 
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setDatasetIds(List.of(dataset.getDatasetId()));
@@ -677,7 +677,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     childDar.setDatasetIds(List.of(dataset.getDatasetId()));
 
     assertDoesNotThrow(() -> resource.populateProgressReportWithDocuments(
-        null, null, null, null, childDar, parentDar));
+        mockUser, null, null, null, null, childDar, parentDar));
   }
 
   @ParameterizedTest
@@ -1037,9 +1037,9 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testApproveCloseout() {
     String referenceId = UUID.randomUUID().toString();
-    doNothing().when(dataAccessRequestService).approveDataAccessRequestCloseout(user,referenceId);
+    doNothing().when(dataAccessRequestService).approveDataAccessRequestCloseout(user, referenceId);
     when(dataAccessRequestService.findByReferenceId(referenceId)).thenReturn(new DataAccessRequest());
-    when(datasetService.findDatasetsByIds(any())).thenReturn(List.of());
+    when(datasetService.findDatasetsByIds(user, List.of())).thenReturn(List.of());
     try (Response response = resource.approveCloseout(duosUser, request, referenceId)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }

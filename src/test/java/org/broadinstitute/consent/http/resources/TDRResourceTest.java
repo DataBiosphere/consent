@@ -7,8 +7,10 @@ import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.core.Response;
 import java.util.List;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUser;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
 import org.broadinstitute.consent.http.service.DatasetService;
@@ -28,6 +30,12 @@ class TDRResourceTest {
   private DatasetService datasetService;
   private TDRResource resource;
 
+  @Mock
+  private User user;
+
+  @Mock
+  private DuosUser duosUser;
+
   private void initResource() {
     try {
       resource = new TDRResource(tdrService, datasetService);
@@ -45,24 +53,29 @@ class TDRResourceTest {
     ApprovedUsers approvedUsers = new ApprovedUsers(users);
 
     Dataset d = new Dataset();
+    Study study = new Study();
+    study.setPublicVisibility(Boolean.TRUE);
+    d.setStudy(study);
 
     when(tdrService.getApprovedUsersForDataset(any(), any())).thenReturn(approvedUsers);
-    when(datasetService.findDatasetByIdentifier(ds)).thenReturn(d);
+    when(datasetService.findDatasetByIdentifier(user, ds)).thenReturn(d);
+    when(duosUser.getUser()).thenReturn(user);
 
     initResource();
 
-    Response r = resource.getApprovedUsers(new AuthUser(), ds);
+    Response r = resource.getApprovedUsers(duosUser, ds);
     assertEquals(200, r.getStatus());
     assertEquals(approvedUsers, r.getEntity());
   }
 
   @Test
   void testGetApprovedUsersForDataset404() {
-    when(datasetService.findDatasetByIdentifier("DUOS-00003")).thenReturn(null);
+    when(duosUser.getUser()).thenReturn(user);
+    when(datasetService.findDatasetByIdentifier(user, "DUOS-00003")).thenReturn(null);
 
     initResource();
 
-    Response r = resource.getApprovedUsers(new AuthUser(), "DUOS-00003");
+    Response r = resource.getApprovedUsers(duosUser, "DUOS-00003");
 
     assertEquals(404, r.getStatus());
   }
@@ -73,11 +86,12 @@ class TDRResourceTest {
     Dataset d = new Dataset();
     d.setName("test");
 
-    when(datasetService.findDatasetByIdentifier("DUOS-00003")).thenReturn(d);
+    when(duosUser.getUser()).thenReturn(user);
+    when(datasetService.findDatasetByIdentifier(user, "DUOS-00003")).thenReturn(d);
 
     initResource();
 
-    Response r = resource.getDatasetByIdentifier(new AuthUser(), "DUOS-00003");
+    Response r = resource.getDatasetByIdentifier(duosUser, "DUOS-00003");
 
     assertEquals(200, r.getStatus());
     assertEquals(GsonUtil.buildGson().toJson(d), r.getEntity());
@@ -86,11 +100,12 @@ class TDRResourceTest {
 
   @Test
   void testGetDatasetByIdentifier404() {
-    when(datasetService.findDatasetByIdentifier("DUOS-00003")).thenReturn(null);
+    when(duosUser.getUser()).thenReturn(user);
+    when(datasetService.findDatasetByIdentifier(user, "DUOS-00003")).thenReturn(null);
 
     initResource();
 
-    Response r = resource.getDatasetByIdentifier(new AuthUser(), "DUOS-00003");
+    Response r = resource.getDatasetByIdentifier(duosUser, "DUOS-00003");
 
     assertEquals(404, r.getStatus());
   }

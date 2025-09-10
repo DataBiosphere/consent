@@ -24,8 +24,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriInfo;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -446,12 +446,11 @@ public class UserResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/acknowledgements")
   @PermitAll
-  public Response postAcknowledgements(@Auth AuthUser authUser, String json) {
+  public Response postAcknowledgements(@Auth DuosUser duosUser, String json) {
+    User user = duosUser.getUser();
     ArrayList<String> keys;
     try {
-      Type listOfStringsType = new TypeToken<ArrayList<String>>() {
-      }.getType();
-      keys = gson.fromJson(json, listOfStringsType);
+      keys = gson.fromJson(json, new TypeToken<>() {});
       if (keys == null || keys.isEmpty()) {
         return Response.status(Response.Status.BAD_REQUEST).build();
       }
@@ -459,8 +458,14 @@ public class UserResource extends Resource {
       return Response.status(Response.Status.BAD_REQUEST).build();
     }
 
+    if (keys.stream().anyMatch(k -> k.startsWith(AcknowledgementService.DAR_CLOSEOUT_CHAIR_REF))
+        && !user.hasUserRole(UserRoles.CHAIRPERSON)) {
+      return Response.status(Status.UNAUTHORIZED)
+          .entity(new Error("Invalid acknowledgement", HttpStatusCodes.STATUS_CODE_UNAUTHORIZED))
+          .build();
+    }
+
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
       Map<String, Acknowledgement> acknowledgementMap = acknowledgementService.makeAcknowledgements(
           keys, user);
       return Response.ok().entity(acknowledgementMap).build();

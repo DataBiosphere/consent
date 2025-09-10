@@ -453,8 +453,6 @@ paths:
     $ref: './paths/progressReport.yaml'
   /api/dar/{referenceId}/approveCloseout:
     $ref: './paths/approveCloseoutBySigningOfficial.yaml'
-  /api/dataset/v2:
-    $ref: './paths/datasetV2.yaml'
   /api/dataset/v3:
     $ref: './paths/datasetV3.yaml'
   /api/dataset/v3/{datasetId}:
@@ -872,7 +870,9 @@ paths:
         400:
           description: The request isn't in the proper format.
         401:
-          description: Unauthorized, log in and try the operation again.
+          description: |
+            Unauthorized, log in and try the operation again.
+            Closeout Acknowledgements can only be submitted by Chairpersons
         500:
           description: Error processing the request.
     get:

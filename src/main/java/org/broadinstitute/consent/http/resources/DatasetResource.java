@@ -22,12 +22,10 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriBuilder;
-import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +42,7 @@ import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -136,7 +135,7 @@ public class DatasetResource extends Resource {
   @Path("/v3/{datasetId}")
   @RolesAllowed({ADMIN, CHAIRPERSON})
   public Response updateByDatasetUpdate(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @PathParam("datasetId") Integer datasetId,
       FormDataMultiPart multipart,
       @FormDataParam("dataset") String json) {
@@ -146,13 +145,11 @@ public class DatasetResource extends Resource {
         throw new BadRequestException("Dataset is required");
       }
       DatasetUpdate update = new DatasetUpdate(json);
-
-      Dataset datasetExists = datasetService.findDatasetById(datasetId);
+      User user = duosUser.getUser();
+      Dataset datasetExists = datasetService.findDatasetById(user, datasetId);
       if (Objects.isNull(datasetExists)) {
         throw new NotFoundException("Could not find the dataset with id: " + datasetId);
       }
-
-      User user = userService.findUserByEmail(authUser.getEmail());
 
       // key: field name (not file name), value: file body part
       Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
@@ -173,15 +170,15 @@ public class DatasetResource extends Resource {
   @Produces({MediaType.APPLICATION_JSON})
   @Path("/{datasetId}")
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
-  public Response patchByDatasetUpdate(@Auth AuthUser authUser,
+  public Response patchByDatasetUpdate(@Auth DuosUser duosUser,
       @PathParam("datasetId") Integer datasetId, String json) {
     try {
-      Dataset existingDataset = datasetService.findDatasetById(datasetId);
+      User user = duosUser.getUser();
+      Dataset existingDataset = datasetService.findDatasetById(user, datasetId);
       if (existingDataset == null) {
         throw new NotFoundException("Could not find the dataset with id: " + datasetId);
       }
       // Check permissions for non-admin roles.
-      User user = userService.findUserByEmail(authUser.getEmail());
       if (!user.hasUserRole(UserRoles.ADMIN)) {
         if (!existingDataset.isCreator(user) && !existingDataset.isCustodian(user)) {
           throw new ForbiddenException("User does not have permission to update this dataset");
@@ -204,7 +201,8 @@ public class DatasetResource extends Resource {
       List<String> existingNames = datasetService.findAllDatasetNames();
       if (patch.name() != null && !patch.name().equals(existingDataset.getName())
           && existingNames.contains(patch.name())) {
-        throw new BadRequestException("The new name for this dataset already exists: " + patch.name());
+        throw new BadRequestException(
+            "The new name for this dataset already exists: " + patch.name());
       }
       if (!patch.validateProperties()) {
         throw new BadRequestException("Properties are invalid");
@@ -212,20 +210,6 @@ public class DatasetResource extends Resource {
       Dataset patched = datasetRegistrationService.patchDataset(datasetId, user, patch);
       elasticSearchService.synchronizeDatasetInESIndex(patched, user, false);
       return Response.ok(patched).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Produces("application/json")
-  @PermitAll
-  @Path("/v2")
-  public Response findAllDatasetsStreaming(@Auth AuthUser authUser) {
-    try {
-      userService.findUserByEmail(authUser.getEmail());
-      StreamingOutput streamedDatasets = datasetService.findAllDatasetsAsStreamingOutput();
-      return Response.ok().entity(streamedDatasets).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -249,9 +233,9 @@ public class DatasetResource extends Resource {
   @Path("/v2/{datasetId}")
   @Produces("application/json")
   @PermitAll
-  public Response getDataset(@PathParam("datasetId") Integer datasetId) {
+  public Response getDataset(@Auth DuosUser duosUser, @PathParam("datasetId") Integer datasetId) {
     try {
-      Dataset dataset = datasetService.findDatasetById(datasetId);
+      Dataset dataset = datasetService.findDatasetById(duosUser.getUser(), datasetId);
       if (Objects.isNull(dataset)) {
         throw new NotFoundException("Could not find the dataset with id: " + datasetId.toString());
       }
@@ -269,7 +253,8 @@ public class DatasetResource extends Resource {
   public Response getRegistrationFromDatasetIdentifier(@Auth AuthUser authUser,
       @PathParam("datasetIdentifier") String datasetIdentifier) {
     try {
-      Dataset dataset = datasetService.findDatasetByIdentifier(datasetIdentifier);
+      User user = userService.findUserByEmail(authUser.getEmail());
+      Dataset dataset = datasetService.findDatasetByIdentifier(user, datasetIdentifier);
       if (Objects.isNull(dataset)) {
         throw new NotFoundException(
             "No dataset exists for dataset identifier: " + datasetIdentifier);
@@ -290,10 +275,10 @@ public class DatasetResource extends Resource {
   @Path("/batch")
   @Produces("application/json")
   @PermitAll
-  public Response getDatasets(@QueryParam("ids") List<Integer> datasetIds) {
+  public Response getDatasets(@Auth DuosUser duosUser,
+      @QueryParam("ids") List<Integer> datasetIds) {
     try {
-      List<Dataset> datasets = datasetService.findDatasetsByIds(datasetIds);
-
+      List<Dataset> datasets = datasetService.findDatasetsByIds(duosUser.getUser(), datasetIds);
       Set<Integer> foundIds = datasets.stream().map(Dataset::getDatasetId)
           .collect(Collectors.toSet());
       if (!foundIds.containsAll(datasetIds)) {
@@ -361,11 +346,10 @@ public class DatasetResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/{datasetId}")
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
-  public Response delete(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId,
-      @Context UriInfo info) {
+  public Response delete(@Auth DuosUser duosUser, @PathParam("datasetId") Integer datasetId) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      Dataset dataset = datasetService.findDatasetById(datasetId);
+      User user = duosUser.getUser();
+      Dataset dataset = datasetService.findDatasetById(user, datasetId);
       if (Objects.nonNull(dataset.getDeletable()) && !dataset.getDeletable()) {
         throw new BadRequestException("Dataset is in use and cannot be deleted.");
       }
@@ -417,7 +401,8 @@ public class DatasetResource extends Resource {
   @DELETE
   @Path("/index/{datasetId}")
   @RolesAllowed(ADMIN)
-  public Response deleteDatasetIndex(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId) {
+  public Response deleteDatasetIndex(@Auth AuthUser authUser,
+      @PathParam("datasetId") Integer datasetId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       return elasticSearchService.deleteIndex(datasetId, user.getUserId());
@@ -468,7 +453,7 @@ public class DatasetResource extends Resource {
       User user = userService.findUserByEmail(authUser.getEmail());
       Gson gson = new Gson();
       DataUse dataUse = gson.fromJson(dataUseJson, DataUse.class);
-      Dataset originalDataset = datasetService.findDatasetById(id);
+      Dataset originalDataset = datasetService.findDatasetById(user, id);
       if (Objects.isNull(originalDataset)) {
         throw new NotFoundException("Dataset not found: " + id);
       }

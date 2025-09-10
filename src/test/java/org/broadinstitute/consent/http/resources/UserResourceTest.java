@@ -96,6 +96,9 @@ class UserResourceTest extends AbstractTestHelper {
       .setEmail(TEST_EMAIL)
       .setUserStatusInfo(userStatusInfo);
 
+  private final DuosUser duosUser = new DuosUser(authUser,
+      new User(1, TEST_EMAIL, "Test User", new Date(), Collections.emptyList()));
+
   @BeforeEach
   void initResource() {
     userResource = new UserResource(samService, userService, datasetService, acknowledgementService,
@@ -184,7 +187,6 @@ class UserResourceTest extends AbstractTestHelper {
   void testGetUsers_InvalidRole() {
     User user = createUserWithRole();
     when(userService.findUserByEmail(any())).thenReturn(user);
-
 
     Response response = userResource.getUsers(authUser, "BadRequest");
     assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
@@ -782,7 +784,6 @@ class UserResourceTest extends AbstractTestHelper {
     when(datasetService.findDatasetListByDacIds(anyList())).thenReturn(List.of());
     when(userService.findUserByEmail(anyString())).thenReturn(user);
 
-
     Response response = userResource.getDatasetsFromUserDacsV2(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
@@ -791,7 +792,6 @@ class UserResourceTest extends AbstractTestHelper {
   void testGetDatasetsFromUserDacsV2UserNotFound() {
     when(userService.findUserByEmail(anyString())).thenThrow(
         new NotFoundException("User not found"));
-
 
     Response response = userResource.getDatasetsFromUserDacsV2(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -806,9 +806,8 @@ class UserResourceTest extends AbstractTestHelper {
     when(acknowledgementService.makeAcknowledgements(anyList(), any())).thenReturn(
         acknowledgementMap);
 
-
     String jsonString = userResource.unmarshal(List.of(acknowledgementKey));
-    try (Response response = userResource.postAcknowledgements(authUser, jsonString)) {
+    try (Response response = userResource.postAcknowledgements(duosUser, jsonString)) {
       assertEquals(Status.OK.getStatusCode(), response.getStatus());
     }
   }
@@ -821,7 +820,7 @@ class UserResourceTest extends AbstractTestHelper {
 
     String jsonString = userResource.unmarshal(List.of(acknowledgementKey));
 
-    try (Response response = userResource.postAcknowledgements(authUser, jsonString)) {
+    try (Response response = userResource.postAcknowledgements(duosUser, jsonString)) {
       assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
     }
   }
@@ -830,21 +829,48 @@ class UserResourceTest extends AbstractTestHelper {
   void testPostAcknowledgementBadJson() {
     String jsonString = "The quick brown fox jumped over the lazy dog.";
 
-    try (Response response = userResource.postAcknowledgements(authUser, jsonString)) {
+    try (Response response = userResource.postAcknowledgements(duosUser, jsonString)) {
       assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
   }
 
   @Test
+  void testPostCloseoutAcknowledgementSuccess() {
+    User user = createUserWithRole();
+    user.addRole(UserRoles.Chairperson());
+    DuosUser chairUser = new DuosUser(authUser, user);
+    String acknowledgementKey = AcknowledgementService.DAR_CLOSEOUT_CHAIR_REF + "12345";
+    Map<String, Acknowledgement> acknowledgementMap = getDefaultAcknowledgementForUser(user,
+        acknowledgementKey);
+    when(acknowledgementService.makeAcknowledgements(anyList(), any())).thenReturn(
+        acknowledgementMap);
+
+    String jsonString = userResource.unmarshal(List.of(acknowledgementKey));
+    try (Response response = userResource.postAcknowledgements(chairUser, jsonString)) {
+      assertEquals(Status.OK.getStatusCode(), response.getStatus());
+    }
+  }
+
+  @Test
+  void testPostCloseoutAcknowledgementFailure() {
+    String acknowledgementKey = AcknowledgementService.DAR_CLOSEOUT_CHAIR_REF + "12345";
+
+    String jsonString = userResource.unmarshal(List.of(acknowledgementKey));
+    try (Response response = userResource.postAcknowledgements(duosUser, jsonString)) {
+      assertEquals(Status.UNAUTHORIZED.getStatusCode(), response.getStatus());
+    }
+  }
+
+  @Test
   void testPostAcknowledgementEmptyJson() {
-    try (Response response = userResource.postAcknowledgements(authUser, "")) {
+    try (Response response = userResource.postAcknowledgements(duosUser, "")) {
       assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
   }
 
   @Test
   void testPostAcknowledgementEmptyJsonList() {
-    try (Response response = userResource.postAcknowledgements(authUser, "[]")) {
+    try (Response response = userResource.postAcknowledgements(duosUser, "[]")) {
       assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
   }
@@ -853,7 +879,6 @@ class UserResourceTest extends AbstractTestHelper {
   void testMissingAcknowledgement() {
     String acknowledgementKey = "key1";
     when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(null);
-
 
     Response response = userResource.getUserAcknowledgement(authUser, acknowledgementKey);
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -865,7 +890,6 @@ class UserResourceTest extends AbstractTestHelper {
     doThrow(new RuntimeException("some exception during get.")).when(acknowledgementService)
         .findAcknowledgementForUserByKey(any(), any());
 
-
     Response response = userResource.getUserAcknowledgement(authUser, acknowledgementKey);
     assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
   }
@@ -873,7 +897,6 @@ class UserResourceTest extends AbstractTestHelper {
   @Test
   void testGetAcknowledgementNull() {
     when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(null);
-
 
     Response response = userResource.getUserAcknowledgement(authUser, null);
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
@@ -883,7 +906,6 @@ class UserResourceTest extends AbstractTestHelper {
   void testGetUnsetAcknowledgementsForUser() {
     when(acknowledgementService.findAcknowledgementsForUser(any())).thenReturn(null);
 
-
     Response response = userResource.getUserAcknowledgements(authUser);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
@@ -892,7 +914,6 @@ class UserResourceTest extends AbstractTestHelper {
   void testGetAcknowledgementsForUserException() {
     doThrow(new RuntimeException("some get exception")).when(acknowledgementService)
         .findAcknowledgementsForUser(any());
-
 
     Response response = userResource.getUserAcknowledgements(authUser);
     assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
@@ -906,7 +927,6 @@ class UserResourceTest extends AbstractTestHelper {
         acknowledgementKey);
     when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(
         acknowledgementMap.get(acknowledgementKey));
-
 
     Response response = userResource.getUserAcknowledgement(authUser, acknowledgementKey);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());

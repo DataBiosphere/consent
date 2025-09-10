@@ -10,6 +10,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.PUT;
@@ -75,11 +76,11 @@ public class StudyResource extends Resource {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN})
-  public Response convertToStudy(@Auth AuthUser authUser,
+  public Response convertToStudy(@Auth DuosUser duosUser,
       @PathParam("datasetIdentifier") String datasetIdentifier, String json) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      Dataset dataset = datasetService.findDatasetByIdentifier(datasetIdentifier);
+      User user = duosUser.getUser();
+      Dataset dataset = datasetService.findDatasetByIdentifier(user, datasetIdentifier);
       StudyConversion studyConversion = new Gson().fromJson(json, StudyConversion.class);
       Study study = datasetService.convertDatasetToStudy(user, dataset, studyConversion);
       return Response.ok(study).build();
@@ -124,7 +125,7 @@ public class StudyResource extends Resource {
   @Timed
   public Response getStudyById(@Auth DuosUser duosUser, @PathParam("studyId") Integer studyId) {
     try {
-      Study study = datasetService.getStudyWithDatasetsById(studyId);
+      Study study = datasetService.getStudyWithDatasetsById(duosUser.getUser(), studyId);
       checkPublicVisibilityForUser(study, duosUser.getUser());
       return Response.ok(study).build();
     } catch (Exception e) {
@@ -139,7 +140,7 @@ public class StudyResource extends Resource {
   public Response deleteStudyById(@Auth AuthUser authUser, @PathParam("studyId") Integer studyId) {
     try {
       final User user = userService.findUserByEmail(authUser.getEmail());
-      Study study = datasetService.getStudyWithDatasetsById(studyId);
+      Study study = datasetService.getStudyWithDatasetsById(user, studyId);
 
       if (Objects.isNull(study)) {
         throw new NotFoundException("Study not found");
@@ -184,7 +185,7 @@ public class StudyResource extends Resource {
   public Response getRegistrationFromStudy(@Auth DuosUser duosUser,
       @PathParam("studyId") Integer studyId) {
     try {
-      Study study = datasetService.getStudyWithDatasetsById(studyId);
+      Study study = datasetService.getStudyWithDatasetsById(duosUser.getUser(), studyId);
       checkPublicVisibilityForUser(study, duosUser.getUser());
       List<Dataset> datasets =
           Objects.nonNull(study.getDatasets()) ? study.getDatasets().stream().toList() : List.of();
@@ -215,6 +216,11 @@ public class StudyResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       Study existingStudy = datasetRegistrationService.findStudyById(studyId);
+      boolean canUpdateStudy = user.hasUserRole(UserRoles.ADMIN) ||
+          datasetService.isCreatorOrCustodian(user, existingStudy);
+      if (!canUpdateStudy) {
+        throw new ForbiddenException("Study with ID " + studyId + " is not updatable");
+      }
 
       // Manually validate the schema from an editing context. Validation with the schema tools
       // enforces it in a creation context but doesn't work for editing purposes.
@@ -247,7 +253,7 @@ public class StudyResource extends Resource {
   }
 
   private void checkPublicVisibilityForUser(Study study, User user) {
-    boolean isPublic = study.getPublicVisibility() != null && study.getPublicVisibility();
+    boolean isPublic = datasetService.isCreatorOrCustodian(user, study);
     if (!isPublic && !study.getCreateUserId().equals(user.getUserId())) {
       throw new NotFoundException("Study not found");
     }

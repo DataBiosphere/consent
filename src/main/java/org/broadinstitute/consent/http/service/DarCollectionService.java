@@ -1,15 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
-import static java.util.stream.Collectors.toList;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.NotAcceptableException;
-import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -495,6 +491,15 @@ public class DarCollectionService implements ConsentLogger {
     return addDatasetsToCollection(collection);
   }
 
+  public DarCollection getCollectionWithElectionsByCollectionIdAndDatasetIds(List<Integer> datasetIds, Integer collectionId) {
+    DarCollection collection = darCollectionDAO.findCollectionWithElectionsByCollectionIdAndDatasetIds(datasetIds, collectionId);
+    if (Objects.isNull(collection)) {
+      throw new NotFoundException(
+          "Collection with the collection id of " + collectionId + " was not found");
+    }
+    return addDatasetsToCollection(collection);
+  }
+
   /**
    * Given a DarCollection, add its relevant datasets.
    *
@@ -519,9 +524,8 @@ public class DarCollectionService implements ConsentLogger {
             .map(datasetMap::get)
             .filter(Objects::nonNull) // filtering out nulls which were getting captured by map
             .collect(Collectors.toSet());
-        DarCollection copy = collection.deepCopy();
-        copy.setDatasets(collectionDatasets);
-        return copy;
+        collection.setDatasets(collectionDatasets);
+        return collection.deepCopy();
     }
     // There were no datasets to add, so we return the original list
     return collection;
