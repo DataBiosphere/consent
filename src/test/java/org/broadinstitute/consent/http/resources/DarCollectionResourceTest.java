@@ -84,26 +84,14 @@ class DarCollectionResourceTest extends AbstractTestHelper {
 
   @Test
   void testGetCollectionByIdResearcher() {
+    DuosUser duosUser = new DuosUser(authUser, researcher);
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
-    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-    when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
+    when(darCollectionService.getByCollectionId(collection.getDarCollectionId())).thenReturn(collection);
 
-    Response response = resource.getCollectionById(authUser, 1);
+    Response response = resource.getCollectionById(duosUser, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-  }
-
-  @Test
-  void testGetCollectionByIdResearcherNotFound() {
-    DarCollection collection = mockDarCollection();
-    collection.setCreateUser(researcher);
-    collection.setCreateUserId(researcher.getUserId() + 1);
-    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-    when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
-
-    Response response = resource.getCollectionById(authUser, 1);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
   @Test
@@ -111,71 +99,71 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     DarCollection collection = mockDarCollection();
     UserRole adminRole = UserRoles.Admin();
     User admin = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(adminRole));
+    DuosUser duosUser = new DuosUser(authUser, admin);
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
 
-    when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
-    when(userService.findUserByEmail(anyString())).thenReturn(admin);
+    when(darCollectionService.getByCollectionId(collection.getDarCollectionId())).thenReturn(collection);
 
-    Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
+    Response response = resource.getCollectionById(duosUser, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
   @Test
   void testGetCollectionByIdSO() {
+    DuosUser duosUser = new DuosUser(authUser, signingOfficial);
     DarCollection collection = mockDarCollection();
     signingOfficial.setInstitutionId(1);
     researcher.setInstitutionId(1);
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
 
-    when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
-    when(userService.findUserByEmail(anyString())).thenReturn(signingOfficial);
+    when(darCollectionService.getByCollectionId(collection.getDarCollectionId())).thenReturn(collection);
 
-    Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
+    Response response = resource.getCollectionById(duosUser, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
   @Test
   void testGetCollectionByIdSOWrongInstitution() {
+    DuosUser duosUser = new DuosUser(authUser, signingOfficial);
     DarCollection collection = mockDarCollection();
     signingOfficial.setInstitutionId(2);
     researcher.setInstitutionId(1);
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
 
-    when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
-    when(userService.findUserByEmail(anyString())).thenReturn(signingOfficial);
+    when(darCollectionService.getByCollectionId(collection.getDarCollectionId())).thenReturn(collection);
 
-    Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
+    Response response = resource.getCollectionById(duosUser, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
   @Test
   void testGetCollectionByIdNoInstitution() {
+    DuosUser duosUser = new DuosUser(authUser, signingOfficial);
     DarCollection collection = mockDarCollection();
     researcher.setInstitutionId(1);
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
 
-    when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
-    when(userService.findUserByEmail(anyString())).thenReturn(signingOfficial);
+    when(darCollectionService.getByCollectionId(collection.getDarCollectionId())).thenReturn(collection);
 
-    Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
+    Response response = resource.getCollectionById(duosUser, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
   @Test
   void testGetCollectionByIdSONoInstitution() {
+    DuosUser duosUser = new DuosUser(authUser, signingOfficial);
     DarCollection collection = mockDarCollection();
     signingOfficial.setInstitutionId(1);
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
 
-    when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
-    when(userService.findUserByEmail(anyString())).thenReturn(signingOfficial);
+    when(darCollectionService.getByCollectionId(collection.getDarCollectionId())).thenReturn(collection);
 
-    Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
+    Response response = resource.getCollectionById(duosUser, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -183,6 +171,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   void testGetCollectionByIdChair() {
     List<UserRole> chairRole = List.of(UserRoles.Chairperson());
     User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole);
+    DuosUser duosUser = new DuosUser(authUser, chair);
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
@@ -191,18 +180,18 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     dataSet.setDatasetId(2);
     collection.addDataset(dataSet);
 
-    when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
-    when(userService.findUserByEmail(anyString())).thenReturn(chair);
-    when(darCollectionService.findDatasetIdsByDACUser(any())).thenReturn(Arrays.asList(1, 2));
+    when(darCollectionService.getByCollectionId(collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.findDatasetIdsByDACUser(chair)).thenReturn(Arrays.asList(1, 2));
 
-    Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
+    Response response = resource.getCollectionById(duosUser, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
   @Test
   void testGetCollectionByIdDacMember() {
-    List<UserRole> chairRole = List.of(UserRoles.Member());
-    User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole);
+    List<UserRole> memberRole = List.of(UserRoles.Member());
+    User member = new User(3, authUser.getEmail(), "Display Name", new Date(), memberRole);
+    DuosUser duosUser = new DuosUser(authUser, member);
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
@@ -211,11 +200,10 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     dataSet.setDatasetId(2);
     collection.addDataset(dataSet);
 
-    when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
-    when(userService.findUserByEmail(anyString())).thenReturn(chair);
-    when(darCollectionService.findDatasetIdsByDACUser(any())).thenReturn(Arrays.asList(1, 2));
+    when(darCollectionService.getByCollectionId(collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.findDatasetIdsByDACUser(member)).thenReturn(Arrays.asList(1, 2));
 
-    Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
+    Response response = resource.getCollectionById(duosUser, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -223,6 +211,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   void testGetCollectionByIdDacMemberNoDatasetIdMatch() {
     List<UserRole> chairRole = List.of(UserRoles.Chairperson());
     User chair = new User(3, authUser.getEmail(), "Display Name", new Date(), chairRole);
+    DuosUser duosUser = new DuosUser(authUser, chair);
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
@@ -231,11 +220,10 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     dataSet.setDatasetId(3);
     collection.addDataset(dataSet);
 
-    when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
-    when(userService.findUserByEmail(anyString())).thenReturn(chair);
-    when(darCollectionService.findDatasetIdsByDACUser(any())).thenReturn(Arrays.asList(1, 2));
+    when(darCollectionService.getByCollectionId(collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.findDatasetIdsByDACUser(chair)).thenReturn(Arrays.asList(1, 2));
 
-    Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
+    Response response = resource.getCollectionById(duosUser, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -245,6 +233,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     UserRole localResearcherRole = UserRoles.Researcher();
     User user = new User(1, authUser.getEmail(), "Display Name", new Date(),
         List.of(chairRole, localResearcherRole));
+    DuosUser duosUser = new DuosUser(authUser, user);
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(user);
     collection.setCreateUserId(user.getUserId());
@@ -253,11 +242,10 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     dataSet.setDatasetId(3);
     collection.addDataset(dataSet);
 
-    when(darCollectionService.getByCollectionId(any())).thenReturn(collection);
-    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-    when(darCollectionService.findDatasetIdsByDACUser(any())).thenReturn(Arrays.asList(1, 2));
+    when(darCollectionService.getByCollectionId(collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.findDatasetIdsByDACUser(user)).thenReturn(Arrays.asList(1, 2));
 
-    Response response = resource.getCollectionById(authUser, collection.getDarCollectionId());
+    Response response = resource.getCollectionById(duosUser, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 

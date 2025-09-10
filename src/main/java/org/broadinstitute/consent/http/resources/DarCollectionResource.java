@@ -106,13 +106,11 @@ public class DarCollectionResource extends Resource {
   @Path("{collectionId}")
   @Produces("application/json")
   @PermitAll
-  public Response getCollectionById(
-      @Auth AuthUser authUser,
+  public Response getCollectionById(@Auth DuosUser duosUser,
       @PathParam("collectionId") Integer collectionId) {
     try {
       DarCollection collection = darCollectionService.getByCollectionId(collectionId);
-      User user = userService.findUserByEmail(authUser.getEmail());
-
+      User user = duosUser.getUser();
       if (user.hasUserRole(UserRoles.ADMIN) || checkSoPermissionsForCollection(user, collection)
           || checkDacPermissionsForCollection(user, collection)) {
         return Response.ok().entity(collection).build();
