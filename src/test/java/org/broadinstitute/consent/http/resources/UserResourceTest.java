@@ -108,11 +108,11 @@ class UserResourceTest extends AbstractTestHelper {
   @Test
   void testGetMe() throws Exception {
     User user = createUserWithRole();
-    DuosUser duosUser = new DuosUser(authUser, user);
+    DuosUser du = new DuosUser(authUser, user);
 
-    Response response = userResource.getUser(duosUser);
-    verify(samService).asyncPostRegistrationInfo(duosUser);
-    verify(nihService).syncAccount(duosUser);
+    Response response = userResource.getUser(du);
+    verify(samService).asyncPostRegistrationInfo(du);
+    verify(nihService).syncAccount(du);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
