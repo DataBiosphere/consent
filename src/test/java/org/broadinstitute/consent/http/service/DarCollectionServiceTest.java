@@ -38,7 +38,6 @@ import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarCollectionActions;
@@ -88,8 +87,6 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   @Mock
   private VoteDAO voteDAO;
   @Mock
-  private MatchDAO matchDAO;
-  @Mock
   private UserDAO userDAO;
   @Mock
   private DacDAO dacDAO;
@@ -97,8 +94,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   @BeforeEach
   void setUp() {
     service = new DarCollectionService(darCollectionDAO, darCollectionServiceDAO, datasetDAO,
-        electionDAO, dataAccessRequestDAO, emailService, voteDAO, matchDAO,
-        darCollectionSummaryDAO, userDAO, dacDAO);
+        electionDAO, dataAccessRequestDAO, emailService, voteDAO, darCollectionSummaryDAO, userDAO,
+        dacDAO);
   }
 
   @Test

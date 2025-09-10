@@ -27,7 +27,6 @@ import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarCollectionActions;
@@ -60,7 +59,6 @@ public class DarCollectionService implements ConsentLogger {
   private final DatasetDAO datasetDAO;
   private final ElectionDAO electionDAO;
   private final EmailService emailService;
-  private final MatchDAO matchDAO;
   private final UserDAO userDAO;
   private final VoteDAO voteDAO;
 
@@ -68,7 +66,7 @@ public class DarCollectionService implements ConsentLogger {
   public DarCollectionService(DarCollectionDAO darCollectionDAO,
       DarCollectionServiceDAO collectionServiceDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO,
       DataAccessRequestDAO dataAccessRequestDAO, EmailService emailService, VoteDAO voteDAO,
-      MatchDAO matchDAO, DarCollectionSummaryDAO darCollectionSummaryDAO, UserDAO userDAO,
+      DarCollectionSummaryDAO darCollectionSummaryDAO, UserDAO userDAO,
       DacDAO dacDAO) {
     this.darCollectionDAO = darCollectionDAO;
     this.collectionServiceDAO = collectionServiceDAO;
@@ -77,7 +75,6 @@ public class DarCollectionService implements ConsentLogger {
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.emailService = emailService;
     this.voteDAO = voteDAO;
-    this.matchDAO = matchDAO;
     this.darCollectionSummaryDAO = darCollectionSummaryDAO;
     this.userDAO = userDAO;
     this.dacDAO = dacDAO;
