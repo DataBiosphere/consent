@@ -7,8 +7,11 @@ import java.beans.Transient;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import net.gcardone.junidecode.Junidecode;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -331,10 +334,19 @@ public class User {
   }
 
   public boolean hasUserRole(UserRoles role) {
-    if (Objects.isNull(this.getRoles())) {
+    if (null == role) {
+      return false;
+    }
+    return hasAnyUserRole(List.of(role));
+  }
+
+  public boolean hasAnyUserRole(List<UserRoles> roles) {
+    if (null == this.getRoles() || this.getRoles().isEmpty() || null == roles || roles.isEmpty()) {
       return false;
     } else {
-      return this.getRoles().stream().anyMatch(r -> r.getRoleId().equals(role.getRoleId()));
+      Set<Integer> roleIds = roles.stream().filter(Objects::nonNull).map(UserRoles::getRoleId).collect(Collectors.toSet());
+      Set<Integer> userRoleIds = this.getRoles().stream().map(UserRole::getRoleId).collect(Collectors.toSet());
+      return userRoleIds.stream().anyMatch(roleIds::contains);
     }
   }
 
