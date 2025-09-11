@@ -8,7 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -26,6 +29,8 @@ import jakarta.ws.rs.core.StreamingOutput;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -39,6 +44,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetAuthorizationReader;
 import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetSummary;
@@ -52,9 +58,11 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGro
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
+import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
+import org.broadinstitute.consent.http.service.TDRService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -78,6 +86,9 @@ class DatasetResourceTest extends AbstractTestHelper {
   private ElasticSearchService elasticSearchService;
 
   @Mock
+  private TDRService tdrService;
+
+  @Mock
   private UserService userService;
 
   @Mock
@@ -91,7 +102,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   @BeforeEach
   void initResource() {
     resource = new DatasetResource(datasetService, userService,
-        datasetRegistrationService, elasticSearchService);
+        datasetRegistrationService, elasticSearchService, tdrService);
   }
 
   @Test
@@ -1013,6 +1024,112 @@ class DatasetResourceTest extends AbstractTestHelper {
     try (var response = resource.syncDataUseTranslation(authUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
+  }
+
+  @Test
+  void testGetAuthorizedReadersOK() {
+    when(datasetService.getAuthorizationReaders(anyLong())).thenReturn(new ArrayList<>());
+    Response response = resource.getAuthorizedReaders(duosUser,1L);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+
+  @Test
+  void testGetAuthorizedReadersError() {
+    doThrow(new RuntimeException("Some Exception"))
+        .when(datasetService)
+        .getAuthorizationReaders(anyLong());
+    Response response = resource.getAuthorizedReaders(duosUser,1L);
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+  }
+
+  @Test
+  void testAddAuthorizedReadersNotServiceAccount(){
+    User readerUser = new User();
+    readerUser.setUserId(1);
+    readerUser.addRole(
+        new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName()));
+    when(userService.findUserById(any())).thenReturn(readerUser);
+    Response response = resource.addAuthorizedReaders(duosUser, 1, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());
+  }
+
+  @Test
+  void testAddAuthorizedReaders(){
+    User readerUser = new User();
+    readerUser.setUserId(1);
+    readerUser.addRole(
+        new UserRole(UserRoles.SERVICE_ACCOUNT.getRoleId(), UserRoles.SERVICE_ACCOUNT.getRoleName()));
+    user.setUserId(1);
+    DatasetAuthorizationReader reader = new DatasetAuthorizationReader(1,1,1, 1, Timestamp.from(
+        Instant.now()));
+    when(userService.findUserById(any())).thenReturn(readerUser);
+    when(datasetService.addAuthorizedReader(anyLong(), anyLong(), anyLong())).thenReturn(reader);
+    Response response = resource.addAuthorizedReaders(duosUser, 1, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  void testAddAuthorizedReadersThrows(){
+    User readerUser = new User();
+    readerUser.setUserId(1);
+    readerUser.addRole(
+        new UserRole(UserRoles.SERVICE_ACCOUNT.getRoleId(), UserRoles.SERVICE_ACCOUNT.getRoleName()));
+    user.setUserId(1);
+    doThrow(new RuntimeException("Some exception")).when(userService).findUserById(any());
+    Response response = resource.addAuthorizedReaders(duosUser, 1, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+  }
+
+  @Test
+  void testRemoveAuthorizedReaders(){
+    doNothing().when(datasetService).removeAuthorizedAccessReader(anyLong(), anyLong());
+    Response response = resource.removeAuthorizedReaders(duosUser, 1, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  void testRemoveAuthorizedReadersThrows(){
+    doThrow(new RuntimeException("Some Exception")).when(datasetService).removeAuthorizedAccessReader(anyLong(), anyLong());
+    Response response = resource.removeAuthorizedReaders(duosUser, 1, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+  }
+
+  @Test
+  void testGetApprovedUsers() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    when(datasetService.findDatasetByIdentifier(any(), any())).thenReturn(dataset);
+    when(datasetService.isAuthorizedToListUsers(any(), any())).thenReturn(true);
+    when(tdrService.getApprovedUsersForDataset(any(), any())).thenReturn(new ApprovedUsers(List.of()));
+    Response response = resource.getApprovedUsers(duosUser, "ABC");
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+
+  @Test
+  void testGetApprovedUsersDatasetNotFound() {
+    when(datasetService.findDatasetByIdentifier(any(), any())).thenReturn(null);
+    Response response = resource.getApprovedUsers(duosUser, "ABC");
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  void testGetAuthorizedUsersNotApproved() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    when(datasetService.findDatasetByIdentifier(any(), any())).thenReturn(dataset);
+    when(datasetService.isAuthorizedToListUsers(any(), any())).thenReturn(false);
+    Response response = resource.getApprovedUsers(duosUser, "ABC");
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+  }
+
+  @Test
+  void testGetApprovedUsersDatasetThrows() {
+    doThrow(new RuntimeException("Some exception"))
+        .when(datasetService).findDatasetByIdentifier(any(), any());
+    Response response = resource.getApprovedUsers(duosUser, "ABC");
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
   }
 
   /**

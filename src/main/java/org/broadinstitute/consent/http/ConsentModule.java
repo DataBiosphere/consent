@@ -22,6 +22,7 @@ import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.DatasetAuthorizationReaderDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DraftDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
@@ -97,6 +98,7 @@ public class ConsentModule extends AbstractModule {
   private final VoteDAO voteDAO;
   private final StudyDAO studyDAO;
   private final DatasetDAO datasetDAO;
+  private final DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
   private final DaaDAO daaDAO;
   private final DacDAO dacDAO;
   private final UserDAO userDAO;
@@ -131,6 +133,7 @@ public class ConsentModule extends AbstractModule {
     this.electionDAO = this.jdbi.onDemand(ElectionDAO.class);
     this.voteDAO = this.jdbi.onDemand(VoteDAO.class);
     this.studyDAO = this.jdbi.onDemand(StudyDAO.class);
+    this.datasetAuthorizationReaderDAO = this.jdbi.onDemand(DatasetAuthorizationReaderDAO.class);
     this.datasetDAO = this.jdbi.onDemand(DatasetDAO.class);
     this.daaDAO = this.jdbi.onDemand(DaaDAO.class);
     this.dacDAO = this.jdbi.onDemand(DacDAO.class);
@@ -164,6 +167,7 @@ public class ConsentModule extends AbstractModule {
     container.setDataAccessRequestDAO(providesDataAccessRequestDAO());
     container.setDarCollectionDAO(providesDARCollectionDAO());
     container.setDarCollectionSummaryDAO(providesDarCollectionSummaryDAO());
+    container.setDatasetAuthorizationReaderDAO(providesDatasetAuthorizationReaderDAO());
     container.setDatasetDAO(providesDatasetDAO());
     container.setElectionDAO(providesElectionDAO());
     container.setMailMessageDAO(providesMailMessageDAO());
@@ -293,12 +297,14 @@ public class ConsentModule extends AbstractModule {
     return new DatasetServiceDAO(
         jdbi,
         providesDatasetDAO(),
-        providesStudyDAO());
+        providesStudyDAO(),
+        providesDatasetAuthorizationReaderDAO());
   }
 
   @Provides
   DatasetService providesDatasetService() {
     return new DatasetService(
+        providesDatasetAuthorizationReaderDAO(),
         providesDatasetDAO(),
         providesDaaDAO(),
         providesDacDAO(),
@@ -407,6 +413,11 @@ public class ConsentModule extends AbstractModule {
         providesUseRestrictionConverter(),
         providesVoteDAO(),
         providesVoteServiceDAO());
+  }
+
+  @Provides
+  DatasetAuthorizationReaderDAO providesDatasetAuthorizationReaderDAO() {
+    return datasetAuthorizationReaderDAO;
   }
 
   @Provides
@@ -607,7 +618,8 @@ public class ConsentModule extends AbstractModule {
         providesDaaDAO(),
         providesDraftService(),
         providesInstitutionService(),
-        providesDACAutomationRuleDAO());
+        providesDACAutomationRuleDAO(),
+        providesDatasetAuthorizationReaderDAO());
   }
 
   @Provides
