@@ -546,7 +546,7 @@ public class DatasetResource extends Resource {
       @PathParam("userId") int userId) {
     try {
       User targetUser = userService.findUserById(userId);
-      if (targetUser == null || !targetUser.hasUserRole(UserRoles.SERVICE_ACCOUNT)) {
+      if (targetUser == null || !targetUser.hasUserRole(UserRoles.RESEARCHER)) {
         return Response.status(Status.CONFLICT).build();
       }
       return Response.ok(
@@ -576,7 +576,7 @@ public class DatasetResource extends Resource {
 
   @GET
   @Produces("application/json")
-  @RolesAllowed(SERVICE_ACCOUNT)
+  @RolesAllowed(RESEARCHER)
   @Path("/{identifier}/approvedUsers")
   public Response getApprovedUsers(@Auth DuosUser duosUser, @PathParam("identifier") String datasetIdentifier) {
     try {
