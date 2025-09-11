@@ -24,7 +24,7 @@ put:
           schema:
             $ref: '../schemas/DatasetAuthorizedReader.yaml'
     409:
-      description: The user is missing the SERVICE_ACCOUNT role required to check access.
+      description: The user is missing the RESEARCHER role required to check access.
 delete:
   summary: Remove authorized access reader
   description: |

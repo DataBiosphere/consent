@@ -1059,7 +1059,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     User readerUser = new User();
     readerUser.setUserId(1);
     readerUser.addRole(
-        new UserRole(UserRoles.SERVICE_ACCOUNT.getRoleId(), UserRoles.SERVICE_ACCOUNT.getRoleName()));
+        new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
     user.setUserId(1);
     DatasetAuthorizationReader reader = new DatasetAuthorizationReader(1,1,1, 1, Timestamp.from(
         Instant.now()));
@@ -1074,7 +1074,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     User readerUser = new User();
     readerUser.setUserId(1);
     readerUser.addRole(
-        new UserRole(UserRoles.SERVICE_ACCOUNT.getRoleId(), UserRoles.SERVICE_ACCOUNT.getRoleName()));
+        new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
     user.setUserId(1);
     doThrow(new RuntimeException("Some exception")).when(userService).findUserById(any());
     Response response = resource.addAuthorizedReaders(duosUser, 1, 1);
