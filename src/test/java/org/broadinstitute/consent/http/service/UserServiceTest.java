@@ -714,52 +714,6 @@ class UserServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testFindOrCreateUser() throws Exception {
-    User user = generateUser();
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail(user.getEmail());
-    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
-        .setLdap(true);
-    UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
-    AuthUser authUser = new AuthUser().setEmail(user.getEmail())
-        .setAuthToken(randomAlphabetic(30));
-
-    when(userDAO.findUserByEmail(any())).thenReturn(user);
-    when(samDAO.postRegistrationInfo(any())).thenReturn(status);
-
-    User existingUser = service.findOrCreateUser(authUser);
-    assertEquals(existingUser, user);
-  }
-
-  @Test
-  void testFindOrCreateUserNewUser() throws Exception {
-    User user = generateUser();
-    List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
-    user.setRoles(roles);
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail(user.getEmail());
-    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
-        .setLdap(true);
-    UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
-    AuthUser authUser = new AuthUser().setName(user.getDisplayName()).setEmail(user.getEmail())
-        .setAuthToken(randomAlphabetic(30));
-    Institution institution = new Institution();
-
-    // mock findUserByEmail to throw the NFE on the first call (findOrCreateUser)
-    when(userDAO.findUserByEmail(authUser.getEmail())).thenThrow(new NotFoundException())
-        .thenReturn(null);
-    when(
-        userDAO.insertUser(eq(authUser.getEmail()), eq(authUser.getName()), eq(institution.getId()),
-            any())).thenReturn(user.getUserId());
-    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
-    when(samDAO.postRegistrationInfo(new DuosUser(authUser, user))).thenReturn(status);
-    when(institutionService.findInstitutionForEmail(user.getEmail())).thenReturn(institution);
-
-    User newUser = service.findOrCreateUser(authUser);
-    assertEquals(user.getEmail(), newUser.getEmail());
-    verify(userRoleDAO).insertUserRoles(any(), any());
-    verify(libraryCardDAO).findLibraryCardByUserEmail(any());
-  }
-
-  @Test
   void insertUserRoleAndInstitution() {
     Institution institution = new Institution();
     institution.setId(1);

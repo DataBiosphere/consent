@@ -452,12 +452,11 @@ class UserResourceTest extends AbstractTestHelper {
   void testUpdateSelf() {
     User user = createUserWithRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(userService.updateUserFieldsById(userUpdateFields, user.getUserId())).thenReturn(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId())).thenReturn(
         gson.toJsonTree(user).getAsJsonObject());
 
-    try (Response response = userResource.updateSelf(authUser, uriInfo,
+    try (Response response = userResource.updateSelf(new DuosUser(authUser, user), uriInfo,
         gson.toJson(userUpdateFields))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
@@ -480,10 +479,9 @@ class UserResourceTest extends AbstractTestHelper {
     String invalidName = "invalid\0name";
     UserUpdateFields userUpdateFields = new UserUpdateFields();
     userUpdateFields.setDisplayName(invalidName);
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(userService.updateUserFieldsById(any(), any())).thenThrow(exception);
 
-    try (var response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields))) {
+    try (var response = userResource.updateSelf(new DuosUser(authUser, user), uriInfo, gson.toJson(userUpdateFields))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -493,9 +491,8 @@ class UserResourceTest extends AbstractTestHelper {
     User user = createUserWithRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();
     userUpdateFields.setUserRoleIds(List.of(1)); // any roles
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
 
-    try (var response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields))) {
+    try (var response = userResource.updateSelf(new DuosUser(authUser, user), uriInfo, gson.toJson(userUpdateFields))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -507,9 +504,8 @@ class UserResourceTest extends AbstractTestHelper {
     user.setInstitutionId(10);
     UserUpdateFields userUpdateFields = new UserUpdateFields();
     userUpdateFields.setInstitutionId(20);
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
 
-    try (var response = userResource.updateSelf(authUser, uriInfo, gson.toJson(userUpdateFields))) {
+    try (var response = userResource.updateSelf(new DuosUser(authUser, user), uriInfo, gson.toJson(userUpdateFields))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -873,7 +869,7 @@ class UserResourceTest extends AbstractTestHelper {
     String acknowledgementKey = "key1";
     when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(null);
 
-    Response response = userResource.getUserAcknowledgement(authUser, acknowledgementKey);
+    Response response = userResource.getUserAcknowledgement(duosUser, acknowledgementKey);
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -883,7 +879,7 @@ class UserResourceTest extends AbstractTestHelper {
     doThrow(new RuntimeException("some exception during get.")).when(acknowledgementService)
         .findAcknowledgementForUserByKey(any(), any());
 
-    Response response = userResource.getUserAcknowledgement(authUser, acknowledgementKey);
+    Response response = userResource.getUserAcknowledgement(duosUser, acknowledgementKey);
     assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
   }
 
@@ -891,7 +887,7 @@ class UserResourceTest extends AbstractTestHelper {
   void testGetAcknowledgementNull() {
     when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(null);
 
-    Response response = userResource.getUserAcknowledgement(authUser, null);
+    Response response = userResource.getUserAcknowledgement(duosUser, null);
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -899,7 +895,7 @@ class UserResourceTest extends AbstractTestHelper {
   void testGetUnsetAcknowledgementsForUser() {
     when(acknowledgementService.findAcknowledgementsForUser(any())).thenReturn(null);
 
-    Response response = userResource.getUserAcknowledgements(authUser);
+    Response response = userResource.getUserAcknowledgements(duosUser);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
@@ -908,7 +904,7 @@ class UserResourceTest extends AbstractTestHelper {
     doThrow(new RuntimeException("some get exception")).when(acknowledgementService)
         .findAcknowledgementsForUser(any());
 
-    Response response = userResource.getUserAcknowledgements(authUser);
+    Response response = userResource.getUserAcknowledgements(duosUser);
     assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
   }
 
@@ -921,7 +917,7 @@ class UserResourceTest extends AbstractTestHelper {
     when(acknowledgementService.findAcknowledgementForUserByKey(any(), any())).thenReturn(
         acknowledgementMap.get(acknowledgementKey));
 
-    Response response = userResource.getUserAcknowledgement(authUser, acknowledgementKey);
+    Response response = userResource.getUserAcknowledgement(new DuosUser(authUser, user), acknowledgementKey);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
@@ -956,7 +952,7 @@ class UserResourceTest extends AbstractTestHelper {
     Map<String, Acknowledgement> acknowledgementMap = getDefaultAcknowledgementForUser(user,
         acknowledgementKey);
     when(acknowledgementService.findAcknowledgementsForUser(any())).thenReturn(acknowledgementMap);
-    Response response = userResource.getUserAcknowledgements(authUser);
+    Response response = userResource.getUserAcknowledgements(new DuosUser(authUser, user));
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
@@ -973,7 +969,7 @@ class UserResourceTest extends AbstractTestHelper {
                     Instant.now().toEpochMilli() + DataAccessRequest.EXPIRATION_DURATION_MILLIS)));
     when(datasetService.getApprovedDatasets(any())).thenReturn(List.of(example));
 
-    Response response = userResource.getApprovedDatasets(authUser);
+    Response response = userResource.getApprovedDatasets(duosUser);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 

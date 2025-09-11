@@ -29,7 +29,6 @@ import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DarCollectionService;
-import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.ComplianceLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -38,12 +37,10 @@ import org.glassfish.jersey.server.ContainerRequest;
 public class DarCollectionResource extends Resource {
 
   private final DarCollectionService darCollectionService;
-  private final UserService userService;
 
   @Inject
-  public DarCollectionResource(DarCollectionService darCollectionService, UserService userService) {
+  public DarCollectionResource(DarCollectionService darCollectionService) {
     this.darCollectionService = darCollectionService;
-    this.userService = userService;
   }
 
   @GET
@@ -54,7 +51,7 @@ public class DarCollectionResource extends Resource {
   public Response getCollectionSummariesForUserByRole(@Auth DuosUser duosUser,
       @PathParam("roleName") String roleName) {
     try {
-      User user = userService.findUserByEmail(duosUser.getEmail());
+      User user = duosUser.getUser();
       var role = validateUserHasRoleName(user, roleName);
       List<DarCollectionSummary> summaries = darCollectionService.getSummariesForRole(user, role);
       // When querying in list context, we only want the exposed fields

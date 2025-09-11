@@ -395,27 +395,7 @@ public class UserService implements ConsentLogger {
     }
   }
 
-  public User findOrCreateUser(AuthUser authUser) throws Exception {
-    User user;
-    // Ensure that the user is a registered DUOS user
-    try {
-      user = userDAO.findUserByEmail(authUser.getEmail());
-    } catch (NotFoundException nfe) {
-      User newUser = new User();
-      newUser.setEmail(authUser.getEmail());
-      newUser.setDisplayName(authUser.getName());
-      user = createUser(newUser);
-    }
-    // Ensure that the user is a registered SAM user
-    try {
-      samDAO.postRegistrationInfo(new DuosUser(authUser, user));
-    } catch (ConsentConflictException cce) {
-      // no-op in the case of conflicts.
-    }
-    return user;
-  }
-
-  public List<User> findUsersInJsonArray(String json, String arrayKey) {
+   public List<User> findUsersInJsonArray(String json, String arrayKey) {
     List<JsonElement> jsonElementList;
     try {
       JsonObject jsonObject = new Gson().fromJson(json, JsonObject.class);

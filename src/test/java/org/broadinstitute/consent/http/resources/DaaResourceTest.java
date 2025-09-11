@@ -27,6 +27,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -54,6 +55,7 @@ class DaaResourceTest extends AbstractTestHelper {
   private LibraryCardService libraryCardService;
 
   private final AuthUser authUser = new AuthUser("test@test.com");
+  private final DuosUser duosUser = new DuosUser(authUser, new User());
 
   private DaaResource resource;
 
@@ -158,7 +160,7 @@ class DaaResourceTest extends AbstractTestHelper {
     when(daaService.findAll()).thenReturn(Collections.emptyList());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.findAll();
+    Response response = resource.findAll(duosUser);
     assert response.getStatus() == HttpStatus.SC_OK;
     JsonArray daas = GsonUtil.buildGson().fromJson((response.getEntity().toString()), JsonArray.class);
     assertEquals(0, daas.size());
@@ -170,7 +172,7 @@ class DaaResourceTest extends AbstractTestHelper {
     when(daaService.findAll()).thenReturn(Collections.singletonList(expectedDaa));
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.findAll();
+    Response response = resource.findAll(duosUser);
     assert response.getStatus() == HttpStatus.SC_OK;
     JsonArray daas = GsonUtil.buildGson().fromJson((response.getEntity().toString()), JsonArray.class);
     assertEquals(1, daas.size());
@@ -183,7 +185,7 @@ class DaaResourceTest extends AbstractTestHelper {
     when(daaService.findAll()).thenReturn(List.of(expectedDaa1, expectedDaa2));
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.findAll();
+    Response response = resource.findAll(duosUser);
     assert response.getStatus() == HttpStatus.SC_OK;
     JsonArray daas = GsonUtil.buildGson()
         .fromJson((response.getEntity().toString()), JsonArray.class);
@@ -229,7 +231,7 @@ class DaaResourceTest extends AbstractTestHelper {
     when(daaService.findById(expectedDaaId)).thenReturn(expectedDaa);
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.findFileById(expectedDaaId);
+    Response response = resource.findFileById(duosUser, expectedDaaId);
     assert response.getStatus() == HttpStatus.SC_OK;
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -243,7 +245,7 @@ class DaaResourceTest extends AbstractTestHelper {
     when(daaService.findFileById(invalidId)).thenThrow(new NotFoundException());
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.findFileById(invalidId);
+    Response response = resource.findFileById(duosUser, invalidId);
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
 
@@ -253,7 +255,7 @@ class DaaResourceTest extends AbstractTestHelper {
     when(daaService.findFileById(expectedDaaId)).thenThrow(new RuntimeException());
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.findFileById(expectedDaaId);
+    Response response = resource.findFileById(duosUser, expectedDaaId);
     assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
   }
 
@@ -485,23 +487,11 @@ class DaaResourceTest extends AbstractTestHelper {
     user.setResearcherRole();
     user.setInstitutionId(randomInt(0,10));
     user.setLibraryCard(lc);
-    when(userService.findUserByEmail(any())).thenReturn(user);
     doNothing().when(daaService).sendDaaRequestEmails(any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.sendDaaRequestMessage(authUser, randomInt(10, 100));
+    Response response = resource.sendDaaRequestMessage(new DuosUser(authUser, user), randomInt(10, 100));
     assert response.getStatus() == HttpStatus.SC_OK;
-  }
-
-  @Test
-  void testSendDaaRequestMessageUserNotFound() {
-    User user = new User();
-    user.setResearcherRole();
-    when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
-
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.sendDaaRequestMessage(authUser, randomInt(10, 100));
-    assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
 
   @Test
@@ -511,11 +501,10 @@ class DaaResourceTest extends AbstractTestHelper {
     user.setResearcherRole();
     user.setInstitutionId(randomInt(0,10));
     user.setLibraryCard(lc);
-    when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new NotFoundException()).when(daaService).sendDaaRequestEmails(any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.sendDaaRequestMessage(authUser, randomInt(10, 100));
+    Response response = resource.sendDaaRequestMessage(new DuosUser(authUser, user), randomInt(10, 100));
     assert response.getStatus() == HttpStatus.SC_NOT_FOUND;
   }
 
@@ -526,11 +515,10 @@ class DaaResourceTest extends AbstractTestHelper {
     user.setResearcherRole();
     user.setInstitutionId(randomInt(0,10));
     user.setLibraryCard(lc);
-    when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new Exception()).when(daaService).sendDaaRequestEmails(any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.sendDaaRequestMessage(authUser, randomInt(10, 100));
+    Response response = resource.sendDaaRequestMessage(new DuosUser(authUser, user), randomInt(10, 100));
     assert response.getStatus() == HttpStatus.SC_INTERNAL_SERVER_ERROR;
   }
 
@@ -542,10 +530,9 @@ class DaaResourceTest extends AbstractTestHelper {
     lc.setDaaIds(List.of(daaId));
     user.setResearcherRole();
     user.setLibraryCard(lc);
-    when(userService.findUserByEmail(any())).thenReturn(user);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.sendDaaRequestMessage(authUser, daaId);
+    Response response = resource.sendDaaRequestMessage(new DuosUser(authUser, user), daaId);
     assert response.getStatus() == HttpStatus.SC_BAD_REQUEST;
   }
 

@@ -70,13 +70,11 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   @Mock
   private DarCollectionService darCollectionService;
   @Mock
-  private UserService userService;
-  @Mock
   private ContainerRequest request;
 
   @BeforeEach
   void initResource() {
-    resource = new DarCollectionResource(darCollectionService, userService);
+    resource = new DarCollectionResource(darCollectionService);
   }
 
   private DataAccessRequest mockDataAccessRequestWithDatasetIds() {
@@ -655,6 +653,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   @Test
   void getCollectionSummaryForRoleById_SO() {
     DarCollectionSummary mockSummary = new DarCollectionSummary();
+    signingOfficial.setInstitutionId(1);
     mockSummary.setInstitutionId(signingOfficial.getInstitutionId());
     Integer collectionId = randomInt(1, 100);
 
@@ -729,10 +728,12 @@ class DarCollectionResourceTest extends AbstractTestHelper {
 
   @Test
   void getCollectionSummaryForRoleById_NoRoleFound() {
+    User noRoleUser = new User();
     Integer collectionId = randomInt(1, 100);
 
-    Response response = resource.getCollectionSummaryForRoleById(duosSigningOfficial,
-        UserRoles.SIGNINGOFFICIAL.getRoleName(), collectionId);
+    Response response =
+        resource.getCollectionSummaryForRoleById(
+            new DuosUser(authUser, noRoleUser), UserRoles.SIGNINGOFFICIAL.getRoleName(), collectionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 

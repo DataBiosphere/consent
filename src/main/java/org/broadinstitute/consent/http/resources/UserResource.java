@@ -209,9 +209,9 @@ public class UserResource extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @PermitAll
-  public Response updateSelf(@Auth AuthUser authUser, @Context UriInfo info, String json) {
+  public Response updateSelf(@Auth DuosUser duosUser, @Context UriInfo info, String json) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
 
       // Users cannot update their own institution id through this service
@@ -226,7 +226,7 @@ public class UserResource extends Resource {
 
       user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
       Gson gson = new Gson();
-      JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser,
+      JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(duosUser.getAuthUser(),
           user.getUserId());
 
       return Response.ok().entity(gson.toJson(jsonUser)).build();
@@ -395,9 +395,9 @@ public class UserResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/acknowledgements")
   @PermitAll
-  public Response getUserAcknowledgements(@Auth AuthUser authUser) {
+  public Response getUserAcknowledgements(@Auth DuosUser duosUser) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       Map<String, Acknowledgement> acknowledgementMap = acknowledgementService.findAcknowledgementsForUser(
           user);
       return Response.ok().entity(acknowledgementMap).build();
@@ -410,9 +410,9 @@ public class UserResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/acknowledgements/{key}")
   @PermitAll
-  public Response getUserAcknowledgement(@Auth AuthUser authUser, @PathParam("key") String key) {
+  public Response getUserAcknowledgement(@Auth DuosUser duosUser, @PathParam("key") String key) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       Acknowledgement ack = acknowledgementService.findAcknowledgementForUserByKey(user, key);
       if (ack == null) {
         return Response.status(Response.Status.NOT_FOUND).build();
@@ -478,9 +478,9 @@ public class UserResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/me/researcher/datasets")
   @PermitAll
-  public Response getApprovedDatasets(@Auth AuthUser authUser) {
+  public Response getApprovedDatasets(@Auth DuosUser duosUser) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       List<ApprovedDataset> approvedDatasets = datasetService.getApprovedDatasets(user);
       return Response.ok().entity(approvedDatasets).build();
     } catch (Exception e) {

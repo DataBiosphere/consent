@@ -224,7 +224,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(injector.getInstance(DACAutomationRuleResource.class));
     env.jersey().register(new DACUserResource(userService));
     env.jersey().register(
-        new DarCollectionResource(darCollectionService, userService));
+        new DarCollectionResource(darCollectionService));
     env.jersey().register(new EmailNotifierResource(dataAccessRequestService));
     env.jersey().register(new InstitutionResource(institutionService));
     env.jersey().register(new LibraryCardResource(userService, libraryCardService));
