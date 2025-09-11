@@ -36,6 +36,7 @@ import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -407,7 +408,7 @@ public class UserService implements ConsentLogger {
     }
     // Ensure that the user is a registered SAM user
     try {
-      samDAO.postRegistrationInfo(authUser);
+      samDAO.postRegistrationInfo(new DuosUser(authUser, user));
     } catch (ConsentConflictException cce) {
       // no-op in the case of conflicts.
     }

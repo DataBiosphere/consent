@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import java.util.List;
 import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.TosResponse;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
@@ -20,37 +21,37 @@ public class SamService implements ConsentLogger {
     this.samDAO = samDAO;
   }
 
-  public List<ResourceType> getResourceTypes(AuthUser authUser) throws Exception {
-    return samDAO.getResourceTypes(authUser);
+  public List<ResourceType> getResourceTypes(DuosUser duosUser) throws Exception {
+    return samDAO.getResourceTypes(duosUser);
   }
 
-  public UserStatusInfo getRegistrationInfo(AuthUser authUser) throws Exception {
-    return samDAO.getRegistrationInfo(authUser);
+  public UserStatusInfo getRegistrationInfo(DuosUser duosUser) throws Exception {
+    return samDAO.getRegistrationInfo(duosUser);
   }
 
-  public UserStatusDiagnostics getSelfDiagnostics(AuthUser authUser) throws Exception {
-    return samDAO.getSelfDiagnostics(authUser);
+  public UserStatusDiagnostics getSelfDiagnostics(DuosUser duosUser) throws Exception {
+    return samDAO.getSelfDiagnostics(duosUser);
   }
 
-  public UserStatus postRegistrationInfo(AuthUser authUser) throws Exception {
-    return samDAO.postRegistrationInfo(authUser);
+  public UserStatus postRegistrationInfo(DuosUser duosUser) throws Exception {
+    return samDAO.postRegistrationInfo(duosUser);
   }
 
-  public void asyncPostRegistrationInfo(AuthUser authUser) {
-    samDAO.asyncPostRegistrationInfo(authUser);
+  public void asyncPostRegistrationInfo(DuosUser duosUser) {
+    samDAO.asyncPostRegistrationInfo(duosUser);
   }
 
   public String getToSText() throws Exception {
     return samDAO.getToSText();
   }
 
-  public TosResponse postTosAcceptedStatus(AuthUser authUser) throws Exception {
-    samDAO.acceptTosStatus(authUser);
-    return samDAO.getTosResponse(authUser);
+  public TosResponse postTosAcceptedStatus(DuosUser duosUser) throws Exception {
+    samDAO.acceptTosStatus(duosUser);
+    return samDAO.getTosResponse(duosUser);
   }
 
-  public TosResponse removeTosAcceptedStatus(AuthUser authUser) throws Exception {
-    samDAO.rejectTosStatus(authUser);
-    return samDAO.getTosResponse(authUser);
+  public TosResponse removeTosAcceptedStatus(DuosUser duosUser) throws Exception {
+    samDAO.rejectTosStatus(duosUser);
+    return samDAO.getTosResponse(duosUser);
   }
 }

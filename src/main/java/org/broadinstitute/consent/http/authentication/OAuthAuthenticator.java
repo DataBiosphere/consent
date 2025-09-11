@@ -5,6 +5,7 @@ import io.dropwizard.auth.Authenticator;
 import jakarta.ws.rs.ServerErrorException;
 import java.util.Optional;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
 public class OAuthAuthenticator implements Authenticator<String, AuthUser>, ConsentLogger {
@@ -21,7 +22,7 @@ public class OAuthAuthenticator implements Authenticator<String, AuthUser>, Cons
     var headers = authorizationHelper.getCache().getIfPresent(bearer);
     if (headers != null) {
       AuthUser user = authorizationHelper.buildAuthUserFromHeaders(headers);
-      user.setUserStatusInfo(authorizationHelper.getUserStatusInfo(user));
+      user.setUserStatusInfo(authorizationHelper.getUserStatusInfo(new DuosUser(user, null)));
       if (user.getUserStatusInfo() == null) {
         logWarn("User with status is null, authentication incomplete");
       }

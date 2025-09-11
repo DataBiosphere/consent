@@ -100,14 +100,13 @@ public class UserResource extends Resource {
   @Produces("application/json")
   @PermitAll
   @Timed
-  public Response getUser(@Auth AuthUser authUser) {
+  public Response getUser(@Auth DuosUser duosUser) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      if (Objects.isNull(authUser.getUserStatusInfo())) {
-        samService.asyncPostRegistrationInfo(authUser);
+      if (Objects.isNull(duosUser.getUserStatusInfo())) {
+        samService.asyncPostRegistrationInfo(duosUser);
       }
-      JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser,
-          user.getUserId());
+      JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(duosUser,
+          duosUser.getUser().getUserId());
       return Response.ok(gson.toJson(userJson)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

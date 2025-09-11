@@ -103,9 +103,8 @@ class UserResourceTest extends AbstractTestHelper {
   @Test
   void testGetMe() {
     User user = createUserWithRole();
-    when(userService.findUserByEmail(any())).thenReturn(user);
 
-    Response response = userResource.getUser(authUser);
+    Response response = userResource.getUser(new DuosUser(authUser, user));
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 

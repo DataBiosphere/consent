@@ -2,11 +2,13 @@ package org.broadinstitute.consent.http.authentication;
 
 import com.google.common.cache.Cache;
 import com.google.inject.Inject;
+import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import java.util.Map;
 import org.broadinstitute.consent.http.filters.ClaimsCache;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
@@ -49,6 +51,7 @@ public class AuthorizationHelper implements ConsentLogger {
       logWarn(String.format(
           "Reading oauth2 claim headers: email is null, auth user is incomplete. Aud: %s Name: %s",
           aud, name));
+      throw new NotAuthorizedException("You are not authorized to use this service without a valid email address.");
     } else {
       try {
         userService.enforceInstitutionAndLibraryCardRules(email);
@@ -63,27 +66,27 @@ public class AuthorizationHelper implements ConsentLogger {
    * Attempt to get the registration status of the current user. If the user is not registered,
    * attempt to register them and return the registration status.
    *
-   * @param authUser The AuthUser
+   * @param duosUser The AuthUser
    * @return A Sam UserStatusInfo entity
    */
-  protected UserStatusInfo getUserStatusInfo(AuthUser authUser) {
+  protected UserStatusInfo getUserStatusInfo(DuosUser duosUser) {
     try {
-      return samService.getRegistrationInfo(authUser);
+      return samService.getRegistrationInfo(duosUser);
     } catch (NotFoundException e) {
       try {
         // Try to post the user to Sam if they have not registered previously
-        UserStatus userStatus = samService.postRegistrationInfo(authUser);
+        UserStatus userStatus = samService.postRegistrationInfo(duosUser);
         // If we succeed, return a basic version of UserStatusInfo. Future API calls will
         // return the full UserStatusInfo object.
         return new UserStatusInfo()
-            .setUserEmail(authUser.getEmail())
+            .setUserEmail(duosUser.getEmail())
             .setUserSubjectId(userStatus.getUserInfo().getUserSubjectId());
       } catch (Exception ex) {
         // if post response is not successful, propagate the error to the user
         throw new WebApplicationException(ex.getMessage());
       }
     } catch (Exception e) {
-      logWarn(String.format("Exception retrieving Sam user info for '%s'", authUser.getEmail()), e);
+      logWarn(String.format("Exception retrieving Sam user info for '%s'", duosUser.getEmail()), e);
     }
     return null;
   }

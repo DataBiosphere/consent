@@ -51,6 +51,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -749,7 +750,7 @@ class UserServiceTest extends AbstractTestHelper {
         userDAO.insertUser(eq(authUser.getEmail()), eq(authUser.getName()), eq(institution.getId()),
             any())).thenReturn(user.getUserId());
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
-    when(samDAO.postRegistrationInfo(authUser)).thenReturn(status);
+    when(samDAO.postRegistrationInfo(new DuosUser(authUser, user))).thenReturn(status);
     when(institutionService.findInstitutionForEmail(user.getEmail())).thenReturn(institution);
 
     User newUser = service.findOrCreateUser(authUser);
