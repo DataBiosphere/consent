@@ -169,11 +169,11 @@ public class DarCollectionResource extends Resource {
   @Produces("application/json")
   @PermitAll
   public Response getCollectionByReferenceId(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @PathParam("referenceId") String referenceId) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      DarCollection collection = darCollectionService.getByReferenceId(referenceId);
+      User user = duosUser.getUser();
+      DarCollection collection = darCollectionService.getByReferenceId(user, referenceId);
       validateUserIsCreator(user, collection);
       return Response.ok().entity(collection).build();
     } catch (Exception e) {

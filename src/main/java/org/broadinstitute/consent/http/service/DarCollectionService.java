@@ -461,13 +461,13 @@ public class DarCollectionService implements ConsentLogger {
   }
 
 
-  public DarCollection getByReferenceId(String referenceId) {
+  public DarCollection getByReferenceId(User user, String referenceId) {
     DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);
     if (Objects.isNull(collection)) {
       throw new NotFoundException(
           "Collection with the reference id of " + referenceId + " was not found");
     }
-    return addDatasetsToCollection(collection);
+    return filterCollectionForUser(user, addDatasetsToCollection(collection));
   }
 
   public DarCollection getByCollectionId(User user, Integer collectionId) {
@@ -476,14 +476,7 @@ public class DarCollectionService implements ConsentLogger {
       throw new NotFoundException(
           "Collection with the collection id of " + collectionId + " was not found");
     }
-    DarCollection populatedCollection = addDatasetsToCollection(collection);
-    // Individual votes are only visible to CHAIRPERSON, MEMBER, and ADMIN roles
-    List<UserRoles> voteViewRoles = List.of(UserRoles.CHAIRPERSON, UserRoles.MEMBER,
-        UserRoles.ADMIN);
-    if (user.hasAnyUserRole(voteViewRoles)) {
-      return populatedCollection;
-    }
-    return filterDarCollectionVotes(populatedCollection);
+    return filterCollectionForUser(user, addDatasetsToCollection(collection));
   }
 
   /**
@@ -492,7 +485,14 @@ public class DarCollectionService implements ConsentLogger {
    * @param collection DarCollection to filter
    * @return DarCollection with votes removed
    */
-  private DarCollection filterDarCollectionVotes(DarCollection collection) {
+  private DarCollection filterCollectionForUser(User user, DarCollection collection) {
+    // Individual votes are only visible to CHAIRPERSON, MEMBER, and ADMIN roles
+    List<UserRoles> voteViewRoles = List.of(UserRoles.CHAIRPERSON, UserRoles.MEMBER,
+        UserRoles.ADMIN);
+    if (user.hasAnyUserRole(voteViewRoles)) {
+      return collection;
+    }
+    // Remove votes from elections for all other users
     collection.getDars().values().forEach(
         dar -> dar.getElections().values().forEach(election -> election.setVotes(Map.of())));
     return collection;
@@ -564,12 +564,13 @@ public class DarCollectionService implements ConsentLogger {
       return collection;
     }
 
-    return switch (role) {
+    DarCollection cancelledCollection = switch (role) {
       case ADMIN -> cancelDarCollectionElectionsAsAdmin(collection, user);
       case CHAIRPERSON ->
           cancelDarCollectionElectionsAsChair(collection, user);
       default -> cancelDarCollectionAsResearcher(collection, user);
     };
+    return getByCollectionId(user, cancelledCollection.getDarCollectionId());
   }
 
   /**
@@ -703,7 +704,7 @@ public class DarCollectionService implements ConsentLogger {
           collection.getDarCollectionId()), e);
       throw e;
     }
-    return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
+    return getByCollectionId(user, collection.getDarCollectionId());
   }
 
   // Private helper method to mark Elections as 'Canceled'

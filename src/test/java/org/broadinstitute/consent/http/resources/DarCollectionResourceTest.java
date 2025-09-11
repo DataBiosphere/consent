@@ -1,7 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -69,6 +69,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     DataAccessRequestData data = new DataAccessRequestData();
     dar.addDatasetId(randomInt(1, 100));
     dar.setData(data);
+    dar.setReferenceId(UUID.randomUUID().toString());
     return dar;
   }
 
@@ -320,23 +321,27 @@ class DarCollectionResourceTest extends AbstractTestHelper {
 
   @Test
   void testGetCollectionByReferenceId() {
+    DuosUser duosUser = new DuosUser(authUser, researcher);
     DarCollection collection = mockDarCollection();
+    String referenceId = collection.getDars().values().stream().findFirst().orElseThrow().getReferenceId();
+    assertNotNull(referenceId);
     collection.setCreateUserId(researcher.getUserId());
-    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-    when(darCollectionService.getByReferenceId(any())).thenReturn(collection);
+    when(darCollectionService.getByReferenceId(duosUser.getUser(), referenceId)).thenReturn(collection);
 
-    Response response = resource.getCollectionByReferenceId(authUser, "1");
+    Response response = resource.getCollectionByReferenceId(duosUser, referenceId);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
   @Test
   void testGetCollectionByReferenceIdNotFound() {
+    DuosUser duosUser = new DuosUser(authUser, researcher);
     DarCollection collection = mockDarCollection();
+    String referenceId = collection.getDars().values().stream().findFirst().orElseThrow().getReferenceId();
+    assertNotNull(referenceId);
     collection.setCreateUserId(researcher.getUserId() + 1);
-    when(userService.findUserByEmail(anyString())).thenReturn(researcher);
-    when(darCollectionService.getByReferenceId(any())).thenReturn(collection);
+    when(darCollectionService.getByReferenceId(duosUser.getUser(), referenceId)).thenThrow(new NotFoundException("Collection not found"));
 
-    Response response = resource.getCollectionByReferenceId(authUser, "1");
+    Response response = resource.getCollectionByReferenceId(duosUser, referenceId);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
