@@ -471,13 +471,31 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   public DarCollection getByCollectionId(User user, Integer collectionId) {
-    // TODO: add user-specific vote filtering into find by id method
     DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     if (Objects.isNull(collection)) {
       throw new NotFoundException(
           "Collection with the collection id of " + collectionId + " was not found");
     }
-    return addDatasetsToCollection(collection);
+    DarCollection populatedCollection = addDatasetsToCollection(collection);
+    // Individual votes are only visible to CHAIRPERSON, MEMBER, and ADMIN roles
+    List<UserRoles> voteViewRoles = List.of(UserRoles.CHAIRPERSON, UserRoles.MEMBER,
+        UserRoles.ADMIN);
+    if (user.hasAnyUserRole(voteViewRoles)) {
+      return populatedCollection;
+    }
+    return filterDarCollectionVotes(populatedCollection);
+  }
+
+  /**
+   * Given a DarCollection, remove all votes from elections for roles that should not see them.
+   * This method mutates the given collection.
+   * @param collection DarCollection to filter
+   * @return DarCollection with votes removed
+   */
+  private DarCollection filterDarCollectionVotes(DarCollection collection) {
+    collection.getDars().values().forEach(
+        dar -> dar.getElections().values().forEach(election -> election.setVotes(Map.of())));
+    return collection;
   }
 
   public DarCollection getCollectionWithAllElectionsByCollectionId(Integer collectionId) {

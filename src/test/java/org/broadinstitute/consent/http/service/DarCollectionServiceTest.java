@@ -62,6 +62,8 @@ import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -156,6 +158,44 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     RuntimeException exception = assertThrows(RuntimeException.class, () ->
         service.getByCollectionId(user, collectionId));
     assertEquals(expectedException, exception);
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = UserRoles.class, names = {"ADMIN", "MEMBER", "CHAIRPERSON"})
+  void testGetByCollectionIdWithVotes(UserRoles role) {
+    User user = new User();
+    user.addRole(new UserRole(role.getRoleId(), role.getRoleName()));
+    Integer collectionId = 1;
+    DarCollection collection = mockDarCollectionWithElectionAndVotes(user);
+    when(darCollectionDAO.findDARCollectionByCollectionId(collectionId)).thenReturn(collection);
+
+    DarCollection result = service.getByCollectionId(user, collectionId);
+    assertNotNull(result);
+    List<Vote> votes = result.getDars().values().stream()
+        .flatMap(d -> d.getElections().values().stream())
+        .map(Election::getVotes)
+        .flatMap(v -> v.values().stream())
+        .toList();
+    assertFalse(votes.isEmpty());
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = UserRoles.class, names = {"RESEARCHER", "ALUMNI", "SIGNINGOFFICIAL", "DATASUBMITTER", "ITDIRECTOR", "SERVICE_ACCOUNT"})
+  void testGetByCollectionIdWithoutVotes(UserRoles role) {
+    User user = new User();
+    user.addRole(new UserRole(role.getRoleId(), role.getRoleName()));
+    Integer collectionId = 1;
+    DarCollection collection = mockDarCollectionWithElectionAndVotes(user);
+    when(darCollectionDAO.findDARCollectionByCollectionId(collectionId)).thenReturn(collection);
+
+    DarCollection result = service.getByCollectionId(user, collectionId);
+    assertNotNull(result);
+    List<Vote> votes = result.getDars().values().stream()
+        .flatMap(d -> d.getElections().values().stream())
+        .map(Election::getVotes)
+        .flatMap(v -> v.values().stream())
+        .toList();
+    assertTrue(votes.isEmpty());
   }
 
   @Test
@@ -1461,6 +1501,27 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         .thenReturn(null);
 
     assertThrows(NotFoundException.class, () -> service.getSummaryForRoleByCollectionId(user, UserRoles.RESEARCHER, collectionId));
+  }
+
+  private DarCollection mockDarCollectionWithElectionAndVotes(User user) {
+    Integer collectionId = 1;
+    DarCollection collection = new DarCollection();
+    collection.setDarCollectionId(collectionId);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    Election election = new Election();
+    election.setReferenceId(dar.getReferenceId());
+    election.setElectionId(1);
+    Vote vote = new Vote();
+    vote.setVoteId(1);
+    vote.setType(VoteType.FINAL.getValue());
+    vote.setUserId(user.getUserId());
+    vote.setElectionId(election.getElectionId());
+    vote.setVote(true);
+    election.setVotes(Map.of(vote.getVoteId(), vote));
+    dar.addElection(election);
+    collection.addDar(dar);
+    return collection;
   }
 
   private DarCollectionSummary createDarCollectionSummaryWithElections() {
