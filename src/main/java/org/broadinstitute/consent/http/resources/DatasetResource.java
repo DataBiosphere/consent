@@ -40,7 +40,6 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
-import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Study;
@@ -406,23 +405,6 @@ public class DatasetResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       return elasticSearchService.deleteIndex(datasetId, user.getUserId());
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
-  @Produces("application/json")
-  @Path("/autocomplete")
-  @PermitAll
-  @Timed
-  public Response autocompleteDatasets(
-      @Auth AuthUser authUser,
-      @QueryParam("query") String query) {
-    try {
-      userService.findUserByEmail(authUser.getEmail());
-      List<DatasetSummary> datasets = datasetService.searchDatasetSummaries(query);
-      return Response.ok(datasets).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

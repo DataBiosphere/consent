@@ -34,7 +34,6 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
-import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyConversion;
@@ -235,10 +234,6 @@ public class DatasetService implements ConsentLogger {
       }
     });
     datasetServiceDAO.deleteStudy(study, user);
-  }
-
-  public List<DatasetSummary> searchDatasetSummaries(String query) {
-    return datasetDAO.findDatasetSummariesByQuery(query);
   }
 
   public List<DatasetStudySummary> findAllDatasetStudySummaries() {
