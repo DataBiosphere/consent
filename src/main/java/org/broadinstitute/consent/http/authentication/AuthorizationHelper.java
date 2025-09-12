@@ -66,7 +66,7 @@ public class AuthorizationHelper implements ConsentLogger {
    * Attempt to get the registration status of the current user. If the user is not registered,
    * attempt to register them and return the registration status.
    *
-   * @param duosUser The AuthUser
+   * @param duosUser The DuosUser
    * @return A Sam UserStatusInfo entity
    */
   protected UserStatusInfo getUserStatusInfo(DuosUser duosUser) {
