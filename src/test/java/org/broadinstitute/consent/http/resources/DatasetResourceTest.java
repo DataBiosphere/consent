@@ -339,7 +339,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     Dataset testDataset = new Dataset();
     when(datasetService.getDatasetByName("test")).thenReturn(testDataset);
 
-    try (var response = resource.validateDatasetName("test")) {
+    try (var response = resource.validateDatasetName(duosUser,"test")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -347,7 +347,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   @Test
   void testValidateDatasetNameNotFound() {
     assertThrows(NotFoundException.class, () -> {
-      try (var response = resource.validateDatasetName("test")) {
+      try (var response = resource.validateDatasetName(duosUser, "test")) {
         fail("Should not get to this point");
       }
     });
@@ -356,7 +356,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   @Test
   void testFindAllStudyNamesSuccess() {
     when(datasetService.findAllStudyNames()).thenReturn(Set.of("Hi", "Hello"));
-    try (var response = resource.findAllStudyNames()) {
+    try (var response = resource.findAllStudyNames(duosUser)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -364,7 +364,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   @Test
   void testFindAllStudyNamesFail() {
     when(datasetService.findAllStudyNames()).thenThrow();
-    try (var response = resource.findAllStudyNames()) {
+    try (var response = resource.findAllStudyNames(duosUser)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
   }
@@ -533,7 +533,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     when(datasetService.searchDatasetSummaries(any())).thenReturn(
         List.of(new DatasetSummary(1, "ID", "Name")));
 
-    try (var response = resource.autocompleteDatasets(authUser, "test")) {
+    try (var response = resource.autocompleteDatasets(duosUser, "test")) {
       assertTrue(HttpStatusCodes.isSuccess(response.getStatus()));
     }
   }
@@ -546,7 +546,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     when(mockResponse.getEntity()).thenReturn(query);
     when(elasticSearchService.searchDatasets(any())).thenReturn(mockResponse);
 
-    try (var response = resource.searchDatasetIndex(authUser, query)) {
+    try (var response = resource.searchDatasetIndex(duosUser, query)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertTrue(response.getEntity().toString().length() > 2);
     }
@@ -727,7 +727,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   void testFindAllDatasetStudySummaries() {
     when(datasetService.findAllDatasetStudySummaries()).thenReturn(List.of());
 
-    try (var response = resource.findAllDatasetStudySummaries(authUser)) {
+    try (var response = resource.findAllDatasetStudySummaries(duosUser)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -866,7 +866,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     assertNotNull(dataset);
     when(datasetService.findDatasetByIdentifier(any(), any())).thenReturn(dataset);
 
-    Response response = resource.getRegistrationFromDatasetIdentifier(authUser,
+    Response response = resource.getRegistrationFromDatasetIdentifier(duosUser,
         dataset.getDatasetIdentifier());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
@@ -877,7 +877,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     assertNotNull(dataset);
     when(datasetService.findDatasetByIdentifier(any(), any())).thenReturn(dataset);
 
-    Response response = resource.getRegistrationFromDatasetIdentifier(authUser,
+    Response response = resource.getRegistrationFromDatasetIdentifier(duosUser,
         dataset.getDatasetIdentifier());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
@@ -889,7 +889,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     assertNotNull(dataset);
     when(datasetService.findDatasetByIdentifier(any(), any())).thenReturn(null);
 
-    Response response = resource.getRegistrationFromDatasetIdentifier(authUser,
+    Response response = resource.getRegistrationFromDatasetIdentifier(duosUser,
         dataset.getDatasetIdentifier());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }

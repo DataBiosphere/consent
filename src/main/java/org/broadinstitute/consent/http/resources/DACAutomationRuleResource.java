@@ -16,6 +16,7 @@ import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.rules.AuditPageResults;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
@@ -42,7 +43,7 @@ public class DACAutomationRuleResource extends Resource {
   @Path("rules")
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
-  public Response getAllRules() {
+  public Response getAllRules(@Auth DuosUser duosUser) {
     try {
       List<DACAutomationRule> rules = ruleService.findAll();
       return Response.ok(rules).build();

@@ -7,10 +7,14 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.BadRequestException;
+import java.util.Date;
+import java.util.List;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -30,14 +34,12 @@ class NihAccountResourceTest {
   @Mock
   private NIHUserAccount nihAccount;
 
-  @Mock
-  private User user;
 
-  @Mock
-  private AuthUser authUser;
+  private final AuthUser authUser = new AuthUser("test");
+  private final List<UserRole> roles = List.of(UserRoles.Researcher());
+  private final User user = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
 
-  @Mock
-  private DuosUser duosUser;
+  private final DuosUser duosUser = new DuosUser(authUser, user);
 
   private NihAccountResource resource;
 
@@ -60,28 +62,17 @@ class NihAccountResourceTest {
 
   @Test
   void testRegisterResearcherSuccess() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
     resource = new NihAccountResource(nihService, userService);
-    try (var response = resource.registerResearcher(authUser, nihAccount)) {
+    try (var response = resource.registerResearcher(duosUser, nihAccount)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
 
   @Test
-  void testRegisterResearcherNoAuth() {
-    when(userService.findUserByEmail(any())).thenReturn(null);
-    resource = new NihAccountResource(nihService, userService);
-    try (var response = resource.registerResearcher(authUser, nihAccount)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
-    }
-  }
-
-  @Test
   void testRegisterResearcherError() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(new RuntimeException()).when(nihService).authenticateNih(any(), any(), any());
     resource = new NihAccountResource(nihService, userService);
-    try (var response = resource.registerResearcher(authUser, nihAccount)) {
+    try (var response = resource.registerResearcher(duosUser, nihAccount)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
   }
@@ -90,7 +81,7 @@ class NihAccountResourceTest {
   void testRegisterResearcherNullAccountError() {
     doThrow(new BadRequestException()).when(nihService).validateNihUserAccount(any(), any());
     resource = new NihAccountResource(nihService, userService);
-    try (var response = resource.registerResearcher(authUser,null)) {
+    try (var response = resource.registerResearcher(duosUser,null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }

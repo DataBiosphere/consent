@@ -9,10 +9,15 @@ import static org.mockito.Mockito.when;
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.core.Response;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Match;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.MatchService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,8 +30,11 @@ class MatchResourceTest {
   @Mock
   private MatchService service;
 
-  @Mock
-  private AuthUser authUser;
+  private final AuthUser authUser = new AuthUser("test");
+  private final List<UserRole> roles = List.of(UserRoles.Researcher());
+  private final User user = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
+
+  private final DuosUser duosUser = new DuosUser(authUser, user);
 
   private MatchResource resource;
 
@@ -38,7 +46,7 @@ class MatchResourceTest {
   void testGetMatchesForPurpose() {
     initResource();
 
-    Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser,
+    Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(duosUser,
         UUID.randomUUID().toString());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
@@ -46,14 +54,14 @@ class MatchResourceTest {
   @Test
   void testGetMatchesForPurpose_EmptyParam() {
     initResource();
-    Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser, "");
+    Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(duosUser, "");
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
   @Test
   void testGetMatchesForPurpose_CommaSeparatedBlanks() {
     initResource();
-    Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser,
+    Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(duosUser,
         " , , ,");
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
@@ -66,7 +74,7 @@ class MatchResourceTest {
         List.of(match));
     initResource();
 
-    Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(authUser,
+    Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(duosUser,
         "3, , 5, ");
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }

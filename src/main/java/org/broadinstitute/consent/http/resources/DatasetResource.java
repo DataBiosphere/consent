@@ -219,9 +219,8 @@ public class DatasetResource extends Resource {
   @Produces("application/json")
   @PermitAll
   @Path("/v3")
-  public Response findAllDatasetStudySummaries(@Auth AuthUser authUser) {
+  public Response findAllDatasetStudySummaries(@Auth DuosUser duosUser) {
     try {
-      userService.findUserByEmail(authUser.getEmail());
       List<DatasetStudySummary> summaries = datasetService.findAllDatasetStudySummaries();
       return Response.ok(summaries).build();
     } catch (Exception e) {
@@ -250,10 +249,10 @@ public class DatasetResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
   @Timed
-  public Response getRegistrationFromDatasetIdentifier(@Auth AuthUser authUser,
+  public Response getRegistrationFromDatasetIdentifier(@Auth DuosUser duosUser,
       @PathParam("datasetIdentifier") String datasetIdentifier) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       Dataset dataset = datasetService.findDatasetByIdentifier(user, datasetIdentifier);
       if (Objects.isNull(dataset)) {
         throw new NotFoundException(
@@ -305,7 +304,7 @@ public class DatasetResource extends Resource {
   @Produces("application/json")
   @Path("/validate")
   @PermitAll
-  public Response validateDatasetName(@QueryParam("name") String name) {
+  public Response validateDatasetName(@Auth DuosUser duosUser, @QueryParam("name") String name) {
     try {
       Dataset datasetWithName = datasetService.getDatasetByName(name);
       return Response.ok().entity(datasetWithName.getDatasetId()).build();
@@ -319,7 +318,7 @@ public class DatasetResource extends Resource {
   @Produces("application/json")
   @Path("/studyNames")
   @PermitAll
-  public Response findAllStudyNames() {
+  public Response findAllStudyNames(@Auth DuosUser duosUser) {
     try {
       Set<String> studyNames = datasetService.findAllStudyNames();
       return Response.ok(studyNames).build();
@@ -333,7 +332,7 @@ public class DatasetResource extends Resource {
   @Produces("application/json")
   @Path("/datasetNames")
   @PermitAll
-  public Response findAllDatasetNames() {
+  public Response findAllDatasetNames(@Auth DuosUser duosUser) {
     try {
       List<String> datasetNames = datasetService.findAllDatasetNames();
       return Response.ok(datasetNames).build();
@@ -417,10 +416,9 @@ public class DatasetResource extends Resource {
   @PermitAll
   @Timed
   public Response autocompleteDatasets(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @QueryParam("query") String query) {
     try {
-      userService.findUserByEmail(authUser.getEmail());
       List<DatasetSummary> datasets = datasetService.searchDatasetSummaries(query);
       return Response.ok(datasets).build();
     } catch (Exception e) {
@@ -434,9 +432,8 @@ public class DatasetResource extends Resource {
   @Produces("application/json")
   @PermitAll
   @Timed
-  public Response searchDatasetIndex(@Auth AuthUser authUser, String query) {
+  public Response searchDatasetIndex(@Auth DuosUser duosUser, String query) {
     try {
-      userService.findUserByEmail(authUser.getEmail());
       return elasticSearchService.searchDatasets(query);
     } catch (Exception e) {
       return createExceptionResponse(e);

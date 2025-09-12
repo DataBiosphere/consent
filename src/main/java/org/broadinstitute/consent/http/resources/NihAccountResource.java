@@ -49,11 +49,11 @@ public class NihAccountResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   @PermitAll
-  public Response registerResearcher(@Auth AuthUser authUser, NIHUserAccount nihAccount) {
+  public Response registerResearcher(@Auth DuosUser duosUser, NIHUserAccount nihAccount) {
     try {
-      nihService.validateNihUserAccount(nihAccount, authUser);
-      User user = userService.findUserByEmail(authUser.getEmail());
-      List<UserProperty> authUserProps = nihService.authenticateNih(nihAccount, authUser,
+      nihService.validateNihUserAccount(nihAccount, duosUser);
+      User user = duosUser.getUser();
+      List<UserProperty> authUserProps = nihService.authenticateNih(nihAccount, duosUser,
           user.getUserId());
       return Response.ok(authUserProps).build();
     } catch (Exception e) {

@@ -93,9 +93,9 @@ public class DataAccessRequestResource extends Resource {
   @Produces("application/json")
   @PermitAll
   @Path("/v2")
-  public Response getDataAccessRequests(@Auth AuthUser authUser) {
+  public Response getDataAccessRequests(@Auth DuosUser duosUser) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       List<DataAccessRequest> dars = dataAccessRequestService.getDataAccessRequestsByUserRole(user);
       return Response.ok().entity(dars).build();
     } catch (Exception e) {
@@ -160,11 +160,11 @@ public class DataAccessRequestResource extends Resource {
   @Produces("application/json")
   @PermitAll
   public Response getByReferenceId(
-      @Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
+      @Auth DuosUser duosUser, @PathParam("referenceId") String referenceId) {
     validateAuthedRoleUser(
         List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER,
             UserRoles.SIGNINGOFFICIAL),
-        authUser, referenceId);
+        duosUser, referenceId);
     try {
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
       if (Objects.nonNull(dar)) {
@@ -186,11 +186,11 @@ public class DataAccessRequestResource extends Resource {
   @Produces("application/json")
   @PermitAll
   public Response getDAAsByReferenceId(
-      @Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
+      @Auth DuosUser duosUser, @PathParam("referenceId") String referenceId) {
     try {
       validateAuthedRoleUser(
           List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER),
-          authUser, referenceId);
+          duosUser, referenceId);
       List<DataAccessAgreement> dataAccessAgreements = daaService.findByDarReferenceId(referenceId);
       return Response.status(Response.Status.OK).entity(dataAccessAgreements).build();
     } catch (Exception e) {
@@ -351,13 +351,13 @@ public class DataAccessRequestResource extends Resource {
   @Path("/v2/{referenceId}/irbDocument")
   @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, RESEARCHER})
   public Response getIrbDocument(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @PathParam("referenceId") String referenceId) {
     try {
       DataAccessRequest dar = getDarById(referenceId);
       validateAuthedRoleUser(
           List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER),
-          authUser, referenceId);
+          duosUser, referenceId);
       if (dar.getData() != null &&
           StringUtils.isNotEmpty(dar.getData().getIrbDocumentLocation()) &&
           StringUtils.isNotEmpty(dar.getData().getIrbDocumentName())
@@ -519,13 +519,13 @@ public class DataAccessRequestResource extends Resource {
   @Path("/v2/{referenceId}/collaborationDocument")
   @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, RESEARCHER})
   public Response getCollaborationDocument(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @PathParam("referenceId") String referenceId) {
     try {
       DataAccessRequest dar = getDarById(referenceId);
       validateAuthedRoleUser(
           List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER),
-          authUser, referenceId);
+          duosUser, referenceId);
       if (dar.getData() != null &&
           StringUtils.isNotEmpty(dar.getData().getCollaborationLetterLocation()) &&
           StringUtils.isNotEmpty(dar.getData().getCollaborationLetterName())
@@ -570,9 +570,9 @@ public class DataAccessRequestResource extends Resource {
   @Path("/v2/{referenceId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN, RESEARCHER})
-  public Response deleteDar(@Auth AuthUser authUser, @PathParam("referenceId") String referenceId) {
+  public Response deleteDar(@Auth DuosUser duosUser, @PathParam("referenceId") String referenceId) {
     try {
-      DataAccessRequest dataAccessRequest = validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), authUser, referenceId);
+      DataAccessRequest dataAccessRequest = validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), duosUser, referenceId);
       dataAccessRequestService.deleteDataAccessRequest(dataAccessRequest);
       return Response.ok().build();
     } catch (Exception e) {
@@ -713,14 +713,14 @@ public class DataAccessRequestResource extends Resource {
    * (i.e. Admin) so they can also have access to the DAR.
    *
    * @param allowableRoles List of roles that would allow the user to access the resource
-   * @param authUser       The AuthUser
+   * @param duosUser       The AuthUser
    * @param referenceId    The referenceId of the resource.
    * @return dataAccessRequest The data access request underlying the referenceId
    */
-  private DataAccessRequest validateAuthedRoleUser(final List<UserRoles> allowableRoles, AuthUser authUser,
+  private DataAccessRequest validateAuthedRoleUser(final List<UserRoles> allowableRoles, DuosUser duosUser,
       String referenceId) {
     DataAccessRequest dataAccessRequest = getDarById(referenceId);
-    User user = findUserByEmail(authUser.getEmail());
+    User user = duosUser.getUser();
     if (Objects.nonNull(dataAccessRequest.getUserId()) && dataAccessRequest.getUserId() > 0) {
       super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
     } else {

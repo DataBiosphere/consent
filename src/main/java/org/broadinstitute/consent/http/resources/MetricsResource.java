@@ -1,12 +1,15 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
+import io.dropwizard.auth.Auth;
+import jakarta.annotation.security.PermitAll;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.service.MetricsService;
 
 @Path("/metrics")
@@ -22,7 +25,8 @@ public class MetricsResource extends Resource {
   @GET
   @Path("/dataset/{datasetId}")
   @Produces("application/json")
-  public Response getDatasetMetricsData(@PathParam("datasetId") Integer datasetId) {
+  @PermitAll
+  public Response getDatasetMetricsData(@Auth DuosUser duosUser, @PathParam("datasetId") Integer datasetId) {
     try {
       DatasetMetrics metrics = metricsService.generateDatasetMetrics(datasetId);
       return Response.ok().entity(metrics).build();
