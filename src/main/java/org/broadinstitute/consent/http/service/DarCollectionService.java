@@ -507,13 +507,13 @@ public class DarCollectionService implements ConsentLogger {
     return addDatasetsToCollection(collection);
   }
 
-  public DarCollection getCollectionWithElectionsByCollectionIdAndDatasetIds(List<Integer> datasetIds, Integer collectionId) {
+  public DarCollection getCollectionWithElectionsByCollectionIdAndDatasetIds(User user, List<Integer> datasetIds, Integer collectionId) {
     DarCollection collection = darCollectionDAO.findCollectionWithElectionsByCollectionIdAndDatasetIds(datasetIds, collectionId);
     if (Objects.isNull(collection)) {
       throw new NotFoundException(
           "Collection with the collection id of " + collectionId + " was not found");
     }
-    return addDatasetsToCollection(collection);
+    return filterCollectionForUser(user, addDatasetsToCollection(collection));
   }
 
   /**

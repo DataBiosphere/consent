@@ -127,18 +127,18 @@ public class DarCollectionResource extends Resource {
   @Produces("application/json")
   @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER})
   public Response getCollectionWithAllElectionsByCollectionId(
-      @Auth DuosUser authUser,
+      @Auth DuosUser duosUser,
       @PathParam("collectionId") Integer collectionId) {
     try {
-      if (authUser.getUser().hasUserRole(UserRoles.ADMIN)) {
+      if (duosUser.getUser().hasUserRole(UserRoles.ADMIN)) {
         DarCollection collection = darCollectionService.getCollectionWithAllElectionsByCollectionId(collectionId);
         return Response.ok().entity(collection).build();
       }
       // if user is only a member or chair, get the list of datasets they have access to
       // this will be used to filter the collection's elections
-      List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByDACUser(authUser.getUser());
-      DarCollection collection = darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(userDatasetIds, collectionId);
-      if (!checkDacPermissionsForCollection(authUser.getUser(), collection)) {
+      List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByDACUser(duosUser.getUser());
+      DarCollection collection = darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(duosUser.getUser(), userDatasetIds, collectionId);
+      if (!checkDacPermissionsForCollection(duosUser.getUser(), collection)) {
         throw new NotFoundException();
       }
       return Response.ok().entity(collection).build();

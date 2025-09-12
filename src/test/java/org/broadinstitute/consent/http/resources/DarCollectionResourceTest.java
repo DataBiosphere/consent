@@ -278,7 +278,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setDatasets(Set.of(dataset1));
 
     when(darCollectionService.findDatasetIdsByDACUser(member)).thenReturn(userDatasetIds);
-    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(userDatasetIds, collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(member, userDatasetIds, collection.getDarCollectionId())).thenReturn(collection);
 
     Response response = resource.getCollectionWithAllElectionsByCollectionId(duosMember, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -287,7 +287,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   @Test
   void testGetCollectionWithAllElectionsById_CollectionNotFoundCollection() {
     when(darCollectionService.findDatasetIdsByDACUser(duosResearcher.getUser())).thenReturn(List.of());
-    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(List.of(), 1))
+    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(duosResearcher.getUser(), List.of(), 1))
         .thenThrow(new NotFoundException("Collection not found"));
 
     Response response = resource.getCollectionWithAllElectionsByCollectionId(duosResearcher, 1);
@@ -297,7 +297,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   @Test
   void testGetCollectionWithAllElectionsByCollectionId_ServiceException() {
     when(darCollectionService.findDatasetIdsByDACUser(duosResearcher.getUser())).thenReturn(List.of());
-    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(List.of(), 1))
+    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(duosResearcher.getUser(), List.of(), 1))
         .thenThrow(new RuntimeException("Service error"));
 
     Response response = resource.getCollectionWithAllElectionsByCollectionId(duosResearcher, 1);
@@ -311,7 +311,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setCreateUserId(researcher.getUserId());
 
     when(darCollectionService.findDatasetIdsByDACUser(researcher)).thenReturn(List.of());
-    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(List.of(),
+    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(researcher, List.of(),
         collection.getDarCollectionId())).thenReturn(collection);
 
     Response response = resource.getCollectionWithAllElectionsByCollectionId(duosResearcher,
