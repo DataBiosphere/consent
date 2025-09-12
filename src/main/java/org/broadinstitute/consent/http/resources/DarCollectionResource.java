@@ -59,7 +59,8 @@ public class DarCollectionResource extends Resource {
       var role = validateUserHasRoleName(user, roleName);
       List<DarCollectionSummary> summaries = darCollectionService.getSummariesForRole(user, role);
       // When querying in list context, we only want the exposed fields
-      Gson gson = GsonUtil.gsonBuilderWithAdapters().excludeFieldsWithoutExposeAnnotation().create();
+      Gson gson = GsonUtil.gsonBuilderWithAdapters().excludeFieldsWithoutExposeAnnotation()
+          .create();
       return Response.ok().entity(gson.toJson(summaries)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -77,7 +78,8 @@ public class DarCollectionResource extends Resource {
       User user = userService.findUserByEmail(authUser.getEmail());
       // throws BadRequestException if user does not have roleName
       var role = validateUserHasRoleName(user, roleName);
-      DarCollectionSummary summary = darCollectionService.getSummaryForRoleByCollectionId(user, role, collectionId);
+      DarCollectionSummary summary = darCollectionService.getSummaryForRoleByCollectionId(user,
+          role, collectionId);
 
       boolean allowedAccess = switch (role) {
         case ADMIN -> true;
@@ -131,13 +133,16 @@ public class DarCollectionResource extends Resource {
       @PathParam("collectionId") Integer collectionId) {
     try {
       if (duosUser.getUser().hasUserRole(UserRoles.ADMIN)) {
-        DarCollection collection = darCollectionService.getCollectionWithAllElectionsByCollectionId(collectionId);
+        DarCollection collection = darCollectionService.getCollectionWithAllElectionsByCollectionId(
+            duosUser.getUser(), collectionId);
         return Response.ok().entity(collection).build();
       }
       // if user is only a member or chair, get the list of datasets they have access to
       // this will be used to filter the collection's elections
-      List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByDACUser(duosUser.getUser());
-      DarCollection collection = darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(duosUser.getUser(), userDatasetIds, collectionId);
+      List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByDACUser(
+          duosUser.getUser());
+      DarCollection collection = darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(
+          duosUser.getUser(), userDatasetIds, collectionId);
       if (!checkDacPermissionsForCollection(duosUser.getUser(), collection)) {
         throw new NotFoundException();
       }
@@ -199,9 +204,10 @@ public class DarCollectionResource extends Resource {
         actingRole = validateUserHasRoleName(user, roleName);
       }
 
-      DarCollection cancelledCollection = darCollectionService.cancelDarCollectionByRole(user, collection, actingRole);
+      DarCollection cancelledCollection = darCollectionService.cancelDarCollectionByRole(user,
+          collection, actingRole);
       ComplianceLogger.logDARCancellation(user, cancelledCollection.getDatasets().stream().toList(),
-              (ContainerRequest) request, Response.Status.OK.getStatusCode());
+          (ContainerRequest) request, Response.Status.OK.getStatusCode());
       return Response.ok().entity(cancelledCollection).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
