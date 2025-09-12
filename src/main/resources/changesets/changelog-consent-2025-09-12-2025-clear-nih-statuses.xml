@@ -1,7 +1,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
-  <changeSet id="changelog-consent-2025-09-12-2025-clear-nih-statuses.xml" author="grushton">
+  <changeSet id="changelog-consent-2025-09-12-2025-clear-nih-statuses" author="grushton">
     <comment>Clear out NIH status fields for all consents</comment>
     <sql>
       DELETE FROM user_property WHERE property_key IN ('eraAuthorized', 'eraExpiration');
