@@ -487,6 +487,7 @@ public class DarCollectionService implements ConsentLogger {
    * Given a DarCollection, remove all votes from elections for roles that should not see them. This
    * method mutates the given collection.
    *
+   * @param user       The User requesting the collection
    * @param collection DarCollection to filter votes from
    * @return DarCollection
    */
