@@ -60,6 +60,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -93,12 +94,20 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   private UserDAO userDAO;
   @Mock
   private DacDAO dacDAO;
+  @Mock
+  private Jdbi jdbi;
 
   @BeforeEach
   void setUp() {
-    service = new DarCollectionService(darCollectionDAO, darCollectionServiceDAO, datasetDAO,
-        electionDAO, dataAccessRequestDAO, emailService, voteDAO, darCollectionSummaryDAO, userDAO,
-        dacDAO);
+    when(jdbi.onDemand(DarCollectionDAO.class)).thenReturn(darCollectionDAO);
+    when(jdbi.onDemand(DarCollectionSummaryDAO.class)).thenReturn(darCollectionSummaryDAO);
+    when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
+    when(jdbi.onDemand(ElectionDAO.class)).thenReturn(electionDAO);
+    when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(dataAccessRequestDAO);
+    when(jdbi.onDemand(VoteDAO.class)).thenReturn(voteDAO);
+    when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
+    when(jdbi.onDemand(DacDAO.class)).thenReturn(dacDAO);
+    service = new DarCollectionService(jdbi, darCollectionServiceDAO, emailService);
   }
 
   @Test

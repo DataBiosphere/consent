@@ -47,37 +47,35 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.jdbi.v3.core.Jdbi;
 
 public class DarCollectionService implements ConsentLogger {
 
   private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-  private final DarCollectionDAO darCollectionDAO;
-  private final DarCollectionServiceDAO collectionServiceDAO;
   private final DacDAO dacDAO;
+  private final DarCollectionDAO darCollectionDAO;
   private final DarCollectionSummaryDAO darCollectionSummaryDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DatasetDAO datasetDAO;
   private final ElectionDAO electionDAO;
-  private final EmailService emailService;
   private final UserDAO userDAO;
   private final VoteDAO voteDAO;
+  private final DarCollectionServiceDAO collectionServiceDAO;
+  private final EmailService emailService;
 
   @Inject
-  public DarCollectionService(DarCollectionDAO darCollectionDAO,
-      DarCollectionServiceDAO collectionServiceDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO,
-      DataAccessRequestDAO dataAccessRequestDAO, EmailService emailService, VoteDAO voteDAO,
-      DarCollectionSummaryDAO darCollectionSummaryDAO, UserDAO userDAO,
-      DacDAO dacDAO) {
-    this.darCollectionDAO = darCollectionDAO;
-    this.collectionServiceDAO = collectionServiceDAO;
-    this.datasetDAO = datasetDAO;
-    this.electionDAO = electionDAO;
-    this.dataAccessRequestDAO = dataAccessRequestDAO;
+  public DarCollectionService(Jdbi jdbi, DarCollectionServiceDAO darCollectionServiceDAO,
+      EmailService emailService) {
+    this.dacDAO = jdbi.onDemand(DacDAO.class);
+    this.darCollectionDAO = jdbi.onDemand(DarCollectionDAO.class);
+    this.darCollectionSummaryDAO = jdbi.onDemand(DarCollectionSummaryDAO.class);
+    this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
+    this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
+    this.electionDAO = jdbi.onDemand(ElectionDAO.class);
+    this.userDAO = jdbi.onDemand(UserDAO.class);
+    this.voteDAO = jdbi.onDemand(VoteDAO.class);
+    this.collectionServiceDAO = darCollectionServiceDAO;
     this.emailService = emailService;
-    this.voteDAO = voteDAO;
-    this.darCollectionSummaryDAO = darCollectionSummaryDAO;
-    this.userDAO = userDAO;
-    this.dacDAO = dacDAO;
   }
 
   private void updateStatusCount(Map<String, Integer> statusCount, String status) {
