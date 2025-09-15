@@ -38,6 +38,7 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
+import org.broadinstitute.consent.http.db.DatasetAuthorizationReaderDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
@@ -112,6 +113,8 @@ class UserServiceTest extends AbstractTestHelper {
   private InstitutionService institutionService;
   @Mock
   private DACAutomationRuleDAO ruleDAO;
+  @Mock
+  private DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
 
 
   private UserService service;
@@ -120,7 +123,7 @@ class UserServiceTest extends AbstractTestHelper {
   void initService() {
     service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO,
         libraryCardDAO, acknowledgementDAO, fileStorageObjectDAO, userServiceDAO, daaDAO,
-        draftServiceDAO, institutionService, ruleDAO);
+        draftServiceDAO, institutionService, ruleDAO, datasetAuthorizationReaderDAO);
   }
 
   @Test
@@ -453,6 +456,7 @@ class UserServiceTest extends AbstractTestHelper {
       service.deleteUserByEmail(randomAlphabetic(10), randomInt(1,100));
       verify(draftServiceDAO).deleteDraftsByUser(u);
       verify(ruleDAO, atLeastOnce()).auditedDeleteAllDACRuleSettingForUser(anyInt(), anyInt());
+      verify(datasetAuthorizationReaderDAO, atLeastOnce()).deleteByUserId(u.getUserId());
     } catch (Exception e) {
       fail("Should not fail: " + e.getMessage());
     }

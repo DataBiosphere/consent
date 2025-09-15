@@ -24,6 +24,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriBuilder;
 import java.net.URI;
@@ -40,7 +41,6 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
-import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Study;
@@ -51,6 +51,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.Da
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
+import org.broadinstitute.consent.http.service.TDRService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.JsonSchemaUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -64,6 +65,7 @@ public class DatasetResource extends Resource {
 
   private final DatasetService datasetService;
   private final DatasetRegistrationService datasetRegistrationService;
+  private final TDRService tdrService;
   private final UserService userService;
   private final ElasticSearchService elasticSearchService;
 
@@ -72,11 +74,13 @@ public class DatasetResource extends Resource {
   @Inject
   public DatasetResource(DatasetService datasetService, UserService userService,
       DatasetRegistrationService datasetRegistrationService,
-      ElasticSearchService elasticSearchService) {
+      ElasticSearchService elasticSearchService,
+      TDRService tdrService) {
     this.datasetService = datasetService;
     this.userService = userService;
     this.datasetRegistrationService = datasetRegistrationService;
     this.elasticSearchService = elasticSearchService;
+    this.tdrService = tdrService;
     this.jsonSchemaUtil = new JsonSchemaUtil();
   }
 
@@ -410,22 +414,6 @@ public class DatasetResource extends Resource {
     }
   }
 
-  @GET
-  @Produces("application/json")
-  @Path("/autocomplete")
-  @PermitAll
-  @Timed
-  public Response autocompleteDatasets(
-      @Auth DuosUser duosUser,
-      @QueryParam("query") String query) {
-    try {
-      List<DatasetSummary> datasets = datasetService.searchDatasetSummaries(query);
-      return Response.ok(datasets).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
   @POST
   @Path("/search/index")
   @Consumes("application/json")
@@ -516,4 +504,72 @@ public class DatasetResource extends Resource {
     }
   }
 
+  @GET
+  @Produces("application/json")
+  @RolesAllowed(ADMIN)
+  @Path("/{id}/authorizedAccessReaders")
+  public Response getAuthorizedReaders(@Auth DuosUser duosUser, @PathParam("id") Long id) {
+    try{
+      return Response.ok(datasetService.getAuthorizationReaders(id)).build();
+    } catch (Exception e) {
+     return createExceptionResponse(e);
+    }
+  }
+
+  @PUT
+  @Produces("application/json")
+  @RolesAllowed(ADMIN)
+  @Path("/{id}/authorizedAccessReaders/{userId}")
+  public Response addAuthorizedReaders(
+      @Auth DuosUser duosUser,
+      @PathParam("id") long datasetId,
+      @PathParam("userId") int userId) {
+    try {
+      User targetUser = userService.findUserById(userId);
+      if (targetUser == null || !targetUser.hasUserRole(UserRoles.RESEARCHER)) {
+        return Response.status(Status.CONFLICT).build();
+      }
+      return Response.ok(
+              datasetService.addAuthorizedReader(datasetId, userId, duosUser.getUser().getUserId()))
+          .build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+
+  }
+
+  @DELETE
+  @Produces("application/json")
+  @RolesAllowed(ADMIN)
+  @Path("/{id}/authorizedAccessReaders/{userId}")
+  public Response removeAuthorizedReaders(
+      @Auth DuosUser duosUser,
+      @PathParam("id") long datasetId,
+      @PathParam("userId") long userId) {
+    try {
+      datasetService.removeAuthorizedAccessReader(datasetId, userId);
+      return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Produces("application/json")
+  @RolesAllowed(RESEARCHER)
+  @Path("/{identifier}/approvedUsers")
+  public Response getApprovedUsers(@Auth DuosUser duosUser, @PathParam("identifier") String datasetIdentifier) {
+    try {
+      Dataset dataset = datasetService.findDatasetByIdentifier(duosUser.getUser(), datasetIdentifier);
+      if (Objects.isNull(dataset)) {
+        return Response.status(Response.Status.NOT_FOUND).build();
+      }
+      if (!datasetService.isAuthorizedToListUsers(dataset.getDatasetId(), duosUser.getUser().getUserId())) {
+        return Response.status(Response.Status.FORBIDDEN).build();
+      }
+      return Response.ok(tdrService.getApprovedUsersForDataset(duosUser, dataset)).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
 }

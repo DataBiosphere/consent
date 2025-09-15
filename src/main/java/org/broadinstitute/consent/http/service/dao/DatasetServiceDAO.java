@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.consent.http.db.DatasetAuthorizationReaderDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
@@ -35,14 +36,20 @@ import org.jdbi.v3.core.statement.Update;
 public class DatasetServiceDAO implements ConsentLogger {
 
   private final Jdbi jdbi;
+  private final DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
   private final DatasetDAO datasetDAO;
   private final StudyDAO studyDAO;
 
   @Inject
-  public DatasetServiceDAO(Jdbi jdbi, DatasetDAO datasetDAO, StudyDAO studyDAO) {
+  public DatasetServiceDAO(
+      Jdbi jdbi,
+      DatasetDAO datasetDAO,
+      StudyDAO studyDAO,
+      DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO) {
     this.jdbi = jdbi;
     this.datasetDAO = datasetDAO;
     this.studyDAO = studyDAO;
+    this.datasetAuthorizationReaderDAO = datasetAuthorizationReaderDAO;
   }
 
   public void deleteDataset(Dataset dataset, Integer userId) throws Exception {
@@ -53,6 +60,7 @@ public class DatasetServiceDAO implements ConsentLogger {
           Objects.nonNull(dataset.getName()) ? dataset.getName() : dataset.getDatasetIdentifier();
       try {
         addAuditRecord(dataset.getDatasetId(), dsAuditName, userId, AuditActions.DELETE);
+        datasetAuthorizationReaderDAO.deleteByDatasetId(dataset.getDatasetId());
         datasetDAO.deleteDatasetPropertiesByDatasetId(dataset.getDatasetId());
         datasetDAO.deleteDatasetById(dataset.getDatasetId());
       } catch (Exception e) {
@@ -85,47 +93,6 @@ public class DatasetServiceDAO implements ConsentLogger {
       }
       handle.commit();
     });
-  }
-
-  public record StudyInsert(String name,
-                            String description,
-                            List<String> dataTypes,
-                            String piName,
-                            Boolean publicVisibility,
-                            Integer userId,
-                            List<StudyProperty> props,
-                            List<FileStorageObject> files) {
-
-  }
-
-  public record StudyUpdate(String name,
-                            Integer studyId,
-                            String description,
-                            List<String> dataTypes,
-                            String piName,
-                            Boolean publicVisibility,
-                            Integer userId,
-                            List<StudyProperty> props,
-                            List<FileStorageObject> files) {
-
-  }
-
-  public record DatasetInsert(String name,
-                              Integer dacId,
-                              DataUse dataUse,
-                              Integer userId,
-                              List<DatasetProperty> props,
-                              List<FileStorageObject> files) {
-
-  }
-
-  public record DatasetUpdate(Integer datasetId,
-                              String name,
-                              Integer userId,
-                              Integer dacId,
-                              List<DatasetProperty> props,
-                              List<FileStorageObject> files) {
-
   }
 
   /**
@@ -521,8 +488,6 @@ public class DatasetServiceDAO implements ConsentLogger {
     return insert;
   }
 
-  // Helper methods to generate DatasetProperty inserts
-
   private List<Update> generatePropertyInserts(Handle handle, Integer datasetId,
       List<DatasetProperty> properties, Set<DatasetProperty> existingProps) {
     Timestamp now = new Timestamp(new Date().getTime());
@@ -557,8 +522,6 @@ public class DatasetServiceDAO implements ConsentLogger {
     insert.bind("createDate", now);
     return insert;
   }
-
-  // Helper methods to generate DatasetProperty updates
 
   private List<Update> generatePropertyUpdates(Handle handle, Integer datasetId,
       List<DatasetProperty> properties, Set<DatasetProperty> existingProps) {
@@ -602,7 +565,7 @@ public class DatasetServiceDAO implements ConsentLogger {
     return insert;
   }
 
-  // Helper methods to generate DatasetProperty deletes
+  // Helper methods to generate DatasetProperty inserts
 
   private List<Update> generatePropertyDeletes(Handle handle, List<DatasetProperty> properties,
       Set<DatasetProperty> existingProps) {
@@ -630,5 +593,50 @@ public class DatasetServiceDAO implements ConsentLogger {
     insert.bind("propertyKey", property.getPropertyKey());
     insert.bind("propertyId", property.getPropertyId());
     return insert;
+  }
+
+  // Helper methods to generate DatasetProperty updates
+
+  public record StudyInsert(String name,
+                            String description,
+                            List<String> dataTypes,
+                            String piName,
+                            Boolean publicVisibility,
+                            Integer userId,
+                            List<StudyProperty> props,
+                            List<FileStorageObject> files) {
+
+  }
+
+  public record StudyUpdate(String name,
+                            Integer studyId,
+                            String description,
+                            List<String> dataTypes,
+                            String piName,
+                            Boolean publicVisibility,
+                            Integer userId,
+                            List<StudyProperty> props,
+                            List<FileStorageObject> files) {
+
+  }
+
+  // Helper methods to generate DatasetProperty deletes
+
+  public record DatasetInsert(String name,
+                              Integer dacId,
+                              DataUse dataUse,
+                              Integer userId,
+                              List<DatasetProperty> props,
+                              List<FileStorageObject> files) {
+
+  }
+
+  public record DatasetUpdate(Integer datasetId,
+                              String name,
+                              Integer userId,
+                              Integer dacId,
+                              List<DatasetProperty> props,
+                              List<FileStorageObject> files) {
+
   }
 }

@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
+import org.broadinstitute.consent.http.db.DatasetAuthorizationReaderDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
@@ -67,13 +68,24 @@ public class UserService implements ConsentLogger {
   private final DraftServiceDAO draftServiceDAO;
   private final InstitutionService institutionService;
   private final DACAutomationRuleDAO ruleDAO;
+  private final DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
 
   @Inject
-  public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO,
-      VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO,
-      AcknowledgementDAO acknowledgementDAO, FileStorageObjectDAO fileStorageObjectDAO,
-      UserServiceDAO userServiceDAO, DaaDAO daaDAO, DraftServiceDAO draftServiceDAO,
-      InstitutionService institutionService, DACAutomationRuleDAO ruleDAO) {
+  public UserService(
+      UserDAO userDAO,
+      UserPropertyDAO userPropertyDAO,
+      UserRoleDAO userRoleDAO,
+      VoteDAO voteDAO,
+      InstitutionDAO institutionDAO,
+      LibraryCardDAO libraryCardDAO,
+      AcknowledgementDAO acknowledgementDAO,
+      FileStorageObjectDAO fileStorageObjectDAO,
+      UserServiceDAO userServiceDAO,
+      DaaDAO daaDAO,
+      DraftServiceDAO draftServiceDAO,
+      InstitutionService institutionService,
+      DACAutomationRuleDAO ruleDAO,
+      DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO) {
     this.userDAO = userDAO;
     this.userPropertyDAO = userPropertyDAO;
     this.userRoleDAO = userRoleDAO;
@@ -85,6 +97,7 @@ public class UserService implements ConsentLogger {
     this.userServiceDAO = userServiceDAO;
     this.daaDAO = daaDAO;
     this.draftServiceDAO = draftServiceDAO;
+    this.datasetAuthorizationReaderDAO = datasetAuthorizationReaderDAO;
     this.institutionService = institutionService;
     this.ruleDAO = ruleDAO;
   }
@@ -280,6 +293,7 @@ public class UserService implements ConsentLogger {
     acknowledgementDAO.deleteAllAcknowledgementsByUser(userId);
     fileStorageObjectDAO.deleteAllUserFiles(userId);
     ruleDAO.auditedDeleteAllDACRuleSettingForUser(userId, auditUserId);
+    datasetAuthorizationReaderDAO.deleteByUserId(userId);
     userDAO.deleteUserById(userId);
   }
 

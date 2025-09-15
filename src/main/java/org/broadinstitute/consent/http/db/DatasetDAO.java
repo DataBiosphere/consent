@@ -12,7 +12,6 @@ import org.broadinstitute.consent.http.db.mapper.DatasetMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetReducer;
 import org.broadinstitute.consent.http.db.mapper.DatasetStudySummaryMapper;
-import org.broadinstitute.consent.http.db.mapper.DatasetSummaryMapper;
 import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOPrefix;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
@@ -20,7 +19,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
-import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
@@ -572,16 +570,4 @@ WHERE dar.submission_date > now() - interval '1 year'
   """)
   List<ApprovedDataset> getApprovedDatasets(@Bind("userId") Integer userId);
 
-  @RegisterRowMapper(DatasetSummaryMapper.class)
-  @SqlQuery("""
-      SELECT DISTINCT d.dataset_id, d.alias, d.name
-      FROM dataset d
-      LEFT JOIN dataset_property p ON p.dataset_id = d.dataset_id
-      WHERE d.dac_approval = TRUE
-      AND (
-        LOWER(d.name) LIKE concat('%', LOWER(:query), '%') OR
-        LOWER(p.property_value) LIKE concat('%', LOWER(:query), '%')
-      )
-      """)
-  List<DatasetSummary> findDatasetSummariesByQuery(@Bind("query") String query);
 }
