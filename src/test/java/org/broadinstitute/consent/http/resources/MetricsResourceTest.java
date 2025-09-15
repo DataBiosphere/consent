@@ -7,14 +7,7 @@ import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
-import java.util.Date;
-import java.util.List;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
-import org.broadinstitute.consent.http.models.DuosUser;
-import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,12 +22,6 @@ class MetricsResourceTest {
   private MetricsService service;
 
   private MetricsResource resource;
-
-  private final AuthUser authUser = new AuthUser("test");
-  private final List<UserRole> roles = List.of(UserRoles.Researcher());
-  private final User user = new User(1, authUser.getEmail(), "Display Name", new Date(), roles);
-
-  private final DuosUser duosUser = new DuosUser(authUser, user);
 
   @BeforeEach
   void initResource() {
