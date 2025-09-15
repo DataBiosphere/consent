@@ -12,24 +12,20 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.service.NihService;
-import org.broadinstitute.consent.http.service.UserService;
 
 @Path("api/nih")
 public class NihAccountResource extends Resource {
 
   private final NihService nihService;
-  private final UserService userService;
 
   @Inject
-  public NihAccountResource(NihService nihService, UserService userService) {
+  public NihAccountResource(NihService nihService) {
     this.nihService = nihService;
-    this.userService = userService;
   }
 
   @GET

@@ -7,15 +7,11 @@ package org.broadinstitute.consent.http.models;
 public class DuosUser extends AuthUser {
 
   private final User user;
-  private final AuthUser authUser;
 
   public DuosUser(AuthUser authUser, User user) {
     super(authUser);
-    this.authUser = authUser;
     this.user = user;
   }
-
-  public AuthUser getAuthUser() { return authUser; }
 
   public User getUser() {
     return user;

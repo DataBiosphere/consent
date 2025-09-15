@@ -41,7 +41,6 @@ import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
-import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -58,7 +57,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
-import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
@@ -102,9 +100,6 @@ class UserServiceTest extends AbstractTestHelper {
   private FileStorageObjectDAO fileStorageObjectDAO;
 
   @Mock
-  private SamDAO samDAO;
-
-  @Mock
   private UserServiceDAO userServiceDAO;
 
   @Mock
@@ -124,7 +119,7 @@ class UserServiceTest extends AbstractTestHelper {
   @BeforeEach
   void initService() {
     service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO,
-        libraryCardDAO, acknowledgementDAO, fileStorageObjectDAO, samDAO, userServiceDAO, daaDAO,
+        libraryCardDAO, acknowledgementDAO, fileStorageObjectDAO, userServiceDAO, daaDAO,
         draftServiceDAO, institutionService, ruleDAO);
   }
 
@@ -147,7 +142,7 @@ class UserServiceTest extends AbstractTestHelper {
     when(userDAO.findUserById(any())).thenReturn(user);
 
     UserUpdateFields fields = new UserUpdateFields();
-    // We're modifying this user to have an SO role. This should leave in place
+    // We're modifying this user to have the SO role. This should leave in place
     // both the Researcher and Chairperson roles, but remove the Admin role.
     fields.setUserRoleIds(List.of(so.getRoleId()));
     fields.setDisplayName(randomAlphabetic(10));
@@ -679,11 +674,11 @@ class UserServiceTest extends AbstractTestHelper {
         .setUserSubjectId("subjectId");
     AuthUser authUser = new AuthUser().setEmail(user.getEmail())
         .setAuthToken(randomAlphabetic(30)).setUserStatusInfo(info);
-    when(userDAO.findUserById(anyInt())).thenReturn(user);
+    DuosUser activeDuosUser = new DuosUser(authUser, user);
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(
         List.of(new UserProperty()));
 
-    JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser,
+    JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(activeDuosUser,
         user.getUserId());
     assertNotNull(userJson);
     assertTrue(userJson.get(UserService.LIBRARY_CARD_FIELD).getAsJsonObject().isJsonObject());
@@ -700,11 +695,11 @@ class UserServiceTest extends AbstractTestHelper {
         .setUserSubjectId("subjectId");
     AuthUser authUser = new AuthUser().setEmail("not the user's email address")
         .setAuthToken(randomAlphabetic(30)).setUserStatusInfo(info);
-    when(userDAO.findUserById(anyInt())).thenReturn(user);
+    DuosUser activeDuosUser = new DuosUser(authUser, user);
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(
         List.of(new UserProperty()));
 
-    JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser,
+    JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(activeDuosUser,
         user.getUserId());
     assertNotNull(userJson);
     assertTrue(userJson.get(UserService.LIBRARY_CARD_FIELD).getAsJsonObject().isJsonObject());

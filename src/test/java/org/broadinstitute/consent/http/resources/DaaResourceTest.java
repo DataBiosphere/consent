@@ -523,7 +523,7 @@ class DaaResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSendDaaRequestMessageAssociationAlreadyExists() throws Exception {
+  void testSendDaaRequestMessageAssociationAlreadyExists() {
     User user = new User();
     int daaId = randomInt(10, 100);
     LibraryCard lc = new LibraryCard();

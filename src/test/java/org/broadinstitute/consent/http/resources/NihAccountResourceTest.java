@@ -29,9 +29,6 @@ class NihAccountResourceTest {
   private NihService nihService;
 
   @Mock
-  private UserService userService;
-
-  @Mock
   private NIHUserAccount nihAccount;
 
 
@@ -45,7 +42,7 @@ class NihAccountResourceTest {
 
   @Test
   void testSyncAccountSuccess() {
-    resource = new NihAccountResource(nihService, userService);
+    resource = new NihAccountResource(nihService);
     try (var response = resource.syncAccount(duosUser)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
@@ -54,7 +51,7 @@ class NihAccountResourceTest {
   @Test
   void testSyncAccountNoAuth() throws Exception {
     when(nihService.syncAccount(duosUser)).thenThrow(new RuntimeException());
-    resource = new NihAccountResource(nihService, userService);
+    resource = new NihAccountResource(nihService);
     try (var response = resource.syncAccount(duosUser)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
@@ -62,7 +59,7 @@ class NihAccountResourceTest {
 
   @Test
   void testRegisterResearcherSuccess() {
-    resource = new NihAccountResource(nihService, userService);
+    resource = new NihAccountResource(nihService);
     try (var response = resource.registerResearcher(duosUser, nihAccount)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
@@ -71,7 +68,7 @@ class NihAccountResourceTest {
   @Test
   void testRegisterResearcherError() {
     doThrow(new RuntimeException()).when(nihService).authenticateNih(any(), any(), any());
-    resource = new NihAccountResource(nihService, userService);
+    resource = new NihAccountResource(nihService);
     try (var response = resource.registerResearcher(duosUser, nihAccount)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
@@ -80,7 +77,7 @@ class NihAccountResourceTest {
   @Test
   void testRegisterResearcherNullAccountError() {
     doThrow(new BadRequestException()).when(nihService).validateNihUserAccount(any(), any());
-    resource = new NihAccountResource(nihService, userService);
+    resource = new NihAccountResource(nihService);
     try (var response = resource.registerResearcher(duosUser,null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
@@ -88,7 +85,7 @@ class NihAccountResourceTest {
 
   @Test
   void testDeleteNihAccountSuccess() {
-    resource = new NihAccountResource(nihService, userService);
+    resource = new NihAccountResource(nihService);
     try (var response = resource.deleteNihAccount(duosUser)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
@@ -97,7 +94,7 @@ class NihAccountResourceTest {
   @Test
   void testDeleteNihAccountError() {
     doThrow(new RuntimeException()).when(nihService).deleteNihAccountById(duosUser);
-    resource = new NihAccountResource(nihService, userService);
+    resource = new NihAccountResource(nihService);
     try (var response = resource.deleteNihAccount(duosUser)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }

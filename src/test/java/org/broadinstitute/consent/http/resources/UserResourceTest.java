@@ -111,7 +111,7 @@ class UserResourceTest extends AbstractTestHelper {
   @Test
   void testGetUserById() {
 
-    Response response = userResource.getUserById(authUser, 1);
+    Response response = userResource.getUserById(duosUser, 1);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
@@ -120,7 +120,7 @@ class UserResourceTest extends AbstractTestHelper {
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenThrow(
         new NotFoundException());
 
-    Response response = userResource.getUserById(authUser, 1);
+    Response response = userResource.getUserById(duosUser, 1);
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
@@ -234,10 +234,10 @@ class UserResourceTest extends AbstractTestHelper {
     User user = createUserWithRole();
     User activeUser = createUserWithRole();
     activeUser.setAdminRole();
+    DuosUser activeDuosUser = new DuosUser(new AuthUser(), activeUser);
     when(userService.findUserById(any())).thenReturn(user);
-    when(userService.findUserByEmail(any())).thenReturn(activeUser);
 
-    try (Response response = userResource.addRoleToUser(authUser, 1, UserRoles.ADMIN.getRoleId())) {
+    try (Response response = userResource.addRoleToUser(activeDuosUser, 1, UserRoles.ADMIN.getRoleId())) {
       assertEquals(200, response.getStatus());
     }
   }
@@ -246,10 +246,10 @@ class UserResourceTest extends AbstractTestHelper {
   void testAddRoleToUserNotFound() {
     User activeUser = createUserWithRole();
     activeUser.setAdminRole();
-    when(userService.findUserByEmail(any())).thenReturn(activeUser);
+    DuosUser activeDuosUser = new DuosUser(new AuthUser(), activeUser);
     doThrow(new NotFoundException()).when(userService).findUserById(any());
 
-    try (Response response = userResource.addRoleToUser(authUser, 1, UserRoles.ADMIN.getRoleId())) {
+    try (Response response = userResource.addRoleToUser(activeDuosUser, 1, UserRoles.ADMIN.getRoleId())) {
       assertEquals(404, response.getStatus());
     }
   }
@@ -258,11 +258,11 @@ class UserResourceTest extends AbstractTestHelper {
   void testAddRoleToUserNotModified() {
     User activeUser = createUserWithRole();
     activeUser.setAdminRole();
+    DuosUser activeDuosUser = new DuosUser(new AuthUser(), activeUser);
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
-    when(userService.findUserByEmail(any())).thenReturn(activeUser);
 
-    try (Response response = userResource.addRoleToUser(authUser, 1,
+    try (Response response = userResource.addRoleToUser(activeDuosUser, 1,
         UserRoles.RESEARCHER.getRoleId())) {
       assertEquals(304, response.getStatus());
     }
@@ -272,8 +272,9 @@ class UserResourceTest extends AbstractTestHelper {
   void testAddRoleToUserBadRequest() {
     User activeUser = createUserWithRole();
     activeUser.setAdminRole();
+    DuosUser activeDuosUser = new DuosUser(new AuthUser(), activeUser);
 
-    try (Response response = userResource.addRoleToUser(authUser, 1, 1000)) {
+    try (Response response = userResource.addRoleToUser(activeDuosUser, 1, 1000)) {
       assertEquals(400, response.getStatus());
     }
   }
@@ -283,10 +284,10 @@ class UserResourceTest extends AbstractTestHelper {
     User activeUser = createUserWithRole();
     activeUser.setSigningOfficialRole();
     User user = createUserWithRole();
+    DuosUser activeDuosUser = new DuosUser(new AuthUser(), activeUser);
     when(userService.findUserById(any())).thenReturn(user);
-    when(userService.findUserByEmail(any())).thenReturn(activeUser);
 
-    try (Response response = userResource.addRoleToUser(authUser, 1,
+    try (Response response = userResource.addRoleToUser(activeDuosUser, 1,
         UserRoles.DATASUBMITTER.getRoleId())) {
       assertEquals(400, response.getStatus());
     }
@@ -297,11 +298,11 @@ class UserResourceTest extends AbstractTestHelper {
     User activeUser = createUserWithRole();
     activeUser.setInstitutionId(10);
     activeUser.setSigningOfficialRole();
+    DuosUser activeDuosUser = new DuosUser(new AuthUser(), activeUser);
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenReturn(user);
-    when(userService.findUserByEmail(any())).thenReturn(activeUser);
 
-    try (Response response = userResource.addRoleToUser(authUser, 1,
+    try (Response response = userResource.addRoleToUser(activeDuosUser, 1,
         UserRoles.DATASUBMITTER.getRoleId())) {
       assertEquals(200, response.getStatus());
     }
@@ -313,10 +314,10 @@ class UserResourceTest extends AbstractTestHelper {
     activeUser.setSigningOfficialRole();
     User user = createUserWithRole();
     user.setInstitutionId(10);
+    DuosUser activeDuosUser = new DuosUser(new AuthUser(), activeUser);
     when(userService.findUserById(any())).thenReturn(user);
-    when(userService.findUserByEmail(any())).thenReturn(activeUser);
 
-    try (Response response = userResource.addRoleToUser(authUser, 1,
+    try (Response response = userResource.addRoleToUser(activeDuosUser, 1,
         UserRoles.DATASUBMITTER.getRoleId())) {
       assertEquals(400, response.getStatus());
     }
@@ -329,25 +330,26 @@ class UserResourceTest extends AbstractTestHelper {
     activeUser.setSigningOfficialRole();
     User user = createUserWithRole();
     user.setInstitutionId(10);
+    DuosUser activeDuosUser = new DuosUser(new AuthUser(), user);
     when(userService.findUserById(any())).thenReturn(user);
-    when(userService.findUserByEmail(any())).thenReturn(activeUser);
 
-    try (Response response = userResource.addRoleToUser(authUser, 1, UserRoles.ADMIN.getRoleId())) {
+
+    try (Response response = userResource.addRoleToUser(activeDuosUser, 1, UserRoles.ADMIN.getRoleId())) {
       assertEquals(400, response.getStatus());
     }
-    try (Response response2 = userResource.addRoleToUser(authUser, 1,
+    try (Response response2 = userResource.addRoleToUser(activeDuosUser, 1,
         UserRoles.RESEARCHER.getRoleId())) {
       assertEquals(400, response2.getStatus());
     }
-    try (Response response3 = userResource.addRoleToUser(authUser, 1,
+    try (Response response3 = userResource.addRoleToUser(activeDuosUser, 1,
         UserRoles.MEMBER.getRoleId())) {
       assertEquals(400, response3.getStatus());
     }
-    try (Response response4 = userResource.addRoleToUser(authUser, 1,
+    try (Response response4 = userResource.addRoleToUser(activeDuosUser, 1,
         UserRoles.CHAIRPERSON.getRoleId())) {
       assertEquals(400, response4.getStatus());
     }
-    try (Response response5 = userResource.addRoleToUser(authUser, 1,
+    try (Response response5 = userResource.addRoleToUser(activeDuosUser, 1,
         UserRoles.ALUMNI.getRoleId())) {
       assertEquals(400, response5.getStatus());
     }
@@ -360,18 +362,18 @@ class UserResourceTest extends AbstractTestHelper {
     activeUser.setSigningOfficialRole();
     User user = createUserWithRole();
     user.setInstitutionId(10);
+    DuosUser activeDuosUser = new DuosUser(new AuthUser(), activeUser);
     when(userService.findUserById(any())).thenReturn(user);
-    when(userService.findUserByEmail(any())).thenReturn(activeUser);
 
-    try (Response response = userResource.addRoleToUser(authUser, 1,
+    try (Response response = userResource.addRoleToUser(activeDuosUser, 1,
         UserRoles.DATASUBMITTER.getRoleId())) {
       assertEquals(200, response.getStatus());
     }
-    try (Response response2 = userResource.addRoleToUser(authUser, 1,
+    try (Response response2 = userResource.addRoleToUser(activeDuosUser, 1,
         UserRoles.ITDIRECTOR.getRoleId())) {
       assertEquals(200, response2.getStatus());
     }
-    try (Response response3 = userResource.addRoleToUser(authUser, 1,
+    try (Response response3 = userResource.addRoleToUser(activeDuosUser, 1,
         UserRoles.ITDIRECTOR.getRoleId())) {
       assertEquals(200, response3.getStatus());
     }
@@ -452,11 +454,12 @@ class UserResourceTest extends AbstractTestHelper {
   void testUpdateSelf() {
     User user = createUserWithRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();
+    DuosUser localDuosUser = new DuosUser(authUser, user);
     when(userService.updateUserFieldsById(userUpdateFields, user.getUserId())).thenReturn(user);
-    when(userService.findUserWithPropertiesByIdAsJsonObject(authUser, user.getUserId())).thenReturn(
-        gson.toJsonTree(user).getAsJsonObject());
+    when(userService.findUserWithPropertiesByIdAsJsonObject(localDuosUser, user.getUserId()))
+        .thenReturn(gson.toJsonTree(user).getAsJsonObject());
 
-    try (Response response = userResource.updateSelf(new DuosUser(authUser, user), uriInfo,
+    try (Response response = userResource.updateSelf(localDuosUser, uriInfo,
         gson.toJson(userUpdateFields))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
@@ -519,7 +522,7 @@ class UserResourceTest extends AbstractTestHelper {
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
         gson.toJsonTree(user).getAsJsonObject());
 
-    try (Response response = userResource.update(authUser, uriInfo, user.getUserId(),
+    try (Response response = userResource.update(duosUser, uriInfo, user.getUserId(),
         gson.toJson(userUpdateFields))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
@@ -530,7 +533,7 @@ class UserResourceTest extends AbstractTestHelper {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenThrow(new NotFoundException());
 
-    try (Response response = userResource.update(authUser, uriInfo, user.getUserId(), "")) {
+    try (Response response = userResource.update(duosUser, uriInfo, user.getUserId(), "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
@@ -539,7 +542,7 @@ class UserResourceTest extends AbstractTestHelper {
   void testUpdateUserInvalidJson() {
     User user = createUserWithRole();
 
-    try (Response response = userResource.update(authUser, uriInfo, user.getUserId(), "}{][")) {
+    try (Response response = userResource.update(duosUser, uriInfo, user.getUserId(), "}{][")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -552,13 +555,12 @@ class UserResourceTest extends AbstractTestHelper {
     activeUser.setUserId(2);
     activeUser.setAdminRole();
     when(userService.findUserById(any())).thenReturn(user);
-    when(userService.findUserByEmail(any())).thenReturn(activeUser);
     JsonElement userJson = gson.toJsonTree(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
         userJson.getAsJsonObject());
-
+    DuosUser activeDuosUser = new DuosUser(new AuthUser(), activeUser);
     User returnedUser;
-    try (Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(),
+    try (Response response = userResource.deleteRoleFromUser(activeDuosUser, user.getUserId(),
         UserRoles.RESEARCHER.getRoleId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       returnedUser = new User((String) response.getEntity());
@@ -571,10 +573,9 @@ class UserResourceTest extends AbstractTestHelper {
     User user = createUserWithRole();
     User activeUser = createUserWithRole();
     activeUser.setAdminRole();
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(activeUser);
     when(userService.findUserById(user.getUserId())).thenReturn(user);
-
-    try (Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(), 2)) {
+    DuosUser activeDuosUser = new DuosUser(new AuthUser(), activeUser);
+    try (Response response = userResource.deleteRoleFromUser(activeDuosUser, user.getUserId(), 2)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -584,7 +585,7 @@ class UserResourceTest extends AbstractTestHelper {
     User activeUser = createUserWithRole();
     activeUser.setAdminRole();
 
-    try (Response response = userResource.deleteRoleFromUser(authUser, 1, 1000)) {
+    try (Response response = userResource.deleteRoleFromUser(duosUser, 1, 1000)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -603,25 +604,24 @@ class UserResourceTest extends AbstractTestHelper {
     activeUser.addRole(UserRoles.SigningOfficial());
     activeUser.setInstitutionId(10);
     when(userService.findUserById(any())).thenReturn(user);
-    when(userService.findUserByEmail(any())).thenReturn(activeUser);
 
-    try (Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(),
+    try (Response response = userResource.deleteRoleFromUser(duosUser, user.getUserId(),
         UserRoles.ADMIN.getRoleId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
-    try (Response response2 = userResource.deleteRoleFromUser(authUser, user.getUserId(),
+    try (Response response2 = userResource.deleteRoleFromUser(duosUser, user.getUserId(),
         UserRoles.RESEARCHER.getRoleId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response2.getStatus());
     }
-    try (Response response3 = userResource.deleteRoleFromUser(authUser, user.getUserId(),
+    try (Response response3 = userResource.deleteRoleFromUser(duosUser, user.getUserId(),
         UserRoles.CHAIRPERSON.getRoleId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response3.getStatus());
     }
-    try (Response response4 = userResource.deleteRoleFromUser(authUser, user.getUserId(),
+    try (Response response4 = userResource.deleteRoleFromUser(duosUser, user.getUserId(),
         UserRoles.MEMBER.getRoleId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response4.getStatus());
     }
-    try (Response response5 = userResource.deleteRoleFromUser(authUser, user.getUserId(),
+    try (Response response5 = userResource.deleteRoleFromUser(duosUser, user.getUserId(),
         UserRoles.ALUMNI.getRoleId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response5.getStatus());
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response5.getStatus());
@@ -640,18 +640,18 @@ class UserResourceTest extends AbstractTestHelper {
     activeUser.setUserId(2);
     activeUser.addRole(UserRoles.SigningOfficial());
     activeUser.setInstitutionId(10);
+    DuosUser activeDuosUser = new DuosUser(new AuthUser(), activeUser);
     when(userService.findUserById(any())).thenReturn(user);
-    when(userService.findUserByEmail(any())).thenReturn(activeUser);
 
-    try (Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(),
+    try (Response response = userResource.deleteRoleFromUser(activeDuosUser, user.getUserId(),
         UserRoles.ITDIRECTOR.getRoleId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
-    try (Response response2 = userResource.deleteRoleFromUser(authUser, user.getUserId(),
+    try (Response response2 = userResource.deleteRoleFromUser(activeDuosUser, user.getUserId(),
         UserRoles.DATASUBMITTER.getRoleId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response2.getStatus());
     }
-    try (Response response3 = userResource.deleteRoleFromUser(authUser, user.getUserId(),
+    try (Response response3 = userResource.deleteRoleFromUser(activeDuosUser, user.getUserId(),
         UserRoles.SIGNINGOFFICIAL.getRoleId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response3.getStatus());
     }
@@ -668,18 +668,18 @@ class UserResourceTest extends AbstractTestHelper {
     activeUser.setUserId(2);
     activeUser.addRole(UserRoles.SigningOfficial());
     activeUser.setInstitutionId(10);
+    DuosUser activeDuosUser = new DuosUser(new AuthUser(), activeUser);
     when(userService.findUserById(any())).thenReturn(user);
-    when(userService.findUserByEmail(any())).thenReturn(activeUser);
 
-    try (Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(),
+    try (Response response = userResource.deleteRoleFromUser(activeDuosUser, user.getUserId(),
         UserRoles.ITDIRECTOR.getRoleId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
-    try (Response response2 = userResource.deleteRoleFromUser(authUser, user.getUserId(),
+    try (Response response2 = userResource.deleteRoleFromUser(activeDuosUser, user.getUserId(),
         UserRoles.DATASUBMITTER.getRoleId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response2.getStatus());
     }
-    try (Response response3 = userResource.deleteRoleFromUser(authUser, user.getUserId(),
+    try (Response response3 = userResource.deleteRoleFromUser(activeDuosUser, user.getUserId(),
         UserRoles.SIGNINGOFFICIAL.getRoleId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response3.getStatus());
     }
@@ -697,10 +697,10 @@ class UserResourceTest extends AbstractTestHelper {
     activeUser.setSigningOfficialRole();
     activeUser.setInstitutionId(2);
     assertNotEquals(user.getInstitutionId(), activeUser.getInstitutionId());
+    DuosUser activeDuosUser = new DuosUser(new AuthUser(), activeUser);
     when(userService.findUserById(any())).thenReturn(user);
-    when(userService.findUserByEmail(any())).thenReturn(activeUser);
 
-    try (Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(),
+    try (Response response = userResource.deleteRoleFromUser(activeDuosUser, user.getUserId(),
         UserRoles.SIGNINGOFFICIAL.getRoleId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
@@ -711,10 +711,11 @@ class UserResourceTest extends AbstractTestHelper {
     User user = createUserWithRole();
     user.setSigningOfficialRole();
     user.setInstitutionId(1);
+    DuosUser activeDuosUser = new DuosUser(new AuthUser(), user);
     when(userService.findUserById(any())).thenReturn(user);
-    when(userService.findUserByEmail(any())).thenReturn(user);
 
-    try (Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(),
+
+    try (Response response = userResource.deleteRoleFromUser(activeDuosUser, user.getUserId(),
         UserRoles.SIGNINGOFFICIAL.getRoleId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
@@ -728,13 +729,12 @@ class UserResourceTest extends AbstractTestHelper {
     activeUser.setUserId(2);
     activeUser.setAdminRole();
     when(userService.findUserById(any())).thenReturn(user);
-    when(userService.findUserByEmail(any())).thenReturn(activeUser);
     JsonElement userJson = gson.toJsonTree(user);
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
         userJson.getAsJsonObject());
-
+    DuosUser activeDuosUser = new DuosUser(new AuthUser(), activeUser);
     User returnedUser;
-    try (Response response = userResource.deleteRoleFromUser(authUser, user.getUserId(),
+    try (Response response = userResource.deleteRoleFromUser(activeDuosUser, user.getUserId(),
         UserRoles.ADMIN.getRoleId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       returnedUser = new User((String) response.getEntity());
@@ -746,10 +746,10 @@ class UserResourceTest extends AbstractTestHelper {
   void testDeleteRoleFromUser_UserNotFound() {
     User activeUser = createUserWithRole();
     activeUser.setAdminRole();
+    DuosUser activeDuosUser = new DuosUser(new AuthUser(), activeUser);
     when(userService.findUserById(any())).thenThrow(new NotFoundException());
-    when(userService.findUserByEmail(any())).thenReturn(activeUser);
 
-    try (Response response = userResource.deleteRoleFromUser(authUser, 1,
+    try (Response response = userResource.deleteRoleFromUser(activeDuosUser, 1,
         UserRoles.ADMIN.getRoleId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }

@@ -6,7 +6,6 @@ import jakarta.ws.rs.ServerErrorException;
 import java.util.Optional;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
-import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
 public class OAuthAuthenticator implements Authenticator<String, AuthUser>, ConsentLogger {

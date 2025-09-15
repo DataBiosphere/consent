@@ -41,7 +41,6 @@ import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.filters.RequestHeaderCacheFilter;
 import org.broadinstitute.consent.http.filters.ResponseServerFilter;
 import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
@@ -230,7 +229,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(new LibraryCardResource(userService, libraryCardService));
     env.jersey().register(new MatchResource(matchService));
     env.jersey().register(new MetricsResource(metricsService));
-    env.jersey().register(new NihAccountResource(nihService, userService));
+    env.jersey().register(new NihAccountResource(nihService));
     env.jersey().register(new SamResource(samService, userService));
     env.jersey().register(new SchemaResource());
     env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
