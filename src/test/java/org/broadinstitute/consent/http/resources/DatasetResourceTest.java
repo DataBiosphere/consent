@@ -47,7 +47,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAuthorizationReader;
 import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetProperty;
-import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.Study;
@@ -536,16 +535,6 @@ class DatasetResourceTest extends AbstractTestHelper {
 
     try (var response = resource.deleteDatasetIndex(authUser, 0)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    }
-  }
-
-  @Test
-  void testAutocompleteDatasets() {
-    when(datasetService.searchDatasetSummaries(any())).thenReturn(
-        List.of(new DatasetSummary(1, "ID", "Name")));
-
-    try (var response = resource.autocompleteDatasets(authUser, "test")) {
-      assertTrue(HttpStatusCodes.isSuccess(response.getStatus()));
     }
   }
 
