@@ -26,17 +26,15 @@ import org.broadinstitute.consent.http.db.DatasetAuthorizationReaderDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
-import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -64,7 +62,6 @@ public class UserService implements ConsentLogger {
   private final LibraryCardDAO libraryCardDAO;
   private final AcknowledgementDAO acknowledgementDAO;
   private final FileStorageObjectDAO fileStorageObjectDAO;
-  private final SamDAO samDAO;
   private final UserServiceDAO userServiceDAO;
   private final DaaDAO daaDAO;
   private final DraftServiceDAO draftServiceDAO;
@@ -82,7 +79,6 @@ public class UserService implements ConsentLogger {
       LibraryCardDAO libraryCardDAO,
       AcknowledgementDAO acknowledgementDAO,
       FileStorageObjectDAO fileStorageObjectDAO,
-      SamDAO samDAO,
       UserServiceDAO userServiceDAO,
       DaaDAO daaDAO,
       DraftServiceDAO draftServiceDAO,
@@ -97,7 +93,6 @@ public class UserService implements ConsentLogger {
     this.libraryCardDAO = libraryCardDAO;
     this.acknowledgementDAO = acknowledgementDAO;
     this.fileStorageObjectDAO = fileStorageObjectDAO;
-    this.samDAO = samDAO;
     this.userServiceDAO = userServiceDAO;
     this.daaDAO = daaDAO;
     this.draftServiceDAO = draftServiceDAO;
@@ -349,9 +344,9 @@ public class UserService implements ConsentLogger {
    * @param userId   The User. This is the user we want to return properties for
    * @return JsonObject.
    */
-  public JsonObject findUserWithPropertiesByIdAsJsonObject(AuthUser authUser, Integer userId) {
+  public JsonObject findUserWithPropertiesByIdAsJsonObject(DuosUser duosUser, Integer userId) {
     Gson gson = GsonUtil.getInstance();
-    User user = findUserById(userId);
+    User user = duosUser.getUser();
     List<UserProperty> props = findAllUserProperties(user.getUserId());
     JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
     JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();
@@ -360,9 +355,9 @@ public class UserService implements ConsentLogger {
       JsonObject libraryCardJson = gson.toJsonTree(user.getLibraryCard()).getAsJsonObject();
       userJson.add(LIBRARY_CARD_FIELD, libraryCardJson);
     }
-    if (authUser.getEmail().equalsIgnoreCase(user.getEmail()) && Objects.nonNull(
-        authUser.getUserStatusInfo())) {
-      JsonObject userStatusInfoJson = gson.toJsonTree(authUser.getUserStatusInfo())
+    if (duosUser.getEmail().equalsIgnoreCase(user.getEmail()) && Objects.nonNull(
+        duosUser.getUserStatusInfo())) {
+      JsonObject userStatusInfoJson = gson.toJsonTree(duosUser.getUserStatusInfo())
           .getAsJsonObject();
       userJson.add(USER_STATUS_INFO_FIELD, userStatusInfoJson);
     }
@@ -409,27 +404,7 @@ public class UserService implements ConsentLogger {
     }
   }
 
-  public User findOrCreateUser(AuthUser authUser) throws Exception {
-    User user;
-    // Ensure that the user is a registered DUOS user
-    try {
-      user = userDAO.findUserByEmail(authUser.getEmail());
-    } catch (NotFoundException nfe) {
-      User newUser = new User();
-      newUser.setEmail(authUser.getEmail());
-      newUser.setDisplayName(authUser.getName());
-      user = createUser(newUser);
-    }
-    // Ensure that the user is a registered SAM user
-    try {
-      samDAO.postRegistrationInfo(authUser);
-    } catch (ConsentConflictException cce) {
-      // no-op in the case of conflicts.
-    }
-    return user;
-  }
-
-  public List<User> findUsersInJsonArray(String json, String arrayKey) {
+   public List<User> findUsersInJsonArray(String json, String arrayKey) {
     List<JsonElement> jsonElementList;
     try {
       JsonObject jsonObject = new Gson().fromJson(json, JsonObject.class);

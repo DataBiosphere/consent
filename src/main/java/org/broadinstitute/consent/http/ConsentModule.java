@@ -613,7 +613,6 @@ public class ConsentModule extends AbstractModule {
         providesLibraryCardDAO(),
         providesAcknowledgementDAO(),
         providesFileStorageObjectDAO(),
-        providesSamDAO(),
         providesUserServiceDAO(),
         providesDaaDAO(),
         providesDraftService(),

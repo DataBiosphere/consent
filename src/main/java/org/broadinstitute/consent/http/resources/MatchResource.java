@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.service.MatchService;
 
@@ -33,7 +34,7 @@ public class MatchResource extends Resource {
   @Path("/purpose/batch")
   @PermitAll
   public Response getMatchesForLatestDataAccessElectionsByPurposeIds(
-      @Auth AuthUser authUser, @QueryParam("purposeIds") String purposeIds) {
+      @Auth DuosUser duosUser, @QueryParam("purposeIds") String purposeIds) {
     try {
       if (Objects.isNull(purposeIds) || purposeIds.isBlank()) {
         throw new BadRequestException("No purpose ids were provided");

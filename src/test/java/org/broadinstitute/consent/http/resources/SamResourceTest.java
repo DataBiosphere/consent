@@ -14,7 +14,7 @@ import jakarta.ws.rs.core.UriInfo;
 import java.util.Collections;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.sam.ActionPattern;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.ResourceTypeRole;
@@ -33,7 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class SamResourceTest {
 
   @Mock
-  private AuthUser authUser;
+  private DuosUser duosUser;
 
   @Mock
   private SamService samService;
@@ -70,7 +70,7 @@ class SamResourceTest {
         .setRoles(Collections.singletonList(role));
     when(samService.getResourceTypes(any())).thenReturn(Collections.singletonList(type));
     initResource();
-    Response response = resource.getResourceTypes(authUser);
+    Response response = resource.getResourceTypes(duosUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -83,7 +83,7 @@ class SamResourceTest {
     UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
     when(samService.postRegistrationInfo(any())).thenReturn(status);
     initResource();
-    Response response = resource.postRegistrationInfo(authUser, uriInfo);
+    Response response = resource.postRegistrationInfo(duosUser, uriInfo);
     assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
   }
 
@@ -97,7 +97,7 @@ class SamResourceTest {
         .setTosAccepted(RandomUtils.nextBoolean());
     when(samService.getSelfDiagnostics(any())).thenReturn(diagnostics);
     initResource();
-    Response response = resource.getSelfDiagnostics(authUser);
+    Response response = resource.getSelfDiagnostics(duosUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -110,7 +110,7 @@ class SamResourceTest {
         .setEnabled(RandomUtils.nextBoolean());
     when(samService.getRegistrationInfo(any())).thenReturn(userInfo);
     initResource();
-    Response response = resource.getRegistrationInfo(authUser);
+    Response response = resource.getRegistrationInfo(duosUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -119,7 +119,7 @@ class SamResourceTest {
     TosResponse tosResponse = new TosResponse("accepted on", true, "version", true);
     when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
     initResource();
-    Response response = resource.postSelfTos(authUser);
+    Response response = resource.postSelfTos(duosUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -130,7 +130,7 @@ class SamResourceTest {
     when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
     initResource();
 
-    Response response = resource.postSelfTos(authUser);
+    Response response = resource.postSelfTos(duosUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     verify(userService, times(1)).createUser(any());
   }
@@ -141,7 +141,7 @@ class SamResourceTest {
     when(samService.postTosAcceptedStatus(any())).thenReturn(tosResponse);
     initResource();
 
-    Response response = resource.postSelfTos(authUser);
+    Response response = resource.postSelfTos(duosUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -150,7 +150,7 @@ class SamResourceTest {
     TosResponse tosResponse = new TosResponse("accepted on", true, "version", false);
     when(samService.removeTosAcceptedStatus(any())).thenReturn(tosResponse);
     initResource();
-    Response response = resource.removeTos(authUser);
+    Response response = resource.removeTos(duosUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 

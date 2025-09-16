@@ -16,6 +16,7 @@ import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUser;
@@ -54,7 +55,7 @@ public class TDRService implements ConsentLogger {
         // Sam has an endpoint for validating a single email at a time
         .map(email -> {
           try {
-            samDAO.getV1UserByEmail(authUser, email);
+            samDAO.getV1UserByEmail(new DuosUser(authUser, null), email);
             return email;
           } catch (NotAuthorizedException e) {
             logWarn("User " + authUser.getEmail() + " is not authorized to look for users in Sam");
