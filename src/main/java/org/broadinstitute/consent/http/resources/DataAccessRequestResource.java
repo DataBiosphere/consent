@@ -713,7 +713,7 @@ public class DataAccessRequestResource extends Resource {
    * (i.e. Admin) so they can also have access to the DAR.
    *
    * @param allowableRoles List of roles that would allow the user to access the resource
-   * @param duosUser       The AuthUser
+   * @param duosUser       The DuosUser
    * @param referenceId    The referenceId of the resource.
    * @return dataAccessRequest The data access request underlying the referenceId
    */
