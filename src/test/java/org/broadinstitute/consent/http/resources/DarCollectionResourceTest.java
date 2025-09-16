@@ -2,8 +2,6 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -114,7 +112,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setCreateUserId(researcher.getUserId() + 1);
     when(darCollectionService.getByCollectionId(researcher, collection.getDarCollectionId())).thenReturn(collection);
 
-    Response response = resource.getCollectionById(duosResearcher, 1);
+    Response response = resource.getCollectionById(duosResearcher, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -124,7 +122,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
 
-    when(darCollectionService.getByCollectionId(researcher, collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getByCollectionId(admin, collection.getDarCollectionId())).thenReturn(collection);
 
     Response response = resource.getCollectionById(duosAdmin, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -448,7 +446,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setCreateUserId(researcher.getUserId());
     when(darCollectionService.getByCollectionId(researcher, collection.getDarCollectionId())).thenReturn(collection);
 
-    try (var response = resource.cancelDarCollectionByCollectionId(duosResearcher, request, 1, Resource.ADMIN)) {
+    try (var response = resource.cancelDarCollectionByCollectionId(duosResearcher, request, collection.getDarCollectionId(), Resource.ADMIN)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
