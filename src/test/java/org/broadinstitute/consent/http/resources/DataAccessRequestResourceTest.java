@@ -201,20 +201,19 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testGetByReferenceId() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
 
-    Response response = resource.getByReferenceId(authUser, "");
+    Response response = resource.getByReferenceId(new DuosUser(authUser, user), "");
     assertEquals(200, response.getStatus());
   }
 
   @Test
   void testGetByReferenceIdForbidden() {
+    DuosUser mockedDuosUser = new DuosUser(authUser, mockUser);
     when(mockUser.getUserId()).thenReturn(user.getUserId() + 1);
-    when(userService.findUserByEmail(any())).thenReturn(mockUser);
     when(dataAccessRequestService.findByReferenceId("id")).thenReturn(generateDataAccessRequest());
 
-    assertThrows(ForbiddenException.class, () -> resource.getByReferenceId(authUser, "id"));
+    assertThrows(ForbiddenException.class, () -> resource.getByReferenceId(mockedDuosUser, "id"));
   }
 
   @ParameterizedTest
@@ -222,13 +221,12 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testGetByReferenceIdAllowedRoles(UserRoles role) {
     UserRole userRole = new UserRole(role.getRoleId(), role.getRoleName());
     User roleUser = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(userRole));
-    when(userService.findUserByEmail(roleUser.getEmail())).thenReturn(roleUser);
     // Set the DAR create user to be a different user from the roleUser
     DataAccessRequest dar = generateDataAccessRequest();
     dar.setUserId(roleUser.getUserId() + 1);
     when(dataAccessRequestService.findByReferenceId("id")).thenReturn(dar);
 
-    Response response = resource.getByReferenceId(authUser, "id");
+    Response response = resource.getByReferenceId(new DuosUser(authUser, roleUser), "id");
     assertEquals(200, response.getStatus());
   }
 
@@ -237,12 +235,12 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testGetByReferenceIdDisallowedRoles(UserRoles role) {
     UserRole userRole = new UserRole(role.getRoleId(), role.getRoleName());
     User roleUser = new User(1, authUser.getEmail(), "Display Name", new Date(), List.of(userRole));
-    when(userService.findUserByEmail(roleUser.getEmail())).thenReturn(roleUser);
+    DuosUser duosRoleUser = new DuosUser(authUser, roleUser);
     // Set the DAR create user to be a different user from the roleUser
     DataAccessRequest dar = generateDataAccessRequest();
     dar.setUserId(roleUser.getUserId() + 1);
     when(dataAccessRequestService.findByReferenceId("id")).thenReturn(dar);
-    assertThrows(ForbiddenException.class, () -> resource.getByReferenceId(authUser, "id"));
+    assertThrows(ForbiddenException.class, () -> resource.getByReferenceId(duosRoleUser, "id"));
   }
 
   @Test
@@ -323,29 +321,23 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testGetIrbDocument() {
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
-    when(userService.findUserByEmail(chairperson.getEmail())).thenReturn(chairperson);
-    when(userService.findUserByEmail(admin.getEmail())).thenReturn(admin);
-    when(userService.findUserByEmail(member.getEmail())).thenReturn(member);
-    when(userService.findUserByEmail(bob.getEmail())).thenReturn(bob);
     DataAccessRequest dar = generateDataAccessRequest();
     dar.getData().setIrbDocumentLocation(randomAlphabetic(10));
     dar.getData().setIrbDocumentName(randomAlphabetic(10) + ".txt");
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
 
-    assertEquals(200, resource.getIrbDocument(chairpersonUser, "").getStatus());
-    assertEquals(200, resource.getIrbDocument(adminUser, "").getStatus());
-    assertEquals(200, resource.getIrbDocument(memberUser, "").getStatus());
-    assertEquals(200, resource.getIrbDocument(authUser, "").getStatus());
-    assertEquals(403, resource.getIrbDocument(anotherUser, "").getStatus());
+    assertEquals(200, resource.getIrbDocument(new DuosUser(chairpersonUser, chairperson), "").getStatus());
+    assertEquals(200, resource.getIrbDocument(new DuosUser(adminUser, admin), "").getStatus());
+    assertEquals(200, resource.getIrbDocument(new DuosUser(memberUser, member), "").getStatus());
+    assertEquals(200, resource.getIrbDocument(new DuosUser(authUser, user), "").getStatus());
+    assertEquals(403, resource.getIrbDocument(new DuosUser(anotherUser, bob), "").getStatus());
   }
 
   @Test
   void testGetIrbDocumentNotFound() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
 
-    Response response = resource.getIrbDocument(authUser, "");
+    Response response = resource.getIrbDocument(new DuosUser(authUser, user), "");
     assertEquals(404, response.getStatus());
   }
 
@@ -353,13 +345,13 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testGetIrbDocumentDARNotFound() {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
 
-    Response response = resource.getIrbDocument(authUser, "");
+    Response response = resource.getIrbDocument(new DuosUser(authUser, user), "");
     assertEquals(404, response.getStatus());
   }
 
   @Test
   void testGetIrbDocumentNullOrEmptyValues() {
-    Response response = resource.getIrbDocument(authUser, "");
+    Response response = resource.getIrbDocument(new DuosUser(authUser, user), "");
     assertEquals(404, response.getStatus());
   }
 
@@ -719,31 +711,25 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testGetCollaborationDocument() {
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
-    when(userService.findUserByEmail(chairperson.getEmail())).thenReturn(chairperson);
-    when(userService.findUserByEmail(admin.getEmail())).thenReturn(admin);
-    when(userService.findUserByEmail(member.getEmail())).thenReturn(member);
-    when(userService.findUserByEmail(bob.getEmail())).thenReturn(bob);
     DataAccessRequest dar = generateDataAccessRequest();
     dar.getData().setCollaborationLetterLocation(randomAlphabetic(10));
     dar.getData().setCollaborationLetterName(randomAlphabetic(10) + ".txt");
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
 
     assertEquals(200,
-        resource.getCollaborationDocument(chairpersonUser, "").getStatus());
-    assertEquals(200, resource.getCollaborationDocument(adminUser, "").getStatus());
-    assertEquals(200, resource.getCollaborationDocument(memberUser, "").getStatus());
-    assertEquals(200, resource.getCollaborationDocument(authUser, "").getStatus());
+        resource.getCollaborationDocument(new DuosUser(chairpersonUser, chairperson), "").getStatus());
+    assertEquals(200, resource.getCollaborationDocument(new DuosUser(adminUser, admin), "").getStatus());
+    assertEquals(200, resource.getCollaborationDocument(new DuosUser(memberUser, member), "").getStatus());
+    assertEquals(200, resource.getCollaborationDocument(new DuosUser(authUser, user), "").getStatus());
     assertEquals(403,
-        resource.getCollaborationDocument(anotherUser, "").getStatus());
+        resource.getCollaborationDocument(new DuosUser(anotherUser, bob), "").getStatus());
   }
 
   @Test
   void testGetCollaborationDocumentNotFound() {
-    when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(generateDataAccessRequest());
 
-    Response response = resource.getCollaborationDocument(authUser, "");
+    Response response = resource.getCollaborationDocument(new DuosUser(authUser, user), "");
     assertEquals(404, response.getStatus());
   }
 
@@ -751,14 +737,14 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testGetCollaborationDocumentDARNotFound() {
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
 
-    Response response = resource.getCollaborationDocument(authUser, "");
+    Response response = resource.getCollaborationDocument(new DuosUser(authUser, user), "");
     assertEquals(404, response.getStatus());
   }
 
   @Test
   void testGetCollaborationDocumentNullOrEmptyValues() {
 
-    Response response = resource.getCollaborationDocument(authUser, "");
+    Response response = resource.getCollaborationDocument(new DuosUser(authUser, user), "");
     assertEquals(404, response.getStatus());
   }
 
@@ -833,7 +819,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void getDataAccessRequests() {
     List<DataAccessRequest> list = Collections.emptyList();
     when(dataAccessRequestService.getDataAccessRequestsByUserRole(any())).thenReturn(list);
-    Response res = resource.getDataAccessRequests(authUser);
+    Response res = resource.getDataAccessRequests(new DuosUser(authUser, new User()));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, res.getStatus());
     assertTrue(res.hasEntity());
   }
@@ -1015,11 +1001,10 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testGetDAAsByReferenceId() {
     DataAccessRequest dar = generateDataAccessRequest();
-    when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(dar);
     when(daaService.findByDarReferenceId(any())).thenReturn(List.of());
 
-    try (Response response = resource.getDAAsByReferenceId(authUser, dar.getReferenceId())) {
+    try (Response response = resource.getDAAsByReferenceId(new DuosUser(authUser, user), dar.getReferenceId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -1029,7 +1014,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     DataAccessRequest dar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(null);
 
-    try (Response response = resource.getDAAsByReferenceId(authUser, dar.getReferenceId())) {
+    try (Response response = resource.getDAAsByReferenceId(new DuosUser(authUser, user), dar.getReferenceId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
@@ -1060,10 +1045,9 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     dar.setUserId(user.getUserId());
     dar.setReferenceId(UUID.randomUUID().toString());
     assertTrue(dar.getDraft());
-    when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
     doNothing().when(dataAccessRequestService).deleteDataAccessRequest(dar);
-    try (Response response = resource.deleteDar(authUser, dar.getReferenceId())) {
+    try (Response response = resource.deleteDar(new DuosUser(authUser, user), dar.getReferenceId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -1076,9 +1060,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     dar.setSubmissionDate(Timestamp.from(Instant.now()));
     assertFalse(dar.getDraft());
     when(dataAccessRequestService.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
-    when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(BadRequestException.class).when(dataAccessRequestService).deleteDataAccessRequest(dar);
-    try (Response response = resource.deleteDar(authUser, dar.getReferenceId())) {
+    try (Response response = resource.deleteDar(new DuosUser(authUser, user), dar.getReferenceId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }

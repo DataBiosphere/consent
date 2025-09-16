@@ -1,0 +1,48 @@
+put:
+  summary: Add authorized access reader
+  description: |
+    Endpoint allows administrators to add an authorized access reader to a dataset
+  tags:
+    - Admin
+    - Dataset
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    - name: userId
+      in: path
+      required: true
+      schema:
+        type: integer
+  responses:
+    200:
+      description: The addition of the user was successful
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DatasetAuthorizedReader.yaml'
+    409:
+      description: The user is missing the RESEARCHER role required to check access.
+delete:
+  summary: Remove authorized access reader
+  description: |
+    Endpoint allows administrators to remove an authorized access reader to a dataset
+  tags:
+    - Admin
+    - Dataset
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    - name: userId
+      in: path
+      required: true
+      schema:
+        type: integer
+  responses:
+    200:
+      description: The removal of the user was successful

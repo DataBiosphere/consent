@@ -23,14 +23,12 @@ import java.util.List;
 import java.util.Objects;
 import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DarCollectionService;
-import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.ComplianceLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -39,12 +37,10 @@ import org.glassfish.jersey.server.ContainerRequest;
 public class DarCollectionResource extends Resource {
 
   private final DarCollectionService darCollectionService;
-  private final UserService userService;
 
   @Inject
-  public DarCollectionResource(DarCollectionService darCollectionService, UserService userService) {
+  public DarCollectionResource(DarCollectionService darCollectionService) {
     this.darCollectionService = darCollectionService;
-    this.userService = userService;
   }
 
   @GET
@@ -52,15 +48,14 @@ public class DarCollectionResource extends Resource {
   @Produces("application/json")
   @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL, RESEARCHER})
   @Timed
-  public Response getCollectionSummariesForUserByRole(@Auth AuthUser authUser,
+  public Response getCollectionSummariesForUserByRole(@Auth DuosUser duosUser,
       @PathParam("roleName") String roleName) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       var role = validateUserHasRoleName(user, roleName);
       List<DarCollectionSummary> summaries = darCollectionService.getSummariesForRole(user, role);
       // When querying in list context, we only want the exposed fields
-      Gson gson = GsonUtil.gsonBuilderWithAdapters().excludeFieldsWithoutExposeAnnotation()
-          .create();
+      Gson gson = GsonUtil.gsonBuilderWithAdapters().excludeFieldsWithoutExposeAnnotation().create();
       return Response.ok().entity(gson.toJson(summaries)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -72,14 +67,13 @@ public class DarCollectionResource extends Resource {
   @Path("role/{roleName}/summary/{collectionId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL, RESEARCHER})
-  public Response getCollectionSummaryForRoleById(@Auth AuthUser authUser,
+  public Response getCollectionSummaryForRoleById(@Auth DuosUser duosUser,
       @PathParam("roleName") String roleName, @PathParam("collectionId") Integer collectionId) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       // throws BadRequestException if user does not have roleName
       var role = validateUserHasRoleName(user, roleName);
-      DarCollectionSummary summary = darCollectionService.getSummaryForRoleByCollectionId(user,
-          role, collectionId);
+      DarCollectionSummary summary = darCollectionService.getSummaryForRoleByCollectionId(user, role, collectionId);
 
       boolean allowedAccess = switch (role) {
         case ADMIN -> true;
@@ -108,17 +102,20 @@ public class DarCollectionResource extends Resource {
   @Path("{collectionId}")
   @Produces("application/json")
   @PermitAll
-  public Response getCollectionById(@Auth DuosUser duosUser,
+  public Response getCollectionById(
+      @Auth DuosUser duosUser,
       @PathParam("collectionId") Integer collectionId) {
     try {
       User user = duosUser.getUser();
       DarCollection collection = darCollectionService.getByCollectionId(user, collectionId);
+
       if (user.hasUserRole(UserRoles.ADMIN) || checkSoPermissionsForCollection(user, collection)
           || checkDacPermissionsForCollection(user, collection)) {
         return Response.ok().entity(collection).build();
       }
       validateUserIsCreator(user, collection);
       return Response.ok().entity(collection).build();
+
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -133,16 +130,13 @@ public class DarCollectionResource extends Resource {
       @PathParam("collectionId") Integer collectionId) {
     try {
       if (duosUser.getUser().hasUserRole(UserRoles.ADMIN)) {
-        DarCollection collection = darCollectionService.getCollectionWithAllElectionsByCollectionId(
-            duosUser.getUser(), collectionId);
+        DarCollection collection = darCollectionService.getCollectionWithAllElectionsByCollectionId(duosUser.getUser(), collectionId);
         return Response.ok().entity(collection).build();
       }
       // if user is only a member or chair, get the list of datasets they have access to
       // this will be used to filter the collection's elections
-      List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByDACUser(
-          duosUser.getUser());
-      DarCollection collection = darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(
-          duosUser.getUser(), userDatasetIds, collectionId);
+      List<Integer> userDatasetIds = darCollectionService.findDatasetIdsByDACUser(duosUser.getUser());
+      DarCollection collection = darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(duosUser.getUser(), userDatasetIds, collectionId);
       if (!checkDacPermissionsForCollection(duosUser.getUser(), collection)) {
         throw new NotFoundException();
       }
@@ -190,8 +184,10 @@ public class DarCollectionResource extends Resource {
   @Path("{id}/cancel")
   @Produces("application/json")
   @RolesAllowed({ADMIN, CHAIRPERSON, RESEARCHER})
-  public Response cancelDarCollectionByCollectionId(@Auth DuosUser duosUser,
-      @Context Request request, @PathParam("id") Integer collectionId,
+  public Response cancelDarCollectionByCollectionId(
+      @Auth DuosUser duosUser,
+      @Context Request request,
+      @PathParam("id") Integer collectionId,
       @QueryParam("roleName") String roleName) {
     try {
       User user = duosUser.getUser();
@@ -204,10 +200,9 @@ public class DarCollectionResource extends Resource {
         actingRole = validateUserHasRoleName(user, roleName);
       }
 
-      DarCollection cancelledCollection = darCollectionService.cancelDarCollectionByRole(user,
-          collection, actingRole);
+      DarCollection cancelledCollection = darCollectionService.cancelDarCollectionByRole(user, collection, actingRole);
       ComplianceLogger.logDARCancellation(user, cancelledCollection.getDatasets().stream().toList(),
-          (ContainerRequest) request, Response.Status.OK.getStatusCode());
+              (ContainerRequest) request, Response.Status.OK.getStatusCode());
       return Response.ok().entity(cancelledCollection).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -238,7 +233,8 @@ public class DarCollectionResource extends Resource {
   @Path("{collectionId}/election")
   @Consumes("application/json")
   @RolesAllowed({ADMIN, CHAIRPERSON})
-  public Response createElectionsForCollection(@Auth DuosUser duosUser,
+  public Response createElectionsForCollection(
+      @Auth DuosUser duosUser,
       @PathParam("collectionId") Integer collectionId) {
     try {
       User user = duosUser.getUser();
