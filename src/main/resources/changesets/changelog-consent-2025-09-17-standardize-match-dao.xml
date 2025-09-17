@@ -1,0 +1,9 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2025-09-17-standardize-match-dao" author="grushton">
+    <renameColumn tableName="match_entity" oldColumnName="matchid" newColumnName="match_id"/>
+    <renameColumn tableName="match_entity" oldColumnName="createdate" newColumnName="create_date"/>
+    <renameColumn tableName="match_entity" oldColumnName="matchentity" newColumnName="match_entity"/>
+  </changeSet>
+</databaseChangeLog>

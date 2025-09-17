@@ -11,7 +11,7 @@ public class MatchReducer implements LinkedHashMapRowReducer<Integer, Match>, Ro
 
   @Override
   public void accumulate(Map<Integer, Match> map, RowView rowView) {
-    Match match = map.computeIfAbsent(rowView.getColumn("matchid", Integer.class),
+    Match match = map.computeIfAbsent(rowView.getColumn("match_id", Integer.class),
         id -> rowView.getRow(Match.class));
     if (hasColumn(rowView, "consent", String.class)) {
       match.setConsent(rowView.getColumn("consent", String.class));
@@ -22,8 +22,8 @@ public class MatchReducer implements LinkedHashMapRowReducer<Integer, Match>, Ro
     if (hasColumn(rowView, "algorithm_version", String.class)) {
       match.setAlgorithmVersion(rowView.getColumn("algorithm_version", String.class));
     }
-    if (hasColumn(rowView, "matchentity", Boolean.class)) {
-      match.setMatch(rowView.getColumn("matchentity", Boolean.class));
+    if (hasColumn(rowView, "match_entity", Boolean.class)) {
+      match.setMatch(rowView.getColumn("match_entity", Boolean.class));
     }
     if (hasColumn(rowView, "abstain", Boolean.class)) {
       match.setAbstain(rowView.getColumn("abstain", Boolean.class));
@@ -31,8 +31,8 @@ public class MatchReducer implements LinkedHashMapRowReducer<Integer, Match>, Ro
     if (hasColumn(rowView, "failed", Boolean.class)) {
       match.setFailed(rowView.getColumn("failed", Boolean.class));
     }
-    if (hasColumn(rowView, "createdate", Date.class)) {
-      match.setCreateDate(rowView.getColumn("createdate", Date.class));
+    if (hasColumn(rowView, "create_date", Date.class)) {
+      match.setCreateDate(rowView.getColumn("create_date", Date.class));
     }
     if (hasColumn(rowView, "rationale", String.class)) {
       String rationale = rowView.getColumn("rationale", String.class);
