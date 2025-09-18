@@ -222,6 +222,11 @@ public class UserService implements ConsentLogger {
    * @return List of Users for specified role name
    */
   public List<User> getUsersAsRole(User user, String roleName) {
+    // Pre-enforce institutions and LC requirements for all calls to this method to ensure that
+    // all users returned are compliant with our rules. For SOs, this adds/removes users that may
+    // not have logged in recently.
+    userDAO.findUsersWithLCsAndInstitution().forEach(this::enforceInstitutionAndLibraryCardRules);
+
     switch (roleName) {
       // SigningOfficial console is technically pulling LCs, it's just bringing associated users along for the ride
       // However LCs can be created for users not yet registered in the system
@@ -229,20 +234,13 @@ public class UserService implements ConsentLogger {
       case Resource.SIGNINGOFFICIAL:
         Integer institutionId = user.getInstitutionId();
         if (Objects.nonNull(user.getInstitutionId())) {
-          return userDAO.getUsersFromInstitutionWithCards(institutionId)
-              .stream()
-              .map(this::enforceInstitutionAndLibraryCardRules)
-              .filter(u -> u.getInstitutionId().equals(institutionId))
-              .toList();
+          return userDAO.getUsersFromInstitutionWithCards(institutionId);
         } else {
           throw new NotFoundException("Signing Official (user: " + user.getDisplayName()
               + ") is not associated with an Institution.");
         }
       case Resource.ADMIN:
-        return userDAO.findUsersWithLCsAndInstitution()
-            .stream()
-            .map(this::enforceInstitutionAndLibraryCardRules)
-            .toList();
+        return userDAO.findUsersWithLCsAndInstitution();
       default:
         // do nothing
     }
