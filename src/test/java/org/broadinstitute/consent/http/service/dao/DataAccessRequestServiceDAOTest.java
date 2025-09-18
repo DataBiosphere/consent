@@ -153,7 +153,6 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     entry.setKey("key");
     entry.setValue("value");
     entry.setLabel("label");
-    data.setDatasets(List.of(entry));
     data.setHmb(true);
     data.setMethods(false);
     String referenceId = UUID.randomUUID().toString();

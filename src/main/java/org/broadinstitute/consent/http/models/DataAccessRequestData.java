@@ -22,7 +22,7 @@ public class DataAccessRequestData {
    * more info.
    */
   public static final List<String> DEPRECATED_PROPS = Arrays
-      .asList("referenceId", "investigator",
+      .asList("referenceId", "investigator", "datasets",
           "institution", "department", "address1", "address2", "city", "zipcode", "zipCode",
           "state", "country", "researcher", "userId", "isThePi", "havePi",
           "profileName", "pubmedId", "scientificUrl", "eraExpiration", "academicEmail",
@@ -67,14 +67,11 @@ public class DataAccessRequestData {
   private Boolean hmb;
   private String status;
   private Boolean poa;
-  private List<DatasetEntry> datasets;
   @SerializedName(value = "darCode", alternate = "dar_code")
   private String darCode;
   private Object restriction;
   @SerializedName(value = "validRestriction", alternate = "valid_restriction")
   private Boolean validRestriction;
-  @Deprecated
-  private Long createDate;
   @Deprecated
   private Long sortDate;
   @Deprecated
@@ -335,17 +332,6 @@ public class DataAccessRequestData {
     this.hmb = hmb;
   }
 
-  public List<DatasetEntry> getDatasets() {
-    if (Objects.isNull(datasets)) {
-      return Collections.emptyList();
-    }
-    return datasets;
-  }
-
-  public void setDatasets(List<DatasetEntry> datasets) {
-    this.datasets = datasets;
-  }
-
   @Deprecated
   public String getDarCode() {
     return darCode;
@@ -370,22 +356,6 @@ public class DataAccessRequestData {
 
   public void setValidRestriction(Boolean validRestriction) {
     this.validRestriction = validRestriction;
-  }
-
-  public Long getCreateDate() {
-    return createDate;
-  }
-
-  public void setCreateDate(Long createDate) {
-    this.createDate = createDate;
-  }
-
-  public Long getSortDate() {
-    return sortDate;
-  }
-
-  public void setSortDate(Long sortDate) {
-    this.sortDate = sortDate;
   }
 
   public String getPiCountryOfOperation() {
