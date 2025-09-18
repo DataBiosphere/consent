@@ -29,9 +29,9 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         latest_dar.closeout_so_approval_timestamp AS latest_dar_closeout_so_approval_timestamp,
         researcher.display_name as researcher_name, i.institution_name,
         e.election_id, e.status, e.dataset_id, e.reference_id,
-        v.voteid as v_vote_id, dd.dataset_id as dd_datasetid,
-        v.user_id as v_user_id, v.vote as v_vote, v.electionid as v_election_id,
-        v.createdate as v_create_date,v.updatedate as v_update_date, v.type as v_type,
+        v.vote_id as v_vote_id, dd.dataset_id as dd_datasetid,
+        v.user_id as v_user_id, v.vote as v_vote, v.election_id as v_election_id,
+        v.create_date as v_create_date,v.update_date as v_update_date, v.type as v_type,
         latest_dar.data ->> 'projectTitle' AS name,
         latest_dar.data ->> 'status' AS dar_status,
         latest_dar.data ->> 'closeoutSupplement' AS closeout,
@@ -77,7 +77,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         AND e.dataset_id = d.dataset_id
       -- Votes for DAC User
       LEFT JOIN vote v
-        ON e.election_id = v.electionid
+        ON e.election_id = v.election_id
         AND (LOWER(v.type) IN ('final', 'radar_approve') OR v.user_id = :currentUserId)
       -- Restrict DARs to the datasets available to the DAC User
       INNER JOIN dar_dataset dd
@@ -87,8 +87,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id,
         latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
         researcher.display_name, i.institution_name, e.election_id, e.status,
-        e.reference_id, e.dataset_id, v.voteid, dd.dataset_id, v.user_id,
-        v.vote, v.electionid, v.createdate, v.updatedate, v.type, latest_dar.data
+        e.reference_id, e.dataset_id, v.vote_id, dd.dataset_id, v.user_id,
+        v.vote, v.election_id, v.create_date, v.update_date, v.type, latest_dar.data
       """)
   List<DarCollectionSummary> getDarCollectionSummariesForDACRole(
       @Bind("currentUserId") Integer currentUserId, @Bind("roleId") Integer roleId);
@@ -279,8 +279,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         latest_dar.closeout_approving_so_id as latest_dar_closeout_approving_so_id,
         latest_dar.closeout_so_approval_timestamp as latest_dar_closeout_so_approval_timestamp,
         u.display_name as researcher_name, u.user_id as researcher_id,
-        i.institution_name, i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, v.voteid as v_vote_id, dd.dataset_id as dd_datasetid,
-        v.user_id as v_user_id, v.vote as v_vote, v.electionid as v_election_id, v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type,
+        i.institution_name, i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, v.vote_id as v_vote_id, dd.dataset_id as dd_datasetid,
+        v.user_id as v_user_id, v.vote as v_vote, v.election_id as v_election_id, v.create_date as v_create_date, v.update_date as v_update_date, v.type as v_type,
         latest_dar.data ->> 'projectTitle' AS name,
         latest_dar.data ->> 'status' AS dar_status,
         latest_dar.data ->> 'closeoutSupplement' AS closeout,
@@ -308,20 +308,20 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       ) AS e
         ON e.reference_id = latest_dar.reference_id
       LEFT JOIN vote v
-        ON e.election_id = v.electionid
+        ON e.election_id = v.election_id
       INNER JOIN dar_dataset dd
         ON latest_dar.reference_id = dd.reference_id
       WHERE c.collection_id= :collectionId
         AND dd.dataset_id IN (<datasetIds>)
         AND (e.latest = e.election_id OR e.election_id IS NULL)
-        AND (LOWER(v.type) IN ('final', 'radar_approve') OR (v.user_id = :currentUserId OR v.voteid IS NULL))
+        AND (LOWER(v.type) IN ('final', 'radar_approve') OR (v.user_id = :currentUserId OR v.vote_id IS NULL))
       GROUP BY
         c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id,
         latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
         u.display_name, u.user_id,
         i.institution_name, i.institution_id, e.election_id, e.status,
-        e.reference_id, e.dataset_id, v.voteid, dd.dataset_id, v.user_id,
-        v.vote, v.electionid, v.createdate, v.updatedate, v.type, latest_dar.data
+        e.reference_id, e.dataset_id, v.vote_id, dd.dataset_id, v.user_id,
+        v.vote, v.election_id, v.create_date, v.update_date, v.type, latest_dar.data
       """)
   DarCollectionSummary getDarCollectionSummaryForDACByCollectionId(
       @Bind("currentUserId") Integer currentUserId,
