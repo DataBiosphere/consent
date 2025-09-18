@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -122,10 +123,18 @@ public class DatasetResource extends Resource {
       Study study = datasetService.findStudy(studyId);
       DatasetRegistrationSchemaV1Builder builder = new DatasetRegistrationSchemaV1Builder();
       DatasetRegistrationSchemaV1 createdRegistration = builder.build(study, datasets);
-      URI uri = UriBuilder.fromPath(String.format("/api/dataset/study/%s", study.getStudyId()))
-          .build();
-      String entity = GsonUtil.buildGsonNullSerializer().toJson(createdRegistration);
-      return Response.created(uri).entity(entity).build();
+      if (study != null) {
+        URI uri = UriBuilder.fromPath(String.format("/api/dataset/study/%s", study.getStudyId()))
+            .build();
+        String entity = GsonUtil.buildGsonNullSerializer().toJson(createdRegistration);
+        return Response.created(uri).entity(entity).build();
+      } else {
+        Exception entityException =
+            new UnprocessableEntityException("Study was not found after it was created");
+        logException(entityException);
+        throw entityException;
+      }
+
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
