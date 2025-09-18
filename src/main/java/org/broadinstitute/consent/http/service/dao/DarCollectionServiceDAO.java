@@ -181,16 +181,16 @@ public class DarCollectionServiceDAO {
 
   private Update createElectionInsert(
       Handle handle, String electionType, String referenceId, Integer datasetId) {
-    final String sql =
-        " INSERT INTO election "
-            + "        (election_type, status, create_date, reference_id, dataset_id, version) "
-            + " VALUES (:electionType, :status, current_timestamp, :referenceId, :datasetId, "
-            + "         (SELECT coalesce (MAX(version), 0) + 1 "
-            + "          FROM election AS election_version "
-            + "          WHERE reference_id = :referenceId "
-            + "          AND election_type = :electionType "
-            + "          AND dataset_id = :datasetId) "
-            + "        )";
+    final String sql = """
+        INSERT INTO election (election_type, status, create_date, reference_id, dataset_id, version)
+        VALUES (:electionType, :status, current_timestamp, :referenceId, :datasetId,
+            (SELECT coalesce (MAX(version), 0) + 1
+            FROM election AS election_version
+            WHERE reference_id = :referenceId
+            AND election_type = :electionType
+            AND dataset_id = :datasetId)
+        )
+    """;
     Update insert = handle.createUpdate(sql);
     insert.bind("electionType", electionType);
     insert.bind("referenceId", referenceId);

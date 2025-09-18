@@ -20,15 +20,17 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 @RegisterRowMapper(ElectionMapper.class)
 public interface ElectionDAO extends Transactional<ElectionDAO> {
 
-  @SqlQuery(
-      "SELECT DISTINCT election_id " +
-          "FROM election " +
-          "WHERE reference_id IN (<referenceIds>)")
+  @SqlQuery("""
+      SELECT DISTINCT election_id
+      FROM election
+      WHERE reference_id IN (<referenceIds>)
+      """)
   List<Integer> getElectionIdsByReferenceIds(@BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
 
-  @SqlUpdate("INSERT INTO election " +
-      "(election_type, status, create_date, reference_id, dataset_id) VALUES " +
-      "(:electionType, :status, :createDate,:referenceId, :datasetId)")
+  @SqlUpdate("""
+      INSERT INTO election (election_type, status, create_date, reference_id, dataset_id) 
+      VALUES (:electionType, :status, :createDate,:referenceId, :datasetId)
+    """)
   @GetGeneratedKeys
   Integer insertElection(@Bind("electionType") String electionType,
       @Bind("status") String status,
