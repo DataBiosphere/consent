@@ -73,8 +73,6 @@ public class DataAccessRequestData {
   @SerializedName(value = "validRestriction", alternate = "valid_restriction")
   private Boolean validRestriction;
   @Deprecated
-  private Long sortDate;
-  @Deprecated
   @SerializedName(value = "datasetIds", alternate = {"datasetId", "datasetid"})
   private List<Integer> datasetIds;
 
