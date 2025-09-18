@@ -39,9 +39,9 @@ public class VoteServiceDAO {
     jdbi.useTransaction(
         h -> {
           final String updateVoteWithRationale =
-              "UPDATE vote SET vote = :vote, updatedate = :updateDate, rationale = :rationale WHERE voteid = :voteId";
+              "UPDATE vote SET vote = :vote, update_date = :updateDate, rationale = :rationale WHERE vote_id = :voteId";
           final String updateVoteWithoutRationale =
-              "UPDATE vote SET vote = :vote, updatedate = :updateDate WHERE voteid = :voteId";
+              "UPDATE vote SET vote = :vote, update_date = :updateDate WHERE vote_id = :voteId";
           final String updateElectionStatus =
               "UPDATE election SET status = :status WHERE election_id = :electionId";
           final Date now = new Date();
