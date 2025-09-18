@@ -1,0 +1,11 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2025-09-18-standardize-vote-dao" author="grushton">
+    <renameColumn tableName="vote" oldColumnName="voteid" newColumnName="vote_id"/>
+    <renameColumn tableName="vote" oldColumnName="createdate" newColumnName="create_date"/>
+    <renameColumn tableName="vote" oldColumnName="updatedate" newColumnName="update_date"/>
+    <renameColumn tableName="vote" oldColumnName="electionid" newColumnName="election_id"/>
+    <renameColumn tableName="vote" oldColumnName="remindersent" newColumnName="reminder_sent"/>
+  </changeSet>
+</databaseChangeLog>

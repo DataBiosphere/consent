@@ -265,8 +265,8 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     jdbi.useHandle(handle -> {
       String sql = """
               UPDATE vote
-              SET vote = :vote, updatedate = :updateDate, rationale = :rationale, remindersent = :reminderSent, createdate = :createDate, has_concerns = :hasConcerns
-              WHERE voteId = :voteId
+              SET vote = :vote, update_date = :updateDate, rationale = :rationale, reminder_sent = :reminderSent, create_date = :createDate, has_concerns = :hasConcerns
+              WHERE vote_id = :voteId
           """;
       handle.createUpdate(sql)
           .bind("vote", vote)

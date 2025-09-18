@@ -43,11 +43,11 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
   @SqlQuery("SELECT DISTINCT "
       + "    e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, "
-      + "    e.reference_id, v.rationale final_rationale, v.createdate final_vote_date, "
+      + "    e.reference_id, v.rationale final_rationale, v.create_date final_vote_date, "
       + "    e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, "
       + "    e.archived, e.version "
       + "FROM election e "
-      + "INNER JOIN vote v ON v.electionid = e.election_id AND "
+      + "INNER JOIN vote v ON v.election_id = e.election_id AND "
       + "    CASE "
       + "        WHEN LOWER(e.election_type) = 'dataaccess' THEN 'final' "
       + "        WHEN LOWER(e.election_type) = 'dataset' THEN 'data_owner' "
@@ -76,9 +76,9 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
 
   @UseRowMapper(SimpleElectionMapper.class)
   @SqlQuery("SELECT * FROM election e " +
-      "INNER JOIN vote v ON v.electionid = e.election_id " +
+      "INNER JOIN vote v ON v.election_id = e.election_id " +
       "WHERE LOWER(e.election_type) = :electionType " +
-      "AND v.voteid IN (<voteIds>)")
+      "AND v.vote_id IN (<voteIds>)")
   List<Election> findElectionsByVoteIdsAndType(
       @BindList(value = "voteIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> voteIds,
       @Bind("electionType") String electionType
@@ -89,13 +89,13 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       "SELECT * FROM ( "
           + "SELECT e.*, v.vote final_vote, "
           + "     CASE "
-          + "     WHEN v.updatedate IS NULL THEN v.createdate "
-          + "     ELSE v.updatedate "
+          + "     WHEN v.update_date IS NULL THEN v.create_date "
+          + "     ELSE v.update_date "
           + "     END as final_vote_date, "
           + " v.rationale final_rationale, MAX(e.election_id) "
           + " OVER (PARTITION BY e.reference_id, e.election_type) AS latest "
           + " FROM election e "
-          + " LEFT JOIN vote v ON e.election_id = v.electionid AND "
+          + " LEFT JOIN vote v ON e.election_id = v.election_id AND "
           + "     CASE "
           + "     WHEN LOWER(e.election_type) = 'dataaccess' THEN 'final'"
           + "     WHEN LOWER(e.election_type) = 'dataset' THEN 'data_owner' "
