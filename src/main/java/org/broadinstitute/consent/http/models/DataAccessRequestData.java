@@ -70,7 +70,6 @@ public class DataAccessRequestData {
   private Object restriction;
   @SerializedName(value = "validRestriction", alternate = "valid_restriction")
   private Boolean validRestriction;
-  @Deprecated
   @SerializedName(value = "datasetIds", alternate = {"datasetId", "datasetid"})
   private List<Integer> datasetIds;
 
