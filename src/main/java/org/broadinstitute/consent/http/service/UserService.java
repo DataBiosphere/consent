@@ -223,8 +223,9 @@ public class UserService implements ConsentLogger {
    */
   public List<User> getUsersAsRole(User user, String roleName) {
     // Pre-enforce institutions and LC requirements for all calls to this method to ensure that
-    // all users returned are compliant with our rules. For SOs, this adds/removes users that may
-    // not have logged in recently.
+    // all users returned are compliant. For SOs, this ensures that users who have not signed in
+    // recently have their institution and LC status updated so they are correctly returned in
+    // institution-specific DAO calls.
     userDAO.findUsersWithLCsAndInstitution().forEach(this::enforceInstitutionAndLibraryCardRules);
 
     switch (roleName) {
@@ -458,13 +459,12 @@ public class UserService implements ConsentLogger {
    * a DUOS user.
    */
   public User enforceInstitutionAndLibraryCardRules(String email) {
-    User user;
     try {
-      user = findUserByEmail(email);
+      User user = findUserByEmail(email);
+      return enforceInstitutionAndLibraryCardRules(user);
     } catch (NotFoundException nfe) {
       return null;
     }
-    return enforceInstitutionAndLibraryCardRules(user);
   }
 
   /**
