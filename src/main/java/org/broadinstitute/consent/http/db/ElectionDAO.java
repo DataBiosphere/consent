@@ -41,19 +41,21 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       @Bind("status") String status,
       @Bind("lastUpdate") Date lastUpdate);
 
-  @SqlQuery("SELECT DISTINCT "
-      + "    e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date, "
-      + "    e.reference_id, v.rationale final_rationale, v.create_date final_vote_date, "
-      + "    e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name, "
-      + "    e.archived, e.version "
-      + "FROM election e "
-      + "INNER JOIN vote v ON v.election_id = e.election_id AND "
-      + "    CASE "
-      + "        WHEN LOWER(e.election_type) = 'dataaccess' THEN 'final' "
-      + "        WHEN LOWER(e.election_type) = 'dataset' THEN 'data_owner' "
-      + "        ELSE 'chairperson' "
-      + "    END = LOWER(v.type)"
-      + "WHERE e.election_id = :electionId LIMIT 1 ")
+  @SqlQuery("""
+      SELECT DISTINCT
+          e.election_id, e.dataset_id, v.vote final_vote, e.status, e.create_date,
+          e.reference_id, v.rationale final_rationale, v.create_date final_vote_date,
+          e.last_update, e.final_access_vote, e.election_type, e.data_use_letter, e.dul_name,
+          e.archived, e.version
+      FROM election e
+      INNER JOIN vote v ON v.election_id = e.election_id AND
+          CASE
+              WHEN LOWER(e.election_type) = 'dataaccess' THEN 'final'
+              WHEN LOWER(e.election_type) = 'dataset' THEN 'data_owner'
+              ELSE 'chairperson'
+          END = LOWER(v.type)
+      WHERE e.election_id = :electionId LIMIT 1
+    """)
   Election findElectionWithFinalVoteById(@Bind("electionId") Integer electionId);
 
   @UseRowMapper(SimpleElectionMapper.class)
