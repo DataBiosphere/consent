@@ -229,13 +229,20 @@ public class UserService implements ConsentLogger {
       case Resource.SIGNINGOFFICIAL:
         Integer institutionId = user.getInstitutionId();
         if (Objects.nonNull(user.getInstitutionId())) {
-          return userDAO.getUsersFromInstitutionWithCards(institutionId);
+          return userDAO.getUsersFromInstitutionWithCards(institutionId)
+              .stream()
+              .map(this::enforceInstitutionAndLibraryCardRules)
+              .filter(u -> u.getInstitutionId().equals(institutionId))
+              .toList();
         } else {
           throw new NotFoundException("Signing Official (user: " + user.getDisplayName()
               + ") is not associated with an Institution.");
         }
       case Resource.ADMIN:
-        return userDAO.findUsersWithLCsAndInstitution();
+        return userDAO.findUsersWithLCsAndInstitution()
+            .stream()
+            .map(this::enforceInstitutionAndLibraryCardRules)
+            .toList();
       default:
         // do nothing
     }
@@ -454,13 +461,22 @@ public class UserService implements ConsentLogger {
    */
   public User enforceInstitutionAndLibraryCardRules(String email) {
     User user;
-    Integer institutionId = institutionService.findInstitutionIdForEmail(email);
     try {
       user = findUserByEmail(email);
     } catch (NotFoundException nfe) {
       return null;
     }
+    return enforceInstitutionAndLibraryCardRules(user);
+  }
 
+  /**
+   * Core method that implements a set of rules in order to ensure Library Card and
+   * Institution matching rules are adhered to when authorizing users of the system.
+   * @param user The DUOS User
+   * @return The modified user if any changes were made, otherwise the original user.
+   */
+  private User enforceInstitutionAndLibraryCardRules(User user) {
+    Integer institutionId = institutionService.findInstitutionIdForEmail(user.getEmail());
     boolean modifiedUser = false;
 
     if (institutionId != null) {

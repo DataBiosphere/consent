@@ -516,14 +516,26 @@ class UserServiceTest extends AbstractTestHelper {
   @Test
   void testGetUsersByUserRole_SO() {
     User u = generateUser();
+    User u2 = generateUser();
     u.setInstitutionId(1);
+    u2.setInstitutionId(1);
     LibraryCard lc = generateLibraryCard(u);
     u.setLibraryCard(lc);
-    when(userDAO.getUsersFromInstitutionWithCards(anyInt())).thenReturn(List.of(u, new User()));
+    // Simulate a user that will be filtered out due to enforcing institutional affiliation rules
+    User u3 = generateUser();
+    u3.setInstitutionId(2);
+    // We're adding u3 to the results returned by the DAO, but it should be filtered out in business logic
+    when(userDAO.getUsersFromInstitutionWithCards(u.getInstitutionId())).thenReturn(List.of(u, u2, u3));
+    when(userDAO.findUserByEmail(u.getEmail())).thenReturn(u);
+    when(userDAO.findUserByEmail(u2.getEmail())).thenReturn(u2);
+    when(userDAO.findUserByEmail(u3.getEmail())).thenReturn(u3);
 
     List<User> users = service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
     assertNotNull(users);
     assertEquals(2, users.size());
+    assertTrue(users.contains(u));
+    assertTrue(users.contains(u2));
+    assertFalse(users.contains(u3));
     assertSame(lc, users.get(0).getLibraryCard());
   }
 
@@ -551,6 +563,7 @@ class UserServiceTest extends AbstractTestHelper {
     LibraryCard lc = generateLibraryCard(u1);
     u1.setLibraryCard(lc);
     when(userDAO.findUsersWithLCsAndInstitution()).thenReturn(returnedUsers);
+    returnedUsers.forEach(u -> when(userDAO.findUserByEmail(u.getEmail())).thenReturn(u));
     List<User> users = service.getUsersAsRole(u1, UserRoles.ADMIN.getRoleName());
     assertNotNull(users);
     assertEquals(returnedUsers.size(), users.size());
