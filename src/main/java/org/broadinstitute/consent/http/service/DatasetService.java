@@ -255,6 +255,10 @@ public class DatasetService implements ConsentLogger {
     datasetServiceDAO.deleteStudy(study, user);
   }
 
+  public Study findStudy(Integer studyId) {
+    return studyDAO.findStudyById(studyId);
+  }
+
   public List<DatasetStudySummary> findAllDatasetStudySummaries() {
     return datasetDAO.findAllDatasetStudySummaries();
   }

@@ -118,7 +118,8 @@ public class DatasetResource extends Resource {
           registration,
           user,
           files);
-      Study study = datasets.get(0).getStudy();
+      Integer studyId = datasets.get(0).getStudyId();
+      Study study = datasetService.findStudy(studyId);
       DatasetRegistrationSchemaV1Builder builder = new DatasetRegistrationSchemaV1Builder();
       DatasetRegistrationSchemaV1 createdRegistration = builder.build(study, datasets);
       URI uri = UriBuilder.fromPath(String.format("/api/dataset/study/%s", study.getStudyId()))
