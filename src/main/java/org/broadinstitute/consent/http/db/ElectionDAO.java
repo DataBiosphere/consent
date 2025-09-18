@@ -59,12 +59,13 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
   Election findElectionWithFinalVoteById(@Bind("electionId") Integer electionId);
 
   @UseRowMapper(SimpleElectionMapper.class)
-  @SqlQuery(
-      "SELECT e.* FROM election e " +
-          "INNER JOIN data_access_request dar ON dar.reference_id = e.reference_id " +
-          "INNER JOIN users u ON u.user_id = dar.user_id " +
-          "INNER JOIN library_card lc ON lc.user_id = u.user_id " +
-          "WHERE e.election_id IN (<electionIds>) ")
+  @SqlQuery("""
+      SELECT e.* FROM election e
+      INNER JOIN data_access_request dar ON dar.reference_id = e.reference_id
+      INNER JOIN users u ON u.user_id = dar.user_id
+      INNER JOIN library_card lc ON lc.user_id = u.user_id
+      WHERE e.election_id IN (<electionIds>)
+    """)
   List<Election> findElectionsWithCardHoldingUsersByElectionIds(
       @BindList(value = "electionIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> electionIds);
 
@@ -77,10 +78,12 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
   List<Election> findElectionsByReferenceIds(@BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING) List<String> referenceIds);
 
   @UseRowMapper(SimpleElectionMapper.class)
-  @SqlQuery("SELECT * FROM election e " +
-      "INNER JOIN vote v ON v.election_id = e.election_id " +
-      "WHERE LOWER(e.election_type) = :electionType " +
-      "AND v.vote_id IN (<voteIds>)")
+  @SqlQuery("""
+      SELECT * FROM election e
+      INNER JOIN vote v ON v.election_id = e.election_id
+      WHERE LOWER(e.election_type) = :electionType
+      AND v.vote_id IN (<voteIds>)
+    """)
   List<Election> findElectionsByVoteIdsAndType(
       @BindList(value = "voteIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> voteIds,
       @Bind("electionType") String electionType
