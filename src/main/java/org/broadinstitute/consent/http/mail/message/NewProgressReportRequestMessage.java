@@ -10,17 +10,17 @@ public class NewProgressReportRequestMessage extends MailMessage {
   private static final String NEW_PROGRESS_REPORT_REQUEST = "Create an election for Progress Report id: %s.";
 
   private final String darCode;
-  private final Map<String, List<String>> sendList;
+  private final Map<String, List<String>> dacDatasetMap;
   private final String researcherName;
   private final String referenceId;
 
 
-  public NewProgressReportRequestMessage(User toUser, String darCode, String referenceId, Map<String, List<String>> sendList,
+  public NewProgressReportRequestMessage(User toUser, String darCode, String referenceId, Map<String, List<String>> dacDatasetMap,
       String researcherName) {
     super(toUser, EmailType.NEW_PROGRESS_REPORT_REQUEST);
     this.darCode = darCode;
     this.referenceId = referenceId;
-    this.sendList = sendList;
+    this.dacDatasetMap = dacDatasetMap;
     this.researcherName = researcherName;
   }
 
@@ -35,7 +35,7 @@ public class NewProgressReportRequestMessage extends MailMessage {
     return Map.of(
         "serverUrl", serverUrl,
         "userName", toUser.getDisplayName(),
-        "dacDatasetGroups", sendList,
+        "dacDatasetGroups", dacDatasetMap,
         "researcherUserName", researcherName,
         "darID", darCode);
   }

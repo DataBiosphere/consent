@@ -113,6 +113,7 @@ public class EmailService implements ConsentLogger {
     String content = out.toString();
     Mail message = new Mail(new Email(fromAccount), mailMessage.createSubject(),
         new Email(mailMessage.toUser.getEmail()), new Content("text/html", content));
+    // Checks that the user has not disabled email before sending
     Response response = sendGridAPI.sendMessage(message, mailMessage.toUser.getEmail());
     saveEmailAndResponse(
         response,
@@ -249,16 +250,16 @@ public class EmailService implements ConsentLogger {
   }
 
   public void sendNewDARRequestEmail(
-      User user, Map<String, List<String>> sendList, String researcherName, String darCode)
+      User user, Map<String, List<String>> dacDatasetMap, String researcherName, String darCode)
       throws TemplateException, IOException {
-        sendMessage(new NewDARRequestMessage(user, darCode, sendList, researcherName),
+        sendMessage(new NewDARRequestMessage(user, darCode, dacDatasetMap, researcherName),
         user.getUserId());
   }
 
   public void sendNewProgressReportRequestEmail(
-      User user, Map<String, List<String>> sendList, String researcherName, String darCode, String referenceId)
+      User user, Map<String, List<String>> dacDatasetMap, String researcherName, String darCode, String referenceId)
       throws TemplateException, IOException {
-      sendMessage(new NewProgressReportRequestMessage(user, darCode, referenceId, sendList, researcherName),
+      sendMessage(new NewProgressReportRequestMessage(user, darCode, referenceId, dacDatasetMap, researcherName),
         user.getUserId());
   }
 
