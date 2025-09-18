@@ -31,7 +31,6 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
@@ -49,10 +48,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   private static DataAccessRequestData createDataAccessRequestData() {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle("Project Title: " + randomAlphabetic(50));
-    DatasetEntry entry = new DatasetEntry();
-    entry.setKey("key");
-    entry.setValue("value");
-    entry.setLabel("label");
     data.setHmb(true);
     data.setMethods(false);
     return data;
