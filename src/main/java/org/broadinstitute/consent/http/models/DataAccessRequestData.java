@@ -22,7 +22,7 @@ public class DataAccessRequestData {
    * more info.
    */
   public static final List<String> DEPRECATED_PROPS = Arrays
-      .asList("referenceId", "investigator", "datasets",
+      .asList("referenceId", "investigator", "datasets", "darCode",
           "institution", "department", "address1", "address2", "city", "zipcode", "zipCode",
           "state", "country", "researcher", "userId", "isThePi", "havePi",
           "profileName", "pubmedId", "scientificUrl", "eraExpiration", "academicEmail",
@@ -67,8 +67,6 @@ public class DataAccessRequestData {
   private Boolean hmb;
   private String status;
   private Boolean poa;
-  @SerializedName(value = "darCode", alternate = "dar_code")
-  private String darCode;
   private Object restriction;
   @SerializedName(value = "validRestriction", alternate = "valid_restriction")
   private Boolean validRestriction;
@@ -328,16 +326,6 @@ public class DataAccessRequestData {
 
   public void setHmb(Boolean hmb) {
     this.hmb = hmb;
-  }
-
-  @Deprecated
-  public String getDarCode() {
-    return darCode;
-  }
-
-  @Deprecated
-  public void setDarCode(String darCode) {
-    this.darCode = darCode;
   }
 
   public Object getRestriction() {
