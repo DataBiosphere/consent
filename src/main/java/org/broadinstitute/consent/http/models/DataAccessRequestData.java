@@ -22,7 +22,7 @@ public class DataAccessRequestData {
    * more info.
    */
   public static final List<String> DEPRECATED_PROPS = Arrays
-      .asList("referenceId", "investigator", "datasets", "darCode", "localUse",
+      .asList("referenceId", "investigator", "datasets", "darCode",
           "institution", "department", "address1", "address2", "city", "zipcode", "zipCode",
           "state", "country", "researcher", "userId", "isThePi", "havePi",
           "profileName", "pubmedId", "scientificUrl", "eraExpiration", "academicEmail",
@@ -84,6 +84,7 @@ public class DataAccessRequestData {
 
   private Boolean anvilUse;
   private Boolean cloudUse;
+  private Boolean localUse;
   private String cloudProvider;
   private String cloudProviderType;
   private String cloudProviderDescription;
@@ -539,6 +540,14 @@ public class DataAccessRequestData {
   public void setExternalCollaborators(
       List<Collaborator> externalCollaborators) {
     this.externalCollaborators = externalCollaborators;
+  }
+
+  public Boolean getLocalUse() {
+    return localUse;
+  }
+
+  public void setLocalUse(Boolean localUse) {
+    this.localUse = localUse;
   }
 
   public String getCloudProviderDescription() {
