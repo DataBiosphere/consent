@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -39,6 +40,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -50,6 +52,7 @@ import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Error;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
@@ -92,6 +95,9 @@ class DatasetResourceTest extends AbstractTestHelper {
   private UserService userService;
 
   @Mock
+  private GCSService gcsService;
+
+  @Mock
   private Response mockResponse;
 
   private final AuthUser authUser = new AuthUser().setEmail("test@test.com");
@@ -102,7 +108,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   @BeforeEach
   void initResource() {
     resource = new DatasetResource(datasetService, userService,
-        datasetRegistrationService, elasticSearchService, tdrService);
+        datasetRegistrationService, elasticSearchService, tdrService, gcsService);
   }
 
   @Test
@@ -1142,6 +1148,158 @@ class DatasetResourceTest extends AbstractTestHelper {
         .when(datasetService).findDatasetByIdentifier(any(), any());
     Response response = resource.getApprovedUsers(duosUser, "ABC");
     assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+  }
+
+  @Test
+  void testGetNihInstitutionalCertification_Submitter() {
+    Dataset dataset = getDatasetWithStudyUserAndFile();
+    DuosUser requestingUser = new DuosUser(authUser, dataset.getCreateUser());
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
+    Response response = resource.getNihInstitutionalCertification(requestingUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+
+  @Test
+  void testGetNihInstitutionalCertification_Document_No_Authorized_User() {
+    Dataset dataset = getDatasetWithStudyUserAndFile();
+    User requestingUser = new User();
+    requestingUser.setUserId(2);
+    DuosUser requestingDuosUser = new DuosUser(authUser, requestingUser);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
+    Response response = resource.getNihInstitutionalCertification(requestingDuosUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  void testGetNihInstitutionalCertification_Document_AdminUser() {
+    Dataset dataset = getDatasetWithStudyUserAndFile();
+    User requestingUser = new User();
+    requestingUser.setUserId(2);
+    requestingUser.addRole(UserRoles.Admin());
+    DuosUser requestingDuosUser = new DuosUser(authUser, requestingUser);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
+    Response response = resource.getNihInstitutionalCertification(requestingDuosUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  void testGetNihInstitutionalCertification_Document_DacMember() {
+    Dataset dataset = getDatasetWithStudyUserAndFile();
+    User requestingUser = new User();
+    requestingUser.setUserId(2);
+    requestingUser.setMemberRoleWithDAC(dataset.getDacId());
+    DuosUser requestingDuosUser = new DuosUser(authUser, requestingUser);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
+    Response response = resource.getNihInstitutionalCertification(requestingDuosUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  void testGetNihInstitutionalCertification_Document_DacChair() {
+    Dataset dataset = getDatasetWithStudyUserAndFile();
+    User requestingUser = new User();
+    requestingUser.setUserId(2);
+    requestingUser.setChairpersonRoleWithDAC(dataset.getDacId());
+    DuosUser requestingDuosUser = new DuosUser(authUser, requestingUser);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
+    Response response = resource.getNihInstitutionalCertification(requestingDuosUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+  }
+
+  @Test
+  void testGetNihInstitutionalCertification_Document_DacMember_Wrong_Dac() {
+    Dataset dataset = getDatasetWithStudyUserAndFile();
+    User requestingUser = new User();
+    requestingUser.setUserId(2);
+    requestingUser.setMemberRoleWithDAC(dataset.getDacId()+1);
+    DuosUser requestingDuosUser = new DuosUser(authUser, requestingUser);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
+    Response response = resource.getNihInstitutionalCertification(requestingDuosUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  void testGetNihInstitutionalCertification_Document_DacChair_Wrong_Dac() {
+    Dataset dataset = getDatasetWithStudyUserAndFile();
+    User requestingUser = new User();
+    requestingUser.setUserId(2);
+    requestingUser.setChairpersonRoleWithDAC(dataset.getDacId()+1);
+    DuosUser requestingDuosUser = new DuosUser(authUser, requestingUser);
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
+    Response response = resource.getNihInstitutionalCertification(requestingDuosUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  void testGetNihInstitutionalCertification_No_Dataset() {
+    when(datasetService.findDatasetById(any(), any())).thenReturn(null);
+    Response response = resource.getNihInstitutionalCertification(duosUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  void testGetNihInstitutionalCertification_file_deleted() {
+    Dataset dataset = getDatasetWithStudyUserAndFile();
+    FileStorageObject fso = new FileStorageObject();
+    fso.setBlobId(BlobId.of("bucket","name"));
+    fso.setFileName("my file.pdf");
+    fso.setDeleted(true);
+    fso.setMediaType("application/pdf");
+    dataset.setNihInstitutionalCertificationFile(fso);
+    DuosUser requestingUser = new DuosUser(authUser, dataset.getCreateUser());
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
+    Response response = resource.getNihInstitutionalCertification(requestingUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  void testGetNihInstitutionalCertification_no_file_name() {
+    Dataset dataset = getDatasetWithStudyUserAndFile();
+    FileStorageObject fso = new FileStorageObject();
+    fso.setBlobId(BlobId.of("bucket","name"));
+    fso.setDeleted(false);
+    fso.setMediaType("application/pdf");
+    dataset.setNihInstitutionalCertificationFile(fso);
+    DuosUser requestingUser = new DuosUser(authUser, dataset.getCreateUser());
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
+    Response response = resource.getNihInstitutionalCertification(requestingUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
+  void testGetNihInstitutionalCertification_no_blob_id() {
+    Dataset dataset = getDatasetWithStudyUserAndFile();
+    FileStorageObject fso = new FileStorageObject();
+    fso.setFileName("my file.pdf");
+    fso.setDeleted(false);
+    fso.setMediaType("application/pdf");
+    dataset.setNihInstitutionalCertificationFile(fso);
+    DuosUser requestingUser = new DuosUser(authUser, dataset.getCreateUser());
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
+    Response response = resource.getNihInstitutionalCertification(requestingUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  private Dataset getDatasetWithStudyUserAndFile() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(3);
+    User user = new User();
+    user.setUserId(1);
+    dataset.setCreateUser(user);
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setCreateUserId(user.getUserId());
+    dataset.setStudy(study);
+    dataset.setStudyId(study.getStudyId());
+    FileStorageObject fso = new FileStorageObject();
+    fso.setBlobId(BlobId.of("bucket","name"));
+    fso.setFileName("my file.pdf");
+    fso.setDeleted(false);
+    fso.setMediaType("application/pdf");
+    dataset.setNihInstitutionalCertificationFile(fso);
+    return dataset;
   }
 
   /**

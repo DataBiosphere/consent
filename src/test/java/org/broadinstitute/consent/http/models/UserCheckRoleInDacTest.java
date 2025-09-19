@@ -41,4 +41,17 @@ class UserCheckRoleInDacTest {
     assertTrue(isUserAdmin);
   }
 
+  @Test
+  void testVerifyDACRole_NullDacId() {
+    User user = new User();
+    UserRole chairRole = UserRoles.Chairperson();
+    chairRole.setDacId(1);
+    UserRole adminRole = UserRoles.Admin();
+    user.setRoles(List.of(chairRole, adminRole));
+    boolean isUserChair = user.verifyDACRole(UserRoles.CHAIRPERSON.getRoleName(), null);
+    boolean isUserAdmin = user.verifyDACRole(UserRoles.ADMIN.getRoleName(), null);
+    assertFalse(isUserChair);
+    assertTrue(isUserAdmin);
+  }
+
 }
