@@ -172,7 +172,7 @@ public class DarCollectionServiceDAO {
     List<User> dacUsers =
         new ArrayList<>(userDAO.findUsersForDatasetsByRole(
             List.of(datasetId),
-            List.of(UserRoles.CHAIRPERSON.getRoleName(), UserRoles.MEMBER.getRoleName())));
+            List.of(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId())));
     return dacUsers.isEmpty() ?
         new ArrayList<>(userDAO.findNonDacUsersEnabledToVote()) :
         dacUsers;
