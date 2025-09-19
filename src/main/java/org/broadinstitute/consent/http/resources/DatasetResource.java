@@ -123,18 +123,16 @@ public class DatasetResource extends Resource {
       Study study = datasetService.findStudy(studyId);
       DatasetRegistrationSchemaV1Builder builder = new DatasetRegistrationSchemaV1Builder();
       DatasetRegistrationSchemaV1 createdRegistration = builder.build(study, datasets);
-      if (study != null) {
-        URI uri = UriBuilder.fromPath(String.format("/api/dataset/study/%s", study.getStudyId()))
-            .build();
-        String entity = GsonUtil.buildGsonNullSerializer().toJson(createdRegistration);
-        return Response.created(uri).entity(entity).build();
-      } else {
+      if (study == null) {
         Exception entityException =
             new UnprocessableEntityException("Study was not found after it was created");
         logException(entityException);
         throw entityException;
       }
-
+      URI uri = UriBuilder.fromPath(String.format("/api/dataset/study/%s", study.getStudyId()))
+          .build();
+      String entity = GsonUtil.buildGsonNullSerializer().toJson(createdRegistration);
+      return Response.created(uri).entity(entity).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
