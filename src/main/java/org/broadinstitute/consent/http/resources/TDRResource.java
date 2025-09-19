@@ -40,7 +40,7 @@ public class TDRResource extends Resource {
   public Response getApprovedUsers(@Auth DuosUser duosUser,
       @PathParam("identifier") String identifier) {
     try {
-      Dataset dataset = datasetService.findMinimalDatasetByIdentifier(duosUser.getUser(), identifier);
+      Dataset dataset = datasetService.findMinimalDatasetByIdentifier(duosUser.getUser(), identifier, false);
       if (Objects.isNull(dataset)) {
         throw new NotFoundException("Could not find dataset " + identifier);
       }
@@ -60,7 +60,7 @@ public class TDRResource extends Resource {
   public Response getDatasetByIdentifier(@Auth DuosUser duosUser,
       @PathParam("identifier") String identifier) {
     try {
-      Dataset dataset = datasetService.findMinimalDatasetByIdentifier(duosUser.getUser(), identifier);
+      Dataset dataset = datasetService.findMinimalDatasetByIdentifier(duosUser.getUser(), identifier, true);
       if (Objects.isNull(dataset)) {
         throw new NotFoundException("Could not find dataset " + identifier);
       }

@@ -117,10 +117,11 @@ public class DatasetService implements ConsentLogger {
    * Finds a minimal version of a Dataset by a formatted dataset identifier.
    *
    * @param datasetIdentifier The formatted identifier, e.g. DUOS-123456
+   * @param populateStudy Whether to populate the study object in the returned dataset
    * @return the Dataset with the given identifier, if found.
    * @throws IllegalArgumentException if datasetIdentifier is invalid
    */
-  public Dataset findMinimalDatasetByIdentifier(User user, String datasetIdentifier)
+  public Dataset findMinimalDatasetByIdentifier(User user, String datasetIdentifier, boolean populateStudy)
       throws IllegalArgumentException {
     Integer alias = Dataset.parseIdentifierToAlias(datasetIdentifier);
     Dataset d = datasetDAO.findMinimalDatasetByAlias(alias);
@@ -132,7 +133,10 @@ public class DatasetService implements ConsentLogger {
     if (!Objects.equals(d.getDatasetIdentifier(), datasetIdentifier)) {
       return null;
     }
-    // Verification will populate study if necessary.
+    // It is faster to populate the study separately than in a single query with the dataset
+    if (d.getStudyId() != null && populateStudy) {
+      d.setStudy(studyDAO.findStudyById(d.getStudyId()));
+    }
     return verifyPublicVisibilityAccess(d, user);
   }
 

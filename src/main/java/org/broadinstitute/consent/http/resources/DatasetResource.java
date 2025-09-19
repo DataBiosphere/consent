@@ -560,7 +560,7 @@ public class DatasetResource extends Resource {
   @Path("/{identifier}/approvedUsers")
   public Response getApprovedUsers(@Auth DuosUser duosUser, @PathParam("identifier") String datasetIdentifier) {
     try {
-      Dataset dataset = datasetService.findMinimalDatasetByIdentifier(duosUser.getUser(), datasetIdentifier);
+      Dataset dataset = datasetService.findMinimalDatasetByIdentifier(duosUser.getUser(), datasetIdentifier, false);
       if (Objects.isNull(dataset)) {
         return Response.status(Response.Status.NOT_FOUND).build();
       }

@@ -58,7 +58,7 @@ class TDRResourceTest {
     d.setStudy(study);
 
     when(tdrService.getApprovedUsersForDataset(any(), any())).thenReturn(approvedUsers);
-    when(datasetService.findMinimalDatasetByIdentifier(user, ds)).thenReturn(d);
+    when(datasetService.findMinimalDatasetByIdentifier(user, ds, false)).thenReturn(d);
     when(duosUser.getUser()).thenReturn(user);
 
     initResource();
@@ -71,7 +71,7 @@ class TDRResourceTest {
   @Test
   void testGetApprovedUsersForDataset404() {
     when(duosUser.getUser()).thenReturn(user);
-    when(datasetService.findMinimalDatasetByIdentifier(user, "DUOS-00003")).thenReturn(null);
+    when(datasetService.findMinimalDatasetByIdentifier(user, "DUOS-00003", false)).thenReturn(null);
 
     initResource();
 
@@ -87,7 +87,7 @@ class TDRResourceTest {
     d.setName("test");
 
     when(duosUser.getUser()).thenReturn(user);
-    when(datasetService.findMinimalDatasetByIdentifier(user, "DUOS-00003")).thenReturn(d);
+    when(datasetService.findMinimalDatasetByIdentifier(user, "DUOS-00003", true)).thenReturn(d);
 
     initResource();
 
@@ -101,7 +101,7 @@ class TDRResourceTest {
   @Test
   void testGetDatasetByIdentifier404() {
     when(duosUser.getUser()).thenReturn(user);
-    when(datasetService.findMinimalDatasetByIdentifier(user, "DUOS-00003")).thenReturn(null);
+    when(datasetService.findMinimalDatasetByIdentifier(user, "DUOS-00003", true)).thenReturn(null);
 
     initResource();
 
