@@ -1088,7 +1088,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   void testGetApprovedUsers() {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
-    when(datasetService.findDatasetByIdentifier(any(), any())).thenReturn(dataset);
+    when(datasetService.findMinimalDatasetByIdentifier(any(), any())).thenReturn(dataset);
     when(datasetService.isAuthorizedToListUsers(any(), any())).thenReturn(true);
     when(tdrService.getApprovedUsersForDataset(any(), any())).thenReturn(new ApprovedUsers(List.of()));
     Response response = resource.getApprovedUsers(duosUser, "ABC");
@@ -1098,7 +1098,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Test
   void testGetApprovedUsersDatasetNotFound() {
-    when(datasetService.findDatasetByIdentifier(any(), any())).thenReturn(null);
+    when(datasetService.findMinimalDatasetByIdentifier(any(), any())).thenReturn(null);
     Response response = resource.getApprovedUsers(duosUser, "ABC");
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
@@ -1107,7 +1107,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   void testGetAuthorizedUsersNotApproved() {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
-    when(datasetService.findDatasetByIdentifier(any(), any())).thenReturn(dataset);
+    when(datasetService.findMinimalDatasetByIdentifier(any(), any())).thenReturn(dataset);
     when(datasetService.isAuthorizedToListUsers(any(), any())).thenReturn(false);
     Response response = resource.getApprovedUsers(duosUser, "ABC");
     assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
@@ -1116,7 +1116,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   @Test
   void testGetApprovedUsersDatasetThrows() {
     doThrow(new RuntimeException("Some exception"))
-        .when(datasetService).findDatasetByIdentifier(any(), any());
+        .when(datasetService).findMinimalDatasetByIdentifier(any(), any());
     Response response = resource.getApprovedUsers(duosUser, "ABC");
     assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
   }

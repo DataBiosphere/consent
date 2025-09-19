@@ -113,6 +113,29 @@ public class DatasetService implements ConsentLogger {
     return verifyPublicVisibilityAccess(d, user);
   }
 
+  /**
+   * Finds a minimal version of a Dataset by a formatted dataset identifier.
+   *
+   * @param datasetIdentifier The formatted identifier, e.g. DUOS-123456
+   * @return the Dataset with the given identifier, if found.
+   * @throws IllegalArgumentException if datasetIdentifier is invalid
+   */
+  public Dataset findMinimalDatasetByIdentifier(User user, String datasetIdentifier)
+      throws IllegalArgumentException {
+    Integer alias = Dataset.parseIdentifierToAlias(datasetIdentifier);
+    Dataset d = datasetDAO.findMinimalDatasetByAlias(alias);
+    if (d == null) {
+      throw new NotFoundException("Dataset not found");
+    }
+    // technically, it is possible to have two dataset identifiers which
+    // have the same alias but are not the same: e.g., DUOS-5 and DUOS-00005
+    if (!Objects.equals(d.getDatasetIdentifier(), datasetIdentifier)) {
+      return null;
+    }
+    // Verification will populate study if necessary.
+    return verifyPublicVisibilityAccess(d, user);
+  }
+
   protected Dataset verifyPublicVisibilityAccess(Dataset dataset, User user) {
     // Admins
     if (user.hasUserRole(UserRoles.ADMIN)) {
