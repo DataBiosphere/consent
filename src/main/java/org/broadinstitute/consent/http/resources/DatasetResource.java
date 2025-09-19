@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -118,9 +119,16 @@ public class DatasetResource extends Resource {
           registration,
           user,
           files);
-      Study study = datasets.get(0).getStudy();
+      Integer studyId = datasets.get(0).getStudyId();
+      Study study = datasetService.findStudy(studyId);
       DatasetRegistrationSchemaV1Builder builder = new DatasetRegistrationSchemaV1Builder();
       DatasetRegistrationSchemaV1 createdRegistration = builder.build(study, datasets);
+      if (study == null) {
+        Exception entityException =
+            new UnprocessableEntityException("Study was not found after it was created");
+        logException(entityException);
+        throw entityException;
+      }
       URI uri = UriBuilder.fromPath(String.format("/api/dataset/study/%s", study.getStudyId()))
           .build();
       String entity = GsonUtil.buildGsonNullSerializer().toJson(createdRegistration);
