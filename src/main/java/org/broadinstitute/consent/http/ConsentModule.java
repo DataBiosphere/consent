@@ -62,7 +62,7 @@ import org.broadinstitute.consent.http.service.OidcService;
 import org.broadinstitute.consent.http.service.OntologyService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
-import org.broadinstitute.consent.http.service.UserEnforcementService;
+import org.broadinstitute.consent.http.service.enforcement.InstitutionAndLibraryCardEnforcementService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
@@ -613,8 +613,8 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
-  UserEnforcementService providesUserEnforcementService() {
-    return new UserEnforcementService(
+  InstitutionAndLibraryCardEnforcementService providesUserEnforcementService() {
+    return new InstitutionAndLibraryCardEnforcementService(
         providesJdbi(),
         providesUserServiceDAO());
   }

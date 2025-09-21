@@ -1,29 +1,40 @@
-package org.broadinstitute.consent.http.service;
+package org.broadinstitute.consent.http.service.enforcement;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
+import java.util.concurrent.ExecutorService;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
+import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.ThreadUtils;
 import org.jdbi.v3.core.Jdbi;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Service that implements a set of rules in order to ensure Library Card and Institution matching
  * rules are adhered to for users of the system.
  */
-public class UserEnforcementService {
+public class InstitutionAndLibraryCardEnforcementService implements ConsentLogger {
 
+  private final ExecutorService executorService = new ThreadUtils().getExecutorService(
+      InstitutionAndLibraryCardEnforcementService.class);
   private final InstitutionDAO institutionDAO;
   private final LibraryCardDAO libraryCardDAO;
   private final UserDAO userDAO;
   private final UserServiceDAO userServiceDAO;
 
   @Inject
-  public UserEnforcementService(Jdbi jdbi, UserServiceDAO userServiceDAO) {
+  public InstitutionAndLibraryCardEnforcementService(Jdbi jdbi, UserServiceDAO userServiceDAO) {
     this.institutionDAO = jdbi.onDemand(InstitutionDAO.class);
     this.libraryCardDAO = jdbi.onDemand(LibraryCardDAO.class);
     this.userDAO = jdbi.onDemand(UserDAO.class);
@@ -33,6 +44,7 @@ public class UserEnforcementService {
   /**
    * Compliance method that implements a set of rules in order to ensure Library Card and
    * Institution matching rules are adhered to when authorizing users of the system.
+   *
    * @param email of the user being evaluated
    * @return user with the Institution and Library Card rules applied or null if the requestor isn't
    * a DUOS user.
@@ -46,13 +58,44 @@ public class UserEnforcementService {
     }
   }
 
+  public void asyncEnforceInstitutionAndLibraryCardRulesForAllUsers() {
+    ListeningExecutorService listeningExecutorService = MoreExecutors.listeningDecorator(
+        executorService);
+    ListenableFuture<User> enforceRulesFuture = listeningExecutorService.submit(() -> {
+      for (User user : userDAO.findUsersWithLCsAndInstitution()) {
+        try {
+          User updatedUser = enforceInstitutionAndLibraryCardRules(user);
+          logInfo("Enforced institution and LC rules for user: " + updatedUser.getEmail());
+        } catch (Exception e) {
+          logWarn("Error enforcing institution and LC rules for user: " + user.getEmail(), e);
+        }
+      }
+      return null;
+    });
+    Futures.addCallback(
+        enforceRulesFuture,
+        new FutureCallback<>() {
+          @Override
+          public void onSuccess(User result) {
+            logInfo("Completed enforcing institution and LC rules for all users.");
+          }
+          @Override
+          public void onFailure(@NotNull Throwable t) {
+            logWarn("Error completing enforcement of institution and LC rules for all users.", t);
+          }
+        },
+        listeningExecutorService);
+  }
+
   /**
-   * Core method that implements a set of rules in order to ensure Library Card and
-   * Institution matching rules are adhered to when authorizing users of the system.
+   * Core method that implements a set of rules in order to ensure Library Card and Institution
+   * matching rules are adhered to when authorizing users of the system.
+   *
    * @param user The DUOS User
    * @return The modified user if any changes were made, otherwise the original user.
    */
-  private User enforceInstitutionAndLibraryCardRules(User user) {
+  @VisibleForTesting
+  protected User enforceInstitutionAndLibraryCardRules(User user) {
     Integer institutionId = findInstitutionIdForEmail(user.getEmail());
     boolean modifiedUser = false;
 
@@ -137,6 +180,12 @@ public class UserEnforcementService {
     return institutionFromDatabase.equals(institutionFromEmail);
   }
 
+  @VisibleForTesting
+  protected String trimmedEmailDomain(String email) {
+    String trimmedEmail = email.trim();
+    return trimmedEmail.substring(trimmedEmail.indexOf('@') + 1);
+  }
+
   private void dropLCAndInstitutionForUser(User user) {
     userServiceDAO.updateInstitutionAndClearLibraryCardForUser(user.getUserId(), null);
   }
@@ -147,11 +196,5 @@ public class UserEnforcementService {
 
   private Integer findInstitutionIdForEmail(String email) {
     return institutionDAO.findInstitutionIdByDomain(trimmedEmailDomain(email));
-  }
-
-  @VisibleForTesting
-  protected String trimmedEmailDomain(String email) {
-    String trimmedEmail = email.trim();
-    return trimmedEmail.substring(trimmedEmail.indexOf('@') + 1);
   }
 }

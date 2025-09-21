@@ -1,14 +1,17 @@
-package org.broadinstitute.consent.http.service;
+package org.broadinstitute.consent.http.service.enforcement;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
@@ -29,7 +32,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class UserEnforcementServiceTest extends AbstractTestHelper {
+public class InstitutionAndLibraryCardEnforcementServiceTest extends AbstractTestHelper {
 
   @Mock
   private InstitutionDAO institutionDAO;
@@ -42,14 +45,28 @@ public class UserEnforcementServiceTest extends AbstractTestHelper {
   @Mock
   private Jdbi jdbi;
 
-  private UserEnforcementService service;
+  private InstitutionAndLibraryCardEnforcementService service;
 
   @BeforeEach
   void setUp() {
     when(jdbi.onDemand(InstitutionDAO.class)).thenReturn(institutionDAO);
     when(jdbi.onDemand(LibraryCardDAO.class)).thenReturn(libraryCardDAO);
     when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
-    service = new UserEnforcementService(jdbi, userServiceDAO);
+    service = new InstitutionAndLibraryCardEnforcementService(jdbi, userServiceDAO);
+  }
+
+  @Test
+  void testAsyncEnforceInstitutionAndLibraryCardRulesForAllUsers() {
+    List<User> allUsers = Stream
+        .generate(InstitutionAndLibraryCardEnforcementServiceTest::generateUser)
+        .limit(5)
+        .toList();
+    when(userDAO.findUsersWithLCsAndInstitution()).thenReturn(allUsers);
+    allUsers.forEach(u -> when(userDAO.findUserByEmail(u.getEmail())).thenReturn(u));
+
+    InstitutionAndLibraryCardEnforcementService spy = spy(service);
+    spy.asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    allUsers.forEach(u -> verify(spy, timeout(1000).atLeastOnce()).enforceInstitutionAndLibraryCardRules(u));
   }
 
   @Test
@@ -124,7 +141,8 @@ public class UserEnforcementServiceTest extends AbstractTestHelper {
     when(institutionDAO.findInstitutionByDomain(soDomain)).thenReturn(institutionFromDatabase);
 
     assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail.getId()));
-    verify(userServiceDAO).updateInstitutionAndClearLibraryCardForUser(testUser.getUserId(), institutionFromEmail.getId());
+    verify(userServiceDAO).updateInstitutionAndClearLibraryCardForUser(testUser.getUserId(),
+        institutionFromEmail.getId());
   }
 
   @Test
@@ -143,7 +161,8 @@ public class UserEnforcementServiceTest extends AbstractTestHelper {
     when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(null);
 
     assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail.getId()));
-    verify(userServiceDAO).updateInstitutionAndClearLibraryCardForUser(testUser.getUserId(), institutionFromEmail.getId());
+    verify(userServiceDAO).updateInstitutionAndClearLibraryCardForUser(testUser.getUserId(),
+        institutionFromEmail.getId());
   }
 
   @Test
@@ -296,7 +315,15 @@ public class UserEnforcementServiceTest extends AbstractTestHelper {
     u.setDisplayName(displayName);
     u.setUserId(randomInt(1, 100));
     u.setInstitutionId(randomInt(1, 100));
+    u.setInstitution(generateInstitution(u.getInstitutionId()));
     return u;
+  }
+
+  private static Institution generateInstitution(Integer id) {
+    Institution inst = new Institution();
+    inst.setId(id);
+    inst.setName(randomAlphabetic(10));
+    return inst;
   }
 
 }

@@ -44,6 +44,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.resources.Resource;
 import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
+import org.broadinstitute.consent.http.service.enforcement.InstitutionAndLibraryCardEnforcementService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
@@ -67,7 +68,7 @@ public class UserService implements ConsentLogger {
   private final InstitutionService institutionService;
   private final DACAutomationRuleDAO ruleDAO;
   private final DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
-  private final UserEnforcementService userEnforcementService;
+  private final InstitutionAndLibraryCardEnforcementService institutionAndLibraryCardEnforcementService;
 
   @Inject
   public UserService(
@@ -85,7 +86,7 @@ public class UserService implements ConsentLogger {
       InstitutionService institutionService,
       DACAutomationRuleDAO ruleDAO,
       DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO,
-      UserEnforcementService userEnforcementService) {
+      InstitutionAndLibraryCardEnforcementService institutionAndLibraryCardEnforcementService) {
     this.userDAO = userDAO;
     this.userPropertyDAO = userPropertyDAO;
     this.userRoleDAO = userRoleDAO;
@@ -100,7 +101,7 @@ public class UserService implements ConsentLogger {
     this.datasetAuthorizationReaderDAO = datasetAuthorizationReaderDAO;
     this.institutionService = institutionService;
     this.ruleDAO = ruleDAO;
-    this.userEnforcementService = userEnforcementService;
+    this.institutionAndLibraryCardEnforcementService = institutionAndLibraryCardEnforcementService;
   }
 
   /**
@@ -455,7 +456,7 @@ public class UserService implements ConsentLogger {
    * a DUOS user.
    */
   public User enforceInstitutionAndLibraryCardRules(String email) {
-    return userEnforcementService.enforceInstitutionAndLibraryCardRules(email);
+    return institutionAndLibraryCardEnforcementService.enforceInstitutionAndLibraryCardRules(email);
   }
 
   public static class SimplifiedUser {

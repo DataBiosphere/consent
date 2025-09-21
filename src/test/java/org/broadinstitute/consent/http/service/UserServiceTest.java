@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
@@ -62,13 +61,11 @@ import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
+import org.broadinstitute.consent.http.service.enforcement.InstitutionAndLibraryCardEnforcementService;
 import org.jdbi.v3.core.transaction.TransactionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -116,7 +113,7 @@ class UserServiceTest extends AbstractTestHelper {
   @Mock
   private DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
   @Mock
-  private UserEnforcementService userEnforcementService;
+  private InstitutionAndLibraryCardEnforcementService institutionAndLibraryCardEnforcementService;
 
   private UserService service;
 
@@ -125,7 +122,7 @@ class UserServiceTest extends AbstractTestHelper {
     service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO,
         libraryCardDAO, acknowledgementDAO, fileStorageObjectDAO, userServiceDAO, daaDAO,
         draftServiceDAO, institutionService, ruleDAO, datasetAuthorizationReaderDAO,
-        userEnforcementService);
+        institutionAndLibraryCardEnforcementService);
   }
 
   @Test
