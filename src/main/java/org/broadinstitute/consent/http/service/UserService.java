@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service;
 import static org.broadinstitute.consent.http.enumeration.UserFields.ERA_EXPIRATION_DATE;
 import static org.broadinstitute.consent.http.enumeration.UserFields.ERA_STATUS;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -68,6 +67,7 @@ public class UserService implements ConsentLogger {
   private final InstitutionService institutionService;
   private final DACAutomationRuleDAO ruleDAO;
   private final DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
+  private final UserEnforcementService userEnforcementService;
 
   @Inject
   public UserService(
@@ -84,7 +84,8 @@ public class UserService implements ConsentLogger {
       DraftServiceDAO draftServiceDAO,
       InstitutionService institutionService,
       DACAutomationRuleDAO ruleDAO,
-      DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO) {
+      DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO,
+      UserEnforcementService userEnforcementService) {
     this.userDAO = userDAO;
     this.userPropertyDAO = userPropertyDAO;
     this.userRoleDAO = userRoleDAO;
@@ -99,6 +100,7 @@ public class UserService implements ConsentLogger {
     this.datasetAuthorizationReaderDAO = datasetAuthorizationReaderDAO;
     this.institutionService = institutionService;
     this.ruleDAO = ruleDAO;
+    this.userEnforcementService = userEnforcementService;
   }
 
   /**
@@ -222,12 +224,6 @@ public class UserService implements ConsentLogger {
    * @return List of Users for specified role name
    */
   public List<User> getUsersAsRole(User user, String roleName) {
-    // Pre-enforce institutions and LC requirements for all calls to this method to ensure that
-    // all users returned are compliant. For SOs, this ensures that users who have not signed in
-    // recently have their institution and LC status updated so they are correctly returned in
-    // institution-specific DAO calls.
-    userDAO.findUsersWithLCsAndInstitution().forEach(this::enforceInstitutionAndLibraryCardRules);
-
     switch (roleName) {
       // SigningOfficial console is technically pulling LCs, it's just bringing associated users along for the ride
       // However LCs can be created for users not yet registered in the system
@@ -459,104 +455,7 @@ public class UserService implements ConsentLogger {
    * a DUOS user.
    */
   public User enforceInstitutionAndLibraryCardRules(String email) {
-    try {
-      User user = findUserByEmail(email);
-      return enforceInstitutionAndLibraryCardRules(user);
-    } catch (NotFoundException nfe) {
-      return null;
-    }
-  }
-
-  /**
-   * Core method that implements a set of rules in order to ensure Library Card and
-   * Institution matching rules are adhered to when authorizing users of the system.
-   * @param user The DUOS User
-   * @return The modified user if any changes were made, otherwise the original user.
-   */
-  private User enforceInstitutionAndLibraryCardRules(User user) {
-    Integer institutionId = institutionService.findInstitutionIdForEmail(user.getEmail());
-    boolean modifiedUser = false;
-
-    if (institutionId != null) {
-      if (handleUserWithInstitutionInMap(user, institutionId)) {
-        modifiedUser = true;
-      }
-    } else {
-      if (handleUserWithoutInstitutionInMap(user)) {
-        modifiedUser = true;
-      }
-    }
-
-    if (modifiedUser) {
-      return findUserByEmail(user.getEmail());
-    } else {
-      return user;
-    }
-  }
-
-  @VisibleForTesting
-  protected boolean handleUserWithInstitutionInMap(User user, Integer institutionId) {
-    boolean needsLCRemoved = needsLibraryCardRemovedForUser(user, institutionId);
-    boolean needsInstitutionAssigned = !institutionId.equals(user.getInstitutionId());
-
-    if (needsInstitutionAssigned && needsLCRemoved) {
-      userServiceDAO.updateInstitutionAndClearLibraryCardForUser(user.getUserId(), institutionId);
-    } else if (needsInstitutionAssigned) {
-      userDAO.updateInstitutionId(user.getUserId(), institutionId);
-    } else if (needsLCRemoved) {
-      libraryCardDAO.deleteAllLibraryCardsByUser(user.getUserId());
-    }
-
-    return needsLCRemoved || needsInstitutionAssigned;
-  }
-
-  @VisibleForTesting
-  protected boolean needsLibraryCardRemovedForUser(User user, Integer userInstitutionId) {
-    boolean needsLCRemoved = false;
-    if (hasLibraryCard(user)) {
-      try {
-        User lcIssuer = findUserById(user.getLibraryCard().getCreateUserId());
-        Institution lcIssuerInstitution = institutionService.findInstitutionForEmail(lcIssuer.getEmail());
-        if (lcIssuerInstitution == null || !userInstitutionId.equals(lcIssuerInstitution.getId())) {
-          needsLCRemoved = true;
-        }
-      } catch (NotFoundException nfe) {
-        needsLCRemoved = true;
-      }
-    }
-    return needsLCRemoved;
-  }
-
-  @VisibleForTesting
-  protected boolean handleUserWithoutInstitutionInMap(User user) {
-    if (hasLibraryCard(user)) {
-      dropLCAndInstitutionForUser(user);
-      return true;
-    } else {
-      if (user.getInstitutionId() != null) {
-        userDAO.updateInstitutionId(user.getUserId(), null);
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private void dropLCAndInstitutionForUser(User user) {
-    userServiceDAO.updateInstitutionAndClearLibraryCardForUser(user.getUserId(), null);
-  }
-
-  @VisibleForTesting
-  protected boolean hasLibraryCard(User user) {
-    return user.getLibraryCard() != null;
-  }
-
-  @VisibleForTesting
-  protected boolean hasMatchingInstitutionInDatabase(
-      Institution institutionFromEmail, Institution institutionFromDatabase) {
-    if (institutionFromEmail == null || institutionFromDatabase == null) {
-      return false;
-    }
-    return institutionFromDatabase.equals(institutionFromEmail);
+    return userEnforcementService.enforceInstitutionAndLibraryCardRules(email);
   }
 
   public static class SimplifiedUser {
