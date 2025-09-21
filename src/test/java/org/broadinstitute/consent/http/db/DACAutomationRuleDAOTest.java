@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
@@ -22,7 +25,7 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
   void testFindAll() {
     List<DACAutomationRule> rules = dacAutomationRuleDAO.findAll();
     Assertions.assertFalse(rules.isEmpty());
-    Assertions.assertTrue(
+    assertTrue(
         rules.stream().anyMatch(rule -> rule.ruleType().equals(DACAutomationRuleType.GRU_V1)));
   }
 
@@ -93,11 +96,11 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     Assertions.assertNotNull(settingId);
     List<DACAutomationRule> updatedRulesByDacId = dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(
         dacId);
-    Assertions.assertTrue(updatedRulesByDacId.stream()
+    assertTrue(updatedRulesByDacId.stream()
         .anyMatch(r -> Objects.equals(r.enabledByUserId(), user.getUserId())));
-    Assertions.assertTrue(
+    assertTrue(
         updatedRulesByDacId.stream().anyMatch(r -> Objects.equals(r.userEmail(), user.getEmail())));
-    Assertions.assertTrue(updatedRulesByDacId.stream()
+    assertTrue(updatedRulesByDacId.stream()
         .anyMatch(r -> Objects.equals(r.displayName(), user.getDisplayName())));
   }
 
@@ -134,12 +137,16 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     Assertions.assertEquals(2, auditRecords.size());
     Assertions.assertEquals(auditRecords.size(),
         dacAutomationRuleDAO.findCountOfAutomationAuditsForDac(dacId1));
-    Assertions.assertNotNull(auditRecords.get(0));
-    Assertions.assertEquals(RuleAuditAction.REMOVE, auditRecords.get(0).action());
-    Assertions.assertEquals(auditUser.getEmail(), auditRecords.get(0).email());
-    Assertions.assertNotNull(auditRecords.get(1));
-    Assertions.assertEquals(RuleAuditAction.ADD, auditRecords.get(1).action());
-    Assertions.assertEquals(user.getEmail(), auditRecords.get(1).email());
+    var remove = auditRecords.stream()
+        .filter(r -> r.action().equals(RuleAuditAction.REMOVE))
+        .findFirst();
+    assertTrue(remove.isPresent());
+    assertEquals(remove.get().email(), auditUser.getEmail());
+    var add = auditRecords.stream()
+        .filter(r -> r.action().equals(RuleAuditAction.ADD))
+        .findFirst();
+    assertTrue(add.isPresent());
+    assertEquals(add.get().email(), user.getEmail());
   }
 
   @Test
@@ -160,9 +167,11 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     List<DACAutomationRuleAudit> auditRecords = dacAutomationRuleDAO.findAutomationAuditsForDac(
         dacId, 5, 0);
     Assertions.assertEquals(2, auditRecords.size());
-    Assertions.assertNotNull(auditRecords.get(0));
-    Assertions.assertEquals(RuleAuditAction.REMOVE, auditRecords.get(0).action());
-    Assertions.assertEquals(auditUser.getEmail(), auditRecords.get(0).email());
+    var remove = auditRecords.stream()
+        .filter(r -> r.action().equals(RuleAuditAction.REMOVE))
+        .findFirst();
+    assertTrue(remove.isPresent());
+    assertEquals(remove.get().email(), auditUser.getEmail());
   }
 
   @Test
@@ -254,7 +263,7 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     Assertions.assertEquals(rulesByDacId.size() - 1, auditRecords.size());
     auditRecords = dacAutomationRuleDAO.findAutomationAuditsForDac(dacId1, 1,
         rulesByDacId.size() * 2);
-    Assertions.assertTrue(auditRecords.isEmpty());
+    assertTrue(auditRecords.isEmpty());
   }
 
   private Integer createRandomDAC() {
