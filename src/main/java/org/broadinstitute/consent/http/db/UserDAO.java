@@ -257,22 +257,28 @@ public interface UserDAO extends Transactional<UserDAO> {
   List<User> findUsersWithLCsAndInstitution();
 
   @UseRowMapper(UserWithRolesMapper.class)
-  @SqlQuery("select du.*, r.role_id, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from users du inner join user_role ur on ur.user_id = du.user_id inner join roles r on r.role_id = ur.role_id where r.name = :roleName and du.email_preference = :emailPreference")
-  List<User> describeUsersByRoleAndEmailPreference(@Bind("roleName") String roleName,
-      @Bind("emailPreference") Boolean emailPreference);
+  @SqlQuery("""
+      SELECT u.*, r.role_id, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id
+      FROM users u
+      INNER JOIN user_role ur ON ur.user_id = u.user_id AND ur.role_id = :roleId
+      INNER JOIN roles r ON r.role_id = ur.role_id
+    """)
+  List<User> findUsersByRoleId(@Bind("roleId") Integer roleId);
 
   @UseRowMapper(UserWithRolesMapper.class)
-  @SqlQuery("select du.*, r.role_id, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id " +
-      " from users du " +
-      " inner join user_role ur on ur.user_id = du.user_id " +
-      " inner join roles r on r.role_id = ur.role_id and r.name in (<roleNames>) " +
-      " inner join dac d on d.dac_id = ur.dac_id " +
-      " inner join dataset ds on ds.dac_id = d.dac_id " +
-      " where ds.dataset_id in (<datasetIds>) "
+  @SqlQuery("""
+      SELECT u.*, r.role_id, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id
+      FROM users u
+      INNER JOIN user_role ur ON ur.user_id = u.user_id AND ur.role_id in (<roleIds>)
+      INNER JOIN roles r on r.role_id = ur.role_id
+      INNER JOIN dac d ON d.dac_id = ur.dac_id
+      INNER JOIN dataset ds ON ds.dac_id = d.dac_id
+      WHERE ds.dataset_id in (<datasetIds>)
+    """
   )
   Set<User> findUsersForDatasetsByRole(
       @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> datasetIds,
-      @BindList(value = "roleNames", onEmpty = EmptyHandling.NULL_STRING) List<String> roleNames);
+      @BindList(value = "roleIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> roleIds);
 
   @RegisterBeanMapper(value = User.class)
   @RegisterBeanMapper(value = UserRole.class)

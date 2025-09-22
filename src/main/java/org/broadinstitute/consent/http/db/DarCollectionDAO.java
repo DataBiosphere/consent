@@ -49,7 +49,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           " ) AS e " +
           "   ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id) AND (e.latest = e.election_id OR e.latest IS NULL) "
           +
-          " LEFT JOIN vote v ON v.electionid = e.election_id ";
+          " LEFT JOIN vote v ON v.election_id = e.election_id ";
 
   String archiveFilterQuery = " AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL) ";
 
@@ -179,8 +179,8 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           + "dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id, "
           + "e.election_id AS e_election_id, e.reference_id AS e_reference_id, e.status AS e_status, e.create_date AS e_create_date, "
           + "e.last_update AS e_last_update, e.dataset_id AS e_dataset_id, e.election_type AS e_election_type, e.latest, "
-          + "v.voteid as v_vote_id, v.vote as v_vote, v.user_id as v_user_id, v.rationale as v_rationale, v.electionid as v_election_id, "
-          + "v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type, du.display_name as v_display_name "
+          + "v.vote_id as v_vote_id, v.vote as v_vote, v.user_id as v_user_id, v.rationale as v_rationale, v.election_id as v_election_id, "
+          + "v.create_date as v_create_date, v.update_date as v_update_date, v.type as v_type, du.display_name as v_display_name "
           + "FROM dar_collection c "
           + "INNER JOIN users u ON c.create_user_id = u.user_id "
           + "LEFT JOIN user_property up ON u.user_id = up.user_id "
@@ -195,7 +195,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           + ") AS e "
           + "ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id) AND (e.latest = e.election_id OR e.latest IS NULL) "
           + "LEFT JOIN vote v "
-          + "ON v.electionid = e.election_id "
+          + "ON v.election_id = e.election_id "
           + "LEFT JOIN users du "
           + "ON du.user_id = v.user_id "
           + "WHERE c.collection_id = :collectionId "
@@ -235,8 +235,8 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
        dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id,
        e.election_id AS e_election_id, e.reference_id AS e_reference_id, e.status AS e_status, e.create_date AS e_create_date,
        e.last_update AS e_last_update, e.dataset_id AS e_dataset_id, e.election_type AS e_election_type,
-       v.voteid as v_vote_id, v.vote as v_vote, v.user_id as v_user_id, v.rationale as v_rationale, v.electionid as v_election_id,
-       v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type, du.display_name as v_display_name
+       v.vote_id as v_vote_id, v.vote as v_vote, v.user_id as v_user_id, v.rationale as v_rationale, v.election_id as v_election_id,
+       v.create_date as v_create_date, v.update_date as v_update_date, v.type as v_type, du.display_name as v_display_name
     FROM dar_collection c
     INNER JOIN users u ON c.create_user_id = u.user_id
     LEFT JOIN user_property up ON u.user_id = up.user_id
@@ -247,7 +247,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
     LEFT JOIN election e
       ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id)
     LEFT JOIN vote v
-      ON v.electionid = e.election_id
+      ON v.election_id = e.election_id
     LEFT JOIN users du
       ON du.user_id = v.user_id
     WHERE c.collection_id = :collectionId
@@ -289,8 +289,8 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
        dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id,
        e.election_id AS e_election_id, e.reference_id AS e_reference_id, e.status AS e_status, e.create_date AS e_create_date,
        e.last_update AS e_last_update, e.dataset_id AS e_dataset_id, e.election_type AS e_election_type,
-       v.voteid as v_vote_id, v.vote as v_vote, v.user_id as v_user_id, v.rationale as v_rationale, v.electionid as v_election_id,
-       v.createdate as v_create_date, v.updatedate as v_update_date, v.type as v_type, du.display_name as v_display_name
+       v.vote_id as v_vote_id, v.vote as v_vote, v.user_id as v_user_id, v.rationale as v_rationale, v.election_id as v_election_id,
+       v.create_date as v_create_date, v.update_date as v_update_date, v.type as v_type, du.display_name as v_display_name
     FROM dar_collection c
     INNER JOIN users u ON c.create_user_id = u.user_id
     LEFT JOIN user_property up ON u.user_id = up.user_id
@@ -302,7 +302,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
     LEFT JOIN election e
       ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id)
     LEFT JOIN vote v
-      ON v.electionid = e.election_id
+      ON v.election_id = e.election_id
     LEFT JOIN users du
       ON du.user_id = v.user_id
     WHERE c.collection_id = :collectionId
