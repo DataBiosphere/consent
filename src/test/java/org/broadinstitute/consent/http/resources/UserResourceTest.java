@@ -530,7 +530,7 @@ class UserResourceTest extends AbstractTestHelper {
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
         gson.toJsonTree(user).getAsJsonObject());
 
-    try (Response response = userResource.update(duosUser, uriInfo, user.getUserId(),
+    try (Response response = userResource.update(duosUser, user.getUserId(),
         gson.toJson(userUpdateFields))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
@@ -541,7 +541,7 @@ class UserResourceTest extends AbstractTestHelper {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenThrow(new NotFoundException());
 
-    try (Response response = userResource.update(duosUser, uriInfo, user.getUserId(), "")) {
+    try (Response response = userResource.update(duosUser, user.getUserId(), "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
@@ -550,7 +550,7 @@ class UserResourceTest extends AbstractTestHelper {
   void testUpdateUserInvalidJson() {
     User user = createUserWithRole();
 
-    try (Response response = userResource.update(duosUser, uriInfo, user.getUserId(), "}{][")) {
+    try (Response response = userResource.update(duosUser, user.getUserId(), "}{][")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }

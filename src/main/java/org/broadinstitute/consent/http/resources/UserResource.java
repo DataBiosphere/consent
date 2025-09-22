@@ -192,13 +192,13 @@ public class UserResource extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @RolesAllowed({ADMIN})
-  public Response update(@Auth AuthUser authUser, @PathParam("id") Integer userId, String json) {
+  public Response update(@Auth DuosUser duosUser, @PathParam("id") Integer userId, String json) {
     try {
       UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
       // Ensure that we have a real user with this ID, fail if we do not.
       userService.findUserById(userId);
       User updatedUser = userService.updateUserFieldsById(userUpdateFields, userId);
-      JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser,
+      JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(duosUser,
           updatedUser.getUserId());
       return Response.ok().entity(gson.toJson(jsonUser)).build();
     } catch (Exception e) {
