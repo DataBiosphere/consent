@@ -547,7 +547,7 @@ public class ConsentModule extends AbstractModule {
 
   @Provides
   InstitutionService providesInstitutionService() {
-    return new InstitutionService(providesInstitutionDAO(), providesUserDAO());
+    return new InstitutionService(providesInstitutionDAO(), providesUserDAO(), providesInstitutionAndLibraryCardEnforcement());
   }
 
   @Provides
@@ -609,11 +609,11 @@ public class ConsentModule extends AbstractModule {
         providesInstitutionService(),
         providesDACAutomationRuleDAO(),
         providesDatasetAuthorizationReaderDAO(),
-        providesUserEnforcementService());
+        providesInstitutionAndLibraryCardEnforcement());
   }
 
   @Provides
-  InstitutionAndLibraryCardEnforcement providesUserEnforcementService() {
+  InstitutionAndLibraryCardEnforcement providesInstitutionAndLibraryCardEnforcement() {
     return new InstitutionAndLibraryCardEnforcement(
         providesJdbi(),
         providesUserServiceDAO());

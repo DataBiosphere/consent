@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
@@ -57,28 +58,27 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
 
   @Test
   void testAsyncEnforceInstitutionAndLibraryCardRulesForAllUsers() {
-    List<User> allUsers = Stream
-        .generate(InstitutionAndLibraryCardEnforcementTest::generateUser)
-        .limit(5)
+    List<User> allUsers = IntStream.rangeClosed(1, 10)
+        .mapToObj(InstitutionAndLibraryCardEnforcementTest::generateUser)
         .toList();
     when(userDAO.findUsersWithLCsAndInstitution()).thenReturn(allUsers);
     allUsers.forEach(u -> when(userDAO.findUserByEmail(u.getEmail())).thenReturn(u));
 
     InstitutionAndLibraryCardEnforcement spy = spy(service);
     spy.asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
-    allUsers.forEach(u -> verify(spy, timeout(1000).atLeastOnce()).enforceInstitutionAndLibraryCardRules(u));
+    allUsers.forEach(u -> verify(spy, timeout(1000)).enforceInstitutionAndLibraryCardRules(u));
   }
 
   @Test
   void hasLibraryCard() {
-    User testUser = generateUser();
+    User testUser = generateUser(1);
     testUser.setLibraryCard(new LibraryCard());
     assertTrue(service.hasLibraryCard(testUser));
   }
 
   @Test
   void hasLibraryCard_NoLibraryCard() {
-    User testUser = generateUser();
+    User testUser = generateUser(1);
     assertFalse(service.hasLibraryCard(testUser));
   }
 
@@ -105,7 +105,7 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
 
   @Test
   void handleUserWithInstitutionInMap() {
-    User testUser = generateUser();
+    User testUser = generateUser(1);
     Institution institutionFromEmail = new Institution();
     institutionFromEmail.setId(1);
     testUser.setInstitutionId(1);
@@ -114,7 +114,7 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
 
   @Test
   void handleUserWithInstitutionInMap_DifferentInDatabase() {
-    User testUser = generateUser();
+    User testUser = generateUser(1);
     Institution institutionFromEmail = new Institution();
     institutionFromEmail.setId(1);
     testUser.setInstitutionId(2);
@@ -124,8 +124,8 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
 
   @Test
   void handleUserWithInstitutionInMap_DifferentInDatabaseWithLibraryCard() {
-    User testUser = generateUser();
-    User signingOfficial = generateUser();
+    User testUser = generateUser(1);
+    User signingOfficial = generateUser(2);
     LibraryCard lc = new LibraryCard();
     lc.setCreateUserId(signingOfficial.getUserId());
     testUser.setLibraryCard(lc);
@@ -147,8 +147,8 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
 
   @Test
   void handleUserWithInstitutionInMap_DifferentInDatabaseWithLibraryCard_SO_NFE() {
-    User testUser = generateUser();
-    User signingOfficial = generateUser();
+    User testUser = generateUser(1);
+    User signingOfficial = generateUser(2);
     LibraryCard lc = new LibraryCard();
     lc.setCreateUserId(signingOfficial.getUserId());
     testUser.setLibraryCard(lc);
@@ -167,8 +167,8 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
 
   @Test
   void handleUserWithInstitutionInMap_SameInDatabaseWithLC() {
-    User testUser = generateUser();
-    User signingOfficial = generateUser();
+    User testUser = generateUser(1);
+    User signingOfficial = generateUser(2);
     LibraryCard lc = new LibraryCard();
     lc.setCreateUserId(signingOfficial.getUserId());
     testUser.setLibraryCard(lc);
@@ -187,8 +187,8 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
 
   @Test
   void handleUserWithInstitutionInMap_SameInDatabaseWithLCFromDifferentOrg() {
-    User testUser = generateUser();
-    User signingOfficial = generateUser();
+    User testUser = generateUser(1);
+    User signingOfficial = generateUser(2);
     LibraryCard lc = new LibraryCard();
     lc.setCreateUserId(signingOfficial.getUserId());
     testUser.setLibraryCard(lc);
@@ -208,17 +208,17 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
 
   @Test
   void needsLibraryCardRemovedForUser() {
-    User testUser = generateUser();
+    User testUser = generateUser(1);
     Institution institution = new Institution();
     assertFalse(service.needsLibraryCardRemovedForUser(testUser, institution.getId()));
   }
 
   @Test
   void needsLibraryCardRemovedForUser_SO_NFE() {
-    User testUser = generateUser();
+    User testUser = generateUser(1);
     Institution institution = new Institution();
     institution.setId(testUser.getInstitutionId());
-    User signingOfficial = generateUser();
+    User signingOfficial = generateUser(2);
     LibraryCard lc = new LibraryCard();
     lc.setCreateUserId(signingOfficial.getUserId());
     testUser.setLibraryCard(lc);
@@ -229,8 +229,8 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
 
   @Test
   void needsLibraryCardRemovedForUser_SO_DifferentInstitution() {
-    User testUser = generateUser();
-    User signingOfficial = generateUser();
+    User testUser = generateUser(1);
+    User signingOfficial = generateUser(2);
     LibraryCard lc = new LibraryCard();
     lc.setCreateUserId(signingOfficial.getUserId());
     testUser.setLibraryCard(lc);
@@ -247,7 +247,7 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
   }
 
   public static Stream<Arguments> testEnforceInstitutionAndLibraryCardVariations() {
-    User testUser = generateUser();
+    User testUser = generateUser(1);
     Institution institution1 = new Institution();
     institution1.setId(1);
     Institution institution2 = new Institution();
@@ -303,7 +303,7 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
     assertNotEquals(left.getInstitutionId(), right.getInstitutionId());
   }
 
-  private static User generateUser() {
+  private static User generateUser(int id) {
     User u = new User();
     int i1 = randomInt(10, 50);
     int i2 = randomInt(10, 50);
@@ -313,8 +313,8 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
     u.setEmail(email);
     u.setEraCommonsId(email);
     u.setDisplayName(displayName);
-    u.setUserId(randomInt(1, 100));
-    u.setInstitutionId(randomInt(1, 100));
+    u.setUserId(id);
+    u.setInstitutionId(randomInt(1, 10000));
     u.setInstitution(generateInstitution(u.getInstitutionId()));
     return u;
   }

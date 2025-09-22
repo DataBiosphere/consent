@@ -87,6 +87,11 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
         listeningExecutorService);
   }
 
+  public String trimmedEmailDomain(String email) {
+    String trimmedEmail = email.trim();
+    return trimmedEmail.substring(trimmedEmail.indexOf('@') + 1);
+  }
+
   /**
    * Core method that implements a set of rules in order to ensure Library Card and Institution
    * matching rules are adhered to when authorizing users of the system.
@@ -178,12 +183,6 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
       return false;
     }
     return institutionFromDatabase.equals(institutionFromEmail);
-  }
-
-  @VisibleForTesting
-  protected String trimmedEmailDomain(String email) {
-    String trimmedEmail = email.trim();
-    return trimmedEmail.substring(trimmedEmail.indexOf('@') + 1);
   }
 
   private void dropLCAndInstitutionForUser(User user) {
