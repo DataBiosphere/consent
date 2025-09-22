@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.service.enforcement;
+package org.broadinstitute.consent.http.service.feature;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.FutureCallback;
@@ -24,17 +24,17 @@ import org.jetbrains.annotations.NotNull;
  * Service that implements a set of rules in order to ensure Library Card and Institution matching
  * rules are adhered to for users of the system.
  */
-public class InstitutionAndLibraryCardEnforcementService implements ConsentLogger {
+public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
 
   private final ExecutorService executorService = new ThreadUtils().getExecutorService(
-      InstitutionAndLibraryCardEnforcementService.class);
+      InstitutionAndLibraryCardEnforcement.class);
   private final InstitutionDAO institutionDAO;
   private final LibraryCardDAO libraryCardDAO;
   private final UserDAO userDAO;
   private final UserServiceDAO userServiceDAO;
 
   @Inject
-  public InstitutionAndLibraryCardEnforcementService(Jdbi jdbi, UserServiceDAO userServiceDAO) {
+  public InstitutionAndLibraryCardEnforcement(Jdbi jdbi, UserServiceDAO userServiceDAO) {
     this.institutionDAO = jdbi.onDemand(InstitutionDAO.class);
     this.libraryCardDAO = jdbi.onDemand(LibraryCardDAO.class);
     this.userDAO = jdbi.onDemand(UserDAO.class);

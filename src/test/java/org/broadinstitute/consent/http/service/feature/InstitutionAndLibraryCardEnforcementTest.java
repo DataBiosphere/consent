@@ -1,4 +1,4 @@
-package org.broadinstitute.consent.http.service.enforcement;
+package org.broadinstitute.consent.http.service.feature;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -32,7 +32,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class InstitutionAndLibraryCardEnforcementServiceTest extends AbstractTestHelper {
+public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper {
 
   @Mock
   private InstitutionDAO institutionDAO;
@@ -45,26 +45,26 @@ public class InstitutionAndLibraryCardEnforcementServiceTest extends AbstractTes
   @Mock
   private Jdbi jdbi;
 
-  private InstitutionAndLibraryCardEnforcementService service;
+  private InstitutionAndLibraryCardEnforcement service;
 
   @BeforeEach
   void setUp() {
     when(jdbi.onDemand(InstitutionDAO.class)).thenReturn(institutionDAO);
     when(jdbi.onDemand(LibraryCardDAO.class)).thenReturn(libraryCardDAO);
     when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
-    service = new InstitutionAndLibraryCardEnforcementService(jdbi, userServiceDAO);
+    service = new InstitutionAndLibraryCardEnforcement(jdbi, userServiceDAO);
   }
 
   @Test
   void testAsyncEnforceInstitutionAndLibraryCardRulesForAllUsers() {
     List<User> allUsers = Stream
-        .generate(InstitutionAndLibraryCardEnforcementServiceTest::generateUser)
+        .generate(InstitutionAndLibraryCardEnforcementTest::generateUser)
         .limit(5)
         .toList();
     when(userDAO.findUsersWithLCsAndInstitution()).thenReturn(allUsers);
     allUsers.forEach(u -> when(userDAO.findUserByEmail(u.getEmail())).thenReturn(u));
 
-    InstitutionAndLibraryCardEnforcementService spy = spy(service);
+    InstitutionAndLibraryCardEnforcement spy = spy(service);
     spy.asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
     allUsers.forEach(u -> verify(spy, timeout(1000).atLeastOnce()).enforceInstitutionAndLibraryCardRules(u));
   }

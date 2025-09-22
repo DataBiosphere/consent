@@ -60,7 +60,7 @@ import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
-import org.broadinstitute.consent.http.service.enforcement.InstitutionAndLibraryCardEnforcementService;
+import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
 import org.jdbi.v3.core.transaction.TransactionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -112,7 +112,7 @@ class UserServiceTest extends AbstractTestHelper {
   @Mock
   private DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
   @Mock
-  private InstitutionAndLibraryCardEnforcementService institutionAndLibraryCardEnforcementService;
+  private InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
 
   private UserService service;
 
@@ -121,7 +121,7 @@ class UserServiceTest extends AbstractTestHelper {
     service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO,
         libraryCardDAO, acknowledgementDAO, fileStorageObjectDAO, userServiceDAO, daaDAO,
         draftServiceDAO, institutionService, ruleDAO, datasetAuthorizationReaderDAO,
-        institutionAndLibraryCardEnforcementService);
+        institutionAndLibraryCardEnforcement);
   }
 
   @Test
