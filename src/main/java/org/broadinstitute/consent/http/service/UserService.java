@@ -340,13 +340,13 @@ public class UserService implements ConsentLogger {
   /**
    * Convenience method to return a response-friendly json object of the user.
    *
-   * @param authUser The AuthUser. Used to determine if we should return auth user properties
+   * @param duosUser The DuosUser. Used to determine if we should return auth user properties
    * @param userId   The User. This is the user we want to return properties for
    * @return JsonObject.
    */
   public JsonObject findUserWithPropertiesByIdAsJsonObject(DuosUser duosUser, Integer userId) {
     Gson gson = GsonUtil.getInstance();
-    User user = duosUser.getUser();
+    User user = findUserById(userId);
     List<UserProperty> props = findAllUserProperties(user.getUserId());
     JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
     JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();

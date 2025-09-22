@@ -204,4 +204,6 @@
     relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2025-09-17-standardize-match-dao.xml"
     relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2025-09-18-standardize-vote-dao.xml"
+    relativeToChangelogFile="true" />
 </databaseChangeLog>

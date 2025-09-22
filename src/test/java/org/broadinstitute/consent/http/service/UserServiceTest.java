@@ -681,6 +681,7 @@ class UserServiceTest extends AbstractTestHelper {
     DuosUser activeDuosUser = new DuosUser(authUser, user);
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(
         List.of(new UserProperty()));
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
 
     JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(activeDuosUser,
         user.getUserId());
@@ -702,6 +703,7 @@ class UserServiceTest extends AbstractTestHelper {
     DuosUser activeDuosUser = new DuosUser(authUser, user);
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(
         List.of(new UserProperty()));
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
 
     JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(activeDuosUser,
         user.getUserId());

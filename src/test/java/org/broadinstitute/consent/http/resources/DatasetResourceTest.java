@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -764,13 +765,32 @@ class DatasetResourceTest extends AbstractTestHelper {
     Study study = new Study();
     study.setStudyId(1);
     dataset.setStudy(study);
+    dataset.setStudyId(study.getStudyId());
     when(datasetRegistrationService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(
         List.of(dataset));
+    when(datasetService.findStudy(anyInt())).thenReturn(study);
     String schemaV1 = createDatasetRegistrationMock(user);
 
     try (var response = resource.createDatasetRegistration(authUser, null, schemaV1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
+  }
+
+  @Test
+  void testCreateDatasetRegistration_NoStudyFound() throws SQLException, IOException {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    user.setUserId(1);
+    Dataset dataset = new Dataset();
+    Study study = new Study();
+    study.setStudyId(1);
+    dataset.setStudyId(study.getStudyId());
+
+    when(datasetRegistrationService.createDatasetsFromRegistration(any(), any(), any()))
+        .thenReturn(List.of(dataset));
+    when(datasetService.findStudy(anyInt())).thenReturn(null);
+    String schemaV1 = createDatasetRegistrationMock(user);
+    Response response = resource.createDatasetRegistration(authUser, null, schemaV1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
   }
 
   @Test
@@ -791,10 +811,11 @@ class DatasetResourceTest extends AbstractTestHelper {
     Study study = new Study();
     study.setStudyId(1);
     dataset.setStudy(study);
+    dataset.setStudyId(study.getStudyId());
     when(datasetRegistrationService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(
         List.of(dataset));
     String schemaV1 = createDatasetRegistrationMock(user);
-
+    when(datasetService.findStudy(anyInt())).thenReturn(study);
     Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, schemaV1);
     assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
   }
@@ -836,8 +857,10 @@ class DatasetResourceTest extends AbstractTestHelper {
     Study study = new Study();
     study.setStudyId(1);
     dataset.setStudy(study);
+    dataset.setStudyId(study.getStudyId());
     when(datasetRegistrationService.createDatasetsFromRegistration(any(), any(), any())).thenReturn(
         List.of(dataset));
+    when(datasetService.findStudy(anyInt())).thenReturn(study);
     String schemaV1 = createDatasetRegistrationMock(user);
 
     Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, schemaV1);
