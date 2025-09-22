@@ -430,10 +430,8 @@ public class DarCollectionService implements ConsentLogger {
       Date now = new Date();
       DataAccessRequestData newData = new Gson().fromJson(d.getData().toString(),
           DataAccessRequestData.class);
-      newData.setDarCode(null);
       newData.setStatus(null);
       newData.setReferenceId(d.getReferenceId());
-      newData.setSortDate(now.getTime());
       dataAccessRequestDAO.updateDataByReferenceId(
           d.getReferenceId(),
           d.getUserId(),
@@ -754,23 +752,21 @@ public class DarCollectionService implements ConsentLogger {
     List<Dataset> datasetsInDAR =
         datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
 
-    Map<String, List<String>> sendList = new HashMap<>();
+    Map<String, List<String>> dacDatasetMap = new HashMap<>();
     for (User user : distinctUsers) {
       List<Dac> matchingDacsForUser = getMatchingDacs(user, dacsInDAR);
       for (Dac dac : matchingDacsForUser) {
         List<String> matchingDatasetsForDac = getMatchingDatasets(dac, datasetsInDAR);
-        if (matchingDatasetsForDac != null) {
-          sendList.put(dac.getName(), matchingDatasetsForDac);
-        }
+        dacDatasetMap.put(dac.getName(), matchingDatasetsForDac);
       }
       // If the dar is not a progress report, use the DAR template else use the PR template.
       if (dar.getProgressReport()) {
         // Use the reference ID to link the fact that this progress report will have been noted.
         // the DAR Code at this point will be ambiguous.
-        emailService.sendNewProgressReportRequestEmail(user, sendList, researcherName,
+        emailService.sendNewProgressReportRequestEmail(user, dacDatasetMap, researcherName,
             collection.getDarCode(), dar.getReferenceId());
       } else {
-        emailService.sendNewDARRequestEmail(user, sendList, researcherName,
+        emailService.sendNewDARRequestEmail(user, dacDatasetMap, researcherName,
             collection.getDarCode());
       }
     }
@@ -811,19 +807,19 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   private List<User> getDistinctAdminAndChairUsersForDatasetIds(List<Integer> datasetIds) {
-    List<User> admins = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(),
-        true);
+    List<User> admins = userDAO.findUsersByRoleId(UserRoles.ADMIN.getRoleId());
     Set<User> chairPersons = userDAO.findUsersForDatasetsByRole(datasetIds,
-        Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
+        Collections.singletonList(UserRoles.CHAIRPERSON.getRoleId()));
     // Ensure that admins/chairs are not double emailed
-    // and filter users that don't want to receive email
     return Streams.concat(admins.stream(), chairPersons.stream())
-        .filter(u -> Boolean.TRUE.equals(u.getEmailPreference()))
         .distinct()
         .toList();
   }
 
   private List<Dac> getMatchingDacs(User user, Collection<Dac> dacsInDAR) {
+    if (user.hasUserRole(UserRoles.ADMIN)) {
+      return new ArrayList<>(dacsInDAR);
+    }
     List<Integer> dacIDs = user.getRoles().stream()
         .map(UserRole::getDacId)
         .filter(Objects::nonNull)

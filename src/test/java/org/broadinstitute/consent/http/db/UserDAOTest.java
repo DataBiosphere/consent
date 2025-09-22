@@ -17,7 +17,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
@@ -258,11 +257,10 @@ class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDescribeUsersByRoleAndEmailPreference() {
+  void testFindUsersByRoleId() {
     User researcher = createUser();
     userDAO.updateEmailPreference(researcher.getUserId(), true);
-    Collection<User> researchers = userDAO.describeUsersByRoleAndEmailPreference("Researcher",
-        true);
+    Collection<User> researchers = userDAO.findUsersByRoleId(UserRoles.RESEARCHER.getRoleId());
     assertFalse(researchers.isEmpty());
   }
 
@@ -291,7 +289,7 @@ class UserDAOTest extends DAOTestHelper {
   @Test
   void testUpdateDisplayName() {
     User researcher = createUser();
-    String newName = RandomStringUtils.random(10, true, false);
+    String newName = randomAlphabetic(10);
     userDAO.updateDisplayName(researcher.getUserId(), newName);
     User u1 = userDAO.findUserById(researcher.getUserId());
     assertEquals(newName, u1.getDisplayName());
@@ -314,7 +312,7 @@ class UserDAOTest extends DAOTestHelper {
 
     Set<User> users = userDAO.findUsersForDatasetsByRole(
         Collections.singletonList(dataset.getDatasetId()),
-        Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
+        Collections.singletonList(UserRoles.CHAIRPERSON.getRoleId()));
     Optional<User> foundUser = users.stream().findFirst();
     assertNotNull(users);
     assertFalse(users.isEmpty());
@@ -331,7 +329,7 @@ class UserDAOTest extends DAOTestHelper {
 
     Set<User> users = userDAO.findUsersForDatasetsByRole(
         Collections.singletonList(dataset.getDatasetId()),
-        Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
+        Collections.singletonList(UserRoles.CHAIRPERSON.getRoleId()));
     assertNotNull(users);
     assertTrue(users.isEmpty());
   }
@@ -449,7 +447,7 @@ class UserDAOTest extends DAOTestHelper {
     for (UserRoles role : roles) {
       // ensure that each role exists on user
       assertTrue(found.getRoles().stream().anyMatch(
-          (existingRole) -> (
+          existingRole -> (
               role.getRoleId().equals(existingRole.getRoleId())
                   && role.getRoleName().equals(existingRole.getName()))));
     }
@@ -487,17 +485,17 @@ class UserDAOTest extends DAOTestHelper {
 
   private Dac createDac() {
     Integer id = dacDAO.createDac(
-        "Test_" + RandomStringUtils.random(20, true, true),
-        "Test_" + RandomStringUtils.random(20, true, true),
+        "Test_" + randomAlphanumeric(20),
+        "Test_" + randomAlphanumeric(20),
         new Date());
     return dacDAO.findById(id);
   }
 
   private Dataset createDataset() {
     User user = createUser();
-    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    String name = "Name_" + randomAlphanumeric(20);
     Timestamp now = new Timestamp(new Date().getTime());
-    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
         dataUse.toString(), null);

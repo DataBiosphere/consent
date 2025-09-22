@@ -33,14 +33,14 @@ class OidcAuthorityDAOTest extends MockServerTestHelper {
   }
 
   @BeforeEach
-  public void init() {
+  void init() {
     OidcConfiguration config = new OidcConfiguration();
     config.setAuthorityEndpoint(getMockContainerBaseUrl());
     dao = new OidcAuthorityDAO(new HttpClientUtil(new ServicesConfiguration()), config);
   }
 
   @Test
-  public void testGetOidcAuthorityConfiguration() {
+  void testGetOidcAuthorityConfiguration() {
     final String expectedIssuer = "https://example.com";
     final String expectedAuthorizationEndpoint = expectedIssuer + "/oauth2/authorize";
     final String expectedTokenEndpoint = expectedIssuer + "/oauth2/token";
@@ -82,7 +82,7 @@ class OidcAuthorityDAOTest extends MockServerTestHelper {
   }
 
   @Test
-  public void testOauthTokenPost() {
+  void testOauthTokenPost() {
     // the content of this response doesn't matter, it's just to simulate a real response
     var expectedResponse = """
         {
