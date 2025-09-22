@@ -43,7 +43,7 @@ public class InstitutionService implements ConsentLogger {
     checkDomainUniqueness(institution);
     try {
       Institution createdInstitution = institutionDAO.insertFullInstitution(institution, userId);
-      // Enforce Institution and Library Card rules for all users after an institution is updated
+      // Enforce Institution and Library Card rules for all users after an institution is created
       enforceInstitutionAndLibraryCardRules();
       return createdInstitution;
     } catch (SQLException e) {
@@ -79,7 +79,7 @@ public class InstitutionService implements ConsentLogger {
     Institution institution = institutionDAO.findInstitutionById(id);
     isInstitutionNull(institution);
     institutionDAO.deleteInstitutionById(id);
-    // Enforce Institution and Library Card rules for all users after an institution is updated
+    // Enforce Institution and Library Card rules for all users after an institution is deleted
     enforceInstitutionAndLibraryCardRules();
   }
 
