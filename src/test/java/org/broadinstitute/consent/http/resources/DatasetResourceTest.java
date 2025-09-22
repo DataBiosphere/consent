@@ -1239,6 +1239,13 @@ class DatasetResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testGetNihInstitutionalCertification_Throws() {
+    doThrow(new RuntimeException()).when(datasetService).findDatasetById(any(), any());
+    Response response = resource.getNihInstitutionalCertification(duosUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+  }
+
+  @Test
   void testGetNihInstitutionalCertification_file_deleted() {
     Dataset dataset = getDatasetWithStudyUserAndFile();
     FileStorageObject fso = new FileStorageObject();

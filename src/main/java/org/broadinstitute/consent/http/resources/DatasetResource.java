@@ -594,27 +594,32 @@ public class DatasetResource extends Resource {
   @Path("/{id}/nihInstitutionalCertification")
   @RolesAllowed({ADMIN, DATASUBMITTER, CHAIRPERSON, MEMBER})
   public Response getNihInstitutionalCertification(@Auth DuosUser duosUser, @PathParam("id") Integer id) {
-    User requestingUser = duosUser.getUser();
-    Dataset dataset = datasetService.findDatasetById(requestingUser, id);
-    if (dataset == null) {
-      return Response.status(Response.Status.NOT_FOUND).build();
-    }
-    FileStorageObject nihFile = dataset.getNihInstitutionalCertificationFile();
-    if (nihFile != null &&
-        !nihFile.getDeleted() &&
-        nihFile.getFileName() != null &&
-        nihFile.getBlobId() != null &&
-        (requestingUser.hasUserRole(UserRoles.ADMIN)
-        || dataset.isCreator(requestingUser)
-        || dataset.isCustodian(requestingUser)
-        || requestingUser.verifyDACRole(CHAIRPERSON, dataset.getDacId())
-        || requestingUser.verifyDACRole(MEMBER, dataset.getDacId()))) {
-      InputStream fileStream = gcsService.getDocument(nihFile.getBlobId());
-      StreamingOutput streamOutput = createStreamingOutput(fileStream);
-      return Response.ok(streamOutput).header(HttpHeaders.CONTENT_DISPOSITION,
-          String.format("attachment; filename=\"%s\"", nihFile.getFileName())).build();
-    } else {
-      return Response.status(Status.NOT_FOUND).build();
+    try {
+      User requestingUser = duosUser.getUser();
+      Dataset dataset = datasetService.findDatasetById(requestingUser, id);
+      if (dataset == null) {
+        return Response.status(Response.Status.NOT_FOUND).build();
+      }
+      FileStorageObject nihFile = dataset.getNihInstitutionalCertificationFile();
+      if (nihFile != null &&
+          !nihFile.getDeleted() &&
+          nihFile.getFileName() != null &&
+          nihFile.getBlobId() != null &&
+          (requestingUser.hasUserRole(UserRoles.ADMIN)
+              || dataset.isCreator(requestingUser)
+              || dataset.isCustodian(requestingUser)
+              || requestingUser.verifyDACRole(CHAIRPERSON, dataset.getDacId())
+              || requestingUser.verifyDACRole(MEMBER, dataset.getDacId()))) {
+        InputStream fileStream = gcsService.getDocument(nihFile.getBlobId());
+        StreamingOutput streamOutput = createStreamingOutput(fileStream);
+        return Response.ok(streamOutput).header(HttpHeaders.CONTENT_DISPOSITION,
+            String.format("attachment; filename=\"%s\"", nihFile.getFileName())).build();
+      } else {
+        return Response.status(Status.NOT_FOUND).build();
+      }
+    } catch (Exception e) {
+      logWarn(e.getMessage());
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
     }
   }
 }
