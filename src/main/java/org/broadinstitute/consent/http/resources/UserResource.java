@@ -151,9 +151,9 @@ public class UserResource extends Resource {
   @Path("/{userId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, DATASUBMITTER, SIGNINGOFFICIAL})
-  public Response getUserById(@Auth AuthUser authUser, @PathParam("userId") Integer userId) {
+  public Response getUserById(@Auth DuosUser duosUser, @PathParam("userId") Integer userId) {
     try {
-      JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
+      JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(duosUser, userId);
       return Response.ok(gson.toJson(userJson)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -210,9 +210,9 @@ public class UserResource extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @PermitAll
-  public Response updateSelf(@Auth AuthUser authUser, String json) {
+  public Response updateSelf(@Auth DuosUser duosUser, @Context UriInfo info, String json) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
 
       // Users cannot update their own institution id through this service
@@ -226,7 +226,7 @@ public class UserResource extends Resource {
       }
 
       user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
-      JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(authUser,
+      JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(duosUser,
           user.getUserId());
 
       return Response.ok().entity(gson.toJson(jsonUser)).build();
@@ -239,7 +239,7 @@ public class UserResource extends Resource {
   @Path("/{userId}/{roleId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
-  public Response addRoleToUser(@Auth AuthUser authUser, @PathParam("userId") Integer userId,
+  public Response addRoleToUser(@Auth DuosUser duosUser, @PathParam("userId") Integer userId,
       @PathParam("roleId") Integer roleId) {
     UserRoles targetRole = UserRoles.getUserRoleFromId(roleId);
     if (Objects.isNull(targetRole)) {
@@ -247,14 +247,14 @@ public class UserResource extends Resource {
     }
     UserRole role = new UserRole(roleId, targetRole.getRoleName());
     try {
-      User activeUser = userService.findUserByEmail(authUser.getEmail());
+      User activeUser = duosUser.getUser();
       User user = userService.findUserById(userId);
       List<Integer> currentUserRoleIds = user.getUserRoleIdsFromUser();
       if ((activeUser.hasUserRole(UserRoles.ADMIN) && UserRoles.isValidNonDACRoleId(targetRole)) ||
           signingOfficialMeetsRequirements(targetRole, activeUser, user)) {
         if (!currentUserRoleIds.contains(roleId)) {
           userService.insertRoleAndInstitutionForUser(role, user);
-          return getUserResponse(authUser, userId);
+          return getUserResponse(duosUser, userId);
         } else {
           return Response.notModified().build();
         }
@@ -275,8 +275,8 @@ public class UserResource extends Resource {
         .equals(activeUser.getInstitutionId()));
   }
 
-  private Response getUserResponse(AuthUser authUser, Integer userId) {
-    JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
+  private Response getUserResponse(DuosUser duosUser, Integer userId) {
+    JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(duosUser, userId);
     return Response.ok().entity(gson.toJson(userJson)).build();
   }
 
@@ -284,20 +284,20 @@ public class UserResource extends Resource {
   @Path("/{userId}/{roleId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
-  public Response deleteRoleFromUser(@Auth AuthUser authUser, @PathParam("userId") Integer userId,
+  public Response deleteRoleFromUser(@Auth DuosUser duosUser, @PathParam("userId") Integer userId,
       @PathParam("roleId") Integer roleId) {
     UserRoles targetRole = UserRoles.getUserRoleFromId(roleId);
     if (Objects.isNull(targetRole)) {
       return Response.status(HttpStatusCodes.STATUS_CODE_BAD_REQUEST).build();
     }
     try {
-      User activeUser = userService.findUserByEmail(authUser.getEmail());
+      User activeUser = duosUser.getUser();
       User user = userService.findUserById(userId);
       if (activeUser.hasUserRole(UserRoles.ADMIN)) {
         if (!UserRoles.isValidNonDACRoleId(targetRole)) {
           throw new BadRequestException("Invalid Role Id");
         }
-        return doDelete(authUser, userId, roleId, activeUser, user);
+        return doDelete(duosUser, userId, roleId, activeUser, user);
       } else if (activeUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
         if (!UserRoles.isValidSoAdjustableRoleId(targetRole)) {
           throw new ForbiddenException(
@@ -310,7 +310,7 @@ public class UserResource extends Resource {
         }
         if (Objects.nonNull(activeUser.getInstitutionId())
             && Objects.equals(activeUser.getInstitutionId(), user.getInstitutionId())) {
-          return doDelete(authUser, userId, roleId, activeUser, user);
+          return doDelete(duosUser, userId, roleId, activeUser, user);
         } else {
           throw new ForbiddenException("Not authorized to remove roles");
         }
@@ -322,15 +322,15 @@ public class UserResource extends Resource {
     }
   }
 
-  private Response doDelete(AuthUser authUser, Integer userId, Integer roleId, User activeUser,
+  private Response doDelete(DuosUser duosUser, Integer userId, Integer roleId, User activeUser,
       User user) {
     List<Integer> currentUserRoleIds = user.getUserRoleIdsFromUser();
     if (!currentUserRoleIds.contains(roleId)) {
-      JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
+      JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(duosUser, userId);
       return Response.ok().entity(gson.toJson(userJson)).build();
     }
     userService.deleteUserRole(activeUser, userId, roleId);
-    JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(authUser, userId);
+    JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(duosUser, userId);
     return Response.ok().entity(gson.toJson(userJson)).build();
   }
 
@@ -395,9 +395,9 @@ public class UserResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/acknowledgements")
   @PermitAll
-  public Response getUserAcknowledgements(@Auth AuthUser authUser) {
+  public Response getUserAcknowledgements(@Auth DuosUser duosUser) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       Map<String, Acknowledgement> acknowledgementMap = acknowledgementService.findAcknowledgementsForUser(
           user);
       return Response.ok().entity(acknowledgementMap).build();
@@ -410,9 +410,9 @@ public class UserResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/acknowledgements/{key}")
   @PermitAll
-  public Response getUserAcknowledgement(@Auth AuthUser authUser, @PathParam("key") String key) {
+  public Response getUserAcknowledgement(@Auth DuosUser duosUser, @PathParam("key") String key) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       Acknowledgement ack = acknowledgementService.findAcknowledgementForUserByKey(user, key);
       if (ack == null) {
         return Response.status(Response.Status.NOT_FOUND).build();
@@ -478,9 +478,9 @@ public class UserResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/me/researcher/datasets")
   @PermitAll
-  public Response getApprovedDatasets(@Auth AuthUser authUser) {
+  public Response getApprovedDatasets(@Auth DuosUser duosUser) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       List<ApprovedDataset> approvedDatasets = datasetService.getApprovedDatasets(user);
       return Response.ok().entity(approvedDatasets).build();
     } catch (Exception e) {

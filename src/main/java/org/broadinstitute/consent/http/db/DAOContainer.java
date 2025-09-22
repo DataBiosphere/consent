@@ -14,6 +14,7 @@ public class DAOContainer {
   private DataAccessRequestDAO dataAccessRequestDAO;
   private DarCollectionDAO darCollectionDAO;
   private DarCollectionSummaryDAO darCollectionSummaryDAO;
+  private DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
   private DatasetDAO datasetDAO;
   private ElectionDAO electionDAO;
   private MailMessageDAO mailMessageDAO;
@@ -77,6 +78,14 @@ public class DAOContainer {
 
   public void setDatasetDAO(DatasetDAO datasetDAO) {
     this.datasetDAO = datasetDAO;
+  }
+
+  public void setDatasetAuthorizationReaderDAO(DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO) {
+    this.datasetAuthorizationReaderDAO = datasetAuthorizationReaderDAO;
+  }
+
+  public DatasetAuthorizationReaderDAO getDatasetAuthorizationReaderDAO() {
+    return datasetAuthorizationReaderDAO;
   }
 
   public ElectionDAO getElectionDAO() {

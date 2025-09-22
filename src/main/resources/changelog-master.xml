@@ -200,4 +200,8 @@
     relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2025-08-07-2025-jsonb-data.xml"
     relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2025-08-29-2025-dataset-authorization-readers.xml"
+    relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2025-09-18-standardize-vote-dao.xml"
+    relativeToChangelogFile="true" />
 </databaseChangeLog>

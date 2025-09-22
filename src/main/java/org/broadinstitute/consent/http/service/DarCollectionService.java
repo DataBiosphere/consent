@@ -27,7 +27,6 @@ import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.DarCollectionActions;
@@ -48,39 +47,35 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.jdbi.v3.core.Jdbi;
 
 public class DarCollectionService implements ConsentLogger {
 
   private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-  private final DarCollectionDAO darCollectionDAO;
-  private final DarCollectionServiceDAO collectionServiceDAO;
   private final DacDAO dacDAO;
+  private final DarCollectionDAO darCollectionDAO;
   private final DarCollectionSummaryDAO darCollectionSummaryDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DatasetDAO datasetDAO;
   private final ElectionDAO electionDAO;
-  private final EmailService emailService;
-  private final MatchDAO matchDAO;
   private final UserDAO userDAO;
   private final VoteDAO voteDAO;
+  private final DarCollectionServiceDAO collectionServiceDAO;
+  private final EmailService emailService;
 
   @Inject
-  public DarCollectionService(DarCollectionDAO darCollectionDAO,
-      DarCollectionServiceDAO collectionServiceDAO, DatasetDAO datasetDAO, ElectionDAO electionDAO,
-      DataAccessRequestDAO dataAccessRequestDAO, EmailService emailService, VoteDAO voteDAO,
-      MatchDAO matchDAO, DarCollectionSummaryDAO darCollectionSummaryDAO, UserDAO userDAO,
-      DacDAO dacDAO) {
-    this.darCollectionDAO = darCollectionDAO;
-    this.collectionServiceDAO = collectionServiceDAO;
-    this.datasetDAO = datasetDAO;
-    this.electionDAO = electionDAO;
-    this.dataAccessRequestDAO = dataAccessRequestDAO;
+  public DarCollectionService(Jdbi jdbi, DarCollectionServiceDAO darCollectionServiceDAO,
+      EmailService emailService) {
+    this.dacDAO = jdbi.onDemand(DacDAO.class);
+    this.darCollectionDAO = jdbi.onDemand(DarCollectionDAO.class);
+    this.darCollectionSummaryDAO = jdbi.onDemand(DarCollectionSummaryDAO.class);
+    this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
+    this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
+    this.electionDAO = jdbi.onDemand(ElectionDAO.class);
+    this.userDAO = jdbi.onDemand(UserDAO.class);
+    this.voteDAO = jdbi.onDemand(VoteDAO.class);
+    this.collectionServiceDAO = darCollectionServiceDAO;
     this.emailService = emailService;
-    this.voteDAO = voteDAO;
-    this.matchDAO = matchDAO;
-    this.darCollectionSummaryDAO = darCollectionSummaryDAO;
-    this.userDAO = userDAO;
-    this.dacDAO = dacDAO;
   }
 
   private void updateStatusCount(Map<String, Integer> statusCount, String status) {
@@ -163,7 +158,8 @@ public class DarCollectionService implements ConsentLogger {
       s.addAction(DarCollectionActions.REVIEW);
       //if the latest DAR in the collection has at least one approved dataset,
       //include the create progress report action
-      Set<Integer> datasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(s.getLatestReferenceId());
+      Set<Integer> datasetIds = dataAccessRequestDAO.findDatasetApprovalsByDar(
+          s.getLatestReferenceId());
       // Can only create a progress report if there are approved datasets, no closeout supplement,
       // and no open elections.
       boolean hasOpenElections = statusCount.getOrDefault(ElectionStatus.OPEN.getValue(), 0) > 0;
@@ -258,9 +254,9 @@ public class DarCollectionService implements ConsentLogger {
   /**
    * Update the summary actions for a chairperson based on the summary and election counts.
    *
-   * @param summary  The DarCollectionSummary to update
+   * @param summary     The DarCollectionSummary to update
    * @param closedCount The count of closed elections
-   * @param openCount The count of open elections
+   * @param openCount   The count of open elections
    */
   private void updateSummaryActionsForChair(
       DarCollectionSummary summary,
@@ -316,7 +312,8 @@ public class DarCollectionService implements ConsentLogger {
 
   private void updateSummaryActionsForSO(DarCollectionSummary summary) {
     // If the SO has not yet approved the closeout supplement, allow review of the progress report.
-    if (summary.getCloseoutSupplement() != null && summary.getCloseoutSigningOfficialApprovalDate() == null) {
+    if (summary.getCloseoutSupplement() != null
+        && summary.getCloseoutSigningOfficialApprovalDate() == null) {
       summary.addAction(DarCollectionActions.REVIEW_PROGRESS_REPORT);
     }
   }
@@ -326,7 +323,7 @@ public class DarCollectionService implements ConsentLogger {
    * Members can see summaries for datasets they have access to Signing Officials can see summaries
    * for researchers in their institution Researchers can see only their own summaries
    *
-   * @param user     The user making the request
+   * @param user The user making the request
    * @param role The role the user is making the request as
    * @return List of DarCollectionSummary objects
    */
@@ -343,11 +340,13 @@ public class DarCollectionService implements ConsentLogger {
         processDarCollectionSummariesForSO(summaries);
         break;
       case CHAIRPERSON:
-        summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(userId, UserRoles.CHAIRPERSON.getRoleId());
+        summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(userId,
+            UserRoles.CHAIRPERSON.getRoleId());
         processDarCollectionSummariesForChair(summaries);
         break;
       case MEMBER:
-        summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(userId, UserRoles.MEMBER.getRoleId());
+        summaries = darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(userId,
+            UserRoles.MEMBER.getRoleId());
         processDarCollectionSummariesForMember(summaries, userId);
         break;
       case RESEARCHER:
@@ -464,46 +463,71 @@ public class DarCollectionService implements ConsentLogger {
   }
 
 
-  public DarCollection getByReferenceId(String referenceId) {
+  public DarCollection getByReferenceId(User user, String referenceId) {
     DarCollection collection = darCollectionDAO.findDARCollectionByReferenceId(referenceId);
     if (Objects.isNull(collection)) {
       throw new NotFoundException(
           "Collection with the reference id of " + referenceId + " was not found");
     }
-    return addDatasetsToCollection(collection);
+    return filterCollectionVotesForUser(user, addDatasetsToCollection(collection));
   }
 
-  public DarCollection getByCollectionId(Integer collectionId) {
+  public DarCollection getByCollectionId(User user, Integer collectionId) {
     DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     if (Objects.isNull(collection)) {
       throw new NotFoundException(
           "Collection with the collection id of " + collectionId + " was not found");
     }
-    return addDatasetsToCollection(collection);
+    return filterCollectionVotesForUser(user, addDatasetsToCollection(collection));
   }
 
-  public DarCollection getCollectionWithAllElectionsByCollectionId(Integer collectionId) {
-    DarCollection collection = darCollectionDAO.findCollectionWithAllElectionsByCollectionId(collectionId);
+  /**
+   * Given a DarCollection, remove all votes from elections for roles that should not see them. This
+   * method mutates the given collection.
+   *
+   * @param user       The User requesting the collection
+   * @param collection DarCollection to filter votes from
+   * @return DarCollection
+   */
+  private DarCollection filterCollectionVotesForUser(User user, DarCollection collection) {
+    // Individual votes are only visible to CHAIRPERSON, MEMBER, and ADMIN roles
+    List<UserRoles> voteViewRoles = List.of(UserRoles.CHAIRPERSON, UserRoles.MEMBER,
+        UserRoles.ADMIN);
+    if (user.hasAnyUserRole(voteViewRoles)) {
+      return collection;
+    }
+    // Remove votes from elections for all other users
+    collection.getDars().values().forEach(
+        dar -> dar.getElections().values().forEach(election -> election.setVotes(Map.of())));
+    return collection;
+  }
+
+  public DarCollection getCollectionWithAllElectionsByCollectionId(User user,
+      Integer collectionId) {
+    DarCollection collection = darCollectionDAO.findCollectionWithAllElectionsByCollectionId(
+        collectionId);
     if (Objects.isNull(collection)) {
       throw new NotFoundException(
           "Collection with the collection id of " + collectionId + " was not found");
     }
-    return addDatasetsToCollection(collection);
+    return filterCollectionVotesForUser(user, addDatasetsToCollection(collection));
   }
 
-  public DarCollection getCollectionWithElectionsByCollectionIdAndDatasetIds(List<Integer> datasetIds, Integer collectionId) {
-    DarCollection collection = darCollectionDAO.findCollectionWithElectionsByCollectionIdAndDatasetIds(datasetIds, collectionId);
+  public DarCollection getCollectionWithElectionsByCollectionIdAndDatasetIds(User user,
+      List<Integer> datasetIds, Integer collectionId) {
+    DarCollection collection = darCollectionDAO.findCollectionWithElectionsByCollectionIdAndDatasetIds(
+        datasetIds, collectionId);
     if (Objects.isNull(collection)) {
       throw new NotFoundException(
           "Collection with the collection id of " + collectionId + " was not found");
     }
-    return addDatasetsToCollection(collection);
+    return filterCollectionVotesForUser(user, addDatasetsToCollection(collection));
   }
 
   /**
    * Given a DarCollection, add its relevant datasets.
    *
-   * @param collection      The list of DarCollections to iterate over.
+   * @param collection The list of DarCollections to iterate over.
    * @return collection with datasets added
    */
   @VisibleForTesting
@@ -518,14 +542,14 @@ public class DarCollectionService implements ConsentLogger {
           .distinct()
           .collect(Collectors.toMap(Dataset::getDatasetId, Function.identity()));
 
-        Set<Dataset> collectionDatasets = collection.getDars().values().stream()
-            .map(DataAccessRequest::getDatasetIds)
-            .flatMap(Collection::stream)
-            .map(datasetMap::get)
-            .filter(Objects::nonNull) // filtering out nulls which were getting captured by map
-            .collect(Collectors.toSet());
-        collection.setDatasets(collectionDatasets);
-        return collection.deepCopy();
+      Set<Dataset> collectionDatasets = collection.getDars().values().stream()
+          .map(DataAccessRequest::getDatasetIds)
+          .flatMap(Collection::stream)
+          .map(datasetMap::get)
+          .filter(Objects::nonNull) // filtering out nulls which were getting captured by map
+          .collect(Collectors.toSet());
+      collection.setDatasets(collectionDatasets);
+      return collection.deepCopy();
     }
     // There were no datasets to add, so we return the original list
     return collection;
@@ -540,7 +564,8 @@ public class DarCollectionService implements ConsentLogger {
    * @param role       The role of the user, must be one of ADMIN, CHAIRPERSON, or RESEARCHER
    * @return The DarCollection that has been canceled
    */
-  public DarCollection cancelDarCollectionByRole(User user, DarCollection collection, UserRoles role) {
+  public DarCollection cancelDarCollectionByRole(User user, DarCollection collection,
+      UserRoles role) {
     Collection<DataAccessRequest> dars = collection.getDars().values();
     if (dars.isEmpty()) {
       logWarn("DAR Collection ID: [%s] does not have any associated DAR ids".formatted(
@@ -548,12 +573,12 @@ public class DarCollectionService implements ConsentLogger {
       return collection;
     }
 
-    return switch (role) {
-      case ADMIN -> cancelDarCollectionElectionsAsAdmin(collection);
-      case CHAIRPERSON ->
-          cancelDarCollectionElectionsAsChair(collection, user);
+    DarCollection cancelledCollection = switch (role) {
+      case ADMIN -> cancelDarCollectionElectionsAsAdmin(collection, user);
+      case CHAIRPERSON -> cancelDarCollectionElectionsAsChair(collection, user);
       default -> cancelDarCollectionAsResearcher(collection, user);
     };
+    return getByCollectionId(user, cancelledCollection.getDarCollectionId());
   }
 
   /**
@@ -564,7 +589,7 @@ public class DarCollectionService implements ConsentLogger {
    * decline or cancel the elections for the collection.
    *
    * @param collection The DarCollection
-   * @param user the researcher requesting the cancel
+   * @param user       the researcher requesting the cancel
    * @return The canceled DarCollection
    */
   private DarCollection cancelDarCollectionAsResearcher(DarCollection collection, User user) {
@@ -594,7 +619,7 @@ public class DarCollectionService implements ConsentLogger {
       dataAccessRequestDAO.cancelByReferenceIds(activeDarIds);
     }
 
-    return getByCollectionId(collection.getDarCollectionId());
+    return getByCollectionId(user, collection.getDarCollectionId());
   }
 
   /**
@@ -605,14 +630,14 @@ public class DarCollectionService implements ConsentLogger {
    * @param collection The DarCollection
    * @return The DarCollection whose elections have been canceled
    */
-  private DarCollection cancelDarCollectionElectionsAsAdmin(DarCollection collection) {
+  private DarCollection cancelDarCollectionElectionsAsAdmin(DarCollection collection, User user) {
     Collection<DataAccessRequest> dars = collection.getDars().values();
     List<String> referenceIds = dars.stream().map(DataAccessRequest::getReferenceId).toList();
 
     // Cancel all DAR elections
     cancelElectionsForReferenceIds(referenceIds);
 
-    return getByCollectionId(collection.getDarCollectionId());
+    return getByCollectionId(user, collection.getDarCollectionId());
   }
 
   /**
@@ -643,7 +668,7 @@ public class DarCollectionService implements ConsentLogger {
     // Cancel filtered DAR elections
     cancelElectionsForReferenceIds(referenceIds);
 
-    return getByCollectionId(collection.getDarCollectionId());
+    return getByCollectionId(user, collection.getDarCollectionId());
   }
 
   /**
@@ -672,7 +697,8 @@ public class DarCollectionService implements ConsentLogger {
         List<User> voteUsers = voteDAO.findVoteUsersByElectionReferenceIdList(
             createdElectionReferenceIds);
         if (dar.getProgressReport()) {
-          emailService.sendProgressReportNewCollectionElectionMessage(voteUsers, collection.getDarCode());
+          emailService.sendProgressReportNewCollectionElectionMessage(voteUsers,
+              collection.getDarCode());
         } else {
           emailService.sendDarNewCollectionElectionMessage(voteUsers, collection.getDarCode());
         }
@@ -687,7 +713,7 @@ public class DarCollectionService implements ConsentLogger {
           collection.getDarCollectionId()), e);
       throw e;
     }
-    return darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
+    return getByCollectionId(user, collection.getDarCollectionId());
   }
 
   // Private helper method to mark Elections as 'Canceled'
@@ -728,22 +754,22 @@ public class DarCollectionService implements ConsentLogger {
     List<Dataset> datasetsInDAR =
         datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
 
-    Map<String, List<String>> sendList = new HashMap<>();
+    Map<String, List<String>> dacDatasetMap = new HashMap<>();
     for (User user : distinctUsers) {
       List<Dac> matchingDacsForUser = getMatchingDacs(user, dacsInDAR);
       for (Dac dac : matchingDacsForUser) {
         List<String> matchingDatasetsForDac = getMatchingDatasets(dac, datasetsInDAR);
-        if (matchingDatasetsForDac != null) {
-          sendList.put(dac.getName(), matchingDatasetsForDac);
-        }
+        dacDatasetMap.put(dac.getName(), matchingDatasetsForDac);
       }
       // If the dar is not a progress report, use the DAR template else use the PR template.
       if (dar.getProgressReport()) {
         // Use the reference ID to link the fact that this progress report will have been noted.
         // the DAR Code at this point will be ambiguous.
-        emailService.sendNewProgressReportRequestEmail(user, sendList, researcherName, collection.getDarCode(), dar.getReferenceId());
+        emailService.sendNewProgressReportRequestEmail(user, dacDatasetMap, researcherName,
+            collection.getDarCode(), dar.getReferenceId());
       } else {
-        emailService.sendNewDARRequestEmail(user, sendList, researcherName, collection.getDarCode());
+        emailService.sendNewDARRequestEmail(user, dacDatasetMap, researcherName,
+            collection.getDarCode());
       }
     }
     notifySigningOfficialsOfDARSubmission(dar, researcher, collection.getDarCode());
@@ -783,19 +809,19 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   private List<User> getDistinctAdminAndChairUsersForDatasetIds(List<Integer> datasetIds) {
-    List<User> admins = userDAO.describeUsersByRoleAndEmailPreference(UserRoles.ADMIN.getRoleName(),
-        true);
+    List<User> admins = userDAO.findUsersByRoleId(UserRoles.ADMIN.getRoleId());
     Set<User> chairPersons = userDAO.findUsersForDatasetsByRole(datasetIds,
-        Collections.singletonList(UserRoles.CHAIRPERSON.getRoleName()));
+        Collections.singletonList(UserRoles.CHAIRPERSON.getRoleId()));
     // Ensure that admins/chairs are not double emailed
-    // and filter users that don't want to receive email
     return Streams.concat(admins.stream(), chairPersons.stream())
-        .filter(u -> Boolean.TRUE.equals(u.getEmailPreference()))
         .distinct()
         .toList();
   }
 
   private List<Dac> getMatchingDacs(User user, Collection<Dac> dacsInDAR) {
+    if (user.hasUserRole(UserRoles.ADMIN)) {
+      return new ArrayList<>(dacsInDAR);
+    }
     List<Integer> dacIDs = user.getRoles().stream()
         .map(UserRole::getDacId)
         .filter(Objects::nonNull)

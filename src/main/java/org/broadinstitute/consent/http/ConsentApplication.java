@@ -219,18 +219,18 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(injector.getInstance(DaaResource.class));
     env.jersey().register(injector.getInstance(DataAccessRequestResource.class));
     env.jersey().register(new DatasetResource(datasetService, userService,
-        datasetRegistrationService, elasticSearchService));
+        datasetRegistrationService, elasticSearchService, tdrService));
     env.jersey().register(injector.getInstance(DacResource.class));
     env.jersey().register(injector.getInstance(DACAutomationRuleResource.class));
     env.jersey().register(new DACUserResource(userService));
     env.jersey().register(
-        new DarCollectionResource(darCollectionService, userService));
+        new DarCollectionResource(darCollectionService));
     env.jersey().register(new EmailNotifierResource(dataAccessRequestService));
     env.jersey().register(new InstitutionResource(institutionService));
     env.jersey().register(new LibraryCardResource(userService, libraryCardService));
     env.jersey().register(new MatchResource(matchService));
     env.jersey().register(new MetricsResource(metricsService));
-    env.jersey().register(new NihAccountResource(nihService, userService));
+    env.jersey().register(new NihAccountResource(nihService));
     env.jersey().register(new SamResource(samService, userService));
     env.jersey().register(new SchemaResource());
     env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));

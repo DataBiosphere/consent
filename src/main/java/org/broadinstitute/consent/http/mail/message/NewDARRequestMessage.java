@@ -10,14 +10,14 @@ public class NewDARRequestMessage extends MailMessage {
   private static final String NEW_DAR_REQUEST = "Create an election for Data Access Request id: %s.";
 
   private final String darCode;
-  private final Map<String, List<String>> sendList;
+  private final Map<String, List<String>> dacDatasetMap;
   private final String researcherName;
 
-  public NewDARRequestMessage(User toUser, String darCode, Map<String, List<String>> sendList,
+  public NewDARRequestMessage(User toUser, String darCode, Map<String, List<String>> dacDatasetMap,
       String researcherName) {
     super(toUser, EmailType.NEW_DAR);
     this.darCode = darCode;
-    this.sendList = sendList;
+    this.dacDatasetMap = dacDatasetMap;
     this.researcherName = researcherName;
   }
 
@@ -32,7 +32,7 @@ public class NewDARRequestMessage extends MailMessage {
     return Map.of(
         "serverUrl", serverUrl,
         "userName", toUser.getDisplayName(),
-        "dacDatasetGroups", sendList,
+        "dacDatasetGroups", dacDatasetMap,
         "researcherUserName", researcherName,
         "darID", darCode);
   }

@@ -46,6 +46,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   protected static DacDAO dacDAO;
   protected static DaaDAO daaDAO;
   protected static UserDAO userDAO;
+  protected static DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
   protected static DatasetDAO datasetDAO;
   protected static ElectionDAO electionDAO;
   protected static UserRoleDAO userRoleDAO;
@@ -132,6 +133,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     dacDAO = jdbi.onDemand(DacDAO.class);
     daaDAO = jdbi.onDemand(DaaDAO.class);
     userDAO = jdbi.onDemand(UserDAO.class);
+    datasetAuthorizationReaderDAO = jdbi.onDemand(DatasetAuthorizationReaderDAO.class);
     datasetDAO = jdbi.onDemand(DatasetDAO.class);
     electionDAO = jdbi.onDemand(ElectionDAO.class);
     userRoleDAO = jdbi.onDemand(UserRoleDAO.class);
@@ -263,8 +265,8 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     jdbi.useHandle(handle -> {
       String sql = """
               UPDATE vote
-              SET vote = :vote, updatedate = :updateDate, rationale = :rationale, remindersent = :reminderSent, createdate = :createDate, has_concerns = :hasConcerns
-              WHERE voteId = :voteId
+              SET vote = :vote, update_date = :updateDate, rationale = :rationale, reminder_sent = :reminderSent, create_date = :createDate, has_concerns = :hasConcerns
+              WHERE vote_id = :voteId
           """;
       handle.createUpdate(sql)
           .bind("vote", vote)

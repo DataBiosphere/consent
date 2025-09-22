@@ -21,6 +21,8 @@ import java.util.Map;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.sam.EmailResponse;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.TosResponse;
@@ -242,8 +244,9 @@ class SamPactTests {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
+    DuosUser duosUser = new DuosUser(authUser, new User());
 
-    int tosResponse = samDAO.acceptTosStatus(authUser);
+    int tosResponse = samDAO.acceptTosStatus(duosUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, tosResponse);
   }
 
@@ -264,8 +267,9 @@ class SamPactTests {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
+    DuosUser duosUser = new DuosUser(authUser, new User());
 
-    UserStatusDiagnostics statusDiagnostics = samDAO.getSelfDiagnostics(authUser);
+    UserStatusDiagnostics statusDiagnostics = samDAO.getSelfDiagnostics(duosUser);
     assertNotNull(statusDiagnostics);
   }
 
@@ -275,8 +279,9 @@ class SamPactTests {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
+    DuosUser duosUser = new DuosUser(authUser, new User());
 
-    UserStatus userStatus = samDAO.postRegistrationInfo(authUser);
+    UserStatus userStatus = samDAO.postRegistrationInfo(duosUser);
     assertNotNull(userStatus);
   }
 
@@ -297,8 +302,10 @@ class SamPactTests {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
+    User user = new User();
+    DuosUser duosUser = new DuosUser(authUser, user);
 
-    TosResponse tosResponse = samDAO.getTosResponse(authUser);
+    TosResponse tosResponse = samDAO.getTosResponse(duosUser);
     assertNotNull(tosResponse);
   }
 
@@ -308,8 +315,10 @@ class SamPactTests {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
+    User user = new User();
+    DuosUser duosUser = new DuosUser(authUser, user);
 
-    List<ResourceType> types = samDAO.getResourceTypes(authUser);
+    List<ResourceType> types = samDAO.getResourceTypes(duosUser);
     assertNotNull(types);
     assertFalse(types.isEmpty());
   }
@@ -320,8 +329,9 @@ class SamPactTests {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
+    DuosUser duosUser = new DuosUser(authUser, new User());
 
-    EmailResponse response = samDAO.getV1UserByEmail(authUser, "test");
+    EmailResponse response = samDAO.getV1UserByEmail(duosUser, "test");
     assertNotNull(response);
   }
 
@@ -331,8 +341,9 @@ class SamPactTests {
     initSamDAO(mockServer);
     AuthUser authUser = new AuthUser();
     authUser.setAuthToken("auth-token");
+    DuosUser duosUser = new DuosUser(authUser, new User());
 
-    int tosResponse = samDAO.rejectTosStatus(authUser);
+    int tosResponse = samDAO.rejectTosStatus(duosUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, tosResponse);
   }
 
