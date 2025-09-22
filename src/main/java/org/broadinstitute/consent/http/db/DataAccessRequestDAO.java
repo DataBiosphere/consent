@@ -77,13 +77,13 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
                 SELECT DISTINCT e.reference_id, e.dataset_id, LAST_VALUE(v.vote)
                     OVER(
                         PARTITION BY e.reference_id, e.dataset_id
-                        ORDER BY v.createdate
+                        ORDER BY v.create_date
                         RANGE BETWEEN
                             UNBOUNDED PRECEDING AND
                             UNBOUNDED FOLLOWING
                         ) last_vote
                   FROM election e
-                    INNER JOIN vote v ON e.election_id = v.electionid AND v.vote IS NOT NULL
+                    INNER JOIN vote v ON e.election_id = v.election_id AND v.vote IS NOT NULL
                     AND LOWER(e.election_type) = 'dataaccess'
                     AND LOWER(v.type) IN ('final', 'radar_approve')) final_access_vote ON final_access_vote.reference_id = dar.reference_id AND final_access_vote.dataset_id = dd.dataset_id
       WHERE dd.dataset_id = :datasetId
@@ -122,13 +122,13 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
         SELECT DISTINCT e.reference_id, e.dataset_id, LAST_VALUE(v.vote)
         OVER(
           PARTITION BY e.dataset_id
-            ORDER BY v.createdate
+            ORDER BY v.create_date
             RANGE BETWEEN
               UNBOUNDED PRECEDING AND
               UNBOUNDED FOLLOWING
         ) last_vote
         FROM election e
-        INNER JOIN vote v ON e.election_id = v.electionid AND v.vote IS NOT NULL
+        INNER JOIN vote v ON e.election_id = v.election_id AND v.vote IS NOT NULL
         AND LOWER(e.election_type) = 'dataaccess'
         AND LOWER(v.type) IN ('final', 'radar_approve')) final_access_vote ON
           final_access_vote.reference_id = dar.reference_id AND

@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.sam.EmailResponse;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.TosResponse;
@@ -53,7 +54,7 @@ public class SamDAO implements ConsentLogger {
     this.readTimeoutMilliseconds = configuration.getTimeoutSeconds() * 6000;
   }
 
-  public List<ResourceType> getResourceTypes(AuthUser authUser) throws Exception {
+  public List<ResourceType> getResourceTypes(DuosUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getV1ResourceTypesUrl());
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
     HttpResponse response = executeRequest(request);
@@ -80,9 +81,9 @@ public class SamDAO implements ConsentLogger {
     return new Gson().fromJson(body, UserStatusInfo.class);
   }
 
-  public UserStatusDiagnostics getSelfDiagnostics(AuthUser authUser) throws Exception {
+  public UserStatusDiagnostics getSelfDiagnostics(DuosUser duosUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getV2SelfDiagnosticsUrl());
-    HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
+    HttpRequest request = clientUtil.buildGetRequest(genericUrl, duosUser);
     HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
       logException(
@@ -93,13 +94,13 @@ public class SamDAO implements ConsentLogger {
     return new Gson().fromJson(body, UserStatusDiagnostics.class);
   }
 
-  public UserStatus postRegistrationInfo(AuthUser authUser) throws Exception {
+  public UserStatus postRegistrationInfo(DuosUser duosUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.postRegisterUserV2SelfUrl());
-    HttpRequest request = clientUtil.buildPostRequest(genericUrl, new EmptyContent(), authUser);
+    HttpRequest request = clientUtil.buildPostRequest(genericUrl, new EmptyContent(), duosUser);
     HttpResponse response = executeRequest(request);
     String body = response.parseAsString();
     if (!response.isSuccessStatusCode()) {
-      var errorMsg = getErrorMessage(authUser, body);
+      var errorMsg = getErrorMessage(duosUser, body);
       Exception e = new WebApplicationException(errorMsg, response.getStatusCode());
       logException(errorMsg, new Exception(body));
       throw e;
@@ -107,9 +108,9 @@ public class SamDAO implements ConsentLogger {
     return new Gson().fromJson(body, UserStatus.class);
   }
 
-  public static String getErrorMessage(AuthUser authUser, String body) {
+  public static String getErrorMessage(DuosUser duosUser, String body) {
     var errorMsg = String.format("Error posting user registration information. Email: %s.",
-        authUser.getEmail());
+        duosUser.getEmail());
     if (body == null || body.isEmpty()) {
       return errorMsg;
     }
@@ -119,7 +120,7 @@ public class SamDAO implements ConsentLogger {
       if (message.contains("Cannot update azureB2cId")) {
         return String.format(
             "Email: %s. You may have previously signed in with a different authentication provider (Google or Microsoft). Please sign in with that provider. For more information visit: https://support.terra.bio/hc/en-us/community/posts/24089648317467-Cannot-update-azureB2cId-for-user",
-            authUser.getEmail());
+            duosUser.getEmail());
       }
       return String.format(errorMsg + " %s.", message);
     } catch (JsonSyntaxException e) {  // If the body is not a valid JSON
@@ -127,22 +128,22 @@ public class SamDAO implements ConsentLogger {
     }
   }
 
-  public void asyncPostRegistrationInfo(AuthUser authUser) {
+  public void asyncPostRegistrationInfo(DuosUser duosUser) {
     ListeningExecutorService listeningExecutorService = MoreExecutors.listeningDecorator(
         executorService);
     ListenableFuture<UserStatus> userStatusFuture =
-        listeningExecutorService.submit(() -> postRegistrationInfo(authUser));
+        listeningExecutorService.submit(() -> postRegistrationInfo(duosUser));
     Futures.addCallback(
         userStatusFuture,
         new FutureCallback<>() {
           @Override
           public void onSuccess(@Nullable UserStatus userStatus) {
-            logInfo("Successfully registered user in Sam: " + authUser.getEmail());
+            logInfo("Successfully registered user in Sam: " + duosUser.getEmail());
           }
 
           @Override
           public void onFailure(@NonNull Throwable throwable) {
-            logWarn("Async Post Registration Failure for user: " + authUser.getEmail() + "; "
+            logWarn("Async Post Registration Failure for user: " + duosUser.getEmail() + "; "
                 + throwable.getMessage());
           }
         },
@@ -161,47 +162,47 @@ public class SamDAO implements ConsentLogger {
     return response.parseAsString();
   }
 
-  public TosResponse getTosResponse(AuthUser authUser) throws Exception {
+  public TosResponse getTosResponse(DuosUser duosUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getSelfTosUrl());
-    HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
+    HttpRequest request = clientUtil.buildGetRequest(genericUrl, duosUser);
     HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
       logException(String.format("Error getting Terms of Service: %s for user %s",
-              response.getStatusMessage(), authUser.getEmail()),
+              response.getStatusMessage(), duosUser.getEmail()),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
     String body = response.parseAsString();
     return new Gson().fromJson(body, TosResponse.class);
   }
 
-  public int acceptTosStatus(AuthUser authUser) throws Exception {
+  public int acceptTosStatus(DuosUser duosUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.acceptTosUrl());
-    HttpRequest request = clientUtil.buildPutRequest(genericUrl, new EmptyContent(), authUser);
+    HttpRequest request = clientUtil.buildPutRequest(genericUrl, new EmptyContent(), duosUser);
     HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
       logException(String.format("Error accepting Terms of Service: %s for user %s",
-              response.getStatusMessage(), authUser.getEmail()),
+              response.getStatusMessage(), duosUser.getEmail()),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
     return response.getStatusCode();
   }
 
-  public int rejectTosStatus(AuthUser authUser) throws Exception {
+  public int rejectTosStatus(DuosUser duosUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.rejectTosUrl());
-    HttpRequest request = clientUtil.buildPutRequest(genericUrl, new EmptyContent(), authUser);
+    HttpRequest request = clientUtil.buildPutRequest(genericUrl, new EmptyContent(), duosUser);
     HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
       logException(
           String.format("Error removing Terms of Service: %s for user %s",
-              response.getStatusMessage(), authUser.getEmail()),
+              response.getStatusMessage(), duosUser.getEmail()),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
     return response.getStatusCode();
   }
 
-  public EmailResponse getV1UserByEmail(AuthUser authUser, String email) throws Exception {
+  public EmailResponse getV1UserByEmail(DuosUser duosUser, String email) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getV1UserUrl(email));
-    HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
+    HttpRequest request = clientUtil.buildGetRequest(genericUrl, duosUser);
     HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
       logException(

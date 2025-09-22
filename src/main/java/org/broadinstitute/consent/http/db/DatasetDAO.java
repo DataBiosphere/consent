@@ -12,7 +12,6 @@ import org.broadinstitute.consent.http.db.mapper.DatasetMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetReducer;
 import org.broadinstitute.consent.http.db.mapper.DatasetStudySummaryMapper;
-import org.broadinstitute.consent.http.db.mapper.DatasetSummaryMapper;
 import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOPrefix;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
@@ -20,7 +19,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
-import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
@@ -553,13 +551,13 @@ FROM data_access_request dar
                 SELECT DISTINCT e.reference_id, e.dataset_id, LAST_VALUE(v.vote)
                     OVER(
                         PARTITION BY e.reference_id, e.dataset_id
-                        ORDER BY v.createdate
+                        ORDER BY v.create_date
                         RANGE BETWEEN
                             UNBOUNDED PRECEDING AND
                             UNBOUNDED FOLLOWING
                         ) last_vote
                   FROM election e
-                    INNER JOIN vote v ON e.election_id = v.electionid AND v.vote IS NOT NULL
+                    INNER JOIN vote v ON e.election_id = v.election_id AND v.vote IS NOT NULL
                     AND LOWER(e.election_type) = 'dataaccess'
                     AND LOWER(v.type) IN ('final', 'radar_approve')) final_access_vote ON final_access_vote.reference_id = dar.reference_id AND final_access_vote.dataset_id = dd.dataset_id
 WHERE dar.submission_date > now() - interval '1 year'
@@ -572,16 +570,4 @@ WHERE dar.submission_date > now() - interval '1 year'
   """)
   List<ApprovedDataset> getApprovedDatasets(@Bind("userId") Integer userId);
 
-  @RegisterRowMapper(DatasetSummaryMapper.class)
-  @SqlQuery("""
-      SELECT DISTINCT d.dataset_id, d.alias, d.name
-      FROM dataset d
-      LEFT JOIN dataset_property p ON p.dataset_id = d.dataset_id
-      WHERE d.dac_approval = TRUE
-      AND (
-        LOWER(d.name) LIKE concat('%', LOWER(:query), '%') OR
-        LOWER(p.property_value) LIKE concat('%', LOWER(:query), '%')
-      )
-      """)
-  List<DatasetSummary> findDatasetSummariesByQuery(@Bind("query") String query);
 }

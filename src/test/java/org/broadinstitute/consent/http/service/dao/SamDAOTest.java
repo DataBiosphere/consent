@@ -27,7 +27,7 @@ import org.broadinstitute.consent.http.MockServerTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
-import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.sam.EmailResponse;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
@@ -52,7 +52,7 @@ class SamDAOTest extends MockServerTestHelper {
   private static SamDAO samDAO;
 
   @Mock
-  private AuthUser authUser;
+  private DuosUser duosUser;
 
   private UserStatus status;
 
@@ -86,7 +86,7 @@ class SamDAOTest extends MockServerTestHelper {
             .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
             .withBody(gson.toJson(mockResponseList)));
 
-    List<ResourceType> resourceTypeList = samDAO.getResourceTypes(authUser);
+    List<ResourceType> resourceTypeList = samDAO.getResourceTypes(duosUser);
     assertFalse(resourceTypeList.isEmpty());
     assertEquals(mockResponseList.size(), resourceTypeList.size());
   }
@@ -104,7 +104,7 @@ class SamDAOTest extends MockServerTestHelper {
             .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
             .withBody(userInfo.toString()));
 
-    UserStatusInfo authUserUserInfo = samDAO.getRegistrationInfo(authUser);
+    UserStatusInfo authUserUserInfo = samDAO.getRegistrationInfo(duosUser);
     assertNotNull(authUserUserInfo);
     assertEquals(userInfo.getUserEmail(), authUserUserInfo.getUserEmail());
     assertEquals(userInfo.getEnabled(), authUserUserInfo.getEnabled());
@@ -117,7 +117,7 @@ class SamDAOTest extends MockServerTestHelper {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_BAD_REQUEST));
-    assertThrows(BadRequestException.class, () -> samDAO.getRegistrationInfo(authUser));
+    assertThrows(BadRequestException.class, () -> samDAO.getRegistrationInfo(duosUser));
   }
 
   @Test
@@ -126,7 +126,7 @@ class SamDAOTest extends MockServerTestHelper {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED));
-    assertThrows(NotAuthorizedException.class, () -> samDAO.getRegistrationInfo(authUser));
+    assertThrows(NotAuthorizedException.class, () -> samDAO.getRegistrationInfo(duosUser));
   }
 
   @Test
@@ -135,7 +135,7 @@ class SamDAOTest extends MockServerTestHelper {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
-    assertThrows(ForbiddenException.class, () -> samDAO.getRegistrationInfo(authUser));
+    assertThrows(ForbiddenException.class, () -> samDAO.getRegistrationInfo(duosUser));
   }
 
   @Test
@@ -145,7 +145,7 @@ class SamDAOTest extends MockServerTestHelper {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_NOT_FOUND));
-    assertThrows(NotFoundException.class, () -> samDAO.getRegistrationInfo(authUser));
+    assertThrows(NotFoundException.class, () -> samDAO.getRegistrationInfo(duosUser));
   }
 
   @Test
@@ -154,7 +154,7 @@ class SamDAOTest extends MockServerTestHelper {
         .respond(response()
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_CONFLICT));
-    assertThrows(ConsentConflictException.class, () -> samDAO.getRegistrationInfo(authUser));
+    assertThrows(ConsentConflictException.class, () -> samDAO.getRegistrationInfo(duosUser));
   }
 
   @Test
@@ -171,7 +171,7 @@ class SamDAOTest extends MockServerTestHelper {
             .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
             .withBody(diagnostics.toString()));
 
-    UserStatusDiagnostics userDiagnostics = samDAO.getSelfDiagnostics(authUser);
+    UserStatusDiagnostics userDiagnostics = samDAO.getSelfDiagnostics(duosUser);
     assertNotNull(userDiagnostics);
     assertEquals(diagnostics.getEnabled(), userDiagnostics.getEnabled());
     assertEquals(diagnostics.getInAllUsersGroup(),
@@ -188,7 +188,7 @@ class SamDAOTest extends MockServerTestHelper {
             .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
             .withBody(status.toString()));
 
-    UserStatus userStatus = samDAO.postRegistrationInfo(authUser);
+    UserStatus userStatus = samDAO.postRegistrationInfo(duosUser);
     assertNotNull(userStatus);
   }
 
@@ -199,10 +199,10 @@ class SamDAOTest extends MockServerTestHelper {
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
             .withBody(("{\"message\":\"errorMessage\"}")));
-    when(authUser.getEmail()).thenReturn("email@email.com");
+    when(duosUser.getEmail()).thenReturn("email@email.com");
 
     WebApplicationException ex = assertThrows(WebApplicationException.class,
-        () -> samDAO.postRegistrationInfo(authUser));
+        () -> samDAO.postRegistrationInfo(duosUser));
     assertEquals(
         "Error posting user registration information. Email: email@email.com. errorMessage.",
         ex.getMessage());
@@ -223,7 +223,7 @@ class SamDAOTest extends MockServerTestHelper {
             .withBody(status.toString()));
 
     try {
-      samDAO.asyncPostRegistrationInfo(authUser);
+      samDAO.asyncPostRegistrationInfo(duosUser);
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -253,7 +253,7 @@ class SamDAOTest extends MockServerTestHelper {
             .withHeader(Header.header("Content-Type", "application/json"))
             .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
     try {
-      samDAO.getTosResponse(authUser);
+      samDAO.getTosResponse(duosUser);
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -267,7 +267,7 @@ class SamDAOTest extends MockServerTestHelper {
             .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
 
     try {
-      samDAO.acceptTosStatus(authUser);
+      samDAO.acceptTosStatus(duosUser);
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -281,7 +281,7 @@ class SamDAOTest extends MockServerTestHelper {
             .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
 
     try {
-      samDAO.rejectTosStatus(authUser);
+      samDAO.rejectTosStatus(duosUser);
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -298,7 +298,7 @@ class SamDAOTest extends MockServerTestHelper {
             .withBody(gson.toJson(emailResponse)));
 
     try {
-      EmailResponse response = samDAO.getV1UserByEmail(authUser, "test@gmail.com");
+      EmailResponse response = samDAO.getV1UserByEmail(duosUser, "test@gmail.com");
       assertNotNull(response);
     } catch (Exception e) {
       fail(e.getMessage());
@@ -310,7 +310,7 @@ class SamDAOTest extends MockServerTestHelper {
     mockServerClient.when(request()).error(HttpError.error().withDropConnection(true));
     assertThrows(
         ServerErrorException.class,
-        () -> samDAO.getV1UserByEmail(authUser, RandomStringUtils.randomAlphabetic(10)));
+        () -> samDAO.getV1UserByEmail(duosUser, RandomStringUtils.randomAlphabetic(10)));
   }
 
   @Test
@@ -324,54 +324,54 @@ class SamDAOTest extends MockServerTestHelper {
             .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
     assertThrows(
         ServerErrorException.class,
-        () -> samDAO.getV1UserByEmail(authUser, RandomStringUtils.randomAlphabetic(10)));
+        () -> samDAO.getV1UserByEmail(duosUser, RandomStringUtils.randomAlphabetic(10)));
   }
 
   @Test
   void testGetErrorMessageAzureB2cId() {
-    when(authUser.getEmail()).thenReturn("email@email.com");
+    when(duosUser.getEmail()).thenReturn("email@email.com");
     String body = """
         {"code":500, "message": "Cannot update azureB2cId"}""";
     assertEquals(
         "Email: email@email.com. You may have previously signed in with a different authentication provider (Google or Microsoft). Please sign in with that provider. For more information visit: https://support.terra.bio/hc/en-us/community/posts/24089648317467-Cannot-update-azureB2cId-for-user",
-        getErrorMessage(authUser, body));
+        getErrorMessage(duosUser, body));
   }
 
   @Test
   void testGetErrorMessageOther() {
-    when(authUser.getEmail()).thenReturn("email@email.com");
+    when(duosUser.getEmail()).thenReturn("email@email.com");
     String body = """
         {"code":500, "message": "some other error"}""";
     assertEquals(
         "Error posting user registration information. Email: email@email.com. some other error.",
-        getErrorMessage(authUser, body));
+        getErrorMessage(duosUser, body));
   }
 
   @Test
   void testGetErrorMessageNoMessage() {
-    when(authUser.getEmail()).thenReturn("email@email.com");
+    when(duosUser.getEmail()).thenReturn("email@email.com");
     String body = """
         {"code":500}""";
     assertEquals("""
             Error posting user registration information. Email: email@email.com. {"code":500}.""",
-        getErrorMessage(authUser, body));
+        getErrorMessage(duosUser, body));
   }
 
   @Test
   void testGetErrorMessageNoBody() {
-    when(authUser.getEmail()).thenReturn("email@email.com");
+    when(duosUser.getEmail()).thenReturn("email@email.com");
     String body = null;
     assertEquals("""
             Error posting user registration information. Email: email@email.com.""",
-        getErrorMessage(authUser, body));
+        getErrorMessage(duosUser, body));
   }
 
   @Test
   void testGetErrorMessageNotJson() {
-    when(authUser.getEmail()).thenReturn("email@email.com");
+    when(duosUser.getEmail()).thenReturn("email@email.com");
     String body = "random non-JSON string";
     assertEquals("""
             Error posting user registration information. Email: email@email.com. random non-JSON string.""",
-        getErrorMessage(authUser, body));
+        getErrorMessage(duosUser, body));
   }
 }
