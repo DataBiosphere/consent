@@ -202,7 +202,7 @@
     relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2025-08-29-2025-dataset-authorization-readers.xml"
     relativeToChangelogFile="true" />
-  <include file="changesets/changelog-consent-2025-09-17-standardize-match-dao.xml"
+  <include file="changesets/changelog-consent-2025-09-22-standardize-match-dao.xml"
     relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2025-09-18-standardize-vote-dao.xml"
     relativeToChangelogFile="true" />
