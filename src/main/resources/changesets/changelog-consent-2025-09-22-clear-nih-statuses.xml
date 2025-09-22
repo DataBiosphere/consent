@@ -19,7 +19,12 @@
       );
       DELETE FROM user_property
       WHERE property_key IN ('eraAuthorized', 'eraExpiration')
-      AND TO_TIMESTAMP(CAST(property_value as BIGINT)/1000) - INTERVAL '16 days' &lt; CURRENT_TIMESTAMP;
+      AND user_id IN (
+        SELECT user_id
+        FROM user_property
+        WHERE property_key = 'eraExpiration'
+        AND TO_TIMESTAMP(CAST(property_value as BIGINT)/1000) - INTERVAL '16 days' &lt; CURRENT_TIMESTAMP
+      );
     </sql>
   </changeSet>
 </databaseChangeLog>
