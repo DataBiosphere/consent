@@ -1292,12 +1292,12 @@ class DatasetResourceTest extends AbstractTestHelper {
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
     dataset.setDacId(3);
-    User user = new User();
-    user.setUserId(1);
-    dataset.setCreateUser(user);
+    User creatingUser = new User();
+    creatingUser.setUserId(1);
+    dataset.setCreateUser(creatingUser);
     Study study = new Study();
     study.setStudyId(1);
-    study.setCreateUserId(user.getUserId());
+    study.setCreateUserId(creatingUser.getUserId());
     dataset.setStudy(study);
     dataset.setStudyId(study.getStudyId());
     FileStorageObject fso = new FileStorageObject();
