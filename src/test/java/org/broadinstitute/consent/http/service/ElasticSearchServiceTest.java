@@ -52,6 +52,7 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.Study;
@@ -161,6 +162,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     dataset.setCreateUser(user);
     dataset.setUpdateUserId(updateUser.getUserId());
     dataset.setCreateUserId(user.getUserId());
+    dataset.setNihInstitutionalCertificationFile(new FileStorageObject());
     return dataset;
   }
 
@@ -398,6 +400,28 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     assertEquals(datasetRecord.dac.getDacId(), term.getDacId());
     assertEquals(datasetRecord.dac.getDacId(), term.getDac().dacId());
     assertEquals(datasetRecord.dac.getName(), term.getDac().dacName());
+  }
+
+  @Test
+  void testToDatasetTerm_NIHInstitutionalCertification() {
+    DatasetRecord datasetRecord = createDatasetRecord();
+    when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
+    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(
+        datasetRecord.createUser);
+    DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
+    assertEquals(datasetRecord.dataset.getNihInstitutionalCertificationFile() != null, term.getHasInstitutionCertification());
+  }
+
+
+  @Test
+  void testToDatasetTerm_Missing_NIHInstitutionalCertification() {
+    DatasetRecord datasetRecord = createDatasetRecord();
+    when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
+    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(
+        datasetRecord.createUser);
+    datasetRecord.dataset.setNihInstitutionalCertificationFile(null);
+    DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
+    assertEquals(null, term.getHasInstitutionCertification());
   }
 
   @Test

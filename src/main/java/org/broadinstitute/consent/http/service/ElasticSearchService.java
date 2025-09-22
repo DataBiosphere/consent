@@ -404,6 +404,9 @@ public class ElasticSearchService implements ConsentLogger {
       }
     }
 
+    Optional.ofNullable(dataset.getNihInstitutionalCertificationFile()).ifPresent(
+    obj -> term.setHasInstitutionCertification(true));
+
     findDatasetProperty(
         dataset.getProperties(), "accessManagement"
     ).ifPresent(
