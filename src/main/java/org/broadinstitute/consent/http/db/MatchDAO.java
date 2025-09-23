@@ -22,7 +22,7 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @SqlQuery("""
       SELECT m.*, r.*
         FROM match_entity m
-        LEFT JOIN match_rationale r on r.match_entity_id = m.matchid
+        LEFT JOIN match_rationale r on r.match_entity_id = m.match_id
         WHERE m.purpose = :purposeId
       """)
   List<Match> findMatchesByPurposeId(@Bind("purposeId") String purposeId);
@@ -31,29 +31,28 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @SqlQuery("""
       SELECT m.*, r.*
         FROM match_entity m
-        LEFT JOIN match_rationale r on r.match_entity_id = m.matchid
-        WHERE m.matchid = :id
+        LEFT JOIN match_rationale r on r.match_entity_id = m.match_id
+        WHERE m.match_id = :id
       """)
   Match findMatchById(@Bind("id") Integer id);
 
   @UseRowReducer(MatchReducer.class)
-  @SqlQuery(
-      " SELECT match_entity.*, r.* FROM match_entity " +
-          " LEFT JOIN match_rationale r on r.match_entity_id = match_entity.matchid " +
-          " INNER JOIN (" +
-          "   SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.dataset_id) AS latest "
-          +
-          "   FROM election " +
-          "   WHERE LOWER(election.election_type) = 'dataaccess' " +
-          " ) AS e " +
-          " ON e.reference_id = match_entity.purpose " +
-          " WHERE match_entity.purpose IN (<purposeIds>) AND e.election_id = latest")
+  @SqlQuery("""
+      SELECT match_entity.*, r.* FROM match_entity
+        LEFT JOIN match_rationale r on r.match_entity_id = match_entity.match_id
+        INNER JOIN (
+          SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.dataset_id) AS latest
+          FROM election
+          WHERE LOWER(election.election_type) = 'dataaccess'
+          ) AS e ON e.reference_id = match_entity.purpose
+        WHERE match_entity.purpose IN (<purposeIds>) AND e.election_id = latest
+      """)
   List<Match> findMatchesForLatestDataAccessElectionsByPurposeIds(
       @BindList(value = "purposeIds", onEmpty = EmptyHandling.NULL_STRING) List<String> purposeIds);
 
   @SqlUpdate("""
         INSERT INTO match_entity
-          (consent, purpose, matchentity, failed, createdate, algorithm_version, abstain)
+          (consent, purpose, match_entity, failed, create_date, algorithm_version, abstain)
         VALUES
           (:consentId, :purposeId, :match, :failed, :createDate, :algorithmVersion, :abstain)
       """)
@@ -72,9 +71,9 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   @SqlUpdate("DELETE FROM match_entity WHERE purpose = :purposeId")
   void deleteMatchesByPurposeId(@Bind("purposeId") String purposeId);
 
-  @SqlUpdate("DELETE FROM match_rationale WHERE match_entity_id in (SELECT matchid FROM match_entity WHERE purpose IN (<purposeIds>)) ")
+  @SqlUpdate("DELETE FROM match_rationale WHERE match_entity_id in (SELECT match_id FROM match_entity WHERE purpose IN (<purposeIds>)) ")
   void deleteRationalesByPurposeIds(@BindList(value = "purposeIds", onEmpty = EmptyHandling.NULL_STRING) List<String> purposeIds);
 
-  @SqlQuery("SELECT COUNT(*) FROM match_entity WHERE matchentity = :matchEntity AND failed = 'FALSE' ")
+  @SqlQuery("SELECT COUNT(*) FROM match_entity WHERE match_entity = :matchEntity AND failed = 'FALSE' ")
   Integer countMatchesByResult(@Bind("matchEntity") Boolean matchEntity);
 }
