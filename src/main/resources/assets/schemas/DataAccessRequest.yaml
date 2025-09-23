@@ -252,7 +252,7 @@ properties:
   dataManagementIncident:
     $ref: './DataManagementIncident.yaml'
   researchPlans:
-    type: String
+    type: string
     description: Research Plans.
   closeOutSupplement:
     $ref: './CloseOutSupplement.yaml'

@@ -22,11 +22,13 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriBuilder;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +37,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -44,6 +47,7 @@ import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.DatasetUpdate;
 import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -71,15 +75,17 @@ public class DatasetResource extends Resource {
   private final ElasticSearchService elasticSearchService;
 
   private final JsonSchemaUtil jsonSchemaUtil;
+  private final GCSService gcsService;
 
   @Inject
   public DatasetResource(DatasetService datasetService, UserService userService,
       DatasetRegistrationService datasetRegistrationService,
       ElasticSearchService elasticSearchService,
-      TDRService tdrService) {
+      TDRService tdrService, GCSService gcsService) {
     this.datasetService = datasetService;
     this.userService = userService;
     this.datasetRegistrationService = datasetRegistrationService;
+    this.gcsService = gcsService;
     this.elasticSearchService = elasticSearchService;
     this.tdrService = tdrService;
     this.jsonSchemaUtil = new JsonSchemaUtil();
@@ -568,7 +574,7 @@ public class DatasetResource extends Resource {
   @Path("/{identifier}/approvedUsers")
   public Response getApprovedUsers(@Auth DuosUser duosUser, @PathParam("identifier") String datasetIdentifier) {
     try {
-      Dataset dataset = datasetService.findDatasetByIdentifier(duosUser.getUser(), datasetIdentifier);
+      Dataset dataset = datasetService.findMinimalDatasetByIdentifier(duosUser.getUser(), datasetIdentifier, false);
       if (Objects.isNull(dataset)) {
         return Response.status(Response.Status.NOT_FOUND).build();
       }
@@ -578,6 +584,40 @@ public class DatasetResource extends Resource {
       return Response.ok(tdrService.getApprovedUsersForDataset(duosUser, dataset)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Produces(MediaType.APPLICATION_OCTET_STREAM)
+  @Path("/{id}/nihInstitutionalCertification")
+  @RolesAllowed({ADMIN, DATASUBMITTER, CHAIRPERSON, MEMBER})
+  public Response getNihInstitutionalCertification(@Auth DuosUser duosUser, @PathParam("id") Integer id) {
+    try {
+      User requestingUser = duosUser.getUser();
+      Dataset dataset = datasetService.findDatasetById(requestingUser, id);
+      if (dataset == null) {
+        return Response.status(Response.Status.NOT_FOUND).build();
+      }
+      FileStorageObject nihFile = dataset.getNihInstitutionalCertificationFile();
+      if (nihFile != null &&
+          !nihFile.getDeleted() &&
+          nihFile.getFileName() != null &&
+          nihFile.getBlobId() != null &&
+          (requestingUser.hasUserRole(UserRoles.ADMIN)
+              || dataset.isCreator(requestingUser)
+              || dataset.isCustodian(requestingUser)
+              || requestingUser.verifyDACRole(CHAIRPERSON, dataset.getDacId())
+              || requestingUser.verifyDACRole(MEMBER, dataset.getDacId()))) {
+        InputStream fileStream = gcsService.getDocument(nihFile.getBlobId());
+        StreamingOutput streamOutput = createStreamingOutput(fileStream);
+        return Response.ok(streamOutput).header(HttpHeaders.CONTENT_DISPOSITION,
+            String.format("attachment; filename=\"%s\"", nihFile.getFileName())).build();
+      } else {
+        return Response.status(Status.NOT_FOUND).build();
+      }
+    } catch (Exception e) {
+      logWarn(e.getMessage());
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
     }
   }
 }
