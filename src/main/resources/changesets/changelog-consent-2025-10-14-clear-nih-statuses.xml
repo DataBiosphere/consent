@@ -4,8 +4,9 @@
   <changeSet id="changelog-consent-2025-09-12-2025-clear-nih-statuses" author="grushton">
     <comment>
       This changeset will be timed to 14 days post-RAS migration. This action will clear out NIH
-      status fields for all users whose 30-day authentications were prior 14 days ago. Users who've
-      signed in before that will be required to re-authenticate with NIH when they next sign in.
+      status fields for all users whose 30-day authentications were prior to 14 days ago. Users
+      who've signed in before that will be required to re-authenticate with NIH when they next sign
+      in.
     </comment>
     <sql>
       UPDATE users
