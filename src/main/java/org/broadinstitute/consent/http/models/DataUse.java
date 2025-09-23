@@ -24,6 +24,7 @@ public class DataUse {
   private Boolean geneticStudiesOnly;
   private Boolean publicationResults;
   private String publicationMoratorium;
+  private Boolean aiLlmUse;
   private Boolean controls;
   private String gender;
   private Boolean pediatric;
@@ -152,6 +153,14 @@ public class DataUse {
     this.publicationMoratorium = publicationMoratorium;
   }
 
+  public Boolean getAiLlmUse() {
+    return aiLlmUse;
+  }
+
+  public void setAiLlmUse(Boolean aiLlmUse) {
+    this.aiLlmUse = aiLlmUse;
+  }
+
   public Boolean getControls() {
     return controls;
   }
@@ -256,6 +265,7 @@ public class DataUse {
         .append(geneticStudiesOnly, dataUse.geneticStudiesOnly)
         .append(publicationResults, dataUse.publicationResults)
         .append(publicationMoratorium, dataUse.publicationMoratorium)
+        .append(aiLlmUse, dataUse.aiLlmUse)
         .append(controls, dataUse.controls).append(gender, dataUse.gender)
         .append(pediatric, dataUse.pediatric).append(population, dataUse.population)
         .append(illegalBehavior, dataUse.illegalBehavior)
@@ -273,7 +283,7 @@ public class DataUse {
         .append(diseaseRestrictions).append(populationOriginsAncestry).append(methodsResearch)
         .append(nonProfitUse).append(other).append(secondaryOther).append(ethicsApprovalRequired)
         .append(collaboratorRequired).append(geographicalRestrictions).append(geneticStudiesOnly)
-        .append(publicationResults).append(publicationMoratorium).append(controls).append(gender)
+        .append(publicationResults).append(publicationMoratorium).append(aiLlmUse).append(controls).append(gender)
         .append(pediatric).append(population).append(illegalBehavior).append(sexualDiseases)
         .append(stigmatizeDiseases).append(vulnerablePopulations).append(psychologicalTraits)
         .append(notHealth).toHashCode();

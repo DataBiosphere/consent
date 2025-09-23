@@ -53,6 +53,8 @@ public class HealthMedicalBioMedicalWithDiseaseSpecificV1Test {
             List.of(new OntologyEntry())), false),
         Arguments.of(new DataUseBuilder().setHmbResearch(true).setPublicationResults(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
             List.of(new OntologyEntry())), false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true).setAiLlmUse(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+            List.of(new OntologyEntry())), false),
         Arguments.of(new DataUseBuilder().setHmbResearch(true).setControl(true), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
             List.of(new OntologyEntry())), false),
         Arguments.of(new DataUseBuilder().setHmbResearch(true).setGender("Gender"), new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
@@ -90,6 +92,9 @@ public class HealthMedicalBioMedicalWithDiseaseSpecificV1Test {
             new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
                 List.of(new OntologyEntry())).setOther(true).setOtherText("Other Condition"),
             false),
+        Arguments.of(new DataUseBuilder().setHmbResearch(true),
+            new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
+                List.of(new OntologyEntry())).setOther(true).setAiLlmUse(true), false),
         Arguments.of(new DataUseBuilder().setHmbResearch(true),
             new DataAccessRequestDataBuilder().setDiseases(true).setOntologies(
                 List.of(new OntologyEntry())).setOther(true).setControls(true), false),
