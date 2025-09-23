@@ -80,6 +80,30 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindMinimalDatasetByAlias() {
+    // The query under test specifically excludes FSO and study information
+    // and INCLUDES User and Dataset Properties information
+    Dataset dataset = insertDataset();
+    Study study = insertStudyWithProperties();
+    datasetDAO.updateStudyId(dataset.getDatasetId(), study.getStudyId());
+    createFileStorageObject(study.getUuid().toString(),
+        FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+    createFileStorageObject(
+        dataset.getDatasetId().toString(),
+        FileCategory.NIH_INSTITUTIONAL_CERTIFICATION
+    );
+    Dataset foundDataset = datasetDAO.findMinimalDatasetByAlias(dataset.getAlias());
+    // Explicitly check queried entities
+    assertNotNull(foundDataset.getProperties());
+    assertEquals(study.getStudyId(), foundDataset.getStudyId());
+    assertEquals(dataset.getCreateUserId(), foundDataset.getCreateUser().getUserId());
+    // Explicitly check un-queried entities
+    assertNull(foundDataset.getNihInstitutionalCertificationFile());
+    assertNull(foundDataset.getStudy());
+    assertNull(foundDataset.getStudy());
+  }
+
+  @Test
   void testFindAllDatasetStudySummariesDatasetAndStudy() {
     Dataset dataset = insertDataset();
     Study study = insertStudyWithProperties();
