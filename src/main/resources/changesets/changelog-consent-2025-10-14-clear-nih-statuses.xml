@@ -14,7 +14,7 @@
             (SELECT user_id
              FROM user_property
              WHERE property_key = 'eraExpiration'
-               AND TO_TIMESTAMP(CAST(property_value as BIGINT) / 1000) - INTERVAL '14 days' &lt; CURRENT_TIMESTAMP
+               AND TO_TIMESTAMP(CAST(property_value as BIGINT) / 1000) - INTERVAL '16 days' &lt; CURRENT_TIMESTAMP
             );
       DELETE
       FROM user_property
@@ -23,7 +23,7 @@
             (SELECT user_id
              FROM user_property
              WHERE property_key = 'eraExpiration'
-               AND TO_TIMESTAMP(CAST(property_value as BIGINT) / 1000) - INTERVAL '14 days' &lt; CURRENT_TIMESTAMP
+               AND TO_TIMESTAMP(CAST(property_value as BIGINT) / 1000) - INTERVAL '16 days' &lt; CURRENT_TIMESTAMP
             );
     </sql>
   </changeSet>
