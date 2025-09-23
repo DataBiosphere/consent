@@ -207,19 +207,16 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     User auditUser = createUser();
     Integer dacId1 = createRandomDAC();
     List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAll();
-    rulesByDacId.forEach(r -> {
-      dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId1, r.id(), user.getUserId(),
-          Instant.now());
-    });
+    rulesByDacId.forEach(
+        r -> dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId1, r.id(), user.getUserId(),
+            Instant.now()));
     Integer deletedCount = dacAutomationRuleDAO.auditedDeleteDACRuleSettingByUser(dacId1,
         user.getUserId(), auditUser.getUserId());
     Assertions.assertEquals(rulesByDacId.size(), deletedCount);
     List<DACAutomationRuleAudit> deleteByUserAudits = dacAutomationRuleDAO.findAutomationAuditsForDac(
         dacId1, rulesByDacId.size(), 0);
     Assertions.assertEquals(rulesByDacId.size(), deleteByUserAudits.size());
-    deleteByUserAudits.forEach(r -> {
-      Assertions.assertEquals(RuleAuditAction.REMOVE, r.action());
-    });
+    deleteByUserAudits.forEach(r -> Assertions.assertEquals(RuleAuditAction.REMOVE, r.action()));
   }
 
   @Test
@@ -251,10 +248,9 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
     User user = createUser();
     Integer dacId1 = createRandomDAC();
     List<DACAutomationRule> rulesByDacId = dacAutomationRuleDAO.findAll();
-    rulesByDacId.forEach(r -> {
-      dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId1, r.id(), user.getUserId(),
-          Instant.now());
-    });
+    rulesByDacId.forEach(
+        r -> dacAutomationRuleDAO.auditedInsertDACRuleSetting(dacId1, r.id(), user.getUserId(),
+            Instant.now()));
     List<DACAutomationRuleAudit> auditRecords = dacAutomationRuleDAO.findAutomationAuditsForDac(
         dacId1, rulesByDacId.size(), 0);
     Assertions.assertEquals(rulesByDacId.size(), auditRecords.size());
