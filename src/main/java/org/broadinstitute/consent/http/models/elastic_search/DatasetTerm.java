@@ -22,6 +22,7 @@ public class DatasetTerm {
   private UserTerm submitter;
   private UserTerm updateUser;
   private DacTerm dac;
+  private Boolean hasInstitutionCertification;
 
   public Integer getDatasetId() {
     return datasetId;
@@ -157,5 +158,13 @@ public class DatasetTerm {
 
   public void setDac(DacTerm dac) {
     this.dac = dac;
+  }
+
+  public Boolean getHasInstitutionCertification() {
+    return hasInstitutionCertification;
+  }
+
+  public void setHasInstitutionCertification(Boolean hasInstitutionCertification) {
+    this.hasInstitutionCertification = hasInstitutionCertification;
   }
 }
