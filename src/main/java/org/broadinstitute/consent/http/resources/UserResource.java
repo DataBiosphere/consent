@@ -195,6 +195,12 @@ public class UserResource extends Resource {
       UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
       // Ensure that we have a real user with this ID, fail if we do not.
       userService.findUserById(userId);
+
+      // Admins cannot update institutions
+      if (userUpdateFields.getInstitutionId() != null) {
+        throw new BadRequestException("Institution ID should not be updated");
+      }
+
       User updatedUser = userService.updateUserFieldsById(userUpdateFields, userId);
       Gson gson = new Gson();
       JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(duosUser,

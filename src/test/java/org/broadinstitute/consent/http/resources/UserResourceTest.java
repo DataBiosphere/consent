@@ -539,6 +539,19 @@ class UserResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testUpdateUserWithInstitutionIdShouldFail() {
+    User user = createUserWithRole();
+    when(userService.findUserById(any())).thenReturn(user);
+
+    UserUpdateFields userUpdateFields = new UserUpdateFields();
+    userUpdateFields.setInstitutionId(123);
+
+    try (Response response = userResource.update(duosUser, uriInfo, user.getUserId(), gson.toJson(userUpdateFields))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
   void testUpdateUserInvalidJson() {
     User user = createUserWithRole();
 
