@@ -111,11 +111,6 @@ public class UserService implements ConsentLogger {
   public User updateUserFieldsById(UserUpdateFields userUpdateFields, Integer userId) {
     if (Objects.nonNull(userUpdateFields)) {
 
-      // Institutions cannot be updated
-      if (Objects.nonNull(userUpdateFields.getInstitutionId())) {
-        throw new BadRequestException("Institution ID is not updatable");
-      }
-
       // Update Primary User Fields
       if (Objects.nonNull(userUpdateFields.getDisplayName())) {
         userDAO.updateDisplayName(userId, userUpdateFields.getDisplayName());

@@ -18,7 +18,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -164,35 +163,6 @@ class UserServiceTest extends AbstractTestHelper {
     // Verify role additions/deletions.
     verify(userRoleDAO, times(1)).insertUserRoles(List.of(so), 1);
     verify(userRoleDAO, times(1)).removeUserRoles(1, List.of(admin.getRoleId()));
-  }
-
-  @Test
-  void testUpdateUserFieldsByIdShouldNotPassInstitutionId() {
-    UserRole so = UserRoles.SigningOfficial();
-
-    User user = new User();
-    user.setUserId(1);
-
-    UserUpdateFields fields = new UserUpdateFields();
-    fields.setUserRoleIds(List.of(so.getRoleId()));
-    fields.setDisplayName(randomAlphabetic(10));
-    fields.setInstitutionId(1);
-    fields.setEmailPreference(true);
-    fields.setEraCommonsId(randomAlphabetic(10));
-    fields.setDaaAcceptance(true);
-
-    assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
-
-    int userId = user.getUserId();
-    assertThrows(BadRequestException.class, () -> service.updateUserFieldsById(fields, userId));
-
-    // Ensure that no update methods are called due to the exception
-    verify(userDAO, never()).updateDisplayName(any(), any());
-    verify(userDAO, never()).updateEmailPreference(any(), any());
-    verify(userDAO, never()).updateEraCommonsId(any(), any());
-    verify(userPropertyDAO, never()).insertAll(any());
-    verify(userRoleDAO, never()).insertUserRoles(any(), anyInt());
-    verify(userRoleDAO, never()).removeUserRoles(anyInt(), any());
   }
 
   @Test

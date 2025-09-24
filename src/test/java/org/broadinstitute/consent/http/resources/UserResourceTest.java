@@ -14,7 +14,6 @@ import static org.mockito.Mockito.when;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
@@ -502,22 +501,6 @@ class UserResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testUpdateSelfShouldNotPassInstitutionId() {
-    User user = createUserWithRole();
-    user.setITDirectorRole();
-    user.setInstitutionId(10);
-    UserUpdateFields userUpdateFields = new UserUpdateFields();
-    userUpdateFields.setInstitutionId(20);
-
-    BadRequestException badRequestException = new BadRequestException("Institution ID is not updatable");
-    when(userService.updateUserFieldsById(userUpdateFields, user.getUserId())).thenThrow(badRequestException);
-
-    try (var response = userResource.updateSelf(new DuosUser(authUser, user), uriInfo, gson.toJson(userUpdateFields))) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    }
-  }
-
-  @Test
   void testUpdate() {
     User user = createUserWithRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();
@@ -539,22 +522,6 @@ class UserResourceTest extends AbstractTestHelper {
 
     try (Response response = userResource.update(duosUser, uriInfo, user.getUserId(), "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-    }
-  }
-
-  @Test
-  void testUpdateUserWithInstitutionIdShouldFail() {
-    User user = createUserWithRole();
-    when(userService.findUserById(any())).thenReturn(user);
-
-    UserUpdateFields userUpdateFields = new UserUpdateFields();
-    userUpdateFields.setInstitutionId(123);
-
-    BadRequestException badRequestException = new BadRequestException("Institution ID is not updatable");
-    when(userService.updateUserFieldsById(userUpdateFields, user.getUserId())).thenThrow(badRequestException);
-
-    try (Response response = userResource.update(duosUser, uriInfo, user.getUserId(), gson.toJson(userUpdateFields))) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
 
