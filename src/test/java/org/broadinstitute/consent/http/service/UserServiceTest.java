@@ -150,7 +150,6 @@ class UserServiceTest extends AbstractTestHelper {
     // both the Researcher and Chairperson roles, but remove the Admin role.
     fields.setUserRoleIds(List.of(so.getRoleId()));
     fields.setDisplayName(randomAlphabetic(10));
-    //fields.setInstitutionId(1);
     fields.setEmailPreference(true);
     fields.setEraCommonsId(randomAlphabetic(10));
     fields.setDaaAcceptance(true);
@@ -184,7 +183,8 @@ class UserServiceTest extends AbstractTestHelper {
 
     assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
 
-    assertThrows(BadRequestException.class, () -> service.updateUserFieldsById(fields, user.getUserId()));
+    int userId = user.getUserId();
+    assertThrows(BadRequestException.class, () -> service.updateUserFieldsById(fields, userId));
 
     // Ensure that no update methods are called due to the exception
     verify(userDAO, never()).updateDisplayName(any(), any());
