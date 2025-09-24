@@ -149,7 +149,6 @@ class UserServiceTest extends AbstractTestHelper {
     // both the Researcher and Chairperson roles, but remove the Admin role.
     fields.setUserRoleIds(List.of(so.getRoleId()));
     fields.setDisplayName(randomAlphabetic(10));
-    fields.setInstitutionId(1);
     fields.setEmailPreference(true);
     fields.setEraCommonsId(randomAlphabetic(10));
     fields.setDaaAcceptance(true);
