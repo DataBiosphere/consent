@@ -91,6 +91,11 @@ public class DataAccessRequestDataBuilder {
     return this;
   }
 
+  public DataAccessRequestDataBuilder setAiLlmUse(boolean b) {
+    data.setAiLlmUse(b);
+    return this;
+  }
+
   public DataAccessRequestDataBuilder setGender(String b) {
     data.setGender(b);
     return this;
