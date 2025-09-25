@@ -60,7 +60,7 @@ jobs:
           service_account: 'dsp-artifact-registry-push@dsp-artifact-registry.iam.gserviceaccount.com'
       # authenticate to GAR docker repo
       - name: Docker Login
-        uses: 'docker/login-action@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093'
+        uses: 'docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1'
         with:
           registry: 'us-central1-docker.pkg.dev'
           username: 'oauth2accesstoken'
