@@ -69,6 +69,8 @@ import org.elasticsearch.client.RestClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -559,21 +561,15 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     }
   }
 
-  @Test
-  void testValidateQuery() throws IOException {
-    String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
-
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }",
+      "{ \"from\": 0, \"size\": 100, \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }",
+      "{ \"sort\": [\"datasetIdentifier\"], \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }",
+      "{ \"from\": 0, \"size\": 100, \"sort\": [\"datasetIdentifier\"], \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }",
+  })
+  void testValidateQuerySuccess(String query) throws IOException {
     mockElasticSearchResponse("{\"valid\":true}");
-
-    assertTrue(service.validateQuery(query));
-  }
-
-  @Test
-  void testValidateQueryWithFromAndSize() throws IOException {
-    String query = "{ \"from\": 0, \"size\": 100, \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
-
-    mockElasticSearchResponse("{\"valid\":true}");
-
     assertTrue(service.validateQuery(query));
   }
 
