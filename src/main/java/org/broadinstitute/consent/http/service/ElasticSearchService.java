@@ -157,8 +157,9 @@ public class ElasticSearchService implements ConsentLogger {
       return false;
     }
 
-    // Remove `size` and `from` parameters from query, otherwise validation will fail
+    // Remove `sort`, `size` and `from` parameters from query, otherwise validation will fail
     var modifiedQuery = query
+        .replaceAll("\"sort\": ?\\[(.*?)\\],?", "")
         .replaceAll("\"size\": ?\\d+,?", "")
         .replaceAll("\"from\": ?\\d+,?", "");
 
