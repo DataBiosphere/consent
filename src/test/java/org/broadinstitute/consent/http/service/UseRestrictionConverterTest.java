@@ -194,6 +194,16 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
   }
 
   @Test
+  void testParseDataUseAiLlmUse() {
+    Client client = ClientBuilder.newClient();
+    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    DataAccessRequest dar = createDataAccessRequest();
+    dar.getData().setAiLlmUse(true);
+    DataUse dataUse = converter.parseDataUsePurpose(dar);
+    assertTrue(dataUse.getAiLlmUse());
+  }
+
+  @Test
   void testParseDataUsePurposeControls() {
     Client client = ClientBuilder.newClient();
     UseRestrictionConverter converter = new UseRestrictionConverter(client, config());

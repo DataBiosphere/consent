@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
@@ -45,26 +44,31 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.sam.SamService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 @Path("api/user")
 public class UserResource extends Resource {
 
   private final UserService userService;
-  private final Gson gson = new Gson();
+  private final Gson gson = GsonUtil.getInstance();
   private final SamService samService;
   private final DatasetService datasetService;
   private final AcknowledgementService acknowledgementService;
+  private final NihService nihService;
 
   @Inject
   public UserResource(SamService samService, UserService userService,
-      DatasetService datasetService, AcknowledgementService acknowledgementService) {
+      DatasetService datasetService, AcknowledgementService acknowledgementService,
+      NihService nihService) {
     this.samService = samService;
     this.userService = userService;
     this.datasetService = datasetService;
     this.acknowledgementService = acknowledgementService;
+    this.nihService = nihService;
   }
 
   @GET
@@ -105,9 +109,8 @@ public class UserResource extends Resource {
       if (Objects.isNull(duosUser.getUserStatusInfo())) {
         samService.asyncPostRegistrationInfo(duosUser);
       }
-      JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(duosUser,
-          duosUser.getUser().getUserId());
-      return Response.ok(gson.toJson(userJson)).build();
+      User syncedUser = nihService.syncAccount(duosUser);
+      return Response.ok(gson.toJson(syncedUser)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -132,7 +135,7 @@ public class UserResource extends Resource {
       List<Integer> dacIds = user.getRoles().stream()
           .map(UserRole::getDacId)
           .filter(Objects::nonNull)
-          .collect(Collectors.toList());
+          .toList();
       List<Dataset> datasets =
           dacIds.isEmpty() ? List.of() : datasetService.findDatasetListByDacIds(dacIds);
       if (datasets.isEmpty()) {
@@ -189,14 +192,12 @@ public class UserResource extends Resource {
   @Consumes("application/json")
   @Produces("application/json")
   @RolesAllowed({ADMIN})
-  public Response update(@Auth DuosUser duosUser, @Context UriInfo info,
-      @PathParam("id") Integer userId, String json) {
+  public Response update(@Auth DuosUser duosUser, @PathParam("id") Integer userId, String json) {
     try {
       UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
       // Ensure that we have a real user with this ID, fail if we do not.
       userService.findUserById(userId);
       User updatedUser = userService.updateUserFieldsById(userUpdateFields, userId);
-      Gson gson = new Gson();
       JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(duosUser,
           updatedUser.getUserId());
       return Response.ok().entity(gson.toJson(jsonUser)).build();
@@ -214,18 +215,12 @@ public class UserResource extends Resource {
       User user = duosUser.getUser();
       UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
 
-      // Users cannot update their own institution id through this service
-      if (userUpdateFields.getInstitutionId() != null) {
-        throw new BadRequestException("Institution ID is not updatable");
-      }
-
       if (Objects.nonNull(userUpdateFields.getUserRoleIds()) && !user.hasUserRole(
           UserRoles.ADMIN)) {
         throw new BadRequestException("Cannot change user's roles.");
       }
 
       user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
-      Gson gson = new Gson();
       JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(duosUser,
           user.getUserId());
 

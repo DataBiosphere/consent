@@ -39,6 +39,7 @@ public class DataAccessRequestData {
   private String nonTechRus;
   private Boolean diseases;
   private Boolean methods;
+  private Boolean aiLlmUse;
   private Boolean controls;
   private Boolean population;
   private Boolean other;
@@ -178,6 +179,14 @@ public class DataAccessRequestData {
 
   public void setMethods(Boolean methods) {
     this.methods = methods;
+  }
+
+  public Boolean getAiLlmUse() {
+    return aiLlmUse;
+  }
+
+  public void setAiLlmUse(Boolean aiLlmUse) {
+    this.aiLlmUse = aiLlmUse;
   }
 
   public Boolean getControls() {

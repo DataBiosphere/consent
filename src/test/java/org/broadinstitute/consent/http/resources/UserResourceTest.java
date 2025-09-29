@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
@@ -41,6 +42,7 @@ import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -81,6 +83,9 @@ class UserResourceTest extends AbstractTestHelper {
   @Mock
   private AcknowledgementService acknowledgementService;
 
+  @Mock
+  private NihService nihService;
+
   private static final String TEST_EMAIL = "test@gmail.com";
 
   private final Gson gson = GsonUtil.getInstance();
@@ -96,15 +101,18 @@ class UserResourceTest extends AbstractTestHelper {
 
   @BeforeEach
   void initResource() {
-    userResource = new UserResource(samService, userService, datasetService,
-        acknowledgementService);
+    userResource = new UserResource(samService, userService, datasetService, acknowledgementService,
+        nihService);
   }
 
   @Test
-  void testGetMe() {
+  void testGetMe() throws Exception {
     User user = createUserWithRole();
+    DuosUser du = new DuosUser(authUser, user);
 
-    Response response = userResource.getUser(new DuosUser(authUser, user));
+    Response response = userResource.getUser(du);
+    verify(samService).asyncPostRegistrationInfo(du);
+    verify(nihService).syncAccount(du);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
@@ -501,19 +509,6 @@ class UserResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testUpdateSelfShouldNotPassInstitutionId() {
-    User user = createUserWithRole();
-    user.setITDirectorRole();
-    user.setInstitutionId(10);
-    UserUpdateFields userUpdateFields = new UserUpdateFields();
-    userUpdateFields.setInstitutionId(20);
-
-    try (var response = userResource.updateSelf(new DuosUser(authUser, user), uriInfo, gson.toJson(userUpdateFields))) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    }
-  }
-
-  @Test
   void testUpdate() {
     User user = createUserWithRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();
@@ -522,7 +517,7 @@ class UserResourceTest extends AbstractTestHelper {
     when(userService.findUserWithPropertiesByIdAsJsonObject(any(), any())).thenReturn(
         gson.toJsonTree(user).getAsJsonObject());
 
-    try (Response response = userResource.update(duosUser, uriInfo, user.getUserId(),
+    try (Response response = userResource.update(duosUser, user.getUserId(),
         gson.toJson(userUpdateFields))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
@@ -533,7 +528,7 @@ class UserResourceTest extends AbstractTestHelper {
     User user = createUserWithRole();
     when(userService.findUserById(any())).thenThrow(new NotFoundException());
 
-    try (Response response = userResource.update(duosUser, uriInfo, user.getUserId(), "")) {
+    try (Response response = userResource.update(duosUser, user.getUserId(), "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
@@ -542,7 +537,7 @@ class UserResourceTest extends AbstractTestHelper {
   void testUpdateUserInvalidJson() {
     User user = createUserWithRole();
 
-    try (Response response = userResource.update(duosUser, uriInfo, user.getUserId(), "}{][")) {
+    try (Response response = userResource.update(duosUser, user.getUserId(), "}{][")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }

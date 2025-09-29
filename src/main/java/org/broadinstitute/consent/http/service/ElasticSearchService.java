@@ -86,6 +86,7 @@ public class ElasticSearchService implements ConsentLogger {
     this.studyDAO = studyDAO;
   }
 
+  private static final int MAX_RESULT_WINDOW = 10000;
 
   private static final String BULK_HEADER = """
       { "index": {"_type": "dataset", "_id": "%d"} }
@@ -137,9 +138,28 @@ public class ElasticSearchService implements ConsentLogger {
     return performRequest(deleteRequest);
   }
 
+  public boolean invalidResultWindow(String query) {
+    try {
+      var queryJson = GsonUtil.getInstance().fromJson(query, Map.class);
+
+      long size = (long) queryJson.getOrDefault("size", 10L);
+      long from = (long) queryJson.getOrDefault("from", 0L);
+
+      return from + size > MAX_RESULT_WINDOW;
+    } catch (Exception e) {
+      logWarn("Unable to parse query for result window validation: " + e.getMessage());
+      return true;
+    }
+  }
+
   public boolean validateQuery(String query) throws IOException {
-    // Remove `size` and `from` parameters from query, otherwise validation will fail
+    if (invalidResultWindow(query)) {
+      return false;
+    }
+
+    // Remove `sort`, `size` and `from` parameters from query, otherwise validation will fail
     var modifiedQuery = query
+        .replaceAll("\"sort\": ?\\[(.*?)\\],?", "")
         .replaceAll("\"size\": ?\\d+,?", "")
         .replaceAll("\"from\": ?\\d+,?", "");
 
