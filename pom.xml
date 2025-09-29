@@ -13,11 +13,11 @@
     <java.version>21</java.version>
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
-    <liquibase.version>4.30.0</liquibase.version>
-    <dropwizard.version>4.0.11</dropwizard.version>
-    <logback.version>1.5.16</logback.version>
+    <liquibase.version>4.33.0</liquibase.version>
+    <dropwizard.version>4.0.16</dropwizard.version>
+    <logback.version>1.5.18</logback.version>
     <pact.version>4.6.17</pact.version>
-    <postgres.version>42.7.7</postgres.version>
+    <postgres.version>42.7.8</postgres.version>
     <surefire.version>3.5.4</surefire.version>
     <swagger.ui.version>5.28.1</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
@@ -550,8 +550,8 @@
     <!-- Logback Access module moved to new location. See https://logback.qos.ch/news.html -->
     <dependency>
       <groupId>ch.qos.logback.access</groupId>
-      <artifactId>common</artifactId>
-      <version>2.0.3</version>
+      <artifactId>logback-access-common</artifactId>
+      <version>2.0.6</version>
     </dependency>
     <!-- Security update. See https://broadworkbench.atlassian.net/browse/DUOS-2826 -->
     <dependency>
