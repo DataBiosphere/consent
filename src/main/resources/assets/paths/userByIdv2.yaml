@@ -46,9 +46,6 @@ put:
             displayName:
               description: The display name for the user
               type: string
-            institutionId:
-              description: The institution id for the user
-              type: number
             emailPreference:
               description: True for receiving email, false for disabling all email
               type: boolean

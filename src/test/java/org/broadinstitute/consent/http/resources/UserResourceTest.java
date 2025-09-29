@@ -509,19 +509,6 @@ class UserResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testUpdateSelfShouldNotPassInstitutionId() {
-    User user = createUserWithRole();
-    user.setITDirectorRole();
-    user.setInstitutionId(10);
-    UserUpdateFields userUpdateFields = new UserUpdateFields();
-    userUpdateFields.setInstitutionId(20);
-
-    try (var response = userResource.updateSelf(new DuosUser(authUser, user), uriInfo, gson.toJson(userUpdateFields))) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    }
-  }
-
-  @Test
   void testUpdate() {
     User user = createUserWithRole();
     UserUpdateFields userUpdateFields = new UserUpdateFields();

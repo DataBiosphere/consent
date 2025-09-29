@@ -38,6 +38,9 @@ public class UseRestrictionConverter implements ConsentLogger {
       //
       //    Research related entries
       //
+      if (Objects.nonNull(dar.getData().getAiLlmUse()) && Boolean.TRUE.equals(dar.getData().getAiLlmUse())) {
+        dataUse.setAiLlmUse(dar.getData().getAiLlmUse());
+      }
       if (Objects.nonNull(dar.getData().getMethods()) && Boolean.TRUE.equals(dar.getData().getMethods())) {
         dataUse.setMethodsResearch(dar.getData().getMethods());
       }

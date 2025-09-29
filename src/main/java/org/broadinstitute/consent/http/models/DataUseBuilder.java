@@ -90,6 +90,11 @@ public class DataUseBuilder {
     return this;
   }
 
+  public DataUseBuilder setAiLlmUse(Boolean aiLlmUse) {
+    du.setAiLlmUse(aiLlmUse);
+    return this;
+  }
+
   public DataUseBuilder setControl(Boolean controls) {
     du.setControls(controls);
     return this;
