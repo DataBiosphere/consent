@@ -214,11 +214,6 @@ public class UserResource extends Resource {
       User user = duosUser.getUser();
       UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
 
-      // Users cannot update their own institution id through this service
-      if (userUpdateFields.getInstitutionId() != null) {
-        throw new BadRequestException("Institution ID is not updatable");
-      }
-
       if (Objects.nonNull(userUpdateFields.getUserRoleIds()) && !user.hasUserRole(
           UserRoles.ADMIN)) {
         throw new BadRequestException("Cannot change user's roles.");

@@ -39,6 +39,9 @@ public interface RuleImplementationInterface {
     if (Boolean.TRUE.equals(data.getIllegalBehavior())) {
       return false;
     }
+    if (Boolean.TRUE.equals(data.getAiLlmUse())) {
+      return false;
+    }
     if (Boolean.TRUE.equals(data.getControls())) {
       return false;
     }
@@ -81,6 +84,9 @@ public interface RuleImplementationInterface {
 
   default boolean secondaryConditionChecks(DataAccessRequestData data) {
     // Secondary condition checks, part 1
+    if (Boolean.TRUE.equals(data.getAiLlmUse())) {
+      return false;
+    }
     if (Boolean.TRUE.equals(data.getControls())) {
       return false;
     }

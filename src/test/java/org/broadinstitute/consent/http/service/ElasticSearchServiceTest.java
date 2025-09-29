@@ -69,6 +69,8 @@ import org.elasticsearch.client.RestClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -559,21 +561,15 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     }
   }
 
-  @Test
-  void testValidateQuery() throws IOException {
-    String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
-
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }",
+      "{ \"from\": 0, \"size\": 100, \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }",
+      "{ \"sort\": [\"datasetIdentifier\"], \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }",
+      "{ \"from\": 0, \"size\": 100, \"sort\": [\"datasetIdentifier\"], \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }",
+  })
+  void testValidateQuerySuccess(String query) throws IOException {
     mockElasticSearchResponse("{\"valid\":true}");
-
-    assertTrue(service.validateQuery(query));
-  }
-
-  @Test
-  void testValidateQueryWithFromAndSize() throws IOException {
-    String query = "{ \"from\": 0, \"size\": 100, \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
-
-    mockElasticSearchResponse("{\"valid\":true}");
-
     assertTrue(service.validateQuery(query));
   }
 
@@ -732,6 +728,89 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(datasetDAO.findDatasetById(any())).thenReturn(null);
     assertDoesNotThrow(() -> service.updateDatasetIndexDate(1, 1, null));
     verify(datasetServiceDAO, never()).updateDatasetIndex(any(), any(), any());
+  }
+
+  @Test
+  void testInvalidResultWindow_ValidQueryWithinLimits() {
+    String query = "{\"size\": 100, \"from\": 0}";
+    assertFalse(service.invalidResultWindow(query));
+  }
+
+  @Test
+  void testInvalidResultWindow_DoubleValuesThrowClassCastException() {
+    String query = "{\"size\": 100.0, \"from\": 0.0}";
+    assertTrue(service.invalidResultWindow(query));
+  }
+
+  @Test
+  void testInvalidResultWindow_StringValuesThrowClassCastException() {
+    String query = "{\"size\": \"100\", \"from\": \"0\"}";
+    assertTrue(service.invalidResultWindow(query));
+  }
+
+  @Test
+  void testInvalidResultWindow_ValidQueryAtLimit() {
+    String query = "{\"size\": 5000, \"from\": 5000}";
+    assertFalse(service.invalidResultWindow(query));
+  }
+
+  @Test
+  void testInvalidResultWindow_ExceedsMaxResultWindow() {
+    String query = "{\"size\": 5000, \"from\": 5001}";
+    assertTrue(service.invalidResultWindow(query));
+  }
+
+  @Test
+  void testInvalidResultWindow_ExceedsMaxResultWindowLargeValues() {
+    String query = "{\"size\": 10000, \"from\": 1}";
+    assertTrue(service.invalidResultWindow(query));
+  }
+
+  @Test
+  void testInvalidResultWindow_DefaultValues() {
+    String query = "{}";
+    assertFalse(service.invalidResultWindow(query));
+  }
+
+  @Test
+  void testInvalidResultWindow_OnlySizeProvided() {
+    String query = "{\"size\": 50}";
+    assertFalse(service.invalidResultWindow(query));
+  }
+
+  @Test
+  void testInvalidResultWindow_OnlyFromProvided() {
+    String query = "{\"from\": 100}";
+    assertFalse(service.invalidResultWindow(query));
+  }
+
+  @Test
+  void testInvalidResultWindow_InvalidJsonFormat() {
+    String query = "{invalid json}";
+    assertTrue(service.invalidResultWindow(query));
+  }
+
+  @Test
+  void testInvalidResultWindow_NullQuery() {
+    assertTrue(service.invalidResultWindow(null));
+  }
+
+  @Test
+  void testInvalidResultWindow_EmptyString() {
+    String query = "";
+    assertTrue(service.invalidResultWindow(query));
+  }
+
+  @Test
+  void testInvalidResultWindow_NonJsonString() {
+    String query = "not a json string";
+    assertTrue(service.invalidResultWindow(query));
+  }
+
+  @Test
+  void testInvalidResultWindow_ExtraFieldsInQuery() {
+    String query = "{\"size\": 100, \"from\": 50, \"query\": {\"match_all\": {}}}";
+    assertFalse(service.invalidResultWindow(query));
   }
 
 }
