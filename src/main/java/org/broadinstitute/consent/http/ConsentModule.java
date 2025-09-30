@@ -67,6 +67,7 @@ import org.broadinstitute.consent.http.service.OidcService;
 import org.broadinstitute.consent.http.service.OntologyService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
+import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
@@ -576,7 +577,7 @@ public class ConsentModule extends AbstractModule {
 
   @Provides
   InstitutionService providesInstitutionService() {
-    return new InstitutionService(providesInstitutionDAO(), providesUserDAO());
+    return new InstitutionService(providesInstitutionDAO(), providesUserDAO(), providesInstitutionAndLibraryCardEnforcement());
   }
 
   @Provides
@@ -637,7 +638,15 @@ public class ConsentModule extends AbstractModule {
         providesDraftService(),
         providesInstitutionService(),
         providesDACAutomationRuleDAO(),
-        providesDatasetAuthorizationReaderDAO());
+        providesDatasetAuthorizationReaderDAO(),
+        providesInstitutionAndLibraryCardEnforcement());
+  }
+
+  @Provides
+  InstitutionAndLibraryCardEnforcement providesInstitutionAndLibraryCardEnforcement() {
+    return new InstitutionAndLibraryCardEnforcement(
+        providesJdbi(),
+        providesUserServiceDAO());
   }
 
   @Provides
