@@ -116,3 +116,39 @@ passing them to SendGrid. To add a new email, follow these steps:
 2. Add a new entry to [EmailType](src/main/java/org/broadinstitute/consent/http/enumeration/EmailType.java) that references that file.
 3. Add a new [MailMessage](src/main/java/org/broadinstitute/consent/http/mail/message/MailMessage.java) subclass that references this EmailType and implements methods to provide data for the freemarker template and database operation
 4. Add a method to [EmailService](src/main/java/org/broadinstitute/consent/http/service/EmailService.java) that creates this message and passes it to sendMessage().
+
+
+### How to scan with OWASP
+Consent code includes a maven plugin for the OWASP dependency check tool.  Three environment
+variables are needed to use this.  You will need the dotNet 8 SDK to generate a report.
+
+Install the dotNet 8 SDK with:
+
+```$ brew install --cask dotnet-sdk@8```
+
+Register at the National Vulnerability Database for an API key here:
+https://nvd.nist.gov/developers/request-an-api-key
+
+Assign the key value they issue you as environment variable NVD_API_KEY
+
+e.g.
+
+```$ export NVD_API_KEY=<your api key here>```
+
+Register at the OSS Index for an API key:
+https://ossindex.sonatype.org/
+
+Assign the username you used (email address) to the environment variable OSS_INDEX_USERNAME
+
+e.g.
+
+```$ export OSS_INDEX_USERNAME=<your username>```
+
+Assign the API Token (visible on the User Settings page) to the environment variable OSS_INDEX_PASSWORD
+
+e.g.
+
+```$ export OSS_INDEX_PASSWORD=<your API token>```
+
+Run the dependency checker:
+```$ mvn org.owasp:dependency-check-maven:check``` 
