@@ -1,0 +1,26 @@
+get:
+  summary: Get the NIH Institutional Certification document for a dataset.
+  description: Provides a stream containing the file as supplied by the data submitter or custodian.
+  tags:
+    - Dataset
+  parameters:
+    - name: id
+      in: path
+      description: The dataset id
+      required: true
+      schema:
+        type: integer
+  responses:
+    200:
+      description: File contents.
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+    401:
+      description: User not authorized to get file
+    404:
+      description: The dataset and/or the file cannot be found.
+    500:
+      description: An unrecoverable error occurred when attempting to return this attachment.

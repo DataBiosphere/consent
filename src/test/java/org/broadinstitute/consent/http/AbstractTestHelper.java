@@ -22,4 +22,8 @@ public abstract class AbstractTestHelper {
     return RandomUtils.secureStrong().randomInt(startInclusive, endExclusive);
   }
 
+  public static int nextInt() {
+    return RandomUtils.secure().randomInt();
+  }
+
 }

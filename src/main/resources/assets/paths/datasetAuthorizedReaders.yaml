@@ -1,0 +1,22 @@
+get:
+  summary: List authorized access readers for a dataset
+  description: |
+    Endpoint allows administrators to list the authorized access readers of a dataset
+  tags:
+    - Admin
+    - Dataset
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+  responses:
+    200:
+      description: Returns the list of authorized access readers
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/DatasetAuthorizedReader.yaml'

@@ -7,10 +7,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MultivaluedHashMap;
@@ -122,11 +125,13 @@ class AuthorizationHelperTest extends AbstractTestHelper {
   @Test
   void testAuthenticateGetUserInfoFailure() {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerCache.loadCache(bearerToken, headerMap);
 
     AuthUser authUser = oAuthAuthenticator.authenticate(bearerToken).orElseThrow();
     assertEquals(bearerToken, authUser.getAuthToken());
     // A DuosUser is not created if the user is not found
+    doThrow(NotFoundException.class).when(userService).findUserByEmail(anyString());
     Optional<DuosUser> duosUser = duosUserAuthenticator.authenticate(bearerToken);
     assertFalse(duosUser.isPresent());
   }
@@ -167,15 +172,28 @@ class AuthorizationHelperTest extends AbstractTestHelper {
   }
 
   /**
-   * Test that in the case of a missing claim headers, we don't fail on Sam user lookup
+   * Test that in the case of a missing claim headers (other than email), we don't fail on Sam user lookup
    */
   @Test
   void testAuthenticateGetUserWithStatusInfoIncompleteClaims() {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerCache.loadCache(bearerToken, headerMap);
 
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
     assertEquals(authUser.orElseThrow().getAuthToken(), bearerToken);
+  }
+
+  /**
+   * Test that in the case of a missing email header, we throw an exception.
+   */
+  @Test
+  void testAuthenticateGetUserWithStatusInfMissingEmailClaimsThrows() {
+    headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
+    headerCache.loadCache(bearerToken, headerMap);
+
+    assertThrows(NotAuthorizedException.class, ()->oAuthAuthenticator.authenticate(bearerToken));
+
   }
 
   /**

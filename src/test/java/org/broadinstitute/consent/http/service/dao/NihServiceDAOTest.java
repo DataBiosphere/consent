@@ -141,9 +141,7 @@ class NihServiceDAOTest extends DAOTestHelper {
   @Test
   void testUpdateUserNihStatus_nullAccount() {
     User user = createUser();
-    assertThrows(IllegalArgumentException.class, () -> {
-      serviceDAO.updateUserNihStatus(user, null);
-    });
+    assertThrows(IllegalArgumentException.class, () -> serviceDAO.updateUserNihStatus(user, null));
   }
 
   @Test
@@ -157,9 +155,46 @@ class NihServiceDAOTest extends DAOTestHelper {
     userAccount.setStatus(true);
     userAccount.setNihUsername("NEW_ID");
     userAccount.setEraExpiration("new expiration");
-    assertThrows(Exception.class, () -> {
-      serviceDAO.updateUserNihStatus(user, userAccount);
-    });
+    assertThrows(Exception.class, () -> serviceDAO.updateUserNihStatus(user, userAccount));
   }
 
+  @Test
+  void testDeleteNihAccountById() {
+    User user = createUser();
+    UserProperty prop1 = new UserProperty(
+        user.getUserId(),
+        UserFields.ERA_STATUS.getValue(),
+        Boolean.TRUE.toString()
+    );
+    UserProperty prop2 = new UserProperty(
+        user.getUserId(),
+        UserFields.ERA_EXPIRATION_DATE.getValue(),
+        new Date().toString()
+    );
+    String commonsId = "COMMONS_ID";
+    userDAO.updateEraCommonsId(user.getUserId(), commonsId);
+    userPropertyDAO.insertAll(List.of(prop1, prop2));
+
+    serviceDAO.deleteNihAccountById(user.getUserId());
+
+    // assert that props are deleted
+    List<UserProperty> updatedProps = userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
+        user.getUserId(),
+        List.of(UserFields.ERA_STATUS.getValue(), UserFields.ERA_EXPIRATION_DATE.getValue()));
+    assertTrue(updatedProps.isEmpty());
+
+    // assert that era commons id is null
+    User updatedUser = userDAO.findUserById(user.getUserId());
+    assertNull(updatedUser.getEraCommonsId());
+  }
+
+  @Test
+  void testDeleteNihStatus_jdbiError() {
+    // superclass jdbi is not a mock, we need to mock it locally to simulate an exception
+    Jdbi jdbi = mock(Jdbi.class);
+    serviceDAO = new NihServiceDAO(jdbi);
+    doThrow(new Exception()).when(jdbi).useTransaction(any());
+    User user = createUser();
+    assertThrows(Exception.class, () -> serviceDAO.deleteNihAccountById(user.getUserId()));
+  }
 }

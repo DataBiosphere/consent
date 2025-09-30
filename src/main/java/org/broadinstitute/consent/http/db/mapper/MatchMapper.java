@@ -11,13 +11,13 @@ public class MatchMapper implements RowMapper<Match> {
   public Match map(ResultSet r, StatementContext ctx) throws SQLException {
 
     return new Match(
-        r.getInt("matchId"),
+        r.getInt("match_id"),
         r.getString("consent"),
         r.getString("purpose"),
-        r.getBoolean("matchEntity"),
+        r.getBoolean("match_entity"),
         r.getBoolean("abstain"),
         r.getBoolean("failed"),
-        r.getDate("createDate"),
+        r.getDate("create_date"),
         r.getString("algorithm_version"));
   }
 }

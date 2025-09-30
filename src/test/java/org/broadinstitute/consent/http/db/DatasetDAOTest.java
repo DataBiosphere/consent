@@ -40,7 +40,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
-import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
@@ -55,6 +54,54 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DatasetDAOTest extends DAOTestHelper {
+
+  @Test
+  void testFindDatasetWithoutFSOInformation() {
+    // The query under test specifically excludes FSO information
+    // and INCLUDES User, Study, and Properties information
+    Dataset dataset = insertDataset();
+    Study study = insertStudyWithProperties();
+    datasetDAO.updateStudyId(dataset.getDatasetId(), study.getStudyId());
+    createFileStorageObject(study.getUuid().toString(),
+        FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+    createFileStorageObject(
+        dataset.getDatasetId().toString(),
+        FileCategory.NIH_INSTITUTIONAL_CERTIFICATION
+    );
+    Dataset foundDataset = datasetDAO.findDatasetWithoutFSOInformation(dataset.getDatasetId());
+    // Explicitly check queried entities
+    assertNotNull(foundDataset.getProperties());
+    assertNotNull(foundDataset.getStudy().getProperties());
+    assertEquals(study.getStudyId(), foundDataset.getStudy().getStudyId());
+    assertEquals(dataset.getCreateUserId(), foundDataset.getCreateUser().getUserId());
+    // Explicitly check un-queried entities
+    assertNull(foundDataset.getNihInstitutionalCertificationFile());
+    assertNull(foundDataset.getStudy().getAlternativeDataSharingPlan());
+  }
+
+  @Test
+  void testFindMinimalDatasetByAlias() {
+    // The query under test specifically excludes FSO and study information
+    // and INCLUDES User and Dataset Properties information
+    Dataset dataset = insertDataset();
+    Study study = insertStudyWithProperties();
+    datasetDAO.updateStudyId(dataset.getDatasetId(), study.getStudyId());
+    createFileStorageObject(study.getUuid().toString(),
+        FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+    createFileStorageObject(
+        dataset.getDatasetId().toString(),
+        FileCategory.NIH_INSTITUTIONAL_CERTIFICATION
+    );
+    Dataset foundDataset = datasetDAO.findMinimalDatasetByAlias(dataset.getAlias());
+    // Explicitly check queried entities
+    assertNotNull(foundDataset.getProperties());
+    assertEquals(study.getStudyId(), foundDataset.getStudyId());
+    assertEquals(dataset.getCreateUserId(), foundDataset.getCreateUser().getUserId());
+    // Explicitly check un-queried entities
+    assertNull(foundDataset.getNihInstitutionalCertificationFile());
+    assertNull(foundDataset.getStudy());
+    assertNull(foundDataset.getStudy());
+  }
 
   @Test
   void testFindAllDatasetStudySummariesDatasetAndStudy() {
@@ -1164,24 +1211,6 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindDatasetSummariesByQuery() {
-    Dataset dataset = insertDataset();
-    Dataset dataset2 = insertDataset();
-    User user = createUser();
-    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(), dataset.getDatasetId());
-    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(),
-        dataset2.getDatasetId());
-
-    List<DatasetSummary> summaries = datasetDAO.findDatasetSummariesByQuery(dataset.getName());
-    assertNotNull(summaries);
-    assertFalse(summaries.isEmpty());
-    assertEquals(dataset.getDatasetId(),
-        summaries.stream().map(DatasetSummary::id).toList().get(0));
-    assertNotEquals(dataset2.getDatasetId(),
-        summaries.stream().map(DatasetSummary::id).toList().get(0));
-  }
-
-  @Test
   void testUpdateDatasetIndexedDate() {
     Dataset dataset = insertDataset();
     datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), Instant.now());
@@ -1190,33 +1219,6 @@ class DatasetDAOTest extends DAOTestHelper {
     datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), null);
     Dataset updatedDataset2 = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNull(updatedDataset2.getIndexedDate());
-  }
-
-  @Test
-  void testFindDatasetSummariesByQuery_NotApproved() {
-    Dataset dataset = insertDataset();
-
-    List<DatasetSummary> summaries = datasetDAO.findDatasetSummariesByQuery(dataset.getName());
-    assertNotNull(summaries);
-    assertTrue(summaries.isEmpty());
-  }
-
-  @Test
-  void testFindDatasetSummariesByQuery_NullQuery() {
-    insertDataset();
-
-    List<DatasetSummary> summaries = datasetDAO.findDatasetSummariesByQuery(null);
-    assertNotNull(summaries);
-    assertTrue(summaries.isEmpty());
-  }
-
-  @Test
-  void testFindDatasetSummariesByQuery_EmptyQuery() {
-    insertDataset();
-
-    List<DatasetSummary> summaries = datasetDAO.findDatasetSummariesByQuery("");
-    assertNotNull(summaries);
-    assertTrue(summaries.isEmpty());
   }
 
   private DarCollection createDarCollectionWithDatasets(int dacId, User user,

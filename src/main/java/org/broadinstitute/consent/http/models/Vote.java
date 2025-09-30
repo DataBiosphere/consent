@@ -11,13 +11,13 @@ import java.util.List;
 public class Vote {
 
   public static final String QUERY_FIELDS_WITH_V_PREFIX =
-      "v.voteid as v_vote_id, "
+      "v.vote_id as v_vote_id, "
           + " v.vote as v_vote, "
           + " v.user_id as v_user_id, "
           + " v.rationale as v_rationale, "
-          + " v.electionid as v_election_id, "
-          + "v.createdate as v_create_date, "
-          + " v.updatedate as v_update_date, "
+          + " v.election_id as v_election_id, "
+          + " v.create_date as v_create_date, "
+          + " v.update_date as v_update_date, "
           + " v.type as v_type ";
 
   @JsonProperty

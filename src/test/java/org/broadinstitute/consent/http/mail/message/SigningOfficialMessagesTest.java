@@ -40,7 +40,9 @@ class SigningOfficialMessagesTest extends AbstractTestHelper {
         Arguments.of(new SoDARApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
             TRANSLATION, true)),
         Arguments.of(new SoPRApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
-            TRANSLATION)),
+            TRANSLATION, false)),
+        Arguments.of(new SoPRApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
+            TRANSLATION, true)),
         Arguments.of(new SoDARSubmitted(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets)),
         Arguments.of(new SoPRSubmitted(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets))
     );
@@ -96,7 +98,7 @@ class SigningOfficialMessagesTest extends AbstractTestHelper {
   }
 
   @Test
-  void testRADARReferences() throws Exception {
+  void testDARApprovedRADARReferences() throws Exception {
     MailMessage message = new SoDARApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
         TRANSLATION, true);
     var linkUrl = "http://testServerUrl";
@@ -110,9 +112,40 @@ class SigningOfficialMessagesTest extends AbstractTestHelper {
   }
 
   @Test
-  void testNORADARReferences() throws Exception {
+  void testDARNORADARReferences() throws Exception {
     MailMessage message = new SoDARApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
         TRANSLATION, false);
+    var linkUrl = "http://testServerUrl";
+    var template = helper.getTemplate(message.getTemplateName());
+    var out = new StringWriter();
+    template.process(message.createModel(linkUrl), out);
+    String templateString = out.toString();
+
+    assertFalse(templateString.toLowerCase().contains("radar"));
+  }
+
+  @Test
+  void testPRApprovedRADARReferences() throws Exception {
+    MailMessage message =
+        new SoPRApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets, TRANSLATION, true);
+    var linkUrl = "http://testServerUrl";
+    var template = helper.getTemplate(message.getTemplateName());
+    var out = new StringWriter();
+    template.process(message.createModel(linkUrl), out);
+    String templateString = out.toString();
+
+    assertEquals(2, StringUtils.countMatches(templateString," Rule Automated DAR (RADAR) "));
+    assertFalse(templateString.contains("radarText"));
+
+    String subject = message.createSubject();
+    assertFalse(subject.contains("radarText"));
+    assertTrue(subject.contains(" Rule Automated DAR (RADAR) "));
+  }
+
+  @Test
+  void testPRNORADARReferences() throws Exception {
+    MailMessage message =
+        new SoPRApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets, TRANSLATION, false);
     var linkUrl = "http://testServerUrl";
     var template = helper.getTemplate(message.getTemplateName());
     var out = new StringWriter();

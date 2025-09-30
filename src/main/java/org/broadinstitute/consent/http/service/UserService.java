@@ -22,20 +22,19 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
+import org.broadinstitute.consent.http.db.DatasetAuthorizationReaderDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
-import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -52,7 +51,6 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 public class UserService implements ConsentLogger {
 
   public static final String LIBRARY_CARD_FIELD = "libraryCard";
-  public static final String LIBRARY_CARDS_FIELD = "libraryCards";
   public static final String USER_PROPERTIES_FIELD = "properties";
   public static final String USER_STATUS_INFO_FIELD = "userStatusInfo";
 
@@ -64,19 +62,29 @@ public class UserService implements ConsentLogger {
   private final LibraryCardDAO libraryCardDAO;
   private final AcknowledgementDAO acknowledgementDAO;
   private final FileStorageObjectDAO fileStorageObjectDAO;
-  private final SamDAO samDAO;
   private final UserServiceDAO userServiceDAO;
   private final DaaDAO daaDAO;
   private final DraftServiceDAO draftServiceDAO;
   private final InstitutionService institutionService;
   private final DACAutomationRuleDAO ruleDAO;
+  private final DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
 
   @Inject
-  public UserService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, UserRoleDAO userRoleDAO,
-      VoteDAO voteDAO, InstitutionDAO institutionDAO, LibraryCardDAO libraryCardDAO,
-      AcknowledgementDAO acknowledgementDAO, FileStorageObjectDAO fileStorageObjectDAO,
-      SamDAO samDAO, UserServiceDAO userServiceDAO, DaaDAO daaDAO, DraftServiceDAO draftServiceDAO,
-      InstitutionService institutionService, DACAutomationRuleDAO ruleDAO) {
+  public UserService(
+      UserDAO userDAO,
+      UserPropertyDAO userPropertyDAO,
+      UserRoleDAO userRoleDAO,
+      VoteDAO voteDAO,
+      InstitutionDAO institutionDAO,
+      LibraryCardDAO libraryCardDAO,
+      AcknowledgementDAO acknowledgementDAO,
+      FileStorageObjectDAO fileStorageObjectDAO,
+      UserServiceDAO userServiceDAO,
+      DaaDAO daaDAO,
+      DraftServiceDAO draftServiceDAO,
+      InstitutionService institutionService,
+      DACAutomationRuleDAO ruleDAO,
+      DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO) {
     this.userDAO = userDAO;
     this.userPropertyDAO = userPropertyDAO;
     this.userRoleDAO = userRoleDAO;
@@ -85,10 +93,10 @@ public class UserService implements ConsentLogger {
     this.libraryCardDAO = libraryCardDAO;
     this.acknowledgementDAO = acknowledgementDAO;
     this.fileStorageObjectDAO = fileStorageObjectDAO;
-    this.samDAO = samDAO;
     this.userServiceDAO = userServiceDAO;
     this.daaDAO = daaDAO;
     this.draftServiceDAO = draftServiceDAO;
+    this.datasetAuthorizationReaderDAO = datasetAuthorizationReaderDAO;
     this.institutionService = institutionService;
     this.ruleDAO = ruleDAO;
   }
@@ -102,12 +110,10 @@ public class UserService implements ConsentLogger {
    */
   public User updateUserFieldsById(UserUpdateFields userUpdateFields, Integer userId) {
     if (Objects.nonNull(userUpdateFields)) {
+
       // Update Primary User Fields
       if (Objects.nonNull(userUpdateFields.getDisplayName())) {
         userDAO.updateDisplayName(userId, userUpdateFields.getDisplayName());
-      }
-      if (Objects.nonNull(userUpdateFields.getInstitutionId())) {
-        userDAO.updateInstitutionId(userId, userUpdateFields.getInstitutionId());
       }
       if (Objects.nonNull(userUpdateFields.getEmailPreference())) {
         userDAO.updateEmailPreference(userId, userUpdateFields.getEmailPreference());
@@ -284,6 +290,7 @@ public class UserService implements ConsentLogger {
     acknowledgementDAO.deleteAllAcknowledgementsByUser(userId);
     fileStorageObjectDAO.deleteAllUserFiles(userId);
     ruleDAO.auditedDeleteAllDACRuleSettingForUser(userId, auditUserId);
+    datasetAuthorizationReaderDAO.deleteByUserId(userId);
     userDAO.deleteUserById(userId);
   }
 
@@ -331,11 +338,11 @@ public class UserService implements ConsentLogger {
   /**
    * Convenience method to return a response-friendly json object of the user.
    *
-   * @param authUser The AuthUser. Used to determine if we should return auth user properties
+   * @param duosUser The DuosUser. Used to determine if we should return auth user properties
    * @param userId   The User. This is the user we want to return properties for
    * @return JsonObject.
    */
-  public JsonObject findUserWithPropertiesByIdAsJsonObject(AuthUser authUser, Integer userId) {
+  public JsonObject findUserWithPropertiesByIdAsJsonObject(DuosUser duosUser, Integer userId) {
     Gson gson = GsonUtil.getInstance();
     User user = findUserById(userId);
     List<UserProperty> props = findAllUserProperties(user.getUserId());
@@ -345,12 +352,10 @@ public class UserService implements ConsentLogger {
     if (user.getLibraryCard() != null) {
       JsonObject libraryCardJson = gson.toJsonTree(user.getLibraryCard()).getAsJsonObject();
       userJson.add(LIBRARY_CARD_FIELD, libraryCardJson);
-      // Note that this is provided for backwards compatibility with the UI and will be removed
-      userJson.add(LIBRARY_CARDS_FIELD, gson.toJsonTree(List.of(libraryCardJson)));
     }
-    if (authUser.getEmail().equalsIgnoreCase(user.getEmail()) && Objects.nonNull(
-        authUser.getUserStatusInfo())) {
-      JsonObject userStatusInfoJson = gson.toJsonTree(authUser.getUserStatusInfo())
+    if (duosUser.getEmail().equalsIgnoreCase(user.getEmail()) && Objects.nonNull(
+        duosUser.getUserStatusInfo())) {
+      JsonObject userStatusInfoJson = gson.toJsonTree(duosUser.getUserStatusInfo())
           .getAsJsonObject();
       userJson.add(USER_STATUS_INFO_FIELD, userStatusInfoJson);
     }
@@ -397,27 +402,7 @@ public class UserService implements ConsentLogger {
     }
   }
 
-  public User findOrCreateUser(AuthUser authUser) throws Exception {
-    User user;
-    // Ensure that the user is a registered DUOS user
-    try {
-      user = userDAO.findUserByEmail(authUser.getEmail());
-    } catch (NotFoundException nfe) {
-      User newUser = new User();
-      newUser.setEmail(authUser.getEmail());
-      newUser.setDisplayName(authUser.getName());
-      user = createUser(newUser);
-    }
-    // Ensure that the user is a registered SAM user
-    try {
-      samDAO.postRegistrationInfo(authUser);
-    } catch (ConsentConflictException cce) {
-      // no-op in the case of conflicts.
-    }
-    return user;
-  }
-
-  public List<User> findUsersInJsonArray(String json, String arrayKey) {
+   public List<User> findUsersInJsonArray(String json, String arrayKey) {
     List<JsonElement> jsonElementList;
     try {
       JsonObject jsonObject = new Gson().fromJson(json, JsonObject.class);

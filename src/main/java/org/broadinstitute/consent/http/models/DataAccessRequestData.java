@@ -22,7 +22,7 @@ public class DataAccessRequestData {
    * more info.
    */
   public static final List<String> DEPRECATED_PROPS = Arrays
-      .asList("referenceId", "investigator",
+      .asList("referenceId", "investigator", "datasets", "darCode",
           "institution", "department", "address1", "address2", "city", "zipcode", "zipCode",
           "state", "country", "researcher", "userId", "isThePi", "havePi",
           "profileName", "pubmedId", "scientificUrl", "eraExpiration", "academicEmail",
@@ -39,6 +39,7 @@ public class DataAccessRequestData {
   private String nonTechRus;
   private Boolean diseases;
   private Boolean methods;
+  private Boolean aiLlmUse;
   private Boolean controls;
   private Boolean population;
   private Boolean other;
@@ -67,17 +68,9 @@ public class DataAccessRequestData {
   private Boolean hmb;
   private String status;
   private Boolean poa;
-  private List<DatasetEntry> datasets;
-  @SerializedName(value = "darCode", alternate = "dar_code")
-  private String darCode;
   private Object restriction;
   @SerializedName(value = "validRestriction", alternate = "valid_restriction")
   private Boolean validRestriction;
-  @Deprecated
-  private Long createDate;
-  @Deprecated
-  private Long sortDate;
-  @Deprecated
   @SerializedName(value = "datasetIds", alternate = {"datasetId", "datasetid"})
   private List<Integer> datasetIds;
 
@@ -186,6 +179,14 @@ public class DataAccessRequestData {
 
   public void setMethods(Boolean methods) {
     this.methods = methods;
+  }
+
+  public Boolean getAiLlmUse() {
+    return aiLlmUse;
+  }
+
+  public void setAiLlmUse(Boolean aiLlmUse) {
+    this.aiLlmUse = aiLlmUse;
   }
 
   public Boolean getControls() {
@@ -335,27 +336,6 @@ public class DataAccessRequestData {
     this.hmb = hmb;
   }
 
-  public List<DatasetEntry> getDatasets() {
-    if (Objects.isNull(datasets)) {
-      return Collections.emptyList();
-    }
-    return datasets;
-  }
-
-  public void setDatasets(List<DatasetEntry> datasets) {
-    this.datasets = datasets;
-  }
-
-  @Deprecated
-  public String getDarCode() {
-    return darCode;
-  }
-
-  @Deprecated
-  public void setDarCode(String darCode) {
-    this.darCode = darCode;
-  }
-
   public Object getRestriction() {
     return restriction;
   }
@@ -370,22 +350,6 @@ public class DataAccessRequestData {
 
   public void setValidRestriction(Boolean validRestriction) {
     this.validRestriction = validRestriction;
-  }
-
-  public Long getCreateDate() {
-    return createDate;
-  }
-
-  public void setCreateDate(Long createDate) {
-    this.createDate = createDate;
-  }
-
-  public Long getSortDate() {
-    return sortDate;
-  }
-
-  public void setSortDate(Long sortDate) {
-    this.sortDate = sortDate;
   }
 
   public String getPiCountryOfOperation() {

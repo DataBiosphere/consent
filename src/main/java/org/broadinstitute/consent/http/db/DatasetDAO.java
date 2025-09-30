@@ -12,7 +12,6 @@ import org.broadinstitute.consent.http.db.mapper.DatasetMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetPropertyMapper;
 import org.broadinstitute.consent.http.db.mapper.DatasetReducer;
 import org.broadinstitute.consent.http.db.mapper.DatasetStudySummaryMapper;
-import org.broadinstitute.consent.http.db.mapper.DatasetSummaryMapper;
 import org.broadinstitute.consent.http.db.mapper.DictionaryMapper;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOPrefix;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
@@ -20,7 +19,6 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
-import org.broadinstitute.consent.http.models.DatasetSummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
@@ -47,6 +45,71 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 public interface DatasetDAO extends Transactional<DatasetDAO> {
 
   String CHAIRPERSON = Resource.CHAIRPERSON;
+
+  /**
+   * Find a Dataset by id.
+   * @param datasetId The dataset id
+   * @return Dataset
+   */
+  @UseRowReducer(DatasetReducer.class)
+  @SqlQuery("""
+          SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
+              d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
+              d.study_id, d.indexed_date,
+              u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
+              u.create_date AS u_create_date, u.email_preference AS u_email_preference,
+              u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
+              k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property, dp.property_id,
+              s.study_id AS s_study_id,
+              s.name AS s_name,
+              s.description AS s_description,
+              s.data_types AS s_data_types,
+              s.pi_name AS s_pi_name,
+              s.create_user_id AS s_create_user_id,
+              s.create_date AS s_create_date,
+              s.update_user_id AS s_user_id,
+              s.update_date AS s_update_date,
+              s.public_visibility AS s_public_visibility,
+              s_dataset.dataset_id AS s_dataset_id,
+              sp.study_property_id AS sp_study_property_id,
+              sp.study_id AS sp_study_id,
+              sp.key AS sp_key,
+              sp.value AS sp_value,
+              sp.type AS sp_type
+      FROM dataset d
+      LEFT JOIN users u on d.create_user_id = u.user_id
+      LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+      LEFT JOIN dictionary k ON k.key_id = dp.property_key
+      LEFT JOIN study s ON s.study_id = d.study_id
+      LEFT JOIN study_property sp ON sp.study_id = s.study_id
+      LEFT JOIN dataset s_dataset ON s_dataset.study_id = s.study_id
+      WHERE d.dataset_id = :datasetId
+      """)
+  Dataset findDatasetWithoutFSOInformation(@Bind("datasetId") Integer datasetId);
+
+  /**
+   * Find a minimal version of a Dataset by alias. This query excludes file and study information
+   * which is often not necessary for many operations.
+   * @param alias The dataset alias
+   * @return Dataset
+   */
+  @UseRowReducer(DatasetReducer.class)
+  @SqlQuery("""
+      SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
+          d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use,
+          d.dac_approval, d.study_id, d.indexed_date,
+          u.user_id AS u_user_id, u.email AS u_email, u.display_name AS u_display_name,
+          u.create_date AS u_create_date, u.email_preference AS u_email_preference,
+          u.institution_id AS u_institution_id, u.era_commons_id AS u_era_commons_id,
+          k.key, dp.property_value, dp.property_key, dp.property_type, dp.schema_property,
+          dp.property_id
+      FROM dataset d
+      LEFT JOIN users u on d.create_user_id = u.user_id
+      LEFT JOIN dataset_property dp ON dp.dataset_id = d.dataset_id
+      LEFT JOIN dictionary k ON k.key_id = dp.property_key
+      WHERE d.alias = :alias
+      """)
+  Dataset findMinimalDatasetByAlias(@Bind("alias") Integer alias);
 
   @UseRowMapper(DatasetStudySummaryMapper.class)
   @SqlQuery("""
@@ -512,13 +575,13 @@ FROM data_access_request dar
                 SELECT DISTINCT e.reference_id, e.dataset_id, LAST_VALUE(v.vote)
                     OVER(
                         PARTITION BY e.reference_id, e.dataset_id
-                        ORDER BY v.createdate
+                        ORDER BY v.create_date
                         RANGE BETWEEN
                             UNBOUNDED PRECEDING AND
                             UNBOUNDED FOLLOWING
                         ) last_vote
                   FROM election e
-                    INNER JOIN vote v ON e.election_id = v.electionid AND v.vote IS NOT NULL
+                    INNER JOIN vote v ON e.election_id = v.election_id AND v.vote IS NOT NULL
                     AND LOWER(e.election_type) = 'dataaccess'
                     AND LOWER(v.type) IN ('final', 'radar_approve')) final_access_vote ON final_access_vote.reference_id = dar.reference_id AND final_access_vote.dataset_id = dd.dataset_id
 WHERE dar.submission_date > now() - interval '1 year'
@@ -527,20 +590,8 @@ WHERE dar.submission_date > now() - interval '1 year'
   AND dar.collection_id NOT IN (
     SELECT DISTINCT collection_id
     FROM data_access_request
-    WHERE (regexp_replace(data #>> '{}', '\\\\u0000', '', 'g'))::jsonb ->> 'closeoutSupplement' IS NOT NULL)
+    WHERE data ->> 'closeoutSupplement' IS NOT NULL)
   """)
   List<ApprovedDataset> getApprovedDatasets(@Bind("userId") Integer userId);
 
-  @RegisterRowMapper(DatasetSummaryMapper.class)
-  @SqlQuery("""
-      SELECT DISTINCT d.dataset_id, d.alias, d.name
-      FROM dataset d
-      LEFT JOIN dataset_property p ON p.dataset_id = d.dataset_id
-      WHERE d.dac_approval = TRUE
-      AND (
-        LOWER(d.name) LIKE concat('%', LOWER(:query), '%') OR
-        LOWER(p.property_value) LIKE concat('%', LOWER(:query), '%')
-      )
-      """)
-  List<DatasetSummary> findDatasetSummariesByQuery(@Bind("query") String query);
 }

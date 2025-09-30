@@ -10,6 +10,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.DACAutomationRuleService;
@@ -46,7 +47,7 @@ class DACAutomationRuleResourceTest extends AbstractTestHelper {
   void testGetAllRules() {
     when(ruleService.findAll()).thenReturn(List.of());
 
-    try (var response = resource.getAllRules()) {
+    try (var response = resource.getAllRules(new DuosUser(authUser, new User()))) {
       Assertions.assertEquals(200, response.getStatus());
     }
   }

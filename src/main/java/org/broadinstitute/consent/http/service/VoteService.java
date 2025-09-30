@@ -298,7 +298,7 @@ public class VoteService implements ConsentLogger {
             try {
               if (dar.getProgressReport()) {
                 emailService.sendResearcherProgressReportApproved(
-                    darCode, researcherId, datasetMailDTOs, translation);
+                    darCode, researcherId, datasetMailDTOs, translation, radarApproved);
               } else {
                 emailService.sendResearcherDarApproved(
                     darCode, researcherId, datasetMailDTOs, translation, radarApproved);
@@ -388,7 +388,7 @@ public class VoteService implements ConsentLogger {
     for (User so : signingOfficials) {
       if (dar.getProgressReport()) {
         emailService.sendNewSoProgressReportApprovedEmail(
-            so, darCode, researcher, dar.getReferenceId(), datasets, translation);
+            so, darCode, researcher, dar.getReferenceId(), datasets, translation, radarApproved);
       } else {
         emailService.sendNewSoDARApprovedEmail(
             so, darCode, researcher, dar.getReferenceId(), datasets, translation, radarApproved);

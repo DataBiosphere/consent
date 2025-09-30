@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -130,7 +131,7 @@ public class DaaResource extends Resource implements ConsentLogger {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
-  public Response findAll() {
+  public Response findAll(@Auth DuosUser duosUser) {
     try {
       List<DataAccessAgreement> daas = daaService.findAll();
       return Response.ok(daas).build();
@@ -158,7 +159,7 @@ public class DaaResource extends Resource implements ConsentLogger {
   @PermitAll
   @Path("{daaId}/file")
   @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
-  public Response findFileById(
+  public Response findFileById(@Auth DuosUser duosUser,
       @PathParam("daaId") Integer daaId) {
     try {
       InputStream daa = daaService.findFileById(daaId);
@@ -212,10 +213,10 @@ public class DaaResource extends Resource implements ConsentLogger {
   @PermitAll
   @Path("/request/{daaId}")
   public Response sendDaaRequestMessage(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @PathParam("daaId") Integer daaId) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       if (user.getInstitutionId() == null) {
         throw new BadRequestException("This user has not set their institution: " + user.getDisplayName());
       }

@@ -49,6 +49,19 @@ public class MailResource {
 
   @GET
   @Produces("application/json")
+  @Path("/user/{userId}")
+  @RolesAllowed({ADMIN})
+  public Response getEmailByUser(@Auth AuthUser authUser,
+      @PathParam("userId") Integer userId,
+      @DefaultValue("20") @QueryParam("limit") Integer limit,
+      @DefaultValue("0") @QueryParam("offset") Integer offset) {
+    validateLimitAndOffset(limit, offset);
+    return Response.ok().entity(emailService.fetchEmailMessagesByUserId(userId, limit, offset))
+        .build();
+  }
+
+  @GET
+  @Produces("application/json")
   @Path("/range")
   @RolesAllowed({ADMIN})
   public Response getEmailByDateRange(@Auth AuthUser authUser,

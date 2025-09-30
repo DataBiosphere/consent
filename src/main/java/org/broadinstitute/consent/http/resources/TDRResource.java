@@ -4,6 +4,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.Path;
@@ -11,8 +12,8 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 import java.util.Objects;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.TDRService;
@@ -33,18 +34,18 @@ public class TDRResource extends Resource {
 
   @GET
   @Produces("application/json")
-  @PermitAll
+  @RolesAllowed({ADMIN, SERVICE_ACCOUNT})
   @Path("/{identifier}/approved/users")
   @Timed
-  public Response getApprovedUsers(@Auth AuthUser authUser,
+  public Response getApprovedUsers(@Auth DuosUser duosUser,
       @PathParam("identifier") String identifier) {
     try {
-      Dataset dataset = datasetService.findDatasetByIdentifier(identifier);
+      Dataset dataset = datasetService.findMinimalDatasetByIdentifier(duosUser.getUser(), identifier, false);
       if (Objects.isNull(dataset)) {
         throw new NotFoundException("Could not find dataset " + identifier);
       }
 
-      ApprovedUsers approvedUsers = tdrService.getApprovedUsersForDataset(authUser, dataset);
+      ApprovedUsers approvedUsers = tdrService.getApprovedUsersForDataset(duosUser, dataset);
       return Response.ok(approvedUsers).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -56,10 +57,10 @@ public class TDRResource extends Resource {
   @PermitAll
   @Path("/{identifier}")
   @Timed
-  public Response getDatasetByIdentifier(@Auth AuthUser authUser,
+  public Response getDatasetByIdentifier(@Auth DuosUser duosUser,
       @PathParam("identifier") String identifier) {
     try {
-      Dataset dataset = datasetService.findDatasetByIdentifier(identifier);
+      Dataset dataset = datasetService.findMinimalDatasetByIdentifier(duosUser.getUser(), identifier, true);
       if (Objects.isNull(dataset)) {
         throw new NotFoundException("Could not find dataset " + identifier);
       }

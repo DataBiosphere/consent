@@ -20,6 +20,7 @@ import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.text.MessageFormat;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -41,7 +42,6 @@ import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.filters.RequestHeaderCacheFilter;
 import org.broadinstitute.consent.http.filters.ResponseServerFilter;
 import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
@@ -140,7 +140,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
         LOGGER.error("Unable to bootstrap sentry logging.");
       }
     } catch (Exception e) {
-      LOGGER.error("Exception loading sentry properties: " + e.getMessage());
+      LOGGER.error(
+          MessageFormat.format("Exception loading sentry properties: {0}", e.getMessage()));
     }
     new ConsentApplication().run(args);
     LOGGER.info("Consent Application Started");
@@ -152,7 +153,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     try {
       initializeLiquibase(config);
     } catch (LiquibaseException | SQLException e) {
-      LOGGER.error("Exception initializing liquibase: " + e);
+      LOGGER.error(MessageFormat.format("Exception initializing liquibase: {0}", e));
     }
 
     // Previously, this code was working around a dropwizard+Guice issue with singletons and JDBI.
@@ -164,7 +165,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     // Services
     final DarCollectionService darCollectionService = injector.getProvider(
         DarCollectionService.class).get();
-    final DataAccessRequestService dataAccessRequestService = injector.getProvider(DataAccessRequestService.class).get();
+    final DataAccessRequestService dataAccessRequestService = injector.getProvider(
+        DataAccessRequestService.class).get();
     final DatasetService datasetService = injector.getProvider(DatasetService.class).get();
     final ElectionService electionService = injector.getProvider(ElectionService.class).get();
     final EmailService emailService = injector.getProvider(EmailService.class).get();
@@ -220,18 +222,18 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(injector.getInstance(DaaResource.class));
     env.jersey().register(injector.getInstance(DataAccessRequestResource.class));
     env.jersey().register(new DatasetResource(datasetService, userService,
-        datasetRegistrationService, elasticSearchService));
+        datasetRegistrationService, elasticSearchService, tdrService, gcsService));
     env.jersey().register(injector.getInstance(DacResource.class));
     env.jersey().register(injector.getInstance(DACAutomationRuleResource.class));
     env.jersey().register(new DACUserResource(userService));
     env.jersey().register(
-        new DarCollectionResource(darCollectionService, userService));
+        new DarCollectionResource(darCollectionService));
     env.jersey().register(new EmailNotifierResource(dataAccessRequestService));
     env.jersey().register(new InstitutionResource(institutionService));
     env.jersey().register(new LibraryCardResource(userService, libraryCardService));
     env.jersey().register(new MatchResource(matchService));
     env.jersey().register(new MetricsResource(metricsService));
-    env.jersey().register(new NihAccountResource(nihService, userService));
+    env.jersey().register(new NihAccountResource(nihService));
     env.jersey().register(injector.getInstance(PassportResource.class));
     env.jersey().register(new SamResource(samService, userService));
     env.jersey().register(new SchemaResource());
@@ -239,7 +241,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(new StatusResource(env.healthChecks()));
     env.jersey().register(injector.getInstance(SupportResource.class));
     env.jersey().register(
-        new UserResource(samService, userService, datasetService, acknowledgementService));
+        new UserResource(samService, userService, datasetService, acknowledgementService,
+            nihService));
     env.jersey().register(new TosResource(samService));
     env.jersey().register(injector.getInstance(VersionResource.class));
     env.jersey().register(new VoteResource(userService, voteService, electionService));
@@ -253,12 +256,16 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
     // Authentication filters
     final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
-    final DuosUserAuthenticator duosUserAuthenticator = injector.getProvider(DuosUserAuthenticator.class).get();
-    final AuthorizationHelper authorizationHelper = injector.getProvider(AuthorizationHelper.class).get();
+    final DuosUserAuthenticator duosUserAuthenticator = injector.getProvider(
+        DuosUserAuthenticator.class).get();
+    final AuthorizationHelper authorizationHelper = injector.getProvider(AuthorizationHelper.class)
+        .get();
     // Requests annotated with @Auth AuthUser will be authenticated through this filter
-    final AuthFilter<String, AuthUser> primaryAuthFilter = new OAuthCustomAuthFilter<>(authenticator, authorizationHelper);
+    final AuthFilter<String, AuthUser> primaryAuthFilter = new OAuthCustomAuthFilter<>(
+        authenticator, authorizationHelper);
     // Requests annotated with @Auth DuosUser will be authenticated through this filter and are guaranteed to have a populated User object
-    final AuthFilter<String, DuosUser> duosAuthUserFilter = new OAuthCustomAuthFilter<>(duosUserAuthenticator, authorizationHelper);
+    final AuthFilter<String, DuosUser> duosAuthUserFilter = new OAuthCustomAuthFilter<>(
+        duosUserAuthenticator, authorizationHelper);
     final PolymorphicAuthDynamicFeature<AuthUser> feature = new PolymorphicAuthDynamicFeature<>(
         Map.of(
             AuthUser.class, primaryAuthFilter,
@@ -307,7 +314,9 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     if (Objects.isNull(changeLogFile) || changeLogFile.trim().isEmpty()) {
       changeLogFile = "changelog-master.xml";
     }
-    LOGGER.info("Initializing db with: " + changeLogFile);
+    if (LOGGER.isInfoEnabled()) {
+      LOGGER.info(MessageFormat.format("Initializing db with: {0}", changeLogFile));
+    }
     return changeLogFile;
   }
 

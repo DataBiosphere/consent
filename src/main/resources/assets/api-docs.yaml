@@ -31,6 +31,8 @@ security:
 paths:
   /api/collections/{collectionId}:
     $ref: './paths/collection.yaml'
+  /api/collections/{collectionId}/electionHistory:
+    $ref: './paths/collectionWithElectionHistoryByCollectionId.yaml'
   /api/collections/dar/{referenceId}:
     $ref: './paths/collectionByReferenceId.yaml'
   /api/collections/role/{roleName}/summary:
@@ -45,6 +47,8 @@ paths:
     $ref: './paths/resubmitCollectionByCollectionId.yaml'
   /api/mail/type/{type}:
     $ref: './paths/mailByType.yaml'
+  /api/mail/user/{userId}:
+    $ref: './paths/mailByUserId.yaml'
   /api/mail/range:
     $ref: './paths/mailByRange.yaml'
   /api/daa:
@@ -449,8 +453,6 @@ paths:
     $ref: './paths/progressReport.yaml'
   /api/dar/{referenceId}/approveCloseout:
     $ref: './paths/approveCloseoutBySigningOfficial.yaml'
-  /api/dataset/v2:
-    $ref: './paths/datasetV2.yaml'
   /api/dataset/v3:
     $ref: './paths/datasetV3.yaml'
   /api/dataset/v3/{datasetId}:
@@ -499,16 +501,22 @@ paths:
     $ref: './paths/datasetReprocessDataUse.yaml'
   /api/dataset/v2/{id}:
     $ref: './paths/datasetByIdV2.yaml'
+  /api/dataset/{id}/nihInstitutionalCertification:
+    $ref: './paths/datasetNihInstitutionalCertification.yaml'
   /api/dataset/batch:
     $ref: './paths/datasetBatch.yaml'
   /api/dataset/index:
     $ref: './paths/datasetIndex.yaml'
   /api/dataset/index/{datasetId}:
     $ref: './paths/datasetIndexById.yaml'
-  /api/dataset/autocomplete:
-    $ref: './paths/datasetSummaryAutocomplete.yaml'
   /api/dataset/search/index:
     $ref: './paths/datasetSearchIndex.yaml'
+  /api/dataset/{id}/authorizedAccessReaders:
+    $ref: './paths/datasetAuthorizedReaders.yaml'
+  /api/dataset/{id}/authorizedAccessReaders/{userId}:
+    $ref: './paths/datasetAuthorizedReadersAddDelete.yaml'
+  /api/dataset/{identifier}/approvedUsers:
+    $ref: './paths/datasetAuthorizedUsers.yaml'
   /api/draft/v1:
     $ref: './paths/draftIndex.yaml'
   /api/draft/v1/{draftUUID}:
@@ -870,7 +878,9 @@ paths:
         400:
           description: The request isn't in the proper format.
         401:
-          description: Unauthorized, log in and try the operation again.
+          description: |
+            Unauthorized, log in and try the operation again.
+            Closeout Acknowledgements can only be submitted by Chairpersons
         500:
           description: Error processing the request.
     get:
@@ -891,6 +901,8 @@ paths:
           description: Error processing the request.
   /api/nih:
     $ref: './paths/nih.yaml'
+  /api/nih/sync:
+    $ref: './paths/nihSync.yaml'
   /api/sam/register/self:
     $ref: './paths/samRegisterSelf.yaml'
   /api/sam/register/self/diagnostics:

@@ -8,7 +8,6 @@ import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
 import java.util.Date;
-import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -19,7 +18,6 @@ import org.broadinstitute.consent.http.enumeration.OrganizationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DatasetEntry;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -46,6 +44,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   protected static DacDAO dacDAO;
   protected static DaaDAO daaDAO;
   protected static UserDAO userDAO;
+  protected static DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
   protected static DatasetDAO datasetDAO;
   protected static ElectionDAO electionDAO;
   protected static UserRoleDAO userRoleDAO;
@@ -132,6 +131,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     dacDAO = jdbi.onDemand(DacDAO.class);
     daaDAO = jdbi.onDemand(DaaDAO.class);
     userDAO = jdbi.onDemand(UserDAO.class);
+    datasetAuthorizationReaderDAO = jdbi.onDemand(DatasetAuthorizationReaderDAO.class);
     datasetDAO = jdbi.onDemand(DatasetDAO.class);
     electionDAO = jdbi.onDemand(ElectionDAO.class);
     userRoleDAO = jdbi.onDemand(UserRoleDAO.class);
@@ -197,11 +197,6 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   private DataAccessRequest createDataAccessRequest(Integer userId, Integer collectionId) {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle("Project Title: " + randomAlphabetic(50));
-    DatasetEntry entry = new DatasetEntry();
-    entry.setKey("key");
-    entry.setValue("value");
-    entry.setLabel("label");
-    data.setDatasets(List.of(entry));
     data.setHmb(true);
     data.setMethods(false);
     String referenceId = UUID.randomUUID().toString();
@@ -263,8 +258,8 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     jdbi.useHandle(handle -> {
       String sql = """
               UPDATE vote
-              SET vote = :vote, updatedate = :updateDate, rationale = :rationale, remindersent = :reminderSent, createdate = :createDate, has_concerns = :hasConcerns
-              WHERE voteId = :voteId
+              SET vote = :vote, update_date = :updateDate, rationale = :rationale, reminder_sent = :reminderSent, create_date = :createDate, has_concerns = :hasConcerns
+              WHERE vote_id = :voteId
           """;
       handle.createUpdate(sql)
           .bind("vote", vote)

@@ -1,0 +1,15 @@
+get:
+  summary: Get Synchronized User NIH Account
+  description: Get a synchronized user account fetches known linked accounts
+  tags:
+    - User
+    - Nih
+  responses:
+    200:
+      description: Returns the synchronized user.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/User.yaml'
+    500:
+      description: Server error.

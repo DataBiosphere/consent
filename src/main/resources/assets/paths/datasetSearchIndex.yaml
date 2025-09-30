@@ -65,10 +65,6 @@ post:
                   dataLocation: Not Determined
                   dacId: 3
                   accessManagement: controlled
-                  approvedUserIds:
-                    - 1
-                    - 2
-                    - 3
                   study:
                     description: Test study details
                     studyName: Test Dataset

@@ -23,11 +23,6 @@ properties:
   dacId:
     type: integer
     description: The unique identifier for a DAC
-  approvedUserIds:
-    type: array
-    description: The list of users who have been approved to access the dataset
-    items:
-      type: integer
   study:
     type: object
     description: The study associated with the dataset

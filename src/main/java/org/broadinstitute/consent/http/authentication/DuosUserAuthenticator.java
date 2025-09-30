@@ -23,7 +23,7 @@ public class DuosUserAuthenticator implements Authenticator<String, DuosUser>, C
     if (headers != null) {
       AuthUser authUser = authorizationHelper.buildAuthUserFromHeaders(headers);
       if (authUser.getEmail() != null) {
-        authUser.setUserStatusInfo(authorizationHelper.getUserStatusInfo(authUser));
+        authUser.setUserStatusInfo(authorizationHelper.getUserStatusInfo(new DuosUser(authUser, null)));
         try {
           User duosUser = authorizationHelper.userService.findUserByEmail(authUser.getEmail());
           return Optional.of(new DuosUser(authUser, duosUser));

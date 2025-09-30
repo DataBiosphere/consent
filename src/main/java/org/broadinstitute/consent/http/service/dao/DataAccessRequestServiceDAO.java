@@ -31,18 +31,23 @@ public class DataAccessRequestServiceDAO {
       throws SQLException {
     Instant now = Instant.now();
     String referenceId = dar.getReferenceId();
+    final String updateDataByReferenceId = """
+          UPDATE data_access_request
+          SET data = regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb, user_id = :userId, sort_date = :sortDate,
+          submission_date = :submissionDate, update_date = :updateDate
+          WHERE reference_id = :referenceId
+        """;
+    final String deleteDarDatasetRelationByReferenceId = """
+          DELETE FROM dar_dataset WHERE reference_id = :referenceId
+        """;
+    final String insertDarDataset = """
+          INSERT INTO dar_dataset (reference_id, dataset_id)
+          VALUES (:referenceId, :datasetId)
+          ON CONFLICT DO NOTHING
+        """;
     jdbi.useHandle(handle -> {
       handle.getConnection().setAutoCommit(false);
       handle.useTransaction(h -> {
-
-        final String updateDataByReferenceId = "UPDATE data_access_request "
-            + "SET data = to_jsonb(regexp_replace(:data, '\\\\u0000', '', 'g')), user_id = :userId, sort_date = :sortDate, "
-            + "submission_date = :submissionDate, update_date = :updateDate "
-            + "WHERE reference_id = :referenceId";
-        final String deleteDarDatasetRelationByReferenceId = "DELETE FROM dar_dataset WHERE reference_id = :referenceId";
-        final String insertDarDataset = "INSERT INTO dar_dataset (reference_id, dataset_id) "
-            + "VALUES (:referenceId, :datasetId) "
-            + "ON CONFLICT DO NOTHING";
 
         Update darUpdate = h.createUpdate(updateDataByReferenceId);
         darUpdate.bind("referenceId", referenceId);

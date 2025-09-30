@@ -38,10 +38,10 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
+import org.broadinstitute.consent.http.db.DatasetAuthorizationReaderDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
-import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -51,13 +51,13 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
-import org.broadinstitute.consent.http.models.sam.UserStatus;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
@@ -101,9 +101,6 @@ class UserServiceTest extends AbstractTestHelper {
   private FileStorageObjectDAO fileStorageObjectDAO;
 
   @Mock
-  private SamDAO samDAO;
-
-  @Mock
   private UserServiceDAO userServiceDAO;
 
   @Mock
@@ -116,6 +113,8 @@ class UserServiceTest extends AbstractTestHelper {
   private InstitutionService institutionService;
   @Mock
   private DACAutomationRuleDAO ruleDAO;
+  @Mock
+  private DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
 
 
   private UserService service;
@@ -123,8 +122,8 @@ class UserServiceTest extends AbstractTestHelper {
   @BeforeEach
   void initService() {
     service = new UserService(userDAO, userPropertyDAO, userRoleDAO, voteDAO, institutionDAO,
-        libraryCardDAO, acknowledgementDAO, fileStorageObjectDAO, samDAO, userServiceDAO, daaDAO,
-        draftServiceDAO, institutionService, ruleDAO);
+        libraryCardDAO, acknowledgementDAO, fileStorageObjectDAO, userServiceDAO, daaDAO,
+        draftServiceDAO, institutionService, ruleDAO, datasetAuthorizationReaderDAO);
   }
 
   @Test
@@ -146,11 +145,10 @@ class UserServiceTest extends AbstractTestHelper {
     when(userDAO.findUserById(any())).thenReturn(user);
 
     UserUpdateFields fields = new UserUpdateFields();
-    // We're modifying this user to have an SO role. This should leave in place
+    // We're modifying this user to have the SO role. This should leave in place
     // both the Researcher and Chairperson roles, but remove the Admin role.
     fields.setUserRoleIds(List.of(so.getRoleId()));
     fields.setDisplayName(randomAlphabetic(10));
-    fields.setInstitutionId(1);
     fields.setEmailPreference(true);
     fields.setEraCommonsId(randomAlphabetic(10));
     fields.setDaaAcceptance(true);
@@ -457,6 +455,7 @@ class UserServiceTest extends AbstractTestHelper {
       service.deleteUserByEmail(randomAlphabetic(10), randomInt(1,100));
       verify(draftServiceDAO).deleteDraftsByUser(u);
       verify(ruleDAO, atLeastOnce()).auditedDeleteAllDACRuleSettingForUser(anyInt(), anyInt());
+      verify(datasetAuthorizationReaderDAO, atLeastOnce()).deleteByUserId(u.getUserId());
     } catch (Exception e) {
       fail("Should not fail: " + e.getMessage());
     }
@@ -678,15 +677,15 @@ class UserServiceTest extends AbstractTestHelper {
         .setUserSubjectId("subjectId");
     AuthUser authUser = new AuthUser().setEmail(user.getEmail())
         .setAuthToken(randomAlphabetic(30)).setUserStatusInfo(info);
-    when(userDAO.findUserById(anyInt())).thenReturn(user);
+    DuosUser activeDuosUser = new DuosUser(authUser, user);
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(
         List.of(new UserProperty()));
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
 
-    JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser,
+    JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(activeDuosUser,
         user.getUserId());
     assertNotNull(userJson);
     assertTrue(userJson.get(UserService.LIBRARY_CARD_FIELD).getAsJsonObject().isJsonObject());
-    assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
     assertTrue(
         userJson.get(UserService.USER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
     assertTrue(userJson.get(UserService.USER_STATUS_INFO_FIELD).getAsJsonObject().isJsonObject());
@@ -700,64 +699,18 @@ class UserServiceTest extends AbstractTestHelper {
         .setUserSubjectId("subjectId");
     AuthUser authUser = new AuthUser().setEmail("not the user's email address")
         .setAuthToken(randomAlphabetic(30)).setUserStatusInfo(info);
-    when(userDAO.findUserById(anyInt())).thenReturn(user);
+    DuosUser activeDuosUser = new DuosUser(authUser, user);
     when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(anyInt(), any())).thenReturn(
         List.of(new UserProperty()));
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
 
-    JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(authUser,
+    JsonObject userJson = service.findUserWithPropertiesByIdAsJsonObject(activeDuosUser,
         user.getUserId());
     assertNotNull(userJson);
     assertTrue(userJson.get(UserService.LIBRARY_CARD_FIELD).getAsJsonObject().isJsonObject());
-    assertTrue(userJson.get(UserService.LIBRARY_CARDS_FIELD).getAsJsonArray().isJsonArray());
     assertTrue(
         userJson.get(UserService.USER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
     assertNull(userJson.get(UserService.USER_STATUS_INFO_FIELD));
-  }
-
-  @Test
-  void testFindOrCreateUser() throws Exception {
-    User user = generateUser();
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail(user.getEmail());
-    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
-        .setLdap(true);
-    UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
-    AuthUser authUser = new AuthUser().setEmail(user.getEmail())
-        .setAuthToken(randomAlphabetic(30));
-
-    when(userDAO.findUserByEmail(any())).thenReturn(user);
-    when(samDAO.postRegistrationInfo(any())).thenReturn(status);
-
-    User existingUser = service.findOrCreateUser(authUser);
-    assertEquals(existingUser, user);
-  }
-
-  @Test
-  void testFindOrCreateUserNewUser() throws Exception {
-    User user = generateUser();
-    List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
-    user.setRoles(roles);
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail(user.getEmail());
-    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
-        .setLdap(true);
-    UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
-    AuthUser authUser = new AuthUser().setName(user.getDisplayName()).setEmail(user.getEmail())
-        .setAuthToken(randomAlphabetic(30));
-    Institution institution = new Institution();
-
-    // mock findUserByEmail to throw the NFE on the first call (findOrCreateUser)
-    when(userDAO.findUserByEmail(authUser.getEmail())).thenThrow(new NotFoundException())
-        .thenReturn(null);
-    when(
-        userDAO.insertUser(eq(authUser.getEmail()), eq(authUser.getName()), eq(institution.getId()),
-            any())).thenReturn(user.getUserId());
-    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
-    when(samDAO.postRegistrationInfo(authUser)).thenReturn(status);
-    when(institutionService.findInstitutionForEmail(user.getEmail())).thenReturn(institution);
-
-    User newUser = service.findOrCreateUser(authUser);
-    assertEquals(user.getEmail(), newUser.getEmail());
-    verify(userRoleDAO).insertUserRoles(any(), any());
-    verify(libraryCardDAO).findLibraryCardByUserEmail(any());
   }
 
   @Test
