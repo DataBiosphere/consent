@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.google.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -15,6 +16,11 @@ import org.apache.commons.io.IOUtils;
 
 @Path("/version")
 public class VersionResource extends Resource {
+
+  @Inject
+  public VersionResource() {
+    // For injection
+  }
 
   @GET
   @Produces("application/json")

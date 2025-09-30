@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 
 import com.google.gson.Gson;
+import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.BadRequestException;
@@ -35,6 +36,7 @@ public class VoteResource extends Resource {
   private final ElectionService electionService;
   private final Gson gson = new Gson();
 
+  @Inject
   public VoteResource(UserService userService, VoteService voteService,
       ElectionService electionService) {
     this.userService = userService;

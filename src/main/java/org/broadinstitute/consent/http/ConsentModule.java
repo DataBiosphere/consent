@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http;
 
+import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
@@ -13,6 +14,10 @@ import org.broadinstitute.consent.http.authentication.DuosUserAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
+import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
+import org.broadinstitute.consent.http.configurations.MailConfiguration;
+import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
@@ -196,6 +201,31 @@ public class ConsentModule extends AbstractModule {
   @Provides
   Jdbi providesJdbi() {
     return jdbi;
+  }
+
+  @Provides
+  ElasticSearchConfiguration providesElasticSearchConfiguration() {
+    return config.getElasticSearchConfiguration();
+  }
+
+  @Provides
+  MailConfiguration providesMailConfiguration() {
+    return config.getMailConfiguration();
+  }
+
+  @Provides
+  ServicesConfiguration providesServicesConfiguration() {
+    return config.getServicesConfiguration();
+  }
+
+  @Provides
+  GoogleOAuth2Config providesGoogleOAuth2Config() {
+    return config.getGoogleAuthentication();
+  }
+
+  @Provides
+  HealthCheckRegistry providesHealthCheckRegistry() {
+    return environment.healthChecks();
   }
 
   @Provides

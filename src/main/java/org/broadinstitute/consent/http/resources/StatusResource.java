@@ -4,6 +4,7 @@ import static org.broadinstitute.consent.http.ConsentModule.DB_ENV;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
+import com.google.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -21,6 +22,7 @@ public class StatusResource extends Resource {
 
   private final HealthCheckRegistry healthChecks;
 
+  @Inject
   public StatusResource(HealthCheckRegistry healthChecks) {
     this.healthChecks = healthChecks;
   }
