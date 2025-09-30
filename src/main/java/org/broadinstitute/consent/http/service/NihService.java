@@ -110,6 +110,11 @@ public class NihService implements ConsentLogger {
         throw new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
       }
     } catch (Exception e) {
+      // Non-fatal error if no ECM RAS account exists to delete
+      if (e instanceof NotFoundException) {
+        logWarn("No RAS account found to delete for user: " + duosUser.getEmail());
+        return;
+      }
       logWarn(
           "Failed to delete NIH account for user: " + duosUser.getEmail() + " - " + e.getMessage());
       throw new ServerErrorException(

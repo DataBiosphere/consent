@@ -189,4 +189,30 @@ class NihServiceTest extends MockServerTestHelper {
     account.setStatus(true);
     assertThrows(BadRequestException.class, () -> service.authenticateNih(account, authUser, 1));
   }
+
+  @Test
+  void testDeleteNihAccountByIdECMSuccess() {
+    User user = new User();
+    user.setUserId(1);
+    when(duosUser.getUser()).thenReturn(user);
+    mockServerClient.when(request())
+        .respond(response()
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
+    service.deleteNihAccountById(duosUser);
+    verify(nihServiceDAO).deleteNihAccountById(user.getUserId());
+  }
+
+  @Test
+  void testDeleteNihAccountByIdECMNotFound() {
+    User user = new User();
+    user.setUserId(1);
+    user.setEmail("email");
+    when(duosUser.getUser()).thenReturn(user);
+    when(duosUser.getAuthToken()).thenReturn("Token");
+    mockServerClient.when(request())
+        .respond(response()
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_NOT_FOUND));
+    service.deleteNihAccountById(duosUser);
+    verify(nihServiceDAO).deleteNihAccountById(user.getUserId());
+  }
 }
