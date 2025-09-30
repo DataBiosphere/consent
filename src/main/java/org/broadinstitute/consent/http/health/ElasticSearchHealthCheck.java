@@ -5,6 +5,7 @@ import static org.broadinstitute.consent.http.service.ontology.ElasticSearchSupp
 import com.codahale.metrics.health.HealthCheck;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.inject.Inject;
 import io.dropwizard.lifecycle.Managed;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -31,6 +32,7 @@ public class ElasticSearchHealthCheck extends HealthCheck implements Managed {
     }
   }
 
+  @Inject
   public ElasticSearchHealthCheck(ElasticSearchConfiguration config) {
     this.client = ElasticSearchSupport.createRestClient(config);
   }
