@@ -22,7 +22,7 @@
     <swagger.ui.version>5.28.1</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <mockserver.version>5.15.0</mockserver.version>
-    <junit.version>5.13.4</junit.version>
+    <junit.version>6.0.0</junit.version>
     <mockito.version>5.20.0</mockito.version>
     <sonar.plugin.version>5.2.0.4988</sonar.plugin.version>
     <netty.override.version>4.2.6.Final</netty.override.version>
@@ -651,7 +651,7 @@
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-launcher</artifactId>
-      <version>1.13.4</version>
+      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
 
