@@ -3,19 +3,14 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
-import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.util.List;
 import org.broadinstitute.consent.http.models.DuosUser;
-import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.service.NihService;
 
 @Path("api/nih")
@@ -36,22 +31,6 @@ public class NihAccountResource extends Resource {
     try {
       User user = nihService.syncAccount(duosUser);
       return Response.ok(user).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @POST
-  @Produces(MediaType.APPLICATION_JSON)
-  @Consumes(MediaType.APPLICATION_JSON)
-  @PermitAll
-  public Response registerResearcher(@Auth DuosUser duosUser, NIHUserAccount nihAccount) {
-    try {
-      nihService.validateNihUserAccount(nihAccount, duosUser);
-      User user = duosUser.getUser();
-      List<UserProperty> authUserProps = nihService.authenticateNih(nihAccount, duosUser,
-          user.getUserId());
-      return Response.ok(authUserProps).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
