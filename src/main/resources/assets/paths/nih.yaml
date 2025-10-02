@@ -7,22 +7,3 @@ delete:
   responses:
     200:
       description: Returns an empty response if the operation was successful
-post:
-  deprecated: true
-  summary: Store eRA Commons information
-  description: Save user's eRA Commons account
-  requestBody:
-    description: The eRA Commons account information to be stored
-    required: true
-    content:
-      application/json:
-        schema:
-          $ref: '../schemas/NIHUserAccount.yaml'
-  tags:
-    - User
-    - Nih
-  responses:
-    200:
-      description: Returns eRA Commons Account information.
-    404:
-      description: The user doesn't exist in the system
