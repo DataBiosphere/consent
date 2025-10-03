@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.models.draft;
 
 import java.net.URI;
 import java.util.List;
-import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
 
 public record ConsentGroup(
     Integer datasetId,
