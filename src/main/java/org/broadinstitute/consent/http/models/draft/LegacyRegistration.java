@@ -1,0 +1,43 @@
+package org.broadinstitute.consent.http.models.draft;
+
+import java.util.List;
+
+public record LegacyRegistration(
+    Integer studyId,
+    String studyName,
+    String studyDescription,
+    List<String> dataTypes,
+    Boolean publicVisibility,
+    String piName,
+    String phenotypeIndication,
+    StudyType studyType,
+    String species,
+    Integer dataSubmitterUserId,
+    List<String> dataCustodianEmail,
+    NihAnvilUse nihAnvilUse,
+    Boolean submittingToAnvil,
+    String dbGaPPhsID,
+    String dbGaPStudyRegistrationName,
+    String embargoReleaseDate,
+    String sequencingCenter,
+    Integer piInstitution,
+    String nihGrantContractNumber,
+    List<NihICsSupportingStudy> nihICsSupportingStudy,
+    String nihProgramOfficerName,
+    NihInstitutionCenterSubmission nihInstitutionCenterSubmission,
+    String nihGenomicProgramAdministratorName,
+    Boolean multiCenterStudy,
+    List<String> collaboratingSites,
+    Boolean controlledAccessRequiredForGenomicSummaryResultsGSR,
+    String controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation,
+    Boolean alternativeDataSharingPlan,
+    List<AlternativeDataSharingPlanReason> alternativeDataSharingPlanReasons,
+    String alternativeDataSharingPlanExplanation,
+    String alternativeDataSharingPlanFileName,
+    AlternativeDataSharingPlanDataSubmitted alternativeDataSharingPlanDataSubmitted,
+    Boolean alternativeDataSharingPlanDataReleased,
+    String alternativeDataSharingPlanTargetDeliveryDate,
+    String alternativeDataSharingPlanTargetPublicReleaseDate,
+    AlternativeDataSharingPlanAccessManagement alternativeDataSharingPlanAccessManagement,
+    List<ConsentGroup> consentGroups
+) {}
