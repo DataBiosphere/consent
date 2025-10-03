@@ -48,14 +48,14 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
    * @param email of the user being evaluated
    * @return user with the Institution and Library Card rules applied or null if the requestor isn't
    * a DUOS user.
+   * @throws NotFoundException when the user isn't found in our database
    */
   public User enforceInstitutionAndLibraryCardRules(String email) {
-    try {
-      User user = userDAO.findUserByEmail(email);
-      return enforceInstitutionAndLibraryCardRules(user);
-    } catch (NotFoundException nfe) {
-      return null;
+    User user = userDAO.findUserByEmail(email);
+    if (user == null) {
+      throw new NotFoundException(email);
     }
+    return enforceInstitutionAndLibraryCardRules(user);
   }
 
   public void asyncEnforceInstitutionAndLibraryCardRulesForAllUsers() {

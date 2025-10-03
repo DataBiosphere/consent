@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service.feature;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
@@ -11,6 +12,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import jakarta.ws.rs.NotFoundException;
 import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -289,6 +291,12 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
       validateUserIsUnmodified(
           testUser, service.enforceInstitutionAndLibraryCardRules(testUser.getEmail()));
     }
+  }
+
+  @Test
+  void testEnforceInstitutionAndLibraryCardThrowsNotFoundExceptionForNewUser() {
+    when(userDAO.findUserByEmail(any())).thenReturn(null);
+    assertThrows(NotFoundException.class, ()->service.enforceInstitutionAndLibraryCardRules("hello world!"));
   }
 
   private void validateUserIsUnmodified(User left, User right) {
