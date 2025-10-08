@@ -87,6 +87,13 @@ public class TDRService implements ConsentLogger {
         .sorted(Comparator.comparing(ApprovedUser::email))
         .toList();
 
+    logInfo(String.format(
+        "Approved users requested. Requesting user: %s, Dataset: %s, Approved users: %s",
+        authUser.getEmail(),
+        dataset.getDatasetIdentifier(),
+        approvedUsers.stream().map(ApprovedUser::email).toList()
+    ));
+
     return new ApprovedUsers(approvedUsers);
   }
 
