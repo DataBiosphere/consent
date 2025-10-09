@@ -35,6 +35,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         latest_dar.data ->> 'projectTitle' AS name,
         latest_dar.data ->> 'status' AS dar_status,
         latest_dar.data ->> 'closeoutSupplement' AS closeout,
+        dac.name AS dac_name,
         ARRAY_AGG(dar_all.reference_id) AS reference_ids
       FROM dar_collection c
       -- DAR Collection Researcher join
@@ -88,7 +89,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
         researcher.display_name, i.institution_name, e.election_id, e.status,
         e.reference_id, e.dataset_id, v.vote_id, dd.dataset_id, v.user_id,
-        v.vote, v.election_id, v.create_date, v.update_date, v.type, latest_dar.data
+        v.vote, v.election_id, v.create_date, v.update_date, v.type, latest_dar.data, dac.name
       """)
   List<DarCollectionSummary> getDarCollectionSummariesForDACRole(
       @Bind("currentUserId") Integer currentUserId, @Bind("roleId") Integer roleId);
