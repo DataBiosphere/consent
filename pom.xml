@@ -16,7 +16,6 @@
     <liquibase.version>4.33.0</liquibase.version>
     <dropwizard.version>4.0.16</dropwizard.version>
     <logback.version>1.5.18</logback.version>
-    <pact.version>4.6.17</pact.version>
     <postgres.version>42.7.8</postgres.version>
     <surefire.version>3.5.4</surefire.version>
     <swagger.ui.version>5.28.1</swagger.ui.version>
@@ -53,29 +52,8 @@
                 -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar
                 -Xshare:off
               </argLine>
-              <systemPropertyVariables>
-                <pact.rootDir>target/pacts</pact.rootDir>
-              </systemPropertyVariables>
               <includes>**/*.java</includes>
               <excludes>**/integration/**/*.java</excludes>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>pact-tests</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>${surefire.version}</version>
-            <configuration>
-              <systemPropertyVariables>
-                <pact.rootDir>target/pacts</pact.rootDir>
-              </systemPropertyVariables>
-              <includes>**/pact/**/*.java</includes>
             </configuration>
           </plugin>
         </plugins>
@@ -596,35 +574,6 @@
       <groupId>io.netty</groupId>
       <artifactId>netty-handler-proxy</artifactId>
       <version>${netty.override.version}</version>
-    </dependency>
-
-    <!--suppress VulnerableLibrariesLocal -->
-    <dependency>
-      <groupId>au.com.dius.pact</groupId>
-      <artifactId>consumer</artifactId>
-      <version>${pact.version}</version>
-      <!-- See comments re: CVE-2023-33953 for google-cloud-storage -->
-      <exclusions>
-        <exclusion>
-          <groupId>io.grpc</groupId>
-          <artifactId>grpc-netty</artifactId>
-        </exclusion>
-      </exclusions>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>au.com.dius.pact</groupId>
-      <artifactId>provider</artifactId>
-      <version>${pact.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>au.com.dius.pact.consumer</groupId>
-      <artifactId>junit5</artifactId>
-      <version>${pact.version}</version>
-      <scope>test</scope>
     </dependency>
 
     <dependency>
