@@ -115,6 +115,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                e.dataset_id,
                e.reference_id,
                dd.dataset_id as dd_datasetid,
+               dac.name AS dac_name,
                latest_dar.data ->> 'projectTitle' AS name,
                latest_dar.data ->> 'status' AS dar_status,
                latest_dar.data ->> 'closeoutSupplement' AS closeout,
@@ -143,13 +144,15 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               ON e.reference_id = latest_dar.reference_id
               INNER JOIN dar_dataset dd
               ON latest_dar.reference_id = dd.reference_id
+              LEFT JOIN dataset ON dataset.dataset_id = dd.dataset_id
+              LEFT JOIN dac ON dac.dac_id = dataset.dac_id
               WHERE u.institution_id = :institutionId
                 AND (e.latest = e.election_id OR e.election_id IS NULL)
               GROUP BY
               c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id,
               latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
               u.display_name, i.institution_name, e.election_id, e.status,
-              e.reference_id, e.dataset_id, dd.dataset_id, latest_dar.data
+              e.reference_id, e.dataset_id, dd.dataset_id, latest_dar.data, dac.name
           """
       )
   List<DarCollectionSummary> getDarCollectionSummariesForSO(
@@ -230,6 +233,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               e.dataset_id,
               e.reference_id AS election_reference_id,
               dd.dataset_id AS dd_datasetid,
+              dac.name AS dac_name,
               latest_dar.data ->> 'projectTitle' AS name,
               latest_dar.data ->> 'status' AS dar_status,
               latest_dar.data ->> 'closeoutSupplement' AS closeout,
@@ -259,13 +263,15 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
           ) AS e ON e.reference_id = latest_dar.reference_id
           INNER JOIN
               dar_dataset dd ON latest_dar.reference_id = dd.reference_id
+          LEFT JOIN dataset ON dataset.dataset_id = dd.dataset_id
+          LEFT JOIN dac ON dac.dac_id = dataset.dac_id
           WHERE
               c.create_user_id = :userId
               AND (e.latest = e.election_id OR e.election_id IS NULL)
           GROUP BY
               c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id, u.display_name, i.institution_name,
               latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
-              e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id, latest_dar.data
+              e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id, latest_dar.data, dac.name
       """)
   List<DarCollectionSummary> getDarCollectionSummariesForResearcher(@Bind("userId") Integer userId);
 
@@ -285,6 +291,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         latest_dar.data ->> 'projectTitle' AS name,
         latest_dar.data ->> 'status' AS dar_status,
         latest_dar.data ->> 'closeoutSupplement' AS closeout,
+        dac.name AS dac_name,
         ARRAY_AGG(dar_all.reference_id) AS reference_ids
       FROM dar_collection c
       INNER JOIN users u
@@ -312,6 +319,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         ON e.election_id = v.election_id
       INNER JOIN dar_dataset dd
         ON latest_dar.reference_id = dd.reference_id
+      LEFT JOIN dataset ON dataset.dataset_id = dd.dataset_id
+      LEFT JOIN dac ON dac.dac_id = dataset.dac_id
       WHERE c.collection_id= :collectionId
         AND dd.dataset_id IN (<datasetIds>)
         AND (e.latest = e.election_id OR e.election_id IS NULL)
@@ -322,7 +331,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         u.display_name, u.user_id,
         i.institution_name, i.institution_id, e.election_id, e.status,
         e.reference_id, e.dataset_id, v.vote_id, dd.dataset_id, v.user_id,
-        v.vote, v.election_id, v.create_date, v.update_date, v.type, latest_dar.data
+        v.vote, v.election_id, v.create_date, v.update_date, v.type, latest_dar.data, dac.name
       """)
   DarCollectionSummary getDarCollectionSummaryForDACByCollectionId(
       @Bind("currentUserId") Integer currentUserId,
@@ -343,6 +352,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                 latest_dar.closeout_so_approval_timestamp as latest_dar_closeout_so_approval_timestamp,
                 u.display_name as researcher_name,
                 u.user_id as researcher_id, i.institution_name, i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid,
+                dac.name AS dac_name,
                 latest_dar.data ->> 'projectTitle' AS name,
                 latest_dar.data ->> 'status' AS dar_status,
                 latest_dar.data ->> 'closeoutSupplement' AS closeout,
@@ -371,13 +381,15 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               ON e.reference_id = latest_dar.reference_id
               INNER JOIN dar_dataset dd
               ON latest_dar.reference_id = dd.reference_id
+              LEFT JOIN dataset ON dataset.dataset_id = dd.dataset_id
+              LEFT JOIN dac ON dac.dac_id = dataset.dac_id
               WHERE c.collection_id = :collectionId
                 AND (e.latest = e.election_id OR e.election_id IS NULL)
               GROUP BY
                 c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id,
                 latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
                 u.display_name, u.user_id, i.institution_name,
-                i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id, latest_dar.data
+                i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id, latest_dar.data, dac.name
           """
       )
   DarCollectionSummary getDarCollectionSummaryByCollectionId(
