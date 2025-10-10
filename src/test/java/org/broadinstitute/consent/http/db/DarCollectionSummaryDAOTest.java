@@ -974,18 +974,24 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Integer userTwoId = userTwo.getUserId();
     Integer userChairId = userChair.getUserId();
 
+    // Add multiple DACs and ensure that only the DAC associated with the dataset in the
     Dac dacOne = createDac();
     Integer dacOneId = dacOne.getDacId();
     String dacOneName = dacOne.getName();
 
+    Dac dacTwo = createDac();
+    Integer dacTwoId = dacTwo.getDacId();
+    String dacTwoName = dacTwo.getName();
+
     Dataset dataset = createDatasetWithDac(userOneId, dacOneId);
-    Dataset datasetTwo = createDataset(userTwoId);
+    Dataset datasetTwo = createDatasetWithDac(userTwoId, dacTwoId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer excludedCollectionId = createDarCollection(userTwoId);
     DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
     DataAccessRequest excludedDar = createDataAccessRequest(excludedCollectionId, userTwoId);
 
     dataAccessRequestDAO.insertDARDatasetRelation(darOne.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(darOne.getReferenceId(), datasetTwo.getDatasetId());
     dataAccessRequestDAO.insertDARDatasetRelation(excludedDar.getReferenceId(),
         datasetTwo.getDatasetId());
 
@@ -1032,13 +1038,15 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
     assertNotNull(summary);
     assertEquals(collectionOneId, summary.getDarCollectionId());
-    assertEquals(1, summary.getDatasetIds().size());
+    assertEquals(2, summary.getDatasetIds().size());
     summary.getDatasetIds()
         .forEach(id -> assertTrue(targetDatasets.contains(id)));
 
+    // Ensure that only the DACs associated with datasets in the specified collection are included
     assertNotNull(summary.getDacNames());
-    assertEquals(1, summary.getDacNames().size());
+    assertEquals(2, summary.getDacNames().size());
     assertTrue(summary.getDacNames().contains(dacOneName));
+    assertTrue(summary.getDacNames().contains(dacTwoName));
 
     List<Integer> targetVotes = List.of(collectionOneVoteChair.getVoteId(),
         collectionOneVoteThree.getVoteId());
@@ -1047,7 +1055,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     summary.getElections().forEach((key, value) -> assertEquals(electionId, key));
     summary.getVotes().forEach(v -> assertTrue(
         targetVotes.contains(v.getVoteId())));
-    assertEquals(1, summary.getDatasetCount());
+    assertEquals(2, summary.getDatasetCount());
   }
 
   @Test
