@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockserver.model.HttpRequest.request;
@@ -10,12 +9,9 @@ import static org.mockserver.model.HttpResponse.response;
 
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 import org.broadinstitute.consent.http.MockServerTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -25,7 +21,6 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.ecm.LinkInfo;
 import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
@@ -141,52 +136,5 @@ class NihServiceTest extends MockServerTestHelper {
     User syncedUser = service.syncAccount(duosUser);
     assertEquals(user.getUserId(), syncedUser.getUserId());
     verify(nihServiceDAO).deleteNihAccountById(user.getUserId());
-  }
-
-  @Test
-  void testAuthenticateNih_InvalidUser() {
-    AuthUser testUser = new AuthUser("test@test.com");
-    assertThrows(NotFoundException.class,
-        () -> service.authenticateNih(nihUserAccount, testUser, 1));
-  }
-
-  @Test
-  void testAuthenticateNih() {
-    List<UserProperty> props = Collections.singletonList(new UserProperty(1, 1, "test", "value"));
-    when(userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(any(), any())).thenReturn(props);
-    User user = new User();
-    user.setUserId(1);
-    when(userDAO.findUserById(any())).thenReturn(user);
-    try {
-      List<UserProperty> properties = service.authenticateNih(nihUserAccount, authUser,
-          user.getUserId());
-      assertEquals(1, properties.size());
-      assertEquals(Integer.valueOf(1), properties.get(0).getPropertyId());
-      verify(nihServiceDAO).updateUserNihStatus(user, nihUserAccount);
-    } catch (BadRequestException bre) {
-      assert false;
-    }
-  }
-
-  @Test
-  void testAuthenticateNih_BadRequest() {
-    User user = new User();
-    user.setUserId(1);
-    when(userDAO.findUserById(any())).thenReturn(user);
-    nihUserAccount.setNihUsername("");
-    assertThrows(BadRequestException.class,
-        () -> service.authenticateNih(nihUserAccount, authUser, 1));
-  }
-
-  @Test
-  void testAuthenticateNih_BadRequestNullAccount() {
-    assertThrows(BadRequestException.class, () -> service.authenticateNih(null, authUser, 1));
-  }
-
-  @Test
-  void testAuthenticateNih_BadRequestNullAccountExpiration() {
-    NIHUserAccount account = new NIHUserAccount();
-    account.setStatus(true);
-    assertThrows(BadRequestException.class, () -> service.authenticateNih(account, authUser, 1));
   }
 }

@@ -2,12 +2,14 @@ package org.broadinstitute.consent.http.health;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.cloud.storage.Bucket;
+import com.google.inject.Inject;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 
 public class GCSHealthCheck extends HealthCheck {
 
   private final GCSService store;
 
+  @Inject
   public GCSHealthCheck(GCSService store) {
     this.store = store;
   }

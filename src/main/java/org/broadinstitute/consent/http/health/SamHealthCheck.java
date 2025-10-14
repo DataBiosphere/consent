@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.health;
 import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
+import com.google.inject.Inject;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
@@ -15,6 +16,7 @@ public class SamHealthCheck extends HealthCheck implements Managed {
   private final HttpClientUtil clientUtil;
   private final ServicesConfiguration configuration;
 
+  @Inject
   public SamHealthCheck(HttpClientUtil clientUtil, ServicesConfiguration configuration) {
     this.clientUtil = clientUtil;
     this.configuration = configuration;

@@ -5,24 +5,16 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.inject.Inject;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import java.time.Instant;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.ecm.LinkInfo;
 import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -65,38 +57,6 @@ public class NihService implements ConsentLogger {
     return userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues());
   }
 
-  public void validateNihUserAccount(NIHUserAccount nihAccount, AuthUser authUser)
-      throws BadRequestException {
-    if (Objects.isNull(nihAccount) || Objects.isNull(nihAccount.getEraExpiration())) {
-      logWarn("Invalid NIH Account for user: " + authUser.getEmail());
-      throw new BadRequestException("Invalid NIH Authentication for user : " + authUser.getEmail());
-    }
-  }
-
-  public List<UserProperty> authenticateNih(NIHUserAccount nihAccount, AuthUser authUser,
-      Integer userId) throws BadRequestException {
-    // fail fast
-    validateNihUserAccount(nihAccount, authUser);
-    User user = userDAO.findUserById(userId);
-    if (Objects.isNull(user)) {
-      throw new NotFoundException("User not found: " + authUser.getEmail());
-    }
-    if (StringUtils.isNotEmpty(nihAccount.getNihUsername()) && !nihAccount.getNihUsername()
-        .isEmpty()) {
-      nihAccount.setEraExpiration(generateEraExpirationDates());
-      nihAccount.setStatus(true);
-      try {
-        serviceDAO.updateUserNihStatus(user, nihAccount);
-      } catch (IllegalArgumentException e) {
-        logException(e);
-      }
-      return userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(userId,
-          UserFields.getValues());
-    } else {
-      throw new BadRequestException("Invalid NIH UserName for user : " + authUser.getEmail());
-    }
-  }
-
   public void deleteNihAccountById(DuosUser duosUser) {
     User user = duosUser.getUser();
     // Delete linkage locally
@@ -110,6 +70,11 @@ public class NihService implements ConsentLogger {
         throw new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
       }
     } catch (Exception e) {
+      // Non-fatal error if no ECM RAS account exists to delete
+      if (e instanceof NotFoundException) {
+        logWarn("No RAS account found to delete for user: " + duosUser.getEmail());
+        return;
+      }
       logWarn(
           "Failed to delete NIH account for user: " + duosUser.getEmail() + " - " + e.getMessage());
       throw new ServerErrorException(
@@ -117,16 +82,6 @@ public class NihService implements ConsentLogger {
           HttpStatusCodes.STATUS_CODE_SERVER_ERROR, e);
     }
 
-  }
-
-
-  private String generateEraExpirationDates() {
-    Date currentDate = new Date();
-    Calendar c = Calendar.getInstance();
-    c.setTime(currentDate);
-    c.add(Calendar.DATE, 30);
-    Date expires = c.getTime();
-    return String.valueOf(expires.getTime());
   }
 
   private NIHUserAccount parseNihUserAccount(String body) {

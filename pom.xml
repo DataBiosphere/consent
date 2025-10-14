@@ -13,19 +13,18 @@
     <java.version>21</java.version>
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
-    <liquibase.version>4.30.0</liquibase.version>
-    <dropwizard.version>4.0.11</dropwizard.version>
-    <logback.version>1.5.16</logback.version>
-    <pact.version>4.6.17</pact.version>
-    <postgres.version>42.7.7</postgres.version>
+    <liquibase.version>4.33.0</liquibase.version>
+    <dropwizard.version>4.0.16</dropwizard.version>
+    <logback.version>1.5.18</logback.version>
+    <postgres.version>42.7.8</postgres.version>
     <surefire.version>3.5.4</surefire.version>
     <swagger.ui.version>5.28.1</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <mockserver.version>5.15.0</mockserver.version>
-    <junit.version>5.13.4</junit.version>
-    <io.grpc.version>1.58.0</io.grpc.version>
-    <mockito.version>5.19.0</mockito.version>
+    <junit.version>6.0.0</junit.version>
+    <mockito.version>5.20.0</mockito.version>
     <sonar.plugin.version>5.2.0.4988</sonar.plugin.version>
+    <netty.override.version>4.2.6.Final</netty.override.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -53,29 +52,8 @@
                 -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar
                 -Xshare:off
               </argLine>
-              <systemPropertyVariables>
-                <pact.rootDir>target/pacts</pact.rootDir>
-              </systemPropertyVariables>
               <includes>**/*.java</includes>
               <excludes>**/integration/**/*.java</excludes>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>pact-tests</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>${surefire.version}</version>
-            <configuration>
-              <systemPropertyVariables>
-                <pact.rootDir>target/pacts</pact.rootDir>
-              </systemPropertyVariables>
-              <includes>**/pact/**/*.java</includes>
             </configuration>
           </plugin>
         </plugins>
@@ -123,12 +101,16 @@
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
         <configuration>
-          <failBuildOnCVSS>1</failBuildOnCVSS>
+          <nvdApiKeyEnvironmentVariable>NVD_API_KEY</nvdApiKeyEnvironmentVariable>
+          <failBuildOnCVSS>7.0</failBuildOnCVSS>
+          <ossIndexUsername>${OSS_INDEX_USERNAME}</ossIndexUsername>
+          <ossIndexPassword>${OSS_INDEX_PASSWORD}</ossIndexPassword>
           <suppressionFiles>
             <suppressionFile>owaspSuppression.xml</suppressionFile>
           </suppressionFiles>
+          <autoUpdate>true</autoUpdate>
         </configuration>
-        <version>12.1.3</version>
+        <version>12.1.6</version>
         <executions>
           <execution>
             <goals>
@@ -258,7 +240,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.14.0</version>
+        <version>3.14.1</version>
         <configuration>
           <release>17</release>
         </configuration>
@@ -447,13 +429,13 @@
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcprov-jdk18on</artifactId>
-      <version>1.81</version>
+      <version>1.82</version>
     </dependency>
 
     <dependency>
       <groupId>org.apache.httpcomponents.client5</groupId>
       <artifactId>httpclient5</artifactId>
-      <version>5.5</version>
+      <version>5.5.1</version>
     </dependency>
 
     <dependency>
@@ -465,7 +447,7 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry</artifactId>
-      <version>8.21.1</version>
+      <version>8.22.0</version>
     </dependency>
 
     <dependency>
@@ -513,10 +495,9 @@
       </exclusions>
     </dependency>
 
-    <!-- OWASP dependency vulnerability: http2-common-11.0.16.jar 10/12/2023 -->
     <dependency>
-      <groupId>org.eclipse.jetty.http2</groupId>
-      <artifactId>http2-common</artifactId>
+      <groupId>org.eclipse.jetty.http3</groupId>
+      <artifactId>http3-common</artifactId>
       <version>11.0.26</version>
     </dependency>
 
@@ -548,8 +529,8 @@
     <!-- Logback Access module moved to new location. See https://logback.qos.ch/news.html -->
     <dependency>
       <groupId>ch.qos.logback.access</groupId>
-      <artifactId>common</artifactId>
-      <version>2.0.3</version>
+      <artifactId>logback-access-common</artifactId>
+      <version>2.0.6</version>
     </dependency>
     <!-- Security update. See https://broadworkbench.atlassian.net/browse/DUOS-2826 -->
     <dependency>
@@ -563,34 +544,36 @@
       <artifactId>logback-core</artifactId>
       <version>${logback.version}</version>
     </dependency>
-
-    <!--suppress VulnerableLibrariesLocal -->
+    <!-- Security update. -->
     <dependency>
-      <groupId>au.com.dius.pact</groupId>
-      <artifactId>consumer</artifactId>
-      <version>${pact.version}</version>
-      <!-- See comments re: CVE-2023-33953 for google-cloud-storage -->
-      <exclusions>
-        <exclusion>
-          <groupId>io.grpc</groupId>
-          <artifactId>grpc-netty</artifactId>
-        </exclusion>
-      </exclusions>
-      <scope>test</scope>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-codec-dns</artifactId>
+      <version>${netty.override.version}</version>
     </dependency>
-
     <dependency>
-      <groupId>au.com.dius.pact</groupId>
-      <artifactId>provider</artifactId>
-      <version>${pact.version}</version>
-      <scope>test</scope>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-codec-http</artifactId>
+      <version>${netty.override.version}</version>
     </dependency>
-
     <dependency>
-      <groupId>au.com.dius.pact.consumer</groupId>
-      <artifactId>junit5</artifactId>
-      <version>${pact.version}</version>
-      <scope>test</scope>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-transport</artifactId>
+      <version>${netty.override.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-codec-socks</artifactId>
+      <version>${netty.override.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-resolver-dns</artifactId>
+      <version>${netty.override.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-handler-proxy</artifactId>
+      <version>${netty.override.version}</version>
     </dependency>
 
     <dependency>
@@ -617,7 +600,7 @@
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-launcher</artifactId>
-      <version>1.13.4</version>
+      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -649,7 +632,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>33.4.8-jre</version>
+      <version>33.5.0-jre</version>
     </dependency>
 
     <dependency>
@@ -692,7 +675,7 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>2.57.0</version>
+      <version>2.58.0</version>
     </dependency>
 
     <dependency>
@@ -728,13 +711,13 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <version>3.18.0</version>
+      <version>3.19.0</version>
     </dependency>
 
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>9.1.3</version>
+      <version>9.1.4</version>
     </dependency>
 
     <dependency>

@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -27,6 +28,7 @@ public class SwaggerResource {
 
   private final GoogleOAuth2Config config;
 
+  @Inject
   public SwaggerResource(GoogleOAuth2Config config) {
     this.config = config;
   }
