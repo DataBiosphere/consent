@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -172,4 +174,33 @@ class TDRServiceTest extends AbstractTestHelper {
     assertTrue(datasetIds.containsAll(List.of(dataset1, dataset2)));
   }
 
+  @Test
+  void testGetApprovedUsersForDataset_logsInfo() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setAlias(00001);
+    User user1 = new User();
+    user1.setUserId(1);
+    user1.setEmail("user1@example.com");
+    LibraryCard libraryCard1 = new LibraryCard();
+    libraryCard1.setUserEmail(user1.getEmail());
+    user1.setLibraryCard(libraryCard1);
+    DataAccessRequest dar1 = new DataAccessRequest();
+    dar1.setUserId(user1.getUserId());
+    dar1.setData(new DataAccessRequestData());
+
+    when(darService.getApprovedDARsForDataset(dataset)).thenReturn(List.of(dar1));
+    when(userDAO.findUsers(any())).thenReturn(List.of(user1));
+    when(libraryCardDAO.findByUserEmails(anyList())).thenReturn(List.of(libraryCard1));
+
+    // Spy the service to intercept logInfo
+    initService();
+    TDRService spyService = spy(service);
+    doNothing().when(spyService).logInfo(any());
+
+    spyService.getApprovedUsersForDataset(authUser, dataset);
+
+    verify(spyService).logInfo(org.mockito.ArgumentMatchers.contains("Approved users requested. Requesting user:"));
+    verify(spyService).logInfo(org.mockito.ArgumentMatchers.contains("user1@example.com"));
+    verify(spyService).logInfo(org.mockito.ArgumentMatchers.contains("DUOS-000001"));  }
 }
