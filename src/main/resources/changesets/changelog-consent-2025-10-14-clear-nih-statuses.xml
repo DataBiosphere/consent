@@ -1,0 +1,31 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2025-10-14-2025-clear-nih-statuses" author="grushton">
+    <comment>
+      This changeset will be timed to 15 days post-RAS migration. This action will clear out NIH
+      status fields for all users whose 30-day authentications were prior to 15 days ago. Users
+      who've signed in before that will be required to re-authenticate with NIH when they next sign
+      in.
+    </comment>
+    <sql>
+      UPDATE users
+      SET era_commons_id = NULL
+      WHERE user_id IN
+            (SELECT user_id
+             FROM user_property
+             WHERE property_key = 'eraExpiration'
+               AND TO_TIMESTAMP(CAST(property_value as BIGINT) / 1000) - INTERVAL '15 days' &lt; CURRENT_TIMESTAMP
+            );
+      DELETE
+      FROM user_property
+      WHERE property_key IN ('eraAuthorized', 'eraExpiration')
+        AND user_id IN
+            (SELECT user_id
+             FROM user_property
+             WHERE property_key = 'eraExpiration'
+               AND TO_TIMESTAMP(CAST(property_value as BIGINT) / 1000) - INTERVAL '15 days' &lt; CURRENT_TIMESTAMP
+            );
+    </sql>
+  </changeSet>
+</databaseChangeLog>
