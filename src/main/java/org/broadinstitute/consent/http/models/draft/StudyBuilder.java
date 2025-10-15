@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.models.draft;
 
 import com.google.gson.Gson;
 import java.util.List;
+import java.util.Optional;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -27,7 +28,7 @@ public class StudyBuilder implements ConsentLogger {
   protected static final String ALTERNATIVE_DATA_SHARING_PLAN_ACCESS_MANAGEMENT = "alternativeDataSharingPlanAccessManagement";
   protected static final String COLLABORATING_SITES = "collaboratingSites";
   protected static final String CONTROLLED_ACCESS_REQUIRED_FOR_GENOMIC_SUMMARY_RESULTS_GSR = "controlledAccessRequiredForGenomicSummaryResultsGSR";
-  protected static final String CONTROLLED_ACCESS_REQUIRED_FOR_GENOMIC_SUMMARY_RESULTS_GSRREQUIRED_EXPLANATION = "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation";
+  protected static final String CONTROLLED_ACCESS_REQUIRED_FOR_GENOMIC_SUMMARY_RESULTS_GSR_REQUIRED_EXPLANATION = "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation";
   protected static final String DATA_CUSTODIAN_EMAIL = "dataCustodianEmail";
   protected static final String DB_GAP_PHS_ID = "dbGaPPhsID";
   protected static final String DB_GAP_STUDY_REGISTRATION_NAME = "dbGaPStudyRegistrationName";
@@ -75,131 +76,83 @@ public class StudyBuilder implements ConsentLogger {
     study.setDataTypes(lr.dataTypes());
     study.setPublicVisibility(lr.publicVisibility());
     study.setPiName(lr.piName());
-
     if (lr.studyId() != null) {
       study.setStudyId(lr.studyId());
     }
-    if (lr.phenotypeIndication() != null) {
-      study.addProperty(
-          new StudyProperty(PHENOTYPE_INDICATION, lr.phenotypeIndication(), PropertyType.String));
-    }
-    if (lr.studyType() != null) {
-      study.addProperty(new StudyProperty(STUDY_TYPE, lr.studyType(), PropertyType.String));
-    }
-    if (lr.species() != null) {
-      study.addProperty(new StudyProperty(SPECIES, lr.species(), PropertyType.String));
-    }
-    // TODO: dataSubmitterUserId
-    if (lr.dataCustodianEmail() != null) {
-      study.addProperty(
-          new StudyProperty(DATA_CUSTODIAN_EMAIL, lr.dataCustodianEmail(), PropertyType.Json));
-    }
-    if (lr.nihAnvilUse() != null) {
-      study.addProperty(
-          new StudyProperty(NIH_ANVIL_USE, lr.nihAnvilUse(), PropertyType.String));
-    }
-    if (lr.submittingToAnvil() != null) {
-      study.addProperty(
-          new StudyProperty(SUBMITTING_TO_ANVIL, lr.submittingToAnvil(), PropertyType.Boolean));
-    }
-    if (lr.dbGaPPhsID() != null) {
-      study.addProperty(new StudyProperty(DB_GAP_PHS_ID, lr.dbGaPPhsID(), PropertyType.String));
-    }
-    if (lr.dbGaPStudyRegistrationName() != null) {
-      study.addProperty(
-          new StudyProperty(DB_GAP_STUDY_REGISTRATION_NAME, lr.dbGaPStudyRegistrationName(),
-              PropertyType.String));
-    }
-    if (lr.embargoReleaseDate() != null) {
-      study.addProperty(
-          new StudyProperty(EMBARGO_RELEASE_DATE, lr.embargoReleaseDate(), PropertyType.String));
-    }
-    if (lr.sequencingCenter() != null) {
-      study.addProperty(
-          new StudyProperty(SEQUENCING_CENTER, lr.sequencingCenter(), PropertyType.String));
-    }
-    if (lr.piInstitution() != null) {
-      study.addProperty(new StudyProperty(PI_INSTITUTION, lr.piInstitution(), PropertyType.Number));
-    }
-    if (lr.nihGrantContractNumber() != null) {
-      study.addProperty(new StudyProperty(NIH_GRANT_CONTRACT_NUMBER, lr.nihGrantContractNumber(),
-          PropertyType.String));
-    }
-    if (lr.nihICsSupportingStudy() != null) {
-      study.addProperty(new StudyProperty(NIH_ICS_SUPPORTING_STUDY, lr.nihICsSupportingStudy(),
-          PropertyType.Json));
-    }
-    if (lr.nihProgramOfficerName() != null) {
-      study.addProperty(new StudyProperty(NIH_PROGRAM_OFFICER_NAME, lr.nihProgramOfficerName(),
-          PropertyType.String));
-    }
-    if (lr.nihInstitutionCenterSubmission() != null) {
-      study.addProperty(new StudyProperty(NIH_INSTITUTION_CENTER_SUBMISSION,
-          lr.nihInstitutionCenterSubmission(), PropertyType.String));
-    }
-    if (lr.nihGenomicProgramAdministratorName() != null) {
-      study.addProperty(new StudyProperty(NIH_GENOMIC_PROGRAM_ADMINISTRATOR_NAME,
-          lr.nihGenomicProgramAdministratorName(), PropertyType.String));
-    }
-    if (lr.multiCenterStudy() != null) {
-      study.addProperty(
-          new StudyProperty(MULTI_CENTER_STUDY, lr.multiCenterStudy(), PropertyType.Boolean));
-    }
-    if (lr.collaboratingSites() != null) {
-      study.addProperty(
-          new StudyProperty(COLLABORATING_SITES, lr.collaboratingSites(), PropertyType.Json));
-    }
-    if (lr.controlledAccessRequiredForGenomicSummaryResultsGSR() != null) {
-      study.addProperty(
-          new StudyProperty(CONTROLLED_ACCESS_REQUIRED_FOR_GENOMIC_SUMMARY_RESULTS_GSR,
-              lr.controlledAccessRequiredForGenomicSummaryResultsGSR(), PropertyType.Boolean));
-    }
-    if (lr.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation() != null) {
-      study.addProperty(new StudyProperty(
-          CONTROLLED_ACCESS_REQUIRED_FOR_GENOMIC_SUMMARY_RESULTS_GSRREQUIRED_EXPLANATION,
-          lr.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation(),
-          PropertyType.String));
-    }
-    if (lr.alternativeDataSharingPlan() != null) {
-      study.addProperty(new StudyProperty(ALTERNATIVE_DATA_SHARING_PLAN, lr.alternativeDataSharingPlan(),
-          PropertyType.Boolean));
-    }
-    if (lr.alternativeDataSharingPlanReasons() != null) {
-      study.addProperty(new StudyProperty(ALTERNATIVE_DATA_SHARING_PLAN_REASONS,
-          lr.alternativeDataSharingPlanReasons(), PropertyType.Json));
-    }
-    if (lr.alternativeDataSharingPlanExplanation() != null) {
-      study.addProperty(new StudyProperty(ALTERNATIVE_DATA_SHARING_PLAN_EXPLANATION,
-          lr.alternativeDataSharingPlanExplanation(), PropertyType.String));
-    }
-    if (lr.alternativeDataSharingPlanFileName() != null) {
-      study.addProperty(new StudyProperty(ALTERNATIVE_DATA_SHARING_PLAN_FILE_NAME,
-          lr.alternativeDataSharingPlanFileName(), PropertyType.String));
-    }
-    if (lr.alternativeDataSharingPlanDataSubmitted() != null) {
-      study.addProperty(new StudyProperty(ALTERNATIVE_DATA_SHARING_PLAN_DATA_SUBMITTED,
-          lr.alternativeDataSharingPlanDataSubmitted(), PropertyType.String));
-    }
-    if (lr.alternativeDataSharingPlanDataReleased() != null) {
-      study.addProperty(new StudyProperty(ALTERNATIVE_DATA_SHARING_PLAN_DATA_RELEASED,
-          lr.alternativeDataSharingPlanDataReleased(), PropertyType.Boolean));
-    }
-    if (lr.alternativeDataSharingPlanTargetDeliveryDate() != null) {
-      study.addProperty(new StudyProperty(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE,
-          lr.alternativeDataSharingPlanTargetDeliveryDate(), PropertyType.String));
-    }
-    if (lr.alternativeDataSharingPlanTargetPublicReleaseDate() != null) {
-      study.addProperty(new StudyProperty(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE,
-          lr.alternativeDataSharingPlanTargetPublicReleaseDate(), PropertyType.String));
-    }
-    if (lr.alternativeDataSharingPlanAccessManagement() != null) {
-      study.addProperty(new StudyProperty(ALTERNATIVE_DATA_SHARING_PLAN_ACCESS_MANAGEMENT,
-          lr.alternativeDataSharingPlanAccessManagement(), PropertyType.String));
-    }
+    addProp(PHENOTYPE_INDICATION, lr.phenotypeIndication(), PropertyType.String).ifPresent(
+        study::addProperty);
+    addProp(STUDY_TYPE, lr.studyType(), PropertyType.String).ifPresent(study::addProperty);
+    addProp(SPECIES, lr.species(), PropertyType.String).ifPresent(study::addProperty);
+    addProp(DATA_CUSTODIAN_EMAIL, lr.dataCustodianEmail(), PropertyType.Json).ifPresent(
+        study::addProperty);
+    addProp(NIH_ANVIL_USE, lr.nihAnvilUse(), PropertyType.String).ifPresent(study::addProperty);
+    addProp(SUBMITTING_TO_ANVIL, lr.submittingToAnvil(), PropertyType.Boolean).ifPresent(
+        study::addProperty);
+    addProp(DB_GAP_PHS_ID, lr.dbGaPPhsID(), PropertyType.String).ifPresent(study::addProperty);
+    addProp(DB_GAP_STUDY_REGISTRATION_NAME, lr.dbGaPStudyRegistrationName(),
+        PropertyType.String).ifPresent(study::addProperty);
+    addProp(EMBARGO_RELEASE_DATE, lr.embargoReleaseDate(), PropertyType.String).ifPresent(
+        study::addProperty);
+    addProp(SEQUENCING_CENTER, lr.sequencingCenter(), PropertyType.String).ifPresent(
+        study::addProperty);
+    addProp(PI_INSTITUTION, lr.piInstitution(), PropertyType.Number).ifPresent(study::addProperty);
+    addProp(NIH_GRANT_CONTRACT_NUMBER, lr.nihGrantContractNumber(), PropertyType.String).ifPresent(
+        study::addProperty);
+    addProp(NIH_ICS_SUPPORTING_STUDY, lr.nihICsSupportingStudy(), PropertyType.Json).ifPresent(
+        study::addProperty);
+    addProp(NIH_PROGRAM_OFFICER_NAME, lr.nihProgramOfficerName(), PropertyType.String).ifPresent(
+        study::addProperty);
+    addProp(NIH_INSTITUTION_CENTER_SUBMISSION, lr.nihInstitutionCenterSubmission(),
+        PropertyType.String).ifPresent(study::addProperty);
+    addProp(NIH_GENOMIC_PROGRAM_ADMINISTRATOR_NAME, lr.nihGenomicProgramAdministratorName(),
+        PropertyType.String).ifPresent(study::addProperty);
+    addProp(MULTI_CENTER_STUDY, lr.multiCenterStudy(), PropertyType.Boolean).ifPresent(
+        study::addProperty);
+    addProp(COLLABORATING_SITES, lr.collaboratingSites(), PropertyType.Json).ifPresent(
+        study::addProperty);
+    addProp(CONTROLLED_ACCESS_REQUIRED_FOR_GENOMIC_SUMMARY_RESULTS_GSR,
+        lr.controlledAccessRequiredForGenomicSummaryResultsGSR(), PropertyType.Boolean).ifPresent(
+        study::addProperty);
+    addProp(CONTROLLED_ACCESS_REQUIRED_FOR_GENOMIC_SUMMARY_RESULTS_GSR_REQUIRED_EXPLANATION,
+        lr.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation(),
+        PropertyType.String)
+        .ifPresent(study::addProperty);
+    addProp(ALTERNATIVE_DATA_SHARING_PLAN, lr.alternativeDataSharingPlan(),
+        PropertyType.Boolean).ifPresent(study::addProperty);
+    addProp(ALTERNATIVE_DATA_SHARING_PLAN_REASONS, lr.alternativeDataSharingPlanReasons(),
+        PropertyType.Json).ifPresent(study::addProperty);
+    addProp(ALTERNATIVE_DATA_SHARING_PLAN_EXPLANATION,
+        lr.alternativeDataSharingPlanExplanation(), PropertyType.String).ifPresent(
+        study::addProperty);
+    addProp(ALTERNATIVE_DATA_SHARING_PLAN_FILE_NAME,
+        lr.alternativeDataSharingPlanFileName(), PropertyType.String).ifPresent(study::addProperty);
+    addProp(ALTERNATIVE_DATA_SHARING_PLAN_DATA_SUBMITTED,
+        lr.alternativeDataSharingPlanDataSubmitted(), PropertyType.String).ifPresent(
+        study::addProperty);
+    addProp(ALTERNATIVE_DATA_SHARING_PLAN_DATA_RELEASED,
+        lr.alternativeDataSharingPlanDataReleased(), PropertyType.Boolean).ifPresent(
+        study::addProperty);
+    addProp(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE,
+        lr.alternativeDataSharingPlanTargetDeliveryDate(), PropertyType.String).ifPresent(
+        study::addProperty);
+    addProp(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE,
+        lr.alternativeDataSharingPlanTargetPublicReleaseDate(), PropertyType.String).ifPresent(
+        study::addProperty);
+    addProp(ALTERNATIVE_DATA_SHARING_PLAN_ACCESS_MANAGEMENT,
+        lr.alternativeDataSharingPlanAccessManagement(), PropertyType.String).ifPresent(
+        study::addProperty);
+
     if (lr.consentGroups() != null) {
       study.addDatasets(getDatasetsFromConsentGroups(lr.consentGroups()));
     }
     return study;
+  }
+
+  private Optional<StudyProperty> addProp(String name, Object value, PropertyType type) {
+    if (value != null) {
+      return Optional.of(new StudyProperty(name, value, type));
+    }
+    return Optional.empty();
   }
 
   public List<Dataset> getDatasetsFromConsentGroups(List<ConsentGroup> consentGroups) {
@@ -217,16 +170,19 @@ public class StudyBuilder implements ConsentLogger {
       dataset.setAlias(Dataset.parseIdentifierToAlias(cg.datasetIdentifier()));
     }
     if (cg.accessManagement() != null) {
-      dataset.addProperty(createDatasetProp(ACCESS_MANAGEMENT, cg.accessManagement(), PropertyType.String));
+      dataset.addProperty(
+          createDatasetProp(ACCESS_MANAGEMENT, cg.accessManagement(), PropertyType.String));
     }
     if (cg.dataLocation() != null) {
-      dataset.addProperty(createDatasetProp(DATA_LOCATION, cg.dataLocation().value(), PropertyType.String));
+      dataset.addProperty(
+          createDatasetProp(DATA_LOCATION, cg.dataLocation().value(), PropertyType.String));
     }
     if (cg.url() != null) {
       dataset.addProperty(createDatasetProp(URL, cg.url(), PropertyType.String));
     }
     if (cg.numberOfParticipants() != null) {
-      dataset.addProperty(createDatasetProp(NUMBER_OF_PARTICIPANTS, cg.numberOfParticipants(), PropertyType.Number));
+      dataset.addProperty(createDatasetProp(NUMBER_OF_PARTICIPANTS, cg.numberOfParticipants(),
+          PropertyType.Number));
     }
     DataUse dataUse = new DataUse();
     if (cg.generalResearchUse() != null && cg.generalResearchUse()) {
@@ -287,5 +243,4 @@ public class StudyBuilder implements ConsentLogger {
     prop.setPropertyType(type);
     return prop;
   }
-
 }
