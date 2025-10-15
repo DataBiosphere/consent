@@ -208,6 +208,12 @@
       "items" : {
         "$ref" : "#/$defs/consentGroup"
       }
+    },
+    "assets" : {
+      "type" : "object",
+      "label" : "Assets",
+      "description" : "Additional assets or metadata associated with this study registration",
+      "additionalProperties" : true
     }
   },
   "$defs" : {
