@@ -197,6 +197,10 @@ public class DatasetService implements ConsentLogger {
     return false;
   }
 
+  public boolean isCreatorCustodianOrAdmin(User user, Study study) {
+    return user.hasUserRole(UserRoles.ADMIN) || isCreatorOrCustodian(user, study);
+  }
+
   public Dataset getDatasetByName(String name) {
     String lowercaseName = name.toLowerCase();
     return datasetDAO.getDatasetByName(lowercaseName);
