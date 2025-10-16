@@ -216,8 +216,7 @@ public class StudyResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       Study existingStudy = datasetRegistrationService.findStudyById(studyId);
-      boolean canUpdateStudy = user.hasUserRole(UserRoles.ADMIN) ||
-          datasetService.isCreatorOrCustodian(user, existingStudy);
+      boolean canUpdateStudy = datasetService.isCreatorCustodianOrAdmin(user, existingStudy);
       if (!canUpdateStudy) {
         throw new ForbiddenException("Study with ID " + studyId + " is not updatable");
       }
@@ -253,8 +252,10 @@ public class StudyResource extends Resource {
   }
 
   private void checkPublicVisibilityForUser(Study study, User user) {
-    boolean isPublic = datasetService.isCreatorOrCustodian(user, study);
-    if (!isPublic && !study.getCreateUserId().equals(user.getUserId())) {
+    boolean isApprovedRole = datasetService.isCreatorCustodianOrAdmin(user, study);
+    boolean isPubliclyVisible = study.getPublicVisibility();
+    // If approved role or publicly visible, the user can see the study, otherwise throw
+    if (!isApprovedRole && !isPubliclyVisible) {
       throw new NotFoundException("Study not found");
     }
   }

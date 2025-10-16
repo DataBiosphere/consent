@@ -18,13 +18,13 @@
     <logback.version>1.5.18</logback.version>
     <postgres.version>42.7.8</postgres.version>
     <surefire.version>3.5.4</surefire.version>
-    <swagger.ui.version>5.28.1</swagger.ui.version>
+    <swagger.ui.version>5.29.3</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <mockserver.version>5.15.0</mockserver.version>
     <junit.version>6.0.0</junit.version>
     <mockito.version>5.20.0</mockito.version>
     <sonar.plugin.version>5.2.0.4988</sonar.plugin.version>
-    <netty.override.version>4.2.6.Final</netty.override.version>
+    <netty.override.version>4.2.7.Final</netty.override.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -110,7 +110,7 @@
           </suppressionFiles>
           <autoUpdate>true</autoUpdate>
         </configuration>
-        <version>12.1.6</version>
+        <version>12.1.8</version>
         <executions>
           <execution>
             <goals>
@@ -123,7 +123,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.6.1</version>
+        <version>3.6.2</version>
         <executions>
           <execution>
             <id>enforce-versions</id>
@@ -133,7 +133,7 @@
             <configuration>
               <rules>
                 <requireMavenVersion>
-                  <version>3.6.1</version>
+                  <version>3.6.2</version>
                 </requireMavenVersion>
                 <requireJavaVersion>
                   <version>{java.version}</version>
@@ -213,7 +213,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.13</version>
+        <version>0.8.14</version>
         <executions>
           <execution>
             <id>prepare-agent</id>
@@ -242,14 +242,14 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.14.1</version>
         <configuration>
-          <release>17</release>
+          <release>21</release>
         </configuration>
       </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.8.1</version>
+        <version>3.9.0</version>
         <executions>
           <execution>
             <id>copy-dependencies</id>
@@ -331,7 +331,7 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.49.5</version>
+        <version>3.49.6</version>
         <scope>import</scope>
       </dependency>
       <dependency>
@@ -447,7 +447,7 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry</artifactId>
-      <version>8.22.0</version>
+      <version>8.23.0</version>
     </dependency>
 
     <dependency>
@@ -675,7 +675,7 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>2.58.0</version>
+      <version>2.58.1</version>
     </dependency>
 
     <dependency>
@@ -717,7 +717,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>9.1.4</version>
+      <version>9.1.5</version>
     </dependency>
 
     <dependency>
