@@ -1171,6 +1171,7 @@ public class DatasetRegistrationSchemaV1 {
     result = ((result * 31) + ((this.controlledAccessRequiredForGenomicSummaryResultsGSR == null)
         ? 0 : this.controlledAccessRequiredForGenomicSummaryResultsGSR.hashCode()));
     result = ((result * 31) + ((this.piInstitution == null) ? 0 : this.piInstitution.hashCode()));
+    result = ((result * 31) + ((this.assets == null) ? 0 : this.assets.hashCode()));
     return result;
   }
 
@@ -1288,7 +1289,8 @@ public class DatasetRegistrationSchemaV1 {
             && this.controlledAccessRequiredForGenomicSummaryResultsGSR.equals(
             rhs.controlledAccessRequiredForGenomicSummaryResultsGSR)))) && (
         (this.piInstitution == rhs.piInstitution) || ((this.piInstitution != null)
-            && this.piInstitution.equals(rhs.piInstitution))));
+            && this.piInstitution.equals(rhs.piInstitution)))) && ((this.assets == rhs.assets)
+        || ((this.assets != null) && this.assets.equals(rhs.assets)));
   }
 
 
