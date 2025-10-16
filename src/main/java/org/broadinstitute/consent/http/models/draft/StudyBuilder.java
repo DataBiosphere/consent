@@ -79,66 +79,66 @@ public class StudyBuilder implements ConsentLogger {
     if (lr.studyId() != null) {
       study.setStudyId(lr.studyId());
     }
-    addProp(PHENOTYPE_INDICATION, lr.phenotypeIndication(), PropertyType.String).ifPresent(
+    studyProp(PHENOTYPE_INDICATION, lr.phenotypeIndication(), PropertyType.String).ifPresent(
         study::addProperty);
-    addProp(STUDY_TYPE, lr.studyType(), PropertyType.String).ifPresent(study::addProperty);
-    addProp(SPECIES, lr.species(), PropertyType.String).ifPresent(study::addProperty);
-    addProp(DATA_CUSTODIAN_EMAIL, lr.dataCustodianEmail(), PropertyType.Json).ifPresent(
+    studyProp(STUDY_TYPE, lr.studyType(), PropertyType.String).ifPresent(study::addProperty);
+    studyProp(SPECIES, lr.species(), PropertyType.String).ifPresent(study::addProperty);
+    studyProp(DATA_CUSTODIAN_EMAIL, lr.dataCustodianEmail(), PropertyType.Json).ifPresent(
         study::addProperty);
-    addProp(NIH_ANVIL_USE, lr.nihAnvilUse(), PropertyType.String).ifPresent(study::addProperty);
-    addProp(SUBMITTING_TO_ANVIL, lr.submittingToAnvil(), PropertyType.Boolean).ifPresent(
+    studyProp(NIH_ANVIL_USE, lr.nihAnvilUse(), PropertyType.String).ifPresent(study::addProperty);
+    studyProp(SUBMITTING_TO_ANVIL, lr.submittingToAnvil(), PropertyType.Boolean).ifPresent(
         study::addProperty);
-    addProp(DB_GAP_PHS_ID, lr.dbGaPPhsID(), PropertyType.String).ifPresent(study::addProperty);
-    addProp(DB_GAP_STUDY_REGISTRATION_NAME, lr.dbGaPStudyRegistrationName(),
+    studyProp(DB_GAP_PHS_ID, lr.dbGaPPhsID(), PropertyType.String).ifPresent(study::addProperty);
+    studyProp(DB_GAP_STUDY_REGISTRATION_NAME, lr.dbGaPStudyRegistrationName(),
         PropertyType.String).ifPresent(study::addProperty);
-    addProp(EMBARGO_RELEASE_DATE, lr.embargoReleaseDate(), PropertyType.String).ifPresent(
+    studyProp(EMBARGO_RELEASE_DATE, lr.embargoReleaseDate(), PropertyType.String).ifPresent(
         study::addProperty);
-    addProp(SEQUENCING_CENTER, lr.sequencingCenter(), PropertyType.String).ifPresent(
+    studyProp(SEQUENCING_CENTER, lr.sequencingCenter(), PropertyType.String).ifPresent(
         study::addProperty);
-    addProp(PI_INSTITUTION, lr.piInstitution(), PropertyType.Number).ifPresent(study::addProperty);
-    addProp(NIH_GRANT_CONTRACT_NUMBER, lr.nihGrantContractNumber(), PropertyType.String).ifPresent(
+    studyProp(PI_INSTITUTION, lr.piInstitution(), PropertyType.Number).ifPresent(study::addProperty);
+    studyProp(NIH_GRANT_CONTRACT_NUMBER, lr.nihGrantContractNumber(), PropertyType.String).ifPresent(
         study::addProperty);
-    addProp(NIH_ICS_SUPPORTING_STUDY, lr.nihICsSupportingStudy(), PropertyType.Json).ifPresent(
+    studyProp(NIH_ICS_SUPPORTING_STUDY, lr.nihICsSupportingStudy(), PropertyType.Json).ifPresent(
         study::addProperty);
-    addProp(NIH_PROGRAM_OFFICER_NAME, lr.nihProgramOfficerName(), PropertyType.String).ifPresent(
+    studyProp(NIH_PROGRAM_OFFICER_NAME, lr.nihProgramOfficerName(), PropertyType.String).ifPresent(
         study::addProperty);
-    addProp(NIH_INSTITUTION_CENTER_SUBMISSION, lr.nihInstitutionCenterSubmission(),
+    studyProp(NIH_INSTITUTION_CENTER_SUBMISSION, lr.nihInstitutionCenterSubmission(),
         PropertyType.String).ifPresent(study::addProperty);
-    addProp(NIH_GENOMIC_PROGRAM_ADMINISTRATOR_NAME, lr.nihGenomicProgramAdministratorName(),
+    studyProp(NIH_GENOMIC_PROGRAM_ADMINISTRATOR_NAME, lr.nihGenomicProgramAdministratorName(),
         PropertyType.String).ifPresent(study::addProperty);
-    addProp(MULTI_CENTER_STUDY, lr.multiCenterStudy(), PropertyType.Boolean).ifPresent(
+    studyProp(MULTI_CENTER_STUDY, lr.multiCenterStudy(), PropertyType.Boolean).ifPresent(
         study::addProperty);
-    addProp(COLLABORATING_SITES, lr.collaboratingSites(), PropertyType.Json).ifPresent(
+    studyProp(COLLABORATING_SITES, lr.collaboratingSites(), PropertyType.Json).ifPresent(
         study::addProperty);
-    addProp(CONTROLLED_ACCESS_REQUIRED_FOR_GENOMIC_SUMMARY_RESULTS_GSR,
+    studyProp(CONTROLLED_ACCESS_REQUIRED_FOR_GENOMIC_SUMMARY_RESULTS_GSR,
         lr.controlledAccessRequiredForGenomicSummaryResultsGSR(), PropertyType.Boolean).ifPresent(
         study::addProperty);
-    addProp(CONTROLLED_ACCESS_REQUIRED_FOR_GENOMIC_SUMMARY_RESULTS_GSR_REQUIRED_EXPLANATION,
+    studyProp(CONTROLLED_ACCESS_REQUIRED_FOR_GENOMIC_SUMMARY_RESULTS_GSR_REQUIRED_EXPLANATION,
         lr.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation(),
         PropertyType.String)
         .ifPresent(study::addProperty);
-    addProp(ALTERNATIVE_DATA_SHARING_PLAN, lr.alternativeDataSharingPlan(),
+    studyProp(ALTERNATIVE_DATA_SHARING_PLAN, lr.alternativeDataSharingPlan(),
         PropertyType.Boolean).ifPresent(study::addProperty);
-    addProp(ALTERNATIVE_DATA_SHARING_PLAN_REASONS, lr.alternativeDataSharingPlanReasons(),
+    studyProp(ALTERNATIVE_DATA_SHARING_PLAN_REASONS, lr.alternativeDataSharingPlanReasons(),
         PropertyType.Json).ifPresent(study::addProperty);
-    addProp(ALTERNATIVE_DATA_SHARING_PLAN_EXPLANATION,
+    studyProp(ALTERNATIVE_DATA_SHARING_PLAN_EXPLANATION,
         lr.alternativeDataSharingPlanExplanation(), PropertyType.String).ifPresent(
         study::addProperty);
-    addProp(ALTERNATIVE_DATA_SHARING_PLAN_FILE_NAME,
+    studyProp(ALTERNATIVE_DATA_SHARING_PLAN_FILE_NAME,
         lr.alternativeDataSharingPlanFileName(), PropertyType.String).ifPresent(study::addProperty);
-    addProp(ALTERNATIVE_DATA_SHARING_PLAN_DATA_SUBMITTED,
+    studyProp(ALTERNATIVE_DATA_SHARING_PLAN_DATA_SUBMITTED,
         lr.alternativeDataSharingPlanDataSubmitted(), PropertyType.String).ifPresent(
         study::addProperty);
-    addProp(ALTERNATIVE_DATA_SHARING_PLAN_DATA_RELEASED,
+    studyProp(ALTERNATIVE_DATA_SHARING_PLAN_DATA_RELEASED,
         lr.alternativeDataSharingPlanDataReleased(), PropertyType.Boolean).ifPresent(
         study::addProperty);
-    addProp(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE,
+    studyProp(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE,
         lr.alternativeDataSharingPlanTargetDeliveryDate(), PropertyType.String).ifPresent(
         study::addProperty);
-    addProp(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE,
+    studyProp(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE,
         lr.alternativeDataSharingPlanTargetPublicReleaseDate(), PropertyType.String).ifPresent(
         study::addProperty);
-    addProp(ALTERNATIVE_DATA_SHARING_PLAN_ACCESS_MANAGEMENT,
+    studyProp(ALTERNATIVE_DATA_SHARING_PLAN_ACCESS_MANAGEMENT,
         lr.alternativeDataSharingPlanAccessManagement(), PropertyType.String).ifPresent(
         study::addProperty);
 
@@ -148,7 +148,7 @@ public class StudyBuilder implements ConsentLogger {
     return study;
   }
 
-  private Optional<StudyProperty> addProp(String name, Object value, PropertyType type) {
+  private Optional<StudyProperty> studyProp(String name, Object value, PropertyType type) {
     if (value != null) {
       return Optional.of(new StudyProperty(name, value, type));
     }
@@ -169,21 +169,29 @@ public class StudyBuilder implements ConsentLogger {
     if (cg.datasetIdentifier() != null) {
       dataset.setAlias(Dataset.parseIdentifierToAlias(cg.datasetIdentifier()));
     }
-    if (cg.accessManagement() != null) {
-      dataset.addProperty(
-          createDatasetProp(ACCESS_MANAGEMENT, cg.accessManagement(), PropertyType.String));
+    datasetProp(ACCESS_MANAGEMENT, cg.accessManagement(), PropertyType.String)
+        .ifPresent(dataset::addProperty);
+    datasetProp(DATA_LOCATION, cg.dataLocation(), PropertyType.String).ifPresent(dataset::addProperty);
+    datasetProp(URL, cg.url(), PropertyType.String).ifPresent(dataset::addProperty);
+    datasetProp(NUMBER_OF_PARTICIPANTS, cg.numberOfParticipants(), PropertyType.Number)
+        .ifPresent(dataset::addProperty);
+    datasetProp(FILE_TYPES, cg.fileTypes(), PropertyType.Json).ifPresent(dataset::addProperty);
+    dataset.setDataUse(populateDataUse(cg));
+    return dataset;
+  }
+
+  private Optional<DatasetProperty> datasetProp(String name, Object value, PropertyType type) {
+    if (value != null) {
+      DatasetProperty prop = new DatasetProperty();
+      prop.setPropertyName(name);
+      prop.setPropertyValue(value);
+      prop.setPropertyType(type);
+      return Optional.of(prop);
     }
-    if (cg.dataLocation() != null) {
-      dataset.addProperty(
-          createDatasetProp(DATA_LOCATION, cg.dataLocation().value(), PropertyType.String));
-    }
-    if (cg.url() != null) {
-      dataset.addProperty(createDatasetProp(URL, cg.url(), PropertyType.String));
-    }
-    if (cg.numberOfParticipants() != null) {
-      dataset.addProperty(createDatasetProp(NUMBER_OF_PARTICIPANTS, cg.numberOfParticipants(),
-          PropertyType.Number));
-    }
+    return Optional.empty();
+  }
+
+  private DataUse populateDataUse(ConsentGroup cg) {
     DataUse dataUse = new DataUse();
     if (cg.generalResearchUse() != null && cg.generalResearchUse()) {
       dataUse.setGeneralUse(true);
@@ -229,18 +237,6 @@ public class StudyBuilder implements ConsentLogger {
     if (cg.otherSecondary() != null) {
       dataUse.setSecondaryOther(cg.otherSecondary());
     }
-    if (cg.fileTypes() != null && !cg.fileTypes().isEmpty()) {
-      dataset.addProperty(createDatasetProp(FILE_TYPES, cg.fileTypes(), PropertyType.Json));
-    }
-    dataset.setDataUse(dataUse);
-    return dataset;
-  }
-
-  protected DatasetProperty createDatasetProp(String name, Object value, PropertyType type) {
-    DatasetProperty prop = new DatasetProperty();
-    prop.setPropertyName(name);
-    prop.setPropertyValue(value);
-    prop.setPropertyType(type);
-    return prop;
+    return dataUse;
   }
 }
