@@ -10,9 +10,10 @@
   <name>Consent Management Services</name>
 
   <properties>
-    <java.version>21</java.version>
-    <maven.compiler.source>21</maven.compiler.source>
-    <maven.compiler.target>21</maven.compiler.target>
+    <java.version>25</java.version>
+    <maven.compiler.source>25</maven.compiler.source>
+    <maven.compiler.target>25</maven.compiler.target>
+    <maven.version>3.9.11</maven.version>
     <liquibase.version>4.33.0</liquibase.version>
     <dropwizard.version>4.0.16</dropwizard.version>
     <logback.version>1.5.18</logback.version>
@@ -133,10 +134,10 @@
             <configuration>
               <rules>
                 <requireMavenVersion>
-                  <version>3.6.2</version>
+                  <version>${maven.version}</version>
                 </requireMavenVersion>
                 <requireJavaVersion>
-                  <version>{java.version}</version>
+                  <version>${java.version}</version>
                 </requireJavaVersion>
               </rules>
             </configuration>

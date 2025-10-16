@@ -1,13 +1,15 @@
 {
-    "name": "Java 21",
-    "image": "mcr.microsoft.com/devcontainers/java:21",
+    "name": "Java 25",
+    "image": "mcr.microsoft.com/devcontainers/java:25",
     "features": {
         "ghcr.io/devcontainers/features/java:1": {
-            "version": "21",
+            "version": "25",
             "jdkDistro": "tem",
             "installMaven": true
         },
-        "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {
+            "moby": false
+        }
     },
     "remoteUser": "vscode"
 }
