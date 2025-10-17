@@ -39,8 +39,8 @@ public class ErrorResource {
       String originalUri = servletRequestInfo.getDecodedPathInContext();
       String decodedUri = URLDecoder.decode(originalUri, Charset.defaultCharset());
       String msg = String.format("Unable to find requested path: %s", decodedUri);
-      Error error = new Error(msg, 404);
-      return Response.status(error.code()).entity(error).build();
+      Error error = new Error(msg, Response.Status.NOT_FOUND.getStatusCode());
+      return Response.status(Response.Status.NOT_FOUND).entity(error).build();
     } catch (Exception e) {
       return Response.status(Response.Status.NOT_FOUND).build();
     }
