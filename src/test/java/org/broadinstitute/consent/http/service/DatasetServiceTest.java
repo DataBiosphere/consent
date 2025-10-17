@@ -47,6 +47,7 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAuthorizationReader;
+import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
@@ -463,12 +464,170 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testFindAllDatasetStudySummaries() {
+    User user = new User();
+    user.setUserId(1);
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1, user.getUserId() + 1, "Dataset Name", "DUOS-123", 1, "Study Name", 1000, true);
+    when(datasetDAO.findAllDatasetStudySummaries()).thenReturn(List.of(summary));
+
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.findAllDatasetStudySummaries(user);
+    assertEquals(1, authorizedSummaries.size());
+    assertEquals(summary, authorizedSummaries.get(0));
+  }
+
+  @Test
+  void testVerifyPublicVisibilitySummaries_Admin_PV_False() {
+    User admin = getAdmin();
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1, admin.getUserId() + 1, "Dataset Name", "DUOS-123", 1, "Study Name", 1000, false);
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.verifyPublicVisibilityAccess(List.of(summary), admin);
+    assertEquals(1, authorizedSummaries.size());
+    assertEquals(summary, authorizedSummaries.get(0));
+  }
+
+  @Test
+  void testVerifyPublicVisibilitySummaries_Admin_PV_True() {
+    User admin = getAdmin();
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1, admin.getUserId() + 1, "Dataset Name", "DUOS-123", 1, "Study Name", 1000, true);
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.verifyPublicVisibilityAccess(List.of(summary), admin);
+    assertEquals(1, authorizedSummaries.size());
+    assertEquals(summary, authorizedSummaries.get(0));
+  }
+
+  @Test
+  void testVerifyPublicVisibilitySummaries_User_HiddenStudy() {
+    User user = new User();
+    user.setUserId(1);
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1, user.getUserId() + 1, "Dataset Name", "DUOS-123", 1, "Study Name", 1000, false);
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.verifyPublicVisibilityAccess(List.of(summary), user);
+    assertEquals(0, authorizedSummaries.size());
+  }
+
+  @Test
+  void testVerifyPublicVisibilitySummaries_User_PV_True() {
+    User user = new User();
+    user.setUserId(1);
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1, user.getUserId() + 1, "Dataset Name", "DUOS-123", 1, "Study Name", 1000, true);
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.verifyPublicVisibilityAccess(List.of(summary), user);
+    assertEquals(1, authorizedSummaries.size());
+    assertEquals(summary, authorizedSummaries.get(0));
+  }
+
+  @Test
+  void testVerifyPublicVisibilitySummaries_User_Created_Dataset_PV_False() {
+    User user = new User();
+    user.setUserId(1);
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1, user.getUserId(), "Dataset Name", "DUOS-123", 1, "Study Name", 1000, false);
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.verifyPublicVisibilityAccess(List.of(summary), user);
+    assertEquals(1, authorizedSummaries.size());
+    assertEquals(summary, authorizedSummaries.get(0));
+  }
+
+  @Test
+  void testVerifyPublicVisibilitySummaries_User_StudyCreator() {
+    User user = new User();
+    user.setUserId(1);
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1,
+            user.getUserId() + 1,
+            "Dataset Name",
+            "DUOS-123",
+            1,
+            "Study Name",
+            user.getUserId(),
+            false);
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.verifyPublicVisibilityAccess(List.of(summary), user);
+    assertEquals(1, authorizedSummaries.size());
+    assertEquals(summary, authorizedSummaries.get(0));
+  }
+
+  @Test
+  void testVerifyPublicVisibilitySummaries_User_IS_StudyCustodian() {
+    Gson gson = GsonUtil.getInstance();
+    User custodian = new User();
+    custodian.setUserId(1);
+    custodian.setEmail("alice@custodiansRus.org");
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setCreateUserId(custodian.getUserId() + 1);
+    study.setPublicVisibility(false);
+    StudyProperty prop = new StudyProperty();
+    prop.setKey(DatasetRegistrationSchemaV1Builder.dataCustodianEmail);
+    prop.setType(PropertyType.Json);
+    prop.setValue(gson.toJson(List.of(custodian.getEmail())));
+    study.addProperties(prop);
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1,
+            custodian.getUserId() + 1,
+            "Dataset Name",
+            "DUOS-123",
+            study.getStudyId(),
+            "Study Name",
+            study.getCreateUserId(),
+            false);
+    when(studyDAO.findStudyById(summary.study_id())).thenReturn(study);
+
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.verifyPublicVisibilityAccess(List.of(summary), custodian);
+    assertEquals(1, authorizedSummaries.size());
+    assertEquals(summary, authorizedSummaries.get(0));
+  }
+
+  @Test
+  void testVerifyPublicVisibilitySummaries_User_NOT_StudyCustodian() {
+    Gson gson = GsonUtil.getInstance();
+    User custodian = new User();
+    custodian.setUserId(1);
+    custodian.setEmail("alice@custodiansRus.org");
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setCreateUserId(custodian.getUserId() + 1);
+    study.setPublicVisibility(false);
+    StudyProperty prop = new StudyProperty();
+    prop.setKey(DatasetRegistrationSchemaV1Builder.dataCustodianEmail);
+    prop.setType(PropertyType.Json);
+    prop.setValue(gson.toJson(List.of("jane@custodiansRus.org")));
+    study.addProperties(prop);
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1,
+            custodian.getUserId() + 1,
+            "Dataset Name",
+            "DUOS-123",
+            study.getStudyId(),
+            "Study Name",
+            study.getCreateUserId(),
+            false);
+    when(studyDAO.findStudyById(summary.study_id())).thenReturn(study);
+
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.verifyPublicVisibilityAccess(List.of(summary), custodian);
+    assertEquals(0, authorizedSummaries.size());
+  }
+
+  @Test
   void testVerifyPublicVisibilityAccess_Admin() {
-    User admin = new User();
-    admin.setUserId(1);
-    admin.setEmail("admin@email.com");
-    // Without the admin role this test condition would fail.
-    admin.setAdminRole();
+    User admin = getAdmin();
     Dataset dataset = new Dataset();
     dataset.setCreateUserId(2);
     User studyCreator = new User();
@@ -484,6 +643,15 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     Dataset verfiedDataset = datasetService.verifyPublicVisibilityAccess(dataset, admin);
     assertEquals(dataset.getDatasetId(), verfiedDataset.getDatasetId());
+  }
+
+  private static User getAdmin() {
+    User admin = new User();
+    admin.setUserId(1);
+    admin.setEmail("admin@email.com");
+    // Without the admin role this test condition would fail.
+    admin.setAdminRole();
+    return admin;
   }
 
   @Test

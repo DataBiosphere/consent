@@ -732,7 +732,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Test
   void testFindAllDatasetStudySummaries() {
-    when(datasetService.findAllDatasetStudySummaries()).thenReturn(List.of());
+    when(datasetService.findAllDatasetStudySummaries(user)).thenReturn(List.of());
 
     try (var response = resource.findAllDatasetStudySummaries(duosUser)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
