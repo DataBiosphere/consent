@@ -140,6 +140,30 @@ public class DatasetService implements ConsentLogger {
     return verifyPublicVisibilityAccess(d, user);
   }
 
+  protected List<DatasetStudySummary> verifyPublicVisibilityAccess(
+      List<DatasetStudySummary> summaries, User user) {
+    if (user.hasUserRole(UserRoles.ADMIN)) {
+      return summaries;
+    }
+    List<DatasetStudySummary> authorizedSummaries = new ArrayList<>();
+    for (DatasetStudySummary summary : summaries) {
+      if (Boolean.TRUE.equals(summary.public_visibility())) {
+        authorizedSummaries.add(summary);
+      } else if (summary.study_create_user_id().equals(user.getUserId())) {
+        authorizedSummaries.add(summary);
+      } else if (summary.dataset_create_user_id().equals(user.getUserId())) {
+        authorizedSummaries.add(summary);
+      } else {
+        // fetch study and see if the user is a custodian
+        Study study = studyDAO.findStudyById(summary.study_id());
+        if (study != null && isCreatorOrCustodian(user, study)) {
+          authorizedSummaries.add(summary);
+        }
+      }
+    }
+    return authorizedSummaries;
+  }
+
   protected Dataset verifyPublicVisibilityAccess(Dataset dataset, User user) {
     // Admins
     if (user.hasUserRole(UserRoles.ADMIN)) {
@@ -290,8 +314,9 @@ public class DatasetService implements ConsentLogger {
     return studyDAO.findStudyById(studyId);
   }
 
-  public List<DatasetStudySummary> findAllDatasetStudySummaries() {
-    return datasetDAO.findAllDatasetStudySummaries();
+  public List<DatasetStudySummary> findAllDatasetStudySummaries(User user) {
+    List<DatasetStudySummary> summaries = datasetDAO.findAllDatasetStudySummaries();
+    return verifyPublicVisibilityAccess(summaries, user);
   }
 
   public Dataset approveDataset(Dataset dataset, User user, Boolean approval) {

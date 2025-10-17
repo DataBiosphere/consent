@@ -23,16 +23,14 @@ jobs:
           java-version: 25
           cache: 'maven'
       - name: Test Only
-        if: github.actor == 'dependabot[bot]'
         env:
           MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
-        run: mvn clean test  --batch-mode
+        run: mvn clean jacoco:prepare-agent test jacoco:report --batch-mode
       - name: Test Report
         continue-on-error: true
-        if: github.actor != 'dependabot[bot]'
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
         run: |
           mvn -v
-          mvn clean jacoco:prepare-agent test jacoco:report org.sonarsource.scanner.maven:sonar-maven-plugin:sonar --batch-mode
+          mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar --batch-mode

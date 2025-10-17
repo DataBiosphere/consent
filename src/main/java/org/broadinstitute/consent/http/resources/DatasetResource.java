@@ -239,7 +239,7 @@ public class DatasetResource extends Resource {
   @Path("/v3")
   public Response findAllDatasetStudySummaries(@Auth DuosUser duosUser) {
     try {
-      List<DatasetStudySummary> summaries = datasetService.findAllDatasetStudySummaries();
+      List<DatasetStudySummary> summaries = datasetService.findAllDatasetStudySummaries(duosUser.getUser());
       return Response.ok(summaries).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

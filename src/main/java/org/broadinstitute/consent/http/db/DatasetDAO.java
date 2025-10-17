@@ -112,8 +112,11 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   Dataset findMinimalDatasetByAlias(@Bind("alias") Integer alias);
 
   @UseRowMapper(DatasetStudySummaryMapper.class)
-  @SqlQuery("""
-      SELECT d.dataset_id, d.name AS dataset_name, d.alias, s.study_id, s.name AS study_name
+  @SqlQuery(
+      """
+      SELECT d.dataset_id, d.create_user_id AS dataset_create_user_id, d.name AS dataset_name,
+          d.alias, s.study_id, s.name AS study_name, s.public_visibility AS public_visibility,
+          s.create_user_id AS study_create_user_id
         FROM dataset d
         LEFT JOIN study s ON s.study_id = d.study_id
         ORDER BY dataset_id
