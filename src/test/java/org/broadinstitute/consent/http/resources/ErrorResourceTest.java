@@ -5,12 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.ws.rs.core.Response;
-import java.net.URLEncoder;
-import java.nio.charset.Charset;
-import org.junit.jupiter.api.Test;
+import org.eclipse.jetty.ee10.servlet.ServletApiRequest;
+import org.eclipse.jetty.ee10.servlet.ServletContextHandler.ServletRequestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -18,26 +19,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ErrorResourceTest {
 
   @Mock
-  private HttpServletRequest request;
+  private HttpServletRequestWrapper mockRequest;
+  @Mock
+  private ServletApiRequest mockServletRequest;
+  @Mock
+  private ServletRequestInfo servletRequestInfo;
 
-  @Test
-  void testNotFound() {
+  @ParameterizedTest
+  @ValueSource(strings = {"/not_found", "/context/¥"})
+  void testNotFound(String path) {
     ErrorResource resource = new ErrorResource();
-    when(request.getRequestURI()).thenReturn("not_found");
-    try (Response response = resource.notFound(request)) {
+    when(mockRequest.getRequest()).thenReturn(mockServletRequest);
+    when(mockServletRequest.getServletRequestInfo()).thenReturn(servletRequestInfo);
+    when(servletRequestInfo.getDecodedPathInContext()).thenReturn(path);
+    try (Response response = resource.notFound(mockRequest)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+      assertTrue(response.getEntity().toString().contains(path));
     }
   }
-
-  @Test
-  void testNotFoundDecoded() {
-    String unicode = "¥";
-    String encoded = URLEncoder.encode(unicode, Charset.defaultCharset());
-    ErrorResource resource = new ErrorResource();
-    when(request.getRequestURI()).thenReturn(encoded);
-    try (Response response = resource.notFound(request)) {
-      assertTrue(response.getEntity().toString().contains(unicode));
-    }
-  }
-
 }
