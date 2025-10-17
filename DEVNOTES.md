@@ -1,7 +1,7 @@
 # Local Development
 
 * Maven 3.9
-* Java 21
+* Java 25
 * Dropwizard Docs: http://www.dropwizard.io/
 
 ### Check out repository:
