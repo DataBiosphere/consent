@@ -112,7 +112,10 @@ class DatasetDAOTest extends DAOTestHelper {
     List<DatasetStudySummary> summaries = datasetDAO.findAllDatasetStudySummaries();
     assertThat(summaries, hasSize(1));
     assertEquals(dataset.getDatasetId(), summaries.get(0).dataset_id());
+    assertEquals(dataset.getCreateUserId(), summaries.get(0).dataset_create_user_id());
     assertEquals(study.getStudyId(), summaries.get(0).study_id());
+    assertEquals(study.getCreateUserId(), summaries.get(0).study_create_user_id());
+    assertEquals(study.getPublicVisibility(), summaries.get(0).public_visibility());
   }
 
   @Test
