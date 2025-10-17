@@ -19,9 +19,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ErrorResourceTest {
 
   @Mock
-  private HttpServletRequestWrapper mockRequest;
+  private HttpServletRequestWrapper request;
   @Mock
-  private ServletApiRequest mockServletRequest;
+  private ServletApiRequest servletRequest;
   @Mock
   private ServletRequestInfo servletRequestInfo;
 
@@ -29,10 +29,10 @@ class ErrorResourceTest {
   @ValueSource(strings = {"/not_found", "/context/¥"})
   void testNotFound(String path) {
     ErrorResource resource = new ErrorResource();
-    when(mockRequest.getRequest()).thenReturn(mockServletRequest);
-    when(mockServletRequest.getServletRequestInfo()).thenReturn(servletRequestInfo);
+    when(request.getRequest()).thenReturn(servletRequest);
+    when(servletRequest.getServletRequestInfo()).thenReturn(servletRequestInfo);
     when(servletRequestInfo.getDecodedPathInContext()).thenReturn(path);
-    try (Response response = resource.notFound(mockRequest)) {
+    try (Response response = resource.notFound(request)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
       assertTrue(response.getEntity().toString().contains(path));
     }
