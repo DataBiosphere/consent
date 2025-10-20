@@ -61,7 +61,8 @@ import java.util.Map;
     "alternativeDataSharingPlanTargetDeliveryDate",
     "alternativeDataSharingPlanTargetPublicReleaseDate",
     "alternativeDataSharingPlanAccessManagement",
-    "consentGroups"
+    "consentGroups",
+    "assets"
 })
 public class DatasetRegistrationSchemaV1 {
 
@@ -291,6 +292,13 @@ public class DatasetRegistrationSchemaV1 {
   @JsonProperty("consentGroups")
   @JsonPropertyDescription("Consent Groups")
   private List<ConsentGroup> consentGroups = new ArrayList<ConsentGroup>();
+
+  /**
+   * Additional assets or metadata associated with this study registration
+   */
+  @JsonProperty("assets")
+  @JsonPropertyDescription("Additional assets or metadata associated with this study registration")
+  private Map<String, Object> assets = new HashMap<>();
 
   /**
    * The study id
@@ -900,6 +908,22 @@ public class DatasetRegistrationSchemaV1 {
     this.consentGroups = consentGroups;
   }
 
+  /**
+   * Additional assets or metadata associated with this study registration
+   */
+  @JsonProperty("assets")
+  public Map<String, Object> getAssets() {
+    return assets;
+  }
+
+  /**
+   * Additional assets or metadata associated with this study registration
+   */
+  @JsonProperty("assets")
+  public void setAssets(Map<String, Object> assets) {
+    this.assets = assets;
+  }
+
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
@@ -1067,6 +1091,10 @@ public class DatasetRegistrationSchemaV1 {
     sb.append('=');
     sb.append(((this.consentGroups == null) ? "<null>" : this.consentGroups));
     sb.append(',');
+    sb.append("assets");
+    sb.append('=');
+    sb.append(((this.assets == null) ? "<null>" : this.assets));
+    sb.append(',');
     if (sb.charAt((sb.length() - 1)) == ',') {
       sb.setCharAt((sb.length() - 1), ']');
     } else {
@@ -1143,6 +1171,7 @@ public class DatasetRegistrationSchemaV1 {
     result = ((result * 31) + ((this.controlledAccessRequiredForGenomicSummaryResultsGSR == null)
         ? 0 : this.controlledAccessRequiredForGenomicSummaryResultsGSR.hashCode()));
     result = ((result * 31) + ((this.piInstitution == null) ? 0 : this.piInstitution.hashCode()));
+    result = ((result * 31) + ((this.assets == null) ? 0 : this.assets.hashCode()));
     return result;
   }
 
@@ -1260,7 +1289,8 @@ public class DatasetRegistrationSchemaV1 {
             && this.controlledAccessRequiredForGenomicSummaryResultsGSR.equals(
             rhs.controlledAccessRequiredForGenomicSummaryResultsGSR)))) && (
         (this.piInstitution == rhs.piInstitution) || ((this.piInstitution != null)
-            && this.piInstitution.equals(rhs.piInstitution))));
+            && this.piInstitution.equals(rhs.piInstitution)))) && ((this.assets == rhs.assets)
+        || ((this.assets != null) && this.assets.equals(rhs.assets)));
   }
 
 
