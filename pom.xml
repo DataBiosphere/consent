@@ -15,7 +15,7 @@
     <maven.compiler.target>25</maven.compiler.target>
     <maven.version>3.9.11</maven.version>
     <liquibase.version>4.33.0</liquibase.version>
-    <dropwizard.version>4.0.16</dropwizard.version>
+    <dropwizard.version>5.0.0</dropwizard.version>
     <logback.version>1.5.18</logback.version>
     <postgres.version>42.7.8</postgres.version>
     <surefire.version>3.5.4</surefire.version>
@@ -488,12 +488,6 @@
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-http2</artifactId>
       <version>${dropwizard.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.eclipse.jetty.http2</groupId>
-          <artifactId>http2-common</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
