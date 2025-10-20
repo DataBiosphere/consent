@@ -149,17 +149,31 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
 
   @Test
   void handleUserWithInstitutionInMap_DifferentInDatabaseWithLibraryCard_SO_NFE() {
-    User testUser = generateUser(1);
-    User signingOfficial = generateUser(2);
+    User testUser = new User();
+    testUser.setUserId(1);
+    testUser.setEmail("user1@example.org");
+    testUser.setDisplayName("User One");
+    testUser.setInstitutionId(2);
+
+    User signingOfficial = new User();
+    signingOfficial.setUserId(2);
+    signingOfficial.setEmail("so@example.org");
+    signingOfficial.setDisplayName("Signing Official");
+
     LibraryCard lc = new LibraryCard();
     lc.setCreateUserId(signingOfficial.getUserId());
     testUser.setLibraryCard(lc);
-    Institution institutionFromEmail = new Institution();
-    institutionFromEmail.setId(1);
-    testUser.setInstitution(institutionFromEmail);
-    Institution institutionFromDatabase = new Institution();
-    institutionFromDatabase.setId(2);
 
+    Institution institutionFromEmail = new Institution();
+    institutionFromEmail.setId(Integer.valueOf(1));
+    institutionFromEmail.setName("Institution One");
+    testUser.setInstitution(institutionFromEmail);
+
+    Institution institutionFromDatabase = new Institution();
+    institutionFromDatabase.setId(Integer.valueOf(2));
+    institutionFromDatabase.setName("Institution Two");
+
+    // Mock SO not found
     when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(null);
 
     assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail.getId()));
