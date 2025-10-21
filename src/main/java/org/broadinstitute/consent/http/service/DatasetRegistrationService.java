@@ -677,6 +677,14 @@ public class DatasetRegistrationService implements ConsentLogger {
               return registration.getAlternativeDataSharingPlanAccessManagement().value();
             }
             return null;
+          }),
+      new StudyPropertyExtractor(
+          "assets", PropertyType.Json,
+          (registration) -> {
+            if (Objects.nonNull(registration.getAssets()) && !registration.getAssets().isEmpty()) {
+              return GsonUtil.getInstance().toJson(registration.getAssets());
+            }
+            return null;
           })
   );
 

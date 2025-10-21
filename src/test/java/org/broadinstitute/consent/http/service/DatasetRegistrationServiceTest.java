@@ -226,6 +226,8 @@ class DatasetRegistrationServiceTest {
         PropertyType.Date.coerce(schema.getAlternativeDataSharingPlanTargetPublicReleaseDate()));
     assertContainsStudyProperty(studyProps, "alternativeDataSharingPlanAccessManagement",
         schema.getAlternativeDataSharingPlanAccessManagement().value());
+    assertContainsStudyProperty(studyProps, "assets",
+        PropertyType.coerceToJson(GsonUtil.getInstance().toJson(schema.getAssets())));
 
     List<DatasetProperty> datasetProps = inserts.get(0).props();
     assertContainsDatasetProperty(datasetProps, "dataLocation",
@@ -862,7 +864,15 @@ class DatasetRegistrationServiceTest {
     consentGroup.setAccessManagement(AccessManagement.CONTROLLED);
     consentGroup.setDataLocation(ConsentGroup.DataLocation.TDR_LOCATION);
     consentGroup.setDataAccessCommitteeId(new Random().nextInt());
-
+    schemaV1.setAssets(Map.of(
+        "workspace_id", "c7b96ac5-5568-441c-a3f4-2e82e45e3e6d", 
+        "name", "Cardiometabolic GWAS Analysis Workspace", 
+        "platform", "Terra",
+        "authors", List.of(
+            Map.of("user", "john", "email", "john@example.com"),
+            Map.of("user", "emma", "email", "emma@example.com")
+        ),
+        "tags", List.of("GWAS", "Terra", "featured")));
     schemaV1.setConsentGroups(List.of(consentGroup));
     return schemaV1;
   }

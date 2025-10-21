@@ -8,6 +8,7 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanReasons;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanTargetDeliveryDate;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanTargetPublicReleaseDate;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.assets;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.collaboratingSites;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.controlledAccessRequiredForGenomicSummaryResultsGSR;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation;
@@ -131,6 +132,7 @@ public class SchemaFromStudy {
             AlternativeDataSharingPlanAccessManagement.fromValue(
                 alternativeDataSharingPlanAccessManagementVal));
       }
+      schemaV1.setAssets(findMapPropValue(study.getProperties(), assets));
     }
 
     return schemaV1;
@@ -227,6 +229,21 @@ public class SchemaFromStudy {
           .map(StudyProperty::getValue)
           .map(Object::toString)
           .map(Integer::valueOf)
+          .findFirst()
+          .orElse(null);
+    }
+    return null;
+  }
+
+  @Nullable
+  private java.util.Map<String, Object> findMapPropValue(Set<StudyProperty> props, String propName) {
+    if (Objects.nonNull(props) && !props.isEmpty()) {
+      return props
+          .stream()
+          .filter(p -> p.getKey().equalsIgnoreCase(propName))
+          .map(StudyProperty::getValue)
+          .map(p -> (java.util.Map<String, Object>) GsonUtil.getInstance().fromJson(p.toString(), 
+              new com.google.gson.reflect.TypeToken<java.util.Map<String, Object>>(){}.getType()))
           .findFirst()
           .orElse(null);
     }
