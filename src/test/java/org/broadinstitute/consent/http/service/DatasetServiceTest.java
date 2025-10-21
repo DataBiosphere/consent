@@ -626,6 +626,21 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testVerifyPublicVisibilitySummaries_Study_DoesntExist() {
+    User user = new User();
+    user.setUserId(1);
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1, user.getUserId() + 1, "Dataset Name", "DUOS-123", null, null, null, null);
+    when(datasetDAO.findAllDatasetStudySummaries()).thenReturn(List.of(summary));
+
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.findAllDatasetStudySummaries(user);
+    assertEquals(1, authorizedSummaries.size());
+    assertEquals(summary, authorizedSummaries.get(0));
+  }
+
+  @Test
   void testVerifyPublicVisibilityAccess_Admin() {
     User admin = getAdmin();
     Dataset dataset = new Dataset();

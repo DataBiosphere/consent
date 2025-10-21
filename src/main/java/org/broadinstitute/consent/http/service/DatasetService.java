@@ -149,16 +149,18 @@ public class DatasetService implements ConsentLogger {
     for (DatasetStudySummary summary : summaries) {
       if (Boolean.TRUE.equals(summary.public_visibility())) {
         authorizedSummaries.add(summary);
-      } else if (summary.study_create_user_id().equals(user.getUserId())) {
+      } else if (user.getUserId().equals(summary.study_create_user_id())) {
         authorizedSummaries.add(summary);
       } else if (summary.dataset_create_user_id().equals(user.getUserId())) {
         authorizedSummaries.add(summary);
-      } else {
+      } else if (summary.study_id() != null) {
         // fetch study and see if the user is a custodian
         Study study = studyDAO.findStudyById(summary.study_id());
         if (study != null && isCreatorOrCustodian(user, study)) {
           authorizedSummaries.add(summary);
         }
+      } else {
+        authorizedSummaries.add(summary);
       }
     }
     return authorizedSummaries;
