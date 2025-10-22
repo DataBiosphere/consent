@@ -10,9 +10,6 @@ properties:
   createDate:
     type: number
     description: Creation Date
-  sortDate:
-    type: number
-    description: Sort Date
   submissionDate:
     type: number
     description: Submission Date

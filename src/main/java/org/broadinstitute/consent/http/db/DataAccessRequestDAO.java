@@ -39,7 +39,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       """
           SELECT collection.dar_code, dd.dataset_id, dar.id, dar.reference_id, dar.collection_id,
-            dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
+            dar.parent_id, dar.user_id, dar.create_date, dar.submission_date, dar.update_date,
             dar.data, dar.era_commons_id,
             dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
           FROM data_access_request dar
@@ -66,7 +66,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery("""
       SELECT dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
-        dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
+        dar.user_id, dar.create_date, dar.submission_date, dar.update_date,
         dar.data,
         dd.dataset_id, collection.dar_code, dar.era_commons_id,
         dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
@@ -156,7 +156,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       """
               SELECT dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
-                dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
+                dar.user_id, dar.create_date, dar.submission_date, dar.update_date,
                 data,
                 dd.dataset_id, collection.dar_code, dar.era_commons_id,
                 dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
@@ -181,7 +181,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       """
               SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
-              dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
+              dar.user_id, dar.create_date, dar.submission_date, dar.update_date,
               dar.data, collection.dar_code,
               dar.era_commons_id, dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
               FROM data_access_request dar
@@ -202,7 +202,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       """
               SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
-              dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
+              dar.user_id, dar.create_date, dar.submission_date, dar.update_date,
               dar.data,
               collection.dar_code, dar.era_commons_id, dar.closeout_so_approval_timestamp,
               dar.closeout_approving_so_id
@@ -212,7 +212,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               WHERE dar.submission_date is null
                 AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
                 AND dar.user_id = :userId
-              ORDER BY dar.sort_date DESC
+              ORDER BY dar.update_date DESC
           """)
   List<DataAccessRequest> findAllDraftsByUserId(@Bind("userId") Integer userId);
 
@@ -226,7 +226,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlQuery(
       """
               SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
-                dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
+                dar.user_id, dar.create_date, dar.submission_date, dar.update_date,
                 dar.data,
                 collection.dar_code, dar.era_commons_id, dar.closeout_so_approval_timestamp,
                 dar.closeout_approving_so_id
@@ -247,7 +247,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @UseRowReducer(DataAccessRequestReducer.class)
   @SqlQuery(
       """
-          SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.sort_date, dar.submission_date, dar.update_date,
+          SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.submission_date, dar.update_date,
             dar.data, collection.dar_code,
             dar.era_commons_id, dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
           FROM data_access_request dar
@@ -263,7 +263,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    *
    * @param referenceId    String
    * @param userId         Integer User
-   * @param sortDate       Date Sorting Date
    * @param submissionDate Date Submission Date
    * @param updateDate     Date Update Date
    * @param data           DataAccessRequestData DAR Properties
@@ -273,14 +272,13 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate(
       """
           UPDATE data_access_request
-          SET data = regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb, user_id = :userId, sort_date = :sortDate,
+          SET data = regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb, user_id = :userId,
             submission_date = :submissionDate, update_date = :updateDate, era_commons_id = :eraCommonsId
           WHERE reference_id = :referenceId
       """)
   void updateDataByReferenceId(
       @Bind("referenceId") String referenceId,
       @Bind("userId") Integer userId,
-      @Bind("sortDate") Date sortDate,
       @Bind("submissionDate") Date submissionDate,
       @Bind("updateDate") Date updateDate,
       @Bind("data") @Json DataAccessRequestData data,
@@ -326,7 +324,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @param referenceId String
    * @param userId      Integer User
    * @param createDate  Date Creation Date
-   * @param sortDate    Date Sorting Date
    * @param updateDate  Date Update Date
    * @param data        DataAccessRequestData DAR Properties
    */
@@ -334,15 +331,14 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate(
       """
           INSERT INTO data_access_request
-            (reference_id, user_id, create_date, sort_date, update_date, data)
-          VALUES (:referenceId, :userId, :createDate, :sortDate,
+            (reference_id, user_id, create_date, update_date, data)
+          VALUES (:referenceId, :userId, :createDate,
             :updateDate, regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb)
       """)
   void insertDraftDataAccessRequest(
       @Bind("referenceId") String referenceId,
       @Bind("userId") Integer userId,
       @Bind("createDate") Date createDate,
-      @Bind("sortDate") Date sortDate,
       @Bind("updateDate") Date updateDate,
       @Bind("data") @Json DataAccessRequestData data);
 
@@ -353,7 +349,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
    * @param referenceId    String
    * @param userId         Integer User
    * @param createDate     Date Creation Date
-   * @param sortDate       Date Sorting Date
    * @param submissionDate Date Submission Date
    * @param updateDate     Date Update Date
    * @param data           DataAccessRequestData DAR Properties
@@ -362,8 +357,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate(
       """
           INSERT INTO data_access_request
-            (collection_id, reference_id, user_id, create_date, sort_date, submission_date, update_date, data, era_commons_id)
-          VALUES (:collectionId, :referenceId, :userId, :createDate, :sortDate,
+            (collection_id, reference_id, user_id, create_date, submission_date, update_date, data, era_commons_id)
+          VALUES (:collectionId, :referenceId, :userId, :createDate,
             :submissionDate, :updateDate, regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb, :eraCommonsId)
       """)
   void insertDataAccessRequest(
@@ -371,7 +366,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       @Bind("referenceId") String referenceId,
       @Bind("userId") Integer userId,
       @Bind("createDate") Date createDate,
-      @Bind("sortDate") Date sortDate,
       @Bind("submissionDate") Date submissionDate,
       @Bind("updateDate") Date updateDate,
       @Bind("data") @Json DataAccessRequestData data,
@@ -390,8 +384,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate(
       """
           INSERT INTO data_access_request
-            (parent_id, collection_id, reference_id, user_id, create_date, sort_date, submission_date, update_date, data, era_commons_id)
-          VALUES (:parentId, :collectionId, :referenceId, :userId, now(), now(), now(), now(), regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb, :eraCommonsId)
+            (parent_id, collection_id, reference_id, user_id, create_date, submission_date, update_date, data, era_commons_id)
+          VALUES (:parentId, :collectionId, :referenceId, :userId, now(), now(), now(), regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb, :eraCommonsId)
       """)
   void insertProgressReport(
       @Bind("parentId") Integer parentId,
