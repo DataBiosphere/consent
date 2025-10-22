@@ -158,7 +158,6 @@ public class DataAccessRequestService implements ConsentLogger {
         user.getUserId(),
         now,
         now,
-        now,
         dar.getData()
     );
     syncDataAccessRequestDatasets(dar.getDatasetIds(), dar.getReferenceId());
@@ -233,7 +232,6 @@ public class DataAccessRequestService implements ConsentLogger {
           user.getUserId(),
           now,
           now,
-          now,
           darData,
           user.getEraCommonsId());
     } else {
@@ -242,7 +240,6 @@ public class DataAccessRequestService implements ConsentLogger {
           collectionId,
           referenceId,
           user.getUserId(),
-          now,
           now,
           now,
           now,

@@ -35,7 +35,6 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
     }
 
     dar.setCreateDate(resultSet.getTimestamp("create_date"));
-    dar.setSortDate(resultSet.getTimestamp("sort_date"));
     dar.setSubmissionDate(resultSet.getTimestamp("submission_date"));
     dar.setUpdateDate(resultSet.getTimestamp("update_date"));
     String darDataString = resultSet.getObject("data", PGobject.class).getValue();

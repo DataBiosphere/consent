@@ -439,9 +439,6 @@ public class DataAccessRequest {
     if (Objects.nonNull(dar.getReferenceId())) {
       copy.put("referenceId", dar.getReferenceId());
     }
-    if (Objects.nonNull(dar.getSortDate())) {
-      copy.put("sortDate", dar.getSortDate().getTime());
-    }
     if (Objects.nonNull(dar.getSubmissionDate())) {
       copy.put("submissionDate", dar.getSubmissionDate().getTime());
     }
