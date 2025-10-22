@@ -457,7 +457,7 @@ class DacDAOTest extends DAOTestHelper {
         collectionId,
         referenceId,
         userId,
-        now, now, now, now,
+        now, now, now,
         data,
         randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
@@ -473,7 +473,6 @@ class DacDAOTest extends DAOTestHelper {
         collection.getDarCollectionId(),
         randomUUID,
         user.getUserId(),
-        new Date(),
         new Date(),
         new Date(),
         new Date(),

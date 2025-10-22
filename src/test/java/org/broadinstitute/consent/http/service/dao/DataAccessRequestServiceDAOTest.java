@@ -58,7 +58,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     DarCollection collection = createDarCollection();
     Integer collectionId = collection.getDarCollectionId();
     dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, user.getUserId(), old,
-        old, old, old, new DataAccessRequestData(), user.getEraCommonsId());
+        old, old, new DataAccessRequestData(), user.getEraCommonsId());
     dataAccessRequestDAO.insertAllDarDatasets(List.of(oldDarDataset, oldDarDatasetTwo));
 
     DataAccessRequest dar = new DataAccessRequest();
@@ -155,7 +155,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         collectionId,
         referenceId,
         userId,
-        now, now, now, now,
+        now, now, now,
         data,
         randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);

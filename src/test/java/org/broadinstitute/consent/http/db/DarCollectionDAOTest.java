@@ -690,7 +690,7 @@ class DarCollectionDAOTest extends DAOTestHelper {
         collectionId,
         referenceId,
         userId,
-        now, now, now, now,
+        now, now, now,
         data,
         randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
@@ -823,7 +823,6 @@ class DarCollectionDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDraftDataAccessRequest(
         referenceId,
         user.getUserId(),
-        now,
         now,
         now,
         data

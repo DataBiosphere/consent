@@ -1352,7 +1352,7 @@ class DatasetDAOTest extends DAOTestHelper {
     data.setProjectTitle(randomAlphabetic(10));
     String referenceId = randomAlphanumeric(20);
     dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, new Date(),
-        new Date(), new Date(), new Date(), data, randomAlphabetic(10));
+        new Date(), new Date(), data, randomAlphabetic(10));
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
   }
 
@@ -1361,7 +1361,7 @@ class DatasetDAOTest extends DAOTestHelper {
     data.setProjectTitle(randomAlphabetic(10));
     String referenceId = randomAlphabetic(20);
     Date now = new Date();
-    dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, now, now, now, now, data, randomAlphabetic(10));
+    dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, now, now, now, data, randomAlphabetic(10));
     datasetIds.forEach(
         datasetId -> dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId));
   }
