@@ -75,7 +75,6 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     DataAccessRequest updatedDar = serviceDAO.updateByReferenceId(user, dar);
 
     Timestamp oldTimestamp = new Timestamp(old.getTime());
-    assertNotEquals(oldTimestamp, updatedDar.getSortDate());
     assertFalse(oldTimestamp.equals(updatedDar.getUpdateDate()));
     assertEquals(newDatasetIds, updatedDar.getDatasetIds());
     DataAccessRequestData updatedData = updatedDar.getData();

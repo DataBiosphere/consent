@@ -213,7 +213,6 @@ class DataAccessReportsParserTest {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setNonTechRus(RUS_SUMMARY);
     dar.setData(data);
-    dar.setSortDate(new Timestamp(currentDate.getTime()));
     return dar;
   }
 }

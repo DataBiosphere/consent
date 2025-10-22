@@ -515,7 +515,6 @@ class DarCollectionDAOTest extends DAOTestHelper {
     testDar.setReferenceId(UUID.randomUUID().toString());
     testDar.setUserId(user.getUserId());
     testDar.setCreateDate(now);
-    testDar.setSortDate(now);
     testDar.setSubmissionDate(now);
     testDar.setUpdateDate(now);
     testDar.setEraCommonsId(user.getEraCommonsId());
@@ -527,7 +526,6 @@ class DarCollectionDAOTest extends DAOTestHelper {
         testDar.getReferenceId(),
         testDar.getUserId(),
         testDar.getCreateDate(),
-        testDar.getSortDate(),
         testDar.getSubmissionDate(),
         testDar.getUpdateDate(),
         testDar.getData(),

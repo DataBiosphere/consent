@@ -410,7 +410,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     testDar.setReferenceId(UUID.randomUUID().toString());
     testDar.setUserId(user.getUserId());
     testDar.setCreateDate(now);
-    testDar.setSortDate(now);
+    testDar
     testDar.setSubmissionDate(submissionDate);
     testDar.setUpdateDate(now);
     DataAccessRequestData contents = new DataAccessRequestData();
@@ -420,7 +420,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         testDar.getReferenceId(),
         testDar.getUserId(),
         testDar.getCreateDate(),
-        testDar.getSortDate(),
         testDar.getSubmissionDate(),
         testDar.getUpdateDate(),
         testDar.getData(),
@@ -1008,7 +1007,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertEquals(dar.getUserId(), progressReport.getUserId());
     assertNotNull(progressReport.getData());
     assertNotNull(progressReport.getCreateDate());
-    assertNotNull(progressReport.getSortDate());
     assertNotNull(progressReport.getSubmissionDate());
     assertNotNull(progressReport.getUpdateDate());
     assertNotEquals(dar.getReferenceId(), progressReport.getReferenceId());
