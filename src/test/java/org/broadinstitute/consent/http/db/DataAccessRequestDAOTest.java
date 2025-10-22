@@ -410,7 +410,6 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     testDar.setReferenceId(UUID.randomUUID().toString());
     testDar.setUserId(user.getUserId());
     testDar.setCreateDate(now);
-    testDar
     testDar.setSubmissionDate(submissionDate);
     testDar.setUpdateDate(now);
     DataAccessRequestData contents = new DataAccessRequestData();
