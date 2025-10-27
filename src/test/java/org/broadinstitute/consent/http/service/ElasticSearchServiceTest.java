@@ -346,16 +346,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   @Test
   void testToDatasetTerm_StudyAssets() {
     DatasetRecord datasetRecord = createDatasetRecord();
-    Map<String, Object> assetsMap = Map.of("workspaces", List.of(Map.of(
-      "workspace_id", "c7b96ac5-5568-441c-a3f4-2e82e45e3e6d",
-      "name", "Cardiometabolic GWAS Analysis Workspace",
-      "platform", "Terra",
-      "authors", List.of(
-          Map.of("user", "john", "email", "john@example.com"),
-          Map.of("user", "emma", "email", "emma@example.com")
-      ),
-      "tags", List.of("GWAS", "Terra", "featured")))
-    );
+    Map<String, Object> assetsMap = Map.of("key", List.of("value1", "value2"));
     String assetsJson = GsonUtil.getInstance().toJson(assetsMap);
     StudyProperty assetsProp = new StudyProperty();
     assetsProp.setStudyId(datasetRecord.study.getStudyId());
