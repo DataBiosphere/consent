@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Map;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpVersion;
 import org.apache.http.StatusLine;
@@ -340,6 +341,29 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     assertEquals(custodianProp.get().getValue().toString(), termCustodians);
     assertEquals(datasetRecord.study.getPublicVisibility(), term.getStudy().getPublicVisibility());
     assertEquals(datasetRecord.study.getDataTypes(), term.getStudy().getDataTypes());
+  }
+
+  @Test
+  void testToDatasetTerm_StudyAssets() {
+    DatasetRecord datasetRecord = createDatasetRecord();
+    Map<String, Object> assetsMap = Map.of("key", List.of("value1", "value2"));
+    String assetsJson = GsonUtil.getInstance().toJson(assetsMap);
+    StudyProperty assetsProp = new StudyProperty();
+    assetsProp.setStudyId(datasetRecord.study.getStudyId());
+    assetsProp.setKey("assets");
+    assetsProp.setType(PropertyType.Json);
+    assetsProp.setValue(GsonUtil.getInstance().fromJson(assetsJson, Object.class));
+    datasetRecord.study.addProperty(assetsProp);
+    
+    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(
+        datasetRecord.createUser);
+    when(userDao.findUserById(datasetRecord.updateUser.getUserId())).thenReturn(
+        datasetRecord.updateUser);
+    when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
+
+    DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
+    
+    assertEquals(assetsMap, term.getStudy().getAssets());
   }
 
   @Test

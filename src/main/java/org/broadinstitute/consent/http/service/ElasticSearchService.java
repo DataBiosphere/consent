@@ -249,6 +249,32 @@ public class ElasticSearchService implements ConsentLogger {
       term.setDataSubmitterEmail(study.getCreateUserEmail());
     }
 
+    findStudyProperty(
+        study.getProperties(), "assets"
+    ).ifPresent(
+        prop -> {
+          Object value = prop.getValue();
+          Map<String, Object> assetsMap;
+          // When property is loaded from db it is deserialized as JsonObject
+          if (value instanceof com.google.gson.JsonElement) {
+            assetsMap = GsonUtil.getInstance().fromJson(
+                (com.google.gson.JsonElement) value,
+                new com.google.gson.reflect.TypeToken<Map<String, Object>>(){}.getType()
+            );
+          // Otherwise Gson deserializes JSON and creates a LinkedTreeMap
+          } else if (value instanceof Map) {
+            assetsMap = (Map<String, Object>) value;
+          // Fallback: try to parse as JSON string
+          } else {
+            assetsMap = GsonUtil.getInstance().fromJson(
+                value.toString(),
+                new com.google.gson.reflect.TypeToken<Map<String, Object>>(){}.getType()
+            );
+          }
+          term.setAssets(assetsMap);
+        }
+    );
+
     return term;
   }
 

@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models.elastic_search;
 
 import java.util.List;
+import java.util.Map;
 
 public class StudyTerm {
 
@@ -16,6 +17,7 @@ public class StudyTerm {
   private List<String> dataCustodianEmail;
   private Boolean publicVisibility;
   private List<String> dataTypes;
+  private Map<String, Object> assets;
 
 
   public String getDescription() {
@@ -109,5 +111,13 @@ public class StudyTerm {
 
   public void setDataTypes(List<String> dataTypes) {
     this.dataTypes = dataTypes;
+  }
+
+  public Map<String, Object> getAssets() {
+    return assets;
+  }
+
+  public void setAssets(Map<String, Object> assets) {
+    this.assets = assets;
   }
 }
