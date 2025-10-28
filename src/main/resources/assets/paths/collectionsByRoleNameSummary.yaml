@@ -12,6 +12,7 @@ get:
     - name: roleName
       in: path
       description: String value that represents the role name to query by
+      required: true
       schema:
         type: string
         enum: [Admin, Chairperson, Member, SigningOfficial, Researcher]

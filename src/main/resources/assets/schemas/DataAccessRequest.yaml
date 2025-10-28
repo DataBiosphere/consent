@@ -43,7 +43,7 @@ properties:
   elections:
     type: object
     description: Map of elections tied to the DAR (electionid - election)
-    items:
+    additionalProperties:
       $ref: './Election.yaml'
   eraCommonsId:
     type: string
