@@ -76,7 +76,7 @@ public class DataAccessRequestData {
 
   // Progress Report/Closeout Fields
   private String progressReportSummary;
-  private String intellectualPropertySummary;
+  private List<IntellectualProperty> intellectualProperties;
   private List<Publication> publications;
   private List<Presentation> presentations;
   private DataManagementIncident dmi;
@@ -665,12 +665,13 @@ public class DataAccessRequestData {
     this.progressReportSummary = progressReportSummary;
   }
 
-  public String getIntellectualPropertySummary() {
-    return intellectualPropertySummary;
+  public List<IntellectualProperty> getIntellectualProperties() {
+    return intellectualProperties;
   }
 
-  public void setIntellectualPropertySummary(String intellectualPropertySummary) {
-    this.intellectualPropertySummary = intellectualPropertySummary;
+  public void setIntellectualProperties(
+      List<IntellectualProperty> intellectualProperties) {
+    this.intellectualProperties = intellectualProperties;
   }
 
   public List<Publication> getPublications() {

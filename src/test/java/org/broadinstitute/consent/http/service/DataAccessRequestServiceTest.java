@@ -859,7 +859,6 @@ institution or library cards issued: Internal Collaborator member:  \
   private DataAccessRequest generateProgressReport() {
     DataAccessRequest progressReport = generateDataAccessRequest();
     progressReport.getData().setProgressReportSummary("Progress Report Summary");
-    progressReport.getData().setIntellectualPropertySummary("Intellectual Property Summary");
     return progressReport;
   }
 
