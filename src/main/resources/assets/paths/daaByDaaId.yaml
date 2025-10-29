@@ -1,6 +1,6 @@
 get:
   summary: Get DAA by id
-  operationId: Find DAA
+  operationId: findById
   description: Fetches Data Access Agreement by Id
   parameters:
     - name: daaId
@@ -24,6 +24,7 @@ get:
       description: Internal Server Error
 delete:
   summary: Delete DAA by id
+  operationId: adminDeleteDaa
   description: Deletes Data Access Agreement by Id
   parameters:
     - name: daaId

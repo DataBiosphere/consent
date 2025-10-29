@@ -15,8 +15,6 @@ delete:
       required: true
       schema:
         type: integer
-  requestBody:
-    required: false
   tags:
     - DAA
   responses:
@@ -30,7 +28,7 @@ delete:
       description: Internal Server Error
 put:
   summary: Create a DAA-Library Card Relationship
-  operationId: Create DAA-Library Card Relationship
+  operationId: createLibraryCardDaaRelation
   description: Create a link between a Data Access Agreement and a User
   parameters:
     - name: daaId

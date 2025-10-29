@@ -1,5 +1,6 @@
 post:
   summary: Create Elections for Collection By ID
+  operationId: createElectionsForCollection
   description: Returns created Elections for Dars in Collection
   tags:
     - DAR Collection
