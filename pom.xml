@@ -329,10 +329,6 @@
             </goals>
             <configuration>
               <mainClass>org.broadinstitute.consent.http.util.OpenAPIBundler</mainClass>
-              <arguments>
-                <argument>${project.basedir}/src/main/resources/assets/api-docs.yaml</argument>
-                <argument>${project.build.directory}/classes/assets</argument>
-              </arguments>
               <includePluginDependencies>true</includePluginDependencies>
             </configuration>
           </execution>

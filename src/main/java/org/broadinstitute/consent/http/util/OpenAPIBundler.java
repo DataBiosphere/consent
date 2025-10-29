@@ -20,23 +20,24 @@ import java.io.IOException;
  */
 public class OpenAPIBundler {
 
+    static final String INPUT_FILE = "src/main/resources/assets/api-docs.yaml";
+    static final String OUTPUT_DIR = "target/classes/assets";
+
     /**
      * Bundle an OpenAPI specification file by resolving all $ref references.
      *
-     * @param inputFilePath Path to the input OpenAPI YAML file
-     * @param outputDirPath Path to the output directory
      * @throws IOException if file operations fail
      */
-    public static void bundleOpenAPI(String inputFilePath, String outputDirPath) throws IOException {
-        File inputFile = new File(inputFilePath);
-        File outputDir = new File(outputDirPath);
+    public static void bundleOpenAPI() throws IOException {
+        File inputFile = new File(INPUT_FILE);
+        File outputDir = new File(OUTPUT_DIR);
 
         if (!inputFile.exists()) {
-            throw new IOException("Input file does not exist: " + inputFilePath);
+            throw new IOException("Input file does not exist: " + INPUT_FILE);
         }
 
         if (!outputDir.exists() && !outputDir.mkdirs()) {
-            throw new IOException("Failed to create output directory: " + outputDirPath);
+            throw new IOException("Failed to create output directory: " + OUTPUT_DIR);
         }
 
         System.out.println("Parsing OpenAPI spec from: " + inputFile.getAbsolutePath());
@@ -78,20 +79,11 @@ public class OpenAPIBundler {
     }
 
     public static void main(String[] args) {
-        if (args.length < 2) {
-            System.err.println("Usage: OpenAPIBundler <input-yaml-file> <output-directory>");
-            System.exit(1);
-        }
-
-        String inputFilePath = args[0];
-        String outputDirPath = args[1];
-
         try {
-            bundleOpenAPI(inputFilePath, outputDirPath);
+            bundleOpenAPI();
             System.out.println("✓ OpenAPI bundling completed successfully.");
         } catch (Exception e) {
             System.err.println("Error bundling OpenAPI: " + e.getMessage());
-            e.printStackTrace();
             System.exit(1);
         }
     }
