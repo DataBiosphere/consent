@@ -335,6 +335,29 @@
         </executions>
       </plugin>
 
+      <!-- OpenAPI/Swagger Validator Plugin -->
+      <plugin>
+        <groupId>org.openapitools</groupId>
+        <artifactId>openapi-generator-maven-plugin</artifactId>
+        <version>7.16.0</version>
+        <executions>
+          <execution>
+            <id>validate-openapi-spec</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${project.basedir}/src/main/resources/assets/api-docs.yaml</inputSpec>
+              <generatorName>html2</generatorName>
+              <output>${project.build.directory}/openapi-validation</output>
+              <skipValidateSpec>false</skipValidateSpec>
+              <strictSpec>true</strictSpec>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
     <pluginManagement>
       <plugins>
