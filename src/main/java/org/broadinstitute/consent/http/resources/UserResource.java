@@ -421,7 +421,7 @@ public class UserResource extends Resource {
   @DELETE
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/acknowledgements/{key}")
-  @RolesAllowed(ADMIN)
+  @PermitAll
   public Response deleteUserAcknowledgement(@Auth AuthUser authUser, @PathParam("key") String key) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
