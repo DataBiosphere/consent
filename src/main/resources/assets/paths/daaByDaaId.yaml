@@ -1,6 +1,6 @@
 get:
   summary: Get DAA by id
-  operationId: findById
+  operationId: findDaaById
   description: Fetches Data Access Agreement by Id
   parameters:
     - name: daaId

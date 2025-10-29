@@ -200,7 +200,7 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.findById(authUser, expectedDaaId);
+    Response response = resource.findDaaById(authUser, expectedDaaId);
     assert response.getStatus() == HttpStatus.SC_OK;
     assertEquals(expectedDaa, response.getEntity());
   }
@@ -211,7 +211,7 @@ class DaaResourceTest extends AbstractTestHelper {
     when(daaService.findById(invalidId)).thenThrow(new NotFoundException());
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.findById(authUser, invalidId);
+    Response response = resource.findDaaById(authUser, invalidId);
     assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
   }
 
