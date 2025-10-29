@@ -10,7 +10,7 @@ get:
       content:
         application/json:
           schema:
-            type: object
+            type: array
             items:
               $ref: '../schemas/Dataset.yaml'
     404:

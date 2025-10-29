@@ -777,9 +777,9 @@ paths:
         - name: roleName
           in: path
           description: The name of the role of the user
+          required: true
           schema:
             type: string
-            required: true
             enum: [ Admin, SigningOfficial ]
       tags:
         - User
@@ -1034,9 +1034,9 @@ components:
       $ref: './schemas/Collaborator.yaml'
     DarCollection:
       $ref: './schemas/DarCollection.yaml'
-    Data Access Agreement:
+    DataAccessAgreement:
       $ref: './schemas/DataAccessAgreement.yaml'
-    Data Access Committee:
+    DataAccessCommittee:
       $ref: './schemas/Dac.yaml'
     DataAccessRequest:
       $ref: './schemas/DataAccessRequest.yaml'

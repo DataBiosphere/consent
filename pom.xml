@@ -314,6 +314,27 @@
           </execution>
         </executions>
       </plugin>
+
+      <!-- OpenAPI bundling using exec-maven-plugin -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.6.2</version>
+        <executions>
+          <execution>
+            <id>bundle-openapi</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>java</goal>
+            </goals>
+            <configuration>
+              <mainClass>org.broadinstitute.consent.http.util.OpenAPIBundler</mainClass>
+              <includePluginDependencies>true</includePluginDependencies>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
     <pluginManagement>
       <plugins>
@@ -346,6 +367,13 @@
   </dependencyManagement>
 
   <dependencies>
+
+    <!-- Swagger Parser for OpenAPI bundling -->
+    <dependency>
+      <groupId>io.swagger.parser.v3</groupId>
+      <artifactId>swagger-parser</artifactId>
+      <version>2.1.35</version>
+    </dependency>
 
     <!-- json-schema-validator 1.0.83 -> 1.0.84 introduced a breaking dependency change, it now requires jackson core -->
     <dependency>

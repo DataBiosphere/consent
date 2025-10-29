@@ -6,20 +6,17 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriBuilder;
+import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.util.Properties;
-import java.util.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.parboiled.common.FileUtils;
 
 @Path("/")
-public class SwaggerResource {
-
-  private static final Logger logger = Logger.getLogger(SwaggerResource.class.getName());
-  private static final String DEFAULT_LIB = "META-INF/resources/webjars/swagger-ui/latest/";
+public class SwaggerResource implements ConsentLogger {
+  private static final String DEFAULT_SWAGGER_UI_PATH = "META-INF/resources/webjars/swagger-ui/latest/";
   private static final String MEDIA_TYPE_GIF = new MediaType("image", "gif").toString();
   protected static final String MEDIA_TYPE_CSS = new MediaType("text", "css").toString();
   protected static final String MEDIA_TYPE_JS = new MediaType("application",
@@ -27,31 +24,34 @@ public class SwaggerResource {
   protected static final String MEDIA_TYPE_PNG = new MediaType("image", "png").toString();
 
   private final GoogleOAuth2Config config;
+  private final String swaggerUiPath;
 
   @Inject
   public SwaggerResource(GoogleOAuth2Config config) {
     this.config = config;
+    this.swaggerUiPath = loadSwaggerUiPath();
   }
 
-  private String swaggerResource = null;
-
-  private String getSwaggerResource() {
-    if (swaggerResource == null) {
-      try (InputStream is = this.getClass().getResourceAsStream("/mvn.properties")) {
-        Properties p = new Properties();
-        p.load(is);
-        if (StringUtils.isNotEmpty(p.getProperty("swagger.ui.path"))) {
-          swaggerResource = p.getProperty("swagger.ui.path");
-        } else {
-          logger.warning("swagger.ui.path is not configured correctly");
-          swaggerResource = DEFAULT_LIB;
+  /**
+   * Load the Swagger UI path from mvn.properties, which is populated from pom.xml
+   * during the Maven build process.
+   */
+  private String loadSwaggerUiPath() {
+    try (InputStream is = getClass().getResourceAsStream("/mvn.properties")) {
+      if (is != null) {
+        Properties props = new Properties();
+        props.load(is);
+        String path = props.getProperty("swagger.ui.path");
+        if (StringUtils.isNotEmpty(path)) {
+          return path;
         }
-      } catch (Exception e) {
-        logger.warning(e.getMessage());
-        swaggerResource = DEFAULT_LIB;
       }
+    } catch (IOException e) {
+      logWarn(e.getMessage());
+      // Fall through to default
     }
-    return swaggerResource;
+    logWarn("swagger.ui.path not found in mvn.properties, using default path.");
+    return DEFAULT_SWAGGER_UI_PATH;
   }
 
   @GET
@@ -60,40 +60,21 @@ public class SwaggerResource {
   }
 
   @GET
-  @Path("swagger")
-  public Response swagger() {
-    URI uri = UriBuilder.fromPath("/").scheme("https").build();
-    return Response.seeOther(uri).build();
-  }
-
-  @GET
   @Path("{path:.*}")
   public Response content(@PathParam("path") String path) {
-    String swaggerResource = getSwaggerResource();
-    Response response;
     String mediaType = getMediaTypeFromPath(path);
+    // Special handling for index.html and swagger-initializer.js
     if (path.isEmpty() || path.equals("index.html")) {
-      response = Response.ok().entity(getIndex(swaggerResource)).type(mediaType).build();
+      return Response.ok().entity(getIndex()).type(mediaType).build();
     } else if (path.contains("swagger-initializer.js")) {
-      response = Response.ok().entity(getInitializer()).type(MEDIA_TYPE_JS).build();
-    } else {
-      if (path.endsWith("png") || path.endsWith("gif")) {
-        byte[] content = FileUtils.readAllBytesFromResource(swaggerResource + path);
-        if (content != null) {
-          response = Response.ok().entity(content).type(mediaType).build();
-        } else {
-          response = Response.status(Response.Status.NOT_FOUND).build();
-        }
-      } else {
-        String content = FileUtils.readAllTextFromResource(swaggerResource + path);
-        if (content != null) {
-          response = Response.ok().entity(content).type(mediaType).build();
-        } else {
-          response = Response.status(Response.Status.NOT_FOUND).build();
-        }
-      }
+      return Response.ok().entity(getInitializer()).type(mediaType).build();
     }
-    return response;
+    // Serve all other files as bytes
+    byte[] content = FileUtils.readAllBytesFromResource(swaggerUiPath + path);
+    if (content != null) {
+      return Response.ok().entity(content).type(mediaType).build();
+    }
+    return Response.status(Response.Status.NOT_FOUND).build();
   }
 
   private String getMediaTypeFromPath(String path) {
@@ -106,8 +87,8 @@ public class SwaggerResource {
     };
   }
 
-  private String getIndex(String swaggerResource) {
-    return FileUtils.readAllTextFromResource(swaggerResource + "index.html");
+  private String getIndex() {
+    return FileUtils.readAllTextFromResource(swaggerUiPath + "index.html");
   }
 
   private String getInitializer() {
@@ -121,7 +102,7 @@ public class SwaggerResource {
             operationsSorter: "alpha",
             apisSorter: "alpha",
             tagsSorter: "alpha",
-            url: "/api-docs/api-docs.yaml",
+            url: "/api-docs/openapi.yaml",
             dom_id: '#swagger-ui',
             deepLinking: true,
             presets: [
