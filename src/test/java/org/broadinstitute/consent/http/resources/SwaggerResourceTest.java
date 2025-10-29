@@ -50,8 +50,9 @@ class SwaggerResourceTest {
   void testStyle() {
     Response response = swaggerResource.content("swagger-ui.css");
     assertTrue(checkStatusAndHeader(response, MEDIA_TYPE_CSS));
-    String content = response.getEntity().toString().trim();
-    assertTrue(content.startsWith(".swagger-ui"));
+    byte[] content = (byte[]) response.getEntity();
+    String contentString = new String(content).trim();
+    assertTrue(contentString.startsWith(".swagger-ui"));
   }
 
   @Test
