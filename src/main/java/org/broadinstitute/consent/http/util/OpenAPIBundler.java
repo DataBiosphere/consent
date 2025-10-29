@@ -1,10 +1,13 @@
 package org.broadinstitute.consent.http.util;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import io.swagger.v3.parser.OpenAPIV3Parser;
 import io.swagger.v3.parser.core.models.ParseOptions;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.core.util.Yaml;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,8 +15,8 @@ import java.io.IOException;
 /**
  * Utility class to bundle OpenAPI specifications with $ref resolution.
  *
- * This class can be invoked during Maven build to create a single bundled
- * openapi resource file.
+ * This class is invoked during a Maven build to create a single bundled openapi
+ * resource file.
  */
 public class OpenAPIBundler {
 
@@ -38,6 +41,11 @@ public class OpenAPIBundler {
 
         System.out.println("Parsing OpenAPI spec from: " + inputFile.getAbsolutePath());
 
+        // Suppress "infinite loop" debug logging from OpenAPI due to circular refs
+        Logger parserLogger = (Logger) LoggerFactory.getLogger("io.swagger.v3.parser");
+        Level originalLevel = parserLogger.getLevel();
+        parserLogger.setLevel(Level.WARN);
+
         // Configure parser to resolve all references
         ParseOptions parseOptions = new ParseOptions();
         parseOptions.setResolve(true);
@@ -46,6 +54,9 @@ public class OpenAPIBundler {
         // Parse the OpenAPI specification
         OpenAPIV3Parser parser = new OpenAPIV3Parser();
         SwaggerParseResult result = parser.readLocation(inputFile.getAbsolutePath(), null, parseOptions);
+
+        // Restore original logging level
+        parserLogger.setLevel(originalLevel);
 
         // Check for messages/warnings
         if (result.getMessages() != null && !result.getMessages().isEmpty()) {
