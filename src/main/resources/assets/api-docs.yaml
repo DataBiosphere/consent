@@ -1037,7 +1037,7 @@ components:
     DataAccessAgreement:
       $ref: './schemas/DataAccessAgreement.yaml'
     DataAccessCommittee:
-      $ref: './schemas/Dac.yaml'
+      $ref: './schemas/DataAccessCommittee.yaml'
     DataAccessRequest:
       $ref: './schemas/DataAccessRequest.yaml'
     Dataset:

@@ -17,7 +17,7 @@ get:
       content:
         application/json:
           schema:
-            $ref: '../schemas/Dac.yaml'
+            $ref: '../schemas/DataAccessCommittee.yaml'
     404:
       description: No DAC found with the given ID
     500:
@@ -41,7 +41,7 @@ delete:
       content:
         application/json:
           schema:
-            $ref: '../schemas/Dac.yaml'
+            $ref: '../schemas/DataAccessCommittee.yaml'
     404:
       description: No DAC found with the given ID
     500:

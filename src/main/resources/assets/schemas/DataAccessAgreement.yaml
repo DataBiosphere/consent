@@ -25,4 +25,4 @@ properties:
     description: List of DACs using this DAA
     type: array
     items:
-      $ref: './Dac.yaml'
+      $ref: './DataAccessCommittee.yaml'

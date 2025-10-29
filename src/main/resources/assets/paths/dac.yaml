@@ -8,7 +8,7 @@ post:
     content:
       application/json:
         schema:
-          $ref: '../schemas/Dac.yaml'
+          $ref: '../schemas/DataAccessCommittee.yaml'
   tags:
     - DAC
   responses:
@@ -17,7 +17,7 @@ post:
       content:
         application/json:
           schema:
-            $ref: '../schemas/Dac.yaml'
+            $ref: '../schemas/DataAccessCommittee.yaml'
     400:
       description: Bad Request. DAC Name and Description are required.
     403:
@@ -36,7 +36,7 @@ put:
     content:
       application/json:
         schema:
-          $ref: '../schemas/Dac.yaml'
+          $ref: '../schemas/DataAccessCommittee.yaml'
   tags:
     - DAC
   responses:
@@ -45,7 +45,7 @@ put:
       content:
         application/json:
           schema:
-            $ref: '../schemas/Dac.yaml'
+            $ref: '../schemas/DataAccessCommittee.yaml'
     400:
       description: Bad Request. DAC ID, Name, and Description are required.
     500:
@@ -69,6 +69,6 @@ get:
           schema:
             type: array
             items:
-              $ref: '../schemas/Dac.yaml'
+              $ref: '../schemas/DataAccessCommittee.yaml'
     500:
       description: Internal Server Error
