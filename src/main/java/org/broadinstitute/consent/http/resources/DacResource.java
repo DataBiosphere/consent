@@ -135,9 +135,9 @@ public class DacResource extends Resource {
   @Path("{dacId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
-  public Response findById(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId) {
+  public Response findDacById(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId) {
     try {
-      Dac dac = findDacById(dacId);
+      Dac dac = findDacOrThrow(dacId);
       return Response.ok().entity(unmarshal(dac)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -150,7 +150,7 @@ public class DacResource extends Resource {
   @RolesAllowed({ADMIN})
   public Response deleteDac(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId) {
     try {
-      findDacById(dacId);
+      findDacOrThrow(dacId);
       User user = userService.findUserByEmail(authUser.getEmail());
       dacService.deleteDac(user, dacId);
       return Response.ok().build();
@@ -168,7 +168,7 @@ public class DacResource extends Resource {
       checkUserExistsInDac(dacId, userId);
       Role role = dacService.getMemberRole();
       User user = findDacUser(userId);
-      Dac dac = findDacById(dacId);
+      Dac dac = findDacOrThrow(dacId);
       checkUserRoleInDac(dac, authUser);
       User member = dacService.addDacMember(role, user, dac);
       return Response.ok().entity(member).build();
@@ -185,7 +185,7 @@ public class DacResource extends Resource {
     try {
       Role role = dacService.getMemberRole();
       User user = findDacUser(userId);
-      Dac dac = findDacById(dacId);
+      Dac dac = findDacOrThrow(dacId);
       checkUserRoleInDac(dac, authUser);
       User auditUser = userService.findUserByEmail(authUser.getEmail());
       dacService.removeDacMember(role, user, dac, auditUser.getUserId());
@@ -204,7 +204,7 @@ public class DacResource extends Resource {
       checkUserExistsInDac(dacId, userId);
       Role role = dacService.getChairpersonRole();
       User user = findDacUser(userId);
-      Dac dac = findDacById(dacId);
+      Dac dac = findDacOrThrow(dacId);
       checkUserRoleInDac(dac, authUser);
       User member = dacService.addDacMember(role, user, dac);
       return Response.ok().entity(member).build();
@@ -221,7 +221,7 @@ public class DacResource extends Resource {
     try {
       Role role = dacService.getChairpersonRole();
       User user = findDacUser(userId);
-      Dac dac = findDacById(dacId);
+      Dac dac = findDacOrThrow(dacId);
       checkUserRoleInDac(dac, authUser);
       User auditUser = userService.findUserByEmail(authUser.getEmail());
       dacService.removeDacMember(role, user, dac, auditUser.getUserId());
@@ -237,7 +237,7 @@ public class DacResource extends Resource {
   @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
   public Response findAllDacDatasets(@Auth AuthUser user, @PathParam("dacId") Integer dacId) {
     try {
-      Dac dac = findDacById(dacId);
+      Dac dac = findDacOrThrow(dacId);
       checkUserRoleInDac(dac, user);
       List<Dataset> datasets = dacService.findDatasetsByDacId(dacId);
       return Response.ok().entity(unmarshal(datasets)).build();
@@ -299,7 +299,7 @@ public class DacResource extends Resource {
     return user;
   }
 
-  private Dac findDacById(Integer dacId) {
+  private Dac findDacOrThrow(Integer dacId) {
     Dac dac = dacService.findById(dacId);
     if (dac == null) {
       throw new NotFoundException(
