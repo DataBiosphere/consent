@@ -61,6 +61,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
+import org.broadinstitute.consent.http.models.IntellectualProperty;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -859,6 +860,24 @@ institution or library cards issued: Internal Collaborator member:  \
   private DataAccessRequest generateProgressReport() {
     DataAccessRequest progressReport = generateDataAccessRequest();
     progressReport.getData().setProgressReportSummary("Progress Report Summary");
+    progressReport.getData().setIntellectualProperties(
+        List.of(
+            new IntellectualProperty(
+                "Patent",
+                "Description of patent",
+                "2024-01-01",
+                "Test Assignee",
+                "US12345678",
+                true,
+                "Active",
+                "https://example.com",
+                "contact@example.com",
+                "ip-123",
+                "study-456",
+                List.of("tag1", "tag2")
+            )
+        )
+    );
     return progressReport;
   }
 
