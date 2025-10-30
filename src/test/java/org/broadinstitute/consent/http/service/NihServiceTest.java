@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockserver.model.HttpRequest.request;
@@ -11,13 +12,10 @@ import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ServerErrorException;
 import java.time.Instant;
-import java.util.Date;
 import org.broadinstitute.consent.http.MockServerTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
-import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
@@ -38,17 +36,12 @@ class NihServiceTest extends MockServerTestHelper {
   private UserDAO userDAO;
 
   @Mock
-  private UserPropertyDAO userPropertyDAO;
-
-  @Mock
   private NihServiceDAO nihServiceDAO;
 
   @Mock
   private DuosUser duosUser;
 
   private NihService service;
-  private NIHUserAccount nihUserAccount;
-  private AuthUser authUser;
 
   @BeforeEach
   void setUp() {
@@ -56,9 +49,7 @@ class NihServiceTest extends MockServerTestHelper {
     servicesConfig.setTimeoutSeconds(1);
     servicesConfig.setEcmUrl(
         "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
-    nihUserAccount = new NIHUserAccount("nih username", new Date().toString(), true);
-    authUser = new AuthUser("test@test.com");
-    service = new NihService(userDAO, userPropertyDAO, nihServiceDAO,
+    service = new NihService(userDAO, nihServiceDAO,
         new HttpClientUtil(servicesConfig), servicesConfig);
     mockServerClient.reset();
   }
@@ -136,5 +127,20 @@ class NihServiceTest extends MockServerTestHelper {
     User syncedUser = service.syncAccount(duosUser);
     assertEquals(user.getUserId(), syncedUser.getUserId());
     verify(nihServiceDAO).deleteNihAccountById(user.getUserId());
+  }
+
+  @Test
+  void testSyncAccountECMNotAuthorized() throws Exception {
+    User user = new User();
+    user.setUserId(1);
+    when(duosUser.getUser()).thenReturn(user);
+    when(userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues())).thenReturn(
+        user);
+    mockServerClient.when(request())
+        .respond(response()
+            .withStatusCode(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED));
+    User syncedUser = service.syncAccount(duosUser);
+    assertEquals(user.getUserId(), syncedUser.getUserId());
+    verify(nihServiceDAO, never()).deleteNihAccountById(user.getUserId());
   }
 }

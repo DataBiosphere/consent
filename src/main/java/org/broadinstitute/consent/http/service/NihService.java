@@ -5,12 +5,12 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.inject.Inject;
+import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import java.time.Instant;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
@@ -24,16 +24,14 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 public class NihService implements ConsentLogger {
 
   private final UserDAO userDAO;
-  private final UserPropertyDAO userPropertyDAO;
   private final NihServiceDAO serviceDAO;
   private final HttpClientUtil clientUtil;
   private final ServicesConfiguration configuration;
 
   @Inject
-  public NihService(UserDAO userDAO, UserPropertyDAO userPropertyDAO, NihServiceDAO serviceDAO,
+  public NihService(UserDAO userDAO, NihServiceDAO serviceDAO,
       HttpClientUtil clientUtil, ServicesConfiguration configuration) {
     this.userDAO = userDAO;
-    this.userPropertyDAO = userPropertyDAO;
     this.serviceDAO = serviceDAO;
     this.clientUtil = clientUtil;
     this.configuration = configuration;
@@ -51,8 +49,11 @@ public class NihService implements ConsentLogger {
       String body = response.parseAsString();
       NIHUserAccount nihAccount = parseNihUserAccount(body);
       serviceDAO.updateUserNihStatus(user, nihAccount);
-    } catch (NotFoundException e) {
+    } catch (NotFoundException _) {
       serviceDAO.deleteNihAccountById(user.getUserId());
+    } catch (NotAuthorizedException _) {
+      // ECM will return a 401 if the user has not accepted ToS yet.
+      logWarn("ECM Response: not authorized user: %s".formatted(duosUser.getEmail()));
     }
     return userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues());
   }
@@ -92,7 +93,7 @@ public class NihService implements ConsentLogger {
       Instant instant = Instant.parse(linkInfo.expirationTimestamp());
       return new NIHUserAccount(
           linkInfo.externalUserId(), String.valueOf(instant.toEpochMilli()), linkInfo.authenticated());
-    } catch (Exception e) {
+    } catch (Exception _) {
       logWarn("Failed to parse ECM response: " + body);
       throw new ServerErrorException("Invalid response from ECM RAS Provider",
           HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
