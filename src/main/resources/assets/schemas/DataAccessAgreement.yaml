@@ -1,3 +1,4 @@
+$dynamicAnchor: DataAccessAgreement
 type: object
 properties:
   daaId:
@@ -25,4 +26,4 @@ properties:
     description: List of DACs using this DAA
     type: array
     items:
-      $ref: './DataAccessCommittee.yaml'
+      $dynamicRef: '#DataAccessCommittee'

@@ -1,3 +1,4 @@
+$dynamicAnchor: Study
 type: object
 properties:
   studyId:
@@ -30,7 +31,7 @@ properties:
   datasets:
     type: array
     items:
-      $ref: './Dataset.yaml'
+      $dynamicRef: '#Dataset'
     description: All of the datasets related to this study.
   properties:
     type: array

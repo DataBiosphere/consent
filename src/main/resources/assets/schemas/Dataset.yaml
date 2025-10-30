@@ -1,3 +1,4 @@
+$dynamicAnchor: Dataset
 type: object
 properties:
   name:
