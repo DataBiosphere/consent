@@ -342,7 +342,7 @@ class DacResourceTest extends AbstractTestHelper {
         .build();
     when(dacService.findById(1)).thenReturn(dac);
 
-    try (Response response = dacResource.findById(authUser, dac.getDacId())) {
+    try (Response response = dacResource.findDacById(authUser, dac.getDacId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -351,7 +351,7 @@ class DacResourceTest extends AbstractTestHelper {
   void testFindById_failure() {
     when(dacService.findById(1)).thenReturn(null);
 
-    try (Response response = dacResource.findById(authUser, 1)) {
+    try (Response response = dacResource.findDacById(authUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }

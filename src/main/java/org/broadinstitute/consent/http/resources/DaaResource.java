@@ -144,7 +144,7 @@ public class DaaResource extends Resource implements ConsentLogger {
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, RESEARCHER})
   @Path("{daaId}")
-  public Response findById(
+  public Response findDaaById(
       @Auth AuthUser authUser,
       @PathParam("daaId") Integer daaId) {
     try {

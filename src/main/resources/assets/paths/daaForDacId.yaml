@@ -1,5 +1,6 @@
 put:
   summary: Add DAA to DAC
+  operationId: modifyDacDaaRelationship
   description: Create a link between a Data Access Agreement and a DAC
   parameters:
     - name: daaId
@@ -27,6 +28,7 @@ put:
       description: Internal Server Error
 delete:
   summary: Remove DAC from DAA
+  operationId: removeDacDaaRelationship
   description: Remove a link between a Data Access Agreement and a DAC
   parameters:
     - name: daaId

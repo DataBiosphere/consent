@@ -1,6 +1,6 @@
 post:
   summary: Create a DAA
-  operationId: Create DAA
+  operationId: createDaaForDac
   description: Create a Data Access Agreement
   parameters:
     - name: dacId

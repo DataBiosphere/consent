@@ -1,5 +1,6 @@
 get:
   summary: Get DAR Collection Summaries By Role Name
+  operationId: getCollectionSummariesForUserByRole
   description: |
     Returns DAR collection summaries by Role Name
       * Admin - all DAR collection summaries
