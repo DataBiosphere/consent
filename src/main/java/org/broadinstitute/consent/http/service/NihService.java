@@ -53,7 +53,7 @@ public class NihService implements ConsentLogger {
       serviceDAO.deleteNihAccountById(user.getUserId());
     } catch (NotAuthorizedException _) {
       // ECM will return a 401 if the user has not accepted ToS yet.
-      logWarn("ECM Response: not authorized user: %s".formatted(duosUser.getEmail()));
+      logWarn("ECM Response: not authorized user: %s. User needs to accept the ToS.".formatted(duosUser.getEmail()));
     }
     return userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues());
   }
