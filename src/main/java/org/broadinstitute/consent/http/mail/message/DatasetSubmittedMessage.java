@@ -6,7 +6,7 @@ import org.broadinstitute.consent.http.models.User;
 
 public class DatasetSubmittedMessage extends MailMessage {
 
-  private static final String DATASET_SUBMITTED = "Dataset submitted to DUOS";
+  private static final String DATASET_SUBMITTED = "Decision Needed: Accept or Reject Dataset Management Request";
 
   private final String dataSubmitterName;
   private final String datasetName;
