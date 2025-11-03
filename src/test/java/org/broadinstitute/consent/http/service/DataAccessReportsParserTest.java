@@ -9,11 +9,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.Timestamp;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Stream;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.enumeration.HeaderDAR;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -69,7 +67,7 @@ class DataAccessReportsParserTest {
     File file = File.createTempFile("ApprovedDataAccessRequests.tsv", ".tsv");
     Date currentDate = new Date();
     Election election = createElection(currentDate);
-    DataAccessRequest dar = createDAR(currentDate);
+    DataAccessRequest dar = createDAR();
     FileWriter darWriter = new FileWriter(file);
     parser.setApprovedDARHeader(darWriter);
     String REQUESTER = "Wesley";
@@ -120,7 +118,7 @@ class DataAccessReportsParserTest {
     File file = File.createTempFile("ApprovedDataAccessRequests.tsv", ".tsv");
     Date currentDate = new Date();
     Election election = createElection(currentDate);
-    DataAccessRequest dar = createDAR(currentDate);
+    DataAccessRequest dar = createDAR();
     FileWriter darWriter = new FileWriter(file);
     parser.setReviewedDARHeader(darWriter);
     parser.addReviewedDARLine(darWriter, election, dar, DAR_CODE, CONSENT_NAME, sDUL);
@@ -160,10 +158,9 @@ class DataAccessReportsParserTest {
   @Test
   void testDataAccessReviewedReportNullElectionDate() throws IOException {
     File file = File.createTempFile("ApprovedDataAccessRequests.tsv", ".tsv");
-    Date currentDate = new Date();
     Election election = new Election();
     election.setFinalVote(true);
-    DataAccessRequest dar = createDAR(currentDate);
+    DataAccessRequest dar = createDAR();
     FileWriter darWriter = new FileWriter(file);
     parser.setReviewedDARHeader(darWriter);
     parser.addReviewedDARLine(darWriter, election, dar, DAR_CODE, CONSENT_NAME, sDUL);
@@ -207,7 +204,7 @@ class DataAccessReportsParserTest {
     return election;
   }
 
-  private DataAccessRequest createDAR(Date currentDate) {
+  private DataAccessRequest createDAR() {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setDatasetIds(List.of(1));
     DataAccessRequestData data = new DataAccessRequestData();
