@@ -88,7 +88,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
           +
           "dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, " +
-          "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
+          "dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date, " +
           "dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date, "+
           "dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id, " +
           "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data " +
@@ -136,7 +136,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
         dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, dar.era_commons_id AS dar_era_commons_id,
         dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date,
         dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id,
-        dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date,
+        dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date,
         dar.update_date AS dar_update_date, dar.data AS data, dd.dataset_id
         FROM dar_collection c
         INNER JOIN users u ON c.create_user_id = u.user_id
@@ -173,7 +173,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           + "dd.dataset_id, "
           + "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
           + "dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, dar.era_commons_id AS dar_era_commons_id, "
-          + "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
+          + "dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date, "
           + "dar.update_date AS dar_update_date, dar.data AS data, "
           + "dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date, "
           + "dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id, "
@@ -229,7 +229,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
        dd.dataset_id,
        dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id,
        dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, dar.era_commons_id AS dar_era_commons_id,
-       dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date,
+       dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date,
        dar.update_date AS dar_update_date, (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
        dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date,
        dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id,
@@ -283,7 +283,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
        dd.dataset_id,
        dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id,
        dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, dar.era_commons_id AS dar_era_commons_id,
-       dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date,
+       dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date,
        dar.update_date AS dar_update_date, (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
        dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date,
        dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id,
