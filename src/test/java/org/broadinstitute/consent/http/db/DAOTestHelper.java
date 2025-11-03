@@ -205,7 +205,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
         collectionId,
         referenceId,
         userId,
-        now, now, now, now,
+        now, now, now,
         data,
         randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);

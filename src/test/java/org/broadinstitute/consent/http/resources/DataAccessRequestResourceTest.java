@@ -811,7 +811,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     dar.setUserId(user.getUserId());
     dar.setCreateDate(now);
     dar.setUpdateDate(now);
-    dar.setSortDate(now);
     return dar;
   }
 

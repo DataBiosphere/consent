@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -58,7 +57,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     DarCollection collection = createDarCollection();
     Integer collectionId = collection.getDarCollectionId();
     dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, user.getUserId(), old,
-        old, old, old, new DataAccessRequestData(), user.getEraCommonsId());
+        old, old, new DataAccessRequestData(), user.getEraCommonsId());
     dataAccessRequestDAO.insertAllDarDatasets(List.of(oldDarDataset, oldDarDatasetTwo));
 
     DataAccessRequest dar = new DataAccessRequest();
@@ -75,7 +74,6 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
     DataAccessRequest updatedDar = serviceDAO.updateByReferenceId(user, dar);
 
     Timestamp oldTimestamp = new Timestamp(old.getTime());
-    assertNotEquals(oldTimestamp, updatedDar.getSortDate());
     assertFalse(oldTimestamp.equals(updatedDar.getUpdateDate()));
     assertEquals(newDatasetIds, updatedDar.getDatasetIds());
     DataAccessRequestData updatedData = updatedDar.getData();
@@ -156,7 +154,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
         collectionId,
         referenceId,
         userId,
-        now, now, now, now,
+        now, now, now,
         data,
         randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);

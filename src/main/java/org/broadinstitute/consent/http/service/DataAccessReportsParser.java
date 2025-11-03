@@ -68,8 +68,10 @@ public class DataAccessReportsParser implements ConsentLogger {
     String content1 = profileName + DEFAULT_SEPARATOR + institution + DEFAULT_SEPARATOR;
     String electionDate = (Objects.nonNull(election.getFinalVoteDate())) ? formatTimeToDate(
         election.getFinalVoteDate().getTime()) : "";
+    String updateDate = (Objects.nonNull(dar.getUpdateDate())) ? formatTimeToDate(
+        dar.getUpdateDate().getTime()) : "";
     String content2 = rusSummary + DEFAULT_SEPARATOR +
-        formatTimeToDate(dar.getSortDate().getTime()) + DEFAULT_SEPARATOR +
+        updateDate + DEFAULT_SEPARATOR +
         electionDate + DEFAULT_SEPARATOR +
         "--";
     addDARLine(darWriter, dar, darCode, content1, content2, consentName, translatedUseRestriction);

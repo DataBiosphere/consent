@@ -199,7 +199,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(counterService.getNextDarSequence()).thenReturn(1);
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
     doNothing().when(dataAccessRequestDAO)
-        .updateDataByReferenceId(any(), any(), any(), any(), any(), any(), any());
+        .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
     assertNotNull(newDar);
   }
@@ -209,7 +209,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.addDatasetIds(List.of(1, 2, 3));
     dar.setCreateDate(new Timestamp(1000));
-    dar.setSortDate(new Timestamp(1000));
     dar.setReferenceId("id");
     User user = createUserWithPrerequisites();
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
@@ -220,7 +219,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         randomInt(1, 100));
     doNothing().when(dataAccessRequestDAO)
         .insertDataAccessRequest(anyInt(), anyString(), anyInt(), any(Date.class), any(Date.class),
-            any(Date.class), any(Date.class), any(DataAccessRequestData.class), anyString());
+            any(Date.class), any(DataAccessRequestData.class), anyString());
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
     assertNotNull(newDar);
   }
@@ -230,7 +229,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.addDatasetIds(List.of(1, 2, 3));
     dar.setCreateDate(new Timestamp(1000));
-    dar.setSortDate(new Timestamp(1000));
     dar.setReferenceId("id");
     dar.setSubmissionDate(Timestamp.from(Instant.now()));
     User user = createUserWithPrerequisites();
@@ -265,7 +263,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.addDatasetIds(List.of(1, 2, 3));
     dar.setCreateDate(new Timestamp(1000));
-    dar.setSortDate(new Timestamp(1000));
     dar.setReferenceId("id");
     User user = new User(1, "email@test.org", "Display Name", new Date());
     assertThrows(NIHComplianceRuleException.class,
@@ -846,7 +843,7 @@ institution or library cards issued: Internal Collaborator member:  \
     DataAccessRequest draft = generateDataAccessRequest();
     doNothing()
         .when(dataAccessRequestDAO)
-        .insertDraftDataAccessRequest(any(), any(), any(), any(), any(), any());
+        .insertDraftDataAccessRequest(any(), any(), any(), any(), any());
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(draft);
     DataAccessRequest dar = service.insertDraftDataAccessRequest(user, draft);
     assertNotNull(dar);

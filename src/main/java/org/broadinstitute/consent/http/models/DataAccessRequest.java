@@ -66,13 +66,6 @@ public class DataAccessRequest {
   @JsonProperty
   public Timestamp createDate;
 
-  /*
-   * Legacy property on DARs. Used to display the sort order for a DAR. In practice, this also
-   * functions as the Update Date. See also https://broadinstitute.atlassian.net/browse/DUOS-728
-   */
-  @JsonProperty
-  public Timestamp sortDate;
-
   @JsonProperty
   public Timestamp submissionDate;
 
@@ -170,14 +163,6 @@ public class DataAccessRequest {
 
   public void setCreateDate(Timestamp createDate) {
     this.createDate = createDate;
-  }
-
-  public Date getSortDate() {
-    return sortDate;
-  }
-
-  public void setSortDate(Timestamp sortDate) {
-    this.sortDate = sortDate;
   }
 
   public Timestamp getSubmissionDate() {
@@ -453,9 +438,6 @@ public class DataAccessRequest {
     }
     if (Objects.nonNull(dar.getReferenceId())) {
       copy.put("referenceId", dar.getReferenceId());
-    }
-    if (Objects.nonNull(dar.getSortDate())) {
-      copy.put("sortDate", dar.getSortDate().getTime());
     }
     if (Objects.nonNull(dar.getSubmissionDate())) {
       copy.put("submissionDate", dar.getSubmissionDate().getTime());
