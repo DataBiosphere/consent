@@ -1,0 +1,11 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2025-11-03-drop-sort-date-column" author="kevinmarete">
+    <comment>
+      Drop sort_date column from data_access_request table as part of consolidating
+      sort_date and update_date fields.
+    </comment>
+    <dropColumn tableName="data_access_request" columnName="sort_date"/>
+  </changeSet>
+</databaseChangeLog>

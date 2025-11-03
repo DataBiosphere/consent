@@ -208,4 +208,6 @@
     relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2025-10-14-clear-nih-statuses.xml"
     relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2025-11-03-drop-sort-date-column.xml"
+    relativeToChangelogFile="true" />
 </databaseChangeLog>
