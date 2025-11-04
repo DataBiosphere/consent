@@ -1,0 +1,6 @@
+# To configure git to use this file when using `git blame`:
+# $ git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# DT-921: Add spotless to consent service
+# https://github.com/DataBiosphere/consent/pull/2741
+
