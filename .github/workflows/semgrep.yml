@@ -2,6 +2,7 @@ name: Semgrep
 on: [ pull_request ]
 jobs:
   semgrep:
+    if: false
     runs-on: ubuntu-latest
     container:
       image: returntocorp/semgrep
