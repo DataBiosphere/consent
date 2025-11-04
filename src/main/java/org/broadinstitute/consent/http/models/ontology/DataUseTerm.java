@@ -5,8 +5,7 @@ public class DataUseTerm {
   private String code;
   private String description;
 
-  public DataUseTerm() {
-  }
+  public DataUseTerm() {}
 
   public DataUseTerm(String code, String description) {
     this.code = code;

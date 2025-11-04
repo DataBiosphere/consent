@@ -1,9 +1,11 @@
 package org.broadinstitute.consent.http.enumeration;
 
 public enum ElectionStatus {
-
-  OPEN("Open"), CLOSED("Closed"), CANCELED("Canceled"), FINAL("Final"), PENDING_APPROVAL(
-      "PendingApproval");
+  OPEN("Open"),
+  CLOSED("Closed"),
+  CANCELED("Canceled"),
+  FINAL("Final"),
+  PENDING_APPROVAL("PendingApproval");
 
   private final String value;
 
@@ -40,8 +42,7 @@ public enum ElectionStatus {
       values.append(",");
     }
     String valuesResult = values.toString();
-    //removing the las ","
+    // removing the las ","
     return valuesResult.substring(0, valuesResult.length() - 1);
   }
-
 }

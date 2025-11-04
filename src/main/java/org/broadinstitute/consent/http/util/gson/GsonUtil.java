@@ -31,20 +31,10 @@ public class GsonUtil {
   public static GsonBuilder gsonBuilderWithAdapters() {
     return new GsonBuilder()
         .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-        .registerTypeAdapter(
-            Instant.class,
-            new InstantTypeAdapter())
-        .registerTypeAdapter(
-            BlobId.class,
-            new BlobIdTypeAdapter())
-        .registerTypeAdapter(
-            Date.class,
-            new DateTypeAdapter())
-        .registerTypeAdapter(
-            Timestamp.class,
-            new TimestampTypeAdapter())
-        .registerTypeHierarchyAdapter(
-            Throwable.class,
-            new ThrowableTypeAdapter());
+        .registerTypeAdapter(Instant.class, new InstantTypeAdapter())
+        .registerTypeAdapter(BlobId.class, new BlobIdTypeAdapter())
+        .registerTypeAdapter(Date.class, new DateTypeAdapter())
+        .registerTypeAdapter(Timestamp.class, new TimestampTypeAdapter())
+        .registerTypeHierarchyAdapter(Throwable.class, new ThrowableTypeAdapter());
   }
 }

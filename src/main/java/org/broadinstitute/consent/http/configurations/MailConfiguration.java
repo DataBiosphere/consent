@@ -6,17 +6,13 @@ import jakarta.validation.constraints.NotNull;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MailConfiguration {
 
-  @NotNull
-  private boolean activateEmailNotifications;
+  @NotNull private boolean activateEmailNotifications;
 
-  @NotNull
-  private String googleAccount;
+  @NotNull private String googleAccount;
 
-  @NotNull
-  private String sendGridApiKey;
+  @NotNull private String sendGridApiKey;
 
-  @NotNull
-  private String sendGridStatusUrl;
+  @NotNull private String sendGridStatusUrl;
 
   public boolean isActivateEmailNotifications() {
     return activateEmailNotifications;

@@ -12,5 +12,4 @@ public class UnknownIdentifierException extends Exception {
   public String getId() {
     return id;
   }
-
 }

@@ -7,7 +7,6 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.resources.Resource;
 
 public enum UserRoles {
-
   MEMBER(Resource.MEMBER, 1),
   CHAIRPERSON(Resource.CHAIRPERSON, 2),
   ALUMNI(Resource.ALUMNI, 3),
@@ -19,8 +18,8 @@ public enum UserRoles {
   SERVICE_ACCOUNT(Resource.SERVICE_ACCOUNT, 10);
 
   private static final Set<UserRoles> NON_DAC_ROLES =
-      Set.of(ALUMNI, ADMIN, RESEARCHER, SIGNINGOFFICIAL, DATASUBMITTER, ITDIRECTOR,
-          SERVICE_ACCOUNT);
+      Set.of(
+          ALUMNI, ADMIN, RESEARCHER, SIGNINGOFFICIAL, DATASUBMITTER, ITDIRECTOR, SERVICE_ACCOUNT);
   private static final Set<UserRoles> SO_AUTHORIZED_ROLES_TO_ADJUST =
       Set.of(ITDIRECTOR, SIGNINGOFFICIAL, DATASUBMITTER);
   private final String roleName;
@@ -89,8 +88,7 @@ public enum UserRoles {
     if (Objects.isNull(roleName)) {
       return false;
     }
-    return EnumSet.allOf(UserRoles.class)
-        .stream()
+    return EnumSet.allOf(UserRoles.class).stream()
         .map(UserRoles::getRoleName)
         .anyMatch(roleName::equalsIgnoreCase);
   }
@@ -110,5 +108,4 @@ public enum UserRoles {
   public Integer getRoleId() {
     return roleId;
   }
-
 }

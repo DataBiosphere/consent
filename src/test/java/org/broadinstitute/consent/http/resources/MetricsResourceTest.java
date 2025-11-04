@@ -18,8 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class MetricsResourceTest {
 
-  @Mock
-  private MetricsService service;
+  @Mock private MetricsService service;
 
   private MetricsResource resource;
 
@@ -33,7 +32,7 @@ class MetricsResourceTest {
     DatasetMetrics metrics = new DatasetMetrics();
     when(service.generateDatasetMetrics(any())).thenReturn(metrics);
 
-    Response response = resource.getDatasetMetricsData( 1);
+    Response response = resource.getDatasetMetricsData(1);
     assertEquals(200, response.getStatus());
     assertFalse(response.getEntity().toString().isEmpty());
   }
@@ -42,7 +41,7 @@ class MetricsResourceTest {
   void testGetDatasetMetricsDataNotFound() {
     when(service.generateDatasetMetrics(any())).thenThrow(new NotFoundException());
 
-    Response response = resource.getDatasetMetricsData( 1);
+    Response response = resource.getDatasetMetricsData(1);
     assertEquals(404, response.getStatus());
   }
 }

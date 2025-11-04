@@ -25,8 +25,8 @@ public class GCSHealthCheck extends HealthCheck {
       return Result.unhealthy("GCS bucket unreachable or does not exist: " + e.getMessage());
     }
 
-    return (bucket != null) ? Result.healthy()
+    return (bucket != null)
+        ? Result.healthy()
         : Result.unhealthy("GCS bucket unreachable or does not exist.");
   }
-
 }

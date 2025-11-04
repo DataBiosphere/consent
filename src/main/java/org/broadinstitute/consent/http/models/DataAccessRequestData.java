@@ -21,22 +21,55 @@ public class DataAccessRequestData {
    * fields. See <a href="https://broadworkbench.atlassian.net/browse/DUOS-728">DUOS-728</a> for
    * more info.
    */
-  public static final List<String> DEPRECATED_PROPS = Arrays
-      .asList("referenceId", "investigator", "datasets", "darCode",
-          "institution", "department", "address1", "address2", "city", "zipcode", "zipCode",
-          "state", "country", "researcher", "userId", "isThePi", "havePi",
-          "profileName", "pubmedId", "scientificUrl", "eraExpiration", "academicEmail",
-          "eraAuthorized", "nihUsername", "linkedIn", "orcid", "researcherGate", "datasetDetail",
-          "datasets", "datasetId", "validRestriction", "restriction", "translatedUseRestriction",
-          "createDate", "sortDate", "additionalEmail", "checkNotifications", "partialDarCode");
+  public static final List<String> DEPRECATED_PROPS =
+      Arrays.asList(
+          "referenceId",
+          "investigator",
+          "datasets",
+          "darCode",
+          "institution",
+          "department",
+          "address1",
+          "address2",
+          "city",
+          "zipcode",
+          "zipCode",
+          "state",
+          "country",
+          "researcher",
+          "userId",
+          "isThePi",
+          "havePi",
+          "profileName",
+          "pubmedId",
+          "scientificUrl",
+          "eraExpiration",
+          "academicEmail",
+          "eraAuthorized",
+          "nihUsername",
+          "linkedIn",
+          "orcid",
+          "researcherGate",
+          "datasetDetail",
+          "datasets",
+          "datasetId",
+          "validRestriction",
+          "restriction",
+          "translatedUseRestriction",
+          "createDate",
+          "sortDate",
+          "additionalEmail",
+          "checkNotifications",
+          "partialDarCode");
 
-  @Deprecated
-  private String referenceId;
+  @Deprecated private String referenceId;
   private String projectTitle;
   private Boolean checkNihDataOnly;
   private String rus;
+
   @SerializedName(value = "nonTechRus", alternate = "non_tech_rus")
   private String nonTechRus;
+
   private Boolean diseases;
   private Boolean methods;
   private Boolean aiLlmUse;
@@ -46,32 +79,47 @@ public class DataAccessRequestData {
   private String otherText;
   private List<OntologyEntry> ontologies;
   private Boolean forProfit;
+
   @SerializedName(value = "oneGender", alternate = "onegender")
   private Boolean oneGender;
+
   private String gender;
   private Boolean pediatric;
+
   @SerializedName(value = "illegalBehavior", alternate = "illegalbehave")
   private Boolean illegalBehavior;
+
   private Boolean addiction;
+
   @SerializedName(value = "sexualDiseases", alternate = "sexualdiseases")
   private Boolean sexualDiseases;
+
   @SerializedName(value = "stigmatizedDiseases", alternate = "stigmatizediseases")
   private Boolean stigmatizedDiseases;
+
   @SerializedName(value = "vulnerablePopulation", alternate = "vulnerablepop")
   private Boolean vulnerablePopulation;
+
   @SerializedName(value = "populationMigration", alternate = "popmigration")
   private Boolean populationMigration;
+
   @SerializedName(value = "psychiatricTraits", alternate = "psychtraits")
   private Boolean psychiatricTraits;
+
   @SerializedName(value = "notHealth", alternate = "nothealth")
   private Boolean notHealth;
+
   private Boolean hmb;
   private String status;
   private Boolean poa;
   private Object restriction;
+
   @SerializedName(value = "validRestriction", alternate = "valid_restriction")
   private Boolean validRestriction;
-  @SerializedName(value = "datasetIds", alternate = {"datasetId", "datasetid"})
+
+  @SerializedName(
+      value = "datasetIds",
+      alternate = {"datasetId", "datasetid"})
   private List<Integer> datasetIds;
 
   // Progress Report/Closeout Fields
@@ -516,8 +564,7 @@ public class DataAccessRequestData {
     return labCollaborators;
   }
 
-  public void setLabCollaborators(
-      List<Collaborator> labCollaborators) {
+  public void setLabCollaborators(List<Collaborator> labCollaborators) {
     this.labCollaborators = labCollaborators;
   }
 
@@ -528,8 +575,7 @@ public class DataAccessRequestData {
     return internalCollaborators;
   }
 
-  public void setInternalCollaborators(
-      List<Collaborator> internalCollaborators) {
+  public void setInternalCollaborators(List<Collaborator> internalCollaborators) {
     this.internalCollaborators = internalCollaborators;
   }
 
@@ -546,8 +592,7 @@ public class DataAccessRequestData {
     return externalCollaborators;
   }
 
-  public void setExternalCollaborators(
-      List<Collaborator> externalCollaborators) {
+  public void setExternalCollaborators(List<Collaborator> externalCollaborators) {
     this.externalCollaborators = externalCollaborators;
   }
 
@@ -641,8 +686,7 @@ public class DataAccessRequestData {
 
   // Validate all ontology entries
   private static void validateOntologyEntries(DataAccessRequestData data) {
-    if (Objects.nonNull(data)
-        && !data.getOntologies().isEmpty()) {
+    if (Objects.nonNull(data) && !data.getOntologies().isEmpty()) {
       List<OntologyEntry> filteredEntries =
           data.getOntologies().stream()
               .filter(Objects::nonNull)
@@ -669,8 +713,7 @@ public class DataAccessRequestData {
     return intellectualProperties;
   }
 
-  public void setIntellectualProperties(
-      List<IntellectualProperty> intellectualProperties) {
+  public void setIntellectualProperties(List<IntellectualProperty> intellectualProperties) {
     this.intellectualProperties = intellectualProperties;
   }
 
@@ -678,8 +721,7 @@ public class DataAccessRequestData {
     return publications;
   }
 
-  public void setPublications(
-      List<Publication> publications) {
+  public void setPublications(List<Publication> publications) {
     this.publications = publications;
   }
 
@@ -687,8 +729,7 @@ public class DataAccessRequestData {
     return presentations;
   }
 
-  public void setPresentations(
-      List<Presentation> presentations) {
+  public void setPresentations(List<Presentation> presentations) {
     this.presentations = presentations;
   }
 
@@ -712,8 +753,7 @@ public class DataAccessRequestData {
     return closeoutSupplement;
   }
 
-  public void setCloseoutSupplement(
-      CloseoutSupplement closeoutSupplement) {
+  public void setCloseoutSupplement(CloseoutSupplement closeoutSupplement) {
     this.closeoutSupplement = closeoutSupplement;
   }
 

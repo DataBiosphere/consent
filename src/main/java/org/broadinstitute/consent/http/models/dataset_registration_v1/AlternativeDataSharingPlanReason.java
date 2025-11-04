@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum AlternativeDataSharingPlanReason {
-
   LEGAL_RESTRICTIONS("Legal Restrictions"),
   INFORMED_CONSENT_PROCESSES_ARE_INADEQUATE_TO_SUPPORT_DATA_FOR_SHARING_FOR_THE_FOLLOWING_REASONS(
       "Informed consent processes are inadequate to support data for sharing for the following reasons:"),
@@ -21,7 +20,8 @@ public enum AlternativeDataSharingPlanReason {
   OTHER_INFORMED_CONSENT_LIMITATIONS_OR_CONCERNS("Other informed consent limitations or concerns"),
   OTHER("Other");
   private final String value;
-  private static final Map<String, AlternativeDataSharingPlanReason> CONSTANTS = new HashMap<String, AlternativeDataSharingPlanReason>();
+  private static final Map<String, AlternativeDataSharingPlanReason> CONSTANTS =
+      new HashMap<String, AlternativeDataSharingPlanReason>();
 
   static {
     for (AlternativeDataSharingPlanReason c : values()) {
@@ -52,5 +52,4 @@ public enum AlternativeDataSharingPlanReason {
       return constant;
     }
   }
-
 }

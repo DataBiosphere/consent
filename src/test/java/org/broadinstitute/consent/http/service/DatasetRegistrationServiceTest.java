@@ -70,38 +70,35 @@ class DatasetRegistrationServiceTest {
 
   private DatasetRegistrationService datasetRegistrationService;
 
-  @Mock
-  private DatasetDAO datasetDAO;
+  @Mock private DatasetDAO datasetDAO;
 
-  @Mock
-  private DacDAO dacDAO;
+  @Mock private DacDAO dacDAO;
 
-  @Mock
-  private DatasetServiceDAO datasetServiceDAO;
+  @Mock private DatasetServiceDAO datasetServiceDAO;
 
-  @Mock
-  private StudyDAO studyDAO;
+  @Mock private StudyDAO studyDAO;
 
-  @Mock
-  private GCSService gcsService;
+  @Mock private GCSService gcsService;
 
-  @Mock
-  private ElasticSearchService elasticSearchService;
+  @Mock private ElasticSearchService elasticSearchService;
 
-  @Mock
-  private EmailService emailService;
+  @Mock private EmailService emailService;
 
   private void initService() {
-    datasetRegistrationService = new DatasetRegistrationService(datasetDAO, dacDAO,
-        datasetServiceDAO, gcsService, elasticSearchService, studyDAO, emailService);
+    datasetRegistrationService =
+        new DatasetRegistrationService(
+            datasetDAO,
+            dacDAO,
+            datasetServiceDAO,
+            gcsService,
+            elasticSearchService,
+            studyDAO,
+            emailService);
   }
 
-
   // captor: allows you to inspect the arguments sent to a function.
-  @Captor
-  ArgumentCaptor<List<DatasetServiceDAO.DatasetInsert>> datasetInsertCaptor;
-  @Captor
-  ArgumentCaptor<DatasetServiceDAO.StudyInsert> studyInsert;
+  @Captor ArgumentCaptor<List<DatasetServiceDAO.DatasetInsert>> datasetInsertCaptor;
+  @Captor ArgumentCaptor<DatasetServiceDAO.StudyInsert> studyInsert;
 
   // ------------------------ test multiple dataset insert ----------------------------------- //
   @Test
@@ -109,10 +106,8 @@ class DatasetRegistrationServiceTest {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createRandomCompleteDatasetRegistration(user);
 
-    FormDataContentDisposition content = FormDataContentDisposition
-        .name("file")
-        .fileName("sharing_plan.txt")
-        .build();
+    FormDataContentDisposition content =
+        FormDataContentDisposition.name("file").fileName("sharing_plan.txt").build();
 
     InputStream is = new ByteArrayInputStream("HelloWorld".getBytes(StandardCharsets.UTF_8));
     FormDataBodyPart bodyPart = mock();
@@ -122,17 +117,22 @@ class DatasetRegistrationServiceTest {
 
     initService();
 
-    Map<String, FormDataBodyPart> files = Map.of("alternativeDataSharingPlan",
-        bodyPart, "consentGroups[0].nihInstitutionalCertificationFile",
-        bodyPart, "otherUnused", bodyPart);
-    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("asdf", "hjkl"),
-        BlobId.of("qwer", "tyuio"));
+    Map<String, FormDataBodyPart> files =
+        Map.of(
+            "alternativeDataSharingPlan",
+            bodyPart,
+            "consentGroups[0].nihInstitutionalCertificationFile",
+            bodyPart,
+            "otherUnused",
+            bodyPart);
+    when(gcsService.storeDocument(any(), any(), any()))
+        .thenReturn(BlobId.of("asdf", "hjkl"), BlobId.of("qwer", "tyuio"));
     when(dacDAO.findById(any())).thenReturn(new Dac());
 
     datasetRegistrationService.createDatasetsFromRegistration(schema, user, files);
 
-    verify(datasetServiceDAO).insertDatasetRegistration(studyInsert.capture(),
-        datasetInsertCaptor.capture());
+    verify(datasetServiceDAO)
+        .insertDatasetRegistration(studyInsert.capture(), datasetInsertCaptor.capture());
 
     // only two files are stored; extra "unused" file not used
     verify(gcsService, times(2)).storeDocument(any(), any(), any());
@@ -142,32 +142,32 @@ class DatasetRegistrationServiceTest {
 
     assertEquals(1, inserts.size());
 
-    assertEquals(schema.getConsentGroups().get(0).getConsentGroupName(),
-        inserts.get(0).name());
+    assertEquals(schema.getConsentGroups().get(0).getConsentGroupName(), inserts.get(0).name());
     assertDataUse(schema.getConsentGroups().get(0), inserts.get(0).dataUse());
     assertEquals(user.getUserId(), inserts.get(0).userId());
 
     assertEquals(1, inserts.get(0).files().size());
 
-    assertEquals(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION,
-        inserts.get(0).files().get(0).getCategory());
     assertEquals(
-        files.get("consentGroups[0].nihInstitutionalCertificationFile").getContentDisposition()
+        FileCategory.NIH_INSTITUTIONAL_CERTIFICATION, inserts.get(0).files().get(0).getCategory());
+    assertEquals(
+        files
+            .get("consentGroups[0].nihInstitutionalCertificationFile")
+            .getContentDisposition()
             .getFileName(),
         inserts.get(0).files().get(0).getFileName());
-    assertEquals(BlobId.of("qwer", "tyuio"),
-        inserts.get(0).files().get(0).getBlobId());
+    assertEquals(BlobId.of("qwer", "tyuio"), inserts.get(0).files().get(0).getBlobId());
 
     assertEquals(schema.getStudyName(), capturedStudyInsert.name());
     assertEquals(schema.getPiName(), capturedStudyInsert.piName());
     assertEquals(schema.getStudyDescription(), capturedStudyInsert.description());
     assertEquals(schema.getDataTypes(), capturedStudyInsert.dataTypes());
-    assertEquals(schema.getPublicVisibility(),
-        capturedStudyInsert.publicVisibility());
+    assertEquals(schema.getPublicVisibility(), capturedStudyInsert.publicVisibility());
     assertEquals(user.getUserId(), capturedStudyInsert.userId());
 
     assertEquals(1, capturedStudyInsert.files().size());
-    assertEquals(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN,
+    assertEquals(
+        FileCategory.ALTERNATIVE_DATA_SHARING_PLAN,
         capturedStudyInsert.files().get(0).getCategory());
 
     // TODO: is there a way to ensure we don't miss anything?
@@ -175,74 +175,118 @@ class DatasetRegistrationServiceTest {
     assertContainsStudyProperty(studyProps, "studyType", schema.getStudyType().value());
     assertContainsStudyProperty(studyProps, "phenotypeIndication", schema.getPhenotypeIndication());
     assertContainsStudyProperty(studyProps, "species", schema.getSpecies());
-    assertContainsStudyProperty(studyProps, "dataCustodianEmail",
+    assertContainsStudyProperty(
+        studyProps,
+        "dataCustodianEmail",
         PropertyType.coerceToJson(GsonUtil.getInstance().toJson(schema.getDataCustodianEmail())));
     assertContainsStudyProperty(studyProps, "nihAnvilUse", schema.getNihAnvilUse().value());
     assertContainsStudyProperty(studyProps, "submittingToAnvil", schema.getSubmittingToAnvil());
     assertContainsStudyProperty(studyProps, "dbGaPPhsID", schema.getDbGaPPhsID());
-    assertContainsStudyProperty(studyProps, "dbGaPStudyRegistrationName",
-        schema.getDbGaPStudyRegistrationName());
-    assertContainsStudyProperty(studyProps, "embargoReleaseDate",
+    assertContainsStudyProperty(
+        studyProps, "dbGaPStudyRegistrationName", schema.getDbGaPStudyRegistrationName());
+    assertContainsStudyProperty(
+        studyProps,
+        "embargoReleaseDate",
         PropertyType.coerceToDate(schema.getEmbargoReleaseDate()));
     assertContainsStudyProperty(studyProps, "sequencingCenter", schema.getSequencingCenter());
     assertContainsStudyProperty(studyProps, "piInstitution", schema.getPiInstitution());
-    assertContainsStudyProperty(studyProps, "nihGrantContractNumber",
-        schema.getNihGrantContractNumber());
-    assertContainsStudyProperty(studyProps, "nihICsSupportingStudy", PropertyType.coerceToJson(
-        GsonUtil.getInstance().toJson(
-            schema.getNihICsSupportingStudy().stream().map(NihICsSupportingStudy::value)
-                .toList())));
-    assertContainsStudyProperty(studyProps, "nihProgramOfficerName",
-        schema.getNihProgramOfficerName());
-    assertContainsStudyProperty(studyProps, "nihInstitutionCenterSubmission",
+    assertContainsStudyProperty(
+        studyProps, "nihGrantContractNumber", schema.getNihGrantContractNumber());
+    assertContainsStudyProperty(
+        studyProps,
+        "nihICsSupportingStudy",
+        PropertyType.coerceToJson(
+            GsonUtil.getInstance()
+                .toJson(
+                    schema.getNihICsSupportingStudy().stream()
+                        .map(NihICsSupportingStudy::value)
+                        .toList())));
+    assertContainsStudyProperty(
+        studyProps, "nihProgramOfficerName", schema.getNihProgramOfficerName());
+    assertContainsStudyProperty(
+        studyProps,
+        "nihInstitutionCenterSubmission",
         schema.getNihInstitutionCenterSubmission().value());
-    assertContainsStudyProperty(studyProps, "nihGenomicProgramAdministratorName",
+    assertContainsStudyProperty(
+        studyProps,
+        "nihGenomicProgramAdministratorName",
         schema.getNihGenomicProgramAdministratorName());
     assertContainsStudyProperty(studyProps, "multiCenterStudy", schema.getMultiCenterStudy());
-    assertContainsStudyProperty(studyProps, "collaboratingSites",
+    assertContainsStudyProperty(
+        studyProps,
+        "collaboratingSites",
         PropertyType.coerceToJson(GsonUtil.getInstance().toJson(schema.getCollaboratingSites())));
-    assertContainsStudyProperty(studyProps, "controlledAccessRequiredForGenomicSummaryResultsGSR",
+    assertContainsStudyProperty(
+        studyProps,
+        "controlledAccessRequiredForGenomicSummaryResultsGSR",
         schema.getControlledAccessRequiredForGenomicSummaryResultsGSR());
-    assertContainsStudyProperty(studyProps,
+    assertContainsStudyProperty(
+        studyProps,
         "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation",
         schema.getControlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation());
-    assertContainsStudyProperty(studyProps, "alternativeDataSharingPlan",
-        schema.getAlternativeDataSharingPlan());
-    assertContainsStudyProperty(studyProps, "alternativeDataSharingPlanReasons",
-        PropertyType.coerceToJson(GsonUtil.getInstance().toJson(
-            schema.getAlternativeDataSharingPlanReasons().stream()
-                .map(AlternativeDataSharingPlanReason::value).toList())));
-    assertContainsStudyProperty(studyProps, "alternativeDataSharingPlanExplanation",
+    assertContainsStudyProperty(
+        studyProps, "alternativeDataSharingPlan", schema.getAlternativeDataSharingPlan());
+    assertContainsStudyProperty(
+        studyProps,
+        "alternativeDataSharingPlanReasons",
+        PropertyType.coerceToJson(
+            GsonUtil.getInstance()
+                .toJson(
+                    schema.getAlternativeDataSharingPlanReasons().stream()
+                        .map(AlternativeDataSharingPlanReason::value)
+                        .toList())));
+    assertContainsStudyProperty(
+        studyProps,
+        "alternativeDataSharingPlanExplanation",
         schema.getAlternativeDataSharingPlanExplanation());
-    assertContainsStudyProperty(studyProps, "alternativeDataSharingPlanFileName",
+    assertContainsStudyProperty(
+        studyProps,
+        "alternativeDataSharingPlanFileName",
         schema.getAlternativeDataSharingPlanFileName());
-    assertContainsStudyProperty(studyProps, "alternativeDataSharingPlanDataSubmitted",
+    assertContainsStudyProperty(
+        studyProps,
+        "alternativeDataSharingPlanDataSubmitted",
         schema.getAlternativeDataSharingPlanDataSubmitted().value());
-    assertContainsStudyProperty(studyProps, "alternativeDataSharingPlanDataReleased",
+    assertContainsStudyProperty(
+        studyProps,
+        "alternativeDataSharingPlanDataReleased",
         schema.getAlternativeDataSharingPlanDataReleased());
-    assertContainsStudyProperty(studyProps, "alternativeDataSharingPlanTargetDeliveryDate",
+    assertContainsStudyProperty(
+        studyProps,
+        "alternativeDataSharingPlanTargetDeliveryDate",
         PropertyType.Date.coerce(schema.getAlternativeDataSharingPlanTargetDeliveryDate()));
-    assertContainsStudyProperty(studyProps, "alternativeDataSharingPlanTargetPublicReleaseDate",
+    assertContainsStudyProperty(
+        studyProps,
+        "alternativeDataSharingPlanTargetPublicReleaseDate",
         PropertyType.Date.coerce(schema.getAlternativeDataSharingPlanTargetPublicReleaseDate()));
-    assertContainsStudyProperty(studyProps, "alternativeDataSharingPlanAccessManagement",
+    assertContainsStudyProperty(
+        studyProps,
+        "alternativeDataSharingPlanAccessManagement",
         schema.getAlternativeDataSharingPlanAccessManagement().value());
-    assertContainsStudyProperty(studyProps, "assets",
+    assertContainsStudyProperty(
+        studyProps,
+        "assets",
         PropertyType.coerceToJson(GsonUtil.getInstance().toJson(schema.getAssets())));
 
     List<DatasetProperty> datasetProps = inserts.get(0).props();
-    assertContainsDatasetProperty(datasetProps, "dataLocation",
-        schema.getConsentGroups().get(0).getDataLocation().value());
-    assertContainsDatasetProperty(datasetProps, "numberOfParticipants",
+    assertContainsDatasetProperty(
+        datasetProps, "dataLocation", schema.getConsentGroups().get(0).getDataLocation().value());
+    assertContainsDatasetProperty(
+        datasetProps,
+        "numberOfParticipants",
         schema.getConsentGroups().get(0).getNumberOfParticipants());
-    assertContainsDatasetProperty(datasetProps, "fileTypes", PropertyType.coerceToJson(
-        GsonUtil.getInstance().toJson(schema.getConsentGroups().get(0).getFileTypes())));
-    assertContainsDatasetProperty(datasetProps, "url",
-        schema.getConsentGroups().get(0).getUrl().toString());
-    assertContainsDatasetProperty(datasetProps, "accessManagement",
+    assertContainsDatasetProperty(
+        datasetProps,
+        "fileTypes",
+        PropertyType.coerceToJson(
+            GsonUtil.getInstance().toJson(schema.getConsentGroups().get(0).getFileTypes())));
+    assertContainsDatasetProperty(
+        datasetProps, "url", schema.getConsentGroups().get(0).getUrl().toString());
+    assertContainsDatasetProperty(
+        datasetProps,
+        "accessManagement",
         schema.getConsentGroups().get(0).getAccessManagement().value());
-
   }
-
 
   // inserts only required fields to ensure that null fields are ok
   @Test
@@ -255,8 +299,8 @@ class DatasetRegistrationServiceTest {
 
     datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
 
-    verify(datasetServiceDAO).insertDatasetRegistration(studyInsert.capture(),
-        datasetInsertCaptor.capture());
+    verify(datasetServiceDAO)
+        .insertDatasetRegistration(studyInsert.capture(), datasetInsertCaptor.capture());
 
     verify(gcsService, times(0)).storeDocument(any(), any(), any());
 
@@ -265,8 +309,7 @@ class DatasetRegistrationServiceTest {
 
     assertEquals(1, inserts.size());
 
-    assertEquals(schema.getConsentGroups().get(0).getConsentGroupName(),
-        inserts.get(0).name());
+    assertEquals(schema.getConsentGroups().get(0).getConsentGroupName(), inserts.get(0).name());
 
     ConsentGroup consentGroup = schema.getConsentGroups().get(0);
     DataUse dataUse = inserts.get(0).dataUse();
@@ -277,8 +320,7 @@ class DatasetRegistrationServiceTest {
     assertEquals(schema.getPiName(), capturedStudyInsert.piName());
     assertEquals(schema.getStudyDescription(), capturedStudyInsert.description());
     assertEquals(schema.getDataTypes(), capturedStudyInsert.dataTypes());
-    assertEquals(schema.getPublicVisibility(),
-        capturedStudyInsert.publicVisibility());
+    assertEquals(schema.getPublicVisibility(), capturedStudyInsert.publicVisibility());
     assertEquals(user.getUserId(), capturedStudyInsert.userId());
 
     assertEquals(user.getUserId(), inserts.get(0).userId());
@@ -289,10 +331,15 @@ class DatasetRegistrationServiceTest {
     List<StudyProperty> studyProps = capturedStudyInsert.props();
     assertContainsStudyProperty(studyProps, "phenotypeIndication", schema.getPhenotypeIndication());
     assertContainsStudyProperty(studyProps, "species", schema.getSpecies());
-    assertContainsDatasetProperty(datasetProps, "numberOfParticipants",
+    assertContainsDatasetProperty(
+        datasetProps,
+        "numberOfParticipants",
         schema.getConsentGroups().get(0).getNumberOfParticipants());
-    assertContainsDatasetProperty(datasetProps, "fileTypes", PropertyType.coerceToJson(
-        GsonUtil.getInstance().toJson(schema.getConsentGroups().get(0).getFileTypes())));
+    assertContainsDatasetProperty(
+        datasetProps,
+        "fileTypes",
+        PropertyType.coerceToJson(
+            GsonUtil.getInstance().toJson(schema.getConsentGroups().get(0).getFileTypes())));
   }
 
   @Test
@@ -368,19 +415,23 @@ class DatasetRegistrationServiceTest {
   @Test
   void testCreatedDatasetsFromUpdatedStudy() {
     Study study = mock();
-    Set<Dataset> allDatasets = Stream.of(1, 2, 3, 4, 5).map((i) -> {
-      Dataset dataset = new Dataset();
-      dataset.setDatasetId(i);
-      return dataset;
-    }).collect(Collectors.toSet());
-    List<DatasetUpdate> updatedDatasets = Stream.of(3, 4)
-        .map((i) -> new DatasetUpdate(i, "update", 1, 1, null, null)).toList();
+    Set<Dataset> allDatasets =
+        Stream.of(1, 2, 3, 4, 5)
+            .map(
+                (i) -> {
+                  Dataset dataset = new Dataset();
+                  dataset.setDatasetId(i);
+                  return dataset;
+                })
+            .collect(Collectors.toSet());
+    List<DatasetUpdate> updatedDatasets =
+        Stream.of(3, 4).map((i) -> new DatasetUpdate(i, "update", 1, 1, null, null)).toList();
 
     initService();
     when(study.getDatasets()).thenReturn(allDatasets);
 
-    List<Dataset> datasets = datasetRegistrationService.createdDatasetsFromUpdatedStudy(study,
-        updatedDatasets);
+    List<Dataset> datasets =
+        datasetRegistrationService.createdDatasetsFromUpdatedStudy(study, updatedDatasets);
 
     assertEquals(3, datasets.size());
 
@@ -396,8 +447,8 @@ class DatasetRegistrationServiceTest {
     List<DatasetUpdate> updatedDatasets = null;
     initService();
     when(study.getDatasets()).thenReturn(null);
-    List<Dataset> datasets = datasetRegistrationService.createdDatasetsFromUpdatedStudy(study,
-        updatedDatasets);
+    List<Dataset> datasets =
+        datasetRegistrationService.createdDatasetsFromUpdatedStudy(study, updatedDatasets);
     assertTrue(datasets.isEmpty());
   }
 
@@ -410,8 +461,8 @@ class DatasetRegistrationServiceTest {
 
     datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
 
-    verify(datasetServiceDAO).insertDatasetRegistration(studyInsert.capture(),
-        datasetInsertCaptor.capture());
+    verify(datasetServiceDAO)
+        .insertDatasetRegistration(studyInsert.capture(), datasetInsertCaptor.capture());
     verify(gcsService, times(0)).storeDocument(any(), any(), any());
 
     List<DatasetServiceDAO.DatasetInsert> inserts = datasetInsertCaptor.getValue();
@@ -421,17 +472,14 @@ class DatasetRegistrationServiceTest {
     verify(dacDAO, never()).findById(any());
   }
 
-
   // test inset multiple consent groups
   @Test
   void testInsertMultipleDatasetRegistration() throws Exception {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createRandomMultipleDatasetRegistration(user);
 
-    FormDataContentDisposition content = FormDataContentDisposition
-        .name("file")
-        .fileName("sharing_plan.txt")
-        .build();
+    FormDataContentDisposition content =
+        FormDataContentDisposition.name("file").fileName("sharing_plan.txt").build();
 
     InputStream is = new ByteArrayInputStream("HelloWorld".getBytes(StandardCharsets.UTF_8));
     FormDataBodyPart bodyPart = mock();
@@ -442,16 +490,21 @@ class DatasetRegistrationServiceTest {
     initService();
 
     when(dacDAO.findById(any())).thenReturn(new Dac());
-    Map<String, FormDataBodyPart> files = Map.of("alternativeDataSharingPlan",
-        bodyPart, "consentGroups[0].nihInstitutionalCertificationFile",
-        bodyPart, "otherUnused", bodyPart);
-    when(gcsService.storeDocument(any(), any(), any())).thenReturn(BlobId.of("asdf", "hjkl"),
-        BlobId.of("qwer", "tyuio"));
+    Map<String, FormDataBodyPart> files =
+        Map.of(
+            "alternativeDataSharingPlan",
+            bodyPart,
+            "consentGroups[0].nihInstitutionalCertificationFile",
+            bodyPart,
+            "otherUnused",
+            bodyPart);
+    when(gcsService.storeDocument(any(), any(), any()))
+        .thenReturn(BlobId.of("asdf", "hjkl"), BlobId.of("qwer", "tyuio"));
 
     datasetRegistrationService.createDatasetsFromRegistration(schema, user, files);
 
-    verify(datasetServiceDAO).insertDatasetRegistration(studyInsert.capture(),
-        datasetInsertCaptor.capture());
+    verify(datasetServiceDAO)
+        .insertDatasetRegistration(studyInsert.capture(), datasetInsertCaptor.capture());
 
     // only two files are stored; extra "unused" file not used
     verify(gcsService, times(2)).storeDocument(any(), any(), any());
@@ -463,8 +516,7 @@ class DatasetRegistrationServiceTest {
 
     // check first dataset insert is ok
 
-    assertEquals(schema.getConsentGroups().get(0).getConsentGroupName(),
-        inserts.get(0).name());
+    assertEquals(schema.getConsentGroups().get(0).getConsentGroupName(), inserts.get(0).name());
 
     ConsentGroup consentGroup = schema.getConsentGroups().get(0);
     DataUse dataUse = inserts.get(0).dataUse();
@@ -477,8 +529,7 @@ class DatasetRegistrationServiceTest {
     assertEquals(schema.getPiName(), capturedStudyInsert.piName());
     assertEquals(schema.getStudyDescription(), capturedStudyInsert.description());
     assertEquals(schema.getDataTypes(), capturedStudyInsert.dataTypes());
-    assertEquals(schema.getPublicVisibility(),
-        capturedStudyInsert.publicVisibility());
+    assertEquals(schema.getPublicVisibility(), capturedStudyInsert.publicVisibility());
     assertEquals(user.getUserId(), capturedStudyInsert.userId());
 
     assertEquals(1, inserts.get(0).files().size());
@@ -489,17 +540,19 @@ class DatasetRegistrationServiceTest {
     assertContainsStudyProperty(studyProps, "species", schema.getSpecies());
 
     List<DatasetProperty> props = inserts.get(0).props();
-    assertContainsDatasetProperty(props, "fileTypes", PropertyType.coerceToJson(
-        GsonUtil.getInstance().toJson(schema.getConsentGroups().get(0).getFileTypes())));
-    assertContainsDatasetProperty(props, "accessManagement",
-        schema.getConsentGroups().get(0).getAccessManagement().value());
-    assertContainsDatasetProperty(props, "numberOfParticipants",
-        schema.getConsentGroups().get(0).getNumberOfParticipants());
+    assertContainsDatasetProperty(
+        props,
+        "fileTypes",
+        PropertyType.coerceToJson(
+            GsonUtil.getInstance().toJson(schema.getConsentGroups().get(0).getFileTypes())));
+    assertContainsDatasetProperty(
+        props, "accessManagement", schema.getConsentGroups().get(0).getAccessManagement().value());
+    assertContainsDatasetProperty(
+        props, "numberOfParticipants", schema.getConsentGroups().get(0).getNumberOfParticipants());
 
     // assert on all the same properties, but for the second dataset
 
-    assertEquals(schema.getConsentGroups().get(1).getConsentGroupName(),
-        inserts.get(1).name());
+    assertEquals(schema.getConsentGroups().get(1).getConsentGroupName(), inserts.get(1).name());
 
     ConsentGroup consentGroup2 = schema.getConsentGroups().get(1);
     DataUse dataUse2 = inserts.get(1).dataUse();
@@ -511,14 +564,15 @@ class DatasetRegistrationServiceTest {
     assertEquals(0, inserts.get(1).files().size());
 
     List<DatasetProperty> props2 = inserts.get(1).props();
-    assertContainsDatasetProperty(props2, "fileTypes", PropertyType.coerceToJson(
-        GsonUtil.getInstance().toJson(schema.getConsentGroups().get(1).getFileTypes())));
-    assertContainsDatasetProperty(props2, "accessManagement",
-        schema.getConsentGroups().get(1).getAccessManagement().value());
-    assertContainsDatasetProperty(props2, "numberOfParticipants",
-        schema.getConsentGroups().get(1).getNumberOfParticipants());
-
-
+    assertContainsDatasetProperty(
+        props2,
+        "fileTypes",
+        PropertyType.coerceToJson(
+            GsonUtil.getInstance().toJson(schema.getConsentGroups().get(1).getFileTypes())));
+    assertContainsDatasetProperty(
+        props2, "accessManagement", schema.getConsentGroups().get(1).getAccessManagement().value());
+    assertContainsDatasetProperty(
+        props2, "numberOfParticipants", schema.getConsentGroups().get(1).getNumberOfParticipants());
   }
 
   @Test
@@ -530,9 +584,11 @@ class DatasetRegistrationServiceTest {
     when(dacDAO.findById(any())).thenReturn(null);
 
     initService();
-    assertThrows(NotFoundException.class, () -> {
-      datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
-    });
+    assertThrows(
+        NotFoundException.class,
+        () -> {
+          datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
+        });
   }
 
   @Test
@@ -540,12 +596,14 @@ class DatasetRegistrationServiceTest {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
     when(dacDAO.findById(any())).thenReturn(new Dac());
-    when(elasticSearchService.indexDatasets(any(), any())).thenThrow(
-        new ServerErrorException("Timeout connecting to [elasticsearch]", 500));
+    when(elasticSearchService.indexDatasets(any(), any()))
+        .thenThrow(new ServerErrorException("Timeout connecting to [elasticsearch]", 500));
     initService();
-    assertDoesNotThrow(() -> {
-      datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
-    }, "Registration Error");
+    assertDoesNotThrow(
+        () -> {
+          datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
+        },
+        "Registration Error");
   }
 
   @Test
@@ -557,25 +615,25 @@ class DatasetRegistrationServiceTest {
     dataset.setDatasetId(RandomUtils.nextInt(1, 100));
     dataset.setDacId(dac.getDacId());
     String name = RandomStringUtils.randomAlphabetic(10);
-    org.broadinstitute.consent.http.models.DatasetUpdate update = new org.broadinstitute.consent.http.models.DatasetUpdate(
-        name,
-        dac.getDacId(),
-        List.of());
+    org.broadinstitute.consent.http.models.DatasetUpdate update =
+        new org.broadinstitute.consent.http.models.DatasetUpdate(name, dac.getDacId(), List.of());
     when(datasetDAO.findDatasetById(any())).thenReturn(dataset);
 
     initService();
-    assertDoesNotThrow(() -> {
-      datasetRegistrationService.updateDataset(dataset.getDatasetId(), user, update, Map.of());
-    }, "Update Error");
+    assertDoesNotThrow(
+        () -> {
+          datasetRegistrationService.updateDataset(dataset.getDatasetId(), user, update, Map.of());
+        },
+        "Update Error");
   }
 
   @Test
   void testExtractStudyProperty() {
-    DatasetRegistrationService.StudyPropertyExtractor extractor = new DatasetRegistrationService.StudyPropertyExtractor(
-        RandomStringUtils.randomAlphabetic(10),
-        PropertyType.String,
-        DatasetRegistrationSchemaV1::getStudyName
-    );
+    DatasetRegistrationService.StudyPropertyExtractor extractor =
+        new DatasetRegistrationService.StudyPropertyExtractor(
+            RandomStringUtils.randomAlphabetic(10),
+            PropertyType.String,
+            DatasetRegistrationSchemaV1::getStudyName);
 
     DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
 
@@ -596,12 +654,12 @@ class DatasetRegistrationServiceTest {
 
   @Test
   void testExtractDatasetProperty() {
-    DatasetRegistrationService.DatasetPropertyExtractor extractor = new DatasetRegistrationService.DatasetPropertyExtractor(
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        PropertyType.String,
-        ConsentGroup::getConsentGroupName
-    );
+    DatasetRegistrationService.DatasetPropertyExtractor extractor =
+        new DatasetRegistrationService.DatasetPropertyExtractor(
+            RandomStringUtils.randomAlphabetic(10),
+            RandomStringUtils.randomAlphabetic(10),
+            PropertyType.String,
+            ConsentGroup::getConsentGroupName);
 
     ConsentGroup group = new ConsentGroup();
 
@@ -621,14 +679,13 @@ class DatasetRegistrationServiceTest {
     assertEquals(extractor.type(), prop.get().getPropertyType());
   }
 
-
   @Test
   void testExtractStudyPropertyTyped() {
-    DatasetRegistrationService.StudyPropertyExtractor extractor = new DatasetRegistrationService.StudyPropertyExtractor(
-        RandomStringUtils.randomAlphabetic(10),
-        PropertyType.Json,
-        (registration) -> GsonUtil.getInstance().toJson(registration.getDataTypes())
-    );
+    DatasetRegistrationService.StudyPropertyExtractor extractor =
+        new DatasetRegistrationService.StudyPropertyExtractor(
+            RandomStringUtils.randomAlphabetic(10),
+            PropertyType.Json,
+            (registration) -> GsonUtil.getInstance().toJson(registration.getDataTypes()));
 
     DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
 
@@ -638,20 +695,19 @@ class DatasetRegistrationServiceTest {
 
     assertTrue(prop.isPresent());
 
-    assertEquals(GsonUtil.getInstance().toJsonTree(schemaV1.getDataTypes()),
-        prop.get().getValue());
+    assertEquals(GsonUtil.getInstance().toJsonTree(schemaV1.getDataTypes()), prop.get().getValue());
     assertEquals(extractor.key(), prop.get().getKey());
     assertEquals(extractor.type(), prop.get().getType());
   }
 
   @Test
   void testExtractDatasetPropertyTyped() {
-    DatasetRegistrationService.DatasetPropertyExtractor extractor = new DatasetRegistrationService.DatasetPropertyExtractor(
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        PropertyType.Json,
-        (consentGroup) -> GsonUtil.getInstance().toJson(consentGroup.getDiseaseSpecificUse())
-    );
+    DatasetRegistrationService.DatasetPropertyExtractor extractor =
+        new DatasetRegistrationService.DatasetPropertyExtractor(
+            RandomStringUtils.randomAlphabetic(10),
+            RandomStringUtils.randomAlphabetic(10),
+            PropertyType.Json,
+            (consentGroup) -> GsonUtil.getInstance().toJson(consentGroup.getDiseaseSpecificUse()));
 
     ConsentGroup group = new ConsentGroup();
 
@@ -661,7 +717,8 @@ class DatasetRegistrationServiceTest {
 
     assertTrue(prop.isPresent());
 
-    assertEquals(GsonUtil.getInstance().toJsonTree(group.getDiseaseSpecificUse()),
+    assertEquals(
+        GsonUtil.getInstance().toJsonTree(group.getDiseaseSpecificUse()),
         prop.get().getPropertyValue());
     assertEquals(extractor.name(), prop.get().getPropertyName());
     assertEquals(extractor.schemaProp(), prop.get().getSchemaProperty());
@@ -670,8 +727,7 @@ class DatasetRegistrationServiceTest {
 
   private void assertDataUse(ConsentGroup consentGroup, DataUse dataUse) {
     assertEquals(consentGroup.getCol(), dataUse.getCollaboratorRequired());
-    assertEquals(consentGroup.getDiseaseSpecificUse(),
-        dataUse.getDiseaseRestrictions());
+    assertEquals(consentGroup.getDiseaseSpecificUse(), dataUse.getDiseaseRestrictions());
     assertEquals(consentGroup.getIrb(), dataUse.getEthicsApprovalRequired());
     assertEquals(consentGroup.getGeneralResearchUse(), dataUse.getGeneralUse());
     assertEquals(consentGroup.getGs(), dataUse.getGeographicalRestrictions());
@@ -690,16 +746,16 @@ class DatasetRegistrationServiceTest {
     assertEquals(consentGroup.getPub(), dataUse.getPublicationResults());
   }
 
-  private void assertContainsDatasetProperty(Collection<DatasetProperty> props, String schema,
-      Object value) {
-    Optional<DatasetProperty> prop = props.stream()
-        .filter((p) -> p.getSchemaProperty().equals(schema)).findFirst();
+  private void assertContainsDatasetProperty(
+      Collection<DatasetProperty> props, String schema, Object value) {
+    Optional<DatasetProperty> prop =
+        props.stream().filter((p) -> p.getSchemaProperty().equals(schema)).findFirst();
     assertTrue(prop.isPresent());
     assertEquals(value, prop.get().getPropertyValue());
   }
 
-  private void assertContainsStudyProperty(Collection<StudyProperty> props, String key,
-      Object value) {
+  private void assertContainsStudyProperty(
+      Collection<StudyProperty> props, String key, Object value) {
     Optional<StudyProperty> prop = props.stream().filter((p) -> p.getKey().equals(key)).findFirst();
     assertTrue(prop.isPresent());
     assertEquals(value, prop.get().getValue());
@@ -798,7 +854,6 @@ class DatasetRegistrationServiceTest {
     return schemaV1;
   }
 
-
   private DatasetRegistrationSchemaV1 createRandomCompleteDatasetRegistration(User user) {
     // TODO: find a better way to initialize this object
     DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
@@ -819,7 +874,8 @@ class DatasetRegistrationServiceTest {
     schemaV1.setEmbargoReleaseDate("2007-12-03");
     schemaV1.setSequencingCenter(RandomStringUtils.randomAlphabetic(10));
     schemaV1.setNihAnvilUse(
-        DatasetRegistrationSchemaV1.NihAnvilUse.I_AM_NOT_NHGRI_FUNDED_BUT_I_AM_SEEKING_TO_SUBMIT_DATA_TO_AN_VIL);
+        DatasetRegistrationSchemaV1.NihAnvilUse
+            .I_AM_NOT_NHGRI_FUNDED_BUT_I_AM_SEEKING_TO_SUBMIT_DATA_TO_AN_VIL);
     schemaV1.setNihGrantContractNumber(RandomStringUtils.randomAlphabetic(10));
     schemaV1.setNihICsSupportingStudy(List.of(NihICsSupportingStudy.CC, NihICsSupportingStudy.CIT));
     schemaV1.setNihProgramOfficerName(RandomStringUtils.randomAlphabetic(10));
@@ -833,12 +889,15 @@ class DatasetRegistrationServiceTest {
     schemaV1.setControlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation(
         RandomStringUtils.randomAlphabetic(10));
     schemaV1.setAlternativeDataSharingPlan(true);
-    schemaV1.setAlternativeDataSharingPlanReasons(List.of(
-        AlternativeDataSharingPlanReason.INFORMED_CONSENT_PROCESSES_ARE_INADEQUATE_TO_SUPPORT_DATA_FOR_SHARING_FOR_THE_FOLLOWING_REASONS));
+    schemaV1.setAlternativeDataSharingPlanReasons(
+        List.of(
+            AlternativeDataSharingPlanReason
+                .INFORMED_CONSENT_PROCESSES_ARE_INADEQUATE_TO_SUPPORT_DATA_FOR_SHARING_FOR_THE_FOLLOWING_REASONS));
     schemaV1.setAlternativeDataSharingPlanExplanation(RandomStringUtils.randomAlphabetic(10));
     schemaV1.setAlternativeDataSharingPlanFileName(RandomStringUtils.randomAlphabetic(10));
     schemaV1.setAlternativeDataSharingPlanDataSubmitted(
-        DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted.WITHIN_3_MONTHS_OF_THE_LAST_DATA_GENERATED_OR_LAST_CLINICAL_VISIT);
+        DatasetRegistrationSchemaV1.AlternativeDataSharingPlanDataSubmitted
+            .WITHIN_3_MONTHS_OF_THE_LAST_DATA_GENERATED_OR_LAST_CLINICAL_VISIT);
     schemaV1.setAlternativeDataSharingPlanDataReleased(true);
     schemaV1.setAlternativeDataSharingPlanTargetDeliveryDate("2011-11-11");
     schemaV1.setAlternativeDataSharingPlanTargetPublicReleaseDate("2012-10-08");
@@ -868,5 +927,4 @@ class DatasetRegistrationServiceTest {
     schemaV1.setConsentGroups(List.of(consentGroup));
     return schemaV1;
   }
-
 }

@@ -18,13 +18,11 @@ import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.TDRService;
 
-
 @Path("api/tdr")
 public class TDRResource extends Resource {
 
   private final TDRService tdrService;
   private final DatasetService datasetService;
-
 
   @Inject
   public TDRResource(TDRService tdrService, DatasetService datasetService) {
@@ -37,10 +35,11 @@ public class TDRResource extends Resource {
   @RolesAllowed({ADMIN, SERVICE_ACCOUNT})
   @Path("/{identifier}/approved/users")
   @Timed
-  public Response getApprovedUsers(@Auth DuosUser duosUser,
-      @PathParam("identifier") String identifier) {
+  public Response getApprovedUsers(
+      @Auth DuosUser duosUser, @PathParam("identifier") String identifier) {
     try {
-      Dataset dataset = datasetService.findMinimalDatasetByIdentifier(duosUser.getUser(), identifier, false);
+      Dataset dataset =
+          datasetService.findMinimalDatasetByIdentifier(duosUser.getUser(), identifier, false);
       if (Objects.isNull(dataset)) {
         throw new NotFoundException("Could not find dataset " + identifier);
       }
@@ -57,10 +56,11 @@ public class TDRResource extends Resource {
   @PermitAll
   @Path("/{identifier}")
   @Timed
-  public Response getDatasetByIdentifier(@Auth DuosUser duosUser,
-      @PathParam("identifier") String identifier) {
+  public Response getDatasetByIdentifier(
+      @Auth DuosUser duosUser, @PathParam("identifier") String identifier) {
     try {
-      Dataset dataset = datasetService.findMinimalDatasetByIdentifier(duosUser.getUser(), identifier, true);
+      Dataset dataset =
+          datasetService.findMinimalDatasetByIdentifier(duosUser.getUser(), identifier, true);
       if (Objects.isNull(dataset)) {
         throw new NotFoundException("Could not find dataset " + identifier);
       }
@@ -70,5 +70,4 @@ public class TDRResource extends Resource {
       return createExceptionResponse(e);
     }
   }
-
 }

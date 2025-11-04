@@ -19,30 +19,34 @@ public class OAuthCustomAuthFilter<P extends Principal> extends AuthFilter<Strin
    * Constructor for OAuthCustomAuthFilter intended to be used with AuthUsers.
    *
    * @param authenticator OAuthAuthenticator
-   * @param authorizationHelper   AuthorizationHelper
+   * @param authorizationHelper AuthorizationHelper
    */
-  public OAuthCustomAuthFilter(OAuthAuthenticator authenticator, AuthorizationHelper authorizationHelper) {
-    filter = new OAuthCredentialAuthFilter.Builder<AuthUser>()
-        .setAuthenticator(authenticator)
-        .setAuthorizer(new UserAuthorizer(authorizationHelper))
-        .setPrefix("Bearer")
-        .setRealm("OAUTH-AUTH")
-        .buildAuthFilter();
+  public OAuthCustomAuthFilter(
+      OAuthAuthenticator authenticator, AuthorizationHelper authorizationHelper) {
+    filter =
+        new OAuthCredentialAuthFilter.Builder<AuthUser>()
+            .setAuthenticator(authenticator)
+            .setAuthorizer(new UserAuthorizer(authorizationHelper))
+            .setPrefix("Bearer")
+            .setRealm("OAUTH-AUTH")
+            .buildAuthFilter();
   }
 
   /**
    * Constructor for OAuthCustomAuthFilter intended to be used with DuosUsers.
    *
    * @param authenticator DuosUserAuthenticator
-   * @param authorizationHelper   AuthorizationHelper
+   * @param authorizationHelper AuthorizationHelper
    */
-  public OAuthCustomAuthFilter(DuosUserAuthenticator authenticator, AuthorizationHelper authorizationHelper) {
-    filter = new OAuthCredentialAuthFilter.Builder<DuosUser>()
-        .setAuthenticator(authenticator)
-        .setAuthorizer(new DuosUserAuthorizer(authorizationHelper))
-        .setPrefix("Bearer")
-        .setRealm("OAUTH-AUTH")
-        .buildAuthFilter();
+  public OAuthCustomAuthFilter(
+      DuosUserAuthenticator authenticator, AuthorizationHelper authorizationHelper) {
+    filter =
+        new OAuthCredentialAuthFilter.Builder<DuosUser>()
+            .setAuthenticator(authenticator)
+            .setAuthorizer(new DuosUserAuthorizer(authorizationHelper))
+            .setPrefix("Bearer")
+            .setRealm("OAUTH-AUTH")
+            .buildAuthFilter();
   }
 
   @Override

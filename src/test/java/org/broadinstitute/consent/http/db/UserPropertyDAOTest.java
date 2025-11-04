@@ -29,25 +29,25 @@ class UserPropertyDAOTest extends DAOTestHelper {
     notPresent.setPropertyValue(randomAlphabetic(10));
     notPresent.setUserId(user.getUserId());
 
-    List<UserProperty> props = userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
-        user.getUserId(),
-        List.of(UserFields.ERA_EXPIRATION_DATE.getValue()));
+    List<UserProperty> props =
+        userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
+            user.getUserId(), List.of(UserFields.ERA_EXPIRATION_DATE.getValue()));
 
     assertEquals(0, props.size());
 
-    userPropertyDAO.insertAll(List.of(
-        eraExpProp,
-        notPresent
-    ));
+    userPropertyDAO.insertAll(List.of(eraExpProp, notPresent));
 
-    props = userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
-        user.getUserId(),
-        List.of(UserFields.ERA_EXPIRATION_DATE.getValue()));
+    props =
+        userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
+            user.getUserId(), List.of(UserFields.ERA_EXPIRATION_DATE.getValue()));
 
     assertEquals(1, props.size());
 
-    assertTrue(props.stream().anyMatch((p) ->
-        (p.getPropertyKey().equals(UserFields.ERA_EXPIRATION_DATE.getValue())
-            && p.getPropertyValue().equals(eraExpProp.getPropertyValue()))));
+    assertTrue(
+        props.stream()
+            .anyMatch(
+                (p) ->
+                    (p.getPropertyKey().equals(UserFields.ERA_EXPIRATION_DATE.getValue())
+                        && p.getPropertyValue().equals(eraExpProp.getPropertyValue()))));
   }
 }

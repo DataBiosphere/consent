@@ -11,8 +11,8 @@ import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 
-public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
-    ConsentLogger, RowMapperHelper {
+public class DacReducer
+    implements LinkedHashMapRowReducer<Integer, Dac>, ConsentLogger, RowMapperHelper {
 
   private final DataUseParser dataUseParser = new DataUseParser();
 
@@ -41,14 +41,13 @@ public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
         if (daa.getDaaId() != null) {
           dac.setAssociatedDaa(daa);
         }
-
       }
 
       if (hasColumn(rowView, "dataset_id", Integer.class)
           && rowView.getColumn("dataset_id", Integer.class) > 0) {
         Dataset dataset = rowView.getRow(Dataset.class);
 
-        //aliased columns must be set directly
+        // aliased columns must be set directly
         String dsAlias = rowView.getColumn("dataset_alias", String.class);
         if (dsAlias != null) {
           try {
@@ -76,9 +75,7 @@ public class DacReducer implements LinkedHashMapRowReducer<Integer, Dac>,
         if (dataset != null) {
           dac.addDataset(dataset);
         }
-
       }
-
 
     } catch (MappingException e) {
       logWarn(e.getMessage());

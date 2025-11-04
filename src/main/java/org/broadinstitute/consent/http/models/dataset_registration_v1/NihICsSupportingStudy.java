@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum NihICsSupportingStudy {
-
   NCI("NCI"),
   NEI("NEI"),
   NHLBI("NHLBI"),
@@ -35,7 +34,8 @@ public enum NihICsSupportingStudy {
   NCATS("NCATS"),
   NCCIH("NCCIH");
   private final String value;
-  private static final Map<String, NihICsSupportingStudy> CONSTANTS = new HashMap<String, NihICsSupportingStudy>();
+  private static final Map<String, NihICsSupportingStudy> CONSTANTS =
+      new HashMap<String, NihICsSupportingStudy>();
 
   static {
     for (NihICsSupportingStudy c : values()) {
@@ -66,5 +66,4 @@ public enum NihICsSupportingStudy {
       return constant;
     }
   }
-
 }

@@ -5,9 +5,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Entity representing a Data Access Committee
- */
+/** Entity representing a Data Access Committee */
 public class Dac {
 
   private Integer dacId;
@@ -34,8 +32,7 @@ public class Dac {
 
   private DataAccessAgreement associatedDaa;
 
-  public Dac() {
-  }
+  public Dac() {}
 
   public Integer getDacId() {
     return dacId;
@@ -108,7 +105,6 @@ public class Dac {
   public void addDatasetId(Integer datasetId) {
     this.datasetIds.add(datasetId);
   }
-
 
   public String getEmail() {
     return email;

@@ -21,24 +21,23 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class InstitutionUtilTest {
 
-  private static final List<String> VALID_DOMAINS = Arrays.asList(
-      "café.com",
-      "broad.mit.edu",
-      "broadinstitute.org",
-      "mail.google.com",
-      "www.broadinstitute.org"
-  );
+  private static final List<String> VALID_DOMAINS =
+      Arrays.asList(
+          "café.com",
+          "broad.mit.edu",
+          "broadinstitute.org",
+          "mail.google.com",
+          "www.broadinstitute.org");
 
-  private static final List<String> INVALID_DOMAINS = Arrays.asList(
-      "invalid",
-      "",
-      null
-  );
+  private static final List<String> INVALID_DOMAINS = Arrays.asList("invalid", "", null);
 
-  private static final List<String> MIXED_VALIDITY_DOMAINS = new ArrayList<String>() {{
-    addAll(VALID_DOMAINS);
-    addAll(INVALID_DOMAINS);
-  }};
+  private static final List<String> MIXED_VALIDITY_DOMAINS =
+      new ArrayList<String>() {
+        {
+          addAll(VALID_DOMAINS);
+          addAll(INVALID_DOMAINS);
+        }
+      };
 
   private InstitutionUtil util;
 
@@ -67,10 +66,10 @@ class InstitutionUtilTest {
     assertEquals(mockInstitution.getName(), deserialized.getName());
     assertEquals(mockInstitution.getCreateUserId(), deserialized.getCreateUserId());
     assertEquals(mockInstitution.getUpdateUserId(), deserialized.getUpdateUserId());
-    assertEquals(mockInstitution.getCreateDate().toString(),
-        deserialized.getCreateDate().toString());
-    assertEquals(mockInstitution.getUpdateDate().toString(),
-        deserialized.getUpdateDate().toString());
+    assertEquals(
+        mockInstitution.getCreateDate().toString(), deserialized.getCreateDate().toString());
+    assertEquals(
+        mockInstitution.getUpdateDate().toString(), deserialized.getUpdateDate().toString());
     assertEquals(mockInstitution.getId(), deserialized.getId());
   }
 
@@ -99,9 +98,10 @@ class InstitutionUtilTest {
 
     List<String> invalidDomains = InstitutionUtil.getInvalidInstitutionDomains(institution);
     assertEquals(3, invalidDomains.size());
-    INVALID_DOMAINS.forEach(domain -> {
-      assertTrue(invalidDomains.contains(domain));
-    });
+    INVALID_DOMAINS.forEach(
+        domain -> {
+          assertTrue(invalidDomains.contains(domain));
+        });
   }
 
   @Test
@@ -134,31 +134,46 @@ class InstitutionUtilTest {
     }
 
     assertInstanceOf(BadRequestException.class, exception);
-    assertEquals("Invalid domain(s) provided for institution: invalid, , null", exception.getMessage());
+    assertEquals(
+        "Invalid domain(s) provided for institution: invalid, , null", exception.getMessage());
   }
 
   @Test
   void testCanonicalizeInstitutionNameValidInput() {
-    assertEquals("Harvard University", InstitutionUtil.canonicalizeInstitutionName("Harvard University"));
-    assertEquals("University of Connecticut", InstitutionUtil.canonicalizeInstitutionName("  University of Connecticut  "));
+    assertEquals(
+        "Harvard University", InstitutionUtil.canonicalizeInstitutionName("Harvard University"));
+    assertEquals(
+        "University of Connecticut",
+        InstitutionUtil.canonicalizeInstitutionName("  University of Connecticut  "));
   }
 
   @Test
   void testCanonicalizeInstitutionNameQuotes() {
     // Test left/right double quotation marks
-    assertEquals("A 'Real' University", InstitutionUtil.canonicalizeInstitutionName("A \"Real\" University"));
+    assertEquals(
+        "A 'Real' University",
+        InstitutionUtil.canonicalizeInstitutionName("A \"Real\" University"));
 
     // Test left/right single quotation marks
-    assertEquals("St. John's University", InstitutionUtil.canonicalizeInstitutionName("St. John’s University"));
-    assertEquals("Mount St. Mary's College", InstitutionUtil.canonicalizeInstitutionName("Mount St. Mary‘s College"));
+    assertEquals(
+        "St. John's University",
+        InstitutionUtil.canonicalizeInstitutionName("St. John’s University"));
+    assertEquals(
+        "Mount St. Mary's College",
+        InstitutionUtil.canonicalizeInstitutionName("Mount St. Mary‘s College"));
 
     // Test low-9 quotation marks
-    assertEquals("A 'Real' University", InstitutionUtil.canonicalizeInstitutionName("A ‚Real„ University"));
+    assertEquals(
+        "A 'Real' University", InstitutionUtil.canonicalizeInstitutionName("A ‚Real„ University"));
   }
 
   @Test
   void testCanonicalizeInstitutionNameWhitespace() {
-    assertEquals("Harvard University", InstitutionUtil.canonicalizeInstitutionName("  Harvard University  "));
-    assertEquals("Connecticut College", InstitutionUtil.canonicalizeInstitutionName("\t Connecticut College \n"));
+    assertEquals(
+        "Harvard University",
+        InstitutionUtil.canonicalizeInstitutionName("  Harvard University  "));
+    assertEquals(
+        "Connecticut College",
+        InstitutionUtil.canonicalizeInstitutionName("\t Connecticut College \n"));
   }
 }

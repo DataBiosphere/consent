@@ -19,8 +19,9 @@ class RuleImplementationInterfaceTest {
     }
 
     @Override
-    public boolean compare(org.broadinstitute.consent.http.models.Dataset dataset,
-                          org.broadinstitute.consent.http.models.DataAccessRequest dataAccessRequest) {
+    public boolean compare(
+        org.broadinstitute.consent.http.models.Dataset dataset,
+        org.broadinstitute.consent.http.models.DataAccessRequest dataAccessRequest) {
       return false;
     }
   }
@@ -70,7 +71,8 @@ class RuleImplementationInterfaceTest {
     TestRuleImplementation rule = new TestRuleImplementation();
     DataAccessRequestData data = new DataAccessRequestData();
     data.setDiseases(true);
-    data.setOntologies(java.util.List.of(new org.broadinstitute.consent.http.models.OntologyEntry()));
+    data.setOntologies(
+        java.util.List.of(new org.broadinstitute.consent.http.models.OntologyEntry()));
 
     assertTrue(rule.requestHasDiseases(data));
 

@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db.mapper;
 
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
@@ -10,8 +9,7 @@ import org.broadinstitute.consent.http.models.DraftSummary;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
-public class DraftSummaryMapper implements RowMapper<DraftSummary>,
-    RowMapperHelper {
+public class DraftSummaryMapper implements RowMapper<DraftSummary>, RowMapperHelper {
 
   @Override
   public DraftSummary map(ResultSet rs, StatementContext ctx) throws SQLException {

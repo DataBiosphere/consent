@@ -5,7 +5,8 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 public interface TestingDAO extends Transactional<TestingDAO> {
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
       DO $$ DECLARE
           table_name text;
       BEGIN

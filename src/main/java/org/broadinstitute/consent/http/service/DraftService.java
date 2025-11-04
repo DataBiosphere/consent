@@ -38,8 +38,8 @@ public class DraftService implements ConsentLogger {
     return draftServiceDAO.getAuthorizedDraft(uuid, user);
   }
 
-  public List<FileStorageObject> addAttachments(DraftInterface draft, User user,
-      Map<String, FormDataBodyPart> files)
+  public List<FileStorageObject> addAttachments(
+      DraftInterface draft, User user, Map<String, FormDataBodyPart> files)
       throws SQLException, RuntimeException {
     return draftServiceDAO.addAttachments(draft, user, files);
   }

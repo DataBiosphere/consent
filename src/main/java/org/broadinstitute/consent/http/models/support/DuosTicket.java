@@ -7,14 +7,15 @@ import org.zendesk.client.v2.model.Ticket;
 
 /**
  * Wrapper around org.zendesk.client.v2.model.Ticket to do the following:
+ *
  * <ul>
  *   <li>Provide a top level field "request" that represents the native Request model which is
- *   required for Zendesk API usage. See
- *   <a href="https://developer.zendesk.com/api-reference/ticketing/tickets/ticket-requests/">Requests</a></a>
- *   for more information.</li>
+ *       required for Zendesk API usage. See <a
+ *       href="https://developer.zendesk.com/api-reference/ticketing/tickets/ticket-requests/">Requests</a></a>
+ *       for more information.
  *   <li>It is required that we provide a `ticketFormId` which is not available on the `Request`
- *   class, but is only on the `Ticket` class.</li>
- *   <li>Ignore the Ticket.hasIncidents field on serialization</li>
+ *       class, but is only on the `Ticket` class.
+ *   <li>Ignore the Ticket.hasIncidents field on serialization
  * </ul>
  */
 public class DuosTicket {
@@ -36,5 +37,4 @@ public class DuosTicket {
       throw new RuntimeException(e);
     }
   }
-
 }

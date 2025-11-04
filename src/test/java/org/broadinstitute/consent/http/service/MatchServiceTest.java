@@ -43,37 +43,32 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class MatchServiceTest {
 
-  @Mock
-  DatasetDAO datasetDAO;
-  @Mock
-  private ServicesConfiguration config;
-  @Mock
-  private DataAccessRequestDAO dataAccessRequestDAO;
-  @Mock
-  private MatchDAO matchDAO;
+  @Mock DatasetDAO datasetDAO;
+  @Mock private ServicesConfiguration config;
+  @Mock private DataAccessRequestDAO dataAccessRequestDAO;
+  @Mock private MatchDAO matchDAO;
 
   private MatchService service;
 
-  @Mock
-  private Client clientMock;
-  @Mock
-  private WebTarget target;
-  @Mock
-  private Invocation.Builder builder;
-  @Mock
-  private Response response;
-  @Mock
-  private UseRestrictionConverter useRestrictionConverter;
+  @Mock private Client clientMock;
+  @Mock private WebTarget target;
+  @Mock private Invocation.Builder builder;
+  @Mock private Response response;
+  @Mock private UseRestrictionConverter useRestrictionConverter;
 
   private void initService() {
-    service = new MatchService(clientMock, config, matchDAO,
-        dataAccessRequestDAO, datasetDAO,
-        useRestrictionConverter);
+    service =
+        new MatchService(
+            clientMock,
+            config,
+            matchDAO,
+            dataAccessRequestDAO,
+            datasetDAO,
+            useRestrictionConverter);
   }
 
   @BeforeAll
-  public static void setUpClass() {
-  }
+  public static void setUpClass() {}
 
   @Test
   void testInsertMatches() {
@@ -101,9 +96,11 @@ class MatchServiceTest {
     when(matchDAO.findMatchById(m.getId())).thenReturn(null);
     initService();
 
-    assertThrows(NotFoundException.class, () -> {
-      service.findMatchById(m.getId());
-    });
+    assertThrows(
+        NotFoundException.class,
+        () -> {
+          service.findMatchById(m.getId());
+        });
   }
 
   @Test
@@ -122,18 +119,22 @@ class MatchServiceTest {
   void testSingleEntitiesMatchV3EmptyDataset() {
     DataAccessRequest dar = new DataAccessRequest();
     initService();
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.singleEntitiesMatchV3(null, dar);
-    });
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          service.singleEntitiesMatchV3(null, dar);
+        });
   }
 
   @Test
   void testSingleEntitiesMatchV3EmptyDar() {
     Dataset dataset = new Dataset();
     initService();
-    assertThrows(IllegalArgumentException.class, () -> {
-      service.singleEntitiesMatchV3(dataset, null);
-    });
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          service.singleEntitiesMatchV3(dataset, null);
+        });
   }
 
   @Test
@@ -256,11 +257,11 @@ class MatchServiceTest {
   @Test
   void testFindMatchesForLatestDataAccessElectionsByPurposeIds() {
     Match m = createMatchObject();
-    when(matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(anyList())).thenReturn(
-        List.of(m));
+    when(matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(anyList()))
+        .thenReturn(List.of(m));
     initService();
-    List<Match> matches = service.findMatchesForLatestDataAccessElectionsByPurposeIds(
-        List.of("test"));
+    List<Match> matches =
+        service.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of("test"));
     assertEquals(1, matches.size());
     assertEquals(m.getId(), matches.get(0).getId());
     verify(matchDAO, atLeastOnce()).findMatchesForLatestDataAccessElectionsByPurposeIds(anyList());
@@ -278,7 +279,14 @@ class MatchServiceTest {
   }
 
   private Match createMatchObject() {
-    return new Match(1, UUID.randomUUID().toString(), UUID.randomUUID().toString(), true, true,
-        false, new Date(), MatchAlgorithm.V4.getVersion());
+    return new Match(
+        1,
+        UUID.randomUUID().toString(),
+        UUID.randomUUID().toString(),
+        true,
+        true,
+        false,
+        new Date(),
+        MatchAlgorithm.V4.getVersion());
   }
 }

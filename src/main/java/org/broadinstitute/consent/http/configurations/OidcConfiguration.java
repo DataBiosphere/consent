@@ -3,8 +3,7 @@ package org.broadinstitute.consent.http.configurations;
 import jakarta.validation.constraints.NotNull;
 
 public class OidcConfiguration {
-  @NotNull
-  private String authorityEndpoint;
+  @NotNull private String authorityEndpoint;
   private String extraAuthParams;
   private boolean addClientIdToScope = false;
   private String clientId;

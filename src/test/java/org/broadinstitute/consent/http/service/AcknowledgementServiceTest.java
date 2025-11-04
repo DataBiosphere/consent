@@ -38,28 +38,25 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class AcknowledgementServiceTest extends AbstractTestHelper {
 
-  @Mock
-  private static AcknowledgementDAO acknowledgementDAO;
-  @Mock
-  private static DataAccessRequestDAO dataAccessRequestDAO;
-  @Mock
-  private static EmailService emailService;
+  @Mock private static AcknowledgementDAO acknowledgementDAO;
+  @Mock private static DataAccessRequestDAO dataAccessRequestDAO;
+  @Mock private static EmailService emailService;
 
   private AcknowledgementService acknowledgementService;
 
   @BeforeEach
   void setUp() {
-    acknowledgementService = new AcknowledgementService(acknowledgementDAO, dataAccessRequestDAO,
-        emailService);
+    acknowledgementService =
+        new AcknowledgementService(acknowledgementDAO, dataAccessRequestDAO, emailService);
   }
 
   @Test
   void test_noAcknowledgementsForUser() {
-    User user = new User(1, "test@domain.com", "Test User", new Date(),
-        List.of(UserRoles.Researcher()));
+    User user =
+        new User(1, "test@domain.com", "Test User", new Date(), List.of(UserRoles.Researcher()));
     when(acknowledgementDAO.findAcknowledgementsForUser(anyInt())).thenReturn(new ArrayList<>());
-    when(acknowledgementDAO.findAcknowledgementsByKeyForUser(anyString(), anyInt())).thenReturn(
-        null);
+    when(acknowledgementDAO.findAcknowledgementsByKeyForUser(anyString(), anyInt()))
+        .thenReturn(null);
 
     assertTrue(acknowledgementService.findAcknowledgementsForUser(user).isEmpty());
     assertNull(acknowledgementService.findAcknowledgementForUserByKey(user, "key1"));
@@ -67,8 +64,8 @@ class AcknowledgementServiceTest extends AbstractTestHelper {
 
   @Test
   void test_makeAndDeleteAcknowledgementForUser() {
-    User user = new User(2, "test@domain.com", "Test User", new Date(),
-        List.of(UserRoles.Researcher()));
+    User user =
+        new User(2, "test@domain.com", "Test User", new Date(), List.of(UserRoles.Researcher()));
     String key = "key2";
     List<String> keys = List.of(key);
     Timestamp timestamp = new Timestamp(new Date().getTime());
@@ -78,27 +75,27 @@ class AcknowledgementServiceTest extends AbstractTestHelper {
     key2Acknowledgement.setFirstAcknowledged(timestamp);
     key2Acknowledgement.setLastAcknowledged(timestamp);
     List<Acknowledgement> acknowledgementList = List.of(key2Acknowledgement);
-    when(acknowledgementDAO.findAcknowledgementsForUser(any(), any())).thenReturn(
-        acknowledgementList);
+    when(acknowledgementDAO.findAcknowledgementsForUser(any(), any()))
+        .thenReturn(acknowledgementList);
     when(acknowledgementDAO.findAcknowledgementsForUser(anyInt())).thenReturn(acknowledgementList);
-    when(acknowledgementDAO.findAcknowledgementsByKeyForUser(anyString(), anyInt())).thenReturn(
-        key2Acknowledgement);
+    when(acknowledgementDAO.findAcknowledgementsByKeyForUser(anyString(), anyInt()))
+        .thenReturn(key2Acknowledgement);
     doNothing().when(acknowledgementDAO).deleteAcknowledgement(anyString(), anyInt());
 
-    Map<String, Acknowledgement> makeResponse = acknowledgementService.makeAcknowledgements(keys,
-        user);
+    Map<String, Acknowledgement> makeResponse =
+        acknowledgementService.makeAcknowledgements(keys, user);
     assertEquals(1, makeResponse.size());
     assertTrue(makeResponse.containsKey(key));
     assertEquals(key2Acknowledgement, makeResponse.get(key));
 
-    Map<String, Acknowledgement> lookupResponse = acknowledgementService.findAcknowledgementsForUser(
-        user);
+    Map<String, Acknowledgement> lookupResponse =
+        acknowledgementService.findAcknowledgementsForUser(user);
     assertEquals(1, lookupResponse.size());
     assertTrue(lookupResponse.containsKey(key));
     assertEquals(key2Acknowledgement, lookupResponse.get(key));
 
-    Acknowledgement singleLookupResponse = acknowledgementService.findAcknowledgementForUserByKey(
-        user, key);
+    Acknowledgement singleLookupResponse =
+        acknowledgementService.findAcknowledgementForUserByKey(user, key);
     assertEquals(singleLookupResponse, key2Acknowledgement);
 
     acknowledgementService.deleteAcknowledgementForUserByKey(user, key);
@@ -108,8 +105,8 @@ class AcknowledgementServiceTest extends AbstractTestHelper {
   void testMakeCloseoutAcknowledgement() throws Exception {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setCloseoutSupplement(new CloseoutSupplement(List.of("reason"), "details", 1));
-    User user = new User(3, "test@domain.com", "Test User", new Date(),
-        List.of(UserRoles.Chairperson()));
+    User user =
+        new User(3, "test@domain.com", "Test User", new Date(), List.of(UserRoles.Chairperson()));
     DataAccessRequest dar1 = new DataAccessRequest();
     dar1.setReferenceId(UUID.randomUUID().toString());
     dar1.setDarCode("DAR-" + randomInt(100, 1000));
@@ -143,25 +140,27 @@ class AcknowledgementServiceTest extends AbstractTestHelper {
     when(dataAccessRequestDAO.findByReferenceId(dar1.getReferenceId())).thenReturn(dar1);
     when(dataAccessRequestDAO.findByReferenceId(dar2.getReferenceId())).thenReturn(dar2);
     // Neither DAR has been acknowledged yet
-    when(acknowledgementDAO.findAcknowledgementsByKeyForUser(ack1.getAckKey(), user.getUserId())).thenReturn(null);
-    when(acknowledgementDAO.findAcknowledgementsByKeyForUser(ack3.getAckKey(), user.getUserId())).thenReturn(null);
+    when(acknowledgementDAO.findAcknowledgementsByKeyForUser(ack1.getAckKey(), user.getUserId()))
+        .thenReturn(null);
+    when(acknowledgementDAO.findAcknowledgementsByKeyForUser(ack3.getAckKey(), user.getUserId()))
+        .thenReturn(null);
     when(acknowledgementDAO.findAcknowledgementsForUser(
-        List.of(ack1.getAckKey(), ack2.getAckKey(), ack3.getAckKey()),
-        user.getUserId())).thenReturn(List.of(ack1, ack2, ack3));
+            List.of(ack1.getAckKey(), ack2.getAckKey(), ack3.getAckKey()), user.getUserId()))
+        .thenReturn(List.of(ack1, ack2, ack3));
 
     acknowledgementService.makeAcknowledgements(
         List.of(ack1.getAckKey(), ack2.getAckKey(), ack3.getAckKey()), user);
     // Only two acknowledgements are closeouts, so only two emails should be sent
-    verify(emailService).sendResearcherCloseoutCompletedMessage(user, dar1.getDarCode(),
-        dar1.getReferenceId());
-    verify(emailService).sendResearcherCloseoutCompletedMessage(user, dar2.getDarCode(),
-        dar2.getReferenceId());
+    verify(emailService)
+        .sendResearcherCloseoutCompletedMessage(user, dar1.getDarCode(), dar1.getReferenceId());
+    verify(emailService)
+        .sendResearcherCloseoutCompletedMessage(user, dar2.getDarCode(), dar2.getReferenceId());
   }
 
   @Test
   void testMakeCloseoutAcknowledgementPreviouslyAcknowledged() throws Exception {
-    User user = new User(3, "test@domain.com", "Test User", new Date(),
-        List.of(UserRoles.Chairperson()));
+    User user =
+        new User(3, "test@domain.com", "Test User", new Date(), List.of(UserRoles.Chairperson()));
     DataAccessRequest dar1 = new DataAccessRequest();
     dar1.setReferenceId(UUID.randomUUID().toString());
     dar1.setDarCode("DAR-" + randomInt(100, 1000));
@@ -173,12 +172,15 @@ class AcknowledgementServiceTest extends AbstractTestHelper {
     ack1.setFirstAcknowledged(timestamp);
 
     // Ensures that this DAR closeout has already been acknowledged
-    when(acknowledgementDAO.findAcknowledgementsByKeyForUser(ack1.getAckKey(), user.getUserId())).thenReturn(ack1);
+    when(acknowledgementDAO.findAcknowledgementsByKeyForUser(ack1.getAckKey(), user.getUserId()))
+        .thenReturn(ack1);
     when(dataAccessRequestDAO.findByReferenceId(dar1.getReferenceId())).thenReturn(dar1);
 
     List<String> keys = List.of(ack1.getAckKey());
-    assertThrows(BadRequestException.class, () -> acknowledgementService.makeAcknowledgements(keys, user));
-    verify(emailService, never()).sendResearcherCloseoutCompletedMessage(any(), anyString(), anyString());
+    assertThrows(
+        BadRequestException.class, () -> acknowledgementService.makeAcknowledgements(keys, user));
+    verify(emailService, never())
+        .sendResearcherCloseoutCompletedMessage(any(), anyString(), anyString());
   }
 
   @Test
@@ -205,17 +207,19 @@ class AcknowledgementServiceTest extends AbstractTestHelper {
     ack1.setFirstAcknowledged(timestamp);
     // This is technically a no-op, but we want to document a chair1 ack for test clarity
     acknowledgementDAO.upsertAcknowledgement(ack1.getAckKey(), chair1.getUserId());
-    when(acknowledgementDAO.findAcknowledgementsByKeyForUser(ackKey, chair2.getUserId())).thenReturn(null);
+    when(acknowledgementDAO.findAcknowledgementsByKeyForUser(ackKey, chair2.getUserId()))
+        .thenReturn(null);
     when(dataAccessRequestDAO.findByReferenceId(dar1.getReferenceId())).thenReturn(dar1);
 
     acknowledgementService.makeAcknowledgements(List.of(ackKey), chair2);
-    verify(emailService).sendResearcherCloseoutCompletedMessage(chair2, dar1.getDarCode(), dar1.getReferenceId());
+    verify(emailService)
+        .sendResearcherCloseoutCompletedMessage(chair2, dar1.getDarCode(), dar1.getReferenceId());
   }
 
   @Test
   void testMakeCloseoutAcknowledgementNotACloseout() throws Exception {
-    User user = new User(3, "test@domain.com", "Test User", new Date(),
-        List.of(UserRoles.Chairperson()));
+    User user =
+        new User(3, "test@domain.com", "Test User", new Date(), List.of(UserRoles.Chairperson()));
     // Note that this DAR does not have a closeout
     DataAccessRequest dar1 = new DataAccessRequest();
     dar1.setReferenceId(UUID.randomUUID().toString());
@@ -223,11 +227,14 @@ class AcknowledgementServiceTest extends AbstractTestHelper {
     String key = AcknowledgementService.DAR_CLOSEOUT_CHAIR_REF + dar1.getReferenceId();
 
     // Ensures that this DAR closeout has NOT already been acknowledged
-    when(acknowledgementDAO.findAcknowledgementsByKeyForUser(key, user.getUserId())).thenReturn(null);
+    when(acknowledgementDAO.findAcknowledgementsByKeyForUser(key, user.getUserId()))
+        .thenReturn(null);
     when(dataAccessRequestDAO.findByReferenceId(dar1.getReferenceId())).thenReturn(dar1);
 
     List<String> keys = List.of(key);
-    assertThrows(BadRequestException.class, () -> acknowledgementService.makeAcknowledgements(keys, user));
-    verify(emailService, never()).sendResearcherCloseoutCompletedMessage(any(), anyString(), anyString());
+    assertThrows(
+        BadRequestException.class, () -> acknowledgementService.makeAcknowledgements(keys, user));
+    verify(emailService, never())
+        .sendResearcherCloseoutCompletedMessage(any(), anyString(), anyString());
   }
 }

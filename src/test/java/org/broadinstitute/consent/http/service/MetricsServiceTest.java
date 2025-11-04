@@ -30,17 +30,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class MetricsServiceTest extends AbstractTestHelper {
 
-  @Mock
-  private DatasetDAO dataSetDAO;
+  @Mock private DatasetDAO dataSetDAO;
 
-  @Mock
-  private DataAccessRequestDAO darDAO;
+  @Mock private DataAccessRequestDAO darDAO;
 
-  @Mock
-  private DarCollectionDAO darCollectionDAO;
+  @Mock private DarCollectionDAO darCollectionDAO;
 
-  @Mock
-  private ElectionDAO electionDAO;
+  @Mock private ElectionDAO electionDAO;
 
   private MetricsService service;
 
@@ -59,8 +55,8 @@ class MetricsServiceTest extends AbstractTestHelper {
     when(dataSetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
     when(darDAO.findApprovedDARsByDatasetId(any())).thenReturn(List.of(dar));
     when(darCollectionDAO.findDARCollectionByCollectionIds(any())).thenReturn(List.of(collection));
-    when(electionDAO.findLastElectionsByReferenceIdsAndType(any(), eq("DataAccess"))).thenReturn(
-        election);
+    when(electionDAO.findLastElectionsByReferenceIdsAndType(any(), eq("DataAccess")))
+        .thenReturn(election);
 
     initService();
     DatasetMetrics metrics = service.generateDatasetMetrics(1);
@@ -76,9 +72,11 @@ class MetricsServiceTest extends AbstractTestHelper {
     when(dataSetDAO.findDatasetById(any())).thenReturn(null);
 
     initService();
-    assertThrows(NotFoundException.class, () -> {
-      service.generateDatasetMetrics(1);
-    });
+    assertThrows(
+        NotFoundException.class,
+        () -> {
+          service.generateDatasetMetrics(1);
+        });
   }
 
   private DataAccessRequest generateDar() {

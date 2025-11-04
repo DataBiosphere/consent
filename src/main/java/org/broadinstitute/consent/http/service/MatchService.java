@@ -37,8 +37,12 @@ public class MatchService implements ConsentLogger {
   private final WebTarget matchServiceTargetV4;
 
   @Inject
-  public MatchService(Client client, ServicesConfiguration config, MatchDAO matchDAO,
-      DataAccessRequestDAO dataAccessRequestDAO, DatasetDAO datasetDAO,
+  public MatchService(
+      Client client,
+      ServicesConfiguration config,
+      MatchDAO matchDAO,
+      DataAccessRequestDAO dataAccessRequestDAO,
+      DatasetDAO datasetDAO,
       UseRestrictionConverter useRestrictionConverter) {
     this.matchDAO = matchDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
@@ -52,22 +56,25 @@ public class MatchService implements ConsentLogger {
   }
 
   public void insertMatches(List<Match> match) {
-    match.forEach(m -> {
-      Integer id = matchDAO.insertMatch(
-          m.getConsent(),
-          m.getPurpose(),
-          m.getMatch(),
-          m.getFailed(),
-          new Date(),
-          m.getAlgorithmVersion(),
-          m.getAbstain()
-      );
-      if (!m.getRationales().isEmpty()) {
-        m.getRationales().forEach(f -> {
-          matchDAO.insertRationale(id, f);
+    match.forEach(
+        m -> {
+          Integer id =
+              matchDAO.insertMatch(
+                  m.getConsent(),
+                  m.getPurpose(),
+                  m.getMatch(),
+                  m.getFailed(),
+                  new Date(),
+                  m.getAlgorithmVersion(),
+                  m.getAbstain());
+          if (!m.getRationales().isEmpty()) {
+            m.getRationales()
+                .forEach(
+                    f -> {
+                      matchDAO.insertRationale(id, f);
+                    });
+          }
         });
-      }
-    });
   }
 
   public Match findMatchById(Integer id) {
@@ -98,19 +105,23 @@ public class MatchService implements ConsentLogger {
 
   protected List<Match> createMatchesForDataAccessRequest(DataAccessRequest dar) {
     List<Match> matches = new ArrayList<>();
-    dar.getDatasetIds().forEach(id -> {
-      Dataset dataset = datasetDAO.findDatasetById(id);
-      if (Objects.nonNull(dataset)) {
-        try {
-          matches.add(singleEntitiesMatchV3(dataset, dar));
-        } catch (Exception e) {
-          String message = "Error finding single match for purpose: " + dar.getReferenceId();
-          logWarn(message);
-          matches.add(
-              matchFailure(dataset.getDatasetIdentifier(), dar.getReferenceId(), List.of(message)));
-        }
-      }
-    });
+    dar.getDatasetIds()
+        .forEach(
+            id -> {
+              Dataset dataset = datasetDAO.findDatasetById(id);
+              if (Objects.nonNull(dataset)) {
+                try {
+                  matches.add(singleEntitiesMatchV3(dataset, dar));
+                } catch (Exception e) {
+                  String message =
+                      "Error finding single match for purpose: " + dar.getReferenceId();
+                  logWarn(message);
+                  matches.add(
+                      matchFailure(
+                          dataset.getDatasetIdentifier(), dar.getReferenceId(), List.of(message)));
+                }
+              }
+            });
     return matches;
   }
 
@@ -131,10 +142,9 @@ public class MatchService implements ConsentLogger {
     String darReferenceId = dar.getReferenceId();
     if (res.getStatus() == Response.Status.OK.getStatusCode()) {
       String stringEntity = res.readEntity(String.class);
-      DataUseResponseMatchingObject entity = new Gson().fromJson(stringEntity,
-          DataUseResponseMatchingObject.class);
-      match = matchSuccess(datasetId, darReferenceId, entity.getResult(),
-          entity.getRationale());
+      DataUseResponseMatchingObject entity =
+          new Gson().fromJson(stringEntity, DataUseResponseMatchingObject.class);
+      match = matchSuccess(datasetId, darReferenceId, entity.getResult(), entity.getRationale());
     } else {
       match = matchFailure(datasetId, darReferenceId, List.of());
     }
@@ -145,7 +155,6 @@ public class MatchService implements ConsentLogger {
     DataUse dataUse = useRestrictionConverter.parseDataUsePurpose(dar);
     return new DataUseRequestMatchingObject(dataset.getDataUse(), dataUse);
   }
-
 
   public List<Match> findMatchesByPurposeId(String purposeId) {
     return matchDAO.findMatchesByPurposeId(purposeId);

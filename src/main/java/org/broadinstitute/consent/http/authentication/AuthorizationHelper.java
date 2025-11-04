@@ -27,8 +27,7 @@ public class AuthorizationHelper implements ConsentLogger {
   protected final UserService userService;
 
   @Inject
-  public AuthorizationHelper(SamService samService,
-      UserService userService) {
+  public AuthorizationHelper(SamService samService, UserService userService) {
     this.claimsCache = ClaimsCache.getInstance();
     this.samService = samService;
     this.userService = userService;
@@ -48,10 +47,12 @@ public class AuthorizationHelper implements ConsentLogger {
       name = email;
     }
     if (email == null) {
-      logWarn(String.format(
-          "Reading oauth2 claim headers: email is null, auth user is incomplete. Aud: %s Name: %s",
-          aud, name));
-      throw new NotAuthorizedException("You are not authorized to use this service without a valid email address.");
+      logWarn(
+          String.format(
+              "Reading oauth2 claim headers: email is null, auth user is incomplete. Aud: %s Name: %s",
+              aud, name));
+      throw new NotAuthorizedException(
+          "You are not authorized to use this service without a valid email address.");
     } else {
       try {
         userService.enforceInstitutionAndLibraryCardRules(email);
@@ -96,7 +97,7 @@ public class AuthorizationHelper implements ConsentLogger {
    * look for all roles they may have, returning true if any of them match the requested role.
    *
    * @param authUser AuthUser
-   * @param role     String role to check
+   * @param role String role to check
    * @return True if the user has the role, false otherwise
    */
   protected boolean authorize(AuthUser authUser, String role) {
@@ -109,5 +110,4 @@ public class AuthorizationHelper implements ConsentLogger {
     }
     return authorize;
   }
-
 }

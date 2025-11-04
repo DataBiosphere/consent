@@ -21,17 +21,13 @@ public class ServicesConfiguration {
   // nosemgrep
   public static final String BROAD_ZENDESK_URL = "https://broadinstitute.zendesk.com";
 
-  @NotNull
-  private String ontologyURL;
+  @NotNull private String ontologyURL;
 
-  @NotNull
-  private String localURL;
+  @NotNull private String localURL;
 
-  @NotNull
-  private String samUrl;
+  @NotNull private String samUrl;
 
-  @NotNull
-  private String ecmUrl;
+  @NotNull private String ecmUrl;
 
   /**
    * This represents the max time we'll wait for an external status check to return. If it does not
@@ -56,7 +52,6 @@ public class ServicesConfiguration {
   private Integer cacheExpireMinutes = 1;
 
   private boolean activateSupportNotifications = false;
-
 
   public String getOntologyURL() {
     return ontologyURL;

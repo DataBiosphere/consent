@@ -6,14 +6,15 @@ import org.broadinstitute.consent.http.models.User;
 
 public class DatasetSubmittedMessage extends MailMessage {
 
-  private static final String DATASET_SUBMITTED = "Decision Needed: Accept or Reject Dataset Management Request";
+  private static final String DATASET_SUBMITTED =
+      "Decision Needed: Accept or Reject Dataset Management Request";
 
   private final String dataSubmitterName;
   private final String datasetName;
   private final String dacName;
 
-  public DatasetSubmittedMessage(User dacChair, String dataSubmitterName, String datasetName,
-      String dacName) {
+  public DatasetSubmittedMessage(
+      User dacChair, String dataSubmitterName, String datasetName, String dacName) {
     super(dacChair, EmailType.NEW_DATASET);
     this.dataSubmitterName = dataSubmitterName;
     this.datasetName = datasetName;
@@ -27,10 +28,15 @@ public class DatasetSubmittedMessage extends MailMessage {
 
   @Override
   public Object createModel(String serverUrl) {
-    return Map.of("dacChairName", toUser.getDisplayName(),
-        "dataSubmitterName", dataSubmitterName,
-        "datasetName", datasetName,
-        "dacName", dacName);
+    return Map.of(
+        "dacChairName",
+        toUser.getDisplayName(),
+        "dataSubmitterName",
+        dataSubmitterName,
+        "datasetName",
+        datasetName,
+        "dacName",
+        dacName);
   }
 
   @Override

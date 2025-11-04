@@ -18,12 +18,12 @@ import org.eclipse.jetty.ee10.servlet.ServletContextHandler.ServletRequestInfo;
 public class ErrorResource {
 
   /**
-   * Explanatory note about this 404 handler:
-   * In order to provide the original URI that resulted in a 404, we need to access the underlying
-   * request information. The HttpServletRequest passed to this method is actually a wrapper around
-   * the original request. By unwrapping it to get to the ServletApiRequest, we can retrieve the
-   * original URI that was requested. This allows us to construct a more informative error message
-   * for the client.
+   * Explanatory note about this 404 handler: In order to provide the original URI that resulted in
+   * a 404, we need to access the underlying request information. The HttpServletRequest passed to
+   * this method is actually a wrapper around the original request. By unwrapping it to get to the
+   * ServletApiRequest, we can retrieve the original URI that was requested. This allows us to
+   * construct a more informative error message for the client.
+   *
    * @param httpServletRequest The HttpServletRequest
    * @return Response
    */

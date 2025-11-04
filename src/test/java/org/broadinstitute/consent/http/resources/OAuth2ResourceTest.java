@@ -23,7 +23,8 @@ class OAuth2ResourceTest {
   void testGetOAuth2Redirect() throws URISyntaxException {
     var queryParameters = new MultivaluedHashMap<String, String>();
     when(mockUriInfo.getQueryParameters()).thenReturn(queryParameters);
-    when(mockOidcService.getAuthorizationURI(queryParameters)).thenReturn(new URI("http://example.com"));
+    when(mockOidcService.getAuthorizationURI(queryParameters))
+        .thenReturn(new URI("http://example.com"));
     OAuth2Resource resource = new OAuth2Resource(mockOidcService);
     var response = resource.getAuthorizationEndpoint(mockUriInfo);
     assertEquals(302, response.getStatus());

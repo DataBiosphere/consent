@@ -25,7 +25,6 @@ public class Study {
   private Integer updateUserId;
   private UUID uuid;
 
-
   public Integer getStudyId() {
     return studyId;
   }

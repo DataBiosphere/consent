@@ -36,21 +36,27 @@ public class OidcAuthorityDAO implements ConsentLogger {
   }
 
   @VisibleForTesting
-  protected void setOidcAuthorityConfiguration(OidcAuthorityConfiguration oidcAuthorityConfiguration) {
+  protected void setOidcAuthorityConfiguration(
+      OidcAuthorityConfiguration oidcAuthorityConfiguration) {
     this.oidcAuthorityConfiguration = oidcAuthorityConfiguration;
   }
 
-  public String oauthTokenPost(MultivaluedMap<String, String> formParameters, MultivaluedMap<String, String> queryParameters) {
+  public String oauthTokenPost(
+      MultivaluedMap<String, String> formParameters,
+      MultivaluedMap<String, String> queryParameters) {
     try {
       var uriBuilder = UriBuilder.fromUri(getOidcAuthorityConfiguration().token_endpoint());
-      queryParameters.forEach((key, values) -> values.forEach(value -> uriBuilder.queryParam(key, value)));
+      queryParameters.forEach(
+          (key, values) -> values.forEach(value -> uriBuilder.queryParam(key, value)));
       GenericUrl genericUrl = new GenericUrl(uriBuilder.build());
-      HttpRequest request = clientUtil.buildUnAuthedPostRequest(genericUrl, new UrlEncodedContent(formParameters));
+      HttpRequest request =
+          clientUtil.buildUnAuthedPostRequest(genericUrl, new UrlEncodedContent(formParameters));
       HttpResponse response = clientUtil.handleHttpRequest(request);
       if (!response.isSuccessStatusCode()) {
-        String message = String.format(
-            "Error getting OIDC token from authority %s, response code %d, response body %s",
-            genericUrl, response.getStatusCode(), response.parseAsString());
+        String message =
+            String.format(
+                "Error getting OIDC token from authority %s, response code %d, response body %s",
+                genericUrl, response.getStatusCode(), response.parseAsString());
         var exception = new ServerErrorException(message, Response.Status.INTERNAL_SERVER_ERROR);
         logException(exception);
         throw exception;
@@ -64,15 +70,19 @@ public class OidcAuthorityDAO implements ConsentLogger {
 
   private OidcAuthorityConfiguration loadOidcAuthorityConfiguration() {
     try {
-      URI oidcMetadataUri = UriBuilder.fromUri(configuration.getAuthorityEndpoint()).path(OIDC_METADATA_URL_SUFFIX).build();
+      URI oidcMetadataUri =
+          UriBuilder.fromUri(configuration.getAuthorityEndpoint())
+              .path(OIDC_METADATA_URL_SUFFIX)
+              .build();
       GenericUrl genericUrl = new GenericUrl(oidcMetadataUri);
       HttpRequest request = clientUtil.buildUnAuthedGetRequest(genericUrl);
       HttpResponse response = clientUtil.handleHttpRequest(request);
       String body = response.parseAsString();
       if (!response.isSuccessStatusCode()) {
-        String message = String.format(
-            "Error getting OIDC configuration from authority %s, response code %d, response body %s",
-            genericUrl, response.getStatusCode(), body);
+        String message =
+            String.format(
+                "Error getting OIDC configuration from authority %s, response code %d, response body %s",
+                genericUrl, response.getStatusCode(), body);
         var exception = new ServerErrorException(message, Response.Status.INTERNAL_SERVER_ERROR);
         logException(exception);
         throw exception;

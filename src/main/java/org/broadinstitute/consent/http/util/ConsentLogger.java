@@ -36,7 +36,7 @@ public interface ConsentLogger {
    * Logs a message and exception to the console and to Sentry
    *
    * @param message The message
-   * @param e       Exception
+   * @param e Exception
    */
   default void logException(String message, Exception e) {
     getLogger(this.getClass()).error(message + e.getMessage());
@@ -56,7 +56,7 @@ public interface ConsentLogger {
    * Logs a warning message and throwable to the console
    *
    * @param message Error Message
-   * @param t       Exception
+   * @param t Exception
    */
   default void logWarn(String message, Throwable t) {
     getLogger(this.getClass()).warn(message, t);

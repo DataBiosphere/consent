@@ -12,8 +12,10 @@ public class DataUseResponseMatchingObject {
 
   public List<String> rationale;
 
-  public DataUseResponseMatchingObject(DataUseMatchResultType result,
-      DataUseRequestMatchingObject matchPair, List<String> rationale) {
+  public DataUseResponseMatchingObject(
+      DataUseMatchResultType result,
+      DataUseRequestMatchingObject matchPair,
+      List<String> rationale) {
     this.result = result;
     this.matchPair = matchPair;
     this.rationale = rationale;

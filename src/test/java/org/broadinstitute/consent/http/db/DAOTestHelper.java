@@ -37,8 +37,8 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   public static final String POSTGRES_IMAGE = "postgres:16.10-alpine";
   public static final String EMPTY_JSON_DOCUMENT = "{}";
   private static final int maxConnections = 100;
-  private static final ConfigOverride maxConnectionsOverride = ConfigOverride.config(
-      "database.maxSize", String.valueOf(maxConnections));
+  private static final ConfigOverride maxConnectionsOverride =
+      ConfigOverride.config("database.maxSize", String.valueOf(maxConnections));
   protected static Jdbi jdbi;
   protected static CounterDAO counterDAO;
   protected static DacDAO dacDAO;
@@ -89,43 +89,46 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
 
   public void startUp() throws Exception {
     // Start the database
-    postgresContainer = new PostgreSQLContainer<>(POSTGRES_IMAGE).
-        withCommand("postgres -c max_connections=" + maxConnections).
-        waitingFor(Wait.forListeningPorts());
+    postgresContainer =
+        new PostgreSQLContainer<>(POSTGRES_IMAGE)
+            .withCommand("postgres -c max_connections=" + maxConnections)
+            .waitingFor(Wait.forListeningPorts());
     postgresContainer.start();
-    ConfigOverride driverOverride = ConfigOverride.config("database.driverClass",
-        postgresContainer.getDriverClassName());
-    ConfigOverride urlOverride = ConfigOverride.config("database.url",
-        postgresContainer.getJdbcUrl());
-    ConfigOverride userOverride = ConfigOverride.config("database.user",
-        postgresContainer.getUsername());
-    ConfigOverride passwordOverride = ConfigOverride.config("database.password",
-        postgresContainer.getPassword());
-    ConfigOverride validationQueryOverride = ConfigOverride.config("database.validationQuery",
-        postgresContainer.getTestQueryString());
+    ConfigOverride driverOverride =
+        ConfigOverride.config("database.driverClass", postgresContainer.getDriverClassName());
+    ConfigOverride urlOverride =
+        ConfigOverride.config("database.url", postgresContainer.getJdbcUrl());
+    ConfigOverride userOverride =
+        ConfigOverride.config("database.user", postgresContainer.getUsername());
+    ConfigOverride passwordOverride =
+        ConfigOverride.config("database.password", postgresContainer.getPassword());
+    ConfigOverride validationQueryOverride =
+        ConfigOverride.config("database.validationQuery", postgresContainer.getTestQueryString());
 
     // Start the app
-    testApp = new DropwizardTestSupport<>(
-        ConsentApplication.class,
-        ResourceHelpers.resourceFilePath("consent-config.yml"),
-        driverOverride, urlOverride,
-        userOverride, passwordOverride,
-        validationQueryOverride,
-        maxConnectionsOverride);
+    testApp =
+        new DropwizardTestSupport<>(
+            ConsentApplication.class,
+            ResourceHelpers.resourceFilePath("consent-config.yml"),
+            driverOverride,
+            urlOverride,
+            userOverride,
+            passwordOverride,
+            validationQueryOverride,
+            maxConnectionsOverride);
     testApp.before();
 
     // Initialize DAOs
     String dbiExtension = "_" + RandomStringUtils.secureStrong().nextAlphabetic(10);
     ConsentConfiguration configuration = testApp.getConfiguration();
     Environment environment = testApp.getEnvironment();
-    jdbi = new JdbiFactory().build(environment, configuration.getDataSourceFactory(),
-        DB_ENV + dbiExtension);
+    jdbi =
+        new JdbiFactory()
+            .build(environment, configuration.getDataSourceFactory(), DB_ENV + dbiExtension);
     jdbi.installPlugin(new SqlObjectPlugin());
     jdbi.installPlugin(new Gson2Plugin());
     jdbi.installPlugin(new GuavaPlugin());
-    jdbi.getConfig().get(Gson2Config.class).setGson(
-        GsonUtil.buildGson()
-    );
+    jdbi.getConfig().get(Gson2Config.class).setGson(GsonUtil.buildGson());
 
     counterDAO = jdbi.onDemand(CounterDAO.class);
     dacDAO = jdbi.onDemand(DacDAO.class);
@@ -157,11 +160,11 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     testingDAO.truncateAllTables();
   }
 
-    /*
-       Utility methods in this class need to be complete from the perspective of the
-       entity. When testing, if you need a specific modification to an object, call
-       dao methods directly to do any manipulation.
-     */
+  /*
+    Utility methods in this class need to be complete from the perspective of the
+    entity. When testing, if you need a specific modification to an object, call
+    dao methods directly to do any manipulation.
+  */
 
   /**
    * Creates a user with default role of Researcher and random user properties
@@ -181,8 +184,8 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   protected DataAccessRequest createDataAccessRequestV3() {
     User user = createUserWithInstitution();
     String darCode = "DAR-" + randomInt(1, 999999999);
-    Integer collection_id = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
-        new Date());
+    Integer collection_id =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
     for (int i = 0; i < 4; i++) {
       createDataAccessRequest(user.getUserId(), collection_id);
     }
@@ -202,12 +205,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     String referenceId = UUID.randomUUID().toString();
     Date now = new Date();
     dataAccessRequestDAO.insertDataAccessRequest(
-        collectionId,
-        referenceId,
-        userId,
-        now, now, now,
-        data,
-        randomAlphabetic(10));
+        collectionId, referenceId, userId, now, now, now, data, randomAlphabetic(10));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
@@ -234,17 +232,19 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   protected User createUserWithInstitution() {
     User admin = createUserWithRole(UserRoles.ADMIN.getRoleId());
     Integer adminId = admin.getUserId();
-    Integer institutionId = institutionDAO.insertInstitution(randomAlphabetic(20),
-        "itDirectorName",
-        "itDirectorEmail",
-        randomAlphabetic(10),
-        new Random().nextInt(),
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        OrganizationType.NON_PROFIT.getValue(),
-        adminId,
-        new Date());
+    Integer institutionId =
+        institutionDAO.insertInstitution(
+            randomAlphabetic(20),
+            "itDirectorName",
+            "itDirectorEmail",
+            randomAlphabetic(10),
+            new Random().nextInt(),
+            randomAlphabetic(10),
+            randomAlphabetic(10),
+            randomAlphabetic(10),
+            OrganizationType.NON_PROFIT.getValue(),
+            adminId,
+            new Date());
     User user = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId(), institutionId);
     return userDAO.findUserById(user.getUserId());
   }
@@ -253,25 +253,34 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     return institutionDAO.findInstitutionById(user.getInstitutionId());
   }
 
-  protected void updateVote(Boolean vote, String rationale, Date updateDate, Integer voteId,
-      boolean reminder, Integer electionId, Date createDate, Boolean hasConcerns) {
-    jdbi.useHandle(handle -> {
-      String sql = """
+  protected void updateVote(
+      Boolean vote,
+      String rationale,
+      Date updateDate,
+      Integer voteId,
+      boolean reminder,
+      Integer electionId,
+      Date createDate,
+      Boolean hasConcerns) {
+    jdbi.useHandle(
+        handle -> {
+          String sql =
+              """
               UPDATE vote
               SET vote = :vote, update_date = :updateDate, rationale = :rationale, reminder_sent = :reminderSent, create_date = :createDate, has_concerns = :hasConcerns
               WHERE vote_id = :voteId
           """;
-      handle.createUpdate(sql)
-          .bind("vote", vote)
-          .bind("rationale", rationale)
-          .bind("updateDate", updateDate)
-          .bind("voteId", voteId)
-          .bind("reminderSent", reminder)
-          .bind("electionId", electionId)
-          .bind("createDate", createDate)
-          .bind("hasConcerns", hasConcerns)
-          .execute();
-    });
+          handle
+              .createUpdate(sql)
+              .bind("vote", vote)
+              .bind("rationale", rationale)
+              .bind("updateDate", updateDate)
+              .bind("voteId", voteId)
+              .bind("reminderSent", reminder)
+              .bind("electionId", electionId)
+              .bind("createDate", createDate)
+              .bind("hasConcerns", hasConcerns)
+              .execute();
+        });
   }
-
 }

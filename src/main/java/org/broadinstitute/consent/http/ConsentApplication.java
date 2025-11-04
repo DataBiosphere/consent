@@ -88,9 +88,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Top-level entry point to the entire application.
- * <p>
- * See the Dropwizard docs here:
- * <a href="https://dropwizard.github.io">https://dropwizard.github.io</a>
+ *
+ * <p>See the Dropwizard docs here: <a
+ * href="https://dropwizard.github.io">https://dropwizard.github.io</a>
  */
 public class ConsentApplication extends Application<ConsentConfiguration> {
 
@@ -106,19 +106,21 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     try {
       String dsn = System.getProperties().getProperty("sentry.dsn");
       if (StringUtils.isNotBlank(dsn)) {
-        Sentry.init(config -> {
-          config.setDsn(dsn);
-          config.setDiagnosticLevel(SentryLevel.ERROR);
-          config.setServerName("Consent");
-          config.addContextTag("Consent");
-          config.addInAppInclude("org.broadinstitute");
-        });
+        Sentry.init(
+            config -> {
+              config.setDsn(dsn);
+              config.setDiagnosticLevel(SentryLevel.ERROR);
+              config.setServerName("Consent");
+              config.addContextTag("Consent");
+              config.addInAppInclude("org.broadinstitute");
+            });
         Thread.currentThread().setUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
       } else {
         LOGGER.error("Unable to bootstrap sentry logging.");
       }
     } catch (Exception e) {
-      LOGGER.error(MessageFormat.format("Exception loading sentry properties: {0}", e.getMessage()));
+      LOGGER.error(
+          MessageFormat.format("Exception loading sentry properties: {0}", e.getMessage()));
     }
     new ConsentApplication().run(args);
     LOGGER.info("Consent Application Started");
@@ -187,18 +189,24 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
     // Authentication filters
     final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
-    final DuosUserAuthenticator duosUserAuthenticator = injector.getProvider(DuosUserAuthenticator.class).get();
-    final AuthorizationHelper authorizationHelper = injector.getProvider(AuthorizationHelper.class).get();
+    final DuosUserAuthenticator duosUserAuthenticator =
+        injector.getProvider(DuosUserAuthenticator.class).get();
+    final AuthorizationHelper authorizationHelper =
+        injector.getProvider(AuthorizationHelper.class).get();
     // Requests annotated with @Auth AuthUser will be authenticated through this filter
-    final AuthFilter<String, AuthUser> primaryAuthFilter = new OAuthCustomAuthFilter<>(authenticator, authorizationHelper);
-    // Requests annotated with @Auth DuosUser will be authenticated through this filter and are guaranteed to have a populated User object
-    final AuthFilter<String, DuosUser> duosAuthUserFilter = new OAuthCustomAuthFilter<>(duosUserAuthenticator, authorizationHelper);
-    final PolymorphicAuthDynamicFeature<AuthUser> feature = new PolymorphicAuthDynamicFeature<>(
-        Map.of(
-            AuthUser.class, primaryAuthFilter,
-            DuosUser.class, duosAuthUserFilter));
-    final AbstractBinder binder = new PolymorphicAuthValueFactoryProvider.Binder<>(
-        Set.of(AuthUser.class, DuosUser.class));
+    final AuthFilter<String, AuthUser> primaryAuthFilter =
+        new OAuthCustomAuthFilter<>(authenticator, authorizationHelper);
+    // Requests annotated with @Auth DuosUser will be authenticated through this filter and are
+    // guaranteed to have a populated User object
+    final AuthFilter<String, DuosUser> duosAuthUserFilter =
+        new OAuthCustomAuthFilter<>(duosUserAuthenticator, authorizationHelper);
+    final PolymorphicAuthDynamicFeature<AuthUser> feature =
+        new PolymorphicAuthDynamicFeature<>(
+            Map.of(
+                AuthUser.class, primaryAuthFilter,
+                DuosUser.class, duosAuthUserFilter));
+    final AbstractBinder binder =
+        new PolymorphicAuthValueFactoryProvider.Binder<>(Set.of(AuthUser.class, DuosUser.class));
     env.jersey().register(feature);
     env.jersey().register(binder);
 
@@ -224,15 +232,16 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
       values.set("ui", new LoggerUIService());
     } catch (IllegalAccessException | NoSuchFieldException ignored) {
     }
-    Connection connection = DriverManager.getConnection(
-        config.getDataSourceFactory().getUrl(),
-        config.getDataSourceFactory().getUser(),
-        config.getDataSourceFactory().getPassword()
-    );
-    Database database = DatabaseFactory.getInstance()
-        .findCorrectDatabaseImplementation(new JdbcConnection(connection));
-    Liquibase liquibase = new Liquibase(liquibaseFile(), new ClassLoaderResourceAccessor(),
-        database);
+    Connection connection =
+        DriverManager.getConnection(
+            config.getDataSourceFactory().getUrl(),
+            config.getDataSourceFactory().getUser(),
+            config.getDataSourceFactory().getPassword());
+    Database database =
+        DatabaseFactory.getInstance()
+            .findCorrectDatabaseImplementation(new JdbcConnection(connection));
+    Liquibase liquibase =
+        new Liquibase(liquibaseFile(), new ClassLoaderResourceAccessor(), database);
     liquibase.update(new Contexts(), new LabelExpression());
   }
 
@@ -246,5 +255,4 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     }
     return changeLogFile;
   }
-
 }

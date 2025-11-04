@@ -22,12 +22,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class NihAccountResourceTest {
 
-  @Mock
-  private NihService nihService;
+  @Mock private NihService nihService;
 
-  @Mock
-  private NIHUserAccount nihAccount;
-
+  @Mock private NIHUserAccount nihAccount;
 
   private final AuthUser authUser = new AuthUser("test");
   private final List<UserRole> roles = List.of(UserRoles.Researcher());

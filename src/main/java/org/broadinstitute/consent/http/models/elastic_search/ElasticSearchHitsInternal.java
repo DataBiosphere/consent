@@ -12,7 +12,8 @@ public class ElasticSearchHitsInternal {
   }
 
   public LinkedTreeMap[] getHits() {
-    return Arrays.stream(hits).map(hit -> (LinkedTreeMap) hit.get("_source"))
+    return Arrays.stream(hits)
+        .map(hit -> (LinkedTreeMap) hit.get("_source"))
         .toArray(LinkedTreeMap[]::new);
   }
 }

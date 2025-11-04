@@ -106,21 +106,20 @@ class VoteServiceDAOTest extends DAOTestHelper {
     Vote vote3 = createDacVote(user.getUserId(), election.getElectionId());
     String rationale = "rationale";
 
-    List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote1, vote2, vote3), true,
-        rationale);
+    List<Vote> votes =
+        serviceDAO.updateVotesWithValue(List.of(vote1, vote2, vote3), true, rationale);
 
     assertNotNull(votes);
     assertFalse(votes.isEmpty());
-    List<Integer> requestVoteIds = Stream.of(vote1, vote2, vote3)
-        .map(Vote::getVoteId)
-        .collect(Collectors.toList());
-    votes.forEach(v -> {
-      assertTrue(v.getVote());
-      assertEquals(rationale, v.getRationale());
-      assertTrue(requestVoteIds.contains(v.getVoteId()));
-    });
+    List<Integer> requestVoteIds =
+        Stream.of(vote1, vote2, vote3).map(Vote::getVoteId).collect(Collectors.toList());
+    votes.forEach(
+        v -> {
+          assertTrue(v.getVote());
+          assertEquals(rationale, v.getRationale());
+          assertTrue(requestVoteIds.contains(v.getVoteId()));
+        });
   }
-
 
   @Test
   void testUpdateVotesWithValue_MultipleElectionTypes() throws Exception {
@@ -129,31 +128,29 @@ class VoteServiceDAOTest extends DAOTestHelper {
     Dataset dataset = createDataset();
     Election rpElection1 = createRPElection(dar.getReferenceId(), dataset.getDatasetId());
     Election rpElection2 = createRPElection(dar.getReferenceId(), dataset.getDatasetId());
-    Election accessElection = createDataAccessElection(dar.getReferenceId(),
-        dataset.getDatasetId());
+    Election accessElection =
+        createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
     electionDAO.updateElectionById(
-        rpElection1.getElectionId(),
-        ElectionStatus.CLOSED.getValue(),
-        new Date());
+        rpElection1.getElectionId(), ElectionStatus.CLOSED.getValue(), new Date());
 
     Vote vote1 = createDacVote(user.getUserId(), rpElection1.getElectionId());
     Vote vote2 = createDacVote(user.getUserId(), rpElection2.getElectionId());
     Vote vote3 = createDacVote(user.getUserId(), accessElection.getElectionId());
     String rationale = "rationale";
 
-    List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote1, vote2, vote3), true,
-        rationale);
+    List<Vote> votes =
+        serviceDAO.updateVotesWithValue(List.of(vote1, vote2, vote3), true, rationale);
 
     assertNotNull(votes);
     assertFalse(votes.isEmpty());
-    List<Integer> requestVoteIds = Stream.of(vote1, vote2, vote3)
-        .map(Vote::getVoteId)
-        .collect(Collectors.toList());
-    votes.forEach(v -> {
-      assertTrue(v.getVote());
-      assertEquals(rationale, v.getRationale());
-      assertTrue(requestVoteIds.contains(v.getVoteId()));
-    });
+    List<Integer> requestVoteIds =
+        Stream.of(vote1, vote2, vote3).map(Vote::getVoteId).collect(Collectors.toList());
+    votes.forEach(
+        v -> {
+          assertTrue(v.getVote());
+          assertEquals(rationale, v.getRationale());
+          assertTrue(requestVoteIds.contains(v.getVoteId()));
+        });
   }
 
   private Dataset createDataset() {
@@ -162,8 +159,8 @@ class VoteServiceDAOTest extends DAOTestHelper {
     Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
-        dataUse.toString(), null);
+    Integer id =
+        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }
@@ -190,25 +187,24 @@ class VoteServiceDAOTest extends DAOTestHelper {
   }
 
   private Election createRPElection(String referenceId, Integer datasetId) {
-    Integer electionId = electionDAO.insertElection(
-        ElectionType.RP.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        new Date(),
-        referenceId,
-        datasetId
-    );
+    Integer electionId =
+        electionDAO.insertElection(
+            ElectionType.RP.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            new Date(),
+            referenceId,
+            datasetId);
     return electionDAO.findElectionById(electionId);
   }
 
   private Election createDataAccessElection(String referenceId, Integer datasetId) {
-    Integer electionId = electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        new Date(),
-        referenceId,
-        datasetId
-    );
+    Integer electionId =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            new Date(),
+            referenceId,
+            datasetId);
     return electionDAO.findElectionById(electionId);
   }
-
 }

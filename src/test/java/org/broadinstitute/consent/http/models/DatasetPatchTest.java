@@ -119,5 +119,4 @@ public class DatasetPatchTest {
     DatasetPatch patch = new DatasetPatch(null, List.of(dataLocationProp));
     assertFalse(patch.validateProperties());
   }
-
 }

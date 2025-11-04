@@ -86,18 +86,17 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     FileStorageObject file1 = new FileStorageObject();
     file1.setMediaType(randomAlphabetic(20));
     file1.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
-    file1.setBlobId(
-        BlobId.of(randomAlphabetic(10),
-            randomAlphabetic(10)));
+    file1.setBlobId(BlobId.of(randomAlphabetic(10), randomAlphabetic(10)));
     file1.setFileName(randomAlphabetic(10));
 
-    DatasetServiceDAO.DatasetInsert insert = new DatasetServiceDAO.DatasetInsert(
-        randomAlphabetic(20),
-        dac.getDacId(),
-        new DataUseBuilder().setStigmatizeDiseases(true).setGeneralUse(true).build(),
-        user.getUserId(),
-        List.of(prop1, prop2),
-        List.of(file1));
+    DatasetServiceDAO.DatasetInsert insert =
+        new DatasetServiceDAO.DatasetInsert(
+            randomAlphabetic(20),
+            dac.getDacId(),
+            new DataUseBuilder().setStigmatizeDiseases(true).setGeneralUse(true).build(),
+            user.getUserId(),
+            List.of(prop1, prop2),
+            List.of(file1));
 
     List<Integer> createdIds = serviceDAO.insertDatasetRegistration(null, List.of(insert));
 
@@ -110,10 +109,16 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
     assertEquals(2, created.getProperties().size());
 
-    DatasetProperty createdProp1 = created.getProperties().stream()
-        .filter((p) -> p.getPropertyName().equals(prop1.getPropertyName())).findFirst().get();
-    DatasetProperty createdProp2 = created.getProperties().stream()
-        .filter((p) -> p.getPropertyName().equals(prop2.getPropertyName())).findFirst().get();
+    DatasetProperty createdProp1 =
+        created.getProperties().stream()
+            .filter((p) -> p.getPropertyName().equals(prop1.getPropertyName()))
+            .findFirst()
+            .get();
+    DatasetProperty createdProp2 =
+        created.getProperties().stream()
+            .filter((p) -> p.getPropertyName().equals(prop2.getPropertyName()))
+            .findFirst()
+            .get();
 
     assertEquals(created.getDatasetId(), createdProp1.getDatasetId());
     assertEquals(prop1.getPropertyValue(), createdProp1.getPropertyValue());
@@ -125,12 +130,9 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
     assertNotNull(created.getNihInstitutionalCertificationFile());
 
-    assertEquals(file1.getFileName(),
-        created.getNihInstitutionalCertificationFile().getFileName());
-    assertEquals(file1.getBlobId(),
-        created.getNihInstitutionalCertificationFile().getBlobId());
+    assertEquals(file1.getFileName(), created.getNihInstitutionalCertificationFile().getFileName());
+    assertEquals(file1.getBlobId(), created.getNihInstitutionalCertificationFile().getBlobId());
   }
-
 
   @Test
   void testInsertMultipleDatasets() throws Exception {
@@ -144,31 +146,33 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     prop1.setPropertyValue(new Random().nextInt());
     prop1.setPropertyType(PropertyType.Number);
 
-    DatasetServiceDAO.DatasetInsert insert1 = new DatasetServiceDAO.DatasetInsert(
-        randomAlphabetic(20),
-        dac.getDacId(),
-        new DataUseBuilder().setGeneralUse(true).build(),
-        user.getUserId(),
-        List.of(),
-        List.of());
+    DatasetServiceDAO.DatasetInsert insert1 =
+        new DatasetServiceDAO.DatasetInsert(
+            randomAlphabetic(20),
+            dac.getDacId(),
+            new DataUseBuilder().setGeneralUse(true).build(),
+            user.getUserId(),
+            List.of(),
+            List.of());
 
-    DatasetServiceDAO.DatasetInsert insert2 = new DatasetServiceDAO.DatasetInsert(
-        randomAlphabetic(20),
-        dac.getDacId(),
-        new DataUseBuilder().setIllegalBehavior(true).build(),
-        user.getUserId(),
-        List.of(prop1),
-        List.of());
+    DatasetServiceDAO.DatasetInsert insert2 =
+        new DatasetServiceDAO.DatasetInsert(
+            randomAlphabetic(20),
+            dac.getDacId(),
+            new DataUseBuilder().setIllegalBehavior(true).build(),
+            user.getUserId(),
+            List.of(prop1),
+            List.of());
 
-    List<Integer> createdIds = serviceDAO.insertDatasetRegistration(null,
-        List.of(insert1, insert2));
+    List<Integer> createdIds =
+        serviceDAO.insertDatasetRegistration(null, List.of(insert1, insert2));
 
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdIds);
 
     assertEquals(2, datasets.size());
 
-    Optional<Dataset> ds1Optional = datasets.stream()
-        .filter(d -> d.getName().equals(insert1.name())).findFirst();
+    Optional<Dataset> ds1Optional =
+        datasets.stream().filter(d -> d.getName().equals(insert1.name())).findFirst();
     assertTrue(ds1Optional.isPresent());
     Dataset dataset1 = ds1Optional.get();
 
@@ -178,8 +182,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertNull(dataset1.getProperties());
     assertNull(dataset1.getNihInstitutionalCertificationFile());
 
-    Optional<Dataset> ds2Optional = datasets.stream()
-        .filter(d -> d.getName().equals(insert2.name())).findFirst();
+    Optional<Dataset> ds2Optional =
+        datasets.stream().filter(d -> d.getName().equals(insert2.name())).findFirst();
     assertTrue(ds2Optional.isPresent());
     Dataset dataset2 = ds2Optional.get();
 
@@ -195,26 +199,28 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     Dac dac = createDac();
     User user = createUser();
 
-    DatasetServiceDAO.StudyInsert studyInsert = new DatasetServiceDAO.StudyInsert(
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        List.of(randomAlphabetic(10)),
-        randomAlphabetic(10),
-        true,
-        user.getUserId(),
-        List.of(),
-        List.of());
+    DatasetServiceDAO.StudyInsert studyInsert =
+        new DatasetServiceDAO.StudyInsert(
+            randomAlphabetic(10),
+            randomAlphabetic(10),
+            List.of(randomAlphabetic(10)),
+            randomAlphabetic(10),
+            true,
+            user.getUserId(),
+            List.of(),
+            List.of());
 
-    DatasetServiceDAO.DatasetInsert datasetInsert = new DatasetServiceDAO.DatasetInsert(
-        randomAlphabetic(20),
-        dac.getDacId(),
-        new DataUseBuilder().setGeneralUse(true).build(),
-        user.getUserId(),
-        List.of(),
-        List.of());
+    DatasetServiceDAO.DatasetInsert datasetInsert =
+        new DatasetServiceDAO.DatasetInsert(
+            randomAlphabetic(20),
+            dac.getDacId(),
+            new DataUseBuilder().setGeneralUse(true).build(),
+            user.getUserId(),
+            List.of(),
+            List.of());
 
-    List<Integer> createdIds = serviceDAO.insertDatasetRegistration(studyInsert,
-        List.of(datasetInsert));
+    List<Integer> createdIds =
+        serviceDAO.insertDatasetRegistration(studyInsert, List.of(datasetInsert));
 
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdIds);
 
@@ -251,26 +257,28 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     prop2.setType(PropertyType.Number);
     prop2.setValue(new Random().nextInt());
 
-    DatasetServiceDAO.StudyInsert studyInsert = new DatasetServiceDAO.StudyInsert(
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        List.of(randomAlphabetic(10)),
-        randomAlphabetic(10),
-        true,
-        user.getUserId(),
-        List.of(prop1, prop2),
-        List.of());
+    DatasetServiceDAO.StudyInsert studyInsert =
+        new DatasetServiceDAO.StudyInsert(
+            randomAlphabetic(10),
+            randomAlphabetic(10),
+            List.of(randomAlphabetic(10)),
+            randomAlphabetic(10),
+            true,
+            user.getUserId(),
+            List.of(prop1, prop2),
+            List.of());
 
-    DatasetServiceDAO.DatasetInsert datasetInsert = new DatasetServiceDAO.DatasetInsert(
-        randomAlphabetic(20),
-        dac.getDacId(),
-        new DataUseBuilder().setGeneralUse(true).build(),
-        user.getUserId(),
-        List.of(),
-        List.of());
+    DatasetServiceDAO.DatasetInsert datasetInsert =
+        new DatasetServiceDAO.DatasetInsert(
+            randomAlphabetic(20),
+            dac.getDacId(),
+            new DataUseBuilder().setGeneralUse(true).build(),
+            user.getUserId(),
+            List.of(),
+            List.of());
 
-    List<Integer> createdIds = serviceDAO.insertDatasetRegistration(studyInsert,
-        List.of(datasetInsert));
+    List<Integer> createdIds =
+        serviceDAO.insertDatasetRegistration(studyInsert, List.of(datasetInsert));
 
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdIds);
 
@@ -288,10 +296,16 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(studyInsert.userId(), s.getCreateUserId());
     assertNotNull(s.getCreateDate());
 
-    StudyProperty createdProp1 = dataset1.getStudy().getProperties().stream()
-        .filter((p) -> p.getKey().equals(prop1.getKey())).findFirst().get();
-    StudyProperty createdProp2 = dataset1.getStudy().getProperties().stream()
-        .filter((p) -> p.getKey().equals(prop2.getKey())).findFirst().get();
+    StudyProperty createdProp1 =
+        dataset1.getStudy().getProperties().stream()
+            .filter((p) -> p.getKey().equals(prop1.getKey()))
+            .findFirst()
+            .get();
+    StudyProperty createdProp2 =
+        dataset1.getStudy().getProperties().stream()
+            .filter((p) -> p.getKey().equals(prop2.getKey()))
+            .findFirst()
+            .get();
 
     assertEquals(prop1.getType(), createdProp1.getType());
     assertEquals(prop1.getValue(), createdProp1.getValue());
@@ -319,31 +333,31 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     FileStorageObject file = new FileStorageObject();
     file.setMediaType(randomAlphabetic(20));
     file.setCategory(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
-    file.setBlobId(
-        BlobId.of(randomAlphabetic(10),
-            randomAlphabetic(10)));
+    file.setBlobId(BlobId.of(randomAlphabetic(10), randomAlphabetic(10)));
     file.setFileName(randomAlphabetic(10));
 
-    DatasetServiceDAO.StudyInsert studyInsert = new DatasetServiceDAO.StudyInsert(
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        List.of(randomAlphabetic(10)),
-        randomAlphabetic(10),
-        true,
-        user.getUserId(),
-        List.of(prop1, prop2),
-        List.of(file));
+    DatasetServiceDAO.StudyInsert studyInsert =
+        new DatasetServiceDAO.StudyInsert(
+            randomAlphabetic(10),
+            randomAlphabetic(10),
+            List.of(randomAlphabetic(10)),
+            randomAlphabetic(10),
+            true,
+            user.getUserId(),
+            List.of(prop1, prop2),
+            List.of(file));
 
-    DatasetServiceDAO.DatasetInsert datasetInsert = new DatasetServiceDAO.DatasetInsert(
-        randomAlphabetic(20),
-        dac.getDacId(),
-        new DataUseBuilder().setGeneralUse(true).build(),
-        user.getUserId(),
-        List.of(),
-        List.of());
+    DatasetServiceDAO.DatasetInsert datasetInsert =
+        new DatasetServiceDAO.DatasetInsert(
+            randomAlphabetic(20),
+            dac.getDacId(),
+            new DataUseBuilder().setGeneralUse(true).build(),
+            user.getUserId(),
+            List.of(),
+            List.of());
 
-    List<Integer> createdIds = serviceDAO.insertDatasetRegistration(studyInsert,
-        List.of(datasetInsert));
+    List<Integer> createdIds =
+        serviceDAO.insertDatasetRegistration(studyInsert, List.of(datasetInsert));
 
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdIds);
 
@@ -361,10 +375,16 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(studyInsert.userId(), s.getCreateUserId());
     assertNotNull(s.getCreateDate());
 
-    StudyProperty createdProp1 = dataset1.getStudy().getProperties().stream()
-        .filter((p) -> p.getKey().equals(prop1.getKey())).findFirst().get();
-    StudyProperty createdProp2 = dataset1.getStudy().getProperties().stream()
-        .filter((p) -> p.getKey().equals(prop2.getKey())).findFirst().get();
+    StudyProperty createdProp1 =
+        dataset1.getStudy().getProperties().stream()
+            .filter((p) -> p.getKey().equals(prop1.getKey()))
+            .findFirst()
+            .get();
+    StudyProperty createdProp2 =
+        dataset1.getStudy().getProperties().stream()
+            .filter((p) -> p.getKey().equals(prop2.getKey()))
+            .findFirst()
+            .get();
 
     assertEquals(prop1.getType(), createdProp1.getType());
     assertEquals(prop1.getValue(), createdProp1.getValue());
@@ -374,17 +394,16 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertNotNull(s.getAlternativeDataSharingPlan());
 
     assertEquals(file.getBlobId(), s.getAlternativeDataSharingPlan().getBlobId());
-    assertEquals(file.getFileName(),
-        s.getAlternativeDataSharingPlan().getFileName());
-    assertEquals(file.getCategory(),
-        s.getAlternativeDataSharingPlan().getCategory());
+    assertEquals(file.getFileName(), s.getAlternativeDataSharingPlan().getFileName());
+    assertEquals(file.getCategory(), s.getAlternativeDataSharingPlan().getCategory());
 
     // Validate that an audit record was added for each dataset
-    datasets.forEach(d -> {
-      List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(d.getDatasetId());
-      assertEquals(1, audits.size());
-      assertEquals(AuditActions.CREATE.name(), audits.get(0).getAction());
-    });
+    datasets.forEach(
+        d -> {
+          List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(d.getDatasetId());
+          assertEquals(1, audits.size());
+          assertEquals(AuditActions.CREATE.name(), audits.get(0).getAction());
+        });
   }
 
   @Test
@@ -442,27 +461,35 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     prop4.setCreateDate(new Date());
 
     String newName = "New Name";
-    DatasetUpdate updates = new DatasetUpdate(
-        dataset.getDatasetId(),
-        newName,
-        dataset.getCreateUserId(),
-        dataset.getDacId(),
-        List.of(updateProp1, updateProp2, prop4),
-        List.of()
-    );
+    DatasetUpdate updates =
+        new DatasetUpdate(
+            dataset.getDatasetId(),
+            newName,
+            dataset.getCreateUserId(),
+            dataset.getDacId(),
+            List.of(updateProp1, updateProp2, prop4),
+            List.of());
     serviceDAO.updateDataset(updates);
 
     // Validate that the dataset props have been updated, deleted, or added:
-    Set<DatasetProperty> updatedProps = datasetDAO.findDatasetPropertiesByDatasetId(
-        dataset.getDatasetId());
-    Optional<DatasetProperty> updated1 = updatedProps.stream()
-        .filter(p -> p.getPropertyName().equals(prop1.getPropertyName())).findFirst();
-    Optional<DatasetProperty> updated2 = updatedProps.stream()
-        .filter(p -> p.getPropertyName().equals(prop2.getPropertyName())).findFirst();
-    Optional<DatasetProperty> deleted3 = updatedProps.stream()
-        .filter(p -> p.getPropertyName().equals(prop3.getPropertyName())).findFirst();
-    Optional<DatasetProperty> added4 = updatedProps.stream()
-        .filter(p -> p.getPropertyName().equals(prop4.getPropertyName())).findFirst();
+    Set<DatasetProperty> updatedProps =
+        datasetDAO.findDatasetPropertiesByDatasetId(dataset.getDatasetId());
+    Optional<DatasetProperty> updated1 =
+        updatedProps.stream()
+            .filter(p -> p.getPropertyName().equals(prop1.getPropertyName()))
+            .findFirst();
+    Optional<DatasetProperty> updated2 =
+        updatedProps.stream()
+            .filter(p -> p.getPropertyName().equals(prop2.getPropertyName()))
+            .findFirst();
+    Optional<DatasetProperty> deleted3 =
+        updatedProps.stream()
+            .filter(p -> p.getPropertyName().equals(prop3.getPropertyName()))
+            .findFirst();
+    Optional<DatasetProperty> added4 =
+        updatedProps.stream()
+            .filter(p -> p.getPropertyName().equals(prop4.getPropertyName()))
+            .findFirst();
     assertTrue(updated1.isPresent());
     assertEquals(updateProp1.getPropertyValueAsString(), updated1.get().getPropertyValueAsString());
     assertTrue(updated2.isPresent());
@@ -488,17 +515,17 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     String newStudyDescription = "New Study Description";
     String newPIName = "New PI Name";
     List<String> newDataTypes = List.of("DT 1", "DT 2", "DT 3");
-    StudyUpdate studyUpdate = new StudyUpdate(
-        newStudyName,
-        study.getStudyId(),
-        newStudyDescription,
-        newDataTypes,
-        newPIName,
-        !study.getPublicVisibility(),
-        study.getCreateUserId(),
-        List.copyOf(study.getProperties()),
-        List.of()
-    );
+    StudyUpdate studyUpdate =
+        new StudyUpdate(
+            newStudyName,
+            study.getStudyId(),
+            newStudyDescription,
+            newDataTypes,
+            newPIName,
+            !study.getPublicVisibility(),
+            study.getCreateUserId(),
+            List.copyOf(study.getProperties()),
+            List.of());
 
     Study updatedStudy = serviceDAO.updateStudy(studyUpdate, List.of(), List.of());
     assertEquals(newStudyName, updatedStudy.getName());
@@ -507,13 +534,16 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(newDataTypes, updatedStudy.getDataTypes());
 
     // Validate that NO update records were added for each dataset
-    updatedStudy.getDatasetIds().forEach(id -> {
-      List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(id);
-      assertFalse(audits.isEmpty());
-      assertFalse(
-          audits.stream()
-              .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.UPDATE.name())));
-    });
+    updatedStudy
+        .getDatasetIds()
+        .forEach(
+            id -> {
+              List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(id);
+              assertFalse(audits.isEmpty());
+              assertFalse(
+                  audits.stream()
+                      .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.UPDATE.name())));
+            });
   }
 
   @Test
@@ -531,37 +561,44 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     prop1.setValue(newPropValue);
 
     // Create a study update with a changed prop, a new prop, and a to-be-deleted prop
-    StudyUpdate studyUpdate = new StudyUpdate(
-        study.getName(),
-        study.getStudyId(),
-        study.getDescription(),
-        study.getDataTypes(),
-        study.getPiName(),
-        !study.getPublicVisibility(),
-        study.getCreateUserId(),
-        List.of(newProp, prop1),
-        List.of()
-    );
+    StudyUpdate studyUpdate =
+        new StudyUpdate(
+            study.getName(),
+            study.getStudyId(),
+            study.getDescription(),
+            study.getDataTypes(),
+            study.getPiName(),
+            !study.getPublicVisibility(),
+            study.getCreateUserId(),
+            List.of(newProp, prop1),
+            List.of());
 
     Study updatedStudy = serviceDAO.updateStudy(studyUpdate, List.of(), List.of());
     // Updated prop
-    Optional<StudyProperty> updatedProp1 = updatedStudy.getProperties().stream()
-        .filter(p -> p.getStudyPropertyId().equals(prop1.getStudyPropertyId())).findFirst();
+    Optional<StudyProperty> updatedProp1 =
+        updatedStudy.getProperties().stream()
+            .filter(p -> p.getStudyPropertyId().equals(prop1.getStudyPropertyId()))
+            .findFirst();
     assertTrue(updatedProp1.isPresent());
     assertEquals(newPropValue, updatedProp1.get().getValue());
     // Added prop
-    Optional<StudyProperty> addedNewProp = updatedStudy.getProperties().stream()
-        .filter(p -> newProp.getValue().equals(p.getValue())).findFirst();
+    Optional<StudyProperty> addedNewProp =
+        updatedStudy.getProperties().stream()
+            .filter(p -> newProp.getValue().equals(p.getValue()))
+            .findFirst();
     assertTrue(addedNewProp.isPresent());
 
     // Validate that NO update records were added for each dataset
-    updatedStudy.getDatasetIds().forEach(id -> {
-      List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(id);
-      assertFalse(audits.isEmpty());
-      assertFalse(
-          audits.stream()
-              .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.UPDATE.name())));
-    });
+    updatedStudy
+        .getDatasetIds()
+        .forEach(
+            id -> {
+              List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(id);
+              assertFalse(audits.isEmpty());
+              assertFalse(
+                  audits.stream()
+                      .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.UPDATE.name())));
+            });
   }
 
   @Test
@@ -569,55 +606,58 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     Study study = createStudy(null);
     Dataset dataset = datasetDAO.findDatasetsByIdList(List.copyOf(study.getDatasetIds())).get(0);
 
-    StudyUpdate studyUpdate = new StudyUpdate(
-        study.getName(),
-        study.getStudyId(),
-        study.getDescription(),
-        study.getDataTypes(),
-        study.getPiName(),
-        !study.getPublicVisibility(),
-        study.getCreateUserId(),
-        List.copyOf(study.getProperties()),
-        List.of()
-    );
+    StudyUpdate studyUpdate =
+        new StudyUpdate(
+            study.getName(),
+            study.getStudyId(),
+            study.getDescription(),
+            study.getDataTypes(),
+            study.getPiName(),
+            !study.getPublicVisibility(),
+            study.getCreateUserId(),
+            List.copyOf(study.getProperties()),
+            List.of());
 
     String newDatasetName = "New Dataset Name";
-    DatasetUpdate datasetUpdate = new DatasetUpdate(
-        dataset.getDatasetId(),
-        newDatasetName,
-        study.getCreateUserId(),
-        dataset.getDacId(),
-        List.copyOf(dataset.getProperties()),
-        List.of()
-    );
+    DatasetUpdate datasetUpdate =
+        new DatasetUpdate(
+            dataset.getDatasetId(),
+            newDatasetName,
+            study.getCreateUserId(),
+            dataset.getDacId(),
+            List.copyOf(dataset.getProperties()),
+            List.of());
 
     String newInsertName = "New Dataset Insert Name";
-    DatasetInsert datasetInsert = new DatasetInsert(
-        newInsertName,
-        dataset.getDacId(),
-        new DataUseBuilder().setGeneralUse(true).build(),
-        study.getCreateUserId(),
-        List.of(),
-        List.of()
-    );
+    DatasetInsert datasetInsert =
+        new DatasetInsert(
+            newInsertName,
+            dataset.getDacId(),
+            new DataUseBuilder().setGeneralUse(true).build(),
+            study.getCreateUserId(),
+            List.of(),
+            List.of());
 
-    Study updatedStudy = serviceDAO.updateStudy(studyUpdate, List.of(datasetUpdate),
-        List.of(datasetInsert));
-    List<Dataset> updatedDatasets = datasetDAO.findDatasetsByIdList(
-        new ArrayList<>(updatedStudy.getDatasetIds()));
+    Study updatedStudy =
+        serviceDAO.updateStudy(studyUpdate, List.of(datasetUpdate), List.of(datasetInsert));
+    List<Dataset> updatedDatasets =
+        datasetDAO.findDatasetsByIdList(new ArrayList<>(updatedStudy.getDatasetIds()));
     assertTrue(updatedDatasets.contains(dataset));
     assertEquals(updatedStudy.getDatasetIds().size(), updatedDatasets.size());
     assertTrue(updatedDatasets.stream().anyMatch(d -> d.getDatasetName().equals(newDatasetName)));
     assertTrue(updatedDatasets.stream().anyMatch(d -> d.getDatasetName().equals(newInsertName)));
 
     // Validate that update records were added for each dataset
-    updatedStudy.getDatasetIds().forEach(id -> {
-      List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(id);
-      assertFalse(audits.isEmpty());
-      assertTrue(
-          audits.stream()
-              .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.CREATE.name())));
-    });
+    updatedStudy
+        .getDatasetIds()
+        .forEach(
+            id -> {
+              List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(id);
+              assertFalse(audits.isEmpty());
+              assertTrue(
+                  audits.stream()
+                      .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.CREATE.name())));
+            });
   }
 
   @Test
@@ -625,91 +665,81 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     FileStorageObject fso1 = new FileStorageObject();
     fso1.setMediaType(randomAlphabetic(20));
     fso1.setCategory(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
-    fso1.setBlobId(
-        BlobId.of(randomAlphabetic(10),
-            randomAlphabetic(10)));
+    fso1.setBlobId(BlobId.of(randomAlphabetic(10), randomAlphabetic(10)));
     fso1.setFileName(randomAlphabetic(10));
 
     FileStorageObject fso2 = new FileStorageObject();
     fso2.setMediaType(randomAlphabetic(20));
     fso2.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
-    fso2.setBlobId(
-        BlobId.of(randomAlphabetic(10),
-            randomAlphabetic(10)));
+    fso2.setBlobId(BlobId.of(randomAlphabetic(10), randomAlphabetic(10)));
     fso2.setFileName(randomAlphabetic(10));
     Study study = createStudy(List.of(fso1, fso2));
 
     FileStorageObject updatedFso1 = new FileStorageObject();
     updatedFso1.setMediaType(randomAlphabetic(20));
     updatedFso1.setCategory(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
-    updatedFso1.setBlobId(
-        BlobId.of(randomAlphabetic(10),
-            randomAlphabetic(10)));
+    updatedFso1.setBlobId(BlobId.of(randomAlphabetic(10), randomAlphabetic(10)));
     updatedFso1.setFileName(randomAlphabetic(10));
 
     FileStorageObject updatedFso2 = new FileStorageObject();
     updatedFso2.setMediaType(randomAlphabetic(20));
     updatedFso2.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
-    updatedFso2.setBlobId(
-        BlobId.of(randomAlphabetic(10),
-            randomAlphabetic(10)));
+    updatedFso2.setBlobId(BlobId.of(randomAlphabetic(10), randomAlphabetic(10)));
     updatedFso2.setFileName(randomAlphabetic(10));
 
-    StudyUpdate studyUpdate = new StudyUpdate(
-        study.getName(),
-        study.getStudyId(),
-        study.getDescription(),
-        study.getDataTypes(),
-        study.getPiName(),
-        !study.getPublicVisibility(),
-        study.getCreateUserId(),
-        List.copyOf(study.getProperties()),
-        List.of(updatedFso1, updatedFso2)
-    );
+    StudyUpdate studyUpdate =
+        new StudyUpdate(
+            study.getName(),
+            study.getStudyId(),
+            study.getDescription(),
+            study.getDataTypes(),
+            study.getPiName(),
+            !study.getPublicVisibility(),
+            study.getCreateUserId(),
+            List.copyOf(study.getProperties()),
+            List.of(updatedFso1, updatedFso2));
 
     Study updatedStudy = serviceDAO.updateStudy(studyUpdate, List.of(), List.of());
     assertNotNull(updatedStudy.getAlternativeDataSharingPlan());
-    assertEquals(updatedFso1.getFileName(),
-        updatedStudy.getAlternativeDataSharingPlan().getFileName());
+    assertEquals(
+        updatedFso1.getFileName(), updatedStudy.getAlternativeDataSharingPlan().getFileName());
     assertTrue(updatedStudy.getDatasetIds().stream().findFirst().isPresent());
-    Dataset dataset = datasetDAO.findDatasetById(
-        updatedStudy.getDatasetIds().stream().findFirst().get());
+    Dataset dataset =
+        datasetDAO.findDatasetById(updatedStudy.getDatasetIds().stream().findFirst().get());
     assertNotNull(dataset.getNihInstitutionalCertificationFile());
-    assertEquals(updatedFso2.getFileName(),
-        dataset.getNihInstitutionalCertificationFile().getFileName());
+    assertEquals(
+        updatedFso2.getFileName(), dataset.getNihInstitutionalCertificationFile().getFileName());
 
     // Validate that NO update records were added for each dataset
-    updatedStudy.getDatasetIds().forEach(id -> {
-      List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(id);
-      assertFalse(audits.isEmpty());
-      assertFalse(
-          audits.stream()
-              .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.UPDATE.name())));
-    });
+    updatedStudy
+        .getDatasetIds()
+        .forEach(
+            id -> {
+              List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(id);
+              assertFalse(audits.isEmpty());
+              assertFalse(
+                  audits.stream()
+                      .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.UPDATE.name())));
+            });
   }
-
 
   @Test
   void testDeleteStudy() throws Exception {
     FileStorageObject fso1 = new FileStorageObject();
     fso1.setMediaType(randomAlphabetic(20));
     fso1.setCategory(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
-    fso1.setBlobId(
-        BlobId.of(randomAlphabetic(10),
-            randomAlphabetic(10)));
+    fso1.setBlobId(BlobId.of(randomAlphabetic(10), randomAlphabetic(10)));
     fso1.setFileName(randomAlphabetic(10));
 
     FileStorageObject fso2 = new FileStorageObject();
     fso2.setMediaType(randomAlphabetic(20));
     fso2.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
-    fso2.setBlobId(
-        BlobId.of(randomAlphabetic(10),
-            randomAlphabetic(10)));
+    fso2.setBlobId(BlobId.of(randomAlphabetic(10), randomAlphabetic(10)));
     fso2.setFileName(randomAlphabetic(10));
     Study study = createStudy(List.of(fso1, fso2));
 
-    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(
-        new ArrayList<>(study.getDatasetIds()));
+    List<Dataset> datasets =
+        datasetDAO.findDatasetsByIdList(new ArrayList<>(study.getDatasetIds()));
     study.addDatasets(datasets);
 
     serviceDAO.deleteStudy(study, createUser());
@@ -717,17 +747,19 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertNull(deletedStudy);
 
     // Validate that audit records are added for each dataset:
-    study.getDatasetIds().forEach(id -> {
-      List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(id);
-      assertFalse(audits.isEmpty());
-      assertTrue(
-          audits.stream()
-              .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.CREATE.name())));
-      assertTrue(
-          audits.stream()
-              .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.DELETE.name())));
-    });
-
+    study
+        .getDatasetIds()
+        .forEach(
+            id -> {
+              List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(id);
+              assertFalse(audits.isEmpty());
+              assertTrue(
+                  audits.stream()
+                      .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.CREATE.name())));
+              assertTrue(
+                  audits.stream()
+                      .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.DELETE.name())));
+            });
   }
 
   @Test
@@ -735,10 +767,13 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     // Registration process creates a study and dataset with properties
     Study study = createStudy(List.of());
     // Delete any created datasets
-    study.getDatasetIds().forEach(id -> {
-      datasetDAO.deleteDatasetPropertiesByDatasetId(id);
-      datasetDAO.deleteDatasetById(id);
-    });
+    study
+        .getDatasetIds()
+        .forEach(
+            id -> {
+              datasetDAO.deleteDatasetPropertiesByDatasetId(id);
+              datasetDAO.deleteDatasetById(id);
+            });
     // Ensure that study deletion succeeds
     serviceDAO.deleteStudy(study, createUser());
     Study deletedStudy = studyDAO.findStudyById(study.getStudyId());
@@ -751,16 +786,17 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     Study study = createStudy(List.of());
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds());
     Dataset dataset = datasets.get(0);
-    jdbi.useHandle(handle -> serviceDAO.executeUpdateDatasetWithFiles(
-        handle,
-        dataset.getDatasetId(),
-        null,
-        study.getCreateUserId(),
-        dataset.getDacId(),
-        List.of(),
-        List.of(),
-        false)
-    );
+    jdbi.useHandle(
+        handle ->
+            serviceDAO.executeUpdateDatasetWithFiles(
+                handle,
+                dataset.getDatasetId(),
+                null,
+                study.getCreateUserId(),
+                dataset.getDacId(),
+                List.of(),
+                List.of(),
+                false));
     Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNotNull(updatedDataset.getName());
     List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(dataset.getDatasetId());
@@ -771,18 +807,20 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   void testExecuteUpdateDatasetWithEmptyName() throws Exception {
     // This creates a study with a single dataset:
     Study study = createStudy(List.of());
-    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds().stream().toList());
+    List<Dataset> datasets =
+        datasetDAO.findDatasetsByIdList(study.getDatasetIds().stream().toList());
     Dataset dataset = datasets.get(0);
-    jdbi.useHandle(handle -> serviceDAO.executeUpdateDatasetWithFiles(
-        handle,
-        dataset.getDatasetId(),
-        "",
-        study.getCreateUserId(),
-        dataset.getDacId(),
-        List.of(),
-        List.of(),
-        false)
-    );
+    jdbi.useHandle(
+        handle ->
+            serviceDAO.executeUpdateDatasetWithFiles(
+                handle,
+                dataset.getDatasetId(),
+                "",
+                study.getCreateUserId(),
+                dataset.getDacId(),
+                List.of(),
+                List.of(),
+                false));
     Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNotNull(updatedDataset.getName());
     List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(dataset.getDatasetId());
@@ -793,19 +831,21 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   void testExecuteUpdateDatasetWithNewName() throws Exception {
     // This creates a study with a single dataset:
     Study study = createStudy(List.of());
-    List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds().stream().toList());
+    List<Dataset> datasets =
+        datasetDAO.findDatasetsByIdList(study.getDatasetIds().stream().toList());
     Dataset dataset = datasets.get(0);
     String newName = randomAlphabetic(dataset.getName().length() + 10);
-    jdbi.useHandle(handle -> serviceDAO.executeUpdateDatasetWithFiles(
-        handle,
-        dataset.getDatasetId(),
-        newName,
-        study.getCreateUserId(),
-        dataset.getDacId(),
-        List.of(),
-        List.of(),
-        false)
-    );
+    jdbi.useHandle(
+        handle ->
+            serviceDAO.executeUpdateDatasetWithFiles(
+                handle,
+                dataset.getDatasetId(),
+                newName,
+                study.getCreateUserId(),
+                dataset.getDacId(),
+                List.of(),
+                List.of(),
+                false));
     Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertEquals(newName, updatedDataset.getName());
     List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(dataset.getDatasetId());
@@ -815,12 +855,12 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   @Test
   void testPatchDataset() throws Exception {
     List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
-    Dictionary one = dictionaries.stream().filter(d -> d.getKeyId().equals(1)).findFirst()
-        .orElse(null);
-    Dictionary two = dictionaries.stream().filter(d -> d.getKeyId().equals(2)).findFirst()
-        .orElse(null);
-    Dictionary three = dictionaries.stream().filter(d -> d.getKeyId().equals(3)).findFirst()
-        .orElse(null);
+    Dictionary one =
+        dictionaries.stream().filter(d -> d.getKeyId().equals(1)).findFirst().orElse(null);
+    Dictionary two =
+        dictionaries.stream().filter(d -> d.getKeyId().equals(2)).findFirst().orElse(null);
+    Dictionary three =
+        dictionaries.stream().filter(d -> d.getKeyId().equals(3)).findFirst().orElse(null);
     assertNotNull(one);
     assertNotNull(two);
     assertNotNull(three);
@@ -877,24 +917,30 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     // Validate that the name is updated
     assertEquals(newName, patched.getDatasetName());
 
-    Set<DatasetProperty> updatedProps = datasetDAO.findDatasetPropertiesByDatasetId(
-        dataset.getDatasetId());
+    Set<DatasetProperty> updatedProps =
+        datasetDAO.findDatasetPropertiesByDatasetId(dataset.getDatasetId());
 
     // Validate that the first prop was not changed
-    Optional<DatasetProperty> original = updatedProps.stream()
-        .filter(p -> p.getPropertyName().equals(prop1.getPropertyName())).findFirst();
+    Optional<DatasetProperty> original =
+        updatedProps.stream()
+            .filter(p -> p.getPropertyName().equals(prop1.getPropertyName()))
+            .findFirst();
     assertTrue(original.isPresent());
     assertEquals(prop1.getPropertyValue(), original.get().getPropertyValue());
 
     // Validate that the new value was updated
-    Optional<DatasetProperty> updated = updatedProps.stream()
-        .filter(p -> p.getPropertyName().equals(prop2.getPropertyName())).findFirst();
+    Optional<DatasetProperty> updated =
+        updatedProps.stream()
+            .filter(p -> p.getPropertyName().equals(prop2.getPropertyName()))
+            .findFirst();
     assertTrue(updated.isPresent());
     assertEquals(patchProp.getPropertyValue(), updated.get().getPropertyValue());
 
     // Validate that the new prop was added
-    Optional<DatasetProperty> added = updatedProps.stream()
-        .filter(p -> p.getPropertyName().equals(prop3.getPropertyName())).findFirst();
+    Optional<DatasetProperty> added =
+        updatedProps.stream()
+            .filter(p -> p.getPropertyName().equals(prop3.getPropertyName()))
+            .findFirst();
     assertTrue(added.isPresent());
     assertEquals(prop3.getPropertyValue(), added.get().getPropertyValue());
 
@@ -991,7 +1037,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     List<DatasetAudit> audits = datasetDAO.findAuditsByDatasetId(updatedDataset.getDatasetId());
     assertFalse(audits.isEmpty());
     assertTrue(
-        audits.stream().anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.DEINDEXED.name())));
+        audits.stream()
+            .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.DEINDEXED.name())));
   }
 
   /**
@@ -1015,15 +1062,16 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     prop2.setType(PropertyType.String);
     prop2.setValue(randomAlphabetic(10));
 
-    DatasetServiceDAO.StudyInsert studyInsert = new DatasetServiceDAO.StudyInsert(
-        randomAlphabetic(10),
-        randomAlphabetic(10),
-        List.of(randomAlphabetic(10)),
-        randomAlphabetic(10),
-        true,
-        user.getUserId(),
-        List.of(prop1, prop2),
-        Objects.isNull(fso) ? List.of() : fso);
+    DatasetServiceDAO.StudyInsert studyInsert =
+        new DatasetServiceDAO.StudyInsert(
+            randomAlphabetic(10),
+            randomAlphabetic(10),
+            List.of(randomAlphabetic(10)),
+            randomAlphabetic(10),
+            true,
+            user.getUserId(),
+            List.of(prop1, prop2),
+            Objects.isNull(fso) ? List.of() : fso);
 
     DatasetProperty datasetProperty = new DatasetProperty();
     datasetProperty.setSchemaProperty(randomAlphabetic(10));
@@ -1033,16 +1081,17 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     datasetProperty.setPropertyValue(new Random().nextInt());
     datasetProperty.setCreateDate(new Date());
 
-    DatasetServiceDAO.DatasetInsert datasetInsert = new DatasetServiceDAO.DatasetInsert(
-        randomAlphabetic(20),
-        dac.getDacId(),
-        new DataUseBuilder().setGeneralUse(true).build(),
-        user.getUserId(),
-        List.of(datasetProperty),
-        List.of());
+    DatasetServiceDAO.DatasetInsert datasetInsert =
+        new DatasetServiceDAO.DatasetInsert(
+            randomAlphabetic(20),
+            dac.getDacId(),
+            new DataUseBuilder().setGeneralUse(true).build(),
+            user.getUserId(),
+            List.of(datasetProperty),
+            List.of());
 
-    List<Integer> createdIds = serviceDAO.insertDatasetRegistration(studyInsert,
-        List.of(datasetInsert));
+    List<Integer> createdIds =
+        serviceDAO.insertDatasetRegistration(studyInsert, List.of(datasetInsert));
     Dataset createdDataset = datasetDAO.findDatasetById(createdIds.get(0));
     return createdDataset.getStudy();
   }
@@ -1053,17 +1102,15 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
-        dataUse.toString(), null);
+    Integer id =
+        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
     return datasetDAO.findDatasetById(id);
   }
 
   private Dac createDac() {
-    Integer id = dacDAO.createDac(
-        "Test_" + randomAlphanumeric(20),
-        "Test_" + randomAlphanumeric(20),
-        new Date());
+    Integer id =
+        dacDAO.createDac(
+            "Test_" + randomAlphanumeric(20), "Test_" + randomAlphanumeric(20), new Date());
     return dacDAO.findById(id);
   }
-
 }

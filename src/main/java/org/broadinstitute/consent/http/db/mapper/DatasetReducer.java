@@ -86,8 +86,7 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
             dataset.setNihInstitutionalCertificationFile(fileStorageObject);
           }
         }
-        default -> {
-        }
+        default -> {}
       }
     }
 
@@ -101,7 +100,7 @@ public class DatasetReducer implements LinkedHashMapRowReducer<Integer, Dataset>
   }
 
   private boolean isFileNewer(FileStorageObject incomingFile, FileStorageObject existingFile) {
-    return Objects.isNull(existingFile) || incomingFile.getLatestUpdateDate()
-        .isAfter(existingFile.getLatestUpdateDate());
+    return Objects.isNull(existingFile)
+        || incomingFile.getLatestUpdateDate().isAfter(existingFile.getLatestUpdateDate());
   }
 }

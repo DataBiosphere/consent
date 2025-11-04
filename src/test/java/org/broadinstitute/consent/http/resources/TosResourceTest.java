@@ -15,8 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class TosResourceTest {
 
-  @Mock
-  private SamService service;
+  @Mock private SamService service;
 
   private TosResource resource;
 

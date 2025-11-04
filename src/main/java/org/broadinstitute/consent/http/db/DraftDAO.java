@@ -27,14 +27,16 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 @RegisterRowMapper(FileStorageObjectMapperWithFSOPrefix.class)
 public interface DraftDAO extends Transactional<DraftDAO> {
 
-  String DRAFT_SUMMARY = """
+  String DRAFT_SUMMARY =
+      """
       SELECT ds.name, ds.create_date, ds.uuid, ds.update_date, ds.draft_type
       FROM draft ds
       WHERE ds.create_user_id = :createdUserId
       ORDER BY ds.update_date DESC
       """;
 
-  String DRAFT_DETAILS = """
+  String DRAFT_DETAILS =
+      """
       SELECT ds.name, ds.create_date, ds.create_user_id, ds.json,
       ds.uuid, ds.update_date, ds.update_user_id, ds.draft_type,
       uu.user_id AS uu_user_id, uu.email AS uu_email, uu.display_name AS uu_display_name,
@@ -42,8 +44,9 @@ public interface DraftDAO extends Transactional<DraftDAO> {
       cu.user_id AS cu_user_id, cu.email AS cu_email, cu.display_name AS cu_display_name,
       cu.create_date AS cu_create_date, cu.email_preference AS cu_email_preference,
       """
-      + FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX + " " +
-      """
+          + FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX
+          + " "
+          + """
           FROM draft ds
           LEFT JOIN users uu on ds.update_user_id = uu.user_id
           LEFT JOIN users cu on ds.create_user_id = cu.user_id
@@ -56,8 +59,7 @@ public interface DraftDAO extends Transactional<DraftDAO> {
               (name, create_date, create_user_id, update_date,
               update_user_id, json, uuid, draft_type)
           (SELECT :name, :createdDate, :createdUserId, :createdDate, :createdUserId, :json::jsonb, :uuid, :draftType)
-          """
-  )
+          """)
   @GetGeneratedKeys
   Integer insert(
       @Bind("name") String name,
@@ -67,7 +69,8 @@ public interface DraftDAO extends Transactional<DraftDAO> {
       @Bind("uuid") UUID uuid,
       @Bind("draftType") String draftType);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
       UPDATE draft
       SET name = :name,
           update_date = :updateDate,
@@ -84,7 +87,8 @@ public interface DraftDAO extends Transactional<DraftDAO> {
       @Bind("uuid") UUID uuid,
       @Bind("draftType") String draftType);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
       UPDATE draft
       SET
           update_date = :updateDate,
@@ -98,23 +102,20 @@ public interface DraftDAO extends Transactional<DraftDAO> {
 
   @UseRowReducer(DraftReducer.class)
   @SqlQuery(
-      DRAFT_DETAILS +
-          """
+      DRAFT_DETAILS
+          + """
                WHERE ds.create_user_id = :createdUserId
               """)
-  Collection<DraftInterface> findDraftsByUserId(
-      @Bind("createdUserId") Integer createdUserId);
+  Collection<DraftInterface> findDraftsByUserId(@Bind("createdUserId") Integer createdUserId);
 
   @UseRowMapper(DraftSummaryMapper.class)
-  @SqlQuery(
-      DRAFT_SUMMARY)
-  Collection<DraftSummary> findDraftSummariesByUserId(
-      @Bind("createdUserId") Integer createdUserId);
+  @SqlQuery(DRAFT_SUMMARY)
+  Collection<DraftSummary> findDraftSummariesByUserId(@Bind("createdUserId") Integer createdUserId);
 
   @UseRowReducer(DraftReducer.class)
   @SqlQuery(
-      DRAFT_DETAILS +
-          """
+      DRAFT_DETAILS
+          + """
                WHERE uuid = :uuid
               """)
   DraftInterface findDraftById(@Bind("uuid") UUID uuid);
@@ -123,7 +124,7 @@ public interface DraftDAO extends Transactional<DraftDAO> {
       """
           DELETE from draft
           WHERE uuid IN (<uuid_list>)
-          """
-  )
-  void deleteDraftByUUIDList(@BindList(value = "uuid_list", onEmpty = EmptyHandling.NULL_STRING) List<UUID> uuid);
+          """)
+  void deleteDraftByUUIDList(
+      @BindList(value = "uuid_list", onEmpty = EmptyHandling.NULL_STRING) List<UUID> uuid);
 }

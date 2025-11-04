@@ -49,10 +49,11 @@ class NewProgressReportRequestMessageTest {
 
     var dacDatasetGroups = Map.of(dac.getName(), List.of(d1.getDatasetIdentifier()));
     String darCode = "DAR-01";
-    var message = new NewProgressReportRequestMessage(toUser, darCode, "myReferenceId", dacDatasetGroups, "ResearcherName");
+    var message =
+        new NewProgressReportRequestMessage(
+            toUser, darCode, "myReferenceId", dacDatasetGroups, "ResearcherName");
     assertEquals("myReferenceId", message.getEntityReferenceId());
-    assertEquals(
-        "Create an election for Progress Report id: DAR-01.", message.createSubject());
+    assertEquals("Create an election for Progress Report id: DAR-01.", message.createSubject());
 
     Template template = helper.getTemplate(message.getTemplateName());
     Writer out = new StringWriter();
@@ -61,11 +62,11 @@ class NewProgressReportRequestMessageTest {
     String templateString = out.toString();
     Document parsedTemplate = Jsoup.parse(templateString);
 
-    assertEquals("Broad Data Use Oversight System - New Progress Report submitted to your DAC",
+    assertEquals(
+        "Broad Data Use Oversight System - New Progress Report submitted to your DAC",
         parsedTemplate.title());
     assertEquals(
-        "Hello Admin,",
-        Objects.requireNonNull(parsedTemplate.getElementById("userName")).text());
+        "Hello Admin,", Objects.requireNonNull(parsedTemplate.getElementById("userName")).text());
     assertTrue(templateString.contains(darCode));
     assertTrue(templateString.contains(serverUrl));
     assertTrue(templateString.contains(dac.getName()));

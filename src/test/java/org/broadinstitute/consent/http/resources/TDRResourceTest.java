@@ -24,17 +24,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class TDRResourceTest {
 
-  @Mock
-  private TDRService tdrService;
-  @Mock
-  private DatasetService datasetService;
+  @Mock private TDRService tdrService;
+  @Mock private DatasetService datasetService;
   private TDRResource resource;
 
-  @Mock
-  private User user;
+  @Mock private User user;
 
-  @Mock
-  private DuosUser duosUser;
+  @Mock private DuosUser duosUser;
 
   private void initResource() {
     try {
@@ -47,9 +43,8 @@ class TDRResourceTest {
   @Test
   void testGetApprovedUsersForDataset() {
     String ds = "DUOS-00003";
-    List<ApprovedUser> users = List.of(
-        new ApprovedUser("asdf1@gmail.com"),
-        new ApprovedUser("asdf2@gmail.com"));
+    List<ApprovedUser> users =
+        List.of(new ApprovedUser("asdf1@gmail.com"), new ApprovedUser("asdf2@gmail.com"));
     ApprovedUsers approvedUsers = new ApprovedUsers(users);
 
     Dataset d = new Dataset();
@@ -97,7 +92,6 @@ class TDRResourceTest {
     assertEquals(GsonUtil.buildGson().toJson(d), r.getEntity());
   }
 
-
   @Test
   void testGetDatasetByIdentifier404() {
     when(duosUser.getUser()).thenReturn(user);
@@ -109,5 +103,4 @@ class TDRResourceTest {
 
     assertEquals(404, r.getStatus());
   }
-
 }

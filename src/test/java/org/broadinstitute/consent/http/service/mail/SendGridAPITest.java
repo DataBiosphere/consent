@@ -37,8 +37,7 @@ class SendGridAPITest {
   private SendGrid sendGrid;
   private SendGridAPI sendGridAPI;
 
-  @Mock
-  private UserDAO userDAO;
+  @Mock private UserDAO userDAO;
 
   @BeforeEach
   void setUp() throws Exception {
@@ -56,12 +55,13 @@ class SendGridAPITest {
   @Test
   void sendMessage() throws Exception {
     String messageBody = "This is a test message";
-    Mail mail = new Mail() {
-      @Override
-      public String build()  {
-        return messageBody;
-      }
-    };
+    Mail mail =
+        new Mail() {
+          @Override
+          public String build() {
+            return messageBody;
+          }
+        };
     assertEquals(RESPONSE, sendGridAPI.sendMessage(mail, TO));
     ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
     verify(sendGrid).makeCall(requestCaptor.capture());

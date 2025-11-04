@@ -31,5 +31,4 @@ public class TicketFactory {
     Ticket ticket = ticketFields.toTicket();
     return new DuosTicket(ticket);
   }
-
 }

@@ -32,8 +32,8 @@ public class DACAutomationRuleResource extends Resource {
   private final UserService userService;
 
   @Inject
-  public DACAutomationRuleResource(DACAutomationRuleService ruleService, DacService dacService,
-      UserService userService) {
+  public DACAutomationRuleResource(
+      DACAutomationRuleService ruleService, DacService dacService, UserService userService) {
     this.ruleService = ruleService;
     this.dacService = dacService;
     this.userService = userService;
@@ -77,8 +77,11 @@ public class DACAutomationRuleResource extends Resource {
   @Path("{dacId}/rules/audit")
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({Resource.ADMIN, Resource.CHAIRPERSON})
-  public Response getDacRuleAuditRecords(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId,
-      @QueryParam("page") Integer page, @QueryParam("pageSize") Integer pageSize) {
+  public Response getDacRuleAuditRecords(
+      @Auth AuthUser authUser,
+      @PathParam("dacId") Integer dacId,
+      @QueryParam("page") Integer page,
+      @QueryParam("pageSize") Integer pageSize) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       validateAdminOrChairForDAC(user, dacId);
@@ -99,7 +102,9 @@ public class DACAutomationRuleResource extends Resource {
   @Path("{dacId}/rules/{ruleId}/toggle")
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({Resource.CHAIRPERSON})
-  public Response toggleRule(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId,
+  public Response toggleRule(
+      @Auth AuthUser authUser,
+      @PathParam("dacId") Integer dacId,
       @PathParam("ruleId") Integer ruleId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
@@ -138,7 +143,5 @@ public class DACAutomationRuleResource extends Resource {
     if (limit > 100) {
       throw new IllegalArgumentException("PageSize must be less than or equal to 100");
     }
-
   }
-
 }

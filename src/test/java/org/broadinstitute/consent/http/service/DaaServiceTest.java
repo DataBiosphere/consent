@@ -46,37 +46,31 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DaaServiceTest {
 
-  @Mock
-  private DaaServiceDAO daaServiceDAO;
+  @Mock private DaaServiceDAO daaServiceDAO;
 
-  @Mock
-  private DaaDAO daaDAO;
+  @Mock private DaaDAO daaDAO;
 
-  @Mock
-  private GCSService gcsService;
+  @Mock private GCSService gcsService;
 
-  @Mock
-  private EmailService emailService;
+  @Mock private EmailService emailService;
 
-  @Mock
-  private UserService userService;
+  @Mock private UserService userService;
 
-  @Mock
-  private InstitutionDAO institutionDAO;
+  @Mock private InstitutionDAO institutionDAO;
 
-  @Mock
-  private DacDAO dacDAO;
+  @Mock private DacDAO dacDAO;
 
   private final InputStream inputStream = mock(InputStream.class);
 
-  private final FormDataContentDisposition contentDisposition = mock(
-      FormDataContentDisposition.class);
-
+  private final FormDataContentDisposition contentDisposition =
+      mock(FormDataContentDisposition.class);
 
   private DaaService service;
 
   private void initService() {
-    service = new DaaService(daaServiceDAO, daaDAO, gcsService, emailService, userService, institutionDAO, dacDAO);
+    service =
+        new DaaService(
+            daaServiceDAO, daaDAO, gcsService, emailService, userService, institutionDAO, dacDAO);
   }
 
   @Test
@@ -99,8 +93,10 @@ class DaaServiceTest {
     doThrow(new IOException("gcs error")).when(gcsService).storeDocument(any(), any(), any());
 
     initService();
-    ServerErrorException e = assertThrows(ServerErrorException.class,
-        () -> service.createDaaWithFso(1, 1, inputStream, contentDisposition));
+    ServerErrorException e =
+        assertThrows(
+            ServerErrorException.class,
+            () -> service.createDaaWithFso(1, 1, inputStream, contentDisposition));
     assertNotNull(e);
   }
 
@@ -110,8 +106,10 @@ class DaaServiceTest {
     doThrow(new Exception("db error")).when(daaServiceDAO).createDaaWithFso(any(), any(), any());
 
     initService();
-    ServerErrorException e = assertThrows(ServerErrorException.class,
-        () -> service.createDaaWithFso(1, 1, inputStream, contentDisposition));
+    ServerErrorException e =
+        assertThrows(
+            ServerErrorException.class,
+            () -> service.createDaaWithFso(1, 1, inputStream, contentDisposition));
     assertNotNull(e);
   }
 
@@ -167,16 +165,16 @@ class DaaServiceTest {
     initService();
     List<DataAccessAgreement> foundDaas = service.findAll();
 
-    Optional<DataAccessAgreement> foundBroadDAA = foundDaas.stream()
-        .filter(d -> d.getDaaId().equals(broadDAA.getDaaId())).findFirst();
+    Optional<DataAccessAgreement> foundBroadDAA =
+        foundDaas.stream().filter(d -> d.getDaaId().equals(broadDAA.getDaaId())).findFirst();
     assertTrue(foundBroadDAA.isPresent() && foundBroadDAA.get().getBroadDaa());
 
-    Optional<DataAccessAgreement> foundNonBroadDAA1 = foundDaas.stream()
-        .filter(d -> d.getDaaId().equals(nonBroadDAA1.getDaaId())).findFirst();
+    Optional<DataAccessAgreement> foundNonBroadDAA1 =
+        foundDaas.stream().filter(d -> d.getDaaId().equals(nonBroadDAA1.getDaaId())).findFirst();
     assertTrue(foundNonBroadDAA1.isPresent() && !foundNonBroadDAA1.get().getBroadDaa());
 
-    Optional<DataAccessAgreement> foundNonBroadDAA2 = foundDaas.stream()
-        .filter(d -> d.getDaaId().equals(nonBroadDAA2.getDaaId())).findFirst();
+    Optional<DataAccessAgreement> foundNonBroadDAA2 =
+        foundDaas.stream().filter(d -> d.getDaaId().equals(nonBroadDAA2.getDaaId())).findFirst();
     assertTrue(foundNonBroadDAA2.isPresent() && !foundNonBroadDAA2.get().getBroadDaa());
   }
 
@@ -270,12 +268,12 @@ class DaaServiceTest {
     SimplifiedUser researcher = mock(SimplifiedUser.class);
     researcher.setDisplayName("Official Name");
     researcher.setEmail("official@example.com");
-    researcher.setInstitutionId(RandomUtils.nextInt(0,50));
+    researcher.setInstitutionId(RandomUtils.nextInt(0, 50));
 
     SimplifiedUser researcher2 = mock(SimplifiedUser.class);
     researcher2.setDisplayName("Official Name2");
     researcher2.setEmail("official2@example.com");
-    researcher2.setInstitutionId(RandomUtils.nextInt(0,50));
+    researcher2.setInstitutionId(RandomUtils.nextInt(0, 50));
 
     SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
     signingOfficial.setDisplayName("Official Name");
@@ -294,9 +292,11 @@ class DaaServiceTest {
     initService();
 
     when(userService.getUsersByDaaId(any())).thenReturn(List.of(researcher, researcher2));
-    when(userService.findSOsByInstitutionId(any())).thenReturn(List.of(signingOfficial, signingOfficial2));
+    when(userService.findSOsByInstitutionId(any()))
+        .thenReturn(List.of(signingOfficial, signingOfficial2));
     assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
-    verify(emailService, times(2)).sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any());
+    verify(emailService, times(2))
+        .sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any());
     verify(emailService, times(2)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any());
   }
 
@@ -307,7 +307,7 @@ class DaaServiceTest {
     SimplifiedUser researcher = mock(SimplifiedUser.class);
     researcher.setDisplayName("Official Name");
     researcher.setEmail("official@example.com");
-    researcher.setInstitutionId(RandomUtils.nextInt(0,50));
+    researcher.setInstitutionId(RandomUtils.nextInt(0, 50));
 
     SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
     signingOfficial.setDisplayName("Official Name");
@@ -326,9 +326,11 @@ class DaaServiceTest {
     initService();
 
     when(userService.getUsersByDaaId(any())).thenReturn(List.of(researcher));
-    when(userService.findSOsByInstitutionId(any())).thenReturn(List.of(signingOfficial, signingOfficial2));
+    when(userService.findSOsByInstitutionId(any()))
+        .thenReturn(List.of(signingOfficial, signingOfficial2));
     assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
-    verify(emailService, times(1)).sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any());
+    verify(emailService, times(1))
+        .sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any());
     verify(emailService, times(2)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any());
   }
 
@@ -337,7 +339,8 @@ class DaaServiceTest {
     User user = mock(User.class);
 
     initService();
-    assertThrows(NotFoundException.class, () -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
+    assertThrows(
+        NotFoundException.class, () -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
   }
 
   @Test
@@ -349,7 +352,6 @@ class DaaServiceTest {
     when(file.getFileName()).thenReturn("previousDaaName");
     when(daa.getFile()).thenReturn(file);
     when(daaDAO.findById(any())).thenReturn(daa);
-
 
     initService();
 
@@ -480,7 +482,7 @@ class DaaServiceTest {
   @Test
   void testFindDAAsInJsonArray() {
     String json = "{daaList:[1,2,3]}";
-    List <DataAccessAgreement> daaList = List.of(createDaa(0), createDaa(1), createDaa(2));
+    List<DataAccessAgreement> daaList = List.of(createDaa(0), createDaa(1), createDaa(2));
     when(daaDAO.findById(any())).thenReturn(daaList.get(0), daaList.get(1), daaList.get(2));
     initService();
     List<DataAccessAgreement> result = service.findDAAsInJsonArray(json, "daaList");
@@ -490,7 +492,7 @@ class DaaServiceTest {
   @Test
   void testFindDAAsInJsonArrayRemoveDuplicates() {
     String json = "{daaList:[1,1,2,3]}";
-    List <DataAccessAgreement> daaList = List.of(createDaa(0), createDaa(1), createDaa(2));
+    List<DataAccessAgreement> daaList = List.of(createDaa(0), createDaa(1), createDaa(2));
     when(daaDAO.findById(any())).thenReturn(daaList.get(0), daaList.get(1), daaList.get(2));
     initService();
     List<DataAccessAgreement> result = service.findDAAsInJsonArray(json, "daaList");
@@ -537,7 +539,7 @@ class DaaServiceTest {
   @Test
   void testIsBroadDAANoDaasNoDacs() {
     initService();
-    assertFalse(service.isBroadDAA(RandomUtils.nextInt(0,50), List.of(), List.of()));
+    assertFalse(service.isBroadDAA(RandomUtils.nextInt(0, 50), List.of(), List.of()));
   }
 
   @Test
@@ -560,7 +562,7 @@ class DaaServiceTest {
     Dac dac = new Dac();
     dac.setName("dacName");
 
-    Dac dac2= new Dac();
+    Dac dac2 = new Dac();
     dac2.setName("dacName2");
 
     DataAccessAgreement daa1 = new DataAccessAgreement();
@@ -580,16 +582,16 @@ class DaaServiceTest {
     dac.setName("dacName");
     dac.setDacId(1);
 
-    Dac dac2= new Dac();
+    Dac dac2 = new Dac();
     dac2.setName("broadDac");
     dac2.setDacId(2);
 
     DataAccessAgreement daa1 = new DataAccessAgreement();
     DataAccessAgreement daa2 = new DataAccessAgreement();
     daa1.setDaaId(1);
-    daa1.setInitialDacId(RandomUtils.nextInt(3,50));
+    daa1.setInitialDacId(RandomUtils.nextInt(3, 50));
     daa2.setDaaId(2);
-    daa2.setInitialDacId(RandomUtils.nextInt(3,50));
+    daa2.setInitialDacId(RandomUtils.nextInt(3, 50));
 
     assertFalse(service.isBroadDAA(1, List.of(daa1, daa2), List.of(dac, dac2)));
     assertFalse(service.isBroadDAA(2, List.of(daa1, daa2), List.of(dac, dac2)));
@@ -603,14 +605,14 @@ class DaaServiceTest {
     dac.setName("dacName");
     dac.setDacId(1);
 
-    Dac dac2= new Dac();
+    Dac dac2 = new Dac();
     dac2.setName("broadDac");
     dac2.setDacId(2);
 
     DataAccessAgreement daa1 = new DataAccessAgreement();
     DataAccessAgreement daa2 = new DataAccessAgreement();
     daa1.setDaaId(1);
-    daa1.setInitialDacId(RandomUtils.nextInt(3,50));
+    daa1.setInitialDacId(RandomUtils.nextInt(3, 50));
     daa2.setDaaId(2);
     daa2.setInitialDacId(2);
 
@@ -624,7 +626,8 @@ class DaaServiceTest {
     DataAccessAgreement daa1 = new DataAccessAgreement();
     when(daaDAO.findByDarReferenceId(any())).thenReturn(List.of(daa1));
 
-    List<DataAccessAgreement> daas = service.findByDarReferenceId(RandomStringUtils.randomAlphabetic(5));
+    List<DataAccessAgreement> daas =
+        service.findByDarReferenceId(RandomStringUtils.randomAlphabetic(5));
     assertFalse(daas.isEmpty());
     assertTrue(daas.stream().map(DataAccessAgreement::getDaaId).toList().contains(daa1.getDaaId()));
   }
@@ -634,8 +637,8 @@ class DaaServiceTest {
     initService();
     when(daaDAO.findByDarReferenceId(any())).thenReturn(List.of());
 
-    List<DataAccessAgreement> daas = service.findByDarReferenceId(RandomStringUtils.randomAlphabetic(5));
+    List<DataAccessAgreement> daas =
+        service.findByDarReferenceId(RandomStringUtils.randomAlphabetic(5));
     assertTrue(daas.isEmpty());
   }
-
 }

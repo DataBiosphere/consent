@@ -9,8 +9,7 @@ import org.jdbi.v3.core.statement.StatementContext;
 public class UserPropertyMapper implements RowMapper<UserProperty> {
 
   @Override
-  public UserProperty map(ResultSet r, StatementContext statementContext)
-      throws SQLException {
+  public UserProperty map(ResultSet r, StatementContext statementContext) throws SQLException {
     return new UserProperty(
         r.getInt("property_id"),
         r.getInt("user_id"),

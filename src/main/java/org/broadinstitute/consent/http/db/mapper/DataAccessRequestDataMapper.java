@@ -7,9 +7,8 @@ import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 import org.postgresql.util.PGobject;
 
-public class DataAccessRequestDataMapper implements RowMapper<DataAccessRequestData>,
-    RowMapperHelper {
-
+public class DataAccessRequestDataMapper
+    implements RowMapper<DataAccessRequestData>, RowMapperHelper {
 
   @Override
   public DataAccessRequestData map(ResultSet resultSet, StatementContext statementContext)
@@ -18,5 +17,4 @@ public class DataAccessRequestDataMapper implements RowMapper<DataAccessRequestD
     DataAccessRequestData data = translate(darDataString);
     return data;
   }
-
 }

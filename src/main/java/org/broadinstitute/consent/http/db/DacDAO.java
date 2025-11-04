@@ -45,7 +45,8 @@ public interface DacDAO extends Transactional<DacDAO> {
   @RegisterBeanMapper(value = Dac.class)
   @RegisterBeanMapper(value = Dataset.class)
   @UseRowReducer(DacReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT
         dac.dac_id,
         dac.email,
@@ -98,7 +99,9 @@ public interface DacDAO extends Transactional<DacDAO> {
   @RegisterBeanMapper(value = UserRole.class)
   @UseRowReducer(UserWithRolesReducer.class)
   @SqlQuery(
-      "SELECT " + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
+      "SELECT "
+          + User.QUERY_FIELDS_WITH_U_PREFIX
+          + QUERY_FIELD_SEPARATOR
           + " r.name, "
           + " ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id "
           + " FROM users u "
@@ -130,7 +133,8 @@ public interface DacDAO extends Transactional<DacDAO> {
   @RegisterBeanMapper(value = DataAccessAgreement.class, prefix = "daa")
   @RegisterBeanMapper(value = FileStorageObjectDAO.class)
   @UseRowReducer(DacReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT dac.*,
         daa.daa_id as daa_daa_id,
         daa.create_user_id as daa_create_user_id,
@@ -161,38 +165,47 @@ public interface DacDAO extends Transactional<DacDAO> {
   /**
    * Create a Dac given name, description, and create date
    *
-   * @param name        The name for the new DAC
+   * @param name The name for the new DAC
    * @param description The description for the new DAC
-   * @param createDate  The date this new DAC was created
+   * @param createDate The date this new DAC was created
    * @return Integer
    */
-  @SqlUpdate("INSERT INTO dac (name, description, create_date) VALUES (:name, :description, :createDate)")
+  @SqlUpdate(
+      "INSERT INTO dac (name, description, create_date) VALUES (:name, :description, :createDate)")
   @GetGeneratedKeys
-  Integer createDac(@Bind("name") String name, @Bind("description") String description,
+  Integer createDac(
+      @Bind("name") String name,
+      @Bind("description") String description,
       @Bind("createDate") Date createDate);
 
   /**
    * Create a Dac given name, description, and create date
    *
-   * @param name        The name for the new DAC
+   * @param name The name for the new DAC
    * @param description The description for the new DAC
-   * @param email       The email for the new DAC
-   * @param createDate  The date this new DAC was created
+   * @param email The email for the new DAC
+   * @param createDate The date this new DAC was created
    * @return Integer
    */
-  @SqlUpdate("INSERT INTO dac (name, description, email, create_date) VALUES (:name, :description, :email, :createDate)")
+  @SqlUpdate(
+      "INSERT INTO dac (name, description, email, create_date) VALUES (:name, :description, :email, :createDate)")
   @GetGeneratedKeys
-  Integer createDac(@Bind("name") String name, @Bind("description") String description,
-      @Bind("email") String email, @Bind("createDate") Date createDate);
+  Integer createDac(
+      @Bind("name") String name,
+      @Bind("description") String description,
+      @Bind("email") String email,
+      @Bind("createDate") Date createDate);
 
-  @SqlUpdate("UPDATE dac SET name = :name, description = :description, update_date = :updateDate WHERE dac_id = :dacId")
+  @SqlUpdate(
+      "UPDATE dac SET name = :name, description = :description, update_date = :updateDate WHERE dac_id = :dacId")
   void updateDac(
       @Bind("name") String name,
       @Bind("description") String description,
       @Bind("updateDate") Date updateDate,
       @Bind("dacId") Integer dacId);
 
-  @SqlUpdate("UPDATE dac SET name = :name, description = :description, email = :email, update_date = :updateDate WHERE dac_id = :dacId")
+  @SqlUpdate(
+      "UPDATE dac SET name = :name, description = :description, email = :email, update_date = :updateDate WHERE dac_id = :dacId")
   void updateDac(
       @Bind("name") String name,
       @Bind("description") String description,
@@ -215,7 +228,9 @@ public interface DacDAO extends Transactional<DacDAO> {
   @RegisterBeanMapper(value = UserRole.class)
   @UseRowReducer(UserWithRolesReducer.class)
   @SqlQuery(
-      "SELECT " + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
+      "SELECT "
+          + User.QUERY_FIELDS_WITH_U_PREFIX
+          + QUERY_FIELD_SEPARATOR
           + " ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
           + " FROM users u "
           + " INNER JOIN user_role ur ON ur.user_id = u.user_id "
@@ -227,19 +242,21 @@ public interface DacDAO extends Transactional<DacDAO> {
   @RegisterBeanMapper(value = UserRole.class)
   @UseRowReducer(UserWithRolesReducer.class)
   @SqlQuery(
-      "SELECT " + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
+      "SELECT "
+          + User.QUERY_FIELDS_WITH_U_PREFIX
+          + QUERY_FIELD_SEPARATOR
           + " ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
           + " FROM users u "
           + " INNER JOIN user_role ur ON ur.user_id = u.user_id "
           + " INNER JOIN roles r ON r.role_id = ur.role_id "
           + " WHERE ur.dac_id = :dacId "
           + " AND ur.role_id = :roleId ")
-  List<User> findMembersByDacIdAndRoleId(@Bind("dacId") Integer dacId,
-      @Bind("roleId") Integer roleId);
+  List<User> findMembersByDacIdAndRoleId(
+      @Bind("dacId") Integer dacId, @Bind("roleId") Integer roleId);
 
   @SqlUpdate("INSERT INTO user_role (role_id, user_id, dac_id) VALUES (:roleId, :userId, :dacId)")
-  void addDacMember(@Bind("roleId") Integer roleId, @Bind("userId") Integer userId,
-      @Bind("dacId") Integer dacId);
+  void addDacMember(
+      @Bind("roleId") Integer roleId, @Bind("userId") Integer userId, @Bind("dacId") Integer dacId);
 
   @SqlUpdate("DELETE FROM user_role WHERE user_role_id = :userRoleId")
   void removeDacMember(@Bind("userRoleId") Integer userRoleId);
@@ -252,7 +269,8 @@ public interface DacDAO extends Transactional<DacDAO> {
   @SqlQuery(
       "SELECT ur.*, r.name FROM user_role ur "
           + " INNER JOIN roles r ON ur.role_id = r.role_id WHERE ur.user_id IN (<userIds>)")
-  List<UserRole> findUserRolesForUsers(@BindList(value = "userIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> userIds);
+  List<UserRole> findUserRolesForUsers(
+      @BindList(value = "userIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> userIds);
 
   /**
    * Find the Dacs for these datasets.
@@ -261,16 +279,20 @@ public interface DacDAO extends Transactional<DacDAO> {
    * @return All DACs that corresponds to the provided dataset ids
    */
   @RegisterRowMapper(DacMapper.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT d.*, ds.dataset_id
       FROM dac d
       INNER JOIN dataset ds ON d.dac_id = ds.dac_id
       WHERE ds.dataset_id IN (<datasetIds>)
       """)
-  Set<Dac> findDacsForDatasetIds(@BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> datasetIds);
+  Set<Dac> findDacsForDatasetIds(
+      @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING)
+          List<Integer> datasetIds);
 
   @RegisterRowMapper(DacMapper.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT dac.*
       FROM dac
       INNER JOIN dataset d ON d.dac_id = dac.dac_id
@@ -279,5 +301,4 @@ public interface DacDAO extends Transactional<DacDAO> {
       WHERE dar.collection_id = :collectionId
       """)
   Collection<Dac> findDacsForCollectionId(@Bind("collectionId") Integer collectionId);
-
 }

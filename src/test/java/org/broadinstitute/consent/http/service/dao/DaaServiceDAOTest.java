@@ -31,22 +31,28 @@ class DaaServiceDAOTest extends DAOTestHelper {
   @Test
   void testCreateDaa() {
     User user = createUser();
-    Integer dacId = dacDAO.createDac(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10),  new Date());
+    Integer dacId =
+        dacDAO.createDac(
+            RandomStringUtils.randomAlphabetic(10),
+            RandomStringUtils.randomAlphabetic(10),
+            RandomStringUtils.randomAlphabetic(10),
+            new Date());
     FileStorageObject fso = new FileStorageObject();
     fso.setFileName(RandomStringUtils.randomAlphabetic(10));
     fso.setCategory(FileCategory.DATA_ACCESS_AGREEMENT);
-    BlobId blobId = BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10));
+    BlobId blobId =
+        BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10));
     fso.setBlobId(blobId);
     fso.setMediaType(MediaType.TEXT_PLAIN_TYPE.getType());
-    assertDoesNotThrow(() -> {
-      Integer daaId = serviceDAO.createDaaWithFso(user.getUserId(), dacId, fso);
-      assertNotNull(daaId);
-      DataAccessAgreement daa = daaDAO.findById(daaId);
-      assertNotNull(daa);
-      assertNotNull(daa.getFile());
-      assertNotNull(daa.getInitialDacId());
-      assertFalse(daa.getDacs().isEmpty());
-    });
+    assertDoesNotThrow(
+        () -> {
+          Integer daaId = serviceDAO.createDaaWithFso(user.getUserId(), dacId, fso);
+          assertNotNull(daaId);
+          DataAccessAgreement daa = daaDAO.findById(daaId);
+          assertNotNull(daa);
+          assertNotNull(daa.getFile());
+          assertNotNull(daa.getInitialDacId());
+          assertFalse(daa.getDacs().isEmpty());
+        });
   }
-
 }

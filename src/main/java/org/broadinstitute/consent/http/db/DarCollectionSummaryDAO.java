@@ -21,7 +21,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @RegisterBeanMapper(value = Vote.class, prefix = "v")
   @RegisterBeanMapper(value = Election.class)
   @UseRowReducer(DarCollectionSummaryReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT c.collection_id as dar_collection_id, c.dar_code,
         latest_dar.submission_date, latest_dar.reference_id as latest_dar_reference_id,
         latest_dar.parent_id as latest_dar_parent_id,
@@ -98,9 +99,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = Election.class)
   @UseRowReducer(DarCollectionSummaryReducer.class)
-  @SqlQuery
-      (
-          """
+  @SqlQuery(
+      """
               SELECT c.collection_id as dar_collection_id,
                c.dar_code,
                latest_dar.submission_date,
@@ -153,8 +153,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
               u.display_name, i.institution_name, e.election_id, e.status,
               e.reference_id, e.dataset_id, dd.dataset_id, latest_dar.data, dac.name
-          """
-      )
+          """)
   List<DarCollectionSummary> getDarCollectionSummariesForSO(
       @Bind("institutionId") Integer institutionId);
 
@@ -162,7 +161,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = Election.class)
   @UseRowReducer(DarCollectionSummaryReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
           SELECT
               c.collection_id AS dar_collection_id,
               c.dar_code,
@@ -217,7 +217,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = Election.class)
   @UseRowReducer(DarCollectionSummaryReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
           SELECT
               c.collection_id AS dar_collection_id,
               c.dar_code,
@@ -280,7 +281,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @RegisterBeanMapper(value = Vote.class, prefix = "v")
   @RegisterBeanMapper(value = Election.class)
   @UseRowReducer(DarCollectionSummaryReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT c.collection_id as dar_collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id AS latest_dar_reference_id,
         latest_dar.parent_id AS latest_dar_parent_id,
         latest_dar.closeout_approving_so_id as latest_dar_closeout_approving_so_id,
@@ -338,14 +340,12 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> datasetIds,
       @Bind("collectionId") Integer collectionId);
 
-
   @RegisterBeanMapper(value = DarCollectionSummary.class)
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = Election.class)
   @UseRowReducer(DarCollectionSummaryReducer.class)
-  @SqlQuery
-      (
-          """
+  @SqlQuery(
+      """
               SELECT c.collection_id as dar_collection_id, c.dar_code, latest_dar.submission_date,
                 latest_dar.reference_id as latest_dar_reference_id, latest_dar.parent_id as latest_dar_parent_id,
                 latest_dar.closeout_approving_so_id as latest_dar_closeout_approving_so_id,
@@ -390,8 +390,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                 latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
                 u.display_name, u.user_id, i.institution_name,
                 i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id, latest_dar.data, dac.name
-          """
-      )
+          """)
   DarCollectionSummary getDarCollectionSummaryByCollectionId(
       @Bind("collectionId") Integer collectionId);
 }

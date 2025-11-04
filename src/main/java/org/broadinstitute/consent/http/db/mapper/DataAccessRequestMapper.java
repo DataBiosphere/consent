@@ -26,7 +26,7 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
       dar.setDarCode(resultSet.getString("dar_code"));
     }
 
-    if (hasNonZeroColumn(resultSet,"parent_id")) {
+    if (hasNonZeroColumn(resultSet, "parent_id")) {
       dar.setParentId(resultSet.getInt("parent_id"));
     }
 
@@ -44,9 +44,9 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
     }
     dar.setData(data);
     dar.setEraCommonsId(resultSet.getString("era_commons_id"));
-    dar.setCloseoutSigningOfficialApprovedDate(resultSet.getTimestamp("closeout_so_approval_timestamp"));
+    dar.setCloseoutSigningOfficialApprovedDate(
+        resultSet.getTimestamp("closeout_so_approval_timestamp"));
     dar.setCloseoutSigningOfficialApprovedUserId(resultSet.getInt("closeout_approving_so_id"));
     return dar;
   }
-
 }

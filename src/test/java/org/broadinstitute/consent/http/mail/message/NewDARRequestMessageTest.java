@@ -51,8 +51,7 @@ class NewDARRequestMessageTest {
     String darCode = "DAR-01";
     var message = new NewDARRequestMessage(toUser, darCode, dacDatasetGroups, "ResearcherName");
     assertEquals(darCode, message.getEntityReferenceId());
-    assertEquals(
-        "Create an election for Data Access Request id: DAR-01.", message.createSubject());
+    assertEquals("Create an election for Data Access Request id: DAR-01.", message.createSubject());
 
     Template template = helper.getTemplate(message.getTemplateName());
     Writer out = new StringWriter();
@@ -61,11 +60,10 @@ class NewDARRequestMessageTest {
     String templateString = out.toString();
     Document parsedTemplate = Jsoup.parse(templateString);
 
-    assertEquals("Broad Data Use Oversight System - New DAR submitted to your DAC",
-        parsedTemplate.title());
     assertEquals(
-        "Hello Admin,",
-        Objects.requireNonNull(parsedTemplate.getElementById("userName")).text());
+        "Broad Data Use Oversight System - New DAR submitted to your DAC", parsedTemplate.title());
+    assertEquals(
+        "Hello Admin,", Objects.requireNonNull(parsedTemplate.getElementById("userName")).text());
     assertTrue(templateString.contains(darCode));
     assertTrue(templateString.contains(serverUrl));
     assertTrue(templateString.contains(dac.getName()));

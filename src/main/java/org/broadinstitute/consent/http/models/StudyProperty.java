@@ -11,8 +11,7 @@ public class StudyProperty {
   private PropertyType type;
   private Object value;
 
-  public StudyProperty() {
-  }
+  public StudyProperty() {}
 
   public StudyProperty(String key, Object value, PropertyType type) {
     this.key = key;
@@ -70,8 +69,10 @@ public class StudyProperty {
     }
     StudyProperty that = (StudyProperty) o;
     return Objects.equals(studyPropertyId, that.studyPropertyId)
-        && Objects.equals(studyId, that.studyId) && Objects.equals(key, that.key)
-        && type == that.type && Objects.equals(value, that.value);
+        && Objects.equals(studyId, that.studyId)
+        && Objects.equals(key, that.key)
+        && type == that.type
+        && Objects.equals(value, that.value);
   }
 
   @Override

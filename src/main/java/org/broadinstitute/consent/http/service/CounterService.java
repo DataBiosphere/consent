@@ -16,5 +16,4 @@ public class CounterService {
   public Integer getNextDarSequence() {
     return counterDAO.incrementCountByName(DAR_COUNTER);
   }
-
 }

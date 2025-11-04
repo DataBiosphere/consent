@@ -6,8 +6,14 @@ import org.zendesk.client.v2.model.Comment;
 import org.zendesk.client.v2.model.CustomFieldValue;
 import org.zendesk.client.v2.model.Ticket;
 
-public record TicketFields(String name, SupportRequestType type, String email, String subject,
-                           String description, String url, List<String> uploads) {
+public record TicketFields(
+    String name,
+    SupportRequestType type,
+    String email,
+    String subject,
+    String description,
+    String url,
+    List<String> uploads) {
 
   private static void validate(boolean condition, String prefix) {
     if (condition) {
@@ -46,11 +52,11 @@ public record TicketFields(String name, SupportRequestType type, String email, S
    * @return List<CustomFieldValue> List of custom fields
    */
   private List<CustomFieldValue> createCustomFields() {
-    return List.of(new CustomFieldValue(360012744452L, new String[]{type.name()}),
-        new CustomFieldValue(360007369412L, new String[]{description}),
-        new CustomFieldValue(360012744292L, new String[]{name}),
-        new CustomFieldValue(360012782111L, new String[]{email}),
-        new CustomFieldValue(360018545031L, new String[]{email}));
+    return List.of(
+        new CustomFieldValue(360012744452L, new String[] {type.name()}),
+        new CustomFieldValue(360007369412L, new String[] {description}),
+        new CustomFieldValue(360012744292L, new String[] {name}),
+        new CustomFieldValue(360012782111L, new String[] {email}),
+        new CustomFieldValue(360018545031L, new String[] {email}));
   }
-
 }

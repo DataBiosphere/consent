@@ -49,14 +49,16 @@ public class ResearcherCloseoutCompletedMessageTest extends AbstractTestHelper {
     var templateString = out.toString();
     Document parsedTemplate = Jsoup.parse(templateString);
 
-    assertEquals("Broad Data Use Oversight System - Researcher - Closeout Complete",
-        parsedTemplate.title());
+    assertEquals(
+        "Broad Data Use Oversight System - Researcher - Closeout Complete", parsedTemplate.title());
     assertEquals("Dear %s,".formatted(userName), getElementTextById(parsedTemplate, "userName"));
     assertEquals(
-        "The closeout on Data Access Request (DAR) %s has been approved and your access to all datasets in this DAR will be revoked unless you have permission to use that data under another DAR.".formatted(
-            darCode), getElementTextById(parsedTemplate, "content"));
-    assertTrue(getElementTextById(parsedTemplate, "warning").contains(
-        "you have agreed to destroy all copies"));
+        "The closeout on Data Access Request (DAR) %s has been approved and your access to all datasets in this DAR will be revoked unless you have permission to use that data under another DAR."
+            .formatted(darCode),
+        getElementTextById(parsedTemplate, "content"));
+    assertTrue(
+        getElementTextById(parsedTemplate, "warning")
+            .contains("you have agreed to destroy all copies"));
     // no unspecified values
     assertFalse(templateString.contains("${"));
   }

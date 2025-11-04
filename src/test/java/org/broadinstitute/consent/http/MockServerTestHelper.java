@@ -7,13 +7,12 @@ import org.mockserver.client.MockServerClient;
 import org.testcontainers.containers.MockServerContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
-public class MockServerTestHelper extends AbstractTestHelper implements TestExecutionListener,
-    WithMockServer {
+public class MockServerTestHelper extends AbstractTestHelper
+    implements TestExecutionListener, WithMockServer {
 
-  public static final MockServerContainer CONTAINER = new MockServerContainer(IMAGE).waitingFor(
-      Wait.forLogMessage(".*started on port:.*", 1));
+  public static final MockServerContainer CONTAINER =
+      new MockServerContainer(IMAGE).waitingFor(Wait.forLogMessage(".*started on port:.*", 1));
   public static MockServerClient mockServerClient;
-
 
   @Override
   public void testPlanExecutionStarted(TestPlan testPlan) {

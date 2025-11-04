@@ -62,12 +62,9 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset dataset = insertDataset();
     Study study = insertStudyWithProperties();
     datasetDAO.updateStudyId(dataset.getDatasetId(), study.getStudyId());
-    createFileStorageObject(study.getUuid().toString(),
-        FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+    createFileStorageObject(study.getUuid().toString(), FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
     createFileStorageObject(
-        dataset.getDatasetId().toString(),
-        FileCategory.NIH_INSTITUTIONAL_CERTIFICATION
-    );
+        dataset.getDatasetId().toString(), FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
     Dataset foundDataset = datasetDAO.findDatasetWithoutFSOInformation(dataset.getDatasetId());
     // Explicitly check queried entities
     assertNotNull(foundDataset.getProperties());
@@ -86,12 +83,9 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset dataset = insertDataset();
     Study study = insertStudyWithProperties();
     datasetDAO.updateStudyId(dataset.getDatasetId(), study.getStudyId());
-    createFileStorageObject(study.getUuid().toString(),
-        FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+    createFileStorageObject(study.getUuid().toString(), FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
     createFileStorageObject(
-        dataset.getDatasetId().toString(),
-        FileCategory.NIH_INSTITUTIONAL_CERTIFICATION
-    );
+        dataset.getDatasetId().toString(), FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
     Dataset foundDataset = datasetDAO.findMinimalDatasetByAlias(dataset.getAlias());
     // Explicitly check queried entities
     assertNotNull(foundDataset.getProperties());
@@ -201,8 +195,8 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset dataset1 = insertDataset();
     Dataset dataset2 = insertDataset();
 
-    List<Dataset> foundDatasets = datasetDAO.findDatasetsByAlias(
-        List.of(dataset1.getAlias(), dataset2.getAlias()));
+    List<Dataset> foundDatasets =
+        datasetDAO.findDatasetsByAlias(List.of(dataset1.getAlias(), dataset2.getAlias()));
     List<Integer> foundDatasetIds = foundDatasets.stream().map(Dataset::getDatasetId).toList();
     assertNotNull(foundDatasets);
     assertTrue(
@@ -215,28 +209,21 @@ class DatasetDAOTest extends DAOTestHelper {
 
     // create unrelated file with the same id as dataset id but different category, timestamp before
     createFileStorageObject(
-        dataset.getDatasetId().toString(),
-        FileCategory.ALTERNATIVE_DATA_SHARING_PLAN
-    );
+        dataset.getDatasetId().toString(), FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
 
-    FileStorageObject nihFile = createFileStorageObject(
-        dataset.getDatasetId().toString(),
-        FileCategory.NIH_INSTITUTIONAL_CERTIFICATION
-    );
+    FileStorageObject nihFile =
+        createFileStorageObject(
+            dataset.getDatasetId().toString(), FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
 
     // create unrelated files with timestamp later than the NIH file: one attached to dataset, one
     // completely separate from the dataset. ensures that the Mapper is selecting only the NIH file.
     createFileStorageObject();
-    createFileStorageObject(
-        dataset.getDatasetId().toString(),
-        FileCategory.DATA_USE_LETTER
-    );
+    createFileStorageObject(dataset.getDatasetId().toString(), FileCategory.DATA_USE_LETTER);
 
     Dataset found = datasetDAO.findDatasetById(dataset.getDatasetId());
 
     assertEquals(nihFile, found.getNihInstitutionalCertificationFile());
-    assertEquals(nihFile.getBlobId(),
-        found.getNihInstitutionalCertificationFile().getBlobId());
+    assertEquals(nihFile.getBlobId(), found.getNihInstitutionalCertificationFile().getBlobId());
   }
 
   @Test
@@ -248,25 +235,25 @@ class DatasetDAOTest extends DAOTestHelper {
     String gcsFileUri = randomAlphabetic(10);
     User createUser = createUser();
 
-    Integer nihFileIdCreatedFirstUpdatedSecond = fileStorageObjectDAO.insertNewFile(
-        fileName,
-        FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue(),
-        bucketName,
-        gcsFileUri,
-        dataset.getDatasetId().toString(),
-        createUser.getUserId(),
-        Instant.ofEpochMilli(100)
-    );
+    Integer nihFileIdCreatedFirstUpdatedSecond =
+        fileStorageObjectDAO.insertNewFile(
+            fileName,
+            FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue(),
+            bucketName,
+            gcsFileUri,
+            dataset.getDatasetId().toString(),
+            createUser.getUserId(),
+            Instant.ofEpochMilli(100));
 
-    Integer nihFileIdCreatedSecondUpdatedFirst = fileStorageObjectDAO.insertNewFile(
-        fileName,
-        FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue(),
-        bucketName,
-        gcsFileUri,
-        dataset.getDatasetId().toString(),
-        createUser.getUserId(),
-        Instant.ofEpochMilli(110)
-    );
+    Integer nihFileIdCreatedSecondUpdatedFirst =
+        fileStorageObjectDAO.insertNewFile(
+            fileName,
+            FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue(),
+            bucketName,
+            gcsFileUri,
+            dataset.getDatasetId().toString(),
+            createUser.getUserId(),
+            Instant.ofEpochMilli(110));
 
     User updateUser = createUser();
 
@@ -287,7 +274,8 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset found = datasetDAO.findDatasetById(dataset.getDatasetId());
 
     // returns last updated file
-    assertEquals(nihFileIdCreatedFirstUpdatedSecond,
+    assertEquals(
+        nihFileIdCreatedFirstUpdatedSecond,
         found.getNihInstitutionalCertificationFile().getFileStorageObjectId());
   }
 
@@ -300,15 +288,15 @@ class DatasetDAOTest extends DAOTestHelper {
     String gcsFileUri = randomAlphabetic(10);
     User createUser = createUser();
 
-    Integer nihFileIdCreatedFirst = fileStorageObjectDAO.insertNewFile(
-        fileName,
-        FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue(),
-        bucketName,
-        gcsFileUri,
-        dataset.getDatasetId().toString(),
-        createUser.getUserId(),
-        Instant.ofEpochMilli(100)
-    );
+    Integer nihFileIdCreatedFirst =
+        fileStorageObjectDAO.insertNewFile(
+            fileName,
+            FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue(),
+            bucketName,
+            gcsFileUri,
+            dataset.getDatasetId().toString(),
+            createUser.getUserId(),
+            Instant.ofEpochMilli(100));
 
     User updateUser = createUser();
 
@@ -319,20 +307,21 @@ class DatasetDAOTest extends DAOTestHelper {
         updateUser.getUserId(),
         Instant.ofEpochMilli(120));
 
-    Integer nihFileIdCreatedSecond = fileStorageObjectDAO.insertNewFile(
-        fileName,
-        FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue(),
-        bucketName,
-        gcsFileUri,
-        dataset.getDatasetId().toString(),
-        createUser.getUserId(),
-        Instant.ofEpochMilli(130)
-    );
+    Integer nihFileIdCreatedSecond =
+        fileStorageObjectDAO.insertNewFile(
+            fileName,
+            FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue(),
+            bucketName,
+            gcsFileUri,
+            dataset.getDatasetId().toString(),
+            createUser.getUserId(),
+            Instant.ofEpochMilli(130));
 
     Dataset found = datasetDAO.findDatasetById(dataset.getDatasetId());
 
     // returns last updated file
-    assertEquals(nihFileIdCreatedSecond,
+    assertEquals(
+        nihFileIdCreatedSecond,
         found.getNihInstitutionalCertificationFile().getFileStorageObjectId());
   }
 
@@ -340,18 +329,14 @@ class DatasetDAOTest extends DAOTestHelper {
   void testGetNIHInstitutionalFile_NotDeleted() {
     Dataset dataset = insertDataset();
 
-    FileStorageObject nihFile = createFileStorageObject(
-        dataset.getDatasetId().toString(),
-        FileCategory.NIH_INSTITUTIONAL_CERTIFICATION
-    );
+    FileStorageObject nihFile =
+        createFileStorageObject(
+            dataset.getDatasetId().toString(), FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
 
     User deleteUser = createUser();
 
     fileStorageObjectDAO.deleteFileById(
-        nihFile.getFileStorageObjectId(),
-        deleteUser.getUserId(),
-        Instant.now()
-    );
+        nihFile.getFileStorageObjectId(), deleteUser.getUserId(), Instant.now());
 
     Dataset found = datasetDAO.findDatasetById(dataset.getDatasetId());
 
@@ -362,10 +347,11 @@ class DatasetDAOTest extends DAOTestHelper {
   void testGetDictionaryTerms() {
     List<Dictionary> terms = datasetDAO.getDictionaryTerms();
     assertFalse(terms.isEmpty());
-    terms.forEach(t -> {
-      assertNotNull(t.getKeyId());
-      assertNotNull(t.getKey());
-    });
+    terms.forEach(
+        t -> {
+          assertNotNull(t.getKeyId());
+          assertNotNull(t.getKey());
+        });
   }
 
   @Test
@@ -439,45 +425,46 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset d = insertDataset();
     Set<DatasetProperty> properties = datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
     DatasetProperty originalProperty = properties.stream().toList().get(0);
-    DatasetProperty newProperty = new DatasetProperty(
-        d.getDatasetId(),
-        1,
-        "dataAccessCommitteeId",
-        "Updated Value",
-        PropertyType.String, new Date()
-    );
+    DatasetProperty newProperty =
+        new DatasetProperty(
+            d.getDatasetId(),
+            1,
+            "dataAccessCommitteeId",
+            "Updated Value",
+            PropertyType.String,
+            new Date());
     List<DatasetProperty> updatedProperties = new ArrayList<>();
     updatedProperties.add(newProperty);
-    datasetDAO.updateDatasetProperty(d.getDatasetId(), updatedProperties.get(0).getPropertyKey(),
+    datasetDAO.updateDatasetProperty(
+        d.getDatasetId(),
+        updatedProperties.get(0).getPropertyKey(),
         updatedProperties.get(0).getPropertyValue().toString());
-    Set<DatasetProperty> returnedProperties = datasetDAO.findDatasetPropertiesByDatasetId(
-        d.getDatasetId());
+    Set<DatasetProperty> returnedProperties =
+        datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
     DatasetProperty returnedProperty = returnedProperties.stream().toList().get(0);
-    assertEquals(originalProperty.getPropertyKey(),
-        returnedProperty.getPropertyKey());
+    assertEquals(originalProperty.getPropertyKey(), returnedProperty.getPropertyKey());
     assertEquals(originalProperty.getPropertyId(), returnedProperty.getPropertyId());
-    assertNotEquals(originalProperty.getPropertyValue(),
-        returnedProperty.getPropertyValue());
+    assertNotEquals(originalProperty.getPropertyValue(), returnedProperty.getPropertyValue());
   }
 
   @Test
   void testCreateNumberTypedDatasetProperty() {
     Dataset d = insertDataset();
 
-    Set<DatasetProperty> oldProperties = datasetDAO.findDatasetPropertiesByDatasetId(
-        d.getDatasetId());
+    Set<DatasetProperty> oldProperties =
+        datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
     DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
     datasetDAO.deleteDatasetPropertyByKey(d.getDatasetId(), propertyToDelete.getPropertyKey());
 
-    List<DatasetProperty> newProps = List.of(
-        new DatasetProperty(
-            d.getDatasetId(),
-            1,
-            "dataAccessCommitteeId",
-            "10",
-            PropertyType.Number,
-            new Date())
-    );
+    List<DatasetProperty> newProps =
+        List.of(
+            new DatasetProperty(
+                d.getDatasetId(),
+                1,
+                "dataAccessCommitteeId",
+                "10",
+                PropertyType.Number,
+                new Date()));
     datasetDAO.insertDatasetProperties(newProps);
 
     Dataset dWithProps = datasetDAO.findDatasetById(d.getDatasetId());
@@ -494,23 +481,22 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset d = insertDataset();
     Instant date = Instant.now();
 
-    Set<DatasetProperty> oldProperties = datasetDAO.findDatasetPropertiesByDatasetId(
-        d.getDatasetId());
+    Set<DatasetProperty> oldProperties =
+        datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
     DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
     datasetDAO.deleteDatasetPropertyByKey(d.getDatasetId(), propertyToDelete.getPropertyKey());
 
-    DatasetProperty propToAdd = new DatasetProperty(
-        d.getDatasetId(),
-        1,
-        "dataAccessCommitteeId",
-        date.toString(),
-        PropertyType.Date,
-        new Date());
+    DatasetProperty propToAdd =
+        new DatasetProperty(
+            d.getDatasetId(),
+            1,
+            "dataAccessCommitteeId",
+            date.toString(),
+            PropertyType.Date,
+            new Date());
 
     propToAdd.setSchemaProperty("date");
-    List<DatasetProperty> newProps = List.of(
-        propToAdd
-    );
+    List<DatasetProperty> newProps = List.of(propToAdd);
     datasetDAO.insertDatasetProperties(newProps);
 
     Set<DatasetProperty> props = datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
@@ -526,20 +512,20 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset d = insertDataset();
     Boolean bool = Boolean.FALSE;
 
-    Set<DatasetProperty> oldProperties = datasetDAO.findDatasetPropertiesByDatasetId(
-        d.getDatasetId());
+    Set<DatasetProperty> oldProperties =
+        datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
     DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
     datasetDAO.deleteDatasetPropertyByKey(d.getDatasetId(), propertyToDelete.getPropertyKey());
 
-    List<DatasetProperty> newProps = List.of(
-        new DatasetProperty(
-            d.getDatasetId(),
-            1,
-            "dataAccessCommitteeId",
-            bool.toString(),
-            PropertyType.Boolean,
-            new Date())
-    );
+    List<DatasetProperty> newProps =
+        List.of(
+            new DatasetProperty(
+                d.getDatasetId(),
+                1,
+                "dataAccessCommitteeId",
+                bool.toString(),
+                PropertyType.Boolean,
+                new Date()));
     datasetDAO.insertDatasetProperties(newProps);
 
     Dataset dWithProps = datasetDAO.findDatasetById(d.getDatasetId());
@@ -557,20 +543,20 @@ class DatasetDAOTest extends DAOTestHelper {
     JsonObject jsonObject = new JsonObject();
     jsonObject.add("test", new JsonObject());
 
-    Set<DatasetProperty> oldProperties = datasetDAO.findDatasetPropertiesByDatasetId(
-        d.getDatasetId());
+    Set<DatasetProperty> oldProperties =
+        datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
     DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
     datasetDAO.deleteDatasetPropertyByKey(d.getDatasetId(), propertyToDelete.getPropertyKey());
 
-    List<DatasetProperty> newProps = List.of(
-        new DatasetProperty(
-            d.getDatasetId(),
-            1,
-            "dataAccessCommitteeId",
-            jsonObject.toString(),
-            PropertyType.Json,
-            new Date())
-    );
+    List<DatasetProperty> newProps =
+        List.of(
+            new DatasetProperty(
+                d.getDatasetId(),
+                1,
+                "dataAccessCommitteeId",
+                jsonObject.toString(),
+                PropertyType.Json,
+                new Date()));
     datasetDAO.insertDatasetProperties(newProps);
 
     Dataset dWithProps = datasetDAO.findDatasetById(d.getDatasetId());
@@ -587,20 +573,20 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset d = insertDataset();
     String value = "hi";
 
-    Set<DatasetProperty> oldProperties = datasetDAO.findDatasetPropertiesByDatasetId(
-        d.getDatasetId());
+    Set<DatasetProperty> oldProperties =
+        datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
     DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
     datasetDAO.deleteDatasetPropertyByKey(d.getDatasetId(), propertyToDelete.getPropertyKey());
 
-    List<DatasetProperty> newProps = List.of(
-        new DatasetProperty(
-            d.getDatasetId(),
-            1,
-            "dataAccessCommitteeId",
-            value,
-            PropertyType.String,
-            new Date())
-    );
+    List<DatasetProperty> newProps =
+        List.of(
+            new DatasetProperty(
+                d.getDatasetId(),
+                1,
+                "dataAccessCommitteeId",
+                value,
+                PropertyType.String,
+                new Date()));
     datasetDAO.insertDatasetProperties(newProps);
 
     Dataset dWithProps = datasetDAO.findDatasetById(d.getDatasetId());
@@ -617,20 +603,15 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset d = insertDataset();
     String schemaValue = "test test test test";
 
-    Set<DatasetProperty> oldProperties = datasetDAO.findDatasetPropertiesByDatasetId(
-        d.getDatasetId());
+    Set<DatasetProperty> oldProperties =
+        datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
     DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
     datasetDAO.deleteDatasetPropertyByKey(d.getDatasetId(), propertyToDelete.getPropertyKey());
 
-    List<DatasetProperty> newProps = List.of(
-        new DatasetProperty(
-            d.getDatasetId(),
-            1,
-            schemaValue,
-            "asdf",
-            PropertyType.String,
-            new Date())
-    );
+    List<DatasetProperty> newProps =
+        List.of(
+            new DatasetProperty(
+                d.getDatasetId(), 1, schemaValue, "asdf", PropertyType.String, new Date()));
     datasetDAO.insertDatasetProperties(newProps);
 
     Dataset dWithProps = datasetDAO.findDatasetById(d.getDatasetId());
@@ -647,17 +628,21 @@ class DatasetDAOTest extends DAOTestHelper {
     Set<DatasetProperty> properties = datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
     DatasetProperty propertyToDelete = properties.stream().toList().get(0);
     datasetDAO.deleteDatasetPropertyByKey(d.getDatasetId(), propertyToDelete.getPropertyKey());
-    Set<DatasetProperty> returnedProperties = datasetDAO.findDatasetPropertiesByDatasetId(
-        d.getDatasetId());
+    Set<DatasetProperty> returnedProperties =
+        datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
     assertNotEquals(properties.size(), returnedProperties.size());
   }
 
   @Test
   void testFindAllDatasetIds() {
-    List<Integer> insertedDatasetIds = IntStream.range(1, 5).mapToObj(i -> {
-      Dataset dataset = insertDataset();
-      return dataset.getDatasetId();
-    }).toList();
+    List<Integer> insertedDatasetIds =
+        IntStream.range(1, 5)
+            .mapToObj(
+                i -> {
+                  Dataset dataset = insertDataset();
+                  return dataset.getDatasetId();
+                })
+            .toList();
     List<Integer> datasetIds = datasetDAO.findAllDatasetIds();
     assertThat(datasetIds, contains(insertedDatasetIds.toArray()));
   }
@@ -665,12 +650,14 @@ class DatasetDAOTest extends DAOTestHelper {
   @Test
   void testZeroAliasValuesValid() {
     Dataset dataset = insertDataset();
-    jdbi.useHandle(handle -> {
-      Update update = handle.createUpdate(" UPDATE dataset SET alias = 0 WHERE dataset_id = :dataset_id ");
-      update.bind("dataset_id", dataset.getDatasetId());
-      update.execute();
-      handle.commit();
-    });
+    jdbi.useHandle(
+        handle -> {
+          Update update =
+              handle.createUpdate(" UPDATE dataset SET alias = 0 WHERE dataset_id = :dataset_id ");
+          update.bind("dataset_id", dataset.getDatasetId());
+          update.execute();
+          handle.commit();
+        });
     Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertEquals(0, updatedDataset.getAlias());
     updatedDataset.setDatasetIdentifier();
@@ -681,7 +668,7 @@ class DatasetDAOTest extends DAOTestHelper {
   void testFindAllStudyNames() {
     Dataset ds1 = insertDataset();
     String ds1Name = randomAlphabetic(20);
-    createStringDatasetProperty(ds1.getDatasetId(),  ds1Name);
+    createStringDatasetProperty(ds1.getDatasetId(), ds1Name);
 
     Dataset ds2 = insertDataset();
     String ds2Name = randomAlphabetic(25);
@@ -722,8 +709,8 @@ class DatasetDAOTest extends DAOTestHelper {
     datasetDAO.updateDatasetDacId(datasetTwo.getDatasetId(), dacTwo.getDacId());
 
     List<Integer> datasetIds = List.of(dataset.getDatasetId(), datasetTwo.getDatasetId());
-    List<Dataset> datasets = datasetDAO.findDatasetListByDacIds(
-        List.of(dac.getDacId(), dacTwo.getDacId()));
+    List<Dataset> datasets =
+        datasetDAO.findDatasetListByDacIds(List.of(dac.getDacId(), dacTwo.getDacId()));
     datasets.forEach(d -> assertTrue(datasetIds.contains(d.getDatasetId())));
   }
 
@@ -741,8 +728,8 @@ class DatasetDAOTest extends DAOTestHelper {
     datasetDAO.updateDatasetDacId(datasetTwo.getDatasetId(), dacTwo.getDacId());
 
     List<Integer> datasetIds = List.of(dataset.getDatasetId(), datasetTwo.getDatasetId());
-    List<Integer> foundDatasetIds = datasetDAO.findDatasetIdsByDacIds(
-        List.of(dac.getDacId(), dacTwo.getDacId()));
+    List<Integer> foundDatasetIds =
+        datasetDAO.findDatasetIdsByDacIds(List.of(dac.getDacId(), dacTwo.getDacId()));
     assertTrue(datasetIds.containsAll(foundDatasetIds));
     assertFalse(foundDatasetIds.contains(datasetThree.getDatasetId()));
   }
@@ -751,12 +738,13 @@ class DatasetDAOTest extends DAOTestHelper {
   void testUpdateDatasetDataUse() {
     Dataset dataset = insertDataset();
     DataUse oldDataUse = dataset.getDataUse();
-    DataUse newDataUse = new DataUseBuilder()
-        .setGeneralUse(false)
-        .setNonProfitUse(true)
-        .setHmbResearch(true)
-        .setDiseaseRestrictions(List.of("DOID_1"))
-        .build();
+    DataUse newDataUse =
+        new DataUseBuilder()
+            .setGeneralUse(false)
+            .setNonProfitUse(true)
+            .setHmbResearch(true)
+            .setDiseaseRestrictions(List.of("DOID_1"))
+            .build();
 
     datasetDAO.updateDatasetDataUse(dataset.getDatasetId(), newDataUse.toString());
     Dataset updated = datasetDAO.findDatasetById(dataset.getDatasetId());
@@ -792,9 +780,7 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset dataset = insertDataset();
     User user = createUser();
     datasetDAO.updateDatasetUpdateUser(
-        dataset.getDatasetId(),
-        new Timestamp(new Date().getTime()),
-        user.getUserId());
+        dataset.getDatasetId(), new Timestamp(new Date().getTime()), user.getUserId());
     Dataset foundDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNotNull(foundDataset);
     assertEquals(user.getUserId(), foundDataset.getUpdateUserId());
@@ -805,34 +791,28 @@ class DatasetDAOTest extends DAOTestHelper {
   void testUpdateDatasetApproval() {
     User updateUser = createUser();
     Dataset dataset = insertDataset();
-    datasetDAO.updateDatasetApproval(true, Instant.now(), updateUser.getUserId(),
-        dataset.getDatasetId());
+    datasetDAO.updateDatasetApproval(
+        true, Instant.now(), updateUser.getUserId(), dataset.getDatasetId());
     Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNotNull(updatedDataset);
     assertTrue(updatedDataset.getDacApproval());
-    datasetDAO.updateDatasetApproval(false, Instant.now(), updateUser.getUserId(),
-        dataset.getDatasetId());
+    datasetDAO.updateDatasetApproval(
+        false, Instant.now(), updateUser.getUserId(), dataset.getDatasetId());
     Dataset updatedDatasetAfterApprovalFalse = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNotNull(updatedDatasetAfterApprovalFalse);
-    assertEquals(dataset.getDatasetId(),
-        updatedDatasetAfterApprovalFalse.getDatasetId());
+    assertEquals(dataset.getDatasetId(), updatedDatasetAfterApprovalFalse.getDatasetId());
     assertFalse(updatedDatasetAfterApprovalFalse.getDacApproval());
-
   }
 
   @Test
   void testInsertDatasetAudit() {
     Dataset d = insertDataset();
-    DatasetAudit audit = new DatasetAudit(
-        d.getDatasetId(),
-        "objectid",
-        "name",
-        new Date(),
-        d.getCreateUserId(),
-        "action");
+    DatasetAudit audit =
+        new DatasetAudit(
+            d.getDatasetId(), "objectid", "name", new Date(), d.getCreateUserId(), "action");
     Integer auditId = datasetDAO.insertDatasetAudit(audit);
-    Optional<DatasetAudit> auditResponse = Optional.ofNullable(
-        datasetDAO.findAuditsByDatasetId(d.getDatasetId()).get(0));
+    Optional<DatasetAudit> auditResponse =
+        Optional.ofNullable(datasetDAO.findAuditsByDatasetId(d.getDatasetId()).get(0));
     assertTrue(auditResponse.isPresent());
     assertEquals(auditId, auditResponse.get().getDataSetAuditId());
   }
@@ -861,8 +841,9 @@ class DatasetDAOTest extends DAOTestHelper {
 
     insertDataset(); // create unrelated datasets (for testing study's dataset ids)
 
-    FileStorageObject fso = createFileStorageObject(study.getUuid().toString(),
-        FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+    FileStorageObject fso =
+        createFileStorageObject(
+            study.getUuid().toString(), FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
 
     ds = datasetDAO.findDatasetById(ds.getDatasetId());
 
@@ -874,12 +855,12 @@ class DatasetDAOTest extends DAOTestHelper {
     assertEquals(study.getProperties().size(), ds.getStudy().getProperties().size());
     // reducer caught FSO
     assertNotNull(fso);
-    assertEquals(fso.getFileStorageObjectId(),
+    assertEquals(
+        fso.getFileStorageObjectId(),
         ds.getStudy().getAlternativeDataSharingPlan().getFileStorageObjectId());
     assertEquals(2, ds.getStudy().getDatasetIds().size());
     assertTrue(ds.getStudy().getDatasetIds().contains(ds.getDatasetId()));
-    assertTrue(
-        ds.getStudy().getDatasetIds().contains(otherDsOnStudy.getDatasetId()));
+    assertTrue(ds.getStudy().getDatasetIds().contains(otherDsOnStudy.getDatasetId()));
   }
 
   @ParameterizedTest
@@ -895,32 +876,59 @@ class DatasetDAOTest extends DAOTestHelper {
     Timestamp timestamp = new Timestamp(new Date().getTime());
 
     Dac dac1 = insertDac();
-    datasetDAO.updateDataset(dataset1.getDatasetId(), dataset1.getDatasetName(), timestamp,
-        user.getUserId(), dac1.getDacId());
-    datasetDAO.updateDataset(dataset2.getDatasetId(), dataset2.getDatasetName(), timestamp,
-        user.getUserId(), dac1.getDacId());
+    datasetDAO.updateDataset(
+        dataset1.getDatasetId(),
+        dataset1.getDatasetName(),
+        timestamp,
+        user.getUserId(),
+        dac1.getDacId());
+    datasetDAO.updateDataset(
+        dataset2.getDatasetId(),
+        dataset2.getDatasetName(),
+        timestamp,
+        user.getUserId(),
+        dac1.getDacId());
 
     Dac dac2 = insertDac();
-    datasetDAO.updateDataset(dataset3.getDatasetId(), dataset3.getDatasetName(), timestamp,
-        user.getUserId(), dac2.getDacId());
-    datasetDAO.updateDataset(dataset4.getDatasetId(), dataset4.getDatasetName(), timestamp,
-        user.getUserId(), dac2.getDacId());
+    datasetDAO.updateDataset(
+        dataset3.getDatasetId(),
+        dataset3.getDatasetName(),
+        timestamp,
+        user.getUserId(),
+        dac2.getDacId());
+    datasetDAO.updateDataset(
+        dataset4.getDatasetId(),
+        dataset4.getDatasetName(),
+        timestamp,
+        user.getUserId(),
+        dac2.getDacId());
 
     DarCollection dar1 = createDarCollectionWithDatasets(dac1.getDacId(), user, List.of(dataset1));
-    DarCollection dar2 = createDarCollectionWithDatasets(dac2.getDacId(), user,
-        List.of(dataset2, dataset3));
+    DarCollection dar2 =
+        createDarCollectionWithDatasets(dac2.getDacId(), user, List.of(dataset2, dataset3));
     DarCollection dar3 = createDarCollectionWithDatasets(dac2.getDacId(), user, List.of(dataset4));
     List<DarCollection> allDarCollections = List.of(dar1, dar2, dar3);
 
-    Map<Integer, Boolean> expectedFinalVotesForDatasets = Map.of(dataset1.getDatasetId(), false,
-        dataset2.getDatasetId(), false, dataset3.getDatasetId(), true, dataset4.getDatasetId(),
-        true);
+    Map<Integer, Boolean> expectedFinalVotesForDatasets =
+        Map.of(
+            dataset1.getDatasetId(),
+            false,
+            dataset2.getDatasetId(),
+            false,
+            dataset3.getDatasetId(),
+            true,
+            dataset4.getDatasetId(),
+            true);
 
     for (DarCollection dar : allDarCollections) {
       for (Map.Entry<String, DataAccessRequest> e : dar.getDars().entrySet()) {
         for (Integer id : e.getValue().getDatasetIds()) {
-          createDataAccessElectionWithVotes(e.getKey(), id, user.getUserId(),
-              expectedFinalVotesForDatasets.get(id), VoteType.valueOf(voteType));
+          createDataAccessElectionWithVotes(
+              e.getKey(),
+              id,
+              user.getUserId(),
+              expectedFinalVotesForDatasets.get(id),
+              VoteType.valueOf(voteType));
         }
       }
     }
@@ -936,7 +944,8 @@ class DatasetDAOTest extends DAOTestHelper {
 
     // user with a mix of approved and unapproved datasets
     User user = createUser();
-    libraryCardDAO.insertLibraryCard(user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+    libraryCardDAO.insertLibraryCard(
+        user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
 
     Dataset dataset1 = createDataset(false);
     Dataset dataset2 = createDataset(true);
@@ -946,33 +955,59 @@ class DatasetDAOTest extends DAOTestHelper {
     Timestamp timestamp = new Timestamp(new Date().getTime());
 
     Dac dac1 = insertDac();
-    datasetDAO.updateDataset(dataset1.getDatasetId(), dataset1.getDatasetName(), timestamp,
-        user.getUserId(), dac1.getDacId());
-    datasetDAO.updateDataset(dataset2.getDatasetId(), dataset2.getDatasetName(), timestamp,
-        user.getUserId(), dac1.getDacId());
+    datasetDAO.updateDataset(
+        dataset1.getDatasetId(),
+        dataset1.getDatasetName(),
+        timestamp,
+        user.getUserId(),
+        dac1.getDacId());
+    datasetDAO.updateDataset(
+        dataset2.getDatasetId(),
+        dataset2.getDatasetName(),
+        timestamp,
+        user.getUserId(),
+        dac1.getDacId());
 
     Dac dac2 = insertDac();
-    datasetDAO.updateDataset(dataset3.getDatasetId(), dataset3.getDatasetName(), timestamp,
-        user.getUserId(), dac2.getDacId());
-    datasetDAO.updateDataset(dataset4.getDatasetId(), dataset4.getDatasetName(), timestamp,
-        user.getUserId(), dac2.getDacId());
+    datasetDAO.updateDataset(
+        dataset3.getDatasetId(),
+        dataset3.getDatasetName(),
+        timestamp,
+        user.getUserId(),
+        dac2.getDacId());
+    datasetDAO.updateDataset(
+        dataset4.getDatasetId(),
+        dataset4.getDatasetName(),
+        timestamp,
+        user.getUserId(),
+        dac2.getDacId());
 
     DarCollection dar1 = createDarCollectionWithDatasets(dac1.getDacId(), user, List.of(dataset1));
-    DarCollection dar2 = createDarCollectionWithDatasets(dac2.getDacId(), user,
-        List.of(dataset2, dataset3));
+    DarCollection dar2 =
+        createDarCollectionWithDatasets(dac2.getDacId(), user, List.of(dataset2, dataset3));
     DarCollection dar3 = createDarCollectionWithDatasets(dac2.getDacId(), user, List.of(dataset4));
     List<DarCollection> allDarCollections = List.of(dar1, dar2, dar3);
 
-    Map<Integer, Boolean> expectedFinalVotesForDatasets = Map.of(dataset1.getDatasetId(), false,
-        dataset2.getDatasetId(), false, dataset3.getDatasetId(), true, dataset4.getDatasetId(),
-        true);
-
+    Map<Integer, Boolean> expectedFinalVotesForDatasets =
+        Map.of(
+            dataset1.getDatasetId(),
+            false,
+            dataset2.getDatasetId(),
+            false,
+            dataset3.getDatasetId(),
+            true,
+            dataset4.getDatasetId(),
+            true);
 
     for (DarCollection dar : allDarCollections) {
       for (Map.Entry<String, DataAccessRequest> e : dar.getDars().entrySet()) {
         for (Integer id : e.getValue().getDatasetIds()) {
-          createDataAccessElectionWithVotes(e.getKey(), id, user.getUserId(),
-              expectedFinalVotesForDatasets.get(id), VoteType.valueOf(voteType));
+          createDataAccessElectionWithVotes(
+              e.getKey(),
+              id,
+              user.getUserId(),
+              expectedFinalVotesForDatasets.get(id),
+              VoteType.valueOf(voteType));
         }
       }
     }
@@ -981,25 +1016,40 @@ class DatasetDAOTest extends DAOTestHelper {
     assertNotNull(approvedDatasets);
 
     // checks that all datasets in the result are approved
-    approvedDatasets.forEach(approvedDataset -> assertTrue(
-        datasetDAO.findDatasetByAlias(approvedDataset.getAlias()).getDacApproval()));
+    approvedDatasets.forEach(
+        approvedDataset ->
+            assertTrue(datasetDAO.findDatasetByAlias(approvedDataset.getAlias()).getDacApproval()));
 
-    ApprovedDataset expectedApprovedDataset1 = new ApprovedDataset(dataset3.getAlias(),
-        dar2.getDarCode(), dataset3.getDatasetName(), dac2.getName(), dar2.getMostRecentDar().getExpiresAt());
-    ApprovedDataset expectedApprovedDataset2 = new ApprovedDataset(dataset4.getAlias(),
-        dar3.getDarCode(), dataset4.getDatasetName(), dac2.getName(), dar3.getMostRecentDar().getExpiresAt());
-    Map<Integer, ApprovedDataset> expectedDatasets = Map.of(dataset3.getAlias(),
-        expectedApprovedDataset1, dataset4.getAlias(), expectedApprovedDataset2);
+    ApprovedDataset expectedApprovedDataset1 =
+        new ApprovedDataset(
+            dataset3.getAlias(),
+            dar2.getDarCode(),
+            dataset3.getDatasetName(),
+            dac2.getName(),
+            dar2.getMostRecentDar().getExpiresAt());
+    ApprovedDataset expectedApprovedDataset2 =
+        new ApprovedDataset(
+            dataset4.getAlias(),
+            dar3.getDarCode(),
+            dataset4.getDatasetName(),
+            dac2.getName(),
+            dar3.getMostRecentDar().getExpiresAt());
+    Map<Integer, ApprovedDataset> expectedDatasets =
+        Map.of(
+            dataset3.getAlias(),
+            expectedApprovedDataset1,
+            dataset4.getAlias(),
+            expectedApprovedDataset2);
 
     // checks that the expected result list size and contents match the observed result
     assertEquals(expectedDatasets.size(), approvedDatasets.size());
-    IntStream.range(0, approvedDatasets.size()).forEach(index -> {
-      ApprovedDataset dataset = approvedDatasets.get(index);
-      ApprovedDataset expectedDataset = expectedDatasets.get(dataset.getAlias());
-      assertTrue(dataset.isApprovedDatasetEqual(expectedDataset));
-    });
-
-
+    IntStream.range(0, approvedDatasets.size())
+        .forEach(
+            index -> {
+              ApprovedDataset dataset = approvedDatasets.get(index);
+              ApprovedDataset expectedDataset = expectedDatasets.get(dataset.getAlias());
+              assertTrue(dataset.isApprovedDatasetEqual(expectedDataset));
+            });
   }
 
   @ParameterizedTest
@@ -1015,13 +1065,21 @@ class DatasetDAOTest extends DAOTestHelper {
     Timestamp timestamp = new Timestamp(new Date().getTime());
 
     Dac dac1 = insertDac();
-    datasetDAO.updateDataset(dataset1.getDatasetId(), dataset1.getDatasetName(), timestamp,
-        user.getUserId(), dac1.getDacId());
-    datasetDAO.updateDataset(dataset2.getDatasetId(), dataset2.getDatasetName(), timestamp,
-        user.getUserId(), dac1.getDacId());
+    datasetDAO.updateDataset(
+        dataset1.getDatasetId(),
+        dataset1.getDatasetName(),
+        timestamp,
+        user.getUserId(),
+        dac1.getDacId());
+    datasetDAO.updateDataset(
+        dataset2.getDatasetId(),
+        dataset2.getDatasetName(),
+        timestamp,
+        user.getUserId(),
+        dac1.getDacId());
 
-    DarCollection dar1 = createDarCollectionWithDatasets(dac1.getDacId(), user,
-        List.of(dataset1, dataset2));
+    DarCollection dar1 =
+        createDarCollectionWithDatasets(dac1.getDacId(), user, List.of(dataset1, dataset2));
 
     for (Map.Entry<String, DataAccessRequest> e : dar1.getDars().entrySet()) {
       for (Integer id : e.getValue().getDatasetIds()) {
@@ -1041,7 +1099,6 @@ class DatasetDAOTest extends DAOTestHelper {
     User user = createUser();
     List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
     assertEquals(0, approvedDatasets.size());
-
   }
 
   @Test
@@ -1051,7 +1108,8 @@ class DatasetDAOTest extends DAOTestHelper {
     User user = createUser();
     User chairperson1 = createUser();
     User chairperson2 = createUser();
-    libraryCardDAO.insertLibraryCard(user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), now);
+    libraryCardDAO.insertLibraryCard(
+        user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), now);
 
     Dataset dataset1 = createDataset(true);
     Dataset dataset2 = createDataset(true);
@@ -1061,72 +1119,102 @@ class DatasetDAOTest extends DAOTestHelper {
     Timestamp timestamp = new Timestamp(now.getTime());
 
     Dac dac1 = insertDac();
-    datasetDAO.updateDataset(dataset1.getDatasetId(), dataset1.getDatasetName(), timestamp, chairperson1.getUserId(), dac1.getDacId());
-    datasetDAO.updateDataset(dataset2.getDatasetId(), dataset2.getDatasetName(), timestamp, chairperson1.getUserId(), dac1.getDacId());
-    datasetDAO.updateDatasetApproval(true, Instant.now(), chairperson1.getUserId(), dataset1.getDatasetId());
-    datasetDAO.updateDatasetApproval(true, Instant.now(), chairperson1.getUserId(), dataset2.getDatasetId());
-
+    datasetDAO.updateDataset(
+        dataset1.getDatasetId(),
+        dataset1.getDatasetName(),
+        timestamp,
+        chairperson1.getUserId(),
+        dac1.getDacId());
+    datasetDAO.updateDataset(
+        dataset2.getDatasetId(),
+        dataset2.getDatasetName(),
+        timestamp,
+        chairperson1.getUserId(),
+        dac1.getDacId());
+    datasetDAO.updateDatasetApproval(
+        true, Instant.now(), chairperson1.getUserId(), dataset1.getDatasetId());
+    datasetDAO.updateDatasetApproval(
+        true, Instant.now(), chairperson1.getUserId(), dataset2.getDatasetId());
 
     Dac dac2 = insertDac();
-    datasetDAO.updateDataset(dataset3.getDatasetId(), dataset3.getDatasetName(), timestamp, chairperson2.getUserId(), dac2.getDacId());
-    datasetDAO.updateDataset(dataset4.getDatasetId(), dataset4.getDatasetName(), timestamp, chairperson2.getUserId(), dac2.getDacId());
-    datasetDAO.updateDatasetApproval(true, Instant.now(), chairperson2.getUserId(), dataset3.getDatasetId());
-    datasetDAO.updateDatasetApproval(true, Instant.now(), chairperson2.getUserId(), dataset4.getDatasetId());
+    datasetDAO.updateDataset(
+        dataset3.getDatasetId(),
+        dataset3.getDatasetName(),
+        timestamp,
+        chairperson2.getUserId(),
+        dac2.getDacId());
+    datasetDAO.updateDataset(
+        dataset4.getDatasetId(),
+        dataset4.getDatasetName(),
+        timestamp,
+        chairperson2.getUserId(),
+        dac2.getDacId());
+    datasetDAO.updateDatasetApproval(
+        true, Instant.now(), chairperson2.getUserId(), dataset3.getDatasetId());
+    datasetDAO.updateDatasetApproval(
+        true, Instant.now(), chairperson2.getUserId(), dataset4.getDatasetId());
 
-    DarCollection darCollection = createDarCollectionWithDatasetsNewModel(user, List.of(dataset1, dataset2, dataset3, dataset4));
+    DarCollection darCollection =
+        createDarCollectionWithDatasetsNewModel(
+            user, List.of(dataset1, dataset2, dataset3, dataset4));
     assertEquals(0, datasetDAO.getApprovedDatasets(user.getUserId()).size());
 
     // Simulate 2 DAC 1 elections for yesterday
     Date yesterday = Date.from(Instant.now().minus(1, ChronoUnit.DAYS));
-    Integer electionId1 = electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        yesterday,
-        darCollection.getMostRecentDar().getReferenceId(),
-        dataset1.getDatasetId()
-    );
-    Integer voteId1 = voteDAO.insertVote(chairperson1.getUserId(), electionId1, VoteType.FINAL.getValue());
+    Integer electionId1 =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            yesterday,
+            darCollection.getMostRecentDar().getReferenceId(),
+            dataset1.getDatasetId());
+    Integer voteId1 =
+        voteDAO.insertVote(chairperson1.getUserId(), electionId1, VoteType.FINAL.getValue());
     updateVote(true, "rationale", yesterday, voteId1, false, electionId1, yesterday, false);
     electionDAO.updateElectionById(electionId1, ElectionStatus.CLOSED.getValue(), yesterday);
     List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
     assertEquals(1, approvedDatasets.size());
-    assertEquals(darCollection.getMostRecentDar().getExpiresAt(), approvedDatasets.get(0).getExpirationDate());
+    assertEquals(
+        darCollection.getMostRecentDar().getExpiresAt(),
+        approvedDatasets.get(0).getExpirationDate());
 
-
-    Integer electionId2 = electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        yesterday,
-        darCollection.getMostRecentDar().getReferenceId(),
-        dataset2.getDatasetId()
-    );
-    Integer voteId2 = voteDAO.insertVote(chairperson1.getUserId(), electionId2, VoteType.FINAL.getValue());
+    Integer electionId2 =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            yesterday,
+            darCollection.getMostRecentDar().getReferenceId(),
+            dataset2.getDatasetId());
+    Integer voteId2 =
+        voteDAO.insertVote(chairperson1.getUserId(), electionId2, VoteType.FINAL.getValue());
     updateVote(true, "rationale", yesterday, voteId2, false, electionId1, yesterday, false);
     electionDAO.updateElectionById(electionId2, ElectionStatus.CLOSED.getValue(), yesterday);
     assertEquals(2, datasetDAO.getApprovedDatasets(user.getUserId()).size());
 
     // Simulate 2 DAC 2 elections for today
     Date today = new Date();
-    Integer electionId3 = electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        today,
-        darCollection.getMostRecentDar().getReferenceId(),
-        dataset3.getDatasetId()
-    );
-    Integer voteId3 = voteDAO.insertVote(chairperson2.getUserId(), electionId3, VoteType.FINAL.getValue());
+    Integer electionId3 =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            today,
+            darCollection.getMostRecentDar().getReferenceId(),
+            dataset3.getDatasetId());
+    Integer voteId3 =
+        voteDAO.insertVote(chairperson2.getUserId(), electionId3, VoteType.FINAL.getValue());
     updateVote(true, "rationale", today, voteId3, false, electionId3, today, false);
     electionDAO.updateElectionById(electionId3, ElectionStatus.CLOSED.getValue(), today);
     assertEquals(3, datasetDAO.getApprovedDatasets(user.getUserId()).size());
 
-    Integer electionId4 = electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        today,
-        darCollection.getMostRecentDar().getReferenceId(),
-        dataset4.getDatasetId()
-    );
-    Integer voteId4 = voteDAO.insertVote(chairperson2.getUserId(), electionId4, VoteType.FINAL.getValue());
+    Integer electionId4 =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            today,
+            darCollection.getMostRecentDar().getReferenceId(),
+            dataset4.getDatasetId());
+    Integer voteId4 =
+        voteDAO.insertVote(chairperson2.getUserId(), electionId4, VoteType.FINAL.getValue());
     updateVote(true, "rationale", today, voteId4, false, electionId4, today, false);
     electionDAO.updateElectionById(electionId4, ElectionStatus.CLOSED.getValue(), today);
 
@@ -1150,7 +1238,14 @@ class DatasetDAOTest extends DAOTestHelper {
     DataAccessRequest recentDar = darCollection.getMostRecentDar();
 
     // submit a progress report.
-    DataAccessRequest progressReport = createProgressReport(recentDar.getData(), recentDar.getEraCommonsId(), recentDar.getUserId(), recentDar.getCollectionId(), recentDar.getId(), recentDar.getDatasetIds());
+    DataAccessRequest progressReport =
+        createProgressReport(
+            recentDar.getData(),
+            recentDar.getEraCommonsId(),
+            recentDar.getUserId(),
+            recentDar.getCollectionId(),
+            recentDar.getId(),
+            recentDar.getDatasetIds());
 
     // ensure we still have no approved datasets.
     List<ApprovedDataset> approvedDatasets4 = datasetDAO.getApprovedDatasets(user.getUserId());
@@ -1158,28 +1253,30 @@ class DatasetDAOTest extends DAOTestHelper {
 
     // Simulate 2 DAC 2 elections for today
     // vote yes on dataset 3
-    Integer electionId5 = electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        today,
-        progressReport.getReferenceId(),
-        dataset3.getDatasetId()
-    );
-    Integer voteId5 = voteDAO.insertVote(chairperson2.getUserId(), electionId5, VoteType.FINAL.getValue());
+    Integer electionId5 =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            today,
+            progressReport.getReferenceId(),
+            dataset3.getDatasetId());
+    Integer voteId5 =
+        voteDAO.insertVote(chairperson2.getUserId(), electionId5, VoteType.FINAL.getValue());
     updateVote(true, "rationale", today, voteId5, false, electionId5, today, false);
     electionDAO.updateElectionById(electionId5, ElectionStatus.CLOSED.getValue(), today);
     List<ApprovedDataset> approvedDatasets5 = datasetDAO.getApprovedDatasets(user.getUserId());
     assertEquals(1, approvedDatasets5.size());
     assertEquals(progressReport.getExpiresAt(), approvedDatasets5.get(0).getExpirationDate());
 
-    Integer electionId6 = electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        today,
-        progressReport.getReferenceId(),
-        dataset4.getDatasetId()
-    );
-    Integer voteId6 = voteDAO.insertVote(chairperson2.getUserId(), electionId6, VoteType.FINAL.getValue());
+    Integer electionId6 =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            today,
+            progressReport.getReferenceId(),
+            dataset4.getDatasetId());
+    Integer voteId6 =
+        voteDAO.insertVote(chairperson2.getUserId(), electionId6, VoteType.FINAL.getValue());
     // vote no on dataset 4
     updateVote(false, "rationale", today, voteId6, false, electionId6, today, false);
     electionDAO.updateElectionById(electionId6, ElectionStatus.CLOSED.getValue(), today);
@@ -1188,29 +1285,31 @@ class DatasetDAOTest extends DAOTestHelper {
     assertNotNull(approvedDatasets6);
     assertEquals(1, approvedDatasets6.size());
 
-    List<DataAccessRequest> dataset3Dars = dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset3.getDatasetId());
+    List<DataAccessRequest> dataset3Dars =
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset3.getDatasetId());
     assertEquals(1, dataset3Dars.size());
 
-    List<DataAccessRequest> dataset4Dars = dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset4.getDatasetId());
+    List<DataAccessRequest> dataset4Dars =
+        dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset4.getDatasetId());
     assertEquals(0, dataset4Dars.size());
 
-    today = new Date();  //adjust the date into the future or the LAST_VALUE won't work correctly.
+    today = new Date(); // adjust the date into the future or the LAST_VALUE won't work correctly.
     // make a new election for dataset 3 and now vote no
-    Integer electionId7 = electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        today,
-        progressReport.getReferenceId(),
-        dataset3.getDatasetId()
-    );
-    Integer voteId7 = voteDAO.insertVote(chairperson2.getUserId(), electionId7, VoteType.FINAL.getValue());
+    Integer electionId7 =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            today,
+            progressReport.getReferenceId(),
+            dataset3.getDatasetId());
+    Integer voteId7 =
+        voteDAO.insertVote(chairperson2.getUserId(), electionId7, VoteType.FINAL.getValue());
     updateVote(false, "rationale", today, voteId7, false, electionId7, today, false);
     electionDAO.updateElectionById(electionId7, ElectionStatus.CLOSED.getValue(), today);
     assertEquals(0, datasetDAO.getApprovedDatasets(user.getUserId()).size());
 
     dataset3Dars = dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset3.getDatasetId());
     assertEquals(0, dataset3Dars.size());
-
   }
 
   @Test
@@ -1224,25 +1323,26 @@ class DatasetDAOTest extends DAOTestHelper {
     assertNull(updatedDataset2.getIndexedDate());
   }
 
-  private DarCollection createDarCollectionWithDatasets(int dacId, User user,
-      List<Dataset> datasets) {
+  private DarCollection createDarCollectionWithDatasets(
+      int dacId, User user, List<Dataset> datasets) {
     String darCode = "DAR-" + randomInt(1, 999999);
-    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
-        new Date());
-    IntStream.range(0, datasets.size()).forEach(index -> {
-      Dataset dataset = datasets.get(index);
-      datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dacId);
-      createDataAccessRequestWithDatasetAndCollectionInfo(collectionId, dataset.getDatasetId(),
-          user.getUserId());
-    });
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
+    IntStream.range(0, datasets.size())
+        .forEach(
+            index -> {
+              Dataset dataset = datasets.get(index);
+              datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dacId);
+              createDataAccessRequestWithDatasetAndCollectionInfo(
+                  collectionId, dataset.getDatasetId(), user.getUserId());
+            });
     return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
   }
 
   private DarCollection createDarCollectionWithDatasetsNewModel(User user, List<Dataset> datasets) {
     String darCode = "DAR-" + randomInt(1, 999999);
     Date now = new Date();
-    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
-        now);
+    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(), now);
     List<Integer> datasetIds = datasets.stream().map(Dataset::getDatasetId).toList();
     createDataAccessRequestNewModel(collectionId, datasetIds, user.getUserId());
     return darCollectionDAO.findDARCollectionByCollectionId(collectionId);
@@ -1253,8 +1353,8 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   private void createFileStorageObject() {
-    FileCategory category = List.of(FileCategory.values())
-        .get(new Random().nextInt(FileCategory.values().length));
+    FileCategory category =
+        List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
     String entityId = randomAlphabetic(10);
     createFileStorageObject(entityId, category);
   }
@@ -1266,15 +1366,15 @@ class DatasetDAOTest extends DAOTestHelper {
     User createUser = createUser();
     Instant createDate = Instant.now();
 
-    Integer newFileStorageObjectId = fileStorageObjectDAO.insertNewFile(
-        fileName,
-        category.getValue(),
-        bucketName,
-        gcsFileUri,
-        entityId,
-        createUser.getUserId(),
-        createDate
-    );
+    Integer newFileStorageObjectId =
+        fileStorageObjectDAO.insertNewFile(
+            fileName,
+            category.getValue(),
+            bucketName,
+            gcsFileUri,
+            entityId,
+            createUser.getUserId(),
+            createDate);
     return fileStorageObjectDAO.findFileById(newFileStorageObjectId);
   }
 
@@ -1293,10 +1393,9 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   private Dac insertDac() {
-    Integer id = dacDAO.createDac(
-        "Test_" + randomAlphanumeric(20),
-        "Test_" + randomAlphanumeric(20),
-        new Date());
+    Integer id =
+        dacDAO.createDac(
+            "Test_" + randomAlphanumeric(20), "Test_" + randomAlphanumeric(20), new Date());
     return dacDAO.findById(id);
   }
 
@@ -1310,72 +1409,67 @@ class DatasetDAOTest extends DAOTestHelper {
 
     String name = randomAlphabetic(20);
     String description = randomAlphabetic(20);
-    List<String> dataTypes = List.of(
-        randomAlphabetic(20),
-        randomAlphabetic(20)
-    );
+    List<String> dataTypes = List.of(randomAlphabetic(20), randomAlphabetic(20));
     String piName = randomAlphabetic(20);
     Boolean publicVisibility = true;
 
-    Integer id = studyDAO.insertStudy(
-        name,
-        description,
-        piName,
-        dataTypes,
-        publicVisibility,
-        user.getUserId(),
-        Instant.now(),
-        UUID.randomUUID()
-    );
+    Integer id =
+        studyDAO.insertStudy(
+            name,
+            description,
+            piName,
+            dataTypes,
+            publicVisibility,
+            user.getUserId(),
+            Instant.now(),
+            UUID.randomUUID());
 
-    studyDAO.insertStudyProperty(
-        id,
-        "prop1",
-        PropertyType.String.toString(),
-        "asdf"
-    );
+    studyDAO.insertStudyProperty(id, "prop1", PropertyType.String.toString(), "asdf");
 
-    studyDAO.insertStudyProperty(
-        id,
-        "prop2",
-        PropertyType.Number.toString(),
-        "1"
-    );
+    studyDAO.insertStudyProperty(id, "prop2", PropertyType.Number.toString(), "1");
 
     return studyDAO.findStudyById(id);
   }
 
-
-  private void createDataAccessRequestWithDatasetAndCollectionInfo(int collectionId,
-      int datasetId, int userId) {
+  private void createDataAccessRequestWithDatasetAndCollectionInfo(
+      int collectionId, int datasetId, int userId) {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle(randomAlphabetic(10));
     String referenceId = randomAlphanumeric(20);
-    dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, new Date(),
-        new Date(), new Date(), data, randomAlphabetic(10));
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId,
+        referenceId,
+        userId,
+        new Date(),
+        new Date(),
+        new Date(),
+        data,
+        randomAlphabetic(10));
     dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
   }
 
-  private void createDataAccessRequestNewModel(int collectionId, List<Integer> datasetIds, int userId) {
+  private void createDataAccessRequestNewModel(
+      int collectionId, List<Integer> datasetIds, int userId) {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle(randomAlphabetic(10));
     String referenceId = randomAlphabetic(20);
     Date now = new Date();
-    dataAccessRequestDAO.insertDataAccessRequest(collectionId, referenceId, userId, now, now, now, data, randomAlphabetic(10));
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId, referenceId, userId, now, now, now, data, randomAlphabetic(10));
     datasetIds.forEach(
         datasetId -> dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId));
   }
 
-  private DataAccessRequest createProgressReport(DataAccessRequestData data, String eraCommonsId, Integer userId, Integer collectionId,
-      Integer parentId, List<Integer> datasetIds) {
+  private DataAccessRequest createProgressReport(
+      DataAccessRequestData data,
+      String eraCommonsId,
+      Integer userId,
+      Integer collectionId,
+      Integer parentId,
+      List<Integer> datasetIds) {
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertProgressReport(
-        parentId,
-        collectionId,
-        referenceId,
-        userId,
-        data,
-        eraCommonsId);
+        parentId, collectionId, referenceId, userId, data, eraCommonsId);
     datasetIds.forEach(
         datasetId -> dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId));
     return dataAccessRequestDAO.findByReferenceId(referenceId);
@@ -1398,12 +1492,11 @@ class DatasetDAOTest extends DAOTestHelper {
     Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
-        dataUse.toString(), null);
+    Integer id =
+        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }
-
 
   private Dataset createDataset(boolean dacApproval) {
     User user = createUser();
@@ -1412,8 +1505,8 @@ class DatasetDAOTest extends DAOTestHelper {
     Instant instant = Instant.now();
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
-        dataUse.toString(), null);
+    Integer id =
+        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
     datasetDAO.updateDatasetApproval(dacApproval, instant, user.getUserId(), id);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
@@ -1425,25 +1518,28 @@ class DatasetDAOTest extends DAOTestHelper {
     Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
-        dataUse.toString(), null);
+    Integer id =
+        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
     createDatasetProperties(id);
   }
 
-  private void createDataAccessElectionWithVotes(String referenceId, Integer datasetId,
-      Integer userId, boolean finalVoteApproval, VoteType voteType) {
-    Integer electionId = electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        new Date(),
-        referenceId,
-        datasetId
-    );
+  private void createDataAccessElectionWithVotes(
+      String referenceId,
+      Integer datasetId,
+      Integer userId,
+      boolean finalVoteApproval,
+      VoteType voteType) {
+    Integer electionId =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            new Date(),
+            referenceId,
+            datasetId);
     Integer voteId = voteDAO.insertVote(userId, electionId, voteType.getValue());
-    updateVote(finalVoteApproval, "rationale", new Date(), voteId, false, electionId,
-        new Date(), false);
+    updateVote(
+        finalVoteApproval, "rationale", new Date(), voteId, false, electionId, new Date(), false);
     electionDAO.updateElectionById(electionId, ElectionStatus.CLOSED.getValue(), new Date());
     datasetDAO.updateDatasetApproval(finalVoteApproval, Instant.now(), userId, datasetId);
   }
-
 }

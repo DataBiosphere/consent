@@ -25,8 +25,8 @@ import org.mockserver.verify.VerificationTimes;
 @ExtendWith(MockitoExtension.class)
 class HttpClientUtilTest extends MockServerTestHelper {
 
-  private final String statusUrl = String.format("http://%s:%s/", CONTAINER.getHost(),
-      CONTAINER.getServerPort());
+  private final String statusUrl =
+      String.format("http://%s:%s/", CONTAINER.getHost(), CONTAINER.getServerPort());
   private HttpClientUtil clientUtil;
 
   @BeforeEach
@@ -36,27 +36,23 @@ class HttpClientUtilTest extends MockServerTestHelper {
     clientUtil = new HttpClientUtil(configuration);
   }
 
-  /**
-   * Test that the cache works normally
-   */
+  /** Test that the cache works normally */
   @Test
   void testGetCachedResponse_case1() {
-    mockServerClient.when(request())
-        .respond(response()
-            .withStatusCode(200));
-    IntStream.range(3, 10).forEach(i -> {
-      try {
-        clientUtil.getCachedResponse(new HttpGet(statusUrl));
-      } catch (Exception e) {
-        fail(e.getMessage());
-      }
-    });
+    mockServerClient.when(request()).respond(response().withStatusCode(200));
+    IntStream.range(3, 10)
+        .forEach(
+            i -> {
+              try {
+                clientUtil.getCachedResponse(new HttpGet(statusUrl));
+              } catch (Exception e) {
+                fail(e.getMessage());
+              }
+            });
     mockServerClient.verify(request(), VerificationTimes.exactly(1));
   }
 
-  /**
-   * Test that when the cache is expired, all calls are made to external servers
-   */
+  /** Test that when the cache is expired, all calls are made to external servers */
   @Test
   void testGetCachedResponse_case2() {
     ServicesConfiguration configuration = new ServicesConfiguration();
@@ -64,39 +60,37 @@ class HttpClientUtilTest extends MockServerTestHelper {
     // Setting the cache to 0 effectively means no caching
     configuration.setCacheExpireMinutes(0);
     clientUtil = new HttpClientUtil(configuration);
-    mockServerClient.when(request())
-        .respond(response()
-            .withStatusCode(200));
+    mockServerClient.when(request()).respond(response().withStatusCode(200));
 
     int count = RandomUtils.nextInt(5, 10);
-    IntStream.range(0, count).forEach(i -> {
-      try {
-        clientUtil.getCachedResponse(new HttpGet(statusUrl));
-      } catch (Exception e) {
-        fail(e.getMessage());
-      }
-    });
+    IntStream.range(0, count)
+        .forEach(
+            i -> {
+              try {
+                clientUtil.getCachedResponse(new HttpGet(statusUrl));
+              } catch (Exception e) {
+                fail(e.getMessage());
+              }
+            });
     mockServerClient.verify(request(), VerificationTimes.exactly(count));
   }
 
   @Test
   void testGetHttpResponseUnderTimeout() throws Exception {
-    mockServerClient.when(request())
-        .respond(response()
-            .withStatusCode(200));
+    mockServerClient.when(request()).respond(response().withStatusCode(200));
     SimpleResponse response = clientUtil.getHttpResponse(new HttpGet(statusUrl));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.code());
   }
 
   @Test
   void testGetHttpResponseOverTimeout() {
-    mockServerClient.when(request())
-        .respond(response()
-            .withStatusCode(200)
-            .withDelay(Delay.delay(TimeUnit.SECONDS, 3)));
-    assertThrows(RequestFailedException.class, () -> {
-      clientUtil.getHttpResponse(new HttpGet(statusUrl));
-    });
+    mockServerClient
+        .when(request())
+        .respond(response().withStatusCode(200).withDelay(Delay.delay(TimeUnit.SECONDS, 3)));
+    assertThrows(
+        RequestFailedException.class,
+        () -> {
+          clientUtil.getHttpResponse(new HttpGet(statusUrl));
+        });
   }
-
 }

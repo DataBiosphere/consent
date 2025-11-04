@@ -6,15 +6,17 @@ import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
 
-public class SoPRSubmitted extends MailMessage  {
+public class SoPRSubmitted extends MailMessage {
 
-  private static final String SUBJECT = "Broad Data Use Oversight System - Signing Official - New Progress Report Submitted From Your Institution";
+  private static final String SUBJECT =
+      "Broad Data Use Oversight System - Signing Official - New Progress Report Submitted From Your Institution";
   private final String darCode;
   private final User researcher;
   private final String referenceId;
   private final List<Dataset> datasets;
 
-  public SoPRSubmitted(User toUser, String darCode, User researcher, String referenceId, List<Dataset> datasets) {
+  public SoPRSubmitted(
+      User toUser, String darCode, User researcher, String referenceId, List<Dataset> datasets) {
     super(toUser, EmailType.SO_PROGRESS_REPORT_SUBMITTED);
     this.darCode = darCode;
     this.researcher = researcher;

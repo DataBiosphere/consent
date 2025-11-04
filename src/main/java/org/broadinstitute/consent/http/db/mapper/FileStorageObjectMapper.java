@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db.mapper;
 
-
 import com.google.cloud.storage.BlobId;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,8 +11,8 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
-public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, RowMapperHelper,
-    ConsentLogger {
+public class FileStorageObjectMapper
+    implements RowMapper<FileStorageObject>, RowMapperHelper, ConsentLogger {
 
   @Override
   public FileStorageObject map(ResultSet r, StatementContext statementContext) throws SQLException {
@@ -36,7 +35,10 @@ public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, Ro
       try {
         file.setBlobId(BlobId.fromGsUtilUri(value));
       } catch (Exception e) {
-        logException("Error parsing blob id: %s for fso id: %s".formatted(value, file.getFileStorageObjectId()), e);
+        logException(
+            "Error parsing blob id: %s for fso id: %s"
+                .formatted(value, file.getFileStorageObjectId()),
+            e);
         file.setBlobId(null);
       }
     }
@@ -46,7 +48,10 @@ public class FileStorageObjectMapper implements RowMapper<FileStorageObject>, Ro
       try {
         file.setCategory(FileCategory.findValue(value));
       } catch (Exception e) {
-        logException("Error parsing file category: %s for fso id: %s".formatted(value, file.getFileStorageObjectId()), e);
+        logException(
+            "Error parsing file category: %s for fso id: %s"
+                .formatted(value, file.getFileStorageObjectId()),
+            e);
         file.setCategory(null);
       }
     }

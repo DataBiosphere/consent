@@ -52,7 +52,11 @@ public class DraftSummary {
     this.updateDate = updateDate;
   }
 
-  public DraftType getDraftType() { return draftType; }
+  public DraftType getDraftType() {
+    return draftType;
+  }
 
-  public void setDraftType(DraftType draftType) { this.draftType = draftType; }
+  public void setDraftType(DraftType draftType) {
+    this.draftType = draftType;
+  }
 }

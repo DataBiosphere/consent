@@ -21,12 +21,10 @@ public class OntologyService implements ConsentLogger {
     this.servicesConfiguration = config;
   }
 
-
   public DataUseSummary translateDataUseSummary(DataUse dataUse) {
-    WebTarget target = client.target(
-        servicesConfiguration.getOntologyURL() + "translate/summary");
-    try (Response response = target.request(MediaType.APPLICATION_JSON)
-        .post(Entity.json(dataUse.toString()))) {
+    WebTarget target = client.target(servicesConfiguration.getOntologyURL() + "translate/summary");
+    try (Response response =
+        target.request(MediaType.APPLICATION_JSON).post(Entity.json(dataUse.toString()))) {
       if (response.getStatus() >= 200 || response.getStatus() <= 299) {
         return response.readEntity(DataUseSummary.class);
       }
@@ -38,10 +36,10 @@ public class OntologyService implements ConsentLogger {
   }
 
   public String translateDataUse(DataUse dataUse, DataUseTranslationType type) {
-    WebTarget target = client.target(
-        servicesConfiguration.getOntologyURL() + "translate?for=" + type.getValue());
-    try (Response response = target.request(MediaType.TEXT_PLAIN)
-        .post(Entity.json(dataUse.toString()))) {
+    WebTarget target =
+        client.target(servicesConfiguration.getOntologyURL() + "translate?for=" + type.getValue());
+    try (Response response =
+        target.request(MediaType.TEXT_PLAIN).post(Entity.json(dataUse.toString()))) {
       if (response.getStatus() == 200) {
         return response.readEntity(String.class);
       }

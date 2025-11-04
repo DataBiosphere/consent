@@ -10,15 +10,15 @@ import org.jdbi.v3.core.statement.StatementContext;
 public class DatasetPropertyMapper implements RowMapper<DatasetProperty>, RowMapperHelper {
 
   public DatasetProperty map(ResultSet r, StatementContext ctx) throws SQLException {
-    DatasetProperty prop = new DatasetProperty(
-        r.getInt("property_id"),
-        r.getInt("dataset_id"),
-        r.getInt("property_key"),
-        r.getString("schema_property"),
-        r.getString("property_value"),
-        PropertyType.parse(r.getString("property_type")),
-        r.getTimestamp("create_date")
-    );
+    DatasetProperty prop =
+        new DatasetProperty(
+            r.getInt("property_id"),
+            r.getInt("dataset_id"),
+            r.getInt("property_key"),
+            r.getString("schema_property"),
+            r.getString("property_value"),
+            PropertyType.parse(r.getString("property_type")),
+            r.getTimestamp("create_date"));
     if (hasColumn(r, "key")) {
       prop.setPropertyName(r.getString("key"));
     }

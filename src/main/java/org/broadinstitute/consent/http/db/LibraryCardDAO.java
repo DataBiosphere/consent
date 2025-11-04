@@ -18,35 +18,40 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
       INSERT INTO library_card (user_id, user_name, user_email, create_user_id, create_date)
       VALUES (:userId, :userName, :userEmail, :createUserId, :createDate)
       """)
   @GetGeneratedKeys
-  Integer insertLibraryCard(@Bind("userId") Integer userId,
+  Integer insertLibraryCard(
+      @Bind("userId") Integer userId,
       @Bind("userName") String userName,
       @Bind("userEmail") String userEmail,
       @Bind("createUserId") Integer createUserId,
       @Bind("createDate") Date createDate);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
       UPDATE library_card SET
-            id = :libraryCardId, 
-            user_id = :userId, 
-            user_name = :userName, 
-            user_email = :userEmail, 
-            update_user_id = :updateUserId, 
-            update_date = :updateDate 
+            id = :libraryCardId,
+            user_id = :userId,
+            user_name = :userName,
+            user_email = :userEmail,
+            update_user_id = :updateUserId,
+            update_date = :updateDate
             WHERE id = :libraryCardId
       """)
-  void updateLibraryCardById(@Bind("libraryCardId") Integer libraryCardId,
+  void updateLibraryCardById(
+      @Bind("libraryCardId") Integer libraryCardId,
       @Bind("userId") Integer userId,
       @Bind("userName") String userName,
       @Bind("userEmail") String userEmail,
       @Bind("updateUserId") Integer updateUserId,
       @Bind("updateDate") Date updateDate);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
       WITH daa_deletes AS (DELETE FROM lc_daa lc_daa WHERE lc_daa.lc_id = :libraryCardId)
       DELETE FROM library_card lc WHERE lc.id = :libraryCardId
       """)
@@ -54,7 +59,8 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @RegisterBeanMapper(value = LibraryCard.class)
   @UseRowReducer(LibraryCardReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT lc.*,
       ld.daa_id
       FROM library_card AS lc
@@ -66,7 +72,8 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   @RegisterBeanMapper(value = LibraryCard.class)
   @RegisterBeanMapper(value = DataAccessAgreement.class, prefix = "daa")
   @UseRowReducer(LibraryCardWithDaaReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT lc.*,
       ld.daa_id,
       daa.daa_id as daa_daa_id,
@@ -84,7 +91,8 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @RegisterBeanMapper(value = LibraryCard.class)
   @UseRowReducer(LibraryCardReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT lc.*,
       ld.daa_id
       FROM library_card AS lc
@@ -95,7 +103,8 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @RegisterBeanMapper(value = LibraryCard.class)
   @UseRowReducer(LibraryCardReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT library_card.*, ld.daa_id
       FROM library_card
       LEFT JOIN lc_daa ld ON library_card.id = ld.lc_id
@@ -105,7 +114,8 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @RegisterBeanMapper(value = LibraryCard.class)
   @UseRowReducer(LibraryCardReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT lc.*,
       ld.daa_id
       FROM library_card AS lc
@@ -115,21 +125,23 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @RegisterBeanMapper(value = LibraryCard.class)
   @UseRowReducer(LibraryCardReducer.class)
-  @SqlQuery("SELECT * FROM library_card " +
-      "WHERE user_email = :email")
+  @SqlQuery("SELECT * FROM library_card " + "WHERE user_email = :email")
   LibraryCard findLibraryCardByUserEmail(@Bind("email") String email);
 
-  @SqlUpdate("DELETE FROM library_card WHERE user_id = :userId OR create_user_id = :userId OR update_user_id = :userId")
+  @SqlUpdate(
+      "DELETE FROM library_card WHERE user_id = :userId OR create_user_id = :userId OR update_user_id = :userId")
   void deleteAllLibraryCardsByUser(@Bind("userId") Integer userId);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
       INSERT INTO lc_daa (lc_id, daa_id)
       VALUES (:lcId, :daaId)
       ON CONFLICT DO NOTHING
       """)
   void createLibraryCardDaaRelation(@Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
       DELETE FROM lc_daa
       WHERE lc_id = :lcId
       AND daa_id = :daaId
@@ -144,7 +156,8 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
    */
   @RegisterBeanMapper(value = LibraryCard.class)
   @UseRowReducer(LibraryCardReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT *
       FROM library_card
       WHERE LOWER(user_email) = ANY(ARRAY(SELECT LOWER(UNNEST(ARRAY[<emails>]))))
@@ -160,12 +173,12 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
    */
   @RegisterBeanMapper(value = LibraryCard.class)
   @UseRowReducer(LibraryCardReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT *
       FROM library_card
       WHERE user_id in (<userIds>)
       """)
   List<LibraryCard> findLibraryCardsByUserIds(
       @BindList(value = "userIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> userIds);
-
 }

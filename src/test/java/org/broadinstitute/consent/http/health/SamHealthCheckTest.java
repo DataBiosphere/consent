@@ -20,18 +20,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class SamHealthCheckTest {
 
-  @Mock
-  private HttpClientUtil clientUtil;
+  @Mock private HttpClientUtil clientUtil;
 
-  @Mock
-  private SimpleResponse response;
+  @Mock private SimpleResponse response;
 
-  @Mock
-  private ServicesConfiguration servicesConfiguration;
+  @Mock private ServicesConfiguration servicesConfiguration;
 
   private SamHealthCheck healthCheck;
 
-  private static final String okResponse = """
+  private static final String okResponse =
+      """
         {
           "ok": true,
           "systems": {
@@ -48,8 +46,7 @@ class SamHealthCheckTest {
   void testCheckSuccess() throws Exception {
     when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
     try {
-      when(response.entity())
-          .thenReturn(okResponse);
+      when(response.entity()).thenReturn(okResponse);
       when(clientUtil.getCachedResponse(any())).thenReturn(response);
       when(servicesConfiguration.getSamUrl()).thenReturn("http://localhost:8000/");
       healthCheck = new SamHealthCheck(clientUtil, servicesConfiguration);

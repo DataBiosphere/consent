@@ -4,7 +4,6 @@ import java.util.EnumSet;
 import java.util.Optional;
 
 public enum ElectionType {
-
   DATA_ACCESS("DataAccess"),
   TRANSLATE_DUL("TranslateDUL"),
   RP("RP"),
@@ -30,11 +29,10 @@ public enum ElectionType {
   }
 
   public static ElectionType getFromValue(String value) {
-    Optional<ElectionType> type = EnumSet.allOf(ElectionType.class).
-        stream().
-        filter(t -> t.getValue().equalsIgnoreCase(value)).
-        findFirst();
+    Optional<ElectionType> type =
+        EnumSet.allOf(ElectionType.class).stream()
+            .filter(t -> t.getValue().equalsIgnoreCase(value))
+            .findFirst();
     return type.orElse(null);
   }
-
 }

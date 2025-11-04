@@ -829,13 +829,17 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   @Test
   void testIsAuthorizedToListUsers() {
-    when(datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetIdAndUserId(anyLong(), anyLong())).thenReturn(new DatasetAuthorizationReader(1, 1, 1, 1, Timestamp.from(Instant.now())));
+    when(datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetIdAndUserId(
+            anyLong(), anyLong()))
+        .thenReturn(new DatasetAuthorizationReader(1, 1, 1, 1, Timestamp.from(Instant.now())));
     assertTrue(datasetService.isAuthorizedToListUsers(1, 1));
   }
 
   @Test
   void testIsAuthorizedToListUsersNotFound() {
-    when(datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetIdAndUserId(anyLong(), anyLong())).thenReturn(null);
+    when(datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetIdAndUserId(
+            anyLong(), anyLong()))
+        .thenReturn(null);
     assertFalse(datasetService.isAuthorizedToListUsers(1, 1));
   }
 
@@ -843,7 +847,8 @@ class DatasetServiceTest extends AbstractTestHelper {
   void testAddAuthorizedReader() {
     DatasetAuthorizationReader dauthr =
         new DatasetAuthorizationReader(1, 1, 1, 1, Timestamp.from(Instant.now()));
-    when(datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(anyLong(), anyLong(), anyLong()))
+    when(datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(
+            anyLong(), anyLong(), anyLong()))
         .thenReturn(dauthr.id());
     when(datasetAuthorizationReaderDAO.findAuthorizedReaderByRecordId(anyLong()))
         .thenReturn(dauthr);

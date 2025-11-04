@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-
 @ExtendWith(MockitoExtension.class)
 class OidcAuthorityDAOTest extends MockServerTestHelper {
 
@@ -44,9 +43,11 @@ class OidcAuthorityDAOTest extends MockServerTestHelper {
     final String expectedIssuer = "https://example.com";
     final String expectedAuthorizationEndpoint = expectedIssuer + "/oauth2/authorize";
     final String expectedTokenEndpoint = expectedIssuer + "/oauth2/token";
-    // the only things that matter in this body are the issuer, authorization_endpoint, and token_endpoint
+    // the only things that matter in this body are the issuer, authorization_endpoint, and
+    // token_endpoint
     // the rest of the fields are just to simulate a real response
-    final String bodyFormat = """
+    final String bodyFormat =
+        """
         {
           "issuer":"%s",
           "authorization_endpoint":"%s",
@@ -65,16 +66,17 @@ class OidcAuthorityDAOTest extends MockServerTestHelper {
         """;
 
     mockServerClient
-        .when(
-            request()
-                .withMethod("GET")
-                .withPath("/.well-known/openid-configuration"))
+        .when(request().withMethod("GET").withPath("/.well-known/openid-configuration"))
         .respond(
             response()
                 .withStatusCode(200)
                 .withHeader("Content-Type", "application/json")
-                .withBody(bodyFormat.formatted(expectedIssuer, expectedAuthorizationEndpoint,
-                    expectedTokenEndpoint, expectedIssuer)));
+                .withBody(
+                    bodyFormat.formatted(
+                        expectedIssuer,
+                        expectedAuthorizationEndpoint,
+                        expectedTokenEndpoint,
+                        expectedIssuer)));
     var actual = dao.getOidcAuthorityConfiguration();
     assertEquals(expectedTokenEndpoint, actual.token_endpoint());
     assertEquals(expectedAuthorizationEndpoint, actual.authorization_endpoint());
@@ -84,7 +86,8 @@ class OidcAuthorityDAOTest extends MockServerTestHelper {
   @Test
   void testOauthTokenPost() {
     // the content of this response doesn't matter, it's just to simulate a real response
-    var expectedResponse = """
+    var expectedResponse =
+        """
         {
           "access_token":"1234567890",
           "token_type":"Bearer",
@@ -103,19 +106,24 @@ class OidcAuthorityDAOTest extends MockServerTestHelper {
             request()
                 .withMethod("POST")
                 .withPath(tokenPath)
-                .withQueryStringParameters(queryParameters.entrySet().stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
-                .withBody(URLEncodedUtils.format(formParameters.entrySet().stream().flatMap(
-                        entry -> entry.getValue().stream()
-                            .map(value -> new BasicNameValuePair(entry.getKey(), value))).toList(),
-                    StandardCharsets.UTF_8))
-        )
+                .withQueryStringParameters(
+                    queryParameters.entrySet().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
+                .withBody(
+                    URLEncodedUtils.format(
+                        formParameters.entrySet().stream()
+                            .flatMap(
+                                entry ->
+                                    entry.getValue().stream()
+                                        .map(
+                                            value -> new BasicNameValuePair(entry.getKey(), value)))
+                            .toList(),
+                        StandardCharsets.UTF_8)))
         .respond(
             response()
                 .withStatusCode(200)
                 .withHeader("Content-Type", "application/json")
-                .withBody(
-                    expectedResponse));
+                .withBody(expectedResponse));
     var actual = dao.oauthTokenPost(formParameters, queryParameters);
     assertEquals(expectedResponse, actual);
   }

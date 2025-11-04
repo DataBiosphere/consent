@@ -27,8 +27,7 @@ import org.zendesk.client.v2.model.Request;
 @ExtendWith(MockitoExtension.class)
 public class SupportResourceTest extends ResourceTest {
 
-  @Mock
-  private SupportRequestService supportRequestService;
+  @Mock private SupportRequestService supportRequestService;
 
   private SupportResource supportResource;
 
@@ -40,7 +39,8 @@ public class SupportResourceTest extends ResourceTest {
   @ParameterizedTest
   @EnumSource(SupportRequestType.class)
   void testPostRequestSuccess(SupportRequestType type) throws Exception {
-    String body = """
+    String body =
+        """
         {
           "name": "Test User",
           "email": "test.user@example.com",
@@ -53,7 +53,8 @@ public class SupportResourceTest extends ResourceTest {
             "token2",
           ]
         }
-        """.formatted(type);
+        """
+            .formatted(type);
     when(supportRequestService.postTicketToSupport(any())).thenReturn(new Request());
     try (Response response = supportResource.postRequest(body)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
@@ -62,7 +63,8 @@ public class SupportResourceTest extends ResourceTest {
 
   private static Stream<Arguments> testPostRequestInvalidFields() {
     return Stream.of(
-        Arguments.of("""
+        Arguments.of(
+            """
             {
               "email": "test.user@example.com",
               "subject": "Test Subject",
@@ -72,7 +74,8 @@ public class SupportResourceTest extends ResourceTest {
               "uploads": ["token1", "token2"]
             }
             """),
-        Arguments.of("""
+        Arguments.of(
+            """
             {
               "name": "Test User",
               "subject": "Test Subject",
@@ -82,7 +85,8 @@ public class SupportResourceTest extends ResourceTest {
               "uploads": ["token1", "token2"]
             }
             """),
-        Arguments.of("""
+        Arguments.of(
+            """
             {
               "name": "Test User",
               "email": "test.user@example.com",
@@ -92,7 +96,8 @@ public class SupportResourceTest extends ResourceTest {
               "uploads": ["token1", "token2"]
             }
             """),
-        Arguments.of("""
+        Arguments.of(
+            """
             {
               "name": "Test User",
               "email": "test.user@example.com",
@@ -102,7 +107,8 @@ public class SupportResourceTest extends ResourceTest {
               "uploads": ["token1", "token2"]
             }
             """),
-        Arguments.of("""
+        Arguments.of(
+            """
             {
               "name": "Test User",
               "email": "test.user@example.com",
@@ -112,7 +118,8 @@ public class SupportResourceTest extends ResourceTest {
               "uploads": ["token1", "token2"]
             }
             """),
-        Arguments.of("""
+        Arguments.of(
+            """
             {
               "name": "Test User",
               "email": "test.user@example.com",
@@ -121,8 +128,7 @@ public class SupportResourceTest extends ResourceTest {
               "type": "QUESTION",
               "uploads": ["token1", "token2"]
             }
-            """)
-    );
+            """));
   }
 
   @ParameterizedTest
@@ -135,9 +141,12 @@ public class SupportResourceTest extends ResourceTest {
 
   @Test
   void testUnprocessableTicket() throws Exception {
-    doThrow(new UnprocessableEntityException("Unprocessable")).when(supportRequestService)
+    doThrow(new UnprocessableEntityException("Unprocessable"))
+        .when(supportRequestService)
         .postTicketToSupport(any());
-    try (Response response = supportResource.postRequest("""
+    try (Response response =
+        supportResource.postRequest(
+            """
         {
           "name": "Test User",
           "email": "test.user@example.com",
@@ -164,11 +173,11 @@ public class SupportResourceTest extends ResourceTest {
 
   @Test
   void testUnprocessableUpload() throws Exception {
-    doThrow(new UnprocessableEntityException("Unprocessable")).when(supportRequestService)
+    doThrow(new UnprocessableEntityException("Unprocessable"))
+        .when(supportRequestService)
         .postAttachmentToSupport(any());
     try (Response response = supportResource.postUpload("test".getBytes())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
     }
   }
-
 }

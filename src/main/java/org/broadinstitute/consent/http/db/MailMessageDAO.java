@@ -16,12 +16,13 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 @RegisterRowMapper(MailMessageMapper.class)
 public interface MailMessageDAO extends Transactional<MailMessageDAO> {
 
-  @SqlUpdate("INSERT INTO email_entity " +
-      "(entity_reference_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date) VALUES "
-      +
-      "(:entityReferenceId, :voteId, :userId, :emailType, :dateSent, :emailText, :sendGridResponse, :sendGridStatus, :createDate)")
+  @SqlUpdate(
+      "INSERT INTO email_entity "
+          + "(entity_reference_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date) VALUES "
+          + "(:entityReferenceId, :voteId, :userId, :emailType, :dateSent, :emailText, :sendGridResponse, :sendGridStatus, :createDate)")
   @GetGeneratedKeys
-  Integer insert(@Nullable @Bind("entityReferenceId") String entityReferenceId,
+  Integer insert(
+      @Nullable @Bind("entityReferenceId") String entityReferenceId,
       @Nullable @Bind("voteId") Integer voteId,
       @Bind("userId") Integer userId,
       @Bind("emailType") Integer emailType,
@@ -31,37 +32,46 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
       @Nullable @Bind("sendGridStatus") Integer sendGridStatus,
       @Bind("createDate") Instant createDate);
 
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT entity_reference_id, email_entity_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date FROM email_entity e
       WHERE email_type = :emailType
       ORDER BY create_date DESC
       OFFSET :offset
       LIMIT :limit
       """)
-  List<MailMessage> fetchMessagesByType(@Bind("emailType") Integer emailType,
-      @Bind("limit") Integer limit, @Bind("offset") Integer offset);
+  List<MailMessage> fetchMessagesByType(
+      @Bind("emailType") Integer emailType,
+      @Bind("limit") Integer limit,
+      @Bind("offset") Integer offset);
 
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT entity_reference_id, email_entity_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date FROM email_entity e
       WHERE user_id = :userId
       ORDER BY create_date DESC
       OFFSET :offset
       LIMIT :limit
       """)
-  List<MailMessage> fetchMessagesByUserId(@Bind("userId") Integer userId,
-      @Bind("limit") Integer limit, @Bind("offset") Integer offset);
+  List<MailMessage> fetchMessagesByUserId(
+      @Bind("userId") Integer userId, @Bind("limit") Integer limit, @Bind("offset") Integer offset);
 
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT entity_reference_id, email_entity_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date FROM email_entity e
       WHERE create_date BETWEEN SYMMETRIC :start AND :end
       ORDER BY create_date DESC
       OFFSET :offset
       LIMIT :limit
       """)
-  List<MailMessage> fetchMessagesByCreateDate(@Bind("start") Date start, @Bind("end") Date end,
-      @Bind("limit") Integer limit, @Bind("offset") Integer offset);
+  List<MailMessage> fetchMessagesByCreateDate(
+      @Bind("start") Date start,
+      @Bind("end") Date end,
+      @Bind("limit") Integer limit,
+      @Bind("offset") Integer offset);
 
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT entity_reference_id, email_entity_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date FROM email_entity e
       WHERE email_entity_id = :emailId
       """)

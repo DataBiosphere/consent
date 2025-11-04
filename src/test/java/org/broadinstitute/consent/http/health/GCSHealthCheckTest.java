@@ -19,11 +19,9 @@ class GCSHealthCheckTest {
 
   private GCSHealthCheck healthCheck;
 
-  @Mock
-  private GCSService store;
+  @Mock private GCSService store;
 
-  @Mock
-  private Bucket bucket;
+  @Mock private Bucket bucket;
 
   @BeforeEach
   void setUpClass() {

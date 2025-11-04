@@ -28,16 +28,21 @@ public class OidcService {
   }
 
   public URI getAuthorizationURI(MultivaluedMap<String, String> parameters) {
-    var uriBuilder = UriBuilder.fromUri(oidcAuthorityDAO.getOidcAuthorityConfiguration().authorization_endpoint());
+    var uriBuilder =
+        UriBuilder.fromUri(
+            oidcAuthorityDAO.getOidcAuthorityConfiguration().authorization_endpoint());
     parameters.forEach((key, value) -> uriBuilder.queryParam(key, value.toArray()));
     getExtraAuthParams().forEach(param -> uriBuilder.queryParam(param.getName(), param.getValue()));
     if (configuration.isAddClientIdToScope()) {
-      uriBuilder.replaceQueryParam(SCOPE_PARAM, addClientIdToScopes(parameters.getFirst(SCOPE_PARAM)));
+      uriBuilder.replaceQueryParam(
+          SCOPE_PARAM, addClientIdToScopes(parameters.getFirst(SCOPE_PARAM)));
     }
     return uriBuilder.build();
   }
 
-  public String tokenExchange(MultivaluedMap<String, String> formParameters, MultivaluedMap<String, String> queryParameters) {
+  public String tokenExchange(
+      MultivaluedMap<String, String> formParameters,
+      MultivaluedMap<String, String> queryParameters) {
     var updatedFormParams = new MultivaluedHashMap<>(formParameters);
     maybeAddClientSecret(updatedFormParams);
     return oidcAuthorityDAO.oauthTokenPost(updatedFormParams, queryParameters);
@@ -62,7 +67,8 @@ public class OidcService {
   }
 
   private void maybeAddClientSecret(MultivaluedMap<String, String> formParameters) {
-    if (!StringUtils.isBlank(configuration.getClientSecret()) && !formParameters.containsKey(CLIENT_SECRET_PARAM)) {
+    if (!StringUtils.isBlank(configuration.getClientSecret())
+        && !formParameters.containsKey(CLIENT_SECRET_PARAM)) {
       formParameters.add(CLIENT_SECRET_PARAM, configuration.getClientSecret());
     }
   }

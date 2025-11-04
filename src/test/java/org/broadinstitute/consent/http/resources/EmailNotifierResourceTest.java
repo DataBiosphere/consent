@@ -8,7 +8,6 @@ import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.EmailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,10 +17,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class EmailNotifierResourceTest {
 
-  @Mock
-  private DataAccessRequestService dataAccessRequestService;
-  @Mock
-  private AuthUser authUser;
+  @Mock private DataAccessRequestService dataAccessRequestService;
+  @Mock private AuthUser authUser;
 
   private EmailNotifierResource resource;
 
@@ -33,8 +30,8 @@ class EmailNotifierResourceTest {
   @Test
   void testResourceSuccess() throws Exception {
     doNothing().when(dataAccessRequestService).sendReminderMessage(any());
-    try (Response response = resource.sendReminderMessage(authUser,
-        String.valueOf(RandomUtils.nextInt(100, 1000)))) {
+    try (Response response =
+        resource.sendReminderMessage(authUser, String.valueOf(RandomUtils.nextInt(100, 1000)))) {
       assertEquals(200, response.getStatus());
     }
   }
@@ -52,5 +49,4 @@ class EmailNotifierResourceTest {
       assertEquals(200, response.getStatus());
     }
   }
-
 }

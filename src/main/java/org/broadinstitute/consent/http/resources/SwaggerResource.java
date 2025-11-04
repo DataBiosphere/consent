@@ -16,11 +16,12 @@ import org.parboiled.common.FileUtils;
 
 @Path("/")
 public class SwaggerResource implements ConsentLogger {
-  private static final String DEFAULT_SWAGGER_UI_PATH = "META-INF/resources/webjars/swagger-ui/latest/";
+  private static final String DEFAULT_SWAGGER_UI_PATH =
+      "META-INF/resources/webjars/swagger-ui/latest/";
   private static final String MEDIA_TYPE_GIF = new MediaType("image", "gif").toString();
   protected static final String MEDIA_TYPE_CSS = new MediaType("text", "css").toString();
-  protected static final String MEDIA_TYPE_JS = new MediaType("application",
-      "javascript").toString();
+  protected static final String MEDIA_TYPE_JS =
+      new MediaType("application", "javascript").toString();
   protected static final String MEDIA_TYPE_PNG = new MediaType("image", "png").toString();
 
   private final GoogleOAuth2Config config;
@@ -33,8 +34,8 @@ public class SwaggerResource implements ConsentLogger {
   }
 
   /**
-   * Load the Swagger UI path from mvn.properties, which is populated from pom.xml
-   * during the Maven build process.
+   * Load the Swagger UI path from mvn.properties, which is populated from pom.xml during the Maven
+   * build process.
    */
   private String loadSwaggerUiPath() {
     try (InputStream is = getClass().getResourceAsStream("/mvn.properties")) {
@@ -92,7 +93,8 @@ public class SwaggerResource implements ConsentLogger {
   }
 
   private String getInitializer() {
-    String initString = """
+    String initString =
+        """
         window.onload = function() {
           const ui = SwaggerUIBundle({
             syntaxHighlight: false,

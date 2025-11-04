@@ -19,8 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class StatusResourceTest {
 
-  @Mock
-  private HealthCheckRegistry healthChecks;
+  @Mock private HealthCheckRegistry healthChecks;
 
   private StatusResource initStatusResource(SortedMap<String, Result> checks) {
     when(healthChecks.runHealthChecks()).thenReturn(checks);
@@ -40,8 +39,8 @@ class StatusResourceTest {
 
   @Test
   void testUnhealthyDatabase() {
-    Result postgresql = Result.unhealthy(
-        new Exception("Cannot connect to the postgresql database"));
+    Result postgresql =
+        Result.unhealthy(new Exception("Cannot connect to the postgresql database"));
     SortedMap<String, Result> checks = new TreeMap<>();
     checks.put(DB_ENV, postgresql);
     checks.put(ConsentApplication.ONTOLOGY_CHECK, Result.healthy());

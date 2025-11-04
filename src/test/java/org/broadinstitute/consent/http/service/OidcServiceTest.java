@@ -18,10 +18,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class OidcServiceTest {
 
   @Mock private OidcAuthorityDAO mockOidcAuthorityDAO;
-  OidcAuthorityConfiguration testConfig = new OidcAuthorityConfiguration(
-      "http://example.com",
-      "http://example.com/authorization",
-      "http://example.com/token");
+  OidcAuthorityConfiguration testConfig =
+      new OidcAuthorityConfiguration(
+          "http://example.com", "http://example.com/authorization", "http://example.com/token");
 
   @Test
   public void testGetAuthorizationURI() throws URISyntaxException {
@@ -57,7 +56,14 @@ class OidcServiceTest {
     var parameters = new MultivaluedHashMap<String, String>();
     when(mockOidcAuthorityDAO.getOidcAuthorityConfiguration()).thenReturn(testConfig);
     var actual = service.getAuthorizationURI(parameters);
-    assertEquals(new URI(testConfig.authorization_endpoint() + "?" + OidcService.SCOPE_PARAM + "=" + testClientId), actual);
+    assertEquals(
+        new URI(
+            testConfig.authorization_endpoint()
+                + "?"
+                + OidcService.SCOPE_PARAM
+                + "="
+                + testClientId),
+        actual);
   }
 
   @Test
@@ -71,7 +77,14 @@ class OidcServiceTest {
     parameters.add(OidcService.SCOPE_PARAM, "foo");
     when(mockOidcAuthorityDAO.getOidcAuthorityConfiguration()).thenReturn(testConfig);
     var actual = service.getAuthorizationURI(parameters);
-    assertEquals(new URI(testConfig.authorization_endpoint() + "?" + OidcService.SCOPE_PARAM + "=foo+" + testClientId), actual);
+    assertEquals(
+        new URI(
+            testConfig.authorization_endpoint()
+                + "?"
+                + OidcService.SCOPE_PARAM
+                + "=foo+"
+                + testClientId),
+        actual);
   }
 
   @Test
@@ -96,7 +109,8 @@ class OidcServiceTest {
     var queryParameters = new MultivaluedHashMap<String, String>();
     var expectedFormParameters = new MultivaluedHashMap<>(formParameters);
     expectedFormParameters.add(OidcService.CLIENT_SECRET_PARAM, configuration.getClientSecret());
-    when(mockOidcAuthorityDAO.oauthTokenPost(expectedFormParameters, queryParameters)).thenReturn("test");
+    when(mockOidcAuthorityDAO.oauthTokenPost(expectedFormParameters, queryParameters))
+        .thenReturn("test");
     var actual = service.tokenExchange(formParameters, queryParameters);
     assertEquals("test", actual);
   }
