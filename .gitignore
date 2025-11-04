@@ -155,6 +155,3 @@ dependency-reduced-pom.xml
 
 ## GHA Credentials
 gha-creds-*.json
-
-## ignore project based code styles (using spotless plugin)
-.idea/codeStyles/*
