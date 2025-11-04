@@ -2,9 +2,7 @@ package org.broadinstitute.consent.http.models.sam;
 
 import com.google.gson.Gson;
 
-/**
- * This represents the Sam response to GET /register/user/v2/self/diagnostics
- */
+/** This represents the Sam response to GET /register/user/v2/self/diagnostics */
 public class UserStatusDiagnostics {
 
   private Boolean adminEnabled;

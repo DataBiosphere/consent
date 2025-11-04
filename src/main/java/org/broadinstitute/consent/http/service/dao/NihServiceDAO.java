@@ -25,34 +25,41 @@ public class NihServiceDAO implements ConsentLogger {
   public void updateUserNihStatus(User user, NIHUserAccount nihAccount)
       throws IllegalArgumentException {
     // fail fast
-    if (Objects.isNull(nihAccount) || Objects.isNull(nihAccount.getStatus()) || Objects.isNull(
-        nihAccount.getEraExpiration())) {
+    if (Objects.isNull(nihAccount)
+        || Objects.isNull(nihAccount.getStatus())
+        || Objects.isNull(nihAccount.getEraExpiration())) {
       throw new IllegalArgumentException("Invalid NIH account information");
     }
-    jdbi.useTransaction(handler -> {
-      UserDAO userDAO = handler.attach(UserDAO.class);
-      UserPropertyDAO userPropertyDAO = handler.attach(UserPropertyDAO.class);
-      Collection<UserProperty> properties = List.of(
-          new UserProperty(user.getUserId(), UserFields.ERA_STATUS.getValue(),
-              nihAccount.getStatus().toString()),
-          new UserProperty(user.getUserId(), UserFields.ERA_EXPIRATION_DATE.getValue(),
-              nihAccount.getEraExpiration())
-      );
-      userPropertyDAO.insertAll(properties);
-      userDAO.updateEraCommonsId(user.getUserId(), nihAccount.getNihUsername());
-    });
+    jdbi.useTransaction(
+        handler -> {
+          UserDAO userDAO = handler.attach(UserDAO.class);
+          UserPropertyDAO userPropertyDAO = handler.attach(UserPropertyDAO.class);
+          Collection<UserProperty> properties =
+              List.of(
+                  new UserProperty(
+                      user.getUserId(),
+                      UserFields.ERA_STATUS.getValue(),
+                      nihAccount.getStatus().toString()),
+                  new UserProperty(
+                      user.getUserId(),
+                      UserFields.ERA_EXPIRATION_DATE.getValue(),
+                      nihAccount.getEraExpiration()));
+          userPropertyDAO.insertAll(properties);
+          userDAO.updateEraCommonsId(user.getUserId(), nihAccount.getNihUsername());
+        });
   }
 
   public void deleteNihAccountById(Integer userId) {
-    jdbi.useTransaction(handler -> {
-      UserDAO userDAO = handler.attach(UserDAO.class);
-      UserPropertyDAO userPropertyDAO = handler.attach(UserPropertyDAO.class);
-      Collection<UserProperty> properties = List.of(
-          new UserProperty(userId, UserFields.ERA_EXPIRATION_DATE.getValue()),
-          new UserProperty(userId, UserFields.ERA_STATUS.getValue())
-      );
-      userDAO.updateEraCommonsId(userId, null);
-      userPropertyDAO.deletePropertiesByUserAndKey(properties);
-    });
+    jdbi.useTransaction(
+        handler -> {
+          UserDAO userDAO = handler.attach(UserDAO.class);
+          UserPropertyDAO userPropertyDAO = handler.attach(UserPropertyDAO.class);
+          Collection<UserProperty> properties =
+              List.of(
+                  new UserProperty(userId, UserFields.ERA_EXPIRATION_DATE.getValue()),
+                  new UserProperty(userId, UserFields.ERA_STATUS.getValue()));
+          userDAO.updateEraCommonsId(userId, null);
+          userPropertyDAO.deletePropertiesByUserAndKey(properties);
+        });
   }
 }

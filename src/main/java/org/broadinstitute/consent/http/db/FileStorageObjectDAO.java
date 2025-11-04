@@ -24,8 +24,7 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
           (:fileName, :category, :gcsFileUri,
           :mediaType, :entityId, :createUserId,
           :createDate, false)
-          """
-  )
+          """)
   @GetGeneratedKeys
   Integer insertNewFile(
       @Bind("fileName") String fileName,
@@ -34,8 +33,7 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
       @Bind("mediaType") String mediaType,
       @Bind("entityId") String entityId,
       @Bind("createUserId") Integer createUserId,
-      @Bind("createDate") Instant createDate
-  );
+      @Bind("createDate") Instant createDate);
 
   @SqlUpdate(
       """
@@ -44,12 +42,11 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
               delete_user_id=:deleteUserId,
               delete_date=:deleteDate
           WHERE file_storage_object_id = :fileStorageObjectId
-          """
-  )
-  void deleteFileById(@Bind("fileStorageObjectId") Integer fileStorageObjectId,
+          """)
+  void deleteFileById(
+      @Bind("fileStorageObjectId") Integer fileStorageObjectId,
       @Bind("deleteUserId") Integer deleteUserId,
       @Bind("deleteDate") Instant deleteDate);
-
 
   @SqlUpdate(
       """
@@ -59,8 +56,7 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
               update_user_id=:updateUserId,
               update_date=:updateDate
           WHERE file_storage_object_id = :fileStorageObjectId
-          """
-  )
+          """)
   void updateFileById(
       @Bind("fileStorageObjectId") Integer fileStorageObjectId,
       @Bind("gcsFileUri") String gcsFileUri,
@@ -75,20 +71,18 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
               delete_user_id=:deleteUserId,
               delete_date=:deleteDate
           WHERE entity_id = :entityId
-          """
-  )
-  void deleteFilesByEntityId(@Bind("entityId") String entityId,
+          """)
+  void deleteFilesByEntityId(
+      @Bind("entityId") String entityId,
       @Bind("deleteUserId") Integer deleteUserId,
       @Bind("deleteDate") Instant deleteDate);
-
 
   @SqlQuery(
       """
           SELECT *
           FROM file_storage_object
           WHERE file_storage_object_id = :fileStorageObjectId
-          """
-  )
+          """)
   FileStorageObject findFileById(@Bind("fileStorageObjectId") Integer fileStorageObjectId);
 
   @SqlQuery(
@@ -97,8 +91,7 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
           FROM file_storage_object
           WHERE entity_id = :entityId AND
                 deleted != true
-          """
-  )
+          """)
   List<FileStorageObject> findFilesByEntityId(@Bind("entityId") String entityId);
 
   @SqlQuery(
@@ -108,11 +101,11 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
           WHERE entity_id = :entityId
                 AND category = :category
                 AND deleted != true
-          """
-  )
-  List<FileStorageObject> findFilesByEntityIdAndCategory(@Bind("entityId") String entityId,
-      @Bind("category") String category);
+          """)
+  List<FileStorageObject> findFilesByEntityIdAndCategory(
+      @Bind("entityId") String entityId, @Bind("category") String category);
 
-  @SqlUpdate("DELETE FROM file_storage_object WHERE create_user_id = :userId OR update_user_id = :userId OR delete_user_id = :userId")
+  @SqlUpdate(
+      "DELETE FROM file_storage_object WHERE create_user_id = :userId OR update_user_id = :userId OR delete_user_id = :userId")
   void deleteAllUserFiles(@Bind("userId") Integer userId);
 }

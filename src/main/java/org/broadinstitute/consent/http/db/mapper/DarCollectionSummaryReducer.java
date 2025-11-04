@@ -13,16 +13,16 @@ import org.jdbi.v3.core.mapper.NoSuchMapperException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 
-public class DarCollectionSummaryReducer implements
-    LinkedHashMapRowReducer<Integer, DarCollectionSummary>, RowMapperHelper {
+public class DarCollectionSummaryReducer
+    implements LinkedHashMapRowReducer<Integer, DarCollectionSummary>, RowMapperHelper {
 
   @Override
   public void accumulate(Map<Integer, DarCollectionSummary> map, RowView rowView) {
 
-    DarCollectionSummary summary = map.computeIfAbsent(
-        rowView.getColumn("dar_collection_id", Integer.class),
-        id -> rowView.getRow(DarCollectionSummary.class)
-    );
+    DarCollectionSummary summary =
+        map.computeIfAbsent(
+            rowView.getColumn("dar_collection_id", Integer.class),
+            id -> rowView.getRow(DarCollectionSummary.class));
     Election election;
     Vote vote;
     Integer datasetId;
@@ -32,7 +32,8 @@ public class DarCollectionSummaryReducer implements
     try {
       if (hasColumn(rowView, "closeout", String.class)) {
         String string = rowView.getColumn("closeout", String.class);
-        CloseoutSupplement closeout = GsonUtil.getInstance().fromJson(string, CloseoutSupplement.class);
+        CloseoutSupplement closeout =
+            GsonUtil.getInstance().fromJson(string, CloseoutSupplement.class);
         summary.setCloseoutSupplement(closeout);
       }
 
@@ -53,7 +54,8 @@ public class DarCollectionSummaryReducer implements
           summary.setLatestReferenceId(darReferenceId);
         }
         hasOptionalColumn(rowView, "latest_dar_parent_id", Integer.class)
-            .ifPresent(darParentId -> summary.addParentChildRelationship(darParentId, darReferenceId));
+            .ifPresent(
+                darParentId -> summary.addParentChildRelationship(darParentId, darReferenceId));
         hasOptionalColumn(rowView, "latest_dar_closeout_approving_so_id", Integer.class)
             .ifPresent(summary::setCloseoutSigningOfficialId);
         hasOptionalColumn(rowView, "latest_dar_closeout_so_approval_timestamp", Timestamp.class)
@@ -63,7 +65,7 @@ public class DarCollectionSummaryReducer implements
           summary.addStatus(darStatus, darReferenceId);
         }
       } catch (MappingException e) {
-        //ignore exception, it means dar_status and dar_reference_id wasn't included for this query
+        // ignore exception, it means dar_status and dar_reference_id wasn't included for this query
       }
 
       try {
@@ -86,7 +88,8 @@ public class DarCollectionSummaryReducer implements
       }
 
     } catch (NoSuchMapperException e) {
-      //ignore these exceptions, just means there's no elections and votes on the collection for this query
+      // ignore these exceptions, just means there's no elections and votes on the collection for
+      // this query
     }
   }
 }

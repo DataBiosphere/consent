@@ -62,5 +62,4 @@ public class SupportResource extends Resource {
       return createExceptionResponse(e);
     }
   }
-
 }

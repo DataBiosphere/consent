@@ -2,8 +2,8 @@ package org.broadinstitute.consent.http.util;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -30,8 +30,18 @@ public class CountryValidator {
           "macao",
           "russian federation (the)",
           "venezuela (bolivarian republic of)");
+
   private static final Set<String> bannedCountriesCFR =
-      Set.of("china", "cuba", "hong kong", "iran", "macao", "macau", "north korea", "russia", "venezuela");
+      Set.of(
+          "china",
+          "cuba",
+          "hong kong",
+          "iran",
+          "macao",
+          "macau",
+          "north korea",
+          "russia",
+          "venezuela");
 
   public CountryValidator() {
     try (InputStream is = getClass().getClassLoader().getResourceAsStream(FILEPATH)) {
@@ -51,14 +61,13 @@ public class CountryValidator {
 
   public static boolean containsBannedCountry(DataAccessRequest dar) {
     return dar.getData().getLabAndInternalCollaborators().stream()
-        .anyMatch(collaborator -> isInBannedCountryList(collaborator.countryOfOperation()))
+            .anyMatch(collaborator -> isInBannedCountryList(collaborator.countryOfOperation()))
         || isInBannedCountryList(dar.getData().getPiCountryOfOperation());
   }
 
   private static boolean isInBannedCountryList(String countryOfOperation) {
     if (countryOfOperation == null) return false;
     return bannedCountriesCFR.contains(countryOfOperation.trim().toLowerCase())
-        || bannedCountriesISO3166.contains(
-        countryOfOperation.trim().toLowerCase());
+        || bannedCountriesISO3166.contains(countryOfOperation.trim().toLowerCase());
   }
 }

@@ -104,5 +104,4 @@ class DarManualReviewTest {
     dar.getData().setNotHealth(true);
     assertTrue(dar.requiresManualReview());
   }
-
 }

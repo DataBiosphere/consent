@@ -26,8 +26,8 @@ class SigningOfficialMessagesTest extends AbstractTestHelper {
 
   private static final String DAR_CODE = "DAR-123";
   private static final String REFERENCE_ID = UUID.randomUUID().toString();
-  private static final String TRANSLATION = new DataUseBuilder().setGeneralUse(true).build()
-      .toString();
+  private static final String TRANSLATION =
+      new DataUseBuilder().setGeneralUse(true).build().toString();
   private static User toUser;
   private static User researcher;
   private static List<Dataset> datasets;
@@ -35,17 +35,20 @@ class SigningOfficialMessagesTest extends AbstractTestHelper {
 
   private static Stream<Arguments> messageProvider() {
     return Stream.of(
-        Arguments.of(new SoDARApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
-            TRANSLATION, false)),
-        Arguments.of(new SoDARApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
-            TRANSLATION, true)),
-        Arguments.of(new SoPRApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
-            TRANSLATION, false)),
-        Arguments.of(new SoPRApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
-            TRANSLATION, true)),
+        Arguments.of(
+            new SoDARApproved(
+                toUser, DAR_CODE, researcher, REFERENCE_ID, datasets, TRANSLATION, false)),
+        Arguments.of(
+            new SoDARApproved(
+                toUser, DAR_CODE, researcher, REFERENCE_ID, datasets, TRANSLATION, true)),
+        Arguments.of(
+            new SoPRApproved(
+                toUser, DAR_CODE, researcher, REFERENCE_ID, datasets, TRANSLATION, false)),
+        Arguments.of(
+            new SoPRApproved(
+                toUser, DAR_CODE, researcher, REFERENCE_ID, datasets, TRANSLATION, true)),
         Arguments.of(new SoDARSubmitted(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets)),
-        Arguments.of(new SoPRSubmitted(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets))
-    );
+        Arguments.of(new SoPRSubmitted(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets)));
   }
 
   @BeforeEach
@@ -85,10 +88,11 @@ class SigningOfficialMessagesTest extends AbstractTestHelper {
     assertTrue(templateString.contains(toUser.getDisplayName()));
     assertTrue(templateString.contains(DAR_CODE));
     assertTrue(templateString.contains(researcher.getDisplayName()));
-    datasets.forEach(dataset -> {
-      assertTrue(templateString.contains(dataset.getName()));
-      assertTrue(templateString.contains(dataset.getDatasetIdentifier()));
-    });
+    datasets.forEach(
+        dataset -> {
+          assertTrue(templateString.contains(dataset.getName()));
+          assertTrue(templateString.contains(dataset.getDatasetIdentifier()));
+        });
   }
 
   @ParameterizedTest
@@ -99,22 +103,22 @@ class SigningOfficialMessagesTest extends AbstractTestHelper {
 
   @Test
   void testDARApprovedRADARReferences() throws Exception {
-    MailMessage message = new SoDARApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
-        TRANSLATION, true);
+    MailMessage message =
+        new SoDARApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets, TRANSLATION, true);
     var linkUrl = "http://testServerUrl";
     var template = helper.getTemplate(message.getTemplateName());
     var out = new StringWriter();
     template.process(message.createModel(linkUrl), out);
     String templateString = out.toString();
 
-    assertEquals(2, StringUtils.countMatches(templateString," Rule Automated DAR (RADAR) "));
+    assertEquals(2, StringUtils.countMatches(templateString, " Rule Automated DAR (RADAR) "));
     assertFalse(templateString.contains("radarText"));
   }
 
   @Test
   void testDARNORADARReferences() throws Exception {
-    MailMessage message = new SoDARApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets,
-        TRANSLATION, false);
+    MailMessage message =
+        new SoDARApproved(toUser, DAR_CODE, researcher, REFERENCE_ID, datasets, TRANSLATION, false);
     var linkUrl = "http://testServerUrl";
     var template = helper.getTemplate(message.getTemplateName());
     var out = new StringWriter();
@@ -134,7 +138,7 @@ class SigningOfficialMessagesTest extends AbstractTestHelper {
     template.process(message.createModel(linkUrl), out);
     String templateString = out.toString();
 
-    assertEquals(2, StringUtils.countMatches(templateString," Rule Automated DAR (RADAR) "));
+    assertEquals(2, StringUtils.countMatches(templateString, " Rule Automated DAR (RADAR) "));
     assertFalse(templateString.contains("radarText"));
 
     String subject = message.createSubject();

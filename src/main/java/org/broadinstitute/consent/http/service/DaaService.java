@@ -15,7 +15,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
@@ -43,7 +42,14 @@ public class DaaService implements ConsentLogger {
   private final DacDAO dacDAO;
 
   @Inject
-  public DaaService(DaaServiceDAO daaServiceDAO, DaaDAO daaDAO, GCSService gcsService, EmailService emailService, UserService userService, InstitutionDAO institutionDAO, DacDAO dacDAO) {
+  public DaaService(
+      DaaServiceDAO daaServiceDAO,
+      DaaDAO daaDAO,
+      GCSService gcsService,
+      EmailService emailService,
+      UserService userService,
+      InstitutionDAO institutionDAO,
+      DacDAO dacDAO) {
     this.daaServiceDAO = daaServiceDAO;
     this.daaDAO = daaDAO;
     this.gcsService = gcsService;
@@ -63,24 +69,26 @@ public class DaaService implements ConsentLogger {
    * @return The created DataAccessAgreement
    * @throws ServerErrorException The Exception
    */
-  public DataAccessAgreement createDaaWithFso(Integer userId, Integer dacId,
-      InputStream inputStream,
-      FormDataContentDisposition fileDetail)
+  public DataAccessAgreement createDaaWithFso(
+      Integer userId, Integer dacId, InputStream inputStream, FormDataContentDisposition fileDetail)
       throws ServerErrorException {
     UUID id = UUID.randomUUID();
     BlobId blobId;
     try {
       blobId = gcsService.storeDocument(inputStream, fileDetail.getType(), id);
     } catch (IOException e) {
-      logException(String.format("Error storing DAA file in GCS. User ID: %s; Dac ID: %s. ", userId, dacId), e);
+      logException(
+          String.format("Error storing DAA file in GCS. User ID: %s; Dac ID: %s. ", userId, dacId),
+          e);
       throw new ServerErrorException("Error storing DAA file in GCS.", 500);
     }
     Integer daaId;
     try {
-      String mediaType = switch (StringUtils.substringAfterLast(fileDetail.getFileName(), ".")) {
-        case "png", "gif", "jpg", "jpeg" -> "image";
-        default -> MediaType.APPLICATION_OCTET_STREAM;
-      };
+      String mediaType =
+          switch (StringUtils.substringAfterLast(fileDetail.getFileName(), ".")) {
+            case "png", "gif", "jpg", "jpeg" -> "image";
+            default -> MediaType.APPLICATION_OCTET_STREAM;
+          };
       FileStorageObject fso = new FileStorageObject();
       fso.setBlobId(blobId);
       fso.setFileName(fileDetail.getFileName());
@@ -91,7 +99,10 @@ public class DaaService implements ConsentLogger {
       try {
         gcsService.deleteDocument(blobId.getName());
       } catch (Exception ex) {
-        logException(String.format("Error deleting DAA file from GCS. User ID: %s; Dac ID: %s. ", userId, dacId), ex);
+        logException(
+            String.format(
+                "Error deleting DAA file from GCS. User ID: %s; Dac ID: %s. ", userId, dacId),
+            ex);
       }
       logException(String.format("Error saving DAA. User ID: %s; Dac ID: %s. ", userId, dacId), e);
       throw new ServerErrorException("Error saving DAA.", 500);
@@ -111,18 +122,22 @@ public class DaaService implements ConsentLogger {
   // Work is ticketed to refactor this logic.
   public boolean isBroadDAA(int daaId, List<DataAccessAgreement> allDaas, List<Dac> allDacs) {
     // Artificially tag the Broad/DUOS DAA as a reference DAA.
-    Optional<Dac> broadDac = allDacs.stream()
-        .filter(dac -> dac.getName().toLowerCase().contains("broad")).findFirst();
+    Optional<Dac> broadDac =
+        allDacs.stream().filter(dac -> dac.getName().toLowerCase().contains("broad")).findFirst();
     if (broadDac.isPresent()) {
-      Optional<DataAccessAgreement> broadDAA = allDaas.stream()
-          .filter(daa -> daa.getInitialDacId().equals(broadDac.get().getDacId())).findFirst();
+      Optional<DataAccessAgreement> broadDAA =
+          allDaas.stream()
+              .filter(daa -> daa.getInitialDacId().equals(broadDac.get().getDacId()))
+              .findFirst();
       broadDAA.ifPresent(daa -> daa.setBroadDaa(true));
     } else {
       // In this case, we want the first created DAA to be the Broad default DAA.
-      allDaas.stream().min(Comparator.comparing(DataAccessAgreement::getDaaId))
+      allDaas.stream()
+          .min(Comparator.comparing(DataAccessAgreement::getDaaId))
           .ifPresent(daa -> daa.setBroadDaa(true));
     }
-    Optional<DataAccessAgreement> broadDaa = allDaas.stream().filter(daa -> daa.getDaaId().equals(daaId)).findFirst();
+    Optional<DataAccessAgreement> broadDaa =
+        allDaas.stream().filter(daa -> daa.getDaaId().equals(daaId)).findFirst();
     if (broadDaa.isPresent()) {
       return broadDaa.get().getBroadDaa();
     } else {
@@ -131,16 +146,15 @@ public class DaaService implements ConsentLogger {
   }
 
   public List<DataAccessAgreement> findAll() {
-      List<DataAccessAgreement> daas = daaDAO.findAll();
-      List<Dac> allDacs = dacDAO.findAll();
-      if (daas != null) {
-        daas.forEach(daa -> {
-          daa.setBroadDaa(
-              isBroadDAA(daa.getDaaId(), daas, allDacs)
-          );
-        });
-        return daas;
-      }
+    List<DataAccessAgreement> daas = daaDAO.findAll();
+    List<Dac> allDacs = dacDAO.findAll();
+    if (daas != null) {
+      daas.forEach(
+          daa -> {
+            daa.setBroadDaa(isBroadDAA(daa.getDaaId(), daas, allDacs));
+          });
+      return daas;
+    }
     return List.of();
   }
 
@@ -156,11 +170,13 @@ public class DaaService implements ConsentLogger {
     try {
       Institution institution = institutionDAO.findInstitutionWithSOById(user.getInstitutionId());
       if (institution == null) {
-        throw new BadRequestException("This user has not set their institution: " + user.getDisplayName());
+        throw new BadRequestException(
+            "This user has not set their institution: " + user.getDisplayName());
       }
       List<SimplifiedUser> signingOfficials = institution.getSigningOfficials();
       if (signingOfficials.isEmpty()) {
-        throw new NotFoundException("No signing officials found for user: " + user.getDisplayName());
+        throw new NotFoundException(
+            "No signing officials found for user: " + user.getDisplayName());
       }
       for (SimplifiedUser signingOfficial : signingOfficials) {
         DataAccessAgreement daa = findById(daaId);
@@ -172,36 +188,42 @@ public class DaaService implements ConsentLogger {
       }
     } catch (Exception e) {
       logException(e);
-      throw(e);
+      throw (e);
     }
   }
 
-  public void sendNewDaaEmails(User user, Integer daaId, String dacName, String newDaaName) throws Exception {
+  public void sendNewDaaEmails(User user, Integer daaId, String dacName, String newDaaName)
+      throws Exception {
     try {
       DataAccessAgreement daa = findById(daaId);
       if (daa != null) {
         String previousDaaName = daa.getFile().getFileName();
         List<SimplifiedUser> researchers = userService.getUsersByDaaId(daaId);
-        List<SimplifiedUser> signingOfficials = researchers.stream()
-            .flatMap(researcher -> userService.findSOsByInstitutionId(researcher.getInstitutionId()).stream())
-            .distinct()
-            .toList();
+        List<SimplifiedUser> signingOfficials =
+            researchers.stream()
+                .flatMap(
+                    researcher ->
+                        userService.findSOsByInstitutionId(researcher.getInstitutionId()).stream())
+                .distinct()
+                .toList();
         User toUser = new User();
 
         for (SimplifiedUser researcher : researchers) {
           toUser.setEmail(researcher.getEmail());
           toUser.setDisplayName(researcher.getDisplayName());
-          emailService.sendNewDAAUploadResearcherMessage(toUser, dacName, previousDaaName, newDaaName, user.getUserId());
+          emailService.sendNewDAAUploadResearcherMessage(
+              toUser, dacName, previousDaaName, newDaaName, user.getUserId());
         }
         for (SimplifiedUser signingOfficial : signingOfficials) {
           toUser.setEmail(signingOfficial.getEmail());
           toUser.setDisplayName(signingOfficial.getDisplayName());
-          emailService.sendNewDAAUploadSOMessage(toUser, dacName, previousDaaName, newDaaName, user.getUserId());
+          emailService.sendNewDAAUploadSOMessage(
+              toUser, dacName, previousDaaName, newDaaName, user.getUserId());
         }
       }
     } catch (Exception e) {
       logException(e);
-      throw(e);
+      throw (e);
     }
   }
 

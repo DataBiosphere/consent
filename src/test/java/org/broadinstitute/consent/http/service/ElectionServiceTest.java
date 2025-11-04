@@ -19,8 +19,7 @@ class ElectionServiceTest {
 
   private ElectionService service;
 
-  @Mock
-  private ElectionDAO electionDAO;
+  @Mock private ElectionDAO electionDAO;
 
   private void initService() {
     service = new ElectionService(electionDAO);
@@ -47,5 +46,4 @@ class ElectionServiceTest {
     assertNotNull(elections);
     assertEquals(1, elections.size());
   }
-
 }

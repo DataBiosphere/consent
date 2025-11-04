@@ -22,14 +22,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class SendGridHealthCheckTest {
 
-  @Mock
-  private HttpClientUtil clientUtil;
+  @Mock private HttpClientUtil clientUtil;
 
-  @Mock
-  private SimpleResponse response;
+  @Mock private SimpleResponse response;
 
-  @Mock
-  private MailConfiguration mailConfiguration;
+  @Mock private MailConfiguration mailConfiguration;
 
   private SendGridHealthCheck healthCheck;
   private SendGridStatus goodStatus, badStatus;

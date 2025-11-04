@@ -27,8 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class MatchResourceTest {
 
-  @Mock
-  private MatchService service;
+  @Mock private MatchService service;
 
   private final AuthUser authUser = new AuthUser("test");
   private final List<UserRole> roles = List.of(UserRoles.Researcher());
@@ -46,8 +45,9 @@ class MatchResourceTest {
   void testGetMatchesForPurpose() {
     initResource();
 
-    Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(duosUser,
-        UUID.randomUUID().toString());
+    Response response =
+        resource.getMatchesForLatestDataAccessElectionsByPurposeIds(
+            duosUser, UUID.randomUUID().toString());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -61,8 +61,8 @@ class MatchResourceTest {
   @Test
   void testGetMatchesForPurpose_CommaSeparatedBlanks() {
     initResource();
-    Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(duosUser,
-        " , , ,");
+    Response response =
+        resource.getMatchesForLatestDataAccessElectionsByPurposeIds(duosUser, " , , ,");
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
@@ -70,12 +70,12 @@ class MatchResourceTest {
   void testGetMatchesForPurpose_PartialValidIds() {
     Match match = new Match();
     match.setId(2);
-    when(service.findMatchesForLatestDataAccessElectionsByPurposeIds(anyList())).thenReturn(
-        List.of(match));
+    when(service.findMatchesForLatestDataAccessElectionsByPurposeIds(anyList()))
+        .thenReturn(List.of(match));
     initResource();
 
-    Response response = resource.getMatchesForLatestDataAccessElectionsByPurposeIds(duosUser,
-        "3, , 5, ");
+    Response response =
+        resource.getMatchesForLatestDataAccessElectionsByPurposeIds(duosUser, "3, , 5, ");
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -85,9 +85,7 @@ class MatchResourceTest {
     when(service.findMatchesByPurposeId(any())).thenReturn(Collections.singletonList(new Match()));
     initResource();
 
-    Response response = resource.reprocessPurposeMatches(authUser,
-        UUID.randomUUID().toString());
+    Response response = resource.reprocessPurposeMatches(authUser, UUID.randomUUID().toString());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
-
 }

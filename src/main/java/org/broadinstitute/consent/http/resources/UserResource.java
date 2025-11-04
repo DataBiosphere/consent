@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-
 import com.codahale.metrics.annotation.Timed;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
@@ -61,8 +60,11 @@ public class UserResource extends Resource {
   private final NihService nihService;
 
   @Inject
-  public UserResource(SamService samService, UserService userService,
-      DatasetService datasetService, AcknowledgementService acknowledgementService,
+  public UserResource(
+      SamService samService,
+      UserService userService,
+      DatasetService datasetService,
+      AcknowledgementService acknowledgementService,
       NihService nihService) {
     this.samService = samService;
     this.userService = userService;
@@ -80,9 +82,9 @@ public class UserResource extends Resource {
       User user = userService.findUserByEmail(authUser.getEmail());
       boolean valid = UserRoles.isValidRole(roleName);
       if (valid) {
-        //if there is a valid roleName but it is not SO or Admin then throw an exception
-        if (!roleName.equals(UserRoles.ADMIN.getRoleName()) && !roleName.equals(
-            UserRoles.SIGNINGOFFICIAL.getRoleName())) {
+        // if there is a valid roleName but it is not SO or Admin then throw an exception
+        if (!roleName.equals(UserRoles.ADMIN.getRoleName())
+            && !roleName.equals(UserRoles.SIGNINGOFFICIAL.getRoleName())) {
           throw new BadRequestException("Unsupported role name: " + roleName);
         }
         if (!user.hasUserRole(UserRoles.getUserRoleFromName(roleName))) {
@@ -132,10 +134,8 @@ public class UserResource extends Resource {
   public Response getDatasetsFromUserDacsV2(@Auth AuthUser authUser) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      List<Integer> dacIds = user.getRoles().stream()
-          .map(UserRole::getDacId)
-          .filter(Objects::nonNull)
-          .toList();
+      List<Integer> dacIds =
+          user.getRoles().stream().map(UserRole::getDacId).filter(Objects::nonNull).toList();
       List<Dataset> datasets =
           dacIds.isEmpty() ? List.of() : datasetService.findDatasetListByDacIds(dacIds);
       if (datasets.isEmpty()) {
@@ -198,8 +198,8 @@ public class UserResource extends Resource {
       // Ensure that we have a real user with this ID, fail if we do not.
       userService.findUserById(userId);
       User updatedUser = userService.updateUserFieldsById(userUpdateFields, userId);
-      JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(duosUser,
-          updatedUser.getUserId());
+      JsonObject jsonUser =
+          userService.findUserWithPropertiesByIdAsJsonObject(duosUser, updatedUser.getUserId());
       return Response.ok().entity(gson.toJson(jsonUser)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -215,14 +215,14 @@ public class UserResource extends Resource {
       User user = duosUser.getUser();
       UserUpdateFields userUpdateFields = gson.fromJson(json, UserUpdateFields.class);
 
-      if (Objects.nonNull(userUpdateFields.getUserRoleIds()) && !user.hasUserRole(
-          UserRoles.ADMIN)) {
+      if (Objects.nonNull(userUpdateFields.getUserRoleIds())
+          && !user.hasUserRole(UserRoles.ADMIN)) {
         throw new BadRequestException("Cannot change user's roles.");
       }
 
       user = userService.updateUserFieldsById(userUpdateFields, user.getUserId());
-      JsonObject jsonUser = userService.findUserWithPropertiesByIdAsJsonObject(duosUser,
-          user.getUserId());
+      JsonObject jsonUser =
+          userService.findUserWithPropertiesByIdAsJsonObject(duosUser, user.getUserId());
 
       return Response.ok().entity(gson.toJson(jsonUser)).build();
     } catch (Exception e) {
@@ -234,7 +234,9 @@ public class UserResource extends Resource {
   @Path("/{userId}/{roleId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
-  public Response addRoleToUser(@Auth DuosUser duosUser, @PathParam("userId") Integer userId,
+  public Response addRoleToUser(
+      @Auth DuosUser duosUser,
+      @PathParam("userId") Integer userId,
       @PathParam("roleId") Integer roleId) {
     UserRoles targetRole = UserRoles.getUserRoleFromId(roleId);
     if (Objects.isNull(targetRole)) {
@@ -245,8 +247,8 @@ public class UserResource extends Resource {
       User activeUser = duosUser.getUser();
       User user = userService.findUserById(userId);
       List<Integer> currentUserRoleIds = user.getUserRoleIdsFromUser();
-      if ((activeUser.hasUserRole(UserRoles.ADMIN) && UserRoles.isValidNonDACRoleId(targetRole)) ||
-          signingOfficialMeetsRequirements(targetRole, activeUser, user)) {
+      if ((activeUser.hasUserRole(UserRoles.ADMIN) && UserRoles.isValidNonDACRoleId(targetRole))
+          || signingOfficialMeetsRequirements(targetRole, activeUser, user)) {
         if (!currentUserRoleIds.contains(roleId)) {
           userService.insertRoleAndInstitutionForUser(role, user);
           return getUserResponse(duosUser, userId);
@@ -261,13 +263,13 @@ public class UserResource extends Resource {
     }
   }
 
-  private static boolean signingOfficialMeetsRequirements(UserRoles role, User activeUser,
-      User user) {
+  private static boolean signingOfficialMeetsRequirements(
+      UserRoles role, User activeUser, User user) {
     return activeUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)
         && activeUser.getInstitutionId() != null
         && UserRoles.isValidSoAdjustableRoleId(role)
-        && (user.getInstitutionId() == null || user.getInstitutionId()
-        .equals(activeUser.getInstitutionId()));
+        && (user.getInstitutionId() == null
+            || user.getInstitutionId().equals(activeUser.getInstitutionId()));
   }
 
   private Response getUserResponse(DuosUser duosUser, Integer userId) {
@@ -279,7 +281,9 @@ public class UserResource extends Resource {
   @Path("/{userId}/{roleId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
-  public Response deleteRoleFromUser(@Auth DuosUser duosUser, @PathParam("userId") Integer userId,
+  public Response deleteRoleFromUser(
+      @Auth DuosUser duosUser,
+      @PathParam("userId") Integer userId,
       @PathParam("roleId") Integer roleId) {
     UserRoles targetRole = UserRoles.getUserRoleFromId(roleId);
     if (Objects.isNull(targetRole)) {
@@ -317,8 +321,8 @@ public class UserResource extends Resource {
     }
   }
 
-  private Response doDelete(DuosUser duosUser, Integer userId, Integer roleId, User activeUser,
-      User user) {
+  private Response doDelete(
+      DuosUser duosUser, Integer userId, Integer roleId, User activeUser, User user) {
     List<Integer> currentUserRoleIds = user.getUserRoleIdsFromUser();
     if (!currentUserRoleIds.contains(roleId)) {
       JsonObject userJson = userService.findUserWithPropertiesByIdAsJsonObject(duosUser, userId);
@@ -335,18 +339,17 @@ public class UserResource extends Resource {
   @PermitAll
   public Response createResearcher(@Context UriInfo info, @Auth AuthUser authUser) {
     if (authUser == null || authUser.getEmail() == null || authUser.getName() == null) {
-      return Response.
-          status(Response.Status.BAD_REQUEST).
-          entity(new Error("Unable to verify google identity",
-              Response.Status.BAD_REQUEST.getStatusCode())).
-          build();
+      return Response.status(Response.Status.BAD_REQUEST)
+          .entity(
+              new Error(
+                  "Unable to verify google identity", Response.Status.BAD_REQUEST.getStatusCode()))
+          .build();
     }
     try {
       if (userService.findUserByEmail(authUser.getEmail()) != null) {
-        return Response.
-            status(Response.Status.CONFLICT).
-            entity(new Error("Registered user exists", Response.Status.CONFLICT.getStatusCode())).
-            build();
+        return Response.status(Response.Status.CONFLICT)
+            .entity(new Error("Registered user exists", Response.Status.CONFLICT.getStatusCode()))
+            .build();
       }
     } catch (NotFoundException nfe) {
       // no-op, we expect to not find the new user in this case.
@@ -359,7 +362,8 @@ public class UserResource extends Resource {
       URI uri;
       user = userService.createUser(user);
       uri = info.getRequestUriBuilder().path("{email}").build(user.getEmail());
-      return Response.created(new URI(uri.toString().replace("user", "dacuser"))).entity(user)
+      return Response.created(new URI(uri.toString().replace("user", "dacuser")))
+          .entity(user)
           .build();
     } catch (Exception e) {
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -376,8 +380,8 @@ public class UserResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       if (Objects.nonNull(user.getInstitutionId())) {
-        List<SimplifiedUser> signingOfficials = userService.findSOsByInstitutionId(
-            user.getInstitutionId());
+        List<SimplifiedUser> signingOfficials =
+            userService.findSOsByInstitutionId(user.getInstitutionId());
         return Response.ok().entity(signingOfficials).build();
       }
       return Response.ok().entity(Collections.emptyList()).build();
@@ -393,8 +397,8 @@ public class UserResource extends Resource {
   public Response getUserAcknowledgements(@Auth DuosUser duosUser) {
     try {
       User user = duosUser.getUser();
-      Map<String, Acknowledgement> acknowledgementMap = acknowledgementService.findAcknowledgementsForUser(
-          user);
+      Map<String, Acknowledgement> acknowledgementMap =
+          acknowledgementService.findAcknowledgementsForUser(user);
       return Response.ok().entity(acknowledgementMap).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -461,8 +465,8 @@ public class UserResource extends Resource {
     }
 
     try {
-      Map<String, Acknowledgement> acknowledgementMap = acknowledgementService.makeAcknowledgements(
-          keys, user);
+      Map<String, Acknowledgement> acknowledgementMap =
+          acknowledgementService.makeAcknowledgements(keys, user);
       return Response.ok().entity(acknowledgementMap).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -482,6 +486,4 @@ public class UserResource extends Resource {
       return createExceptionResponse(e);
     }
   }
-
-
 }

@@ -11,7 +11,6 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.google.api.client.http.HttpStatusCodes;
-import io.netty.handler.codec.http.HttpHeaderNames;
 import jakarta.ws.rs.core.HttpHeaders;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -30,12 +29,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 
-
 @ExtendWith(MockitoExtension.class)
 class ComplianceLoggerTest extends AbstractTestHelper {
 
-  @Mock
-  private ContainerRequest request;
+  @Mock private ContainerRequest request;
   private TestAppender testAppender;
   private final User user = new User();
   private final Institution institution = new Institution();
@@ -73,68 +70,82 @@ class ComplianceLoggerTest extends AbstractTestHelper {
 
   @Test
   void testLogDARSApproval() {
-    ComplianceLogger.logDARApproval(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
+    ComplianceLogger.logDARApproval(
+        user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
     assertEquals(1, testAppender.getSize());
     ILoggingEvent event = testAppender.getLoggedEvents().get(0);
     assertMessageContainsValueFields(event);
-    assertThat(event.getFormattedMessage(), containsString(ComplianceEvent.DAR_APPROVAL.toString()));
+    assertThat(
+        event.getFormattedMessage(), containsString(ComplianceEvent.DAR_APPROVAL.toString()));
   }
 
   @Test
   void testLogRadarApproval() {
-    ComplianceLogger.logRadarApproval(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
+    ComplianceLogger.logRadarApproval(
+        user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
     assertEquals(1, testAppender.getSize());
     ILoggingEvent event = testAppender.getLoggedEvents().get(0);
     assertMessageContainsValueFields(event);
-    assertThat(event.getFormattedMessage(), containsString(ComplianceEvent.RADAR_APPROVAL.toString()));
+    assertThat(
+        event.getFormattedMessage(), containsString(ComplianceEvent.RADAR_APPROVAL.toString()));
   }
 
   @Test
   void testLogDARRejection() {
-    ComplianceLogger.logDARRejection(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
+    ComplianceLogger.logDARRejection(
+        user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
     assertEquals(1, testAppender.getSize());
     ILoggingEvent event = testAppender.getLoggedEvents().get(0);
     assertMessageContainsValueFields(event);
-    assertThat(event.getFormattedMessage(), containsString(ComplianceEvent.DAR_REJECTION.toString()));
+    assertThat(
+        event.getFormattedMessage(), containsString(ComplianceEvent.DAR_REJECTION.toString()));
   }
 
   @Test
   void testLogDARSubmission() {
-    ComplianceLogger.logDARSubmission(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_CREATED);
+    ComplianceLogger.logDARSubmission(
+        user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_CREATED);
     assertEquals(1, testAppender.getSize());
     ILoggingEvent event = testAppender.getLoggedEvents().get(0);
     assertMessageContainsValueFields(event);
-    assertThat(event.getFormattedMessage(), containsString(ComplianceEvent.DAR_SUBMISSION.toString()));
+    assertThat(
+        event.getFormattedMessage(), containsString(ComplianceEvent.DAR_SUBMISSION.toString()));
   }
 
   @Test
   void testLogDARCancellation() {
-    ComplianceLogger.logDARCancellation(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
+    ComplianceLogger.logDARCancellation(
+        user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
     assertEquals(1, testAppender.getSize());
     ILoggingEvent event = testAppender.getLoggedEvents().get(0);
     assertMessageContainsValueFields(event);
-    assertThat(event.getFormattedMessage(), containsString(ComplianceEvent.DAR_CANCELLATION.toString()));
+    assertThat(
+        event.getFormattedMessage(), containsString(ComplianceEvent.DAR_CANCELLATION.toString()));
   }
 
   @Test
   void testLogSOCloseoutApproval() {
-    ComplianceLogger.logCloseoutApprovalBySigningOfficial(user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
+    ComplianceLogger.logCloseoutApprovalBySigningOfficial(
+        user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
     assertEquals(1, testAppender.getSize());
     ILoggingEvent event = testAppender.getLoggedEvents().get(0);
     assertMessageContainsValueFields(event);
-    assertThat(event.getFormattedMessage(), containsString(ComplianceEvent.CLOSEOUT_SO_APPROVAL.toString()));
+    assertThat(
+        event.getFormattedMessage(),
+        containsString(ComplianceEvent.CLOSEOUT_SO_APPROVAL.toString()));
   }
 
   private static class TestAppender extends ListAppender<ILoggingEvent> {
     public void reset() {
       this.list.clear();
     }
+
     public int getSize() {
       return this.list.size();
     }
+
     public List<ILoggingEvent> getLoggedEvents() {
       return Collections.unmodifiableList(this.list);
     }
   }
-
 }

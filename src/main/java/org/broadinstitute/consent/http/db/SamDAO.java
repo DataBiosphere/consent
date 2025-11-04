@@ -38,8 +38,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class SamDAO implements ConsentLogger {
 
-  private final ExecutorService executorService = new ThreadUtils().getExecutorService(
-      SamDAO.class);
+  private final ExecutorService executorService =
+      new ThreadUtils().getExecutorService(SamDAO.class);
   private final HttpClientUtil clientUtil;
   private final ServicesConfiguration configuration;
   private final Integer connectTimeoutMilliseconds;
@@ -59,12 +59,12 @@ public class SamDAO implements ConsentLogger {
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
     HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
-      logException("Error getting resource types from Sam: " + response.getStatusMessage(),
+      logException(
+          "Error getting resource types from Sam: " + response.getStatusMessage(),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
     String body = response.parseAsString();
-    Type resourceTypesListType = new TypeToken<ArrayList<ResourceType>>() {
-    }.getType();
+    Type resourceTypesListType = new TypeToken<ArrayList<ResourceType>>() {}.getType();
     return new Gson().fromJson(body, resourceTypesListType);
   }
 
@@ -109,8 +109,9 @@ public class SamDAO implements ConsentLogger {
   }
 
   public static String getErrorMessage(DuosUser duosUser, String body) {
-    var errorMsg = String.format("Error posting user registration information. Email: %s.",
-        duosUser.getEmail());
+    var errorMsg =
+        String.format(
+            "Error posting user registration information. Email: %s.", duosUser.getEmail());
     if (body == null || body.isEmpty()) {
       return errorMsg;
     }
@@ -123,14 +124,14 @@ public class SamDAO implements ConsentLogger {
             duosUser.getEmail());
       }
       return String.format(errorMsg + " %s.", message);
-    } catch (JsonSyntaxException e) {  // If the body is not a valid JSON
+    } catch (JsonSyntaxException e) { // If the body is not a valid JSON
       return String.format(errorMsg + " %s.", body);
     }
   }
 
   public void asyncPostRegistrationInfo(DuosUser duosUser) {
-    ListeningExecutorService listeningExecutorService = MoreExecutors.listeningDecorator(
-        executorService);
+    ListeningExecutorService listeningExecutorService =
+        MoreExecutors.listeningDecorator(executorService);
     ListenableFuture<UserStatus> userStatusFuture =
         listeningExecutorService.submit(() -> postRegistrationInfo(duosUser));
     Futures.addCallback(
@@ -143,8 +144,11 @@ public class SamDAO implements ConsentLogger {
 
           @Override
           public void onFailure(@NonNull Throwable throwable) {
-            logWarn("Async Post Registration Failure for user: " + duosUser.getEmail() + "; "
-                + throwable.getMessage());
+            logWarn(
+                "Async Post Registration Failure for user: "
+                    + duosUser.getEmail()
+                    + "; "
+                    + throwable.getMessage());
           }
         },
         listeningExecutorService);
@@ -156,7 +160,8 @@ public class SamDAO implements ConsentLogger {
     request.getHeaders().setAccept(MediaType.TEXT_PLAIN);
     HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
-      logException("Error getting Terms of Service text from Sam: " + response.getStatusMessage(),
+      logException(
+          "Error getting Terms of Service text from Sam: " + response.getStatusMessage(),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
     return response.parseAsString();
@@ -167,7 +172,9 @@ public class SamDAO implements ConsentLogger {
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, duosUser);
     HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
-      logException(String.format("Error getting Terms of Service: %s for user %s",
+      logException(
+          String.format(
+              "Error getting Terms of Service: %s for user %s",
               response.getStatusMessage(), duosUser.getEmail()),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
@@ -180,7 +187,9 @@ public class SamDAO implements ConsentLogger {
     HttpRequest request = clientUtil.buildPutRequest(genericUrl, new EmptyContent(), duosUser);
     HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
-      logException(String.format("Error accepting Terms of Service: %s for user %s",
+      logException(
+          String.format(
+              "Error accepting Terms of Service: %s for user %s",
               response.getStatusMessage(), duosUser.getEmail()),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
@@ -193,7 +202,8 @@ public class SamDAO implements ConsentLogger {
     HttpResponse response = executeRequest(request);
     if (!response.isSuccessStatusCode()) {
       logException(
-          String.format("Error removing Terms of Service: %s for user %s",
+          String.format(
+              "Error removing Terms of Service: %s for user %s",
               response.getStatusMessage(), duosUser.getEmail()),
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
@@ -226,5 +236,4 @@ public class SamDAO implements ConsentLogger {
     request.setReadTimeout(readTimeoutMilliseconds);
     return clientUtil.handleHttpRequest(request);
   }
-
 }

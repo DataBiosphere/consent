@@ -15,9 +15,8 @@ class BlobIdTypeAdapterTest {
 
   @Test
   void testBlobIdTypeAdapter() {
-    BlobId randomId = BlobId.of(
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10));
+    BlobId randomId =
+        BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10));
     String randomIdUri = randomId.toGsUtilUri();
     boolean failsSerialization = false;
     boolean failsDeserialization = false;

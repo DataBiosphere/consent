@@ -90,8 +90,8 @@ public class DatasetService implements ConsentLogger {
   }
 
   /**
-   * TODO: Refactor this to throw a NotFoundException instead of returning null
-   * Finds a Dataset by a formatted dataset identifier.
+   * TODO: Refactor this to throw a NotFoundException instead of returning null Finds a Dataset by a
+   * formatted dataset identifier.
    *
    * @param datasetIdentifier The formatted identifier, e.g. DUOS-123456
    * @return the Dataset with the given identifier, if found.
@@ -121,8 +121,8 @@ public class DatasetService implements ConsentLogger {
    * @return the Dataset with the given identifier, if found.
    * @throws IllegalArgumentException if datasetIdentifier is invalid
    */
-  public Dataset findMinimalDatasetByIdentifier(User user, String datasetIdentifier, boolean populateStudy)
-      throws IllegalArgumentException {
+  public Dataset findMinimalDatasetByIdentifier(
+      User user, String datasetIdentifier, boolean populateStudy) throws IllegalArgumentException {
     Integer alias = Dataset.parseIdentifierToAlias(datasetIdentifier);
     Dataset d = datasetDAO.findMinimalDatasetByAlias(alias);
     if (d == null) {
@@ -700,8 +700,7 @@ public class DatasetService implements ConsentLogger {
     return studyId;
   }
 
-  public DatasetAuthorizationReader addAuthorizedReader(
-      long id, long userId, long operatorId) {
+  public DatasetAuthorizationReader addAuthorizedReader(long id, long userId, long operatorId) {
     long recordId =
         datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(id, userId, operatorId);
     return datasetAuthorizationReaderDAO.findAuthorizedReaderByRecordId(recordId);

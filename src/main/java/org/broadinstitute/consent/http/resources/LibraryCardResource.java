@@ -30,10 +30,7 @@ public class LibraryCardResource extends Resource {
   private final LibraryCardService libraryCardService;
 
   @Inject
-  public LibraryCardResource(
-      UserService userService,
-      LibraryCardService libraryCardService
-  ) {
+  public LibraryCardResource(UserService userService, LibraryCardService libraryCardService) {
     this.userService = userService;
     this.libraryCardService = libraryCardService;
   }
@@ -67,8 +64,8 @@ public class LibraryCardResource extends Resource {
   @Produces("application/json")
   @Path("/institution/{id}")
   @RolesAllowed({ADMIN})
-  public Response getLibraryCardsByInstitutionId(@Auth AuthUser authUser,
-      @PathParam("id") Integer id) {
+  public Response getLibraryCardsByInstitutionId(
+      @Auth AuthUser authUser, @PathParam("id") Integer id) {
     try {
       List<LibraryCard> libraryCards = libraryCardService.findLibraryCardsByInstitutionId(id);
       return Response.ok().entity(libraryCards).build();
@@ -108,7 +105,9 @@ public class LibraryCardResource extends Resource {
     }
     try {
       // If user is not an admin and SO institutionID doesn't match the user's throw an exception
-      if (lcUser != null && !checkIsAdmin(user) && !lcUser.getInstitution().equals(user.getInstitution())) {
+      if (lcUser != null
+          && !checkIsAdmin(user)
+          && !lcUser.getInstitution().equals(user.getInstitution())) {
         throw new ForbiddenException("You are not authorized to delete this library card");
       }
       libraryCardService.deleteLibraryCardById(id);
@@ -119,8 +118,7 @@ public class LibraryCardResource extends Resource {
   }
 
   private boolean checkIsAdmin(User user) {
-    return user.getRoles()
-        .stream()
+    return user.getRoles().stream()
         .anyMatch(role -> role.getName().equalsIgnoreCase(UserRoles.ADMIN.getRoleName()));
   }
 }

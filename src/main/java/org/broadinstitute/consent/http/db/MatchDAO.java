@@ -19,7 +19,8 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 public interface MatchDAO extends Transactional<MatchDAO> {
 
   @UseRowReducer(MatchReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT m.*, r.*
         FROM match_entity m
         LEFT JOIN match_rationale r on r.match_entity_id = m.match_id
@@ -28,7 +29,8 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   List<Match> findMatchesByPurposeId(@Bind("purposeId") String purposeId);
 
   @UseRowReducer(MatchReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT m.*, r.*
         FROM match_entity m
         LEFT JOIN match_rationale r on r.match_entity_id = m.match_id
@@ -37,7 +39,8 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   Match findMatchById(@Bind("id") Integer id);
 
   @UseRowReducer(MatchReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT match_entity.*, r.* FROM match_entity
         LEFT JOIN match_rationale r on r.match_entity_id = match_entity.match_id
         INNER JOIN (
@@ -50,14 +53,16 @@ public interface MatchDAO extends Transactional<MatchDAO> {
   List<Match> findMatchesForLatestDataAccessElectionsByPurposeIds(
       @BindList(value = "purposeIds", onEmpty = EmptyHandling.NULL_STRING) List<String> purposeIds);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
         INSERT INTO match_entity
           (consent, purpose, match_entity, failed, create_date, algorithm_version, abstain)
         VALUES
           (:consentId, :purposeId, :match, :failed, :createDate, :algorithmVersion, :abstain)
       """)
   @GetGeneratedKeys
-  Integer insertMatch(@Bind("consentId") String consentId,
+  Integer insertMatch(
+      @Bind("consentId") String consentId,
       @Bind("purposeId") String purposeId,
       @Bind("match") Boolean match,
       @Bind("failed") Boolean failed,
@@ -65,15 +70,19 @@ public interface MatchDAO extends Transactional<MatchDAO> {
       @Bind("algorithmVersion") String algorithmVersion,
       @Bind("abstain") Boolean abstain);
 
-  @SqlUpdate("INSERT INTO match_rationale (match_entity_id, rationale) VALUES (:matchId, :rationale) ")
+  @SqlUpdate(
+      "INSERT INTO match_rationale (match_entity_id, rationale) VALUES (:matchId, :rationale) ")
   void insertRationale(@Bind("matchId") Integer matchId, @Bind("rationale") String rationale);
 
   @SqlUpdate("DELETE FROM match_entity WHERE purpose = :purposeId")
   void deleteMatchesByPurposeId(@Bind("purposeId") String purposeId);
 
-  @SqlUpdate("DELETE FROM match_rationale WHERE match_entity_id in (SELECT match_id FROM match_entity WHERE purpose IN (<purposeIds>)) ")
-  void deleteRationalesByPurposeIds(@BindList(value = "purposeIds", onEmpty = EmptyHandling.NULL_STRING) List<String> purposeIds);
+  @SqlUpdate(
+      "DELETE FROM match_rationale WHERE match_entity_id in (SELECT match_id FROM match_entity WHERE purpose IN (<purposeIds>)) ")
+  void deleteRationalesByPurposeIds(
+      @BindList(value = "purposeIds", onEmpty = EmptyHandling.NULL_STRING) List<String> purposeIds);
 
-  @SqlQuery("SELECT COUNT(*) FROM match_entity WHERE match_entity = :matchEntity AND failed = 'FALSE' ")
+  @SqlQuery(
+      "SELECT COUNT(*) FROM match_entity WHERE match_entity = :matchEntity AND failed = 'FALSE' ")
   Integer countMatchesByResult(@Bind("matchEntity") Boolean matchEntity);
 }

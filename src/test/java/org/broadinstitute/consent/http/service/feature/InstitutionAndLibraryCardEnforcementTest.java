@@ -37,16 +37,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper {
 
-  @Mock
-  private InstitutionDAO institutionDAO;
-  @Mock
-  private LibraryCardDAO libraryCardDAO;
-  @Mock
-  private UserDAO userDAO;
-  @Mock
-  private UserServiceDAO userServiceDAO;
-  @Mock
-  private Jdbi jdbi;
+  @Mock private InstitutionDAO institutionDAO;
+  @Mock private LibraryCardDAO libraryCardDAO;
+  @Mock private UserDAO userDAO;
+  @Mock private UserServiceDAO userServiceDAO;
+  @Mock private Jdbi jdbi;
 
   private InstitutionAndLibraryCardEnforcement service;
 
@@ -60,9 +55,10 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
 
   @Test
   void testAsyncEnforceInstitutionAndLibraryCardRulesForAllUsers() {
-    List<User> allUsers = IntStream.rangeClosed(1, 10)
-        .mapToObj(InstitutionAndLibraryCardEnforcementTest::generateUser)
-        .toList();
+    List<User> allUsers =
+        IntStream.rangeClosed(1, 10)
+            .mapToObj(InstitutionAndLibraryCardEnforcementTest::generateUser)
+            .toList();
     when(userDAO.findUsersWithLCsAndInstitution()).thenReturn(allUsers);
     allUsers.forEach(u -> when(userDAO.findUserByEmail(u.getEmail())).thenReturn(u));
 
@@ -143,8 +139,9 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
     when(institutionDAO.findInstitutionByDomain(soDomain)).thenReturn(institutionFromDatabase);
 
     assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail.getId()));
-    verify(userServiceDAO).updateInstitutionAndClearLibraryCardForUser(testUser.getUserId(),
-        institutionFromEmail.getId());
+    verify(userServiceDAO)
+        .updateInstitutionAndClearLibraryCardForUser(
+            testUser.getUserId(), institutionFromEmail.getId());
   }
 
   @Test
@@ -177,8 +174,9 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
     when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(null);
 
     assertTrue(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail.getId()));
-    verify(userServiceDAO).updateInstitutionAndClearLibraryCardForUser(testUser.getUserId(),
-        institutionFromEmail.getId());
+    verify(userServiceDAO)
+        .updateInstitutionAndClearLibraryCardForUser(
+            testUser.getUserId(), institutionFromEmail.getId());
   }
 
   @Test
@@ -199,7 +197,6 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
 
     assertFalse(service.handleUserWithInstitutionInMap(testUser, institutionFromEmail.getId()));
   }
-
 
   @Test
   void handleUserWithInstitutionInMap_SameInDatabaseWithLCFromDifferentOrg() {
@@ -277,8 +274,7 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
         Arguments.of(institution1, testUser, libraryCard2, false),
         Arguments.of(institution1, testUser, null, false),
         Arguments.of(null, testUser, libraryCards1, true),
-        Arguments.of(null, testUser, null, false)
-    );
+        Arguments.of(null, testUser, null, false));
   }
 
   @ParameterizedTest
@@ -290,11 +286,9 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
     alteredUser.setEmail(testUser.getEmail());
     String domain = service.trimmedEmailDomain(testUser.getEmail());
     if (institutionFromMap != null) {
-      when(institutionDAO.findInstitutionIdByDomain(domain))
-          .thenReturn(institutionFromMap.getId());
+      when(institutionDAO.findInstitutionIdByDomain(domain)).thenReturn(institutionFromMap.getId());
     } else {
-      when(institutionDAO.findInstitutionIdByDomain(domain))
-          .thenReturn(null);
+      when(institutionDAO.findInstitutionIdByDomain(domain)).thenReturn(null);
     }
     if (expectsUserMod) {
       when(userDAO.findUserByEmail(testUser.getEmail())).thenReturn(testUser, alteredUser);
@@ -310,7 +304,9 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
   @Test
   void testEnforceInstitutionAndLibraryCardThrowsNotFoundExceptionForNewUser() {
     when(userDAO.findUserByEmail(any())).thenReturn(null);
-    assertThrows(NotFoundException.class, ()->service.enforceInstitutionAndLibraryCardRules("hello world!"));
+    assertThrows(
+        NotFoundException.class,
+        () -> service.enforceInstitutionAndLibraryCardRules("hello world!"));
   }
 
   private void validateUserIsUnmodified(User left, User right) {
@@ -347,5 +343,4 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
     inst.setName(randomAlphabetic(10));
     return inst;
   }
-
 }

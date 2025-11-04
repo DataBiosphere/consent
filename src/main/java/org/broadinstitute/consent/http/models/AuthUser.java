@@ -15,8 +15,7 @@ public class AuthUser implements Principal {
   private String aud;
   private UserStatusInfo userStatusInfo;
 
-  public AuthUser() {
-  }
+  public AuthUser() {}
 
   public AuthUser(AuthUser authUser) {
     this.authToken = authUser.getAuthToken();
@@ -33,8 +32,8 @@ public class AuthUser implements Principal {
     this.aud = aud;
   }
 
-  public AuthUser(String authToken, String email, String name, String aud,
-      UserStatusInfo userStatusInfo) {
+  public AuthUser(
+      String authToken, String email, String name, String aud, UserStatusInfo userStatusInfo) {
     this.authToken = authToken;
     this.email = email;
     this.name = name;

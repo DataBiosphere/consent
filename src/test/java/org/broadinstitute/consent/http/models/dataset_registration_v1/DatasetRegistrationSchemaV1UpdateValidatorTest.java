@@ -28,8 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DatasetRegistrationSchemaV1UpdateValidatorTest {
 
-  @Mock
-  private DatasetService datasetService;
+  @Mock private DatasetService datasetService;
   private DatasetRegistrationSchemaV1UpdateValidator validator;
 
   @BeforeEach
@@ -39,7 +38,8 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
 
   @Test
   void testValidation_knownFieldsExcluded() {
-    String json = """
+    String json =
+        """
         {
           "studyId": 6077,
           "studyName": "All of Us (Controlled+ Tier)",
@@ -218,9 +218,11 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
     registration.setStudyName(existingStudyName);
 
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
+    assertThrows(
+        BadRequestException.class,
+        () -> {
+          validator.validate(study, registration);
+        });
   }
 
   @Test
@@ -229,9 +231,11 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
     registration.setConsentGroups(List.of());
 
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
+    assertThrows(
+        BadRequestException.class,
+        () -> {
+          validator.validate(study, registration);
+        });
   }
 
   @Test
@@ -241,18 +245,23 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     // mock data is limited to 10->100
     registration.getConsentGroups().get(0).setDatasetId(10000);
 
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
+    assertThrows(
+        BadRequestException.class,
+        () -> {
+          validator.validate(study, registration);
+        });
   }
 
   @Test
   void testValidation_consent_group_name_change_allowed() {
     Study study = createMockStudy();
     DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
-    study.getDatasets().forEach(d -> {
-      d.setName("");
-    });
+    study
+        .getDatasets()
+        .forEach(
+            d -> {
+              d.setName("");
+            });
 
     boolean valid = validator.validate(study, registration);
     assertTrue(valid);
@@ -262,26 +271,36 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
   void testValidation_consent_group_name_change_not_allowed() {
     Study study = createMockStudy();
     DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
-    study.getDatasets().forEach(d -> {
-      d.setName("Existing Name");
-    });
+    study
+        .getDatasets()
+        .forEach(
+            d -> {
+              d.setName("Existing Name");
+            });
 
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
+    assertThrows(
+        BadRequestException.class,
+        () -> {
+          validator.validate(study, registration);
+        });
   }
 
   @Test
   void testValidation_consent_group_data_location_required() {
     Study study = createMockStudy();
     DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
-    registration.getConsentGroups().forEach(cg -> {
-      cg.setDataLocation(null);
-    });
+    registration
+        .getConsentGroups()
+        .forEach(
+            cg -> {
+              cg.setDataLocation(null);
+            });
 
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
+    assertThrows(
+        BadRequestException.class,
+        () -> {
+          validator.validate(study, registration);
+        });
   }
 
   @Test
@@ -298,9 +317,11 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     datasetIds.add(dataset.getDatasetId());
     study.addDatasetIds(new HashSet<>(datasetIds));
 
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
+    assertThrows(
+        BadRequestException.class,
+        () -> {
+          validator.validate(study, registration);
+        });
   }
 
   @Test
@@ -309,9 +330,11 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
     registration.setStudyDescription(null);
 
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
+    assertThrows(
+        BadRequestException.class,
+        () -> {
+          validator.validate(study, registration);
+        });
   }
 
   @Test
@@ -320,9 +343,11 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
     registration.setDataTypes(List.of());
 
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
+    assertThrows(
+        BadRequestException.class,
+        () -> {
+          validator.validate(study, registration);
+        });
   }
 
   @Test
@@ -331,9 +356,11 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
     registration.setPublicVisibility(null);
 
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
+    assertThrows(
+        BadRequestException.class,
+        () -> {
+          validator.validate(study, registration);
+        });
   }
 
   @Test
@@ -342,9 +369,11 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
     registration.setNihAnvilUse(null);
 
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
+    assertThrows(
+        BadRequestException.class,
+        () -> {
+          validator.validate(study, registration);
+        });
   }
 
   @Test
@@ -354,9 +383,11 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     registration.setNihAnvilUse(NihAnvilUse.I_AM_NHGRI_FUNDED_AND_I_HAVE_A_DB_GA_P_PHS_ID_ALREADY);
     registration.setDbGaPPhsID(null);
 
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
+    assertThrows(
+        BadRequestException.class,
+        () -> {
+          validator.validate(study, registration);
+        });
   }
 
   @Test
@@ -367,9 +398,11 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     registration.setDbGaPPhsID(RandomStringUtils.randomAlphabetic(10));
     registration.setPiInstitution(null);
 
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
+    assertThrows(
+        BadRequestException.class,
+        () -> {
+          validator.validate(study, registration);
+        });
   }
 
   @Test
@@ -381,9 +414,11 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     registration.setPiInstitution(RandomUtils.nextInt(10, 100));
     registration.setNihGrantContractNumber(null);
 
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
+    assertThrows(
+        BadRequestException.class,
+        () -> {
+          validator.validate(study, registration);
+        });
   }
 
   @Test
@@ -394,9 +429,11 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
         NihAnvilUse.I_AM_NOT_NHGRI_FUNDED_BUT_I_AM_SEEKING_TO_SUBMIT_DATA_TO_AN_VIL);
     registration.setPiInstitution(null);
 
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
+    assertThrows(
+        BadRequestException.class,
+        () -> {
+          validator.validate(study, registration);
+        });
   }
 
   @Test
@@ -408,9 +445,11 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     registration.setPiInstitution(RandomUtils.nextInt(10, 100));
     registration.setNihGrantContractNumber(null);
 
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
+    assertThrows(
+        BadRequestException.class,
+        () -> {
+          validator.validate(study, registration);
+        });
   }
 
   @Test
@@ -419,9 +458,11 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
     registration.setPiName(null);
 
-    assertThrows(BadRequestException.class, () -> {
-      validator.validate(study, registration);
-    });
+    assertThrows(
+        BadRequestException.class,
+        () -> {
+          validator.validate(study, registration);
+        });
   }
 
   private Study createMockStudy() {
@@ -449,17 +490,20 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     registration.setPhenotypeIndication(RandomStringUtils.randomAlphabetic(10));
     registration.setPiName(RandomStringUtils.randomAlphabetic(10));
     registration.setDataCustodianEmail(List.of(RandomStringUtils.randomAlphabetic(10)));
-    List<ConsentGroup> cgs = study.getDatasets().stream().map(d -> {
-      ConsentGroup cg = new ConsentGroup();
-      cg.setDataLocation(DataLocation.NOT_DETERMINED);
-      cg.setNumberOfParticipants(RandomUtils.nextInt(10, 100));
-      cg.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
-      cg.setDatasetId(d.getDatasetId());
-      cg.setDataAccessCommitteeId(d.getDacId());
-      return cg;
-    }).toList();
+    List<ConsentGroup> cgs =
+        study.getDatasets().stream()
+            .map(
+                d -> {
+                  ConsentGroup cg = new ConsentGroup();
+                  cg.setDataLocation(DataLocation.NOT_DETERMINED);
+                  cg.setNumberOfParticipants(RandomUtils.nextInt(10, 100));
+                  cg.setConsentGroupName(RandomStringUtils.randomAlphabetic(10));
+                  cg.setDatasetId(d.getDatasetId());
+                  cg.setDataAccessCommitteeId(d.getDacId());
+                  return cg;
+                })
+            .toList();
     registration.setConsentGroups(cgs);
     return registration;
   }
-
 }

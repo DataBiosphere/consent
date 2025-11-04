@@ -22,7 +22,6 @@ class ElasticSearchHealthCheckTest extends MockServerTestHelper {
   private ElasticSearchHealthCheck healthCheck;
   private ElasticSearchConfiguration config;
 
-
   @BeforeEach
   void init() {
     config = new ElasticSearchConfiguration();
@@ -33,9 +32,9 @@ class ElasticSearchHealthCheckTest extends MockServerTestHelper {
   private void initHealthCheck(String status, Integer statusCode) {
     try {
       String stringResponse = "{ \"status\": \"" + status + "\" }";
-      mockServerClient.when(request()).respond(response()
-          .withStatusCode(statusCode)
-          .withBody(stringResponse));
+      mockServerClient
+          .when(request())
+          .respond(response().withStatusCode(statusCode).withBody(stringResponse));
 
       healthCheck = new ElasticSearchHealthCheck(config);
     } catch (Exception e) {

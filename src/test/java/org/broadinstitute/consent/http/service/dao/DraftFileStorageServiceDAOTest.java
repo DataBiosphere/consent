@@ -37,16 +37,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DraftFileStorageServiceDAOTest extends DAOTestHelper {
-  @Mock
-  private GCSService gcsService;
+  @Mock private GCSService gcsService;
 
   private DraftFileStorageServiceDAO draftFileStorageServiceDAO;
 
   @BeforeEach
   void setUp() throws IOException {
-    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
-        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
-    draftFileStorageServiceDAO = new DraftFileStorageServiceDAO(jdbi, gcsService, fileStorageObjectDAO);
+    when(gcsService.storeDocument(any(), anyString(), any()))
+        .thenReturn(BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+    draftFileStorageServiceDAO =
+        new DraftFileStorageServiceDAO(jdbi, gcsService, fileStorageObjectDAO);
   }
 
   @Test
@@ -54,16 +54,17 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
     User user = createUser();
     UUID associatedUUID = UUID.randomUUID();
     Map<String, FormDataBodyPart> testFiles = getRandomFiles(4);
-    List<FileStorageObject> storedFiles = draftFileStorageServiceDAO.storeDraftFiles(associatedUUID,
-        user, testFiles);
+    List<FileStorageObject> storedFiles =
+        draftFileStorageServiceDAO.storeDraftFiles(associatedUUID, user, testFiles);
     assertThat(testFiles.values(), hasSize(4));
     assertThat(storedFiles, hasSize(4));
-    storedFiles.forEach(fileStorageObject -> {
-      assertThat(testFiles, hasKey(fileStorageObject.getFileName()));
-      assertFalse(fileStorageObject.getFileName().trim().isEmpty());
-      assertEquals(fileStorageObject.getCreateUserId(), user.getUserId());
-      assertEquals(fileStorageObject.getCategory(), FileCategory.DRAFT_UPLOADED_FILE);
-    });
+    storedFiles.forEach(
+        fileStorageObject -> {
+          assertThat(testFiles, hasKey(fileStorageObject.getFileName()));
+          assertFalse(fileStorageObject.getFileName().trim().isEmpty());
+          assertEquals(fileStorageObject.getCreateUserId(), user.getUserId());
+          assertEquals(fileStorageObject.getCategory(), FileCategory.DRAFT_UPLOADED_FILE);
+        });
   }
 
   @Test
@@ -71,24 +72,26 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
     User user = createUser();
     UUID associatedUUID = UUID.randomUUID();
     Map<String, FormDataBodyPart> testFiles = getRandomFiles(2);
-    List<FileStorageObject> storedFiles = draftFileStorageServiceDAO.storeDraftFiles(associatedUUID,
-        user, testFiles);
+    List<FileStorageObject> storedFiles =
+        draftFileStorageServiceDAO.storeDraftFiles(associatedUUID, user, testFiles);
     assertThat(testFiles.values(), hasSize(2));
     assertThat(storedFiles, hasSize(2));
     for (FileStorageObject fileStorageObject : storedFiles) {
       draftFileStorageServiceDAO.deleteStoredFile(fileStorageObject, user);
     }
-    assertThrows(NotFoundException.class,
+    assertThrows(
+        NotFoundException.class,
         () -> draftFileStorageServiceDAO.deleteStoredFile(new FileStorageObject(), user));
   }
 
   private Map<String, FormDataBodyPart> getRandomFiles(Integer count) {
     Map<String, FormDataBodyPart> mapOfFiles = new HashMap<>();
     IntStream.range(0, count)
-        .forEach(index -> {
-          String name = String.format("file%d", index);
-          mapOfFiles.put(name, getFormDataBodyPartMock(name));
-        });
+        .forEach(
+            index -> {
+              String name = String.format("file%d", index);
+              mapOfFiles.put(name, getFormDataBodyPartMock(name));
+            });
     return mapOfFiles;
   }
 
@@ -100,5 +103,4 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
         .thenReturn(new ByteArrayInputStream(EMPTY_JSON_DOCUMENT.getBytes()));
     return part;
   }
-
 }

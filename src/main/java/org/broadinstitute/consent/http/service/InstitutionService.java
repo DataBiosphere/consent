@@ -23,7 +23,9 @@ public class InstitutionService implements ConsentLogger {
   private final InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
 
   @Inject
-  public InstitutionService(InstitutionDAO institutionDAO, UserDAO userDAO,
+  public InstitutionService(
+      InstitutionDAO institutionDAO,
+      UserDAO userDAO,
       InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement) {
     this.institutionDAO = institutionDAO;
     this.userDAO = userDAO;
@@ -47,13 +49,13 @@ public class InstitutionService implements ConsentLogger {
       enforceInstitutionAndLibraryCardRules();
       return createdInstitution;
     } catch (SQLException e) {
-      throw new ServerErrorException("Could not create institution",
-          HttpStatusCodes.STATUS_CODE_SERVER_ERROR, e);
+      throw new ServerErrorException(
+          "Could not create institution", HttpStatusCodes.STATUS_CODE_SERVER_ERROR, e);
     }
   }
 
-  public Institution updateInstitutionById(Institution institutionPayload, Integer id,
-      Integer userId) throws SQLException {
+  public Institution updateInstitutionById(
+      Institution institutionPayload, Integer id, Integer userId) throws SQLException {
     checkUserId(userId);
     Institution targetInstitution = institutionDAO.findInstitutionById(id);
     isInstitutionNull(targetInstitution);
@@ -61,15 +63,15 @@ public class InstitutionService implements ConsentLogger {
     // Name validation
     checkForEmptyName(institutionPayload);
     checkNameUniqueness(institutionPayload);
-    String canonicalName = InstitutionUtil.canonicalizeInstitutionName(
-        institutionPayload.getName());
+    String canonicalName =
+        InstitutionUtil.canonicalizeInstitutionName(institutionPayload.getName());
     institutionPayload.setName(canonicalName);
 
     // Domain validation
     InstitutionUtil.validateInstitutionDomains(institutionPayload);
     checkDomainUniqueness(institutionPayload);
-    Institution updatedInstitution = institutionDAO.updateFullInstitution(institutionPayload,
-        userId);
+    Institution updatedInstitution =
+        institutionDAO.updateFullInstitution(institutionPayload, userId);
     // Enforce Institution and Library Card rules for all users after an institution is updated
     enforceInstitutionAndLibraryCardRules();
     return updatedInstitution;
@@ -87,9 +89,8 @@ public class InstitutionService implements ConsentLogger {
     Institution institution = institutionDAO.findInstitutionById(id);
     isInstitutionNull(institution);
 
-    List<SimplifiedUser> signingOfficials = userDAO.getSOsByInstitution(id).stream()
-        .map(SimplifiedUser::new)
-        .toList();
+    List<SimplifiedUser> signingOfficials =
+        userDAO.getSOsByInstitution(id).stream().map(SimplifiedUser::new).toList();
     institution.setSigningOfficials(signingOfficials);
 
     return institution;
@@ -135,12 +136,11 @@ public class InstitutionService implements ConsentLogger {
   }
 
   private void checkNameUniqueness(Institution institution) {
-    List<Institution> conflicts = findAllInstitutionsByName(institution.getName())
-        .stream()
-        // Filter out the institution being updated, so it doesn't conflict with itself
-        .filter(existingInstitution ->
-            !existingInstitution.getId().equals(institution.getId()))
-        .toList();
+    List<Institution> conflicts =
+        findAllInstitutionsByName(institution.getName()).stream()
+            // Filter out the institution being updated, so it doesn't conflict with itself
+            .filter(existingInstitution -> !existingInstitution.getId().equals(institution.getId()))
+            .toList();
 
     if (!conflicts.isEmpty()) {
       throw new ConsentConflictException(
@@ -157,23 +157,27 @@ public class InstitutionService implements ConsentLogger {
       throw new IllegalArgumentException("Institution domains must be unique");
     }
 
-    List<String> conflictingDomains = institution.getDomains().stream()
-        .map(domain -> {
-          Integer existingInstitutionId = institutionDAO.findInstitutionIdByDomain(domain);
-          if (existingInstitutionId != null && !existingInstitutionId.equals(institution.getId())) {
-            // Return the domain if it conflicts with another institution.
-            // If the domain is already associated with the institution being updated, it's not a conflict.
-            return domain;
-          }
-          return null; // No conflict
-        })
-        .filter(Objects::nonNull)
-        .toList();
+    List<String> conflictingDomains =
+        institution.getDomains().stream()
+            .map(
+                domain -> {
+                  Integer existingInstitutionId = institutionDAO.findInstitutionIdByDomain(domain);
+                  if (existingInstitutionId != null
+                      && !existingInstitutionId.equals(institution.getId())) {
+                    // Return the domain if it conflicts with another institution.
+                    // If the domain is already associated with the institution being updated, it's
+                    // not a conflict.
+                    return domain;
+                  }
+                  return null; // No conflict
+                })
+            .filter(Objects::nonNull)
+            .toList();
 
     if (!conflictingDomains.isEmpty()) {
       throw new IllegalArgumentException(
-          "Domain(s) already associated with another institution: " + String.join(", ",
-              conflictingDomains));
+          "Domain(s) already associated with another institution: "
+              + String.join(", ", conflictingDomains));
     }
   }
 

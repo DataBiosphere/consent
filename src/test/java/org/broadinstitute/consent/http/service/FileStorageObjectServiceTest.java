@@ -28,11 +28,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class FileStorageObjectServiceTest {
 
-  @Mock
-  private FileStorageObjectDAO fileStorageObjectDAO;
+  @Mock private FileStorageObjectDAO fileStorageObjectDAO;
 
-  @Mock
-  private GCSService gcsService;
+  @Mock private GCSService gcsService;
 
   private FileStorageObjectService service;
 
@@ -45,8 +43,8 @@ class FileStorageObjectServiceTest {
     InputStream content = new ByteArrayInputStream(RandomStringUtils.random(20).getBytes());
     String fileName = RandomStringUtils.randomAlphabetic(10);
     String mediaType = RandomStringUtils.randomAlphabetic(10);
-    FileCategory category = List.of(FileCategory.values())
-        .get(new Random().nextInt(FileCategory.values().length));
+    FileCategory category =
+        List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
     String entityId = RandomStringUtils.randomAlphabetic(10);
     Integer createUserId = new Random().nextInt();
 
@@ -54,44 +52,40 @@ class FileStorageObjectServiceTest {
     String blob = RandomStringUtils.randomAlphabetic(10);
 
     when(fileStorageObjectDAO.insertNewFile(
-        eq(fileName),
-        eq(category.getValue()),
-        eq(BlobId.of(bucket, blob).toGsUtilUri()),
-        eq(mediaType),
-        eq(entityId),
-        eq(createUserId),
-        any())).thenReturn(10);
+            eq(fileName),
+            eq(category.getValue()),
+            eq(BlobId.of(bucket, blob).toGsUtilUri()),
+            eq(mediaType),
+            eq(entityId),
+            eq(createUserId),
+            any()))
+        .thenReturn(10);
 
     FileStorageObject newFileStorageObject = new FileStorageObject();
     newFileStorageObject.setFileName(RandomStringUtils.randomAlphabetic(10));
 
     when(fileStorageObjectDAO.findFileById(10)).thenReturn(newFileStorageObject);
-    when(
-        gcsService.storeDocument(eq(content), eq(mediaType), any())
-    ).thenReturn(BlobId.of(bucket, blob));
+    when(gcsService.storeDocument(eq(content), eq(mediaType), any()))
+        .thenReturn(BlobId.of(bucket, blob));
 
     initService();
 
-    FileStorageObject returned = service.uploadAndStoreFile(content, fileName, mediaType, category,
-        entityId, createUserId);
+    FileStorageObject returned =
+        service.uploadAndStoreFile(content, fileName, mediaType, category, entityId, createUserId);
 
     assertEquals(newFileStorageObject, returned);
 
-    verify(
-        gcsService, times(1)
-    ).storeDocument(eq(content), eq(mediaType), any());
+    verify(gcsService, times(1)).storeDocument(eq(content), eq(mediaType), any());
 
-    verify(
-        fileStorageObjectDAO, times(1)
-    ).insertNewFile(
-        eq(fileName),
-        eq(category.getValue()),
-        eq(BlobId.of(bucket, blob).toGsUtilUri()),
-        eq(mediaType),
-        eq(entityId),
-        eq(createUserId),
-        any());
-
+    verify(fileStorageObjectDAO, times(1))
+        .insertNewFile(
+            eq(fileName),
+            eq(category.getValue()),
+            eq(BlobId.of(bucket, blob).toGsUtilUri()),
+            eq(mediaType),
+            eq(entityId),
+            eq(createUserId),
+            any());
   }
 
   @Test
@@ -104,13 +98,10 @@ class FileStorageObjectServiceTest {
 
     String content = RandomStringUtils.random(100);
 
-    when(
-        gcsService.getDocument(BlobId.of(bucket, blob))
-    ).thenReturn(new ByteArrayInputStream(content.getBytes()));
+    when(gcsService.getDocument(BlobId.of(bucket, blob)))
+        .thenReturn(new ByteArrayInputStream(content.getBytes()));
 
-    when(
-        fileStorageObjectDAO.findFileById(10)
-    ).thenReturn(file);
+    when(fileStorageObjectDAO.findFileById(10)).thenReturn(file);
 
     initService();
 
@@ -143,19 +134,17 @@ class FileStorageObjectServiceTest {
     String content2 = RandomStringUtils.randomAlphabetic(10);
     String content3 = RandomStringUtils.randomAlphabetic(10);
 
-    when(
-        gcsService.getDocuments(List.of(file1.getBlobId(), file2.getBlobId(), file3.getBlobId()))
-    ).thenReturn(Map.of(
-        file1.getBlobId(), new ByteArrayInputStream(content1.getBytes()),
-        file2.getBlobId(), new ByteArrayInputStream(content2.getBytes()),
-        file3.getBlobId(), new ByteArrayInputStream(content3.getBytes())
-    ));
+    when(gcsService.getDocuments(List.of(file1.getBlobId(), file2.getBlobId(), file3.getBlobId())))
+        .thenReturn(
+            Map.of(
+                file1.getBlobId(), new ByteArrayInputStream(content1.getBytes()),
+                file2.getBlobId(), new ByteArrayInputStream(content2.getBytes()),
+                file3.getBlobId(), new ByteArrayInputStream(content3.getBytes())));
 
     String entityId = RandomStringUtils.randomAlphabetic(10);
 
-    when(
-        fileStorageObjectDAO.findFilesByEntityId(entityId)
-    ).thenReturn(List.of(file1, file2, file3));
+    when(fileStorageObjectDAO.findFilesByEntityId(entityId))
+        .thenReturn(List.of(file1, file2, file3));
 
     initService();
 
@@ -167,12 +156,9 @@ class FileStorageObjectServiceTest {
     assertEquals(file2, returned.get(1));
     assertEquals(file3, returned.get(2));
 
-    assertArrayEquals(content1.getBytes(),
-        returned.get(0).getUploadedFile().readAllBytes());
-    assertArrayEquals(content2.getBytes(),
-        returned.get(1).getUploadedFile().readAllBytes());
-    assertArrayEquals(content3.getBytes(),
-        returned.get(2).getUploadedFile().readAllBytes());
+    assertArrayEquals(content1.getBytes(), returned.get(0).getUploadedFile().readAllBytes());
+    assertArrayEquals(content2.getBytes(), returned.get(1).getUploadedFile().readAllBytes());
+    assertArrayEquals(content3.getBytes(), returned.get(2).getUploadedFile().readAllBytes());
   }
 
   @Test
@@ -197,21 +183,19 @@ class FileStorageObjectServiceTest {
     String content2 = RandomStringUtils.randomAlphabetic(10);
     String content3 = RandomStringUtils.randomAlphabetic(10);
 
-    when(
-        gcsService.getDocuments(List.of(file1.getBlobId(), file2.getBlobId(), file3.getBlobId()))
-    ).thenReturn(Map.of(
-        file1.getBlobId(), new ByteArrayInputStream(content1.getBytes()),
-        file2.getBlobId(), new ByteArrayInputStream(content2.getBytes()),
-        file3.getBlobId(), new ByteArrayInputStream(content3.getBytes())
-    ));
+    when(gcsService.getDocuments(List.of(file1.getBlobId(), file2.getBlobId(), file3.getBlobId())))
+        .thenReturn(
+            Map.of(
+                file1.getBlobId(), new ByteArrayInputStream(content1.getBytes()),
+                file2.getBlobId(), new ByteArrayInputStream(content2.getBytes()),
+                file3.getBlobId(), new ByteArrayInputStream(content3.getBytes())));
 
     String entityId = RandomStringUtils.randomAlphabetic(10);
-    FileCategory category = List.of(FileCategory.values())
-        .get(new Random().nextInt(FileCategory.values().length));
+    FileCategory category =
+        List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
 
-    when(
-        fileStorageObjectDAO.findFilesByEntityIdAndCategory(entityId, category.getValue())
-    ).thenReturn(List.of(file1, file2, file3));
+    when(fileStorageObjectDAO.findFilesByEntityIdAndCategory(entityId, category.getValue()))
+        .thenReturn(List.of(file1, file2, file3));
 
     initService();
 
@@ -223,12 +207,8 @@ class FileStorageObjectServiceTest {
     assertEquals(file2, returned.get(1));
     assertEquals(file3, returned.get(2));
 
-    assertArrayEquals(content1.getBytes(),
-        returned.get(0).getUploadedFile().readAllBytes());
-    assertArrayEquals(content2.getBytes(),
-        returned.get(1).getUploadedFile().readAllBytes());
-    assertArrayEquals(content3.getBytes(),
-        returned.get(2).getUploadedFile().readAllBytes());
+    assertArrayEquals(content1.getBytes(), returned.get(0).getUploadedFile().readAllBytes());
+    assertArrayEquals(content2.getBytes(), returned.get(1).getUploadedFile().readAllBytes());
+    assertArrayEquals(content3.getBytes(), returned.get(2).getUploadedFile().readAllBytes());
   }
-
 }

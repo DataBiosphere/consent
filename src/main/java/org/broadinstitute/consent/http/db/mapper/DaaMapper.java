@@ -13,7 +13,8 @@ public class DaaMapper implements RowMapper<DataAccessAgreement>, RowMapperHelpe
   private final Map<Integer, DataAccessAgreement> daaMap = new HashMap<>();
 
   @Override
-  public DataAccessAgreement map(ResultSet resultSet, StatementContext statementContext) throws SQLException {
+  public DataAccessAgreement map(ResultSet resultSet, StatementContext statementContext)
+      throws SQLException {
     DataAccessAgreement daa;
     Integer daaId = hasNonZeroColumn(resultSet, "daa_id") ? resultSet.getInt("daa_id") : null;
     if (daaId == null) {

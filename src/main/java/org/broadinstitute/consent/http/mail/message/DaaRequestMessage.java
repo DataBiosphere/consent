@@ -5,7 +5,8 @@ import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.User;
 
 public class DaaRequestMessage extends MailMessage {
-  private static final String NEW_DAA_LIBRARY_CARD_REQUEST = "New DAA-Library Card Relationship Request in DUOS";
+  private static final String NEW_DAA_LIBRARY_CARD_REQUEST =
+      "New DAA-Library Card Relationship Request in DUOS";
   private final User requestUser;
   private final String daaName;
   private final Integer daaId;
@@ -24,10 +25,15 @@ public class DaaRequestMessage extends MailMessage {
 
   @Override
   public Object createModel(String serverUrl) {
-    return Map.of("serverUrl", serverUrl,
-        "daaName", daaName,
-        "userName", requestUser.getDisplayName(),
-        "signingOfficialUserName", toUser.getDisplayName());
+    return Map.of(
+        "serverUrl",
+        serverUrl,
+        "daaName",
+        daaName,
+        "userName",
+        requestUser.getDisplayName(),
+        "signingOfficialUserName",
+        toUser.getDisplayName());
   }
 
   @Override

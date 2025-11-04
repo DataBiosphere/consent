@@ -38,17 +38,20 @@ class LibraryCardResourceTest {
 
   private final AuthUser authUser = new AuthUser("test@test.com");
   private final List<UserRole> adminRoles = Collections.singletonList(UserRoles.Admin());
-  private final User user = new User(1, authUser.getEmail(), "Display Name", new Date(),
-      adminRoles);
-  private final User lcUser = new User(2, "testuser@gmail.com", "Test User", new Date(),
-      Collections.singletonList(UserRoles.Researcher()));
+  private final User user =
+      new User(1, authUser.getEmail(), "Display Name", new Date(), adminRoles);
+  private final User lcUser =
+      new User(
+          2,
+          "testuser@gmail.com",
+          "Test User",
+          new Date(),
+          Collections.singletonList(UserRoles.Researcher()));
 
   private LibraryCardResource resource;
 
-  @Mock
-  private UserService userService;
-  @Mock
-  private LibraryCardService libraryCardService;
+  @Mock private UserService userService;
+  @Mock private LibraryCardService libraryCardService;
 
   private LibraryCard mockLibraryCardSetup() {
     LibraryCard mockCard = new LibraryCard();
@@ -59,8 +62,13 @@ class LibraryCardResourceTest {
   }
 
   private User mockSOUser() {
-    User mockUser = new User(2, "testuser@gmail.com", "Test User", new Date(),
-        Collections.singletonList(UserRoles.SigningOfficial()));
+    User mockUser =
+        new User(
+            2,
+            "testuser@gmail.com",
+            "Test User",
+            new Date(),
+            Collections.singletonList(UserRoles.SigningOfficial()));
     return mockUser;
   }
 
@@ -70,9 +78,7 @@ class LibraryCardResourceTest {
 
   private UnableToExecuteStatementException generateUniqueViolationException() {
     PSQLState uniqueViolationEnum = PSQLState.UNIQUE_VIOLATION;
-    PSQLException uniqueViolationException = new PSQLException(
-        "Error", uniqueViolationEnum
-    );
+    PSQLException uniqueViolationException = new PSQLException("Error", uniqueViolationEnum);
     return new UnableToExecuteStatementException(uniqueViolationException, null);
   }
 
@@ -117,8 +123,8 @@ class LibraryCardResourceTest {
 
   @Test
   void testGetLibraryCardByInstitutionIdThrowsNotFoundException() {
-    when(libraryCardService.findLibraryCardsByInstitutionId(anyInt())).thenThrow(
-        new NotFoundException());
+    when(libraryCardService.findLibraryCardsByInstitutionId(anyInt()))
+        .thenThrow(new NotFoundException());
     initResource();
     Response response = resource.getLibraryCardsByInstitutionId(authUser, 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -129,8 +135,8 @@ class LibraryCardResourceTest {
     LibraryCard mockCard = mockLibraryCardSetup();
     String payload = GsonUtil.getInstance().toJson(mockCard);
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
-    when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class))).thenReturn(
-        mockCard);
+    when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class)))
+        .thenReturn(mockCard);
     initResource();
     Response response = resource.createLibraryCard(authUser, payload);
     String json = response.getEntity().toString();
@@ -143,8 +149,8 @@ class LibraryCardResourceTest {
     LibraryCard mockCard = mockLibraryCardSetup();
     String payload = GsonUtil.getInstance().toJson(mockCard);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class))).thenThrow(
-        new IllegalArgumentException());
+    when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class)))
+        .thenThrow(new IllegalArgumentException());
     initResource();
     Response response = resource.createLibraryCard(authUser, payload);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
@@ -155,8 +161,8 @@ class LibraryCardResourceTest {
     UnableToExecuteStatementException exception = generateUniqueViolationException();
     String json = GsonUtil.getInstance().toJson(mockLibraryCardSetup());
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class))).thenThrow(
-        exception);
+    when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class)))
+        .thenThrow(exception);
     initResource();
     Response response = resource.createLibraryCard(authUser, json);
     assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());
@@ -167,8 +173,8 @@ class LibraryCardResourceTest {
     BadRequestException exception = new BadRequestException();
     String json = GsonUtil.getInstance().toJson(mockLibraryCardSetup());
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class))).thenThrow(
-        exception);
+    when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class)))
+        .thenThrow(exception);
     initResource();
     Response response = resource.createLibraryCard(authUser, json);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
@@ -179,8 +185,8 @@ class LibraryCardResourceTest {
     NotFoundException exception = new NotFoundException();
     String json = GsonUtil.getInstance().toJson(mockLibraryCardSetup());
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class))).thenThrow(
-        exception);
+    when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class)))
+        .thenThrow(exception);
     initResource();
     Response response = resource.createLibraryCard(authUser, json);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());

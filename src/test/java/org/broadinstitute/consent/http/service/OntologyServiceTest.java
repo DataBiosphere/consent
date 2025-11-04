@@ -26,7 +26,6 @@ class OntologyServiceTest extends MockServerTestHelper {
 
   private OntologyService service;
 
-
   ServicesConfiguration config() {
     ServicesConfiguration config = new ServicesConfiguration();
     config.setLocalURL("http://localhost:8180/");
@@ -44,10 +43,8 @@ class OntologyServiceTest extends MockServerTestHelper {
     mockDataUseTranslateSummarySuccess();
     initService();
 
-    DataUse dataUse = new DataUseBuilder()
-        .setHmbResearch(true)
-        .setDiseaseRestrictions(List.of(""))
-        .build();
+    DataUse dataUse =
+        new DataUseBuilder().setHmbResearch(true).setDiseaseRestrictions(List.of("")).build();
     DataUseSummary translation = service.translateDataUseSummary(dataUse);
 
     assertNotNull(translation);
@@ -73,30 +70,27 @@ class OntologyServiceTest extends MockServerTestHelper {
 
     assertEquals("OTHER", translation.getSecondary().get(3).getCode());
     assertFalse(translation.getSecondary().get(3).getDescription().isEmpty());
-
   }
-
 
   @Test
   void testTranslateDataUse() {
     mockDataUseTranslateSuccess();
     initService();
 
-    DataUse dataUse = new DataUseBuilder()
-        .setHmbResearch(true)
-        .setDiseaseRestrictions(List.of(""))
-        .build();
+    DataUse dataUse =
+        new DataUseBuilder().setHmbResearch(true).setDiseaseRestrictions(List.of("")).build();
     String translation = service.translateDataUse(dataUse, DataUseTranslationType.DATASET);
 
-    assertEquals("""
+    assertEquals(
+        """
         Samples are restricted for use under the following conditions:
         Data is limited for health/medical/biomedical research. [HMB]
         Data use is limited for studying: cancerophobia [DS]
         Commercial use is not prohibited.
         Data use for methods development research irrespective of the specified data use limitations is not prohibited.
         Restrictions for use as a control set for diseases other than those defined were not specified.
-        """, translation);
-
+        """,
+        translation);
   }
 
   private void mockDataUseTranslateSummarySuccess() {
@@ -138,9 +132,7 @@ class OntologyServiceTest extends MockServerTestHelper {
                             }
                           ]
                         }
-                        """
-                )
-        );
+                        """));
   }
 
   private void mockDataUseTranslateSuccess() {
@@ -150,15 +142,14 @@ class OntologyServiceTest extends MockServerTestHelper {
             response()
                 .withStatusCode(200)
                 .withHeaders(new Header("Content-Type", MediaType.TEXT_PLAIN))
-                .withBody("""
+                .withBody(
+                    """
                     Samples are restricted for use under the following conditions:
                     Data is limited for health/medical/biomedical research. [HMB]
                     Data use is limited for studying: cancerophobia [DS]
                     Commercial use is not prohibited.
                     Data use for methods development research irrespective of the specified data use limitations is not prohibited.
                     Restrictions for use as a control set for diseases other than those defined were not specified.
-                    """)
-        );
+                    """));
   }
-
 }

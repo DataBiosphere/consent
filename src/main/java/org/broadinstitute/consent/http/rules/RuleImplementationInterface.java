@@ -11,6 +11,7 @@ public interface RuleImplementationInterface {
   DACAutomationRuleType getRuleType();
 
   boolean compare(Dataset dataset, DataAccessRequest dataAccessRequest);
+
   default boolean hasNoModifiers(DataUse data) {
     if (Boolean.TRUE.equals(data.getCollaboratorRequired())) {
       return false;

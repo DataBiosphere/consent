@@ -23,38 +23,34 @@ public class DaaServiceDAO implements ConsentLogger {
     this.fsoDAO = fsoDAO;
   }
 
-  public Integer createDaaWithFso(Integer userId, Integer dacId, FileStorageObject fso) throws Exception {
+  public Integer createDaaWithFso(Integer userId, Integer dacId, FileStorageObject fso)
+      throws Exception {
     List<Integer> createdDaaIds = new ArrayList<>();
-    jdbi.useHandle(handle -> {
-      handle.getConnection().setAutoCommit(false);
-      Instant now = Instant.now();
-      try {
-        Integer daaId = daaDAO.createDaa(
-            userId,
-            now,
-            userId,
-            now,
-            dacId);
-        createdDaaIds.add(daaId);
-        daaDAO.createDacDaaRelation(dacId, daaId);
-        if (fso != null) {
-          fsoDAO.insertNewFile(
-              fso.getFileName(),
-              fso.getCategory().getValue(),
-              fso.getBlobId().toGsUtilUri(),
-              fso.getMediaType(),
-              daaId.toString(),
-              userId,
-              now);
-        }
-      } catch (Exception e) {
-        handle.rollback();
-        logException(e);
-        throw e;
-      }
-      handle.commit();
-    });
+    jdbi.useHandle(
+        handle -> {
+          handle.getConnection().setAutoCommit(false);
+          Instant now = Instant.now();
+          try {
+            Integer daaId = daaDAO.createDaa(userId, now, userId, now, dacId);
+            createdDaaIds.add(daaId);
+            daaDAO.createDacDaaRelation(dacId, daaId);
+            if (fso != null) {
+              fsoDAO.insertNewFile(
+                  fso.getFileName(),
+                  fso.getCategory().getValue(),
+                  fso.getBlobId().toGsUtilUri(),
+                  fso.getMediaType(),
+                  daaId.toString(),
+                  userId,
+                  now);
+            }
+          } catch (Exception e) {
+            handle.rollback();
+            logException(e);
+            throw e;
+          }
+          handle.commit();
+        });
     return createdDaaIds.isEmpty() ? null : createdDaaIds.get(0);
   }
-
 }

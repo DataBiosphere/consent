@@ -36,14 +36,11 @@ class InstitutionServiceTest extends AbstractTestHelper {
 
   private InstitutionService service;
 
-  @Mock
-  private InstitutionDAO institutionDAO;
+  @Mock private InstitutionDAO institutionDAO;
 
-  @Mock
-  private UserDAO userDAO;
+  @Mock private UserDAO userDAO;
 
-  @Mock
-  InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
+  @Mock InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
 
   @BeforeEach
   void setUp() {
@@ -62,28 +59,28 @@ class InstitutionServiceTest extends AbstractTestHelper {
     when(institutionDAO.insertFullInstitution(mockInstitution, 1)).thenReturn(mockInstitution);
     Institution institution = service.createInstitution(mockInstitution, 1);
     assertNotNull(institution);
-    verify(
-        institutionAndLibraryCardEnforcement).asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    verify(institutionAndLibraryCardEnforcement)
+        .asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
   }
 
   @Test
   void testCreateInstitutionBlankName() {
     Institution mockInstitution = initMockModel();
     mockInstitution.setName("");
-    assertThrows(IllegalArgumentException.class,
-        () -> service.createInstitution(mockInstitution, 1));
-    verify(institutionAndLibraryCardEnforcement,
-        never()).asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    assertThrows(
+        IllegalArgumentException.class, () -> service.createInstitution(mockInstitution, 1));
+    verify(institutionAndLibraryCardEnforcement, never())
+        .asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
   }
 
   @Test
   void testCreateInstitutionNullName() {
     Institution mockInstitution = initMockModel();
     mockInstitution.setName(null);
-    assertThrows(IllegalArgumentException.class,
-        () -> service.createInstitution(mockInstitution, 1));
-    verify(institutionAndLibraryCardEnforcement,
-        never()).asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    assertThrows(
+        IllegalArgumentException.class, () -> service.createInstitution(mockInstitution, 1));
+    verify(institutionAndLibraryCardEnforcement, never())
+        .asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
   }
 
   @Test
@@ -93,22 +90,22 @@ class InstitutionServiceTest extends AbstractTestHelper {
     when(institutionDAO.findInstitutionById(mockInstitution.getId())).thenReturn(mockInstitution);
     when(institutionDAO.updateFullInstitution(mockInstitution, 1)).thenReturn(mockInstitution);
     mockInstitution.setUpdateDate(new Date());
-    //doNothing is default for void methods, no need to mock InstitutionDAO.updateInstitutionById
-    Institution updatedInstitution = service.updateInstitutionById(mockInstitution,
-        mockInstitution.getId(), 1);
+    // doNothing is default for void methods, no need to mock InstitutionDAO.updateInstitutionById
+    Institution updatedInstitution =
+        service.updateInstitutionById(mockInstitution, mockInstitution.getId(), 1);
     assertNotNull(updatedInstitution);
-    verify(
-        institutionAndLibraryCardEnforcement).asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    verify(institutionAndLibraryCardEnforcement)
+        .asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
   }
 
   @Test
   void testUpdateInstitutionByIdNotFound() {
     Institution mockInstitution = initMockModel();
     when(institutionDAO.findInstitutionById(anyInt())).thenThrow(new NotFoundException());
-    assertThrows(NotFoundException.class,
-        () -> service.updateInstitutionById(mockInstitution, 1, 1));
-    verify(institutionAndLibraryCardEnforcement,
-        never()).asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    assertThrows(
+        NotFoundException.class, () -> service.updateInstitutionById(mockInstitution, 1, 1));
+    verify(institutionAndLibraryCardEnforcement, never())
+        .asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
   }
 
   @Test
@@ -116,10 +113,10 @@ class InstitutionServiceTest extends AbstractTestHelper {
     Institution mockInstitution = initMockModel();
     mockInstitution.setName("");
     when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
-    assertThrows(IllegalArgumentException.class,
-        () -> service.updateInstitutionById(mockInstitution, 1, 1));
-    verify(institutionAndLibraryCardEnforcement,
-        never()).asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    assertThrows(
+        IllegalArgumentException.class, () -> service.updateInstitutionById(mockInstitution, 1, 1));
+    verify(institutionAndLibraryCardEnforcement, never())
+        .asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
   }
 
   @Test
@@ -127,10 +124,10 @@ class InstitutionServiceTest extends AbstractTestHelper {
     Institution mockInstitution = initMockModel();
     when(institutionDAO.findInstitutionById(anyInt())).thenReturn(mockInstitution);
     mockInstitution.setName(null);
-    assertThrows(IllegalArgumentException.class,
-        () -> service.updateInstitutionById(mockInstitution, 1, 1));
-    verify(institutionAndLibraryCardEnforcement,
-        never()).asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    assertThrows(
+        IllegalArgumentException.class, () -> service.updateInstitutionById(mockInstitution, 1, 1));
+    verify(institutionAndLibraryCardEnforcement, never())
+        .asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
   }
 
   @Test
@@ -148,8 +145,8 @@ class InstitutionServiceTest extends AbstractTestHelper {
   void testDeleteInstitutionByIdFail() {
     when(institutionDAO.findInstitutionById(anyInt())).thenThrow(new NotFoundException());
     assertThrows(NotFoundException.class, () -> service.deleteInstitutionById(1));
-    verify(institutionAndLibraryCardEnforcement,
-        never()).asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    verify(institutionAndLibraryCardEnforcement, never())
+        .asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
   }
 
   @Test
@@ -199,11 +196,12 @@ class InstitutionServiceTest extends AbstractTestHelper {
     when(institutionDAO.findInstitutionIdByDomain("broadinstitute.org")).thenReturn(null);
     when(institutionDAO.findInstitutionIdByDomain("broad.mit.edu")).thenReturn(null);
     when(institutionDAO.findInstitutionIdByDomain("café.com")).thenReturn(null);
-    assertDoesNotThrow(() -> {
-      service.createInstitution(mockInstitution, 1);
-    });
-    verify(
-        institutionAndLibraryCardEnforcement).asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    assertDoesNotThrow(
+        () -> {
+          service.createInstitution(mockInstitution, 1);
+        });
+    verify(institutionAndLibraryCardEnforcement)
+        .asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
   }
 
   @Test
@@ -212,12 +210,13 @@ class InstitutionServiceTest extends AbstractTestHelper {
     mockInstitution.setDomains(List.of("broadinstitute.org", "broad.mit.edu"));
     when(institutionDAO.findInstitutionIdByDomain("broadinstitute.org")).thenReturn(2);
     when(institutionDAO.findInstitutionIdByDomain("broad.mit.edu")).thenReturn(null);
-    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-        () -> service.createInstitution(mockInstitution, 1));
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class, () -> service.createInstitution(mockInstitution, 1));
     assertTrue(exception.getMessage().contains("broadinstitute.org"));
     assertFalse(exception.getMessage().contains("broad.mit.edu"));
-    verify(institutionAndLibraryCardEnforcement,
-        never()).asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    verify(institutionAndLibraryCardEnforcement, never())
+        .asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
   }
 
   @Test
@@ -226,12 +225,13 @@ class InstitutionServiceTest extends AbstractTestHelper {
     mockInstitution.setDomains(List.of("broadinstitute.org", "broad.mit.edu"));
     when(institutionDAO.findInstitutionIdByDomain("broadinstitute.org")).thenReturn(2);
     when(institutionDAO.findInstitutionIdByDomain("broad.mit.edu")).thenReturn(2);
-    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-        () -> service.createInstitution(mockInstitution, 1));
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class, () -> service.createInstitution(mockInstitution, 1));
     assertTrue(exception.getMessage().contains("broadinstitute.org"));
     assertTrue(exception.getMessage().contains("broad.mit.edu"));
-    verify(institutionAndLibraryCardEnforcement,
-        never()).asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    verify(institutionAndLibraryCardEnforcement, never())
+        .asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
   }
 
   @Test
@@ -243,11 +243,12 @@ class InstitutionServiceTest extends AbstractTestHelper {
     when(institutionDAO.findInstitutionIdByDomain("broadinstitute.org")).thenReturn(1);
     when(institutionDAO.findInstitutionById(1)).thenReturn(mockInstitution);
     when(institutionDAO.updateFullInstitution(mockInstitution, 1)).thenReturn(mockInstitution);
-    assertDoesNotThrow(() -> {
-      service.updateInstitutionById(mockInstitution, 1, 1);
-    });
-    verify(
-        institutionAndLibraryCardEnforcement).asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    assertDoesNotThrow(
+        () -> {
+          service.updateInstitutionById(mockInstitution, 1, 1);
+        });
+    verify(institutionAndLibraryCardEnforcement)
+        .asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
   }
 
   @Test
@@ -257,25 +258,29 @@ class InstitutionServiceTest extends AbstractTestHelper {
     mockInstitution.setDomains(List.of("broadinstitute.org"));
     when(institutionDAO.findInstitutionIdByDomain("broadinstitute.org")).thenReturn(2);
     when(institutionDAO.findInstitutionById(1)).thenReturn(mockInstitution);
-    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-        () -> service.updateInstitutionById(mockInstitution, 1, 1));
-    assertEquals("Domain(s) already associated with another institution: broadinstitute.org",
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> service.updateInstitutionById(mockInstitution, 1, 1));
+    assertEquals(
+        "Domain(s) already associated with another institution: broadinstitute.org",
         exception.getMessage());
-    verify(institutionAndLibraryCardEnforcement,
-        never()).asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    verify(institutionAndLibraryCardEnforcement, never())
+        .asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
   }
 
   @Test
   void testCreateInstitutionNameUniqueness() {
     Institution newInstitution = initMockModel();
     newInstitution.setName("Broad Institute");
-    when(institutionDAO.findInstitutionsByName("Broad Institute")).thenReturn(
-        Collections.emptyList());
-    assertDoesNotThrow(() -> {
-      service.createInstitution(newInstitution, 1);
-    });
-    verify(
-        institutionAndLibraryCardEnforcement).asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    when(institutionDAO.findInstitutionsByName("Broad Institute"))
+        .thenReturn(Collections.emptyList());
+    assertDoesNotThrow(
+        () -> {
+          service.createInstitution(newInstitution, 1);
+        });
+    verify(institutionAndLibraryCardEnforcement)
+        .asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
   }
 
   @Test
@@ -285,14 +290,17 @@ class InstitutionServiceTest extends AbstractTestHelper {
     Institution existingConflictingInstitution = new Institution();
     existingConflictingInstitution.setId(2);
     existingConflictingInstitution.setName("Broad Institute");
-    when(institutionDAO.findInstitutionsByName("Broad Institute")).thenReturn(
-        List.of(existingConflictingInstitution));
-    ConsentConflictException exception = assertThrows(ConsentConflictException.class,
-        () -> service.createInstitution(newInstitution, 1));
-    assertTrue(exception.getMessage()
-        .contains("An institution exists with the name of 'Broad Institute'"));
-    verify(institutionAndLibraryCardEnforcement,
-        never()).asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    when(institutionDAO.findInstitutionsByName("Broad Institute"))
+        .thenReturn(List.of(existingConflictingInstitution));
+    ConsentConflictException exception =
+        assertThrows(
+            ConsentConflictException.class, () -> service.createInstitution(newInstitution, 1));
+    assertTrue(
+        exception
+            .getMessage()
+            .contains("An institution exists with the name of 'Broad Institute'"));
+    verify(institutionAndLibraryCardEnforcement, never())
+        .asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
   }
 
   @Test
@@ -301,15 +309,16 @@ class InstitutionServiceTest extends AbstractTestHelper {
     updatedInstitution.setId(1);
     updatedInstitution.setName("Broad Institute");
     when(institutionDAO.findInstitutionById(1)).thenReturn(updatedInstitution);
-    when(institutionDAO.findInstitutionsByName("Broad Institute")).thenReturn(
-        Collections.emptyList());
-    when(institutionDAO.updateFullInstitution(updatedInstitution, 1)).thenReturn(
-        updatedInstitution);
-    assertDoesNotThrow(() -> {
-      service.updateInstitutionById(updatedInstitution, 1, 1);
-    });
-    verify(
-        institutionAndLibraryCardEnforcement).asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    when(institutionDAO.findInstitutionsByName("Broad Institute"))
+        .thenReturn(Collections.emptyList());
+    when(institutionDAO.updateFullInstitution(updatedInstitution, 1))
+        .thenReturn(updatedInstitution);
+    assertDoesNotThrow(
+        () -> {
+          service.updateInstitutionById(updatedInstitution, 1, 1);
+        });
+    verify(institutionAndLibraryCardEnforcement)
+        .asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
   }
 
   @Test
@@ -321,14 +330,18 @@ class InstitutionServiceTest extends AbstractTestHelper {
     existingConflictingInstitution.setId(2);
     existingConflictingInstitution.setName("Broad Institute");
     when(institutionDAO.findInstitutionById(1)).thenReturn(updatedInstitution);
-    when(institutionDAO.findInstitutionsByName("Broad Institute")).thenReturn(
-        List.of(existingConflictingInstitution));
-    ConsentConflictException exception = assertThrows(ConsentConflictException.class,
-        () -> service.updateInstitutionById(updatedInstitution, 1, 1));
-    assertTrue(exception.getMessage()
-        .contains("An institution exists with the name of 'Broad Institute'"));
-    verify(institutionAndLibraryCardEnforcement,
-        never()).asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    when(institutionDAO.findInstitutionsByName("Broad Institute"))
+        .thenReturn(List.of(existingConflictingInstitution));
+    ConsentConflictException exception =
+        assertThrows(
+            ConsentConflictException.class,
+            () -> service.updateInstitutionById(updatedInstitution, 1, 1));
+    assertTrue(
+        exception
+            .getMessage()
+            .contains("An institution exists with the name of 'Broad Institute'"));
+    verify(institutionAndLibraryCardEnforcement, never())
+        .asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
   }
 
   @Test
@@ -336,24 +349,27 @@ class InstitutionServiceTest extends AbstractTestHelper {
     Institution newInstitution = initMockModel();
     newInstitution.setName("Broad Institute");
     newInstitution.setDomains(List.of("broadinstitute.org", "broadinstitute.org"));
-    when(institutionDAO.findInstitutionsByName("Broad Institute")).thenReturn(
-        Collections.emptyList());
-    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-        () -> service.createInstitution(newInstitution, 1));
+    when(institutionDAO.findInstitutionsByName("Broad Institute"))
+        .thenReturn(Collections.emptyList());
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class, () -> service.createInstitution(newInstitution, 1));
     assertEquals("Institution domains must be unique", exception.getMessage());
-    verify(institutionAndLibraryCardEnforcement,
-        never()).asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    verify(institutionAndLibraryCardEnforcement, never())
+        .asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
   }
 
   /**
    * @return A list of 5 dacs
    */
   private List<Institution> getInstitutions() {
-    return IntStream.range(0, 4).
-        mapToObj(i -> {
-          Institution institute = new Institution();
-          institute.setId(i);
-          return institute;
-        }).toList();
+    return IntStream.range(0, 4)
+        .mapToObj(
+            i -> {
+              Institution institute = new Institution();
+              institute.setId(i);
+              return institute;
+            })
+        .toList();
   }
 }

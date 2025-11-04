@@ -14,10 +14,10 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 public class UserUpdateFields {
 
   // We can only update non-DAC-related roles so always filter those out for addition or removal
-  protected static final List<Integer> IGNORE_ROLE_IDS = List.of(UserRoles.CHAIRPERSON.getRoleId(),
-      UserRoles.MEMBER.getRoleId());
-  private static final List<Integer> VALID_ROLE_IDS = Arrays.stream(UserRoles.values())
-      .map(UserRoles::getRoleId).toList();
+  protected static final List<Integer> IGNORE_ROLE_IDS =
+      List.of(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.MEMBER.getRoleId());
+  private static final List<Integer> VALID_ROLE_IDS =
+      Arrays.stream(UserRoles.values()).map(UserRoles::getRoleId).toList();
   private String displayName;
   private Boolean emailPreference;
   private List<Integer> userRoleIds;
@@ -92,9 +92,11 @@ public class UserUpdateFields {
     return this.getUserRoleIds().stream()
         .filter(
             id ->
-              !currentUserRoleIds.contains(id) && // Don't add any that already exist
-                  !IGNORE_ROLE_IDS.contains(id) &&    // Never add ignorable roles
-                  VALID_ROLE_IDS.contains(id)        // Only add roles we know about
+                !currentUserRoleIds.contains(id)
+                    && // Don't add any that already exist
+                    !IGNORE_ROLE_IDS.contains(id)
+                    && // Never add ignorable roles
+                    VALID_ROLE_IDS.contains(id) // Only add roles we know about
             )
         .toList();
   }
@@ -110,14 +112,17 @@ public class UserUpdateFields {
   public List<Integer> getRoleIdsToRemove(List<Integer> currentUserRoleIds) {
     return currentUserRoleIds.stream()
         .filter(
-            id -> !getUserRoleIds().contains(id) &&
-                  // Remove roles that are NOT in the new role id list
-                  !Objects.equals(id, UserRoles.RESEARCHER.getRoleId()) &&
-                  // Never remove the researcher role
-                  !IGNORE_ROLE_IDS.contains(id) &&
-                  // Never remove ignorable roles
-                  VALID_ROLE_IDS.contains(
-                      id)                            // Only remove roles we know about
+            id ->
+                !getUserRoleIds().contains(id)
+                    &&
+                    // Remove roles that are NOT in the new role id list
+                    !Objects.equals(id, UserRoles.RESEARCHER.getRoleId())
+                    &&
+                    // Never remove the researcher role
+                    !IGNORE_ROLE_IDS.contains(id)
+                    &&
+                    // Never remove ignorable roles
+                    VALID_ROLE_IDS.contains(id) // Only remove roles we know about
             )
         .toList();
   }
@@ -129,14 +134,15 @@ public class UserUpdateFields {
     }
 
     UserUpdateFields that = (UserUpdateFields) o;
-    return Objects.equals(displayName, that.displayName) && Objects.equals(emailPreference, that.emailPreference)
-        && Objects.equals(userRoleIds, that.userRoleIds) && Objects.equals(eraCommonsId,
-        that.eraCommonsId) && Objects.equals(daaAcceptance, that.daaAcceptance);
+    return Objects.equals(displayName, that.displayName)
+        && Objects.equals(emailPreference, that.emailPreference)
+        && Objects.equals(userRoleIds, that.userRoleIds)
+        && Objects.equals(eraCommonsId, that.eraCommonsId)
+        && Objects.equals(daaAcceptance, that.daaAcceptance);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(displayName, emailPreference, userRoleIds, eraCommonsId,
-        daaAcceptance);
+    return Objects.hash(displayName, emailPreference, userRoleIds, eraCommonsId, daaAcceptance);
   }
 }

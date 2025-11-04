@@ -11,8 +11,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
- * Manage a cache of bearer token to map of `OAUTH2_CLAIM` headers for every request. This is
- * useful in cases where components need, but do not have access to, the full request context.
+ * Manage a cache of bearer token to map of `OAUTH2_CLAIM` headers for every request. This is useful
+ * in cases where components need, but do not have access to, the full request context.
  */
 public class ClaimsCache {
 
@@ -24,10 +24,7 @@ public class ClaimsCache {
   public static final String OAUTH2_CLAIM_aud = "OAUTH2_CLAIM_aud";
 
   private ClaimsCache() {
-    cache = CacheBuilder
-        .newBuilder()
-        .expireAfterWrite(5, TimeUnit.MINUTES)
-        .build();
+    cache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
   }
 
   public static ClaimsCache getInstance() {
@@ -46,14 +43,13 @@ public class ClaimsCache {
 
   public void loadCache(String token, MultivaluedMap<String, String> headers) {
     if (this.cache.getIfPresent(token) == null) {
-      Map<String, String> claimsMap = headers.entrySet()
-          .stream()
-          .filter(e -> e.getKey().startsWith("OAUTH2_CLAIM"))
-          .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), getFirst(e.getValue())))
-          .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+      Map<String, String> claimsMap =
+          headers.entrySet().stream()
+              .filter(e -> e.getKey().startsWith("OAUTH2_CLAIM"))
+              .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), getFirst(e.getValue())))
+              .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
       this.cache.put(token, claimsMap);
       this.cache.cleanUp();
     }
   }
-
 }

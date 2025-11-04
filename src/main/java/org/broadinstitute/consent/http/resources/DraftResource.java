@@ -46,8 +46,7 @@ public class DraftResource extends Resource {
   private final DraftService draftService;
 
   @Inject
-  public DraftResource(UserService userService,
-      DraftService draftService) {
+  public DraftResource(UserService userService, DraftService draftService) {
     this.userService = userService;
     this.draftService = draftService;
   }
@@ -59,13 +58,11 @@ public class DraftResource extends Resource {
   public Response getDrafts(@Auth AuthUser authUser) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      Collection<DraftSummary> draftSummaries = draftService.findDraftSummariesForUser(
-          user);
+      Collection<DraftSummary> draftSummaries = draftService.findDraftSummariesForUser(user);
       return Response.ok().entity(draftSummaries).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
-
   }
 
   @POST
@@ -89,18 +86,16 @@ public class DraftResource extends Resource {
   @Produces({MediaType.APPLICATION_JSON})
   @Path("/v1/{draftUUID}")
   @RolesAllowed({ADMIN, DATASUBMITTER})
-  public Response getDraftDocument(@Auth AuthUser authUser,
-      @PathParam("draftUUID") String draftUUID) {
+  public Response getDraftDocument(
+      @Auth AuthUser authUser, @PathParam("draftUUID") String draftUUID) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      DraftInterface draft = draftService.getAuthorizedDraft(
-          validateUUID(draftUUID), user);
+      DraftInterface draft = draftService.getAuthorizedDraft(validateUUID(draftUUID), user);
       StreamingOutput output = draftService.draftAsJson(draft);
       return Response.ok().entity(output).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
-
   }
 
   @PUT
@@ -108,12 +103,11 @@ public class DraftResource extends Resource {
   @Consumes({MediaType.APPLICATION_JSON})
   @Path("/v1/{draftUUID}")
   @RolesAllowed({ADMIN, DATASUBMITTER})
-  public Response updateDraft(@Auth AuthUser authUser, @PathParam("draftUUID") String draftUUID,
-      String json) {
+  public Response updateDraft(
+      @Auth AuthUser authUser, @PathParam("draftUUID") String draftUUID, String json) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      DraftInterface draft = draftService.getAuthorizedDraft(
-          validateUUID(draftUUID), user);
+      DraftInterface draft = draftService.getAuthorizedDraft(validateUUID(draftUUID), user);
       draft.setJson(json);
       DraftInterface responseDraft = draftService.updateDraft(draft, user);
       return Response.ok().entity(draftService.draftAsJson(responseDraft)).build();
@@ -127,8 +121,8 @@ public class DraftResource extends Resource {
   @Consumes({MediaType.TEXT_PLAIN})
   @Path("/v1/{draftUUID}")
   @RolesAllowed({ADMIN, DATASUBMITTER})
-  public Response patchDraftName(@Auth AuthUser authUser, @PathParam("draftUUID") String draftUUID,
-      String name) {
+  public Response patchDraftName(
+      @Auth AuthUser authUser, @PathParam("draftUUID") String draftUUID, String name) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       DraftInterface draft = draftService.getAuthorizedDraft(validateUUID(draftUUID), user);
@@ -147,8 +141,7 @@ public class DraftResource extends Resource {
   public Response deleteDraft(@Auth AuthUser authUser, @PathParam("draftUUID") String draftUUID) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      DraftInterface draft = draftService.getAuthorizedDraft(
-          validateUUID(draftUUID), user);
+      DraftInterface draft = draftService.getAuthorizedDraft(validateUUID(draftUUID), user);
       draftService.deleteDraft(draft, user);
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -160,17 +153,15 @@ public class DraftResource extends Resource {
   @Produces({MediaType.APPLICATION_JSON})
   @Path("/v1/{draftUUID}/attachments")
   @RolesAllowed({ADMIN, DATASUBMITTER})
-  public Response getAttachments(@Auth AuthUser authUser,
-      @PathParam("draftUUID") String draftUUID) {
+  public Response getAttachments(
+      @Auth AuthUser authUser, @PathParam("draftUUID") String draftUUID) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      DraftInterface draft = draftService.getAuthorizedDraft(
-          validateUUID(draftUUID), user);
+      DraftInterface draft = draftService.getAuthorizedDraft(validateUUID(draftUUID), user);
       return Response.ok().entity(draft.getStoredFiles()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
-
   }
 
   @POST
@@ -178,15 +169,15 @@ public class DraftResource extends Resource {
   @Consumes({MediaType.MULTIPART_FORM_DATA})
   @Path("/v1/{draftUUID}/attachments")
   @RolesAllowed({ADMIN, DATASUBMITTER})
-  public Response addAttachments(@Auth AuthUser authUser, @PathParam("draftUUID") String draftUUID,
+  public Response addAttachments(
+      @Auth AuthUser authUser,
+      @PathParam("draftUUID") String draftUUID,
       FormDataMultiPart multipart) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      DraftInterface draft = draftService.getAuthorizedDraft(
-          validateUUID(draftUUID), user);
+      DraftInterface draft = draftService.getAuthorizedDraft(validateUUID(draftUUID), user);
       Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
-      List<FileStorageObject> storedFiles = draftService.addAttachments(draft, user,
-          files);
+      List<FileStorageObject> storedFiles = draftService.addAttachments(draft, user, files);
       return Response.ok().entity(storedFiles).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -197,28 +188,34 @@ public class DraftResource extends Resource {
   @Produces(MediaType.APPLICATION_OCTET_STREAM)
   @Path("/v1/{draftUUID}/attachments/{fileId}")
   @RolesAllowed({ADMIN, DATASUBMITTER})
-  public Response getAttachment(@Auth AuthUser authUser, @PathParam("draftUUID") String draftUUID,
+  public Response getAttachment(
+      @Auth AuthUser authUser,
+      @PathParam("draftUUID") String draftUUID,
       @PathParam("fileId") Integer fileId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      DraftInterface draft = draftService.getAuthorizedDraft(
-          validateUUID(draftUUID), user);
-      Set<FileStorageObject> filteredAttachments = draft.getStoredFiles().stream()
-          .filter((fileStorageObject) -> fileStorageObject.getFileStorageObjectId().equals(fileId))
-          .collect(
-              Collectors.toSet());
+      DraftInterface draft = draftService.getAuthorizedDraft(validateUUID(draftUUID), user);
+      Set<FileStorageObject> filteredAttachments =
+          draft.getStoredFiles().stream()
+              .filter(
+                  (fileStorageObject) -> fileStorageObject.getFileStorageObjectId().equals(fileId))
+              .collect(Collectors.toSet());
       if (filteredAttachments.isEmpty()) {
         return Response.status(Response.Status.NOT_FOUND).build();
       } else if (filteredAttachments.size() == 1) {
         FileStorageObject targetAttachment = filteredAttachments.iterator().next();
         InputStream fileStream = draftService.getDraftAttachmentStream(targetAttachment);
         StreamingOutput streamOutput = createStreamingOutput(fileStream);
-        return Response.ok(streamOutput).header(HttpHeaders.CONTENT_DISPOSITION,
-            String.format("attachment; filename=\"%s\"", targetAttachment.getFileName())).build();
+        return Response.ok(streamOutput)
+            .header(
+                HttpHeaders.CONTENT_DISPOSITION,
+                String.format("attachment; filename=\"%s\"", targetAttachment.getFileName()))
+            .build();
       } else {
-        logWarn(String.format(
-            "More than one file attachment matches requested draft ID and file ID combination.  draftid: %s, fileid: %d",
-            draftUUID, fileId));
+        logWarn(
+            String.format(
+                "More than one file attachment matches requested draft ID and file ID combination.  draftid: %s, fileid: %d",
+                draftUUID, fileId));
         throw new InternalServerErrorException("Disambiguation error encountered.");
       }
     } catch (Exception e) {
@@ -230,12 +227,13 @@ public class DraftResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/v1/{draftUUID}/attachments/{fileId}")
   @RolesAllowed({ADMIN, DATASUBMITTER})
-  public Response deleteDraftAttachment(@Auth AuthUser authUser,
-      @PathParam("draftUUID") String draftUUID, @PathParam("fileId") Integer fileId) {
+  public Response deleteDraftAttachment(
+      @Auth AuthUser authUser,
+      @PathParam("draftUUID") String draftUUID,
+      @PathParam("fileId") Integer fileId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      DraftInterface draft = draftService.getAuthorizedDraft(
-          validateUUID(draftUUID), user);
+      DraftInterface draft = draftService.getAuthorizedDraft(validateUUID(draftUUID), user);
       draftService.deleteDraftAttachment(draft, user, fileId);
       return Response.ok().build();
     } catch (Exception e) {

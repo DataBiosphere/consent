@@ -77,9 +77,10 @@ public class ConsentGroupFromDataset {
   @Nullable
   private String findStringDSPropValue(Set<DatasetProperty> props, String propName) {
     if (Objects.nonNull(props) && !props.isEmpty()) {
-      return props
-          .stream()
-          .filter(p -> p.getSchemaProperty() != null && p.getSchemaProperty().equalsIgnoreCase(propName))
+      return props.stream()
+          .filter(
+              p ->
+                  p.getSchemaProperty() != null && p.getSchemaProperty().equalsIgnoreCase(propName))
           .map(DatasetProperty::getPropertyValueAsString)
           .findFirst()
           .orElse(null);
@@ -90,9 +91,10 @@ public class ConsentGroupFromDataset {
   @Nullable
   private Integer findIntegerDSPropValue(Set<DatasetProperty> props, String propName) {
     if (Objects.nonNull(props) && !props.isEmpty()) {
-      return props
-          .stream()
-          .filter(p -> p.getSchemaProperty() != null && p.getSchemaProperty().equalsIgnoreCase(propName))
+      return props.stream()
+          .filter(
+              p ->
+                  p.getSchemaProperty() != null && p.getSchemaProperty().equalsIgnoreCase(propName))
           .map(DatasetProperty::getPropertyValue)
           .map(Object::toString)
           .map(Integer::valueOf)
@@ -105,9 +107,11 @@ public class ConsentGroupFromDataset {
   @Nullable
   private List<FileTypeObject> findListFTSODSPropValue(Set<DatasetProperty> props) {
     if (Objects.nonNull(props) && !props.isEmpty()) {
-      return props
-          .stream()
-          .filter(p -> p.getSchemaProperty() != null && p.getSchemaProperty().equalsIgnoreCase(fileTypes))
+      return props.stream()
+          .filter(
+              p ->
+                  p.getSchemaProperty() != null
+                      && p.getSchemaProperty().equalsIgnoreCase(fileTypes))
           .map(DatasetProperty::getPropertyValueAsString)
           .map(p -> GsonUtil.getInstance().fromJson(p, JsonArray.class))
           .map(JsonArray::asList)
@@ -117,5 +121,4 @@ public class ConsentGroupFromDataset {
     }
     return null;
   }
-
 }

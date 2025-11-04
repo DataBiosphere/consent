@@ -12,7 +12,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class SchemaResourceTest {
 
-
   private final JsonSchemaUtil jsonSchemaUtil = new JsonSchemaUtil();
 
   @Test
@@ -25,5 +24,4 @@ class SchemaResourceTest {
     Object body = response.getEntity();
     assertEquals(jsonSchemaUtil.getDatasetRegistrationSchemaV1(), body.toString());
   }
-
 }

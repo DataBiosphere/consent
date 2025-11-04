@@ -34,13 +34,14 @@ class ResourceTest {
 
   @Test
   void testUnableToExecuteExceptionDatabaseConflict() {
-    PSQLException psqlException = new PSQLException(
-        "duplicate key value violates unique constraint", PSQLState.UNIQUE_VIOLATION);
+    PSQLException psqlException =
+        new PSQLException(
+            "duplicate key value violates unique constraint", PSQLState.UNIQUE_VIOLATION);
     StatementContext ctx = mock(StatementContext.class);
     StatementExceptions exceptions = mock(StatementExceptions.class);
     when(ctx.getConfig(StatementExceptions.class)).thenReturn(exceptions);
-    UnableToExecuteStatementException exception = new UnableToExecuteStatementException(
-        "Failed to execute statement", psqlException, ctx);
+    UnableToExecuteStatementException exception =
+        new UnableToExecuteStatementException("Failed to execute statement", psqlException, ctx);
 
     var result = Resource.unableToExecuteExceptionHandler(exception);
     var entity = (Error) result.getEntity();
@@ -51,15 +52,16 @@ class ResourceTest {
   @Test
   void testUnableToExecuteExceptionInvalidByteSequence() {
     PSQLState psqlState = mock(PSQLState.class);
-    // PSQLState is missing the enum constant 22021 for invalid byte sequence but returns it so we mock it
+    // PSQLState is missing the enum constant 22021 for invalid byte sequence but returns it so we
+    // mock it
     when(psqlState.getState()).thenReturn("22021");
-    PSQLException psqlException = new PSQLException(
-        "invalid byte sequence for encoding \"UTF8\": 0x00", psqlState);
+    PSQLException psqlException =
+        new PSQLException("invalid byte sequence for encoding \"UTF8\": 0x00", psqlState);
     StatementContext ctx = mock(StatementContext.class);
     StatementExceptions exceptions = mock(StatementExceptions.class);
     when(ctx.getConfig(StatementExceptions.class)).thenReturn(exceptions);
-    UnableToExecuteStatementException exception = new UnableToExecuteStatementException(
-        "Failed to execute statement", psqlException, ctx);
+    UnableToExecuteStatementException exception =
+        new UnableToExecuteStatementException("Failed to execute statement", psqlException, ctx);
 
     var result = Resource.unableToExecuteExceptionHandler(exception);
     var entity = (Error) result.getEntity();
@@ -86,9 +88,11 @@ class ResourceTest {
     Resource abstractResource = mock(Resource.class, Mockito.CALLS_REAL_METHODS);
     FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
     when(fileDetail.getFileName()).thenReturn("C:\\temp\\virus.exe");
-    assertThrows(IllegalArgumentException.class, () -> {
-      abstractResource.validateFileDetails(fileDetail);
-    });
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          abstractResource.validateFileDetails(fileDetail);
+        });
   }
 
   @Test
@@ -98,9 +102,10 @@ class ResourceTest {
     FormDataContentDisposition fileDetail = mock(FormDataContentDisposition.class);
     when(fileDetail.getFileName()).thenReturn("temp.txt");
     when(fileDetail.getSize()).thenReturn(maxSize + 1);
-    assertThrows(IllegalArgumentException.class, () -> {
-      abstractResource.validateFileDetails(fileDetail);
-    });
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          abstractResource.validateFileDetails(fileDetail);
+        });
   }
-
 }

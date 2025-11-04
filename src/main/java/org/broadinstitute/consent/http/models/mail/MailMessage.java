@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.models.mail;
 
-
 import java.util.Date;
 
 public class MailMessage {
@@ -15,8 +14,15 @@ public class MailMessage {
   private Integer sendgridStatus;
   private Date createDate;
 
-  public MailMessage(Integer emailId, Integer voteId, Integer dacUserId, String emailType,
-      Date dateSent, String emailText, String sendgridResponse, Integer sendgridStatus,
+  public MailMessage(
+      Integer emailId,
+      Integer voteId,
+      Integer dacUserId,
+      String emailType,
+      Date dateSent,
+      String emailText,
+      String sendgridResponse,
+      Integer sendgridStatus,
       Date createDate) {
     this.emailId = emailId;
     this.voteId = voteId;
@@ -100,6 +106,4 @@ public class MailMessage {
   public void setCreateDate(Date createDate) {
     this.createDate = createDate;
   }
-
-
 }

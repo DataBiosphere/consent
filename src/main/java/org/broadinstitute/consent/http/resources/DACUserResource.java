@@ -38,14 +38,14 @@ public class DACUserResource extends Resource {
     try {
       User user = userService.createUser(new User(json));
       // Update email preference
-      getEmailPreferenceValueFromUserJson(json).ifPresent(aBoolean ->
-          userService.updateEmailPreference(aBoolean, user.getUserId())
-      );
+      getEmailPreferenceValueFromUserJson(json)
+          .ifPresent(aBoolean -> userService.updateEmailPreference(aBoolean, user.getUserId()));
       URI uri = info.getRequestUriBuilder().path("{email}").build(user.getEmail());
       return Response.created(uri).entity(user).build();
     } catch (Exception e) {
       return Response.status(Response.Status.BAD_REQUEST)
-          .entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode())).build();
+          .entity(new Error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode()))
+          .build();
     }
   }
 
@@ -54,7 +54,7 @@ public class DACUserResource extends Resource {
    *
    * @param json Raw json string from client
    * @return Optional value of the "emailPreference" boolean value set in either the legacy json or
-   * the new DacUser model.
+   *     the new DacUser model.
    */
   private Optional<Boolean> getEmailPreferenceValueFromUserJson(String json) {
     String memberName = "emailPreference";
@@ -68,12 +68,12 @@ public class DACUserResource extends Resource {
         } else if (userObj.has("roles") && !userObj.get("roles").isJsonNull()) {
           List<JsonElement> rolesElements = new ArrayList<>();
           userObj.get("roles").getAsJsonArray().forEach(rolesElements::add);
-          List<Boolean> emailPrefs = rolesElements.
-              stream().
-              filter(e -> e.getAsJsonObject().has(memberName)).
-              map(e -> e.getAsJsonObject().get(memberName).getAsBoolean()).
-              distinct().
-              toList();
+          List<Boolean> emailPrefs =
+              rolesElements.stream()
+                  .filter(e -> e.getAsJsonObject().has(memberName))
+                  .map(e -> e.getAsJsonObject().get(memberName).getAsBoolean())
+                  .distinct()
+                  .toList();
           // In practice, there should only be a single email preference value, if any.
           if (emailPrefs.size() == 1) {
             aBoolean = Optional.of(emailPrefs.get(0));
@@ -85,5 +85,4 @@ public class DACUserResource extends Resource {
     }
     return aBoolean;
   }
-
 }

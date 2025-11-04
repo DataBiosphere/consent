@@ -26,8 +26,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
 
-  private final ExecutorService executorService = new ThreadUtils().getExecutorService(
-      InstitutionAndLibraryCardEnforcement.class);
+  private final ExecutorService executorService =
+      new ThreadUtils().getExecutorService(InstitutionAndLibraryCardEnforcement.class);
   private final InstitutionDAO institutionDAO;
   private final LibraryCardDAO libraryCardDAO;
   private final UserDAO userDAO;
@@ -47,7 +47,7 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
    *
    * @param email of the user being evaluated
    * @return user with the Institution and Library Card rules applied or null if the requestor isn't
-   * a DUOS user.
+   *     a DUOS user.
    * @throws NotFoundException when the user isn't found in our database
    */
   public User enforceInstitutionAndLibraryCardRules(String email) {
@@ -59,19 +59,22 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
   }
 
   public void asyncEnforceInstitutionAndLibraryCardRulesForAllUsers() {
-    ListeningExecutorService listeningExecutorService = MoreExecutors.listeningDecorator(
-        executorService);
-    ListenableFuture<User> enforceRulesFuture = listeningExecutorService.submit(() -> {
-      for (User user : userDAO.findUsersWithLCsAndInstitution()) {
-        try {
-          User updatedUser = enforceInstitutionAndLibraryCardRules(user);
-          logInfo("Enforced institution and LC rules for user: " + updatedUser.getEmail());
-        } catch (Exception e) {
-          logWarn("Error enforcing institution and LC rules for user: " + user.getEmail(), e);
-        }
-      }
-      return null;
-    });
+    ListeningExecutorService listeningExecutorService =
+        MoreExecutors.listeningDecorator(executorService);
+    ListenableFuture<User> enforceRulesFuture =
+        listeningExecutorService.submit(
+            () -> {
+              for (User user : userDAO.findUsersWithLCsAndInstitution()) {
+                try {
+                  User updatedUser = enforceInstitutionAndLibraryCardRules(user);
+                  logInfo("Enforced institution and LC rules for user: " + updatedUser.getEmail());
+                } catch (Exception e) {
+                  logWarn(
+                      "Error enforcing institution and LC rules for user: " + user.getEmail(), e);
+                }
+              }
+              return null;
+            });
     Futures.addCallback(
         enforceRulesFuture,
         new FutureCallback<>() {
@@ -79,6 +82,7 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
           public void onSuccess(User result) {
             logInfo("Completed enforcing institution and LC rules for all users.");
           }
+
           @Override
           public void onFailure(@NotNull Throwable t) {
             logWarn("Error completing enforcement of institution and LC rules for all users.", t);

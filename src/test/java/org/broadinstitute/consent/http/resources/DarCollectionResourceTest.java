@@ -41,34 +41,33 @@ class DarCollectionResourceTest extends AbstractTestHelper {
 
   private final AuthUser authUser = new AuthUser("test@test.com");
   private final List<UserRole> researcherRole = List.of(UserRoles.Researcher());
-  private final User researcher = new User(1, authUser.getEmail(), "Display Name", new Date(),
-      researcherRole);
+  private final User researcher =
+      new User(1, authUser.getEmail(), "Display Name", new Date(), researcherRole);
   private final DuosUser duosResearcher = new DuosUser(authUser, researcher);
   private final List<UserRole> signingOfficialRole = List.of(UserRoles.SigningOfficial());
-  private final User signingOfficial = new User(4, authUser.getEmail(), "Display Name", new Date(),
-      signingOfficialRole);
+  private final User signingOfficial =
+      new User(4, authUser.getEmail(), "Display Name", new Date(), signingOfficialRole);
   private final DuosUser duosSigningOfficial = new DuosUser(authUser, signingOfficial);
 
   private final List<UserRole> adminRole = List.of(UserRoles.Admin());
-  private final User admin = new User(5, authUser.getEmail(), "Display Name", new Date(),
-      adminRole);
+  private final User admin =
+      new User(5, authUser.getEmail(), "Display Name", new Date(), adminRole);
   private final DuosUser duosAdmin = new DuosUser(authUser, admin);
 
   private final List<UserRole> chairpersonRole = List.of(UserRoles.Chairperson());
-  private final User chairperson = new User (6, authUser.getEmail(), "Display Name", new Date(),
-      chairpersonRole);
+  private final User chairperson =
+      new User(6, authUser.getEmail(), "Display Name", new Date(), chairpersonRole);
   private final DuosUser duosChairperson = new DuosUser(authUser, chairperson);
 
   private final List<UserRole> memberRole = List.of(UserRoles.Member());
-  private final User member = new User(7, authUser.getEmail(), "Display Name", new Date(), memberRole);
+  private final User member =
+      new User(7, authUser.getEmail(), "Display Name", new Date(), memberRole);
   private final DuosUser duosMember = new DuosUser(authUser, member);
 
   private DarCollectionResource resource;
 
-  @Mock
-  private DarCollectionService darCollectionService;
-  @Mock
-  private ContainerRequest request;
+  @Mock private DarCollectionService darCollectionService;
+  @Mock private ContainerRequest request;
 
   @BeforeEach
   void initResource() {
@@ -99,7 +98,8 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
-    when(darCollectionService.getByCollectionId(researcher, collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getByCollectionId(researcher, collection.getDarCollectionId()))
+        .thenReturn(collection);
 
     Response response = resource.getCollectionById(duosUser, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -110,7 +110,8 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId() + 1);
-    when(darCollectionService.getByCollectionId(researcher, collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getByCollectionId(researcher, collection.getDarCollectionId()))
+        .thenReturn(collection);
 
     Response response = resource.getCollectionById(duosResearcher, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -122,7 +123,8 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
 
-    when(darCollectionService.getByCollectionId(admin, collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getByCollectionId(admin, collection.getDarCollectionId()))
+        .thenReturn(collection);
 
     Response response = resource.getCollectionById(duosAdmin, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -136,9 +138,11 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
 
-    when(darCollectionService.getByCollectionId(signingOfficial, collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getByCollectionId(signingOfficial, collection.getDarCollectionId()))
+        .thenReturn(collection);
 
-    Response response = resource.getCollectionById(duosSigningOfficial, collection.getDarCollectionId());
+    Response response =
+        resource.getCollectionById(duosSigningOfficial, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -150,9 +154,11 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
 
-    when(darCollectionService.getByCollectionId(signingOfficial, collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getByCollectionId(signingOfficial, collection.getDarCollectionId()))
+        .thenReturn(collection);
 
-    Response response = resource.getCollectionById(duosSigningOfficial, collection.getDarCollectionId());
+    Response response =
+        resource.getCollectionById(duosSigningOfficial, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -163,9 +169,11 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
 
-    when(darCollectionService.getByCollectionId(signingOfficial, collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getByCollectionId(signingOfficial, collection.getDarCollectionId()))
+        .thenReturn(collection);
 
-    Response response = resource.getCollectionById(duosSigningOfficial, collection.getDarCollectionId());
+    Response response =
+        resource.getCollectionById(duosSigningOfficial, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -176,9 +184,11 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
 
-    when(darCollectionService.getByCollectionId(signingOfficial, collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getByCollectionId(signingOfficial, collection.getDarCollectionId()))
+        .thenReturn(collection);
 
-    Response response = resource.getCollectionById(duosSigningOfficial, collection.getDarCollectionId());
+    Response response =
+        resource.getCollectionById(duosSigningOfficial, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -194,10 +204,12 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     dataSet.setDatasetId(2);
     collection.addDataset(dataSet);
 
-    when(darCollectionService.getByCollectionId(chair, collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getByCollectionId(chair, collection.getDarCollectionId()))
+        .thenReturn(collection);
     when(darCollectionService.findDatasetIdsByDACUser(chair)).thenReturn(Arrays.asList(1, 2));
 
-    Response response = resource.getCollectionById(new DuosUser(authUser, chair), collection.getDarCollectionId());
+    Response response =
+        resource.getCollectionById(new DuosUser(authUser, chair), collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -211,7 +223,8 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     dataSet.setDatasetId(2);
     collection.addDataset(dataSet);
 
-    when(darCollectionService.getByCollectionId(member, collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getByCollectionId(member, collection.getDarCollectionId()))
+        .thenReturn(collection);
     when(darCollectionService.findDatasetIdsByDACUser(member)).thenReturn(Arrays.asList(1, 2));
 
     Response response = resource.getCollectionById(duosMember, collection.getDarCollectionId());
@@ -230,10 +243,12 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     dataSet.setDatasetId(3);
     collection.addDataset(dataSet);
 
-    when(darCollectionService.getByCollectionId(chair, collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getByCollectionId(chair, collection.getDarCollectionId()))
+        .thenReturn(collection);
     when(darCollectionService.findDatasetIdsByDACUser(chair)).thenReturn(Arrays.asList(1, 2));
 
-    Response response = resource.getCollectionById(new DuosUser(authUser, chair), collection.getDarCollectionId());
+    Response response =
+        resource.getCollectionById(new DuosUser(authUser, chair), collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -241,8 +256,13 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   void testGetCollectionByIdMultipleRoles() {
     UserRole chairRole = UserRoles.Chairperson();
     UserRole localResearcherRole = UserRoles.Researcher();
-    User user = new User(1, authUser.getEmail(), "Display Name", new Date(),
-        List.of(chairRole, localResearcherRole));
+    User user =
+        new User(
+            1,
+            authUser.getEmail(),
+            "Display Name",
+            new Date(),
+            List.of(chairRole, localResearcherRole));
     DarCollection collection = mockDarCollection();
     collection.setCreateUser(user);
     collection.setCreateUserId(user.getUserId());
@@ -251,7 +271,8 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     dataSet.setDatasetId(3);
     collection.addDataset(dataSet);
 
-    when(darCollectionService.getByCollectionId(researcher, collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getByCollectionId(researcher, collection.getDarCollectionId()))
+        .thenReturn(collection);
     when(darCollectionService.findDatasetIdsByDACUser(researcher)).thenReturn(Arrays.asList(1, 2));
 
     Response response = resource.getCollectionById(duosResearcher, collection.getDarCollectionId());
@@ -264,9 +285,13 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setCreateUser(researcher);
     collection.setCreateUserId(researcher.getUserId());
 
-    when(darCollectionService.getCollectionWithAllElectionsByCollectionId(admin, collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getCollectionWithAllElectionsByCollectionId(
+            admin, collection.getDarCollectionId()))
+        .thenReturn(collection);
 
-    Response response = resource.getCollectionWithAllElectionsByCollectionId(duosAdmin, collection.getDarCollectionId());
+    Response response =
+        resource.getCollectionWithAllElectionsByCollectionId(
+            duosAdmin, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -281,16 +306,21 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setDatasets(Set.of(dataset1));
 
     when(darCollectionService.findDatasetIdsByDACUser(member)).thenReturn(userDatasetIds);
-    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(member, userDatasetIds, collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(
+            member, userDatasetIds, collection.getDarCollectionId()))
+        .thenReturn(collection);
 
-    Response response = resource.getCollectionWithAllElectionsByCollectionId(duosMember, collection.getDarCollectionId());
+    Response response =
+        resource.getCollectionWithAllElectionsByCollectionId(
+            duosMember, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
   @Test
   void testGetCollectionWithAllElectionsById_CollectionNotFoundCollection() {
     when(darCollectionService.findDatasetIdsByDACUser(researcher)).thenReturn(List.of());
-    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(researcher, List.of(), 1))
+    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(
+            researcher, List.of(), 1))
         .thenThrow(new NotFoundException("Collection not found"));
 
     Response response = resource.getCollectionWithAllElectionsByCollectionId(duosResearcher, 1);
@@ -300,7 +330,8 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   @Test
   void testGetCollectionWithAllElectionsByCollectionId_ServiceException() {
     when(darCollectionService.findDatasetIdsByDACUser(researcher)).thenReturn(List.of());
-    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(researcher, List.of(), 1))
+    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(
+            researcher, List.of(), 1))
         .thenThrow(new RuntimeException("Service error"));
 
     Response response = resource.getCollectionWithAllElectionsByCollectionId(duosResearcher, 1);
@@ -314,19 +345,21 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setCreateUserId(researcher.getUserId());
 
     when(darCollectionService.findDatasetIdsByDACUser(researcher)).thenReturn(List.of());
-    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(researcher, List.of(),
-        collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getCollectionWithElectionsByCollectionIdAndDatasetIds(
+            researcher, List.of(), collection.getDarCollectionId()))
+        .thenReturn(collection);
 
-    Response response = resource.getCollectionWithAllElectionsByCollectionId(duosResearcher,
-        collection.getDarCollectionId());
+    Response response =
+        resource.getCollectionWithAllElectionsByCollectionId(
+            duosResearcher, collection.getDarCollectionId());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
   @Test
   void testGetCollectionByReferenceId() {
     DarCollection collection = mockDarCollection();
-    String referenceId = collection.getDars().values().stream().findFirst().orElseThrow()
-        .getReferenceId();
+    String referenceId =
+        collection.getDars().values().stream().findFirst().orElseThrow().getReferenceId();
     assertNotNull(referenceId);
     collection.setCreateUserId(researcher.getUserId());
     when(darCollectionService.getByReferenceId(researcher, referenceId)).thenReturn(collection);
@@ -338,8 +371,8 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   @Test
   void testGetCollectionByReferenceIdNotFound() {
     DarCollection collection = mockDarCollection();
-    String referenceId = collection.getDars().values().stream().findFirst().orElseThrow()
-        .getReferenceId();
+    String referenceId =
+        collection.getDars().values().stream().findFirst().orElseThrow().getReferenceId();
     assertNotNull(referenceId);
     collection.setCreateUserId(researcher.getUserId() + 1);
     when(darCollectionService.getByReferenceId(researcher, referenceId)).thenReturn(collection);
@@ -352,9 +385,12 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   void testCancelDarCollection_NotFoundStatus() {
     DarCollection collection = mockDarCollection();
     collection.setCreateUserId(researcher.getUserId());
-    when(darCollectionService.getByCollectionId(researcher, collection.getDarCollectionId())).thenReturn(null);
+    when(darCollectionService.getByCollectionId(researcher, collection.getDarCollectionId()))
+        .thenReturn(null);
 
-    try (var response = resource.cancelDarCollectionByCollectionId(duosResearcher, request, collection.getDarCollectionId(), null)) {
+    try (var response =
+        resource.cancelDarCollectionByCollectionId(
+            duosResearcher, request, collection.getDarCollectionId(), null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
@@ -365,10 +401,12 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setCreateUserId(researcher.getUserId());
     int collectionId = collection.getDarCollectionId();
     when(darCollectionService.getByCollectionId(researcher, collectionId)).thenReturn(collection);
-    when(darCollectionService.cancelDarCollectionByRole(researcher, collection, UserRoles.RESEARCHER))
+    when(darCollectionService.cancelDarCollectionByRole(
+            researcher, collection, UserRoles.RESEARCHER))
         .thenThrow(new BadRequestException());
 
-    try (var response = resource.cancelDarCollectionByCollectionId(duosResearcher, request, collectionId, null)) {
+    try (var response =
+        resource.cancelDarCollectionByCollectionId(duosResearcher, request, collectionId, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -379,10 +417,12 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setCreateUserId(researcher.getUserId());
     int collectionId = collection.getDarCollectionId();
     when(darCollectionService.getByCollectionId(researcher, collectionId)).thenReturn(collection);
-    when(darCollectionService.cancelDarCollectionByRole(researcher, collection, UserRoles.RESEARCHER))
+    when(darCollectionService.cancelDarCollectionByRole(
+            researcher, collection, UserRoles.RESEARCHER))
         .thenThrow(new InternalServerErrorException());
 
-    try (var response = resource.cancelDarCollectionByCollectionId(duosResearcher, request, collectionId, null)) {
+    try (var response =
+        resource.cancelDarCollectionByCollectionId(duosResearcher, request, collectionId, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
   }
@@ -396,7 +436,9 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     when(darCollectionService.cancelDarCollectionByRole(admin, collection, UserRoles.ADMIN))
         .thenReturn(collection);
 
-    try (var response = resource.cancelDarCollectionByCollectionId(duosAdmin, request, collectionId, Resource.ADMIN)) {
+    try (var response =
+        resource.cancelDarCollectionByCollectionId(
+            duosAdmin, request, collectionId, Resource.ADMIN)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -407,10 +449,13 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     collection.setCreateUserId(chairperson.getUserId());
     int collectionId = collection.getDarCollectionId();
     when(darCollectionService.getByCollectionId(chairperson, collectionId)).thenReturn(collection);
-    when(darCollectionService.cancelDarCollectionByRole(chairperson, collection, UserRoles.CHAIRPERSON))
+    when(darCollectionService.cancelDarCollectionByRole(
+            chairperson, collection, UserRoles.CHAIRPERSON))
         .thenReturn(collection);
 
-    try (var response = resource.cancelDarCollectionByCollectionId(duosChairperson, request, collectionId, Resource.CHAIRPERSON)) {
+    try (var response =
+        resource.cancelDarCollectionByCollectionId(
+            duosChairperson, request, collectionId, Resource.CHAIRPERSON)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -419,9 +464,12 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   void testCancelDarCollection_asChairAsAdmin() {
     DarCollection collection = mockDarCollection();
     collection.setCreateUserId(chairperson.getUserId());
-    when(darCollectionService.getByCollectionId(chairperson, collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getByCollectionId(chairperson, collection.getDarCollectionId()))
+        .thenReturn(collection);
 
-    try (var response = resource.cancelDarCollectionByCollectionId(duosChairperson, request, collection.getDarCollectionId(), Resource.ADMIN)) {
+    try (var response =
+        resource.cancelDarCollectionByCollectionId(
+            duosChairperson, request, collection.getDarCollectionId(), Resource.ADMIN)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -432,10 +480,13 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     int collectionId = collection.getDarCollectionId();
     collection.setCreateUserId(researcher.getUserId());
     when(darCollectionService.getByCollectionId(researcher, collectionId)).thenReturn(collection);
-    when(darCollectionService.cancelDarCollectionByRole(researcher, collection, UserRoles.RESEARCHER))
+    when(darCollectionService.cancelDarCollectionByRole(
+            researcher, collection, UserRoles.RESEARCHER))
         .thenReturn(collection);
 
-    try (var response = resource.cancelDarCollectionByCollectionId(duosResearcher, request, collectionId, Resource.RESEARCHER)) {
+    try (var response =
+        resource.cancelDarCollectionByCollectionId(
+            duosResearcher, request, collectionId, Resource.RESEARCHER)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -444,13 +495,15 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   void testCancelDarCollection_asResearcherAsAdmin() {
     DarCollection collection = mockDarCollection();
     collection.setCreateUserId(researcher.getUserId());
-    when(darCollectionService.getByCollectionId(researcher, collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getByCollectionId(researcher, collection.getDarCollectionId()))
+        .thenReturn(collection);
 
-    try (var response = resource.cancelDarCollectionByCollectionId(duosResearcher, request, collection.getDarCollectionId(), Resource.ADMIN)) {
+    try (var response =
+        resource.cancelDarCollectionByCollectionId(
+            duosResearcher, request, collection.getDarCollectionId(), Resource.ADMIN)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
-
 
   @Test
   void testResubmitDarCollection_CollectionNotFound() {
@@ -482,9 +535,11 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     when(dar.getReferenceId()).thenReturn(referenceId);
     Map<String, DataAccessRequest> darMap = Map.of(dar.getReferenceId(), dar);
     when(collection.getDars()).thenReturn(darMap);
-    when(darCollectionService.getByCollectionId(researcher, collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getByCollectionId(researcher, collection.getDarCollectionId()))
+        .thenReturn(collection);
 
-    try (var response = resource.resubmitDarCollection(duosResearcher, collection.getDarCollectionId())) {
+    try (var response =
+        resource.resubmitDarCollection(duosResearcher, collection.getDarCollectionId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -501,9 +556,11 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     when(dar.getReferenceId()).thenReturn(referenceId);
     Map<String, DataAccessRequest> darMap = Map.of(dar.getReferenceId(), dar);
     when(collection.getDars()).thenReturn(darMap);
-    when(darCollectionService.getByCollectionId(researcher, collection.getDarCollectionId())).thenReturn(collection);
+    when(darCollectionService.getByCollectionId(researcher, collection.getDarCollectionId()))
+        .thenReturn(collection);
 
-    try (var response = resource.resubmitDarCollection(duosResearcher, collection.getDarCollectionId())) {
+    try (var response =
+        resource.resubmitDarCollection(duosResearcher, collection.getDarCollectionId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -533,8 +590,8 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     when(darCollectionService.getSummariesForRole(member, UserRoles.MEMBER))
         .thenReturn(List.of(mockSummary));
 
-    Response response = resource.getCollectionSummariesForUserByRole(duosMember,
-        UserRoles.MEMBER.getRoleName());
+    Response response =
+        resource.getCollectionSummariesForUserByRole(duosMember, UserRoles.MEMBER.getRoleName());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -544,8 +601,9 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     when(darCollectionService.getSummariesForRole(chairperson, UserRoles.CHAIRPERSON))
         .thenReturn(List.of(mockSummary));
 
-    Response response = resource.getCollectionSummariesForUserByRole(duosChairperson,
-        UserRoles.CHAIRPERSON.getRoleName());
+    Response response =
+        resource.getCollectionSummariesForUserByRole(
+            duosChairperson, UserRoles.CHAIRPERSON.getRoleName());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -555,8 +613,9 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     when(darCollectionService.getSummariesForRole(signingOfficial, UserRoles.SIGNINGOFFICIAL))
         .thenReturn(List.of(mockSummary));
 
-    Response response = resource.getCollectionSummariesForUserByRole(duosSigningOfficial,
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
+    Response response =
+        resource.getCollectionSummariesForUserByRole(
+            duosSigningOfficial, UserRoles.SIGNINGOFFICIAL.getRoleName());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -566,8 +625,9 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     when(darCollectionService.getSummariesForRole(researcher, UserRoles.RESEARCHER))
         .thenReturn(List.of(mockSummary));
 
-    Response response = resource.getCollectionSummariesForUserByRole(duosResearcher,
-        UserRoles.RESEARCHER.getRoleName());
+    Response response =
+        resource.getCollectionSummariesForUserByRole(
+            duosResearcher, UserRoles.RESEARCHER.getRoleName());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -577,15 +637,16 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     when(darCollectionService.getSummariesForRole(admin, UserRoles.ADMIN))
         .thenReturn(List.of(mockSummary));
 
-    Response response = resource.getCollectionSummariesForUserByRole(duosAdmin,
-        UserRoles.ADMIN.getRoleName());
+    Response response =
+        resource.getCollectionSummariesForUserByRole(duosAdmin, UserRoles.ADMIN.getRoleName());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
   @Test
   void getCollectionSummariesForUserByRole_NoRoleFound() {
-    Response response = resource.getCollectionSummariesForUserByRole(duosResearcher,
-        UserRoles.SIGNINGOFFICIAL.getRoleName());
+    Response response =
+        resource.getCollectionSummariesForUserByRole(
+            duosResearcher, UserRoles.SIGNINGOFFICIAL.getRoleName());
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
@@ -595,7 +656,6 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
-
   @Test
   void getCollectionSummaryForRoleById_Member() {
     DarCollectionSummary mockSummary = new DarCollectionSummary();
@@ -603,11 +663,13 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     Integer collectionId = randomInt(1, 100);
 
     when(darCollectionService.findDatasetIdsByDACUser(member)).thenReturn(List.of(1, 2));
-    when(darCollectionService.getSummaryForRoleByCollectionId(member, UserRoles.MEMBER, collectionId))
+    when(darCollectionService.getSummaryForRoleByCollectionId(
+            member, UserRoles.MEMBER, collectionId))
         .thenReturn(mockSummary);
 
-    Response response = resource.getCollectionSummaryForRoleById(duosMember,
-        UserRoles.MEMBER.getRoleName(), collectionId);
+    Response response =
+        resource.getCollectionSummaryForRoleById(
+            duosMember, UserRoles.MEMBER.getRoleName(), collectionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -618,11 +680,13 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     Integer collectionId = randomInt(1, 100);
 
     when(darCollectionService.findDatasetIdsByDACUser(member)).thenReturn(List.of(2));
-    when(darCollectionService.getSummaryForRoleByCollectionId(member, UserRoles.MEMBER, collectionId))
+    when(darCollectionService.getSummaryForRoleByCollectionId(
+            member, UserRoles.MEMBER, collectionId))
         .thenReturn(mockSummary);
 
-    Response response = resource.getCollectionSummaryForRoleById(duosMember,
-        UserRoles.MEMBER.getRoleName(), collectionId);
+    Response response =
+        resource.getCollectionSummaryForRoleById(
+            duosMember, UserRoles.MEMBER.getRoleName(), collectionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -633,11 +697,13 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     Integer collectionId = randomInt(1, 100);
 
     when(darCollectionService.findDatasetIdsByDACUser(chairperson)).thenReturn(List.of(1, 2));
-    when(darCollectionService.getSummaryForRoleByCollectionId(chairperson, UserRoles.CHAIRPERSON, collectionId))
+    when(darCollectionService.getSummaryForRoleByCollectionId(
+            chairperson, UserRoles.CHAIRPERSON, collectionId))
         .thenReturn(mockSummary);
 
-    Response response = resource.getCollectionSummaryForRoleById(duosChairperson,
-        UserRoles.CHAIRPERSON.getRoleName(), collectionId);
+    Response response =
+        resource.getCollectionSummaryForRoleById(
+            duosChairperson, UserRoles.CHAIRPERSON.getRoleName(), collectionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -648,11 +714,13 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     Integer collectionId = randomInt(1, 100);
 
     when(darCollectionService.findDatasetIdsByDACUser(chairperson)).thenReturn(List.of(2));
-    when(darCollectionService.getSummaryForRoleByCollectionId(chairperson, UserRoles.CHAIRPERSON, collectionId))
+    when(darCollectionService.getSummaryForRoleByCollectionId(
+            chairperson, UserRoles.CHAIRPERSON, collectionId))
         .thenReturn(mockSummary);
 
-    Response response = resource.getCollectionSummaryForRoleById(duosChairperson,
-        UserRoles.CHAIRPERSON.getRoleName(), collectionId);
+    Response response =
+        resource.getCollectionSummaryForRoleById(
+            duosChairperson, UserRoles.CHAIRPERSON.getRoleName(), collectionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -663,12 +731,13 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     mockSummary.setInstitutionId(signingOfficial.getInstitutionId());
     Integer collectionId = randomInt(1, 100);
 
-    when(darCollectionService.getSummaryForRoleByCollectionId(signingOfficial, UserRoles.SIGNINGOFFICIAL,
-        collectionId))
+    when(darCollectionService.getSummaryForRoleByCollectionId(
+            signingOfficial, UserRoles.SIGNINGOFFICIAL, collectionId))
         .thenReturn(mockSummary);
 
-    Response response = resource.getCollectionSummaryForRoleById(duosSigningOfficial,
-        UserRoles.SIGNINGOFFICIAL.getRoleName(), collectionId);
+    Response response =
+        resource.getCollectionSummaryForRoleById(
+            duosSigningOfficial, UserRoles.SIGNINGOFFICIAL.getRoleName(), collectionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -678,12 +747,13 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     mockSummary.setInstitutionId(2);
     Integer collectionId = randomInt(1, 100);
 
-    when(darCollectionService.getSummaryForRoleByCollectionId(signingOfficial, UserRoles.SIGNINGOFFICIAL,
-        collectionId))
+    when(darCollectionService.getSummaryForRoleByCollectionId(
+            signingOfficial, UserRoles.SIGNINGOFFICIAL, collectionId))
         .thenReturn(mockSummary);
 
-    Response response = resource.getCollectionSummaryForRoleById(duosSigningOfficial,
-        UserRoles.SIGNINGOFFICIAL.getRoleName(), collectionId);
+    Response response =
+        resource.getCollectionSummaryForRoleById(
+            duosSigningOfficial, UserRoles.SIGNINGOFFICIAL.getRoleName(), collectionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -693,12 +763,13 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     mockSummary.setResearcherId(researcher.getUserId());
     Integer collectionId = randomInt(1, 100);
 
-    when(darCollectionService.getSummaryForRoleByCollectionId(researcher, UserRoles.RESEARCHER,
-        collectionId))
+    when(darCollectionService.getSummaryForRoleByCollectionId(
+            researcher, UserRoles.RESEARCHER, collectionId))
         .thenReturn(mockSummary);
 
-    Response response = resource.getCollectionSummaryForRoleById(duosResearcher,
-        UserRoles.RESEARCHER.getRoleName(), collectionId);
+    Response response =
+        resource.getCollectionSummaryForRoleById(
+            duosResearcher, UserRoles.RESEARCHER.getRoleName(), collectionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -708,12 +779,13 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     mockSummary.setResearcherId(2);
     Integer collectionId = randomInt(1, 100);
 
-    when(darCollectionService.getSummaryForRoleByCollectionId(researcher, UserRoles.RESEARCHER,
-        collectionId))
+    when(darCollectionService.getSummaryForRoleByCollectionId(
+            researcher, UserRoles.RESEARCHER, collectionId))
         .thenReturn(mockSummary);
 
-    Response response = resource.getCollectionSummaryForRoleById(duosResearcher,
-        UserRoles.RESEARCHER.getRoleName(), collectionId);
+    Response response =
+        resource.getCollectionSummaryForRoleById(
+            duosResearcher, UserRoles.RESEARCHER.getRoleName(), collectionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -722,13 +794,12 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     DarCollectionSummary mockSummary = new DarCollectionSummary();
     Integer collectionId = randomInt(1, 100);
 
-
-    when(darCollectionService.getSummaryForRoleByCollectionId(admin, UserRoles.ADMIN,
-        collectionId))
+    when(darCollectionService.getSummaryForRoleByCollectionId(admin, UserRoles.ADMIN, collectionId))
         .thenReturn(mockSummary);
 
-    Response response = resource.getCollectionSummaryForRoleById(duosAdmin,
-        UserRoles.ADMIN.getRoleName(), collectionId);
+    Response response =
+        resource.getCollectionSummaryForRoleById(
+            duosAdmin, UserRoles.ADMIN.getRoleName(), collectionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
 
@@ -739,7 +810,9 @@ class DarCollectionResourceTest extends AbstractTestHelper {
 
     Response response =
         resource.getCollectionSummaryForRoleById(
-            new DuosUser(authUser, noRoleUser), UserRoles.SIGNINGOFFICIAL.getRoleName(), collectionId);
+            new DuosUser(authUser, noRoleUser),
+            UserRoles.SIGNINGOFFICIAL.getRoleName(),
+            collectionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
@@ -747,7 +820,8 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   void getCollectionSummaryForRoleById_InvalidRoleString() {
     Integer collectionId = randomInt(1, 100);
 
-    Response response = resource.getCollectionSummaryForRoleById(duosResearcher, "invalid", collectionId);
+    Response response =
+        resource.getCollectionSummaryForRoleById(duosResearcher, "invalid", collectionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
   }
 
@@ -755,12 +829,13 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   void getCollectionSummaryForRoleById_CollectionNotFound() {
     Integer collectionId = randomInt(1, 100);
 
-    when(darCollectionService.getSummaryForRoleByCollectionId(duosResearcher.getUser(), UserRoles.RESEARCHER,
-        collectionId))
+    when(darCollectionService.getSummaryForRoleByCollectionId(
+            duosResearcher.getUser(), UserRoles.RESEARCHER, collectionId))
         .thenThrow(new NotFoundException());
 
-    Response response = resource.getCollectionSummaryForRoleById(duosResearcher,
-        UserRoles.RESEARCHER.getRoleName(), collectionId);
+    Response response =
+        resource.getCollectionSummaryForRoleById(
+            duosResearcher, UserRoles.RESEARCHER.getRoleName(), collectionId);
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 }

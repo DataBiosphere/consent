@@ -24,15 +24,15 @@ public class JsonSchemaUtil implements ConsentLogger {
   private final String datasetRegistrationSchemaV1 = "/dataset-registration-schema_v1.json";
   private JsonSchemaFactory factory;
 
-
   public JsonSchemaUtil() {
     factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V201909);
-    CacheLoader<String, String> loader = new CacheLoader<>() {
-      @Override
-      public String load(String key) throws Exception {
-        return IOUtils.resourceToString(key, Charset.defaultCharset());
-      }
-    };
+    CacheLoader<String, String> loader =
+        new CacheLoader<>() {
+          @Override
+          public String load(String key) throws Exception {
+            return IOUtils.resourceToString(key, Charset.defaultCharset());
+          }
+        };
     this.cache = CacheBuilder.newBuilder().build(loader);
   }
 
@@ -44,7 +44,6 @@ public class JsonSchemaUtil implements ConsentLogger {
       return null;
     }
   }
-
 
   /**
    * Loads a Schema populated from the current dataset registration schema

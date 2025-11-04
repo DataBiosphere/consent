@@ -52,9 +52,9 @@ public class Acknowledgement {
       return false;
     }
     Acknowledgement ack = (Acknowledgement) o;
-    return (Objects.equals(this.getAckKey(), ack.getAckKey()) &&
-        Objects.equals(this.getUserId(), ack.getUserId()) &&
-        this.getLastAcknowledged().getTime() == (ack.getLastAcknowledged().getTime()) &&
-        this.getFirstAcknowledged().getTime() == (ack.getFirstAcknowledged()).getTime());
+    return (Objects.equals(this.getAckKey(), ack.getAckKey())
+        && Objects.equals(this.getUserId(), ack.getUserId())
+        && this.getLastAcknowledged().getTime() == (ack.getLastAcknowledged().getTime())
+        && this.getFirstAcknowledged().getTime() == (ack.getFirstAcknowledged()).getTime());
   }
 }

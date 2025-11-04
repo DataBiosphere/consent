@@ -7,8 +7,7 @@ public class DataUseSummary {
   private List<DataUseTerm> primary;
   private List<DataUseTerm> secondary;
 
-  public DataUseSummary() {
-  }
+  public DataUseSummary() {}
 
   public DataUseSummary(List<DataUseTerm> primary, List<DataUseTerm> secondary) {
     this.primary = primary;
@@ -19,8 +18,7 @@ public class DataUseSummary {
     return primary;
   }
 
-  public void setPrimary(
-      List<DataUseTerm> primary) {
+  public void setPrimary(List<DataUseTerm> primary) {
     this.primary = primary;
   }
 
@@ -28,8 +26,7 @@ public class DataUseSummary {
     return secondary;
   }
 
-  public void setSecondary(
-      List<DataUseTerm> secondary) {
+  public void setSecondary(List<DataUseTerm> secondary) {
     this.secondary = secondary;
   }
 }

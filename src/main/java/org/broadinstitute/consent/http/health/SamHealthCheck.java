@@ -49,12 +49,10 @@ public class SamHealthCheck extends HealthCheck implements Managed {
   }
 
   @Override
-  public void start() throws Exception {
-  }
+  public void start() throws Exception {}
 
   @Override
-  public void stop() throws Exception {
-  }
+  public void stop() throws Exception {}
 
   private static class SamStatus {
 

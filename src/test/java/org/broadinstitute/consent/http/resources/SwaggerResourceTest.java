@@ -32,8 +32,7 @@ class SwaggerResourceTest {
   void testIndex() {
     Response response = swaggerResource.content("index.html");
     assertTrue(checkStatusAndHeader(response, TEXT_HTML));
-    String content = response.getEntity().toString()
-        .replaceFirst("<!--[^-]+-->", "").trim();
+    String content = response.getEntity().toString().replaceFirst("<!--[^-]+-->", "").trim();
     assertTrue(content.startsWith("<!DOCTYPE html>"));
     assertTrue(content.endsWith("</html>"));
   }
@@ -72,5 +71,4 @@ class SwaggerResourceTest {
     String headerObject = response.getHeaderString(HttpHeaders.CONTENT_TYPE);
     return headerObject.contains(header);
   }
-
 }

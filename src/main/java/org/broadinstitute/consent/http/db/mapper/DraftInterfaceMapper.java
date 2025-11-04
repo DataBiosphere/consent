@@ -12,11 +12,11 @@ import org.broadinstitute.consent.http.models.User;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
-
 public class DraftInterfaceMapper implements RowMapper<DraftInterface>, RowMapperHelper {
 
   @Override
-  public DraftInterface map(ResultSet rs, StatementContext ctx) throws SQLException, UnknownDraftTypeException {
+  public DraftInterface map(ResultSet rs, StatementContext ctx)
+      throws SQLException, UnknownDraftTypeException {
     DraftInterface dsi = getDraftImplByType(rs);
 
     if (hasColumn(rs, "name")) {
@@ -40,28 +40,32 @@ public class DraftInterfaceMapper implements RowMapper<DraftInterface>, RowMappe
     }
 
     if (hasColumn(rs, "uu_user_id")) {
-      User updateUser = buildUserFromResult(rs.getInt("uu_user_id"),
-          rs.getString("uu_email"),
-          rs.getString("uu_display_name"),
-          rs.getTimestamp("uu_create_date"),
-          rs.getBoolean("uu_email_preference"));
+      User updateUser =
+          buildUserFromResult(
+              rs.getInt("uu_user_id"),
+              rs.getString("uu_email"),
+              rs.getString("uu_display_name"),
+              rs.getTimestamp("uu_create_date"),
+              rs.getBoolean("uu_email_preference"));
       dsi.setUpdateUser(updateUser);
     }
 
     if (hasColumn(rs, "cu_user_id")) {
-      User createUser = buildUserFromResult(rs.getInt("cu_user_id"),
-          rs.getString("cu_email"),
-          rs.getString("cu_display_name"),
-          new Date(rs.getTimestamp("cu_create_date").getTime()),
-          rs.getBoolean("cu_email_preference"));
+      User createUser =
+          buildUserFromResult(
+              rs.getInt("cu_user_id"),
+              rs.getString("cu_email"),
+              rs.getString("cu_display_name"),
+              new Date(rs.getTimestamp("cu_create_date").getTime()),
+              rs.getBoolean("cu_email_preference"));
       dsi.setCreateUser(createUser);
     }
 
     return dsi;
   }
 
-  private User buildUserFromResult(Integer userId, String email, String displayName,
-      Date createDate, boolean emailPreference) {
+  private User buildUserFromResult(
+      Integer userId, String email, String displayName, Date createDate, boolean emailPreference) {
     User user = new User();
     user.setUserId(userId);
     user.setEmail(email);
@@ -71,11 +75,11 @@ public class DraftInterfaceMapper implements RowMapper<DraftInterface>, RowMappe
     return user;
   }
 
-  private DraftInterface getDraftImplByType(ResultSet rs) throws SQLException, UnknownDraftTypeException {
+  private DraftInterface getDraftImplByType(ResultSet rs)
+      throws SQLException, UnknownDraftTypeException {
     try {
       String type = rs.getString("draft_type");
-      DraftType draftType = DraftType.fromValue(
-          type);
+      DraftType draftType = DraftType.fromValue(type);
       return DraftBuilder.from(draftType);
     } catch (NullPointerException ex) {
       throw new UnknownDraftTypeException("Draft type was not found.");

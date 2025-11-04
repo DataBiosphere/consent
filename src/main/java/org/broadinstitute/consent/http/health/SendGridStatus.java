@@ -27,11 +27,8 @@ public class SendGridStatus {
     Result result;
 
     if (status.getIndicator() == Indicator.none) {
-      result = Result.builder()
-          .withDetail("page", page)
-          .withDetail("status", status)
-          .healthy()
-          .build();
+      result =
+          Result.builder().withDetail("page", page).withDetail("status", status).healthy().build();
     } else {
       result = Result.unhealthy("SendGrid status is unhealthy: " + status.getDescription());
     }
@@ -40,7 +37,10 @@ public class SendGridStatus {
   }
 
   enum Indicator {
-    none, minor, major, critical
+    none,
+    minor,
+    major,
+    critical
   }
 
   static class StatusObject {

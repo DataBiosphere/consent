@@ -22,8 +22,7 @@ public class ElasticSearchHealthCheck extends HealthCheck implements Managed {
   private final RestClient client;
 
   @Override
-  public void start() throws Exception {
-  }
+  public void start() throws Exception {}
 
   @Override
   public void stop() throws Exception {
@@ -49,8 +48,8 @@ public class ElasticSearchHealthCheck extends HealthCheck implements Managed {
         return Result.unhealthy(
             "Invalid health check request: " + esResponse.getStatusLine().getReasonPhrase());
       }
-      String stringResponse = IOUtils.toString(esResponse.getEntity().getContent(),
-          Charset.defaultCharset());
+      String stringResponse =
+          IOUtils.toString(esResponse.getEntity().getContent(), Charset.defaultCharset());
       JsonObject jsonResponse = JsonParser.parseString(stringResponse).getAsJsonObject();
       String status = jsonResponse.get("status").getAsString();
       if (status.equalsIgnoreCase("red")) {

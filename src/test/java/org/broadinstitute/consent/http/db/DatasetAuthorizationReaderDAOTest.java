@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.db;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -22,9 +22,12 @@ class DatasetAuthorizationReaderDAOTest extends DAOTestHelper {
     User testUser = createUserWithInstitution();
     User operator = createUserWithInstitution();
     int datasetId = createDataset(testUser);
-    long authRecordId = datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(datasetId, testUser.getUserId(), operator.getUserId());
+    long authRecordId =
+        datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(
+            datasetId, testUser.getUserId(), operator.getUserId());
     assertTrue(authRecordId > 0);
-    List<DatasetAuthorizationReader> authorizationReaderList = datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId);
+    List<DatasetAuthorizationReader> authorizationReaderList =
+        datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId);
     assertNotNull(authorizationReaderList);
     assertEquals(1, authorizationReaderList.size());
     DatasetAuthorizationReader authorizationReader = authorizationReaderList.get(0);
@@ -32,7 +35,8 @@ class DatasetAuthorizationReaderDAOTest extends DAOTestHelper {
     assertEquals(testUser.getUserId().intValue(), authorizationReader.userId());
     assertEquals(operator.getUserId().intValue(), authorizationReader.createdBy());
     datasetAuthorizationReaderDAO.deleteByDatasetId(datasetId);
-    List<DatasetAuthorizationReader> authorizationReaderList2 = datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId);
+    List<DatasetAuthorizationReader> authorizationReaderList2 =
+        datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId);
     assertNotNull(authorizationReaderList2);
     assertEquals(0, authorizationReaderList2.size());
   }
@@ -43,18 +47,26 @@ class DatasetAuthorizationReaderDAOTest extends DAOTestHelper {
     User operator = createUserWithInstitution();
     int datasetId1 = createDataset(testUser);
     int datasetId2 = createDataset(testUser);
-    datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(datasetId1, testUser.getUserId(), operator.getUserId());
-    datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(datasetId2, testUser.getUserId(), operator.getUserId());
-    assertEquals(1, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId1).size());
-    assertEquals(1, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId2).size());
+    datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(
+        datasetId1, testUser.getUserId(), operator.getUserId());
+    datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(
+        datasetId2, testUser.getUserId(), operator.getUserId());
+    assertEquals(
+        1, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId1).size());
+    assertEquals(
+        1, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId2).size());
 
     datasetAuthorizationReaderDAO.deleteByDatasetAndUserId(datasetId1, testUser.getUserId());
-    assertEquals(0, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId1).size());
-    assertEquals(1, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId2).size());
+    assertEquals(
+        0, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId1).size());
+    assertEquals(
+        1, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId2).size());
 
     datasetAuthorizationReaderDAO.deleteByDatasetAndUserId(datasetId2, testUser.getUserId());
-    assertEquals(0, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId1).size());
-    assertEquals(0, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId2).size());
+    assertEquals(
+        0, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId1).size());
+    assertEquals(
+        0, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId2).size());
   }
 
   @Test
@@ -64,27 +76,37 @@ class DatasetAuthorizationReaderDAOTest extends DAOTestHelper {
     User operator = createUserWithInstitution();
     int datasetId1 = createDataset(testUser);
     int datasetId2 = createDataset(testUser);
-    long record1 = datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(datasetId1, testUser.getUserId(), operator.getUserId());
-    datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(datasetId2, testUser.getUserId(), operator.getUserId());
-    datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(datasetId1, testUser2.getUserId(), operator.getUserId());
+    long record1 =
+        datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(
+            datasetId1, testUser.getUserId(), operator.getUserId());
+    datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(
+        datasetId2, testUser.getUserId(), operator.getUserId());
+    datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(
+        datasetId1, testUser2.getUserId(), operator.getUserId());
 
-    DatasetAuthorizationReader authReader = datasetAuthorizationReaderDAO.findAuthorizedReaderByRecordId(record1);
+    DatasetAuthorizationReader authReader =
+        datasetAuthorizationReaderDAO.findAuthorizedReaderByRecordId(record1);
     assertNotNull(authReader);
     assertEquals(record1, authReader.id());
     assertEquals(datasetId1, authReader.datasetId());
     assertEquals(testUser.getUserId().intValue(), authReader.userId());
     assertEquals(operator.getUserId().intValue(), authReader.createdBy());
-    assertEquals(2, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId1).size());
-    DatasetAuthorizationReader reader = datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetIdAndUserId(datasetId1, testUser.getUserId());
+    assertEquals(
+        2, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId1).size());
+    DatasetAuthorizationReader reader =
+        datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetIdAndUserId(
+            datasetId1, testUser.getUserId());
     assertNotNull(reader);
     assertEquals(record1, reader.id());
     assertEquals(datasetId1, reader.datasetId());
     assertEquals(testUser.getUserId().intValue(), reader.userId());
     assertEquals(operator.getUserId().intValue(), reader.createdBy());
     datasetAuthorizationReaderDAO.deleteByDatasetId(datasetId1);
-    assertEquals(0, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId1).size());
+    assertEquals(
+        0, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId1).size());
 
-    assertEquals(1, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId2).size());
+    assertEquals(
+        1, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId2).size());
   }
 
   @Test
@@ -95,16 +117,22 @@ class DatasetAuthorizationReaderDAOTest extends DAOTestHelper {
     int datasetId1 = createDataset(testUser1);
     int datasetId2 = createDataset(testUser2);
 
-    datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(datasetId1, testUser1.getUserId(), operator.getUserId());
-    datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(datasetId2, testUser1.getUserId(), operator.getUserId());
-    datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(datasetId2, testUser2.getUserId(), operator.getUserId());
+    datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(
+        datasetId1, testUser1.getUserId(), operator.getUserId());
+    datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(
+        datasetId2, testUser1.getUserId(), operator.getUserId());
+    datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(
+        datasetId2, testUser2.getUserId(), operator.getUserId());
 
-    assertEquals(1,datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId1).size());
-    assertEquals(2,datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId2).size());
+    assertEquals(
+        1, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId1).size());
+    assertEquals(
+        2, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId2).size());
     datasetAuthorizationReaderDAO.deleteByUserId(testUser1.getUserId());
-    assertEquals(0,datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId1).size());
-    assertEquals(1,datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId2).size());
-
+    assertEquals(
+        0, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId1).size());
+    assertEquals(
+        1, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId2).size());
   }
 
   private int createDataset(User user) {
@@ -112,8 +140,8 @@ class DatasetAuthorizationReaderDAOTest extends DAOTestHelper {
     Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
-        dataUse.toString(), null);
+    Integer id =
+        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
     createDatasetProperties(id);
     return id;
   }

@@ -30,12 +30,17 @@ class ReminderMessageTest {
 
   @Test
   void testMessageSubject() {
-    var message = new ReminderMessage(new User(), new Vote(), "DUL-123", "Data Use Limitations", "");
-    assertEquals("Urgent: Log vote on Data Use Limitations case id: DUL-123.", message.createSubject());
-    var message2 = new ReminderMessage(new User(), new Vote(), "DAR-123", "Data Access Request", "");
-    assertEquals("Urgent: Log votes on Data Access Request case id: DAR-123.", message2.createSubject());
+    var message =
+        new ReminderMessage(new User(), new Vote(), "DUL-123", "Data Use Limitations", "");
+    assertEquals(
+        "Urgent: Log vote on Data Use Limitations case id: DUL-123.", message.createSubject());
+    var message2 =
+        new ReminderMessage(new User(), new Vote(), "DAR-123", "Data Access Request", "");
+    assertEquals(
+        "Urgent: Log votes on Data Access Request case id: DAR-123.", message2.createSubject());
     var message3 = new ReminderMessage(new User(), new Vote(), "RP-123", "Research Purpose", "");
-    assertEquals("Urgent: Log votes on Research Purpose Review case id: RP-123.", message3.createSubject());
+    assertEquals(
+        "Urgent: Log votes on Research Purpose Review case id: RP-123.", message3.createSubject());
   }
 
   @Test
@@ -57,7 +62,8 @@ class ReminderMessageTest {
     String templateString = out.toString();
     Document parsedTemplate = Jsoup.parse(templateString);
 
-    assertEquals("Broad Data Use Oversight System - Your vote was requested for a Data Access Request",
+    assertEquals(
+        "Broad Data Use Oversight System - Your vote was requested for a Data Access Request",
         parsedTemplate.title());
     assertEquals(
         "Hello Reminder User,",

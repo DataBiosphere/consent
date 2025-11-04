@@ -6,8 +6,7 @@ import jakarta.validation.constraints.NotNull;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GoogleOAuth2Config {
 
-  @NotNull
-  public String clientId;
+  @NotNull public String clientId;
 
   public String getClientId() {
     return clientId;
@@ -16,5 +15,4 @@ public class GoogleOAuth2Config {
   public void setClientId(String clientId) {
     this.clientId = clientId;
   }
-
 }

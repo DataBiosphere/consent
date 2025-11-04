@@ -104,7 +104,9 @@ class ResearcherDarApprovedMessageTest extends AbstractTestHelper {
         "Hello " + researcherUserName + ",", getElementTextById(parsedTemplate, "userName"));
     assertTrue(
         templateString.contains(
-            "Your data access request application " + darCode + " was Rule Automated DAR (RADAR) approved"));
+            "Your data access request application "
+                + darCode
+                + " was Rule Automated DAR (RADAR) approved"));
     assertTrue(templateString.contains(datasetId));
     assertTrue(templateString.contains(datasetName));
     assertTrue(templateString.contains(researcherEmail));

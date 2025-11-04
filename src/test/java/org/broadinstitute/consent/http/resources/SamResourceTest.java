@@ -32,17 +32,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class SamResourceTest {
 
-  @Mock
-  private DuosUser duosUser;
+  @Mock private DuosUser duosUser;
 
-  @Mock
-  private SamService samService;
+  @Mock private SamService samService;
 
-  @Mock
-  private UserService userService;
+  @Mock private UserService userService;
 
-  @Mock
-  private UriInfo uriInfo;
+  @Mock private UriInfo uriInfo;
 
   private SamResource resource;
 
@@ -52,22 +48,25 @@ class SamResourceTest {
 
   @Test
   void testGetResourceTypes() throws Exception {
-    ActionPattern pattern = new ActionPattern()
-        .setAuthDomainConstrainable(true)
-        .setDescription("description")
-        .setValue("value");
-    ResourceTypeRole role = new ResourceTypeRole()
-        .setRoleName("roleName")
-        .setActions(Collections.singletonList("action"))
-        .setDescendantRoles(Collections.emptyMap())
-        .setIncludedRoles(Collections.emptyList())
-        .setIncludedRoles(Collections.emptyList());
-    ResourceType type = new ResourceType()
-        .setName("name")
-        .setReuseIds(true)
-        .setOwnerRoleName("ownerRoleName")
-        .setActionPatterns(Collections.singletonList(pattern))
-        .setRoles(Collections.singletonList(role));
+    ActionPattern pattern =
+        new ActionPattern()
+            .setAuthDomainConstrainable(true)
+            .setDescription("description")
+            .setValue("value");
+    ResourceTypeRole role =
+        new ResourceTypeRole()
+            .setRoleName("roleName")
+            .setActions(Collections.singletonList("action"))
+            .setDescendantRoles(Collections.emptyMap())
+            .setIncludedRoles(Collections.emptyList())
+            .setIncludedRoles(Collections.emptyList());
+    ResourceType type =
+        new ResourceType()
+            .setName("name")
+            .setReuseIds(true)
+            .setOwnerRoleName("ownerRoleName")
+            .setActionPatterns(Collections.singletonList(pattern))
+            .setRoles(Collections.singletonList(role));
     when(samService.getResourceTypes(any())).thenReturn(Collections.singletonList(type));
     initResource();
     Response response = resource.getResourceTypes(duosUser);
@@ -76,10 +75,10 @@ class SamResourceTest {
 
   @Test
   void testPostRegistrationInfo() throws Exception {
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
-        .setUserSubjectId("subjectId");
-    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
-        .setLdap(true);
+    UserStatus.UserInfo info =
+        new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
+    UserStatus.Enabled enabled =
+        new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true).setLdap(true);
     UserStatus status = new UserStatus().setUserInfo(info).setEnabled(enabled);
     when(samService.postRegistrationInfo(any())).thenReturn(status);
     initResource();
@@ -89,12 +88,13 @@ class SamResourceTest {
 
   @Test
   void testGetSelfDiagnostics() throws Exception {
-    UserStatusDiagnostics diagnostics = new UserStatusDiagnostics()
-        .setAdminEnabled(RandomUtils.nextBoolean())
-        .setEnabled(RandomUtils.nextBoolean())
-        .setInAllUsersGroup(RandomUtils.nextBoolean())
-        .setInGoogleProxyGroup(RandomUtils.nextBoolean())
-        .setTosAccepted(RandomUtils.nextBoolean());
+    UserStatusDiagnostics diagnostics =
+        new UserStatusDiagnostics()
+            .setAdminEnabled(RandomUtils.nextBoolean())
+            .setEnabled(RandomUtils.nextBoolean())
+            .setInAllUsersGroup(RandomUtils.nextBoolean())
+            .setInGoogleProxyGroup(RandomUtils.nextBoolean())
+            .setTosAccepted(RandomUtils.nextBoolean());
     when(samService.getSelfDiagnostics(any())).thenReturn(diagnostics);
     initResource();
     Response response = resource.getSelfDiagnostics(duosUser);
@@ -103,11 +103,12 @@ class SamResourceTest {
 
   @Test
   void testGetRegistrationInfo() throws Exception {
-    UserStatusInfo userInfo = new UserStatusInfo()
-        .setAdminEnabled(RandomUtils.nextBoolean())
-        .setUserEmail("test@test.org")
-        .setUserSubjectId(RandomStringUtils.random(10, false, true))
-        .setEnabled(RandomUtils.nextBoolean());
+    UserStatusInfo userInfo =
+        new UserStatusInfo()
+            .setAdminEnabled(RandomUtils.nextBoolean())
+            .setUserEmail("test@test.org")
+            .setUserSubjectId(RandomStringUtils.random(10, false, true))
+            .setEnabled(RandomUtils.nextBoolean());
     when(samService.getRegistrationInfo(any())).thenReturn(userInfo);
     initResource();
     Response response = resource.getRegistrationInfo(duosUser);
@@ -153,5 +154,4 @@ class SamResourceTest {
     Response response = resource.removeTos(duosUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
   }
-
 }

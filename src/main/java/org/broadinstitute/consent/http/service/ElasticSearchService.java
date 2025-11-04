@@ -53,8 +53,8 @@ import org.elasticsearch.client.RestClient;
 
 public class ElasticSearchService implements ConsentLogger {
 
-  private final ExecutorService executorService = new ThreadUtils().getExecutorService(
-      ElasticSearchService.class);
+  private final ExecutorService executorService =
+      new ThreadUtils().getExecutorService(ElasticSearchService.class);
   private final RestClient esClient;
   private final ElasticSearchConfiguration esConfig;
   private final DacDAO dacDAO;
@@ -88,11 +88,13 @@ public class ElasticSearchService implements ConsentLogger {
 
   private static final int MAX_RESULT_WINDOW = 10000;
 
-  private static final String BULK_HEADER = """
+  private static final String BULK_HEADER =
+      """
       { "index": {"_type": "dataset", "_id": "%d"} }
       """;
 
-  private static final String DELETE_QUERY = """
+  private static final String DELETE_QUERY =
+      """
       { "query": { "bool": { "must": [ { "match": { "_type": "dataset" } }, { "match": { "_id": "%d" } } ] } } }
       """;
 
@@ -102,38 +104,34 @@ public class ElasticSearchService implements ConsentLogger {
     if (status != 200) {
       throw new IOException("Invalid Elasticsearch query");
     }
-    var body = new String(response.getEntity().getContent().readAllBytes(),
-        StandardCharsets.UTF_8);
+    var body = new String(response.getEntity().getContent().readAllBytes(), StandardCharsets.UTF_8);
     return Response.status(status).entity(body).build();
   }
 
   public Response indexDatasetTerms(List<DatasetTerm> datasets, User user) throws IOException {
     List<String> bulkApiCall = new ArrayList<>();
 
-    datasets.forEach(dsTerm -> {
-      bulkApiCall.add(BULK_HEADER.formatted(dsTerm.getDatasetId()));
-      bulkApiCall.add(GsonUtil.getInstance().toJson(dsTerm) + "\n");
-      updateDatasetIndexDate(dsTerm.getDatasetId(), user.getUserId(), Instant.now());
-    });
+    datasets.forEach(
+        dsTerm -> {
+          bulkApiCall.add(BULK_HEADER.formatted(dsTerm.getDatasetId()));
+          bulkApiCall.add(GsonUtil.getInstance().toJson(dsTerm) + "\n");
+          updateDatasetIndexDate(dsTerm.getDatasetId(), user.getUserId(), Instant.now());
+        });
 
-    Request bulkRequest = new Request(
-        HttpMethod.PUT,
-        "/" + esConfig.getDatasetIndexName() + "/_bulk");
+    Request bulkRequest =
+        new Request(HttpMethod.PUT, "/" + esConfig.getDatasetIndexName() + "/_bulk");
 
-    bulkRequest.setEntity(new NStringEntity(
-        String.join("", bulkApiCall) + "\n",
-        ContentType.APPLICATION_JSON));
+    bulkRequest.setEntity(
+        new NStringEntity(String.join("", bulkApiCall) + "\n", ContentType.APPLICATION_JSON));
 
     return performRequest(bulkRequest);
   }
 
   public Response deleteIndex(Integer datasetId, Integer userId) throws IOException {
-    Request deleteRequest = new Request(
-        HttpMethod.POST,
-        "/" + esConfig.getDatasetIndexName() + "/_delete_by_query");
-    deleteRequest.setEntity(new NStringEntity(
-        DELETE_QUERY.formatted(datasetId),
-        ContentType.APPLICATION_JSON));
+    Request deleteRequest =
+        new Request(HttpMethod.POST, "/" + esConfig.getDatasetIndexName() + "/_delete_by_query");
+    deleteRequest.setEntity(
+        new NStringEntity(DELETE_QUERY.formatted(datasetId), ContentType.APPLICATION_JSON));
     updateDatasetIndexDate(datasetId, userId, null);
     return performRequest(deleteRequest);
   }
@@ -158,14 +156,14 @@ public class ElasticSearchService implements ConsentLogger {
     }
 
     // Remove `sort`, `size` and `from` parameters from query, otherwise validation will fail
-    var modifiedQuery = query
-        .replaceAll("\"sort\": ?\\[(.*?)\\],?", "")
-        .replaceAll("\"size\": ?\\d+,?", "")
-        .replaceAll("\"from\": ?\\d+,?", "");
+    var modifiedQuery =
+        query
+            .replaceAll("\"sort\": ?\\[(.*?)\\],?", "")
+            .replaceAll("\"size\": ?\\d+,?", "")
+            .replaceAll("\"from\": ?\\d+,?", "");
 
-    Request validateRequest = new Request(
-        HttpMethod.GET,
-        "/" + esConfig.getDatasetIndexName() + "/_validate/query");
+    Request validateRequest =
+        new Request(HttpMethod.GET, "/" + esConfig.getDatasetIndexName() + "/_validate/query");
     validateRequest.setEntity(new NStringEntity(modifiedQuery, ContentType.APPLICATION_JSON));
     Response response = performRequest(validateRequest);
 
@@ -180,9 +178,8 @@ public class ElasticSearchService implements ConsentLogger {
       throw new IOException("Invalid Elasticsearch query");
     }
 
-    Request searchRequest = new Request(
-        HttpMethod.GET,
-        "/" + esConfig.getDatasetIndexName() + "/_search");
+    Request searchRequest =
+        new Request(HttpMethod.GET, "/" + esConfig.getDatasetIndexName() + "/_search");
     searchRequest.setEntity(new NStringEntity(query, ContentType.APPLICATION_JSON));
 
     Response response = performRequest(searchRequest);
@@ -208,34 +205,23 @@ public class ElasticSearchService implements ConsentLogger {
     term.setPiName(study.getPiName());
     term.setPublicVisibility(study.getPublicVisibility());
 
-    findStudyProperty(
-        study.getProperties(), "dbGaPPhsID"
-    ).ifPresent(
-        prop -> term.setPhsId(prop.getValue().toString())
-    );
+    findStudyProperty(study.getProperties(), "dbGaPPhsID")
+        .ifPresent(prop -> term.setPhsId(prop.getValue().toString()));
 
-    findStudyProperty(
-        study.getProperties(), "phenotypeIndication"
-    ).ifPresent(
-        prop -> term.setPhenotype(prop.getValue().toString())
-    );
+    findStudyProperty(study.getProperties(), "phenotypeIndication")
+        .ifPresent(prop -> term.setPhenotype(prop.getValue().toString()));
 
-    findStudyProperty(
-        study.getProperties(), "species"
-    ).ifPresent(
-        prop -> term.setSpecies(prop.getValue().toString())
-    );
+    findStudyProperty(study.getProperties(), "species")
+        .ifPresent(prop -> term.setSpecies(prop.getValue().toString()));
 
-    findStudyProperty(
-        study.getProperties(), "dataCustodianEmail"
-    ).ifPresent(
-        prop -> {
-          JsonArray jsonArray = (JsonArray) prop.getValue();
-          List<String> dataCustodianEmail = new ArrayList<>();
-          jsonArray.forEach(email -> dataCustodianEmail.add(email.getAsString()));
-          term.setDataCustodianEmail(dataCustodianEmail);
-        }
-    );
+    findStudyProperty(study.getProperties(), "dataCustodianEmail")
+        .ifPresent(
+            prop -> {
+              JsonArray jsonArray = (JsonArray) prop.getValue();
+              List<String> dataCustodianEmail = new ArrayList<>();
+              jsonArray.forEach(email -> dataCustodianEmail.add(email.getAsString()));
+              term.setDataCustodianEmail(dataCustodianEmail);
+            });
 
     if (Objects.nonNull(study.getCreateUserId())) {
       term.setDataSubmitterId(study.getCreateUserId());
@@ -249,31 +235,33 @@ public class ElasticSearchService implements ConsentLogger {
       term.setDataSubmitterEmail(study.getCreateUserEmail());
     }
 
-    findStudyProperty(
-        study.getProperties(), "assets"
-    ).ifPresent(
-        prop -> {
-          Object value = prop.getValue();
-          Map<String, Object> assetsMap;
-          // When property is loaded from db it is deserialized as JsonObject
-          if (value instanceof com.google.gson.JsonElement) {
-            assetsMap = GsonUtil.getInstance().fromJson(
-                (com.google.gson.JsonElement) value,
-                new com.google.gson.reflect.TypeToken<Map<String, Object>>(){}.getType()
-            );
-          // Otherwise Gson deserializes JSON and creates a LinkedTreeMap
-          } else if (value instanceof Map) {
-            assetsMap = (Map<String, Object>) value;
-          // Fallback: try to parse as JSON string
-          } else {
-            assetsMap = GsonUtil.getInstance().fromJson(
-                value.toString(),
-                new com.google.gson.reflect.TypeToken<Map<String, Object>>(){}.getType()
-            );
-          }
-          term.setAssets(assetsMap);
-        }
-    );
+    findStudyProperty(study.getProperties(), "assets")
+        .ifPresent(
+            prop -> {
+              Object value = prop.getValue();
+              Map<String, Object> assetsMap;
+              // When property is loaded from db it is deserialized as JsonObject
+              if (value instanceof com.google.gson.JsonElement) {
+                assetsMap =
+                    GsonUtil.getInstance()
+                        .fromJson(
+                            (com.google.gson.JsonElement) value,
+                            new com.google.gson.reflect.TypeToken<
+                                Map<String, Object>>() {}.getType());
+                // Otherwise Gson deserializes JSON and creates a LinkedTreeMap
+              } else if (value instanceof Map) {
+                assetsMap = (Map<String, Object>) value;
+                // Fallback: try to parse as JSON string
+              } else {
+                assetsMap =
+                    GsonUtil.getInstance()
+                        .fromJson(
+                            value.toString(),
+                            new com.google.gson.reflect.TypeToken<
+                                Map<String, Object>>() {}.getType());
+              }
+              term.setAssets(assetsMap);
+            });
 
     return term;
   }
@@ -282,9 +270,10 @@ public class ElasticSearchService implements ConsentLogger {
     if (Objects.isNull(user)) {
       return null;
     }
-    InstitutionTerm institution = (Objects.nonNull(user.getInstitutionId())) ?
-        toInstitutionTerm(institutionDAO.findInstitutionById(user.getInstitutionId())) :
-        null;
+    InstitutionTerm institution =
+        (Objects.nonNull(user.getInstitutionId()))
+            ? toInstitutionTerm(institutionDAO.findInstitutionById(user.getInstitutionId()))
+            : null;
     return new UserTerm(user.getUserId(), user.getDisplayName(), institution);
   }
 
@@ -303,31 +292,34 @@ public class ElasticSearchService implements ConsentLogger {
   }
 
   public void asyncDatasetInESIndex(Integer datasetId, User user, boolean force) {
-    ListeningExecutorService listeningExecutorService = MoreExecutors.listeningDecorator(
-        executorService);
+    ListeningExecutorService listeningExecutorService =
+        MoreExecutors.listeningDecorator(executorService);
     ListenableFuture<Dataset> syncFuture =
-        listeningExecutorService.submit(() -> {
-          Dataset dataset = datasetDAO.findDatasetById(datasetId);
-          synchronizeDatasetInESIndex(dataset, user, force);
-          return dataset;
-        });
+        listeningExecutorService.submit(
+            () -> {
+              Dataset dataset = datasetDAO.findDatasetById(datasetId);
+              synchronizeDatasetInESIndex(dataset, user, force);
+              return dataset;
+            });
     Futures.addCallback(
         syncFuture,
         new FutureCallback<>() {
           @Override
           public void onSuccess(Dataset d) {
-            logInfo("Successfully synchronized dataset in ES index: %s".formatted(
-                d.getDatasetIdentifier()));
+            logInfo(
+                "Successfully synchronized dataset in ES index: %s"
+                    .formatted(d.getDatasetIdentifier()));
           }
 
           @Override
           public void onFailure(Throwable t) {
-            logWarn("Failed to synchronize dataset in ES index: %s".formatted(datasetId) + ": "
-                + t.getMessage());
+            logWarn(
+                "Failed to synchronize dataset in ES index: %s".formatted(datasetId)
+                    + ": "
+                    + t.getMessage());
           }
         },
-        listeningExecutorService
-    );
+        listeningExecutorService);
   }
 
   /**
@@ -336,8 +328,8 @@ public class ElasticSearchService implements ConsentLogger {
    * update the dataset's last indexed date value.
    *
    * @param dataset The Dataset
-   * @param user    The User
-   * @param force   Boolean to force the index update regardless of dataset's indexed date status.
+   * @param user The User
+   * @param force Boolean to force the index update regardless of dataset's indexed date status.
    */
   public void synchronizeDatasetInESIndex(Dataset dataset, User user, boolean force) {
     if (force || dataset.getIndexedDate() != null) {
@@ -358,10 +350,8 @@ public class ElasticSearchService implements ConsentLogger {
   public Response indexDatasets(List<Integer> datasetIds, User user) throws IOException {
     // Datasets in list context may not have their study populated, so we need to ensure that is
     // true before trying to index them in ES.
-    List<DatasetTerm> datasetTerms = datasetIds.stream()
-        .map(datasetDAO::findDatasetById)
-        .map(this::toDatasetTerm)
-        .toList();
+    List<DatasetTerm> datasetTerms =
+        datasetIds.stream().map(datasetDAO::findDatasetById).map(this::toDatasetTerm).toList();
     return indexDatasetTerms(datasetTerms, user);
   }
 
@@ -377,17 +367,18 @@ public class ElasticSearchService implements ConsentLogger {
     Integer lastDatasetId = datasetIds.get(datasetIds.size() - 1);
     return output -> {
       output.write("[".getBytes());
-      datasetIds.forEach(id -> {
-        try (Response response = indexDataset(id, user)) {
-          output.write(response.getEntity().toString().getBytes());
-          if (!id.equals(lastDatasetId)) {
-            output.write(",".getBytes());
-          }
-          output.write("\n".getBytes());
-        } catch (IOException e) {
-          logException("Error indexing dataset term for dataset id: %d ".formatted(id), e);
-        }
-      });
+      datasetIds.forEach(
+          id -> {
+            try (Response response = indexDataset(id, user)) {
+              output.write(response.getEntity().toString().getBytes());
+              if (!id.equals(lastDatasetId)) {
+                output.write(",".getBytes());
+              }
+              output.write("\n".getBytes());
+            } catch (IOException e) {
+              logException("Error indexing dataset term for dataset id: %d ".formatted(id), e);
+            }
+          });
       output.write("]".getBytes());
     };
   }
@@ -414,12 +405,14 @@ public class ElasticSearchService implements ConsentLogger {
     DatasetTerm term = new DatasetTerm();
 
     term.setDatasetId(dataset.getDatasetId());
-    Optional.ofNullable(dataset.getCreateUserId()).ifPresent(userId -> {
-      User user = userDAO.findUserById(dataset.getCreateUserId());
-      term.setCreateUserId(dataset.getCreateUserId());
-      term.setCreateUserDisplayName(user.getDisplayName());
-      term.setSubmitter(toUserTerm(user));
-    });
+    Optional.ofNullable(dataset.getCreateUserId())
+        .ifPresent(
+            userId -> {
+              User user = userDAO.findUserById(dataset.getCreateUserId());
+              term.setCreateUserId(dataset.getCreateUserId());
+              term.setCreateUserDisplayName(user.getDisplayName());
+              term.setSubmitter(toUserTerm(user));
+            });
     Optional.ofNullable(dataset.getUpdateUserId())
         .map(userDAO::findUserById)
         .map(this::toUserTerm)
@@ -432,14 +425,16 @@ public class ElasticSearchService implements ConsentLogger {
       term.setStudy(toStudyTerm(dataset.getStudy()));
     }
 
-    Optional.ofNullable(dataset.getDacId()).ifPresent(dacId -> {
-      Dac dac = dacDAO.findById(dataset.getDacId());
-      term.setDacId(dataset.getDacId());
-      if (Objects.nonNull(dataset.getDacApproval())) {
-        term.setDacApproval(dataset.getDacApproval());
-      }
-      term.setDac(toDacTerm(dac));
-    });
+    Optional.ofNullable(dataset.getDacId())
+        .ifPresent(
+            dacId -> {
+              Dac dac = dacDAO.findById(dataset.getDacId());
+              term.setDacId(dataset.getDacId());
+              if (Objects.nonNull(dataset.getDacApproval())) {
+                term.setDacApproval(dataset.getDacApproval());
+              }
+              term.setDac(toDacTerm(dac));
+            });
 
     if (Objects.nonNull(dataset.getDataUse())) {
       DataUseSummary summary = ontologyService.translateDataUseSummary(dataset.getDataUse());
@@ -450,41 +445,34 @@ public class ElasticSearchService implements ConsentLogger {
       }
     }
 
-    Optional.ofNullable(dataset.getNihInstitutionalCertificationFile()).ifPresent(
-    obj -> term.setHasInstitutionCertification(true));
+    Optional.ofNullable(dataset.getNihInstitutionalCertificationFile())
+        .ifPresent(obj -> term.setHasInstitutionCertification(true));
 
-    findDatasetProperty(
-        dataset.getProperties(), "accessManagement"
-    ).ifPresent(
-        datasetProperty -> term.setAccessManagement(datasetProperty.getPropertyValueAsString())
-    );
+    findDatasetProperty(dataset.getProperties(), "accessManagement")
+        .ifPresent(
+            datasetProperty ->
+                term.setAccessManagement(datasetProperty.getPropertyValueAsString()));
 
-    findFirstDatasetPropertyByName(
-        dataset.getProperties(), "# of participants"
-    ).ifPresent(
-        datasetProperty -> {
-          String value = datasetProperty.getPropertyValueAsString();
-          try {
-            term.setParticipantCount(Integer.valueOf(value));
-          } catch (NumberFormatException e) {
-            logWarn(
-                String.format("Unable to coerce participant count to integer: %s for dataset: %s",
-                    value, dataset.getDatasetIdentifier()));
-          }
-        }
-    );
+    findFirstDatasetPropertyByName(dataset.getProperties(), "# of participants")
+        .ifPresent(
+            datasetProperty -> {
+              String value = datasetProperty.getPropertyValueAsString();
+              try {
+                term.setParticipantCount(Integer.valueOf(value));
+              } catch (NumberFormatException e) {
+                logWarn(
+                    String.format(
+                        "Unable to coerce participant count to integer: %s for dataset: %s",
+                        value, dataset.getDatasetIdentifier()));
+              }
+            });
 
-    findDatasetProperty(
-        dataset.getProperties(), "url"
-    ).ifPresent(
-        datasetProperty -> term.setUrl(datasetProperty.getPropertyValueAsString())
-    );
+    findDatasetProperty(dataset.getProperties(), "url")
+        .ifPresent(datasetProperty -> term.setUrl(datasetProperty.getPropertyValueAsString()));
 
-    findDatasetProperty(
-        dataset.getProperties(), "dataLocation"
-    ).ifPresent(
-        datasetProperty -> term.setDataLocation(datasetProperty.getPropertyValueAsString())
-    );
+    findDatasetProperty(dataset.getProperties(), "dataLocation")
+        .ifPresent(
+            datasetProperty -> term.setDataLocation(datasetProperty.getPropertyValueAsString()));
 
     return term;
   }
@@ -502,31 +490,28 @@ public class ElasticSearchService implements ConsentLogger {
     }
   }
 
-  Optional<DatasetProperty> findDatasetProperty(Collection<DatasetProperty> props,
-      String schemaProp) {
-    return
-        (props == null) ? Optional.empty() : props
-            .stream()
+  Optional<DatasetProperty> findDatasetProperty(
+      Collection<DatasetProperty> props, String schemaProp) {
+    return (props == null)
+        ? Optional.empty()
+        : props.stream()
             .filter(p -> Objects.nonNull(p.getSchemaProperty()))
             .filter(p -> p.getSchemaProperty().equals(schemaProp))
             .findFirst();
   }
 
-  Optional<DatasetProperty> findFirstDatasetPropertyByName(Collection<DatasetProperty> props,
-      String propertyName) {
-    return
-        (props == null) ? Optional.empty() : props
-            .stream()
+  Optional<DatasetProperty> findFirstDatasetPropertyByName(
+      Collection<DatasetProperty> props, String propertyName) {
+    return (props == null)
+        ? Optional.empty()
+        : props.stream()
             .filter(p -> p.getPropertyName().equalsIgnoreCase(propertyName))
             .findFirst();
   }
 
   Optional<StudyProperty> findStudyProperty(Collection<StudyProperty> props, String key) {
-    return
-        (props == null) ? Optional.empty() : props
-            .stream()
-            .filter(p -> p.getKey().equals(key))
-            .findFirst();
+    return (props == null)
+        ? Optional.empty()
+        : props.stream().filter(p -> p.getKey().equals(key)).findFirst();
   }
-
 }

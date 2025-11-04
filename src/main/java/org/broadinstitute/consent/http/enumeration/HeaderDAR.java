@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.enumeration;
 
 public enum HeaderDAR {
-
   DAR_ID("DAR ID"),
   DATASET_NAME("Dataset name"),
   DATASET_ID("Dataset ID"),
@@ -20,7 +19,6 @@ public enum HeaderDAR {
   USERNAME("Username"),
   NAME("Name");
 
-
   private final String value;
 
   HeaderDAR(String value) {
@@ -30,5 +28,4 @@ public enum HeaderDAR {
   public String getValue() {
     return value;
   }
-
 }

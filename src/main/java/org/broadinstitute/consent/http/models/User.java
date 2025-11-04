@@ -21,47 +21,37 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 public class User {
 
   public static final String QUERY_FIELDS_WITH_U_PREFIX =
-      " u.user_id as u_user_id, " +
-          " u.email as u_email, " +
-          " u.display_name as u_display_name, " +
-          " u.create_date as u_create_date, " +
-          " u.email_preference as u_email_preference, " +
-          " u.institution_id as u_institution_id," +
-          " u.era_commons_id as u_era_commons_id ";
+      " u.user_id as u_user_id, "
+          + " u.email as u_email, "
+          + " u.display_name as u_display_name, "
+          + " u.create_date as u_create_date, "
+          + " u.email_preference as u_email_preference, "
+          + " u.institution_id as u_institution_id,"
+          + " u.era_commons_id as u_era_commons_id ";
 
-  @JsonProperty
-  private Integer userId;
+  @JsonProperty private Integer userId;
 
-  @JsonProperty
-  private String email;
+  @JsonProperty private String email;
 
-  @JsonProperty
-  private String displayName;
+  @JsonProperty private String displayName;
 
-  @JsonProperty
-  private Date createDate;
+  @JsonProperty private Date createDate;
 
-  @JsonProperty
-  private List<UserRole> roles;
+  @JsonProperty private List<UserRole> roles;
 
-  @JsonProperty
-  private List<UserProperty> properties;
+  @JsonProperty private List<UserProperty> properties;
 
-  @JsonProperty
-  private Boolean emailPreference;
+  @JsonProperty private Boolean emailPreference;
 
-  @JsonProperty
-  private Integer institutionId;
+  @JsonProperty private Integer institutionId;
 
-  @JsonProperty
-  private String eraCommonsId;
+  @JsonProperty private String eraCommonsId;
 
   private Institution institution;
 
   private LibraryCard libraryCard;
 
-  public User() {
-  }
+  public User() {}
 
   public Integer getUserId() {
     return userId;
@@ -78,8 +68,8 @@ public class User {
     this.createDate = createDate;
   }
 
-  public User(Integer userId, String email, String displayName, Date createDate,
-      List<UserRole> roles) {
+  public User(
+      Integer userId, String email, String displayName, Date createDate, List<UserRole> roles) {
     this.userId = userId;
     this.email = email;
     this.displayName = displayName;
@@ -100,9 +90,8 @@ public class User {
     JsonObject userJsonObject = gson.fromJson(json, JsonObject.class);
     // There are no cases where we want to pull the create date/update date from user-provided data.
     // Nor do we need to retrieve the full institution object from user-provided data.
-    JsonObject filteredUserJsonObject = filterFields(
-        userJsonObject,
-        Arrays.asList("createDate", "institution", "libraryCard"));
+    JsonObject filteredUserJsonObject =
+        filterFields(userJsonObject, Arrays.asList("createDate", "institution", "libraryCard"));
     User u = gson.fromJson(filteredUserJsonObject.toString(), User.class);
     setUserId(u);
     setEmail(u);
@@ -115,17 +104,18 @@ public class User {
   /**
    * Private method to filter out fields that we do not want to parse from json objects.
    *
-   * @param obj    The json object
+   * @param obj The json object
    * @param fields The fields to remove
    * @return Filtered Clone of the object.
    */
   private JsonObject filterFields(JsonObject obj, List<String> fields) {
     JsonObject copy = obj.deepCopy();
-    fields.forEach(f -> {
-      if (copy.has(f)) {
-        copy.remove(f);
-      }
-    });
+    fields.forEach(
+        f -> {
+          if (copy.has(f)) {
+            copy.remove(f);
+          }
+        });
     return copy;
   }
 
@@ -343,8 +333,13 @@ public class User {
     if (null == this.getRoles() || this.getRoles().isEmpty() || null == roles || roles.isEmpty()) {
       return false;
     } else {
-      Set<Integer> roleIds = roles.stream().filter(Objects::nonNull).map(UserRoles::getRoleId).collect(Collectors.toSet());
-      Set<Integer> userRoleIds = this.getRoles().stream().map(UserRole::getRoleId).collect(Collectors.toSet());
+      Set<Integer> roleIds =
+          roles.stream()
+              .filter(Objects::nonNull)
+              .map(UserRoles::getRoleId)
+              .collect(Collectors.toSet());
+      Set<Integer> userRoleIds =
+          this.getRoles().stream().map(UserRole::getRoleId).collect(Collectors.toSet());
       return userRoleIds.stream().anyMatch(roleIds::contains);
     }
   }
@@ -354,10 +349,7 @@ public class User {
     if (Objects.isNull(this.getRoles())) {
       return List.of();
     }
-    return this.getRoles()
-        .stream()
-        .map(UserRole::getRoleId)
-        .toList();
+    return this.getRoles().stream().map(UserRole::getRoleId).toList();
   }
 
   @Transient
@@ -367,13 +359,14 @@ public class User {
     if (Objects.isNull(currentRoles) || Objects.isNull(role)) {
       return false;
     }
-    List<UserRole> targetRoles = currentRoles.stream()
-        .filter(r -> r.getName().equals(role.getRoleName())
-            && r.getRoleId().equals(role.getRoleId())
-            && Objects.equals(r.getDacId(), dacId))
-        .toList();
+    List<UserRole> targetRoles =
+        currentRoles.stream()
+            .filter(
+                r ->
+                    r.getName().equals(role.getRoleName())
+                        && r.getRoleId().equals(role.getRoleId())
+                        && Objects.equals(r.getDacId(), dacId))
+            .toList();
     return !targetRoles.isEmpty();
-
   }
-
 }

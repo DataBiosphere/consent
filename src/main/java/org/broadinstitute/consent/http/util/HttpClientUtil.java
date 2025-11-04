@@ -36,9 +36,7 @@ import org.broadinstitute.consent.http.models.AuthUser;
 
 public class HttpClientUtil implements ConsentLogger {
 
-  public record SimpleResponse(int code, String entity) {
-
-  }
+  public record SimpleResponse(int code, String entity) {}
 
   private final ServicesConfiguration configuration;
 
@@ -49,16 +47,17 @@ public class HttpClientUtil implements ConsentLogger {
   public HttpClientUtil(ServicesConfiguration configuration) {
     this.configuration = configuration;
     httpClient = HttpClients.createDefault();
-    CacheLoader<URI, SimpleResponse> loader = new CacheLoader<>() {
-      @Override
-      public SimpleResponse load(URI uri) throws Exception {
-        return getHttpResponse(new HttpGet(uri));
-      }
-    };
-    this.cache = CacheBuilder
-        .newBuilder()
-        .expireAfterWrite(configuration.getCacheExpireMinutes(), TimeUnit.MINUTES)
-        .build(loader);
+    CacheLoader<URI, SimpleResponse> loader =
+        new CacheLoader<>() {
+          @Override
+          public SimpleResponse load(URI uri) throws Exception {
+            return getHttpResponse(new HttpGet(uri));
+          }
+        };
+    this.cache =
+        CacheBuilder.newBuilder()
+            .expireAfterWrite(configuration.getCacheExpireMinutes(), TimeUnit.MINUTES)
+            .build(loader);
   }
 
   /**
@@ -88,14 +87,15 @@ public class HttpClientUtil implements ConsentLogger {
    * @throws IOException The exception
    */
   public SimpleResponse getHttpResponse(HttpGet request) throws IOException {
-    final ScheduledExecutorService executor = Executors.newScheduledThreadPool(
-        configuration.getPoolSize());
+    final ScheduledExecutorService executor =
+        Executors.newScheduledThreadPool(configuration.getPoolSize());
     executor.schedule(request::cancel, configuration.getTimeoutSeconds(), TimeUnit.SECONDS);
-    return httpClient.execute(request, httpResponse ->
-        new SimpleResponse(
-            httpResponse.getCode(),
-            IOUtils.toString(httpResponse.getEntity().getContent(), Charset.defaultCharset()))
-    );
+    return httpClient.execute(
+        request,
+        httpResponse ->
+            new SimpleResponse(
+                httpResponse.getCode(),
+                IOUtils.toString(httpResponse.getEntity().getContent(), Charset.defaultCharset())));
   }
 
   public HttpRequest buildGetRequest(GenericUrl genericUrl, AuthUser authUser) throws Exception {
@@ -144,8 +144,10 @@ public class HttpClientUtil implements ConsentLogger {
   }
 
   public HttpResponse handleHttpRequest(HttpRequest request) {
-    String timerName = String.format("org.broadinstitute.consent.http.util.HttpClientUtil-%s-%s",
-        request.getRequestMethod(), request.getUrl().toString());
+    String timerName =
+        String.format(
+            "org.broadinstitute.consent.http.util.HttpClientUtil-%s-%s",
+            request.getRequestMethod(), request.getUrl().toString());
     if (SharedMetricRegistries.tryGetDefault() == null) {
       logWarn("Default SharedMetricRegistries is null, setting default");
       SharedMetricRegistries.setDefault("org.broadinstitute.consent", new MetricRegistry());
@@ -174,7 +176,8 @@ public class HttpClientUtil implements ConsentLogger {
         };
       }
     } catch (IOException e) {
-      throw new ServerErrorException("Server Error (" + e.getMessage() + ")", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+      throw new ServerErrorException(
+          "Server Error (" + e.getMessage() + ")", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
     }
     throw new ServerErrorException("Server Error", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
   }

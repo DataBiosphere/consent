@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public enum FileCategory {
-
   @SerializedName("irbCollaborationLetter")
   IRB_COLLABORATION_LETTER("irbCollaborationLetter"),
   @SerializedName("dataUseLetter")
@@ -31,7 +30,8 @@ public enum FileCategory {
   }
 
   public static List<String> getValues() {
-    return Stream.of(FileCategory.values()).map(FileCategory::getValue)
+    return Stream.of(FileCategory.values())
+        .map(FileCategory::getValue)
         .collect(Collectors.toList());
   }
 

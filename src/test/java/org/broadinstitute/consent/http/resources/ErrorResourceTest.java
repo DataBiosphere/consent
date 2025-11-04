@@ -18,12 +18,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ErrorResourceTest {
 
-  @Mock
-  private HttpServletRequestWrapper request;
-  @Mock
-  private ServletApiRequest servletRequest;
-  @Mock
-  private ServletRequestInfo servletRequestInfo;
+  @Mock private HttpServletRequestWrapper request;
+  @Mock private ServletApiRequest servletRequest;
+  @Mock private ServletRequestInfo servletRequestInfo;
 
   @ParameterizedTest
   @ValueSource(strings = {"/not_found", "/context/¥"})

@@ -1,35 +1,28 @@
 package org.broadinstitute.consent.http.models;
 
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 
 public class UserProperty {
 
   public static final String QUERY_FIELDS_WITH_UP_PREFIX =
-      " up.property_id AS up_property_id, " +
-          " up.user_id AS up_user_id, " +
-          " up.property_key AS up_property_key, " +
-          " up.property_value AS up_property_value ";
+      " up.property_id AS up_property_id, "
+          + " up.user_id AS up_user_id, "
+          + " up.property_key AS up_property_key, "
+          + " up.property_value AS up_property_value ";
 
-  @JsonProperty
-  private Integer propertyId;
+  @JsonProperty private Integer propertyId;
 
-  @JsonProperty
-  private Integer userId;
+  @JsonProperty private Integer userId;
 
-  @JsonProperty
-  private String propertyKey;
+  @JsonProperty private String propertyKey;
 
-  @JsonProperty
-  private String propertyValue;
+  @JsonProperty private String propertyValue;
 
+  public UserProperty() {}
 
-  public UserProperty() {
-  }
-
-  public UserProperty(Integer propertyId, Integer userId, String propertyKey,
-      String propertyValue) {
+  public UserProperty(
+      Integer propertyId, Integer userId, String propertyKey, String propertyValue) {
     this.propertyId = propertyId;
     this.userId = userId;
     this.propertyKey = propertyKey;

@@ -38,21 +38,21 @@ class LibraryCardDAOTest extends DAOTestHelper {
     User user = createUser();
     // Test FK on library_card.user_id
     try {
-      libraryCardDAO.insertLibraryCard(0, user.getDisplayName(), user.getEmail(),
-          user.getUserId(), new Date());
+      libraryCardDAO.insertLibraryCard(
+          0, user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
       fail("Should have thrown a FOREIGN_KEY_VIOLATION exception");
     } catch (Exception e) {
-      assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(),
-          ((PSQLException) e.getCause()).getSQLState());
+      assertEquals(
+          PSQLState.FOREIGN_KEY_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
     }
     // Test FK on library_card.create_user_id
     try {
-      libraryCardDAO.insertLibraryCard(user.getUserId(), user.getDisplayName(), user.getEmail(), 0,
-          new Date());
+      libraryCardDAO.insertLibraryCard(
+          user.getUserId(), user.getDisplayName(), user.getEmail(), 0, new Date());
       fail("Should have thrown a FOREIGN_KEY_VIOLATION exception");
     } catch (Exception e) {
-      assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(),
-          ((PSQLException) e.getCause()).getSQLState());
+      assertEquals(
+          PSQLState.FOREIGN_KEY_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
     }
   }
 
@@ -60,26 +60,34 @@ class LibraryCardDAOTest extends DAOTestHelper {
   void testInsertLibraryCardUniqueConstraintErrors() {
     User user1 = createUser();
     // Set up LC that will trigger the unique constraints on subsequent inserts
-    libraryCardDAO.insertLibraryCard(user1.getUserId(), user1.getDisplayName(), user1.getEmail(),
-        user1.getUserId(), new Date());
+    libraryCardDAO.insertLibraryCard(
+        user1.getUserId(), user1.getDisplayName(), user1.getEmail(), user1.getUserId(), new Date());
     // Test Unique on library_card.user_id
     try {
-      libraryCardDAO.insertLibraryCard(user1.getUserId(), user1.getDisplayName(), user1.getEmail(),
-          user1.getUserId(), new Date());
+      libraryCardDAO.insertLibraryCard(
+          user1.getUserId(),
+          user1.getDisplayName(),
+          user1.getEmail(),
+          user1.getUserId(),
+          new Date());
       fail("Should have thrown a UNIQUE_VIOLATION exception");
     } catch (Exception e) {
-      assertEquals(PSQLState.UNIQUE_VIOLATION.getState(),
-          ((PSQLException) e.getCause()).getSQLState());
+      assertEquals(
+          PSQLState.UNIQUE_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
     }
     User user2 = createUser();
     // Test Unique on library_card.user_email - note that we're using the same email as user1
     try {
-      libraryCardDAO.insertLibraryCard(user2.getUserId(), user2.getDisplayName(), user1.getEmail(),
-          user2.getUserId(), new Date());
+      libraryCardDAO.insertLibraryCard(
+          user2.getUserId(),
+          user2.getDisplayName(),
+          user1.getEmail(),
+          user2.getUserId(),
+          new Date());
       fail("Should have thrown a UNIQUE_VIOLATION exception");
     } catch (Exception e) {
-      assertEquals(PSQLState.UNIQUE_VIOLATION.getState(),
-          ((PSQLException) e.getCause()).getSQLState());
+      assertEquals(
+          PSQLState.UNIQUE_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
     }
   }
 
@@ -96,8 +104,8 @@ class LibraryCardDAOTest extends DAOTestHelper {
     try {
       libraryCardDAO.deleteLibraryCardById(randomInt(1, 1000));
     } catch (Exception e) {
-      assertEquals(PSQLState.UNIQUE_VIOLATION.getState(),
-          ((PSQLException) e.getCause()).getSQLState());
+      assertEquals(
+          PSQLState.UNIQUE_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
     }
   }
 
@@ -107,11 +115,13 @@ class LibraryCardDAOTest extends DAOTestHelper {
     // 1. Library Card for a user as a top level object that will be deleted
     // 2. Dac so we can create a DAA
     // 3. DAA so we can link it to a user's Library Card
-    // 4. Library Card <-> DAA relationship that represents a Signing Official's acceptance of a DAA for the user
+    // 4. Library Card <-> DAA relationship that represents a Signing Official's acceptance of a DAA
+    // for the user
     LibraryCard card = createLibraryCard();
     int dacId = dacDAO.createDac(randomAlphabetic(10), randomAlphabetic(10), new Date());
-    int daaId = daaDAO.createDaa(card.getCreateUserId(), Instant.now(), card.getCreateUserId(),
-        Instant.now(), dacId);
+    int daaId =
+        daaDAO.createDaa(
+            card.getCreateUserId(), Instant.now(), card.getCreateUserId(), Instant.now(), dacId);
     daaDAO.createDacDaaRelation(dacId, daaId);
     libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
 
@@ -142,10 +152,10 @@ class LibraryCardDAOTest extends DAOTestHelper {
     LibraryCard card = createLibraryCard();
     Integer userId = createUser().getUserId();
     Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
-    Integer daaId1 = daaDAO.createDaa(userId, new Date().toInstant(), userId,
-        new Date().toInstant(), dacId);
-    Integer daaId2 = daaDAO.createDaa(userId, new Date().toInstant(), userId,
-        new Date().toInstant(), dacId);
+    Integer daaId1 =
+        daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
+    Integer daaId2 =
+        daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
     DataAccessAgreement daa1 = daaDAO.findById(daaId1);
     DataAccessAgreement daa2 = daaDAO.findById(daaId2);
     card.addDaa(daa1.getDaaId());
@@ -207,11 +217,11 @@ class LibraryCardDAOTest extends DAOTestHelper {
     Institution institution = createInstitution();
     int userId = institution.getCreateUserId();
     String stringValue = "value";
-    Integer lcId = libraryCardDAO.insertLibraryCard(userId, stringValue,
-        stringValue, userId, new Date());
+    Integer lcId =
+        libraryCardDAO.insertLibraryCard(userId, stringValue, stringValue, userId, new Date());
     userDAO.updateInstitutionId(userId, institution.getId());
-    List<LibraryCard> cardsFromDAO = libraryCardDAO.findLibraryCardsByInstitutionId(
-        institution.getId());
+    List<LibraryCard> cardsFromDAO =
+        libraryCardDAO.findLibraryCardsByInstitutionId(institution.getId());
 
     assertNotNull(cardsFromDAO);
     assertEquals(1, cardsFromDAO.size());
@@ -222,8 +232,8 @@ class LibraryCardDAOTest extends DAOTestHelper {
   @Test
   void testFindLibraryCardByUserIdInstitutionId() {
     LibraryCard libraryCard = createLibraryCard();
-    int dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), randomAlphabetic(5),
-        new Date());
+    int dacId =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), randomAlphabetic(5), new Date());
     Instant now = Instant.now();
     int daaId = daaDAO.createDaa(libraryCard.getUserId(), now, libraryCard.getUserId(), now, dacId);
     daaDAO.createDacDaaRelation(dacId, daaId);
@@ -279,10 +289,10 @@ class LibraryCardDAOTest extends DAOTestHelper {
     Integer userId = user.getUserId();
     Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
     Integer dacId2 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
-    Integer daaId1 = daaDAO.createDaa(userId, new Date().toInstant(), userId,
-        new Date().toInstant(), dacId);
-    Integer daaId2 = daaDAO.createDaa(userId, new Date().toInstant(), userId,
-        new Date().toInstant(), dacId2);
+    Integer daaId1 =
+        daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
+    Integer daaId2 =
+        daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId2);
     libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId1);
     libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId2);
     libraryCardDAO.createLibraryCardDaaRelation(card2.getId(), daaId1);
@@ -302,21 +312,21 @@ class LibraryCardDAOTest extends DAOTestHelper {
     LibraryCard card = createLibraryCard(user);
     Integer userId = user.getUserId();
     Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
-    Integer daaId1 = daaDAO.createDaa(userId, new Date().toInstant(), userId,
-        new Date().toInstant(), dacId);
+    Integer daaId1 =
+        daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
 
     try {
       libraryCardDAO.createLibraryCardDaaRelation(card.getId(), 2);
     } catch (Exception e) {
-      assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(),
-          ((PSQLException) e.getCause()).getSQLState());
+      assertEquals(
+          PSQLState.FOREIGN_KEY_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
     }
 
     try {
       libraryCardDAO.createLibraryCardDaaRelation(2, daaId1);
     } catch (Exception e) {
-      assertEquals(PSQLState.FOREIGN_KEY_VIOLATION.getState(),
-          ((PSQLException) e.getCause()).getSQLState());
+      assertEquals(
+          PSQLState.FOREIGN_KEY_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
     }
 
     List<LibraryCard> lcs = libraryCardDAO.findAllLibraryCards();
@@ -333,10 +343,10 @@ class LibraryCardDAOTest extends DAOTestHelper {
     Integer userId = user.getUserId();
     Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
     Integer dacId2 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
-    Integer daaId1 = daaDAO.createDaa(userId, new Date().toInstant(), userId,
-        new Date().toInstant(), dacId);
-    Integer daaId2 = daaDAO.createDaa(userId, new Date().toInstant(), userId,
-        new Date().toInstant(), dacId2);
+    Integer daaId1 =
+        daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
+    Integer daaId2 =
+        daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId2);
     libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId1);
     libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId2);
 
@@ -366,8 +376,10 @@ class LibraryCardDAOTest extends DAOTestHelper {
     // This card will not be returned since its email is not in the list
     LibraryCard card4 = createLibraryCard(createUser());
 
-    List<LibraryCard> cardsFromDAO = libraryCardDAO.findByUserEmails(
-        List.of(user1.getEmail().toLowerCase(), user2.getEmail().toUpperCase(), user3.getEmail()));
+    List<LibraryCard> cardsFromDAO =
+        libraryCardDAO.findByUserEmails(
+            List.of(
+                user1.getEmail().toLowerCase(), user2.getEmail().toUpperCase(), user3.getEmail()));
 
     assertEquals(3, cardsFromDAO.size());
     assertTrue(cardsFromDAO.contains(card1));
@@ -377,9 +389,21 @@ class LibraryCardDAOTest extends DAOTestHelper {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"", " ", "invalid-email", "user@domain", "user@domain.", "@domain.com",
-      "user@.com", "user_@domain.com", "user%@domain.com", "user*@domain.com", "user.@domain.com",
-      "user-@domain.com"})
+  @ValueSource(
+      strings = {
+        "",
+        " ",
+        "invalid-email",
+        "user@domain",
+        "user@domain.",
+        "@domain.com",
+        "user@.com",
+        "user_@domain.com",
+        "user%@domain.com",
+        "user*@domain.com",
+        "user.@domain.com",
+        "user-@domain.com"
+      })
   void testFindByUserEmailsWithSpecialCharacters(String email) {
     Integer userId = userDAO.insertUser(email, "display name", null, new Date());
     userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), userId);
@@ -391,22 +415,30 @@ class LibraryCardDAOTest extends DAOTestHelper {
 
   @Test
   void testFindByUserEmailsWithConflictingSpecialCharacters() {
-    List<String> emails = List.of("user_@domain.com", "user%@domain.com", "user*@domain.com",
-        "user.@domain.com", "user-@domain.com");
+    List<String> emails =
+        List.of(
+            "user_@domain.com",
+            "user%@domain.com",
+            "user*@domain.com",
+            "user.@domain.com",
+            "user-@domain.com");
     // Create users with emails that have special characters that could conflict with SQL queries
-    emails.forEach(email -> {
-      Integer userId = userDAO.insertUser(email, "display name " + randomAlphabetic(25), null,
-          new Date());
-      userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), userId);
-      User user = userDAO.findUserById(userId);
-      createLibraryCard(user);
-    });
+    emails.forEach(
+        email -> {
+          Integer userId =
+              userDAO.insertUser(email, "display name " + randomAlphabetic(25), null, new Date());
+          userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), userId);
+          User user = userDAO.findUserById(userId);
+          createLibraryCard(user);
+        });
 
-    // Fetch library cards by emails and ensure that multiples (due to regexes in emails) are not returned
-    emails.forEach(email -> {
-      List<LibraryCard> cards = libraryCardDAO.findByUserEmails(List.of(email));
-      assertEquals(1, cards.size(), "Should return exactly one card for email: " + email);
-    });
+    // Fetch library cards by emails and ensure that multiples (due to regexes in emails) are not
+    // returned
+    emails.forEach(
+        email -> {
+          List<LibraryCard> cards = libraryCardDAO.findByUserEmails(List.of(email));
+          assertEquals(1, cards.size(), "Should return exactly one card for email: " + email);
+        });
   }
 
   @Test
@@ -420,8 +452,9 @@ class LibraryCardDAOTest extends DAOTestHelper {
     // This card will not be returned since its email is not in the list
     LibraryCard card4 = createLibraryCard(createUser());
 
-    List<LibraryCard> cardsFromDAO = libraryCardDAO.findLibraryCardsByUserIds(
-        List.of(user1.getUserId(), user2.getUserId(), user3.getUserId()));
+    List<LibraryCard> cardsFromDAO =
+        libraryCardDAO.findLibraryCardsByUserIds(
+            List.of(user1.getUserId(), user2.getUserId(), user3.getUserId()));
 
     assertEquals(3, cardsFromDAO.size());
     assertTrue(cardsFromDAO.contains(card1));
@@ -433,9 +466,8 @@ class LibraryCardDAOTest extends DAOTestHelper {
   private LibraryCard createLibraryCardForIndex() {
     Integer userId = createUser().getUserId();
     String stringValue = "value";
-    Integer id = libraryCardDAO.insertLibraryCard(userId, stringValue,
-        stringValue,
-        userId, new Date());
+    Integer id =
+        libraryCardDAO.insertLibraryCard(userId, stringValue, stringValue, userId, new Date());
     return libraryCardDAO.findLibraryCardById(id);
   }
 
@@ -448,15 +480,15 @@ class LibraryCardDAOTest extends DAOTestHelper {
     int userId = institution.getCreateUserId();
 
     String stringValue = "value";
-    Integer id = libraryCardDAO.insertLibraryCard(userId, stringValue,
-        stringValue, userId, new Date());
+    Integer id =
+        libraryCardDAO.insertLibraryCard(userId, stringValue, stringValue, userId, new Date());
     return libraryCardDAO.findLibraryCardById(id);
   }
 
   private LibraryCard createLibraryCard(User user) {
-    Integer id = libraryCardDAO.insertLibraryCard(user.getUserId(),
-        user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+    Integer id =
+        libraryCardDAO.insertLibraryCard(
+            user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
     return libraryCardDAO.findLibraryCardById(id);
   }
-
 }

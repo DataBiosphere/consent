@@ -45,8 +45,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 /**
  * This class can be used to functionally test email notifications as well as unit test. To enable
  * functional tests, configure MailService with correct values (i.e. is active, sendgrid key, etc.)
- * Functional test emails will be directed to the private google group:
- * <a href="https://groups.google.com/a/broadinstitute.org/g/duos-dev">duos-dev</a>
+ * Functional test emails will be directed to the private google group: <a
+ * href="https://groups.google.com/a/broadinstitute.org/g/duos-dev">duos-dev</a>
  */
 @ExtendWith(MockitoExtension.class)
 class EmailServiceTest extends AbstractTestHelper {
@@ -54,14 +54,10 @@ class EmailServiceTest extends AbstractTestHelper {
   private static final String SERVER_URL = "http://localhost:8000/#/";
   private static final String FROM = "from@duos";
   private EmailService service;
-  @Mock
-  private UserDAO userDAO;
-  @Mock
-  private MailMessageDAO emailDAO;
-  @Mock
-  private SendGridAPI sendGridAPI;
-  @Mock
-  private FreeMarkerTemplateHelper templateHelper;
+  @Mock private UserDAO userDAO;
+  @Mock private MailMessageDAO emailDAO;
+  @Mock private SendGridAPI sendGridAPI;
+  @Mock private FreeMarkerTemplateHelper templateHelper;
 
   @BeforeEach
   void initService() {
@@ -71,12 +67,7 @@ class EmailServiceTest extends AbstractTestHelper {
 
     ServicesConfiguration servicesConfiguration = config.getServicesConfiguration();
     servicesConfiguration.setLocalURL(SERVER_URL);
-    service = new EmailService(
-        userDAO,
-        emailDAO,
-        sendGridAPI,
-        templateHelper,
-        config);
+    service = new EmailService(userDAO, emailDAO, sendGridAPI, templateHelper, config);
   }
 
   @Test
@@ -90,27 +81,28 @@ class EmailServiceTest extends AbstractTestHelper {
     Integer userId = 1234;
     Integer voteId = 4567;
     when(templateHelper.getTemplate(EmailType.COLLECT.templateName)).thenReturn(mock());
-    var message = new org.broadinstitute.consent.http.mail.message.MailMessage(user, EmailType.COLLECT) {
-      @Override
-      public String createSubject() {
-        return subject;
-      }
+    var message =
+        new org.broadinstitute.consent.http.mail.message.MailMessage(user, EmailType.COLLECT) {
+          @Override
+          public String createSubject() {
+            return subject;
+          }
 
-      @Override
-      public Object createModel(String serverUrl) {
-        return model;
-      }
+          @Override
+          public Object createModel(String serverUrl) {
+            return model;
+          }
 
-      @Override
-      public String getEntityReferenceId() {
-        return entityReferenceId;
-      }
+          @Override
+          public String getEntityReferenceId() {
+            return entityReferenceId;
+          }
 
-      @Override
-      public Integer getVoteId() {
-        return voteId;
-      }
-    };
+          @Override
+          public Integer getVoteId() {
+            return voteId;
+          }
+        };
     Template template = mock();
     when(templateHelper.getTemplate(EmailType.COLLECT.templateName)).thenReturn(template);
     Response response = new Response();
@@ -172,17 +164,17 @@ class EmailServiceTest extends AbstractTestHelper {
     service.sendNewResearcherMessage(user, so);
 
     verify(sendGridAPI).sendMessage(any(), any());
-    verify(emailDAO).insert(
-        eq("1234"),
-        eq(null),
-        eq(1234),
-        eq(EmailType.NEW_RESEARCHER.getTypeInt()),
-        any(),
-        any(),
-        any(),
-        any(),
-        any()
-    );
+    verify(emailDAO)
+        .insert(
+            eq("1234"),
+            eq(null),
+            eq(1234),
+            eq(EmailType.NEW_RESEARCHER.getTypeInt()),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
   }
 
   @Test
@@ -198,17 +190,19 @@ class EmailServiceTest extends AbstractTestHelper {
 
     service.sendDarExpiredMessage(user, darCode, otherUserId, referenceId);
     verify(sendGridAPI).sendMessage(any(), eq(user.getEmail()));
-    verify(emailDAO).insert(
-        eq(referenceId),
-        isNull(),
-        eq(otherUserId),
-        eq(EmailType.DAR_EXPIRED.getTypeInt()),
-        any(),
-        any(),
-        any(),
-        any(),
-        any());
+    verify(emailDAO)
+        .insert(
+            eq(referenceId),
+            isNull(),
+            eq(otherUserId),
+            eq(EmailType.DAR_EXPIRED.getTypeInt()),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
   }
+
   @Test
   void sendDarExpirationReminderMessage() throws Exception {
     User user = new User();
@@ -218,21 +212,22 @@ class EmailServiceTest extends AbstractTestHelper {
     String darCode = "DAR-12345";
     String referenceId = UUID.randomUUID().toString();
     Integer otherUserId = 456;
-    when(templateHelper.getTemplate(EmailType.DAR_EXPIRATION_REMINDER.templateName)).thenReturn(
-        mock());
+    when(templateHelper.getTemplate(EmailType.DAR_EXPIRATION_REMINDER.templateName))
+        .thenReturn(mock());
 
     service.sendDarExpirationReminderMessage(user, darCode, otherUserId, referenceId);
     verify(sendGridAPI).sendMessage(any(), eq(user.getEmail()));
-    verify(emailDAO).insert(
-        eq(referenceId),
-        isNull(),
-        eq(otherUserId),
-        eq(EmailType.DAR_EXPIRATION_REMINDER.getTypeInt()),
-        any(),
-        any(),
-        any(),
-        any(),
-        any());
+    verify(emailDAO)
+        .insert(
+            eq(referenceId),
+            isNull(),
+            eq(otherUserId),
+            eq(EmailType.DAR_EXPIRATION_REMINDER.getTypeInt()),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
   }
 
   @Test
@@ -254,17 +249,17 @@ class EmailServiceTest extends AbstractTestHelper {
     service.sendDatasetSubmittedMessage(dacChair, dataSubmitter, dacName, datasetName);
 
     verify(sendGridAPI).sendMessage(any(), any());
-    verify(emailDAO).insert(
-        eq(datasetName),
-        eq(null),
-        eq(456),
-        eq(EmailType.NEW_DATASET.getTypeInt()),
-        any(),
-        any(),
-        any(),
-        any(),
-        any()
-    );
+    verify(emailDAO)
+        .insert(
+            eq(datasetName),
+            eq(null),
+            eq(456),
+            eq(EmailType.NEW_DATASET.getTypeInt()),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
   }
 
   @Test
@@ -284,17 +279,17 @@ class EmailServiceTest extends AbstractTestHelper {
     service.sendDaaRequestMessage(signingOfficial, user, daaName, daaId);
 
     verify(sendGridAPI).sendMessage(any(), any());
-    verify(emailDAO).insert(
-        eq("456"),
-        eq(null),
-        eq(user.getUserId()),
-        eq(EmailType.NEW_DAA_REQUEST.getTypeInt()),
-        any(),
-        any(),
-        any(),
-        any(),
-        any()
-    );
+    verify(emailDAO)
+        .insert(
+            eq("456"),
+            eq(null),
+            eq(user.getUserId()),
+            eq(EmailType.NEW_DAA_REQUEST.getTypeInt()),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
   }
 
   @Test
@@ -313,24 +308,24 @@ class EmailServiceTest extends AbstractTestHelper {
     String previousDaaName = "DAA-123";
 
     String newDaaName = "DAA-456";
-    when(templateHelper.getTemplate(EmailType.NEW_DAA_UPLOAD_RESEARCHER.templateName)).thenReturn(
-        mock());
+    when(templateHelper.getTemplate(EmailType.NEW_DAA_UPLOAD_RESEARCHER.templateName))
+        .thenReturn(mock());
 
     service.sendNewDAAUploadResearcherMessage(
         researcher, dac.getName(), previousDaaName, newDaaName, user.getUserId());
 
     verify(sendGridAPI).sendMessage(any(), any());
-    verify(emailDAO).insert(
-        eq("DAC-01"),
-        eq(null),
-        eq(user.getUserId()),
-        eq(EmailType.NEW_DAA_UPLOAD_RESEARCHER.getTypeInt()),
-        any(),
-        any(),
-        any(),
-        any(),
-        any()
-    );
+    verify(emailDAO)
+        .insert(
+            eq("DAC-01"),
+            eq(null),
+            eq(user.getUserId()),
+            eq(EmailType.NEW_DAA_UPLOAD_RESEARCHER.getTypeInt()),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
   }
 
   @Test
@@ -351,21 +346,21 @@ class EmailServiceTest extends AbstractTestHelper {
     String newDaaName = "DAA-456";
     when(templateHelper.getTemplate(EmailType.NEW_DAA_UPLOAD_SO.templateName)).thenReturn(mock());
 
-    service.sendNewDAAUploadSOMessage(signingOfficial,
-        dac.getName(), previousDaaName, newDaaName, user.getUserId());
+    service.sendNewDAAUploadSOMessage(
+        signingOfficial, dac.getName(), previousDaaName, newDaaName, user.getUserId());
 
     verify(sendGridAPI).sendMessage(any(), any());
-    verify(emailDAO).insert(
-        eq("DAC-01"),
-        eq(null),
-        eq(user.getUserId()),
-        eq(EmailType.NEW_DAA_UPLOAD_SO.getTypeInt()),
-        any(),
-        any(),
-        any(),
-        any(),
-        any()
-    );
+    verify(emailDAO)
+        .insert(
+            eq("DAC-01"),
+            eq(null),
+            eq(user.getUserId()),
+            eq(EmailType.NEW_DAA_UPLOAD_SO.getTypeInt()),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
   }
 
   @Test
@@ -376,30 +371,29 @@ class EmailServiceTest extends AbstractTestHelper {
     user.setEmail("jd@somewhere");
     String darCode = "DAR-12345";
     String referenceId = UUID.randomUUID().toString();
-    when(templateHelper.getTemplate(
-        EmailType.RESEARCHER_CLOSEOUT_COMPLETED.templateName)).thenReturn(
-        mock());
+    when(templateHelper.getTemplate(EmailType.RESEARCHER_CLOSEOUT_COMPLETED.templateName))
+        .thenReturn(mock());
 
     service.sendResearcherCloseoutCompletedMessage(user, darCode, referenceId);
     verify(sendGridAPI).sendMessage(any(), eq(user.getEmail()));
-    verify(emailDAO).insert(
-        eq(referenceId),
-        isNull(),
-        eq(user.getUserId()),
-        eq(EmailType.RESEARCHER_CLOSEOUT_COMPLETED.getTypeInt()),
-        any(),
-        any(),
-        any(),
-        any(),
-        any());
+    verify(emailDAO)
+        .insert(
+            eq(referenceId),
+            isNull(),
+            eq(user.getUserId()),
+            eq(EmailType.RESEARCHER_CLOSEOUT_COMPLETED.getTypeInt()),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
   }
 
   @Test
   void testFetchEmails() {
     List<MailMessage> mailMessages = generateMailMessageList();
     when(emailDAO.fetchMessagesByType(any(), anyInt(), anyInt())).thenReturn(mailMessages);
-    assertEquals(2,
-        service.fetchEmailMessagesByType(EmailType.COLLECT, 20, 0).size());
+    assertEquals(2, service.fetchEmailMessagesByType(EmailType.COLLECT, 20, 0).size());
   }
 
   @Test
@@ -407,10 +401,9 @@ class EmailServiceTest extends AbstractTestHelper {
     List<MailMessage> mailMessages = generateMailMessageList();
     Date startDate = new Date();
     Date endDate = new Date();
-    when(emailDAO.fetchMessagesByCreateDate(any(), any(), anyInt(), anyInt())).thenReturn(
-        mailMessages);
-    assertEquals(2,
-        service.fetchEmailMessagesByCreateDate(startDate, endDate, 20, 0).size());
+    when(emailDAO.fetchMessagesByCreateDate(any(), any(), anyInt(), anyInt()))
+        .thenReturn(mailMessages);
+    assertEquals(2, service.fetchEmailMessagesByCreateDate(startDate, endDate, 20, 0).size());
   }
 
   @Test
@@ -426,17 +419,17 @@ class EmailServiceTest extends AbstractTestHelper {
 
     service.sendSubmittedCloseoutMessage(toUser, darId, referenceId, closeoutUrl);
     verify(sendGridAPI).sendMessage(any(Mail.class), eq(toUser.getEmail()));
-    verify(emailDAO).insert(
-        eq(referenceId),
-        eq(null),
-        eq(toUser.getUserId()),
-        eq(EmailType.SUBMITTED_CLOSEOUT.getTypeInt()),
-        any(),
-        any(),
-        any(),
-        any(),
-        any()
-    );
+    verify(emailDAO)
+        .insert(
+            eq(referenceId),
+            eq(null),
+            eq(toUser.getUserId()),
+            eq(EmailType.SUBMITTED_CLOSEOUT.getTypeInt()),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
   }
 
   @Test
@@ -444,21 +437,22 @@ class EmailServiceTest extends AbstractTestHelper {
     User toUser = new User();
     toUser.setDisplayName("Test User");
     toUser.setEmail("test.user@test.com");
-    when(templateHelper.getTemplate(EmailType.NEW_LIBRARY_CARD_ISSUED.templateName)).thenReturn(mock());
+    when(templateHelper.getTemplate(EmailType.NEW_LIBRARY_CARD_ISSUED.templateName))
+        .thenReturn(mock());
 
     service.sendNewLibraryCardIssuedMessage(toUser);
     verify(sendGridAPI).sendMessage(any(Mail.class), eq(toUser.getEmail()));
-    verify(emailDAO).insert(
-        eq(toUser.getEmail()),
-        eq(null),
-        eq(toUser.getUserId()),
-        eq(EmailType.NEW_LIBRARY_CARD_ISSUED.getTypeInt()),
-        any(),
-        any(),
-        any(),
-        any(),
-        any()
-    );
+    verify(emailDAO)
+        .insert(
+            eq(toUser.getEmail()),
+            eq(null),
+            eq(toUser.getUserId()),
+            eq(EmailType.NEW_LIBRARY_CARD_ISSUED.getTypeInt()),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
   }
 
   @Test
@@ -508,8 +502,6 @@ class EmailServiceTest extends AbstractTestHelper {
         randomAlphanumeric(10),
         randomAlphanumeric(10),
         randomInt(31, 40),
-        new Date()
-    );
+        new Date());
   }
-
 }

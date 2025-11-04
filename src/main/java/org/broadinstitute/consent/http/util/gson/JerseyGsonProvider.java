@@ -21,34 +21,43 @@ import java.nio.charset.StandardCharsets;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class JerseyGsonProvider implements MessageBodyWriter<Object>,
-    MessageBodyReader<Object> {
+public class JerseyGsonProvider implements MessageBodyWriter<Object>, MessageBodyReader<Object> {
 
   @Override
-  public boolean isReadable(Class<?> aClass, Type type, Annotation[] annotations,
-      MediaType mediaType) {
+  public boolean isReadable(
+      Class<?> aClass, Type type, Annotation[] annotations, MediaType mediaType) {
     return true;
   }
 
   @Override
-  public Object readFrom(Class<Object> aClass, Type type, Annotation[] annotations,
-      MediaType mediaType, MultivaluedMap<String, String> multivaluedMap, InputStream inputStream)
+  public Object readFrom(
+      Class<Object> aClass,
+      Type type,
+      Annotation[] annotations,
+      MediaType mediaType,
+      MultivaluedMap<String, String> multivaluedMap,
+      InputStream inputStream)
       throws JsonSyntaxException, WebApplicationException, IOException {
     try (InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
       return GsonUtil.getInstance().fromJson(reader, type);
     }
-
   }
 
   @Override
-  public boolean isWriteable(Class<?> aClass, Type type, Annotation[] annotations,
-      MediaType mediaType) {
+  public boolean isWriteable(
+      Class<?> aClass, Type type, Annotation[] annotations, MediaType mediaType) {
     return true;
   }
 
   @Override
-  public void writeTo(Object object, Class<?> aClass, Type type, Annotation[] annotations,
-      MediaType mediaType, MultivaluedMap<String, Object> multivaluedMap, OutputStream outputStream)
+  public void writeTo(
+      Object object,
+      Class<?> aClass,
+      Type type,
+      Annotation[] annotations,
+      MediaType mediaType,
+      MultivaluedMap<String, Object> multivaluedMap,
+      OutputStream outputStream)
       throws IOException, WebApplicationException {
     try (OutputStreamWriter writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
       GsonUtil.getInstance().toJson(object, type, writer);
@@ -57,11 +66,7 @@ public class JerseyGsonProvider implements MessageBodyWriter<Object>,
 
   @Override
   public long getSize(
-      Object o,
-      Class<?> type,
-      Type genericType,
-      Annotation[] annotations,
-      MediaType mediaType) {
+      Object o, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
     return -1;
   }
 }

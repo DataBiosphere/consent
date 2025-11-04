@@ -5,8 +5,7 @@ public class DarDataset {
   private String referenceId;
   private Integer datasetId;
 
-  public DarDataset() {
-  }
+  public DarDataset() {}
 
   public DarDataset(String referenceId, Integer datasetId) {
     this.referenceId = referenceId;

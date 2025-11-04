@@ -15,8 +15,12 @@ public class ResearcherApprovedProgressReportMessage extends MailMessage {
   private final String dataUseRestriction;
   private final String radarText;
 
-  public ResearcherApprovedProgressReportMessage(User toUser, String darCode, List<DatasetMailDTO> datasets,
-      String dataUseRestriction, boolean radarApproved) {
+  public ResearcherApprovedProgressReportMessage(
+      User toUser,
+      String darCode,
+      List<DatasetMailDTO> datasets,
+      String dataUseRestriction,
+      boolean radarApproved) {
     super(toUser, EmailType.RESEARCHER_PROGRESS_REPORT_APPROVED);
     this.darCode = darCode;
     this.datasets = datasets;
@@ -31,12 +35,19 @@ public class ResearcherApprovedProgressReportMessage extends MailMessage {
 
   @Override
   public Object createModel(String serverUrl) {
-    return Map.of("researcherName", toUser.getDisplayName(),
-        "darCode", darCode,
-        "datasets", datasets,
-        "dataUseRestriction", dataUseRestriction,
-        "radarText", radarText,
-        "researcherEmail", toUser.getEmail());
+    return Map.of(
+        "researcherName",
+        toUser.getDisplayName(),
+        "darCode",
+        darCode,
+        "datasets",
+        datasets,
+        "dataUseRestriction",
+        dataUseRestriction,
+        "radarText",
+        radarText,
+        "researcherEmail",
+        toUser.getEmail());
   }
 
   @Override

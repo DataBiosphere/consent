@@ -7,18 +7,13 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ElasticSearchConfiguration {
 
-  @NotNull
-  private String indexName;
+  @NotNull private String indexName;
 
-  @NotNull
-  private List<String> servers;
+  @NotNull private List<String> servers;
 
-  @NotNull
-  private String datasetIndexName;
+  @NotNull private String datasetIndexName;
 
-  /**
-   * This is configurable for testing purposes
-   */
+  /** This is configurable for testing purposes */
   private int port = 9200;
 
   public List<String> getServers() {
