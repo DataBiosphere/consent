@@ -6,7 +6,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import jakarta.ws.rs.BadRequestException;
 import java.util.List;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -34,21 +33,22 @@ public class InstitutionUtil implements ConsentLogger {
       public boolean shouldSkipField(FieldAttributes field) {
         String fieldName = field.getName();
 
-        return !isAdmin && !(fieldName.equals("id")
-            || fieldName.equals("name")
-            || fieldName.equals("signingOfficials")
-            || fieldName.equals("displayName")
-            || fieldName.equals("userId")
-            || fieldName.equals("email")
-            || fieldName.equals("itDirectorName")
-            || fieldName.equals("itDirectorEmail")
-            || fieldName.equals("institutionUrl")
-            || fieldName.equals("dunsNumber")
-            || fieldName.equals("orgChartUrl")
-            || fieldName.equals("verificationUrl")
-            || fieldName.equals("verificationFilename")
-            || fieldName.equals("organizationType")
-            || fieldName.equals("domains"));
+        return !isAdmin
+            && !(fieldName.equals("id")
+                || fieldName.equals("name")
+                || fieldName.equals("signingOfficials")
+                || fieldName.equals("displayName")
+                || fieldName.equals("userId")
+                || fieldName.equals("email")
+                || fieldName.equals("itDirectorName")
+                || fieldName.equals("itDirectorEmail")
+                || fieldName.equals("institutionUrl")
+                || fieldName.equals("dunsNumber")
+                || fieldName.equals("orgChartUrl")
+                || fieldName.equals("verificationUrl")
+                || fieldName.equals("verificationFilename")
+                || fieldName.equals("organizationType")
+                || fieldName.equals("domains"));
       }
 
       // NOTE: shouldSkipClass is mandatory when creating an ExclusionStrategy
@@ -96,9 +96,7 @@ public class InstitutionUtil implements ConsentLogger {
 
     DomainValidator validator = DomainValidator.getInstance();
 
-    return institution.getDomains().stream()
-        .filter(domain -> !validator.isValid(domain))
-        .toList();
+    return institution.getDomains().stream().filter(domain -> !validator.isValid(domain)).toList();
   }
 
   public static void validateInstitutionDomains(Institution institution) {

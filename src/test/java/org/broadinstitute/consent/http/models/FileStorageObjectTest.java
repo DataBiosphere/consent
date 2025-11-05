@@ -28,25 +28,22 @@ class FileStorageObjectTest {
     fso.setBlobId(BlobId.of("sensitive", "information")); // should not be serialized
     fso.setCreateDate(Instant.now());
     fso.setCategory(FileCategory.IRB_COLLABORATION_LETTER);
-    fso.setUploadedFile(new ByteArrayInputStream(new byte[]{})); // should not be serialized
+    fso.setUploadedFile(new ByteArrayInputStream(new byte[] {})); // should not be serialized
 
     Gson gson = GsonUtil.buildGson();
     JsonObject fsoJsonObject = gson.fromJson(gson.toJson(fso), JsonObject.class);
 
     assertEquals(3, fsoJsonObject.size());
     assertTrue(fsoJsonObject.has("createDate"));
-    assertEquals(fso.getCreateDate().toEpochMilli(),
-        fsoJsonObject.get("createDate").getAsLong());
+    assertEquals(fso.getCreateDate().toEpochMilli(), fsoJsonObject.get("createDate").getAsLong());
     assertTrue(fsoJsonObject.has("fileName"));
     assertEquals(fso.getFileName(), fsoJsonObject.get("fileName").getAsString());
     assertTrue(fsoJsonObject.has("category"));
-    assertEquals(fso.getCategory().getValue(),
-        fsoJsonObject.get("category").getAsString());
+    assertEquals(fso.getCategory().getValue(), fsoJsonObject.get("category").getAsString());
 
     // should not have these fields ever
     assertFalse(fsoJsonObject.has("blobId"));
     assertFalse(fsoJsonObject.has("uploadedFile"));
-
   }
 
   @Test

@@ -25,5 +25,4 @@ public abstract class AbstractTestHelper {
   public static int nextInt() {
     return RandomUtils.secure().randomInt();
   }
-
 }

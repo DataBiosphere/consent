@@ -15,15 +15,25 @@ class DatasetRegistrationSchemaV1AssetsTest {
   void testAssetsFieldCanBeSetAndRetrieved() {
     // Create a DatasetRegistrationSchemaV1 instance
     DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1();
-    
+
     // Create a sample assets object
     Map<String, Object> assets = new HashMap<>();
-    assets.put("workspaces", Map.of("workspace_id", "c7b96ac5-5568-441c-a3f4-2e82e45e3e6d", "name", "Cardiometabolic GWAS Analysis Workspace", "platform", "Terra"));
-    assets.put("funding", Map.of("funding_id", "fund-0001",  "funder_name", "NIH", "grant_number", "R01HG012345"));
-    
+    assets.put(
+        "workspaces",
+        Map.of(
+            "workspace_id",
+            "c7b96ac5-5568-441c-a3f4-2e82e45e3e6d",
+            "name",
+            "Cardiometabolic GWAS Analysis Workspace",
+            "platform",
+            "Terra"));
+    assets.put(
+        "funding",
+        Map.of("funding_id", "fund-0001", "funder_name", "NIH", "grant_number", "R01HG012345"));
+
     // Set the assets
     registration.setAssets(assets);
-    
+
     // Verify the assets can be retrieved
     Map<String, Object> retrievedAssets = registration.getAssets();
     assertNotNull(retrievedAssets);
@@ -36,23 +46,24 @@ class DatasetRegistrationSchemaV1AssetsTest {
     // Create a DatasetRegistrationSchemaV1 instance with assets
     DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1();
     registration.setStudyName("Test Study");
-    
+
     Map<String, Object> assets = new HashMap<>();
     assets.put("customField", "customValue");
     assets.put("nestedObject", Map.of("key1", "value1", "key2", 123));
     registration.setAssets(assets);
-    
+
     // Serialize to JSON
     Gson gson = new Gson();
     String json = gson.toJson(registration);
-    
+
     // Verify JSON contains assets
     assertTrue(json.contains("\"assets\""));
     assertTrue(json.contains("\"customField\""));
     assertTrue(json.contains("\"customValue\""));
-    
+
     // Deserialize back
-    DatasetRegistrationSchemaV1 deserialized = gson.fromJson(json, DatasetRegistrationSchemaV1.class);
+    DatasetRegistrationSchemaV1 deserialized =
+        gson.fromJson(json, DatasetRegistrationSchemaV1.class);
     assertNotNull(deserialized.getAssets());
     assertEquals("customValue", deserialized.getAssets().get("customField"));
   }
@@ -62,7 +73,7 @@ class DatasetRegistrationSchemaV1AssetsTest {
     // Create a DatasetRegistrationSchemaV1 instance without setting assets
     DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1();
     registration.setStudyName("Test Study");
-    
+
     // Verify assets is initialized as empty map
     Map<String, Object> assets = registration.getAssets();
     assertNotNull(assets);
@@ -72,9 +83,10 @@ class DatasetRegistrationSchemaV1AssetsTest {
   @Test
   void testJsonSchemaValidationAcceptsAssets() {
     JsonSchemaUtil jsonSchemaUtil = new JsonSchemaUtil();
-    
+
     // Create a minimal valid JSON with assets
-    String json = """
+    String json =
+        """
         {
           "studyName": "Test Study",
           "studyDescription": "Test Description",
@@ -99,21 +111,22 @@ class DatasetRegistrationSchemaV1AssetsTest {
           }
         }
         """;
-    
+
     // Validate the schema
     var errors = jsonSchemaUtil.validateSchema_v1(json);
-    
+
     // Verify no validation errors
-    assertTrue(errors.isEmpty(), 
-        "Schema validation should pass with assets field. Errors: " + errors);
+    assertTrue(
+        errors.isEmpty(), "Schema validation should pass with assets field. Errors: " + errors);
   }
 
   @Test
   void testEmptyAssetsObjectIsValid() {
     JsonSchemaUtil jsonSchemaUtil = new JsonSchemaUtil();
-    
+
     // Create a minimal valid JSON with empty assets
-    String json = """
+    String json =
+        """
         {
           "studyName": "Test Study",
           "studyDescription": "Test Description",
@@ -132,21 +145,23 @@ class DatasetRegistrationSchemaV1AssetsTest {
           "assets": {}
         }
         """;
-    
+
     // Validate the schema
     var errors = jsonSchemaUtil.validateSchema_v1(json);
-    
+
     // Verify no validation errors
-    assertTrue(errors.isEmpty(), 
+    assertTrue(
+        errors.isEmpty(),
         "Schema validation should pass with empty assets field. Errors: " + errors);
   }
 
   @Test
   void testMissingAssetsFieldIsValid() {
     JsonSchemaUtil jsonSchemaUtil = new JsonSchemaUtil();
-    
+
     // Create a minimal valid JSON without assets field
-    String json = """
+    String json =
+        """
         {
           "studyName": "Test Study",
           "studyDescription": "Test Description",
@@ -164,12 +179,12 @@ class DatasetRegistrationSchemaV1AssetsTest {
           ]
         }
         """;
-    
+
     // Validate the schema
     var errors = jsonSchemaUtil.validateSchema_v1(json);
-    
+
     // Verify no validation errors
-    assertTrue(errors.isEmpty(), 
-        "Schema validation should pass without assets field. Errors: " + errors);
+    assertTrue(
+        errors.isEmpty(), "Schema validation should pass without assets field. Errors: " + errors);
   }
 }

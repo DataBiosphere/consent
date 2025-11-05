@@ -10,7 +10,6 @@ import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;

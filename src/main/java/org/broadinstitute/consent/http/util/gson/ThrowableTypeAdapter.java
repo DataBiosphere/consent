@@ -6,8 +6,7 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 
-public class ThrowableTypeAdapter
-    implements JsonSerializer<Throwable> {
+public class ThrowableTypeAdapter implements JsonSerializer<Throwable> {
 
   @Override
   public JsonElement serialize(Throwable src, Type srcType, JsonSerializationContext context) {

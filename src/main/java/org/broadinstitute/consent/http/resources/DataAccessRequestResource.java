@@ -78,8 +78,7 @@ public class DataAccessRequestResource extends Resource {
       UserService userService,
       DatasetService datasetService,
       MatchService matchService,
-      DarCollectionService darCollectionService
-  ) {
+      DarCollectionService darCollectionService) {
     this.daaService = daaService;
     this.dataAccessRequestService = dataAccessRequestService;
     this.gcsService = gcsService;
@@ -109,20 +108,20 @@ public class DataAccessRequestResource extends Resource {
   @RolesAllowed(RESEARCHER)
   @Path("/v2")
   public Response createDataAccessRequest(
-      @Auth AuthUser authUser,
-      @Context Request request,
-      @Context UriInfo info,
-      String dar) {
+      @Auth AuthUser authUser, @Context Request request, @Context UriInfo info, String dar) {
     try {
       User user = findUserByEmail(authUser.getEmail());
 
       DataAccessRequest payload = populateDarFromJsonString(user, dar);
-      DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload, (ContainerRequest) request);
+      DataAccessRequest newDar =
+          dataAccessRequestService.createDataAccessRequest(
+              user, payload, (ContainerRequest) request);
       sendNewDarCollectionMessage(newDar.getCollectionId());
       URI uri = info.getRequestUriBuilder().build();
       matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
       List<Dataset> datasets = datasetService.findDatasetsByIds(user, newDar.getDatasetIds());
-      ComplianceLogger.logDARSubmission(user, datasets, ((ContainerRequest) request), HttpStatusCodes.STATUS_CODE_CREATED);
+      ComplianceLogger.logDARSubmission(
+          user, datasets, ((ContainerRequest) request), HttpStatusCodes.STATUS_CODE_CREATED);
       return Response.created(uri).entity(newDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -135,20 +134,21 @@ public class DataAccessRequestResource extends Resource {
   @RolesAllowed(RESEARCHER)
   @Path("/v3")
   public Response createDataAccessRequestWithDAARestrictions(
-      @Auth AuthUser authUser,
-      @Context Request request,
-      @Context UriInfo info, String dar) {
+      @Auth AuthUser authUser, @Context Request request, @Context UriInfo info, String dar) {
     try {
       User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest payload = populateDarFromJsonString(user, dar);
       // DAA Enforcement
       datasetService.enforceDAARestrictions(user, payload.getDatasetIds());
-      DataAccessRequest newDar = dataAccessRequestService.createDataAccessRequest(user, payload, (ContainerRequest) request);
+      DataAccessRequest newDar =
+          dataAccessRequestService.createDataAccessRequest(
+              user, payload, (ContainerRequest) request);
       sendNewDarCollectionMessage(newDar.getCollectionId());
       URI uri = info.getRequestUriBuilder().build();
       matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
       List<Dataset> datasets = datasetService.findDatasetsByIds(user, newDar.getDatasetIds());
-      ComplianceLogger.logDARSubmission(user, datasets, ((ContainerRequest) request), HttpStatusCodes.STATUS_CODE_CREATED);
+      ComplianceLogger.logDARSubmission(
+          user, datasets, ((ContainerRequest) request), HttpStatusCodes.STATUS_CODE_CREATED);
       return Response.created(uri).entity(newDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -162,9 +162,10 @@ public class DataAccessRequestResource extends Resource {
   public Response getByReferenceId(
       @Auth DuosUser duosUser, @PathParam("referenceId") String referenceId) {
     validateAuthedRoleUser(
-        List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER,
-            UserRoles.SIGNINGOFFICIAL),
-        duosUser, referenceId);
+        List.of(
+            UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER, UserRoles.SIGNINGOFFICIAL),
+        duosUser,
+        referenceId);
     try {
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
       if (Objects.nonNull(dar)) {
@@ -189,8 +190,7 @@ public class DataAccessRequestResource extends Resource {
       @Auth DuosUser duosUser, @PathParam("referenceId") String referenceId) {
     try {
       validateAuthedRoleUser(
-          List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER),
-          duosUser, referenceId);
+          List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER), duosUser, referenceId);
       List<DataAccessAgreement> dataAccessAgreements = daaService.findByDarReferenceId(referenceId);
       return Response.status(Response.Status.OK).entity(dataAccessAgreements).build();
     } catch (Exception e) {
@@ -229,8 +229,8 @@ public class DataAccessRequestResource extends Resource {
   public Response getDraftDataAccessRequests(@Auth AuthUser authUser) {
     try {
       User user = findUserByEmail(authUser.getEmail());
-      List<DataAccessRequest> draftDars = dataAccessRequestService.findAllDraftDataAccessRequestsByUser(
-          user.getUserId());
+      List<DataAccessRequest> draftDars =
+          dataAccessRequestService.findAllDraftDataAccessRequestsByUser(user.getUserId());
       return Response.ok().entity(draftDars).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -351,17 +351,14 @@ public class DataAccessRequestResource extends Resource {
   @Path("/v2/{referenceId}/irbDocument")
   @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, RESEARCHER})
   public Response getIrbDocument(
-      @Auth DuosUser duosUser,
-      @PathParam("referenceId") String referenceId) {
+      @Auth DuosUser duosUser, @PathParam("referenceId") String referenceId) {
     try {
       DataAccessRequest dar = getDarById(referenceId);
       validateAuthedRoleUser(
-          List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER),
-          duosUser, referenceId);
-      if (dar.getData() != null &&
-          StringUtils.isNotEmpty(dar.getData().getIrbDocumentLocation()) &&
-          StringUtils.isNotEmpty(dar.getData().getIrbDocumentName())
-      ) {
+          List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER), duosUser, referenceId);
+      if (dar.getData() != null
+          && StringUtils.isNotEmpty(dar.getData().getIrbDocumentLocation())
+          && StringUtils.isNotEmpty(dar.getData().getIrbDocumentName())) {
         String blobIdName = dar.getData().getIrbDocumentLocation();
         String fileName = dar.getData().getIrbDocumentName();
         InputStream is = gcsService.getDocument(blobIdName);
@@ -390,8 +387,9 @@ public class DataAccessRequestResource extends Resource {
       User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest dar = getDarById(referenceId);
       checkAuthorizedUpdateUser(user, dar);
-      DataAccessRequest updatedDar = updateDarWithDocumentContents(DarDocumentType.IRB, user, dar,
-          uploadInputStream, fileDetail);
+      DataAccessRequest updatedDar =
+          updateDarWithDocumentContents(
+              DarDocumentType.IRB, user, dar, uploadInputStream, fileDetail);
       return Response.ok(updatedDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -401,15 +399,17 @@ public class DataAccessRequestResource extends Resource {
   @PUT
   @RolesAllowed({SIGNINGOFFICIAL})
   @Path("/{referenceId}/approveCloseout")
-  public Response approveCloseout(@Auth DuosUser duosUser,
+  public Response approveCloseout(
+      @Auth DuosUser duosUser,
       @Context Request request,
       @PathParam("referenceId") String referenceId) {
     try {
       dataAccessRequestService.approveDataAccessRequestCloseout(duosUser.getUser(), referenceId);
       DataAccessRequest dar = getDarById(referenceId);
-      List<Dataset> datasets = datasetService.findDatasetsByIds(duosUser.getUser(), dar.getDatasetIds());
-      ComplianceLogger.logCloseoutApprovalBySigningOfficial(duosUser.getUser(), datasets,
-          (ContainerRequest) request, HttpStatusCodes.STATUS_CODE_OK);
+      List<Dataset> datasets =
+          datasetService.findDatasetsByIds(duosUser.getUser(), dar.getDatasetIds());
+      ComplianceLogger.logCloseoutApprovalBySigningOfficial(
+          duosUser.getUser(), datasets, (ContainerRequest) request, HttpStatusCodes.STATUS_CODE_OK);
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -442,24 +442,40 @@ public class DataAccessRequestResource extends Resource {
         throw new ForbiddenException("User not authorized to update this Data Access Request");
       }
       // Prevent creation if there are open DataAccess elections for the parent DAR
-      List<Election> openElections = dataAccessRequestService.findOpenElectionsByReferenceId(parentDar.getReferenceId());
-      boolean hasOpenDataAccessElections = openElections
-          .stream()
-          .anyMatch(election -> election.getElectionType().equalsIgnoreCase(ElectionType.DATA_ACCESS.getValue()));
+      List<Election> openElections =
+          dataAccessRequestService.findOpenElectionsByReferenceId(parentDar.getReferenceId());
+      boolean hasOpenDataAccessElections =
+          openElections.stream()
+              .anyMatch(
+                  election ->
+                      election
+                          .getElectionType()
+                          .equalsIgnoreCase(ElectionType.DATA_ACCESS.getValue()));
       if (hasOpenDataAccessElections) {
-        throw new BadRequestException("Cannot create a progress report for a DAR with an open election: " + parentDar.getReferenceId());
+        throw new BadRequestException(
+            "Cannot create a progress report for a DAR with an open election: "
+                + parentDar.getReferenceId());
       }
-      DataAccessRequest payload = DataAccessRequest.populateProgressReportFromJsonString(dar, parentDar);
-      populateProgressReportWithDocuments(user, collabInputStream, collabFileDetails, ethicsInputStream,
-          ethicsFileDetails, payload, parentDar);
-      DataAccessRequest progressReport = dataAccessRequestService.createProgressReport(user,
-          payload, parentDar, (ContainerRequest) request);
+      DataAccessRequest payload =
+          DataAccessRequest.populateProgressReportFromJsonString(dar, parentDar);
+      populateProgressReportWithDocuments(
+          user,
+          collabInputStream,
+          collabFileDetails,
+          ethicsInputStream,
+          ethicsFileDetails,
+          payload,
+          parentDar);
+      DataAccessRequest progressReport =
+          dataAccessRequestService.createProgressReport(
+              user, payload, parentDar, (ContainerRequest) request);
       if (Objects.nonNull(progressReport) && !progressReport.getIsCloseoutProgressReport()) {
         sendNewDarCollectionMessage(parentDar.getCollectionId());
       }
-      List<Dataset> datasets = datasetService.findDatasetsByIds(user, progressReport.getDatasetIds());
-      ComplianceLogger.logDARSubmission(user, datasets, ((ContainerRequest) request),
-          HttpStatusCodes.STATUS_CODE_CREATED);
+      List<Dataset> datasets =
+          datasetService.findDatasetsByIds(user, progressReport.getDatasetIds());
+      ComplianceLogger.logDARSubmission(
+          user, datasets, ((ContainerRequest) request), HttpStatusCodes.STATUS_CODE_CREATED);
       return Response.ok(progressReport.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -480,10 +496,15 @@ public class DataAccessRequestResource extends Resource {
     logException("Exception sending email for collection id: " + collectionId, e);
   }
 
-  public void populateProgressReportWithDocuments(User user, InputStream collabInputStream,
-      FormDataContentDisposition collabFileDetails, InputStream ethicsInputStream,
-      FormDataContentDisposition ethicsFileDetails, DataAccessRequest childDar,
-      DataAccessRequest parentDar) throws IOException {
+  public void populateProgressReportWithDocuments(
+      User user,
+      InputStream collabInputStream,
+      FormDataContentDisposition collabFileDetails,
+      InputStream ethicsInputStream,
+      FormDataContentDisposition ethicsFileDetails,
+      DataAccessRequest childDar,
+      DataAccessRequest parentDar)
+      throws IOException {
     for (Integer datasetId : childDar.getDatasetIds()) {
       Dataset dataset = datasetService.findDatasetById(user, datasetId);
       if (dataset == null) {
@@ -499,8 +520,8 @@ public class DataAccessRequestResource extends Resource {
             && Strings.isNullOrEmpty(parentCollabLocation)) {
           throw new BadRequestException("Collaboration document is required");
         }
-        uploadDocumentContents(DarDocumentType.COLLABORATION, childDar,
-            collabInputStream, collabFileDetails);
+        uploadDocumentContents(
+            DarDocumentType.COLLABORATION, childDar, collabInputStream, collabFileDetails);
       }
       if (Boolean.TRUE.equals(dataUse.getEthicsApprovalRequired())) {
         String parentEthicsLocation = parentDar.getData().getIrbDocumentLocation();
@@ -508,8 +529,7 @@ public class DataAccessRequestResource extends Resource {
             && Strings.isNullOrEmpty(parentEthicsLocation)) {
           throw new BadRequestException("Ethics approval document is required");
         }
-        uploadDocumentContents(DarDocumentType.IRB, childDar,
-            ethicsInputStream, ethicsFileDetails);
+        uploadDocumentContents(DarDocumentType.IRB, childDar, ethicsInputStream, ethicsFileDetails);
       }
     }
   }
@@ -519,17 +539,14 @@ public class DataAccessRequestResource extends Resource {
   @Path("/v2/{referenceId}/collaborationDocument")
   @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, RESEARCHER})
   public Response getCollaborationDocument(
-      @Auth DuosUser duosUser,
-      @PathParam("referenceId") String referenceId) {
+      @Auth DuosUser duosUser, @PathParam("referenceId") String referenceId) {
     try {
       DataAccessRequest dar = getDarById(referenceId);
       validateAuthedRoleUser(
-          List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER),
-          duosUser, referenceId);
-      if (dar.getData() != null &&
-          StringUtils.isNotEmpty(dar.getData().getCollaborationLetterLocation()) &&
-          StringUtils.isNotEmpty(dar.getData().getCollaborationLetterName())
-      ) {
+          List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER), duosUser, referenceId);
+      if (dar.getData() != null
+          && StringUtils.isNotEmpty(dar.getData().getCollaborationLetterLocation())
+          && StringUtils.isNotEmpty(dar.getData().getCollaborationLetterName())) {
         String blobIdName = dar.getData().getCollaborationLetterLocation();
         String fileName = dar.getData().getCollaborationLetterName();
         InputStream is = gcsService.getDocument(blobIdName);
@@ -558,8 +575,9 @@ public class DataAccessRequestResource extends Resource {
       User user = findUserByEmail(authUser.getEmail());
       DataAccessRequest dar = getDarById(referenceId);
       checkAuthorizedUpdateUser(user, dar);
-      DataAccessRequest updatedDar = updateDarWithDocumentContents(DarDocumentType.COLLABORATION,
-          user, dar, uploadInputStream, fileDetail);
+      DataAccessRequest updatedDar =
+          updateDarWithDocumentContents(
+              DarDocumentType.COLLABORATION, user, dar, uploadInputStream, fileDetail);
       return Response.ok(updatedDar.convertToSimplifiedDar()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -572,7 +590,8 @@ public class DataAccessRequestResource extends Resource {
   @RolesAllowed({ADMIN, RESEARCHER})
   public Response deleteDar(@Auth DuosUser duosUser, @PathParam("referenceId") String referenceId) {
     try {
-      DataAccessRequest dataAccessRequest = validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), duosUser, referenceId);
+      DataAccessRequest dataAccessRequest =
+          validateAuthedRoleUser(Collections.singletonList(UserRoles.ADMIN), duosUser, referenceId);
       dataAccessRequestService.deleteDataAccessRequest(dataAccessRequest);
       return Response.ok().build();
     } catch (Exception e) {
@@ -637,7 +656,8 @@ public class DataAccessRequestResource extends Resource {
       User user,
       DataAccessRequest dar,
       InputStream uploadInputStream,
-      FormDataContentDisposition fileDetail) throws IOException {
+      FormDataContentDisposition fileDetail)
+      throws IOException {
     // When we move updateDarWithDocumentContents to the service tier, we should incorporate the
     // code below into that method
     if (!dar.getDraft()) {
@@ -650,15 +670,18 @@ public class DataAccessRequestResource extends Resource {
   /**
    * Uploads the document contents to GCS and mutates the dar data object with the blobId.
    *
-   * @param type              The type of document (IRB or Collaboration)
-   * @param dar               The Data Access Request
+   * @param type The type of document (IRB or Collaboration)
+   * @param dar The Data Access Request
    * @param uploadInputStream The input stream of the file to be uploaded
-   * @param fileDetail        The file details
+   * @param fileDetail The file details
    * @throws IOException if an error occurs during upload
    */
-  public void uploadDocumentContents(DarDocumentType type, DataAccessRequest dar,
+  public void uploadDocumentContents(
+      DarDocumentType type,
+      DataAccessRequest dar,
       InputStream uploadInputStream,
-      FormDataContentDisposition fileDetail) throws IOException {
+      FormDataContentDisposition fileDetail)
+      throws IOException {
     // This should be moved to service tier logic and the transactions should be coordinated
     validateFileDetails(fileDetail);
     String fileName = fileDetail.getFileName();
@@ -690,9 +713,10 @@ public class DataAccessRequestResource extends Resource {
     try {
       gcsService.deleteDocument(blobIdName);
     } catch (Exception e) {
-      String message = String.format(
-          "Unable to delete document for DAR ID: %s; dar document location: %s",
-          dar.getReferenceId(), blobIdName);
+      String message =
+          String.format(
+              "Unable to delete document for DAR ID: %s; dar document location: %s",
+              dar.getReferenceId(), blobIdName);
       logWarn(message);
     }
   }
@@ -713,12 +737,12 @@ public class DataAccessRequestResource extends Resource {
    * (i.e. Admin) so they can also have access to the DAR.
    *
    * @param allowableRoles List of roles that would allow the user to access the resource
-   * @param duosUser       The DuosUser
-   * @param referenceId    The referenceId of the resource.
+   * @param duosUser The DuosUser
+   * @param referenceId The referenceId of the resource.
    * @return dataAccessRequest The data access request underlying the referenceId
    */
-  private DataAccessRequest validateAuthedRoleUser(final List<UserRoles> allowableRoles, DuosUser duosUser,
-      String referenceId) {
+  private DataAccessRequest validateAuthedRoleUser(
+      final List<UserRoles> allowableRoles, DuosUser duosUser, String referenceId) {
     DataAccessRequest dataAccessRequest = getDarById(referenceId);
     User user = duosUser.getUser();
     if (Objects.nonNull(dataAccessRequest.getUserId()) && dataAccessRequest.getUserId() > 0) {

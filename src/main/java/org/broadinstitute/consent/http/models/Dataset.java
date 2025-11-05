@@ -60,11 +60,17 @@ public class Dataset implements ConsentLogger {
 
   private Date indexedDate;
 
-  public Dataset() {
-  }
+  public Dataset() {}
 
-  public Dataset(Integer datasetId, String objectId, String name, Date createDate,
-      Integer createUserId, Date updateDate, Integer updateUserId, Integer alias) {
+  public Dataset(
+      Integer datasetId,
+      String objectId,
+      String name,
+      Date createDate,
+      Integer createUserId,
+      Date updateDate,
+      Integer updateUserId,
+      Integer alias) {
     this.datasetId = datasetId;
     this.objectId = objectId;
     this.name = name;
@@ -171,7 +177,6 @@ public class Dataset implements ConsentLogger {
     return propertyName;
   }
 
-
   public void setProperties(Set<DatasetProperty> properties) {
     this.properties = properties;
   }
@@ -267,12 +272,13 @@ public class Dataset implements ConsentLogger {
    * data use properties. Has optional parameter accessManagement which will search datasets on both
    * the raw search query and the access management type.
    *
-   * @param query            Raw string query
+   * @param query Raw string query
    * @param accessManagement One of controlled, open, or external
    * @return if the Dataset matched query
    */
 
-  // TODO: investigate whether we can try to coerce getPropertyValue to a boolean instead of comparing strings
+  // TODO: investigate whether we can try to coerce getPropertyValue to a boolean instead of
+  // comparing strings
   public boolean isDatasetMatch(@NonNull String query, AccessManagement accessManagement) {
     String lowerCaseQuery = query.toLowerCase();
     List<String> queryTerms = List.of(lowerCaseQuery.split("\\s+"));
@@ -282,27 +288,28 @@ public class Dataset implements ConsentLogger {
     matchTerms.add(this.getDatasetIdentifier());
 
     if (Objects.nonNull(getProperties()) && !getProperties().isEmpty()) {
-      Optional<DatasetProperty> accessManagementProp = getProperties()
-          .stream()
-          .filter((dp) -> Objects.nonNull(dp.getPropertyValue()))
-          .filter((dp) -> Objects.equals(dp.getPropertyName(), "Access Management"))
-          .findFirst();
+      Optional<DatasetProperty> accessManagementProp =
+          getProperties().stream()
+              .filter((dp) -> Objects.nonNull(dp.getPropertyValue()))
+              .filter((dp) -> Objects.equals(dp.getPropertyName(), "Access Management"))
+              .findFirst();
 
       if (accessManagementProp.isEmpty()) {
         if (accessManagement.equals(AccessManagement.OPEN)) {
           return false;
         }
-      } else if (!accessManagement.toString()
+      } else if (!accessManagement
+          .toString()
           .equals(accessManagementProp.get().getPropertyValueAsString())) {
         return false;
       }
 
-      List<String> propVals = getProperties()
-          .stream()
-          .filter((dp) -> Objects.nonNull(dp.getPropertyValue()))
-          .map(DatasetProperty::getPropertyValueAsString)
-          .map(String::toLowerCase)
-          .toList();
+      List<String> propVals =
+          getProperties().stream()
+              .filter((dp) -> Objects.nonNull(dp.getPropertyValue()))
+              .map(DatasetProperty::getPropertyValueAsString)
+              .map(String::toLowerCase)
+              .toList();
       matchTerms.addAll(propVals);
     }
 
@@ -312,8 +319,7 @@ public class Dataset implements ConsentLogger {
         matchTerms.add("irb");
       }
 
-      if (Objects.nonNull(dataUse.getCollaboratorRequired())
-          && dataUse.getCollaboratorRequired()) {
+      if (Objects.nonNull(dataUse.getCollaboratorRequired()) && dataUse.getCollaboratorRequired()) {
         matchTerms.add("collaborator");
       }
 
@@ -322,18 +328,15 @@ public class Dataset implements ConsentLogger {
       }
     }
 
-    return queryTerms
-        .stream()
+    return queryTerms.stream()
         .filter(Objects::nonNull)
         // all terms must match at least one thing
-        .allMatch((q) ->
-            matchTerms
-                .stream()
-                .filter(Objects::nonNull)
-                .map(String::toLowerCase)
-                .anyMatch(
-                    (t) -> t.contains(q))
-        );
+        .allMatch(
+            (q) ->
+                matchTerms.stream()
+                    .filter(Objects::nonNull)
+                    .map(String::toLowerCase)
+                    .anyMatch((t) -> t.contains(q)));
   }
 
   public Study getStudy() {
@@ -368,21 +371,18 @@ public class Dataset implements ConsentLogger {
    */
   public boolean isCustodian(User user) {
     if (getStudy() != null && getStudy().getProperties() != null) {
-      Optional<StudyProperty> dataCustodians = getStudy()
-          .getProperties()
-          .stream()
-          .filter(p -> p.getKey().equals(DatasetRegistrationSchemaV1Builder.dataCustodianEmail))
-          .findFirst();
+      Optional<StudyProperty> dataCustodians =
+          getStudy().getProperties().stream()
+              .filter(p -> p.getKey().equals(DatasetRegistrationSchemaV1Builder.dataCustodianEmail))
+              .findFirst();
       if (dataCustodians.isPresent()) {
         JsonArray jsonArray = (JsonArray) dataCustodians.get().getValue();
         return jsonArray.contains(new JsonPrimitive(user.getEmail()));
       } else {
-        logWarn(
-            "No data custodians found for dataset: %s".formatted(getDatasetIdentifier()));
+        logWarn("No data custodians found for dataset: %s".formatted(getDatasetIdentifier()));
       }
     } else {
-      logWarn(
-          "No study properties found for dataset: %s".formatted(getDatasetIdentifier()));
+      logWarn("No study properties found for dataset: %s".formatted(getDatasetIdentifier()));
     }
     return false;
   }
@@ -391,8 +391,7 @@ public class Dataset implements ConsentLogger {
     if (Objects.equals(user.getUserId(), getCreateUserId())) {
       return true;
     }
-    return getStudy() != null && Objects.equals(user.getUserId(),
-        getStudy().getCreateUserId());
+    return getStudy() != null && Objects.equals(user.getUserId(), getStudy().getCreateUserId());
   }
 
   @Override
@@ -428,5 +427,4 @@ public class Dataset implements ConsentLogger {
   public void setCreateUser(User createUser) {
     this.createUser = createUser;
   }
-
 }

@@ -49,10 +49,10 @@ public class VersionResource extends Resource {
         this.version = "error";
       } else {
         JsonObject jsonObject = new Gson().fromJson(props, JsonObject.class);
-        String longHash = Optional
-            .ofNullable(jsonObject.get("git.commit.id"))
-            .orElse(new JsonPrimitive("error"))
-            .getAsString();
+        String longHash =
+            Optional.ofNullable(jsonObject.get("git.commit.id"))
+                .orElse(new JsonPrimitive("error"))
+                .getAsString();
         String shortHash = longHash.substring(0, Math.min(longHash.length(), 12));
         JsonElement buildVersion = jsonObject.get("git.build.version");
         if (Objects.nonNull(buildVersion)) {
@@ -70,5 +70,4 @@ public class VersionResource extends Resource {
       return version;
     }
   }
-
 }

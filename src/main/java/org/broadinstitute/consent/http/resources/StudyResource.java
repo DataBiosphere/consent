@@ -55,9 +55,10 @@ public class StudyResource extends Resource {
   private final UserService userService;
   private final ElasticSearchService elasticSearchService;
 
-
   @Inject
-  public StudyResource(DatasetService datasetService, UserService userService,
+  public StudyResource(
+      DatasetService datasetService,
+      UserService userService,
       DatasetRegistrationService datasetRegistrationService,
       ElasticSearchService elasticSearchService) {
     this.datasetService = datasetService;
@@ -76,8 +77,10 @@ public class StudyResource extends Resource {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN})
-  public Response convertToStudy(@Auth DuosUser duosUser,
-      @PathParam("datasetIdentifier") String datasetIdentifier, String json) {
+  public Response convertToStudy(
+      @Auth DuosUser duosUser,
+      @PathParam("datasetIdentifier") String datasetIdentifier,
+      String json) {
     try {
       User user = duosUser.getUser();
       Dataset dataset = datasetService.findDatasetByIdentifier(user, datasetIdentifier);
@@ -98,8 +101,8 @@ public class StudyResource extends Resource {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN})
-  public Response updateCustodians(@Auth AuthUser authUser,
-      @PathParam("studyId") Integer studyId, String json) {
+  public Response updateCustodians(
+      @Auth AuthUser authUser, @PathParam("studyId") Integer studyId, String json) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       Gson gson = new Gson();
@@ -147,30 +150,30 @@ public class StudyResource extends Resource {
       }
 
       // If the user is not an admin, ensure that they are the study/dataset creator
-      if (!user.hasUserRole(UserRoles.ADMIN) && (!Objects.equals(study.getCreateUserId(),
-          user.getUserId()))) {
+      if (!user.hasUserRole(UserRoles.ADMIN)
+          && (!Objects.equals(study.getCreateUserId(), user.getUserId()))) {
         throw new NotFoundException("Study not found");
       }
 
       boolean deletable =
-          (study.getDatasets() == null || study.getDatasets().isEmpty()) || study.getDatasets()
-              .stream()
-              .allMatch(Dataset::getDeletable);
+          (study.getDatasets() == null || study.getDatasets().isEmpty())
+              || study.getDatasets().stream().allMatch(Dataset::getDeletable);
       if (!deletable) {
         throw new BadRequestException("Study has datasets that are in use and cannot be deleted.");
       }
       Set<Integer> studyDatasetIds = study.getDatasetIds();
       datasetService.deleteStudy(study, user);
       // Remove from ES index
-      studyDatasetIds.forEach(id -> {
-        try (Response indexResponse = elasticSearchService.deleteIndex(id, user.getUserId())) {
-          if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
-            logWarn("Non-OK response when deleting index for dataset with id: " + id);
-          }
-        } catch (IOException e) {
-          logException(e);
-        }
-      });
+      studyDatasetIds.forEach(
+          id -> {
+            try (Response indexResponse = elasticSearchService.deleteIndex(id, user.getUserId())) {
+              if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
+                logWarn("Non-OK response when deleting index for dataset with id: " + id);
+              }
+            } catch (IOException e) {
+              logException(e);
+            }
+          });
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -182,15 +185,15 @@ public class StudyResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
   @Timed
-  public Response getRegistrationFromStudy(@Auth DuosUser duosUser,
-      @PathParam("studyId") Integer studyId) {
+  public Response getRegistrationFromStudy(
+      @Auth DuosUser duosUser, @PathParam("studyId") Integer studyId) {
     try {
       Study study = datasetService.getStudyWithDatasetsById(duosUser.getUser(), studyId);
       checkPublicVisibilityForUser(study, duosUser.getUser());
       List<Dataset> datasets =
           Objects.nonNull(study.getDatasets()) ? study.getDatasets().stream().toList() : List.of();
-      DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1Builder().build(
-          study, datasets);
+      DatasetRegistrationSchemaV1 registration =
+          new DatasetRegistrationSchemaV1Builder().build(study, datasets);
       String entity = GsonUtil.buildGsonNullSerializer().toJson(registration);
       return Response.ok().entity(entity).build();
     } catch (Exception e) {
@@ -223,18 +226,16 @@ public class StudyResource extends Resource {
 
       // Manually validate the schema from an editing context. Validation with the schema tools
       // enforces it in a creation context but doesn't work for editing purposes.
-      DatasetRegistrationSchemaV1UpdateValidator updateValidator = new DatasetRegistrationSchemaV1UpdateValidator(
-          datasetService);
+      DatasetRegistrationSchemaV1UpdateValidator updateValidator =
+          new DatasetRegistrationSchemaV1UpdateValidator(datasetService);
       DatasetRegistrationSchemaV1 registration = updateValidator.deserializeRegistration(json);
 
       if (updateValidator.validate(existingStudy, registration)) {
         // Update study from registration
         Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
-        Study updatedStudy = datasetRegistrationService.updateStudyFromRegistration(
-            studyId,
-            registration,
-            user,
-            files);
+        Study updatedStudy =
+            datasetRegistrationService.updateStudyFromRegistration(
+                studyId, registration, user, files);
         try (Response indexResponse = elasticSearchService.indexStudy(studyId, user)) {
           if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
             logWarn("Non-OK response when reindexing study with id: " + studyId);

@@ -92,10 +92,7 @@ public class DataAccessAgreement {
     if (this.dacs == null) {
       this.dacs = new ArrayList<>();
     }
-    if (this.dacs
-        .stream()
-        .map(Dac::getDacId)
-        .noneMatch(d -> d.equals(dac.getDacId()))) {
+    if (this.dacs.stream().map(Dac::getDacId).noneMatch(d -> d.equals(dac.getDacId()))) {
       this.dacs.add(dac);
     }
   }

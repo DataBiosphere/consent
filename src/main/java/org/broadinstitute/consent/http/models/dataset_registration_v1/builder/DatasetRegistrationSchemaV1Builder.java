@@ -24,19 +24,31 @@ public class DatasetRegistrationSchemaV1Builder {
   public static final String nihICsSupportingStudy = "nihICsSupportingStudy";
   public static final String nihProgramOfficerName = "nihProgramOfficerName";
   public static final String nihInstitutionCenterSubmission = "nihInstitutionCenterSubmission";
-  public static final String nihGenomicProgramAdministratorName = "nihGenomicProgramAdministratorName";
+  public static final String nihGenomicProgramAdministratorName =
+      "nihGenomicProgramAdministratorName";
   public static final String multiCenterStudy = "multiCenterStudy";
   public static final String collaboratingSites = "collaboratingSites";
-  public static final String controlledAccessRequiredForGenomicSummaryResultsGSR = "controlledAccessRequiredForGenomicSummaryResultsGSR";
-  public static final String controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation = "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation";
-  public static final String alternativeDataSharingPlanReasons = "alternativeDataSharingPlanReasons";
-  public static final String alternativeDataSharingPlanExplanation = "alternativeDataSharingPlanExplanation";
-  public static final String alternativeDataSharingPlanFileName = "alternativeDataSharingPlanFileName";
-  public static final String alternativeDataSharingPlanDataSubmitted = "alternativeDataSharingPlanDataSubmitted";
-  public static final String alternativeDataSharingPlanDataReleased = "alternativeDataSharingPlanDataReleased";
-  public static final String alternativeDataSharingPlanTargetDeliveryDate = "alternativeDataSharingPlanTargetDeliveryDate";
-  public static final String alternativeDataSharingPlanTargetPublicReleaseDate = "alternativeDataSharingPlanTargetPublicReleaseDate";
-  public static final String alternativeDataSharingPlanAccessManagement = "alternativeDataSharingPlanAccessManagement";
+  public static final String controlledAccessRequiredForGenomicSummaryResultsGSR =
+      "controlledAccessRequiredForGenomicSummaryResultsGSR";
+  public static final String
+      controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation =
+          "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation";
+  public static final String alternativeDataSharingPlanReasons =
+      "alternativeDataSharingPlanReasons";
+  public static final String alternativeDataSharingPlanExplanation =
+      "alternativeDataSharingPlanExplanation";
+  public static final String alternativeDataSharingPlanFileName =
+      "alternativeDataSharingPlanFileName";
+  public static final String alternativeDataSharingPlanDataSubmitted =
+      "alternativeDataSharingPlanDataSubmitted";
+  public static final String alternativeDataSharingPlanDataReleased =
+      "alternativeDataSharingPlanDataReleased";
+  public static final String alternativeDataSharingPlanTargetDeliveryDate =
+      "alternativeDataSharingPlanTargetDeliveryDate";
+  public static final String alternativeDataSharingPlanTargetPublicReleaseDate =
+      "alternativeDataSharingPlanTargetPublicReleaseDate";
+  public static final String alternativeDataSharingPlanAccessManagement =
+      "alternativeDataSharingPlanAccessManagement";
   public static final String assets = "assets";
   public static final String accessManagement = "accessManagement";
   public static final String generalResearchUse = "generalResearchUse";
@@ -65,16 +77,12 @@ public class DatasetRegistrationSchemaV1Builder {
     DatasetRegistrationSchemaV1 schema = new SchemaFromStudy().build(study);
     if (!datasets.isEmpty()) {
       ConsentGroupFromDataset consentGroupFromDataset = new ConsentGroupFromDataset();
-      List<ConsentGroup> consentGroups = datasets
-        .stream()
-        .filter(Objects::nonNull)
-        .map(consentGroupFromDataset::build)
-        .toList();
+      List<ConsentGroup> consentGroups =
+          datasets.stream().filter(Objects::nonNull).map(consentGroupFromDataset::build).toList();
       if (!consentGroups.isEmpty()) {
         schema.setConsentGroups(consentGroups);
       }
     }
     return schema;
   }
-
 }

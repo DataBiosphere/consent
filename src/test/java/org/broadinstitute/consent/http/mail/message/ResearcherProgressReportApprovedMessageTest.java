@@ -36,7 +36,8 @@ class ResearcherProgressReportApprovedMessageTest extends AbstractTestHelper {
 
   @Test
   void testMessageSubject() {
-    var message = new ResearcherApprovedProgressReportMessage(new User(), "DAR-123", List.of(), "", false);
+    var message =
+        new ResearcherApprovedProgressReportMessage(new User(), "DAR-123", List.of(), "", false);
     assertEquals("Your DUOS Progress Report Results", message.createSubject());
   }
 
@@ -67,7 +68,8 @@ class ResearcherProgressReportApprovedMessageTest extends AbstractTestHelper {
         parsedTemplate.title());
     assertEquals(
         "Hello " + researcherUserName + ",", getElementTextById(parsedTemplate, "userName"));
-    assertTrue(templateString.contains("Your progress report application " + darCode + " was approved"));
+    assertTrue(
+        templateString.contains("Your progress report application " + darCode + " was approved"));
     assertTrue(templateString.contains(datasetId));
     assertTrue(templateString.contains(datasetName));
     assertTrue(templateString.contains(researcherEmail));
@@ -100,7 +102,11 @@ class ResearcherProgressReportApprovedMessageTest extends AbstractTestHelper {
         parsedTemplate.title());
     assertEquals(
         "Hello " + researcherUserName + ",", getElementTextById(parsedTemplate, "userName"));
-    assertTrue(templateString.contains("Your progress report application " + darCode + " was Rule Automated DAR (RADAR) approved"));
+    assertTrue(
+        templateString.contains(
+            "Your progress report application "
+                + darCode
+                + " was Rule Automated DAR (RADAR) approved"));
     assertTrue(templateString.contains(datasetId));
     assertTrue(templateString.contains(datasetName));
     assertTrue(templateString.contains(researcherEmail));

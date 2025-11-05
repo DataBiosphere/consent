@@ -51,8 +51,7 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
             response()
                 .withStatusCode(500)
                 .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
-                .withBody("Exception")
-        );
+                .withBody("Exception"));
   }
 
   public ServicesConfiguration config() {
@@ -348,5 +347,4 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
     dar.setData(data);
     return dar;
   }
-
 }

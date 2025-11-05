@@ -22,69 +22,55 @@ public class Election {
           + " e.archived AS e_archived, "
           + " e.latest AS e_latest ";
 
-  @JsonProperty
-  private Integer electionId;
+  @JsonProperty private Integer electionId;
 
-  @JsonProperty
-  private String electionType;
+  @JsonProperty private String electionType;
 
-  @JsonProperty
-  private Boolean finalVote;
+  @JsonProperty private Boolean finalVote;
 
-  @JsonProperty
-  private String status;
+  @JsonProperty private String status;
 
-  @JsonProperty
-  private Date createDate;
+  @JsonProperty private Date createDate;
 
-  @JsonProperty
-  private Date lastUpdate;
+  @JsonProperty private Date lastUpdate;
 
-  @JsonProperty
-  private Date finalVoteDate;
+  @JsonProperty private Date finalVoteDate;
 
-  @JsonProperty
-  private String referenceId;
+  @JsonProperty private String referenceId;
 
-  @JsonProperty
-  private String finalRationale;
+  @JsonProperty private String finalRationale;
 
-  @JsonProperty
-  private Boolean finalAccessVote;
+  @JsonProperty private Boolean finalAccessVote;
 
-  @JsonProperty
-  private Integer datasetId;
+  @JsonProperty private Integer datasetId;
 
-  @JsonProperty
-  private String displayId;
+  @JsonProperty private String displayId;
 
-  @JsonProperty
-  private String dataUseLetter;
+  @JsonProperty private String dataUseLetter;
 
-  @JsonProperty
-  private String dulName;
+  @JsonProperty private String dulName;
 
-  @JsonProperty
-  private Boolean archived;
+  @JsonProperty private Boolean archived;
 
-  @JsonProperty
-  private Integer version;
+  @JsonProperty private Integer version;
 
-  @JsonProperty
-  private String consentGroupName;
+  @JsonProperty private String consentGroupName;
 
-  @JsonProperty
-  private String projectTitle;
+  @JsonProperty private String projectTitle;
 
-  @JsonProperty
-  private Map<Integer, Vote> votes;
+  @JsonProperty private Map<Integer, Vote> votes;
 
-  public Election() {
-  }
+  public Election() {}
 
-  public Election(Integer electionId, String electionType,
-      String status, Date createDate,
-      String referenceId, Date lastUpdate, Boolean finalAccessVote, Integer datasetId) {
+  public Election(
+      Integer electionId,
+      String electionType,
+      String status,
+      Date createDate,
+      String referenceId,
+      Date lastUpdate,
+      Boolean finalAccessVote,
+      Integer datasetId) {
     this.electionId = electionId;
     this.electionType = electionType;
     this.status = status;
@@ -96,11 +82,18 @@ public class Election {
     this.votes = new HashMap<>();
   }
 
-  public Election(Integer electionId, String electionType,
-      String status, Date createDate,
-      String referenceId, Date lastUpdate, Boolean finalAccessVote, Integer datasetId,
+  public Election(
+      Integer electionId,
+      String electionType,
+      String status,
+      Date createDate,
+      String referenceId,
+      Date lastUpdate,
+      Boolean finalAccessVote,
+      Integer datasetId,
       Boolean archived,
-      String dulName, String dataUseLetter) {
+      String dulName,
+      String dataUseLetter) {
     this.electionId = electionId;
     this.electionType = electionType;
     this.status = status;
@@ -288,13 +281,12 @@ public class Election {
       return false;
     }
     Election election = (Election) o;
-    return Objects.equal(electionId, election.electionId) &&
-        Objects.equal(referenceId, election.referenceId);
+    return Objects.equal(electionId, election.electionId)
+        && Objects.equal(referenceId, election.referenceId);
   }
 
   @Override
   public int hashCode() {
     return Objects.hashCode(electionId, referenceId);
   }
-
 }

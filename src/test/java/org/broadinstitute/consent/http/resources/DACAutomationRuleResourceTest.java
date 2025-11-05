@@ -26,15 +26,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DACAutomationRuleResourceTest extends AbstractTestHelper {
 
-  @Mock
-  private DACAutomationRuleService ruleService;
-  @Mock
-  private DacService dacService;
-  @Mock
-  private UserService userService;
+  @Mock private DACAutomationRuleService ruleService;
+  @Mock private DacService dacService;
+  @Mock private UserService userService;
 
-  @Mock
-  private AuthUser authUser;
+  @Mock private AuthUser authUser;
 
   private DACAutomationRuleResource resource;
 
@@ -54,8 +50,8 @@ class DACAutomationRuleResourceTest extends AbstractTestHelper {
 
   @Test
   void testGetAvailableRulesAsAdmin() {
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(
-        createUserWithRole(UserRoles.Admin()));
+    when(userService.findUserByEmail(authUser.getEmail()))
+        .thenReturn(createUserWithRole(UserRoles.Admin()));
     when(dacService.findById(1)).thenReturn(new Dac());
 
     try (var response = resource.getAvailableRules(authUser, 1)) {
@@ -103,10 +99,14 @@ class DACAutomationRuleResourceTest extends AbstractTestHelper {
     User chairperson = createUserWithRole(role);
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(chairperson);
     when(dacService.findById(1)).thenReturn(new Dac());
-    when(ruleService.toggleRule(1, 1, chairperson)).thenReturn(
-        new AutomationRuleToggleResponse(1, true, Instant.now().toEpochMilli(),
-            chairperson.getDisplayName(),
-            chairperson.getEmail()));
+    when(ruleService.toggleRule(1, 1, chairperson))
+        .thenReturn(
+            new AutomationRuleToggleResponse(
+                1,
+                true,
+                Instant.now().toEpochMilli(),
+                chairperson.getDisplayName(),
+                chairperson.getEmail()));
 
     try (var response = resource.toggleRule(authUser, 1, 1)) {
       Assertions.assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -125,7 +125,6 @@ class DACAutomationRuleResourceTest extends AbstractTestHelper {
     }
   }
 
-
   private User createUserWithRole(UserRole role) {
     User user = new User();
     user.setUserId(randomInt(1, 100));
@@ -134,5 +133,4 @@ class DACAutomationRuleResourceTest extends AbstractTestHelper {
     user.addRole(role);
     return user;
   }
-
 }

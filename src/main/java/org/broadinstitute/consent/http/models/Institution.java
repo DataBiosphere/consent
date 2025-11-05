@@ -13,12 +13,12 @@ import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 public class Institution {
 
   public static final String QUERY_FIELDS_WITH_I_PREFIX =
-      " i.institution_id as i_id, " +
-          " i.institution_name as i_name, " +
-          " i.it_director_name as i_it_director_name, " +
-          " i.it_director_email as i_it_director_email, " +
-          " i.create_date as i_create_date, " +
-          " i.update_date as i_update_date ";
+      " i.institution_id as i_id, "
+          + " i.institution_name as i_name, "
+          + " i.it_director_name as i_it_director_name, "
+          + " i.it_director_email as i_it_director_email, "
+          + " i.create_date as i_create_date, "
+          + " i.update_date as i_update_date ";
 
   private Integer id;
   private String name;
@@ -39,7 +39,7 @@ public class Institution {
   private User createUser;
   private User updateUser;
 
-  //empty constructor sets all null values except create Date
+  // empty constructor sets all null values except create Date
   public Institution() {
     this.createDate = new Date();
   }
@@ -206,7 +206,6 @@ public class Institution {
     this.updateUser = updateUser;
   }
 
-
   @Override
   public boolean equals(Object institution) {
     if (institution == this) {
@@ -216,9 +215,7 @@ public class Institution {
       return false;
     }
     Institution other = (Institution) institution;
-    return new EqualsBuilder()
-        .append(id, other.getId())
-        .isEquals();
+    return new EqualsBuilder().append(id, other.getId()).isEquals();
   }
 
   @Override
@@ -233,7 +230,7 @@ public class Institution {
    * intentional field deletion.
    *
    * @param existing The existing institution to merge from. Must be a full institution entity with
-   *                 all required fields populated.
+   *     all required fields populated.
    */
   public Institution mergeUpdatableFields(Institution existing) {
     // These fields are not updatable, so we set them directly from the existing institution.
@@ -245,20 +242,22 @@ public class Institution {
 
     // The following fields are updatable, so we merge them from the existing institution.
     // Institution.name is not nullable, but it is updatable to a valid value.
-    if (this.getName() == null || StringUtils.isBlank(this.getName()) ) {
+    if (this.getName() == null || StringUtils.isBlank(this.getName())) {
       this.setName(existing.getName());
     }
     mergeStringField(this::getItDirectorName, existing::getItDirectorName, this::setItDirectorName);
-    mergeStringField(this::getItDirectorEmail, existing::getItDirectorEmail,
-        this::setItDirectorEmail);
+    mergeStringField(
+        this::getItDirectorEmail, existing::getItDirectorEmail, this::setItDirectorEmail);
     if (this.getDunsNumber() == null) {
       this.setDunsNumber(existing.getDunsNumber());
     }
     mergeStringField(this::getInstitutionUrl, existing::getInstitutionUrl, this::setInstitutionUrl);
     mergeStringField(this::getOrgChartUrl, existing::getOrgChartUrl, this::setOrgChartUrl);
-    mergeStringField(this::getVerificationUrl, existing::getVerificationUrl,
-        this::setVerificationUrl);
-    mergeStringField(this::getVerificationFilename, existing::getVerificationFilename,
+    mergeStringField(
+        this::getVerificationUrl, existing::getVerificationUrl, this::setVerificationUrl);
+    mergeStringField(
+        this::getVerificationFilename,
+        existing::getVerificationFilename,
         this::setVerificationFilename);
     if (this.getOrganizationType() == null) {
       this.setOrganizationType(existing.getOrganizationType());
@@ -278,15 +277,14 @@ public class Institution {
    * the payload is null. If the payload value is an empty string, it will be set to null to
    * represent an intentionally empty value.
    *
-   * @param payloadGetter  The getter for the payload field.
+   * @param payloadGetter The getter for the payload field.
    * @param existingGetter The getter for the existing field.
-   * @param payloadSetter  The setter for the payload field.
+   * @param payloadSetter The setter for the payload field.
    */
   private void mergeStringField(
       java.util.function.Supplier<String> payloadGetter,
       java.util.function.Supplier<String> existingGetter,
-      java.util.function.Consumer<String> payloadSetter
-  ) {
+      java.util.function.Consumer<String> payloadSetter) {
     String value = payloadGetter.get();
     if (value == null) {
       payloadSetter.accept(existingGetter.get());
@@ -294,5 +292,4 @@ public class Institution {
       payloadSetter.accept(null);
     }
   }
-
 }

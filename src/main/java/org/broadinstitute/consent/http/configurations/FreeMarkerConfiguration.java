@@ -6,11 +6,9 @@ import jakarta.validation.constraints.NotNull;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FreeMarkerConfiguration {
 
-  @NotNull
-  public String templateDirectory;
+  @NotNull public String templateDirectory;
 
-  @NotNull
-  public String defaultEncoding;
+  @NotNull public String defaultEncoding;
 
   public String getTemplateDirectory() {
     return templateDirectory;
@@ -27,5 +25,4 @@ public class FreeMarkerConfiguration {
   public void setDefaultEncoding(String defaultEncoding) {
     this.defaultEncoding = defaultEncoding;
   }
-
 }

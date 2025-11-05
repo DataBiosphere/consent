@@ -19,7 +19,6 @@ public class StudyTerm {
   private List<String> dataTypes;
   private Map<String, Object> assets;
 
-
   public String getDescription() {
     return description;
   }
@@ -44,9 +43,13 @@ public class StudyTerm {
     this.studyId = studyId;
   }
 
-  public String getPhsId() { return phsId; }
+  public String getPhsId() {
+    return phsId;
+  }
 
-  public void setPhsId(String phsId) { this.phsId = phsId; }
+  public void setPhsId(String phsId) {
+    this.phsId = phsId;
+  }
 
   public String getPhenotype() {
     return phenotype;
@@ -84,8 +87,7 @@ public class StudyTerm {
     return dataSubmitterId;
   }
 
-  public void setDataSubmitterId(
-      Integer dataSubmitterId) {
+  public void setDataSubmitterId(Integer dataSubmitterId) {
     this.dataSubmitterId = dataSubmitterId;
   }
 

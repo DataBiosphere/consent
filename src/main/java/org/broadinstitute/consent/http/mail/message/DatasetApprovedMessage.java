@@ -23,9 +23,13 @@ public class DatasetApprovedMessage extends MailMessage {
 
   @Override
   public Object createModel(String serverUrl) {
-    return Map.of("dataSubmitterName", toUser.getDisplayName(),
-        "datasetName", datasetName,
-        "dacName", dacName);
+    return Map.of(
+        "dataSubmitterName",
+        toUser.getDisplayName(),
+        "datasetName",
+        datasetName,
+        "dacName",
+        dacName);
   }
 
   @Override

@@ -14,8 +14,7 @@ public enum DraftType {
   private final String value;
 
   public static List<String> getValues() {
-    return Stream.of(DraftType.values()).map(DraftType::getValue)
-        .collect(Collectors.toList());
+    return Stream.of(DraftType.values()).map(DraftType::getValue).collect(Collectors.toList());
   }
 
   DraftType(String value) {
@@ -27,10 +26,10 @@ public enum DraftType {
   }
 
   public static DraftType fromValue(String value) {
-    Optional<DraftType> type = EnumSet.allOf(DraftType.class).
-        stream().
-        filter(t -> t.getValue().equalsIgnoreCase(value)).
-        findFirst();
+    Optional<DraftType> type =
+        EnumSet.allOf(DraftType.class).stream()
+            .filter(t -> t.getValue().equalsIgnoreCase(value))
+            .findFirst();
     return type.orElse(null);
   }
 }

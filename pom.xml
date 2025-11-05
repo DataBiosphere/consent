@@ -26,6 +26,7 @@
     <mockito.version>5.20.0</mockito.version>
     <sonar.plugin.version>5.2.0.4988</sonar.plugin.version>
     <netty.override.version>4.2.7.Final</netty.override.version>
+    <spotless.version>3.0.0</spotless.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -97,6 +98,48 @@
     </testResources>
 
     <plugins>
+
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>${spotless.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>${spotless.version}</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <java>
+            <googleJavaFormat/>
+          </java>
+        </configuration>
+        <executions>
+          <execution>
+            <id>spotless-check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>verify</phase>
+            <configuration>
+              <!-- In CI workflows, run verify. -->
+              <skip>${env.CI != true}</skip>
+            </configuration>
+          </execution>
+          <execution>
+            <id>spotless-apply</id>
+            <goals>
+              <goal>apply</goal>
+            </goals>
+            <phase>process-sources</phase>
+            <configuration>
+              <!-- In local workflows, run apply. -->
+              <skip>${env.CI}</skip>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
       <plugin>
         <groupId>org.owasp</groupId>

@@ -27,15 +27,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-
 @ExtendWith(MockitoExtension.class)
 class GCSServiceTest extends AbstractTestHelper {
 
-  @Mock
-  private Storage storage;
+  @Mock private Storage storage;
 
-  @Mock
-  private Blob blob;
+  @Mock private Blob blob;
 
   private StoreConfiguration config;
 
@@ -60,8 +57,8 @@ class GCSServiceTest extends AbstractTestHelper {
     UUID id = UUID.randomUUID();
     BlobId blobId = BlobId.of(config.getEndpoint(), id.toString());
     when(blob.getBlobId()).thenReturn(blobId);
-    when(storage.create(any(BlobInfo.class), any(), new Storage.BlobTargetOption[0])).thenReturn(
-        blob);
+    when(storage.create(any(BlobInfo.class), any(), new Storage.BlobTargetOption[0]))
+        .thenReturn(blob);
     initStore();
 
     InputStream is = IOUtils.toInputStream("content", Charset.defaultCharset());

@@ -50,10 +50,8 @@ public class OntologyHealthCheck extends HealthCheck implements Managed {
   }
 
   @Override
-  public void start() {
-  }
+  public void start() {}
 
   @Override
-  public void stop() {
-  }
+  public void stop() {}
 }

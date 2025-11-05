@@ -53,8 +53,7 @@ public class StudyReducer implements LinkedHashMapRowReducer<Integer, Study>, Ro
     }
 
     if (hasNonZeroColumn(rowView, "fso_file_storage_object_id")
-        && Objects.nonNull(rowView.getColumn("fso_file_storage_object_id", Integer.class))
-    ) {
+        && Objects.nonNull(rowView.getColumn("fso_file_storage_object_id", Integer.class))) {
       FileStorageObject fileStorageObject = rowView.getRow(FileStorageObject.class);
 
       switch (fileStorageObject.getCategory()) {
@@ -63,14 +62,13 @@ public class StudyReducer implements LinkedHashMapRowReducer<Integer, Study>, Ro
             study.setAlternativeDataSharingPlan(fileStorageObject);
           }
         }
-        default -> {
-        }
+        default -> {}
       }
     }
   }
 
   private boolean isFileNewer(FileStorageObject incomingFile, FileStorageObject existingFile) {
-    return Objects.isNull(existingFile) || incomingFile.getLatestUpdateDate()
-        .isAfter(existingFile.getLatestUpdateDate());
+    return Objects.isNull(existingFile)
+        || incomingFile.getLatestUpdateDate().isAfter(existingFile.getLatestUpdateDate());
   }
 }

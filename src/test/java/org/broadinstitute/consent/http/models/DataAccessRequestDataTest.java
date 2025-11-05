@@ -14,7 +14,8 @@ class DataAccessRequestDataTest {
 
   @Test
   void serialization() {
-    String exampleDarData = """
+    String exampleDarData =
+        """
         {
           "institution": "The Broad Institute of MIT and Harvard",
           "projectTitle": "title",
@@ -22,7 +23,8 @@ class DataAccessRequestDataTest {
           "checkNihDataOnly": false
         }""";
     DataAccessRequestData resultingDarData = DataAccessRequestData.fromString(exampleDarData);
-    String expectedDarData = """
+    String expectedDarData =
+        """
         {"projectTitle":"title","checkNihDataOnly":false}""";
     // does not include fields removed from the object (ex. checkCollaborator, institution)
     assertEquals(expectedDarData, resultingDarData.toString());
@@ -67,7 +69,8 @@ class DataAccessRequestDataTest {
 
   @Test
   void testPopulateDARDataWithValidJson() {
-    String validJson = """
+    String validJson =
+        """
             {
                 "projectTitle": "Test Project",
                 "checkNihDataOnly": true
@@ -81,12 +84,14 @@ class DataAccessRequestDataTest {
 
   @Test
   void testPopulateDARDataWithInvalidJson() {
-    String invalidJson = """
+    String invalidJson =
+        """
             {
                 "projectTitle": "Test Project",
                 "checkNihDataOnly": true,
         """;
-    assertThrows(BadRequestException.class, () -> DataAccessRequestData.populateDARData(invalidJson));
+    assertThrows(
+        BadRequestException.class, () -> DataAccessRequestData.populateDARData(invalidJson));
   }
 
   @Test

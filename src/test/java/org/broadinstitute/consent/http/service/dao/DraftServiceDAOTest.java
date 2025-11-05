@@ -55,13 +55,12 @@ class DraftServiceDAOTest extends DAOTestHelper {
   @BeforeEach
   void beforeEachTestSetup() throws IOException {
     gcsService = Mockito.mock(GCSService.class);
-    when(gcsService.storeDocument(any(), anyString(), any())).thenReturn(
-        BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
-    DraftFileStorageServiceDAO draftFileStorageServiceDAO = new DraftFileStorageServiceDAO(jdbi,
-        gcsService, fileStorageObjectDAO);
+    when(gcsService.storeDocument(any(), anyString(), any()))
+        .thenReturn(BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+    DraftFileStorageServiceDAO draftFileStorageServiceDAO =
+        new DraftFileStorageServiceDAO(jdbi, gcsService, fileStorageObjectDAO);
     draftServiceDAO = new DraftServiceDAO(jdbi, draftDAO, draftFileStorageServiceDAO);
   }
-
 
   @Test
   void testCreateDraft() throws SQLException {
@@ -100,13 +99,15 @@ class DraftServiceDAOTest extends DAOTestHelper {
     adminUser.addRole(UserRoles.Admin());
     DraftInterface draft = createDraft(goodUser, 4);
     assertThat(draftDAO.findDraftsByUserId(goodUser.getUserId()), hasSize(1));
-    assertThrows(NotFoundException.class,
+    assertThrows(
+        NotFoundException.class,
         () -> draftServiceDAO.getAuthorizedDraft(UUID.randomUUID(), goodUser));
-    assertThrows(NotAuthorizedException.class,
+    assertThrows(
+        NotAuthorizedException.class,
         () -> draftServiceDAO.getAuthorizedDraft(draft.getUUID(), badUser));
     assertThat(draftDAO.findDraftsByUserId(adminUser.getUserId()), hasSize(0));
-    DraftInterface adminVisibleDraft = draftServiceDAO.getAuthorizedDraft(draft.getUUID(),
-        adminUser);
+    DraftInterface adminVisibleDraft =
+        draftServiceDAO.getAuthorizedDraft(draft.getUUID(), adminUser);
     assertEquals(adminVisibleDraft.getUUID(), draft.getUUID());
     assertEquals(adminVisibleDraft.getName(), draft.getName());
     assertThat(adminVisibleDraft.getStoredFiles(), hasSize(4));
@@ -157,8 +158,8 @@ class DraftServiceDAOTest extends DAOTestHelper {
     for (FileStorageObject file : storedFiles) {
       draftServiceDAO.deleteDraftAttachment(draft, user, file.getFileStorageObjectId());
     }
-    assertThat(draftServiceDAO.getAuthorizedDraft(draft.getUUID(), user).getStoredFiles(),
-        hasSize(0));
+    assertThat(
+        draftServiceDAO.getAuthorizedDraft(draft.getUUID(), user).getStoredFiles(), hasSize(0));
   }
 
   @Test
@@ -200,18 +201,17 @@ class DraftServiceDAOTest extends DAOTestHelper {
 
   private Map<String, FormDataBodyPart> getRandomFiles(Integer count) {
     Map<String, FormDataBodyPart> mapOfFiles = new HashMap<>();
-    return IntStream.range(0, count).mapToObj("file%d"::formatted).collect(Collectors.toMap(
-        Function.identity(), this::getFormDataBodyPartMock));
+    return IntStream.range(0, count)
+        .mapToObj("file%d"::formatted)
+        .collect(Collectors.toMap(Function.identity(), this::getFormDataBodyPartMock));
   }
 
   private FormDataBodyPart getFormDataBodyPartMock(String name) {
     FormDataBodyPart part = mock(FormDataBodyPart.class);
     when(part.getName()).thenReturn(name);
     when(part.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
-    when(part.getValueAs(InputStream.class)).thenReturn(
-        new ByteArrayInputStream(EMPTY_JSON_DOCUMENT.getBytes()));
+    when(part.getValueAs(InputStream.class))
+        .thenReturn(new ByteArrayInputStream(EMPTY_JSON_DOCUMENT.getBytes()));
     return part;
   }
-
-
 }

@@ -31,7 +31,8 @@ class SubmittedCloseoutMessageTest {
 
   @Test
   void testMessageSubject() {
-    var message = new SubmittedCloseoutMessage(toUser, "DAR-123", "ref-456", "http://testServerUrl");
+    var message =
+        new SubmittedCloseoutMessage(toUser, "DAR-123", "ref-456", "http://testServerUrl");
     assertEquals("DAR DAR-123 Closeout Available for Review", message.createSubject());
   }
 

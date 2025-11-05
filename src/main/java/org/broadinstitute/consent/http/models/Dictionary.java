@@ -4,15 +4,12 @@ public class Dictionary {
 
   private Integer keyId;
   private String key;
-  @Deprecated
-  private Boolean required;
-  @Deprecated
-  private Integer displayOrder;
-  @Deprecated
-  private Integer receiveOrder;
+  @Deprecated private Boolean required;
+  @Deprecated private Integer displayOrder;
+  @Deprecated private Integer receiveOrder;
 
-  public Dictionary(Integer keyId, String key, Boolean required, Integer displayOrder,
-      Integer receiveOrder) {
+  public Dictionary(
+      Integer keyId, String key, Boolean required, Integer displayOrder, Integer receiveOrder) {
     this(key, required, displayOrder, receiveOrder);
     this.keyId = keyId;
   }

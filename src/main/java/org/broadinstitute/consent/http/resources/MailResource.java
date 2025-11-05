@@ -38,12 +38,14 @@ public class MailResource {
   @Produces("application/json")
   @Path("/type/{type}")
   @RolesAllowed({ADMIN})
-  public Response getEmailByType(@Auth AuthUser authUser,
+  public Response getEmailByType(
+      @Auth AuthUser authUser,
       @PathParam("type") EmailType emailType,
       @DefaultValue("20") @QueryParam("limit") Integer limit,
       @DefaultValue("0") @QueryParam("offset") Integer offset) {
     validateLimitAndOffset(limit, offset);
-    return Response.ok().entity(emailService.fetchEmailMessagesByType(emailType, limit, offset))
+    return Response.ok()
+        .entity(emailService.fetchEmailMessagesByType(emailType, limit, offset))
         .build();
   }
 
@@ -51,12 +53,14 @@ public class MailResource {
   @Produces("application/json")
   @Path("/user/{userId}")
   @RolesAllowed({ADMIN})
-  public Response getEmailByUser(@Auth AuthUser authUser,
+  public Response getEmailByUser(
+      @Auth AuthUser authUser,
       @PathParam("userId") Integer userId,
       @DefaultValue("20") @QueryParam("limit") Integer limit,
       @DefaultValue("0") @QueryParam("offset") Integer offset) {
     validateLimitAndOffset(limit, offset);
-    return Response.ok().entity(emailService.fetchEmailMessagesByUserId(userId, limit, offset))
+    return Response.ok()
+        .entity(emailService.fetchEmailMessagesByUserId(userId, limit, offset))
         .build();
   }
 
@@ -64,25 +68,29 @@ public class MailResource {
   @Produces("application/json")
   @Path("/range")
   @RolesAllowed({ADMIN})
-  public Response getEmailByDateRange(@Auth AuthUser authUser,
+  public Response getEmailByDateRange(
+      @Auth AuthUser authUser,
       @QueryParam("start") String start,
       @QueryParam("end") String end,
       @DefaultValue("20") @QueryParam("limit") Integer limit,
       @DefaultValue("0") @QueryParam("offset") Integer offset) {
     validateLimitAndOffset(limit, offset);
     DateFormat df = new SimpleDateFormat("MM/dd/yyyy");
-    //if df.setLenient(false) were not set, dates like 55/97/2022 would parse and the year would be advanced.
+    // if df.setLenient(false) were not set, dates like 55/97/2022 would parse and the year would be
+    // advanced.
     df.setLenient(false);
     try {
       Date startDate = df.parse(start);
-      Date endDate = StringUtils.isNotBlank(end) ?
-          df.parse(end) :
-          Date.from(LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC));
+      Date endDate =
+          StringUtils.isNotBlank(end)
+              ? df.parse(end)
+              : Date.from(LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC));
       return Response.ok()
           .entity(emailService.fetchEmailMessagesByCreateDate(startDate, endDate, limit, offset))
           .build();
     } catch (ParseException pe) {
-      return Response.status(Response.Status.BAD_REQUEST).entity(
+      return Response.status(Response.Status.BAD_REQUEST)
+          .entity(
               "Invalid date format provided for begin or end.  Please use MM/dd/yyyy (e.g. 05/21/2022)")
           .build();
     }

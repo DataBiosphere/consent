@@ -12,8 +12,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class DateTypeAdapter
-    implements JsonSerializer<Date>, JsonDeserializer<Date> {
+public class DateTypeAdapter implements JsonSerializer<Date>, JsonDeserializer<Date> {
 
   @Override
   public JsonElement serialize(Date src, Type srcType, JsonSerializationContext context) {

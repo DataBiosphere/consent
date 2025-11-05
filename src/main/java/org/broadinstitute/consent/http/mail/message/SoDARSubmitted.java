@@ -8,13 +8,15 @@ import org.broadinstitute.consent.http.models.User;
 
 public class SoDARSubmitted extends MailMessage {
 
-  private static final String SUBJECT = "Broad Data Use Oversight System - Signing Official - New Data Access Request Submitted From Your Institution";
+  private static final String SUBJECT =
+      "Broad Data Use Oversight System - Signing Official - New Data Access Request Submitted From Your Institution";
   private final String darCode;
   private final User researcher;
   private final String referenceId;
   private final List<Dataset> datasets;
 
-  public SoDARSubmitted(User toUser, String darCode, User researcher, String referenceId, List<Dataset> datasets) {
+  public SoDARSubmitted(
+      User toUser, String darCode, User researcher, String referenceId, List<Dataset> datasets) {
     super(toUser, EmailType.SO_DAR_SUBMITTED);
     this.darCode = darCode;
     this.researcher = researcher;

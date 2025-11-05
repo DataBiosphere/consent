@@ -20,9 +20,8 @@ public class FileStorageObjectService implements ConsentLogger {
   GCSService gcsService;
   FileStorageObjectDAO fileStorageObjectDAO;
 
-
-  public FileStorageObjectService(FileStorageObjectDAO fileStorageObjectDAO,
-      GCSService gcsService) {
+  public FileStorageObjectService(
+      FileStorageObjectDAO fileStorageObjectDAO, GCSService gcsService) {
     this.fileStorageObjectDAO = fileStorageObjectDAO;
     this.gcsService = gcsService;
   }
@@ -33,31 +32,28 @@ public class FileStorageObjectService implements ConsentLogger {
       String mediaType,
       FileCategory category,
       String entityId,
-      Integer createUserId
-  ) throws IOException {
+      Integer createUserId)
+      throws IOException {
 
     BlobId blobId;
     try {
       // upload to GCS
-      blobId = gcsService.storeDocument(
-          content,
-          mediaType,
-          UUID.randomUUID());
+      blobId = gcsService.storeDocument(content, mediaType, UUID.randomUUID());
     } catch (Exception e) {
       logWarn("Failed to upload file for user id " + createUserId + ": " + e.getMessage());
       throw e;
     }
 
     // insert file
-    Integer fileStorageObjectId = fileStorageObjectDAO.insertNewFile(
-        fileName,
-        category.getValue(),
-        blobId.toGsUtilUri(),
-        mediaType,
-        entityId,
-        createUserId,
-        Instant.now()
-    );
+    Integer fileStorageObjectId =
+        fileStorageObjectDAO.insertNewFile(
+            fileName,
+            category.getValue(),
+            blobId.toGsUtilUri(),
+            mediaType,
+            entityId,
+            createUserId,
+            Instant.now());
 
     return fileStorageObjectDAO.findFileById(fileStorageObjectId);
   }
@@ -80,9 +76,11 @@ public class FileStorageObjectService implements ConsentLogger {
   private void fetchAndPopulateMultipleUploadedFiles(List<FileStorageObject> fileStorageObjects)
       throws NotFoundException {
     try {
-      Map<BlobId, InputStream> documentMap = gcsService.getDocuments(
-          fileStorageObjects.stream().map(FileStorageObject::getBlobId)
-              .collect(Collectors.toList()));
+      Map<BlobId, InputStream> documentMap =
+          gcsService.getDocuments(
+              fileStorageObjects.stream()
+                  .map(FileStorageObject::getBlobId)
+                  .collect(Collectors.toList()));
 
       fileStorageObjects.forEach((fso) -> fso.setUploadedFile(documentMap.get(fso.getBlobId())));
     } catch (NotFoundException e) {
@@ -94,18 +92,14 @@ public class FileStorageObjectService implements ConsentLogger {
     }
   }
 
-  public FileStorageObject fetchById(
-      Integer fileStorageObjectId
-  ) throws NotFoundException {
+  public FileStorageObject fetchById(Integer fileStorageObjectId) throws NotFoundException {
     FileStorageObject fileStorageObject = fileStorageObjectDAO.findFileById(fileStorageObjectId);
     // download file from GCS
     fetchAndPopulateUploadedFile(fileStorageObject);
     return fileStorageObject;
   }
 
-  public List<FileStorageObject> fetchAllByEntityId(
-      String entityId
-  ) throws NotFoundException {
+  public List<FileStorageObject> fetchAllByEntityId(String entityId) throws NotFoundException {
     List<FileStorageObject> fileStorageObjects = fileStorageObjectDAO.findFilesByEntityId(entityId);
     // download all files from GCS
     fetchAndPopulateMultipleUploadedFiles(fileStorageObjects);
@@ -113,10 +107,9 @@ public class FileStorageObjectService implements ConsentLogger {
   }
 
   public List<FileStorageObject> fetchAllByEntityIdAndCategory(
-      String entityId, FileCategory category
-  ) throws NotFoundException {
-    List<FileStorageObject> fileStorageObjects = fileStorageObjectDAO.findFilesByEntityIdAndCategory(
-        entityId, category.getValue());
+      String entityId, FileCategory category) throws NotFoundException {
+    List<FileStorageObject> fileStorageObjects =
+        fileStorageObjectDAO.findFilesByEntityIdAndCategory(entityId, category.getValue());
     // download all files from GCS
     fetchAndPopulateMultipleUploadedFiles(fileStorageObjects);
     return fileStorageObjects;

@@ -91,8 +91,7 @@ public class StudyConversion {
     return nihAnvilUse;
   }
 
-  public void setNihAnvilUse(
-      String nihAnvilUse) {
+  public void setNihAnvilUse(String nihAnvilUse) {
     this.nihAnvilUse = nihAnvilUse;
   }
 
@@ -167,5 +166,4 @@ public class StudyConversion {
     }
     return props;
   }
-
 }

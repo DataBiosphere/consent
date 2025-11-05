@@ -20,9 +20,9 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 @RegisterRowMapper(FileStorageObjectMapperWithFSOPrefix.class)
 public interface StudyDAO extends Transactional<StudyDAO> {
 
-
   @UseRowReducer(StudyReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT
           s.*,
           sp.study_property_id AS sp_study_property_id,
@@ -32,8 +32,9 @@ public interface StudyDAO extends Transactional<StudyDAO> {
           sp.type AS sp_type,
           d.dataset_id AS s_dataset_id,
       """
-      + FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX + " " +
-      """
+          + FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX
+          + " "
+          + """
               FROM
                   study s
               LEFT JOIN study_property sp ON sp.study_id = s.study_id
@@ -43,7 +44,8 @@ public interface StudyDAO extends Transactional<StudyDAO> {
           """)
   Study findStudyById(@Bind("studyId") Integer studyId);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
           INSERT INTO study (
               name, description,
               pi_name, data_types,
@@ -59,7 +61,8 @@ public interface StudyDAO extends Transactional<StudyDAO> {
           )
       """)
   @GetGeneratedKeys
-  Integer insertStudy(@Bind("name") String name,
+  Integer insertStudy(
+      @Bind("name") String name,
       @Bind("description") String description,
       @Bind("piName") String piName,
       @Bind("dataTypes") List<String> dataTypes,
@@ -68,7 +71,8 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       @Bind("createDate") Instant createDate,
       @Bind("uuid") UUID uuid);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
           UPDATE study
           SET name = :name,
               description = :description,
@@ -79,7 +83,8 @@ public interface StudyDAO extends Transactional<StudyDAO> {
               update_date = :updateDate
           WHERE study_id = :studyId
       """)
-  void updateStudy(@Bind("studyId") Integer studyId,
+  void updateStudy(
+      @Bind("studyId") Integer studyId,
       @Bind("name") String name,
       @Bind("description") String description,
       @Bind("piName") String piName,
@@ -88,7 +93,8 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       @Bind("updateUserId") Integer updateUserId,
       @Bind("updateDate") Instant updateDate);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
           INSERT INTO study_property (
               study_id, key,
               type, value
@@ -102,10 +108,10 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       @Bind("studyId") Integer studyId,
       @Bind("key") String key,
       @Bind("type") String type,
-      @Bind("value") String value
-  );
+      @Bind("value") String value);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
           UPDATE study_property
           SET value = :value
           WHERE study_id = :studyId
@@ -116,10 +122,10 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       @Bind("studyId") Integer studyId,
       @Bind("key") String key,
       @Bind("type") String type,
-      @Bind("value") String value
-  );
+      @Bind("value") String value);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
           WITH property_deletes AS (
               DELETE from study_property where study_id = :studyId returning study_id
           )
@@ -128,9 +134,9 @@ public interface StudyDAO extends Transactional<StudyDAO> {
   void deleteStudyByStudyId(@Bind("studyId") Integer studyId);
 
   @UseRowReducer(StudyReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT * FROM study WHERE name = :name
       """)
   Study findStudyByName(@Bind("name") String name);
-
 }

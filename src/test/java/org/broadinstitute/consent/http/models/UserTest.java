@@ -34,7 +34,10 @@ class UserTest {
   @ParameterizedTest
   @EnumSource(UserRoles.class)
   void testHasUserRole(UserRoles roleToTest) {
-    Set<UserRoles> otherRoles = EnumSet.allOf(UserRoles.class).stream().filter(u -> u != roleToTest).collect(Collectors.toSet());
+    Set<UserRoles> otherRoles =
+        EnumSet.allOf(UserRoles.class).stream()
+            .filter(u -> u != roleToTest)
+            .collect(Collectors.toSet());
     User user = new User();
     user.addRole(new UserRole(roleToTest.getRoleId(), roleToTest.getRoleName()));
     assertTrue(user.hasUserRole(roleToTest));
@@ -66,7 +69,8 @@ class UserTest {
   void testHasAnyRole() {
     User user = new User();
     user.addRole(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
-    user.addRole(new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
+    user.addRole(
+        new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName()));
     // User has ADMIN and RESEARCHER roles, test cases where at least one matches
     assertTrue(user.hasAnyUserRole(List.of(UserRoles.ADMIN, UserRoles.RESEARCHER)));
     assertTrue(user.hasAnyUserRole(List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON)));

@@ -10,18 +10,17 @@ import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 
-/**
- * Set the create user and update user on an institution
- */
-public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Integer, Institution>,
-    RowMapperHelper {
+/** Set the create user and update user on an institution */
+public class InstitutionWithUsersReducer
+    implements LinkedHashMapRowReducer<Integer, Institution>, RowMapperHelper {
 
   @Override
   public void accumulate(Map<Integer, Institution> map, RowView rowView) {
 
-    Institution institution = map.computeIfAbsent(
-        rowView.getColumn("institution_id", Integer.class),
-        id -> rowView.getRow(Institution.class));
+    Institution institution =
+        map.computeIfAbsent(
+            rowView.getColumn("institution_id", Integer.class),
+            id -> rowView.getRow(Institution.class));
 
     User createUser = new User();
     if (Objects.nonNull(rowView.getColumn("u_user_id", Integer.class))) {
@@ -51,5 +50,4 @@ public class InstitutionWithUsersReducer implements LinkedHashMapRowReducer<Inte
       }
     }
   }
-
 }

@@ -5,41 +5,28 @@ import java.util.Date;
 
 public class DatasetAudit {
 
-  @JsonProperty
-  private Integer dataSetAuditId;
+  @JsonProperty private Integer dataSetAuditId;
 
-  @JsonProperty
-  private Integer datasetId;
+  @JsonProperty private Integer datasetId;
 
-  @JsonProperty
-  private String objectId;
+  @JsonProperty private String objectId;
 
-  @JsonProperty
-  private String name;
+  @JsonProperty private String name;
 
-  @JsonProperty
-  private Date date;
+  @JsonProperty private Date date;
 
   @Deprecated(forRemoval = true)
   @JsonProperty
   private Boolean active;
 
-  @JsonProperty
-  private Integer user;
+  @JsonProperty private Integer user;
 
-  @JsonProperty
-  private String action;
+  @JsonProperty private String action;
 
-  public DatasetAudit() {
-  }
+  public DatasetAudit() {}
 
   public DatasetAudit(
-      Integer datasetId,
-      String objectId,
-      String name,
-      Date date,
-      Integer user,
-      String action) {
+      Integer datasetId, String objectId, String name, Date date, Integer user, String action) {
     this.datasetId = datasetId;
     this.objectId = objectId;
     this.name = name;

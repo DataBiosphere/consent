@@ -25,7 +25,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-// This is a utility test to verify a pattern for Database Transactions continues to be supported and works as expected.
+// This is a utility test to verify a pattern for Database Transactions continues to be supported
+// and works as expected.
 // It should be updated to include new patterns that are developed.
 @ExtendWith(MockitoExtension.class)
 class UserServiceDAOTest extends DAOTestHelper {
@@ -57,21 +58,22 @@ class UserServiceDAOTest extends DAOTestHelper {
     assertTrue(Optional.ofNullable(testUser.getInstitutionId()).isEmpty());
     UserRole userRole = UserRoles.SigningOfficial();
     try {
-      //it's necessary to copy the code in from the service dao layer because we're testing that the transaction
-      //does indeed roll back from postgres.  mocking won't confirm that behavior.
-      jdbi.useTransaction(transactionHandle -> {
-        UserDAO userDAOT = transactionHandle.attach(UserDAO.class);
-        UserRoleDAO userRoleDAOT = transactionHandle.attach(UserRoleDAO.class);
-        userDAOT.updateInstitutionId(testUser.getUserId(), institution.getId());
-        userRoleDAOT.insertSingleUserRole(userRole.getRoleId(), testUser.getUserId());
-        throw new RuntimeException("interrupt the transaction.");
-      });
+      // it's necessary to copy the code in from the service dao layer because we're testing that
+      // the transaction
+      // does indeed roll back from postgres.  mocking won't confirm that behavior.
+      jdbi.useTransaction(
+          transactionHandle -> {
+            UserDAO userDAOT = transactionHandle.attach(UserDAO.class);
+            UserRoleDAO userRoleDAOT = transactionHandle.attach(UserRoleDAO.class);
+            userDAOT.updateInstitutionId(testUser.getUserId(), institution.getId());
+            userRoleDAOT.insertSingleUserRole(userRole.getRoleId(), testUser.getUserId());
+            throw new RuntimeException("interrupt the transaction.");
+          });
     } catch (Exception e) {
       User fetchedUser = userDAO.findUserById(testUser.getUserId());
       assertEquals(fetchedUser.getUserId(), testUser.getUserId());
       assertEquals(1, fetchedUser.getRoles().size());
-      assertEquals(UserRoles.RESEARCHER.getRoleId(),
-          fetchedUser.getRoles().get(0).getRoleId());
+      assertEquals(UserRoles.RESEARCHER.getRoleId(), fetchedUser.getRoles().get(0).getRoleId());
       assertNotEquals(fetchedUser.getInstitutionId(), institution.getId());
       assertTrue(Optional.ofNullable(fetchedUser.getInstitutionId()).isEmpty());
       exceptionCaught = true;
@@ -83,17 +85,19 @@ class UserServiceDAOTest extends DAOTestHelper {
 
   private Institution createInstitution() {
     User createUser = createUser();
-    Integer id = institutionDAO.insertInstitution(RandomStringUtils.randomAlphabetic(20),
-        "itDirectorName",
-        "itDirectorEmail",
-        RandomStringUtils.randomAlphabetic(10),
-        new Random().nextInt(),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10),
-        OrganizationType.NON_PROFIT.getValue(),
-        createUser.getUserId(),
-        createUser.getCreateDate());
+    Integer id =
+        institutionDAO.insertInstitution(
+            RandomStringUtils.randomAlphabetic(20),
+            "itDirectorName",
+            "itDirectorEmail",
+            RandomStringUtils.randomAlphabetic(10),
+            new Random().nextInt(),
+            RandomStringUtils.randomAlphabetic(10),
+            RandomStringUtils.randomAlphabetic(10),
+            RandomStringUtils.randomAlphabetic(10),
+            OrganizationType.NON_PROFIT.getValue(),
+            createUser.getUserId(),
+            createUser.getCreateDate());
     Institution institution = institutionDAO.findInstitutionById(id);
     User updateUser = createUser();
     institutionDAO.updateInstitutionById(
@@ -108,8 +112,7 @@ class UserServiceDAOTest extends DAOTestHelper {
         institution.getVerificationFilename(),
         institution.getOrganizationType().getValue(),
         updateUser.getUserId(),
-        new Date()
-    );
+        new Date());
     return institutionDAO.findInstitutionById(id);
   }
 

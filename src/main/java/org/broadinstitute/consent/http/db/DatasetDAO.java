@@ -48,11 +48,13 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
 
   /**
    * Find a Dataset by id.
+   *
    * @param datasetId The dataset id
    * @return Dataset
    */
   @UseRowReducer(DatasetReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
               d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
               d.study_id, d.indexed_date,
@@ -90,11 +92,13 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   /**
    * Find a minimal version of a Dataset by alias. This query excludes file and study information
    * which is often not necessary for many operations.
+   *
    * @param alias The dataset alias
    * @return Dataset
    */
   @UseRowReducer(DatasetReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
           d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use,
           d.dac_approval, d.study_id, d.indexed_date,
@@ -140,7 +144,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       @Bind("dataUse") String dataUse,
       @Bind("dacId") Integer dacId);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
             UPDATE dataset
             SET name = :datasetName,
                 update_date = :updateDate,
@@ -156,7 +161,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       @Bind("dacId") Integer updatedDacId);
 
   @UseRowReducer(DatasetReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
               d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
               dar_ds_ids.id AS in_use, d.study_id, d.indexed_date,
@@ -213,7 +219,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
    * @return List of datasets
    */
   @UseRowReducer(DatasetReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
               d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
               dar_ds_ids.id AS in_use, d.study_id, d.indexed_date,
@@ -242,9 +249,12 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           WHERE d.dataset_id in (<datasetIds>)
           ORDER BY d.dataset_id
       """)
-  List<Dataset> findDatasetsByIdList(@BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING) Collection<Integer> datasetIds);
+  List<Dataset> findDatasetsByIdList(
+      @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING)
+          Collection<Integer> datasetIds);
 
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT dataset_id FROM dataset ORDER BY dataset_id
       """)
   List<Integer> findAllDatasetIds();
@@ -255,7 +265,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
    * @param userId User ID
    * @return List of Dataset IDs that are visible to the user via DACs.
    */
-  @SqlQuery("""
+  @SqlQuery(
+      """
           SELECT distinct d.dataset_id
           FROM dataset d
           INNER JOIN user_role dac_role ON dac_role.dac_id = d.dac_id
@@ -272,7 +283,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
    * @return all datasets associated with DAC
    */
   @UseRowReducer(DatasetReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
               d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
               dar_ds_ids.id AS in_use, d.study_id, d.indexed_date,
@@ -290,7 +302,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       """)
   List<Dataset> findDatasetsAssociatedWithDac(@Bind("dacId") Integer dacId);
 
-  @SqlQuery("""
+  @SqlQuery(
+      """
           SELECT DISTINCT dp.property_value as name
           FROM dataset_property dp
           INNER JOIN dataset d ON dp.dataset_id = d.dataset_id
@@ -301,7 +314,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       """)
   Set<String> findAllStudyNames();
 
-  @SqlQuery("""
+  @SqlQuery(
+      """
           SELECT DISTINCT d.name
           FROM dataset d
           WHERE d.name IS NOT NULL
@@ -309,7 +323,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   List<String> findAllDatasetNames();
 
   @UseRowReducer(DatasetReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
               d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use, d.dac_approval,
               dar_ds_ids.id AS in_use, d.study_id, d.indexed_date,
@@ -366,7 +381,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
    * @return List of datasets
    */
   @UseRowReducer(DatasetReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
           SELECT d.dataset_id, d.name, d.create_date, d.create_user_id, d.update_date,
               d.update_user_id, d.object_id, d.dac_id, d.alias, d.data_use, d.translated_data_use,
               d.dac_approval, dar_ds_ids.id AS in_use, d.study_id, d.indexed_date,
@@ -394,21 +410,22 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           LEFT JOIN file_storage_object fso ON fso.entity_id = d.dataset_id::text AND fso.deleted = false
           WHERE d.alias IN (<aliases>)
       """)
-  List<Dataset> findDatasetsByAlias(@BindList(value = "aliases", onEmpty = EmptyHandling.NULL_STRING) List<Integer> aliases);
+  List<Dataset> findDatasetsByAlias(
+      @BindList(value = "aliases", onEmpty = EmptyHandling.NULL_STRING) List<Integer> aliases);
 
   @SqlUpdate("UPDATE dataset SET dac_id = :dacId WHERE dataset_id = :datasetId")
   void updateDatasetDacId(@Bind("datasetId") Integer datasetId, @Bind("dacId") Integer dacId);
 
-
-  @SqlUpdate("UPDATE dataset SET translated_data_use = :translatedDataUse WHERE dataset_id = :datasetId")
-  void updateDatasetTranslatedDataUse(@Bind("datasetId") Integer datasetId,
-      @Bind("translatedDataUse") String translatedDataUse);
+  @SqlUpdate(
+      "UPDATE dataset SET translated_data_use = :translatedDataUse WHERE dataset_id = :datasetId")
+  void updateDatasetTranslatedDataUse(
+      @Bind("datasetId") Integer datasetId, @Bind("translatedDataUse") String translatedDataUse);
 
   @SqlUpdate("UPDATE dataset SET name = :name WHERE dataset_id = :datasetId")
   void updateDatasetName(@Bind("datasetId") Integer datasetId, @Bind("name") String name);
 
-
-  @SqlBatch("""
+  @SqlBatch(
+      """
       INSERT INTO dataset_property
         (dataset_id, property_key, schema_property, property_value, property_type, create_date )
       VALUES
@@ -419,7 +436,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlUpdate("DELETE FROM dataset_property WHERE dataset_id = :datasetId")
   void deleteDatasetPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
       INSERT INTO dataset_audit
         (dataset_id, change_action, modified_by_user, modification_date, object_id, name)
       VALUES
@@ -429,7 +447,8 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   Integer insertDatasetAudit(@BindBean DatasetAudit dataSets);
 
   @UseRowMapper(DatasetAuditMapper.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
           SELECT *
           FROM dataset_audit
           WHERE dataset_id = :datasetId
@@ -441,29 +460,31 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           + "SET property_value = :propertyValue "
           + "WHERE dataset_id = :datasetId "
           + "AND property_key = :propertyKey")
-  void updateDatasetProperty(@Bind("datasetId") Integer datasetId,
-      @Bind("propertyKey") Integer propertyKey, @Bind("propertyValue") String propertyValue);
+  void updateDatasetProperty(
+      @Bind("datasetId") Integer datasetId,
+      @Bind("propertyKey") Integer propertyKey,
+      @Bind("propertyValue") String propertyValue);
 
   @SqlUpdate(
       """
           UPDATE dataset
           SET study_id = :studyId
           WHERE dataset_id = :datasetId
-          """
-  )
+          """)
   void updateStudyId(@Bind("datasetId") Integer datasetId, @Bind("studyId") Integer studyId);
 
   @SqlUpdate(
       "DELETE from dataset_property "
           + "WHERE dataset_id = :datasetId "
           + "AND property_key = :propertyKey")
-  void deleteDatasetPropertyByKey(@Bind("datasetId") Integer datasetId,
-      @Bind("propertyKey") Integer propertyKey);
+  void deleteDatasetPropertyByKey(
+      @Bind("datasetId") Integer datasetId, @Bind("propertyKey") Integer propertyKey);
 
   @SqlUpdate("DELETE FROM dataset WHERE dataset_id = :datasetId")
   void deleteDatasetById(@Bind("datasetId") Integer datasetId);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
       UPDATE dataset
       SET name = :datasetName,
           update_date = :updateDate,
@@ -471,53 +492,61 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           dac_id = :dacId
       WHERE dataset_id = :datasetId
       """)
-  void updateDataset(@Bind("datasetId") Integer datasetId,
-      @Bind("datasetName") String datasetName, @Bind("updateDate") Timestamp updateDate,
+  void updateDataset(
+      @Bind("datasetId") Integer datasetId,
+      @Bind("datasetName") String datasetName,
+      @Bind("updateDate") Timestamp updateDate,
       @Bind("updateUserId") Integer updateUserId,
       @Bind("dacId") Integer updatedDacId);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
       UPDATE dataset
       SET data_use = :dataUse
       WHERE dataset_id = :datasetId
       """)
   void updateDatasetDataUse(@Bind("datasetId") Integer datasetId, @Bind("dataUse") String dataUse);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
       UPDATE dataset
       SET create_user_id = :createUserId
       WHERE dataset_id = :datasetId
       """)
-  void updateDatasetCreateUserId(@Bind("datasetId") Integer datasetId,
-      @Bind("createUserId") Integer createUserId);
+  void updateDatasetCreateUserId(
+      @Bind("datasetId") Integer datasetId, @Bind("createUserId") Integer createUserId);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
       UPDATE dataset
       SET name = :datasetName,
           update_date = :updateDate,
           update_user_id = :updateUserId
       WHERE dataset_id = :datasetId
       """)
-  void updateDatasetNameWithUpdateUser(@Bind("datasetId") Integer datasetId,
+  void updateDatasetNameWithUpdateUser(
+      @Bind("datasetId") Integer datasetId,
       @Bind("datasetName") String datasetName,
       @Bind("updateDate") Timestamp updateDate,
       @Bind("updateUserId") Integer updateUserId);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
       UPDATE dataset
       SET update_date = :updateDate,
           update_user_id = :updateUserId
       WHERE dataset_id = :datasetId
       """)
-  void updateDatasetUpdateUser(@Bind("datasetId") Integer datasetId,
+  void updateDatasetUpdateUser(
+      @Bind("datasetId") Integer datasetId,
       @Bind("updateDate") Timestamp updateDate,
       @Bind("updateUserId") Integer updateUserId);
 
   @UseRowMapper(DatasetPropertyMapper.class)
   @SqlQuery(
-      " SELECT p.*, d.key FROM dataset_property p " +
-          " INNER JOIN dictionary d ON p.property_key = d.key_id " +
-          " WHERE p.dataset_id = :datasetId ")
+      " SELECT p.*, d.key FROM dataset_property p "
+          + " INNER JOIN dictionary d ON p.property_key = d.key_id "
+          + " WHERE p.dataset_id = :datasetId ")
   Set<DatasetProperty> findDatasetPropertiesByDatasetId(@Bind("datasetId") Integer datasetId);
 
   @RegisterRowMapper(DictionaryMapper.class)
@@ -528,40 +557,44 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   Dataset getDatasetByName(@Bind("name") String name);
 
   @UseRowReducer(DatasetReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT distinct d.*, k.key, p.property_value, d.dac_id
       FROM dataset d
       LEFT JOIN dataset_property p ON p.dataset_id = d.dataset_id
       LEFT JOIN dictionary k ON k.key_id = p.property_key
       WHERE d.dac_id IN (<dacIds>)
       """)
-  List<Dataset> findDatasetListByDacIds(@BindList(value = "dacIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> dacIds);
+  List<Dataset> findDatasetListByDacIds(
+      @BindList(value = "dacIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> dacIds);
 
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT distinct d.dataset_id FROM dataset d WHERE d.dac_id IN (<dacIds>)
       """)
-  List<Integer> findDatasetIdsByDacIds(@BindList(value = "dacIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> dacIds);
+  List<Integer> findDatasetIdsByDacIds(
+      @BindList(value = "dacIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> dacIds);
 
   @SqlUpdate(
-      "UPDATE dataset " +
-          "SET dac_approval = :dacApproval, " +
-          "update_date = :updateDate, " +
-          "update_user_id = :updateUserId " +
-          "WHERE dataset_id = :datasetId"
-  )
+      "UPDATE dataset "
+          + "SET dac_approval = :dacApproval, "
+          + "update_date = :updateDate, "
+          + "update_user_id = :updateUserId "
+          + "WHERE dataset_id = :datasetId")
   void updateDatasetApproval(
       @Bind("dacApproval") Boolean dacApproved,
       @Bind("updateDate") Instant updateDate,
       @Bind("updateUserId") Integer updateUserId,
-      @Bind("datasetId") Integer datasetId
-  );
+      @Bind("datasetId") Integer datasetId);
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
       UPDATE dataset
       SET indexed_date = :indexedDate
       WHERE dataset_id = :datasetId
       """)
-  void updateDatasetIndexedDate(@Bind("datasetId") Integer datasetId, @Bind("indexedDate") Instant indexedDate);
+  void updateDatasetIndexedDate(
+      @Bind("datasetId") Integer datasetId, @Bind("indexedDate") Instant indexedDate);
 
   @RegisterRowMapper(ApprovedDatasetMapper.class)
   @UseRowReducer(ApprovedDatasetReducer.class)
@@ -596,5 +629,4 @@ WHERE dar.submission_date > now() - interval '1 year'
     WHERE data ->> 'closeoutSupplement' IS NOT NULL)
   """)
   List<ApprovedDataset> getApprovedDatasets(@Bind("userId") Integer userId);
-
 }

@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.models;
 
-
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -91,12 +90,12 @@ class DatasetTests {
     assertEquals(3, (int) Dataset.parseIdentifierToAlias("DUOS-000003"));
     assertEquals(123456, (int) Dataset.parseIdentifierToAlias("DUOS-123456"));
 
-    assertThrows(IllegalArgumentException.class,
-        () -> Dataset.parseIdentifierToAlias("asdf-123456"));
-    assertThrows(IllegalArgumentException.class,
-        () -> Dataset.parseIdentifierToAlias("DUOS-1234 56"));
-    assertThrows(IllegalArgumentException.class,
-        () -> Dataset.parseIdentifierToAlias("DUOS-1234as56"));
+    assertThrows(
+        IllegalArgumentException.class, () -> Dataset.parseIdentifierToAlias("asdf-123456"));
+    assertThrows(
+        IllegalArgumentException.class, () -> Dataset.parseIdentifierToAlias("DUOS-1234 56"));
+    assertThrows(
+        IllegalArgumentException.class, () -> Dataset.parseIdentifierToAlias("DUOS-1234as56"));
   }
 
   @Test
@@ -210,7 +209,6 @@ class DatasetTests {
 
     assertFalse(ds.isDatasetMatch("asf DUOS-001234", AccessManagement.CONTROLLED));
     assertFalse(ds.isDatasetMatch("asd 122", AccessManagement.CONTROLLED));
-
   }
 
   @Test
@@ -246,5 +244,4 @@ class DatasetTests {
     assertTrue(ds.isDatasetMatch(value, AccessManagement.CONTROLLED));
     assertFalse(ds.isDatasetMatch(RandomStringUtils.randomAlphanumeric(25), AccessManagement.OPEN));
   }
-
 }

@@ -9,11 +9,8 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 
-/**
- * Written to be clear this is an internal that should not be exposed via JSON.
- */
-public class BlobIdTypeAdapter
-    implements JsonSerializer<BlobId>, JsonDeserializer<BlobId> {
+/** Written to be clear this is an internal that should not be exposed via JSON. */
+public class BlobIdTypeAdapter implements JsonSerializer<BlobId>, JsonDeserializer<BlobId> {
 
   @Override
   public JsonElement serialize(BlobId src, Type srcType, JsonSerializationContext context) {

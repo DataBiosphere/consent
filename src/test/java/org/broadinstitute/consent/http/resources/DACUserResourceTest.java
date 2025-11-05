@@ -15,10 +15,12 @@ class DACUserResourceTest {
 
   @Test
   void testConvertJsonToDACUserDateIgnoredCase() {
-    String jsonRole = "[{\"roleId\": 1, \"name\":\"name\", \"what\": \"Huh?\", \"rationale\": \"rationale\", \"status\": \"pending\"}]";
+    String jsonRole =
+        "[{\"roleId\": 1, \"name\":\"name\", \"what\": \"Huh?\", \"rationale\": \"rationale\", \"status\": \"pending\"}]";
     String json =
         "{\"userId\": 1, \"email\":\"email\", \"what\": \"Huh?\", \"createDate\": \"Oct 28, 2020\", \"emailPreference\": false, \"roles\": "
-            + jsonRole + "}";
+            + jsonRole
+            + "}";
     User user = new User(json);
     assertNotNull(user);
     assertNull(user.getCreateDate());
@@ -31,10 +33,12 @@ class DACUserResourceTest {
 
   @Test
   void testConvertJsonToDACUserNoCreateDate() {
-    String jsonRole = "[{\"roleId\": 1, \"name\":\"name\", \"what\": \"Huh?\", \"rationale\": \"rationale\", \"status\": \"pending\"}]";
+    String jsonRole =
+        "[{\"roleId\": 1, \"name\":\"name\", \"what\": \"Huh?\", \"rationale\": \"rationale\", \"status\": \"pending\"}]";
     String json =
         "{\"userId\": 1, \"email\":\"email\", \"what\": \"Huh?\", \"emailPreference\": false, \"roles\": "
-            + jsonRole + "}";
+            + jsonRole
+            + "}";
     User user = new User(json);
     assertNotNull(user);
     assertNull(user.getCreateDate());

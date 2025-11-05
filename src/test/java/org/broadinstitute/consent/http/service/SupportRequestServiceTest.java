@@ -33,9 +33,7 @@ import org.mockserver.model.HttpRequest;
 class SupportRequestServiceTest extends MockServerTestHelper {
 
   private SupportRequestService service;
-  @Mock
-  private ServicesConfiguration config;
-
+  @Mock private ServicesConfiguration config;
 
   @BeforeEach
   void init() {
@@ -48,13 +46,15 @@ class SupportRequestServiceTest extends MockServerTestHelper {
     String expectedBody = ticket.toString().replaceAll("\\s*", "");
 
     when(config.isActivateSupportNotifications()).thenReturn(true);
-    when(config.postSupportRequestUrl()).thenReturn(
-        "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
-    mockServerClient.when(request().withMethod("POST"))
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
-            .withBody(expectedBody));
+    when(config.postSupportRequestUrl())
+        .thenReturn("http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
+    mockServerClient
+        .when(request().withMethod("POST"))
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
+                .withBody(expectedBody));
 
     service.postTicketToSupport(ticket);
     HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
@@ -68,7 +68,8 @@ class SupportRequestServiceTest extends MockServerTestHelper {
   void testPostTicketToSupportNotificationsNotActivated() {
     DuosTicket ticket = generateTicket();
     when(config.isActivateSupportNotifications()).thenReturn(false);
-    // verify no requests sent if activateSupportNotifications is false; throw error if post attempted
+    // verify no requests sent if activateSupportNotifications is false; throw error if post
+    // attempted
     mockServerClient.when(request()).error(new HttpError());
     assertThrows(BadRequestException.class, () -> service.postTicketToSupport(ticket));
   }
@@ -77,12 +78,14 @@ class SupportRequestServiceTest extends MockServerTestHelper {
   void testPostTicketToSupportNotificationsUnprocessableEntity() {
     DuosTicket ticket = generateTicket();
     when(config.isActivateSupportNotifications()).thenReturn(true);
-    when(config.postSupportRequestUrl()).thenReturn(
-        "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY));
+    when(config.postSupportRequestUrl())
+        .thenReturn("http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY));
     assertThrows(UnprocessableEntityException.class, () -> service.postTicketToSupport(ticket));
   }
 
@@ -90,29 +93,33 @@ class SupportRequestServiceTest extends MockServerTestHelper {
   void testPostTicketToSupportServerError() {
     DuosTicket ticket = generateTicket();
     when(config.isActivateSupportNotifications()).thenReturn(true);
-    when(config.postSupportRequestUrl()).thenReturn(
-        "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
+    when(config.postSupportRequestUrl())
+        .thenReturn("http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
     assertThrows(ServerErrorException.class, () -> service.postTicketToSupport(ticket));
   }
 
   @Test
   void testPostAttachmentToSupport() throws Exception {
-    String expectedBody = """
+    String expectedBody =
+        """
         { "upload": { "token": "token string" } }
         """;
     when(config.isActivateSupportNotifications()).thenReturn(true);
-    when(config.postSupportUploadUrl()).thenReturn(
-        "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
-    mockServerClient.when(request().withMethod("POST"))
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
-            .withBody(expectedBody)
-        );
+    when(config.postSupportUploadUrl())
+        .thenReturn("http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
+    mockServerClient
+        .when(request().withMethod("POST"))
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
+                .withBody(expectedBody));
     service = new SupportRequestService(config);
     service.postAttachmentToSupport("Test".getBytes());
     HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
@@ -123,54 +130,62 @@ class SupportRequestServiceTest extends MockServerTestHelper {
   void testPostTicketToSupportUnableToParseResponse() {
     // This case should never happen, but we do inspect the response for a valid "upload" object.
     // We need to ensure that the service handles invalid response formats correctly.
-    String expectedBody = """
+    String expectedBody =
+        """
         { "invalid": { "missing_token": "token string" } }
         """;
     when(config.isActivateSupportNotifications()).thenReturn(true);
-    when(config.postSupportUploadUrl()).thenReturn(
-        "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
-    mockServerClient.when(request().withMethod("POST"))
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
-            .withBody(expectedBody)
-        );
-    assertThrows(ServerErrorException.class,
-        () -> service.postAttachmentToSupport("Test".getBytes()));
+    when(config.postSupportUploadUrl())
+        .thenReturn("http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
+    mockServerClient
+        .when(request().withMethod("POST"))
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
+                .withBody(expectedBody));
+    assertThrows(
+        ServerErrorException.class, () -> service.postAttachmentToSupport("Test".getBytes()));
   }
 
   @Test
   void testPostAttachmentToSupportNotificationsNotActivated() {
     when(config.isActivateSupportNotifications()).thenReturn(false);
-    // verify no requests sent if activateSupportNotifications is false; throw error if post attempted
+    // verify no requests sent if activateSupportNotifications is false; throw error if post
+    // attempted
     mockServerClient.when(request()).error(new HttpError());
-    assertThrows(BadRequestException.class,
-        () -> service.postAttachmentToSupport("Test".getBytes()));
+    assertThrows(
+        BadRequestException.class, () -> service.postAttachmentToSupport("Test".getBytes()));
   }
 
   @Test
   void testPostAttachmentToSupportServerError() {
     when(config.isActivateSupportNotifications()).thenReturn(true);
-    when(config.postSupportUploadUrl()).thenReturn(
-        "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
-    assertThrows(ServerErrorException.class,
-        () -> service.postAttachmentToSupport("Test".getBytes()));
+    when(config.postSupportUploadUrl())
+        .thenReturn("http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
+    assertThrows(
+        ServerErrorException.class, () -> service.postAttachmentToSupport("Test".getBytes()));
   }
 
   @Test
   void testPostAttachmentToSupportUnprocessableEntity() {
     when(config.isActivateSupportNotifications()).thenReturn(true);
-    when(config.postSupportUploadUrl()).thenReturn(
-        "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY));
-    assertThrows(UnprocessableEntityException.class,
+    when(config.postSupportUploadUrl())
+        .thenReturn("http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY));
+    assertThrows(
+        UnprocessableEntityException.class,
         () -> service.postAttachmentToSupport("Test".getBytes()));
   }
 

@@ -54,7 +54,6 @@ class DaaRequestMessageTest extends AbstractTestHelper {
     String templateString = out.toString();
     Document parsedTemplate = Jsoup.parse(templateString);
 
-
     assertEquals(
         "Broad Data Use Oversight System - New Data Access Agreement-Library Card Relationship Request for your Institution",
         parsedTemplate.title());

@@ -14,5 +14,4 @@ public class GeneralResearchUseV1 implements RuleImplementationInterface {
   public DACAutomationRuleType getRuleType() {
     return DACAutomationRuleType.GRU_V1;
   }
-
 }

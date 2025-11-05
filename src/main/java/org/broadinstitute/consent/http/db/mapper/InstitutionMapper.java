@@ -29,8 +29,8 @@ public class InstitutionMapper implements RowMapper<Institution>, RowMapperHelpe
     setDateFieldValue(resultSet, "create_date", institution::setCreateDate);
     setDateFieldValue(resultSet, "update_date", institution::setUpdateDate);
     if (hasColumn(resultSet, "organization_type")) {
-      OrganizationType type = OrganizationType.getOrganizationTypeFromString(
-          resultSet.getString("organization_type"));
+      OrganizationType type =
+          OrganizationType.getOrganizationTypeFromString(resultSet.getString("organization_type"));
       institution.setOrganizationType(type);
     }
     return institution;

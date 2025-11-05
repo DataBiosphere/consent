@@ -108,7 +108,7 @@ public class UserService implements ConsentLogger {
    * Update a select group of user fields for a user id.
    *
    * @param userUpdateFields A UserUpdateFields object for all update information
-   * @param userId           The User's ID
+   * @param userId The User's ID
    * @return The updated User
    */
   public User updateUserFieldsById(UserUpdateFields userUpdateFields, Integer userId) {
@@ -133,18 +133,25 @@ public class UserService implements ConsentLogger {
       }
 
       // Handle Roles
-      //TODO: Confirm if we need to prevent removing the chairperson role through this.  We have other business logic in the application that checks to see if there's at least one other chairperson on a DAC.
+      // TODO: Confirm if we need to prevent removing the chairperson role through this.  We have
+      // other business logic in the application that checks to see if there's at least one other
+      // chairperson on a DAC.
       if (Objects.nonNull(userUpdateFields.getUserRoleIds())) {
-        List<Integer> currentRoleIds = userRoleDAO.findRolesByUserId(userId).stream()
-            .map(UserRole::getRoleId).toList();
+        List<Integer> currentRoleIds =
+            userRoleDAO.findRolesByUserId(userId).stream().map(UserRole::getRoleId).toList();
         List<Integer> roleIdsToAdd = userUpdateFields.getRoleIdsToAdd(currentRoleIds);
         List<Integer> roleIdsToRemove = userUpdateFields.getRoleIdsToRemove(currentRoleIds);
         // Add the new role ids to the user
         if (!roleIdsToAdd.isEmpty()) {
-          List<UserRole> newRoles = roleIdsToAdd.stream()
-              .map(id -> new UserRole(id,
-                  Objects.requireNonNull(UserRoles.getUserRoleFromId(id)).getRoleName()))
-              .toList();
+          List<UserRole> newRoles =
+              roleIdsToAdd.stream()
+                  .map(
+                      id ->
+                          new UserRole(
+                              id,
+                              Objects.requireNonNull(UserRoles.getUserRoleFromId(id))
+                                  .getRoleName()))
+                  .toList();
           userRoleDAO.insertUserRoles(newRoles, userId);
         }
         // Remove the old role ids from the user
@@ -152,7 +159,6 @@ public class UserService implements ConsentLogger {
           userRoleDAO.removeUserRoles(userId, roleIdsToRemove);
         }
       }
-
     }
     return findUserById(userId);
   }
@@ -171,8 +177,7 @@ public class UserService implements ConsentLogger {
         userRoleDAO.insertSingleUserRole(role.getRoleId(), userId);
       }
     } catch (Exception e) {
-      logException(
-          "Error when updating user: %s, role: %s".formatted(userId, role), e);
+      logException("Error when updating user: %s, role: %s".formatted(userId, role), e);
       throw e;
     }
   }
@@ -191,8 +196,9 @@ public class UserService implements ConsentLogger {
     if (institution != null) {
       user.setInstitutionId(institution.getId());
     }
-    Integer userId = userDAO.insertUser(user.getEmail(), user.getDisplayName(),
-        user.getInstitutionId(), new Date());
+    Integer userId =
+        userDAO.insertUser(
+            user.getEmail(), user.getDisplayName(), user.getInstitutionId(), new Date());
     insertUserRoles(user.getRoles(), userId);
     assignExistingLibraryCardToUser(user);
     return userDAO.findUserById(userId);
@@ -218,13 +224,14 @@ public class UserService implements ConsentLogger {
    * Find users as a specific role, e.g., Admins can see all users, other roles can only see a
    * subset of users.
    *
-   * @param user     The user making the request
+   * @param user The user making the request
    * @param roleName The role the user is making the request as
    * @return List of Users for specified role name
    */
   public List<User> getUsersAsRole(User user, String roleName) {
     switch (roleName) {
-      // SigningOfficial console is technically pulling LCs, it's just bringing associated users along for the ride
+      // SigningOfficial console is technically pulling LCs, it's just bringing associated users
+      // along for the ride
       // However LCs can be created for users not yet registered in the system
       // As such a more specialized query is needed to produce the proper listing
       case Resource.SIGNINGOFFICIAL:
@@ -232,8 +239,10 @@ public class UserService implements ConsentLogger {
         if (Objects.nonNull(user.getInstitutionId())) {
           return userDAO.getUsersFromInstitutionWithCards(institutionId);
         } else {
-          throw new NotFoundException("Signing Official (user: " + user.getDisplayName()
-              + ") is not associated with an Institution.");
+          throw new NotFoundException(
+              "Signing Official (user: "
+                  + user.getDisplayName()
+                  + ") is not associated with an Institution.");
         }
       case Resource.ADMIN:
         return userDAO.findUsersWithLCsAndInstitution();
@@ -261,11 +270,8 @@ public class UserService implements ConsentLogger {
       throw new NotFoundException("The user for the specified E-Mail address does not exist");
     }
     Integer userId = user.getUserId();
-    List<Integer> roleIds = userRoleDAO.
-        findRolesByUserId(userId).
-        stream().
-        map(UserRole::getRoleId).
-        toList();
+    List<Integer> roleIds =
+        userRoleDAO.findRolesByUserId(userId).stream().map(UserRole::getRoleId).toList();
     if (!roleIds.isEmpty()) {
       userRoleDAO.removeUserRoles(userId, roleIds);
     }
@@ -278,15 +284,19 @@ public class UserService implements ConsentLogger {
       draftServiceDAO.deleteDraftsByUser(user);
     } catch (Exception e) {
       logException(
-          String.format("Unable to delete all drafts and files for userId %d. Error was: %s",
-              userId, e.getMessage()), e);
+          String.format(
+              "Unable to delete all drafts and files for userId %d. Error was: %s",
+              userId, e.getMessage()),
+          e);
     }
     try {
       institutionDAO.deleteAllInstitutionsByUser(userId);
     } catch (Exception e) {
       logException(
-          String.format("Unable to delete all institutions for userId %d. Error was: %s",
-              userId, e.getMessage()), e);
+          String.format(
+              "Unable to delete all institutions for userId %d. Error was: %s",
+              userId, e.getMessage()),
+          e);
     }
     userPropertyDAO.deleteAllPropertiesByUser(userId);
     libraryCardDAO.deleteAllLibraryCardsByUser(userId);
@@ -298,8 +308,8 @@ public class UserService implements ConsentLogger {
   }
 
   public List<UserProperty> findAllUserProperties(Integer userId) {
-    return userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(userId,
-        UserFields.getValues());
+    return userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
+        userId, UserFields.getValues());
   }
 
   public void updateEmailPreference(boolean preference, Integer userId) {
@@ -326,12 +336,11 @@ public class UserService implements ConsentLogger {
     return userDAO.findUsersByInstitution(institutionId);
   }
 
-
   public void deleteUserRole(User authUser, Integer userId, Integer roleId) {
     userRoleDAO.removeSingleUserRole(userId, roleId);
     logInfo(
-        "User %s deleted roleId: %s from User ID: %s".formatted(authUser.getDisplayName(), roleId,
-            userId));
+        "User %s deleted roleId: %s from User ID: %s"
+            .formatted(authUser.getDisplayName(), roleId, userId));
   }
 
   public List<User> findUsersWithNoInstitution() {
@@ -342,7 +351,7 @@ public class UserService implements ConsentLogger {
    * Convenience method to return a response-friendly json object of the user.
    *
    * @param duosUser The DuosUser. Used to determine if we should return auth user properties
-   * @param userId   The User. This is the user we want to return properties for
+   * @param userId The User. This is the user we want to return properties for
    * @return JsonObject.
    */
   public JsonObject findUserWithPropertiesByIdAsJsonObject(DuosUser duosUser, Integer userId) {
@@ -356,10 +365,10 @@ public class UserService implements ConsentLogger {
       JsonObject libraryCardJson = gson.toJsonTree(user.getLibraryCard()).getAsJsonObject();
       userJson.add(LIBRARY_CARD_FIELD, libraryCardJson);
     }
-    if (duosUser.getEmail().equalsIgnoreCase(user.getEmail()) && Objects.nonNull(
-        duosUser.getUserStatusInfo())) {
-      JsonObject userStatusInfoJson = gson.toJsonTree(duosUser.getUserStatusInfo())
-          .getAsJsonObject();
+    if (duosUser.getEmail().equalsIgnoreCase(user.getEmail())
+        && Objects.nonNull(duosUser.getUserStatusInfo())) {
+      JsonObject userStatusInfoJson =
+          gson.toJsonTree(duosUser.getUserStatusInfo()).getAsJsonObject();
       userJson.add(USER_STATUS_INFO_FIELD, userStatusInfoJson);
     }
     return userJson;
@@ -372,23 +381,28 @@ public class UserService implements ConsentLogger {
     if (StringUtils.isEmpty(user.getEmail())) {
       throw new BadRequestException("Email address cannot be empty");
     }
-    List<String> validRoleNameList = Stream.of(UserRoles.RESEARCHER, UserRoles.ALUMNI,
-        UserRoles.ADMIN).map(UserRoles::getRoleName).toList();
-    user.getRoles().forEach(role -> {
-      if (!validRoleNameList.contains(role.getName())) {
-        String validRoleNames = String.join(", ", validRoleNameList);
-        throw new BadRequestException(
-            "Invalid role: " + role.getName() + ". Valid roles are: " + validRoleNames);
-      }
-    });
+    List<String> validRoleNameList =
+        Stream.of(UserRoles.RESEARCHER, UserRoles.ALUMNI, UserRoles.ADMIN)
+            .map(UserRoles::getRoleName)
+            .toList();
+    user.getRoles()
+        .forEach(
+            role -> {
+              if (!validRoleNameList.contains(role.getName())) {
+                String validRoleNames = String.join(", ", validRoleNameList);
+                throw new BadRequestException(
+                    "Invalid role: " + role.getName() + ". Valid roles are: " + validRoleNames);
+              }
+            });
   }
 
   public void insertUserRoles(List<UserRole> roles, Integer userId) {
-    roles.forEach(r -> {
-      if (r.getRoleId() == null) {
-        r.setRoleId(userRoleDAO.findRoleIdByName(r.getName()));
-      }
-    });
+    roles.forEach(
+        r -> {
+          if (r.getRoleId() == null) {
+            r.setRoleId(userRoleDAO.findRoleIdByName(r.getName()));
+          }
+        });
     userRoleDAO.insertUserRoles(roles, userId);
   }
 
@@ -405,7 +419,7 @@ public class UserService implements ConsentLogger {
     }
   }
 
-   public List<User> findUsersInJsonArray(String json, String arrayKey) {
+  public List<User> findUsersInJsonArray(String json, String arrayKey) {
     List<JsonElement> jsonElementList;
     try {
       JsonObject jsonObject = new Gson().fromJson(json, JsonObject.class);
@@ -425,13 +439,18 @@ public class UserService implements ConsentLogger {
       throw new BadRequestException("User does not have an Era Commons ID");
     }
     List<UserProperty> userProperties = findAllUserProperties(user.getUserId());
-    List<UserProperty> eraStatusProps = userProperties.stream().filter(
-            userProperty -> userProperty.getPropertyKey().equalsIgnoreCase(ERA_STATUS.getValue()))
-        .toList();
-    List<UserProperty> eraExpirationProps = userProperties.stream().filter(
-            userProperty -> userProperty.getPropertyKey()
-                .equalsIgnoreCase(ERA_EXPIRATION_DATE.getValue()))
-        .toList();
+    List<UserProperty> eraStatusProps =
+        userProperties.stream()
+            .filter(
+                userProperty ->
+                    userProperty.getPropertyKey().equalsIgnoreCase(ERA_STATUS.getValue()))
+            .toList();
+    List<UserProperty> eraExpirationProps =
+        userProperties.stream()
+            .filter(
+                userProperty ->
+                    userProperty.getPropertyKey().equalsIgnoreCase(ERA_EXPIRATION_DATE.getValue()))
+            .toList();
     if (eraStatusProps.size() == 1 && eraExpirationProps.size() == 1) {
       if (!eraStatusProps.get(0).getPropertyValue().equalsIgnoreCase("true")) {
         throw new BadRequestException("User does not have an Era Commons ID that is authorized.");
@@ -449,9 +468,10 @@ public class UserService implements ConsentLogger {
   /**
    * Compliance method that implements a set of rules in order to ensure Library Card and
    * Institution matching rules are adhered to when authorizing users of the system.
+   *
    * @param email of the user being evaluated
    * @return user with the Institution and Library Card rules applied or null if the requestor isn't
-   * a DUOS user.
+   *     a DUOS user.
    */
   public User enforceInstitutionAndLibraryCardRules(String email) {
     return institutionAndLibraryCardEnforcement.enforceInstitutionAndLibraryCardRules(email);
@@ -471,8 +491,7 @@ public class UserService implements ConsentLogger {
       this.institutionId = user.getInstitutionId();
     }
 
-    public SimplifiedUser() {
-    }
+    public SimplifiedUser() {}
 
     public void setUserId(Integer userId) {
       this.userId = userId;

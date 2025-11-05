@@ -29,15 +29,18 @@ public class NihService implements ConsentLogger {
   private final ServicesConfiguration configuration;
 
   @Inject
-  public NihService(UserDAO userDAO, NihServiceDAO serviceDAO,
-      HttpClientUtil clientUtil, ServicesConfiguration configuration) {
+  public NihService(
+      UserDAO userDAO,
+      NihServiceDAO serviceDAO,
+      HttpClientUtil clientUtil,
+      ServicesConfiguration configuration) {
     this.userDAO = userDAO;
     this.serviceDAO = serviceDAO;
     this.clientUtil = clientUtil;
     this.configuration = configuration;
   }
 
-  public  User syncAccount(DuosUser duosUser) throws Exception {
+  public User syncAccount(DuosUser duosUser) throws Exception {
     User user = duosUser.getUser();
     GenericUrl ecmRasProviderUrl = new GenericUrl(configuration.getEcmRasProviderUrl());
     HttpRequest request = clientUtil.buildGetRequest(ecmRasProviderUrl, duosUser);
@@ -53,7 +56,9 @@ public class NihService implements ConsentLogger {
       serviceDAO.deleteNihAccountById(user.getUserId());
     } catch (NotAuthorizedException _) {
       // ECM will return a 401 if the user has not accepted ToS yet.
-      logWarn("ECM Response: not authorized user: %s. User needs to accept the ToS.".formatted(duosUser.getEmail()));
+      logWarn(
+          "ECM Response: not authorized user: %s. User needs to accept the ToS."
+              .formatted(duosUser.getEmail()));
     }
     return userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues());
   }
@@ -80,9 +85,9 @@ public class NihService implements ConsentLogger {
           "Failed to delete NIH account for user: " + duosUser.getEmail() + " - " + e.getMessage());
       throw new ServerErrorException(
           "Failed to delete NIH account for user: " + duosUser.getEmail(),
-          HttpStatusCodes.STATUS_CODE_SERVER_ERROR, e);
+          HttpStatusCodes.STATUS_CODE_SERVER_ERROR,
+          e);
     }
-
   }
 
   private NIHUserAccount parseNihUserAccount(String body) {
@@ -92,11 +97,13 @@ public class NihService implements ConsentLogger {
       // Historically, we store this value as epoch milliseconds
       Instant instant = Instant.parse(linkInfo.expirationTimestamp());
       return new NIHUserAccount(
-          linkInfo.externalUserId(), String.valueOf(instant.toEpochMilli()), linkInfo.authenticated());
+          linkInfo.externalUserId(),
+          String.valueOf(instant.toEpochMilli()),
+          linkInfo.authenticated());
     } catch (Exception _) {
       logWarn("Failed to parse ECM response: " + body);
-      throw new ServerErrorException("Invalid response from ECM RAS Provider",
-          HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+      throw new ServerErrorException(
+          "Invalid response from ECM RAS Provider", HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
     }
   }
 }

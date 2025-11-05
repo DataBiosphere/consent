@@ -16,14 +16,15 @@ public class DataUseParser implements ConsentLogger {
     if (null == dataUseString || dataUseString.isEmpty()) {
       return null;
     }
-    return dataUseCache.computeIfAbsent(dataUseString, s -> {
-      try {
-        return gson.fromJson(dataUseString, DataUse.class);
-      } catch (Exception e) {
-        logWarn(String.format("Unable to parse data use string: '%s'", dataUseString));
-      }
-      return null;
-    });
+    return dataUseCache.computeIfAbsent(
+        dataUseString,
+        s -> {
+          try {
+            return gson.fromJson(dataUseString, DataUse.class);
+          } catch (Exception e) {
+            logWarn(String.format("Unable to parse data use string: '%s'", dataUseString));
+          }
+          return null;
+        });
   }
-
 }

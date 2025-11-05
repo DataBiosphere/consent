@@ -5,5 +5,4 @@ public class DatasetDeletionException extends RuntimeException {
   public DatasetDeletionException(Throwable cause) {
     super(cause);
   }
-
 }

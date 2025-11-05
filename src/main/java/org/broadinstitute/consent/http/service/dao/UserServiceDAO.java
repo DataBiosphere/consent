@@ -15,7 +15,8 @@ public class UserServiceDAO {
   UserRoleDAO userRoleDAO;
 
   @Inject
-  public UserServiceDAO(Jdbi jdbi, LibraryCardDAO libraryCardDAO, UserDAO userDAO, UserRoleDAO userRoleDAO) {
+  public UserServiceDAO(
+      Jdbi jdbi, LibraryCardDAO libraryCardDAO, UserDAO userDAO, UserRoleDAO userRoleDAO) {
     this.jdbi = jdbi;
     this.libraryCardDAO = libraryCardDAO;
     this.userDAO = userDAO;
@@ -23,20 +24,22 @@ public class UserServiceDAO {
   }
 
   public void insertRoleAndInstitutionTxn(UserRole role, Integer institutionId, Integer userId) {
-    jdbi.useTransaction(transactionHandle -> {
-      UserDAO userDAOT = transactionHandle.attach(UserDAO.class);
-      UserRoleDAO userRoleDAOT = transactionHandle.attach(UserRoleDAO.class);
-      userDAOT.updateInstitutionId(userId, institutionId);
-      userRoleDAOT.insertSingleUserRole(role.getRoleId(), userId);
-    });
+    jdbi.useTransaction(
+        transactionHandle -> {
+          UserDAO userDAOT = transactionHandle.attach(UserDAO.class);
+          UserRoleDAO userRoleDAOT = transactionHandle.attach(UserRoleDAO.class);
+          userDAOT.updateInstitutionId(userId, institutionId);
+          userRoleDAOT.insertSingleUserRole(role.getRoleId(), userId);
+        });
   }
 
   public void updateInstitutionAndClearLibraryCardForUser(Integer userId, Integer institutionId) {
-    jdbi.useTransaction(transactionHandle -> {
-      UserDAO userDAOT = transactionHandle.attach(UserDAO.class);
-      LibraryCardDAO libraryCardDAOT = transactionHandle.attach(LibraryCardDAO.class);
-      userDAOT.updateInstitutionId(userId, institutionId);
-      libraryCardDAOT.deleteAllLibraryCardsByUser(userId);
-    });
+    jdbi.useTransaction(
+        transactionHandle -> {
+          UserDAO userDAOT = transactionHandle.attach(UserDAO.class);
+          LibraryCardDAO libraryCardDAOT = transactionHandle.attach(LibraryCardDAO.class);
+          userDAOT.updateInstitutionId(userId, institutionId);
+          libraryCardDAOT.deleteAllLibraryCardsByUser(userId);
+        });
   }
 }

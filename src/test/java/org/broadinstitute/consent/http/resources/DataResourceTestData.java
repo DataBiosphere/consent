@@ -2,13 +2,15 @@ package org.broadinstitute.consent.http.resources;
 
 public class DataResourceTestData {
 
-  public static final String registrationWithMalformedJson = """
+  public static final String registrationWithMalformedJson =
+      """
       {
         "studyType" - "Observational"
       }
       """;
 
-  public static final String registrationWithStudyName = """
+  public static final String registrationWithStudyName =
+      """
       {
         "studyType": "Observational",
         "studyName": "name",
@@ -20,7 +22,8 @@ public class DataResourceTestData {
       }
       """;
 
-  public static final String registrationWithDataSubmitterUserId = """
+  public static final String registrationWithDataSubmitterUserId =
+      """
       {
         "studyType": "Observational",
         "studyDescription": "description",
@@ -32,7 +35,8 @@ public class DataResourceTestData {
       }
       """;
 
-  public static final String registrationWithExistingCGDataUse = """
+  public static final String registrationWithExistingCGDataUse =
+      """
       {
         "studyType": "Observational",
         "studyDescription": "description",
@@ -69,7 +73,8 @@ public class DataResourceTestData {
       }
       """;
 
-  public static final String registrationWithExistingCG = """
+  public static final String registrationWithExistingCG =
+      """
       {
         "studyType": "Observational",
         "studyDescription": "description",
@@ -93,7 +98,8 @@ public class DataResourceTestData {
       }
       """;
 
-  public static final String validRegistration = """
+  public static final String validRegistration =
+      """
       {
         "studyType": "Observational",
         "studyDescription": "description",
@@ -155,5 +161,4 @@ public class DataResourceTestData {
         ]
       }
       """;
-
 }

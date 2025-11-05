@@ -27,16 +27,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DataAccessReportsParserTest {
 
-  @Mock
-  private DatasetDAO datasetDAO;
-  @Mock
-  private UseRestrictionConverter useRestrictionConverter;
+  @Mock private DatasetDAO datasetDAO;
+  @Mock private UseRestrictionConverter useRestrictionConverter;
   private DataAccessReportsParser parser;
   private final String CONSENT_NAME = "ORSP-1903";
   private final String NAME = "Test";
   private final String DS_IDENTIFIER = "DUOS-000001";
   private final String RUS_SUMMARY = "Purpose";
-  private final String sDUL = """
+  private final String sDUL =
+      """
       Samples Restricted for use with "cancer" [DOID_162(CC)]
       Future use by for-profit entities is prohibited [NPU]
       Future use of aggregate-level data for general research purposes is prohibited [NPNV]
@@ -54,7 +53,8 @@ class DataAccessReportsParserTest {
     d.setName(NAME);
     List<Dataset> datasets = List.of(d);
     when(datasetDAO.findDatasetsByIdList(List.of(1))).thenReturn(datasets);
-    String translation = """
+    String translation =
+        """
         Research is limited to samples restricted for use under the following conditions:
         Data is limited for health/medical/biomedical research. [HMB]
     """;
@@ -72,8 +72,8 @@ class DataAccessReportsParserTest {
     parser.setApprovedDARHeader(darWriter);
     String REQUESTER = "Wesley";
     String ORGANIZATION = "Broad";
-    parser.addApprovedDARLine(darWriter, election, dar, DAR_CODE, REQUESTER, ORGANIZATION,
-        CONSENT_NAME, sDUL);
+    parser.addApprovedDARLine(
+        darWriter, election, dar, DAR_CODE, REQUESTER, ORGANIZATION, CONSENT_NAME, sDUL);
     darWriter.flush();
     try (var stream = Files.lines(Paths.get(file.getPath()))) {
       Iterator<String> iterator = stream.iterator();
@@ -94,8 +94,7 @@ class DataAccessReportsParserTest {
           assertEquals(columns[8], HeaderDAR.RESEARCH_PURPOSE.getValue());
           assertEquals(columns[9], HeaderDAR.DATE_REQUEST_SUBMISSION.getValue());
           assertEquals(columns[10], HeaderDAR.DATE_REQUEST_APPROVAL.getValue());
-          assertEquals(columns[11],
-              HeaderDAR.DATE_REQUEST_RE_ATTESTATION.getValue());
+          assertEquals(columns[11], HeaderDAR.DATE_REQUEST_RE_ATTESTATION.getValue());
         }
         if (i == 1) {
           assertEquals(DAR_CODE, columns[0]);
@@ -123,7 +122,7 @@ class DataAccessReportsParserTest {
     parser.setReviewedDARHeader(darWriter);
     parser.addReviewedDARLine(darWriter, election, dar, DAR_CODE, CONSENT_NAME, sDUL);
     darWriter.flush();
-    try(var stream = Files.lines(Paths.get(file.getPath()))){
+    try (var stream = Files.lines(Paths.get(file.getPath()))) {
       Iterator<String> iterator = stream.iterator();
       int i = 0;
       while (iterator.hasNext()) {
@@ -137,8 +136,7 @@ class DataAccessReportsParserTest {
           assertEquals(columns[3], HeaderDAR.CONSENT_ID.getValue());
           assertEquals(columns[4], HeaderDAR.CODED_VERSION_SDUL.getValue());
           assertEquals(columns[5], HeaderDAR.CODED_VERSION_DAR.getValue());
-          assertEquals(columns[6],
-              HeaderDAR.DATE_REQUEST_APPROVAL_DISAPROVAL.getValue());
+          assertEquals(columns[6], HeaderDAR.DATE_REQUEST_APPROVAL_DISAPROVAL.getValue());
           assertEquals(columns[7], HeaderDAR.APPROVED_DISAPPROVED.getValue());
         }
         if (i == 1) {
@@ -165,7 +163,7 @@ class DataAccessReportsParserTest {
     parser.setReviewedDARHeader(darWriter);
     parser.addReviewedDARLine(darWriter, election, dar, DAR_CODE, CONSENT_NAME, sDUL);
     darWriter.flush();
-    try(var stream = Files.lines(Paths.get(file.getPath()))){
+    try (var stream = Files.lines(Paths.get(file.getPath()))) {
       Iterator<String> iterator = stream.iterator();
       int i = 0;
       while (iterator.hasNext()) {
@@ -179,8 +177,7 @@ class DataAccessReportsParserTest {
           assertEquals(columns[3], HeaderDAR.CONSENT_ID.getValue());
           assertEquals(columns[4], HeaderDAR.CODED_VERSION_SDUL.getValue());
           assertEquals(columns[5], HeaderDAR.CODED_VERSION_DAR.getValue());
-          assertEquals(columns[6],
-              HeaderDAR.DATE_REQUEST_APPROVAL_DISAPROVAL.getValue());
+          assertEquals(columns[6], HeaderDAR.DATE_REQUEST_APPROVAL_DISAPROVAL.getValue());
           assertEquals(columns[7], HeaderDAR.APPROVED_DISAPPROVED.getValue());
         }
         if (i == 1) {

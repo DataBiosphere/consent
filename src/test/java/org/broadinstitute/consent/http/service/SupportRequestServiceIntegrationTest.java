@@ -14,9 +14,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.zendesk.client.v2.model.Request;
 
-/**
- * This test class should be used for manual integration testing only.
- */
+/** This test class should be used for manual integration testing only. */
 class SupportRequestServiceIntegrationTest {
 
   private SupportRequestService service;
@@ -33,17 +31,17 @@ class SupportRequestServiceIntegrationTest {
   void testPostTicketToSupportWithAttachment() throws Exception {
     JsonObject tokenObject = service.postAttachmentToSupport("Test Image Content".getBytes());
     String token = tokenObject.get("token").getAsString();
-    DuosTicket ticket = TicketFactory.createTicket(
-        new TicketFields(
-        "Test User Name",
-        SupportRequestType.QUESTION,
-        "test@duos.org",
-        "Test Subject",
-        "Test Description",
-        "Test URL",
-        List.of(token)));
+    DuosTicket ticket =
+        TicketFactory.createTicket(
+            new TicketFields(
+                "Test User Name",
+                SupportRequestType.QUESTION,
+                "test@duos.org",
+                "Test Subject",
+                "Test Description",
+                "Test URL",
+                List.of(token)));
     Request request = service.postTicketToSupport(ticket);
     assertNotNull(request);
   }
-
 }

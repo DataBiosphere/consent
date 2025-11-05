@@ -63,36 +63,32 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DACAutomationRuleServiceTest {
 
-  @Mock
-  private DataAccessRequestDAO dataAccessRequestDAO;
-  @Mock
-  private DatasetDAO datasetDAO;
-  @Mock
-  private ElectionDAO electionDAO;
-  @Mock
-  private VoteDAO voteDAO;
-  @Mock
-  private VoteServiceDAO voteServiceDAO;
-  @Mock
-  private User user;
+  @Mock private DataAccessRequestDAO dataAccessRequestDAO;
+  @Mock private DatasetDAO datasetDAO;
+  @Mock private ElectionDAO electionDAO;
+  @Mock private VoteDAO voteDAO;
+  @Mock private VoteServiceDAO voteServiceDAO;
+  @Mock private User user;
 
-  @Mock
-  private DACAutomationRuleDAO ruleDAO;
+  @Mock private DACAutomationRuleDAO ruleDAO;
 
-  @Mock
-  private UserDAO userDAO;
+  @Mock private UserDAO userDAO;
 
-  @Mock
-  private VoteService voteService;
+  @Mock private VoteService voteService;
 
-  @Mock
-  private ContainerRequest request;
+  @Mock private ContainerRequest request;
 
   private DACAutomationRuleService service;
 
   private static DACAutomationRule makeDacAutomationRuleGRU() {
-    return new DACAutomationRule(1, DACAutomationRuleType.GRU_V1,
-        "Test Rule", RuleState.AVAILABLE, Timestamp.from(Instant.now()), 1, "admin",
+    return new DACAutomationRule(
+        1,
+        DACAutomationRuleType.GRU_V1,
+        "Test Rule",
+        RuleState.AVAILABLE,
+        Timestamp.from(Instant.now()),
+        1,
+        "admin",
         "admin@example.com");
   }
 
@@ -142,15 +138,23 @@ class DACAutomationRuleServiceTest {
             userDAO,
             voteDAO,
             voteServiceDAO,
-            voteService
-        );
+            voteService);
   }
 
   @Test
   void testFindAll() {
-    when(ruleDAO.findAll()).thenReturn(List.of(
-        new DACAutomationRule(1, DACAutomationRuleType.GRU_V1, "Test Rule", RuleState.AVAILABLE,
-            null, null, null, null)));
+    when(ruleDAO.findAll())
+        .thenReturn(
+            List.of(
+                new DACAutomationRule(
+                    1,
+                    DACAutomationRuleType.GRU_V1,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    null,
+                    null,
+                    null,
+                    null)));
 
     List<DACAutomationRule> rules = service.findAll();
     Assertions.assertNotNull(rules);
@@ -159,9 +163,18 @@ class DACAutomationRuleServiceTest {
 
   @Test
   void testFindById() {
-    when(ruleDAO.findAllDACAutomationRulesByDACId(1)).thenReturn(List.of(
-        new DACAutomationRule(1, DACAutomationRuleType.GRU_V1, "Test Rule", RuleState.AVAILABLE,
-            null, null, null, null)));
+    when(ruleDAO.findAllDACAutomationRulesByDACId(1))
+        .thenReturn(
+            List.of(
+                new DACAutomationRule(
+                    1,
+                    DACAutomationRuleType.GRU_V1,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    null,
+                    null,
+                    null,
+                    null)));
     List<DACAutomationRule> rules = service.findAllByDacId(1);
     Assertions.assertNotNull(rules);
     assertFalse(rules.isEmpty());
@@ -169,13 +182,20 @@ class DACAutomationRuleServiceTest {
 
   @Test
   void testToggleRuleFromOffToOn() {
-    when(ruleDAO.findAllDACAutomationRulesByDACId(1)).thenReturn(List.of(
-        new DACAutomationRule(1, DACAutomationRuleType.GRU_V1, "Test Rule", RuleState.AVAILABLE,
-            null, null, null, null)));
-    when(ruleDAO.auditedInsertDACRuleSetting(anyInt(), anyInt(), anyInt(), any())).thenReturn(
-        1);
-    AutomationRuleToggleResponse result = service.toggleRule(
-        1, 1, user);
+    when(ruleDAO.findAllDACAutomationRulesByDACId(1))
+        .thenReturn(
+            List.of(
+                new DACAutomationRule(
+                    1,
+                    DACAutomationRuleType.GRU_V1,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    null,
+                    null,
+                    null,
+                    null)));
+    when(ruleDAO.auditedInsertDACRuleSetting(anyInt(), anyInt(), anyInt(), any())).thenReturn(1);
+    AutomationRuleToggleResponse result = service.toggleRule(1, 1, user);
     assertTrue(result.isRuleEnabled());
     assertEquals(1, result.getRuleId());
     Assertions.assertTrue(result.getEnabledTime() > 1);
@@ -183,9 +203,18 @@ class DACAutomationRuleServiceTest {
 
   @Test
   void testToggleRuleFromOnToOff() {
-    when(ruleDAO.findAllDACAutomationRulesByDACId(1)).thenReturn(List.of(
-        new DACAutomationRule(1, DACAutomationRuleType.GRU_V1, "Test Rule", RuleState.AVAILABLE,
-            Timestamp.from(Instant.now()), 1, "alice", "alice@fake.org")));
+    when(ruleDAO.findAllDACAutomationRulesByDACId(1))
+        .thenReturn(
+            List.of(
+                new DACAutomationRule(
+                    1,
+                    DACAutomationRuleType.GRU_V1,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    Timestamp.from(Instant.now()),
+                    1,
+                    "alice",
+                    "alice@fake.org")));
     doNothing().when(ruleDAO).auditedDeleteDACRuleSetting(anyInt(), anyInt(), anyInt());
     AutomationRuleToggleResponse result = service.toggleRule(1, 1, user);
     assertFalse(result.isRuleEnabled());
@@ -222,22 +251,20 @@ class DACAutomationRuleServiceTest {
     int offset = (page - 1) * pageSize;
     int totalCount = 25;
 
-    List<DACAutomationRuleAudit> mockAudits = List.of(
-        new DACAutomationRuleAudit(
-            RuleAuditAction.ADD,
-            Timestamp.from(Instant.now()),
-            DACAutomationRuleType.GRU_V1,
-            "user1@example.com",
-            "User One"
-        ),
-        new DACAutomationRuleAudit(
-            RuleAuditAction.REMOVE,
-            Timestamp.from(Instant.now()),
-            DACAutomationRuleType.HMB_DSV1,
-            "user2@example.com",
-            "User Two"
-        )
-    );
+    List<DACAutomationRuleAudit> mockAudits =
+        List.of(
+            new DACAutomationRuleAudit(
+                RuleAuditAction.ADD,
+                Timestamp.from(Instant.now()),
+                DACAutomationRuleType.GRU_V1,
+                "user1@example.com",
+                "User One"),
+            new DACAutomationRuleAudit(
+                RuleAuditAction.REMOVE,
+                Timestamp.from(Instant.now()),
+                DACAutomationRuleType.HMB_DSV1,
+                "user2@example.com",
+                "User Two"));
 
     when(ruleDAO.findAutomationAuditsForDac(dacId, pageSize, offset)).thenReturn(mockAudits);
     when(ruleDAO.findCountOfAutomationAuditsForDac(dacId)).thenReturn(totalCount);
@@ -260,18 +287,30 @@ class DACAutomationRuleServiceTest {
     Dataset dataset1 = makeDataset(1, "Dataset One", 3);
     Dataset dataset2 = makeDataset(2, "Dataset Two", 4);
     DACAutomationRule activeRule = makeDacAutomationRuleGRU(); // This has enabledByUserId=1
-    DACAutomationRule inactiveRule = new DACAutomationRule(2, DACAutomationRuleType.GRU_V1,
-        "Inactive Rule", RuleState.AVAILABLE, null, null, null, null);
+    DACAutomationRule inactiveRule =
+        new DACAutomationRule(
+            2,
+            DACAutomationRuleType.GRU_V1,
+            "Inactive Rule",
+            RuleState.AVAILABLE,
+            null,
+            null,
+            null,
+            null);
 
     when(dataAccessRequestDAO.findByReferenceId(referenceId)).thenReturn(dar);
     when(datasetDAO.findDatasetById(1)).thenReturn(dataset1);
     when(datasetDAO.findDatasetById(2)).thenReturn(dataset2);
-    when(ruleDAO.findAllDACAutomationRulesByDACId(dataset1.getDacId())).thenReturn(List.of(activeRule));
-    when(ruleDAO.findAllDACAutomationRulesByDACId(dataset2.getDacId())).thenReturn(List.of(inactiveRule));
+    when(ruleDAO.findAllDACAutomationRulesByDACId(dataset1.getDacId()))
+        .thenReturn(List.of(activeRule));
+    when(ruleDAO.findAllDACAutomationRulesByDACId(dataset2.getDacId()))
+        .thenReturn(List.of(inactiveRule));
 
     DACAutomationRuleService serviceSpy = spy(service);
     // in order to test sending the email we need to add to the datasetsAuthorized list
-    doAnswer(inv -> Optional.of(new Vote())).when(serviceSpy).applyRule(activeRule, dataset1, dar, request);
+    doAnswer(inv -> Optional.of(new Vote()))
+        .when(serviceSpy)
+        .applyRule(activeRule, dataset1, dar, request);
 
     serviceSpy.triggerDACRuleSettings(researcher, datasetIds, referenceId, request);
 
@@ -285,12 +324,21 @@ class DACAutomationRuleServiceTest {
     String referenceId = dar.getReferenceId();
     List<Integer> datasetIds = List.of(1);
     Dataset dataset = makeDataset();
-    DACAutomationRule inactiveRule = new DACAutomationRule(1, DACAutomationRuleType.GRU_V1,
-        "Inactive Rule", RuleState.AVAILABLE, null, null, null, null);
+    DACAutomationRule inactiveRule =
+        new DACAutomationRule(
+            1,
+            DACAutomationRuleType.GRU_V1,
+            "Inactive Rule",
+            RuleState.AVAILABLE,
+            null,
+            null,
+            null,
+            null);
 
     when(dataAccessRequestDAO.findByReferenceId(referenceId)).thenReturn(dar);
     when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
-    when(ruleDAO.findAllDACAutomationRulesByDACId(dataset.getDacId())).thenReturn(List.of(inactiveRule));
+    when(ruleDAO.findAllDACAutomationRulesByDACId(dataset.getDacId()))
+        .thenReturn(List.of(inactiveRule));
 
     DACAutomationRuleService serviceSpy = spy(service);
 
@@ -300,7 +348,7 @@ class DACAutomationRuleServiceTest {
   }
 
   @Test
-  void testTriggerDACRuleSettings_does_not_throw(){
+  void testTriggerDACRuleSettings_does_not_throw() {
     User researcher = makeResearcher();
     DataAccessRequest dar = makeDAR();
     String referenceId = dar.getReferenceId();
@@ -310,7 +358,8 @@ class DACAutomationRuleServiceTest {
         .when(dataAccessRequestDAO)
         .findByReferenceId(referenceId);
 
-    assertDoesNotThrow(() -> service.triggerDACRuleSettings(researcher, datasetIds, referenceId, request));
+    assertDoesNotThrow(
+        () -> service.triggerDACRuleSettings(researcher, datasetIds, referenceId, request));
   }
 
   @Test
@@ -331,13 +380,13 @@ class DACAutomationRuleServiceTest {
 
     Vote vote = mockFindVoteById(voteId);
     when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(vote));
-    Vote openedVote = service.openElectionAndApprove(rule, ruleImplementation, dar, dataset, request);
+    Vote openedVote =
+        service.openElectionAndApprove(rule, ruleImplementation, dar, dataset, request);
 
     assertEquals(vote, openedVote);
-    verify(voteServiceDAO).updateVotesWithValue(
-          List.of(vote),
-          true,
-          "Rule Automated DAR (RADAR) Approval using rule: GRU_V1");
+    verify(voteServiceDAO)
+        .updateVotesWithValue(
+            List.of(vote), true, "Rule Automated DAR (RADAR) Approval using rule: GRU_V1");
   }
 
   @Test
@@ -377,11 +426,16 @@ class DACAutomationRuleServiceTest {
     vote.setType(VoteType.RADAR_APPROVE.getValue());
     vote.setVote(true);
 
-    when(electionDAO.insertElection(eq(ElectionType.DATA_ACCESS.getValue()),
-        eq(ElectionStatus.OPEN.getValue()), any(), eq(darHmb.getReferenceId()), eq(datasetGru.getDatasetId()))).thenReturn(1);
+    when(electionDAO.insertElection(
+            eq(ElectionType.DATA_ACCESS.getValue()),
+            eq(ElectionStatus.OPEN.getValue()),
+            any(),
+            eq(darHmb.getReferenceId()),
+            eq(datasetGru.getDatasetId())))
+        .thenReturn(1);
 
-    when(voteDAO.insertVote(rule.enabledByUserId(), 1,
-        VoteType.RADAR_APPROVE.getValue())).thenReturn(1);
+    when(voteDAO.insertVote(rule.enabledByUserId(), 1, VoteType.RADAR_APPROVE.getValue()))
+        .thenReturn(1);
     when(voteDAO.findVoteById(1)).thenReturn(vote);
     when(userDAO.findUserById(rule.enabledByUserId())).thenReturn(user);
     when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(vote));
@@ -428,11 +482,16 @@ class DACAutomationRuleServiceTest {
     Vote vote = new Vote();
     vote.setType(VoteType.RADAR_APPROVE.getValue());
 
-    when(electionDAO.insertElection(eq(ElectionType.DATA_ACCESS.getValue()),
-        eq(ElectionStatus.OPEN.getValue()), any(), eq(darHmb.getReferenceId()), eq(datasetGru.getDatasetId()))).thenReturn(1);
+    when(electionDAO.insertElection(
+            eq(ElectionType.DATA_ACCESS.getValue()),
+            eq(ElectionStatus.OPEN.getValue()),
+            any(),
+            eq(darHmb.getReferenceId()),
+            eq(datasetGru.getDatasetId())))
+        .thenReturn(1);
 
-    when(voteDAO.insertVote(rule.enabledByUserId(), 1,
-        VoteType.RADAR_APPROVE.getValue())).thenReturn(1);
+    when(voteDAO.insertVote(rule.enabledByUserId(), 1, VoteType.RADAR_APPROVE.getValue()))
+        .thenReturn(1);
     when(voteDAO.findVoteById(1)).thenReturn(vote);
 
     doThrow(new RuntimeException("Test error"))
@@ -453,20 +512,21 @@ class DACAutomationRuleServiceTest {
     DACAutomationRuleService serviceSpy = spy(service);
     serviceSpy.applyRule(rule, datasetGru, darNotHmb, request);
 
-    verify(serviceSpy, never()).openElectionAndApprove(
-        any(DACAutomationRule.class),
-        any(RuleImplementationInterface.class),
-        any(DataAccessRequest.class),
-        any(Dataset.class),
-        any(ContainerRequest.class)
-    );
+    verify(serviceSpy, never())
+        .openElectionAndApprove(
+            any(DACAutomationRule.class),
+            any(RuleImplementationInterface.class),
+            any(DataAccessRequest.class),
+            any(Dataset.class),
+            any(ContainerRequest.class));
   }
 
   @Test
   void testGetRuleImplementation() {
     DACAutomationRule gruRule = makeDacAutomationRuleGRU();
 
-    RuleImplementationInterface implementation = DACAutomationRuleService.getRuleImplementation(gruRule);
+    RuleImplementationInterface implementation =
+        DACAutomationRuleService.getRuleImplementation(gruRule);
 
     assertNotNull(implementation);
     assertEquals(DACAutomationRuleType.GRU_V1, implementation.getRuleType());
@@ -481,22 +541,21 @@ class DACAutomationRuleServiceTest {
     when(mockRule.ruleType()).thenReturn(mockType);
     when(mockType.toString()).thenReturn("MOCK_TYPE");
 
-    IllegalArgumentException exception = assertThrows(
-        IllegalArgumentException.class,
-        () -> DACAutomationRuleService.getRuleImplementation(mockRule));
-    assertEquals(
-        "No rule implementation found for type: MOCK_TYPE",
-        exception.getMessage());
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> DACAutomationRuleService.getRuleImplementation(mockRule));
+    assertEquals("No rule implementation found for type: MOCK_TYPE", exception.getMessage());
   }
 
   private void mockInsertElection(DataAccessRequest dar, Dataset dataset, Integer electionId) {
     when(electionDAO.insertElection(
-        eq(ElectionType.DATA_ACCESS.getValue()),
-        eq(ElectionStatus.OPEN.getValue()),
-        any(Date.class),
-        eq(dar.getReferenceId()),
-        eq(dataset.getDatasetId())
-    )).thenReturn(electionId);
+            eq(ElectionType.DATA_ACCESS.getValue()),
+            eq(ElectionStatus.OPEN.getValue()),
+            any(Date.class),
+            eq(dar.getReferenceId()),
+            eq(dataset.getDatasetId())))
+        .thenReturn(electionId);
   }
 
   private Vote mockFindVoteById(Integer voteId) {
@@ -506,5 +565,4 @@ class DACAutomationRuleServiceTest {
     when(voteDAO.findVoteById(voteId)).thenReturn(vote);
     return vote;
   }
-
 }

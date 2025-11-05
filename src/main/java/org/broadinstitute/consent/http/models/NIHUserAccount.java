@@ -13,8 +13,7 @@ public class NIHUserAccount {
 
   private Boolean status;
 
-  public NIHUserAccount() {
-  }
+  public NIHUserAccount() {}
 
   public NIHUserAccount(String nihUsername, String eraExpiration, Boolean status) {
     this.nihUsername = nihUsername;
@@ -51,8 +50,9 @@ public class NIHUserAccount {
     if (!(o instanceof NIHUserAccount that)) {
       return false;
     }
-    return Objects.equals(nihUsername, that.nihUsername) && Objects.equals(
-        eraExpiration, that.eraExpiration) && Objects.equals(status, that.status);
+    return Objects.equals(nihUsername, that.nihUsername)
+        && Objects.equals(eraExpiration, that.eraExpiration)
+        && Objects.equals(status, that.status);
   }
 
   @Override

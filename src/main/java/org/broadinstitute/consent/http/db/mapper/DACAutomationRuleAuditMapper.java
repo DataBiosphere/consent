@@ -3,14 +3,14 @@ package org.broadinstitute.consent.http.db.mapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import org.broadinstitute.consent.http.rules.RuleAuditAction;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleAudit;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
+import org.broadinstitute.consent.http.rules.RuleAuditAction;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
-public class DACAutomationRuleAuditMapper implements RowMapper<DACAutomationRuleAudit>,
-    RowMapperHelper {
+public class DACAutomationRuleAuditMapper
+    implements RowMapper<DACAutomationRuleAudit>, RowMapperHelper {
 
   @Override
   public DACAutomationRuleAudit map(ResultSet rs, StatementContext ctx) throws SQLException {

@@ -23,7 +23,8 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 @RegisterRowMapper(InstitutionMapper.class)
 public interface InstitutionDAO extends Transactional<InstitutionDAO> {
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
       INSERT INTO institution
               (institution_name, it_director_name, it_director_email, institution_url,
                duns_number, org_chart_url, verification_url, verification_filename,
@@ -33,7 +34,8 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
               :organizationType, :createUser, :createDate)
       """)
   @GetGeneratedKeys
-  Integer insertInstitution(@Bind("institutionName") String institutionName,
+  Integer insertInstitution(
+      @Bind("institutionName") String institutionName,
       @Bind("itDirectorName") String itDirectorName,
       @Bind("itDirectorEmail") String itDirectorEmail,
       @Bind("institutionUrl") String institutionUrl,
@@ -54,43 +56,55 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
    * @return The inserted Institution object
    * @throws SQLException The exception thrown if the insert fails.
    */
-  default Institution insertFullInstitution(Institution institution, Integer userId) throws SQLException {
+  default Institution insertFullInstitution(Institution institution, Integer userId)
+      throws SQLException {
     Date now = new Date();
     AtomicReference<Integer> institutionId = new AtomicReference<>();
-    getHandle().useTransaction(handle -> {
-      handle.getConnection().setAutoCommit(false);
-      Integer id = insertInstitution(
-          institution.getName(),
-          institution.getItDirectorName(),
-          institution.getItDirectorEmail(),
-          institution.getInstitutionUrl(),
-          institution.getDunsNumber(),
-          institution.getOrgChartUrl(),
-          institution.getVerificationUrl(),
-          institution.getVerificationFilename(),
-          (Objects.nonNull(institution.getOrganizationType()) ? institution.getOrganizationType()
-              .getValue() : null),
-          userId,
-          now);
-      if (institution.getDomains() != null) {
-        String insertDomainQuery = """
+    getHandle()
+        .useTransaction(
+            handle -> {
+              handle.getConnection().setAutoCommit(false);
+              Integer id =
+                  insertInstitution(
+                      institution.getName(),
+                      institution.getItDirectorName(),
+                      institution.getItDirectorEmail(),
+                      institution.getInstitutionUrl(),
+                      institution.getDunsNumber(),
+                      institution.getOrgChartUrl(),
+                      institution.getVerificationUrl(),
+                      institution.getVerificationFilename(),
+                      (Objects.nonNull(institution.getOrganizationType())
+                          ? institution.getOrganizationType().getValue()
+                          : null),
+                      userId,
+                      now);
+              if (institution.getDomains() != null) {
+                String insertDomainQuery =
+                    """
             INSERT INTO institution_domains (institution_id, domain) VALUES (:institutionId, :domain)
             """;
-        institution.getDomains().forEach(domain -> handle.createUpdate(insertDomainQuery)
-            .bind("institutionId", id)
-            .bind("domain", domain)
-            .execute());
-      }
-      handle.commit();
-      institutionId.set(id);
-    });
+                institution
+                    .getDomains()
+                    .forEach(
+                        domain ->
+                            handle
+                                .createUpdate(insertDomainQuery)
+                                .bind("institutionId", id)
+                                .bind("domain", domain)
+                                .execute());
+              }
+              handle.commit();
+              institutionId.set(id);
+            });
     if (institutionId.get() != null) {
       return findInstitutionById(institutionId.get());
     }
     throw new SQLException("Failed to insert institution");
   }
 
-  @SqlUpdate("""
+  @SqlUpdate(
+      """
       UPDATE institution
       SET
         institution_name = :institutionName,
@@ -106,7 +120,8 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
         update_date = :updateDate
       WHERE institution_id = :institutionId
       """)
-  void updateInstitutionById(@Bind("institutionId") Integer institutionId,
+  void updateInstitutionById(
+      @Bind("institutionId") Integer institutionId,
       @Bind("institutionName") String institutionName,
       @Bind("itDirectorName") String itDirectorName,
       @Bind("itDirectorEmail") String itDirectorEmail,
@@ -131,48 +146,60 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
       throws SQLException {
     Date now = new Date();
     Integer institutionId = institution.getId();
-    getHandle().useTransaction(handle -> {
-      handle.getConnection().setAutoCommit(false);
-      updateInstitutionById(
-          institution.getId(),
-          institution.getName(),
-          institution.getItDirectorName(),
-          institution.getItDirectorEmail(),
-          institution.getInstitutionUrl(),
-          institution.getDunsNumber(),
-          institution.getOrgChartUrl(),
-          institution.getVerificationUrl(),
-          institution.getVerificationFilename(),
-          (Objects.nonNull(institution.getOrganizationType()) ? institution.getOrganizationType()
-              .getValue() : null),
-          userId,
-          now);
-      handle.createUpdate("DELETE FROM institution_domains WHERE institution_id = :institutionId")
-          .bind("institutionId", institutionId)
-          .execute();
-      if (institution.getDomains() != null) {
-        String insertDomainQuery = """
+    getHandle()
+        .useTransaction(
+            handle -> {
+              handle.getConnection().setAutoCommit(false);
+              updateInstitutionById(
+                  institution.getId(),
+                  institution.getName(),
+                  institution.getItDirectorName(),
+                  institution.getItDirectorEmail(),
+                  institution.getInstitutionUrl(),
+                  institution.getDunsNumber(),
+                  institution.getOrgChartUrl(),
+                  institution.getVerificationUrl(),
+                  institution.getVerificationFilename(),
+                  (Objects.nonNull(institution.getOrganizationType())
+                      ? institution.getOrganizationType().getValue()
+                      : null),
+                  userId,
+                  now);
+              handle
+                  .createUpdate(
+                      "DELETE FROM institution_domains WHERE institution_id = :institutionId")
+                  .bind("institutionId", institutionId)
+                  .execute();
+              if (institution.getDomains() != null) {
+                String insertDomainQuery =
+                    """
             INSERT INTO institution_domains (institution_id, domain) VALUES (:institutionId, :domain)
             """;
-        institution.getDomains().forEach(domain -> handle.createUpdate(insertDomainQuery)
-            .bind("institutionId", institutionId)
-            .bind("domain", domain)
-            .execute());
-      }
-      handle.commit();
-    });
+                institution
+                    .getDomains()
+                    .forEach(
+                        domain ->
+                            handle
+                                .createUpdate(insertDomainQuery)
+                                .bind("institutionId", institutionId)
+                                .bind("domain", domain)
+                                .execute());
+              }
+              handle.commit();
+            });
     return findInstitutionById(institutionId);
   }
 
   @SqlUpdate(
-  """
+      """
      WITH domain_deletes AS (DELETE FROM institution_domains d WHERE d.institution_id = :institutionId)
      DELETE FROM institution WHERE institution_id = :institutionId
   """)
   void deleteInstitutionById(@Bind("institutionId") Integer institutionId);
 
   @UseRowReducer(InstitutionReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT i.*, d.domain
       FROM institution i
       LEFT JOIN institution_domains d on d.institution_id = i.institution_id
@@ -181,7 +208,8 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
   Institution findInstitutionById(@Bind("institutionId") Integer institutionId);
 
   @UseRowReducer(InstitutionReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT i.*, d.domain
       FROM institution i
       LEFT JOIN institution_domains d on d.institution_id = i.institution_id
@@ -192,7 +220,8 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = SimplifiedUser.class, prefix = "so")
   @UseRowReducer(InstitutionWithUsersReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT i.*,
         d.domain,
         u.user_id AS u_user_id, u.email AS u_email,
@@ -222,7 +251,8 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = SimplifiedUser.class, prefix = "so")
   @UseRowReducer(InstitutionWithUsersReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT i.*,
         d.domain,
         u.user_id AS u_user_id,
@@ -252,25 +282,30 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
   Institution findInstitutionWithSOById(@Bind("institutionId") Integer institutionId);
 
   default void deleteAllInstitutionsByUser(@Bind("userId") Integer userId) throws SQLException {
-    final String domainDeleteQuery = """
+    final String domainDeleteQuery =
+        """
         DELETE FROM institution_domains
         WHERE institution_id IN (SELECT institution_id FROM institution WHERE create_user = :userId OR update_user = :userId)
         """;
-    final String institutionDeleteQuery = """
+    final String institutionDeleteQuery =
+        """
         DELETE FROM institution WHERE create_user = :userId OR update_user = :userId
         """;
-    getHandle().useTransaction(handle -> {
-      handle.getConnection().setAutoCommit(false);
-      handle.createUpdate(domainDeleteQuery).bind("userId", userId).execute();
-      handle.createUpdate(institutionDeleteQuery).bind("userId", userId).execute();
-      handle.commit();
-    });
+    getHandle()
+        .useTransaction(
+            handle -> {
+              handle.getConnection().setAutoCommit(false);
+              handle.createUpdate(domainDeleteQuery).bind("userId", userId).execute();
+              handle.createUpdate(institutionDeleteQuery).bind("userId", userId).execute();
+              handle.commit();
+            });
   }
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = SimplifiedUser.class, prefix = "so")
   @UseRowReducer(InstitutionWithUsersReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT i.*,
         d.domain,
         u.user_id AS u_user_id,
@@ -299,7 +334,8 @@ public interface InstitutionDAO extends Transactional<InstitutionDAO> {
       """)
   Institution findInstitutionByDomain(@Bind("domain") String domain);
 
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT distinct i.institution_id
       FROM institution i
       INNER JOIN institution_domains d ON d.institution_id = i.institution_id

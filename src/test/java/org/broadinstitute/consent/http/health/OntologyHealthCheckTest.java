@@ -20,14 +20,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class OntologyHealthCheckTest {
 
-  @Mock
-  private HttpClientUtil clientUtil;
+  @Mock private HttpClientUtil clientUtil;
 
-  @Mock
-  private SimpleResponse response;
+  @Mock private SimpleResponse response;
 
-  @Mock
-  private ServicesConfiguration servicesConfiguration;
+  @Mock private ServicesConfiguration servicesConfiguration;
 
   private OntologyHealthCheck healthCheck;
 

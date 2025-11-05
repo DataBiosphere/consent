@@ -25,5 +25,4 @@ public class SchemaResource extends Resource {
     String content = jsonSchemaUtil.getDatasetRegistrationSchemaV1();
     return Response.ok().entity(content).type(MediaType.APPLICATION_JSON).build();
   }
-
 }

@@ -160,10 +160,7 @@ public class FileStorageObject {
    * @return The last time the file has been changed.
    */
   public Instant getLatestUpdateDate() {
-    return Stream.of(
-            this.getCreateDate(),
-            this.getUpdateDate(),
-            this.getDeleteDate())
+    return Stream.of(this.getCreateDate(), this.getUpdateDate(), this.getDeleteDate())
         .filter(Objects::nonNull)
         .max(Instant::compareTo)
         // there should always at least be a create date, but if somehow not, send very old date
@@ -184,7 +181,15 @@ public class FileStorageObject {
 
   @Override
   public int hashCode() {
-    return Objects.hash(fileStorageObjectId, entityId, fileName, blobId, category, mediaType,
-        createUserId, createDate, deleted);
+    return Objects.hash(
+        fileStorageObjectId,
+        entityId,
+        fileName,
+        blobId,
+        category,
+        mediaType,
+        createUserId,
+        createDate,
+        deleted);
   }
 }

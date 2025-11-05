@@ -11,11 +11,9 @@ import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 
-/**
- * This class works well for individual Users as well as collections.
- */
-public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, User>,
-    RowMapperHelper {
+/** This class works well for individual Users as well as collections. */
+public class UserWithRolesReducer
+    implements LinkedHashMapRowReducer<Integer, User>, RowMapperHelper {
 
   @Override
   public void accumulate(Map<Integer, User> map, RowView rowView) {
@@ -26,10 +24,7 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
     } else if (hasNonZeroColumn(rowView, "u_user_id")) {
       userId = rowView.getColumn("u_user_id", Integer.class);
     }
-    User user =
-        map.computeIfAbsent(
-            userId,
-            id -> rowView.getRow(User.class));
+    User user = map.computeIfAbsent(userId, id -> rowView.getRow(User.class));
 
     try {
       UserRole userRole = mapUserRoleFromRowView(rowView, userId);
@@ -50,9 +45,9 @@ public class UserWithRolesReducer implements LinkedHashMapRowReducer<Integer, Us
     } catch (MappingException e) {
       logDebug("Error adding Institution to User: %s".formatted(e.getMessage()));
     }
-    //user role join can cause duplication of data if done in tandem with joins on other tables
-    //ex) The same LC can end up being repeated multiple times
-    //Below only adds LC if not currently saved on the array
+    // user role join can cause duplication of data if done in tandem with joins on other tables
+    // ex) The same LC can end up being repeated multiple times
+    // Below only adds LC if not currently saved on the array
     try {
       if (rowView.getColumn("lc_id", Integer.class) != null) {
         LibraryCard lc = rowView.getRow(LibraryCard.class);

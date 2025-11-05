@@ -43,18 +43,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class AuthorizationHelperTest extends AbstractTestHelper {
 
-  @Mock
-  private SamService samService;
-  @Mock
-  private UserService userService;
-  @Mock
-  private AuthUser authorizedUser;
-  @Mock
-  private AuthUser unauthorizedUser;
-  @Mock
-  private DuosUser authorizedDuosUser;
-  @Mock
-  private DuosUser unauthorizedDuosUser;
+  @Mock private SamService samService;
+  @Mock private UserService userService;
+  @Mock private AuthUser authorizedUser;
+  @Mock private AuthUser unauthorizedUser;
+  @Mock private DuosUser authorizedDuosUser;
+  @Mock private DuosUser unauthorizedDuosUser;
 
   private AuthorizationHelper authorizationHelper;
   private DuosUserAuthenticator duosUserAuthenticator;
@@ -85,8 +79,15 @@ class AuthorizationHelperTest extends AbstractTestHelper {
 
   @ParameterizedTest
   @NullAndEmptySource
-  @ValueSource(strings = {Resource.MEMBER, Resource.CHAIRPERSON, Resource.SIGNINGOFFICIAL,
-      Resource.ADMIN, Resource.DATASUBMITTER, Resource.ITDIRECTOR})
+  @ValueSource(
+      strings = {
+        Resource.MEMBER,
+        Resource.CHAIRPERSON,
+        Resource.SIGNINGOFFICIAL,
+        Resource.ADMIN,
+        Resource.DATASUBMITTER,
+        Resource.ITDIRECTOR
+      })
   void testNotAuthorized(String roleName) {
     unauthorizedUser.setEmail("email");
     unauthorizedDuosUser.setEmail(unauthorizedUser.getEmail());
@@ -119,9 +120,7 @@ class AuthorizationHelperTest extends AbstractTestHelper {
     assertNotNull(authUser.getAuthToken());
   }
 
-  /**
-   * Test that in the case of a header lookup failure, we don't fail the overall request.
-   */
+  /** Test that in the case of a header lookup failure, we don't fail the overall request. */
   @Test
   void testAuthenticateGetUserInfoFailure() {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
@@ -136,9 +135,7 @@ class AuthorizationHelperTest extends AbstractTestHelper {
     assertFalse(duosUser.isPresent());
   }
 
-  /**
-   * Test that in the case of a Sam user lookup failure, we then try to register the user
-   */
+  /** Test that in the case of a Sam user lookup failure, we then try to register the user */
   @Test
   void testAuthenticateGetUserWithStatusInfoFailurePostUserSuccess() throws Exception {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
@@ -146,9 +143,10 @@ class AuthorizationHelperTest extends AbstractTestHelper {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("name"));
     headerCache.loadCache(bearerToken, headerMap);
     when(samService.getRegistrationInfo(any())).thenThrow(new NotFoundException());
-    when(samService.postRegistrationInfo(any())).thenReturn(
-        new UserStatus()
-            .setUserInfo(new UserInfo().setUserEmail("email").setUserSubjectId("subjectId")));
+    when(samService.postRegistrationInfo(any()))
+        .thenReturn(
+            new UserStatus()
+                .setUserInfo(new UserInfo().setUserEmail("email").setUserSubjectId("subjectId")));
 
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
     assertEquals(bearerToken, authUser.orElseThrow().getAuthToken());
@@ -166,13 +164,15 @@ class AuthorizationHelperTest extends AbstractTestHelper {
     when(samService.getRegistrationInfo(any())).thenThrow(new NotFoundException());
     when(samService.postRegistrationInfo(any())).thenThrow(new Exception("errorMessage"));
 
-    WebApplicationException ex = assertThrows(WebApplicationException.class,
-        () -> oAuthAuthenticator.authenticate(bearerToken));
+    WebApplicationException ex =
+        assertThrows(
+            WebApplicationException.class, () -> oAuthAuthenticator.authenticate(bearerToken));
     assertEquals("errorMessage", ex.getMessage());
   }
 
   /**
-   * Test that in the case of a missing claim headers (other than email), we don't fail on Sam user lookup
+   * Test that in the case of a missing claim headers (other than email), we don't fail on Sam user
+   * lookup
    */
   @Test
   void testAuthenticateGetUserWithStatusInfoIncompleteClaims() {
@@ -184,21 +184,16 @@ class AuthorizationHelperTest extends AbstractTestHelper {
     assertEquals(authUser.orElseThrow().getAuthToken(), bearerToken);
   }
 
-  /**
-   * Test that in the case of a missing email header, we throw an exception.
-   */
+  /** Test that in the case of a missing email header, we throw an exception. */
   @Test
   void testAuthenticateGetUserWithStatusInfMissingEmailClaimsThrows() {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
     headerCache.loadCache(bearerToken, headerMap);
 
-    assertThrows(NotAuthorizedException.class, ()->oAuthAuthenticator.authenticate(bearerToken));
-
+    assertThrows(NotAuthorizedException.class, () -> oAuthAuthenticator.authenticate(bearerToken));
   }
 
-  /**
-   * Test that if the name is "unknown" in the header, we use the email as the name
-   */
+  /** Test that if the name is "unknown" in the header, we use the email as the name */
   @Test
   void testUnknownNameDefaultsToEmail() {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_access_token, List.of(bearerToken));
@@ -209,5 +204,4 @@ class AuthorizationHelperTest extends AbstractTestHelper {
     Optional<AuthUser> authUser = oAuthAuthenticator.authenticate(bearerToken);
     assertEquals(authUser.orElseThrow().getName(), authUser.orElseThrow().getEmail());
   }
-
 }

@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.enumeration;
 
 public enum ElectionFields {
-
   ID("election_id"),
   TYPE("election_type"),
   STATUS("status"),
@@ -27,5 +26,4 @@ public enum ElectionFields {
   public String getValue() {
     return value;
   }
-
 }

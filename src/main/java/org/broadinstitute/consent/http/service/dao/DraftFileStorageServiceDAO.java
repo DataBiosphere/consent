@@ -27,54 +27,66 @@ public class DraftFileStorageServiceDAO implements ConsentLogger {
   FileStorageObjectDAO fileStorageObjectDAO;
 
   @Inject
-  public DraftFileStorageServiceDAO(Jdbi jdbi, GCSService gcsService,
-      FileStorageObjectDAO fileStorageObjectDAO) {
+  public DraftFileStorageServiceDAO(
+      Jdbi jdbi, GCSService gcsService, FileStorageObjectDAO fileStorageObjectDAO) {
     this.jdbi = jdbi;
     this.gcsService = gcsService;
     this.fileStorageObjectDAO = fileStorageObjectDAO;
   }
 
-  public List<FileStorageObject> storeDraftFiles(UUID associatedId, User user,
-      Map<String, FormDataBodyPart> files) throws SQLException {
+  public List<FileStorageObject> storeDraftFiles(
+      UUID associatedId, User user, Map<String, FormDataBodyPart> files) throws SQLException {
     List<FileStorageObject> fileStorageObjects = new ArrayList<>();
-    jdbi.useHandle(handle -> {
-      handle.getConnection().setAutoCommit(false);
-      try {
-        files.forEach((String key, FormDataBodyPart file) -> {
-          fileStorageObjects.add(store(file, user, associatedId));
-        });
-      } catch (Exception e) {
-        fileStorageObjects.forEach(file -> {
+    jdbi.useHandle(
+        handle -> {
+          handle.getConnection().setAutoCommit(false);
           try {
-            deleteStoredFile(file, user);
-          } catch (SQLException ex) {
-            logWarn(String.format("Error rolling back files in GCS for draft: %s, gcsuri: %s",
-                associatedId.toString(), file.getBlobId().toGsUtilUri()));
-            throw new RuntimeException(ex);
+            files.forEach(
+                (String key, FormDataBodyPart file) -> {
+                  fileStorageObjects.add(store(file, user, associatedId));
+                });
+          } catch (Exception e) {
+            fileStorageObjects.forEach(
+                file -> {
+                  try {
+                    deleteStoredFile(file, user);
+                  } catch (SQLException ex) {
+                    logWarn(
+                        String.format(
+                            "Error rolling back files in GCS for draft: %s, gcsuri: %s",
+                            associatedId.toString(), file.getBlobId().toGsUtilUri()));
+                    throw new RuntimeException(ex);
+                  }
+                });
+            handle.getConnection().rollback();
           }
+          handle.commit();
         });
-        handle.getConnection().rollback();
-      }
-      handle.commit();
-    });
     return fileStorageObjects;
   }
 
-  public void deleteStoredFile(FileStorageObject fileStorageObject, User user) throws SQLException, NotFoundException {
-    jdbi.useHandle(handle -> {
-      handle.getConnection().setAutoCommit(false);
-      try {
-        gcsService.deleteDocument(fileStorageObject.getBlobId().getName());
-        fileStorageObjectDAO.deleteFileById(fileStorageObject.getFileStorageObjectId(),
-            user.getUserId(), new Date().toInstant());
-      } catch (Exception e) {
-        logWarn(String.format("Error deleting stored file for user: %s, file obj id: %d, error: %s",
-            user.getEmail(), fileStorageObject.getFileStorageObjectId(), e));
-        handle.rollback();
-        throw new NotFoundException("Error deleting stored file for user: " + user.getEmail(), e);
-      }
-      handle.commit();
-    });
+  public void deleteStoredFile(FileStorageObject fileStorageObject, User user)
+      throws SQLException, NotFoundException {
+    jdbi.useHandle(
+        handle -> {
+          handle.getConnection().setAutoCommit(false);
+          try {
+            gcsService.deleteDocument(fileStorageObject.getBlobId().getName());
+            fileStorageObjectDAO.deleteFileById(
+                fileStorageObject.getFileStorageObjectId(),
+                user.getUserId(),
+                new Date().toInstant());
+          } catch (Exception e) {
+            logWarn(
+                String.format(
+                    "Error deleting stored file for user: %s, file obj id: %d, error: %s",
+                    user.getEmail(), fileStorageObject.getFileStorageObjectId(), e));
+            handle.rollback();
+            throw new NotFoundException(
+                "Error deleting stored file for user: " + user.getEmail(), e);
+          }
+          handle.commit();
+        });
   }
 
   private FileStorageObject store(FormDataBodyPart file, User user, UUID draftId)
@@ -82,15 +94,26 @@ public class DraftFileStorageServiceDAO implements ConsentLogger {
     BlobId blobId;
     try {
       // upload to GCS
-      blobId = gcsService.storeDocument(file.getValueAs(InputStream.class),
-          file.getMediaType().toString(), UUID.randomUUID());
-      Integer fileStorageObjectId = fileStorageObjectDAO.insertNewFile(file.getName(),
-          FileCategory.DRAFT_UPLOADED_FILE.getValue(), blobId.toGsUtilUri(),
-          file.getMediaType().toString(), draftId.toString(), user.getUserId(), Instant.now());
+      blobId =
+          gcsService.storeDocument(
+              file.getValueAs(InputStream.class),
+              file.getMediaType().toString(),
+              UUID.randomUUID());
+      Integer fileStorageObjectId =
+          fileStorageObjectDAO.insertNewFile(
+              file.getName(),
+              FileCategory.DRAFT_UPLOADED_FILE.getValue(),
+              blobId.toGsUtilUri(),
+              file.getMediaType().toString(),
+              draftId.toString(),
+              user.getUserId(),
+              Instant.now());
       return fileStorageObjectDAO.findFileById(fileStorageObjectId);
     } catch (Exception e) {
-      logWarn(String.format("Error storing file for user: %s, draft id : %s, error: %s",
-          user.getEmail(), draftId.toString(), e));
+      logWarn(
+          String.format(
+              "Error storing file for user: %s, draft id : %s, error: %s",
+              user.getEmail(), draftId.toString(), e));
       throw new RuntimeException(e);
     }
   }

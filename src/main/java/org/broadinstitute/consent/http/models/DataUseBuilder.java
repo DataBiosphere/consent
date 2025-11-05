@@ -19,7 +19,6 @@ public class DataUseBuilder {
     return du;
   }
 
-
   public DataUseBuilder setGeneralUse(Boolean generalUse) {
     du.setGeneralUse(generalUse);
     return this;
@@ -144,5 +143,4 @@ public class DataUseBuilder {
     du.setNotHealth(notHealth);
     return this;
   }
-
 }

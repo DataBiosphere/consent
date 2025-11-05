@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.enumeration;
 
 public enum HeaderSummary {
-
-
   CONSENT("Consent"),
   VERSION("Version"),
   STATUS("Status"),
@@ -49,5 +47,4 @@ public enum HeaderSummary {
   public String getValue() {
     return value;
   }
-
 }

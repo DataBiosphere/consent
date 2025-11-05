@@ -5,7 +5,6 @@ import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.enumeration.DraftType;
 
-
 public interface DraftInterface {
 
   String getJson();
@@ -41,5 +40,4 @@ public interface DraftInterface {
   Set<FileStorageObject> getStoredFiles();
 
   DraftType getType();
-
 }
