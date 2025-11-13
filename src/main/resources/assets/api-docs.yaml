@@ -511,6 +511,8 @@ paths:
     $ref: './paths/datasetIndexById.yaml'
   /api/dataset/search/index:
     $ref: './paths/datasetSearchIndex.yaml'
+  /api/dataset/search/index/v2:
+    $ref: './paths/datasetSearchIndexV2.yaml'
   /api/dataset/{id}/authorizedAccessReaders:
     $ref: './paths/datasetAuthorizedReaders.yaml'
   /api/dataset/{id}/authorizedAccessReaders/{userId}:
