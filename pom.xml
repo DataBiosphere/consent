@@ -24,7 +24,7 @@
     <mockserver.version>5.15.0</mockserver.version>
     <junit.version>6.0.1</junit.version>
     <mockito.version>5.20.0</mockito.version>
-    <sonar.plugin.version>5.2.0.4988</sonar.plugin.version>
+    <sonar.plugin.version>5.3.0.6276</sonar.plugin.version>
     <netty.override.version>4.2.7.Final</netty.override.version>
     <spotless.version>3.0.0</spotless.version>
 
