@@ -15,6 +15,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -381,10 +383,17 @@ public class UserService implements ConsentLogger {
     if (StringUtils.isEmpty(user.getEmail())) {
       throw new BadRequestException("Email address cannot be empty");
     }
-    List<String> validRoleNameList =
-        Stream.of(UserRoles.RESEARCHER, UserRoles.ALUMNI, UserRoles.ADMIN)
+    Set<String> validRoleNameList =
+        Stream.of(
+                UserRoles.ADMIN,
+                UserRoles.ALUMNI,
+                UserRoles.DATASUBMITTER,
+                UserRoles.ITDIRECTOR,
+                UserRoles.RESEARCHER,
+                UserRoles.SERVICE_ACCOUNT,
+                UserRoles.SIGNINGOFFICIAL)
             .map(UserRoles::getRoleName)
-            .toList();
+            .collect(Collectors.toSet());
     user.getRoles()
         .forEach(
             role -> {

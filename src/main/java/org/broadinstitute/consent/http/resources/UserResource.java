@@ -35,6 +35,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.CreateDuosUserRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Error;
@@ -482,6 +483,35 @@ public class UserResource extends Resource {
       User user = duosUser.getUser();
       List<ApprovedDataset> approvedDatasets = datasetService.getApprovedDatasets(user);
       return Response.ok().entity(approvedDatasets).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/create")
+  @RolesAllowed({ADMIN, CHAIRPERSON})
+  public Response createNewUser(@Auth DuosUser duosUser, @Context UriInfo info, String json) {
+    try {
+      CreateDuosUserRequest createDuosUserRequest =
+          gson.fromJson(json, CreateDuosUserRequest.class);
+      // Non-admins can only create users with the Researcher role
+      if (!duosUser.getUser().hasUserRole(UserRoles.ADMIN)) {
+        createDuosUserRequest
+            .roles()
+            .forEach(
+                role -> {
+                  if (!role.getName().equals(UserRoles.RESEARCHER.getRoleName())) {
+                    throw new ForbiddenException(
+                        "Chairs can only create users with the Researcher role.");
+                  }
+                });
+      }
+      User user = userService.createUser(createDuosUserRequest.newUser());
+      URI uri = info.getRequestUriBuilder().path("{email}").build(user.getEmail());
+      return Response.created(uri).entity(user).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

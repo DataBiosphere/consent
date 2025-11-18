@@ -21,6 +21,7 @@ import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService;
 
+@Deprecated(forRemoval = true, since = "2024-11-17")
 @Path("api/dacuser")
 public class DACUserResource extends Resource {
 

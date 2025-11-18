@@ -1,8 +1,17 @@
 post:
   summary: Create User
-  deprecated: true
   requestBody:
-    description: Creates a User
+    description: |
+      Creates a User. Admins are allowed to create users with the following roles:
+        - Admin
+        - Alumni
+        - DataSubmitter
+        - ITDirector      
+        - Researcher
+        - ServiceAccount
+        - SigningOfficial
+      Chairpersons are only allowed to create users with the Researcher role. Chairpersons can
+      subsequently add created users to DACs they manage as Members or Chairpersons.
     required: true
     content:
       application/json:
@@ -30,3 +39,6 @@ post:
             $ref: '../schemas/User.yaml'
     400:
       description: Malformed user entity.
+    403:
+        description: |
+          Forbidden. The user does not have permission to create a user with the specified roles
