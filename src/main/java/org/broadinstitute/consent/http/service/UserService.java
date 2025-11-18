@@ -201,6 +201,7 @@ public class UserService implements ConsentLogger {
     Integer userId =
         userDAO.insertUser(
             user.getEmail(), user.getDisplayName(), user.getInstitutionId(), new Date());
+    userDAO.updateEmailPreference(userId, user.getEmailPreference());
     insertUserRoles(user.getRoles(), userId);
     assignExistingLibraryCardToUser(user);
     return userDAO.findUserById(userId);
