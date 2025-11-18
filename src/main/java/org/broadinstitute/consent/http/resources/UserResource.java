@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
@@ -59,6 +60,7 @@ public class UserResource extends Resource {
   private final DatasetService datasetService;
   private final AcknowledgementService acknowledgementService;
   private final NihService nihService;
+  private final ServicesConfiguration servicesConfiguration;
 
   @Inject
   public UserResource(
@@ -66,12 +68,14 @@ public class UserResource extends Resource {
       UserService userService,
       DatasetService datasetService,
       AcknowledgementService acknowledgementService,
-      NihService nihService) {
+      NihService nihService,
+      ServicesConfiguration servicesConfiguration) {
     this.samService = samService;
     this.userService = userService;
     this.datasetService = datasetService;
     this.acknowledgementService = acknowledgementService;
     this.nihService = nihService;
+    this.servicesConfiguration = servicesConfiguration;
   }
 
   @GET
@@ -493,7 +497,7 @@ public class UserResource extends Resource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/create")
   @RolesAllowed({ADMIN, CHAIRPERSON})
-  public Response createNewUser(@Auth DuosUser duosUser, @Context UriInfo info, String json) {
+  public Response createNewUser(@Auth DuosUser duosUser, String json) {
     try {
       CreateDuosUserRequest createDuosUserRequest =
           gson.fromJson(json, CreateDuosUserRequest.class);
@@ -510,7 +514,11 @@ public class UserResource extends Resource {
                 });
       }
       User user = userService.createUser(createDuosUserRequest.newUser());
-      URI uri = info.getRequestUriBuilder().path("{email}").build(user.getEmail());
+      String localUrl =
+          servicesConfiguration.getLocalURL().endsWith("/")
+              ? servicesConfiguration.getLocalURL()
+              : servicesConfiguration.getLocalURL() + "/";
+      URI uri = new URI("%sapi/user/%d".formatted(localUrl, user.getUserId()));
       return Response.created(uri).entity(user).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
@@ -84,9 +85,7 @@ class UserResourceTest extends AbstractTestHelper {
 
   @Mock private NihService nihService;
 
-  @Mock private UriInfo info;
-
-  @Mock private UriBuilder builder;
+  @Mock private ServicesConfiguration servicesConfiguration;
 
   private static final String TEST_EMAIL = "test@gmail.com";
 
@@ -107,7 +106,12 @@ class UserResourceTest extends AbstractTestHelper {
   void initResource() {
     userResource =
         new UserResource(
-            samService, userService, datasetService, acknowledgementService, nihService);
+            samService,
+            userService,
+            datasetService,
+            acknowledgementService,
+            nihService,
+            servicesConfiguration);
   }
 
   @Test
@@ -1002,10 +1006,8 @@ class UserResourceTest extends AbstractTestHelper {
     User createdUser =
         new User(1, request.email(), request.displayName(), new Date(), request.roles());
     when(userService.createUser(request.newUser())).thenReturn(createdUser);
-    when(info.getRequestUriBuilder()).thenReturn(builder);
-    when(builder.path("{email}")).thenReturn(builder);
-    when(builder.build(request.email())).thenReturn(URI.create("http://localhost:8080/user/api"));
-    try (var response = userResource.createNewUser(duosUser, info, gson.toJson(request))) {
+    when(servicesConfiguration.getLocalURL()).thenReturn("http://localhost:8080");
+    try (var response = userResource.createNewUser(duosUser, gson.toJson(request))) {
       assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
     }
   }
@@ -1014,7 +1016,7 @@ class UserResourceTest extends AbstractTestHelper {
   void testCreateNewUserInvalidDisplayName() {
     CreateDuosUserRequest request =
         new CreateDuosUserRequest(null, "test@test.com", true, List.of(UserRoles.Researcher()));
-    try (var response = userResource.createNewUser(duosUser, info, gson.toJson(request))) {
+    try (var response = userResource.createNewUser(duosUser, gson.toJson(request))) {
       assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
   }
@@ -1023,7 +1025,7 @@ class UserResourceTest extends AbstractTestHelper {
   void testCreateNewUserInvalidEmail() {
     CreateDuosUserRequest request =
         new CreateDuosUserRequest("New User", null, true, List.of(UserRoles.Researcher()));
-    try (var response = userResource.createNewUser(duosUser, info, gson.toJson(request))) {
+    try (var response = userResource.createNewUser(duosUser, gson.toJson(request))) {
       assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
   }
@@ -1043,7 +1045,7 @@ class UserResourceTest extends AbstractTestHelper {
   void testCreateNewUserChairInvalidRole(UserRole role) {
     CreateDuosUserRequest request =
         new CreateDuosUserRequest("New User", "test@test.com", true, List.of(role));
-    try (var response = userResource.createNewUser(duosUser, info, gson.toJson(request))) {
+    try (var response = userResource.createNewUser(duosUser, gson.toJson(request))) {
       assertEquals(Status.FORBIDDEN.getStatusCode(), response.getStatus());
     }
   }
@@ -1059,10 +1061,8 @@ class UserResourceTest extends AbstractTestHelper {
     User createdUser =
         new User(1, request.email(), request.displayName(), new Date(), request.roles());
     when(userService.createUser(request.newUser())).thenReturn(createdUser);
-    when(info.getRequestUriBuilder()).thenReturn(builder);
-    when(builder.path("{email}")).thenReturn(builder);
-    when(builder.build(request.email())).thenReturn(URI.create("http://localhost:8080/user/api"));
-    try (var response = userResource.createNewUser(adminUser, info, gson.toJson(request))) {
+    when(servicesConfiguration.getLocalURL()).thenReturn("http://localhost:8080");
+    try (var response = userResource.createNewUser(adminUser, gson.toJson(request))) {
       assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
     }
   }
