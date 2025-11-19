@@ -12,6 +12,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -189,6 +190,21 @@ public class ElasticSearchService implements ConsentLogger {
     var hits = json.getHits();
 
     return Response.ok().entity(hits).build();
+  }
+
+  public InputStream searchDatasetsStream(String query) throws IOException {
+    if (!validateQuery(query)) {
+      throw new IOException("Invalid Elasticsearch query");
+    }
+    Request searchRequest =
+        new Request(HttpMethod.GET, "/" + esConfig.getDatasetIndexName() + "/_search");
+    searchRequest.setEntity(new NStringEntity(query, ContentType.APPLICATION_JSON));
+    var response = esClient.performRequest(searchRequest);
+    var status = response.getStatusLine().getStatusCode();
+    if (status != 200) {
+      throw new IOException("Invalid Elasticsearch query");
+    }
+    return response.getEntity().getContent();
   }
 
   public StudyTerm toStudyTerm(Study study) {

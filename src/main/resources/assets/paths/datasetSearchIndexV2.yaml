@@ -1,0 +1,98 @@
+post:
+  summary: Search the dataset index
+  operationId: searchDatasetIndexV2
+  description: |
+    Returns all results matching a search query in a streaming format. Includes full ElasticSearch
+    response that includes timing, shards, hits:total, hits:max_score, and hits:hits which contains
+    the actual results.
+  requestBody:
+    description: Search query
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          description: Elasticsearch query object
+          additionalProperties: true
+        examples:
+          example1:
+            summary: Search request 1
+            value:
+              query:
+                bool:
+                  must:
+                    - match:
+                        _type: dataset
+                    - match:
+                        _id: 1440
+          example2:
+            summary: Search request 2
+            value:
+              from: 0
+              size: 10000
+              query:
+                bool:
+                  must:
+                    - match:
+                        _type: dataset
+                    - exists:
+                        field: study
+  tags:
+    - Dataset
+  responses:
+    200:
+      description: ElasticSearch response of results matching the search query
+      content:
+        application/json:
+          schema:
+            type: object
+          examples:
+            example1:
+              summary: Search response 1
+              value:
+                - took: 181
+                  timed_out: false
+                  _shards:
+                    total: 5
+                    successful: 5
+                    failed: 0
+                  hits:
+                    total: 15
+                    max_score: 1.0
+                    hits:
+                      - _index: datasets
+                        _type: dataset
+                        _id: 1440
+                        _score: 1.0
+                        _source:
+                          datasetId: 1440
+                          createUserId: 1
+                          datasetIdentifier: DUOS-000xxx
+                          deletable: false
+                          datasetName: Dataset 000xxx
+                          participantCount: 45
+                          dataUse:
+                            primary:
+                              - code: NPOA
+                                description: Future use for population origins or ancestry research is prohibited.
+                            secondary:
+                              - code: NCU
+                          dacId: 2
+                          dacApproval: true
+                          approvedUserIds: [1,2,3]
+                          submitter:
+                            userId: 10
+                            displayName: Jane Doe
+                            institution:
+                              id: 100
+                              name: Broad Institute
+                          updateUser:
+                            userId: 10
+                            displayName: Jane Doe
+                            institution:
+                              id: 100
+                              name: Broad Institute
+                          dac:
+                            dacId: 2
+                            name: Example DAC
+                            dacEmail: dac_email@test.org
