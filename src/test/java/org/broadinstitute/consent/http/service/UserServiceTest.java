@@ -13,7 +13,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -31,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
@@ -65,6 +63,8 @@ import org.jdbi.v3.core.transaction.TransactionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -158,43 +158,6 @@ class UserServiceTest extends AbstractTestHelper {
     // Verify role additions/deletions.
     verify(userRoleDAO, times(1)).insertUserRoles(List.of(so), 1);
     verify(userRoleDAO, times(1)).removeUserRoles(1, List.of(admin.getRoleId()));
-  }
-
-  @Test
-  void createUserTest() {
-    User u = generateUser();
-    List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
-    u.setRoles(roles);
-    when(userDAO.findUserByEmail(u.getEmail())).thenReturn(null);
-    when(libraryCardDAO.findLibraryCardByUserEmail(u.getEmail())).thenReturn(null);
-    try {
-      service.createUser(u);
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
-  }
-
-  @Test
-  void createUserWithLibraryCardTest() {
-    User u = generateUser();
-    LibraryCard lc = generateLibraryCard(u.getEmail());
-    lc.setUserName(u.getDisplayName());
-    Institution institution = new Institution();
-    List<UserRole> roles = List.of(generateRole(UserRoles.RESEARCHER.getRoleId()));
-    u.setRoles(roles);
-    when(libraryCardDAO.findLibraryCardByUserEmail(u.getEmail())).thenReturn(lc);
-    when(institutionService.findInstitutionForEmail(u.getEmail())).thenReturn(institution);
-
-    service.createUser(u);
-
-    verify(libraryCardDAO)
-        .updateLibraryCardById(
-            eq(lc.getId()),
-            eq(u.getUserId()),
-            eq(lc.getUserName()),
-            eq(lc.getUserEmail()),
-            eq(u.getUserId()),
-            any());
   }
 
   @Test
@@ -345,30 +308,11 @@ class UserServiceTest extends AbstractTestHelper {
     assertThrows(BadRequestException.class, () -> service.validateActiveERACredentials(u));
   }
 
-  @Test
-  void testCreateUserNoRoles() {
+  @ParameterizedTest
+  @ValueSource(ints = {1, 2}) // Chair and Member role IDs
+  void testCreateUserInvalidRole(int roleId) {
     User u = generateUser();
-    assertTrue(CollectionUtils.isEmpty(u.getRoles()));
-    int userId = 123;
-    when(userDAO.insertUser(
-            eq(u.getEmail()), eq(u.getDisplayName()), eq(u.getInstitutionId()), any()))
-        .thenReturn(userId);
-    service.createUser(u);
-    verify(userRoleDAO).insertUserRoles(List.of(UserRoles.Researcher()), userId);
-  }
-
-  @Test
-  void testCreateUserInvalidRoleCase1() {
-    User u = generateUser();
-    List<UserRole> roles = List.of(generateRole(UserRoles.CHAIRPERSON.getRoleId()));
-    u.setRoles(roles);
-    assertThrows(BadRequestException.class, () -> service.createUser(u));
-  }
-
-  @Test
-  void testCreateUserInvalidRoleCase2() {
-    User u = generateUser();
-    List<UserRole> roles = List.of(generateRole(UserRoles.MEMBER.getRoleId()));
+    List<UserRole> roles = List.of(generateRole(roleId));
     u.setRoles(roles);
     assertThrows(BadRequestException.class, () -> service.createUser(u));
   }

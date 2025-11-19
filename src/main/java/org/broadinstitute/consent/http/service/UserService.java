@@ -12,7 +12,6 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.time.Instant;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -37,7 +36,6 @@ import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Institution;
-import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -198,13 +196,7 @@ public class UserService implements ConsentLogger {
     if (institution != null) {
       user.setInstitutionId(institution.getId());
     }
-    Integer userId =
-        userDAO.insertUser(
-            user.getEmail(), user.getDisplayName(), user.getInstitutionId(), new Date());
-    userDAO.updateEmailPreference(userId, user.getEmailPreference());
-    insertUserRoles(user.getRoles(), userId);
-    assignExistingLibraryCardToUser(user);
-    return userDAO.findUserById(userId);
+    return userServiceDAO.createUser(user);
   }
 
   public User findUserById(Integer id) throws NotFoundException {
@@ -404,29 +396,6 @@ public class UserService implements ConsentLogger {
                     "Invalid role: " + role.getName() + ". Valid roles are: " + validRoleNames);
               }
             });
-  }
-
-  public void insertUserRoles(List<UserRole> roles, Integer userId) {
-    roles.forEach(
-        r -> {
-          if (r.getRoleId() == null) {
-            r.setRoleId(userRoleDAO.findRoleIdByName(r.getName()));
-          }
-        });
-    userRoleDAO.insertUserRoles(roles, userId);
-  }
-
-  private void assignExistingLibraryCardToUser(User user) {
-    LibraryCard libraryCard = libraryCardDAO.findLibraryCardByUserEmail(user.getEmail());
-    if (libraryCard != null) {
-      libraryCardDAO.updateLibraryCardById(
-          libraryCard.getId(),
-          user.getUserId(),
-          user.getDisplayName(),
-          user.getEmail(),
-          user.getUserId(),
-          new Date());
-    }
   }
 
   public List<User> findUsersInJsonArray(String json, String arrayKey) {
