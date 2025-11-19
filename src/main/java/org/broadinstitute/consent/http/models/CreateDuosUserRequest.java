@@ -1,19 +1,22 @@
 package org.broadinstitute.consent.http.models;
 
-import jakarta.ws.rs.BadRequestException;
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 
 public record CreateDuosUserRequest(
     String displayName, String email, boolean emailPreference, List<UserRole> roles) {
 
-  public User newUser() {
+  public void validate() {
     if (email == null || email.isBlank()) {
-      throw new BadRequestException("Email is required to create a new user.");
+      throw new IllegalArgumentException("Email is required.");
     }
     if (displayName == null || displayName.isBlank()) {
-      throw new BadRequestException("Display name is required to create a new user.");
+      throw new IllegalArgumentException("Display name is required.");
     }
+  }
+
+  public User newUser() {
+    validate();
     User user = new User();
     user.setEmail(email);
     user.setDisplayName(displayName);

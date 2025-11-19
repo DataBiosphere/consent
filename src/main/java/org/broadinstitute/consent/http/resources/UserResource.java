@@ -501,6 +501,7 @@ public class UserResource extends Resource {
     try {
       CreateDuosUserRequest createDuosUserRequest =
           gson.fromJson(json, CreateDuosUserRequest.class);
+      createDuosUserRequest.validate();
       // Non-admins can only create users with the Researcher role
       if (!duosUser.getUser().hasUserRole(UserRoles.ADMIN)) {
         createDuosUserRequest
