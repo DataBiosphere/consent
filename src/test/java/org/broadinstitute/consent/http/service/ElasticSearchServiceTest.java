@@ -25,6 +25,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpVersion;
 import org.apache.http.StatusLine;
@@ -592,6 +594,17 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
 
     try (var response = service.searchDatasets(query)) {
       assertEquals(200, response.getStatus());
+    }
+  }
+
+  @Test
+  void testSearchDatasetsStream() throws IOException {
+    String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
+    String mockResponse = "{\"valid\":true,\"hits\":{\"hits\":[]}}";
+    mockElasticSearchResponse(mockResponse);
+    try (var inputStream = service.searchDatasetsStream(query)) {
+      String received = IOUtils.toString(inputStream, Charset.defaultCharset());
+      assertEquals(mockResponse, received);
     }
   }
 

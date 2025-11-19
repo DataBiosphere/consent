@@ -29,6 +29,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -38,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
@@ -552,6 +554,17 @@ class DatasetResourceTest extends AbstractTestHelper {
     when(elasticSearchService.searchDatasets(any())).thenReturn(mockResponse);
 
     try (var response = resource.searchDatasetIndex(duosUser, query)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertTrue(response.getEntity().toString().length() > 2);
+    }
+  }
+
+  @Test
+  void testSearchDatasetIndexStream() throws IOException {
+    String query = "{ \"dataUse\": [\"HMB\"] }";
+    when(elasticSearchService.searchDatasetsStream(any()))
+        .thenReturn(IOUtils.toInputStream(query, Charset.defaultCharset()));
+    try (var response = resource.searchDatasetIndexStream(duosUser, query)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertTrue(response.getEntity().toString().length() > 2);
     }

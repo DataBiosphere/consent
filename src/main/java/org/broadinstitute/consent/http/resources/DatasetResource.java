@@ -438,6 +438,22 @@ public class DatasetResource extends Resource {
     }
   }
 
+  @POST
+  @Path("/search/index/v2")
+  @Consumes("application/json")
+  @Produces("application/json")
+  @PermitAll
+  @Timed
+  public Response searchDatasetIndexStream(@Auth DuosUser duosUser, String query) {
+    try {
+      InputStream inputStream = elasticSearchService.searchDatasetsStream(query);
+      StreamingOutput stream = createStreamingOutput(inputStream);
+      return Response.ok(stream).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   @PUT
   @Produces("application/json")
   @RolesAllowed(ADMIN)
