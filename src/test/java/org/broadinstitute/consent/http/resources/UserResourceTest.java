@@ -1045,7 +1045,8 @@ class UserResourceTest extends AbstractTestHelper {
   void testCreateNewUserChairInvalidRole(UserRole role) {
     DuosUser chairUser =
         new DuosUser(
-            authUser, new User(1, TEST_EMAIL, "Test User", new Date(), List.of(UserRoles.Chairperson())));
+            authUser,
+            new User(1, TEST_EMAIL, "Test User", new Date(), List.of(UserRoles.Chairperson())));
     CreateDuosUserRequest request =
         new CreateDuosUserRequest("New User", "test@test.com", true, List.of(role));
     try (var response = userResource.createNewUser(chairUser, gson.toJson(request))) {
