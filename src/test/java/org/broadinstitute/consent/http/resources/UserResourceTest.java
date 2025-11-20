@@ -1043,9 +1043,12 @@ class UserResourceTest extends AbstractTestHelper {
   @ParameterizedTest
   @MethodSource("nonResearcherRoleProvider")
   void testCreateNewUserChairInvalidRole(UserRole role) {
+    DuosUser chairUser =
+        new DuosUser(
+            authUser, new User(1, TEST_EMAIL, "Test User", new Date(), List.of(UserRoles.Chairperson())));
     CreateDuosUserRequest request =
         new CreateDuosUserRequest("New User", "test@test.com", true, List.of(role));
-    try (var response = userResource.createNewUser(duosUser, gson.toJson(request))) {
+    try (var response = userResource.createNewUser(chairUser, gson.toJson(request))) {
       assertEquals(Status.FORBIDDEN.getStatusCode(), response.getStatus());
     }
   }
