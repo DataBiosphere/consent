@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -1014,20 +1015,18 @@ class UserResourceTest extends AbstractTestHelper {
 
   @Test
   void testCreateNewUserInvalidDisplayName() {
-    CreateDuosUserRequest request =
-        new CreateDuosUserRequest(null, "test@test.com", true, List.of(UserRoles.Researcher()));
-    try (var response = userResource.createNewUser(duosUser, gson.toJson(request))) {
-      assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    }
+    List<UserRole> roles = List.of(UserRoles.Researcher());
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> new CreateDuosUserRequest(null, "test@test.com", true, roles));
   }
 
   @Test
   void testCreateNewUserInvalidEmail() {
-    CreateDuosUserRequest request =
-        new CreateDuosUserRequest("New User", null, true, List.of(UserRoles.Researcher()));
-    try (var response = userResource.createNewUser(duosUser, gson.toJson(request))) {
-      assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-    }
+    List<UserRole> roles = List.of(UserRoles.Researcher());
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> new CreateDuosUserRequest("New User", null, true, roles));
   }
 
   private static Stream<Arguments> nonResearcherRoleProvider() {

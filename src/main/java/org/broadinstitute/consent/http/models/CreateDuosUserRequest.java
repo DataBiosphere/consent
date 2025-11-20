@@ -6,6 +6,15 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 public record CreateDuosUserRequest(
     String displayName, String email, boolean emailPreference, List<UserRole> roles) {
 
+  public CreateDuosUserRequest(
+      String displayName, String email, boolean emailPreference, List<UserRole> roles) {
+    this.displayName = displayName;
+    this.email = email;
+    this.emailPreference = emailPreference;
+    this.roles = roles;
+    validate();
+  }
+
   public void validate() {
     if (email == null || email.isBlank()) {
       throw new IllegalArgumentException("Email is required.");
