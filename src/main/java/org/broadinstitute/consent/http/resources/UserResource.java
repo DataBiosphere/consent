@@ -31,10 +31,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.CreateDuosUserRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Error;
@@ -58,6 +60,7 @@ public class UserResource extends Resource {
   private final DatasetService datasetService;
   private final AcknowledgementService acknowledgementService;
   private final NihService nihService;
+  private final ServicesConfiguration servicesConfiguration;
 
   @Inject
   public UserResource(
@@ -65,12 +68,14 @@ public class UserResource extends Resource {
       UserService userService,
       DatasetService datasetService,
       AcknowledgementService acknowledgementService,
-      NihService nihService) {
+      NihService nihService,
+      ServicesConfiguration servicesConfiguration) {
     this.samService = samService;
     this.userService = userService;
     this.datasetService = datasetService;
     this.acknowledgementService = acknowledgementService;
     this.nihService = nihService;
+    this.servicesConfiguration = servicesConfiguration;
   }
 
   @GET
@@ -482,6 +487,40 @@ public class UserResource extends Resource {
       User user = duosUser.getUser();
       List<ApprovedDataset> approvedDatasets = datasetService.getApprovedDatasets(user);
       return Response.ok().entity(approvedDatasets).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/create")
+  @RolesAllowed({ADMIN, CHAIRPERSON})
+  public Response createNewUser(@Auth DuosUser duosUser, String json) {
+    try {
+      CreateDuosUserRequest createDuosUserRequest =
+          gson.fromJson(json, CreateDuosUserRequest.class);
+      createDuosUserRequest.validate();
+      // Non-admins can only create users with the Researcher role
+      if (!duosUser.getUser().hasUserRole(UserRoles.ADMIN)) {
+        createDuosUserRequest
+            .roles()
+            .forEach(
+                role -> {
+                  if (!role.getName().equals(UserRoles.RESEARCHER.getRoleName())) {
+                    throw new ForbiddenException(
+                        "Chairs can only create users with the Researcher role.");
+                  }
+                });
+      }
+      User user = userService.createUser(createDuosUserRequest.newUser());
+      String localUrl =
+          servicesConfiguration.getLocalURL().endsWith("/")
+              ? servicesConfiguration.getLocalURL()
+              : servicesConfiguration.getLocalURL() + "/";
+      URI uri = new URI("%sapi/user/%d".formatted(localUrl, user.getUserId()));
+      return Response.created(uri).entity(user).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

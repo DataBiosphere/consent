@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -29,15 +30,19 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.CreateDuosUserRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
@@ -52,6 +57,9 @@ import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.util.PSQLException;
@@ -78,6 +86,8 @@ class UserResourceTest extends AbstractTestHelper {
 
   @Mock private NihService nihService;
 
+  @Mock private ServicesConfiguration servicesConfiguration;
+
   private static final String TEST_EMAIL = "test@gmail.com";
 
   private final Gson gson = GsonUtil.getInstance();
@@ -97,7 +107,12 @@ class UserResourceTest extends AbstractTestHelper {
   void initResource() {
     userResource =
         new UserResource(
-            samService, userService, datasetService, acknowledgementService, nihService);
+            samService,
+            userService,
+            datasetService,
+            acknowledgementService,
+            nihService,
+            servicesConfiguration);
   }
 
   @Test
@@ -982,6 +997,77 @@ class UserResourceTest extends AbstractTestHelper {
 
     Response response = userResource.getApprovedDatasets(duosUser);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  void testCreateNewUser() {
+    CreateDuosUserRequest request =
+        new CreateDuosUserRequest(
+            "New User", "test@test.com", true, List.of(UserRoles.Researcher()));
+    User createdUser =
+        new User(1, request.email(), request.displayName(), new Date(), request.roles());
+    when(userService.createUser(request.newUser())).thenReturn(createdUser);
+    when(servicesConfiguration.getLocalURL()).thenReturn("http://localhost:8080");
+    try (var response = userResource.createNewUser(duosUser, gson.toJson(request))) {
+      assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
+    }
+  }
+
+  @Test
+  void testCreateNewUserInvalidDisplayName() {
+    List<UserRole> roles = List.of(UserRoles.Researcher());
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> new CreateDuosUserRequest(null, "test@test.com", true, roles));
+  }
+
+  @Test
+  void testCreateNewUserInvalidEmail() {
+    List<UserRole> roles = List.of(UserRoles.Researcher());
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> new CreateDuosUserRequest("New User", null, true, roles));
+  }
+
+  private static Stream<Arguments> nonResearcherRoleProvider() {
+    return Stream.of(
+        Arguments.of(UserRoles.Admin()),
+        Arguments.of(UserRoles.Alumni()),
+        Arguments.of(UserRoles.DataSubmitter()),
+        Arguments.of(UserRoles.ServiceAccount()),
+        Arguments.of(UserRoles.SigningOfficial()),
+        Arguments.of(UserRoles.ITDirector()));
+  }
+
+  @ParameterizedTest
+  @MethodSource("nonResearcherRoleProvider")
+  void testCreateNewUserChairInvalidRole(UserRole role) {
+    DuosUser chairUser =
+        new DuosUser(
+            authUser,
+            new User(1, TEST_EMAIL, "Test User", new Date(), List.of(UserRoles.Chairperson())));
+    CreateDuosUserRequest request =
+        new CreateDuosUserRequest("New User", "test@test.com", true, List.of(role));
+    try (var response = userResource.createNewUser(chairUser, gson.toJson(request))) {
+      assertEquals(Status.FORBIDDEN.getStatusCode(), response.getStatus());
+    }
+  }
+
+  @ParameterizedTest
+  @MethodSource("nonResearcherRoleProvider")
+  void testCreateNewUserAdmin(UserRole role) {
+    DuosUser adminUser =
+        new DuosUser(
+            authUser, new User(1, TEST_EMAIL, "Test User", new Date(), List.of(UserRoles.Admin())));
+    CreateDuosUserRequest request =
+        new CreateDuosUserRequest("New User", "test@test.com", true, List.of(role));
+    User createdUser =
+        new User(1, request.email(), request.displayName(), new Date(), request.roles());
+    when(userService.createUser(request.newUser())).thenReturn(createdUser);
+    when(servicesConfiguration.getLocalURL()).thenReturn("http://localhost:8080");
+    try (var response = userResource.createNewUser(adminUser, gson.toJson(request))) {
+      assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
+    }
   }
 
   private Map<String, Acknowledgement> getDefaultAcknowledgementForUser(

@@ -899,6 +899,8 @@ paths:
           description: Unauthorized, log in and try the operation again.
         500:
           description: Error processing the request.
+  /api/user/create:
+    $ref: './paths/userCreate.yaml'
   /api/nih:
     $ref: './paths/nih.yaml'
   /api/nih/sync:
