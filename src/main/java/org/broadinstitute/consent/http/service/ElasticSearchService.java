@@ -23,8 +23,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
-import org.apache.http.entity.ContentType;
-import org.apache.http.nio.entity.NStringEntity;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -49,8 +49,8 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.ThreadUtils;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.RestClient;
+import org.opensearch.client.Request;
+import org.opensearch.client.RestClient;
 
 public class ElasticSearchService implements ConsentLogger {
 
@@ -91,12 +91,12 @@ public class ElasticSearchService implements ConsentLogger {
 
   private static final String BULK_HEADER =
       """
-      { "index": {"_type": "dataset", "_id": "%d"} }
+      { "index": { "_index": "dataset", "_id": "%d"} }
       """;
 
   private static final String DELETE_QUERY =
       """
-      { "query": { "bool": { "must": [ { "match": { "_type": "dataset" } }, { "match": { "_id": "%d" } } ] } } }
+      { "query": { "terms": { "_id": ["%d"] } } }
       """;
 
   private Response performRequest(Request request) throws IOException {
@@ -123,7 +123,7 @@ public class ElasticSearchService implements ConsentLogger {
         new Request(HttpMethod.PUT, "/" + esConfig.getDatasetIndexName() + "/_bulk");
 
     bulkRequest.setEntity(
-        new NStringEntity(String.join("", bulkApiCall) + "\n", ContentType.APPLICATION_JSON));
+        new StringEntity(String.join("", bulkApiCall) + "\n", ContentType.APPLICATION_JSON));
 
     return performRequest(bulkRequest);
   }
@@ -132,7 +132,7 @@ public class ElasticSearchService implements ConsentLogger {
     Request deleteRequest =
         new Request(HttpMethod.POST, "/" + esConfig.getDatasetIndexName() + "/_delete_by_query");
     deleteRequest.setEntity(
-        new NStringEntity(DELETE_QUERY.formatted(datasetId), ContentType.APPLICATION_JSON));
+        new StringEntity(DELETE_QUERY.formatted(datasetId), ContentType.APPLICATION_JSON));
     updateDatasetIndexDate(datasetId, userId, null);
     return performRequest(deleteRequest);
   }
@@ -165,7 +165,7 @@ public class ElasticSearchService implements ConsentLogger {
 
     Request validateRequest =
         new Request(HttpMethod.GET, "/" + esConfig.getDatasetIndexName() + "/_validate/query");
-    validateRequest.setEntity(new NStringEntity(modifiedQuery, ContentType.APPLICATION_JSON));
+    validateRequest.setEntity(new StringEntity(modifiedQuery, ContentType.APPLICATION_JSON));
     Response response = performRequest(validateRequest);
 
     var entity = response.getEntity().toString();
@@ -181,7 +181,7 @@ public class ElasticSearchService implements ConsentLogger {
 
     Request searchRequest =
         new Request(HttpMethod.GET, "/" + esConfig.getDatasetIndexName() + "/_search");
-    searchRequest.setEntity(new NStringEntity(query, ContentType.APPLICATION_JSON));
+    searchRequest.setEntity(new StringEntity(query, ContentType.APPLICATION_JSON));
 
     Response response = performRequest(searchRequest);
 
@@ -193,12 +193,12 @@ public class ElasticSearchService implements ConsentLogger {
   }
 
   public InputStream searchDatasetsStream(String query) throws IOException {
-    if (!validateQuery(query)) {
+    if (invalidResultWindow(query)) {
       throw new IOException("Invalid Elasticsearch query");
     }
     Request searchRequest =
         new Request(HttpMethod.GET, "/" + esConfig.getDatasetIndexName() + "/_search");
-    searchRequest.setEntity(new NStringEntity(query, ContentType.APPLICATION_JSON));
+    searchRequest.setEntity(new StringEntity(query, ContentType.APPLICATION_JSON));
     var response = esClient.performRequest(searchRequest);
     var status = response.getStatusLine().getStatusCode();
     if (status != 200) {
