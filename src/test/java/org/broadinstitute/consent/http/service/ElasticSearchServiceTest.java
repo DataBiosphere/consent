@@ -66,9 +66,9 @@ import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.models.ontology.DataUseTerm;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.Response;
-import org.elasticsearch.client.RestClient;
+import org.opensearch.client.Request;
+import org.opensearch.client.Response;
+import org.opensearch.client.RestClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -536,9 +536,9 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
       assertEquals("PUT", capturedRequest.getMethod());
       assertEquals(
           """
-              { "index": {"_type": "dataset", "_id": "1"} }
+              { "index": {"_index": "dataset", "_id": "1"} }
               {"datasetId":1}
-              { "index": {"_type": "dataset", "_id": "2"} }
+              { "index": {"_index": "dataset", "_id": "2"} }
               {"datasetId":2}
 
               """,
@@ -562,7 +562,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(datasetDAO.findDatasetById(dataset2.getDatasetId())).thenReturn(dataset2);
     when(userDao.findUserById(dataset1.getCreateUserId())).thenReturn(datasetRecord.createUser);
     when(userDao.findUserById(dataset2.getCreateUserId())).thenReturn(datasetRecord.createUser);
-    org.elasticsearch.client.Response mockResponse = mock();
+    org.opensearch.client.Response mockResponse = mock();
     when(esClient.performRequest(any())).thenReturn(mockResponse);
     when(mockResponse.getEntity()).thenReturn(new StringEntity("response body"));
     StatusLine statusLine = mock();
@@ -709,9 +709,9 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     assertEquals(0, jsonArray.size());
   }
 
-  // Helper method to mock an ElasticSearch Client response
+  // Helper method to mock an OpenSearch Client response
   private void mockESClientResponse(int status, String body) throws Exception {
-    var esClientResponse = mock(org.elasticsearch.client.Response.class);
+    var esClientResponse = mock(org.opensearch.client.Response.class);
     var statusLine = mock(StatusLine.class);
     when(esClientResponse.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(status);

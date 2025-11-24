@@ -4,7 +4,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.message.BasicHeader;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
-import org.elasticsearch.client.RestClient;
+import org.opensearch.client.RestClient;
 
 @SuppressWarnings("WeakerAccess")
 public class ElasticSearchSupport {

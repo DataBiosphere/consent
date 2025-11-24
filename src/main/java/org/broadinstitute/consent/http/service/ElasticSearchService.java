@@ -49,8 +49,8 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.ThreadUtils;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.RestClient;
+import org.opensearch.client.Request;
+import org.opensearch.client.RestClient;
 
 public class ElasticSearchService implements ConsentLogger {
 
@@ -91,12 +91,12 @@ public class ElasticSearchService implements ConsentLogger {
 
   private static final String BULK_HEADER =
       """
-      { "index": {"_type": "dataset", "_id": "%d"} }
+      { "index": { "_index": "dataset", "_id": "%d"} }
       """;
 
   private static final String DELETE_QUERY =
       """
-      { "query": { "bool": { "must": [ { "match": { "_type": "dataset" } }, { "match": { "_id": "%d" } } ] } } }
+      { "query": { "terms": { "_id": ["%d"] } } }
       """;
 
   private Response performRequest(Request request) throws IOException {
