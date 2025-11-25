@@ -220,10 +220,8 @@ properties:
     items:
       "$ref": "./ConsentGroup.yaml"
   assets:
-    type: array
+    type: object
     description: Study Assets
-    items:
-      type: object
 required:
   - studyName
   - studyDescription
