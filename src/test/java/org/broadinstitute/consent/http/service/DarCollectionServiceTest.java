@@ -1611,6 +1611,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(darCollectionDAO.findDARCollectionByCollectionId(anyInt())).thenReturn(null);
     service.sendNewDARCollectionMessage(999);
     // Should log a warning and not throw
+    verifyNoInteractions(emailService);
   }
 
   // DARs with no datasets
