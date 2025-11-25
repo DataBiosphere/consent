@@ -220,7 +220,7 @@ public class DarCollectionService implements ConsentLogger {
     summaries.forEach(
         s -> {
           Collection<Election> elections = s.getElections().values();
-          Integer electionCount = elections.size();
+          int electionCount = elections.size();
           // if there are no elections present, unreviewed
           // if there are elections present. in process
           if (electionCount == 0) {
@@ -490,7 +490,8 @@ public class DarCollectionService implements ConsentLogger {
         this.darCollectionDAO.findDARCollectionByCollectionId(
             sourceCollection.getDarCollectionId());
 
-    return this.processDraftAsSummary(new ArrayList<>(sourceCollection.getDars().values()).get(0));
+    return this.processDraftAsSummary(
+        new ArrayList<>(sourceCollection.getDars().values()).getFirst());
   }
 
   /**
@@ -859,43 +860,34 @@ public class DarCollectionService implements ConsentLogger {
 
     for (Integer dacId : dacIds) {
       boolean autoOpen = hasAutoOpenRule(dacId);
-      Integer autoOpenUserId = getAutoOpenUserId(dacId);
+      Integer autoOpenUserId = getAutoOpenRuleUserId(dacId);
 
-      Optional<Dac> dacOpt =
-          dacsForDar.stream().filter(d -> d.getDacId().equals(dacId)).findFirst();
-
-      Optional<Dataset> dsOpt =
-          datasetsForDar.stream().filter(ds -> ds.getDacId().equals(dacId)).findFirst();
+      Dac dac = findDac(dacsForDar, dacId);
+      Dataset dataset = findDataset(datasetsForDar, dacId);
 
       if (autoOpen) {
-        dacOpt.ifPresent(result.autoOpenDacs::add);
-        dsOpt.ifPresent(result.autoOpenDatasets::add);
-        result.autoOpenUserIds.put(dacId, autoOpenUserId);
-
-        for (User user : adminAndChairUsers) {
-          if (user.verifyDACRole(CHAIRPERSON, dacId)
-              || user.verifyDACRole(MEMBER, dacId)
-              || user.hasUserRole(ADMIN)) {
-            result.autoOpenUsers.add(user);
-          }
-        }
-
+        addAutoOpen(result, dacId, autoOpenUserId, dac, dataset);
+        addUsers(result.autoOpenUsers, dacId, adminAndChairUsers, true);
       } else {
-        dacOpt.ifPresent(result.manualOpenDacs::add);
-        dsOpt.ifPresent(result.manualOpenDatasets::add);
-
-        for (User user : adminAndChairUsers) {
-          if (user.verifyDACRole(CHAIRPERSON, dacId) || user.hasUserRole(ADMIN)) {
-            result.manualOpenUsers.add(user);
-          }
-        }
+        addManualOpen(result, dac, dataset);
+        addUsers(result.manualOpenUsers, dacId, adminAndChairUsers, false);
       }
     }
 
     return result;
   }
 
-  /** Checks if the given DAC ID has an auto-open rule enabled. */
+  /** Finds a DAC by its ID from a collection of DACs. */
+  private Dac findDac(Collection<Dac> dacs, Integer dacId) {
+    return dacs.stream().filter(d -> d.getDacId().equals(dacId)).findFirst().orElse(null);
+  }
+
+  /** Finds a dataset by its DAC ID from a list of datasets. */
+  private Dataset findDataset(List<Dataset> datasets, Integer dacId) {
+    return datasets.stream().filter(ds -> ds.getDacId().equals(dacId)).findFirst().orElse(null);
+  }
+
+  /** Checks if an auto-open rule exists for a given DAC ID. */
   private boolean hasAutoOpenRule(Integer dacId) {
     return dacAutomationRuleService.findAllByDacId(dacId).stream()
         .anyMatch(
@@ -904,8 +896,8 @@ public class DarCollectionService implements ConsentLogger {
                     && r.enabledByUserId() != null);
   }
 
-  /** Retrieves the user ID who enabled the auto-open rule for the given DAC ID. */
-  private Integer getAutoOpenUserId(Integer dacId) {
+  /** Retrieves the user ID associated with the auto-open rule for a given DAC ID. */
+  private Integer getAutoOpenRuleUserId(Integer dacId) {
     return dacAutomationRuleService.findAllByDacId(dacId).stream()
         .filter(
             r ->
@@ -914,6 +906,54 @@ public class DarCollectionService implements ConsentLogger {
         .map(DACAutomationRule::enabledByUserId)
         .findFirst()
         .orElse(null);
+  }
+
+  /** Adds DACs, datasets, and auto-open user IDs to the auto open classification. */
+  private void addAutoOpen(
+      DacUserClassification result,
+      Integer dacId,
+      Integer autoOpenUserId,
+      Dac dac,
+      Dataset dataset) {
+
+    if (dac != null) {
+      result.autoOpenDacs.add(dac);
+    }
+    if (dataset != null) {
+      result.autoOpenDatasets.add(dataset);
+    }
+    result.autoOpenUserIds.put(dacId, autoOpenUserId);
+  }
+
+  /** Adds DACs and datasets to the manual open classification. */
+  private void addManualOpen(DacUserClassification result, Dac dac, Dataset dataset) {
+
+    if (dac != null) {
+      result.manualOpenDacs.add(dac);
+    }
+    if (dataset != null) {
+      result.manualOpenDatasets.add(dataset);
+    }
+  }
+
+  /** Adds users to the target set based on their DAC roles and the autoOpen flag. */
+  private void addUsers(Set<User> targetSet, Integer dacId, List<User> users, boolean autoOpen) {
+
+    for (User user : users) {
+      boolean isChair = user.verifyDACRole(CHAIRPERSON, dacId);
+      boolean isMember = user.verifyDACRole(MEMBER, dacId);
+      boolean isAdmin = user.hasUserRole(ADMIN);
+
+      if (autoOpen) {
+        if (isChair || isMember || isAdmin) {
+          targetSet.add(user);
+        }
+      } else { // manual
+        if (isChair || isAdmin) {
+          targetSet.add(user);
+        }
+      }
+    }
   }
 
   /** Creates elections and votes for DACs with auto-open rules. */
