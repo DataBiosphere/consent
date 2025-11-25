@@ -219,6 +219,11 @@ properties:
     description: Consent Groups
     items:
       "$ref": "./ConsentGroup.yaml"
+  assets:
+    type: array
+    description: Study Assets
+    items:
+      type: object
 required:
   - studyName
   - studyDescription
