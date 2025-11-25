@@ -998,7 +998,7 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   private List<User> getDistinctAdminAndChairUsersForDatasetIds(List<Integer> datasetIds) {
-    List<User> admins = userDAO.findUsersByRoleId(ADMIN.getRoleId());
+    List<User> admins = userDAO.findUsersByRoleId(UserRoles.ADMIN.getRoleId());
     Set<User> chairPersons =
         userDAO.findUsersForDatasetsByRole(
             datasetIds, Collections.singletonList(UserRoles.CHAIRPERSON.getRoleId()));
@@ -1007,7 +1007,7 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   private List<Dac> getMatchingDacs(User user, Collection<Dac> dacsInDAR) {
-    if (user.hasUserRole(ADMIN)) {
+    if (user.hasUserRole(UserRoles.ADMIN)) {
       return new ArrayList<>(dacsInDAR);
     }
     List<Integer> dacIDs =
