@@ -1701,6 +1701,73 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     verify(emailService).sendDarNewCollectionElectionMessage(any(), any());
   }
 
+  // Mixed auto-open and manual DACs
+  @Test
+  void testSendNewDARCollectionMessage_MixedAutoOpenAndManualDACs() throws Exception {
+    DarCollection collection = new DarCollection();
+    collection.setDarCollectionId(1);
+
+    // Dataset 1: auto-open DAC
+    Dataset autoOpenDataset = new Dataset();
+    autoOpenDataset.setDatasetId(1);
+    autoOpenDataset.setDacId(1);
+
+    // Dataset 2: manual DAC
+    Dataset manualDataset = new Dataset();
+    manualDataset.setDatasetId(2);
+    manualDataset.setDacId(2);
+
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(autoOpenDataset.getDatasetId(), manualDataset.getDatasetId()));
+    collection.addDar(dar);
+
+    Dac autoOpenDac = new Dac();
+    autoOpenDac.setDacId(1);
+    autoOpenDac.setName("AutoOpenDAC");
+
+    Dac manualDac = new Dac();
+    manualDac.setDacId(2);
+    manualDac.setName("ManualDAC");
+
+    User member = new User();
+    member.setUserId(3);
+    UserRole memberRole =
+        new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName());
+    memberRole.setDacId(autoOpenDac.getDacId());
+    member.setRoles(List.of(memberRole));
+
+    User chair = new User();
+    chair.setUserId(4);
+    UserRole chairRole =
+        new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+    chairRole.setDacId(manualDac.getDacId());
+    chair.setRoles(List.of(chairRole));
+
+    DACAutomationRule rule = mock(DACAutomationRule.class);
+    when(rule.ruleType()).thenReturn(DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS);
+    when(rule.enabledByUserId()).thenReturn(member.getUserId());
+
+    when(darCollectionDAO.findDARCollectionByCollectionId(1)).thenReturn(collection);
+    when(datasetDAO.findDatasetsByIdList(anyList()))
+        .thenReturn(List.of(autoOpenDataset, manualDataset));
+    when(dacDAO.findDacsForDatasetIds(anyList())).thenReturn(Set.of(autoOpenDac, manualDac));
+    when(dacAutomationRuleService.findAllByDacId(autoOpenDac.getDacId())).thenReturn(List.of(rule));
+    when(dacAutomationRuleService.findAllByDacId(manualDac.getDacId())).thenReturn(List.of());
+    when(userDAO.findUsersByRoleId(UserRoles.ADMIN.getRoleId())).thenReturn(List.of());
+    when(userDAO.findUsersForDatasetsByRole(anyList(), anyList()))
+        .thenReturn(Set.of(member, chair));
+    when(dacAutomationRuleService.createElectionForDAR(any(), any())).thenReturn(10);
+    when(userDAO.findUserById(any())).thenReturn(new User());
+
+    service.sendNewDARCollectionMessage(1);
+
+    // Auto-open DAC should trigger election notification
+    verify(emailService).sendDarNewCollectionElectionMessage(any(), any());
+    // Manual DAC should trigger manual notification
+    verify(emailService).sendNewDARRequestEmail(any(), any(), any(), any());
+  }
+
   @Test
   void testNotifySigningOfficialsOfDARSubmission_DAR() throws TemplateException, IOException {
     Dataset dataset = new Dataset();
