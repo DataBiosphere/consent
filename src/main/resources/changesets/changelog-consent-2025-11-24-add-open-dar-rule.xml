@@ -1,0 +1,36 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+<changeSet id="changelog-consent-2025-11-28-add-open-dar-rule.cs1" author="kevinmarete">
+  <sql>
+    ALTER TYPE dac_rule_type ADD VALUE IF NOT EXISTS 'AUTO_OPEN_DAR_FOR_ALL_MEMBERS';
+  </sql>
+  <rollback>
+    <sql>
+      -- Remove rows using the new ENUM value
+      DELETE FROM dac_automation_rules WHERE rule = 'AUTO_OPEN_DAR_FOR_ALL_MEMBERS';
+      -- Create new ENUM type
+      CREATE TYPE dac_rule_type_new AS ENUM ('GRU_V1', 'HMB_V1', 'HMB_DSV1', 'GRU_DSV1');
+      -- Alter column to use new type
+      ALTER TABLE dac_automation_rules ALTER COLUMN rule TYPE dac_rule_type_new USING rule::text::dac_rule_type_new;
+      -- Drop old type
+      DROP TYPE dac_rule_type;
+      -- Rename new type to original name
+      ALTER TYPE dac_rule_type_new RENAME TO dac_rule_type;
+    </sql>
+  </rollback>
+</changeSet>
+  <changeSet id="changelog-consent-2025-11-28-add-open-dar-rule.cs2" author="kevinmarete">
+  <insert tableName="dac_automation_rules">
+    <column name="rule" value="AUTO_OPEN_DAR_FOR_ALL_MEMBERS"/>
+    <column name="description"
+            value="Automatically open Data Access Requests (DARs) for all DAC members upon submission, **without requiring Chair to open manually**."/>
+    <column name="state" value="AVAILABLE"/>
+  </insert>
+  <rollback>
+    <sql>
+      DELETE FROM dac_automation_rules WHERE rule = 'AUTO_OPEN_DAR_FOR_ALL_MEMBERS';
+    </sql>
+  </rollback>
+</changeSet>
+</databaseChangeLog>
