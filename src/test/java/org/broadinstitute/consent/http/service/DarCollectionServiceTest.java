@@ -1631,17 +1631,20 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         .thenReturn(collection);
     when(userDAO.findUserById(researcher.getUserId())).thenReturn(researcher);
     when(userDAO.findUsersForDatasetsByRole(
-            dar.getDatasetIds(), Collections.singletonList(UserRoles.CHAIRPERSON.getRoleId())))
+        dar.getDatasetIds(), Collections.singletonList(UserRoles.CHAIRPERSON.getRoleId())))
         .thenReturn(Set.of(chairperson));
     when(dacDAO.findDacsForDatasetIds(dar.getDatasetIds())).thenReturn(Set.of(dac));
     when(datasetDAO.findDatasetsByIdList(dar.getDatasetIds())).thenReturn(List.of(d1, d2));
+
     service.sendNewDARCollectionMessage(collection.getDarCollectionId());
+
+    // Only expect the datasets that match the DAC for the user
     verify(emailService)
         .sendNewDARRequestEmail(
-            chairperson,
-            Map.of(dac.getName(), List.of(d1.getDatasetIdentifier(), d2.getDatasetIdentifier())),
-            researcher.getDisplayName(),
-            collection.getDarCode());
+            eq(chairperson),
+            eq(Map.of(dac.getName(), List.of(d1.getDatasetIdentifier()))),
+            eq(researcher.getDisplayName()),
+            eq(collection.getDarCode()));
   }
 
   @Test
