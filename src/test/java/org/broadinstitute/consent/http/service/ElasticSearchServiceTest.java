@@ -34,13 +34,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpVersion;
-import org.apache.http.StatusLine;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.message.BasicStatusLine;
-import org.apache.http.nio.entity.NStringEntity;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.message.BasicHttpResponse;
+import org.apache.hc.core5.http.message.StatusLine;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -66,9 +64,6 @@ import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.models.ontology.DataUseTerm;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.opensearch.client.Request;
-import org.opensearch.client.Response;
-import org.opensearch.client.RestClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -78,6 +73,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.opensearch.client.Request;
+import org.opensearch.client.Response;
+import org.opensearch.client.RestClient;
 
 @ExtendWith(MockitoExtension.class)
 class ElasticSearchServiceTest extends AbstractTestHelper {
@@ -120,8 +118,8 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   private void mockElasticSearchResponse(String body) throws IOException {
     Response response = mock(Response.class);
     String reasonPhrase = fromStatusCode(200).getReasonPhrase();
-    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, reasonPhrase);
-    HttpEntity entity = new NStringEntity(body, ContentType.APPLICATION_JSON);
+    StatusLine status = new StatusLine(new BasicHttpResponse(200, reasonPhrase));
+    HttpEntity entity = new StringEntity(body, ContentType.APPLICATION_JSON);
 
     when(esClient.performRequest(any())).thenReturn(response);
     when(response.getStatusLine()).thenReturn(status);
@@ -627,7 +625,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
 
     Response response = mock(Response.class);
     String reasonPhrase = fromStatusCode(400).getReasonPhrase();
-    BasicStatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 400, reasonPhrase);
+    StatusLine status = new StatusLine(new BasicHttpResponse(400, reasonPhrase));
     when(esClient.performRequest(any())).thenReturn(response);
     when(response.getStatusLine()).thenReturn(status);
 

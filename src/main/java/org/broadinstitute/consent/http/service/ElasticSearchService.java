@@ -23,8 +23,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
-import org.apache.http.entity.ContentType;
-import org.apache.http.nio.entity.NStringEntity;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -123,7 +123,7 @@ public class ElasticSearchService implements ConsentLogger {
         new Request(HttpMethod.PUT, "/" + esConfig.getDatasetIndexName() + "/_bulk");
 
     bulkRequest.setEntity(
-        new NStringEntity(String.join("", bulkApiCall) + "\n", ContentType.APPLICATION_JSON));
+        new StringEntity(String.join("", bulkApiCall) + "\n", ContentType.APPLICATION_JSON));
 
     return performRequest(bulkRequest);
   }
@@ -132,7 +132,7 @@ public class ElasticSearchService implements ConsentLogger {
     Request deleteRequest =
         new Request(HttpMethod.POST, "/" + esConfig.getDatasetIndexName() + "/_delete_by_query");
     deleteRequest.setEntity(
-        new NStringEntity(DELETE_QUERY.formatted(datasetId), ContentType.APPLICATION_JSON));
+        new StringEntity(DELETE_QUERY.formatted(datasetId), ContentType.APPLICATION_JSON));
     updateDatasetIndexDate(datasetId, userId, null);
     return performRequest(deleteRequest);
   }
@@ -165,7 +165,7 @@ public class ElasticSearchService implements ConsentLogger {
 
     Request validateRequest =
         new Request(HttpMethod.GET, "/" + esConfig.getDatasetIndexName() + "/_validate/query");
-    validateRequest.setEntity(new NStringEntity(modifiedQuery, ContentType.APPLICATION_JSON));
+    validateRequest.setEntity(new StringEntity(modifiedQuery, ContentType.APPLICATION_JSON));
     Response response = performRequest(validateRequest);
 
     var entity = response.getEntity().toString();
@@ -181,7 +181,7 @@ public class ElasticSearchService implements ConsentLogger {
 
     Request searchRequest =
         new Request(HttpMethod.GET, "/" + esConfig.getDatasetIndexName() + "/_search");
-    searchRequest.setEntity(new NStringEntity(query, ContentType.APPLICATION_JSON));
+    searchRequest.setEntity(new StringEntity(query, ContentType.APPLICATION_JSON));
 
     Response response = performRequest(searchRequest);
 
@@ -198,7 +198,7 @@ public class ElasticSearchService implements ConsentLogger {
     }
     Request searchRequest =
         new Request(HttpMethod.GET, "/" + esConfig.getDatasetIndexName() + "/_search");
-    searchRequest.setEntity(new NStringEntity(query, ContentType.APPLICATION_JSON));
+    searchRequest.setEntity(new StringEntity(query, ContentType.APPLICATION_JSON));
     var response = esClient.performRequest(searchRequest);
     var status = response.getStatusLine().getStatusCode();
     if (status != 200) {
