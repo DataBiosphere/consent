@@ -960,77 +960,105 @@ public class DarCollectionService implements ConsentLogger {
   /** Creates elections and votes for DACs with auto-open rules. */
   private void createElectionsAndVotesForAutoOpenDacs(
       DacUserClassification classification, DataAccessRequest latestDar) {
+
     for (Dataset dataset : classification.autoOpenDatasets) {
-      Integer dacId = dataset.getDacId();
-      Integer autoOpenUserId = classification.autoOpenUserIds.get(dacId);
-
-      // Check for existing open DATA_ACCESS election
-      Election existingElection =
-          electionDAO.findLastElectionByReferenceIdDatasetIdAndType(
-              latestDar.getReferenceId(), dataset.getDatasetId(), DATA_ACCESS.getValue());
-      if (existingElection != null
-          && ElectionStatus.OPEN.getValue().equalsIgnoreCase(existingElection.getStatus())) {
-        continue; // Skip if open election exists
+      if (hasOpenElection(latestDar, dataset)) {
+        continue;
       }
 
-      // Archive old elections for this DAR+Dataset
-      List<Integer> oldElectionIds =
-          electionDAO
-              .findElectionsByReferenceIdAndDatasetId(
-                  latestDar.getReferenceId(), dataset.getDatasetId())
-              .stream()
-              .map(Election::getElectionId)
-              .toList();
-      if (!oldElectionIds.isEmpty()) {
-        electionDAO.archiveElectionByIds(oldElectionIds, new Date());
-      }
+      archiveOldElections(latestDar, dataset);
 
-      // Create DATA_ACCESS election
       int dataAccessElectionId =
           dacAutomationRuleService.createOpenElectionForDAR(latestDar, dataset, DATA_ACCESS);
-      // Create RP election
       int rpElectionId = dacAutomationRuleService.createOpenElectionForDAR(latestDar, dataset, RP);
 
-      for (User user : classification.autoOpenUsers) {
-        // DAC vote for both elections
-        dacAutomationRuleService.createVoteForElection(
-            dataAccessElectionId, user.getUserId(), VoteType.DAC);
-        dacAutomationRuleService.createVoteForElection(
-            rpElectionId, user.getUserId(), VoteType.DAC);
+      createVotesForAllUsers(
+          classification.autoOpenUsers, dataAccessElectionId, rpElectionId, latestDar);
 
-        if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
-          // Chairperson vote for both elections
-          dacAutomationRuleService.createVoteForElection(
-              dataAccessElectionId, user.getUserId(), VoteType.CHAIRPERSON);
-          dacAutomationRuleService.createVoteForElection(
-              rpElectionId, user.getUserId(), VoteType.CHAIRPERSON);
+      logAutoOpenTrigger(classification, dataset, latestDar);
+    }
+  }
 
-          // Final vote for DATA_ACCESS
-          dacAutomationRuleService.createVoteForElection(
-              dataAccessElectionId, user.getUserId(), VoteType.FINAL);
+  /** Checks if there is an open election for the given DAR and dataset. */
+  private boolean hasOpenElection(DataAccessRequest dar, Dataset dataset) {
+    Election existing =
+        electionDAO.findLastElectionByReferenceIdDatasetIdAndType(
+            dar.getReferenceId(), dataset.getDatasetId(), DATA_ACCESS.getValue());
 
-          // Agreement vote for DATA_ACCESS if not manual review
-          if (!latestDar.requiresManualReview()) {
-            dacAutomationRuleService.createVoteForElection(
-                dataAccessElectionId, user.getUserId(), VoteType.AGREEMENT);
-          }
-        }
-      }
+    return existing != null
+        && ElectionStatus.OPEN.getValue().equalsIgnoreCase(existing.getStatus());
+  }
 
-      // Log that the auto-open rule was triggered for this user
-      if (autoOpenUserId != null) {
-        User enablingUser = userDAO.findUserById(autoOpenUserId);
-        if (enablingUser != null) {
-          logInfo(
-              "Auto-open rule triggered by userId=%s for DAC=%s, datasetId=%s, DAR referenceId=%s"
-                  .formatted(
-                      enablingUser.getUserId(),
-                      dataset.getDacId(),
-                      dataset.getDatasetId(),
-                      latestDar.getReferenceId()));
-        }
+  /** Archives old elections for the given DAR and dataset. */
+  private void archiveOldElections(DataAccessRequest dar, Dataset dataset) {
+    List<Integer> oldElectionIds =
+        electionDAO
+            .findElectionsByReferenceIdAndDatasetId(dar.getReferenceId(), dataset.getDatasetId())
+            .stream()
+            .map(Election::getElectionId)
+            .toList();
+
+    if (!oldElectionIds.isEmpty()) {
+      electionDAO.archiveElectionByIds(oldElectionIds, new Date());
+    }
+  }
+
+  /** Creates standard votes for all users for the given elections. */
+  private void createVotesForAllUsers(
+      Set<User> users, int dataAccessElectionId, int rpElectionId, DataAccessRequest dar) {
+
+    for (User user : users) {
+      createStandardVotes(dataAccessElectionId, rpElectionId, user);
+
+      if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
+        createChairpersonVotes(dataAccessElectionId, rpElectionId, user, dar);
       }
     }
+  }
+
+  /** Creates standard votes for the given elections. */
+  private void createStandardVotes(int dataAccessElectionId, int rpElectionId, User user) {
+    dacAutomationRuleService.createVoteForElection(
+        dataAccessElectionId, user.getUserId(), VoteType.DAC);
+
+    dacAutomationRuleService.createVoteForElection(rpElectionId, user.getUserId(), VoteType.DAC);
+  }
+
+  /** Creates chairperson votes for the given elections. */
+  private void createChairpersonVotes(
+      int dataAccessElectionId, int rpElectionId, User user, DataAccessRequest dar) {
+
+    dacAutomationRuleService.createVoteForElection(
+        dataAccessElectionId, user.getUserId(), VoteType.CHAIRPERSON);
+    dacAutomationRuleService.createVoteForElection(
+        rpElectionId, user.getUserId(), VoteType.CHAIRPERSON);
+
+    dacAutomationRuleService.createVoteForElection(
+        dataAccessElectionId, user.getUserId(), VoteType.FINAL);
+
+    if (!dar.requiresManualReview()) {
+      dacAutomationRuleService.createVoteForElection(
+          dataAccessElectionId, user.getUserId(), VoteType.AGREEMENT);
+    }
+  }
+
+  /** Logs the auto-open trigger event. */
+  private void logAutoOpenTrigger(
+      DacUserClassification classification, Dataset dataset, DataAccessRequest dar) {
+
+    Integer autoOpenUserId = classification.autoOpenUserIds.get(dataset.getDacId());
+    if (autoOpenUserId == null) return;
+
+    User enablingUser = userDAO.findUserById(autoOpenUserId);
+    if (enablingUser == null) return;
+
+    logInfo(
+        "Auto-open rule triggered by userId=%s for DAC=%s, datasetId=%s, DAR referenceId=%s"
+            .formatted(
+                enablingUser.getUserId(),
+                dataset.getDacId(),
+                dataset.getDatasetId(),
+                dar.getReferenceId()));
   }
 
   /** Notifies users for the given DACs and datasets. */
