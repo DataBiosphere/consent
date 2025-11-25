@@ -85,6 +85,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   @Mock private UserDAO userDAO;
   @Mock private DacDAO dacDAO;
   @Mock private Jdbi jdbi;
+  @Mock private DACAutomationRuleService dacAutomationRuleService;
 
   @BeforeEach
   void setUp() {
@@ -96,7 +97,9 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(jdbi.onDemand(VoteDAO.class)).thenReturn(voteDAO);
     when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
     when(jdbi.onDemand(DacDAO.class)).thenReturn(dacDAO);
-    service = new DarCollectionService(jdbi, darCollectionServiceDAO, emailService);
+    service =
+        new DarCollectionService(
+            jdbi, darCollectionServiceDAO, emailService, dacAutomationRuleService);
   }
 
   @Test
