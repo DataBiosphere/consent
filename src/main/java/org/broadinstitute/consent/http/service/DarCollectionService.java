@@ -851,31 +851,27 @@ public class DarCollectionService implements ConsentLogger {
   /** Classifies DACs and users based on automation rules. */
   private DacUserClassification classifyDacsAndUsers(
       Collection<Dac> dacsForDar, List<Dataset> datasetsForDar, List<User> adminAndChairUsers) {
+
     Set<Integer> dacIds =
         datasetsForDar.stream().map(Dataset::getDacId).collect(Collectors.toSet());
+
     DacUserClassification result = new DacUserClassification();
 
     for (Integer dacId : dacIds) {
-      List<DACAutomationRule> automationRules = dacAutomationRuleService.findAllByDacId(dacId);
-      boolean hasAutoOpenRule = false;
-      Integer autoOpenUserId = null;
-      for (DACAutomationRule rule : automationRules) {
-        if (rule.ruleType() == DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS
-            && rule.enabledByUserId() != null) {
-          hasAutoOpenRule = true;
-          autoOpenUserId = rule.enabledByUserId();
-          break;
-        }
-      }
-      Optional<Dac> dacOpt =
-          dacsForDar.stream().filter(dac -> dac.getDacId().equals(dacId)).findFirst();
-      Optional<Dataset> datasetOpt =
-          datasetsForDar.stream().filter(dataset -> dataset.getDacId().equals(dacId)).findFirst();
+      boolean autoOpen = hasAutoOpenRule(dacId);
+      Integer autoOpenUserId = getAutoOpenUserId(dacId);
 
-      if (hasAutoOpenRule) {
+      Optional<Dac> dacOpt =
+          dacsForDar.stream().filter(d -> d.getDacId().equals(dacId)).findFirst();
+
+      Optional<Dataset> dsOpt =
+          datasetsForDar.stream().filter(ds -> ds.getDacId().equals(dacId)).findFirst();
+
+      if (autoOpen) {
         dacOpt.ifPresent(result.autoOpenDacs::add);
-        datasetOpt.ifPresent(result.autoOpenDatasets::add);
+        dsOpt.ifPresent(result.autoOpenDatasets::add);
         result.autoOpenUserIds.put(dacId, autoOpenUserId);
+
         for (User user : adminAndChairUsers) {
           if (user.verifyDACRole(CHAIRPERSON, dacId)
               || user.verifyDACRole(MEMBER, dacId)
@@ -883,9 +879,11 @@ public class DarCollectionService implements ConsentLogger {
             result.autoOpenUsers.add(user);
           }
         }
+
       } else {
         dacOpt.ifPresent(result.manualOpenDacs::add);
-        datasetOpt.ifPresent(result.manualOpenDatasets::add);
+        dsOpt.ifPresent(result.manualOpenDatasets::add);
+
         for (User user : adminAndChairUsers) {
           if (user.verifyDACRole(CHAIRPERSON, dacId) || user.hasUserRole(ADMIN)) {
             result.manualOpenUsers.add(user);
@@ -893,7 +891,29 @@ public class DarCollectionService implements ConsentLogger {
         }
       }
     }
+
     return result;
+  }
+
+  /** Checks if the given DAC ID has an auto-open rule enabled. */
+  private boolean hasAutoOpenRule(Integer dacId) {
+    return dacAutomationRuleService.findAllByDacId(dacId).stream()
+        .anyMatch(
+            r ->
+                r.ruleType() == DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS
+                    && r.enabledByUserId() != null);
+  }
+
+  /** Retrieves the user ID who enabled the auto-open rule for the given DAC ID. */
+  private Integer getAutoOpenUserId(Integer dacId) {
+    return dacAutomationRuleService.findAllByDacId(dacId).stream()
+        .filter(
+            r ->
+                r.ruleType() == DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS
+                    && r.enabledByUserId() != null)
+        .map(DACAutomationRule::enabledByUserId)
+        .findFirst()
+        .orElse(null);
   }
 
   /** Creates elections and votes for DACs with auto-open rules. */
