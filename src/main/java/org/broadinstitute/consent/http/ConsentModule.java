@@ -259,20 +259,7 @@ public class ConsentModule extends AbstractModule {
         providesJdbi(),
         providesDarCollectionServiceDAO(),
         providesEmailService(),
-        providesDACAutomationRuleService());
-  }
-
-  @Provides
-  DACAutomationRuleService providesDACAutomationRuleService() {
-    return new DACAutomationRuleService(
-        providesDataAccessRequestDAO(),
-        providesDatasetDAO(),
-        providesDACAutomationRuleDAO(),
-        providesElectionDAO(),
-        providesUserDAO(),
-        providesVoteDAO(),
-        providesVoteServiceDAO(),
-        providesVoteService());
+        providesRuleService());
   }
 
   @Provides

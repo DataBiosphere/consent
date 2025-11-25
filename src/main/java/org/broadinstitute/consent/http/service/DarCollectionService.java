@@ -1,5 +1,9 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.enumeration.UserRoles.ADMIN;
+import static org.broadinstitute.consent.http.resources.Resource.CHAIRPERSON;
+import static org.broadinstitute.consent.http.resources.Resource.MEMBER;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
 import com.google.gson.Gson;
@@ -14,6 +18,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -45,6 +50,8 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.rules.DACAutomationRule;
+import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.Jdbi;
@@ -62,10 +69,14 @@ public class DarCollectionService implements ConsentLogger {
   private final VoteDAO voteDAO;
   private final DarCollectionServiceDAO collectionServiceDAO;
   private final EmailService emailService;
+  private final DACAutomationRuleService dacAutomationRuleService;
 
   @Inject
   public DarCollectionService(
-      Jdbi jdbi, DarCollectionServiceDAO darCollectionServiceDAO, EmailService emailService) {
+      Jdbi jdbi,
+      DarCollectionServiceDAO darCollectionServiceDAO,
+      EmailService emailService,
+      DACAutomationRuleService dacAutomationRuleService) {
     this.dacDAO = jdbi.onDemand(DacDAO.class);
     this.darCollectionDAO = jdbi.onDemand(DarCollectionDAO.class);
     this.darCollectionSummaryDAO = jdbi.onDemand(DarCollectionSummaryDAO.class);
@@ -76,6 +87,7 @@ public class DarCollectionService implements ConsentLogger {
     this.voteDAO = jdbi.onDemand(VoteDAO.class);
     this.collectionServiceDAO = darCollectionServiceDAO;
     this.emailService = emailService;
+    this.dacAutomationRuleService = dacAutomationRuleService;
   }
 
   private void updateStatusCount(Map<String, Integer> statusCount, String status) {
@@ -518,8 +530,7 @@ public class DarCollectionService implements ConsentLogger {
    */
   private DarCollection filterCollectionVotesForUser(User user, DarCollection collection) {
     // Individual votes are only visible to CHAIRPERSON, MEMBER, and ADMIN roles
-    List<UserRoles> voteViewRoles =
-        List.of(UserRoles.CHAIRPERSON, UserRoles.MEMBER, UserRoles.ADMIN);
+    List<UserRoles> voteViewRoles = List.of(UserRoles.CHAIRPERSON, UserRoles.MEMBER, ADMIN);
     if (user.hasAnyUserRole(voteViewRoles)) {
       return collection;
     }
@@ -797,11 +808,108 @@ public class DarCollectionService implements ConsentLogger {
     List<Dataset> datasetsInDAR =
         datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
 
+    Set<Integer> dacs = datasetsInDAR.stream().map(Dataset::getDacId).collect(Collectors.toSet());
+    Set<Dac> dacsWithAutoOpenRule = new HashSet<>();
+    Set<Dac> dacsWithOutAutoOpenRule = new HashSet<>();
+    Set<User> usersWithAutoOpenRule = new HashSet<>();
+    Set<User> usersWithOutAutoOpenRule = new HashSet<>();
+    Set<Dataset> datasetsWithAutoOpenRule = new HashSet<>();
+    Set<Dataset> datasetsWithOutAutoOpenRule = new HashSet<>();
+
+    dacs.forEach(
+        (dacId) -> {
+          List<DACAutomationRule> rules = dacAutomationRuleService.findAllByDacId(dacId);
+          rules.forEach(
+              (rule) -> {
+                if (rule.ruleType() == DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS) {
+                  dacsWithAutoOpenRule.add(
+                      dacsInDAR.stream()
+                          .filter(dac -> dac.getDacId().equals(dacId))
+                          .findFirst()
+                          .orElse(null));
+                  distinctUsers.forEach(
+                      user -> {
+                        if (user.verifyDACRole(CHAIRPERSON, dacId)
+                            || user.verifyDACRole(MEMBER, dacId)
+                            || user.hasUserRole(ADMIN)) {
+                          usersWithAutoOpenRule.add(user);
+                        }
+                      });
+                  datasetsWithAutoOpenRule.add(
+                      datasetsInDAR.stream()
+                          .filter(dataset -> dataset.getDacId().equals(dacId))
+                          .findFirst()
+                          .orElse(null));
+
+                  for (Dataset dataset : datasetsWithAutoOpenRule) {
+                    /*
+                    For each DAC that has the AUTO_OPEN_DAR_FOR_ALL_MEMBERS rule,
+                     CREATE ELECTION AUTOMATICALLY
+                     */
+                    int electionId = dacAutomationRuleService.createElectionForDAR(dar, dataset);
+                    dacAutomationRuleService.createVoteForElection(
+                        electionId, rule.enabledByUserId(), VoteType.CHAIRPERSON);
+
+                    for (User user : usersWithAutoOpenRule) {
+                      if (!user.getUserId().equals(rule.enabledByUserId())) {
+                        dacAutomationRuleService.createVoteForElection(
+                            electionId, user.getUserId(), VoteType.DAC);
+                      }
+                    }
+                  }
+
+                } else {
+                  dacsWithOutAutoOpenRule.add(
+                      dacsInDAR.stream()
+                          .filter(dac -> dac.getDacId().equals(dacId))
+                          .findFirst()
+                          .orElse(null));
+                  distinctUsers.forEach(
+                      user -> {
+                        if (user.verifyDACRole(CHAIRPERSON, dacId) || user.hasUserRole(ADMIN)) {
+                          usersWithOutAutoOpenRule.add(user);
+                        }
+                      });
+                  datasetsWithOutAutoOpenRule.add(
+                      datasetsInDAR.stream()
+                          .filter(dataset -> dataset.getDacId().equals(dacId))
+                          .findFirst()
+                          .orElse(null));
+                }
+              });
+        });
+
+    // NOTIFY ALL DAC MEMBERS OF NEW ELECTION
     Map<String, List<String>> dacDatasetMap = new HashMap<>();
-    for (User user : distinctUsers) {
-      List<Dac> matchingDacsForUser = getMatchingDacs(user, dacsInDAR);
+    for (User user : usersWithAutoOpenRule) {
+      List<Dac> matchingDacsForUser = getMatchingDacs(user, dacsWithAutoOpenRule);
       for (Dac dac : matchingDacsForUser) {
-        List<String> matchingDatasetsForDac = getMatchingDatasets(dac, datasetsInDAR);
+        List<String> matchingDatasetsForDac =
+            getMatchingDatasets(dac, datasetsWithAutoOpenRule.stream().toList());
+        dacDatasetMap.put(dac.getName(), matchingDatasetsForDac);
+      }
+      // If the dar is not a progress report, use the DAR template else use the PR template.
+      if (dar.getProgressReport()) {
+        // Use the reference ID to link the fact that this progress report will have been noted.
+        // the DAR Code at this point will be ambiguous.
+        emailService.sendProgressReportNewCollectionElectionMessage(
+            List.of(user), collection.getDarCode());
+      } else {
+        emailService.sendDarNewCollectionElectionMessage(List.of(user), collection.getDarCode());
+      }
+    }
+
+    /*
+    For each DAC that does NOT have the AUTO_OPEN_DAR_FOR_ALL_MEMBERS rule,
+     DO NOT CREATE ELECTION
+     NOTIFY ADMINS AND CHAIRS OF DACS TO OPEN ELECTION
+     */
+    dacDatasetMap.clear();
+    for (User user : usersWithOutAutoOpenRule) {
+      List<Dac> matchingDacsForUser = getMatchingDacs(user, dacsWithOutAutoOpenRule);
+      for (Dac dac : matchingDacsForUser) {
+        List<String> matchingDatasetsForDac =
+            getMatchingDatasets(dac, datasetsWithOutAutoOpenRule.stream().toList());
         dacDatasetMap.put(dac.getName(), matchingDatasetsForDac);
       }
       // If the dar is not a progress report, use the DAR template else use the PR template.
@@ -815,6 +923,7 @@ public class DarCollectionService implements ConsentLogger {
             user, dacDatasetMap, researcherName, collection.getDarCode());
       }
     }
+
     notifySigningOfficialsOfDARSubmission(dar, researcher, collection.getDarCode());
   }
 
@@ -853,7 +962,7 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   private List<User> getDistinctAdminAndChairUsersForDatasetIds(List<Integer> datasetIds) {
-    List<User> admins = userDAO.findUsersByRoleId(UserRoles.ADMIN.getRoleId());
+    List<User> admins = userDAO.findUsersByRoleId(ADMIN.getRoleId());
     Set<User> chairPersons =
         userDAO.findUsersForDatasetsByRole(
             datasetIds, Collections.singletonList(UserRoles.CHAIRPERSON.getRoleId()));
@@ -862,7 +971,7 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   private List<Dac> getMatchingDacs(User user, Collection<Dac> dacsInDAR) {
-    if (user.hasUserRole(UserRoles.ADMIN)) {
+    if (user.hasUserRole(ADMIN)) {
       return new ArrayList<>(dacsInDAR);
     }
     List<Integer> dacIDs =
