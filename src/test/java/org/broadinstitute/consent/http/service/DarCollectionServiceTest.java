@@ -1610,7 +1610,6 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   void testSendNewDARCollectionMessage_NoCollection() throws Exception {
     when(darCollectionDAO.findDARCollectionByCollectionId(anyInt())).thenReturn(null);
     service.sendNewDARCollectionMessage(999);
-    // Should log a warning and not throw
     verifyNoInteractions(emailService);
   }
 
@@ -1659,6 +1658,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(userDAO.findUsersForDatasetsByRole(anyList(), anyList())).thenReturn(Set.of(chair));
     service.sendNewDARCollectionMessage(1);
     verify(emailService).sendNewDARRequestEmail(any(), any(), any(), any());
+    verify(emailService, never()).sendDarNewCollectionElectionMessage(any(), any());
   }
 
   // Only auto-open DACs
@@ -1694,11 +1694,12 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(dacAutomationRuleService.findAllByDacId(anyInt())).thenReturn(List.of(rule));
     when(userDAO.findUsersByRoleId(UserRoles.ADMIN.getRoleId())).thenReturn(List.of());
     when(userDAO.findUsersForDatasetsByRole(anyList(), anyList())).thenReturn(Set.of(member));
-    when(dacAutomationRuleService.createElectionForDAR(any(), any())).thenReturn(10);
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), any(), any())).thenReturn(10);
     when(userDAO.findUserById(any())).thenReturn(new User());
 
     service.sendNewDARCollectionMessage(1);
     verify(emailService).sendDarNewCollectionElectionMessage(any(), any());
+    verify(emailService, never()).sendNewDARRequestEmail(any(), any(), any(), any());
   }
 
   // Mixed auto-open and manual DACs
@@ -1757,14 +1758,12 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(userDAO.findUsersByRoleId(UserRoles.ADMIN.getRoleId())).thenReturn(List.of());
     when(userDAO.findUsersForDatasetsByRole(anyList(), anyList()))
         .thenReturn(Set.of(member, chair));
-    when(dacAutomationRuleService.createElectionForDAR(any(), any())).thenReturn(10);
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), any(), any())).thenReturn(10);
     when(userDAO.findUserById(any())).thenReturn(new User());
 
     service.sendNewDARCollectionMessage(1);
 
-    // Auto-open DAC should trigger election notification
     verify(emailService).sendDarNewCollectionElectionMessage(any(), any());
-    // Manual DAC should trigger manual notification
     verify(emailService).sendNewDARRequestEmail(any(), any(), any(), any());
   }
 
