@@ -182,15 +182,8 @@ public class DACAutomationRuleService implements ConsentLogger {
       DataAccessRequest dar,
       Dataset dataset,
       ContainerRequest request) {
-    int electionId =
-        electionDAO.insertElection(
-            ElectionType.DATA_ACCESS.getValue(),
-            ElectionStatus.OPEN.getValue(),
-            new Date(),
-            dar.getReferenceId(),
-            dataset.getDatasetId());
-    int voteId =
-        voteDAO.insertVote(rule.enabledByUserId(), electionId, VoteType.RADAR_APPROVE.getValue());
+    int electionId = createElectionForDAR(dar, dataset);
+    int voteId = createVoteForElection(electionId, rule.enabledByUserId(), VoteType.RADAR_APPROVE);
     Vote vote = voteDAO.findVoteById(voteId);
     try {
       List<Vote> updatedVotes =
@@ -213,5 +206,18 @@ public class DACAutomationRuleService implements ConsentLogger {
             "Rule %s triggered for DAC id: %s and dataset id: %s",
             rule.ruleType(), dataset.getDacId(), dataset.getDatasetId()));
     return vote;
+  }
+
+  protected int createElectionForDAR(DataAccessRequest dar, Dataset dataset) {
+    return electionDAO.insertElection(
+        ElectionType.DATA_ACCESS.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        new Date(),
+        dar.getReferenceId(),
+        dataset.getDatasetId());
+  }
+
+  protected int createVoteForElection(int electionId, int userId, VoteType voteType) {
+    return voteDAO.insertVote(userId, electionId, voteType.getValue());
   }
 }
