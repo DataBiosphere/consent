@@ -1838,16 +1838,6 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     return election;
   }
 
-  private Dataset createDataset(Integer dacId) {
-    Dataset dataset = new Dataset();
-    dataset.setDatasetId(randomInt(1, 100000));
-    dataset.setAlias(dataset.getDatasetId());
-    dataset.setDatasetIdentifier();
-    dataset.setDacId(dacId);
-    dataset.setName(String.format("Dataset %s-%s", randomAlphabetic(10), dataset.getDatasetId()));
-    return dataset;
-  }
-
   private User createUserWithRole(UserRoles userRoles, Integer dacId) {
     User user = new User();
     user.setUserId(randomInt(1, 100000));
