@@ -534,9 +534,9 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
       assertEquals("PUT", capturedRequest.getMethod());
       assertEquals(
           """
-              { "index": {"_index": "dataset", "_id": "1"} }
+              { "index": { "_index": "dataset", "_id": "1"} }
               {"datasetId":1}
-              { "index": {"_index": "dataset", "_id": "2"} }
+              { "index": { "_index": "dataset", "_id": "2"} }
               {"datasetId":2}
 
               """,
