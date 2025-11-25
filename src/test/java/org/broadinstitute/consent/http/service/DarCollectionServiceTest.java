@@ -1641,10 +1641,10 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     // Only expect the datasets that match the DAC for the user
     verify(emailService)
         .sendNewDARRequestEmail(
-            eq(chairperson),
-            eq(Map.of(dac.getName(), List.of(d1.getDatasetIdentifier()))),
-            eq(researcher.getDisplayName()),
-            eq(collection.getDarCode()));
+            chairperson,
+            Map.of(dac.getName(), List.of(d1.getDatasetIdentifier())),
+            researcher.getDisplayName(),
+            collection.getDarCode());
   }
 
   @Test
