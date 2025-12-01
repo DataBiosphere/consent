@@ -967,12 +967,19 @@ public class DarCollectionService implements ConsentLogger {
 
       archiveOldElections(latestDar, dataset);
 
-      int dataAccessElectionId =
-          dacAutomationRuleService.createOpenElectionForDAR(latestDar, dataset, DATA_ACCESS);
-      int rpElectionId = dacAutomationRuleService.createOpenElectionForDAR(latestDar, dataset, RP);
+      // Wrap in transaction to ensure election and votes are created atomically
+      electionDAO.inTransaction(
+          _ -> {
+            int dataAccessElectionId =
+                dacAutomationRuleService.createOpenElectionForDAR(latestDar, dataset, DATA_ACCESS);
+            int rpElectionId =
+                dacAutomationRuleService.createOpenElectionForDAR(latestDar, dataset, RP);
 
-      createVotesForAllUsers(
-          classification.autoOpenUsers, dataAccessElectionId, rpElectionId, latestDar);
+            createVotesForAllUsers(
+                classification.autoOpenUsers, dataAccessElectionId, rpElectionId, latestDar);
+
+            return null;
+          });
 
       logAutoOpenTrigger(classification, dataset, latestDar);
     }

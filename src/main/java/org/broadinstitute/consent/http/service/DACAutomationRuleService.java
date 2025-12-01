@@ -182,9 +182,17 @@ public class DACAutomationRuleService implements ConsentLogger {
       DataAccessRequest dar,
       Dataset dataset,
       ContainerRequest request) {
-    int electionId = createOpenElectionForDAR(dar, dataset, ElectionType.DATA_ACCESS);
-    int voteId = createVoteForElection(electionId, rule.enabledByUserId(), VoteType.RADAR_APPROVE);
-    Vote vote = voteDAO.findVoteById(voteId);
+
+    // Wrap in transaction to ensure election and vote are created together
+    Vote vote =
+        electionDAO.inTransaction(
+            _ -> {
+              int electionId = createOpenElectionForDAR(dar, dataset, ElectionType.DATA_ACCESS);
+              int voteId =
+                  createVoteForElection(electionId, rule.enabledByUserId(), VoteType.RADAR_APPROVE);
+              return voteDAO.findVoteById(voteId);
+            });
+
     try {
       List<Vote> updatedVotes =
           voteServiceDAO.updateVotesWithValue(
@@ -194,7 +202,7 @@ public class DACAutomationRuleService implements ConsentLogger {
                   "Rule Automated DAR (RADAR) Approval using rule: %s",
                   ruleImplementation.getRuleType()));
       assert (updatedVotes.size() == 1);
-      vote = updatedVotes.get(0);
+      vote = updatedVotes.getFirst();
     } catch (Exception e) {
       logException("Error updating vote", e);
       return null;
