@@ -804,8 +804,7 @@ public class DarCollectionService implements ConsentLogger {
 
     // Get DACs and datasets for the DAR
     List<Integer> datasetIds = latestDar.getDatasetIds();
-    List<Dataset> datasetsForDar =
-        datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
+    List<Dataset> datasetsForDar = datasetDAO.findDatasetsByIdList(datasetIds);
     Collection<Dac> dacsForDar = dacDAO.findDacsForDatasetIds(datasetIds);
 
     // Classify DACs and users by automation rules
