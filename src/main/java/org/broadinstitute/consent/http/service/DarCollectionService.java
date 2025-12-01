@@ -861,7 +861,7 @@ public class DarCollectionService implements ConsentLogger {
 
     for (Integer dacId : dacIds) {
       boolean autoOpen = hasAutoOpenRule(dacId);
-      Integer autoOpenUserId = getAutoOpenRuleUserId(dacId);
+      Integer autoOpenUserId = getAutoOpenRuleEnabledByUserId(dacId);
 
       Dac dac = findDac(dacsForDar, dacId);
       Dataset dataset = findDataset(datasetsForDar, dacId);
@@ -898,7 +898,7 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   /** Retrieves the user ID associated with the auto-open rule for a given DAC ID. */
-  private Integer getAutoOpenRuleUserId(Integer dacId) {
+  private Integer getAutoOpenRuleEnabledByUserId(Integer dacId) {
     return dacAutomationRuleService.findAllByDacId(dacId).stream()
         .filter(
             r ->
