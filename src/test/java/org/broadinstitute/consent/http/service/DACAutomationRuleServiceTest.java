@@ -23,7 +23,6 @@ import static org.mockito.Mockito.when;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,8 +32,6 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
 import org.broadinstitute.consent.http.models.Collaborator;
@@ -309,7 +306,7 @@ class DACAutomationRuleServiceTest {
 
     DACAutomationRuleService serviceSpy = spy(service);
     // in order to test sending the email we need to add to the datasetsAuthorized list
-    doAnswer(inv -> Optional.of(new Vote()))
+    doAnswer(_ -> Optional.of(new Vote()))
         .when(serviceSpy)
         .applyRule(activeRule, dataset1, dar, request);
 
@@ -528,23 +525,5 @@ class DACAutomationRuleServiceTest {
             IllegalArgumentException.class,
             () -> DACAutomationRuleService.getRuleImplementation(mockRule));
     assertEquals("No rule implementation found for type: MOCK_TYPE", exception.getMessage());
-  }
-
-  private void mockInsertElection(DataAccessRequest dar, Dataset dataset, Integer electionId) {
-    when(electionDAO.insertElection(
-            eq(ElectionType.DATA_ACCESS.getValue()),
-            eq(ElectionStatus.OPEN.getValue()),
-            any(Date.class),
-            eq(dar.getReferenceId()),
-            eq(dataset.getDatasetId())))
-        .thenReturn(electionId);
-  }
-
-  private Vote mockFindVoteById(Integer voteId) {
-    Vote vote = new Vote();
-    vote.setVoteId(voteId);
-    vote.setVote(true);
-    when(voteDAO.findVoteById(voteId)).thenReturn(vote);
-    return vote;
   }
 }
