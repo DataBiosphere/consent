@@ -785,13 +785,57 @@ public class DarCollectionService implements ConsentLogger {
         });
   }
 
+  /** Creates elections for a new DAR collection. */
+  public void createElectionsForNewDarCollection(Integer collectionId) {
+    DarCollectionContext context = getDarCollectionContext(collectionId);
+    if (context == null) {
+      return;
+    }
+
+    // Create elections and votes for auto-open DACs
+    createElectionsAndVotesForAutoOpenDacs(context.classification, context.latestDar);
+  }
+
+  /** Sends notification messages for a new DAR collection. */
   public void sendNewDARCollectionMessage(Integer collectionId)
       throws IOException, TemplateException {
+    DarCollectionContext context = getDarCollectionContext(collectionId);
+    if (context == null) {
+      return;
+    }
+
+    // Notify users for auto-open DACs
+    notifyUsersForDacs(
+        context.classification.autoOpenUsers,
+        context.classification.autoOpenDacs,
+        context.classification.autoOpenDatasets,
+        context.latestDar,
+        context.darCollection,
+        context.researcherName,
+        true);
+
+    // Notify users for manual DACs
+    notifyUsersForDacs(
+        context.classification.manualOpenUsers,
+        context.classification.manualOpenDacs,
+        context.classification.manualOpenDatasets,
+        context.latestDar,
+        context.darCollection,
+        context.researcherName,
+        false);
+
+    // Notify signing officials of DAR submission
+    notifySigningOfficialsOfDARSubmission(
+        context.latestDar, context.researcher, context.darCollection.getDarCode());
+  }
+
+  /** Helper method to retrieve the DAR collection context for processing. */
+  private DarCollectionContext getDarCollectionContext(Integer collectionId) {
     // Retrieve the DAR collection by its ID
     DarCollection darCollection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     if (darCollection == null) {
       logWarn("Could not find DAR collection for collection id: " + collectionId);
-      return;
+      return null;
     }
 
     // Get the most recent DAR and its associated users
@@ -811,31 +855,30 @@ public class DarCollectionService implements ConsentLogger {
     DacUserClassification classification =
         classifyDacsAndUsers(dacsForDar, datasetsForDar, adminAndChairUsers);
 
-    // Create elections and votes for auto-open DACs
-    createElectionsAndVotesForAutoOpenDacs(classification, latestDar);
+    return new DarCollectionContext(
+        darCollection, latestDar, researcher, researcherName, classification);
+  }
 
-    // Notify users for auto-open DACs
-    notifyUsersForDacs(
-        classification.autoOpenUsers,
-        classification.autoOpenDacs,
-        classification.autoOpenDatasets,
-        latestDar,
-        darCollection,
-        researcherName,
-        true);
+  /** Helper class to hold context for processing a DAR collection. */
+  private static class DarCollectionContext {
+    final DarCollection darCollection;
+    final DataAccessRequest latestDar;
+    final User researcher;
+    final String researcherName;
+    final DacUserClassification classification;
 
-    // Notify users for manual DACs
-    notifyUsersForDacs(
-        classification.manualOpenUsers,
-        classification.manualOpenDacs,
-        classification.manualOpenDatasets,
-        latestDar,
-        darCollection,
-        researcherName,
-        false);
-
-    // Notify signing officials of DAR submission
-    notifySigningOfficialsOfDARSubmission(latestDar, researcher, darCollection.getDarCode());
+    DarCollectionContext(
+        DarCollection darCollection,
+        DataAccessRequest latestDar,
+        User researcher,
+        String researcherName,
+        DacUserClassification classification) {
+      this.darCollection = darCollection;
+      this.latestDar = latestDar;
+      this.researcher = researcher;
+      this.researcherName = researcherName;
+      this.classification = classification;
+    }
   }
 
   /** Helper class to hold classification results for DACs, users, and datasets. */

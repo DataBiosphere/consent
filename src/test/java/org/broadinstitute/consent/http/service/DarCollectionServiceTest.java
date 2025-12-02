@@ -1609,6 +1609,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   @Test
   void testSendNewDARCollectionMessage_NoCollection() throws Exception {
     when(darCollectionDAO.findDARCollectionByCollectionId(anyInt())).thenReturn(null);
+    service.createElectionsForNewDarCollection(999);
     service.sendNewDARCollectionMessage(999);
     verifyNoInteractions(emailService);
   }
@@ -1624,6 +1625,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     collection.addDar(dar);
     when(darCollectionDAO.findDARCollectionByCollectionId(1)).thenReturn(collection);
     when(userDAO.findUserById(any())).thenReturn(new User());
+    service.createElectionsForNewDarCollection(1);
     service.sendNewDARCollectionMessage(1);
     verifyNoInteractions(emailService);
   }
@@ -1656,6 +1658,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(dacAutomationRuleService.findAllByDacId(anyInt())).thenReturn(List.of());
     when(userDAO.findUsersByRoleId(UserRoles.ADMIN.getRoleId())).thenReturn(List.of());
     when(userDAO.findUsersForDatasetsByRole(anyList(), anyList())).thenReturn(Set.of(chair));
+    service.createElectionsForNewDarCollection(1);
     service.sendNewDARCollectionMessage(1);
     verify(emailService).sendNewDARRequestEmail(any(), any(), any(), any());
     verify(emailService, never()).sendDarNewCollectionElectionMessage(any(), any());
@@ -1697,7 +1700,9 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(dacAutomationRuleService.createOpenElectionForDAR(any(), any(), any())).thenReturn(10);
     when(userDAO.findUserById(any())).thenReturn(new User());
 
+    service.createElectionsForNewDarCollection(1);
     service.sendNewDARCollectionMessage(1);
+
     verify(emailService).sendDarNewCollectionElectionMessage(any(), any());
     verify(emailService, never()).sendNewDARRequestEmail(any(), any(), any(), any());
   }
@@ -1761,6 +1766,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(dacAutomationRuleService.createOpenElectionForDAR(any(), any(), any())).thenReturn(10);
     when(userDAO.findUserById(any())).thenReturn(new User());
 
+    service.createElectionsForNewDarCollection(1);
     service.sendNewDARCollectionMessage(1);
 
     verify(emailService).sendDarNewCollectionElectionMessage(any(), any());
