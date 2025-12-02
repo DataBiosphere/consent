@@ -15,6 +15,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
@@ -926,5 +927,39 @@ class DatasetRegistrationServiceTest {
     schemaV1.setAssets(Map.of("key", List.of("value1", "value2")));
     schemaV1.setConsentGroups(List.of(consentGroup));
     return schemaV1;
+  }
+
+  @Test
+  void testCreateDatasetRegistrationWithBlankConsentGroupName() {
+    User user = mock();
+    DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
+
+    // Set consent group name to blank
+    schema.getConsentGroups().getFirst().setConsentGroupName("");
+
+    initService();
+
+    assertThrows(
+        BadRequestException.class,
+        () -> {
+          datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
+        });
+  }
+
+  @Test
+  void testCreateDatasetRegistrationWithNullConsentGroupName() {
+    User user = mock();
+    DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
+
+    // Set consent group name to null
+    schema.getConsentGroups().getFirst().setConsentGroupName(null);
+
+    initService();
+
+    assertThrows(
+        BadRequestException.class,
+        () -> {
+          datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
+        });
   }
 }
