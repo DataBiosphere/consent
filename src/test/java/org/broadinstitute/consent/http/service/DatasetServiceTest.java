@@ -13,7 +13,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -54,6 +53,7 @@ import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.StudyType;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -866,156 +866,28 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testPatchStudy() {
-    Study study = mockStudy();
-    StudyPatch patch =
-        new StudyPatch(
-            randomAlphabetic(10),
-            randomAlphabetic(10),
-            List.of("tag1", "tag2"),
-            randomAlphabetic(10),
-            true);
-    User user = new User();
-    user.setUserId(1);
-    when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
-    datasetService.patchStudy(study.getStudyId(), user, patch);
-    verify(studyDAO)
-        .updateStudy(
-            eq(study.getStudyId()),
-            eq(patch.name()),
-            eq(patch.description()),
-            eq(patch.piName()),
-            eq(patch.dataTypes()),
-            eq(patch.publicVisibility()),
-            eq(user.getUserId()),
-            any(Instant.class));
-  }
-
-  @Test
-  void testPatchStudyUnchangedName() {
-    Study study = mockStudy();
-    StudyPatch patch =
-        new StudyPatch(
-            null, randomAlphabetic(10), List.of("tag1", "tag2"), randomAlphabetic(10), true);
-    User user = new User();
-    user.setUserId(1);
-    when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
-    datasetService.patchStudy(study.getStudyId(), user, patch);
-    verify(studyDAO)
-        .updateStudy(
-            eq(study.getStudyId()),
-            eq(study.getName()),
-            eq(patch.description()),
-            eq(patch.piName()),
-            eq(patch.dataTypes()),
-            eq(patch.publicVisibility()),
-            eq(user.getUserId()),
-            any(Instant.class));
-  }
-
-  @Test
-  void testPatchStudyUnchangedDescription() {
-    Study study = mockStudy();
-    StudyPatch patch =
-        new StudyPatch(
-            randomAlphabetic(10), null, List.of("tag1", "tag2"), randomAlphabetic(10), true);
-    User user = new User();
-    user.setUserId(1);
-    when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
-    datasetService.patchStudy(study.getStudyId(), user, patch);
-    verify(studyDAO)
-        .updateStudy(
-            eq(study.getStudyId()),
-            eq(patch.name()),
-            eq(study.getDescription()),
-            eq(patch.piName()),
-            eq(patch.dataTypes()),
-            eq(patch.publicVisibility()),
-            eq(user.getUserId()),
-            any(Instant.class));
-  }
-
-  @Test
-  void testPatchStudyUnchangedDatatypes() {
-    Study study = mockStudy();
-    StudyPatch patch =
-        new StudyPatch(
-            randomAlphabetic(10), randomAlphabetic(10), null, randomAlphabetic(10), true);
-    User user = new User();
-    user.setUserId(1);
-    when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
-    datasetService.patchStudy(study.getStudyId(), user, patch);
-    verify(studyDAO)
-        .updateStudy(
-            eq(study.getStudyId()),
-            eq(patch.name()),
-            eq(patch.description()),
-            eq(patch.piName()),
-            eq(study.getDataTypes()),
-            eq(patch.publicVisibility()),
-            eq(user.getUserId()),
-            any(Instant.class));
-  }
-
-  @Test
-  void testPatchStudyUnchangedPIName() {
-    Study study = mockStudy();
-    StudyPatch patch =
-        new StudyPatch(
-            randomAlphabetic(10), randomAlphabetic(10), List.of("tag3", "tag4"), null, true);
-    User user = new User();
-    user.setUserId(1);
-    when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
-    datasetService.patchStudy(study.getStudyId(), user, patch);
-    verify(studyDAO)
-        .updateStudy(
-            eq(study.getStudyId()),
-            eq(patch.name()),
-            eq(patch.description()),
-            eq(study.getPiName()),
-            eq(patch.dataTypes()),
-            eq(patch.publicVisibility()),
-            eq(user.getUserId()),
-            any(Instant.class));
-  }
-
-  @Test
-  void testPatchStudyUnchangedVisibility() {
-    Study study = mockStudy();
-    StudyPatch patch =
-        new StudyPatch(
-            randomAlphabetic(10),
-            randomAlphabetic(10),
-            List.of("tag3", "tag4"),
-            randomAlphabetic(10),
-            null);
-    User user = new User();
-    user.setUserId(1);
-    when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
-    datasetService.patchStudy(study.getStudyId(), user, patch);
-    verify(studyDAO)
-        .updateStudy(
-            eq(study.getStudyId()),
-            eq(patch.name()),
-            eq(patch.description()),
-            eq(patch.piName()),
-            eq(patch.dataTypes()),
-            eq(study.getPublicVisibility()),
-            eq(user.getUserId()),
-            any(Instant.class));
-  }
-
-  /* Helper functions */
-
-  private Study mockStudy() {
+  void testPatchStudy() throws Exception {
     Study study = new Study();
     study.setStudyId(1);
-    study.setName("Original Study Name");
-    study.setDescription("Original Study Description");
-    study.setDataTypes(List.of("tag1", "tag2"));
-    study.setPiName("Original PI Name");
-    study.setPublicVisibility(true);
-    return study;
+    study.setName("Study Name");
+    User user = new User();
+    user.setUserId(1);
+    StudyPatch patch =
+        new StudyPatch(
+            "New Study Name",
+            StudyType.OBSERVATIONAL,
+            "New Description",
+            null,
+            "New Phenotype",
+            "New Species",
+            "New PI",
+            null,
+            null,
+            null,
+            true);
+    when(datasetServiceDAO.patchStudy(study, user, patch)).thenReturn(study);
+    when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
+    assertDoesNotThrow(() -> datasetService.patchStudy(study.getStudyId(), user, patch));
   }
 
   private List<Dataset> getDatasets() {

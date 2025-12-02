@@ -146,7 +146,7 @@ public class StudyResource extends Resource {
   public Response patchStudyById(
       @Auth DuosUser duosUser, @PathParam("studyId") Integer studyId, String json) {
     try {
-      Study study = datasetService.getStudyWithDatasetsById(duosUser.getUser(), studyId);
+      Study study = datasetService.findStudy(studyId);
       checkPublicVisibilityForUser(study, duosUser.getUser());
       StudyPatch studyPatch = GsonUtil.getInstance().fromJson(json, StudyPatch.class);
       Study patchedStudy = datasetService.patchStudy(studyId, duosUser.getUser(), studyPatch);

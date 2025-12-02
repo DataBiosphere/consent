@@ -1,5 +1,11 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanTargetDeliveryDate;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanTargetPublicReleaseDate;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.phenotypeIndication;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.species;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.studyType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -30,11 +36,14 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.StudyType;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetInsert;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetUpdate;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -1039,6 +1048,411 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertTrue(
         audits.stream()
             .anyMatch(a -> a.getAction().equalsIgnoreCase(AuditActions.DEINDEXED.name())));
+  }
+
+  @Test
+  void testPatchStudyAllProperties() throws Exception {
+    Study study = createStudy(null);
+    User user = userDAO.findUserById(study.getCreateUserId());
+    StudyPatch patch =
+        new StudyPatch(
+            randomAlphabetic(10),
+            StudyType.OBSERVATIONAL,
+            randomAlphabetic(10),
+            List.of("tag1", "tag2"),
+            randomAlphabetic(10),
+            randomAlphabetic(10),
+            randomAlphabetic(10),
+            List.of("email1", "email2"),
+            randomAlphabetic(10),
+            randomAlphabetic(10),
+            true);
+    Study patched = serviceDAO.patchStudy(study, user, patch);
+    assertEquals(patch.name(), patched.getName());
+    assertEquals(patch.description(), patched.getDescription());
+    assertEquals(patch.dataTypes(), patched.getDataTypes());
+    assertEquals(patch.piName(), patched.getPiName());
+    assertEquals(patch.publicVisibility(), patched.getPublicVisibility());
+    assertEquals(
+        patch.studyType().value(),
+        patched.getProperties().stream()
+            .filter(p -> p.getKey().equals(studyType))
+            .findFirst()
+            .orElseThrow()
+            .getValue());
+    assertEquals(
+        patch.phenotypeIndication(),
+        patched.getProperties().stream()
+            .filter(p -> p.getKey().equals(phenotypeIndication))
+            .findFirst()
+            .orElseThrow()
+            .getValue());
+    assertEquals(
+        patch.species(),
+        patched.getProperties().stream()
+            .filter(p -> p.getKey().equals(species))
+            .findFirst()
+            .orElseThrow()
+            .getValue());
+    assertEquals(
+        GsonUtil.getInstance().toJson(patch.dataCustodianEmail()),
+        patched.getProperties().stream()
+            .filter(p -> p.getKey().equals(dataCustodianEmail))
+            .findFirst()
+            .orElseThrow()
+            .getValue()
+            .toString());
+    assertEquals(
+        patch.alternativeDataSharingPlanTargetDeliveryDate(),
+        patched.getProperties().stream()
+            .filter(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate))
+            .findFirst()
+            .orElseThrow()
+            .getValue());
+    assertEquals(
+        patch.alternativeDataSharingPlanTargetPublicReleaseDate(),
+        patched.getProperties().stream()
+            .filter(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate))
+            .findFirst()
+            .orElseThrow()
+            .getValue());
+  }
+
+  @Test
+  void testPatchStudyName() throws Exception {
+    Study study = createStudy(null);
+    User user = userDAO.findUserById(study.getCreateUserId());
+    StudyPatch patch =
+        new StudyPatch(
+            randomAlphabetic(10), null, null, null, null, null, null, null, null, null, null);
+    Study patched = serviceDAO.patchStudy(study, user, patch);
+    assertEquals(patch.name(), patched.getName());
+    assertEquals(study.getDescription(), patched.getDescription());
+    assertEquals(study.getDataTypes(), patched.getDataTypes());
+    assertEquals(study.getPiName(), patched.getPiName());
+    assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+  }
+
+  @Test
+  void testPatchStudyDescription() throws Exception {
+    Study study = createStudy(null);
+    User user = userDAO.findUserById(study.getCreateUserId());
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, randomAlphabetic(10), null, null, null, null, null, null, null, null);
+    Study patched = serviceDAO.patchStudy(study, user, patch);
+    assertEquals(study.getName(), patched.getName());
+    assertEquals(patch.description(), patched.getDescription());
+    assertEquals(study.getDataTypes(), patched.getDataTypes());
+    assertEquals(study.getPiName(), patched.getPiName());
+    assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+  }
+
+  @Test
+  void testPatchStudyDataTypes() throws Exception {
+    Study study = createStudy(null);
+    User user = userDAO.findUserById(study.getCreateUserId());
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, List.of("tag1", "tag2"), null, null, null, null, null, null, null);
+    Study patched = serviceDAO.patchStudy(study, user, patch);
+    assertEquals(study.getName(), patched.getName());
+    assertEquals(study.getDescription(), patched.getDescription());
+    assertEquals(patch.dataTypes(), patched.getDataTypes());
+    assertEquals(study.getPiName(), patched.getPiName());
+    assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+  }
+
+  @Test
+  void testPatchStudyPIName() throws Exception {
+    Study study = createStudy(null);
+    User user = userDAO.findUserById(study.getCreateUserId());
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, null, null, null, randomAlphabetic(10), null, null, null, null);
+    Study patched = serviceDAO.patchStudy(study, user, patch);
+    assertEquals(study.getName(), patched.getName());
+    assertEquals(study.getDescription(), patched.getDescription());
+    assertEquals(study.getDataTypes(), patched.getDataTypes());
+    assertEquals(patch.piName(), patched.getPiName());
+    assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+  }
+
+  @Test
+  void testPatchStudyPublicVisibility() throws Exception {
+    Study study = createStudy(null);
+    User user = userDAO.findUserById(study.getCreateUserId());
+    StudyPatch patch =
+        new StudyPatch(null, null, null, null, null, null, null, null, null, null, false);
+    Study patched = serviceDAO.patchStudy(study, user, patch);
+    assertEquals(study.getName(), patched.getName());
+    assertEquals(study.getDescription(), patched.getDescription());
+    assertEquals(study.getDataTypes(), patched.getDataTypes());
+    assertEquals(study.getPiName(), patched.getPiName());
+    assertEquals(patch.publicVisibility(), patched.getPublicVisibility());
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+  }
+
+  @Test
+  void testPatchStudyStudyType() throws Exception {
+    Study study = createStudy(null);
+    User user = userDAO.findUserById(study.getCreateUserId());
+    StudyPatch patch =
+        new StudyPatch(
+            null, StudyType.COHORT_STUDY, null, null, null, null, null, null, null, null, null);
+    Study patched = serviceDAO.patchStudy(study, user, patch);
+    assertEquals(study.getName(), patched.getName());
+    assertEquals(study.getDescription(), patched.getDescription());
+    assertEquals(study.getDataTypes(), patched.getDataTypes());
+    assertEquals(study.getPiName(), patched.getPiName());
+    assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
+    assertEquals(
+        patch.studyType().value(),
+        patched.getProperties().stream()
+            .filter(p -> p.getKey().equals(studyType))
+            .findFirst()
+            .orElseThrow()
+            .getValue());
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+  }
+
+  @Test
+  void testPatchStudyPhenotypeIndication() throws Exception {
+    Study study = createStudy(null);
+    User user = userDAO.findUserById(study.getCreateUserId());
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, null, randomAlphabetic(10), null, null, null, null, null, null);
+    Study patched = serviceDAO.patchStudy(study, user, patch);
+    assertEquals(study.getName(), patched.getName());
+    assertEquals(study.getDescription(), patched.getDescription());
+    assertEquals(study.getDataTypes(), patched.getDataTypes());
+    assertEquals(study.getPiName(), patched.getPiName());
+    assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
+    assertTrue(patched.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertEquals(
+        patch.phenotypeIndication(),
+        patched.getProperties().stream()
+            .filter(p -> p.getKey().equals(phenotypeIndication))
+            .findFirst()
+            .orElseThrow()
+            .getValue());
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+  }
+
+  @Test
+  void testPatchStudySpecies() throws Exception {
+    Study study = createStudy(null);
+    User user = userDAO.findUserById(study.getCreateUserId());
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, null, null, randomAlphabetic(10), null, null, null, null, null);
+    Study patched = serviceDAO.patchStudy(study, user, patch);
+    assertEquals(study.getName(), patched.getName());
+    assertEquals(study.getDescription(), patched.getDescription());
+    assertEquals(study.getDataTypes(), patched.getDataTypes());
+    assertEquals(study.getPiName(), patched.getPiName());
+    assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
+    assertTrue(patched.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
+    assertEquals(
+        patch.species(),
+        patched.getProperties().stream()
+            .filter(p -> p.getKey().equals(species))
+            .findFirst()
+            .orElseThrow()
+            .getValue());
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+  }
+
+  @Test
+  void testPatchStudyDataCustodianEmail() throws Exception {
+    Study study = createStudy(null);
+    User user = userDAO.findUserById(study.getCreateUserId());
+    StudyPatch patch =
+        new StudyPatch(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            List.of("email1", "email2"),
+            null,
+            null,
+            null);
+    Study patched = serviceDAO.patchStudy(study, user, patch);
+    assertEquals(study.getName(), patched.getName());
+    assertEquals(study.getDescription(), patched.getDescription());
+    assertEquals(study.getDataTypes(), patched.getDataTypes());
+    assertEquals(study.getPiName(), patched.getPiName());
+    assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
+    assertTrue(patched.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+    assertEquals(
+        GsonUtil.getInstance().toJson(patch.dataCustodianEmail()),
+        patched.getProperties().stream()
+            .filter(p -> p.getKey().equals(dataCustodianEmail))
+            .findFirst()
+            .orElseThrow()
+            .getValue()
+            .toString());
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+  }
+
+  @Test
+  void testPatchStudyAlternativeDataSharingPlanTargetDeliveryDate() throws Exception {
+    Study study = createStudy(null);
+    User user = userDAO.findUserById(study.getCreateUserId());
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, randomAlphabetic(10), null, null);
+    Study patched = serviceDAO.patchStudy(study, user, patch);
+    assertEquals(study.getName(), patched.getName());
+    assertEquals(study.getDescription(), patched.getDescription());
+    assertEquals(study.getDataTypes(), patched.getDataTypes());
+    assertEquals(study.getPiName(), patched.getPiName());
+    assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
+    assertTrue(patched.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
+    assertEquals(
+        patch.alternativeDataSharingPlanTargetDeliveryDate(),
+        patched.getProperties().stream()
+            .filter(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate))
+            .findFirst()
+            .orElseThrow()
+            .getValue());
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+  }
+
+  @Test
+  void testPatchStudyAlternativeDataSharingPlanTargetPublicReleaseDate() throws Exception {
+    Study study = createStudy(null);
+    User user = userDAO.findUserById(study.getCreateUserId());
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, null, randomAlphabetic(10), null);
+    Study patched = serviceDAO.patchStudy(study, user, patch);
+    assertEquals(study.getName(), patched.getName());
+    assertEquals(study.getDescription(), patched.getDescription());
+    assertEquals(study.getDataTypes(), patched.getDataTypes());
+    assertEquals(study.getPiName(), patched.getPiName());
+    assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
+    assertTrue(patched.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+    assertEquals(
+        patch.alternativeDataSharingPlanTargetPublicReleaseDate(),
+        patched.getProperties().stream()
+            .filter(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate))
+            .findFirst()
+            .orElseThrow()
+            .getValue());
   }
 
   /**

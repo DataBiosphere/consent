@@ -113,8 +113,13 @@ patch:
     This API allows Admins, Chairpersons, and Data Submitters to patch a limited set of study
     properties. All fields are optional and if not provided, will be ignored.
       * Study name
+      * Study type
       * Study description
       * Study datatypes (list of strings)
+      * Study Phenotype/Indication
+      * Study Species
+      * Study Target Delivery Date
+      * Study Target Public Release Date
       * Study PI Name
       * Study public visibility (boolean)
   parameters:

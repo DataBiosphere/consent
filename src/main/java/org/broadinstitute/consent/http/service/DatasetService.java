@@ -720,15 +720,7 @@ public class DatasetService implements ConsentLogger {
   public Study patchStudy(Integer studyId, User user, StudyPatch patch) {
     try {
       Study study = studyDAO.findStudyById(studyId);
-      studyDAO.updateStudy(
-          studyId,
-          patch.name() != null ? patch.name() : study.getName(),
-          patch.description() != null ? patch.description() : study.getDescription(),
-          patch.piName() != null ? patch.piName() : study.getPiName(),
-          patch.dataTypes() != null ? patch.dataTypes() : study.getDataTypes(),
-          patch.publicVisibility() != null ? patch.publicVisibility() : study.getPublicVisibility(),
-          user.getUserId(),
-          Instant.now());
+      datasetServiceDAO.patchStudy(study, user, patch);
       study
           .getDatasetIds()
           .forEach(datasetId -> elasticSearchService.asyncDatasetInESIndex(datasetId, user, true));
