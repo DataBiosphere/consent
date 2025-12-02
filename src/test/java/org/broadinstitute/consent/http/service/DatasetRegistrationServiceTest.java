@@ -20,9 +20,11 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -939,11 +941,7 @@ class DatasetRegistrationServiceTest {
 
     initService();
 
-    assertThrows(
-        BadRequestException.class,
-        () -> {
-          datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
-        });
+    assertThrows(BadRequestException.class, () -> invokeCreateRegistration(schema, user));
   }
 
   @Test
@@ -956,10 +954,11 @@ class DatasetRegistrationServiceTest {
 
     initService();
 
-    assertThrows(
-        BadRequestException.class,
-        () -> {
-          datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
-        });
+    assertThrows(BadRequestException.class, () -> invokeCreateRegistration(schema, user));
+  }
+
+  private void invokeCreateRegistration(DatasetRegistrationSchemaV1 schema, User user)
+      throws SQLException, IOException {
+    datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
   }
 }
