@@ -210,6 +210,8 @@
     relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2025-11-03-drop-sort-date-column.xml"
     relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2025-11-24-add-open-dar-rule.xml"
+           relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2025-12-02-alter-dataset-name-column.xml"
     relativeToChangelogFile="true" />
 </databaseChangeLog>

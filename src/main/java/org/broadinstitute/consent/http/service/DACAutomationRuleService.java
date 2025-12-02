@@ -182,16 +182,17 @@ public class DACAutomationRuleService implements ConsentLogger {
       DataAccessRequest dar,
       Dataset dataset,
       ContainerRequest request) {
-    int electionId =
-        electionDAO.insertElection(
-            ElectionType.DATA_ACCESS.getValue(),
-            ElectionStatus.OPEN.getValue(),
-            new Date(),
-            dar.getReferenceId(),
-            dataset.getDatasetId());
-    int voteId =
-        voteDAO.insertVote(rule.enabledByUserId(), electionId, VoteType.RADAR_APPROVE.getValue());
-    Vote vote = voteDAO.findVoteById(voteId);
+
+    // Wrap in transaction to ensure election and vote are created together
+    Vote vote =
+        electionDAO.inTransaction(
+            _ -> {
+              int electionId = createOpenElectionForDAR(dar, dataset, ElectionType.DATA_ACCESS);
+              int voteId =
+                  createVoteForElection(electionId, rule.enabledByUserId(), VoteType.RADAR_APPROVE);
+              return voteDAO.findVoteById(voteId);
+            });
+
     try {
       List<Vote> updatedVotes =
           voteServiceDAO.updateVotesWithValue(
@@ -201,7 +202,7 @@ public class DACAutomationRuleService implements ConsentLogger {
                   "Rule Automated DAR (RADAR) Approval using rule: %s",
                   ruleImplementation.getRuleType()));
       assert (updatedVotes.size() == 1);
-      vote = updatedVotes.get(0);
+      vote = updatedVotes.getFirst();
     } catch (Exception e) {
       logException("Error updating vote", e);
       return null;
@@ -213,5 +214,19 @@ public class DACAutomationRuleService implements ConsentLogger {
             "Rule %s triggered for DAC id: %s and dataset id: %s",
             rule.ruleType(), dataset.getDacId(), dataset.getDatasetId()));
     return vote;
+  }
+
+  protected int createOpenElectionForDAR(
+      DataAccessRequest dar, Dataset dataset, ElectionType electionType) {
+    return electionDAO.insertElection(
+        electionType.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        new Date(),
+        dar.getReferenceId(),
+        dataset.getDatasetId());
+  }
+
+  protected int createVoteForElection(int electionId, int userId, VoteType voteType) {
+    return voteDAO.insertVote(userId, electionId, voteType.getValue());
   }
 }

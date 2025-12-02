@@ -116,7 +116,7 @@ public class DataAccessRequestResource extends Resource {
       DataAccessRequest newDar =
           dataAccessRequestService.createDataAccessRequest(
               user, payload, (ContainerRequest) request);
-      sendNewDarCollectionMessage(newDar.getCollectionId());
+      processNewDarCollection(newDar.getCollectionId());
       URI uri = info.getRequestUriBuilder().build();
       matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
       List<Dataset> datasets = datasetService.findDatasetsByIds(user, newDar.getDatasetIds());
@@ -143,7 +143,7 @@ public class DataAccessRequestResource extends Resource {
       DataAccessRequest newDar =
           dataAccessRequestService.createDataAccessRequest(
               user, payload, (ContainerRequest) request);
-      sendNewDarCollectionMessage(newDar.getCollectionId());
+      processNewDarCollection(newDar.getCollectionId());
       URI uri = info.getRequestUriBuilder().build();
       matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
       List<Dataset> datasets = datasetService.findDatasetsByIds(user, newDar.getDatasetIds());
@@ -470,7 +470,7 @@ public class DataAccessRequestResource extends Resource {
           dataAccessRequestService.createProgressReport(
               user, payload, parentDar, (ContainerRequest) request);
       if (Objects.nonNull(progressReport) && !progressReport.getIsCloseoutProgressReport()) {
-        sendNewDarCollectionMessage(parentDar.getCollectionId());
+        processNewDarCollection(parentDar.getCollectionId());
       }
       List<Dataset> datasets =
           datasetService.findDatasetsByIds(user, progressReport.getDatasetIds());
@@ -482,9 +482,10 @@ public class DataAccessRequestResource extends Resource {
     }
   }
 
-  private void sendNewDarCollectionMessage(Integer collectionId) {
+  private void processNewDarCollection(Integer collectionId) {
     try {
       // This service method knows how to distinguish between a DAR and a Progress Report.
+      darCollectionService.createElectionsForNewDarCollection(collectionId);
       darCollectionService.sendNewDARCollectionMessage(collectionId);
     } catch (Exception e) {
       // non-fatal exception
