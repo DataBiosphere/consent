@@ -1119,6 +1119,33 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testPatchStudyNoChanges() throws Exception {
+    Study study = createStudy(null);
+    User user = userDAO.findUserById(study.getCreateUserId());
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, null, null, null);
+    Study patched = serviceDAO.patchStudy(study, user, patch);
+    assertEquals(study.getName(), patched.getName());
+    assertEquals(study.getDescription(), patched.getDescription());
+    assertEquals(study.getDataTypes(), patched.getDataTypes());
+    assertEquals(study.getPiName(), patched.getPiName());
+    assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+    assertTrue(
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+  }
+
+  @Test
   void testPatchStudyName() throws Exception {
     Study study = createStudy(null);
     User user = userDAO.findUserById(study.getCreateUserId());
