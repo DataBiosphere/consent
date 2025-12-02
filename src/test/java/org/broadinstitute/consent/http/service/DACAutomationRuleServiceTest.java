@@ -13,6 +13,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -22,7 +23,6 @@ import static org.mockito.Mockito.when;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -32,8 +32,6 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
-import org.broadinstitute.consent.http.enumeration.ElectionStatus;
-import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
 import org.broadinstitute.consent.http.models.Collaborator;
@@ -308,7 +306,7 @@ class DACAutomationRuleServiceTest {
 
     DACAutomationRuleService serviceSpy = spy(service);
     // in order to test sending the email we need to add to the datasetsAuthorized list
-    doAnswer(inv -> Optional.of(new Vote()))
+    doAnswer(_ -> Optional.of(new Vote()))
         .when(serviceSpy)
         .applyRule(activeRule, dataset1, dar, request);
 
@@ -369,17 +367,18 @@ class DACAutomationRuleServiceTest {
     DataAccessRequest dar = makeDAR();
     Dataset dataset = makeDataset();
 
-    Integer electionId = 4;
-    mockInsertElection(dar, dataset, electionId);
+    Vote vote = new Vote();
+    vote.setVoteId(5);
+    vote.setVote(true);
 
-    Integer voteId = 5;
-    when(voteDAO.insertVote(rule.enabledByUserId(), electionId, VoteType.RADAR_APPROVE.getValue()))
-        .thenReturn(voteId);
+    // Mocking the transaction to return the vote directly
+    when(electionDAO.inTransaction(any())).thenReturn(vote);
+
+    // Mocking only the methods called outside the transaction
     user.setEraCommonsId("eraCommonsId");
     when(userDAO.findUserById(rule.enabledByUserId())).thenReturn(user);
-
-    Vote vote = mockFindVoteById(voteId);
     when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(vote));
+
     Vote openedVote =
         service.openElectionAndApprove(rule, ruleImplementation, dar, dataset, request);
 
@@ -396,19 +395,19 @@ class DACAutomationRuleServiceTest {
     DataAccessRequest dar = makeDAR();
     Dataset dataset = makeDataset();
 
-    Integer electionId = 4;
-    mockInsertElection(dar, dataset, electionId);
+    Vote vote = new Vote();
+    vote.setVoteId(5);
+    vote.setVote(true);
 
-    Integer voteId = 5;
-    when(voteDAO.insertVote(rule.enabledByUserId(), electionId, VoteType.RADAR_APPROVE.getValue()))
-        .thenReturn(voteId);
+    // Mocking the transaction to return the vote directly
+    when(electionDAO.inTransaction(any())).thenReturn(vote);
 
-    Vote vote = mockFindVoteById(voteId);
-
+    // Mocking the exception when updating votes
     doThrow(new RuntimeException("Test error"))
         .when(voteServiceDAO)
         .updateVotesWithValue(
             List.of(vote), true, "Rule Automated DAR (RADAR) Approval using rule: GRU_V1");
+
     assertNull(service.openElectionAndApprove(rule, ruleImplementation, dar, dataset, request));
   }
 
@@ -423,22 +422,17 @@ class DACAutomationRuleServiceTest {
     darData.setInternalCollaborators(List.of(bannedActor));
     darHmb.setData(darData);
     Vote vote = new Vote();
+    vote.setVoteId(1);
     vote.setType(VoteType.RADAR_APPROVE.getValue());
     vote.setVote(true);
 
-    when(electionDAO.insertElection(
-            eq(ElectionType.DATA_ACCESS.getValue()),
-            eq(ElectionStatus.OPEN.getValue()),
-            any(),
-            eq(darHmb.getReferenceId()),
-            eq(datasetGru.getDatasetId())))
-        .thenReturn(1);
+    // Mocking the transaction to return the vote directly
+    when(electionDAO.inTransaction(any())).thenReturn(vote);
 
-    when(voteDAO.insertVote(rule.enabledByUserId(), 1, VoteType.RADAR_APPROVE.getValue()))
-        .thenReturn(1);
-    when(voteDAO.findVoteById(1)).thenReturn(vote);
+    // Mocking only the methods that are called outside the transaction
     when(userDAO.findUserById(rule.enabledByUserId())).thenReturn(user);
     when(voteServiceDAO.updateVotesWithValue(any(), anyBoolean(), any())).thenReturn(List.of(vote));
+
     Optional<Vote> appliedVote = service.applyRule(rule, datasetGru, darHmb, request);
     assertTrue(appliedVote.isPresent());
     assertEquals(vote, appliedVote.get());
@@ -479,26 +473,11 @@ class DACAutomationRuleServiceTest {
     DACAutomationRule rule = makeDacAutomationRuleGRU();
     Dataset datasetGru = makeDataset();
     DataAccessRequest darHmb = makeDAR();
-    Vote vote = new Vote();
-    vote.setType(VoteType.RADAR_APPROVE.getValue());
 
-    when(electionDAO.insertElection(
-            eq(ElectionType.DATA_ACCESS.getValue()),
-            eq(ElectionStatus.OPEN.getValue()),
-            any(),
-            eq(darHmb.getReferenceId()),
-            eq(datasetGru.getDatasetId())))
-        .thenReturn(1);
+    DACAutomationRuleService serviceSpy = spy(service);
+    doReturn(null).when(serviceSpy).openElectionAndApprove(any(), any(), any(), any(), any());
 
-    when(voteDAO.insertVote(rule.enabledByUserId(), 1, VoteType.RADAR_APPROVE.getValue()))
-        .thenReturn(1);
-    when(voteDAO.findVoteById(1)).thenReturn(vote);
-
-    doThrow(new RuntimeException("Test error"))
-        .when(voteServiceDAO)
-        .updateVotesWithValue(any(), anyBoolean(), any());
-
-    Optional<Vote> appliedVote = service.applyRule(rule, datasetGru, darHmb, request);
+    Optional<Vote> appliedVote = serviceSpy.applyRule(rule, datasetGru, darHmb, request);
     assertTrue(appliedVote.isEmpty());
   }
 
@@ -546,23 +525,5 @@ class DACAutomationRuleServiceTest {
             IllegalArgumentException.class,
             () -> DACAutomationRuleService.getRuleImplementation(mockRule));
     assertEquals("No rule implementation found for type: MOCK_TYPE", exception.getMessage());
-  }
-
-  private void mockInsertElection(DataAccessRequest dar, Dataset dataset, Integer electionId) {
-    when(electionDAO.insertElection(
-            eq(ElectionType.DATA_ACCESS.getValue()),
-            eq(ElectionStatus.OPEN.getValue()),
-            any(Date.class),
-            eq(dar.getReferenceId()),
-            eq(dataset.getDatasetId())))
-        .thenReturn(electionId);
-  }
-
-  private Vote mockFindVoteById(Integer voteId) {
-    Vote vote = new Vote();
-    vote.setVoteId(voteId);
-    vote.setVote(true);
-    when(voteDAO.findVoteById(voteId)).thenReturn(vote);
-    return vote;
   }
 }

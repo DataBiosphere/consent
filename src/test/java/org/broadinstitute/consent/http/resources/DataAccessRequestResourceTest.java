@@ -144,6 +144,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       dar.setData(data);
       when(dataAccessRequestService.createDataAccessRequest(any(), any(), any())).thenReturn(dar);
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
+      doNothing().when(darCollectionService).createElectionsForNewDarCollection(any());
       doNothing().when(darCollectionService).sendNewDARCollectionMessage(any());
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
       when(info.getRequestUriBuilder()).thenReturn(builder);
@@ -970,6 +971,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       dar.setData(data);
       when(dataAccessRequestService.createDataAccessRequest(any(), any(), any())).thenReturn(dar);
       doNothing().when(matchService).reprocessMatchesForPurpose(any());
+      doNothing().when(darCollectionService).createElectionsForNewDarCollection(any());
       doNothing().when(darCollectionService).sendNewDARCollectionMessage(any());
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
       when(info.getRequestUriBuilder()).thenReturn(builder);
