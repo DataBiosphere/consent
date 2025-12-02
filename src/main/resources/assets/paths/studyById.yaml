@@ -107,3 +107,40 @@ delete:
       description: Not Found
     500:
       description: Server error
+patch:
+  summary: Patch Study
+  description: |
+    This API allows Admins, Chairpersons, and Data Submitters to patch a limited set of study
+    properties. All fields are optional and if not provided, will be ignored.
+      * Study name
+      * Study description
+      * Study datatypes (list of strings)
+      * Study PI Name
+      * Study public visibility (boolean)
+  parameters:
+    - name: studyId
+      in: path
+      description: ID of the Study
+      required: true
+      schema:
+        type: integer
+  tags:
+    - Study
+  requestBody:
+    description: StudyPatch object
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../schemas/StudyPatch.yaml'
+  responses:
+    200:
+      description: Study Patch applied successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/Study.yaml'
+    404:
+      description: Not Found
+    500:
+      description: Server error.
