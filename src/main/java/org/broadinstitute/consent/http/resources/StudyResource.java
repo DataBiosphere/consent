@@ -147,6 +147,9 @@ public class StudyResource extends Resource {
       @Auth DuosUser duosUser, @PathParam("studyId") Integer studyId, String json) {
     try {
       Study study = datasetService.findStudy(studyId);
+      if (study == null) {
+        throw new NotFoundException("Study not found");
+      }
       checkPublicVisibilityForUser(study, duosUser.getUser());
       StudyPatch studyPatch = GsonUtil.getInstance().fromJson(json, StudyPatch.class);
       Study patchedStudy = datasetService.patchStudy(studyId, duosUser.getUser(), studyPatch);
