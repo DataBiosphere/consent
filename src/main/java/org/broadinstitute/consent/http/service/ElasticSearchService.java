@@ -193,7 +193,7 @@ public class ElasticSearchService implements ConsentLogger {
   }
 
   public InputStream searchDatasetsStream(String query) throws IOException {
-    if (!validateQuery(query)) {
+    if (invalidResultWindow(query)) {
       throw new IOException("Invalid Elasticsearch query");
     }
     Request searchRequest =
