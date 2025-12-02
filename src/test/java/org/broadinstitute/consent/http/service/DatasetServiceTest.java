@@ -890,6 +890,8 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertDoesNotThrow(() -> datasetService.patchStudy(study.getStudyId(), user, patch));
   }
 
+  /* Helper functions */
+
   private List<Dataset> getDatasets() {
     return IntStream.range(1, 3)
         .mapToObj(
