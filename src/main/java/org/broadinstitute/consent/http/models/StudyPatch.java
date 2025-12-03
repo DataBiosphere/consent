@@ -23,6 +23,7 @@ public record StudyPatch(
 
   public static final String STUDY_TYPE = "studyType";
   public static final String PHENOTYPE_INDICATION = "phenotypeIndication";
+  // nosemgrep
   public static final String SPECIES_KEY = "species";
   public static final String DATA_CUSTODIAN_EMAIL = "dataCustodianEmail";
   public static final String ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE =
