@@ -1,11 +1,11 @@
 package org.broadinstitute.consent.http.service.dao;
 
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanTargetDeliveryDate;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanTargetPublicReleaseDate;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.phenotypeIndication;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.species;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.studyType;
+import static org.broadinstitute.consent.http.models.StudyPatch.ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE;
+import static org.broadinstitute.consent.http.models.StudyPatch.ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE;
+import static org.broadinstitute.consent.http.models.StudyPatch.DATA_CUSTODIAN_EMAIL;
+import static org.broadinstitute.consent.http.models.StudyPatch.PHENOTYPE_INDICATION;
+import static org.broadinstitute.consent.http.models.StudyPatch.SPECIES_KEY;
+import static org.broadinstitute.consent.http.models.StudyPatch.STUDY_TYPE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -1076,28 +1076,28 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(
         patch.studyType().value(),
         patched.getProperties().stream()
-            .filter(p -> p.getKey().equals(studyType))
+            .filter(p -> p.getKey().equals(STUDY_TYPE))
             .findFirst()
             .orElseThrow()
             .getValue());
     assertEquals(
         patch.phenotypeIndication(),
         patched.getProperties().stream()
-            .filter(p -> p.getKey().equals(phenotypeIndication))
+            .filter(p -> p.getKey().equals(PHENOTYPE_INDICATION))
             .findFirst()
             .orElseThrow()
             .getValue());
     assertEquals(
         patch.species(),
         patched.getProperties().stream()
-            .filter(p -> p.getKey().equals(species))
+            .filter(p -> p.getKey().equals(SPECIES_KEY))
             .findFirst()
             .orElseThrow()
             .getValue());
     assertEquals(
         GsonUtil.getInstance().toJson(patch.dataCustodianEmail()),
         patched.getProperties().stream()
-            .filter(p -> p.getKey().equals(dataCustodianEmail))
+            .filter(p -> p.getKey().equals(DATA_CUSTODIAN_EMAIL))
             .findFirst()
             .orElseThrow()
             .getValue()
@@ -1105,14 +1105,15 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(
         patch.alternativeDataSharingPlanTargetDeliveryDate(),
         patched.getProperties().stream()
-            .filter(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate))
+            .filter(p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE))
             .findFirst()
             .orElseThrow()
             .getValue());
     assertEquals(
         patch.alternativeDataSharingPlanTargetPublicReleaseDate(),
         patched.getProperties().stream()
-            .filter(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate))
+            .filter(
+                p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE))
             .findFirst()
             .orElseThrow()
             .getValue());
@@ -1130,18 +1131,19 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(study.getDataTypes(), patched.getDataTypes());
     assertEquals(study.getPiName(), patched.getPiName());
     assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
-    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(STUDY_TYPE)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
-    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(PHENOTYPE_INDICATION)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(SPECIES_KEY)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
-    assertTrue(
-        study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(DATA_CUSTODIAN_EMAIL)));
     assertTrue(
         study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+            .noneMatch(p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(
+                p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE)));
   }
 
   @Test
@@ -1157,18 +1159,19 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(study.getDataTypes(), patched.getDataTypes());
     assertEquals(study.getPiName(), patched.getPiName());
     assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
-    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(STUDY_TYPE)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
-    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(PHENOTYPE_INDICATION)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(SPECIES_KEY)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
-    assertTrue(
-        study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(DATA_CUSTODIAN_EMAIL)));
     assertTrue(
         study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+            .noneMatch(p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(
+                p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE)));
   }
 
   @Test
@@ -1184,18 +1187,19 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(study.getDataTypes(), patched.getDataTypes());
     assertEquals(study.getPiName(), patched.getPiName());
     assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
-    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(STUDY_TYPE)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
-    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(PHENOTYPE_INDICATION)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(SPECIES_KEY)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
-    assertTrue(
-        study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(DATA_CUSTODIAN_EMAIL)));
     assertTrue(
         study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+            .noneMatch(p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(
+                p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE)));
   }
 
   @Test
@@ -1211,18 +1215,19 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(patch.dataTypes(), patched.getDataTypes());
     assertEquals(study.getPiName(), patched.getPiName());
     assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
-    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(STUDY_TYPE)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
-    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(PHENOTYPE_INDICATION)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(SPECIES_KEY)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
-    assertTrue(
-        study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(DATA_CUSTODIAN_EMAIL)));
     assertTrue(
         study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+            .noneMatch(p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(
+                p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE)));
   }
 
   @Test
@@ -1238,18 +1243,19 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(study.getDataTypes(), patched.getDataTypes());
     assertEquals(patch.piName(), patched.getPiName());
     assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
-    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(STUDY_TYPE)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
-    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(PHENOTYPE_INDICATION)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(SPECIES_KEY)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
-    assertTrue(
-        study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(DATA_CUSTODIAN_EMAIL)));
     assertTrue(
         study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+            .noneMatch(p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(
+                p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE)));
   }
 
   @Test
@@ -1264,18 +1270,19 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(study.getDataTypes(), patched.getDataTypes());
     assertEquals(study.getPiName(), patched.getPiName());
     assertEquals(patch.publicVisibility(), patched.getPublicVisibility());
-    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(STUDY_TYPE)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
-    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(PHENOTYPE_INDICATION)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(SPECIES_KEY)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
-    assertTrue(
-        study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(DATA_CUSTODIAN_EMAIL)));
     assertTrue(
         study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+            .noneMatch(p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(
+                p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE)));
   }
 
   @Test
@@ -1294,21 +1301,22 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(
         patch.studyType().value(),
         patched.getProperties().stream()
-            .filter(p -> p.getKey().equals(studyType))
+            .filter(p -> p.getKey().equals(STUDY_TYPE))
             .findFirst()
             .orElseThrow()
             .getValue());
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
-    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(PHENOTYPE_INDICATION)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(SPECIES_KEY)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
-    assertTrue(
-        study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(DATA_CUSTODIAN_EMAIL)));
     assertTrue(
         study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+            .noneMatch(p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(
+                p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE)));
   }
 
   @Test
@@ -1324,23 +1332,24 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(study.getDataTypes(), patched.getDataTypes());
     assertEquals(study.getPiName(), patched.getPiName());
     assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
-    assertTrue(patched.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(patched.getProperties().stream().noneMatch(p -> p.getKey().equals(STUDY_TYPE)));
     assertEquals(
         patch.phenotypeIndication(),
         patched.getProperties().stream()
-            .filter(p -> p.getKey().equals(phenotypeIndication))
+            .filter(p -> p.getKey().equals(PHENOTYPE_INDICATION))
             .findFirst()
             .orElseThrow()
             .getValue());
-    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(SPECIES_KEY)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
-    assertTrue(
-        study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(DATA_CUSTODIAN_EMAIL)));
     assertTrue(
         study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+            .noneMatch(p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE)));
+    assertTrue(
+        study.getProperties().stream()
+            .noneMatch(
+                p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE)));
   }
 
   @Test
@@ -1356,24 +1365,25 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(study.getDataTypes(), patched.getDataTypes());
     assertEquals(study.getPiName(), patched.getPiName());
     assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
-    assertTrue(patched.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(patched.getProperties().stream().noneMatch(p -> p.getKey().equals(STUDY_TYPE)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(PHENOTYPE_INDICATION)));
     assertEquals(
         patch.species(),
         patched.getProperties().stream()
-            .filter(p -> p.getKey().equals(species))
+            .filter(p -> p.getKey().equals(SPECIES_KEY))
             .findFirst()
             .orElseThrow()
             .getValue());
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(DATA_CUSTODIAN_EMAIL)));
     assertTrue(
         study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+            .noneMatch(p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE)));
     assertTrue(
         study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+            .noneMatch(
+                p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE)));
   }
 
   @Test
@@ -1399,24 +1409,25 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(study.getDataTypes(), patched.getDataTypes());
     assertEquals(study.getPiName(), patched.getPiName());
     assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
-    assertTrue(patched.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(patched.getProperties().stream().noneMatch(p -> p.getKey().equals(STUDY_TYPE)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
-    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(PHENOTYPE_INDICATION)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(SPECIES_KEY)));
     assertEquals(
         GsonUtil.getInstance().toJson(patch.dataCustodianEmail()),
         patched.getProperties().stream()
-            .filter(p -> p.getKey().equals(dataCustodianEmail))
+            .filter(p -> p.getKey().equals(DATA_CUSTODIAN_EMAIL))
             .findFirst()
             .orElseThrow()
             .getValue()
             .toString());
     assertTrue(
         study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+            .noneMatch(p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE)));
     assertTrue(
         study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+            .noneMatch(
+                p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE)));
   }
 
   @Test
@@ -1432,22 +1443,23 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(study.getDataTypes(), patched.getDataTypes());
     assertEquals(study.getPiName(), patched.getPiName());
     assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
-    assertTrue(patched.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(patched.getProperties().stream().noneMatch(p -> p.getKey().equals(STUDY_TYPE)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
-    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(PHENOTYPE_INDICATION)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(SPECIES_KEY)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(DATA_CUSTODIAN_EMAIL)));
     assertEquals(
         patch.alternativeDataSharingPlanTargetDeliveryDate(),
         patched.getProperties().stream()
-            .filter(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate))
+            .filter(p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE))
             .findFirst()
             .orElseThrow()
             .getValue());
     assertTrue(
         study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate)));
+            .noneMatch(
+                p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE)));
   }
 
   @Test
@@ -1463,19 +1475,20 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     assertEquals(study.getDataTypes(), patched.getDataTypes());
     assertEquals(study.getPiName(), patched.getPiName());
     assertEquals(study.getPublicVisibility(), patched.getPublicVisibility());
-    assertTrue(patched.getProperties().stream().noneMatch(p -> p.getKey().equals(studyType)));
+    assertTrue(patched.getProperties().stream().noneMatch(p -> p.getKey().equals(STUDY_TYPE)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(phenotypeIndication)));
-    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(species)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(PHENOTYPE_INDICATION)));
+    assertTrue(study.getProperties().stream().noneMatch(p -> p.getKey().equals(SPECIES_KEY)));
     assertTrue(
-        study.getProperties().stream().noneMatch(p -> p.getKey().equals(dataCustodianEmail)));
+        study.getProperties().stream().noneMatch(p -> p.getKey().equals(DATA_CUSTODIAN_EMAIL)));
     assertTrue(
         study.getProperties().stream()
-            .noneMatch(p -> p.getKey().equals(alternativeDataSharingPlanTargetDeliveryDate)));
+            .noneMatch(p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE)));
     assertEquals(
         patch.alternativeDataSharingPlanTargetPublicReleaseDate(),
         patched.getProperties().stream()
-            .filter(p -> p.getKey().equals(alternativeDataSharingPlanTargetPublicReleaseDate))
+            .filter(
+                p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE))
             .findFirst()
             .orElseThrow()
             .getValue());

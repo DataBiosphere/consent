@@ -1,5 +1,11 @@
 package org.broadinstitute.consent.http.models;
 
+import static org.broadinstitute.consent.http.models.StudyPatch.ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE;
+import static org.broadinstitute.consent.http.models.StudyPatch.ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE;
+import static org.broadinstitute.consent.http.models.StudyPatch.DATA_CUSTODIAN_EMAIL;
+import static org.broadinstitute.consent.http.models.StudyPatch.PHENOTYPE_INDICATION;
+import static org.broadinstitute.consent.http.models.StudyPatch.SPECIES_KEY;
+import static org.broadinstitute.consent.http.models.StudyPatch.STUDY_TYPE;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -151,17 +157,17 @@ class StudyPatchTest extends AbstractTestHelper {
     study.setPiName(randomAlphabetic(20));
     study.setPublicVisibility(true);
     study.addProperties(
-        new StudyProperty("studyType", StudyType.OBSERVATIONAL.value(), PropertyType.String),
-        new StudyProperty("phenotypeIndication", "CANCER", PropertyType.String),
-        new StudyProperty("species", "HUMAN", PropertyType.String),
+        new StudyProperty(STUDY_TYPE, StudyType.OBSERVATIONAL.value(), PropertyType.String),
+        new StudyProperty(PHENOTYPE_INDICATION, "CANCER", PropertyType.String),
+        new StudyProperty(SPECIES_KEY, "HUMAN", PropertyType.String),
         new StudyProperty(
-            "dataCustodianEmail",
+            DATA_CUSTODIAN_EMAIL,
             GsonUtil.getInstance().toJson(List.of("EMAIL1", "EMAIL2")),
             PropertyType.Json),
         new StudyProperty(
-            "alternativeDataSharingPlanTargetDeliveryDate", "01/01/2020", PropertyType.String),
+            ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE, "01/01/2020", PropertyType.String),
         new StudyProperty(
-            "alternativeDataSharingPlanTargetPublicReleaseDate",
+            ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE,
             "01/01/2020",
             PropertyType.String));
     return study;

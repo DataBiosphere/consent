@@ -1,11 +1,11 @@
 package org.broadinstitute.consent.http.service.dao;
 
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanTargetDeliveryDate;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanTargetPublicReleaseDate;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.phenotypeIndication;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.species;
-import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.studyType;
+import static org.broadinstitute.consent.http.models.StudyPatch.ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE;
+import static org.broadinstitute.consent.http.models.StudyPatch.ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE;
+import static org.broadinstitute.consent.http.models.StudyPatch.DATA_CUSTODIAN_EMAIL;
+import static org.broadinstitute.consent.http.models.StudyPatch.PHENOTYPE_INDICATION;
+import static org.broadinstitute.consent.http.models.StudyPatch.SPECIES_KEY;
+import static org.broadinstitute.consent.http.models.StudyPatch.STUDY_TYPE;
 
 import com.google.inject.Inject;
 import java.sql.SQLException;
@@ -450,33 +450,34 @@ public class DatasetServiceDAO implements ConsentLogger {
             new ArrayList<>(),
             new ArrayList<>());
     if (patch.studyType() != null) {
-      studyUpdate.props.add(new StudyProperty(studyType, patch.studyType(), PropertyType.String));
+      studyUpdate.props.add(new StudyProperty(STUDY_TYPE, patch.studyType(), PropertyType.String));
     }
     if (patch.phenotypeIndication() != null) {
       studyUpdate.props.add(
-          new StudyProperty(phenotypeIndication, patch.phenotypeIndication(), PropertyType.String));
+          new StudyProperty(
+              PHENOTYPE_INDICATION, patch.phenotypeIndication(), PropertyType.String));
     }
     if (patch.species() != null) {
-      studyUpdate.props.add(new StudyProperty(species, patch.species(), PropertyType.String));
+      studyUpdate.props.add(new StudyProperty(SPECIES_KEY, patch.species(), PropertyType.String));
     }
     if (patch.dataCustodianEmail() != null) {
       studyUpdate.props.add(
           new StudyProperty(
-              dataCustodianEmail,
+              DATA_CUSTODIAN_EMAIL,
               GsonUtil.getInstance().toJson(patch.dataCustodianEmail()),
               PropertyType.Json));
     }
     if (patch.alternativeDataSharingPlanTargetDeliveryDate() != null) {
       studyUpdate.props.add(
           new StudyProperty(
-              alternativeDataSharingPlanTargetDeliveryDate,
+              ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE,
               patch.alternativeDataSharingPlanTargetDeliveryDate(),
               PropertyType.String));
     }
     if (patch.alternativeDataSharingPlanTargetPublicReleaseDate() != null) {
       studyUpdate.props.add(
           new StudyProperty(
-              alternativeDataSharingPlanTargetPublicReleaseDate,
+              ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE,
               patch.alternativeDataSharingPlanTargetPublicReleaseDate(),
               PropertyType.String));
     }

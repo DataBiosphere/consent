@@ -23,10 +23,12 @@ public record StudyPatch(
 
   public static final String STUDY_TYPE = "studyType";
   public static final String PHENOTYPE_INDICATION = "phenotypeIndication";
-  public static final String SPECIES_TYPE = "species";
+  public static final String SPECIES_KEY = "species";
   public static final String DATA_CUSTODIAN_EMAIL = "dataCustodianEmail";
-  public static final String ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE = "alternativeDataSharingPlanTargetDeliveryDate";
-  public static final String ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE = "alternativeDataSharingPlanTargetPublicReleaseDate";
+  public static final String ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE =
+      "alternativeDataSharingPlanTargetDeliveryDate";
+  public static final String ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE =
+      "alternativeDataSharingPlanTargetPublicReleaseDate";
 
   // Utility method to determine if any patch values differ from the provided Study entity
   public boolean isPatchable(Study study) {
@@ -86,7 +88,7 @@ public record StudyPatch(
 
   private boolean checkSpecies(Study study) {
     Optional<StudyProperty> speciesProp =
-        study.getProperties().stream().filter(p -> p.getKey().equals(SPECIES_TYPE)).findFirst();
+        study.getProperties().stream().filter(p -> p.getKey().equals(SPECIES_KEY)).findFirst();
     if (species() != null) {
       return speciesProp
           .map(studyProperty -> !species().equals(studyProperty.getValue()))
@@ -136,7 +138,8 @@ public record StudyPatch(
   private boolean checkTargetReleaseDate(Study study) {
     Optional<StudyProperty> targetReleaseProp =
         study.getProperties().stream()
-            .filter(p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE))
+            .filter(
+                p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE))
             .findFirst();
     if (alternativeDataSharingPlanTargetPublicReleaseDate() != null) {
       return targetReleaseProp
