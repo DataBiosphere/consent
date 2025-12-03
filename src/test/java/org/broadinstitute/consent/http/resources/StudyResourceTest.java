@@ -706,7 +706,9 @@ class StudyResourceTest extends AbstractTestHelper {
         "{ \"unknownField\": \"some value\" }",
         "{ \"name\": 12345 }",
         "{ \"studyType\": \"not a study type\" }",
-        "{ \"publicVisibility\": \"not a boolean\" }"
+        "{ \"publicVisibility\": \"not a boolean\" }",
+        "{ \"publicVisibility\": \"true\" }",
+        "{ \"publicVisibility\": \"false\" }"
       })
   void testPatchStudyByIdInvalidPatch(String json) {
     Study study = createMockStudy();

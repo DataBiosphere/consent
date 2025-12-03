@@ -45,6 +45,7 @@ public record StudyPatch(
     mapper.configure(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE, true);
     SimpleModule module = new SimpleModule();
     module.addDeserializer(String.class, new ForceStringDeserializer());
+    module.addDeserializer(Boolean.class, new ForceBooleanDeserializer());
     mapper.registerModule(module);
     try {
       return mapper.readValue(json, StudyPatch.class);
@@ -67,6 +68,23 @@ public record StudyPatch(
             "Attempted to parse int to string but this is not allowed");
       }
       return jsonParser.getValueAsString();
+    }
+  }
+
+  // Jackson, by default, allows coercion from numbers to strings.
+  // This custom deserializer forbids that behavior for all String fields.
+  private static class ForceBooleanDeserializer extends JsonDeserializer<Boolean> {
+    @Override
+    public Boolean deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)
+        throws IOException {
+      if (jsonParser.getCurrentToken() == JsonToken.VALUE_STRING) {
+        throw deserializationContext.wrongTokenException(
+            jsonParser,
+            String.class,
+            JsonToken.NOT_AVAILABLE,
+            "Attempted to parse string to boolean but this is not allowed");
+      }
+      return jsonParser.getBooleanValue();
     }
   }
 
