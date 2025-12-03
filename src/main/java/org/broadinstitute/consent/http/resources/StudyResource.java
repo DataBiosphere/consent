@@ -152,6 +152,9 @@ public class StudyResource extends Resource {
       }
       checkPublicVisibilityForUser(study, duosUser.getUser());
       StudyPatch studyPatch = GsonUtil.getInstance().fromJson(json, StudyPatch.class);
+      if (!studyPatch.isPatchable(study)) {
+        return Response.status(Status.NOT_MODIFIED).entity(study).build();
+      }
       Study patchedStudy = datasetService.patchStudy(studyId, duosUser.getUser(), studyPatch);
       return Response.ok(patchedStudy).build();
     } catch (Exception e) {

@@ -1123,8 +1123,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     Study study = createStudy(null);
     User user = userDAO.findUserById(study.getCreateUserId());
     StudyPatch patch =
-        new StudyPatch(
-            null, null, null, null, null, null, null, null, null, null, null);
+        new StudyPatch(null, null, null, null, null, null, null, null, null, null, null);
     Study patched = serviceDAO.patchStudy(study, user, patch);
     assertEquals(study.getName(), patched.getName());
     assertEquals(study.getDescription(), patched.getDescription());

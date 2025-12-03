@@ -145,6 +145,8 @@ patch:
         application/json:
           schema:
             $ref: '../schemas/Study.yaml'
+    304:
+      description: Not Modified
     404:
       description: Not Found
     500:

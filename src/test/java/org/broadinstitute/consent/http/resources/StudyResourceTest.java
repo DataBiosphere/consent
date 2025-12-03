@@ -686,4 +686,16 @@ class StudyResourceTest extends AbstractTestHelper {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
+
+  @Test
+  void testPatchStudyByIdNotModified() {
+    Study study = createMockStudy();
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    try (var response = resource.patchStudyById(duosUser, study.getStudyId(), "{}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
+    }
+  }
 }
