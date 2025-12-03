@@ -151,7 +151,7 @@ public class StudyResource extends Resource {
         throw new NotFoundException("Study not found");
       }
       checkPublicVisibilityForUser(study, duosUser.getUser());
-      StudyPatch studyPatch = GsonUtil.getInstance().fromJson(json, StudyPatch.class);
+      StudyPatch studyPatch = StudyPatch.fromJson(json);
       if (!studyPatch.isPatchable(study)) {
         return Response.status(Status.NOT_MODIFIED).entity(study).build();
       }

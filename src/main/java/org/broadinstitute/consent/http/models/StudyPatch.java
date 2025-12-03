@@ -1,6 +1,14 @@
 package org.broadinstitute.consent.http.models;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.gson.reflect.TypeToken;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +38,37 @@ public record StudyPatch(
       "alternativeDataSharingPlanTargetDeliveryDate";
   public static final String ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE =
       "alternativeDataSharingPlanTargetPublicReleaseDate";
+
+  public static StudyPatch fromJson(String json) {
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+    mapper.configure(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE, true);
+    SimpleModule module = new SimpleModule();
+    module.addDeserializer(String.class, new ForceStringDeserializer());
+    mapper.registerModule(module);
+    try {
+      return mapper.readValue(json, StudyPatch.class);
+    } catch (Exception e) {
+      throw new IllegalArgumentException(e.getMessage());
+    }
+  }
+
+  // Jackson, by default, allows coercion from numbers to strings.
+  // This custom deserializer forbids that behavior for all String fields.
+  private static class ForceStringDeserializer extends JsonDeserializer<String> {
+    @Override
+    public String deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)
+        throws IOException {
+      if (jsonParser.getCurrentToken() == JsonToken.VALUE_NUMBER_INT) {
+        throw deserializationContext.wrongTokenException(
+            jsonParser,
+            String.class,
+            JsonToken.VALUE_STRING,
+            "Attempted to parse int to string but this is not allowed");
+      }
+      return jsonParser.getValueAsString();
+    }
+  }
 
   // Utility method to determine if any patch values differ from the provided Study entity
   public boolean isPatchable(Study study) {

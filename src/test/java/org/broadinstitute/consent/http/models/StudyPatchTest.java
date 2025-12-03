@@ -7,6 +7,7 @@ import static org.broadinstitute.consent.http.models.StudyPatch.PHENOTYPE_INDICA
 import static org.broadinstitute.consent.http.models.StudyPatch.SPECIES_KEY;
 import static org.broadinstitute.consent.http.models.StudyPatch.STUDY_TYPE;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -16,10 +17,25 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class StudyPatchTest extends AbstractTestHelper {
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "{ invalid json }",
+        "{ \"unknownField\": \"some value\" }",
+        "{ \"name\": 12345 }",
+        "{ \"studyType\": \"not a study type\" }",
+        "{ \"publicVisibility\": \"not a boolean\" }"
+      })
+  void testFromJson(String json) {
+    assertThrows(Exception.class, () -> StudyPatch.fromJson(json));
+  }
 
   @Test
   void testIsPatchableNoValues() {

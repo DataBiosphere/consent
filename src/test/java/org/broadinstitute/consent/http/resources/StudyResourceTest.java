@@ -698,4 +698,24 @@ class StudyResourceTest extends AbstractTestHelper {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
     }
   }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "{ invalid json }",
+        "{ \"unknownField\": \"some value\" }",
+        "{ \"name\": 12345 }",
+        "{ \"studyType\": \"not a study type\" }",
+        "{ \"publicVisibility\": \"not a boolean\" }"
+      })
+  void testPatchStudyByIdInvalidPatch(String json) {
+    Study study = createMockStudy();
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    try (var response = resource.patchStudyById(duosUser, study.getStudyId(), json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
 }
