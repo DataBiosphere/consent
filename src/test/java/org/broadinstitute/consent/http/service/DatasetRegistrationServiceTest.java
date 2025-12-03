@@ -15,13 +15,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -926,5 +929,36 @@ class DatasetRegistrationServiceTest {
     schemaV1.setAssets(Map.of("key", List.of("value1", "value2")));
     schemaV1.setConsentGroups(List.of(consentGroup));
     return schemaV1;
+  }
+
+  @Test
+  void testCreateDatasetRegistrationWithBlankConsentGroupName() {
+    User user = mock();
+    DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
+
+    // Set consent group name to blank
+    schema.getConsentGroups().getFirst().setConsentGroupName("");
+
+    initService();
+
+    assertThrows(BadRequestException.class, () -> invokeCreateRegistration(schema, user));
+  }
+
+  @Test
+  void testCreateDatasetRegistrationWithNullConsentGroupName() {
+    User user = mock();
+    DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
+
+    // Set consent group name to null
+    schema.getConsentGroups().getFirst().setConsentGroupName(null);
+
+    initService();
+
+    assertThrows(BadRequestException.class, () -> invokeCreateRegistration(schema, user));
+  }
+
+  private void invokeCreateRegistration(DatasetRegistrationSchemaV1 schema, User user)
+      throws SQLException, IOException {
+    datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
   }
 }

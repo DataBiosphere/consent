@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2025-12-02-alter-dataset-name-column" author="kevinmarete">
+    <comment>
+      Alter name column in dataset table to be not nullable.
+      The name field is a required property in the Dataset model.
+    </comment>
+    <addNotNullConstraint tableName="dataset" columnName="name" columnDataType="VARCHAR(255)"/>
+  </changeSet>
+</databaseChangeLog>

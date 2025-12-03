@@ -294,6 +294,11 @@ public class DatasetRegistrationService implements ConsentLogger {
       throws IOException {
     ConsentGroup consentGroup = registration.getConsentGroups().get(consentGroupIdx);
 
+    if (Objects.isNull(consentGroup.getConsentGroupName())
+        || consentGroup.getConsentGroupName().isBlank()) {
+      throw new BadRequestException("Consent Group Name is required");
+    }
+
     if (Objects.nonNull(consentGroup.getDataAccessCommitteeId())
         && Objects.isNull(dacDAO.findById(consentGroup.getDataAccessCommitteeId()))) {
       throw new NotFoundException("Could not find DAC");
