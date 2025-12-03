@@ -71,8 +71,8 @@ public record StudyPatch(
     }
   }
 
-  // Jackson, by default, allows coercion from numbers to strings.
-  // This custom deserializer forbids that behavior for all String fields.
+  // Jackson, by default, allows coercion from strings to booleans.
+  // This custom deserializer forbids that behavior for all Boolean fields.
   private static class ForceBooleanDeserializer extends JsonDeserializer<Boolean> {
     @Override
     public Boolean deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)
