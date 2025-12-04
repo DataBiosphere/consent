@@ -49,9 +49,11 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAuthorizationReader;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.StudyType;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -861,6 +863,31 @@ class DatasetServiceTest extends AbstractTestHelper {
   void testRemoveAuthorizedAccessReader() {
     doNothing().when(datasetAuthorizationReaderDAO).deleteByDatasetAndUserId(anyLong(), anyLong());
     assertDoesNotThrow(() -> datasetAuthorizationReaderDAO.deleteByDatasetAndUserId(1, 1));
+  }
+
+  @Test
+  void testPatchStudy() throws Exception {
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setName("Study Name");
+    User user = new User();
+    user.setUserId(1);
+    StudyPatch patch =
+        new StudyPatch(
+            "New Study Name",
+            StudyType.OBSERVATIONAL,
+            "New Description",
+            null,
+            "New Phenotype",
+            "New Species",
+            "New PI",
+            null,
+            null,
+            null,
+            true);
+    when(datasetServiceDAO.patchStudy(study, user, patch)).thenReturn(study);
+    when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
+    assertDoesNotThrow(() -> datasetService.patchStudy(study.getStudyId(), user, patch));
   }
 
   /* Helper functions */

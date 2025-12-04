@@ -13,6 +13,7 @@ import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -34,6 +35,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyConversion;
+import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1UpdateValidator;
@@ -131,6 +133,30 @@ public class StudyResource extends Resource {
       Study study = datasetService.getStudyWithDatasetsById(duosUser.getUser(), studyId);
       checkPublicVisibilityForUser(study, duosUser.getUser());
       return Response.ok(study).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @PATCH
+  @Path("/{studyId}")
+  @Consumes({MediaType.APPLICATION_JSON})
+  @Produces({MediaType.APPLICATION_JSON})
+  @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
+  public Response patchStudyById(
+      @Auth DuosUser duosUser, @PathParam("studyId") Integer studyId, String json) {
+    try {
+      Study study = datasetService.findStudy(studyId);
+      if (study == null) {
+        throw new NotFoundException("Study not found");
+      }
+      checkPublicVisibilityForUser(study, duosUser.getUser());
+      StudyPatch studyPatch = StudyPatch.fromJson(json);
+      if (!studyPatch.isPatchable(study)) {
+        return Response.status(Status.NOT_MODIFIED).entity(study).build();
+      }
+      Study patchedStudy = datasetService.patchStudy(studyId, duosUser.getUser(), studyPatch);
+      return Response.ok(patchedStudy).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

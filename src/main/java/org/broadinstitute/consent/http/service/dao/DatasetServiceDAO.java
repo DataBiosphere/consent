@@ -1,5 +1,12 @@
 package org.broadinstitute.consent.http.service.dao;
 
+import static org.broadinstitute.consent.http.models.StudyPatch.ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE;
+import static org.broadinstitute.consent.http.models.StudyPatch.ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE;
+import static org.broadinstitute.consent.http.models.StudyPatch.DATA_CUSTODIAN_EMAIL;
+import static org.broadinstitute.consent.http.models.StudyPatch.PHENOTYPE_INDICATION;
+import static org.broadinstitute.consent.http.models.StudyPatch.SPECIES_KEY;
+import static org.broadinstitute.consent.http.models.StudyPatch.STUDY_TYPE;
+
 import com.google.inject.Inject;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -18,6 +25,7 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
+import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAudit;
@@ -26,9 +34,11 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.Update;
@@ -404,6 +414,74 @@ public class DatasetServiceDAO implements ConsentLogger {
     }
     // insert properties
     executeSynchronizeDatasetProperties(handle, datasetId, properties, false);
+  }
+
+  public Study patchStudy(Study study, User user, StudyPatch patch) throws SQLException {
+    jdbi.useHandle(
+        handle -> {
+          handle.getConnection().setAutoCommit(false);
+          // Convert the patch to a StudyUpdate for reuse of existing methods
+          StudyUpdate studyUpdate = convertToStudyUpdate(study, user, patch);
+          try {
+            executeUpdateStudy(handle, studyUpdate);
+          } catch (Exception e) {
+            handle.rollback();
+            logException(e);
+            throw e;
+          }
+          handle.commit();
+        });
+    return studyDAO.findStudyById(study.getStudyId());
+  }
+
+  // Helper method to convert StudyPatch to StudyUpdate
+  private StudyUpdate convertToStudyUpdate(Study study, User user, StudyPatch patch) {
+    StudyUpdate studyUpdate =
+        new StudyUpdate(
+            patch.name() != null ? patch.name() : study.getName(),
+            study.getStudyId(),
+            patch.description() != null ? patch.description() : study.getDescription(),
+            patch.dataTypes() != null ? patch.dataTypes() : study.getDataTypes(),
+            patch.piName() != null ? patch.piName() : study.getPiName(),
+            patch.publicVisibility() != null
+                ? patch.publicVisibility()
+                : study.getPublicVisibility(),
+            user.getUserId(),
+            new ArrayList<>(),
+            new ArrayList<>());
+    if (patch.studyType() != null) {
+      studyUpdate.props.add(new StudyProperty(STUDY_TYPE, patch.studyType(), PropertyType.String));
+    }
+    if (patch.phenotypeIndication() != null) {
+      studyUpdate.props.add(
+          new StudyProperty(
+              PHENOTYPE_INDICATION, patch.phenotypeIndication(), PropertyType.String));
+    }
+    if (patch.species() != null) {
+      studyUpdate.props.add(new StudyProperty(SPECIES_KEY, patch.species(), PropertyType.String));
+    }
+    if (patch.dataCustodianEmail() != null) {
+      studyUpdate.props.add(
+          new StudyProperty(
+              DATA_CUSTODIAN_EMAIL,
+              GsonUtil.getInstance().toJson(patch.dataCustodianEmail()),
+              PropertyType.Json));
+    }
+    if (patch.alternativeDataSharingPlanTargetDeliveryDate() != null) {
+      studyUpdate.props.add(
+          new StudyProperty(
+              ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE,
+              patch.alternativeDataSharingPlanTargetDeliveryDate(),
+              PropertyType.String));
+    }
+    if (patch.alternativeDataSharingPlanTargetPublicReleaseDate() != null) {
+      studyUpdate.props.add(
+          new StudyProperty(
+              ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE,
+              patch.alternativeDataSharingPlanTargetPublicReleaseDate(),
+              PropertyType.String));
+    }
+    return studyUpdate;
   }
 
   private void addAuditRecord(Integer datasetId, String name, Integer userId, AuditActions action) {

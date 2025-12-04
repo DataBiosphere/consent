@@ -7,6 +7,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
@@ -39,6 +40,7 @@ import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyConversion;
+import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
@@ -713,5 +715,20 @@ public class DatasetService implements ConsentLogger {
 
   public void removeAuthorizedAccessReader(long datasetId, long userId) {
     datasetAuthorizationReaderDAO.deleteByDatasetAndUserId(datasetId, userId);
+  }
+
+  public Study patchStudy(Integer studyId, User user, StudyPatch patch) {
+    try {
+      Study study = studyDAO.findStudyById(studyId);
+      datasetServiceDAO.patchStudy(study, user, patch);
+      study
+          .getDatasetIds()
+          .forEach(datasetId -> elasticSearchService.asyncDatasetInESIndex(datasetId, user, true));
+      return studyDAO.findStudyById(studyId);
+    } catch (Exception ex) {
+      logException(ex);
+      throw new InternalServerErrorException(
+          "An error occurred patching study %s".formatted(studyId));
+    }
   }
 }

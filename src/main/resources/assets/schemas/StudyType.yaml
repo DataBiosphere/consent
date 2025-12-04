@@ -1,0 +1,13 @@
+type: string
+enum:
+  - Observational
+  - Interventional
+  - Descriptive
+  - Analytical
+  - Prospective
+  - Retrospective
+  - Case report
+  - Case series
+  - Cross-sectional
+  - Cohort study
+description: The study type

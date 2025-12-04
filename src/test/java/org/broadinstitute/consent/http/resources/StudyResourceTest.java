@@ -26,6 +26,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
@@ -649,6 +650,74 @@ class StudyResourceTest extends AbstractTestHelper {
 
     try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+    }
+  }
+
+  @Test
+  void testPatchStudyById() {
+    Study study = createMockStudy();
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    when(duosUser.getUser()).thenReturn(admin);
+    String patchJson =
+        """
+            {
+              "name": "Updated Study Name"
+            }
+            """;
+    StudyPatch studyPatch = GsonUtil.getInstance().fromJson(patchJson, StudyPatch.class);
+    when(datasetService.patchStudy(study.getStudyId(), duosUser.getUser(), studyPatch))
+        .thenReturn(study);
+    try (var response = resource.patchStudyById(duosUser, study.getStudyId(), patchJson)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testPatchStudyByIdNotFound() {
+    Study study = createMockStudy();
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(datasetService.findStudy(study.getStudyId())).thenReturn(null);
+    try (var response = resource.patchStudyById(duosUser, study.getStudyId(), "{}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
+  void testPatchStudyByIdNotModified() {
+    Study study = createMockStudy();
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    try (var response = resource.patchStudyById(duosUser, study.getStudyId(), "{}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "{ invalid json }",
+        "{ \"unknownField\": \"some value\" }",
+        "{ \"name\": 12345 }",
+        "{ \"studyType\": \"not a study type\" }",
+        "{ \"publicVisibility\": \"not a boolean\" }",
+        "{ \"publicVisibility\": \"true\" }",
+        "{ \"publicVisibility\": \"false\" }"
+      })
+  void testPatchStudyByIdInvalidPatch(String json) {
+    Study study = createMockStudy();
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    try (var response = resource.patchStudyById(duosUser, study.getStudyId(), json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
 }
