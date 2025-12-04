@@ -7,19 +7,7 @@ properties:
     type: string
     description: A human-readable description of the study.
   studyType:
-    type: string
-    enum:
-      - Observational
-      - Interventional
-      - Descriptive
-      - Analytical
-      - Prospective
-      - Retrospective
-      - Case report
-      - Case series
-      - Cross-sectional
-      - Cohort study
-    description: The study type
+    $ref: './StudyType.yaml'
   dataTypes:
     type: array
     items:
