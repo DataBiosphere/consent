@@ -745,6 +745,9 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     assertEquals(consentGroup.getGso(), dataUse.getGeneticStudiesOnly());
     assertEquals(consentGroup.getHmb(), dataUse.getHmbResearch());
     assertEquals(consentGroup.getMorDate(), dataUse.getPublicationMoratorium());
+    // NMDS is an inverse condition flag:
+    // Methods research (analytic/software/technology development) is prohibited
+    // https://github.com/EBISPOT/DUO
     if (Objects.isNull(consentGroup.getNmds()) || !consentGroup.getNmds()) {
       assertNull(dataUse.getMethodsResearch());
     } else {
