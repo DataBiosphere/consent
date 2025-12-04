@@ -61,6 +61,7 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetUpda
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -87,7 +88,8 @@ class DatasetRegistrationServiceTest {
 
   @Mock private EmailService emailService;
 
-  private void initService() {
+  @BeforeEach
+  void setUp() {
     datasetRegistrationService =
         new DatasetRegistrationService(
             datasetDAO,
@@ -117,8 +119,6 @@ class DatasetRegistrationServiceTest {
     when(bodyPart.getMediaType()).thenReturn(MediaType.TEXT_PLAIN_TYPE);
     when(bodyPart.getContentDisposition()).thenReturn(content);
     when(bodyPart.getValueAs(any())).thenReturn(is);
-
-    initService();
 
     Map<String, FormDataBodyPart> files =
         Map.of(
@@ -297,7 +297,6 @@ class DatasetRegistrationServiceTest {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
 
-    initService();
     when(dacDAO.findById(any())).thenReturn(new Dac());
 
     datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
@@ -350,7 +349,6 @@ class DatasetRegistrationServiceTest {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createRandomCompleteDatasetRegistration(user);
 
-    initService();
     when(dacDAO.findById(any())).thenReturn(new Dac());
 
     DatasetRegistrationService registrationSpy = spy(datasetRegistrationService);
@@ -365,7 +363,6 @@ class DatasetRegistrationServiceTest {
     Study study = mock();
     Set<Dataset> datasets = Set.of(new Dataset());
 
-    initService();
     when(dacDAO.findById(any())).thenReturn(new Dac());
     when(datasetServiceDAO.updateStudy(any(), any(), any())).thenReturn(study);
     when(study.getDatasets()).thenReturn(datasets);
@@ -383,7 +380,6 @@ class DatasetRegistrationServiceTest {
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
 
-    initService();
     when(dacDAO.findById(any())).thenReturn(dac);
     when(dacDAO.findMembersByDacId(any())).thenReturn(List.of(user));
 
@@ -397,7 +393,6 @@ class DatasetRegistrationServiceTest {
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
 
-    initService();
     when(dacDAO.findById(any())).thenReturn(dac);
     when(dacDAO.findMembersByDacId(any())).thenReturn(List.of());
 
@@ -408,7 +403,6 @@ class DatasetRegistrationServiceTest {
   @Test
   void testSendDatasetSubmittedEmailsNoDAC() throws Exception {
     Dataset dataset = new Dataset();
-    initService();
     when(dacDAO.findById(any())).thenReturn(null);
 
     datasetRegistrationService.sendDatasetSubmittedEmails(List.of(dataset));
@@ -430,7 +424,6 @@ class DatasetRegistrationServiceTest {
     List<DatasetUpdate> updatedDatasets =
         Stream.of(3, 4).map((i) -> new DatasetUpdate(i, "update", 1, 1, null, null)).toList();
 
-    initService();
     when(study.getDatasets()).thenReturn(allDatasets);
 
     List<Dataset> datasets =
@@ -448,7 +441,6 @@ class DatasetRegistrationServiceTest {
   void testCreatedDatasetsFromUpdatedStudyNoDatasets() {
     Study study = mock();
     List<DatasetUpdate> updatedDatasets = null;
-    initService();
     when(study.getDatasets()).thenReturn(null);
     List<Dataset> datasets =
         datasetRegistrationService.createdDatasetsFromUpdatedStudy(study, updatedDatasets);
@@ -459,8 +451,6 @@ class DatasetRegistrationServiceTest {
   void testInsertAccessManagement() throws Exception {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createAccessManagementRegistrationNoDacId(user);
-
-    initService();
 
     datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
 
@@ -489,8 +479,6 @@ class DatasetRegistrationServiceTest {
     when(bodyPart.getMediaType()).thenReturn(MediaType.TEXT_PLAIN_TYPE);
     when(bodyPart.getContentDisposition()).thenReturn(content);
     when(bodyPart.getValueAs(any())).thenReturn(is);
-
-    initService();
 
     when(dacDAO.findById(any())).thenReturn(new Dac());
     Map<String, FormDataBodyPart> files =
@@ -579,6 +567,28 @@ class DatasetRegistrationServiceTest {
   }
 
   @Test
+  void testGenerateDataUseFromConsentGroup() {
+    ConsentGroup consentGroup = new ConsentGroup();
+    consentGroup.setGeneralResearchUse(false);
+    consentGroup.setHmb(true);
+    consentGroup.setDiseaseSpecificUse(List.of("disease1", "disease2"));
+    consentGroup.setPoa(true);
+    consentGroup.setNmds(true);
+    consentGroup.setNpu(true);
+    consentGroup.setOtherPrimary("other primary use");
+    consentGroup.setOtherSecondary("other secondary use");
+    consentGroup.setIrb(true);
+    consentGroup.setCol(true);
+    consentGroup.setGs("USA");
+    consentGroup.setGso(true);
+    consentGroup.setPub(true);
+    consentGroup.setMor(true);
+    consentGroup.setMorDate("2025-12-31");
+    DataUse dataUse = datasetRegistrationService.generateDataUseFromConsentGroup(consentGroup);
+    assertDataUse(consentGroup, dataUse);
+  }
+
+  @Test
   void testRegistrationErrorsOnInvalidDacId() throws Exception {
 
     User user = mock();
@@ -586,7 +596,6 @@ class DatasetRegistrationServiceTest {
 
     when(dacDAO.findById(any())).thenReturn(null);
 
-    initService();
     assertThrows(
         NotFoundException.class,
         () -> {
@@ -601,7 +610,6 @@ class DatasetRegistrationServiceTest {
     when(dacDAO.findById(any())).thenReturn(new Dac());
     when(elasticSearchService.indexDatasets(any(), any()))
         .thenThrow(new ServerErrorException("Timeout connecting to [elasticsearch]", 500));
-    initService();
     assertDoesNotThrow(
         () -> {
           datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
@@ -622,7 +630,6 @@ class DatasetRegistrationServiceTest {
         new org.broadinstitute.consent.http.models.DatasetUpdate(name, dac.getDacId(), List.of());
     when(datasetDAO.findDatasetById(any())).thenReturn(dataset);
 
-    initService();
     assertDoesNotThrow(
         () -> {
           datasetRegistrationService.updateDataset(dataset.getDatasetId(), user, update, Map.of());
@@ -939,8 +946,6 @@ class DatasetRegistrationServiceTest {
     // Set consent group name to blank
     schema.getConsentGroups().getFirst().setConsentGroupName("");
 
-    initService();
-
     assertThrows(BadRequestException.class, () -> invokeCreateRegistration(schema, user));
   }
 
@@ -951,8 +956,6 @@ class DatasetRegistrationServiceTest {
 
     // Set consent group name to null
     schema.getConsentGroups().getFirst().setConsentGroupName(null);
-
-    initService();
 
     assertThrows(BadRequestException.class, () -> invokeCreateRegistration(schema, user));
   }
