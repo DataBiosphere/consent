@@ -73,15 +73,16 @@ Update the compose file to include a new section for an ES instance:
 
 ```
 es:
-  image: docker.elastic.co/elasticsearch/elasticsearch:5.5.0
+  image: opensearchproject/opensearch:3
   ports:
     - "9200:9200"
+  container_name: elastic
   volumes:
-    - ../data:/usr/share/elasticsearch/data
+    - ./data:/usr/share/opensearch/data
   environment:
-    transport.host: 127.0.0.1
-    xpack.security.enabled: "false"
-    http.host: 0.0.0.0
+    - DISABLE_SECURITY_PLUGIN=true
+    - discovery.type=single-node
+    - cluster.routing.allocation.disk.threshold_enabled=false
 ```
 
 Add a line to the `app` section to link to that:
