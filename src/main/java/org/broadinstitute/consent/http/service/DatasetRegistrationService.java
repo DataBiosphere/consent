@@ -353,9 +353,11 @@ public class DatasetRegistrationService implements ConsentLogger {
     dataUse.setGeneticStudiesOnly(group.getGso());
     dataUse.setHmbResearch(group.getHmb());
     dataUse.setPublicationMoratorium(
-        Objects.nonNull(group.getMor()) && group.getMor() ? group.getMorDate() : null);
-
-    dataUse.setMethodsResearch(Objects.nonNull(group.getNmds()) && group.getNmds() ? false : null);
+        Objects.nonNull(group.getMor()) && Boolean.TRUE.equals(group.getMor())
+            ? group.getMorDate()
+            : null);
+    dataUse.setMethodsResearch(
+        Objects.nonNull(group.getNmds()) && Boolean.TRUE.equals(group.getNmds()) ? false : null);
     dataUse.setNonProfitUse(Objects.nonNull(group.getNpu()) ? group.getNpu() : null);
     dataUse.setOther(group.getOtherPrimary());
     dataUse.setSecondaryOther(group.getOtherSecondary());
