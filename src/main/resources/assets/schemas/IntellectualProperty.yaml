@@ -1,0 +1,41 @@
+type: object
+description: An Intellectual Property object.
+properties:
+  type:
+    type: string
+    description: The type of intellectual property.
+  title:
+    type: string
+    description: The title of the intellectual property.
+  date:
+    type: string
+    description: The date associated with the intellectual property.
+  assignee:
+    type: string
+    description: The assignee of the intellectual property.
+  patentNumber:
+    type: string
+    description: The patent number.
+  filingDate:
+    type: boolean
+    description: The filing date indicator.
+  status:
+    type: string
+    description: The status of the intellectual property.
+  url:
+    type: string
+    description: The URL associated with the intellectual property.
+  contact:
+    type: string
+    description: The contact information for the intellectual property.
+  ipId:
+    type: string
+    description: The unique identifier for the intellectual property.
+  studyId:
+    type: string
+    description: The study ID associated with the intellectual property.
+  tags:
+    type: array
+    items:
+      type: string
+    description: Tags associated with the intellectual property.
