@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2025-12-05-migrate-publications-authors-and-dates" author="kevinmarete">
+    <comment>
+      Migrate publications authors from string to array format and rename date to publishedDate.
+      Splits comma-separated authors into individual author objects.
+    </comment>
+    <sql splitStatements="false">
+      UPDATE data_access_request
+      SET data = jsonb_set(
+        data,
+        '{publications}',
+        (
+          SELECT jsonb_agg(
+                   CASE
+                     WHEN jsonb_typeof(pub -&gt; 'authors') = 'string'
+                       THEN (
+                       pub
+                         || jsonb_build_object(
+                         'authors',
+                         (
+                           SELECT jsonb_agg(jsonb_build_object('name', author_name))
+                           FROM regexp_split_to_table(pub -&gt;&gt; 'authors', ',') AS author_name
+                         )
+                            )
+                         || (CASE WHEN pub -&gt; 'date' IS NOT NULL AND pub -&gt; 'publishedDate' IS NULL
+                                    THEN jsonb_build_object('publishedDate', pub -&gt; 'date')
+                                  ELSE '{}'::jsonb END)
+                         #- (CASE WHEN pub -&gt; 'date' IS NOT NULL AND pub -&gt; 'publishedDate' IS NULL
+                                  THEN '{date}'::text[]
+                                  ELSE '{}'::text[] END)
+                       )
+                     ELSE pub
+                       || (CASE WHEN pub -&gt; 'date' IS NOT NULL AND pub -&gt; 'publishedDate' IS NULL
+                                  THEN jsonb_build_object('publishedDate', pub -&gt; 'date')
+                                ELSE '{}'::jsonb END)
+                       #- (CASE WHEN pub -&gt; 'date' IS NOT NULL AND pub -&gt; 'publishedDate' IS NULL
+                                THEN '{date}'::text[]
+                                ELSE '{}'::text[] END)
+                     END
+                 )
+          FROM jsonb_array_elements(data -&gt; 'publications') AS pub
+        )
+                 )
+      WHERE parent_id IS NOT NULL
+        AND jsonb_typeof(data -&gt; 'publications') = 'array'
+        AND EXISTS (
+        SELECT 1 FROM jsonb_array_elements(data -&gt; 'publications') AS pub
+        WHERE jsonb_typeof(pub -&gt; 'authors') = 'string'
+           OR (pub -&gt; 'date' IS NOT NULL AND pub -&gt; 'publishedDate' IS NULL)
+      );
+    </sql>
+  </changeSet>
+</databaseChangeLog>

@@ -214,4 +214,10 @@
            relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2025-12-02-alter-dataset-name-column.xml"
     relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2025-12-05-migrate-intellectual-property-summary.xml"
+           relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2025-12-05-migrate-presentations-link-to-url.xml"
+           relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2025-12-05-migrate-publications-authors-and-dates.xml"
+           relativeToChangelogFile="true" />
 </databaseChangeLog>
