@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 @JsonInclude(Include.NON_NULL)
 public class DataAccessRequestData {
@@ -168,7 +169,8 @@ public class DataAccessRequestData {
   }
 
   public static DataAccessRequestData fromString(String jsonString) {
-    DataAccessRequestData data = new Gson().fromJson(jsonString, DataAccessRequestData.class);
+    DataAccessRequestData data =
+        GsonUtil.getInstance().fromJson(jsonString, DataAccessRequestData.class);
     validateOntologyEntries(data);
     return data;
   }
