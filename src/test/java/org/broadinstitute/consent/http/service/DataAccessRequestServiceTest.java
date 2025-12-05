@@ -901,7 +901,7 @@ institution or library cards issued: Internal Collaborator member:  \
     progressReport.getData().setProgressReportSummary("Progress Report Summary");
     progressReport
         .getData()
-        .setIntellectualProperties(
+        .setIntellectualProperty(
             List.of(
                 new IntellectualProperty(
                     "Patent",
