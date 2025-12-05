@@ -40,7 +40,7 @@ public class HealthMedicalBioMedicalV1Test {
             new DataAccessRequestDataBuilder().setHmb(true),
             false),
         Arguments.of(
-            new DataUseBuilder().setHmbResearch(true).setMethodsResearch(true),
+            new DataUseBuilder().setHmbResearch(true).setMethodsResearch(false),
             new DataAccessRequestDataBuilder().setHmb(true),
             false),
         Arguments.of(

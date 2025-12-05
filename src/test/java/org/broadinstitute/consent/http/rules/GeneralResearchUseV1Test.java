@@ -40,7 +40,7 @@ class GeneralResearchUseV1Test {
             new DataAccessRequestDataBuilder().setHmb(true),
             false),
         Arguments.of(
-            new DataUseBuilder().setGeneralUse(true).setMethodsResearch(true),
+            new DataUseBuilder().setGeneralUse(true).setMethodsResearch(false),
             new DataAccessRequestDataBuilder().setHmb(true),
             false),
         Arguments.of(

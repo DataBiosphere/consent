@@ -49,7 +49,7 @@ public class HealthMedicalBioMedicalWithDiseaseSpecificV1Test {
                 .setOntologies(List.of(new OntologyEntry())),
             false),
         Arguments.of(
-            new DataUseBuilder().setHmbResearch(true).setMethodsResearch(true),
+            new DataUseBuilder().setHmbResearch(true).setMethodsResearch(false),
             new DataAccessRequestDataBuilder()
                 .setDiseases(true)
                 .setOntologies(List.of(new OntologyEntry())),
