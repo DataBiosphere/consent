@@ -8,12 +8,6 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Objects;
-import org.broadinstitute.consent.http.models.IntellectualProperty;
-import org.broadinstitute.consent.http.models.Presentation;
-import org.broadinstitute.consent.http.models.Publication;
-import org.broadinstitute.consent.http.util.gson.deserializer.IntellectualPropertyDeserializer;
-import org.broadinstitute.consent.http.util.gson.deserializer.PresentationDeserializer;
-import org.broadinstitute.consent.http.util.gson.deserializer.PublicationDeserializer;
 
 public class GsonUtil {
 
@@ -41,9 +35,6 @@ public class GsonUtil {
         .registerTypeAdapter(BlobId.class, new BlobIdTypeAdapter())
         .registerTypeAdapter(Date.class, new DateTypeAdapter())
         .registerTypeAdapter(Timestamp.class, new TimestampTypeAdapter())
-        .registerTypeHierarchyAdapter(Throwable.class, new ThrowableTypeAdapter())
-        .registerTypeAdapter(IntellectualProperty.class, new IntellectualPropertyDeserializer())
-        .registerTypeAdapter(Publication.class, new PublicationDeserializer())
-        .registerTypeAdapter(Presentation.class, new PresentationDeserializer());
+        .registerTypeHierarchyAdapter(Throwable.class, new ThrowableTypeAdapter());
   }
 }
