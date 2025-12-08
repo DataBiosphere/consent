@@ -38,6 +38,8 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -172,14 +174,18 @@ class DatasetRegistrationSchemaV1BuilderTest {
     assertEquals(dataUse.getDiseaseRestrictions(), consentGroup.getDiseaseSpecificUse());
     assertEquals(dataUse.getPopulationOriginsAncestry(), consentGroup.getPoa());
     assertEquals(dataUse.getOther(), consentGroup.getOtherPrimary());
-    assertEquals(dataUse.getMethodsResearch(), consentGroup.getNmds());
+    if (Boolean.FALSE.equals(dataUse.getMethodsResearch())) {
+      assertTrue(consentGroup.getNmds());
+    } else {
+      assertNull(consentGroup.getNmds());
+    }
     assertEquals(dataUse.getGeneticStudiesOnly(), consentGroup.getGso());
     assertEquals(dataUse.getPublicationResults(), consentGroup.getPub());
     assertEquals(dataUse.getCollaboratorRequired(), consentGroup.getCol());
     assertEquals(dataUse.getEthicsApprovalRequired(), consentGroup.getIrb());
     assertEquals(dataUse.getGeographicalRestrictions(), consentGroup.getGs());
     // ConsentGroup.morDate is a string value that is meant to represent a date
-    assertEquals(true, consentGroup.getMor());
+    assertEquals(Boolean.TRUE, consentGroup.getMor());
     assertEquals(dataUse.getPublicationMoratorium(), consentGroup.getMorDate());
     assertEquals(dataUse.getNonProfitUse(), consentGroup.getNpu());
     assertEquals(dataUse.getSecondaryOther(), consentGroup.getOtherSecondary());

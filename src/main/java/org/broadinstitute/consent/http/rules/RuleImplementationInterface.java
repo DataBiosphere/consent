@@ -22,7 +22,7 @@ public interface RuleImplementationInterface {
     if (Boolean.TRUE.equals(data.getEthicsApprovalRequired())) {
       return false;
     }
-    if (Boolean.TRUE.equals(data.getMethodsResearch())) {
+    if (Boolean.FALSE.equals(data.getMethodsResearch())) {
       return false;
     }
     if (Boolean.TRUE.equals(data.getNonProfitUse())) {

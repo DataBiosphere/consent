@@ -41,7 +41,7 @@ public class ConsentGroupFromDataset {
         consentGroup.setDiseaseSpecificUse(dataUse.getDiseaseRestrictions());
         consentGroup.setPoa(dataUse.getPopulationOriginsAncestry());
         consentGroup.setOtherPrimary(dataUse.getOther());
-        consentGroup.setNmds(dataUse.getMethodsResearch());
+        consentGroup.setNmds(Boolean.FALSE.equals(dataUse.getMethodsResearch()) ? true : null);
         consentGroup.setGso(dataUse.getGeneticStudiesOnly());
         consentGroup.setPub(dataUse.getPublicationResults());
         consentGroup.setCol(dataUse.getCollaboratorRequired());

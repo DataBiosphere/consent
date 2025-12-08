@@ -49,7 +49,7 @@ public class GeneralResearchUseWithDiseaseSpecificV1Test {
                 .setOntologies(List.of(new OntologyEntry())),
             false),
         Arguments.of(
-            new DataUseBuilder().setGeneralUse(true).setMethodsResearch(true),
+            new DataUseBuilder().setGeneralUse(true).setMethodsResearch(false),
             new DataAccessRequestDataBuilder()
                 .setDiseases(true)
                 .setOntologies(List.of(new OntologyEntry())),
