@@ -399,6 +399,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     user.addRole(UserRoles.Admin());
     when(datasetService.findDatasetById(any(), any())).thenReturn(dataSet);
     when(elasticSearchService.deleteIndex(any(), any())).thenReturn(mockResponse);
+    when(openSearchService.deleteIndex(any(), any())).thenReturn(mockResponse);
 
     try (var response = resource.delete(duosUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -417,6 +418,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
     when(datasetService.findDatasetById(any(), any())).thenReturn(dataSet);
     when(elasticSearchService.deleteIndex(any(), any())).thenReturn(mockResponse);
+    when(openSearchService.deleteIndex(any(), any())).thenReturn(mockResponse);
 
     try (var response = resource.delete(duosUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());

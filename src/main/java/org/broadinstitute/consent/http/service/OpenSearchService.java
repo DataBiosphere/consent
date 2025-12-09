@@ -91,7 +91,7 @@ public class OpenSearchService implements ConsentLogger {
 
   private static final String BULK_HEADER =
       """
-      { "index": { "_index": "dataset", "_id": "%d"} }
+      { "index": {"_index": "dataset", "_id": "%d"} }
       """;
 
   private static final String DELETE_QUERY =
