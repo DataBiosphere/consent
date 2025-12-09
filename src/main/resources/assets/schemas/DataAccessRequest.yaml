@@ -233,9 +233,11 @@ properties:
   progressReportSummary:
     type: string
     description: A Progress Report Summary.
-  intellectualPropertySummary:
-    type: string
-    description: An Intellectual Property Summary.
+  intellectualProperty:
+    type: array
+    description: An array of intellectual property.
+    items:
+      $ref: './IntellectualProperty.yaml'
   publications:
     type: array
     description: An array of publications.

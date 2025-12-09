@@ -214,4 +214,6 @@
            relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2025-12-02-alter-dataset-name-column.xml"
     relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2025-12-05-migrate-ip-presentations-publications.xml"
+           relativeToChangelogFile="true" />
 </databaseChangeLog>

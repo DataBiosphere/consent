@@ -4,12 +4,11 @@ properties:
   title:
     type: string
     description: The title of the presentation.
-  link:
+  url:
     type: string
-    description: The link to the presentation.
+    description: The URL to the presentation.
   date:
     type: string
-    format: date
     description: The presentation date.
   authors:
     type: string
@@ -20,3 +19,30 @@ properties:
   citation:
     type: boolean
     description: Indicates if the dataset(s) were cited in the Presentation.
+  presentationId:
+    type: string
+    description: The unique identifier for the presentation.
+  studyId:
+    type: string
+    description: The study ID associated with the presentation.
+  presenter:
+    allOf:
+      - $ref: './Presenter.yaml'
+      - description: The presenter information.
+  event:
+    type: string
+    description: The event name.
+  location:
+    type: string
+    description: The location of the presentation.
+  format:
+    type: string
+    description: The format of the presentation.
+  access:
+    type: string
+    description: The access level of the presentation.
+  tags:
+    type: array
+    items:
+      type: string
+    description: Tags associated with the presentation.

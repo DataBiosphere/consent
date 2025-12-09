@@ -59,7 +59,7 @@ Or, if not using docker:
 java -jar /path/to/consent.jar server /path/to/config/file
 ```
 
-Visit local swagger page: https://local.dsde-dev.broadinstitute.org:27443/swagger/
+Visit local swagger page: https://local.dsde-dev.broadinstitute.org:27443
 
 ### Debugging
 
