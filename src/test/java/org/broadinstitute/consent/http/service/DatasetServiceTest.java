@@ -73,6 +73,7 @@ class DatasetServiceTest extends AbstractTestHelper {
   @Mock private DaaDAO daaDAO;
   @Mock private DacDAO dacDAO;
   @Mock private ElasticSearchService elasticSearchService;
+  @Mock private OpenSearchService openSearchService;
   @Mock private EmailService emailService;
   @Mock private OntologyService ontologyService;
   @Mock private StudyDAO studyDAO;
@@ -89,6 +90,7 @@ class DatasetServiceTest extends AbstractTestHelper {
             daaDAO,
             dacDAO,
             elasticSearchService,
+            openSearchService,
             emailService,
             ontologyService,
             studyDAO,

@@ -56,6 +56,7 @@ public class DatasetRegistrationService implements ConsentLogger {
   private final DatasetServiceDAO datasetServiceDAO;
   private final GCSService gcsService;
   private final ElasticSearchService elasticSearchService;
+  private final OpenSearchService openSearchService;
   private final StudyDAO studyDAO;
   private final EmailService emailService;
 
@@ -65,6 +66,7 @@ public class DatasetRegistrationService implements ConsentLogger {
       DatasetServiceDAO datasetServiceDAO,
       GCSService gcsService,
       ElasticSearchService elasticSearchService,
+      OpenSearchService openSearchService,
       StudyDAO studyDAO,
       EmailService emailService) {
     this.datasetDAO = datasetDAO;
@@ -72,6 +74,7 @@ public class DatasetRegistrationService implements ConsentLogger {
     this.datasetServiceDAO = datasetServiceDAO;
     this.gcsService = gcsService;
     this.elasticSearchService = elasticSearchService;
+    this.openSearchService = openSearchService;
     this.studyDAO = studyDAO;
     this.emailService = emailService;
   }
@@ -211,6 +214,15 @@ public class DatasetRegistrationService implements ConsentLogger {
     } catch (Exception e) {
       logException(e);
     }
+    try (Response response = openSearchService.indexDatasets(createdDatasetIds, user)) {
+      if (response.getStatus() >= 400) {
+        logWarn(
+            String.format(
+                "Error indexing datasets from registration: %s", registration.getStudyName()));
+      }
+    } catch (Exception e) {
+      logException(e);
+    }
     return datasets;
   }
 
@@ -280,6 +292,7 @@ public class DatasetRegistrationService implements ConsentLogger {
 
     Dataset updatedDataset = datasetDAO.findDatasetById(datasetId);
     elasticSearchService.synchronizeDatasetInESIndex(updatedDataset, user, false);
+    openSearchService.synchronizeDatasetInESIndex(updatedDataset, user, false);
     return updatedDataset;
   }
 

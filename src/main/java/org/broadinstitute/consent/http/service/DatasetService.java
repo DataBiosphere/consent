@@ -54,6 +54,7 @@ public class DatasetService implements ConsentLogger {
   private final DaaDAO daaDAO;
   private final DacDAO dacDAO;
   private final ElasticSearchService elasticSearchService;
+  private final OpenSearchService openSearchService;
   private final EmailService emailService;
   private final OntologyService ontologyService;
   private final StudyDAO studyDAO;
@@ -67,6 +68,7 @@ public class DatasetService implements ConsentLogger {
       DaaDAO daaDAO,
       DacDAO dacDAO,
       ElasticSearchService elasticSearchService,
+      OpenSearchService openSearchService,
       EmailService emailService,
       OntologyService ontologyService,
       StudyDAO studyDAO,
@@ -77,6 +79,7 @@ public class DatasetService implements ConsentLogger {
     this.daaDAO = daaDAO;
     this.dacDAO = dacDAO;
     this.elasticSearchService = elasticSearchService;
+    this.openSearchService = openSearchService;
     this.emailService = emailService;
     this.ontologyService = ontologyService;
     this.studyDAO = studyDAO;
@@ -268,6 +271,7 @@ public class DatasetService implements ConsentLogger {
     }
     datasetDAO.updateDatasetDataUse(datasetId, dataUse.toString());
     elasticSearchService.synchronizeDatasetInESIndex(d, user, false);
+    openSearchService.synchronizeDatasetInESIndex(d, user, false);
     return datasetDAO.findDatasetById(datasetId);
   }
 
@@ -281,6 +285,7 @@ public class DatasetService implements ConsentLogger {
         ontologyService.translateDataUse(dataset.getDataUse(), DataUseTranslationType.DATASET);
     datasetDAO.updateDatasetTranslatedDataUse(datasetId, translation);
     elasticSearchService.synchronizeDatasetInESIndex(dataset, user, false);
+    openSearchService.synchronizeDatasetInESIndex(dataset, user, false);
     return datasetDAO.findDatasetById(datasetId);
   }
 
@@ -288,6 +293,11 @@ public class DatasetService implements ConsentLogger {
     Dataset dataset = datasetDAO.findDatasetById(datasetId);
     if (dataset != null) {
       try (var response = elasticSearchService.deleteIndex(datasetId, userId)) {
+        if (!HttpStatusCodes.isSuccess(response.getStatus())) {
+          logWarn("Response error, unable to delete dataset from index: %s".formatted(datasetId));
+        }
+      }
+      try (var response = openSearchService.deleteIndex(datasetId, userId)) {
         if (!HttpStatusCodes.isSuccess(response.getStatus())) {
           logWarn("Response error, unable to delete dataset from index: %s".formatted(datasetId));
         }
@@ -302,6 +312,15 @@ public class DatasetService implements ConsentLogger {
         .forEach(
             datasetId -> {
               try (var response = elasticSearchService.deleteIndex(datasetId, user.getUserId())) {
+                if (!HttpStatusCodes.isSuccess(response.getStatus())) {
+                  logWarn(
+                      "Response error, unable to delete dataset from index: %s"
+                          .formatted(datasetId));
+                }
+              } catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+              try (var response = openSearchService.deleteIndex(datasetId, user.getUserId())) {
                 if (!HttpStatusCodes.isSuccess(response.getStatus())) {
                   logWarn(
                       "Response error, unable to delete dataset from index: %s"
@@ -333,6 +352,7 @@ public class DatasetService implements ConsentLogger {
     if (currentApprovalState == null || !currentApprovalState) {
       datasetDAO.updateDatasetApproval(approval, Instant.now(), user.getUserId(), datasetId);
       elasticSearchService.asyncDatasetInESIndex(datasetId, user, true);
+      openSearchService.asyncDatasetInESIndex(datasetId, user, true);
       datasetReturn = datasetDAO.findDatasetWithoutFSOInformation(datasetId);
     } else {
       if (approval == null || !approval) {
@@ -442,6 +462,7 @@ public class DatasetService implements ConsentLogger {
       datasetDAO.updateDatasetName(dataset.getDatasetId(), studyConversion.getDatasetName());
     }
     elasticSearchService.synchronizeDatasetInESIndex(dataset, user, false);
+    openSearchService.synchronizeDatasetInESIndex(dataset, user, false);
     List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
     // Handle "Phenotype/Indication"
     if (studyConversion.getPhenotype() != null) {
@@ -524,7 +545,10 @@ public class DatasetService implements ConsentLogger {
     }
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds());
     datasets.forEach(
-        dataset -> elasticSearchService.synchronizeDatasetInESIndex(dataset, user, false));
+        dataset -> {
+          elasticSearchService.synchronizeDatasetInESIndex(dataset, user, false);
+          openSearchService.synchronizeDatasetInESIndex(dataset, user, false);
+        });
     return studyDAO.findStudyById(studyId);
   }
 
@@ -723,7 +747,11 @@ public class DatasetService implements ConsentLogger {
       datasetServiceDAO.patchStudy(study, user, patch);
       study
           .getDatasetIds()
-          .forEach(datasetId -> elasticSearchService.asyncDatasetInESIndex(datasetId, user, true));
+          .forEach(
+              datasetId -> {
+                elasticSearchService.asyncDatasetInESIndex(datasetId, user, true);
+                openSearchService.asyncDatasetInESIndex(datasetId, user, true);
+              });
       return studyDAO.findStudyById(studyId);
     } catch (Exception ex) {
       logException(ex);

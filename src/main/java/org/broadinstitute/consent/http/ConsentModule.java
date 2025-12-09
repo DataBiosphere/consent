@@ -17,6 +17,7 @@ import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
 import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
+import org.broadinstitute.consent.http.configurations.OpenSearchConfiguration;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.CounterDAO;
@@ -65,6 +66,7 @@ import org.broadinstitute.consent.http.service.MetricsService;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.OidcService;
 import org.broadinstitute.consent.http.service.OntologyService;
+import org.broadinstitute.consent.http.service.OpenSearchService;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.service.UseRestrictionConverter;
 import org.broadinstitute.consent.http.service.UserService;
@@ -81,6 +83,7 @@ import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
 import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
+import org.broadinstitute.consent.http.service.ontology.OpenSearchSupport;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -209,6 +212,11 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
+  OpenSearchConfiguration providesOpenSearchConfiguration() {
+    return config.getOpenSearchConfiguration();
+  }
+
+  @Provides
   MailConfiguration providesMailConfiguration() {
     return config.getMailConfiguration();
   }
@@ -323,6 +331,7 @@ public class ConsentModule extends AbstractModule {
         providesDaaDAO(),
         providesDacDAO(),
         providesElasticSearchService(),
+        providesOpenSearchService(),
         providesEmailService(),
         providesOntologyService(),
         providesStudyDAO(),
@@ -412,6 +421,7 @@ public class ConsentModule extends AbstractModule {
         providesElectionDAO(),
         providesEmailService(),
         providesElasticSearchService(),
+        providesOpenSearchService(),
         providesUseRestrictionConverter(),
         providesVoteDAO(),
         providesVoteServiceDAO());
@@ -478,6 +488,20 @@ public class ConsentModule extends AbstractModule {
     return new ElasticSearchService(
         ElasticSearchSupport.createRestClient(config.getElasticSearchConfiguration()),
         config.getElasticSearchConfiguration(),
+        providesDacDAO(),
+        providesUserDAO(),
+        providesOntologyService(),
+        providesInstitutionDAO(),
+        providesDatasetDAO(),
+        providesDatasetServiceDAO(),
+        providesStudyDAO());
+  }
+
+  @Provides
+  OpenSearchService providesOpenSearchService() {
+    return new OpenSearchService(
+        OpenSearchSupport.createRestClient(config.getOpenSearchConfiguration()),
+        config.getOpenSearchConfiguration(),
         providesDacDAO(),
         providesUserDAO(),
         providesOntologyService(),
@@ -584,6 +608,7 @@ public class ConsentModule extends AbstractModule {
         providesDatasetServiceDAO(),
         providesGCSService(),
         providesElasticSearchService(),
+        providesOpenSearchService(),
         providesStudyDAO(),
         providesEmailService());
   }

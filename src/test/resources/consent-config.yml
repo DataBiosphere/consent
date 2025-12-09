@@ -56,5 +56,11 @@ elasticSearch:
     - localhost
   indexName: iName
   datasetIndexName: dataset
+openSearch:
+  servers:
+    - localhost
+  indexName: iName
+  datasetIndexName: dataset
+  port: 9201
 oidcConfiguration:
   authorityEndpoint: http://localhost:8000

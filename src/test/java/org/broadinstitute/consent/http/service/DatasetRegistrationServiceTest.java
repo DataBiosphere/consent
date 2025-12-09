@@ -85,6 +85,8 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
   @Mock private ElasticSearchService elasticSearchService;
 
+  @Mock private OpenSearchService openSearchService;
+
   @Mock private EmailService emailService;
 
   @BeforeEach
@@ -96,6 +98,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
             datasetServiceDAO,
             gcsService,
             elasticSearchService,
+            openSearchService,
             studyDAO,
             emailService);
   }

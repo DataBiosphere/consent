@@ -56,6 +56,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.Da
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
+import org.broadinstitute.consent.http.service.OpenSearchService;
 import org.broadinstitute.consent.http.service.TDRService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.JsonSchemaUtil;
@@ -72,6 +73,7 @@ public class DatasetResource extends Resource {
   private final TDRService tdrService;
   private final UserService userService;
   private final ElasticSearchService elasticSearchService;
+  private final OpenSearchService openSearchService;
 
   private final JsonSchemaUtil jsonSchemaUtil;
   private final GCSService gcsService;
@@ -82,6 +84,7 @@ public class DatasetResource extends Resource {
       UserService userService,
       DatasetRegistrationService datasetRegistrationService,
       ElasticSearchService elasticSearchService,
+      OpenSearchService openSearchService,
       TDRService tdrService,
       GCSService gcsService) {
     this.datasetService = datasetService;
@@ -89,6 +92,7 @@ public class DatasetResource extends Resource {
     this.datasetRegistrationService = datasetRegistrationService;
     this.gcsService = gcsService;
     this.elasticSearchService = elasticSearchService;
+    this.openSearchService = openSearchService;
     this.tdrService = tdrService;
     this.jsonSchemaUtil = new JsonSchemaUtil();
   }
@@ -222,6 +226,7 @@ public class DatasetResource extends Resource {
       }
       Dataset patched = datasetRegistrationService.patchDataset(datasetId, user, patch);
       elasticSearchService.synchronizeDatasetInESIndex(patched, user, false);
+      openSearchService.synchronizeDatasetInESIndex(patched, user, false);
       return Response.ok(patched).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -379,6 +384,11 @@ public class DatasetResource extends Resource {
           logWarn("Unable to delete index for dataset: " + datasetId);
         }
       }
+      try (var deleteResponse = openSearchService.deleteIndex(datasetId, user.getUserId())) {
+        if (!HttpStatusCodes.isSuccess(deleteResponse.getStatus())) {
+          logWarn("Unable to delete index for dataset: " + datasetId);
+        }
+      }
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -392,8 +402,10 @@ public class DatasetResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       var datasetIds = datasetService.findAllDatasetIds();
-      StreamingOutput indexResponse = elasticSearchService.indexDatasetIds(datasetIds, user);
-      return Response.ok(indexResponse, MediaType.APPLICATION_JSON).build();
+      StreamingOutput elasticSearchResponse =
+          elasticSearchService.indexDatasetIds(datasetIds, user);
+      StreamingOutput openSearchResponse = openSearchService.indexDatasetIds(datasetIds, user);
+      return Response.ok(elasticSearchResponse, MediaType.APPLICATION_JSON).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -405,7 +417,9 @@ public class DatasetResource extends Resource {
   public Response indexDataset(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      return elasticSearchService.indexDataset(datasetId, user);
+      Response elasticSearchResponse = elasticSearchService.indexDataset(datasetId, user);
+      Response openSearchResponse = openSearchService.indexDataset(datasetId, user);
+      return elasticSearchResponse;
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -446,7 +460,7 @@ public class DatasetResource extends Resource {
   @Timed
   public Response searchDatasetIndexStream(@Auth DuosUser duosUser, String query) {
     try {
-      InputStream inputStream = elasticSearchService.searchDatasetsStream(query);
+      InputStream inputStream = openSearchService.searchDatasetsStream(query);
       StreamingOutput stream = createStreamingOutput(inputStream);
       return Response.ok(stream).build();
     } catch (Exception e) {

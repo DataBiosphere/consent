@@ -39,6 +39,9 @@ public class ConsentConfiguration extends Configuration {
   private final ElasticSearchConfiguration elasticSearch = new ElasticSearchConfiguration();
 
   @Valid @NotNull @JsonProperty
+  private final OpenSearchConfiguration openSearch = new OpenSearchConfiguration();
+
+  @Valid @NotNull @JsonProperty
   private final OidcConfiguration oidcConfiguration = new OidcConfiguration();
 
   public DataSourceFactory getDataSourceFactory() {
@@ -71,6 +74,10 @@ public class ConsentConfiguration extends Configuration {
 
   public ElasticSearchConfiguration getElasticSearchConfiguration() {
     return elasticSearch;
+  }
+
+  public OpenSearchConfiguration getOpenSearchConfiguration() {
+    return openSearch;
   }
 
   public OidcConfiguration getOidcConfiguration() {

@@ -66,6 +66,7 @@ import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
+import org.broadinstitute.consent.http.service.OpenSearchService;
 import org.broadinstitute.consent.http.service.TDRService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -85,6 +86,8 @@ class DatasetResourceTest extends AbstractTestHelper {
   @Mock private DatasetRegistrationService datasetRegistrationService;
 
   @Mock private ElasticSearchService elasticSearchService;
+
+  @Mock private OpenSearchService openSearchService;
 
   @Mock private TDRService tdrService;
 
@@ -107,6 +110,7 @@ class DatasetResourceTest extends AbstractTestHelper {
             userService,
             datasetRegistrationService,
             elasticSearchService,
+            openSearchService,
             tdrService,
             gcsService);
   }
@@ -562,7 +566,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   @Test
   void testSearchDatasetIndexStream() throws IOException {
     String query = "{ \"dataUse\": [\"HMB\"] }";
-    when(elasticSearchService.searchDatasetsStream(any()))
+    when(openSearchService.searchDatasetsStream(any()))
         .thenReturn(IOUtils.toInputStream(query, Charset.defaultCharset()));
     try (var response = resource.searchDatasetIndexStream(duosUser, query)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());

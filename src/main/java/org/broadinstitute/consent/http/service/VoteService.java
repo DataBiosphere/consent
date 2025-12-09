@@ -57,6 +57,7 @@ public class VoteService implements ConsentLogger {
   private final ElectionDAO electionDAO;
   private final EmailService emailService;
   private final ElasticSearchService elasticSearchService;
+  private final OpenSearchService openSearchService;
   private final UseRestrictionConverter useRestrictionConverter;
   private final VoteDAO voteDAO;
   private final VoteServiceDAO voteServiceDAO;
@@ -70,6 +71,7 @@ public class VoteService implements ConsentLogger {
       ElectionDAO electionDAO,
       EmailService emailService,
       ElasticSearchService elasticSearchService,
+      OpenSearchService openSearchService,
       UseRestrictionConverter useRestrictionConverter,
       VoteDAO voteDAO,
       VoteServiceDAO voteServiceDAO) {
@@ -80,6 +82,7 @@ public class VoteService implements ConsentLogger {
     this.electionDAO = electionDAO;
     this.emailService = emailService;
     this.elasticSearchService = elasticSearchService;
+    this.openSearchService = openSearchService;
     this.useRestrictionConverter = useRestrictionConverter;
     this.voteDAO = voteDAO;
     this.voteServiceDAO = voteServiceDAO;
@@ -260,6 +263,7 @@ public class VoteService implements ConsentLogger {
 
     try {
       elasticSearchService.indexDatasets(datasetIds, user);
+      openSearchService.indexDatasets(datasetIds, user);
     } catch (Exception e) {
       logException("Error indexing datasets for approved DARs: " + e.getMessage(), e);
     }

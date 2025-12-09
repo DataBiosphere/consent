@@ -46,6 +46,7 @@ import org.broadinstitute.consent.http.filters.ResponseServerFilter;
 import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.health.GCSHealthCheck;
 import org.broadinstitute.consent.http.health.OntologyHealthCheck;
+import org.broadinstitute.consent.http.health.OpenSearchHealthCheck;
 import org.broadinstitute.consent.http.health.SamHealthCheck;
 import org.broadinstitute.consent.http.health.SendGridHealthCheck;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -96,6 +97,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
   public static final String GCS_CHECK = "google-cloud-storage";
   public static final String ES_CHECK = "elastic-search";
+  public static final String OS_CHECK = "opensearch";
   public static final String ONTOLOGY_CHECK = "ontology";
   public static final String SAM_CHECK = "sam";
   public static final String SG_CHECK = "sendgrid";
@@ -146,6 +148,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     // Health Checks
     env.healthChecks().register(GCS_CHECK, injector.getInstance(GCSHealthCheck.class));
     env.healthChecks().register(ES_CHECK, injector.getInstance(ElasticSearchHealthCheck.class));
+    env.healthChecks().register(OS_CHECK, injector.getInstance(OpenSearchHealthCheck.class));
     env.healthChecks().register(ONTOLOGY_CHECK, injector.getInstance(OntologyHealthCheck.class));
     env.healthChecks().register(SAM_CHECK, injector.getInstance(SamHealthCheck.class));
     env.healthChecks().register(SG_CHECK, injector.getInstance(SendGridHealthCheck.class));
