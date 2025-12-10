@@ -294,12 +294,16 @@ public class DatasetService implements ConsentLogger {
     if (dataset != null) {
       try (var response = elasticSearchService.deleteIndex(datasetId, userId)) {
         if (!HttpStatusCodes.isSuccess(response.getStatus())) {
-          logWarn("Response error, unable to delete dataset from index: %s".formatted(datasetId));
+          logWarn(
+              "Response error, unable to delete dataset from Elasticsearch index: %s"
+                  .formatted(datasetId));
         }
       }
       try (var response = openSearchService.deleteIndex(datasetId, userId)) {
         if (!HttpStatusCodes.isSuccess(response.getStatus())) {
-          logWarn("Response error, unable to delete dataset from index: %s".formatted(datasetId));
+          logWarn(
+              "Response error, unable to delete dataset from OpenSearch index: %s"
+                  .formatted(datasetId));
         }
       }
       datasetServiceDAO.deleteDataset(dataset, userId);
@@ -314,7 +318,7 @@ public class DatasetService implements ConsentLogger {
               try (var response = elasticSearchService.deleteIndex(datasetId, user.getUserId())) {
                 if (!HttpStatusCodes.isSuccess(response.getStatus())) {
                   logWarn(
-                      "Response error, unable to delete dataset from index: %s"
+                      "Response error, unable to delete dataset from Elasticsearch index: %s"
                           .formatted(datasetId));
                 }
               } catch (IOException e) {
@@ -323,7 +327,7 @@ public class DatasetService implements ConsentLogger {
               try (var response = openSearchService.deleteIndex(datasetId, user.getUserId())) {
                 if (!HttpStatusCodes.isSuccess(response.getStatus())) {
                   logWarn(
-                      "Response error, unable to delete dataset from index: %s"
+                      "Response error, unable to delete dataset from OpenSearch index: %s"
                           .formatted(datasetId));
                 }
               } catch (IOException e) {

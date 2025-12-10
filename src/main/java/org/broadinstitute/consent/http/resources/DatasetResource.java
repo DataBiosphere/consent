@@ -381,12 +381,12 @@ public class DatasetResource extends Resource {
       }
       try (var deleteResponse = elasticSearchService.deleteIndex(datasetId, user.getUserId())) {
         if (!HttpStatusCodes.isSuccess(deleteResponse.getStatus())) {
-          logWarn("Unable to delete index for dataset: " + datasetId);
+          logWarn("Unable to delete Elasticsearch index for dataset: " + datasetId);
         }
       }
       try (var deleteResponse = openSearchService.deleteIndex(datasetId, user.getUserId())) {
         if (!HttpStatusCodes.isSuccess(deleteResponse.getStatus())) {
-          logWarn("Unable to delete index for dataset: " + datasetId);
+          logWarn("Unable to delete OpenSearch index for dataset: " + datasetId);
         }
       }
       return Response.ok().build();
