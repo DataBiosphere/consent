@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2025-12-11-rename-intellectual-property-to-properties" author="kevinmarete">
+    <comment>
+      Rename intellectualProperty field to intellectualProperties in data_access_request table.
+      Transforms the singular field name to plural form.
+    </comment>
+    <sql>
+      UPDATE data_access_request
+      SET data = jsonb_set(
+        data #- '{intellectualProperty}',
+        '{intellectualProperties}',
+        data -> 'intellectualProperty'
+                 )
+      WHERE parent_id IS NOT NULL
+        AND data -> 'intellectualProperty' IS NOT NULL
+        AND data -> 'intellectualProperties' IS NULL;
+    </sql>
+  </changeSet>
+</databaseChangeLog>

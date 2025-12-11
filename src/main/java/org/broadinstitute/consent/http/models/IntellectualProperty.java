@@ -5,10 +5,9 @@ import java.util.List;
 public record IntellectualProperty(
     String type,
     String title,
-    String date,
     String assignee,
     String patentNumber,
-    Boolean filingDate,
+    String filingDate,
     String status,
     String url,
     String contact,

@@ -901,15 +901,14 @@ institution or library cards issued: Internal Collaborator member:  \
     progressReport.getData().setProgressReportSummary("Progress Report Summary");
     progressReport
         .getData()
-        .setIntellectualProperty(
+        .setIntellectualProperties(
             List.of(
                 new IntellectualProperty(
                     "Patent",
                     "Description of patent",
-                    "2024-01-01",
                     "Test Assignee",
                     "US12345678",
-                    true,
+                    "2024-01-01",
                     "Active",
                     "https://example.com",
                     "contact@example.com",
