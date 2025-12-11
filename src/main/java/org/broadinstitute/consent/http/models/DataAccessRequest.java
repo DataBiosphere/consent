@@ -353,7 +353,7 @@ public class DataAccessRequest {
     originalDataCopy.setExternalCollaborators(newData.getExternalCollaborators());
     originalDataCopy.setLabCollaborators(newData.getLabCollaborators());
     originalDataCopy.setProgressReportSummary(newData.getProgressReportSummary());
-    originalDataCopy.setIntellectualProperty(newData.getIntellectualProperty());
+    originalDataCopy.setIntellectualProperties(newData.getIntellectualProperties());
     originalDataCopy.setPublications(newData.getPublications());
     originalDataCopy.setPresentations(newData.getPresentations());
     originalDataCopy.setDmi(newData.getDmi());
