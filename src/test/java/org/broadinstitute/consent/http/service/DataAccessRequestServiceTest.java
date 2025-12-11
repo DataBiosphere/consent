@@ -906,10 +906,9 @@ institution or library cards issued: Internal Collaborator member:  \
                 new IntellectualProperty(
                     "Patent",
                     "Description of patent",
-                    "2024-01-01",
                     "Test Assignee",
                     "US12345678",
-                    true,
+                    "2024-01-01",
                     "Active",
                     "https://example.com",
                     "contact@example.com",
