@@ -247,7 +247,7 @@ public class DatasetServiceDAO implements ConsentLogger {
     jdbi.useHandle(
         handle -> {
           handle.getConnection().setAutoCommit(false);
-          executeUpdateStudy(handle, studyUpdate);
+          executeUpdateStudyReplaceProps(handle, studyUpdate);
           for (DatasetUpdate datasetUpdate : datasetUpdates) {
             executeUpdateDatasetWithFiles(
                 handle,
@@ -275,7 +275,15 @@ public class DatasetServiceDAO implements ConsentLogger {
     return studyDAO.findStudyById(studyUpdate.studyId);
   }
 
-  private void executeUpdateStudy(Handle handle, StudyUpdate update) {
+  private void executeUpdateStudyReplaceProps(Handle handle, StudyUpdate update) {
+    executeUpdateStudy(handle, update, true);
+  }
+
+  private void executeUpdateStudyKeepProps(Handle handle, StudyUpdate update) {
+    executeUpdateStudy(handle, update, false);
+  }
+
+  private void executeUpdateStudy(Handle handle, StudyUpdate update, boolean replaceProps) {
     StudyDAO studyDAO = handle.attach(StudyDAO.class);
     Study study = studyDAO.findStudyById(update.studyId);
     studyDAO.updateStudy(
@@ -288,26 +296,34 @@ public class DatasetServiceDAO implements ConsentLogger {
         update.userId,
         Instant.now());
 
-    // Handle property inserts and updates
-    Set<StudyProperty> existingStudyProperties =
-        studyDAO.findStudyById(update.studyId).getProperties();
-    update.props.forEach(
-        p -> {
-          Optional<StudyProperty> existingProp =
-              existingStudyProperties.stream()
-                  .filter(ep -> p.getKey().equals(ep.getKey()) && p.getType().equals(ep.getType()))
-                  .findFirst();
-          if (existingProp.isPresent()) {
-            // Update existing study prop:
-            studyDAO.updateStudyProperty(
-                update.studyId, p.getKey(), p.getType().toString(), p.getValue().toString());
-          } else {
-            // Add new study prop:
-            studyDAO.insertStudyProperty(
-                update.studyId, p.getKey(), p.getType().toString(), p.getValue().toString());
-          }
-        });
-
+    if (replaceProps) {
+      studyDAO.deleteStudyPropertiesByStudyId(update.studyId);
+      update.props.forEach(
+          p ->
+              studyDAO.insertStudyProperty(
+                  update.studyId, p.getKey(), p.getType().toString(), p.getValue().toString()));
+    } else {
+      // Handle property inserts and updates
+      Set<StudyProperty> existingStudyProperties =
+          studyDAO.findStudyById(update.studyId).getProperties();
+      update.props.forEach(
+          p -> {
+            Optional<StudyProperty> existingProp =
+                existingStudyProperties.stream()
+                    .filter(
+                        ep -> p.getKey().equals(ep.getKey()) && p.getType().equals(ep.getType()))
+                    .findFirst();
+            if (existingProp.isPresent()) {
+              // Update existing study prop:
+              studyDAO.updateStudyProperty(
+                  update.studyId, p.getKey(), p.getType().toString(), p.getValue().toString());
+            } else {
+              // Add new study prop:
+              studyDAO.insertStudyProperty(
+                  update.studyId, p.getKey(), p.getType().toString(), p.getValue().toString());
+            }
+          });
+    }
     executeInsertFiles(handle, update.files, update.userId, study.getUuid().toString());
   }
 
@@ -423,7 +439,7 @@ public class DatasetServiceDAO implements ConsentLogger {
           // Convert the patch to a StudyUpdate for reuse of existing methods
           StudyUpdate studyUpdate = convertToStudyUpdate(study, user, patch);
           try {
-            executeUpdateStudy(handle, studyUpdate);
+            executeUpdateStudyKeepProps(handle, studyUpdate);
           } catch (Exception e) {
             handle.rollback();
             logException(e);
