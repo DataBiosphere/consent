@@ -133,6 +133,12 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       """)
   void deleteStudyByStudyId(@Bind("studyId") Integer studyId);
 
+  @SqlUpdate(
+      """
+      DELETE FROM study_property where study_id = :studyId
+      """)
+  void deleteStudyPropertiesByStudyId(@Bind("studyId") Integer studyId);
+
   @UseRowReducer(StudyReducer.class)
   @SqlQuery(
       """
