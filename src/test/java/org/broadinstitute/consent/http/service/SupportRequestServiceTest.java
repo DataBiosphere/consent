@@ -46,7 +46,7 @@ class SupportRequestServiceTest extends MockServerTestHelper {
   @Test
   void testPostTicketToSupport() throws Exception {
     DuosTicket ticket = generateTicket();
-    String expectedBody = ticket.toString(;
+    String expectedBody = ticket.toString();
 
     when(config.isActivateSupportNotifications()).thenReturn(true);
     when(config.postSupportRequestUrl())
