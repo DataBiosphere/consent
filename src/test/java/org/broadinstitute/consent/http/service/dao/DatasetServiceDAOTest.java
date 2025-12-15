@@ -586,7 +586,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     // Updated prop
     Optional<StudyProperty> updatedProp1 =
         updatedStudy.getProperties().stream()
-            .filter(p -> p.getStudyPropertyId().equals(prop1.getStudyPropertyId()))
+            .filter(p -> p.getKey().equals(prop1.getKey()))
             .findFirst();
     assertTrue(updatedProp1.isPresent());
     assertEquals(newPropValue, updatedProp1.get().getValue());
