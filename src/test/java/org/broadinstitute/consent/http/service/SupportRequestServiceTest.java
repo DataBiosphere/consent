@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 import static org.mockserver.model.HttpRequest.request;
@@ -29,7 +28,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockserver.model.Header;
 import org.mockserver.model.HttpError;
-import org.mockserver.model.HttpRequest;
 import org.mockserver.verify.VerificationTimes;
 
 @ExtendWith(MockitoExtension.class)
@@ -61,7 +59,9 @@ class SupportRequestServiceTest extends MockServerTestHelper {
 
     service.postTicketToSupport(ticket);
     URL supportUrl = URI.create(config.postSupportRequestUrl()).toURL();
-    mockServerClient.verify(request().withPath(supportUrl.getPath()).withBody(expectedBody), VerificationTimes.exactly(1));
+    mockServerClient.verify(
+        request().withPath(supportUrl.getPath()).withBody(expectedBody),
+        VerificationTimes.exactly(1));
   }
 
   @Test

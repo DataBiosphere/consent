@@ -4,7 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestPlan;
 import org.mockserver.client.MockServerClient;
-import org.mockserver.configuration.Configuration;
 import org.testcontainers.containers.MockServerContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
