@@ -9,6 +9,8 @@ import static org.mockserver.model.HttpResponse.response;
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ServerErrorException;
+import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -28,6 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockserver.model.Header;
 import org.mockserver.model.HttpError;
 import org.mockserver.model.HttpRequest;
+import org.mockserver.verify.VerificationTimes;
 
 @ExtendWith(MockitoExtension.class)
 class SupportRequestServiceTest extends MockServerTestHelper {
@@ -43,7 +46,7 @@ class SupportRequestServiceTest extends MockServerTestHelper {
   @Test
   void testPostTicketToSupport() throws Exception {
     DuosTicket ticket = generateTicket();
-    String expectedBody = ticket.toString().replaceAll("\\s*", "");
+    String expectedBody = ticket.toString(;
 
     when(config.isActivateSupportNotifications()).thenReturn(true);
     when(config.postSupportRequestUrl())
@@ -57,11 +60,8 @@ class SupportRequestServiceTest extends MockServerTestHelper {
                 .withBody(expectedBody));
 
     service.postTicketToSupport(ticket);
-    HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
-    assertEquals(1, requests.length);
-    // Ensure that we really did send a ticket object in the POST request
-    String requestBody = requests[0].getBody().getValue().toString().replaceAll("\\s*", "");
-    assertEquals(expectedBody, requestBody);
+    URL supportUrl = URI.create(config.postSupportRequestUrl()).toURL();
+    mockServerClient.verify(request().withPath(supportUrl.getPath()).withBody(expectedBody), VerificationTimes.exactly(1));
   }
 
   @Test
@@ -122,8 +122,8 @@ class SupportRequestServiceTest extends MockServerTestHelper {
                 .withBody(expectedBody));
     service = new SupportRequestService(config);
     service.postAttachmentToSupport("Test".getBytes());
-    HttpRequest[] requests = mockServerClient.retrieveRecordedRequests(null);
-    assertEquals(1, requests.length);
+    URL supportUrl = URI.create(config.postSupportUploadUrl()).toURL();
+    mockServerClient.verify(request().withPath(supportUrl.getPath()), VerificationTimes.exactly(1));
   }
 
   @Test
