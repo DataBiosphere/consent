@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.networknt.schema.ValidationMessage;
+import com.networknt.schema.Error;
 import java.util.Set;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.junit.jupiter.api.BeforeAll;
@@ -53,13 +53,13 @@ class JsonSchemaUtilTest {
   @Test
   void testIsValidDatasetRegistrationObject_v1_case0() {
     String instance = "{}";
-    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(instance);
+    Set<Error> errors = schemaUtil.validateSchema_v1(instance);
     assertFalse(errors.isEmpty());
   }
 
   @Test
   void testIsValidDatasetRegistrationObject_v1_case1() {
-    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(datasetRegistrationInstance);
+    Set<Error> errors = schemaUtil.validateSchema_v1(datasetRegistrationInstance);
     assertTrue(errors.isEmpty());
   }
 
@@ -118,7 +118,7 @@ class JsonSchemaUtilTest {
           }]
         }
         """;
-    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(instance);
+    Set<Error> errors = schemaUtil.validateSchema_v1(instance);
     assertNoErrors(errors);
   }
 
@@ -157,7 +157,7 @@ class JsonSchemaUtilTest {
           }]
         }
         """;
-    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(instance);
+    Set<Error> errors = schemaUtil.validateSchema_v1(instance);
     assertFieldHasError(errors, "embargoReleaseDate");
     assertFieldHasError(errors, "targetDeliveryDate");
     assertFieldHasError(errors, "targetPublicReleaseDate");
@@ -251,7 +251,7 @@ class JsonSchemaUtilTest {
           }]
         }
         """;
-    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(noGsrSelected);
+    Set<Error> errors = schemaUtil.validateSchema_v1(noGsrSelected);
     assertNoErrors(errors);
 
     errors = schemaUtil.validateSchema_v1(gsrSelectedNoExplanation);
@@ -293,7 +293,7 @@ class JsonSchemaUtilTest {
         }
         """;
 
-    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(datasetRegistrationInstance);
+    Set<Error> errors = schemaUtil.validateSchema_v1(datasetRegistrationInstance);
     assertNoErrors(errors);
 
     errors = schemaUtil.validateSchema_v1(anvilUseYesRequiresDbGapFields);
@@ -387,12 +387,12 @@ class JsonSchemaUtilTest {
         }
         """;
 
-    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(datasetRegistrationInstance);
+    Set<Error> errors = schemaUtil.validateSchema_v1(datasetRegistrationInstance);
     assertNoErrors(errors);
 
-    Set<ValidationMessage> fundedHaveIdErrors = schemaUtil.validateSchema_v1(anvilUseFundedHaveId);
-    Set<ValidationMessage> fundedNoIdErrors = schemaUtil.validateSchema_v1(anvilUseFundedNoId);
-    Set<ValidationMessage> seekingToSubmitErrors =
+    Set<Error> fundedHaveIdErrors = schemaUtil.validateSchema_v1(anvilUseFundedHaveId);
+    Set<Error> fundedNoIdErrors = schemaUtil.validateSchema_v1(anvilUseFundedNoId);
+    Set<Error> seekingToSubmitErrors =
         schemaUtil.validateSchema_v1(anvilUseNotFundedSeekingToSubmit);
 
     assertFieldHasError(fundedHaveIdErrors, "piInstitution");
@@ -488,7 +488,7 @@ class JsonSchemaUtilTest {
         }
         """;
 
-    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(openAccessNoDacId);
+    Set<Error> errors = schemaUtil.validateSchema_v1(openAccessNoDacId);
     assertNoErrors(errors);
 
     // only errors if not open access & no dac id present
@@ -538,7 +538,7 @@ class JsonSchemaUtilTest {
         }
         """;
 
-    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(noConsentGroup);
+    Set<Error> errors = schemaUtil.validateSchema_v1(noConsentGroup);
     assertFieldHasError(errors, "consentGroups");
 
     errors = schemaUtil.validateSchema_v1(emptyConsentGroup);
@@ -596,7 +596,7 @@ class JsonSchemaUtilTest {
         }
         """;
 
-    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(noFileTypes);
+    Set<Error> errors = schemaUtil.validateSchema_v1(noFileTypes);
     assertNoErrors(errors);
 
     errors = schemaUtil.validateSchema_v1(emptyFileTypes);
@@ -661,7 +661,7 @@ class JsonSchemaUtilTest {
         }
         """;
 
-    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(emptyDiseaseSpecificUse);
+    Set<Error> errors = schemaUtil.validateSchema_v1(emptyDiseaseSpecificUse);
     assertFieldHasError(errors, "diseaseSpecificUse");
 
     errors = schemaUtil.validateSchema_v1(filledDiseaseSpecificUse);
@@ -728,7 +728,7 @@ class JsonSchemaUtilTest {
         }
         """;
 
-    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(hmbAndGru);
+    Set<Error> errors = schemaUtil.validateSchema_v1(hmbAndGru);
     assertHasErrors(errors);
 
     errors = schemaUtil.validateSchema_v1(diseaseSpecificAndOpenAccess);
@@ -793,7 +793,7 @@ class JsonSchemaUtilTest {
         }
         """;
 
-    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(notDeterminedNoURL);
+    Set<Error> errors = schemaUtil.validateSchema_v1(notDeterminedNoURL);
     assertNoErrors(errors);
 
     errors = schemaUtil.validateSchema_v1(tdrLocationNoUrl);
@@ -835,7 +835,7 @@ class JsonSchemaUtilTest {
          }
         """;
 
-    Set<ValidationMessage> errors = schemaUtil.validateSchema_v1(instance);
+    Set<Error> errors = schemaUtil.validateSchema_v1(instance);
     assertFieldHasError(errors, "studyName");
     assertFieldHasError(errors, "studyDescription");
     assertFieldHasError(errors, "piName");
@@ -847,21 +847,23 @@ class JsonSchemaUtilTest {
     assertFieldHasError(errors, "url");
   }
 
-  private void assertNoErrors(Set<ValidationMessage> errors) {
+  private void assertNoErrors(Set<Error> errors) {
     assertTrue(
         errors.isEmpty(),
         String.format(
-            "Should be empty, instead was: %s",
-            errors.stream().map(ValidationMessage::toString).toList()));
+            "Should be empty, instead was: %s", errors.stream().map(Error::toString).toList()));
   }
 
-  private void assertHasErrors(Set<ValidationMessage> errors) {
+  private void assertHasErrors(Set<Error> errors) {
     assertFalse(errors.isEmpty(), "Should have errored, instead was empty.");
   }
 
-  private void assertFieldHasError(Set<ValidationMessage> errors, String field) {
+  private void assertFieldHasError(Set<Error> errors, String field) {
     assertTrue(
-        errors.stream().anyMatch((ValidationMessage s) -> s.getMessage().contains(field)),
+        errors.stream()
+            .anyMatch(
+                (Error s) ->
+                    s.getMessage().contains(field) || s.getInstanceLocation().contains(field)),
         String.format("Field %s should have errored", field));
   }
 }

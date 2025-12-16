@@ -5,7 +5,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
-import com.networknt.schema.ValidationMessage;
+import com.networknt.schema.Error;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
@@ -106,11 +106,15 @@ public class DatasetResource extends Resource {
   public Response createDatasetRegistration(
       @Auth AuthUser authUser, FormDataMultiPart multipart, @FormDataParam("dataset") String json) {
     try {
-      Set<ValidationMessage> errors = jsonSchemaUtil.validateSchema_v1(json);
+      Set<Error> errors = jsonSchemaUtil.validateSchema_v1(json);
       if (!errors.isEmpty()) {
         throw new BadRequestException(
             "Invalid schema:\n"
-                + String.join("\n", errors.stream().map(ValidationMessage::getMessage).toList()));
+                + String.join(
+                    "\n",
+                    errors.stream()
+                        .map(e -> String.format("%s %s", e.getInstanceLocation(), e.getMessage()))
+                        .toList()));
       }
 
       DatasetRegistrationSchemaV1 registration =

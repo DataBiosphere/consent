@@ -452,6 +452,11 @@
       <artifactId>jackson-core</artifactId>
       <version>2.20.1</version>
     </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.20.1</version>
+    </dependency>
 
     <dependency>
       <groupId>net.gcardone.junidecode</groupId>
@@ -752,6 +757,7 @@
       <groupId>org.mock-server</groupId>
       <artifactId>mockserver-client-java</artifactId>
       <version>${mockserver.version}</version>
+      <classifier>shaded</classifier>
       <scope>test</scope>
     </dependency>
 
