@@ -256,7 +256,7 @@ public class DatasetServiceDAO implements ConsentLogger {
                 studyUpdate.userId,
                 datasetUpdate.dacId,
                 datasetUpdate.props,
-                studyUpdate.files,
+                datasetUpdate.files,
                 false);
           }
           for (DatasetServiceDAO.DatasetInsert insert : datasetInserts) {
