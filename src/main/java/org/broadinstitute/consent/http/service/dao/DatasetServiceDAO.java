@@ -268,7 +268,7 @@ public class DatasetServiceDAO implements ConsentLogger {
                 insert.dataUse,
                 studyUpdate.userId,
                 insert.props,
-                studyUpdate.files);
+                insert.files);
           }
           handle.commit();
         });
