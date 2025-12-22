@@ -1679,9 +1679,9 @@ class DatasetServiceDAOTest extends DAOTestHelper {
             new DataUseBuilder().setGeneralUse(true).build(),
             user.getUserId(),
             List.of(datasetProperty),
-            Objects.isNull(dataset1InstitutionalCertification)
+            Objects.isNull(dataset2InstitutionalCertification)
                 ? List.of()
-                : List.of(dataset1InstitutionalCertification));
+                : List.of(dataset2InstitutionalCertification));
 
     List<Integer> createdIds =
         serviceDAO.insertDatasetRegistration(studyInsert, List.of(datasetInsert1, datasetInsert2));
