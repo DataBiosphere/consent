@@ -128,7 +128,7 @@ public class DatasetRegistrationService implements ConsentLogger {
                           convertConsentGroupToDatasetProperties(cg));
                   DatasetServiceDAO.DatasetUpdate update =
                       createDatasetUpdate(
-                          cg.getDatasetId(), user, datasetUpdate, files, uploadedFileCache);
+                          cg.getDatasetId(), user, datasetUpdate, files, uploadedFileCache, idx);
                   datasetUpdates.add(update);
                 } catch (Exception e) {
                   logException(e);
@@ -267,7 +267,7 @@ public class DatasetRegistrationService implements ConsentLogger {
 
     try {
       DatasetServiceDAO.DatasetUpdate datasetUpdates =
-          createDatasetUpdate(datasetId, user, update, files, uploadedFileCache);
+          createDatasetUpdate(datasetId, user, update, files, uploadedFileCache, 0);
 
       // Update or create the objects in the database
       datasetServiceDAO.updateDataset(datasetUpdates);
@@ -324,13 +324,14 @@ public class DatasetRegistrationService implements ConsentLogger {
       User user,
       DatasetUpdate datasetUpdate,
       Map<String, FormDataBodyPart> files,
-      Map<String, BlobId> uploadedFileCache)
+      Map<String, BlobId> uploadedFileCache,
+      int idx)
       throws IOException {
 
     List<DatasetProperty> props = datasetUpdate.getDatasetProperties();
 
     List<FileStorageObject> fileStorageObjects =
-        uploadFilesForDatasetUpdate(files, uploadedFileCache, user);
+        uploadFilesForDatasetUpdate(files, uploadedFileCache, user, idx);
 
     return new DatasetServiceDAO.DatasetUpdate(
         datasetId,
@@ -407,17 +408,21 @@ public class DatasetRegistrationService implements ConsentLogger {
   }
 
   private List<FileStorageObject> uploadFilesForDatasetUpdate(
-      Map<String, FormDataBodyPart> files, Map<String, BlobId> uploadedFileCache, User user)
+      Map<String, FormDataBodyPart> files,
+      Map<String, BlobId> uploadedFileCache,
+      User user,
+      int idx)
       throws IOException {
     List<FileStorageObject> updateDatasetFSOs = new ArrayList<>();
-
-    if (files.containsKey(String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME, 0))) {
+    String fileKey = String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME, idx);
+    FormDataBodyPart fileToUpdate = files.get(fileKey);
+    if (fileToUpdate != null) {
       updateDatasetFSOs.add(
           uploadFile(
               files,
               uploadedFileCache,
               user,
-              String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME, 0),
+              fileKey,
               FileCategory.NIH_INSTITUTIONAL_CERTIFICATION));
     }
 
@@ -440,8 +445,8 @@ public class DatasetRegistrationService implements ConsentLogger {
       Map<String, FormDataBodyPart> files, Map<String, BlobId> uploadedFileCache, User user)
       throws IOException {
     List<FileStorageObject> studyFSOs = new ArrayList<>();
-
-    if (files.containsKey(ALTERNATIVE_DATA_SHARING_PLAN_NAME)) {
+    FormDataBodyPart alternateSharingPlanFile = files.get(ALTERNATIVE_DATA_SHARING_PLAN_NAME);
+    if (alternateSharingPlanFile != null) {
       studyFSOs.add(
           uploadFile(
               files,
