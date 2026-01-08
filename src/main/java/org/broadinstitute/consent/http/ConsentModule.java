@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
+import org.broadinstitute.consent.http.db.CacheTableDAO;
 import org.broadinstitute.consent.http.db.CounterDAO;
 import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -119,6 +120,7 @@ public class ConsentModule extends AbstractModule {
   private final AcknowledgementDAO acknowledgementDAO;
   private final DraftDAO draftDAO;
   private final DACAutomationRuleDAO rulesDAO;
+  private final CacheTableDAO cacheTableDAO;
 
   ConsentModule(ConsentConfiguration consentConfiguration, Environment environment) {
     this.config = consentConfiguration;
@@ -156,6 +158,7 @@ public class ConsentModule extends AbstractModule {
     this.acknowledgementDAO = this.jdbi.onDemand((AcknowledgementDAO.class));
     this.draftDAO = this.jdbi.onDemand(DraftDAO.class);
     this.rulesDAO = this.jdbi.onDemand(DACAutomationRuleDAO.class);
+    this.cacheTableDAO = this.jdbi.onDemand(CacheTableDAO.class);
   }
 
   @Override
