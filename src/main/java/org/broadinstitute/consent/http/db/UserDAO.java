@@ -388,23 +388,6 @@ public interface UserDAO extends Transactional<UserDAO> {
         """)
   List<User> getUsersWithCardsByDaaId(@Bind("daaId") Integer daaId);
 
-  // SO only endpoint (so far)
-  // Meant to pull in users that have not yet been assigned an institution
-  // (SOs can assign LCs to these users as well)
-  @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = UserRole.class)
-  @UseRowReducer(UserWithRolesReducer.class)
-  @SqlQuery(
-      " SELECT "
-          + User.QUERY_FIELDS_WITH_U_PREFIX
-          + QUERY_FIELD_SEPARATOR
-          + " r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id "
-          + " FROM users u "
-          + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
-          + " LEFT JOIN roles r ON r.role_id = ur.role_id "
-          + " WHERE u.institution_id IS NULL")
-  List<User> getUsersWithNoInstitution();
-
   @RegisterBeanMapper(value = User.class)
   @SqlQuery(
       "SELECT u.user_id, u.display_name, u.email FROM users u "

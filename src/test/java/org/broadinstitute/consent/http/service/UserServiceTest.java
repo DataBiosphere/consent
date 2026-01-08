@@ -627,16 +627,6 @@ class UserServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testFindUsersWithNoInstitution() {
-    User user = generateUser();
-    when(userDAO.getUsersWithNoInstitution()).thenReturn(List.of(user));
-    List<User> users = service.findUsersWithNoInstitution();
-    assertNotNull(users);
-    assertEquals(1, users.size());
-    assertEquals(user.getUserId(), users.get(0).getUserId());
-  }
-
-  @Test
   void testFindUserWithPropertiesAsJsonObjectById() {
     User user = generateUser();
     user.setLibraryCard(new LibraryCard());

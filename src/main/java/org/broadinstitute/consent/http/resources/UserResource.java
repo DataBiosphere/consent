@@ -166,19 +166,6 @@ public class UserResource extends Resource {
   }
 
   @GET
-  @Path("/institution/unassigned")
-  @Produces("application/json")
-  @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
-  public Response getUnassignedUsers(@Auth AuthUser user) {
-    try {
-      List<User> unassignedUsers = userService.findUsersWithNoInstitution();
-      return Response.ok().entity(unassignedUsers).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @GET
   @Path("/institution/{institutionId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN})

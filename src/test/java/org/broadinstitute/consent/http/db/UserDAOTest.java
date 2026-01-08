@@ -434,16 +434,6 @@ class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetUsersWithNoInstitution() {
-    createUserWithInstitution();
-    User user = createUser();
-    List<User> users = userDAO.getUsersWithNoInstitution();
-    // One user we created just now, one is the admin user for the institution.
-    assertEquals(2, users.size());
-    assertTrue(users.stream().anyMatch(u -> u.getUserId().equals(user.getUserId())));
-  }
-
-  @Test
   void testUpdateEraCommonsId() {
     User u = createUser();
     String era = u.getEraCommonsId();
