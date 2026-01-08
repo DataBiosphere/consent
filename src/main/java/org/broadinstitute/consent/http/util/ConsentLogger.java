@@ -49,7 +49,10 @@ public interface ConsentLogger {
    * @param message Error Message
    */
   default void logWarn(String message) {
-    getLogger(this.getClass()).warn(message);
+    if (message != null) {
+      message = message.replaceAll("[\n\r]", "_");
+      getLogger(this.getClass()).warn(message);
+    }
   }
 
   /**
