@@ -338,10 +338,6 @@ public class UserService implements ConsentLogger {
             .formatted(authUser.getDisplayName(), roleId, userId));
   }
 
-  public List<User> findUsersWithNoInstitution() {
-    return userDAO.getUsersWithNoInstitution();
-  }
-
   /**
    * Convenience method to return a response-friendly json object of the user.
    *

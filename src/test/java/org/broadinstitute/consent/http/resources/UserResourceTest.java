@@ -437,15 +437,6 @@ class UserResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testGetUnassignedUsers() {
-    List<User> users = Collections.singletonList(createUserWithRole());
-    when(userService.findUsersWithNoInstitution()).thenReturn(users);
-
-    Response response = userResource.getUnassignedUsers(authUser);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-  }
-
-  @Test
   void testGetUsersByInstitutionNoInstitution() {
     Integer institutionId = 1;
     doThrow(new NotFoundException()).when(userService).findUsersByInstitutionId(institutionId);
