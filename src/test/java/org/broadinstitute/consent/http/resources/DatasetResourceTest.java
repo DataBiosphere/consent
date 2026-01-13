@@ -63,6 +63,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGro
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
+import org.broadinstitute.consent.http.service.CacheTableService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
@@ -92,6 +93,8 @@ class DatasetResourceTest extends AbstractTestHelper {
 
   @Mock private GCSService gcsService;
 
+  @Mock private CacheTableService cacheTableService;
+
   @Mock private Response mockResponse;
 
   private final AuthUser authUser = new AuthUser().setEmail("test@test.com");
@@ -108,7 +111,8 @@ class DatasetResourceTest extends AbstractTestHelper {
             datasetRegistrationService,
             elasticSearchService,
             tdrService,
-            gcsService);
+            gcsService,
+            cacheTableService);
   }
 
   @Test

@@ -26,6 +26,7 @@ public class DAOContainer {
   private InstitutionDAO institutionDAO;
   private FileStorageObjectDAO fileStorageObjectDAO;
   private AcknowledgementDAO acknowledgementDAO;
+  private CacheTableDAO cacheTableDAO;
 
   public CounterDAO getCounterDAO() {
     return counterDAO;
@@ -170,5 +171,13 @@ public class DAOContainer {
 
   public void setAcknowledgementDAO(AcknowledgementDAO acknowledgementDAO) {
     this.acknowledgementDAO = acknowledgementDAO;
+  }
+
+  public CacheTableDAO getCacheTableDAO() {
+    return cacheTableDAO;
+  }
+
+  public void setCacheTableDAO(CacheTableDAO cacheTableDAO) {
+    this.cacheTableDAO = cacheTableDAO;
   }
 }

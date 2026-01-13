@@ -47,6 +47,7 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
+import org.broadinstitute.consent.http.service.CacheTableService;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DACAutomationRuleService;
 import org.broadinstitute.consent.http.service.DaaService;
@@ -188,6 +189,7 @@ public class ConsentModule extends AbstractModule {
     container.setInstitutionDAO(providesInstitutionDAO());
     container.setFileStorageObjectDAO(providesFileStorageObjectDAO());
     container.setAcknowledgementDAO(providesAcknowledgementDAO());
+    container.setCacheTableDAO(providesCacheTableDAO());
     return container;
   }
 
@@ -681,5 +683,19 @@ public class ConsentModule extends AbstractModule {
   @Provides
   DACAutomationRuleDAO providesDACAutomationRuleDAO() {
     return rulesDAO;
+  }
+
+  @Provides
+  CacheTableDAO providesCacheTableDAO() {
+    return cacheTableDAO;
+  }
+
+  @Provides
+  CacheTableService providesCacheTableService() {
+    return new CacheTableService(
+        providesJdbi(),
+        providesDAOContainer(),
+        providesDatasetServiceDAO(),
+        providesOntologyService());
   }
 }

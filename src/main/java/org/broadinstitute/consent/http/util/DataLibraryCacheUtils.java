@@ -1,11 +1,15 @@
 package org.broadinstitute.consent.http.util;
 
 import com.google.gson.JsonArray;
-import jakarta.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.models.CacheDocument;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -21,15 +25,9 @@ import org.broadinstitute.consent.http.models.elastic_search.UserTerm;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.service.OntologyService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 
 public class DataLibraryCacheUtils implements ConsentLogger {
-  public static StudyTerm toStudyTerm(Study study, UserDAO userDAO) {
+  public StudyTerm toStudyTerm(Study study, UserDAO userDAO) {
     if (Objects.isNull(study)) {
       return null;
     }
@@ -104,7 +102,11 @@ public class DataLibraryCacheUtils implements ConsentLogger {
     return term;
   }
 
-  public DatasetTerm toDatasetTerm(Dataset dataset, UserDAO userDAO, DacDAO dacDAO, InstitutionDAO institutionDAO,
+  public DatasetTerm toDatasetTerm(
+      Dataset dataset,
+      UserDAO userDAO,
+      DacDAO dacDAO,
+      InstitutionDAO institutionDAO,
       OntologyService ontologyService) {
     if (Objects.isNull(dataset)) {
       return null;
@@ -197,21 +199,21 @@ public class DataLibraryCacheUtils implements ConsentLogger {
     return new UserTerm(user.getUserId(), user.getDisplayName(), institution);
   }
 
-  static DacTerm toDacTerm(Dac dac) {
+  DacTerm toDacTerm(Dac dac) {
     if (Objects.isNull(dac)) {
       return null;
     }
     return new DacTerm(dac.getDacId(), dac.getName(), dac.getEmail());
   }
 
-  static InstitutionTerm toInstitutionTerm(Institution institution) {
+  InstitutionTerm toInstitutionTerm(Institution institution) {
     if (Objects.isNull(institution)) {
       return null;
     }
     return new InstitutionTerm(institution.getId(), institution.getName());
   }
 
-  static Optional<DatasetProperty> findDatasetProperty(
+  Optional<DatasetProperty> findDatasetProperty(
       Collection<DatasetProperty> props, String schemaProp) {
     return (props == null)
         ? Optional.empty()
@@ -221,7 +223,7 @@ public class DataLibraryCacheUtils implements ConsentLogger {
             .findFirst();
   }
 
-  static Optional<DatasetProperty> findFirstDatasetPropertyByName(
+  Optional<DatasetProperty> findFirstDatasetPropertyByName(
       Collection<DatasetProperty> props, String propertyName) {
     return (props == null)
         ? Optional.empty()
@@ -230,10 +232,9 @@ public class DataLibraryCacheUtils implements ConsentLogger {
             .findFirst();
   }
 
-  static Optional<StudyProperty> findStudyProperty(Collection<StudyProperty> props, String key) {
+  Optional<StudyProperty> findStudyProperty(Collection<StudyProperty> props, String key) {
     return (props == null)
         ? Optional.empty()
         : props.stream().filter(p -> p.getKey().equals(key)).findFirst();
   }
-
 }

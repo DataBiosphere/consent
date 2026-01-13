@@ -31,16 +31,19 @@ import jakarta.ws.rs.core.UriBuilder;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.CacheDocument;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetPatch;
@@ -53,6 +56,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
+import org.broadinstitute.consent.http.service.CacheTableService;
 import org.broadinstitute.consent.http.service.DatasetRegistrationService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
@@ -63,6 +67,8 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.result.ResultIterable;
 
 @Path("api/dataset")
 public class DatasetResource extends Resource {
@@ -75,6 +81,7 @@ public class DatasetResource extends Resource {
 
   private final JsonSchemaUtil jsonSchemaUtil;
   private final GCSService gcsService;
+  private final CacheTableService cacheTableService;
 
   @Inject
   public DatasetResource(
@@ -83,13 +90,15 @@ public class DatasetResource extends Resource {
       DatasetRegistrationService datasetRegistrationService,
       ElasticSearchService elasticSearchService,
       TDRService tdrService,
-      GCSService gcsService) {
+      GCSService gcsService,
+      CacheTableService cacheTableService) {
     this.datasetService = datasetService;
     this.userService = userService;
     this.datasetRegistrationService = datasetRegistrationService;
     this.gcsService = gcsService;
     this.elasticSearchService = elasticSearchService;
     this.tdrService = tdrService;
+    this.cacheTableService = cacheTableService;
     this.jsonSchemaUtil = new JsonSchemaUtil();
   }
 
@@ -392,8 +401,8 @@ public class DatasetResource extends Resource {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       var datasetIds = datasetService.findAllDatasetIds();
-      StreamingOutput indexResponse = elasticSearchService.indexDatasetIds(datasetIds, user);
-      return Response.ok(indexResponse, MediaType.APPLICATION_JSON).build();
+      // StreamingOutput indexResponse = elasticSearchService.indexDatasetIds(datasetIds, user);
+      return cacheTableService.indexDatasets(datasetIds);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -405,7 +414,7 @@ public class DatasetResource extends Resource {
   public Response indexDataset(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      return elasticSearchService.indexDataset(datasetId, user);
+      return cacheTableService.indexDatasets(List.of(datasetId));
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -432,7 +441,36 @@ public class DatasetResource extends Resource {
   @Timed
   public Response searchDatasetIndex(@Auth DuosUser duosUser, String query) {
     try {
-      return elasticSearchService.searchDatasets(query);
+      Pair<ResultIterable<CacheDocument>, Handle> results = cacheTableService.searchDatasets(query);
+      Iterator<CacheDocument> cacheDocumentStream = results.getLeft().stream().iterator();
+      Handle handle = results.getRight();
+      StreamingOutput streamingOutput =
+          output -> {
+            try {
+              output.write("[".getBytes());
+              if (cacheDocumentStream.hasNext()) {
+                output.write(cacheDocumentStream.next().jsondocument().getBytes());
+              }
+              cacheDocumentStream.forEachRemaining(
+                  cacheDocument -> {
+                    try {
+                      output.write(",".getBytes());
+                      output.write(cacheDocument.jsondocument().getBytes());
+                    } catch (Exception e) {
+                      throw new RuntimeException(e);
+                    }
+                  });
+              output.write("]".getBytes());
+              output.flush();
+            } catch (Exception e) {
+              throw new RuntimeException("Error streaming data", e);
+            } finally {
+              if (handle != null) {
+                handle.close();
+              }
+            }
+          };
+      return Response.ok(streamingOutput).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
