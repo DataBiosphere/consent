@@ -50,14 +50,14 @@ public class DarCollectionServiceDAO {
   public List<String> createElectionsForDarByUser(User user, DataAccessRequest dar)
       throws SQLException {
     List<String> createdElectionReferenceIds = new ArrayList<>();
-    List<Integer> allowableDatasetIds = new ArrayList<>();
+    List<Integer> actionableDatasetIds = new ArrayList<>();
     if (user.hasUserRole(UserRoles.ADMIN)) {
-      allowableDatasetIds.addAll(dar.getDatasetIds());
+      actionableDatasetIds.addAll(dar.getDatasetIds());
     } else if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
-      allowableDatasetIds.addAll(datasetDAO.findDatasetIdsByDACUserId(user.getUserId()));
+      actionableDatasetIds.addAll(datasetDAO.findDatasetIdsByDACUserId(user.getUserId()));
     } else if (user.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
       // TODO: This needs to be `REQUIRE_SO_DAR_APPROVAL` when DT-2786 and DT-2787 are complete
-      allowableDatasetIds.addAll(
+      actionableDatasetIds.addAll(
           datasetDAO.filterDatasetIdsByAutomationRuleType(
               dar.getDatasetIds(), DACAutomationRuleType.GRU_V1.name()));
     }
@@ -96,7 +96,7 @@ public class DarCollectionServiceDAO {
                                 .equalsIgnoreCase(ElectionStatus.OPEN.getValue());
 
                     // Skip election creation for datasets that the user cannot act upon.
-                    if (!allowableDatasetIds.contains(datasetId)) {
+                    if (!actionableDatasetIds.contains(datasetId)) {
                       ignore = true;
                     }
                     if (!ignore) {

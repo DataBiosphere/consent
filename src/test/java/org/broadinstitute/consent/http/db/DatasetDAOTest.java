@@ -406,7 +406,7 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset dataset = insertDataset();
     Dac dac = insertDac();
     datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
-    // Set up a DAC Rule for requiring SO Approval.
+    // Set up the required DAC Rule
     User user = createUser();
     createUserRole(UserRoles.CHAIRPERSON.getRoleId(), user.getUserId(), dac.getDacId());
     List<DACAutomationRule> rules =
