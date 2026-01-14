@@ -57,10 +57,9 @@ public class DarCollectionServiceDAO {
       actionableDatasetIds.addAll(datasetDAO.findDatasetIdsByDACUserId(user.getUserId()));
     } else if (user.hasUserRole(UserRoles.SIGNINGOFFICIAL)
         && user.getEmail().equalsIgnoreCase(dar.getData().getSigningOfficialEmail())) {
-      // TODO: This needs to be `REQUIRE_SO_DAR_APPROVAL` when DT-2786 and DT-2787 are complete
       actionableDatasetIds.addAll(
           datasetDAO.filterDatasetIdsByAutomationRuleType(
-              dar.getDatasetIds(), DACAutomationRuleType.GRU_V1.name()));
+              dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()));
     }
     jdbi.useHandle(
         handle -> {

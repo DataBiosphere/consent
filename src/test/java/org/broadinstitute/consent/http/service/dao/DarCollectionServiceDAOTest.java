@@ -474,10 +474,9 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     dar.getData().setSigningOfficialEmail(signingOfficial.getEmail());
 
     // Set up DAC Automation Rule
-    // TODO: This needs to be `REQUIRE_SO_DAR_APPROVAL` when DT-2786 and DT-2787 are complete
     List<DACAutomationRule> rules =
         dacAutomationRuleDAO.findAll().stream()
-            .filter(r -> r.ruleType().equals(DACAutomationRuleType.GRU_V1))
+            .filter(r -> r.ruleType().equals(DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL))
             .toList();
     assertFalse(rules.isEmpty());
 
@@ -537,10 +536,9 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     dar.getData().setSigningOfficialEmail(otherSO.getEmail());
 
     // Set up DAC Automation Rule
-    // TODO: This needs to be `REQUIRE_SO_DAR_APPROVAL` when DT-2786 and DT-2787 are complete
     List<DACAutomationRule> rules =
         dacAutomationRuleDAO.findAll().stream()
-            .filter(r -> r.ruleType().equals(DACAutomationRuleType.GRU_V1))
+            .filter(r -> r.ruleType().equals(DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL))
             .toList();
     assertFalse(rules.isEmpty());
 
