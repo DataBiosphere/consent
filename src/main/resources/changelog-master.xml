@@ -220,4 +220,5 @@
            relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-01-13-add-rule-so-dar-approval.xml"
            relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-01-09-ontology.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>

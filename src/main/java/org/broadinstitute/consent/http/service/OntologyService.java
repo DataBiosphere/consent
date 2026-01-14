@@ -5,20 +5,28 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.io.InputStream;
+import java.util.Collection;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
+import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
+import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
+import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
 public class OntologyService implements ConsentLogger {
 
   private final ServicesConfiguration servicesConfiguration;
   private final Client client;
+  private final OntologyDAO ontologyDAO;
 
-  public OntologyService(Client client, ServicesConfiguration config) {
+  public OntologyService(Client client, ServicesConfiguration config, OntologyDAO ontologyDAO) {
     this.client = client;
     this.servicesConfiguration = config;
+    this.ontologyDAO = ontologyDAO;
   }
 
   public DataUseSummary translateDataUseSummary(DataUse dataUse) {
@@ -50,5 +58,12 @@ public class OntologyService implements ConsentLogger {
       logWarn("Error parsing response from Ontology service: " + e);
       throw e;
     }
+  }
+
+  public void indexOntology(User user, InputStream indexStream, String ontologyType)
+      throws Exception {
+    OntologyIndexService indexService = new OntologyIndexService();
+    Collection<OntologyTerm> terms = indexService.generateTerms(indexStream, ontologyType);
+    ontologyDAO.insertTerms(user, terms);
   }
 }

@@ -16,8 +16,10 @@ import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
+import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockserver.model.Header;
 
@@ -25,6 +27,7 @@ import org.mockserver.model.Header;
 class OntologyServiceTest extends MockServerTestHelper {
 
   private OntologyService service;
+  @Mock private OntologyDAO ontologyDAO;
 
   ServicesConfiguration config() {
     ServicesConfiguration config = new ServicesConfiguration();
@@ -35,7 +38,7 @@ class OntologyServiceTest extends MockServerTestHelper {
 
   private void initService() {
     Client client = ClientBuilder.newClient();
-    service = new OntologyService(client, config());
+    service = new OntologyService(client, config(), ontologyDAO);
   }
 
   @Test

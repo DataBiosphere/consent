@@ -902,6 +902,30 @@ paths:
     $ref: './paths/votes.yaml'
   /api/votes/rationale:
     $ref: './paths/votesRationale.yaml'
+  /api/ontology:
+    post:
+        summary: Index Ontology
+        description: Index Ontology
+        requestBody:
+          description: Ontology Index file to upload
+          required: true
+          content:
+            multipart/form-data:
+              schema:
+                type: object
+                properties:
+                  file:
+                    description: Ontology file to upload
+                    type: string
+                    format: binary
+        tags:
+            - Admin
+            - Ontology
+        responses:
+          200:
+            description: Ontology Query Results
+          500:
+            description: Internal Server Error
   /metrics/dataset/{datasetId}:
     get:
       summary: Dataset Metrics

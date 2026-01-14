@@ -20,6 +20,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Config;
@@ -62,6 +63,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   protected static AcknowledgementDAO acknowledgementDAO;
   protected static DraftDAO draftDAO;
   protected static DACAutomationRuleDAO dacAutomationRuleDAO;
+  protected static OntologyDAO ontologyDAO;
   private static DropwizardTestSupport<ConsentConfiguration> testApp;
   // This is a test-only DAO class where we manage the deletion
   // of all records between test runs.
@@ -153,6 +155,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     draftDAO = jdbi.onDemand(DraftDAO.class);
     dacAutomationRuleDAO = jdbi.onDemand(DACAutomationRuleDAO.class);
     testingDAO = jdbi.onDemand(TestingDAO.class);
+    ontologyDAO = jdbi.onDemand(OntologyDAO.class);
   }
 
   @BeforeEach()
