@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 import com.sendgrid.Response;
 import com.sendgrid.helpers.mail.Mail;
 import freemarker.template.Template;
+import freemarker.template.TemplateException;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Collections;
@@ -22,7 +23,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import freemarker.template.TemplateException;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
@@ -500,12 +500,11 @@ class EmailServiceTest extends AbstractTestHelper {
 
     String referenceId = "abc-123";
 
-    when(templateHelper.getTemplate(EmailType.NEW_DAR_SO_NEEDS_TO_APPROVE.templateName)).thenReturn(mock());
+    when(templateHelper.getTemplate(EmailType.NEW_DAR_SO_NEEDS_TO_APPROVE.templateName))
+        .thenReturn(mock());
 
     service.sendNewDARSigningOfficialRequestEmail(
-        signingOfficial,
-        researcherUser.getDisplayName(),
-        referenceId);
+        signingOfficial, researcherUser.getDisplayName(), referenceId);
     verify(sendGridAPI).sendMessage(any(Mail.class), eq(signingOfficial.getEmail()));
     verify(emailDAO)
         .insert(

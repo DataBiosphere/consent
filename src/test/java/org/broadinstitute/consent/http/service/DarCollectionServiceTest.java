@@ -1958,13 +1958,24 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     chairRole.setDacId(manualDac.getDacId());
     chair.setRoles(List.of(chairRole));
 
-    DACAutomationRule autoOpenRule = mock(DACAutomationRule.class);
-    when(autoOpenRule.ruleType()).thenReturn(DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS);
-    when(autoOpenRule.enabledByUserId()).thenReturn(member.getUserId());
+    DACAutomationRule disabledAutoOpenRule = mock(DACAutomationRule.class);
+    when(disabledAutoOpenRule.ruleType())
+        .thenReturn(DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS);
+    when(disabledAutoOpenRule.enabledByUserId()).thenReturn(null);
 
-    DACAutomationRule requireSORule = mock(DACAutomationRule.class);
-    when(requireSORule.ruleType()).thenReturn(DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL);
-    when(requireSORule.enabledByUserId()).thenReturn(member.getUserId());
+    DACAutomationRule enabledAutoOpenRule = mock(DACAutomationRule.class);
+    when(enabledAutoOpenRule.ruleType())
+        .thenReturn(DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS);
+    when(enabledAutoOpenRule.enabledByUserId()).thenReturn(member.getUserId());
+
+    DACAutomationRule disabledRequireSORule = mock(DACAutomationRule.class);
+    when(disabledRequireSORule.ruleType())
+        .thenReturn(DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL);
+    when(disabledRequireSORule.enabledByUserId()).thenReturn(null);
+
+    DACAutomationRule enabledRequireSORule = mock(DACAutomationRule.class);
+    when(enabledRequireSORule.ruleType()).thenReturn(DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL);
+    when(enabledRequireSORule.enabledByUserId()).thenReturn(member.getUserId());
 
     when(darCollectionDAO.findDARCollectionByCollectionId(1)).thenReturn(collection);
     when(datasetDAO.findDatasetsByIdList(anyList()))
@@ -1972,10 +1983,11 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(dacDAO.findDacsForDatasetIds(anyList()))
         .thenReturn(Set.of(autoOpenDac, manualDac, soRequiredDac));
     when(dacAutomationRuleService.findAllByDacId(autoOpenDac.getDacId()))
-        .thenReturn(List.of(autoOpenRule));
-    when(dacAutomationRuleService.findAllByDacId(manualDac.getDacId())).thenReturn(List.of());
+        .thenReturn(List.of(enabledAutoOpenRule));
+    when(dacAutomationRuleService.findAllByDacId(manualDac.getDacId()))
+        .thenReturn(List.of(disabledAutoOpenRule, disabledRequireSORule));
     when(dacAutomationRuleService.findAllByDacId(soRequiredDac.getDacId()))
-        .thenReturn(List.of(requireSORule));
+        .thenReturn(List.of(enabledRequireSORule));
     when(userDAO.findUsersByRoleId(UserRoles.ADMIN.getRoleId())).thenReturn(List.of());
     when(userDAO.findUsersForDatasetsByRole(anyList(), anyList()))
         .thenReturn(Set.of(member, chair));
