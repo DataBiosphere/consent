@@ -476,8 +476,9 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     // Set up DAC Automation Rule
     // TODO: This needs to be `REQUIRE_SO_DAR_APPROVAL` when DT-2786 and DT-2787 are complete
     List<DACAutomationRule> rules =
-        dacAutomationRuleDAO.findAll().stream().filter(r -> r.ruleType().equals(
-            DACAutomationRuleType.GRU_V1)).toList();
+        dacAutomationRuleDAO.findAll().stream()
+            .filter(r -> r.ruleType().equals(DACAutomationRuleType.GRU_V1))
+            .toList();
     assertFalse(rules.isEmpty());
 
     dacAutomationRuleDAO.auditedInsertDACRuleSetting(
@@ -538,8 +539,9 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     // Set up DAC Automation Rule
     // TODO: This needs to be `REQUIRE_SO_DAR_APPROVAL` when DT-2786 and DT-2787 are complete
     List<DACAutomationRule> rules =
-        dacAutomationRuleDAO.findAll().stream().filter(r -> r.ruleType().equals(
-            DACAutomationRuleType.GRU_V1)).toList();
+        dacAutomationRuleDAO.findAll().stream()
+            .filter(r -> r.ruleType().equals(DACAutomationRuleType.GRU_V1))
+            .toList();
     assertFalse(rules.isEmpty());
 
     dacAutomationRuleDAO.auditedInsertDACRuleSetting(
@@ -600,9 +602,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
   private Dac createDac() {
     Integer id =
         dacDAO.createDac(
-            "Test_" + randomAlphabetic(20),
-            "Test_" + randomAlphabetic(20),
-            new Date());
+            "Test_" + randomAlphabetic(20), "Test_" + randomAlphabetic(20), new Date());
     return dacDAO.findById(id);
   }
 
@@ -617,8 +617,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     datasetDAO.insertDatasetProperties(list);
   }
 
-  private void createDarForCollection(
-      User user, Integer collectionId, Dataset dataset) {
+  private void createDarForCollection(User user, Integer collectionId, Dataset dataset) {
     Date now = new Date();
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
