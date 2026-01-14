@@ -617,7 +617,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     datasetDAO.insertDatasetProperties(list);
   }
 
-  private DataAccessRequest createDarForCollection(
+  private void createDarForCollection(
       User user, Integer collectionId, Dataset dataset) {
     Date now = new Date();
     DataAccessRequest dar = new DataAccessRequest();
@@ -630,7 +630,6 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.updateDataByReferenceId(
         dar.referenceId, dar.userId, new Date(), new Date(), data, user.getEraCommonsId());
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
-    return dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
   }
 
   private Dataset createDatasetWithDac(Integer dacId) {
