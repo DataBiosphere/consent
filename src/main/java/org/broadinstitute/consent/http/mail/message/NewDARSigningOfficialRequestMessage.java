@@ -6,7 +6,7 @@ import org.broadinstitute.consent.http.models.User;
 
 public class NewDARSigningOfficialRequestMessage extends MailMessage {
 
-  private static final String NEW_DAR_REQUEST = "A data access request requires your approval: %s.";
+  private static final String SUBJECT = "A data access request requires your approval: %s.";
 
   private final String darCode;
   private final String researcherName;
@@ -20,7 +20,7 @@ public class NewDARSigningOfficialRequestMessage extends MailMessage {
   @Override
   public String createSubject() {
     // nosemgrep
-    return String.format(NEW_DAR_REQUEST, darCode);
+    return String.format(SUBJECT, darCode);
   }
 
   @Override

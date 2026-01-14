@@ -265,7 +265,7 @@ public class EmailService implements ConsentLogger {
       User signingOfficial, String researcherName, String darCode)
       throws TemplateException, IOException {
     sendMessage(
-        new NewDARSigningOfficialRequestMessage(signingOfficial, researcherName, darCode),
+        new NewDARSigningOfficialRequestMessage(signingOfficial, darCode, researcherName),
         signingOfficial.getUserId());
   }
 
