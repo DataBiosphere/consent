@@ -16,7 +16,7 @@ public class OntologyTerm {
   Boolean usable;
   List<ParentTerm> parents;
 
-  public OntologyTerm(String termId, String version, String ontology) {
+  public OntologyTerm(String termId, String ontology, String version) {
     this.termId = termId;
     this.version = version;
     this.ontology = ontology;
