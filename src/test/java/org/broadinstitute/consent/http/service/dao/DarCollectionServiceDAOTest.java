@@ -13,7 +13,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -65,7 +64,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
     List<Vote> createdVotes =
         voteDAO.findVotesByElectionIds(
-            createdElections.stream().map(Election::getElectionId).collect(Collectors.toList()));
+            createdElections.stream().map(Election::getElectionId).toList());
 
     assertTrue(referenceIds.contains(dar.getReferenceId()));
     assertFalse(createdElections.isEmpty());
@@ -176,7 +175,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
     List<Vote> createdVotes =
         voteDAO.findVotesByElectionIds(
-            createdElections.stream().map(Election::getElectionId).collect(Collectors.toList()));
+            createdElections.stream().map(Election::getElectionId).toList());
 
     assertTrue(referenceIds.contains(dar.getReferenceId()));
     // Ensure that we have an access and rp election
@@ -232,7 +231,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
     List<Vote> createdVotes =
         voteDAO.findVotesByElectionIds(
-            createdElections.stream().map(Election::getElectionId).collect(Collectors.toList()));
+            createdElections.stream().map(Election::getElectionId).toList());
 
     assertTrue(referenceIds.contains(dar.getReferenceId()));
     assertEquals(2, createdElections.size()); //
