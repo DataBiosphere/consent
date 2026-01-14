@@ -132,7 +132,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
     List<Vote> createdVotes =
         voteDAO.findVotesByElectionIds(
-            createdElections.stream().map(Election::getElectionId).collect(Collectors.toList()));
+            createdElections.stream().map(Election::getElectionId).toList());
 
     assertTrue(referenceIds.contains(dar.getReferenceId()));
     // Ensure that we have an access and rp election
