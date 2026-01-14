@@ -825,8 +825,9 @@ public class DarCollectionService implements ConsentLogger {
         false);
 
     // Notify signing official named in DAR if they need to approve
-    notifySpecificSigningOfficialOfApprovalNeeded(
-        context.classification.requiresSOApprovalDacs, context.latestDar, context.researcher);
+    if (!context.classification.requiresSOApprovalDacs.isEmpty()) {
+      notifySpecificSigningOfficialOfApprovalNeeded(context.latestDar, context.researcher);
+    }
 
     // Notify signing officials of DAR submission
     notifySigningOfficialsOfDARSubmission(
@@ -1177,13 +1178,8 @@ public class DarCollectionService implements ConsentLogger {
     }
   }
 
-  protected void notifySpecificSigningOfficialOfApprovalNeeded(
-      Set<Dac> dacs, DataAccessRequest dataAccessRequest, User researcher)
-      throws TemplateException, IOException {
-    if (dacs.isEmpty() || dataAccessRequest.getProgressReport()) {
-      return;
-    }
-
+  private void notifySpecificSigningOfficialOfApprovalNeeded(
+      DataAccessRequest dataAccessRequest, User researcher) throws TemplateException, IOException {
     String soEmail = dataAccessRequest.getData().getSigningOfficialEmail();
     User soUser = userDAO.findUserByEmail(soEmail);
     emailService.sendNewDARSigningOfficialRequestEmail(
