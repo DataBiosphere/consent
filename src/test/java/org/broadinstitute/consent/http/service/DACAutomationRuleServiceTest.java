@@ -33,6 +33,8 @@ import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
 import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -218,6 +220,127 @@ class DACAutomationRuleServiceTest {
     assertFalse(result.isRuleEnabled());
     assertEquals(1, result.getRuleId());
     assertEquals(-1, result.getEnabledTime());
+  }
+
+  @Test
+  void testToggleRuleFromOnToOffInvalidRuleNumber() {
+    when(ruleDAO.findAllDACAutomationRulesByDACId(1))
+        .thenReturn(
+            List.of(
+                new DACAutomationRule(
+                    1,
+                    DACAutomationRuleType.GRU_V1,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    Timestamp.from(Instant.now()),
+                    1,
+                    "alice",
+                    "alice@fake.org")));
+    assertThrows(UnprocessableEntityException.class, () -> service.toggleRule(1, 666, user));
+  }
+
+  @Test
+  void testToggleRuleRequireSORuleToOnWithAutoOpenOn() {
+    when(ruleDAO.findAllDACAutomationRulesByDACId(1))
+        .thenReturn(
+            List.of(
+                new DACAutomationRule(
+                    1,
+                    DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    Timestamp.from(Instant.now()),
+                    1,
+                    "alice",
+                    "alice@fake.org"),
+                new DACAutomationRule(
+                    2,
+                    DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    null,
+                    null,
+                    null,
+                    null)));
+    assertThrows(ConsentConflictException.class, () -> service.toggleRule(1, 2, user));
+  }
+
+  @Test
+  void testToggleRuleRAutoOpenOnWithSORuleOn() {
+    when(ruleDAO.findAllDACAutomationRulesByDACId(1))
+        .thenReturn(
+            List.of(
+                new DACAutomationRule(
+                    1,
+                    DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    null,
+                    null,
+                    null,
+                    null),
+                new DACAutomationRule(
+                    2,
+                    DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    Timestamp.from(Instant.now()),
+                    1,
+                    "alice",
+                    "alice@fake.org")));
+    assertThrows(ConsentConflictException.class, () -> service.toggleRule(1, 1, user));
+  }
+
+  @Test
+  void testToggleRuleRAutoOpenOnWithSORuleOff() {
+    when(ruleDAO.findAllDACAutomationRulesByDACId(1))
+        .thenReturn(
+            List.of(
+                new DACAutomationRule(
+                    1,
+                    DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    null,
+                    null,
+                    null,
+                    null),
+                new DACAutomationRule(
+                    2,
+                    DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    null,
+                    null,
+                    null,
+                    null)));
+    assertDoesNotThrow(() -> service.toggleRule(1, 1, user));
+  }
+
+  @Test
+  void testToggleRuleSORuleOnWithAutoOpenOff() {
+    when(ruleDAO.findAllDACAutomationRulesByDACId(1))
+        .thenReturn(
+            List.of(
+                new DACAutomationRule(
+                    1,
+                    DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    null,
+                    null,
+                    null,
+                    null),
+                new DACAutomationRule(
+                    2,
+                    DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL,
+                    "Test Rule",
+                    RuleState.AVAILABLE,
+                    null,
+                    null,
+                    null,
+                    null)));
+    assertDoesNotThrow(() -> service.toggleRule(1, 2, user));
   }
 
   @Test

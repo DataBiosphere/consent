@@ -218,4 +218,6 @@
            relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2025-12-11-rename-intellectual-property-to-properties.xml"
            relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-01-13-add-rule-so-dar-approval.xml"
+           relativeToChangelogFile="true" />
 </databaseChangeLog>
