@@ -123,7 +123,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     assertNotNull(dar);
 
     // refresh the collection
-    collection = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
+    darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
 
     List<String> referenceIds = serviceDAO.createElectionsForDarByUser(user, dar);
 
@@ -223,7 +223,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
             .orElseThrow();
 
     // refresh the collection
-    collection = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
+    darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
 
     List<String> referenceIds = serviceDAO.createElectionsForDarByUser(chair, dar);
 
