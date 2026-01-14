@@ -453,6 +453,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
   /// This test covers the case where:
   /// - User is a Signing Official for the DAR under test
   /// - Collection has 1 DAR/Dataset combinations
+  /// - DAC has a rule set requiring SO approval
   /// - Elections created should be for the DAR/Dataset
   ///
   @Test
@@ -514,6 +515,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
   /// This test covers the case where:
   /// - User is NOT a Signing Official for the DAR under test
   /// - Collection has 1 DAR/Dataset combinations
+  /// - DAC has a rule set requiring SO approval
   /// - No elections should be created
   ///
   @Test
