@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -571,7 +569,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
   /** Helper method to generate a DarCollection with a Dac, a Dataset, and a create User */
   private DarCollection setUpDarCollectionWithDacDataset() {
     User user = createUser();
-    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+    String darCode = "DAR-" + randomInt(100, 1000);
     DacAndDataset dacAndDataset = createDacAndDataset();
     DacAndDataset dacAndDataset2 = createDacAndDataset();
     Integer collectionId =
@@ -603,8 +601,8 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
   private Dac createDac() {
     Integer id =
         dacDAO.createDac(
-            "Test_" + RandomStringUtils.random(20, true, true),
-            "Test_" + RandomStringUtils.random(20, true, true),
+            "Test_" + randomAlphabetic(20),
+            "Test_" + randomAlphabetic(20),
             new Date());
     return dacDAO.findById(id);
   }
@@ -638,9 +636,9 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
 
   private Dataset createDatasetWithDac(Integer dacId) {
     User user = createUser();
-    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    String name = "Name_" + randomAlphabetic(20);
     Timestamp now = new Timestamp(new Date().getTime());
-    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    String objectId = "Object ID_" + randomAlphabetic(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     Integer id =
         datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), dacId);
