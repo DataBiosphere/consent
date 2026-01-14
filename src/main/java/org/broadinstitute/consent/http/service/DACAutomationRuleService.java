@@ -19,6 +19,8 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -86,14 +88,39 @@ public class DACAutomationRuleService implements ConsentLogger {
     return ruleDAO.findAllDACAutomationRulesByDACId(dacId);
   }
 
-  public AutomationRuleToggleResponse toggleRule(Integer dacId, Integer ruleId, User user) {
+  public AutomationRuleToggleResponse toggleRule(Integer dacId, Integer ruleId, User user)
+      throws ConsentConflictException, UnprocessableEntityException {
+    List<DACAutomationRule> dacRules = ruleDAO.findAllDACAutomationRulesByDACId(dacId);
     Optional<DACAutomationRule> matchingRule =
-        ruleDAO.findAllDACAutomationRulesByDACId(dacId).stream()
+        dacRules.stream()
             .filter(r -> Objects.equals(r.id(), ruleId) && !isNull(r.enabledByUserId()))
             .findFirst();
     if (matchingRule.isPresent()) {
       ruleDAO.auditedDeleteDACRuleSetting(dacId, ruleId, user.getUserId());
       return new AutomationRuleToggleResponse(ruleId, false, -1, null, null);
+    } else {
+      Optional<DACAutomationRule> optionalRuleBeingUpdated =
+          dacRules.stream().filter(r -> Objects.equals(r.id(), ruleId)).findFirst();
+      if (optionalRuleBeingUpdated.isEmpty()) {
+        throw new UnprocessableEntityException("Rule ID not found.");
+      }
+      DACAutomationRule ruleBeingUpdated = optionalRuleBeingUpdated.get();
+      if (ruleBeingUpdated.ruleType() == DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL) {
+        Optional<DACAutomationRule> enabledRuleOfInterest =
+            getEnabledRuleOfInterest(dacRules, DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS);
+        if (enabledRuleOfInterest.isPresent()) {
+          throw new ConsentConflictException(
+              "You must disable the rule to automatically open elections for all DAC members before enabling this rule.");
+        }
+      } else if (ruleBeingUpdated.ruleType()
+          == DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS) {
+        Optional<DACAutomationRule> enabledRuleOfInterest =
+            getEnabledRuleOfInterest(dacRules, DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL);
+        if (enabledRuleOfInterest.isPresent()) {
+          throw new ConsentConflictException(
+              "You must disable the rule that requires Signing Official approval on Data Access Requests before enabling this rule.");
+        }
+      }
     }
     Instant insertTime = Instant.now();
     ruleDAO.auditedInsertDACRuleSetting(dacId, ruleId, user.getUserId(), insertTime);
@@ -228,5 +255,12 @@ public class DACAutomationRuleService implements ConsentLogger {
 
   protected int createVoteForElection(int electionId, int userId, VoteType voteType) {
     return voteDAO.insertVote(userId, electionId, voteType.getValue());
+  }
+
+  protected Optional<DACAutomationRule> getEnabledRuleOfInterest(
+      List<DACAutomationRule> dacRules, DACAutomationRuleType ruleType) {
+    return dacRules.stream()
+        .filter(r -> Objects.equals(r.ruleType(), ruleType) && !isNull(r.enabledByUserId()))
+        .findFirst();
   }
 }
