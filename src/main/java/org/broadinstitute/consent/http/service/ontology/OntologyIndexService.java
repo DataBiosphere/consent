@@ -60,7 +60,7 @@ public class OntologyIndexService implements ConsentLogger {
 
   private OntologyTerm generateTerm(
       OWLClass owlClass, String ontologyType, OWLOntology ontology, OWLReasoner reasoner, String version) {
-    OntologyTerm ontologyTerm = new OntologyTerm(owlClass.toStringID(), ontologyType, version);
+    OntologyTerm ontologyTerm = new OntologyTerm(owlClass.toStringID(), version, ontologyType);
     Set<OWLAnnotation> classAnnotations =
         EntitySearcher.getAnnotations(owlClass, ontology).collect(Collectors.toSet());
     classAnnotations.addAll(
