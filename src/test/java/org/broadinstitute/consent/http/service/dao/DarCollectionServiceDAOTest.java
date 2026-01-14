@@ -161,7 +161,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
   void testCreateElectionsForDarByUserChair() throws Exception {
     DarCollection collection = setUpDarCollectionWithDacDataset();
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElseThrow();
-    Integer datasetId = dar.getDatasetIds().get(0);
+    Integer datasetId = dar.getDatasetIds().getFirst();
     assertNotNull(datasetId);
     Optional<Dac> dac = dacDAO.findDacsForDatasetIds(List.of(datasetId)).stream().findFirst();
     assertTrue(dac.isPresent());
@@ -276,10 +276,10 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     // Verify we have elections for both DACs
     assertTrue(
         createdElections.stream()
-            .anyMatch(e -> e.getDatasetId().equals(dac.getDatasetIds().get(0))));
+            .anyMatch(e -> e.getDatasetId().equals(dac.getDatasetIds().getFirst())));
     assertTrue(
         createdElections.stream()
-            .anyMatch(e -> e.getDatasetId().equals(dac2.getDatasetIds().get(0))));
+            .anyMatch(e -> e.getDatasetId().equals(dac2.getDatasetIds().getFirst())));
 
     // Verify we have open votes for both datasets on the DAR.
     createdVotes =
@@ -297,7 +297,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     DarCollection collection = setUpDarCollectionWithDacDataset();
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElseThrow();
     assertFalse(dar.getDatasetIds().isEmpty());
-    Integer datasetId = dar.getDatasetIds().get(0);
+    Integer datasetId = dar.getDatasetIds().getFirst();
 
     // Find the dac chairperson for the current DAR/Dataset combination
     Dac dac = dacDAO.findDacsForDatasetIds(List.of(datasetId)).stream().findFirst().orElseThrow();
@@ -389,7 +389,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
     assertNotNull(dar);
     assertFalse(dar.getDatasetIds().isEmpty());
-    Integer datasetId = dar.getDatasetIds().get(0);
+    Integer datasetId = dar.getDatasetIds().getFirst();
     assertNotNull(datasetId);
 
     // Find the dac chairperson for the current DAR/Dataset combination
