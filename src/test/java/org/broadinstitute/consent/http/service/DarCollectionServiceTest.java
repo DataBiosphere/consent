@@ -1769,7 +1769,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSendNewDARCollectionMessage_RequiresSOApprovalShouldDoDefaultBehaviorWithProgressReport() throws Exception {
+  void testSendNewDARCollectionMessage_RequiresSOApprovalShouldDoDefaultBehaviorWithProgressReport()
+      throws Exception {
     DarCollection collection = new DarCollection();
     collection.setDarCollectionId(1);
 
@@ -1893,7 +1894,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSendNewDARCollectionMessage_MixedAutoOpenAndManualDACsWithSORequiredOnOne() throws Exception {
+  void testSendNewDARCollectionMessage_MixedAutoOpenAndManualDACsWithSORequiredOnOne()
+      throws Exception {
     DarCollection collection = new DarCollection();
     collection.setDarCollectionId(1);
 
@@ -1920,7 +1922,11 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
     dar.setSubmissionDate(Timestamp.from(Instant.now()));
-    dar.setDatasetIds(List.of(autoOpenDataset.getDatasetId(), manualDataset.getDatasetId(), soRequiredDataset.getDatasetId()));
+    dar.setDatasetIds(
+        List.of(
+            autoOpenDataset.getDatasetId(),
+            manualDataset.getDatasetId(),
+            soRequiredDataset.getDatasetId()));
     DataAccessRequestData darData = new DataAccessRequestData();
     darData.setSigningOfficialEmail(signingOfficial.getEmail());
     dar.setData(darData);
@@ -1963,10 +1969,13 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(darCollectionDAO.findDARCollectionByCollectionId(1)).thenReturn(collection);
     when(datasetDAO.findDatasetsByIdList(anyList()))
         .thenReturn(List.of(autoOpenDataset, manualDataset, soRequiredDataset));
-    when(dacDAO.findDacsForDatasetIds(anyList())).thenReturn(Set.of(autoOpenDac, manualDac, soRequiredDac));
-    when(dacAutomationRuleService.findAllByDacId(autoOpenDac.getDacId())).thenReturn(List.of(autoOpenRule));
+    when(dacDAO.findDacsForDatasetIds(anyList()))
+        .thenReturn(Set.of(autoOpenDac, manualDac, soRequiredDac));
+    when(dacAutomationRuleService.findAllByDacId(autoOpenDac.getDacId()))
+        .thenReturn(List.of(autoOpenRule));
     when(dacAutomationRuleService.findAllByDacId(manualDac.getDacId())).thenReturn(List.of());
-    when(dacAutomationRuleService.findAllByDacId(soRequiredDac.getDacId())).thenReturn(List.of(requireSORule));
+    when(dacAutomationRuleService.findAllByDacId(soRequiredDac.getDacId()))
+        .thenReturn(List.of(requireSORule));
     when(userDAO.findUsersByRoleId(UserRoles.ADMIN.getRoleId())).thenReturn(List.of());
     when(userDAO.findUsersForDatasetsByRole(anyList(), anyList()))
         .thenReturn(Set.of(member, chair));
