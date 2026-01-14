@@ -37,15 +37,16 @@ public class DarCollectionServiceDAO {
     this.userDAO = userDAO;
   }
 
-  /**
-   * Create DAR-Dataset elections that are available to the user. - Admins can create elections for
-   * any dataset. - Chairs can only create elections for datasets in their DACs. - Signing Officials
-   * can only create elections for datasets whose DACs require SO approval.
-   *
-   * @param user The User initiating new elections for a data access request
-   * @param dar The DataAccessRequest
-   * @return List of reference ids for which a DAR election was created
-   */
+  ///
+  /// Create DAR-Dataset elections that are available to the user.
+  /// - Admins can create elections for any dataset.
+  /// - Chairs can only create elections for datasets in their DACs.
+  /// - Signing Officials can only create elections for datasets whose DACs require SO approval.
+  ///
+  /// @param user The User initiating new elections for a data access request
+  /// @param dar The DataAccessRequest
+  /// @return List of reference ids for which a DAR election was created
+  ///
   public List<String> createElectionsForDarByUser(User user, DataAccessRequest dar)
       throws SQLException {
     List<String> createdElectionReferenceIds = new ArrayList<>();
