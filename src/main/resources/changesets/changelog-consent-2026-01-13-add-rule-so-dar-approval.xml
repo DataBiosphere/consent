@@ -1,0 +1,36 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2026-01-13-add-rule-so-dar-approval.cs1" author="otchet">
+    <sql>
+      ALTER TYPE dac_rule_type ADD VALUE IF NOT EXISTS 'REQUIRE_SO_DAR_APPROVAL';
+    </sql>
+    <rollback>
+      <sql>
+        -- Remove rows using the new ENUM value
+        DELETE FROM dac_automation_rules WHERE rule = 'REQUIRE_SO_DAR_APPROVAL';
+        -- Create new ENUM type
+        CREATE TYPE dac_rule_type_new AS ENUM ('GRU_V1', 'HMB_V1', 'HMB_DSV1', 'GRU_DSV1', 'AUTO_OPEN_DAR_FOR_ALL_MEMBERS');
+        -- Alter column to use new type
+        ALTER TABLE dac_automation_rules ALTER COLUMN rule TYPE dac_rule_type_new USING rule::text::dac_rule_type_new;
+        -- Drop old type
+        DROP TYPE dac_rule_type;
+        -- Rename new type to original name
+        ALTER TYPE dac_rule_type_new RENAME TO dac_rule_type;
+      </sql>
+    </rollback>
+  </changeSet>
+  <changeSet id="changelog-consent-2026-01-13-add-rule-so-dar-approval.cs2" author="otchet">
+    <insert tableName="dac_automation_rules">
+      <column name="rule" value="REQUIRE_SO_DAR_APPROVAL"/>
+      <column name="description"
+              value="Require approval by the Signing Official identified in the Data Access Request (DAR) prior to DAC Voting.  **Cannot be used with automatically opening Data Access Requests (DARs) for all DAC members.**"/>
+      <column name="state" value="AVAILABLE"/>
+    </insert>
+    <rollback>
+      <sql>
+        DELETE FROM dac_automation_rules WHERE rule = 'REQUIRE_SO_DAR_APPROVAL';
+      </sql>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
