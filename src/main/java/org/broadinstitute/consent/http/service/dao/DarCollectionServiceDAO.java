@@ -16,6 +16,7 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.Update;
@@ -37,11 +38,9 @@ public class DarCollectionServiceDAO {
   }
 
   /**
-   * Find all Dar + Dataset combinations that are available to the user. - Admins have all available
-   * to them - Chairs can only create elections for datasets in their DACs
-   *
-   * <p>DataAccessRequests with no elections, or with previously canceled elections, are valid for
-   * initiating a new set of elections. Any DAR elections in open state should be ignored.
+   * Create DAR-Dataset elections that are available to the user. - Admins can create elections for
+   * any dataset. - Chairs can only create elections for datasets in their DACs. - Signing Officials
+   * can only create elections for datasets whose DACs require SO approval.
    *
    * @param user The User initiating new elections for a data access request
    * @param dar The DataAccessRequest
@@ -49,11 +48,18 @@ public class DarCollectionServiceDAO {
    */
   public List<String> createElectionsForDarByUser(User user, DataAccessRequest dar)
       throws SQLException {
-    boolean isAdmin = user.hasUserRole(UserRoles.ADMIN);
     List<String> createdElectionReferenceIds = new ArrayList<>();
-    // If the user is not an admin, we need to know what datasets they have access to.
-    List<Integer> dacUserDatasetIds =
-        isAdmin ? List.of() : datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
+    List<Integer> allowableDatasetIds = new ArrayList<>();
+    if (user.hasUserRole(UserRoles.ADMIN)) {
+      allowableDatasetIds.addAll(dar.getDatasetIds());
+    } else if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
+      allowableDatasetIds.addAll(datasetDAO.findDatasetIdsByDACUserId(user.getUserId()));
+    } else if (user.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+      // TODO: This needs to be `REQUIRE_SO_DAR_APPROVAL` when DT-2786 and DT-2787 are complete
+      allowableDatasetIds.addAll(
+          datasetDAO.filterDatasetIdsByAutomationRuleType(
+              dar.getDatasetIds(), DACAutomationRuleType.GRU_V1.name()));
+    }
     jdbi.useHandle(
         handle -> {
           // By default, new connections are set to auto-commit which breaks our rollback strategy.
@@ -88,10 +94,8 @@ public class DarCollectionServiceDAO {
                                 .getStatus()
                                 .equalsIgnoreCase(ElectionStatus.OPEN.getValue());
 
-                    // If the user is not an admin, then the dataset must be in the list of the
-                    // user's DAC Datasets
-                    // Otherwise, we need to skip election creation for this DAR as well.
-                    if (!isAdmin && !dacUserDatasetIds.contains(datasetId)) {
+                    // Skip election creation for datasets that the user cannot act upon.
+                    if (!allowableDatasetIds.contains(datasetId)) {
                       ignore = true;
                     }
                     if (!ignore) {

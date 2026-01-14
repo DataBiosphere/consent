@@ -44,11 +44,14 @@ import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.rules.DACAutomationRule;
+import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.jdbi.v3.core.statement.Update;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -394,6 +397,40 @@ class DatasetDAOTest extends DAOTestHelper {
     List<Integer> datasetIds = datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
     assertFalse(datasetIds.isEmpty());
     assertTrue(datasetIds.contains(dataset.getDatasetId()));
+  }
+
+  @ParameterizedTest
+  @EnumSource(DACAutomationRuleType.class)
+  void testFilterDatasetIdsByAutomationRuleType(DACAutomationRuleType ruleType) {
+    // Set up a Dataset in a DAC
+    Dataset dataset = insertDataset();
+    Dac dac = insertDac();
+    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
+    // Set up a DAC Rule for requiring SO Approval.
+    User user = createUser();
+    createUserRole(UserRoles.CHAIRPERSON.getRoleId(), user.getUserId(), dac.getDacId());
+    List<DACAutomationRule> rules =
+        dacAutomationRuleDAO.findAll().stream().filter(r -> r.ruleType().equals(ruleType)).toList();
+    assertFalse(rules.isEmpty());
+
+    dacAutomationRuleDAO.auditedInsertDACRuleSetting(
+        dac.getDacId(), rules.getFirst().id(), user.getUserId(), Instant.now());
+
+    List<Integer> filteredDatasetIds =
+        datasetDAO.filterDatasetIdsByAutomationRuleType(
+            List.of(dataset.getDatasetId()), ruleType.name());
+    assertFalse(filteredDatasetIds.isEmpty());
+    assertTrue(filteredDatasetIds.contains(dataset.getDatasetId()));
+
+    // Negative test
+    Dataset dataset2 = insertDataset();
+    Dac dac2 = insertDac();
+    datasetDAO.updateDatasetDacId(dataset2.getDatasetId(), dac2.getDacId());
+
+    List<Integer> filteredDatasetIds2 =
+        datasetDAO.filterDatasetIdsByAutomationRuleType(
+            List.of(dataset2.getDatasetId()), ruleType.name());
+    assertTrue(filteredDatasetIds2.isEmpty());
   }
 
   @Test
