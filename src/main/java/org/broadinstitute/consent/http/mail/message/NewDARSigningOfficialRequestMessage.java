@@ -1,20 +1,17 @@
 package org.broadinstitute.consent.http.mail.message;
 
-import java.util.List;
 import java.util.Map;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.User;
 
 public class NewDARSigningOfficialRequestMessage extends MailMessage {
 
-  private static final String NEW_DAR_REQUEST =
-      "A data access request requires your approval: %s.";
+  private static final String NEW_DAR_REQUEST = "A data access request requires your approval: %s.";
 
   private final String darCode;
   private final String researcherName;
 
-  public NewDARSigningOfficialRequestMessage(
-      User toUser, String darCode, String researcherName) {
+  public NewDARSigningOfficialRequestMessage(User toUser, String darCode, String researcherName) {
     super(toUser, EmailType.NEW_DAR_SO_NEEDS_TO_APPROVE);
     this.darCode = darCode;
     this.researcherName = researcherName;

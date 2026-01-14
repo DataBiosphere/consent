@@ -261,8 +261,12 @@ public class EmailService implements ConsentLogger {
         new NewDARRequestMessage(user, darCode, dacDatasetMap, researcherName), user.getUserId());
   }
 
-  public void sendNewDARSigningOfficialRequestEmail(User signingOfficial, String researcherName, String darCode) throws TemplateException, IOException{
-    sendMessage(new NewDARSigningOfficialRequestMessage(signingOfficial, researcherName, darCode), signingOfficial.getUserId());
+  public void sendNewDARSigningOfficialRequestEmail(
+      User signingOfficial, String researcherName, String darCode)
+      throws TemplateException, IOException {
+    sendMessage(
+        new NewDARSigningOfficialRequestMessage(signingOfficial, researcherName, darCode),
+        signingOfficial.getUserId());
   }
 
   public void sendNewProgressReportRequestEmail(

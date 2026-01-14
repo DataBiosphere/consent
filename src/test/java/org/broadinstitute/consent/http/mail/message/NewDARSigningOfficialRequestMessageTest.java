@@ -6,8 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import freemarker.template.Template;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
@@ -49,8 +47,7 @@ class NewDARSigningOfficialRequestMessageTest {
 
     String darCode = "DAR-01";
     var message =
-        new NewDARSigningOfficialRequestMessage(
-            signingOfficial, darCode, "ResearcherName");
+        new NewDARSigningOfficialRequestMessage(signingOfficial, darCode, "ResearcherName");
     assertEquals(darCode, message.getEntityReferenceId());
     assertEquals("A data access request requires your approval: DAR-01.", message.createSubject());
 
@@ -62,7 +59,8 @@ class NewDARSigningOfficialRequestMessageTest {
     Document parsedTemplate = Jsoup.parse(templateString);
 
     assertEquals(
-        "Broad Data Use Oversight System - New DAR submitted that requires your approval", parsedTemplate.title());
+        "Broad Data Use Oversight System - New DAR submitted that requires your approval",
+        parsedTemplate.title());
     assertEquals(
         "Hello SO,", Objects.requireNonNull(parsedTemplate.getElementById("userName")).text());
     assertTrue(templateString.contains(" ResearcherName,"));

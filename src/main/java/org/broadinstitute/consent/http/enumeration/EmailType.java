@@ -33,8 +33,7 @@ public enum EmailType {
   SO_PROGRESS_REPORT_SUBMITTED(30, "so-progress-report-submitted.html"),
   SO_PROGRESS_REPORT_APPROVED(31, "so-progress-report-approved.html"),
   DAC_RADAR_APPROVED(32, "dac-radar-approved.html"),
-  NEW_DAR_SO_NEEDS_TO_APPROVE(33, "new-dar-so-needs-to-approve.html")
-  ;
+  NEW_DAR_SO_NEEDS_TO_APPROVE(33, "new-dar-so-needs-to-approve.html");
 
   private final Integer typeInt;
   public final String templateName;
