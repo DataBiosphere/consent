@@ -39,7 +39,6 @@ public class DarCollectionServiceDAO {
 
   ///
   /// Create DAR-Dataset elections that are available to the user.
-  /// - Admins can create elections for any dataset.
   /// - Chairs can only create elections for datasets in their DACs.
   /// - Signing Officials can only create elections for datasets whose DACs require SO approval.
   ///
@@ -50,17 +49,8 @@ public class DarCollectionServiceDAO {
   public List<String> createElectionsForDarByUser(User user, DataAccessRequest dar)
       throws SQLException {
     List<String> createdElectionReferenceIds = new ArrayList<>();
-    List<Integer> actionableDatasetIds = new ArrayList<>();
-    if (user.hasUserRole(UserRoles.ADMIN)) {
-      actionableDatasetIds.addAll(dar.getDatasetIds());
-    } else if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
-      actionableDatasetIds.addAll(datasetDAO.findDatasetIdsByDACUserId(user.getUserId()));
-    } else if (user.hasUserRole(UserRoles.SIGNINGOFFICIAL)
-        && user.getEmail().equalsIgnoreCase(dar.getData().getSigningOfficialEmail())) {
-      actionableDatasetIds.addAll(
-          datasetDAO.filterDatasetIdsByAutomationRuleType(
-              dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()));
-    }
+    // If the user is not an admin, we need to know what datasets they have access to.
+    List<Integer> actionableDatasetIds = datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
     jdbi.useHandle(
         handle -> {
           // By default, new connections are set to auto-commit which breaks our rollback strategy.

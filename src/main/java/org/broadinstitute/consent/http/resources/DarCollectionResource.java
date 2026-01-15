@@ -246,7 +246,7 @@ public class DarCollectionResource extends Resource {
   @POST
   @Path("{collectionId}/election")
   @Consumes("application/json")
-  @RolesAllowed({ADMIN, CHAIRPERSON, SIGNINGOFFICIAL})
+  @RolesAllowed({CHAIRPERSON, SIGNINGOFFICIAL})
   public Response createElectionsForCollection(
       @Auth DuosUser duosUser, @PathParam("collectionId") Integer collectionId) {
     try {

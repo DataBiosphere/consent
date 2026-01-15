@@ -47,112 +47,6 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
   }
 
   /**
-   * This test covers the case where: - User is an admin - Collection has 1 DAR/Dataset combinations
-   * - Elections created should be for the DAR/Dataset for the user
-   */
-  @Test
-  void testCreateElectionsForDarByUserAdmin() throws Exception {
-    User user = new User();
-    user.setAdminRole();
-    DarCollection collection = setUpDarCollectionWithDacDataset();
-    DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
-    assertNotNull(dar);
-
-    List<String> referenceIds = serviceDAO.createElectionsForDarByUser(user, dar);
-
-    List<Election> createdElections =
-        electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
-    List<Vote> createdVotes =
-        voteDAO.findVotesByElectionIds(
-            createdElections.stream().map(Election::getElectionId).toList());
-
-    assertTrue(referenceIds.contains(dar.getReferenceId()));
-    assertFalse(createdElections.isEmpty());
-    assertFalse(createdVotes.isEmpty());
-
-    // Ensure that we have all primary vote types for each election type
-    // Data Access Elections have Chair, Dac, Final, and Agreement votes
-    Optional<Election> daElectionOption =
-        createdElections.stream()
-            .filter(e -> ElectionType.DATA_ACCESS.getValue().equals(e.getElectionType()))
-            .findFirst();
-    assertTrue(daElectionOption.isPresent());
-    assertTrue(
-        createdVotes.stream()
-            .filter(v -> v.getElectionId().equals(daElectionOption.get().getElectionId()))
-            .anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
-    assertTrue(
-        createdVotes.stream()
-            .filter(v -> v.getElectionId().equals(daElectionOption.get().getElectionId()))
-            .anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
-    assertTrue(
-        createdVotes.stream()
-            .filter(v -> v.getElectionId().equals(daElectionOption.get().getElectionId()))
-            .anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
-    assertTrue(
-        createdVotes.stream()
-            .filter(v -> v.getElectionId().equals(daElectionOption.get().getElectionId()))
-            .anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
-
-    // RP Elections have Chair and Dac votes
-    Optional<Election> rpElectionOption =
-        createdElections.stream()
-            .filter(e -> ElectionType.RP.getValue().equals(e.getElectionType()))
-            .findFirst();
-    assertTrue(rpElectionOption.isPresent());
-    assertTrue(
-        createdVotes.stream()
-            .filter(v -> v.getElectionId().equals(rpElectionOption.get().getElectionId()))
-            .anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
-    assertTrue(
-        createdVotes.stream()
-            .filter(v -> v.getElectionId().equals(rpElectionOption.get().getElectionId()))
-            .anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
-  }
-
-  /**
-   * This test covers the case where: - User is an admin - Collection has 2 DAR/Dataset combinations
-   * - User is an Admin - Elections created should only be for ALL the DAR/Dataset combinations
-   */
-  @Test
-  void testCreateElectionsForDarCollectionWithMultipleDatasetsForAdminBy() throws Exception {
-    User user = new User();
-    user.setAdminRole();
-    DarCollection collection = setUpDarCollectionWithDacDataset();
-    DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
-    assertNotNull(dar);
-
-    // refresh the collection
-    darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
-
-    List<String> referenceIds = serviceDAO.createElectionsForDarByUser(user, dar);
-
-    List<Election> createdElections =
-        electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
-    List<Vote> createdVotes =
-        voteDAO.findVotesByElectionIds(
-            createdElections.stream().map(Election::getElectionId).toList());
-
-    assertTrue(referenceIds.contains(dar.getReferenceId()));
-    // Ensure that we have an access and rp election
-    assertFalse(createdElections.isEmpty());
-    assertTrue(
-        createdElections.stream()
-            .anyMatch(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())));
-    assertTrue(
-        createdElections.stream()
-            .anyMatch(e -> e.getElectionType().equals(ElectionType.RP.getValue())));
-    // Ensure that we have primary vote types
-    assertFalse(createdVotes.isEmpty());
-    assertTrue(
-        createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
-    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
-    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
-    assertTrue(
-        createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
-  }
-
-  /**
    * This test covers the case where: - User is a chairperson - Collection has 1 DAR/Dataset
    * combinations - Elections created should be for the DAR/Dataset for the user
    */
@@ -208,7 +102,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     DataAccessRequest dar = collection.getMostRecentDar();
     assertNotNull(dar);
     assertFalse(dar.getDatasetIds().isEmpty());
-    Integer datasetId1 = dar.getDatasetIds().get(0);
+    Integer datasetId1 = dar.getDatasetIds().getFirst();
     Integer datasetId2 = dar.getDatasetIds().get(1);
     assertEquals(2, dar.getDatasetIds().size());
 
@@ -320,58 +214,6 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     List<String> electionReferenceIds =
         serviceDAO.createElectionsForDarByUser(chair, collection.getMostRecentDar());
     assertTrue(electionReferenceIds.contains(progressReport.getReferenceId()));
-  }
-
-  /**
-   * This test covers the case where: - User is an admin - Elections have been created for a
-   * Collection - Elections are then canceled - Elections re-created correctly - Previous canceled
-   * elections are correctly archived
-   */
-  @Test
-  void testCreateElectionsForDarCollectionAfterCancelingEarlierElectionsAsAdminBy()
-      throws Exception {
-    User user = new User();
-    user.setAdminRole();
-    DarCollection collection = setUpDarCollectionWithDacDataset();
-    DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
-    assertNotNull(dar);
-
-    // create elections & votes:
-    List<String> referenceIds = serviceDAO.createElectionsForDarByUser(user, dar);
-
-    // cancel those elections:
-    List<Integer> canceledElectionIds =
-        electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId())).stream()
-            .map(Election::getElectionId)
-            .toList();
-    canceledElectionIds.forEach(
-        id -> electionDAO.updateElectionById(id, ElectionStatus.CANCELED.getValue(), new Date()));
-
-    // re-create elections & new votes:
-    referenceIds.addAll(serviceDAO.createElectionsForDarByUser(user, dar));
-
-    List<Election> createdElections =
-        electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
-
-    assertTrue(referenceIds.contains(dar.getReferenceId()));
-
-    // Ensure that we have the right number of access and rp elections, i.e. 1 each
-    assertFalse(createdElections.isEmpty());
-    assertEquals(2, createdElections.size());
-    assertEquals(
-        1,
-        createdElections.stream()
-            .filter(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue()))
-            .count());
-    assertEquals(
-        1,
-        createdElections.stream()
-            .filter(e -> e.getElectionType().equals(ElectionType.RP.getValue()))
-            .count());
-
-    // Check that the canceled elections are archived
-    List<Election> canceledElections = electionDAO.findElectionsByIds(canceledElectionIds);
-    canceledElections.forEach(e -> assertTrue(e.getArchived()));
   }
 
   /**
