@@ -821,6 +821,11 @@ public class DarCollectionService implements ConsentLogger {
         context.researcherName,
         false);
 
+    // Notify signing official named in DAR if they need to approve
+    if (!context.classification.requiresSOApprovalDacs.isEmpty()) {
+      notifySpecificSigningOfficialOfApprovalNeeded(context.latestDar, context.researcher);
+    }
+
     // Notify signing officials of DAR submission
     notifySigningOfficialsOfDARSubmission(
         context.latestDar, context.researcher, context.darCollection.getDarCode());
@@ -850,7 +855,7 @@ public class DarCollectionService implements ConsentLogger {
 
     // Classify DACs and users by automation rules
     DacUserClassification classification =
-        classifyDacsAndUsers(dacsForDar, datasetsForDar, adminAndChairUsers);
+        classifyDacsAndUsers(dacsForDar, datasetsForDar, adminAndChairUsers, latestDar);
 
     return new DarCollectionContext(
         darCollection, latestDar, researcher, researcherName, classification);
@@ -880,6 +885,7 @@ public class DarCollectionService implements ConsentLogger {
 
   /** Helper class to hold classification results for DACs, users, and datasets. */
   private static class DacUserClassification {
+    Set<Dac> requiresSOApprovalDacs = new HashSet<>();
     Set<Dac> autoOpenDacs = new HashSet<>();
     Set<Dac> manualOpenDacs = new HashSet<>();
     Set<User> autoOpenUsers = new HashSet<>();
@@ -891,7 +897,10 @@ public class DarCollectionService implements ConsentLogger {
 
   /** Classifies DACs and users based on automation rules. */
   private DacUserClassification classifyDacsAndUsers(
-      Collection<Dac> dacsForDar, List<Dataset> datasetsForDar, List<User> adminAndChairUsers) {
+      Collection<Dac> dacsForDar,
+      List<Dataset> datasetsForDar,
+      List<User> adminAndChairUsers,
+      DataAccessRequest dar) {
 
     Set<Integer> dacIds =
         datasetsForDar.stream().map(Dataset::getDacId).collect(Collectors.toSet());
@@ -899,18 +908,25 @@ public class DarCollectionService implements ConsentLogger {
     DacUserClassification result = new DacUserClassification();
 
     for (Integer dacId : dacIds) {
-      boolean autoOpen = hasAutoOpenRule(dacId);
+      List<DACAutomationRule> dacRules = dacAutomationRuleService.findAllByDacId(dacId);
+      boolean autoOpen = hasAutoOpenRule(dacRules);
+      // the rule must be on AND the DAR must not be a progress report.
+      boolean requiresSOApproval = hasSOApprovalRule(dacRules) && !dar.getProgressReport();
       Integer autoOpenUserId = getAutoOpenRuleEnabledByUserId(dacId);
 
       Dac dac = findDac(dacsForDar, dacId);
       Dataset dataset = findDataset(datasetsForDar, dacId);
-
-      if (autoOpen) {
-        addAutoOpen(result, dacId, autoOpenUserId, dac, dataset);
-        addUsers(result.autoOpenUsers, dacId, adminAndChairUsers, true);
+      // If the DAC requires SO approval the submission is not a progress report
+      if (requiresSOApproval) {
+        result.requiresSOApprovalDacs.add(dac);
       } else {
-        addManualOpen(result, dac, dataset);
-        addUsers(result.manualOpenUsers, dacId, adminAndChairUsers, false);
+        if (autoOpen) {
+          addAutoOpen(result, dacId, autoOpenUserId, dac, dataset);
+          addUsers(result.autoOpenUsers, dacId, adminAndChairUsers, true);
+        } else {
+          addManualOpen(result, dac, dataset);
+          addUsers(result.manualOpenUsers, dacId, adminAndChairUsers, false);
+        }
       }
     }
 
@@ -928,11 +944,20 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   /** Checks if an auto-open rule exists for a given DAC ID. */
-  private boolean hasAutoOpenRule(Integer dacId) {
-    return dacAutomationRuleService.findAllByDacId(dacId).stream()
+  private boolean hasAutoOpenRule(List<DACAutomationRule> dacRules) {
+    return dacRules.stream()
         .anyMatch(
             r ->
                 r.ruleType() == DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS
+                    && r.enabledByUserId() != null);
+  }
+
+  /** Checks if rule requiring SIGNING OFFICIALS to approve DARs before DAC will vote is enabled */
+  private boolean hasSOApprovalRule(List<DACAutomationRule> dacRules) {
+    return dacRules.stream()
+        .anyMatch(
+            r ->
+                r.ruleType() == DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL
                     && r.enabledByUserId() != null);
   }
 
@@ -1148,6 +1173,14 @@ public class DarCollectionService implements ConsentLogger {
         }
       }
     }
+  }
+
+  private void notifySpecificSigningOfficialOfApprovalNeeded(
+      DataAccessRequest dataAccessRequest, User researcher) throws TemplateException, IOException {
+    String soEmail = dataAccessRequest.getData().getSigningOfficialEmail();
+    User soUser = userDAO.findUserByEmail(soEmail);
+    emailService.sendNewDARSigningOfficialRequestEmail(
+        soUser, researcher.getDisplayName(), dataAccessRequest.getDarCode());
   }
 
   @VisibleForTesting

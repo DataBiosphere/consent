@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 import com.sendgrid.Response;
 import com.sendgrid.helpers.mail.Mail;
 import freemarker.template.Template;
+import freemarker.template.TemplateException;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Collections;
@@ -481,6 +482,36 @@ class EmailServiceTest extends AbstractTestHelper {
             eq(null),
             eq(toUser.getUserId()),
             eq(EmailType.DAC_RADAR_APPROVED.getTypeInt()),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
+  }
+
+  @Test
+  void testSendEmailToSOWhenApprovalRqdForNewDAR() throws TemplateException, IOException {
+    User signingOfficial = new User();
+    signingOfficial.setUserId(1);
+    signingOfficial.setDisplayName("Test User");
+    signingOfficial.setEmail("test.user@test.com");
+    User researcherUser = new User();
+    researcherUser.setDisplayName("Research User");
+
+    String referenceId = "abc-123";
+
+    when(templateHelper.getTemplate(EmailType.NEW_DAR_SO_NEEDS_TO_APPROVE.templateName))
+        .thenReturn(mock());
+
+    service.sendNewDARSigningOfficialRequestEmail(
+        signingOfficial, researcherUser.getDisplayName(), referenceId);
+    verify(sendGridAPI).sendMessage(any(Mail.class), eq(signingOfficial.getEmail()));
+    verify(emailDAO)
+        .insert(
+            eq(referenceId),
+            eq(null),
+            eq(signingOfficial.getUserId()),
+            eq(EmailType.NEW_DAR_SO_NEEDS_TO_APPROVE.getTypeInt()),
             any(),
             any(),
             any(),

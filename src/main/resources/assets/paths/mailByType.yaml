@@ -42,6 +42,7 @@ get:
          - SO_PROGRESS_REPORT_SUBMITTED
          - SO_PROGRESS_REPORT_APPROVED
          - DAC_RADAR_APPROVED
+         - NEW_DAR_SO_NEEDS_TO_APPROVE
     - name: limit
       in: query
       description: Number of results to return.  Defaults to 20 if unset. May not be negative.
