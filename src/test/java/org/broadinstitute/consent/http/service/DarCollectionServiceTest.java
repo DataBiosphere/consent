@@ -351,7 +351,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     dar.setReferenceId(UUID.randomUUID().toString());
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setData(data);
-    DarCollection collection = createMockCollections().get(0);
+    DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
     when(electionDAO.findLastElectionsByReferenceIds(anyList())).thenReturn(List.of());
     when(darCollectionDAO.findDARCollectionByCollectionId(any())).thenReturn(collection);
@@ -376,7 +376,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     dar.setReferenceId(UUID.randomUUID().toString());
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setData(data);
-    DarCollection collection = createMockCollections().get(0);
+    DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
     Election election = createMockElection();
     election.setReferenceId(dar.getReferenceId());
@@ -401,7 +401,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     dar.setReferenceId(UUID.randomUUID().toString());
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setData(data);
-    DarCollection collection = createMockCollections().get(0);
+    DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
     Election election = createMockElection();
     election.setReferenceId(dar.getReferenceId());
@@ -430,7 +430,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DataAccessRequestData data = new DataAccessRequestData();
     dar.addDatasetId(dataset.getDatasetId());
     dar.setData(data);
-    DarCollection collection = createMockCollections().get(0);
+    DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
     Election election = createMockElection();
     election.setReferenceId(dar.getReferenceId());
@@ -462,7 +462,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DataAccessRequestData data = new DataAccessRequestData();
     dar.addDatasetId(dataset.getDatasetId());
     dar.setData(data);
-    DarCollection collection = createMockCollections().get(0);
+    DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
     Election election = createMockElection();
     election.setReferenceId(dar.getReferenceId());
@@ -479,7 +479,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   @Test
   void cancelDarCollectionByRole_ProgressReport() {
-    DarCollection collection = createMockCollections().get(0);
+    DarCollection collection = createMockCollections().getFirst();
     collection.addDar(new DataAccessRequest());
     DarCollectionSummary summary = new DarCollectionSummary();
     summary.addParentChildRelationship(123, "456");
@@ -509,7 +509,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     user.setEmail("email");
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
-    DarCollection collection = createMockCollections().get(0);
+    DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
     when(darCollectionServiceDAO.createElectionsForDarByUser(any(), any()))
         .thenReturn(List.of("electionId"));
@@ -536,7 +536,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     progressReport.setReferenceId(UUID.randomUUID().toString());
     progressReport.setParentId(dar.getId());
     progressReport.setSubmissionDate(Timestamp.from(Instant.now()));
-    DarCollection collection = createMockCollections().get(0);
+    DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
     collection.addDar(progressReport);
 
@@ -562,7 +562,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     user.setEmail("email");
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
-    DarCollection collection = createMockCollections().get(0);
+    DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
 
     assertThrows(
@@ -576,7 +576,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     user.setEmail("email");
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
-    DarCollection collection = createMockCollections().get(0);
+    DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
     List<String> electionIds = List.of("electionId");
     when(darCollectionServiceDAO.createElectionsForDarByUser(user, dar)).thenReturn(electionIds);
@@ -611,7 +611,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         service.getSummariesForRole(user, UserRoles.SIGNINGOFFICIAL);
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
-    DarCollectionSummary s = summaries.get(0);
+    DarCollectionSummary s = summaries.getFirst();
     assertTrue(s.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
   }
 
@@ -641,7 +641,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         service.getSummariesForRole(user, UserRoles.SIGNINGOFFICIAL);
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
-    DarCollectionSummary s = summaries.get(0);
+    DarCollectionSummary s = summaries.getFirst();
     assertTrue(s.getStatus().equalsIgnoreCase(DarCollectionStatus.COMPLETE.getValue()));
   }
 
@@ -663,7 +663,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         service.getSummariesForRole(user, UserRoles.SIGNINGOFFICIAL);
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
-    DarCollectionSummary s = summaries.get(0);
+    DarCollectionSummary s = summaries.getFirst();
     assertTrue(s.getStatus().equalsIgnoreCase(DarCollectionStatus.SUBMITTED.getValue()));
   }
 
@@ -681,7 +681,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
     // Admin summary should not have any actions
-    assertTrue(summaries.get(0).getActions().isEmpty());
+    assertTrue(summaries.getFirst().getActions().isEmpty());
   }
 
   @Test
@@ -697,7 +697,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
     // With no elections, there should be an Open action
-    assertTrue(summaries.get(0).getActions().contains(DarCollectionActions.OPEN.getValue()));
+    assertFalse(summaries.getFirst().getActions().contains(DarCollectionActions.OPEN.getValue()));
   }
 
   @Test
@@ -779,7 +779,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertNotNull(summaries);
     assertEquals(6, summaries.size());
 
-    DarCollectionSummary testOne = summaries.get(0);
+    DarCollectionSummary testOne = summaries.getFirst();
     Set<String> expectedOneActions = Set.of(DarCollectionActions.REVIEW.getValue());
     assertTrue(testOne.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
     assertEquals(expectedOneActions, testOne.getActions());
@@ -832,11 +832,11 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
     // All summaries should have the REVIEW action
-    assertTrue(summaries.get(0).getActions().contains(DarCollectionActions.REVIEW.getValue()));
+    assertTrue(summaries.getFirst().getActions().contains(DarCollectionActions.REVIEW.getValue()));
     // Summaries with closeout should not have the CREATE_PROGRESS_REPORT action
     assertFalse(
         summaries
-            .get(0)
+            .getFirst()
             .getActions()
             .contains(DarCollectionActions.CREATE_PROGRESS_REPORT.getValue()));
   }
@@ -857,11 +857,11 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
     // All summaries should have the REVIEW action
-    assertTrue(summaries.get(0).getActions().contains(DarCollectionActions.REVIEW.getValue()));
+    assertTrue(summaries.getFirst().getActions().contains(DarCollectionActions.REVIEW.getValue()));
     // Summaries without a closeout should have the CREATE_PROGRESS_REPORT action
     assertTrue(
         summaries
-            .get(0)
+            .getFirst()
             .getActions()
             .contains(DarCollectionActions.CREATE_PROGRESS_REPORT.getValue()));
   }
@@ -891,7 +891,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
     Set<String> expectedActions = Set.of(DarCollectionActions.REVIEW_PROGRESS_REPORT.getValue());
-    assertEquals(expectedActions, summaries.get(0).getActions());
+    assertEquals(expectedActions, summaries.getFirst().getActions());
   }
 
   @Test
@@ -918,7 +918,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
-    assertEquals(Set.of(), summaries.get(0).getActions());
+    assertEquals(Set.of(), summaries.getFirst().getActions());
   }
 
   @Test
@@ -945,7 +945,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
     Set<String> expectedActions = Set.of(DarCollectionActions.REVIEW_PROGRESS_REPORT.getValue());
-    assertEquals(expectedActions, summaries.get(0).getActions());
+    assertEquals(expectedActions, summaries.getFirst().getActions());
   }
 
   @Test
@@ -1012,26 +1012,25 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.ADMIN);
 
-    DarCollectionSummary testOne = summaries.get(0);
+    DarCollectionSummary testOne = summaries.getFirst();
     Set<String> expectedOneActions = Set.of(DarCollectionActions.CANCEL.getValue());
     assertTrue(testOne.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
-    assertEquals(testOne.getActions(), expectedOneActions);
+    assertEquals(expectedOneActions, testOne.getActions());
 
     DarCollectionSummary testTwo = summaries.get(1);
-    Set<String> expectedTwoActions =
-        Set.of(DarCollectionActions.CANCEL.getValue(), DarCollectionActions.OPEN.getValue());
+    Set<String> expectedTwoActions = Set.of(DarCollectionActions.CANCEL.getValue());
     assertTrue(testTwo.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
-    assertEquals(testTwo.getActions(), expectedTwoActions);
+    assertEquals(expectedTwoActions, testTwo.getActions());
 
     DarCollectionSummary testThree = summaries.get(2);
-    Set<String> expectedThreeActions = Set.of(DarCollectionActions.OPEN.getValue());
+    Set<String> expectedThreeActions = Set.of();
     assertTrue(testThree.getStatus().equalsIgnoreCase(DarCollectionStatus.COMPLETE.getValue()));
-    assertEquals(testThree.getActions(), expectedThreeActions);
+    assertEquals(expectedThreeActions, testThree.getActions());
 
     DarCollectionSummary testFour = summaries.get(3);
-    Set<String> expectedFourActions = Set.of(DarCollectionActions.OPEN.getValue());
+    Set<String> expectedFourActions = Set.of();
     assertTrue(testFour.getStatus().equalsIgnoreCase(DarCollectionStatus.SUBMITTED.getValue()));
-    assertEquals(testFour.getActions(), expectedFourActions);
+    assertEquals(expectedFourActions, testFour.getActions());
   }
 
   @Test
@@ -1144,7 +1143,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertNotNull(summaries);
     assertEquals(4, summaries.size());
 
-    DarCollectionSummary testOne = summaries.get(0);
+    DarCollectionSummary testOne = summaries.getFirst();
     Set<String> expectedOneActions = Set.of();
     assertEquals(testOne.getActions(), expectedOneActions);
     assertEquals(DarCollectionStatus.COMPLETE.getValue(), testOne.getStatus());
@@ -1262,7 +1261,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.CHAIRPERSON);
     assertEquals(6, summaries.size());
 
-    DarCollectionSummary testOne = summaries.get(0);
+    DarCollectionSummary testOne = summaries.getFirst();
     Set<String> expectedOneActions =
         Set.of(DarCollectionActions.VOTE.getValue(), DarCollectionActions.CANCEL.getValue());
     assertTrue(testOne.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
@@ -1316,7 +1315,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
     // Chair summary should not have any actions
-    assertTrue(summaries.get(0).getActions().isEmpty());
+    assertTrue(summaries.getFirst().getActions().isEmpty());
   }
 
   @Test
@@ -1335,7 +1334,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
     // With no elections, there should be an Open action
-    assertTrue(summaries.get(0).getActions().contains(DarCollectionActions.OPEN.getValue()));
+    assertTrue(summaries.getFirst().getActions().contains(DarCollectionActions.OPEN.getValue()));
   }
 
   @Test
@@ -1397,7 +1396,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertNotNull(summaryResult);
 
     Set<String> expectedActions =
-        Set.of(DarCollectionActions.CANCEL.getValue(), DarCollectionActions.OPEN.getValue());
+        Set.of(DarCollectionActions.CANCEL.getValue());
     assertTrue(
         summaryResult.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
     assertEquals(expectedActions, summaryResult.getActions());
@@ -1413,9 +1412,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         .getElections()
         .values()
         .forEach(
-            election -> {
-              election.setStatus(ElectionStatus.CLOSED.getValue());
-            });
+            election -> election.setStatus(ElectionStatus.CLOSED.getValue()));
     summary.setLatestReferenceId("ref1");
     Integer collectionId = summary.getDarCollectionId();
 
@@ -1449,9 +1446,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         .getElections()
         .values()
         .forEach(
-            election -> {
-              election.setStatus(ElectionStatus.OPEN.getValue());
-            });
+            election -> election.setStatus(ElectionStatus.OPEN.getValue()));
     summary.setLatestReferenceId("ref1");
     Integer collectionId = summary.getDarCollectionId();
 
@@ -1793,10 +1788,10 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     dar.setDatasetIds(List.of(dataset.getDatasetId()));
     collection.addDar(dar);
 
-    User researcher = createUserWithRole(UserRoles.RESEARCHER, null);
+    User researcher = createUserWithRole(UserRoles.RESEARCHER);
     collection.setCreateUserId(researcher.getUserId());
     researcher.setInstitutionId(1);
-    User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL, null);
+    User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL);
     signingOfficial.setEmailPreference(true);
     when(userDAO.getSOsByInstitution(researcher.getInstitutionId()))
         .thenReturn(List.of(signingOfficial));
@@ -1835,10 +1830,10 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     child.setDatasetIds(List.of(dataset.getDatasetId()));
     collection.addDar(child);
 
-    User researcher = createUserWithRole(UserRoles.RESEARCHER, null);
+    User researcher = createUserWithRole(UserRoles.RESEARCHER);
     collection.setCreateUserId(researcher.getUserId());
     researcher.setInstitutionId(1);
-    User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL, null);
+    User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL);
     signingOfficial.setEmailPreference(true);
     when(userDAO.getSOsByInstitution(researcher.getInstitutionId()))
         .thenReturn(List.of(signingOfficial));
@@ -1865,7 +1860,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     dar.setDatasetIds(List.of(dataset.getDatasetId()));
     collection.addDar(dar);
 
-    User researcher = createUserWithRole(UserRoles.RESEARCHER, null);
+    User researcher = createUserWithRole(UserRoles.RESEARCHER);
     collection.setCreateUserId(researcher.getUserId());
 
     service.notifySigningOfficialsOfDARSubmission(
@@ -1915,15 +1910,12 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     return election;
   }
 
-  private User createUserWithRole(UserRoles userRoles, Integer dacId) {
+  private User createUserWithRole(UserRoles userRoles) {
     User user = new User();
     user.setUserId(randomInt(1, 100000));
     user.setDisplayName(String.format("%s - %s", userRoles.getRoleName(), user.getUserId()));
     user.setEmail(String.format("%s@test.com", userRoles.getRoleName()));
     UserRole role = new UserRole(userRoles.getRoleId(), userRoles.getRoleName());
-    if (dacId != null) {
-      role.setDacId(dacId);
-    }
     user.setRoles(List.of(role));
     user.setEmailPreference(Boolean.TRUE);
     return user;
