@@ -127,7 +127,6 @@ public class DarCollectionService implements ConsentLogger {
           Map<String, Integer> statusCount = new HashMap<>();
           Map<Integer, Election> elections = s.getElections();
           if (elections.isEmpty()) {
-            s.addAction(DarCollectionActions.OPEN);
             s.setStatus(DarCollectionStatus.SUBMITTED.getValue());
           } else {
             elections
@@ -138,8 +137,6 @@ public class DarCollectionService implements ConsentLogger {
                       updateStatusCount(statusCount, status);
                       if (status.equals(ElectionStatus.OPEN.getValue())) {
                         s.addAction(DarCollectionActions.CANCEL);
-                      } else {
-                        s.addAction(DarCollectionActions.OPEN);
                       }
                     });
             determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
