@@ -1395,8 +1395,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         service.getSummaryForRoleByCollectionId(user, UserRoles.ADMIN, collectionId);
     assertNotNull(summaryResult);
 
-    Set<String> expectedActions =
-        Set.of(DarCollectionActions.CANCEL.getValue());
+    Set<String> expectedActions = Set.of(DarCollectionActions.CANCEL.getValue());
     assertTrue(
         summaryResult.getStatus().equalsIgnoreCase(DarCollectionStatus.IN_PROCESS.getValue()));
     assertEquals(expectedActions, summaryResult.getActions());
@@ -1411,8 +1410,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     summary
         .getElections()
         .values()
-        .forEach(
-            election -> election.setStatus(ElectionStatus.CLOSED.getValue()));
+        .forEach(election -> election.setStatus(ElectionStatus.CLOSED.getValue()));
     summary.setLatestReferenceId("ref1");
     Integer collectionId = summary.getDarCollectionId();
 
@@ -1445,8 +1443,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     summary
         .getElections()
         .values()
-        .forEach(
-            election -> election.setStatus(ElectionStatus.OPEN.getValue()));
+        .forEach(election -> election.setStatus(ElectionStatus.OPEN.getValue()));
     summary.setLatestReferenceId("ref1");
     Integer collectionId = summary.getDarCollectionId();
 
