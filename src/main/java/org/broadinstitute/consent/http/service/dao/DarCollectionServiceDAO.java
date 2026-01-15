@@ -37,8 +37,8 @@ public class DarCollectionServiceDAO {
   }
 
   /**
-   * Find all Dar + Dataset combinations that are available to the user. - Admins have all available
-   * to them - Chairs can only create elections for datasets in their DACs
+   * Find all Dar + Dataset combinations that are available to the user. Chairs can only create
+   * elections for datasets in their DACs
    *
    * <p>DataAccessRequests with no elections, or with previously canceled elections, are valid for
    * initiating a new set of elections. Any DAR elections in open state should be ignored.
@@ -49,11 +49,9 @@ public class DarCollectionServiceDAO {
    */
   public List<String> createElectionsForDarByUser(User user, DataAccessRequest dar)
       throws SQLException {
-    boolean isAdmin = user.hasUserRole(UserRoles.ADMIN);
     List<String> createdElectionReferenceIds = new ArrayList<>();
     // If the user is not an admin, we need to know what datasets they have access to.
-    List<Integer> dacUserDatasetIds =
-        isAdmin ? List.of() : datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
+    List<Integer> dacUserDatasetIds = datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
     jdbi.useHandle(
         handle -> {
           // By default, new connections are set to auto-commit which breaks our rollback strategy.
@@ -88,10 +86,9 @@ public class DarCollectionServiceDAO {
                                 .getStatus()
                                 .equalsIgnoreCase(ElectionStatus.OPEN.getValue());
 
-                    // If the user is not an admin, then the dataset must be in the list of the
-                    // user's DAC Datasets
+                    // The dataset must be in the list of the user's DAC Datasets
                     // Otherwise, we need to skip election creation for this DAR as well.
-                    if (!isAdmin && !dacUserDatasetIds.contains(datasetId)) {
+                    if (!dacUserDatasetIds.contains(datasetId)) {
                       ignore = true;
                     }
                     if (!ignore) {
