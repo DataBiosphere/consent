@@ -393,6 +393,61 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     assertTrue(referenceIds.isEmpty());
   }
 
+  @Test
+  void testFindActionableDatasetIdsForUser() {
+    // Collection with 2 datasets against 2 DACs
+    DarCollection collection = setUpDarCollectionWithDacDataset();
+
+    // Set up an SO for the DAR
+    User signingOfficial = createUserWithRole(UserRoles.SIGNINGOFFICIAL.getRoleId());
+    collection.getMostRecentDar().getData().setSigningOfficial(signingOfficial.getDisplayName());
+    collection.getMostRecentDar().getData().setSigningOfficialEmail(signingOfficial.getEmail());
+
+    // Set up Datasets. DACs. and Chairs
+    Dataset d1 =
+        collection.getMostRecentDar().getDatasetIds().stream()
+            .map(id -> datasetDAO.findDatasetById(id))
+            .findFirst()
+            .orElseThrow();
+    Dac dac1 = dacDAO.findById(d1.getDacId());
+    User chair1 = dac1.getChairpersons().stream().findFirst().orElseThrow();
+    Dataset d2 =
+        collection.getMostRecentDar().getDatasetIds().stream()
+            .skip(1)
+            .map(id -> datasetDAO.findDatasetById(id))
+            .findFirst()
+            .orElseThrow();
+    Dac dac2 = dacDAO.findById(d2.getDacId());
+    User chair2 = dac2.getChairpersons().stream().findFirst().orElseThrow();
+
+    // Set up DAC Automation Rule
+    List<DACAutomationRule> rules =
+        dacAutomationRuleDAO.findAll().stream()
+            .filter(r -> r.ruleType().equals(DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL))
+            .toList();
+    assertFalse(rules.isEmpty());
+    dacAutomationRuleDAO.auditedInsertDACRuleSetting(
+        dac1.getDacId(), rules.getFirst().id(), chair1.getUserId(), Instant.now());
+
+    // Dataset 1 in DAC 1 has SO approval required so there should be no actionable dataset ids
+    // for chair1
+    List<Integer> actionableDatasetIdsForChair1 =
+        serviceDAO.findActionableDatasetIdsForUser(chair1, collection.getMostRecentDar());
+    assertTrue(actionableDatasetIdsForChair1.isEmpty());
+
+    // Dataset 2 in DAC 2 should ONLY have dataset 2 as actionable for chair2
+    List<Integer> actionableDatasetIdsForChair2 =
+        serviceDAO.findActionableDatasetIdsForUser(chair2, collection.getMostRecentDar());
+    assertTrue(actionableDatasetIdsForChair2.contains(d2.getDatasetId()));
+    assertFalse(actionableDatasetIdsForChair2.contains(d1.getDatasetId()));
+
+    // Dataset 1 in DAC 1 should be actionable for the signing official
+    List<Integer> actionableDatasetIdsForSO =
+        serviceDAO.findActionableDatasetIdsForUser(signingOfficial, collection.getMostRecentDar());
+    assertTrue(actionableDatasetIdsForSO.contains(d1.getDatasetId()));
+    assertFalse(actionableDatasetIdsForSO.contains(d2.getDatasetId()));
+  }
+
   private DataAccessRequest createProgressReportFromDAR(DataAccessRequest dar) {
     String referenceId = UUID.randomUUID().toString();
     dataAccessRequestDAO.insertProgressReport(
@@ -435,8 +490,10 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
 
   private DacAndDataset createDacAndDataset() {
     Dac dac = createDac();
-    createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
-    createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
+    User chair = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    User member = createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
+    dac.setChairpersons(List.of(chair));
+    dac.setMembers(List.of(member));
     Dataset dataset = createDatasetWithDac(dac.getDacId());
     return new DacAndDataset(dac, dataset);
   }
