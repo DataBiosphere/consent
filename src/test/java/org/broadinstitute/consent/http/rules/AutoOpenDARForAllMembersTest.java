@@ -1,10 +1,10 @@
 package org.broadinstitute.consent.http.rules;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class AutoOpenDARForAllMembersTest {
   @Test
