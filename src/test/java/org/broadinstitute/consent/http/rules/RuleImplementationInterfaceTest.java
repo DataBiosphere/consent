@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.rules;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.core.IsNot.not;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -78,5 +81,14 @@ class RuleImplementationInterfaceTest {
 
     data.setAiLlmUse(true);
     assertFalse(rule.requestHasDiseases(data));
+  }
+
+  @Test
+  void testEnsureEachRuleHasImplementation() {
+    for (DACAutomationRuleType value : DACAutomationRuleType.values()) {
+      assertThat(
+          Rules.implementationList.stream().filter(r -> r.getRuleType() == value).toList(),
+          not(empty()));
+    }
   }
 }
