@@ -300,8 +300,11 @@ public class DarCollectionService implements ConsentLogger {
    * @param closedCount The count of closed elections
    * @param openCount The count of open elections
    */
-  private void updateSummaryActionsForChair(boolean requiresSOApproval,
-      DarCollectionSummary summary, Integer closedCount, Integer openCount) {
+  private void updateSummaryActionsForChair(
+      boolean requiresSOApproval,
+      DarCollectionSummary summary,
+      Integer closedCount,
+      Integer openCount) {
 
     // By default, no actions can be taken on a closeout supplement
     if (summary.getCloseoutSupplement() != null) {

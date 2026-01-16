@@ -1329,7 +1329,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(
             user.getUserId(), UserRoles.CHAIRPERSON.getRoleId()))
         .thenReturn(List.of(summary));
-    when(datasetDAO.findAllDatasetIdsByAutomationRuleType(DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
+    when(datasetDAO.findAllDatasetIdsByAutomationRuleType(
+            DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
         .thenReturn(Set.of());
 
     List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.CHAIRPERSON);
@@ -1351,7 +1352,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(
             user.getUserId(), UserRoles.CHAIRPERSON.getRoleId()))
         .thenReturn(List.of(summary));
-    when(datasetDAO.findAllDatasetIdsByAutomationRuleType(DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
+    when(datasetDAO.findAllDatasetIdsByAutomationRuleType(
+            DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
         .thenReturn(Set.of(1));
     List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.CHAIRPERSON);
 
@@ -1374,7 +1376,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(
             user.getUserId(), UserRoles.CHAIRPERSON.getRoleId()))
         .thenReturn(List.of(summary));
-    when(datasetDAO.findAllDatasetIdsByAutomationRuleType(DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
+    when(datasetDAO.findAllDatasetIdsByAutomationRuleType(
+            DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
         .thenReturn(Set.of(1));
     List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.CHAIRPERSON);
 
