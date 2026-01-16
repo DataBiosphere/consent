@@ -562,7 +562,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testCreateElectionsForDarCollectionWithSORequiredNoDARData() throws Exception {
+  void testCreateElectionsForDarCollectionWithSORequiredNoDARData() {
     User user = new User();
     user.setEmail("email");
     user.setUserId(1);
