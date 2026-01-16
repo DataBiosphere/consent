@@ -152,7 +152,11 @@ public class DACAutomationRuleService implements ConsentLogger {
   }
 
   public void triggerDACRuleSettings(
-      User researcher, List<Integer> datasetIds, String referenceId, ContainerRequest request) {
+      User researcher,
+      List<Integer> datasetIds,
+      String referenceId,
+      ContainerRequest request,
+      boolean skipIfRequiresSOApproval) {
     try {
       DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
       List<Vote> approvalVotes = new ArrayList<>();
@@ -161,6 +165,9 @@ public class DACAutomationRuleService implements ConsentLogger {
             Dataset dataset = datasetDAO.findDatasetById(datasetId);
             List<DACAutomationRule> rules =
                 ruleDAO.findAllDACAutomationRulesByDACId(dataset.getDacId());
+            if (requiresSOApprovalEnabled(rules) && skipIfRequiresSOApproval) {
+              return;
+            }
             rules.forEach(
                 rule -> {
                   boolean isActive = rule.enabledByUserId() != null;
@@ -262,5 +269,13 @@ public class DACAutomationRuleService implements ConsentLogger {
     return dacRules.stream()
         .filter(r -> Objects.equals(r.ruleType(), ruleType) && !isNull(r.enabledByUserId()))
         .findFirst();
+  }
+
+  private boolean requiresSOApprovalEnabled(List<DACAutomationRule> rules) {
+    return rules.stream()
+        .anyMatch(
+            r ->
+                r.ruleType() == DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL
+                    && r.enabledByUserId() != null);
   }
 }

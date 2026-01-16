@@ -218,4 +218,28 @@ class DataAccessRequestTest {
         exception.getMessage(),
         containsString("A closeout supplement must have a signing official id provided."));
   }
+
+  @Test
+  void testConvertToSimplifiedDar() {
+    Timestamp now = Timestamp.from(Instant.now());
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setData(new DataAccessRequestData());
+    dar.setDatasetIds(List.of());
+    dar.setCreateDate(now);
+    dar.setApprovingSigningOfficialUserId(1);
+    dar.setApprovingSigningOfficialApprovedDate(now);
+    dar.setCloseoutSigningOfficialApprovedDate(now);
+    dar.setCloseoutSigningOfficialApprovedUserId(1);
+    assertDoesNotThrow(dar::convertToSimplifiedDar);
+  }
+
+  @Test
+  void testConvertToSimplifiedDarWithMissingValues() {
+    Timestamp now = Timestamp.from(Instant.now());
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setData(new DataAccessRequestData());
+    dar.setDatasetIds(List.of());
+    dar.setCreateDate(now);
+    assertDoesNotThrow(dar::convertToSimplifiedDar);
+  }
 }

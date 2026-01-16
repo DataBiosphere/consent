@@ -58,16 +58,16 @@ import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 public class DataAccessRequestService implements ConsentLogger {
   public static final String EXPIRE_WARN_INTERVAL = "11 months";
   public static final String EXPIRE_NOTICE_INTERVAL = "1 year";
+  public static final String ALL_LISTED_PERSONNEL_MUST_SHARE_THE_SAME_INSTITUTION =
+      """
+  All listed personnel must share the same institutional affiliation and have a library card.  The following list of \
+  roles and members must have email addresses associated with your institution or library cards issued:\s""";
   protected static final Timestamp MINIMUM_SUBMITTED_DATE_FOR_DAR_EXPIRATIONS =
       Timestamp.from(
           Instant.ofEpochSecond(
               LocalDate.of(2024, 9, 30).toEpochSecond(LocalTime.of(0, 0, 0, 0), ZoneOffset.UTC)));
   private static final String MEMBER = "member";
   private static final String MEMBERS = MEMBER + "s: ";
-  public static final String ALL_LISTED_PERSONNEL_MUST_SHARE_THE_SAME_INSTITUTION =
-      """
-  All listed personnel must share the same institutional affiliation and have a library card.  The following list of \
-  roles and members must have email addresses associated with your institution or library cards issued:\s""";
   private static final String INTERNAL_COLLABORATOR = "Internal Collaborator";
   private static final String LAB_STAFF = "Lab staff";
   private final CounterService counterService;
@@ -249,7 +249,7 @@ public class DataAccessRequestService implements ConsentLogger {
           user.getEraCommonsId());
     }
     syncDataAccessRequestDatasets(datasetIds, referenceId);
-    ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request);
+    ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request, true);
     return findByReferenceId(referenceId);
   }
 
@@ -308,7 +308,8 @@ public class DataAccessRequestService implements ConsentLogger {
     syncDataAccessRequestDatasets(progressReportDatasetIds, referenceId);
 
     if (!progressReport.getIsCloseoutProgressReport() && !progressReport.getHasDMI()) {
-      ruleService.triggerDACRuleSettings(user, progressReportDatasetIds, referenceId, request);
+      ruleService.triggerDACRuleSettings(
+          user, progressReportDatasetIds, referenceId, request, false);
     }
 
     return findByReferenceId(referenceId);
