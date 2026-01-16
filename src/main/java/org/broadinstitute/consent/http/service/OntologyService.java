@@ -64,6 +64,6 @@ public class OntologyService implements ConsentLogger {
       throws Exception {
     OntologyIndexService indexService = new OntologyIndexService();
     Collection<OntologyTerm> terms = indexService.generateTerms(indexStream, ontologyType);
-    ontologyDAO.insertTerms(user, terms);
+    ontologyDAO.batchInsertTerms(terms, user.getUserId());
   }
 }

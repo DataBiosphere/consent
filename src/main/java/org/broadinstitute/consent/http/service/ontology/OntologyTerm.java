@@ -1,10 +1,10 @@
 package org.broadinstitute.consent.http.service.ontology;
 
-import com.google.gson.JsonElement;
 import java.util.ArrayList;
 import java.util.List;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
+@SuppressWarnings("unused") // Unused getters are used in JDBI method mappint.
 public class OntologyTerm {
 
   String termId;
@@ -25,40 +25,60 @@ public class OntologyTerm {
     this.parents = new ArrayList<>();
   }
 
+  public String termId() {
+    return termId;
+  }
+
+  public String version() {
+    return version;
+  }
+
+  public String ontology() {
+    return ontology;
+  }
+
+  public String synonyms() {
+    return String.join(" ", synonyms);
+  }
+
+  public String label() {
+    return label;
+  }
+
+  public String definition() {
+    return definition;
+  }
+
+  public boolean usable() {
+    return usable;
+  }
+
+  public String jsonDocument() {
+    return GsonUtil.getInstance().toJson(this);
+  }
+
   public void addSynonym(String synonym) {
     synonyms.add(synonym);
   }
 
-  public void addLabel(String label) {
+  public void setLabel(String label) {
     this.label = label;
   }
 
-  public void addDefinition(String definition) {
+  public void setDefinition(String definition) {
     this.definition = definition;
   }
 
-  public void setUsable(boolean useable) {
-    this.usable = useable;
-  }
-
-  public String getTermId() {
-    return termId;
+  public void setUsable(boolean usable) {
+    this.usable = usable;
   }
 
   public void addParent(String parent, String label, Integer position) {
     parents.add(new ParentTerm(parent, label, position));
   }
 
-  public List<ParentTerm> getParents() {
-    return parents;
-  }
-
   @Override
   public String toString() {
     return GsonUtil.getInstance().toJson(this);
-  }
-
-  public JsonElement getJson() {
-    return GsonUtil.getInstance().toJsonTree(this);
   }
 }

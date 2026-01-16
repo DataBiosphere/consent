@@ -59,7 +59,11 @@ public class OntologyIndexService implements ConsentLogger {
   }
 
   private OntologyTerm generateTerm(
-      OWLClass owlClass, String ontologyType, OWLOntology ontology, OWLReasoner reasoner, String version) {
+      OWLClass owlClass,
+      String ontologyType,
+      OWLOntology ontology,
+      OWLReasoner reasoner,
+      String version) {
     OntologyTerm ontologyTerm = new OntologyTerm(owlClass.toStringID(), version, ontologyType);
     Set<OWLAnnotation> classAnnotations =
         EntitySearcher.getAnnotations(owlClass, ontology).collect(Collectors.toSet());
@@ -77,10 +81,10 @@ public class OntologyIndexService implements ConsentLogger {
         ontologyTerm.addSynonym(propertyValue);
       }
       if (propertyName.equals(FIELD_LABEL_PROPERTY)) {
-        ontologyTerm.addLabel(propertyValue);
+        ontologyTerm.setLabel(propertyValue);
       }
       if (propertyName.equals(FIELD_DEFINITION_PROPERTY)) {
-        ontologyTerm.addDefinition(propertyValue);
+        ontologyTerm.setDefinition(propertyValue);
       }
     }
 

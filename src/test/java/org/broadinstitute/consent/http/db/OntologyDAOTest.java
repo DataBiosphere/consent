@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Collection;
@@ -10,8 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.Assert.assertEquals;
-
 @ExtendWith(MockitoExtension.class)
 class OntologyDAOTest extends DAOTestHelper {
 
@@ -21,7 +21,7 @@ class OntologyDAOTest extends DAOTestHelper {
     OntologyIndexService indexer = new OntologyIndexService();
     Collection<OntologyTerm> terms = indexer.generateTerms(inputStream, "DOID");
     User user = createUser();
-    ontologyDAO.insertTerms(user, terms);
+    ontologyDAO.batchInsertTerms(terms, user.getUserId());
     int count = ontologyDAO.countTerms();
     assertEquals(terms.size(), count);
   }
