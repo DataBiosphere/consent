@@ -629,4 +629,13 @@ WHERE dar.submission_date > now() - interval '1 year'
     WHERE data ->> 'closeoutSupplement' IS NOT NULL)
   """)
   List<ApprovedDataset> getApprovedDatasets(@Bind("userId") Integer userId);
+
+  @SqlQuery(
+      """
+          SELECT DISTINCT d.dataset_id
+          FROM dataset d
+          INNER JOIN dac_rule_settings settings ON d.dac_id = settings.dac_id
+          INNER JOIN dac_automation_rules r ON settings.rule_id = r.id AND r.rule::text = :ruleType
+      """)
+  Set<Integer> findAllDatasetIdsByAutomationRuleType(@Bind("ruleType") String name);
 }

@@ -44,11 +44,14 @@ import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.rules.DACAutomationRule;
+import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.jdbi.v3.core.statement.Update;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -1321,6 +1324,34 @@ class DatasetDAOTest extends DAOTestHelper {
     datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), null);
     Dataset updatedDataset2 = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNull(updatedDataset2.getIndexedDate());
+  }
+
+  @ParameterizedTest
+  @EnumSource(DACAutomationRuleType.class)
+  void testFilterDatasetIdsByAutomationRuleType(DACAutomationRuleType ruleType) {
+    // Dataset and DAC with DAC Rule
+    Dataset dataset = insertDataset();
+    Dac dac = insertDac();
+    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
+
+    User user = createUser();
+    createUserRole(UserRoles.CHAIRPERSON.getRoleId(), user.getUserId(), dac.getDacId());
+    List<DACAutomationRule> rules =
+        dacAutomationRuleDAO.findAll().stream().filter(r -> r.ruleType().equals(ruleType)).toList();
+    assertFalse(rules.isEmpty());
+
+    dacAutomationRuleDAO.auditedInsertDACRuleSetting(
+        dac.getDacId(), rules.getFirst().id(), user.getUserId(), Instant.now());
+
+    // Dataset and DAC without the DAC rule
+    Dataset dataset2 = insertDataset();
+    Dac dac2 = insertDac();
+    datasetDAO.updateDatasetDacId(dataset2.getDatasetId(), dac2.getDacId());
+
+    Set<Integer> datasetIds = datasetDAO.findAllDatasetIdsByAutomationRuleType(ruleType.name());
+    assertFalse(datasetIds.isEmpty());
+    assertTrue(datasetIds.contains(dataset.getDatasetId()));
+    assertFalse(datasetIds.contains(dataset2.getDatasetId()));
   }
 
   private DarCollection createDarCollectionWithDatasets(

@@ -268,11 +268,18 @@ public class DarCollectionService implements ConsentLogger {
    * @param summaries The list of DarCollectionSummaries to process
    */
   private void processDarCollectionSummariesForChair(List<DarCollectionSummary> summaries) {
+    // If all datasets in a collection require SO approval, do not show the open action. If there
+    // are some datasets in the collection that do not require SO approval, then the chair can still
+    // click OPEN and create elections for those datasets that do not require SO approval.
+    Set<Integer> soApprovalDatasetIds =
+        datasetDAO.findAllDatasetIdsByAutomationRuleType(
+            DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name());
     summaries.forEach(
         s -> {
+          boolean requiresSOApproval = soApprovalDatasetIds.containsAll(s.getDatasetIds());
           Map<String, Integer> statusCount = new HashMap<>();
           Map<Integer, Election> elections = s.getElections();
-          if (elections.size() < s.getDatasetCount()) {
+          if (!requiresSOApproval && elections.size() < s.getDatasetCount()) {
             s.addAction(DarCollectionActions.OPEN);
           }
           elections
@@ -281,18 +288,19 @@ public class DarCollectionService implements ConsentLogger {
           Integer closedCount = statusCount.get(ElectionStatus.CLOSED.getValue());
           Integer openCount = statusCount.get(ElectionStatus.OPEN.getValue());
           determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
-          updateSummaryActionsForChair(s, closedCount, openCount);
+          updateSummaryActionsForChair(requiresSOApproval, s, closedCount, openCount);
         });
   }
 
   /**
    * Update the summary actions for a chairperson based on the summary and election counts.
    *
+   * @param requiresSOApproval Whether all datasets in the collection require SO approval
    * @param summary The DarCollectionSummary to update
    * @param closedCount The count of closed elections
    * @param openCount The count of open elections
    */
-  private void updateSummaryActionsForChair(
+  private void updateSummaryActionsForChair(boolean requiresSOApproval,
       DarCollectionSummary summary, Integer closedCount, Integer openCount) {
 
     // By default, no actions can be taken on a closeout supplement
@@ -306,7 +314,7 @@ public class DarCollectionService implements ConsentLogger {
     }
 
     // If there are no elections, only show open
-    if (summary.getElections().isEmpty()) {
+    if (!requiresSOApproval && summary.getElections().isEmpty()) {
       summary.addAction(DarCollectionActions.OPEN);
     }
 
