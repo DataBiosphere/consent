@@ -38,6 +38,7 @@ public class DarCollectionSummary {
   @Expose private Integer institutionId;
   @Expose private Set<Integer> datasetIds;
   @Expose private boolean requiresSOApproval;
+  @Expose private Integer soApproverId;
 
   // Normally unused by the UI, but used in data population. Can be included in the JSON response
   // if needed by using a GsonBuilder without `excludeFieldsWithoutExposeAnnotation`.
@@ -213,6 +214,14 @@ public class DarCollectionSummary {
 
   public boolean requiresSOApproval() {
     return this.requiresSOApproval;
+  }
+
+  public void setSOApprover(Integer soUserId) {
+     this.soApproverId = soUserId;
+  }
+
+  public Integer getSOApprover() {
+    return this.soApproverId;
   }
 
   public void setDatasetIds(Set<Integer> datasetIds) {

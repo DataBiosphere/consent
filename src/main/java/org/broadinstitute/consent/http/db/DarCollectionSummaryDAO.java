@@ -109,6 +109,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                latest_dar.closeout_approving_so_id as latest_dar_closeout_approving_so_id,
                latest_dar.closeout_so_approval_timestamp as latest_dar_closeout_so_approval_timestamp,
                latest_dar.requires_so_approval as latest_dar_requires_so_approval,
+               latest_dar.approving_so_id as latest_dar_so_approver_id,
                u.display_name as researcher_name,
                i.institution_name,
                e.election_id,
@@ -152,8 +153,9 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               GROUP BY
               c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id,
               latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
-              latest_dar.requires_so_approval, u.display_name, i.institution_name, e.election_id,
-              e.status, e.reference_id, e.dataset_id, dd.dataset_id, latest_dar.data, dac.name
+              latest_dar.requires_so_approval, latest_dar.approving_so_id, u.display_name,
+              i.institution_name, e.election_id, e.status, e.reference_id, e.dataset_id,
+              dd.dataset_id, latest_dar.data, dac.name
           """)
   List<DarCollectionSummary> getDarCollectionSummariesForSO(
       @Bind("institutionId") Integer institutionId);
