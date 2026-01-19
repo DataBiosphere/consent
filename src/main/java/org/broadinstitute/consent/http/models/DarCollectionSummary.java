@@ -217,7 +217,7 @@ public class DarCollectionSummary {
   }
 
   public void setSOApprover(Integer soUserId) {
-     this.soApproverId = soUserId;
+    this.soApproverId = soUserId;
   }
 
   public Integer getSOApprover() {
