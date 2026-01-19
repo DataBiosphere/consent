@@ -358,6 +358,9 @@ public class DarCollectionService implements ConsentLogger {
         && summary.getCloseoutSigningOfficialApprovalDate() == null) {
       summary.addAction(DarCollectionActions.REVIEW_PROGRESS_REPORT);
     }
+    if (summary.requiresSOApproval()) {
+      summary.addAction(DarCollectionActions.APPROVE);
+    }
   }
 
   /**

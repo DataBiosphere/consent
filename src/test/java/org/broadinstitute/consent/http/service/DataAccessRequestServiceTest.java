@@ -67,6 +67,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
@@ -222,6 +223,9 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
             any(Date.class),
             any(DataAccessRequestData.class),
             anyString());
+    when(dataSetDAO.filterDatasetIdsByAutomationRuleType(
+            dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
+        .thenReturn(dar.getDatasetIds());
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
     assertNotNull(newDar);
   }

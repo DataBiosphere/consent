@@ -55,6 +55,8 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
       dar.setApprovingSigningOfficialUserId(resultSet.getInt("approving_so_id"));
     }
 
+    dar.setRequiresSOApproval(resultSet.getBoolean("requires_so_approval"));
+
     return dar;
   }
 }

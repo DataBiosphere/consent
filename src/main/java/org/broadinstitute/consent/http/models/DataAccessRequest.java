@@ -68,6 +68,8 @@ public class DataAccessRequest {
 
   @JsonProperty public Integer closeoutSigningOfficialApprovedUserId;
 
+  @JsonProperty public boolean requiresSOApproval;
+
   public DataAccessRequest() {
     this.elections = new HashMap<>();
   }
@@ -279,6 +281,14 @@ public class DataAccessRequest {
     this.approvingSigningOfficialApprovedDate = when;
   }
 
+  public void setRequiresSOApproval(boolean requiresSOApproval) {
+    this.requiresSOApproval = requiresSOApproval;
+  }
+
+  public boolean getRequiresSOApproval() {
+    return this.requiresSOApproval;
+  }
+
   /**
    * Merges the DAR and the DAR Data into a single Map Ignores a series of deprecated keys Null
    * values are ignored by default
@@ -481,6 +491,9 @@ public class DataAccessRequest {
     if (dar.getApprovingSigningOfficialApprovedDate() != null) {
       copy.put(
           "approvingSigningOfficialApprovedDate", dar.getApprovingSigningOfficialApprovedDate());
+    }
+    if (dar.getRequiresSOApproval()) {
+      copy.put("requiresSOApproval", dar.getRequiresSOApproval());
     }
     return copy;
   }

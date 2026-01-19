@@ -222,4 +222,6 @@
            relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-01-15-add-appoving-so-to-dar-table.xml"
            relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-01-19-add-requires-so-approval-attribute.xml"
+           relativeToChangelogFile="true" />
 </databaseChangeLog>
