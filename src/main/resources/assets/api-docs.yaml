@@ -903,31 +903,7 @@ paths:
   /api/votes/rationale:
     $ref: './paths/votesRationale.yaml'
   /api/ontology:
-    post:
-        summary: Index Ontology
-        description: Index Ontology
-        parameters:
-          - name: fileName
-            in: query
-            description: The name of the ontology file to index.
-            required: true
-            schema:
-              type: string
-          - name: fileType
-            in: query
-            description: The type of the ontology file to index
-            required: true
-            schema:
-              type: string
-              enum: [ DOID, DUOS, DUO ]
-        tags:
-            - Admin
-            - Ontology
-        responses:
-          200:
-            description: Ontology Query Results
-          500:
-            description: Internal Server Error
+    $ref: './paths/ontology.yaml'
   /metrics/dataset/{datasetId}:
     get:
       summary: Dataset Metrics
