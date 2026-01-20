@@ -40,7 +40,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
           SELECT collection.dar_code, dd.dataset_id, dar.id, dar.reference_id, dar.collection_id,
             dar.parent_id, dar.user_id, dar.create_date, dar.submission_date, dar.update_date,
-            dar.data, dar.era_commons_id,
+            dar.data, dar.era_commons_id, dar.approving_so_id, dar.approving_so_timestamp,
             dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
           FROM data_access_request dar
           LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
@@ -70,6 +70,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
         dar.user_id, dar.create_date, dar.submission_date, dar.update_date,
         dar.data,
         dd.dataset_id, collection.dar_code, dar.era_commons_id,
+        dar.approving_so_id, dar.approving_so_timestamp,
         dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
       FROM data_access_request dar
       LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
@@ -160,6 +161,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
                 dar.user_id, dar.create_date, dar.submission_date, dar.update_date,
                 data,
                 dd.dataset_id, collection.dar_code, dar.era_commons_id,
+                dar.approving_so_id, dar.approving_so_timestamp,
                 dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
               FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
@@ -186,7 +188,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id,
               dar.user_id, dar.create_date, dar.submission_date, dar.update_date,
               dar.data, collection.dar_code,
-              dar.era_commons_id, dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
+              dar.era_commons_id, dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id,
+              dar.approving_so_id, dar.approving_so_timestamp
               FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
               LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
@@ -208,7 +211,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
               dar.user_id, dar.create_date, dar.submission_date, dar.update_date,
               dar.data,
               collection.dar_code, dar.era_commons_id, dar.closeout_so_approval_timestamp,
-              dar.closeout_approving_so_id
+              dar.closeout_approving_so_id, dar.approving_so_id, dar.approving_so_timestamp
               FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
               LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
@@ -232,7 +235,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
                 dar.user_id, dar.create_date, dar.submission_date, dar.update_date,
                 dar.data,
                 collection.dar_code, dar.era_commons_id, dar.closeout_so_approval_timestamp,
-                dar.closeout_approving_so_id
+                dar.closeout_approving_so_id, dar.approving_so_id, dar.approving_so_timestamp
               FROM data_access_request dar
               LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
               LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
@@ -252,7 +255,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       """
           SELECT dd.dataset_id, dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id, dar.create_date, dar.submission_date, dar.update_date,
             dar.data, collection.dar_code,
-            dar.era_commons_id, dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id
+            dar.era_commons_id, dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id,
+            dar.approving_so_id, dar.approving_so_timestamp
           FROM data_access_request dar
           LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
           LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id
@@ -434,6 +438,15 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
         WHERE reference_id = :referenceId
     """)
   void updateDarCloseoutSO(
+      @Bind("id") Integer signingOfficialUserId, @Bind("referenceId") String referenceId);
+
+  @SqlUpdate(
+      """
+        UPDATE data_access_request
+          SET approving_so_id = :id, approving_so_timestamp = now()
+        WHERE reference_id = :referenceId
+    """)
+  void updateDarApprovalSO(
       @Bind("id") Integer signingOfficialUserId, @Bind("referenceId") String referenceId);
 
   /**

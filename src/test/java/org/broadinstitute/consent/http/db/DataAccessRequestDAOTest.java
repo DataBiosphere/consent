@@ -1164,6 +1164,25 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     assertNotNull(dar.getCloseoutSigningOfficialApprovedDate());
   }
 
+  @Test
+  void testMarkSOApprovalOfDAR() {
+    User user = createUserWithInstitution();
+    User signingOfficial = createUserWithInstitution();
+    Dataset dataset = createDataset(user.getUserId());
+    Integer collection = createDarCollection(user.getUserId());
+    DataAccessRequest darToStore =
+        createDataAccessRequest(collection, user.getUserId(), Date.from(Instant.now()));
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        darToStore.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.updateDarApprovalSO(
+        signingOfficial.getUserId(), darToStore.getReferenceId());
+
+    DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(darToStore.getReferenceId());
+
+    assertEquals(signingOfficial.getUserId(), dar.getApprovingSigningOfficialUserId());
+    assertNotNull(dar.getApprovingSigningOfficialApprovedDate());
+  }
+
   /**
    * Replace parent implementation of `createDataset()`
    *

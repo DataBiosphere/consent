@@ -61,6 +61,9 @@ public class DataAccessRequest {
   @JsonProperty private Map<Integer, Election> elections;
   @JsonProperty private String eraCommonsId;
 
+  @JsonProperty public Integer approvingSigningOfficialUserId;
+  @JsonProperty public Timestamp approvingSigningOfficialApprovedDate;
+
   @JsonProperty public Timestamp closeoutSigningOfficialApprovedDate;
 
   @JsonProperty public Integer closeoutSigningOfficialApprovedUserId;
@@ -260,6 +263,22 @@ public class DataAccessRequest {
     this.closeoutSigningOfficialApprovedDate = closeoutSigningOfficialApprovedDate;
   }
 
+  public Integer getApprovingSigningOfficialUserId() {
+    return this.approvingSigningOfficialUserId;
+  }
+
+  public Timestamp getApprovingSigningOfficialApprovedDate() {
+    return this.approvingSigningOfficialApprovedDate;
+  }
+
+  public void setApprovingSigningOfficialUserId(Integer userId) {
+    this.approvingSigningOfficialUserId = userId;
+  }
+
+  public void setApprovingSigningOfficialApprovedDate(Timestamp when) {
+    this.approvingSigningOfficialApprovedDate = when;
+  }
+
   /**
    * Merges the DAR and the DAR Data into a single Map Ignores a series of deprecated keys Null
    * values are ignored by default
@@ -455,6 +474,13 @@ public class DataAccessRequest {
     if (dar.getCloseoutSigningOfficialApprovedDate() != null) {
       copy.put(
           "closeoutSigningOfficialApprovedDate", dar.getCloseoutSigningOfficialApprovedUserId());
+    }
+    if (dar.getApprovingSigningOfficialUserId() != null) {
+      copy.put("approvingSigningOfficialUserId", dar.getApprovingSigningOfficialUserId());
+    }
+    if (dar.getApprovingSigningOfficialApprovedDate() != null) {
+      copy.put(
+          "approvingSigningOfficialApprovedDate", dar.getApprovingSigningOfficialApprovedDate());
     }
     return copy;
   }

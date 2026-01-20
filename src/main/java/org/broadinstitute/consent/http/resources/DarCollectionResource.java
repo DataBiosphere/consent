@@ -248,13 +248,16 @@ public class DarCollectionResource extends Resource {
   @Consumes("application/json")
   @RolesAllowed({CHAIRPERSON, SIGNINGOFFICIAL})
   public Response createElectionsForCollection(
-      @Auth DuosUser duosUser, @PathParam("collectionId") Integer collectionId) {
+      @Auth DuosUser duosUser,
+      @PathParam("collectionId") Integer collectionId,
+      @Context Request request) {
     try {
       User user = duosUser.getUser();
       DarCollection sourceCollection = darCollectionService.getByCollectionId(user, collectionId);
       isCollectionPresent(sourceCollection);
       DarCollection updatedCollection =
-          darCollectionService.createElectionsForDarCollection(user, sourceCollection);
+          darCollectionService.createElectionsForDarCollection(
+              user, sourceCollection, (ContainerRequest) request);
       return Response.ok(updatedCollection).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
