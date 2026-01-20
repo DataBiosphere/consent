@@ -1,7 +1,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
-  <changeSet id="changelog-consent-2026-01-15-add-appoving-so-to-dar-table.xml" author="otchet">
+  <changeSet id="changelog-consent-2026-01-15-add-approving-so-to-dar-table.xml" author="otchet">
     <addColumn tableName="data_access_request">
       <column name="approving_so_id" type="bigint"/>
     </addColumn>
