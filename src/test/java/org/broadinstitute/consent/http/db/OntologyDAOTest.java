@@ -1,25 +1,34 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
+import com.google.cloud.storage.BlobId;
 import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.Collection;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
 import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class OntologyDAOTest extends DAOTestHelper {
 
+  @Mock private GCSService gcsService;
+  @Mock private StoreConfiguration storeConfiguration;
+
   @Test
   void testInsertTerms() throws Exception {
-    InputStream inputStream = new FileInputStream("src/test/resources/doid.owl");
-    OntologyIndexService indexer = new OntologyIndexService();
-    Collection<OntologyTerm> terms = indexer.generateTerms(inputStream, "DOID");
+    when(gcsService.getDocument(any(BlobId.class)))
+        .thenReturn(new FileInputStream("src/test/resources/doid.owl"));
+    OntologyIndexService indexer = new OntologyIndexService(gcsService, storeConfiguration);
+    Collection<OntologyTerm> terms = indexer.generateTerms("doid.owl", "DOID");
     User user = createUser();
     ontologyDAO.batchInsertTerms(terms, user.getUserId());
     int count = ontologyDAO.countTerms();

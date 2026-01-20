@@ -240,12 +240,15 @@ public class ConsentModule extends AbstractModule {
   @Provides
   OntologyService providesOntologyService() {
     return new OntologyService(
-        providesClient(), config.getServicesConfiguration(), providesOntologyDAO());
+        providesClient(),
+        config.getServicesConfiguration(),
+        providesOntologyDAO(),
+        providesOntologyIndexService());
   }
 
   @Provides
   OntologyIndexService providesOntologyIndexService() {
-    return new OntologyIndexService();
+    return new OntologyIndexService(providesGCSService(), config.getCloudStoreConfiguration());
   }
 
   @Provides

@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service.ontology;
 
+import com.google.cloud.storage.BlobId;
+import com.google.inject.Inject;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,6 +13,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.broadinstitute.consent.http.cloudstore.GCSService;
+import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.HasClassesInSignature;
@@ -36,10 +40,21 @@ public class OntologyIndexService implements ConsentLogger {
   private static final ArrayList<String> IRI_FILTERS =
       new ArrayList<>(Arrays.asList("DOID", "DUOS", "DUO"));
 
-  public Collection<OntologyTerm> generateTerms(InputStream stream, String ontologyType)
+  private final GCSService gcsService;
+  private final StoreConfiguration storeConfiguration;
+
+  @Inject
+  public OntologyIndexService(GCSService gcsService, StoreConfiguration storeConfiguration) {
+    this.gcsService = gcsService;
+    this.storeConfiguration = storeConfiguration;
+  }
+
+  public Collection<OntologyTerm> generateTerms(String ontologyFile, String ontologyType)
       throws OWLOntologyCreationException {
+    BlobId blobId = BlobId.of(storeConfiguration.getBucket(), "ontology/" + ontologyFile);
+    InputStream is = gcsService.getDocument(blobId);
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-    OWLOntology ontology = manager.loadOntologyFromOntologyDocument(stream);
+    OWLOntology ontology = manager.loadOntologyFromOntologyDocument(is);
     OWLOntologyID ontologyID = ontology.getOntologyID();
     Optional<IRI> versionIRI = ontologyID.getVersionIRI();
     String version = versionIRI.map(IRI::toString).orElse("unknown_version");
