@@ -230,6 +230,7 @@ class DataAccessRequestTest {
     dar.setApprovingSigningOfficialApprovedDate(now);
     dar.setCloseoutSigningOfficialApprovedDate(now);
     dar.setCloseoutSigningOfficialApprovedUserId(1);
+    dar.setRequiresSOApproval(true);
     assertDoesNotThrow(dar::convertToSimplifiedDar);
   }
 

@@ -27,6 +27,7 @@ import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -48,6 +49,7 @@ import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.CountryValidator;
@@ -81,6 +83,7 @@ public class DataAccessRequestService implements ConsentLogger {
   private final UserDAO userDAO;
   private final UserService userService;
   private final DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
+  private final DatasetDAO datasetDAO;
   private final CountryValidator countryValidator;
 
   private final DacService dacService;
@@ -99,6 +102,7 @@ public class DataAccessRequestService implements ConsentLogger {
       DACAutomationRuleService ruleService,
       ConsentConfiguration config) {
     this.counterService = counterService;
+    this.datasetDAO = container.getDatasetDAO();
     this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
     this.darCollectionDAO = container.getDarCollectionDAO();
     this.electionDAO = container.getElectionDAO();
@@ -249,6 +253,7 @@ public class DataAccessRequestService implements ConsentLogger {
           user.getEraCommonsId());
     }
     syncDataAccessRequestDatasets(datasetIds, referenceId);
+    flagIfSOApprovalIsNeeded(datasetIds, referenceId);
     ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request, true);
     return findByReferenceId(referenceId);
   }
@@ -726,5 +731,14 @@ public class DataAccessRequestService implements ConsentLogger {
 
   public List<Election> findOpenElectionsByReferenceId(String referenceId) {
     return electionDAO.findOpenElectionsByReferenceIds(List.of(referenceId));
+  }
+
+  private void flagIfSOApprovalIsNeeded(List<Integer> datasetIds, String referenceId) {
+    if (!datasetDAO
+        .filterDatasetIdsByAutomationRuleType(
+            datasetIds, DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name())
+        .isEmpty()) {
+      dataAccessRequestDAO.updateRequiresSOApproval(true, referenceId);
+    }
   }
 }

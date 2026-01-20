@@ -761,6 +761,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     datasetTwo.setDatasetId(2);
     summary.addDatasetId(datasetOne.getDatasetId());
     summary.addDatasetId(datasetTwo.getDatasetId());
+    summary.setRequiresSOApproval(true);
     when(darCollectionSummaryDAO.getDarCollectionSummariesForSO(any()))
         .thenReturn(List.of(summary));
 
@@ -770,6 +771,34 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertEquals(1, summaries.size());
     DarCollectionSummary s = summaries.getFirst();
     assertTrue(s.getStatus().equalsIgnoreCase(DarCollectionStatus.SUBMITTED.getValue()));
+    assertTrue(s.requiresSOApproval());
+    assertTrue(s.getActions().contains(DarCollectionActions.APPROVE.getValue()));
+  }
+
+  @Test
+  void testProcessDarCollectionSummariesForDAC_SO_Reviewed() {
+    User user = new User();
+    user.setUserId(1);
+    DarCollectionSummary summary = new DarCollectionSummary();
+    Dataset datasetOne = new Dataset();
+    datasetOne.setDatasetId(1);
+    Dataset datasetTwo = new Dataset();
+    datasetTwo.setDatasetId(2);
+    summary.addDatasetId(datasetOne.getDatasetId());
+    summary.addDatasetId(datasetTwo.getDatasetId());
+    summary.setRequiresSOApproval(true);
+    summary.setSOApprover(1);
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForSO(any()))
+        .thenReturn(List.of(summary));
+
+    List<DarCollectionSummary> summaries =
+        service.getSummariesForRole(user, UserRoles.SIGNINGOFFICIAL);
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    DarCollectionSummary s = summaries.getFirst();
+    assertTrue(s.getStatus().equalsIgnoreCase(DarCollectionStatus.SUBMITTED.getValue()));
+    assertTrue(s.requiresSOApproval());
+    assertTrue(!s.getActions().contains(DarCollectionActions.APPROVE.getValue()));
   }
 
   @Test

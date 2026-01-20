@@ -1174,6 +1174,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         createDataAccessRequest(collection, user.getUserId(), Date.from(Instant.now()));
     dataAccessRequestDAO.insertDARDatasetRelation(
         darToStore.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.updateRequiresSOApproval(true, darToStore.getReferenceId());
     dataAccessRequestDAO.updateDarApprovalSO(
         signingOfficial.getUserId(), darToStore.getReferenceId());
 
