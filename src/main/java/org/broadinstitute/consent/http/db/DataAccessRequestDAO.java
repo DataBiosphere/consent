@@ -456,7 +456,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           SET requires_so_approval = :requiresSOApproval
         WHERE reference_id = :referenceId
         """)
-  Integer updateRequiresSOApproval(
+  void updateRequiresSOApproval(
       @Bind("requiresSOApproval") boolean requiresSOApproval,
       @Bind("referenceId") String referenceId);
 
