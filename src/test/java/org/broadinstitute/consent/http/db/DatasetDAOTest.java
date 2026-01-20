@@ -1362,7 +1362,7 @@ class DatasetDAOTest extends DAOTestHelper {
 
   @ParameterizedTest
   @EnumSource(DACAutomationRuleType.class)
-  void testFilterDatasetIdsByAutomationRuleType(DACAutomationRuleType ruleType) {
+  void testFindAllDatasetIdsByAutomationRuleType(DACAutomationRuleType ruleType) {
     // Dataset and DAC with DAC Rule
     Dataset dataset = insertDataset();
     Dac dac = insertDac();
