@@ -453,7 +453,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   @SqlUpdate(
       """
         UPDATE data_access_request
-          SET requires_so_approval=:requiresSOApproval
+          SET requires_so_approval = :requiresSOApproval
         WHERE reference_id = :referenceId
         """)
   Integer updateRequiresSOApproval(
