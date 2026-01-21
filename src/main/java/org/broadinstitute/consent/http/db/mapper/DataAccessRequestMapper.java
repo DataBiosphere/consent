@@ -46,7 +46,17 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
     dar.setEraCommonsId(resultSet.getString("era_commons_id"));
     dar.setCloseoutSigningOfficialApprovedDate(
         resultSet.getTimestamp("closeout_so_approval_timestamp"));
-    dar.setCloseoutSigningOfficialApprovedUserId(resultSet.getInt("closeout_approving_so_id"));
+    if (hasNonZeroColumn(resultSet, "closeout_approving_so_id")) {
+      dar.setCloseoutSigningOfficialApprovedUserId(resultSet.getInt("closeout_approving_so_id"));
+    }
+
+    dar.setApprovingSigningOfficialApprovedDate(resultSet.getTimestamp("approving_so_timestamp"));
+    if (hasNonZeroColumn(resultSet, "approving_so_id")) {
+      dar.setApprovingSigningOfficialUserId(resultSet.getInt("approving_so_id"));
+    }
+
+    dar.setRequiresSOApproval(resultSet.getBoolean("requires_so_approval"));
+
     return dar;
   }
 }

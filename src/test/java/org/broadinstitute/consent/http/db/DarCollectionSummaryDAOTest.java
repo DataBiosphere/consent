@@ -424,6 +424,79 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testGetDarCollectionSummaryForSO_ApprovalRequired() {
+    User userOne = createUserWithInstitution();
+    Integer userOneId = userOne.getUserId();
+
+    Dac dacOne = createDac();
+    Integer dacOneId = dacOne.getDacId();
+    String dacOneName = dacOne.getName();
+
+    Integer institutionId = getUserInstitution(userOne).getId();
+    Dataset dataset = createDatasetWithDac(userOneId, dacOneId);
+    Integer collectionOneId = createDarCollection(userOneId);
+    DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
+    dataAccessRequestDAO.insertDARDatasetRelation(darOne.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.updateRequiresSOApproval(true, darOne.getReferenceId());
+    List<Integer> targetDatasets = List.of(dataset.getDatasetId());
+    List<DarCollectionSummary> summaries =
+        darCollectionSummaryDAO.getDarCollectionSummariesForSO(institutionId);
+
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    summaries.forEach(
+        s -> {
+          assertEquals(1, s.getDatasetIds().size());
+          s.getDatasetIds().forEach(id -> assertTrue(targetDatasets.contains(id)));
+
+          assertNotNull(s.getDacNames());
+          assertEquals(1, s.getDacNames().size());
+          assertTrue(s.getDacNames().contains(dacOneName));
+
+          assertEquals(0, s.getElections().size());
+          assertEquals(1, s.getDatasetCount());
+          assertTrue(s.requiresSOApproval());
+        });
+  }
+
+  @Test
+  void testGetDarCollectionSummaryForSO_ApprovalCompleted() {
+    User userOne = createUserWithInstitution();
+    Integer userOneId = userOne.getUserId();
+
+    Dac dacOne = createDac();
+    Integer dacOneId = dacOne.getDacId();
+    String dacOneName = dacOne.getName();
+
+    Integer institutionId = getUserInstitution(userOne).getId();
+    Dataset dataset = createDatasetWithDac(userOneId, dacOneId);
+    Integer collectionOneId = createDarCollection(userOneId);
+    DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
+    dataAccessRequestDAO.insertDARDatasetRelation(darOne.getReferenceId(), dataset.getDatasetId());
+    dataAccessRequestDAO.updateRequiresSOApproval(true, darOne.getReferenceId());
+    dataAccessRequestDAO.updateDarApprovalSO(userOne.getUserId(), darOne.getReferenceId());
+    List<Integer> targetDatasets = List.of(dataset.getDatasetId());
+    List<DarCollectionSummary> summaries =
+        darCollectionSummaryDAO.getDarCollectionSummariesForSO(institutionId);
+
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    summaries.forEach(
+        s -> {
+          assertEquals(1, s.getDatasetIds().size());
+          s.getDatasetIds().forEach(id -> assertTrue(targetDatasets.contains(id)));
+
+          assertNotNull(s.getDacNames());
+          assertEquals(1, s.getDacNames().size());
+          assertTrue(s.getDacNames().contains(dacOneName));
+
+          assertEquals(0, s.getElections().size());
+          assertEquals(1, s.getDatasetCount());
+          assertTrue(s.requiresSOApproval());
+        });
+  }
+
+  @Test
   void testGetDarCollectionSummaryForSO_ArchivedCollection() {
     User userOne = createUserWithInstitution();
     Integer userOneId = userOne.getUserId();

@@ -570,7 +570,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
     DarCollection collection = mock(DarCollection.class);
     when(darCollectionService.getByCollectionId(researcher, 1)).thenReturn(collection);
 
-    try (var response = resource.createElectionsForCollection(duosResearcher, 1)) {
+    try (var response = resource.createElectionsForCollection(duosResearcher, 1, request)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -579,7 +579,7 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   void testCreateElectionsForCollectionNotFound() {
     when(darCollectionService.getByCollectionId(chairperson, 1)).thenReturn(null);
 
-    try (var response = resource.createElectionsForCollection(duosChairperson, 1)) {
+    try (var response = resource.createElectionsForCollection(duosChairperson, 1, request)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
