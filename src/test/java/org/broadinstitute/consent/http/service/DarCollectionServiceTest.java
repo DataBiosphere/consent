@@ -1476,7 +1476,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testProcessDarCollectionSummariesForChairAllRequireSOApproval() {
+  void testProcessDarCollectionSummariesForChairAllDatasetsRequireSOApproval() {
     User user = new User();
     user.setUserId(1);
     user.addRole(UserRoles.Chairperson());
@@ -1498,7 +1498,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testProcessDarCollectionSummariesForChairSomeRequireSOApproval() {
+  void testProcessDarCollectionSummariesForChairSomeDatasetsRequireSOApproval() {
     User user = new User();
     user.setUserId(1);
     user.addRole(UserRoles.Chairperson());
@@ -1519,6 +1519,31 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     assertEquals(1, summaries.size());
     // There should be an OPEN action since only some datasets require SO approval
     assertTrue(summaries.getFirst().getActions().contains(DarCollectionActions.OPEN.getValue()));
+  }
+
+  @Test
+  void testProcessDarCollectionSummariesForChairDarCollectionSummaryRequiresSOApproval() {
+    User user = new User();
+    user.setUserId(1);
+    user.addRole(UserRoles.Chairperson());
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.setLatestReferenceId(UUID.randomUUID().toString());
+    summary.addDatasetId(1);
+    // Ensure that the dar collection condition IS triggered
+    summary.setRequiresSOApproval(true);
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(
+            user.getUserId(), UserRoles.CHAIRPERSON.getRoleId()))
+        .thenReturn(List.of(summary));
+    // Ensure that the dataset condition is NOT triggered
+    when(datasetDAO.findAllDatasetIdsByAutomationRuleType(
+            DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
+        .thenReturn(Set.of());
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.CHAIRPERSON);
+
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    // There should not be an OPEN action since all datasets require SO approval
+    assertFalse(summaries.getFirst().getActions().contains(DarCollectionActions.OPEN.getValue()));
   }
 
   @Test

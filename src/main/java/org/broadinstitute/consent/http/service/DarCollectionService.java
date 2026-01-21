@@ -272,15 +272,15 @@ public class DarCollectionService implements ConsentLogger {
    * @param summaries The list of DarCollectionSummaries to process
    */
   private void processDarCollectionSummariesForChair(List<DarCollectionSummary> summaries) {
-    // If all datasets in a collection require SO approval, do not show the open action. If there
-    // are some datasets in the collection that do not require SO approval, then the chair can still
-    // click OPEN and create elections for those datasets that do not require SO approval.
     Set<Integer> soApprovalDatasetIds =
         datasetDAO.findAllDatasetIdsByAutomationRuleType(
             DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name());
     summaries.forEach(
         s -> {
-          boolean requiresSOApproval = soApprovalDatasetIds.containsAll(s.getDatasetIds());
+          // DarCollections with ALL datasets requiring SO approval should not show the OPEN action.
+          // DarCollections with a requiresSOApproval setting should also not show the OPEN action.
+          boolean requiresSOApproval =
+              soApprovalDatasetIds.containsAll(s.getDatasetIds()) || s.requiresSOApproval();
           Map<String, Integer> statusCount = new HashMap<>();
           Map<Integer, Election> elections = s.getElections();
           if (!requiresSOApproval && elections.size() < s.getDatasetCount()) {
@@ -299,7 +299,7 @@ public class DarCollectionService implements ConsentLogger {
   /**
    * Update the summary actions for a chairperson based on the summary and election counts.
    *
-   * @param requiresSOApproval Whether all datasets in the collection require SO approval
+   * @param requiresSOApproval Whether the DarCollectionSummary requires SO approval
    * @param summary The DarCollectionSummary to update
    * @param closedCount The count of closed elections
    * @param openCount The count of open elections
