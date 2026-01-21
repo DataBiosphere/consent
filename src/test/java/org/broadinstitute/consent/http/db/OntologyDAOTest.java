@@ -25,10 +25,11 @@ class OntologyDAOTest extends DAOTestHelper {
 
   @Test
   void testInsertTerms() throws Exception {
+    when(storeConfiguration.getBucket()).thenReturn("my-bucket");
     when(gcsService.getDocument(any(BlobId.class)))
-        .thenReturn(new FileInputStream("src/test/resources/doid.owl"));
+        .thenReturn(new FileInputStream("src/test/resources/duo.owl"));
     OntologyIndexService indexer = new OntologyIndexService(gcsService, storeConfiguration);
-    Collection<OntologyTerm> terms = indexer.generateTerms("doid.owl", "DOID");
+    Collection<OntologyTerm> terms = indexer.generateTerms("duo.owl", "DOID");
     User user = createUser();
     ontologyDAO.batchInsertTerms(terms, user.getUserId());
     int count = ontologyDAO.countTerms();
