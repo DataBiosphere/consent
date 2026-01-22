@@ -1,0 +1,21 @@
+type: object
+properties:
+  id:
+    type: string
+    description: Unique identifier for the feature flag
+    example: "enable-new-dar-workflow"
+  value:
+    type: string
+    description: Value of the feature flag
+    example: "true"
+  createDate:
+    type: string
+    format: date-time
+    description: Timestamp when the feature flag was created
+  updateDate:
+    type: string
+    format: date-time
+    description: Timestamp when the feature flag was last updated
+required:
+  - id
+  - value
