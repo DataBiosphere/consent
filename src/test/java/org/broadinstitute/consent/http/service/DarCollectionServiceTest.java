@@ -1453,6 +1453,25 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testProcessDarCollectionSummariesForChairWithoutCloseout() {
+    User user = new User();
+    user.setUserId(1);
+    user.addRole(UserRoles.Chairperson());
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.setLatestReferenceId(UUID.randomUUID().toString());
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(
+            user.getUserId(), UserRoles.CHAIRPERSON.getRoleId()))
+        .thenReturn(List.of(summary));
+
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.CHAIRPERSON);
+
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    // With no elections, there should be an Open action
+    assertTrue(summaries.getFirst().getActions().contains(DarCollectionActions.OPEN.getValue()));
+  }
+
+  @Test
   void testGetSummaryForRoleByCollectionId_SO() {
     User user = new User();
     user.setUserId(1);
