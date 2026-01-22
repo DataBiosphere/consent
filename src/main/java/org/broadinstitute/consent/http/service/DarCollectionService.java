@@ -285,20 +285,18 @@ public class DarCollectionService implements ConsentLogger {
           Integer closedCount = statusCount.get(ElectionStatus.CLOSED.getValue());
           Integer openCount = statusCount.get(ElectionStatus.OPEN.getValue());
           determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
-          updateSummaryActionsForChair(s.requiresSOApproval(), s, closedCount, openCount);
+          updateSummaryActionsForChair(s, closedCount, openCount);
         });
   }
 
   /**
    * Update the summary actions for a chairperson based on the summary and election counts.
    *
-   * @param requiresSOApproval Whether the DarCollectionSummary requires SO approval
    * @param summary The DarCollectionSummary to update
    * @param closedCount The count of closed elections
    * @param openCount The count of open elections
    */
   private void updateSummaryActionsForChair(
-      boolean requiresSOApproval,
       DarCollectionSummary summary,
       Integer closedCount,
       Integer openCount) {
@@ -314,7 +312,7 @@ public class DarCollectionService implements ConsentLogger {
     }
 
     // If there are no elections, only show open
-    if (!requiresSOApproval && summary.getElections().isEmpty()) {
+    if (!summary.requiresSOApproval() && summary.getElections().isEmpty()) {
       summary.addAction(DarCollectionActions.OPEN);
     }
 
