@@ -40,7 +40,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     return createDataAccessRequestWithSOEmail(collectionId, userId, null);
   }
 
-  private DataAccessRequest createDataAccessRequestWithSOEmail(Integer collectionId, Integer userId, String soEmail) {
+  private DataAccessRequest createDataAccessRequestWithSOEmail(
+      Integer collectionId, Integer userId, String soEmail) {
     String referenceId = UUID.randomUUID().toString();
     Date createDate = new Date();
     Date submissionDate = new Date();
@@ -510,7 +511,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Dataset dataset = createDataset(userOneId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer archivedCollectionId = createDarCollection(userOneId);
-    DataAccessRequest darOne = createDataAccessRequestWithSOEmail(collectionOneId, userOneId, "test");
+    DataAccessRequest darOne =
+        createDataAccessRequestWithSOEmail(collectionOneId, userOneId, "test");
     DataAccessRequest archivedDar = createDataAccessRequest(archivedCollectionId, userOneId);
     dataAccessRequestDAO.archiveByReferenceIds(List.of(archivedDar.getReferenceId()));
 
@@ -525,7 +527,8 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
     assertEquals(collectionOneId, summaries.get(0).getDarCollectionId());
-    assertEquals(darOne.getData().getSigningOfficialEmail(), summaries.get(0).getSigningOfficialEmail());
+    assertEquals(
+        darOne.getData().getSigningOfficialEmail(), summaries.get(0).getSigningOfficialEmail());
   }
 
   @Test
