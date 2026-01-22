@@ -28,6 +28,7 @@ public class DarCollectionSummaryReducer
     Integer datasetId;
     String darStatus;
     String darReferenceId;
+    String signingOfficialEmail;
 
     try {
       if (hasColumn(rowView, "closeout", String.class)) {
@@ -67,6 +68,10 @@ public class DarCollectionSummaryReducer
         darStatus = rowView.getColumn("dar_status", String.class);
         if (Objects.nonNull(darStatus)) {
           summary.addStatus(darStatus, darReferenceId);
+        }
+        signingOfficialEmail = rowView.getColumn("signingOfficialEmail", String.class);
+        if (Objects.nonNull(signingOfficialEmail)) {
+          summary.setSigningOfficialEmail(signingOfficialEmail);
         }
       } catch (MappingException e) {
         // ignore exception, it means dar_status and dar_reference_id wasn't included for this query

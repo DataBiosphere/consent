@@ -121,6 +121,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                latest_dar.data ->> 'projectTitle' AS name,
                latest_dar.data ->> 'status' AS dar_status,
                latest_dar.data ->> 'closeoutSupplement' AS closeout,
+               latest_dar.data ->> 'signingOfficialEmail' AS signingOfficialEmail,
                ARRAY_AGG(dar_all.reference_id) AS reference_ids
               FROM dar_collection c
               INNER JOIN users u

@@ -104,23 +104,6 @@ public class DACAutomationRuleService implements ConsentLogger {
       if (optionalRuleBeingUpdated.isEmpty()) {
         throw new UnprocessableEntityException("Rule ID not found.");
       }
-      DACAutomationRule ruleBeingUpdated = optionalRuleBeingUpdated.get();
-      if (ruleBeingUpdated.ruleType() == DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL) {
-        Optional<DACAutomationRule> enabledRuleOfInterest =
-            getEnabledRuleOfInterest(dacRules, DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS);
-        if (enabledRuleOfInterest.isPresent()) {
-          throw new ConsentConflictException(
-              "You must disable the rule to automatically open elections for all DAC members before enabling this rule.");
-        }
-      } else if (ruleBeingUpdated.ruleType()
-          == DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS) {
-        Optional<DACAutomationRule> enabledRuleOfInterest =
-            getEnabledRuleOfInterest(dacRules, DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL);
-        if (enabledRuleOfInterest.isPresent()) {
-          throw new ConsentConflictException(
-              "You must disable the rule that requires Signing Official approval on Data Access Requests before enabling this rule.");
-        }
-      }
     }
     Instant insertTime = Instant.now();
     ruleDAO.auditedInsertDACRuleSetting(dacId, ruleId, user.getUserId(), insertTime);
@@ -152,11 +135,7 @@ public class DACAutomationRuleService implements ConsentLogger {
   }
 
   public void triggerDACRuleSettings(
-      User researcher,
-      List<Integer> datasetIds,
-      String referenceId,
-      ContainerRequest request,
-      boolean skipIfRequiresSOApproval) {
+      User researcher, List<Integer> datasetIds, String referenceId, ContainerRequest request) {
     try {
       DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
       List<Vote> approvalVotes = new ArrayList<>();
@@ -165,9 +144,6 @@ public class DACAutomationRuleService implements ConsentLogger {
             Dataset dataset = datasetDAO.findDatasetById(datasetId);
             List<DACAutomationRule> rules =
                 ruleDAO.findAllDACAutomationRulesByDACId(dataset.getDacId());
-            if (requiresSOApprovalEnabled(rules) && skipIfRequiresSOApproval) {
-              return;
-            }
             rules.forEach(
                 rule -> {
                   boolean isActive = rule.enabledByUserId() != null;
