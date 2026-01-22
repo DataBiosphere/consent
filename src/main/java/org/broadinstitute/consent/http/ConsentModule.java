@@ -31,6 +31,7 @@ import org.broadinstitute.consent.http.db.DatasetAuthorizationReaderDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DraftDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
+import org.broadinstitute.consent.http.db.FeatureFlagDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
@@ -57,6 +58,7 @@ import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.EmailService;
+import org.broadinstitute.consent.http.service.FeatureFlagService;
 import org.broadinstitute.consent.http.service.FileStorageObjectService;
 import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.LibraryCardService;
@@ -119,6 +121,7 @@ public class ConsentModule extends AbstractModule {
   private final AcknowledgementDAO acknowledgementDAO;
   private final DraftDAO draftDAO;
   private final DACAutomationRuleDAO rulesDAO;
+  private final FeatureFlagDAO featureFlagDAO;
 
   ConsentModule(ConsentConfiguration consentConfiguration, Environment environment) {
     this.config = consentConfiguration;
@@ -156,6 +159,7 @@ public class ConsentModule extends AbstractModule {
     this.acknowledgementDAO = this.jdbi.onDemand((AcknowledgementDAO.class));
     this.draftDAO = this.jdbi.onDemand(DraftDAO.class);
     this.rulesDAO = this.jdbi.onDemand(DACAutomationRuleDAO.class);
+    this.featureFlagDAO = this.jdbi.onDemand(FeatureFlagDAO.class);
   }
 
   @Override
@@ -348,6 +352,11 @@ public class ConsentModule extends AbstractModule {
         providesSendGridAPI(),
         providesFreeMarkerTemplateHelper(),
         config);
+  }
+
+  @Provides
+  FeatureFlagService providesFeatureFlagService() {
+    return new FeatureFlagService(providesFeatureFlagDAO());
   }
 
   @Provides
@@ -678,5 +687,10 @@ public class ConsentModule extends AbstractModule {
   @Provides
   DACAutomationRuleDAO providesDACAutomationRuleDAO() {
     return rulesDAO;
+  }
+
+  @Provides
+  FeatureFlagDAO providesFeatureFlagDAO() {
+    return featureFlagDAO;
   }
 }
