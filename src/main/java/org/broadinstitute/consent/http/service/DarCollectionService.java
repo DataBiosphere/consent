@@ -732,6 +732,29 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   /**
+   * @param user The User initiating new elections for a collection
+   * @param collection The DarCollection
+   * @param request The request context
+   * @return The updated DarCollection
+   * @throws ConsentConflictException Can be thrown when the collection no longer requires approval
+   *     or the underlying data access request does not support this operation.
+   * @throws BadRequestException Can be thrown when a collection required approval but is already
+   *     approved
+   * @throws ForbiddenException The user is not the specified signing official required to approve
+   *     the collection
+   */
+  public DarCollection approveDarCollection(
+      User user, DarCollection collection, ContainerRequest request)
+      throws ConsentConflictException, BadRequestException, ForbiddenException {
+    DataAccessRequest dar = collection.getMostRecentDar();
+    if (dar.getRequiresSOApproval()) {
+      approveDataAccessRequestBySigningOfficial(user, dar, request);
+      return darCollectionDAO.findDARCollectionByCollectionId(dar.getCollectionId());
+    }
+    throw new ConsentConflictException("This collection does not require approval.");
+  }
+
+  /**
    * DarCollections with no elections, or with previously canceled elections, are valid for
    * initiating a new set of elections. Elections in open, closed, pending, or final states are not
    * valid.
@@ -740,16 +763,10 @@ public class DarCollectionService implements ConsentLogger {
    * @param collection The DarCollection
    * @return The updated DarCollection
    */
-  public DarCollection createElectionsForDarCollection(
-      User user, DarCollection collection, ContainerRequest request)
+  public DarCollection createElectionsForDarCollection(User user, DarCollection collection)
       throws BadRequestException, ForbiddenException, ConsentConflictException, SQLException {
     DataAccessRequest dar = collection.getMostRecentDar();
-    if (user.hasUserRole(UserRoles.SIGNINGOFFICIAL) && dar.getRequiresSOApproval()) {
-      approveDataAccessRequestBySigningOfficial(user, dar, request);
-      return darCollectionDAO.findDARCollectionByCollectionId(dar.getCollectionId());
-    }
-    if (user.hasUserRole(UserRoles.CHAIRPERSON)
-        && (!dar.getRequiresSOApproval() || dar.getApprovingSigningOfficialUserId() != null)) {
+    if ((!dar.getRequiresSOApproval() || dar.getApprovingSigningOfficialUserId() != null)) {
       try {
         List<String> createdElectionReferenceIds =
             collectionServiceDAO.createElectionsForDarByUser(user, dar);

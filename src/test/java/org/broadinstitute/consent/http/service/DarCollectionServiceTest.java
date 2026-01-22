@@ -524,7 +524,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId()))
         .thenReturn(collection);
 
-    service.createElectionsForDarCollection(user, collection, request);
+    service.createElectionsForDarCollection(user, collection);
     verify(darCollectionServiceDAO).createElectionsForDarByUser(any(), eq(dar));
     verify(voteDAO).findVoteUsersByElectionReferenceIdList(any());
     verify(emailService).sendDarNewCollectionElectionMessage(any(), any());
@@ -532,7 +532,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testCreateElectionsForDarCollection_UserSO_ApprovalNotRequired() {
+  void testApproveCollection_UserSO_ApprovalNotRequired() {
     User user = new User();
     user.setEmail("email");
     user.setSigningOfficialRole();
@@ -542,12 +542,12 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     collection.addDar(dar);
 
     assertThrows(
-        ForbiddenException.class,
-        () -> service.createElectionsForDarCollection(user, collection, request));
+        ConsentConflictException.class,
+        () -> service.approveDarCollection(user, collection, request));
   }
 
   @Test
-  void testCreateElectionsForDarCollectionWithSORequired_NotSigningOfficial() {
+  void testApproveCollectionWithSORequired_NotSigningOfficial() {
     User user = new User();
     user.setEmail("email");
     user.setUserId(1);
@@ -566,11 +566,11 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertThrows(
         ForbiddenException.class,
-        () -> service.createElectionsForDarCollection(notASigningOfficial, collection, request));
+        () -> service.approveDarCollection(notASigningOfficial, collection, request));
   }
 
   @Test
-  void testCreateElectionsForDarCollectionWithSORequiredNoDARData() {
+  void testApproveCollectionWithSORequiredNoDARData() {
     User user = new User();
     user.setEmail("email");
     user.setUserId(1);
@@ -587,11 +587,11 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertThrows(
         ConsentConflictException.class,
-        () -> service.createElectionsForDarCollection(signingOfficial, collection, request));
+        () -> service.approveDarCollection(signingOfficial, collection, request));
   }
 
   @Test
-  void testCreateElectionsForDarCollectionWithSORequiredNotSOInDARThrows() {
+  void testApproveCollectionWithSORequiredNotSOInDARThrows() {
     User user = new User();
     user.setEmail("email");
     user.setUserId(1);
@@ -611,11 +611,11 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertThrows(
         ForbiddenException.class,
-        () -> service.createElectionsForDarCollection(signingOfficial, collection, request));
+        () -> service.approveDarCollection(signingOfficial, collection, request));
   }
 
   @Test
-  void testCreateElectionsForDarCollectionWithSORequired_Approving() {
+  void testApproveCollectionWithSORequired_Approving() {
     User user = new User();
     user.setEmail("email");
     user.setUserId(1);
@@ -633,12 +633,11 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DarCollection collection = createMockCollections().getFirst();
     collection.addDar(dar);
 
-    assertDoesNotThrow(
-        () -> service.createElectionsForDarCollection(signingOfficial, collection, request));
+    assertDoesNotThrow(() -> service.approveDarCollection(signingOfficial, collection, request));
   }
 
   @Test
-  void testCreateElectionsForDarCollectionWithSORequired_Approving_NoSO_Email() {
+  void testApproveCollectionWithSORequired_Approving_NoSO_Email() {
     User user = new User();
     user.setEmail("email");
     user.setUserId(1);
@@ -657,11 +656,11 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertThrows(
         ForbiddenException.class,
-        () -> service.createElectionsForDarCollection(signingOfficial, collection, request));
+        () -> service.approveDarCollection(signingOfficial, collection, request));
   }
 
   @Test
-  void testCreateElectionsForDarCollectionWithSORequiredAlreadyApprovedDARThrows() {
+  void testApproveCollectionWithSORequiredAlreadyApprovedDARThrows() {
     User user = new User();
     user.setEmail("email");
     user.setUserId(1);
@@ -683,7 +682,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertThrows(
         BadRequestException.class,
-        () -> service.createElectionsForDarCollection(signingOfficial, collection, request));
+        () -> service.approveDarCollection(signingOfficial, collection, request));
   }
 
   @Test
@@ -712,8 +711,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         .thenReturn(collection);
     when(voteDAO.findVoteUsersByElectionReferenceIdList(any())).thenReturn(List.of(chairperson));
 
-    assertDoesNotThrow(
-        () -> service.createElectionsForDarCollection(chairperson, collection, request));
+    assertDoesNotThrow(() -> service.createElectionsForDarCollection(chairperson, collection));
   }
 
   @Test
@@ -737,7 +735,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertThrows(
         ForbiddenException.class,
-        () -> service.createElectionsForDarCollection(chairperson, collection, request));
+        () -> service.createElectionsForDarCollection(chairperson, collection));
   }
 
   @Test
@@ -766,8 +764,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         .thenReturn(collection);
     when(voteDAO.findVoteUsersByElectionReferenceIdList(any())).thenReturn(List.of(chairperson));
 
-    assertDoesNotThrow(
-        () -> service.createElectionsForDarCollection(chairperson, collection, request));
+    assertDoesNotThrow(() -> service.createElectionsForDarCollection(chairperson, collection));
   }
 
   @Test
@@ -796,7 +793,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId()))
         .thenReturn(collection);
 
-    service.createElectionsForDarCollection(user, collection, request);
+    service.createElectionsForDarCollection(user, collection);
 
     verify(darCollectionDAO).findDARCollectionByCollectionId(collection.getDarCollectionId());
     verify(emailService)
@@ -815,7 +812,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertThrows(
         IllegalStateException.class,
-        () -> service.createElectionsForDarCollection(user, collection, request));
+        () -> service.createElectionsForDarCollection(user, collection));
   }
 
   @Test
@@ -834,7 +831,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId()))
         .thenReturn(collection);
 
-    service.createElectionsForDarCollection(user, collection, request);
+    service.createElectionsForDarCollection(user, collection);
     verify(darCollectionServiceDAO).createElectionsForDarByUser(user, dar);
     verify(voteDAO).findVoteUsersByElectionReferenceIdList(electionIds);
     verifyNoInteractions(emailService);

@@ -246,7 +246,7 @@ public class DarCollectionResource extends Resource {
   @POST
   @Path("{collectionId}/election")
   @Consumes("application/json")
-  @RolesAllowed({CHAIRPERSON, SIGNINGOFFICIAL})
+  @RolesAllowed({CHAIRPERSON})
   public Response createElectionsForCollection(
       @Auth DuosUser duosUser,
       @PathParam("collectionId") Integer collectionId,
@@ -256,7 +256,27 @@ public class DarCollectionResource extends Resource {
       DarCollection sourceCollection = darCollectionService.getByCollectionId(user, collectionId);
       isCollectionPresent(sourceCollection);
       DarCollection updatedCollection =
-          darCollectionService.createElectionsForDarCollection(
+          darCollectionService.createElectionsForDarCollection(user, sourceCollection);
+      return Response.ok(updatedCollection).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Path("{collectionId}/approve")
+  @Consumes("application/json")
+  @RolesAllowed({SIGNINGOFFICIAL})
+  public Response approveCollection(
+      @Auth DuosUser duosUser,
+      @PathParam("collectionId") Integer collectionId,
+      @Context Request request) {
+    try {
+      User user = duosUser.getUser();
+      DarCollection sourceCollection = darCollectionService.getByCollectionId(user, collectionId);
+      isCollectionPresent(sourceCollection);
+      DarCollection updatedCollection =
+          darCollectionService.approveDarCollection(
               user, sourceCollection, (ContainerRequest) request);
       return Response.ok(updatedCollection).build();
     } catch (Exception e) {
