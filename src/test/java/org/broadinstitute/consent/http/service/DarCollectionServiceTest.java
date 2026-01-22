@@ -1480,7 +1480,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     summary.setLatestReferenceId(UUID.randomUUID().toString());
     summary.setRequiresSOApproval(true);
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(
-        user.getUserId(), UserRoles.CHAIRPERSON.getRoleId()))
+            user.getUserId(), UserRoles.CHAIRPERSON.getRoleId()))
         .thenReturn(List.of(summary));
 
     List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.CHAIRPERSON);
