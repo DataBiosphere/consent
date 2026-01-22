@@ -1,7 +1,7 @@
 post:
   summary: Allows a SIGNING OFFICIAL to approve a collection by collection ID
   operationId: approveCollection
-  description: Returns created Elections for Dars in Collection
+  description: Returns an approved DAR collection
   tags:
     - DAR Collection
     - Election
