@@ -2107,6 +2107,63 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testSendNewDARCollectionMessage_SOApproval() throws Exception {
+    DarCollection collection = new DarCollection();
+    collection.setDarCollectionId(1);
+
+    User signingOfficial = new User();
+    signingOfficial.setUserId(3);
+    signingOfficial.setInstitutionId(1);
+    signingOfficial.setEmail("so@example.org");
+
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    DataAccessRequestData darData = new DataAccessRequestData();
+    darData.setSigningOfficialEmail(signingOfficial.getEmail());
+    dar.setData(darData);
+    dar.setRequiresSOApproval(true);
+    dar.setApprovingSigningOfficialUserId(signingOfficial.getUserId());
+
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(1);
+
+    dar.setDatasetIds(List.of(dataset.getDatasetId()));
+    collection.addDar(dar);
+
+    Dac dac = new Dac();
+    dac.setDacId(1);
+    dac.setName("DAC-1");
+
+    User member = new User();
+    member.setUserId(3);
+    member.setInstitutionId(1);
+
+    UserRole memberRole =
+        new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName());
+    memberRole.setDacId(dac.getDacId());
+    member.setRoles(List.of(memberRole));
+
+    DACAutomationRule rule = mock(DACAutomationRule.class);
+
+    when(rule.ruleType()).thenReturn(DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL);
+    when(darCollectionDAO.findDARCollectionByCollectionId(1)).thenReturn(collection);
+    when(datasetDAO.findDatasetsByIdList(anyList())).thenReturn(List.of(dataset));
+    when(dacDAO.findDacsForDatasetIds(anyList())).thenReturn(Set.of(dac));
+    when(dacAutomationRuleService.findAllByDacId(anyInt())).thenReturn(List.of(rule));
+    when(userDAO.findUsersByRoleId(UserRoles.ADMIN.getRoleId())).thenReturn(List.of());
+    when(userDAO.findUsersForDatasetsByRole(anyList(), anyList())).thenReturn(Set.of(member));
+    when(userDAO.findUserById(any())).thenReturn(new User());
+
+    service.createElectionsForNewDarCollection(1);
+    service.sendNewDARCollectionMessage(1);
+
+    verify(emailService, never()).sendDarNewCollectionElectionMessage(any(), any());
+    verify(emailService, never()).sendNewDARRequestEmail(any(), any(), any(), any());
+    verify(emailService).sendNewDARSigningOfficialRequestEmail(any(), any(), any());
+  }
+
+  @Test
   void testSendNewDARCollectionMessage_RequiresSOApprovalShouldDoDefaultBehaviorWithProgressReport()
       throws Exception {
     DarCollection collection = new DarCollection();
