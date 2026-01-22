@@ -1472,6 +1472,25 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testProcessDarCollectionSummariesForChairWithSOApprovalRequired() {
+    User user = new User();
+    user.setUserId(1);
+    user.addRole(UserRoles.Chairperson());
+    DarCollectionSummary summary = new DarCollectionSummary();
+    summary.setLatestReferenceId(UUID.randomUUID().toString());
+    summary.setRequiresSOApproval(true);
+    when(darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(
+        user.getUserId(), UserRoles.CHAIRPERSON.getRoleId()))
+        .thenReturn(List.of(summary));
+
+    List<DarCollectionSummary> summaries = service.getSummariesForRole(user, UserRoles.CHAIRPERSON);
+
+    assertNotNull(summaries);
+    assertEquals(1, summaries.size());
+    // Chair summary should not have any actions
+    assertTrue(summaries.getFirst().getActions().isEmpty());
+  }
+  @Test
   void testGetSummaryForRoleByCollectionId_SO() {
     User user = new User();
     user.setUserId(1);
