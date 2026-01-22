@@ -1490,6 +1490,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     // Chair summary should not have any actions
     assertTrue(summaries.getFirst().getActions().isEmpty());
   }
+
   @Test
   void testGetSummaryForRoleByCollectionId_SO() {
     User user = new User();
