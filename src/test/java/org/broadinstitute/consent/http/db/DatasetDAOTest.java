@@ -433,34 +433,6 @@ class DatasetDAOTest extends DAOTestHelper {
     assertTrue(filteredDatasetIds2.isEmpty());
   }
 
-  @ParameterizedTest
-  @EnumSource(DACAutomationRuleType.class)
-  void testFindAllDatasetIdsByAutomationRuleType(DACAutomationRuleType ruleType) {
-    // Dataset and DAC with DAC Rule
-    Dataset dataset = insertDataset();
-    Dac dac = insertDac();
-    datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
-
-    User user = createUser();
-    createUserRole(UserRoles.CHAIRPERSON.getRoleId(), user.getUserId(), dac.getDacId());
-    List<DACAutomationRule> rules =
-        dacAutomationRuleDAO.findAll().stream().filter(r -> r.ruleType().equals(ruleType)).toList();
-    assertFalse(rules.isEmpty());
-
-    dacAutomationRuleDAO.auditedInsertDACRuleSetting(
-        dac.getDacId(), rules.getFirst().id(), user.getUserId(), Instant.now());
-
-    // Dataset and DAC without the DAC rule
-    Dataset dataset2 = insertDataset();
-    Dac dac2 = insertDac();
-    datasetDAO.updateDatasetDacId(dataset2.getDatasetId(), dac2.getDacId());
-
-    Set<Integer> datasetIds = datasetDAO.findAllDatasetIdsByAutomationRuleType(ruleType.name());
-    assertFalse(datasetIds.isEmpty());
-    assertTrue(datasetIds.contains(dataset.getDatasetId()));
-    assertFalse(datasetIds.contains(dataset2.getDatasetId()));
-  }
-
   @Test
   void testFindDatasetPropertiesByDatasetId() {
     Dataset d = insertDataset();

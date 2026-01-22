@@ -286,15 +286,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> datasetIds,
       @Bind("ruleType") String ruleType);
 
-  @SqlQuery(
-      """
-          SELECT DISTINCT d.dataset_id
-          FROM dataset d
-          INNER JOIN dac_rule_settings settings ON d.dac_id = settings.dac_id
-          INNER JOIN dac_automation_rules r ON settings.rule_id = r.id AND r.rule::text = :ruleType
-      """)
-  Set<Integer> findAllDatasetIdsByAutomationRuleType(@Bind("ruleType") String name);
-
   /**
    * Finds all minimal dataset information for datasets assigned to this DAC and which have been
    * requested for this DAC. This explicitly does NOT populate study information due to performance

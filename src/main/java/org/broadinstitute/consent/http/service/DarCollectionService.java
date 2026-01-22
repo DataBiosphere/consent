@@ -272,18 +272,11 @@ public class DarCollectionService implements ConsentLogger {
    * @param summaries The list of DarCollectionSummaries to process
    */
   private void processDarCollectionSummariesForChair(List<DarCollectionSummary> summaries) {
-    Set<Integer> soApprovalDatasetIds =
-        datasetDAO.findAllDatasetIdsByAutomationRuleType(
-            DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name());
     summaries.forEach(
         s -> {
-          // DarCollections with ALL datasets requiring SO approval should not show the OPEN action.
-          // DarCollections with a requiresSOApproval setting should also not show the OPEN action.
-          boolean requiresSOApproval =
-              soApprovalDatasetIds.containsAll(s.getDatasetIds()) || s.requiresSOApproval();
           Map<String, Integer> statusCount = new HashMap<>();
           Map<Integer, Election> elections = s.getElections();
-          if (!requiresSOApproval && elections.size() < s.getDatasetCount()) {
+          if (!s.requiresSOApproval() && elections.size() < s.getDatasetCount()) {
             s.addAction(DarCollectionActions.OPEN);
           }
           elections
@@ -292,7 +285,7 @@ public class DarCollectionService implements ConsentLogger {
           Integer closedCount = statusCount.get(ElectionStatus.CLOSED.getValue());
           Integer openCount = statusCount.get(ElectionStatus.OPEN.getValue());
           determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
-          updateSummaryActionsForChair(requiresSOApproval, s, closedCount, openCount);
+          updateSummaryActionsForChair(s.requiresSOApproval(), s, closedCount, openCount);
         });
   }
 
