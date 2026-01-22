@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.models.FeatureFlag;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +14,7 @@ class FeatureFlagDAOTest extends DAOTestHelper {
 
   @Test
   void testInsertAndFindById() {
-    String id = "test-feature-" + RandomStringUtils.secureStrong().nextAlphanumeric(10);
+    String id = "test-feature-" + randomAlphanumeric(10);
     String value = "test-value";
     featureFlagDAO.insert(id, value);
 
@@ -29,15 +28,15 @@ class FeatureFlagDAOTest extends DAOTestHelper {
 
   @Test
   void testFindById_NotFound() {
-    String id = "non-existent-" + RandomStringUtils.secureStrong().nextAlphanumeric(10);
+    String id = "non-existent-" + randomAlphanumeric(10);
     FeatureFlag flag = featureFlagDAO.findById(id);
     assertNull(flag);
   }
 
   @Test
   void testFindAll() {
-    String id1 = "feature-1-" + RandomStringUtils.secureStrong().nextAlphanumeric(10);
-    String id2 = "feature-2-" + RandomStringUtils.secureStrong().nextAlphanumeric(10);
+    String id1 = "feature-1-" + randomAlphanumeric(10);
+    String id2 = "feature-2-" + randomAlphanumeric(10);
     featureFlagDAO.insert(id1, "value1");
     featureFlagDAO.insert(id2, "value2");
 
@@ -50,7 +49,7 @@ class FeatureFlagDAOTest extends DAOTestHelper {
 
   @Test
   void testUpdate() {
-    String id = "update-test-" + RandomStringUtils.secureStrong().nextAlphanumeric(10);
+    String id = "update-test-" + randomAlphanumeric(10);
     String originalValue = "original";
     String updatedValue = "updated";
 
@@ -68,7 +67,7 @@ class FeatureFlagDAOTest extends DAOTestHelper {
 
   @Test
   void testDeleteById() {
-    String id = "delete-test-" + RandomStringUtils.secureStrong().nextAlphanumeric(10);
+    String id = "delete-test-" + randomAlphanumeric(10);
     featureFlagDAO.insert(id, "value");
 
     assertTrue(featureFlagDAO.exists(id));
@@ -79,7 +78,7 @@ class FeatureFlagDAOTest extends DAOTestHelper {
 
   @Test
   void testExists() {
-    String id = "exists-test-" + RandomStringUtils.secureStrong().nextAlphanumeric(10);
+    String id = "exists-test-" + randomAlphanumeric(10);
     assertFalse(featureFlagDAO.exists(id));
 
     featureFlagDAO.insert(id, "value");
@@ -91,7 +90,7 @@ class FeatureFlagDAOTest extends DAOTestHelper {
 
   @Test
   void testMultipleOperations() {
-    String id = "multi-test-" + RandomStringUtils.secureStrong().nextAlphanumeric(10);
+    String id = "multi-test-" + randomAlphanumeric(10);
 
     // Insert
     featureFlagDAO.insert(id, "initial");
@@ -111,9 +110,9 @@ class FeatureFlagDAOTest extends DAOTestHelper {
 
   @Test
   void testFindAllOrdering() {
-    String id1 = "aaa-" + RandomStringUtils.secureStrong().nextAlphanumeric(10);
-    String id2 = "zzz-" + RandomStringUtils.secureStrong().nextAlphanumeric(10);
-    String id3 = "mmm-" + RandomStringUtils.secureStrong().nextAlphanumeric(10);
+    String id1 = "aaa-" + randomAlphanumeric(10);
+    String id2 = "zzz-" + randomAlphanumeric(10);
+    String id3 = "mmm-" + randomAlphanumeric(10);
 
     featureFlagDAO.insert(id2, "value2");
     featureFlagDAO.insert(id1, "value1");
