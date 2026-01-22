@@ -758,7 +758,7 @@ public class DarCollectionService implements ConsentLogger {
               new IllegalStateException(
                   "No elections were created for DAR Collection: %s %s"
                       .formatted(collection.getDarCode(), dar.getReferenceId()));
-          logException(e);
+          logWarn(e.getMessage());
           throw e;
         }
         try {
