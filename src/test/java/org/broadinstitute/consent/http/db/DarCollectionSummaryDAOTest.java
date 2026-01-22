@@ -37,13 +37,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
   private DataAccessRequest createDataAccessRequest(Integer collectionId, Integer userId) {
+    return createDataAccessRequestWithSOEmail(collectionId, userId, null);
+  }
+
+  private DataAccessRequest createDataAccessRequestWithSOEmail(Integer collectionId, Integer userId, String soEmail) {
     String referenceId = UUID.randomUUID().toString();
     Date createDate = new Date();
     Date submissionDate = new Date();
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle(randomAlphabetic(20));
     data.setStatus("test");
-    data.setSigningOfficialEmail("soEmail");
+    data.setSigningOfficialEmail(soEmail);
     dataAccessRequestDAO.insertDataAccessRequest(
         collectionId,
         referenceId,
@@ -506,7 +510,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     Dataset dataset = createDataset(userOneId);
     Integer collectionOneId = createDarCollection(userOneId);
     Integer archivedCollectionId = createDarCollection(userOneId);
-    DataAccessRequest darOne = createDataAccessRequest(collectionOneId, userOneId);
+    DataAccessRequest darOne = createDataAccessRequestWithSOEmail(collectionOneId, userOneId, "test");
     DataAccessRequest archivedDar = createDataAccessRequest(archivedCollectionId, userOneId);
     dataAccessRequestDAO.archiveByReferenceIds(List.of(archivedDar.getReferenceId()));
 
@@ -1436,8 +1440,6 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     return new Setup(userId, chairId, summary);
   }
 
-  public record Setup(Integer userId, Integer chairId, DarCollectionSummary summary) {}
-
   private void validateSummaryObjectForResearcherWithParent(Integer userId, String referenceId) {
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
     List<DarCollectionSummary> summariesForResearcher =
@@ -1460,4 +1462,6 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
 
     return darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionOneId);
   }
+
+  public record Setup(Integer userId, Integer chairId, DarCollectionSummary summary) {}
 }
