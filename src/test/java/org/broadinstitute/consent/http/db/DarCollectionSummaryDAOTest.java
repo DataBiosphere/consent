@@ -43,6 +43,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle(randomAlphabetic(20));
     data.setStatus("test");
+    data.setSigningOfficialEmail("soEmail");
     dataAccessRequestDAO.insertDataAccessRequest(
         collectionId,
         referenceId,
@@ -520,6 +521,7 @@ class DarCollectionSummaryDAOTest extends DAOTestHelper {
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
     assertEquals(collectionOneId, summaries.get(0).getDarCollectionId());
+    assertEquals(darOne.getData().getSigningOfficialEmail(), summaries.get(0).getSigningOfficialEmail());
   }
 
   @Test
