@@ -246,12 +246,4 @@ public class DACAutomationRuleService implements ConsentLogger {
         .filter(r -> Objects.equals(r.ruleType(), ruleType) && !isNull(r.enabledByUserId()))
         .findFirst();
   }
-
-  private boolean requiresSOApprovalEnabled(List<DACAutomationRule> rules) {
-    return rules.stream()
-        .anyMatch(
-            r ->
-                r.ruleType() == DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL
-                    && r.enabledByUserId() != null);
-  }
 }
