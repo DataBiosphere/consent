@@ -18,7 +18,6 @@ post:
         enum: [ DOID, DUOS, DUO ]
   tags:
     - Admin
-    - Ontology
   responses:
     200:
       description: Ontology Query Results
