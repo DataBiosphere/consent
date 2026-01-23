@@ -126,6 +126,9 @@ class DarCollectionDAOTest extends DAOTestHelper {
         darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
     assertNotNull(returned);
     assertNotNull(returned.getMostRecentDar().getEraCommonsId());
+    assertTrue(returned.getMostRecentDar().getRequiresSOApproval());
+    assertNotNull(returned.getMostRecentDar().getApprovingSigningOfficialUserId());
+    assertNotNull(returned.getMostRecentDar().getApprovingSigningOfficialApprovedDate());
     assertEquals(collection.getDarCode(), returned.getDarCode());
     assertEquals(collection.getCreateUserId(), returned.getCreateUserId());
     generateDatasetElectionForCollection(collection);
@@ -696,10 +699,14 @@ class DarCollectionDAOTest extends DAOTestHelper {
     data.setProjectTitle("Project Title: " + randomAlphabetic(50));
     data.setHmb(true);
     data.setMethods(false);
+    data.setSigningOfficialEmail("test");
+    User signingOfficial = createUser();
     String referenceId = UUID.randomUUID().toString();
     Date now = new Date();
     dataAccessRequestDAO.insertDataAccessRequest(
         collectionId, referenceId, userId, now, now, now, data, randomAlphabetic(10));
+    dataAccessRequestDAO.updateRequiresSOApproval(true, referenceId);
+    dataAccessRequestDAO.updateDarApprovalSO(signingOfficial.getUserId(), referenceId);
     return dataAccessRequestDAO.findByReferenceId(referenceId);
   }
 
