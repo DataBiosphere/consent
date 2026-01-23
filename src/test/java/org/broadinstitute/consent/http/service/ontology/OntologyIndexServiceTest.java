@@ -26,7 +26,7 @@ class OntologyIndexServiceTest {
     when(gcsService.getDocument(any(BlobId.class)))
         .thenReturn(new FileInputStream("src/test/resources/duo.owl"));
     OntologyIndexService indexer = new OntologyIndexService(gcsService, storeConfiguration);
-    Collection<OntologyTerm> terms = indexer.generateTerms("duo.owl", "DOID");
+    Collection<OntologyTerm> terms = indexer.generateTerms("duo.owl", "DUO");
     assertFalse(terms.isEmpty());
   }
 }

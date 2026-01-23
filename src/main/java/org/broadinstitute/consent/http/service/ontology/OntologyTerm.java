@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
-@SuppressWarnings("unused") // Unused getters are used in JDBI method mappint.
+@SuppressWarnings("unused") // Getters are used in JDBI @BindMethods
 public class OntologyTerm {
 
   String termId;
