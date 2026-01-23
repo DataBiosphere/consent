@@ -28,6 +28,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         latest_dar.parent_id as latest_dar_parent_id,
         latest_dar.closeout_approving_so_id as latest_dar_closeout_approving_so_id,
         latest_dar.closeout_so_approval_timestamp AS latest_dar_closeout_so_approval_timestamp,
+        latest_dar.requires_so_approval as latest_dar_requires_so_approval,
+        latest_dar.approving_so_id as latest_dar_so_approver_id,
         researcher.display_name as researcher_name, i.institution_name,
         e.election_id, e.status, e.dataset_id, e.reference_id,
         v.vote_id as v_vote_id, dd.dataset_id as dd_datasetid,
@@ -88,8 +90,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       GROUP BY
         c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id,
         latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
-        researcher.display_name, i.institution_name, e.election_id, e.status,
-        e.reference_id, e.dataset_id, v.vote_id, dd.dataset_id, v.user_id,
+        latest_dar.requires_so_approval, latest_dar.approving_so_id, researcher.display_name, i.institution_name,
+        e.election_id, e.status, e.reference_id, e.dataset_id, v.vote_id, dd.dataset_id, v.user_id,
         v.vote, v.election_id, v.create_date, v.update_date, v.type, latest_dar.data, dac.name
       """)
   List<DarCollectionSummary> getDarCollectionSummariesForDACRole(
@@ -174,6 +176,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               latest_dar.parent_id AS latest_dar_parent_id,
               latest_dar.closeout_approving_so_id as latest_dar_closeout_approving_so_id,
               latest_dar.closeout_so_approval_timestamp as latest_dar_closeout_so_approval_timestamp,
+              latest_dar.requires_so_approval as latest_dar_requires_so_approval,
+              latest_dar.approving_so_id as latest_dar_so_approver_id,
               u.display_name AS researcher_name,
               i.institution_name,
               e.election_id,
@@ -211,8 +215,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
           GROUP BY
               c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id,
               latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
-              u.display_name, i.institution_name, e.election_id, e.status,
-              e.dataset_id, dd.dataset_id, latest_dar.data, dac.name
+              latest_dar.requires_so_approval, latest_dar.approving_so_id, u.display_name,
+              i.institution_name, e.election_id, e.status, e.dataset_id, dd.dataset_id, latest_dar.data, dac.name
       """)
   List<DarCollectionSummary> getDarCollectionSummariesForAdmin();
 
@@ -230,6 +234,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               latest_dar.parent_id AS latest_dar_parent_id,
               latest_dar.closeout_approving_so_id as latest_dar_closeout_approving_so_id,
               latest_dar.closeout_so_approval_timestamp as latest_dar_closeout_so_approval_timestamp,
+              latest_dar.requires_so_approval as latest_dar_requires_so_approval,
+              latest_dar.approving_so_id as latest_dar_so_approver_id,
               u.display_name AS researcher_name,
               i.institution_name,
               e.election_id,
@@ -274,7 +280,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               AND (e.latest = e.election_id OR e.election_id IS NULL)
           GROUP BY
               c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id, u.display_name, i.institution_name,
-              latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
+              latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp, latest_dar.requires_so_approval, latest_dar.approving_so_id,
               e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id, latest_dar.data, dac.name
       """)
   List<DarCollectionSummary> getDarCollectionSummariesForResearcher(@Bind("userId") Integer userId);
@@ -290,6 +296,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         latest_dar.parent_id AS latest_dar_parent_id,
         latest_dar.closeout_approving_so_id as latest_dar_closeout_approving_so_id,
         latest_dar.closeout_so_approval_timestamp as latest_dar_closeout_so_approval_timestamp,
+        latest_dar.requires_so_approval as latest_dar_requires_so_approval,
+        latest_dar.approving_so_id as latest_dar_so_approver_id,
         u.display_name as researcher_name, u.user_id as researcher_id,
         i.institution_name, i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, v.vote_id as v_vote_id, dd.dataset_id as dd_datasetid,
         v.user_id as v_user_id, v.vote as v_vote, v.election_id as v_election_id, v.create_date as v_create_date, v.update_date as v_update_date, v.type as v_type,
@@ -333,6 +341,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       GROUP BY
         c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id,
         latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
+        latest_dar.requires_so_approval, latest_dar.approving_so_id,
         u.display_name, u.user_id,
         i.institution_name, i.institution_id, e.election_id, e.status,
         e.reference_id, e.dataset_id, v.vote_id, dd.dataset_id, v.user_id,
@@ -353,6 +362,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                 latest_dar.reference_id as latest_dar_reference_id, latest_dar.parent_id as latest_dar_parent_id,
                 latest_dar.closeout_approving_so_id as latest_dar_closeout_approving_so_id,
                 latest_dar.closeout_so_approval_timestamp as latest_dar_closeout_so_approval_timestamp,
+                latest_dar.requires_so_approval as latest_dar_requires_so_approval,
+                latest_dar.approving_so_id as latest_dar_so_approver_id,
                 u.display_name as researcher_name,
                 u.user_id as researcher_id, i.institution_name, i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid,
                 dac.name AS dac_name,
@@ -391,7 +402,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               GROUP BY
                 c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id,
                 latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
-                u.display_name, u.user_id, i.institution_name,
+                latest_dar.requires_so_approval, latest_dar.approving_so_id,
+                latest_dar.requires_so_approval, latest_dar.approving_so_id, u.display_name, u.user_id, i.institution_name,
                 i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id, latest_dar.data, dac.name
           """)
   DarCollectionSummary getDarCollectionSummaryByCollectionId(
