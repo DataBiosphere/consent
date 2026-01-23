@@ -224,5 +224,5 @@
            relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-01-19-add-requires-so-approval-attribute.xml"
            relativeToChangelogFile="true" />
-  <include file="changesets/changelog-consent-2026-01-09-ontology.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-01-26-ontology-index.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>
