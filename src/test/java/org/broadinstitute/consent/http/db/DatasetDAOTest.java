@@ -108,11 +108,11 @@ class DatasetDAOTest extends DAOTestHelper {
 
     List<DatasetStudySummary> summaries = datasetDAO.findAllDatasetStudySummaries();
     assertThat(summaries, hasSize(1));
-    assertEquals(dataset.getDatasetId(), summaries.get(0).dataset_id());
-    assertEquals(dataset.getCreateUserId(), summaries.get(0).dataset_create_user_id());
-    assertEquals(study.getStudyId(), summaries.get(0).study_id());
-    assertEquals(study.getCreateUserId(), summaries.get(0).study_create_user_id());
-    assertEquals(study.getPublicVisibility(), summaries.get(0).public_visibility());
+    assertEquals(dataset.getDatasetId(), summaries.getFirst().dataset_id());
+    assertEquals(dataset.getCreateUserId(), summaries.getFirst().dataset_create_user_id());
+    assertEquals(study.getStudyId(), summaries.getFirst().study_id());
+    assertEquals(study.getCreateUserId(), summaries.getFirst().study_create_user_id());
+    assertEquals(study.getPublicVisibility(), summaries.getFirst().public_visibility());
   }
 
   @Test
@@ -121,8 +121,8 @@ class DatasetDAOTest extends DAOTestHelper {
 
     List<DatasetStudySummary> summaries = datasetDAO.findAllDatasetStudySummaries();
     assertThat(summaries, hasSize(1));
-    assertEquals(dataset.getDatasetId(), summaries.get(0).dataset_id());
-    assertNull(summaries.get(0).study_id());
+    assertEquals(dataset.getDatasetId(), summaries.getFirst().dataset_id());
+    assertNull(summaries.getFirst().study_id());
   }
 
   @Test
@@ -366,9 +366,9 @@ class DatasetDAOTest extends DAOTestHelper {
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId()));
     assertFalse(datasets.isEmpty());
     assertEquals(1, datasets.size());
-    assertEquals(dac.getDacId(), datasets.get(0).getDacId());
-    assertFalse(datasets.get(0).getProperties().isEmpty());
-    assertNotNull(datasets.get(0).getCreateUser());
+    assertEquals(dac.getDacId(), datasets.getFirst().getDacId());
+    assertFalse(datasets.getFirst().getProperties().isEmpty());
+    assertNotNull(datasets.getFirst().getCreateUser());
   }
 
   @Test
@@ -461,7 +461,7 @@ class DatasetDAOTest extends DAOTestHelper {
   void testUpdateDatasetProperty() {
     Dataset d = insertDataset();
     Set<DatasetProperty> properties = datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
-    DatasetProperty originalProperty = properties.stream().toList().get(0);
+    DatasetProperty originalProperty = properties.stream().toList().getFirst();
     DatasetProperty newProperty =
         new DatasetProperty(
             d.getDatasetId(),
@@ -474,11 +474,11 @@ class DatasetDAOTest extends DAOTestHelper {
     updatedProperties.add(newProperty);
     datasetDAO.updateDatasetProperty(
         d.getDatasetId(),
-        updatedProperties.get(0).getPropertyKey(),
-        updatedProperties.get(0).getPropertyValue().toString());
+        updatedProperties.getFirst().getPropertyKey(),
+        updatedProperties.getFirst().getPropertyValue().toString());
     Set<DatasetProperty> returnedProperties =
         datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
-    DatasetProperty returnedProperty = returnedProperties.stream().toList().get(0);
+    DatasetProperty returnedProperty = returnedProperties.stream().toList().getFirst();
     assertEquals(originalProperty.getPropertyKey(), returnedProperty.getPropertyKey());
     assertEquals(originalProperty.getPropertyId(), returnedProperty.getPropertyId());
     assertNotEquals(originalProperty.getPropertyValue(), returnedProperty.getPropertyValue());
@@ -490,7 +490,7 @@ class DatasetDAOTest extends DAOTestHelper {
 
     Set<DatasetProperty> oldProperties =
         datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
-    DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
+    DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).getFirst();
     datasetDAO.deleteDatasetPropertyByKey(d.getDatasetId(), propertyToDelete.getPropertyKey());
 
     List<DatasetProperty> newProps =
@@ -507,7 +507,7 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset dWithProps = datasetDAO.findDatasetById(d.getDatasetId());
 
     assertEquals(1, dWithProps.getProperties().size());
-    DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).get(0);
+    DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).getFirst();
     assertEquals(PropertyType.Number, prop.getPropertyType());
     assertEquals("10", prop.getPropertyValueAsString());
     assertEquals(10, prop.getPropertyValue());
@@ -520,7 +520,7 @@ class DatasetDAOTest extends DAOTestHelper {
 
     Set<DatasetProperty> oldProperties =
         datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
-    DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
+    DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).getFirst();
     datasetDAO.deleteDatasetPropertyByKey(d.getDatasetId(), propertyToDelete.getPropertyKey());
 
     DatasetProperty propToAdd =
@@ -551,7 +551,7 @@ class DatasetDAOTest extends DAOTestHelper {
 
     Set<DatasetProperty> oldProperties =
         datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
-    DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
+    DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).getFirst();
     datasetDAO.deleteDatasetPropertyByKey(d.getDatasetId(), propertyToDelete.getPropertyKey());
 
     List<DatasetProperty> newProps =
@@ -568,7 +568,7 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset dWithProps = datasetDAO.findDatasetById(d.getDatasetId());
 
     assertEquals(1, dWithProps.getProperties().size());
-    DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).get(0);
+    DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).getFirst();
     assertEquals(PropertyType.Boolean, prop.getPropertyType());
     assertEquals(bool.toString(), prop.getPropertyValueAsString());
     assertEquals(Boolean.FALSE, prop.getPropertyValue());
@@ -582,7 +582,7 @@ class DatasetDAOTest extends DAOTestHelper {
 
     Set<DatasetProperty> oldProperties =
         datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
-    DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
+    DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).getFirst();
     datasetDAO.deleteDatasetPropertyByKey(d.getDatasetId(), propertyToDelete.getPropertyKey());
 
     List<DatasetProperty> newProps =
@@ -599,7 +599,7 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset dWithProps = datasetDAO.findDatasetById(d.getDatasetId());
 
     assertEquals(1, dWithProps.getProperties().size());
-    DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).get(0);
+    DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).getFirst();
     assertEquals(PropertyType.Json, prop.getPropertyType());
     assertEquals(jsonObject.toString(), prop.getPropertyValueAsString());
     assertEquals(jsonObject, prop.getPropertyValue());
@@ -612,7 +612,7 @@ class DatasetDAOTest extends DAOTestHelper {
 
     Set<DatasetProperty> oldProperties =
         datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
-    DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
+    DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).getFirst();
     datasetDAO.deleteDatasetPropertyByKey(d.getDatasetId(), propertyToDelete.getPropertyKey());
 
     List<DatasetProperty> newProps =
@@ -629,7 +629,7 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset dWithProps = datasetDAO.findDatasetById(d.getDatasetId());
 
     assertEquals(1, dWithProps.getProperties().size());
-    DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).get(0);
+    DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).getFirst();
     assertEquals(PropertyType.String, prop.getPropertyType());
     assertEquals(value, prop.getPropertyValueAsString());
     assertEquals(value, prop.getPropertyValue());
@@ -642,7 +642,7 @@ class DatasetDAOTest extends DAOTestHelper {
 
     Set<DatasetProperty> oldProperties =
         datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
-    DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).get(0);
+    DatasetProperty propertyToDelete = new ArrayList<>(oldProperties).getFirst();
     datasetDAO.deleteDatasetPropertyByKey(d.getDatasetId(), propertyToDelete.getPropertyKey());
 
     List<DatasetProperty> newProps =
@@ -654,7 +654,7 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset dWithProps = datasetDAO.findDatasetById(d.getDatasetId());
 
     assertEquals(1, dWithProps.getProperties().size());
-    DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).get(0);
+    DatasetProperty prop = new ArrayList<>(dWithProps.getProperties()).getFirst();
     assertEquals(PropertyType.String, prop.getPropertyType());
     assertEquals(schemaValue, prop.getSchemaProperty());
   }
@@ -663,7 +663,7 @@ class DatasetDAOTest extends DAOTestHelper {
   void testDeleteDatasetPropertyByKey() {
     Dataset d = insertDataset();
     Set<DatasetProperty> properties = datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
-    DatasetProperty propertyToDelete = properties.stream().toList().get(0);
+    DatasetProperty propertyToDelete = properties.stream().toList().getFirst();
     datasetDAO.deleteDatasetPropertyByKey(d.getDatasetId(), propertyToDelete.getPropertyKey());
     Set<DatasetProperty> returnedProperties =
         datasetDAO.findDatasetPropertiesByDatasetId(d.getDatasetId());
@@ -675,7 +675,7 @@ class DatasetDAOTest extends DAOTestHelper {
     List<Integer> insertedDatasetIds =
         IntStream.range(1, 5)
             .mapToObj(
-                i -> {
+                _ -> {
                   Dataset dataset = insertDataset();
                   return dataset.getDatasetId();
                 })
@@ -849,7 +849,7 @@ class DatasetDAOTest extends DAOTestHelper {
             d.getDatasetId(), "objectid", "name", new Date(), d.getCreateUserId(), "action");
     Integer auditId = datasetDAO.insertDatasetAudit(audit);
     Optional<DatasetAudit> auditResponse =
-        Optional.ofNullable(datasetDAO.findAuditsByDatasetId(d.getDatasetId()).get(0));
+        Optional.ofNullable(datasetDAO.findAuditsByDatasetId(d.getDatasetId()).getFirst());
     assertTrue(auditResponse.isPresent());
     assertEquals(auditId, auditResponse.get().getDataSetAuditId());
   }
@@ -1213,7 +1213,7 @@ class DatasetDAOTest extends DAOTestHelper {
     assertEquals(1, approvedDatasets.size());
     assertEquals(
         darCollection.getMostRecentDar().getExpiresAt(),
-        approvedDatasets.get(0).getExpirationDate());
+        approvedDatasets.getFirst().getExpirationDate());
 
     Integer electionId2 =
         electionDAO.insertElection(
@@ -1303,7 +1303,7 @@ class DatasetDAOTest extends DAOTestHelper {
     electionDAO.updateElectionById(electionId5, ElectionStatus.CLOSED.getValue(), today);
     List<ApprovedDataset> approvedDatasets5 = datasetDAO.getApprovedDatasets(user.getUserId());
     assertEquals(1, approvedDatasets5.size());
-    assertEquals(progressReport.getExpiresAt(), approvedDatasets5.get(0).getExpirationDate());
+    assertEquals(progressReport.getExpiresAt(), approvedDatasets5.getFirst().getExpirationDate());
 
     Integer electionId6 =
         electionDAO.insertElection(
