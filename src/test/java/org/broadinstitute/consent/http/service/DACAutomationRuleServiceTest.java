@@ -34,7 +34,6 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
-import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
 import org.broadinstitute.consent.http.models.Collaborator;
@@ -263,33 +262,7 @@ class DACAutomationRuleServiceTest {
                     null,
                     null,
                     null)));
-    assertThrows(ConsentConflictException.class, () -> service.toggleRule(1, 2, user));
-  }
-
-  @Test
-  void testToggleRuleRAutoOpenOnWithSORuleOn() {
-    when(ruleDAO.findAllDACAutomationRulesByDACId(1))
-        .thenReturn(
-            List.of(
-                new DACAutomationRule(
-                    1,
-                    DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS,
-                    "Test Rule",
-                    RuleState.AVAILABLE,
-                    null,
-                    null,
-                    null,
-                    null),
-                new DACAutomationRule(
-                    2,
-                    DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL,
-                    "Test Rule",
-                    RuleState.AVAILABLE,
-                    Timestamp.from(Instant.now()),
-                    1,
-                    "alice",
-                    "alice@fake.org")));
-    assertThrows(ConsentConflictException.class, () -> service.toggleRule(1, 1, user));
+    assertDoesNotThrow(() -> service.toggleRule(1, 2, user));
   }
 
   @Test
@@ -445,7 +418,7 @@ class DACAutomationRuleServiceTest {
         .when(serviceSpy)
         .applyRule(activeRule, dataset1, dar, request);
 
-    serviceSpy.triggerDACRuleSettings(researcher, datasetIds, referenceId, request, true);
+    serviceSpy.triggerDACRuleSettings(researcher, datasetIds, referenceId, request);
 
     verify(serviceSpy, never()).applyRule(eq(inactiveRule), any(), any(), any());
   }
@@ -475,40 +448,9 @@ class DACAutomationRuleServiceTest {
 
     DACAutomationRuleService serviceSpy = spy(service);
 
-    serviceSpy.triggerDACRuleSettings(researcher, datasetIds, referenceId, request, true);
+    serviceSpy.triggerDACRuleSettings(researcher, datasetIds, referenceId, request);
 
     verify(serviceSpy, never()).applyRule(any(), any(), any(), any());
-  }
-
-  @Test
-  void testTriggerDACRuleSettingsSOApprovalRequiredToRunRulesWithoutApproval() {
-    User researcher = makeResearcher();
-    DataAccessRequest dar = makeDAR();
-    String referenceId = dar.getReferenceId();
-    List<Integer> datasetIds = List.of(1, 2);
-    Dataset dataset1 = makeDataset(1, "Dataset One", 3);
-    DACAutomationRule activeRule = makeDacAutomationRuleGRU(); // This has enabledByUserId=1
-    DACAutomationRule soRequiredRule =
-        new DACAutomationRule(
-            3,
-            DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL,
-            "SO Required Rule",
-            RuleState.AVAILABLE,
-            Timestamp.from(Instant.now()),
-            1,
-            "SO Rule",
-            activeRule.userEmail());
-
-    when(dataAccessRequestDAO.findByReferenceId(referenceId)).thenReturn(dar);
-    when(datasetDAO.findDatasetById(1)).thenReturn(dataset1);
-    when(ruleDAO.findAllDACAutomationRulesByDACId(dataset1.getDacId()))
-        .thenReturn(List.of(activeRule, soRequiredRule));
-
-    DACAutomationRuleService serviceSpy = spy(service);
-
-    serviceSpy.triggerDACRuleSettings(researcher, datasetIds, referenceId, request, true);
-
-    verify(serviceSpy, never()).applyRule(eq(activeRule), any(), any(), any());
   }
 
   @Test
@@ -550,7 +492,7 @@ class DACAutomationRuleServiceTest {
         .when(serviceSpy)
         .applyRule(activeRule, dataset1, dar, request);
 
-    serviceSpy.triggerDACRuleSettings(signingOfficial, datasetIds, referenceId, request, false);
+    serviceSpy.triggerDACRuleSettings(signingOfficial, datasetIds, referenceId, request);
 
     verify(serviceSpy).applyRule(eq(activeRule), any(), any(), any());
   }
@@ -567,7 +509,7 @@ class DACAutomationRuleServiceTest {
         .findByReferenceId(referenceId);
 
     assertDoesNotThrow(
-        () -> service.triggerDACRuleSettings(researcher, datasetIds, referenceId, request, true));
+        () -> service.triggerDACRuleSettings(researcher, datasetIds, referenceId, request));
   }
 
   @Test

@@ -224,4 +224,6 @@
            relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-01-19-add-requires-so-approval-attribute.xml"
            relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-01-22-update-so-approval-rule-desc.xml"
+           relativeToChangelogFile="true" />
 </databaseChangeLog>

@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -303,7 +302,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
             user.getEraCommonsId());
     verify(ruleService)
         .triggerDACRuleSettings(
-            user, progressReport.getDatasetIds(), progressReport.getReferenceId(), request, false);
+            user, progressReport.getDatasetIds(), progressReport.getReferenceId(), request);
     verify(dataAccessRequestDAO)
         .insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
   }
@@ -349,7 +348,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
             user.getUserId(),
             progressReport.getData(),
             user.getEraCommonsId());
-    verify(ruleService, never()).triggerDACRuleSettings(any(), any(), any(), any(), anyBoolean());
+    verify(ruleService, never()).triggerDACRuleSettings(any(), any(), any(), any());
     verify(dataAccessRequestDAO)
         .insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
   }

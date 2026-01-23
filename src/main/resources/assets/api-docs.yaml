@@ -43,6 +43,8 @@ paths:
     $ref: './paths/cancelCollectionByCollectionId.yaml'
   /api/collections/{collectionId}/election:
     $ref: './paths/createCollectionElectionsByCollectionId.yaml'
+  /api/collections/{collectionId}/approve:
+    $ref: './paths/approveCollectionByCollectionId.yaml'
   /api/collections/{collectionId}/resubmit:
     $ref: './paths/resubmitCollectionByCollectionId.yaml'
   /api/mail/type/{type}:

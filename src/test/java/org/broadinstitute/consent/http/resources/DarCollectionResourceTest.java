@@ -585,6 +585,23 @@ class DarCollectionResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testApproveCollection() {
+    DarCollection collection = mock(DarCollection.class);
+    when(darCollectionService.getByCollectionId(signingOfficial, 1)).thenReturn(collection);
+    try (var response = resource.approveCollection(duosSigningOfficial, 1, request)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testApproveCollection_NotFound() {
+    when(darCollectionService.getByCollectionId(signingOfficial, 1)).thenReturn(null);
+    try (var response = resource.approveCollection(duosSigningOfficial, 1, request)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
   void getCollectionSummariesForUserByRole_Member() {
     DarCollectionSummary mockSummary = new DarCollectionSummary();
     when(darCollectionService.getSummariesForRole(member, UserRoles.MEMBER))

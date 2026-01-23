@@ -55,6 +55,7 @@ public class DarCollectionReducer
           } else {
             dar = savedDar;
           }
+          dar.setDarCode(collection.getDarCode());
           if (Objects.nonNull(rowView.getColumn("dataset_id", Integer.class))) {
             dar.addDatasetId(rowView.getColumn("dataset_id", Integer.class));
           }
