@@ -119,8 +119,6 @@ public class OntologyIndexService implements ConsentLogger {
 
   private List<Set<OWLClass>> getFilteredParentSets(OWLClass owlClass, OWLReasoner reasoner) {
     List<Set<OWLClass>> parentSets = getParentSets(owlClass, reasoner);
-    // TODO: Review if we really need to reverse the parent sets
-    // Collections.reverse(parentSets);
     List<Set<OWLClass>> filteredSets = new ArrayList<>();
     List<String> owlClassCache = new ArrayList<>();
     for (Set<OWLClass> classSet : parentSets) {
@@ -136,7 +134,6 @@ public class OntologyIndexService implements ConsentLogger {
         filteredSets.add(filteredParentSet);
       }
     }
-    Collections.reverse(filteredSets);
     return filteredSets;
   }
 
