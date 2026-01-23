@@ -276,7 +276,8 @@ public class DarCollectionService implements ConsentLogger {
         s -> {
           Map<String, Integer> statusCount = new HashMap<>();
           Map<Integer, Election> elections = s.getElections();
-          if (!s.requiresSOApproval() && elections.size() < s.getDatasetCount()) {
+          if ((!s.requiresSOApproval() || s.getSOApprover() != null)
+              && elections.size() < s.getDatasetCount()) {
             s.addAction(DarCollectionActions.OPEN);
           }
           elections
@@ -310,7 +311,8 @@ public class DarCollectionService implements ConsentLogger {
     }
 
     // If there are no elections, only show open
-    if (!summary.requiresSOApproval() && summary.getElections().isEmpty()) {
+    if ((!summary.requiresSOApproval() || summary.getSOApprover() != null)
+        && summary.getElections().isEmpty()) {
       summary.addAction(DarCollectionActions.OPEN);
     }
 
