@@ -1718,7 +1718,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     assertNotNull(summaries);
     assertEquals(1, summaries.size());
-    // Chair summary should not have any actions
+    // Chair summary have the open action after it is approved by the SO.
     assertTrue(summaries.getFirst().getActions().contains(DarCollectionActions.OPEN.getValue()));
   }
 
