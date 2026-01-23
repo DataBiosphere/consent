@@ -16,6 +16,7 @@ import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
 import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
 public class OntologyService implements ConsentLogger {
 
@@ -67,7 +68,8 @@ public class OntologyService implements ConsentLogger {
     }
   }
 
-  public void indexOntology(User user, String ontologyFile, String ontologyType) throws Exception {
+  public void indexOntology(User user, String ontologyFile, String ontologyType)
+      throws OWLOntologyCreationException {
     Collection<OntologyTerm> terms = indexService.generateTerms(ontologyFile, ontologyType);
     ontologyDAO.batchInsertTerms(terms, user.getUserId());
   }
