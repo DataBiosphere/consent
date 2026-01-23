@@ -1,0 +1,18 @@
+get:
+  summary: Search Ontology terms
+  description: Search Ontology terms
+  operationId: searchOntologyTerms
+  parameters:
+    - name: terms
+      in: query
+      description: A comma-separated list of terms to search for in the ontology
+      required: true
+      schema:
+        type: string
+  tags:
+    - Ontology
+  responses:
+    200:
+      description: Ontology Search Results
+    500:
+      description: Internal Server Error

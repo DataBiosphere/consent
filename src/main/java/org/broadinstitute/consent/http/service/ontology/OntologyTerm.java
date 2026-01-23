@@ -14,6 +14,7 @@ public class OntologyTerm {
   String label;
   String definition;
   Boolean usable;
+  String oboId;
   List<ParentTerm> parents;
 
   public OntologyTerm(String termId, String version, String ontology) {
@@ -53,6 +54,10 @@ public class OntologyTerm {
     return usable;
   }
 
+  public String oboId() {
+    return oboId;
+  }
+
   public String jsonDocument() {
     return GsonUtil.getInstance().toJson(this);
   }
@@ -71,6 +76,10 @@ public class OntologyTerm {
 
   public void setUsable(boolean usable) {
     this.usable = usable;
+  }
+
+  public void setOboId(String oboId) {
+    this.oboId = oboId;
   }
 
   public void addParent(String parent, String label, Integer position) {

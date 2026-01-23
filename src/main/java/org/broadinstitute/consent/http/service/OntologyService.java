@@ -7,6 +7,7 @@ import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.Collection;
+import java.util.List;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -72,5 +73,9 @@ public class OntologyService implements ConsentLogger {
       throws OWLOntologyCreationException {
     Collection<OntologyTerm> terms = indexService.generateTerms(ontologyFile, ontologyType);
     ontologyDAO.batchInsertTerms(terms, user.getUserId());
+  }
+
+  public List<String> findByTerms(String terms) {
+    return ontologyDAO.findByTerms(List.of(terms.split(",")));
   }
 }

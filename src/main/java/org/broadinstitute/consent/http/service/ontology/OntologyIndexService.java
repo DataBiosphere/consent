@@ -36,6 +36,7 @@ public class OntologyIndexService implements ConsentLogger {
   private static final String FIELD_HAS_EXACT_SYNONYM_PROPERTY = "hasExactSynonym";
   private static final String FIELD_LABEL_PROPERTY = "label";
   private static final String FIELD_DEPRECATED_PROPERTY = "deprecated";
+  private static final String FIELD_OBO_ID_PROPERTY = "id";
   private static final ArrayList<String> IRI_FILTERS =
       new ArrayList<>(Arrays.asList("DOID", "DUOS", "DUO"));
 
@@ -99,6 +100,13 @@ public class OntologyIndexService implements ConsentLogger {
       }
       if (propertyName.equals(FIELD_DEFINITION_PROPERTY)) {
         ontologyTerm.setDefinition(propertyValue);
+      }
+      if (propertyName.equals(FIELD_OBO_ID_PROPERTY)) {
+        // OBO IDs usually look like "DOID:1234", so we store them as-is here.
+        // Additionally, they can be referenced with an underscore, so store both values here
+        // for easier searching later.
+        String oboIdUnderscore = propertyValue.replace(":", "_");
+        ontologyTerm.setOboId(String.format("%s %s", propertyValue, oboIdUnderscore));
       }
     }
 

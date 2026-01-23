@@ -1,6 +1,7 @@
 post:
   summary: Index Ontology
   description: Index Ontology
+  operationId: indexOntology
   parameters:
     - name: fileName
       in: query

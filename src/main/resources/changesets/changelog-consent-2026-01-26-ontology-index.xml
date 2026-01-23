@@ -15,6 +15,7 @@
         label text not null,
         definition text,
         usable boolean not null,
+        obo_id varchar(255),
         json_document jsonb,
         create_user_id integer not null,
         create_date timestamp without time zone default CURRENT_TIMESTAMP not null,
@@ -25,6 +26,7 @@
             'english',
             coalesce(term_id, '') || ' ' ||
             coalesce(label, '') || ' ' ||
+            coalesce(obo_id, '') || ' ' ||
             coalesce(synonyms, '')
           )
         ) STORED
