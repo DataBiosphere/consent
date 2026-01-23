@@ -2137,7 +2137,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     member.setInstitutionId(1);
 
     UserRole memberRole =
-        new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName());
+        new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
     memberRole.setDacId(dac.getDacId());
     member.setRoles(List.of(memberRole));
 
@@ -2156,8 +2156,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.sendNewDARCollectionMessage(1);
 
     verify(emailService, never()).sendDarNewCollectionElectionMessage(any(), any());
-    verify(emailService, never()).sendNewDARRequestEmail(any(), any(), any(), any());
-    verify(emailService).sendNewDARSigningOfficialRequestEmail(any(), any(), any());
+    verify(emailService).sendNewDARRequestEmail(any(), any(), any(), any());
+    verify(emailService, never()).sendNewDARSigningOfficialRequestEmail(any(), any(), any());
   }
 
   @Test

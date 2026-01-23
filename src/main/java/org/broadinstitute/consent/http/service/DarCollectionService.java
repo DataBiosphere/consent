@@ -838,7 +838,9 @@ public class DarCollectionService implements ConsentLogger {
     if (context == null) {
       return;
     }
-    if (!context.latestDar.getRequiresSOApproval()) {
+    if (!context.latestDar.getRequiresSOApproval()
+        || (context.latestDar.getRequiresSOApproval()
+            && context.latestDar.getApprovingSigningOfficialUserId() != null)) {
       // Notify users for auto-open DACs
       notifyUsersForDacs(
           context.classification.autoOpenUsers,
