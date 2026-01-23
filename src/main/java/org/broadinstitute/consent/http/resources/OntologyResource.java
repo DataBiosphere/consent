@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.RolesAllowed;
@@ -44,7 +45,7 @@ public class OntologyResource extends Resource {
   @Path("search")
   public Response searchTerm(@QueryParam("terms") String terms) {
     try {
-      List<String> termList = ontologyService.findByTerms(terms);
+      List<JsonObject> termList = ontologyService.findByTerms(terms);
       if (termList != null && !termList.isEmpty()) {
         return Response.ok(termList).build();
       } else {

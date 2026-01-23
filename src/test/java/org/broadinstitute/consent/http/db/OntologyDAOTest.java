@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
+import com.google.gson.JsonObject;
 import java.io.FileInputStream;
 import java.util.Collection;
 import java.util.List;
@@ -49,11 +50,11 @@ class OntologyDAOTest extends DAOTestHelper {
       strings = {
         "DUO_0000006", // normalized obo id
         "DUO:0000006", // raw obo id
-        "http://purl.obolibrary.org/obo/DUO_0000006" // full iri
+        "http://purl.obolibrary.org/obo/DUO_0000006" // full term_id
       })
   void testFindByTerms(String term) throws Exception {
     batchInsertTerms();
-    List<String> terms = ontologyDAO.findByTerms(List.of(term));
+    List<JsonObject> terms = ontologyDAO.findByTerms(List.of(term));
     assertEquals(1, terms.size());
   }
 }
