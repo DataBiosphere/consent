@@ -1,0 +1,16 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2026-01-15-add-approving-so-to-dar-table.xml" author="otchet">
+    <addColumn tableName="data_access_request">
+      <column name="approving_so_id" type="bigint"/>
+    </addColumn>
+    <addColumn tableName="data_access_request">
+      <column name="approving_so_timestamp" type="timestamp"/>
+    </addColumn>
+    <addForeignKeyConstraint baseTableName="data_access_request" baseColumnNames="approving_so_id" constraintName="fk_approving_so_user_id"
+                             referencedTableName="users" referencedColumnNames="user_id"
+                             deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                             referencesUniqueColumn="true"/>
+  </changeSet>
+</databaseChangeLog>

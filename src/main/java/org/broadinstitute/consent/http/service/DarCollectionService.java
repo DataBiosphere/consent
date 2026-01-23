@@ -12,8 +12,10 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,6 +44,7 @@ import org.broadinstitute.consent.http.enumeration.DarStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
@@ -56,6 +59,7 @@ import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.Jdbi;
 
 public class DarCollectionService implements ConsentLogger {
@@ -353,6 +357,9 @@ public class DarCollectionService implements ConsentLogger {
     if (summary.getCloseoutSupplement() != null
         && summary.getCloseoutSigningOfficialApprovalDate() == null) {
       summary.addAction(DarCollectionActions.REVIEW_PROGRESS_REPORT);
+    }
+    if (summary.requiresSOApproval() && summary.getSOApprover() == null) {
+      summary.addAction(DarCollectionActions.APPROVE);
     }
   }
 
@@ -730,10 +737,12 @@ public class DarCollectionService implements ConsentLogger {
    * @param collection The DarCollection
    * @return The updated DarCollection
    */
-  public DarCollection createElectionsForDarCollection(User user, DarCollection collection)
-      throws Exception {
+  public DarCollection createElectionsForDarCollection(
+      User user, DarCollection collection, ContainerRequest request)
+      throws BadRequestException, ForbiddenException, ConsentConflictException, SQLException {
     try {
       DataAccessRequest dar = collection.getMostRecentDar();
+      approveDataAccessRequestBySigningOfficial(user, dar, request);
       List<String> createdElectionReferenceIds =
           collectionServiceDAO.createElectionsForDarByUser(user, dar);
       if (createdElectionReferenceIds.isEmpty()) {
@@ -1209,6 +1218,38 @@ public class DarCollectionService implements ConsentLogger {
         emailService.sendNewSoDARSubmittedEmail(
             so, darCode, researcher, dar.getReferenceId(), datasets);
       }
+    }
+  }
+
+  private void approveDataAccessRequestBySigningOfficial(
+      User signingOfficial, DataAccessRequest dar, ContainerRequest request) {
+    if (!signingOfficial.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+      return;
+    }
+    validateSigningOfficialApproval(signingOfficial, dar);
+    dataAccessRequestDAO.updateDarApprovalSO(signingOfficial.getUserId(), dar.getReferenceId());
+    User researcher = userDAO.findUserById(dar.getUserId());
+    List<Integer> datasetIds = filterDatasetIdsToSigningOfficialRequired(dar.getDatasetIds());
+    dacAutomationRuleService.triggerDACRuleSettings(
+        researcher, datasetIds, dar.getReferenceId(), request, false);
+  }
+
+  private List<Integer> filterDatasetIdsToSigningOfficialRequired(List<Integer> datasetIds) {
+    return datasetDAO.filterDatasetIdsByAutomationRuleType(
+        datasetIds, DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name());
+  }
+
+  private void validateSigningOfficialApproval(User signingOfficial, DataAccessRequest dar) {
+    if (dar.getData() == null) {
+      throw new ConsentConflictException(
+          ("This data access request does not support this operation"));
+    }
+    String darSigningOfficialEmail = dar.data.getSigningOfficialEmail();
+    if (dar.getApprovingSigningOfficialUserId() != null) {
+      throw new BadRequestException("This data access request has already been approved");
+    }
+    if (!signingOfficial.getEmail().equalsIgnoreCase(darSigningOfficialEmail)) {
+      throw new ForbiddenException("You are not the Signing Official for this request.");
     }
   }
 

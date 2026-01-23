@@ -57,3 +57,6 @@ properties:
     description: List of DAC names associated with this collection.
     items:
       type: string
+  requiresSOApproval:
+    type: boolean
+    description: True if the most recent DAR in the collection requires Signing Official Approval

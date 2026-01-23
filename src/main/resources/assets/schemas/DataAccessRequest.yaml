@@ -22,6 +22,15 @@ properties:
   closeoutSigningOfficialApprovedUserId:
     type: number
     description: The user ID of the Signing Official that approved the closeout.
+  requiresSOApproval:
+    type: boolean
+    description: True if this Data Access Request requires Signing Official Approval
+  approvingSigningOfficialUserId:
+    type: number
+    description: The user ID of the Signing Official that approved this request.
+  approvingSigningOfficialApprovedDate:
+    type: number
+    description: When the Signing Official approved this data access request, in milliseconds since the epoch.
   draft:
     type: boolean
     description: Draft status of this DAR

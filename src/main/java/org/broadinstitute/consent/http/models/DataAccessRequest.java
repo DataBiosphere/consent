@@ -61,9 +61,14 @@ public class DataAccessRequest {
   @JsonProperty private Map<Integer, Election> elections;
   @JsonProperty private String eraCommonsId;
 
+  @JsonProperty public Integer approvingSigningOfficialUserId;
+  @JsonProperty public Timestamp approvingSigningOfficialApprovedDate;
+
   @JsonProperty public Timestamp closeoutSigningOfficialApprovedDate;
 
   @JsonProperty public Integer closeoutSigningOfficialApprovedUserId;
+
+  @JsonProperty public boolean requiresSOApproval;
 
   public DataAccessRequest() {
     this.elections = new HashMap<>();
@@ -258,6 +263,30 @@ public class DataAccessRequest {
   public void setCloseoutSigningOfficialApprovedDate(
       Timestamp closeoutSigningOfficialApprovedDate) {
     this.closeoutSigningOfficialApprovedDate = closeoutSigningOfficialApprovedDate;
+  }
+
+  public Integer getApprovingSigningOfficialUserId() {
+    return this.approvingSigningOfficialUserId;
+  }
+
+  public Timestamp getApprovingSigningOfficialApprovedDate() {
+    return this.approvingSigningOfficialApprovedDate;
+  }
+
+  public void setApprovingSigningOfficialUserId(Integer userId) {
+    this.approvingSigningOfficialUserId = userId;
+  }
+
+  public void setApprovingSigningOfficialApprovedDate(Timestamp when) {
+    this.approvingSigningOfficialApprovedDate = when;
+  }
+
+  public void setRequiresSOApproval(boolean requiresSOApproval) {
+    this.requiresSOApproval = requiresSOApproval;
+  }
+
+  public boolean getRequiresSOApproval() {
+    return this.requiresSOApproval;
   }
 
   /**
@@ -455,6 +484,16 @@ public class DataAccessRequest {
     if (dar.getCloseoutSigningOfficialApprovedDate() != null) {
       copy.put(
           "closeoutSigningOfficialApprovedDate", dar.getCloseoutSigningOfficialApprovedUserId());
+    }
+    if (dar.getApprovingSigningOfficialUserId() != null) {
+      copy.put("approvingSigningOfficialUserId", dar.getApprovingSigningOfficialUserId());
+    }
+    if (dar.getApprovingSigningOfficialApprovedDate() != null) {
+      copy.put(
+          "approvingSigningOfficialApprovedDate", dar.getApprovingSigningOfficialApprovedDate());
+    }
+    if (dar.getRequiresSOApproval()) {
+      copy.put("requiresSOApproval", dar.getRequiresSOApproval());
     }
     return copy;
   }

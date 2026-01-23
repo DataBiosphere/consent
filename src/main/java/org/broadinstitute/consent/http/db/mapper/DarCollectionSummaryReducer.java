@@ -60,6 +60,10 @@ public class DarCollectionSummaryReducer
             .ifPresent(summary::setCloseoutSigningOfficialId);
         hasOptionalColumn(rowView, "latest_dar_closeout_so_approval_timestamp", Timestamp.class)
             .ifPresent(summary::setCloseoutSigningOfficialApprovalDate);
+        hasOptionalColumn(rowView, "latest_dar_requires_so_approval", Boolean.class)
+            .ifPresent(summary::setRequiresSOApproval);
+        hasOptionalColumn(rowView, "latest_dar_so_approver_id", Integer.class)
+            .ifPresent(summary::setSOApprover);
         darStatus = rowView.getColumn("dar_status", String.class);
         if (Objects.nonNull(darStatus)) {
           summary.addStatus(darStatus, darReferenceId);
