@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
@@ -144,34 +145,41 @@ class FeatureFlagServiceTest extends AbstractTestHelper {
 
   @Test
   void testCreateOrUpdateFeatureFlag_Create() {
+    Integer userId = 1;
     FeatureFlag createdFlag = new FeatureFlag("new-feature", "new-value");
     when(featureFlagDAO.exists("new-feature")).thenReturn(false);
     doNothing().when(featureFlagDAO).insert(anyString(), anyString());
+    doNothing().when(featureFlagDAO).insertAudit(userId, "new-feature", "CREATE");
     when(featureFlagDAO.findById("new-feature")).thenReturn(createdFlag);
 
-    FeatureFlag result = service.createOrUpdateFeatureFlag("new-feature", "new-value");
+    FeatureFlag result = service.createOrUpdateFeatureFlag("new-feature", "new-value", userId);
     assertNotNull(result);
     assertEquals("new-feature", result.getId());
     assertEquals("new-value", result.getValue());
     verify(featureFlagDAO).exists("new-feature");
     verify(featureFlagDAO).insert("new-feature", "new-value");
+    verify(featureFlagDAO).insertAudit(userId, "new-feature", "CREATE");
     verify(featureFlagDAO, never()).update(anyString(), anyString());
     verify(featureFlagDAO).findById("new-feature");
   }
 
   @Test
   void testCreateOrUpdateFeatureFlag_Update() {
+    Integer userId = 1;
     FeatureFlag updatedFlag = new FeatureFlag("existing-feature", "updated-value");
     when(featureFlagDAO.exists("existing-feature")).thenReturn(true);
     doNothing().when(featureFlagDAO).update(anyString(), anyString());
+    doNothing().when(featureFlagDAO).insertAudit(userId, "existing-feature", "UPDATE");
     when(featureFlagDAO.findById("existing-feature")).thenReturn(updatedFlag);
 
-    FeatureFlag result = service.createOrUpdateFeatureFlag("existing-feature", "updated-value");
+    FeatureFlag result =
+        service.createOrUpdateFeatureFlag("existing-feature", "updated-value", userId);
     assertNotNull(result);
     assertEquals("existing-feature", result.getId());
     assertEquals("updated-value", result.getValue());
     verify(featureFlagDAO).exists("existing-feature");
     verify(featureFlagDAO).update("existing-feature", "updated-value");
+    verify(featureFlagDAO).insertAudit(userId, "existing-feature", "UPDATE");
     verify(featureFlagDAO, never()).insert(anyString(), anyString());
     verify(featureFlagDAO).findById("existing-feature");
   }
@@ -179,36 +187,40 @@ class FeatureFlagServiceTest extends AbstractTestHelper {
   @Test
   void testCreateOrUpdateFeatureFlag_EmptyId() {
     assertThrows(
-        IllegalArgumentException.class, () -> service.createOrUpdateFeatureFlag("", "value"));
+        IllegalArgumentException.class, () -> service.createOrUpdateFeatureFlag("", "value", 1));
     assertThrows(
-        IllegalArgumentException.class, () -> service.createOrUpdateFeatureFlag("   ", "value"));
+        IllegalArgumentException.class, () -> service.createOrUpdateFeatureFlag("   ", "value", 1));
     assertThrows(
-        IllegalArgumentException.class, () -> service.createOrUpdateFeatureFlag(null, "value"));
+        IllegalArgumentException.class, () -> service.createOrUpdateFeatureFlag(null, "value", 1));
   }
 
   @Test
   void testCreateOrUpdateFeatureFlag_NullValue() {
     assertThrows(
-        IllegalArgumentException.class, () -> service.createOrUpdateFeatureFlag("id", null));
+        IllegalArgumentException.class, () -> service.createOrUpdateFeatureFlag("id", null, 1));
   }
 
   @Test
   void testDeleteFeatureFlag_Success() {
+    Integer userId = 1;
     when(featureFlagDAO.exists("test-id")).thenReturn(true);
     doNothing().when(featureFlagDAO).deleteById("test-id");
+    doNothing().when(featureFlagDAO).insertAudit(userId, "test-id", "DELETE");
 
-    service.deleteFeatureFlag("test-id");
+    service.deleteFeatureFlag("test-id", userId);
     verify(featureFlagDAO).exists("test-id");
     verify(featureFlagDAO).deleteById("test-id");
+    verify(featureFlagDAO).insertAudit(userId, "test-id", "DELETE");
   }
 
   @Test
   void testDeleteFeatureFlag_NotFound() {
     when(featureFlagDAO.exists("non-existent")).thenReturn(false);
 
-    assertThrows(NotFoundException.class, () -> service.deleteFeatureFlag("non-existent"));
+    assertThrows(NotFoundException.class, () -> service.deleteFeatureFlag("non-existent", 1));
     verify(featureFlagDAO).exists("non-existent");
     verify(featureFlagDAO, never()).deleteById(anyString());
+    verify(featureFlagDAO, never()).insertAudit(any(), anyString(), anyString());
   }
 
   @Test

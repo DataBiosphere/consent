@@ -81,9 +81,10 @@ public class FeatureFlagService implements ConsentLogger {
    *
    * @param id The feature flag id
    * @param value The feature flag value
+   * @param userId The user id performing the action
    * @return The created or updated feature flag
    */
-  public FeatureFlag createOrUpdateFeatureFlag(String id, String value) {
+  public FeatureFlag createOrUpdateFeatureFlag(String id, String value, Integer userId) {
     if (id == null || id.trim().isEmpty()) {
       throw new IllegalArgumentException("Feature flag id cannot be empty");
     }
@@ -93,8 +94,10 @@ public class FeatureFlagService implements ConsentLogger {
 
     if (featureFlagDAO.exists(id)) {
       featureFlagDAO.update(id, value);
+      featureFlagDAO.insertAudit(userId, id, "UPDATE");
     } else {
       featureFlagDAO.insert(id, value);
+      featureFlagDAO.insertAudit(userId, id, "CREATE");
     }
     return featureFlagDAO.findById(id);
   }
@@ -103,13 +106,15 @@ public class FeatureFlagService implements ConsentLogger {
    * Delete a feature flag by id
    *
    * @param id The feature flag id
+   * @param userId The user id performing the action
    * @throws NotFoundException if the feature flag does not exist
    */
-  public void deleteFeatureFlag(String id) {
+  public void deleteFeatureFlag(String id, Integer userId) {
     if (!featureFlagDAO.exists(id)) {
       throw new NotFoundException("Feature flag with id '" + id + "' not found");
     }
     featureFlagDAO.deleteById(id);
+    featureFlagDAO.insertAudit(userId, id, "DELETE");
   }
 
   /**

@@ -7,7 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Map;
 import org.broadinstitute.consent.http.models.FeatureFlag;
+import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 
 class FeatureFlagDAOTest extends DAOTestHelper {
@@ -130,5 +132,27 @@ class FeatureFlagDAOTest extends DAOTestHelper {
     }
     assertTrue(idx1 < idx3);
     assertTrue(idx3 < idx2);
+  }
+
+  @Test
+  void testInsertAudit() {
+    User user = createUser();
+    String id = "audit-test-" + randomAlphanumeric(10);
+    featureFlagDAO.insertAudit(user.getUserId(), id, "CREATE");
+
+    jdbi.useHandle(
+        handle -> {
+          List<Map<String, Object>> results =
+              handle
+                  .createQuery("SELECT * FROM feature_flag_audit WHERE feature_flag_id = :id")
+                  .bind("id", id)
+                  .mapToMap()
+                  .list();
+          assertEquals(1, results.size());
+          // The database returns a Long for bigint, so we compare with user.getUserId().longValue()
+          assertEquals(user.getUserId().longValue(), results.get(0).get("user_id"));
+          assertEquals("CREATE", results.get(0).get("action"));
+          assertNotNull(results.get(0).get("action_date"));
+        });
   }
 }

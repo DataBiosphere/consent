@@ -228,4 +228,6 @@
            relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-01-22-feature-flags.xml"
            relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-01-26-feature-flag-audit.xml"
+           relativeToChangelogFile="true" />
 </databaseChangeLog>

@@ -20,16 +20,20 @@ import java.util.List;
 import java.util.Map;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.FeatureFlag;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.FeatureFlagService;
+import org.broadinstitute.consent.http.service.UserService;
 
 @Path("api/feature")
 public class FeatureFlagResource extends Resource {
 
   private final FeatureFlagService featureFlagService;
+  private final UserService userService;
 
   @Inject
-  public FeatureFlagResource(FeatureFlagService featureFlagService) {
+  public FeatureFlagResource(FeatureFlagService featureFlagService, UserService userService) {
     this.featureFlagService = featureFlagService;
+    this.userService = userService;
   }
 
   /**
@@ -95,8 +99,9 @@ public class FeatureFlagResource extends Resource {
             .build();
       }
 
+      User user = userService.findUserByEmail(authUser.getEmail());
       boolean existed = featureFlagService.exists(id);
-      FeatureFlag flag = featureFlagService.createOrUpdateFeatureFlag(id, value);
+      FeatureFlag flag = featureFlagService.createOrUpdateFeatureFlag(id, value, user.getUserId());
 
       if (existed) {
         return Response.ok(flag).build();
@@ -121,7 +126,8 @@ public class FeatureFlagResource extends Resource {
   @RolesAllowed({ADMIN})
   public Response deleteFeatureFlag(@Auth AuthUser authUser, @PathParam("id") String id) {
     try {
-      featureFlagService.deleteFeatureFlag(id);
+      User user = userService.findUserByEmail(authUser.getEmail());
+      featureFlagService.deleteFeatureFlag(id, user.getUserId());
       return Response.noContent().build();
     } catch (Exception e) {
       return createExceptionResponse(e);

@@ -67,4 +67,21 @@ public interface FeatureFlagDAO extends Transactional<FeatureFlagDAO> {
    */
   @SqlQuery("SELECT COUNT(*) > 0 FROM feature_flag WHERE id = :id")
   boolean exists(@Bind("id") String id);
+
+  /**
+   * Insert an audit record for a feature flag action
+   *
+   * @param userId The user id who performed the action
+   * @param featureFlagId The feature flag id
+   * @param action The action performed (e.g., 'CREATE', 'UPDATE', 'DELETE')
+   */
+  @SqlUpdate(
+      """
+      INSERT INTO feature_flag_audit (user_id, feature_flag_id, action, action_date)
+      VALUES (:userId, :featureFlagId, :action, NOW())
+      """)
+  void insertAudit(
+      @Bind("userId") Integer userId,
+      @Bind("featureFlagId") String featureFlagId,
+      @Bind("action") String action);
 }
