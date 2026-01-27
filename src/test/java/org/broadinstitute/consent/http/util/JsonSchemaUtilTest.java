@@ -736,7 +736,7 @@ class JsonSchemaUtilTest {
   }
 
   @Test
-  void testValidateDatasetRegistrationObject_v1_url_not_required_if_data_loc_not_determined() {
+  void testValidateDatasetRegistrationObject_v1_url_not_required_for_any_data_loc() {
     String notDeterminedNoURL =
         """
         {
@@ -797,7 +797,7 @@ class JsonSchemaUtilTest {
     assertNoErrors(errors);
 
     errors = schemaUtil.validateSchema_v1(tdrLocationNoUrl);
-    assertFieldHasError(errors, "url");
+    assertNoErrors(errors);
   }
 
   @Test
