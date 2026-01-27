@@ -57,4 +57,11 @@ class OntologyDAOTest extends DAOTestHelper {
     List<JsonObject> terms = ontologyDAO.findByTerms(List.of(term));
     assertEquals(1, terms.size());
   }
+
+  @Test
+  void testFindByTermsMultiple() throws Exception {
+    batchInsertTerms();
+    List<JsonObject> terms = ontologyDAO.findByTerms(List.of("DUO:0000006", "DUO:0000007"));
+    assertEquals(2, terms.size());
+  }
 }
