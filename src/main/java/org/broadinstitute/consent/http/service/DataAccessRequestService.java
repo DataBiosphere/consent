@@ -253,8 +253,10 @@ public class DataAccessRequestService implements ConsentLogger {
           user.getEraCommonsId());
     }
     syncDataAccessRequestDatasets(datasetIds, referenceId);
-    flagIfSOApprovalIsNeeded(datasetIds, referenceId);
-    ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request, true);
+    boolean requiresSOApproval = flagIfSOApprovalIsNeeded(datasetIds, referenceId);
+    if (!requiresSOApproval) {
+      ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request);
+    }
     return findByReferenceId(referenceId);
   }
 
@@ -313,8 +315,7 @@ public class DataAccessRequestService implements ConsentLogger {
     syncDataAccessRequestDatasets(progressReportDatasetIds, referenceId);
 
     if (!progressReport.getIsCloseoutProgressReport() && !progressReport.getHasDMI()) {
-      ruleService.triggerDACRuleSettings(
-          user, progressReportDatasetIds, referenceId, request, false);
+      ruleService.triggerDACRuleSettings(user, progressReportDatasetIds, referenceId, request);
     }
 
     return findByReferenceId(referenceId);
@@ -733,12 +734,14 @@ public class DataAccessRequestService implements ConsentLogger {
     return electionDAO.findOpenElectionsByReferenceIds(List.of(referenceId));
   }
 
-  private void flagIfSOApprovalIsNeeded(List<Integer> datasetIds, String referenceId) {
+  private boolean flagIfSOApprovalIsNeeded(List<Integer> datasetIds, String referenceId) {
     if (!datasetDAO
         .filterDatasetIdsByAutomationRuleType(
             datasetIds, DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name())
         .isEmpty()) {
       dataAccessRequestDAO.updateRequiresSOApproval(true, referenceId);
+      return true;
     }
+    return false;
   }
 }

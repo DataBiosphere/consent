@@ -1,0 +1,10 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2026-01-22-update-so-approval-rule-desc.xml" author="otchet">
+    <update tableName="dac_automation_rules">
+      <column name="description" value="Require approval by the Signing Official identified in the Data Access Request (DAR) prior to DAC Voting."/>
+      <where>rule='REQUIRE_SO_DAR_APPROVAL'</where>
+    </update>
+  </changeSet>
+</databaseChangeLog>

@@ -276,7 +276,8 @@ public class DarCollectionService implements ConsentLogger {
         s -> {
           Map<String, Integer> statusCount = new HashMap<>();
           Map<Integer, Election> elections = s.getElections();
-          if (!s.requiresSOApproval() && elections.size() < s.getDatasetCount()) {
+          if ((!s.requiresSOApproval() || s.getSOApprover() != null)
+              && elections.size() < s.getDatasetCount()) {
             s.addAction(DarCollectionActions.OPEN);
           }
           elections
@@ -310,7 +311,8 @@ public class DarCollectionService implements ConsentLogger {
     }
 
     // If there are no elections, only show open
-    if (!summary.requiresSOApproval() && summary.getElections().isEmpty()) {
+    if ((!summary.requiresSOApproval() || summary.getSOApprover() != null)
+        && summary.getElections().isEmpty()) {
       summary.addAction(DarCollectionActions.OPEN);
     }
 
@@ -340,7 +342,7 @@ public class DarCollectionService implements ConsentLogger {
     }
   }
 
-  private void processDarCollectionSummariesForSO(List<DarCollectionSummary> summaries) {
+  private void processDarCollectionSummariesForSO(User user, List<DarCollectionSummary> summaries) {
     summaries.forEach(
         s -> {
           Map<String, Integer> statusCount = new HashMap<>();
@@ -348,17 +350,20 @@ public class DarCollectionService implements ConsentLogger {
               .values()
               .forEach(election -> updateStatusCount(statusCount, election.getStatus()));
           determineCollectionStatus(s, statusCount, s.getDatasetCount(), s.getElections().size());
-          updateSummaryActionsForSO(s);
+          updateSummaryActionsForSO(user, s);
         });
   }
 
-  private void updateSummaryActionsForSO(DarCollectionSummary summary) {
+  private void updateSummaryActionsForSO(User user, DarCollectionSummary summary) {
     // If the SO has not yet approved the closeout supplement, allow review of the progress report.
     if (summary.getCloseoutSupplement() != null
-        && summary.getCloseoutSigningOfficialApprovalDate() == null) {
+        && summary.getCloseoutSigningOfficialApprovalDate() == null
+        && user.getUserId().equals(summary.getCloseoutSupplement().signingOfficialId())) {
       summary.addAction(DarCollectionActions.REVIEW_PROGRESS_REPORT);
     }
-    if (summary.requiresSOApproval() && summary.getSOApprover() == null) {
+    if (summary.requiresSOApproval()
+        && summary.getSOApprover() == null
+        && user.getEmail().equalsIgnoreCase(summary.getSigningOfficialEmail())) {
       summary.addAction(DarCollectionActions.APPROVE);
     }
   }
@@ -382,7 +387,7 @@ public class DarCollectionService implements ConsentLogger {
         break;
       case SIGNINGOFFICIAL:
         summaries = darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId());
-        processDarCollectionSummariesForSO(summaries);
+        processDarCollectionSummariesForSO(user, summaries);
         break;
       case CHAIRPERSON:
         summaries =
@@ -445,7 +450,7 @@ public class DarCollectionService implements ConsentLogger {
           break;
         case SIGNINGOFFICIAL:
           summary = darCollectionSummaryDAO.getDarCollectionSummaryByCollectionId(collectionId);
-          processDarCollectionSummariesForSO(List.of(summary));
+          processDarCollectionSummariesForSO(user, List.of(summary));
           break;
         case CHAIRPERSON:
           datasetIds = getDatasetIdsForUserAndRoleId(user, UserRoles.CHAIRPERSON.getRoleId());
@@ -729,6 +734,29 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   /**
+   * @param user The User initiating new elections for a collection
+   * @param collection The DarCollection
+   * @param request The request context
+   * @return The updated DarCollection
+   * @throws ConsentConflictException Can be thrown when the collection no longer requires approval
+   *     or the underlying data access request does not support this operation.
+   * @throws BadRequestException Can be thrown when a collection required approval but is already
+   *     approved
+   * @throws ForbiddenException The user is not the specified signing official required to approve
+   *     the collection
+   */
+  public DarCollection approveDarCollection(
+      User user, DarCollection collection, ContainerRequest request)
+      throws ConsentConflictException, BadRequestException, ForbiddenException {
+    DataAccessRequest dar = collection.getMostRecentDar();
+    if (dar.getRequiresSOApproval()) {
+      approveDataAccessRequestBySigningOfficial(user, dar, request);
+      return darCollectionDAO.findDARCollectionByCollectionId(dar.getCollectionId());
+    }
+    throw new ConsentConflictException("This collection does not require approval.");
+  }
+
+  /**
    * DarCollections with no elections, or with previously canceled elections, are valid for
    * initiating a new set of elections. Elections in open, closed, pending, or final states are not
    * valid.
@@ -737,46 +765,49 @@ public class DarCollectionService implements ConsentLogger {
    * @param collection The DarCollection
    * @return The updated DarCollection
    */
-  public DarCollection createElectionsForDarCollection(
-      User user, DarCollection collection, ContainerRequest request)
+  public DarCollection createElectionsForDarCollection(User user, DarCollection collection)
       throws BadRequestException, ForbiddenException, ConsentConflictException, SQLException {
-    try {
-      DataAccessRequest dar = collection.getMostRecentDar();
-      approveDataAccessRequestBySigningOfficial(user, dar, request);
-      List<String> createdElectionReferenceIds =
-          collectionServiceDAO.createElectionsForDarByUser(user, dar);
-      if (createdElectionReferenceIds.isEmpty()) {
-        var e =
-            new IllegalStateException(
-                "No elections were created for DAR Collection: %s %s"
-                    .formatted(collection.getDarCode(), dar.getReferenceId()));
-        logException(e);
-        throw e;
-      }
+    DataAccessRequest dar = collection.getMostRecentDar();
+    if ((!dar.getRequiresSOApproval() || dar.getApprovingSigningOfficialUserId() != null)) {
       try {
-        List<User> voteUsers =
-            voteDAO.findVoteUsersByElectionReferenceIdList(createdElectionReferenceIds);
-        if (dar.getProgressReport()) {
-          emailService.sendProgressReportNewCollectionElectionMessage(
-              voteUsers, collection.getDarCode());
-        } else {
-          emailService.sendDarNewCollectionElectionMessage(voteUsers, collection.getDarCode());
+        List<String> createdElectionReferenceIds =
+            collectionServiceDAO.createElectionsForDarByUser(user, dar);
+        if (createdElectionReferenceIds.isEmpty()) {
+          var e =
+              new IllegalStateException(
+                  "No elections were created for DAR Collection: %s %s"
+                      .formatted(collection.getDarCode(), dar.getReferenceId()));
+          logWarn(e.getMessage());
+          throw e;
         }
+        try {
+          List<User> voteUsers =
+              voteDAO.findVoteUsersByElectionReferenceIdList(createdElectionReferenceIds);
+          if (dar.getProgressReport()) {
+            emailService.sendProgressReportNewCollectionElectionMessage(
+                voteUsers, collection.getDarCode());
+          } else {
+            emailService.sendDarNewCollectionElectionMessage(voteUsers, collection.getDarCode());
+          }
 
+        } catch (Exception e) {
+          logException(
+              "Unable to send new case message to DAC members for DAR Collection: %s"
+                  .formatted(collection.getDarCode()),
+              e);
+        }
+        return getByCollectionId(user, collection.getDarCollectionId());
       } catch (Exception e) {
         logException(
-            "Unable to send new case message to DAC members for DAR Collection: %s"
-                .formatted(collection.getDarCode()),
+            "Exception creating elections and votes for collection: %s"
+                .formatted(collection.getDarCollectionId()),
             e);
+        throw e;
       }
-    } catch (Exception e) {
-      logException(
-          "Exception creating elections and votes for collection: %s"
-              .formatted(collection.getDarCollectionId()),
-          e);
-      throw e;
+    } else {
+      throw new ForbiddenException(
+          "The user is either not authorized to make this request or the request is awaiting an additional approval processes.");
     }
-    return getByCollectionId(user, collection.getDarCollectionId());
   }
 
   // Private helper method to mark Elections as 'Canceled'
@@ -809,29 +840,28 @@ public class DarCollectionService implements ConsentLogger {
     if (context == null) {
       return;
     }
+    if (!context.latestDar.getRequiresSOApproval()
+        || context.latestDar.getApprovingSigningOfficialUserId() != null) {
+      // Notify users for auto-open DACs
+      notifyUsersForDacs(
+          context.classification.autoOpenUsers,
+          context.classification.autoOpenDacs,
+          context.classification.autoOpenDatasets,
+          context.latestDar,
+          context.darCollection,
+          context.researcherName,
+          true);
 
-    // Notify users for auto-open DACs
-    notifyUsersForDacs(
-        context.classification.autoOpenUsers,
-        context.classification.autoOpenDacs,
-        context.classification.autoOpenDatasets,
-        context.latestDar,
-        context.darCollection,
-        context.researcherName,
-        true);
-
-    // Notify users for manual DACs
-    notifyUsersForDacs(
-        context.classification.manualOpenUsers,
-        context.classification.manualOpenDacs,
-        context.classification.manualOpenDatasets,
-        context.latestDar,
-        context.darCollection,
-        context.researcherName,
-        false);
-
-    // Notify signing official named in DAR if they need to approve
-    if (!context.classification.requiresSOApprovalDacs.isEmpty()) {
+      // Notify users for manual DACs
+      notifyUsersForDacs(
+          context.classification.manualOpenUsers,
+          context.classification.manualOpenDacs,
+          context.classification.manualOpenDatasets,
+          context.latestDar,
+          context.darCollection,
+          context.researcherName,
+          false);
+    } else {
       notifySpecificSigningOfficialOfApprovalNeeded(context.latestDar, context.researcher);
     }
 
@@ -864,52 +894,15 @@ public class DarCollectionService implements ConsentLogger {
 
     // Classify DACs and users by automation rules
     DacUserClassification classification =
-        classifyDacsAndUsers(dacsForDar, datasetsForDar, adminAndChairUsers, latestDar);
+        classifyDacsAndUsers(dacsForDar, datasetsForDar, adminAndChairUsers);
 
     return new DarCollectionContext(
         darCollection, latestDar, researcher, researcherName, classification);
   }
 
-  /** Helper class to hold context for processing a DAR collection. */
-  private static class DarCollectionContext {
-    final DarCollection darCollection;
-    final DataAccessRequest latestDar;
-    final User researcher;
-    final String researcherName;
-    final DacUserClassification classification;
-
-    DarCollectionContext(
-        DarCollection darCollection,
-        DataAccessRequest latestDar,
-        User researcher,
-        String researcherName,
-        DacUserClassification classification) {
-      this.darCollection = darCollection;
-      this.latestDar = latestDar;
-      this.researcher = researcher;
-      this.researcherName = researcherName;
-      this.classification = classification;
-    }
-  }
-
-  /** Helper class to hold classification results for DACs, users, and datasets. */
-  private static class DacUserClassification {
-    Set<Dac> requiresSOApprovalDacs = new HashSet<>();
-    Set<Dac> autoOpenDacs = new HashSet<>();
-    Set<Dac> manualOpenDacs = new HashSet<>();
-    Set<User> autoOpenUsers = new HashSet<>();
-    Set<User> manualOpenUsers = new HashSet<>();
-    Set<Dataset> autoOpenDatasets = new HashSet<>();
-    Set<Dataset> manualOpenDatasets = new HashSet<>();
-    Map<Integer, Integer> autoOpenUserIds = new HashMap<>();
-  }
-
   /** Classifies DACs and users based on automation rules. */
   private DacUserClassification classifyDacsAndUsers(
-      Collection<Dac> dacsForDar,
-      List<Dataset> datasetsForDar,
-      List<User> adminAndChairUsers,
-      DataAccessRequest dar) {
+      Collection<Dac> dacsForDar, List<Dataset> datasetsForDar, List<User> adminAndChairUsers) {
 
     Set<Integer> dacIds =
         datasetsForDar.stream().map(Dataset::getDacId).collect(Collectors.toSet());
@@ -919,23 +912,17 @@ public class DarCollectionService implements ConsentLogger {
     for (Integer dacId : dacIds) {
       List<DACAutomationRule> dacRules = dacAutomationRuleService.findAllByDacId(dacId);
       boolean autoOpen = hasAutoOpenRule(dacRules);
-      // the rule must be on AND the DAR must not be a progress report.
-      boolean requiresSOApproval = hasSOApprovalRule(dacRules) && !dar.getProgressReport();
       Integer autoOpenUserId = getAutoOpenRuleEnabledByUserId(dacId);
 
       Dac dac = findDac(dacsForDar, dacId);
       Dataset dataset = findDataset(datasetsForDar, dacId);
       // If the DAC requires SO approval the submission is not a progress report
-      if (requiresSOApproval) {
-        result.requiresSOApprovalDacs.add(dac);
+      if (autoOpen) {
+        addAutoOpen(result, dacId, autoOpenUserId, dac, dataset);
+        addUsers(result.autoOpenUsers, dacId, adminAndChairUsers, true);
       } else {
-        if (autoOpen) {
-          addAutoOpen(result, dacId, autoOpenUserId, dac, dataset);
-          addUsers(result.autoOpenUsers, dacId, adminAndChairUsers, true);
-        } else {
-          addManualOpen(result, dac, dataset);
-          addUsers(result.manualOpenUsers, dacId, adminAndChairUsers, false);
-        }
+        addManualOpen(result, dac, dataset);
+        addUsers(result.manualOpenUsers, dacId, adminAndChairUsers, false);
       }
     }
 
@@ -958,15 +945,6 @@ public class DarCollectionService implements ConsentLogger {
         .anyMatch(
             r ->
                 r.ruleType() == DACAutomationRuleType.AUTO_OPEN_DAR_FOR_ALL_MEMBERS
-                    && r.enabledByUserId() != null);
-  }
-
-  /** Checks if rule requiring SIGNING OFFICIALS to approve DARs before DAC will vote is enabled */
-  private boolean hasSOApprovalRule(List<DACAutomationRule> dacRules) {
-    return dacRules.stream()
-        .anyMatch(
-            r ->
-                r.ruleType() == DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL
                     && r.enabledByUserId() != null);
   }
 
@@ -1033,7 +1011,9 @@ public class DarCollectionService implements ConsentLogger {
   /** Creates elections and votes for DACs with auto-open rules. */
   private void createElectionsAndVotesForAutoOpenDacs(
       DacUserClassification classification, DataAccessRequest latestDar) {
-
+    if (latestDar.requiresSOApproval && latestDar.getApprovingSigningOfficialUserId() == null) {
+      return;
+    }
     for (Dataset dataset : classification.autoOpenDatasets) {
       if (hasOpenElection(latestDar, dataset)) {
         continue;
@@ -1223,20 +1203,12 @@ public class DarCollectionService implements ConsentLogger {
 
   private void approveDataAccessRequestBySigningOfficial(
       User signingOfficial, DataAccessRequest dar, ContainerRequest request) {
-    if (!signingOfficial.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
-      return;
-    }
     validateSigningOfficialApproval(signingOfficial, dar);
     dataAccessRequestDAO.updateDarApprovalSO(signingOfficial.getUserId(), dar.getReferenceId());
     User researcher = userDAO.findUserById(dar.getUserId());
-    List<Integer> datasetIds = filterDatasetIdsToSigningOfficialRequired(dar.getDatasetIds());
+    List<Integer> datasetIds = dar.getDatasetIds();
     dacAutomationRuleService.triggerDACRuleSettings(
-        researcher, datasetIds, dar.getReferenceId(), request, false);
-  }
-
-  private List<Integer> filterDatasetIdsToSigningOfficialRequired(List<Integer> datasetIds) {
-    return datasetDAO.filterDatasetIdsByAutomationRuleType(
-        datasetIds, DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name());
+        researcher, datasetIds, dar.getReferenceId(), request);
   }
 
   private void validateSigningOfficialApproval(User signingOfficial, DataAccessRequest dar) {
@@ -1248,7 +1220,8 @@ public class DarCollectionService implements ConsentLogger {
     if (dar.getApprovingSigningOfficialUserId() != null) {
       throw new BadRequestException("This data access request has already been approved");
     }
-    if (!signingOfficial.getEmail().equalsIgnoreCase(darSigningOfficialEmail)) {
+    if (signingOfficial.getEmail() == null
+        || !signingOfficial.getEmail().equalsIgnoreCase(darSigningOfficialEmail)) {
       throw new ForbiddenException("You are not the Signing Official for this request.");
     }
   }
@@ -1281,5 +1254,38 @@ public class DarCollectionService implements ConsentLogger {
         .filter(dataset -> dataset.getDacId().equals(dac.getDacId()))
         .map(Dataset::getDatasetIdentifier)
         .toList();
+  }
+
+  /** Helper class to hold context for processing a DAR collection. */
+  private static class DarCollectionContext {
+    final DarCollection darCollection;
+    final DataAccessRequest latestDar;
+    final User researcher;
+    final String researcherName;
+    final DacUserClassification classification;
+
+    DarCollectionContext(
+        DarCollection darCollection,
+        DataAccessRequest latestDar,
+        User researcher,
+        String researcherName,
+        DacUserClassification classification) {
+      this.darCollection = darCollection;
+      this.latestDar = latestDar;
+      this.researcher = researcher;
+      this.researcherName = researcherName;
+      this.classification = classification;
+    }
+  }
+
+  /** Helper class to hold classification results for DACs, users, and datasets. */
+  private static class DacUserClassification {
+    Set<Dac> autoOpenDacs = new HashSet<>();
+    Set<Dac> manualOpenDacs = new HashSet<>();
+    Set<User> autoOpenUsers = new HashSet<>();
+    Set<User> manualOpenUsers = new HashSet<>();
+    Set<Dataset> autoOpenDatasets = new HashSet<>();
+    Set<Dataset> manualOpenDatasets = new HashSet<>();
+    Map<Integer, Integer> autoOpenUserIds = new HashMap<>();
   }
 }

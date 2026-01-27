@@ -39,6 +39,7 @@ public class DarCollectionSummary {
   @Expose private Set<Integer> datasetIds;
   @Expose private boolean requiresSOApproval;
   @Expose private Integer soApproverId;
+  private String signingOfficialEmail;
 
   // Normally unused by the UI, but used in data population. Can be included in the JSON response
   // if needed by using a GsonBuilder without `excludeFieldsWithoutExposeAnnotation`.
@@ -301,6 +302,14 @@ public class DarCollectionSummary {
 
   public void setCloseoutSupplement(CloseoutSupplement closeoutSupplement) {
     this.closeoutSupplement = closeoutSupplement;
+  }
+
+  public void setSigningOfficialEmail(String signingOfficialEmail) {
+    this.signingOfficialEmail = signingOfficialEmail;
+  }
+
+  public String getSigningOfficialEmail() {
+    return this.signingOfficialEmail;
   }
 
   private void updateProgressReportStatus() {

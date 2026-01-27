@@ -224,5 +224,11 @@
            relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-01-19-add-requires-so-approval-attribute.xml"
            relativeToChangelogFile="true" />
-  <include file="changesets/changelog-consent-2026-01-26-ontology-index.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-01-22-update-so-approval-rule-desc.xml"
+           relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-01-22-feature-flags.xml"
+           relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-01-26-feature-flag-audit.xml"
+           relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-01-30-ontology-index.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>

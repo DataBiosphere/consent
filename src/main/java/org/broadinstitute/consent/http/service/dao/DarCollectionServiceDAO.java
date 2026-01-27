@@ -1,13 +1,11 @@
 package org.broadinstitute.consent.http.service.dao;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Predicate;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -18,7 +16,6 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.Update;
@@ -39,36 +36,7 @@ public class DarCollectionServiceDAO {
     this.userDAO = userDAO;
   }
 
-  /// Signing Officials can only create elections for datasets whose DACs require SO approval.
-  /// Chairs can only create elections for datasets in their DACs that do not also require SO
-  /// approval.
-  @VisibleForTesting
-  public List<Integer> findActionableDatasetIdsForUser(User user, DataAccessRequest dar) {
-    List<Integer> actionableDatasetIds = new ArrayList<>();
-    // Handle the special case of Signing Officials first. Note that we want to know all datasets
-    // that require SO approval for this DAR ... BUT we can only take action on those if the
-    // user is the SO.
-    List<Integer> soApprovalDatasetIds =
-        datasetDAO.filterDatasetIdsByAutomationRuleType(
-            dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name());
-    if (user.hasUserRole(UserRoles.SIGNINGOFFICIAL)
-        && user.getEmail().equalsIgnoreCase(dar.getData().getSigningOfficialEmail())) {
-      actionableDatasetIds.addAll(soApprovalDatasetIds);
-    }
-
-    // Find chairperson datasets that do NOT require prior SO approval
-    if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
-      List<Integer> chairpersonDatasetIds =
-          datasetDAO.findDatasetIdsByDACUserId(user.getUserId()).stream()
-              .filter(Predicate.not(soApprovalDatasetIds::contains))
-              .toList();
-      actionableDatasetIds.addAll(chairpersonDatasetIds);
-    }
-    return actionableDatasetIds;
-  }
-
   /// Create DAR-Dataset elections that are available to the user.
-  /// - Signing Officials can only create elections for datasets whose DACs require SO approval.
   /// - Chairs can only create elections for datasets in their DACs that do not also require SO
   // approval.
   ///
@@ -78,7 +46,7 @@ public class DarCollectionServiceDAO {
   public List<String> createElectionsForDarByUser(User user, DataAccessRequest dar)
       throws SQLException {
     List<String> createdElectionReferenceIds = new ArrayList<>();
-    List<Integer> actionableDatasetIds = findActionableDatasetIdsForUser(user, dar);
+    List<Integer> actionableDatasetIds = datasetDAO.findDatasetIdsByDACUserId(user.getUserId());
 
     jdbi.useHandle(
         handle -> {
