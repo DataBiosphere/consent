@@ -673,7 +673,8 @@
             "AnVIL Workspace",
             "Terra Workspace",
             "TDR Location",
-            "Not Determined"
+            "Not Determined",
+            "Other"
           ],
           "label" : "Please provide the location of your data resource for this consent group",
           "description" : "Data Location"
