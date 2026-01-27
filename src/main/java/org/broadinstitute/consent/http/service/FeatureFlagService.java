@@ -92,13 +92,16 @@ public class FeatureFlagService implements ConsentLogger {
       throw new IllegalArgumentException("Feature flag value cannot be null");
     }
 
-    if (featureFlagDAO.exists(id)) {
-      featureFlagDAO.update(id, value);
-      featureFlagDAO.insertAudit(userId, id, "UPDATE");
-    } else {
-      featureFlagDAO.insert(id, value);
-      featureFlagDAO.insertAudit(userId, id, "CREATE");
-    }
+    featureFlagDAO.useTransaction(
+        dao -> {
+          if (dao.exists(id)) {
+            dao.update(id, value);
+            dao.insertAudit(userId, id, "UPDATE");
+          } else {
+            dao.insert(id, value);
+            dao.insertAudit(userId, id, "CREATE");
+          }
+        });
     return featureFlagDAO.findById(id);
   }
 
@@ -110,11 +113,14 @@ public class FeatureFlagService implements ConsentLogger {
    * @throws NotFoundException if the feature flag does not exist
    */
   public void deleteFeatureFlag(String id, Integer userId) {
-    if (!featureFlagDAO.exists(id)) {
-      throw new NotFoundException("Feature flag with id '" + id + "' not found");
-    }
-    featureFlagDAO.deleteById(id);
-    featureFlagDAO.insertAudit(userId, id, "DELETE");
+    featureFlagDAO.useTransaction(
+        dao -> {
+          if (!dao.exists(id)) {
+            throw new NotFoundException("Feature flag with id '" + id + "' not found");
+          }
+          dao.deleteById(id);
+          dao.insertAudit(userId, id, "DELETE");
+        });
   }
 
   /**

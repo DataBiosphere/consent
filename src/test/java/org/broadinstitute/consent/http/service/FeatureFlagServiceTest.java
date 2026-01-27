@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -17,6 +18,7 @@ import jakarta.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.FeatureFlagDAO;
 import org.broadinstitute.consent.http.models.FeatureFlag;
+import org.jdbi.v3.sqlobject.transaction.TransactionalConsumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,8 +33,17 @@ class FeatureFlagServiceTest extends AbstractTestHelper {
   private FeatureFlagService service;
 
   @BeforeEach
-  void setUp() {
+  void setUp() throws Exception {
     service = new FeatureFlagService(featureFlagDAO);
+    lenient()
+        .doAnswer(
+            invocation -> {
+              TransactionalConsumer<FeatureFlagDAO, Exception> consumer = invocation.getArgument(0);
+              consumer.useTransaction(featureFlagDAO);
+              return null;
+            })
+        .when(featureFlagDAO)
+        .useTransaction(any());
   }
 
   @Test
