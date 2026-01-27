@@ -460,21 +460,6 @@
       ],
       "allOf" : [
         {
-          "if" : {
-            "properties" : {
-              "dataLocation" : {
-                "const" : "Not Determined"
-              }
-            }
-          },
-          "then" : {},
-          "else" : {
-            "required" : [
-              "url"
-            ]
-          }
-        },
-        {
           "$comment" : "if accessManagement is controlled OR not present, then require dac id & add secondary consent fields",
           "if" : {
             "properties" : {
