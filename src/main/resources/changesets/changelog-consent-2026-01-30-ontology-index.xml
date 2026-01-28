@@ -4,11 +4,11 @@
   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
-  <changeSet id="changelog-consent-2026-01-09-ontology-index" author="grushton">
+  <changeSet id="changelog-consent-2026-01-30-ontology-index" author="grushton">
 
     <sql>
       CREATE TABLE ontology_index (
-        term_id varchar(255) primary key,
+        id varchar(255) primary key,
         obo_id varchar(56),
         version varchar(255) not null,
         ontology varchar(255) not null,
@@ -24,7 +24,7 @@
         search_vector tsvector GENERATED ALWAYS AS (
           to_tsvector(
             'english',
-            coalesce(term_id, '') || ' ' ||
+            coalesce(id, '') || ' ' ||
             coalesce(obo_id, '') || ' ' ||
             coalesce(label, '') || ' ' ||
             coalesce(definition, '') || ' ' ||
@@ -34,9 +34,9 @@
       );
     </sql>
     <createIndex
-      indexName="idx_ontology_index_term_id"
+      indexName="idx_ontology_index_id"
       tableName="ontology_index">
-      <column name="term_id"/>
+      <column name="id"/>
     </createIndex>
     <createIndex
       indexName="idx_ontology_index_obo_id"
@@ -47,7 +47,7 @@
       CREATE INDEX idx_ontology_index_search_vector ON ontology_index USING GIN (search_vector);
     </sql>
     <rollback>
-      <dropIndex tableName="ontology_index" indexName="idx_ontology_index_term_id"/>
+      <dropIndex tableName="ontology_index" indexName="idx_ontology_index_id"/>
       <dropIndex tableName="ontology_index" indexName="idx_ontology_index_obo_id"/>
       <dropIndex tableName="ontology_index" indexName="idx_ontology_index_search_vector"/>
       <dropTable

@@ -76,7 +76,7 @@ public class OntologyService implements ConsentLogger {
     ontologyDAO.batchInsertTerms(terms, user.getUserId());
   }
 
-  public List<JsonObject> findByTermIDs(String termIDs) {
-    return ontologyDAO.findByTermIDs(List.of(termIDs.split(",")));
+  public List<JsonObject> findByTermIds(String termIds) {
+    return ontologyDAO.findByIds(List.of(termIds.split(",")));
   }
 }

@@ -50,7 +50,7 @@ public class OntologyResource extends Resource {
   @Path("search")
   public Response searchTerm(@QueryParam("termIDs") String termIDs) {
     try {
-      List<JsonObject> termList = ontologyService.findByTermIDs(termIDs);
+      List<JsonObject> termList = ontologyService.findByTermIds(termIDs);
       if (termList != null && !termList.isEmpty()) {
         return Response.ok(termList).build();
       } else {

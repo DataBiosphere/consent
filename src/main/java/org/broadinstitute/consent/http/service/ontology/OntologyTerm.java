@@ -7,7 +7,7 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 @SuppressWarnings("unused") // Getters are used in JDBI @BindMethods
 public class OntologyTerm {
 
-  String termId;
+  String id;
   String version;
   String ontology;
   List<String> synonyms;
@@ -17,8 +17,8 @@ public class OntologyTerm {
   String oboId;
   List<ParentTerm> parents;
 
-  public OntologyTerm(String termId, String version, String ontology) {
-    this.termId = termId;
+  public OntologyTerm(String id, String version, String ontology) {
+    this.id = id;
     this.version = version;
     this.ontology = ontology;
     this.synonyms = new ArrayList<>();
@@ -26,8 +26,8 @@ public class OntologyTerm {
     this.parents = new ArrayList<>();
   }
 
-  public String termId() {
-    return termId;
+  public String id() {
+    return id;
   }
 
   public String version() {

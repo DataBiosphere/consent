@@ -1,13 +1,13 @@
 get:
-  summary: Search Ontology terms by IDs
-  description: Search Ontology terms by IDs
+  summary: Search Ontology terms by ids
+  description: Search Ontology terms by ids
   operationId: searchOntologyTerms
   parameters:
-    - name: termIDs
+    - name: ids
       in: query
       description: |
-        A comma-separated list of term IDs to search for in the ontology.
-        The ID can be a full purl Term URI or an abbreviation.
+        A comma-separated list of term ids to search for in the ontology.
+        The term id can be a full purl Term URI or an abbreviation.
       required: true
       schema:
         type: string
