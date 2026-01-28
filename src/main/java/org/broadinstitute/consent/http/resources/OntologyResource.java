@@ -4,15 +4,14 @@ import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.RolesAllowed;
-import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+import org.broadinstitute.consent.http.enumeration.OntologyType;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.service.OntologyService;
 
@@ -27,14 +26,15 @@ public class OntologyResource extends Resource {
   }
 
   @POST
-  @Consumes({MediaType.MULTIPART_FORM_DATA})
   @RolesAllowed({ADMIN})
   public Response indexOntologyTerms(
-      @Auth DuosUser duosUser,
-      @QueryParam("fileName") String fileName,
-      @QueryParam("fileType") String fileType) {
+      @Auth DuosUser duosUser, @QueryParam("ontologyType") String ontologyType) {
     try {
-      ontologyService.indexOntology(duosUser.getUser(), fileName, fileType);
+      OntologyType type = OntologyType.getFromName(ontologyType);
+      if (type == null) {
+        throw new IllegalArgumentException("Invalid ontology type: " + ontologyType);
+      }
+      ontologyService.indexOntology(duosUser.getUser(), type.getFileName(), type.name());
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);

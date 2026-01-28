@@ -20,8 +20,9 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
 
   @SqlBatch(
       """
-      INSERT INTO ontology_index (term_id, versifix on, ontology, synonyms, label, definition, usable, obo_id, json_document, create_user_id)
+      INSERT INTO ontology_index (term_id, version, ontology, synonyms, label, definition, usable, obo_id, json_document, create_user_id)
       VALUES (:termId, :version, :ontology, :synonyms, :label, :definition, :usable, :oboId, :jsonDocument::jsonb, :userId)
+      ON CONFLICT (term_id) DO NOTHING
     """)
   void batchInsertTerms(
       @BindMethods Collection<OntologyTerm> terms, @Bind("userId") Integer userId);
@@ -35,17 +36,17 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
         """
         SELECT json_document
         FROM ontology_index
-        WHERE term_id ILIKE ANY (:terms)
-           OR obo_id ILIKE ANY (:terms)
+        WHERE LOWER(term_id) = ANY (:terms)
+           OR LOWER(obo_id) = ANY (:terms)
         """;
-    String[] likeTerms =
-        terms.stream().map(term -> String.format("%%%s%%", term)).toArray(String[]::new);
+    String[] termArray =
+        terms.stream().map(term -> term.trim().toLowerCase()).toArray(String[]::new);
     return inTransaction(
-        dao -> {
+        _ -> {
           Handle handle = getHandle();
           return handle
               .createQuery(query)
-              .bindArray("terms", likeTerms)
+              .bindArray("terms", termArray)
               .map(new JsonMapper())
               .list();
         });

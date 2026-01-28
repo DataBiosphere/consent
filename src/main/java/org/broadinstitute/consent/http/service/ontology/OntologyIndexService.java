@@ -20,7 +20,6 @@ import org.semanticweb.owlapi.model.HasClassesInSignature;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyID;
@@ -32,13 +31,8 @@ import org.semanticweb.owlapi.search.EntitySearcher;
 
 public class OntologyIndexService implements ConsentLogger {
 
-  private static final String FIELD_DEFINITION_PROPERTY = "IAO_0000115";
-  private static final String FIELD_HAS_EXACT_SYNONYM_PROPERTY = "hasExactSynonym";
-  private static final String FIELD_LABEL_PROPERTY = "label";
-  private static final String FIELD_DEPRECATED_PROPERTY = "deprecated";
   private static final String OBSOLETE_CLASS_IRI =
       "http://www.geneontology.org/formats/oboInOwl#ObsoleteClass";
-  private static final String FIELD_OBO_ID_PROPERTY = "id";
   private static final ArrayList<String> IRI_FILTERS =
       new ArrayList<>(Arrays.asList("DOID", "DUOS", "DUO"));
 
@@ -87,16 +81,23 @@ public class OntologyIndexService implements ConsentLogger {
             .getOWLOntologyManager()
             .getOWLDataFactory()
             .getOWLClass(IRI.create(OBSOLETE_CLASS_IRI));
-    boolean isObsolete = reasoner.getSuperClasses(owlClass, false).containsEntity(obsoleteClass);
-    if (isObsolete) {
-      ontologyTerm.setUsable(false);
-    }
     Set<OWLAnnotation> classAnnotations =
         EntitySearcher.getAnnotations(owlClass, ontology).collect(Collectors.toSet());
     classAnnotations.addAll(
         EntitySearcher.getAnnotationObjects(owlClass, ontology.imports(), null)
             .collect(Collectors.toSet()));
-    processAnnotations(ontologyTerm, classAnnotations);
+    OwlClassFields classFields = new OwlClassFields(classAnnotations);
+    ontologyTerm.setLabel(classFields.getLabel());
+    ontologyTerm.setDefinition(classFields.getDefinition());
+    ontologyTerm.setOboId(classFields.getOboId());
+    ontologyTerm.setSynonyms(classFields.getSynonyms());
+    boolean isObsolete = reasoner.getSuperClasses(owlClass, false).containsEntity(obsoleteClass);
+    if (isObsolete) {
+      ontologyTerm.setUsable(false);
+    } else {
+      ontologyTerm.setUsable(!classFields.getDeprecated());
+    }
+
     // Only process parents if the term is usable
     if (Boolean.TRUE.equals(ontologyTerm.usable)) {
       int position = 0;
@@ -105,40 +106,18 @@ public class OntologyIndexService implements ConsentLogger {
         for (OWLClass parentClass : parentSet) {
           Set<OWLAnnotation> parentAnnotations =
               EntitySearcher.getAnnotations(parentClass, ontology).collect(Collectors.toSet());
-          String label = getPropFromAnnotations(parentAnnotations);
-          ontologyTerm.addParent(parentClass.toStringID(), label, position);
+          OwlClassFields parentClassFields = new OwlClassFields(parentAnnotations);
+          ParentTerm parentTerm = new ParentTerm();
+          parentTerm.setId(parentClass.toStringID());
+          parentTerm.setOrder(position);
+          parentTerm.setLabel(parentClassFields.getLabel());
+          parentTerm.setDefinition(parentClassFields.getDefinition());
+          parentTerm.setSynonyms(parentClassFields.getSynonyms());
+          ontologyTerm.addParent(parentTerm);
         }
       }
     }
     return ontologyTerm;
-  }
-
-  // Mutates the given ontologyTerm based on the provided annotations
-  private void processAnnotations(OntologyTerm ontologyTerm, Set<OWLAnnotation> classAnnotations) {
-    for (OWLAnnotation annotation : classAnnotations) {
-      String propertyName = annotation.getProperty().getIRI().getRemainder().orElse("");
-      String propertyValue =
-          annotation.getValue().asLiteral().map(OWLLiteral::getLiteral).orElse("");
-      if (propertyName.equals(FIELD_DEPRECATED_PROPERTY)) {
-        ontologyTerm.setUsable(false);
-      }
-      if (propertyName.equals(FIELD_HAS_EXACT_SYNONYM_PROPERTY)) {
-        ontologyTerm.addSynonym(propertyValue);
-      }
-      if (propertyName.equals(FIELD_LABEL_PROPERTY)) {
-        ontologyTerm.setLabel(propertyValue);
-      }
-      if (propertyName.equals(FIELD_DEFINITION_PROPERTY)) {
-        ontologyTerm.setDefinition(propertyValue);
-      }
-      if (propertyName.equals(FIELD_OBO_ID_PROPERTY)) {
-        // OBO IDs usually look like "DOID:1234", so we store them as-is here.
-        // Additionally, they can be referenced with an underscore, so store both values here
-        // for easier searching later.
-        String oboIdUnderscore = propertyValue.replace(":", "_");
-        ontologyTerm.setOboId(String.format("%s %s", propertyValue, oboIdUnderscore));
-      }
-    }
   }
 
   private List<Set<OWLClass>> getFilteredParentSets(OWLClass owlClass, OWLReasoner reasoner) {
@@ -159,16 +138,6 @@ public class OntologyIndexService implements ConsentLogger {
       }
     }
     return filteredSets;
-  }
-
-  private String getPropFromAnnotations(Set<OWLAnnotation> annotations) {
-    for (OWLAnnotation annotation : annotations) {
-      String propertyName = annotation.getProperty().getIRI().getRemainder().orElse("");
-      if (propertyName.equals(FIELD_LABEL_PROPERTY)) {
-        return annotation.getValue().asLiteral().map(Object::toString).orElse(null);
-      }
-    }
-    return null;
   }
 
   private boolean isValidOWLClass(OWLClass owlClass) {

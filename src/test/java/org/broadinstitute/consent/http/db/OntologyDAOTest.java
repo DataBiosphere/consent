@@ -49,7 +49,6 @@ class OntologyDAOTest extends DAOTestHelper {
   @ValueSource(
       strings = {
         "DUO_0000006", // normalized obo id
-        "DUO:0000006", // raw obo id
         "http://purl.obolibrary.org/obo/DUO_0000006" // full term_id
       })
   void testFindByTerms(String term) throws Exception {
@@ -61,7 +60,7 @@ class OntologyDAOTest extends DAOTestHelper {
   @Test
   void testFindByTermsMultiple() throws Exception {
     batchInsertTerms();
-    List<JsonObject> terms = ontologyDAO.findByTerms(List.of("DUO:0000006", "DUO:0000007"));
+    List<JsonObject> terms = ontologyDAO.findByTerms(List.of("DUO_0000006", "DUO_0000007"));
     assertEquals(2, terms.size());
   }
 }

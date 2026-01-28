@@ -1,14 +1,17 @@
 get:
-  summary: Search Ontology terms
-  description: Search Ontology terms
+  summary: Search Ontology terms by IDs
+  description: Search Ontology terms by IDs
   operationId: searchOntologyTerms
   parameters:
     - name: terms
       in: query
-      description: A comma-separated list of terms to search for in the ontology
+      description: |
+        A comma-separated list of term IDs to search for in the ontology.
+        The ID can be a full purl Term URI or an abbreviation.
       required: true
       schema:
         type: string
+        example: "http://purl.obolibrary.org/obo/DOID_162, DOID_14566"
   tags:
     - Ontology
   responses:

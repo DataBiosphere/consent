@@ -3,19 +3,15 @@ post:
   description: Index Ontology
   operationId: indexOntology
   parameters:
-    - name: fileName
+    - name: ontologyType
       in: query
-      description: The name of the ontology file to index.
+      description: | 
+        The type of the ontology file to index. Note that the ontology file
+        specified must exist in the configured ontology file storage location.
       required: true
       schema:
         type: string
-    - name: fileType
-      in: query
-      description: The type of the ontology file to index
-      required: true
-      schema:
-        type: string
-        enum: [ DOID, DUOS, DUO ]
+        enum: [ DUO, DOID ]
   tags:
     - Admin
   responses:

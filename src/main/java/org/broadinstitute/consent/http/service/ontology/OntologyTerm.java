@@ -62,8 +62,8 @@ public class OntologyTerm {
     return GsonUtil.getInstance().toJson(this);
   }
 
-  public void addSynonym(String synonym) {
-    synonyms.add(synonym);
+  public void setSynonyms(List<String> synonyms) {
+    this.synonyms = synonyms;
   }
 
   public void setLabel(String label) {
@@ -82,8 +82,8 @@ public class OntologyTerm {
     this.oboId = oboId;
   }
 
-  public void addParent(String parent, String label, Integer position) {
-    parents.add(new ParentTerm(parent, label, position));
+  public void addParent(ParentTerm term) {
+    parents.add(term);
   }
 
   @Override
