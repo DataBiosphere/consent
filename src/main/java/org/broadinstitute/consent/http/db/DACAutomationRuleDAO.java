@@ -18,7 +18,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
 
   @SqlQuery(
       """
-      SELECT * FROM dac_automation_rules
+      SELECT * FROM dac_automation_rules ORDER BY id ASC
       """)
   List<DACAutomationRule> findAll();
 
@@ -151,6 +151,7 @@ public interface DACAutomationRuleDAO extends Transactional<DACAutomationRuleDAO
       LEFT JOIN dac_rule_settings settings ON rules.id = settings.rule_id AND settings.dac_id = :dacId
       LEFT JOIN users u on settings.user_id = u.user_id
       WHERE state = 'AVAILABLE'
+      ORDER BY rules.id ASC
       """)
   List<DACAutomationRule> findAllDACAutomationRulesByDACId(@Bind("dacId") int dacId);
 
