@@ -31,7 +31,7 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
   int countTerms();
 
   @Json
-  default List<JsonObject> findByTerms(Collection<String> terms) {
+  default List<JsonObject> findByTermIDs(Collection<String> terms) {
     String query =
         """
         SELECT json_document
@@ -55,8 +55,7 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
   class JsonMapper implements RowMapper<JsonObject> {
     @Override
     public JsonObject map(ResultSet rs, StatementContext ctx) throws SQLException {
-      String json = rs.getString("json_document");
-      return GsonUtil.getInstance().fromJson(json, JsonObject.class);
+      return GsonUtil.getInstance().fromJson(rs.getString("json_document"), JsonObject.class);
     }
   }
 }

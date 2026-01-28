@@ -3,7 +3,7 @@ get:
   description: Search Ontology terms by IDs
   operationId: searchOntologyTerms
   parameters:
-    - name: terms
+    - name: termIDs
       in: query
       description: |
         A comma-separated list of term IDs to search for in the ontology.

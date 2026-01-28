@@ -4,7 +4,6 @@ import com.google.cloud.storage.BlobId;
 import com.google.inject.Inject;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -31,10 +30,9 @@ import org.semanticweb.owlapi.search.EntitySearcher;
 
 public class OntologyIndexService implements ConsentLogger {
 
+  private static final List<String> IRI_FILTERS = List.of("DOID", "DUO");
   private static final String OBSOLETE_CLASS_IRI =
       "http://www.geneontology.org/formats/oboInOwl#ObsoleteClass";
-  private static final ArrayList<String> IRI_FILTERS =
-      new ArrayList<>(Arrays.asList("DOID", "DUOS", "DUO"));
 
   private final GCSService gcsService;
   private final StoreConfiguration storeConfiguration;

@@ -15,6 +15,11 @@ import org.broadinstitute.consent.http.enumeration.OntologyType;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.service.OntologyService;
 
+/**
+ * Resource class to handle ontology-related endpoints. Provides functionality to index ontology
+ * terms and search for terms. Indexing (/api/ontology) is restricted to ADMIN users. Searching
+ * (/ontology/search or /api/ontology/search) is open to authed or un-authed requests.
+ */
 @Path("{api : (api/)?}ontology")
 public class OntologyResource extends Resource {
 
@@ -43,13 +48,13 @@ public class OntologyResource extends Resource {
 
   @GET
   @Path("search")
-  public Response searchTerm(@QueryParam("terms") String terms) {
+  public Response searchTerm(@QueryParam("termIDs") String termIDs) {
     try {
-      List<JsonObject> termList = ontologyService.findByTerms(terms);
+      List<JsonObject> termList = ontologyService.findByTermIDs(termIDs);
       if (termList != null && !termList.isEmpty()) {
         return Response.ok(termList).build();
       } else {
-        throw new NotFoundException("Ontology term not found for terms: " + terms);
+        throw new NotFoundException("Ontology term not found for term IDs: " + termIDs);
       }
     } catch (Exception e) {
       return createExceptionResponse(e);
