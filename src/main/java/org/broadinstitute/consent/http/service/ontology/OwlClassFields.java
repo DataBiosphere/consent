@@ -8,11 +8,11 @@ import org.semanticweb.owlapi.model.OWLLiteral;
 
 public class OwlClassFields {
 
-  private static final String FIELD_DEFINITION_PROPERTY = "IAO_0000115";
-  private static final String FIELD_HAS_EXACT_SYNONYM_PROPERTY = "hasExactSynonym";
-  private static final String FIELD_LABEL_PROPERTY = "label";
-  private static final String FIELD_OBO_ID_PROPERTY = "id";
-  private static final String FIELD_DEPRECATED_PROPERTY = "deprecated";
+  protected static final String FIELD_DEFINITION_PROPERTY = "IAO_0000115";
+  protected static final String FIELD_HAS_EXACT_SYNONYM_PROPERTY = "hasExactSynonym";
+  protected static final String FIELD_LABEL_PROPERTY = "label";
+  protected static final String FIELD_OBO_ID_PROPERTY = "id";
+  protected static final String FIELD_DEPRECATED_PROPERTY = "deprecated";
 
   private String definition;
   private final List<String> synonyms = new ArrayList<>();
