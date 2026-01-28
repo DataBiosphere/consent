@@ -9,14 +9,14 @@
     <sql>
       CREATE TABLE ontology_index (
         term_id varchar(255) primary key,
+        obo_id varchar(56),
         version varchar(255) not null,
         ontology varchar(255) not null,
-        synonyms text,
         label text not null,
         definition text,
-        usable boolean not null,
-        obo_id varchar(255),
+        synonyms text,
         json_document jsonb,
+        usable boolean not null,
         create_user_id integer not null,
         create_date timestamp without time zone default CURRENT_TIMESTAMP not null,
         update_user_id integer,
@@ -25,15 +25,31 @@
           to_tsvector(
             'english',
             coalesce(term_id, '') || ' ' ||
-            coalesce(label, '') || ' ' ||
             coalesce(obo_id, '') || ' ' ||
+            coalesce(label, '') || ' ' ||
+            coalesce(definition, '') || ' ' ||
             coalesce(synonyms, '')
           )
         ) STORED
       );
     </sql>
-
+    <createIndex
+      indexName="idx_ontology_index_term_id"
+      tableName="ontology_index">
+      <column name="term_id"/>
+    </createIndex>
+    <createIndex
+      indexName="idx_ontology_index_obo_id"
+      tableName="ontology_index">
+      <column name="obo_id"/>
+    </createIndex>
+    <sql>
+      CREATE INDEX idx_ontology_index_search_vector ON ontology_index USING GIN (search_vector);
+    </sql>
     <rollback>
+      <dropIndex tableName="ontology_index" indexName="idx_ontology_index_term_id"/>
+      <dropIndex tableName="ontology_index" indexName="idx_ontology_index_obo_id"/>
+      <dropIndex tableName="ontology_index" indexName="idx_ontology_index_search_vector"/>
       <dropTable
         tableName="ontology_index"
         cascadeConstraints="true"/>

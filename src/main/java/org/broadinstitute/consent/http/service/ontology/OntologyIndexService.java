@@ -75,6 +75,7 @@ public class OntologyIndexService implements ConsentLogger {
       OWLOntology ontology,
       OWLReasoner reasoner,
       String version) {
+    // Process basic term fields
     OntologyTerm ontologyTerm = new OntologyTerm(owlClass.toStringID(), version, ontologyType);
     OWLClass obsoleteClass =
         ontology
@@ -92,13 +93,9 @@ public class OntologyIndexService implements ConsentLogger {
     ontologyTerm.setOboId(classFields.getOboId());
     ontologyTerm.setSynonyms(classFields.getSynonyms());
     boolean isObsolete = reasoner.getSuperClasses(owlClass, false).containsEntity(obsoleteClass);
-    if (isObsolete) {
-      ontologyTerm.setUsable(false);
-    } else {
-      ontologyTerm.setUsable(!classFields.getDeprecated());
-    }
+    ontologyTerm.setUsable(!isObsolete && !Boolean.TRUE.equals(classFields.getDeprecated()));
 
-    // Only process parents if the term is usable
+    // Process parents if the term is usable
     if (Boolean.TRUE.equals(ontologyTerm.usable)) {
       int position = 0;
       for (Set<OWLClass> parentSet : getFilteredParentSets(owlClass, reasoner)) {
