@@ -67,6 +67,17 @@ public class OntologyIndexService implements ConsentLogger {
         .collect(Collectors.toSet());
   }
 
+  /**
+   * Generate an OntologyTerm from an OWLClass. Processes annotations, parents, and usability. Terms
+   * marked as obsolete or deprecated are flagged as unusable.
+   *
+   * @param owlClass The OWLClass to process
+   * @param ontologyType The ontology type (e.g. "DOID", "DUO")
+   * @param ontology the OWLOntology being processed
+   * @param reasoner The OWLReasoner for making inferences
+   * @param version The ontology version string
+   * @return The generated OntologyTerm
+   */
   private OntologyTerm generateTerm(
       OWLClass owlClass,
       String ontologyType,
@@ -115,8 +126,18 @@ public class OntologyIndexService implements ConsentLogger {
     return ontologyTerm;
   }
 
+  /**
+   * We need to check for duplicate sets from the top down. For instance, if we have DOID_4 as the
+   * top-level node, we should filter it out of all lower level nodes. This happens when a class has
+   * two parents and each of those parents have a common ancestor, which is true in 100% of the
+   * cases. We need to keep the top-most node and filter out the duplicates lower down in the tree.
+   *
+   * @param owlClass The class to find parents for
+   * @param reasoner Reasoner required to make inferences.
+   * @return List of ordered OWLClass parents
+   */
   private List<Set<OWLClass>> getFilteredParentSets(OWLClass owlClass, OWLReasoner reasoner) {
-    List<Set<OWLClass>> parentSets = getParentSets(owlClass, reasoner);
+    List<Set<OWLClass>> parentSets = getParentSets(owlClass, reasoner).reversed();
     List<Set<OWLClass>> filteredSets = new ArrayList<>();
     List<String> owlClassCache = new ArrayList<>();
     for (Set<OWLClass> classSet : parentSets) {
@@ -132,9 +153,16 @@ public class OntologyIndexService implements ConsentLogger {
         filteredSets.add(filteredParentSet);
       }
     }
-    return filteredSets;
+    return filteredSets.reversed();
   }
 
+  /**
+   * Determine if an OWLClass is valid for processing. Filters out OWLThing, OWLNothing, nulls, and
+   * any classes that do not contain the required IRI filters.
+   *
+   * @param owlClass The OWLClass to validate
+   * @return True if the class is valid, false otherwise
+   */
   private boolean isValidOWLClass(OWLClass owlClass) {
     return owlClass != null
         && owlClass.isOWLClass()
@@ -143,6 +171,13 @@ public class OntologyIndexService implements ConsentLogger {
         && IRI_FILTERS.stream().anyMatch(f -> owlClass.getIRI().toString().contains(f));
   }
 
+  /**
+   * Recursively generate an ordered list of OWLClass Parent Sets.
+   *
+   * @param owlClass The class to find parents for
+   * @param reasoner Reasoner required to make inferences.
+   * @return Ordered list of OWLClass parent sets
+   */
   private List<Set<OWLClass>> getParentSets(OWLClass owlClass, OWLReasoner reasoner) {
     List<Set<OWLClass>> parents = new ArrayList<>();
     Set<OWLClass> parentSet =
