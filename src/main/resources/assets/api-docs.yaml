@@ -553,10 +553,12 @@ paths:
           description: Server error.
   /api/emailNotifier/darExpirationNotices:
     $ref: './paths/darExpirationNotices.yaml'
-  /api/feature:
+  /feature:
     $ref: './paths/feature.yaml'
+  /feature/{id}:
+    $ref: './paths/publicFeatureById.yaml'
   /api/feature/{id}:
-    $ref: './paths/featureById.yaml'
+    $ref: './paths/adminFeatureById.yaml'
   /api/institutions:
     $ref: './paths/institutions.yaml'
   /api/institutions/{id}:
