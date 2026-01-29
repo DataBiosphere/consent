@@ -14,7 +14,6 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -44,54 +43,12 @@ class FeatureFlagResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testGetAllFeatureFlags() {
-    FeatureFlag flag1 = new FeatureFlag("feature1", "value1");
-    FeatureFlag flag2 = new FeatureFlag("feature2", "value2");
-    when(featureFlagService.getAllFeatureFlags()).thenReturn(List.of(flag1, flag2));
-
-    Response response = resource.getAllFeatureFlags();
-    assertEquals(200, response.getStatus());
-    assertNotNull(response.getEntity());
-    verify(featureFlagService).getAllFeatureFlags();
-  }
-
-  @Test
-  void testGetAllFeatureFlags_Empty() {
-    when(featureFlagService.getAllFeatureFlags()).thenReturn(List.of());
-
-    Response response = resource.getAllFeatureFlags();
-    assertEquals(200, response.getStatus());
-    verify(featureFlagService).getAllFeatureFlags();
-  }
-
-  @Test
-  void testGetFeatureFlagById_Found() {
-    FeatureFlag flag = new FeatureFlag("test-feature", "test-value");
-    when(featureFlagService.getFeatureFlagById("test-feature")).thenReturn(flag);
-
-    Response response = resource.getFeatureFlagById("test-feature");
-    assertEquals(200, response.getStatus());
-    assertNotNull(response.getEntity());
-    verify(featureFlagService).getFeatureFlagById("test-feature");
-  }
-
-  @Test
-  void testGetFeatureFlagById_NotFound() {
-    when(featureFlagService.getFeatureFlagById("non-existent"))
-        .thenThrow(new NotFoundException("Feature flag with id 'non-existent' not found"));
-
-    Response response = resource.getFeatureFlagById("non-existent");
-    assertEquals(404, response.getStatus());
-    verify(featureFlagService).getFeatureFlagById("non-existent");
-  }
-
-  @Test
   void testCreateOrUpdateFeatureFlag_Create() {
     UriInfo uriInfo = mock(UriInfo.class);
     UriBuilder uriBuilder = mock(UriBuilder.class);
-    when(uriInfo.getAbsolutePathBuilder()).thenReturn(uriBuilder);
+    when(uriInfo.getBaseUriBuilder()).thenReturn(uriBuilder);
     when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
-    when(uriBuilder.build()).thenReturn(URI.create("http://localhost/api/feature/new-feature"));
+    when(uriBuilder.build()).thenReturn(URI.create("http://localhost/feature/new-feature"));
 
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     FeatureFlag createdFlag = new FeatureFlag("new-feature", "new-value");
