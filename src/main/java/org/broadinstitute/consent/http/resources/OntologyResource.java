@@ -48,13 +48,13 @@ public class OntologyResource extends Resource {
 
   @GET
   @Path("search")
-  public Response searchTerm(@QueryParam("termIDs") String termIDs) {
+  public Response searchTerm(@QueryParam("ids") String ids) {
     try {
-      List<JsonObject> termList = ontologyService.findByTermIds(termIDs);
+      List<JsonObject> termList = ontologyService.findByTermIds(ids);
       if (termList != null && !termList.isEmpty()) {
         return Response.ok(termList).build();
       } else {
-        throw new NotFoundException("Ontology term not found for term IDs: " + termIDs);
+        throw new NotFoundException("Ontology term not found for term IDs: " + ids);
       }
     } catch (Exception e) {
       return createExceptionResponse(e);
