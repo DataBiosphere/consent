@@ -837,17 +837,19 @@ class DatasetResourceTest extends AbstractTestHelper {
         // Intellectual Property
         Arguments.of("intellectualProperties", "type", null, false, "type"),
         Arguments.of("intellectualProperties", "type", "", false, "type"),
-        Arguments.of("intellectualProperties", "type", "Patent", true, null)
-    );
+        Arguments.of("intellectualProperties", "type", "Patent", true, null));
   }
 
   @ParameterizedTest
   @MethodSource("assetTestCases")
-  void testAssetRequiredFieldValidation(String assetType, String field, Object value, boolean shouldPass, String expectedError) throws Exception {
+  void testAssetRequiredFieldValidation(
+      String assetType, String field, Object value, boolean shouldPass, String expectedError)
+      throws Exception {
     // Build asset JSON with all required fields for each asset type
     String assetJson = getAssetJson(assetType, field, value);
 
-    String json = """
+    String json =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -873,7 +875,8 @@ class DatasetResourceTest extends AbstractTestHelper {
             "%s": [%s]
           }
         }
-        """.formatted(assetType, assetJson);
+        """
+            .formatted(assetType, assetJson);
 
     if (shouldPass) {
       when(userService.findUserByEmail(any())).thenReturn(user);
@@ -895,11 +898,12 @@ class DatasetResourceTest extends AbstractTestHelper {
         assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
         String entity = response.getEntity().toString();
         assertTrue(entity.contains("Please correct the following fields:"));
-        String expectedLabel = switch (assetType) {
-          case "intellectualProperties" -> "Intellectual Property";
-          case "funding" -> "Funding";
-          default -> assetType.substring(0, 1).toUpperCase() + assetType.substring(1);
-        };
+        String expectedLabel =
+            switch (assetType) {
+              case "intellectualProperties" -> "Intellectual Property";
+              case "funding" -> "Funding";
+              default -> assetType.substring(0, 1).toUpperCase() + assetType.substring(1);
+            };
         assertTrue(entity.contains(expectedLabel));
         if (expectedError != null) {
           assertTrue(entity.toLowerCase().contains(expectedError.toLowerCase()));
@@ -1632,7 +1636,8 @@ class DatasetResourceTest extends AbstractTestHelper {
       }
     }
     return switch (assetType) {
-      case "models" -> """
+      case "models" ->
+          """
             {
                 %s
                 "url": "https://model.com",
@@ -1640,16 +1645,20 @@ class DatasetResourceTest extends AbstractTestHelper {
                 "license": "MIT",
                 "maintainer": { "name": "Maintainer", "email": "maintainer@abc.com" }
             }
-            """.formatted(fieldEntry);
-      case "workspaces" -> """
+            """
+              .formatted(fieldEntry);
+      case "workspaces" ->
+          """
             {
                 %s
                 "platform": "Terra",
                 "url": "https://workspace.com",
                 "description": "desc"
             }
-            """.formatted(fieldEntry);
-      case "publications" -> """
+            """
+              .formatted(fieldEntry);
+      case "publications" ->
+          """
             {
                 %s
                 "publishedDate": "2024-01-01",
@@ -1657,14 +1666,18 @@ class DatasetResourceTest extends AbstractTestHelper {
                 "journal": "journal",
                 "doi": "10.1000/xyz123"
             }
-            """.formatted(fieldEntry);
-      case "presentations" -> """
+            """
+              .formatted(fieldEntry);
+      case "presentations" ->
+          """
             {
                 %s
                 "date": "2024-01-01"
             }
-            """.formatted(fieldEntry);
-      case "clinicalTrials" -> """
+            """
+              .formatted(fieldEntry);
+      case "clinicalTrials" ->
+          """
             {
                 %s
                 "registry": "ClinicalTrials.gov",
@@ -1676,16 +1689,20 @@ class DatasetResourceTest extends AbstractTestHelper {
                 "phase": "PHASE1",
                 "url": "https://trial.com"
             }
-            """.formatted(fieldEntry);
-      case "funding" -> """
+            """
+              .formatted(fieldEntry);
+      case "funding" ->
+          """
             {
                 %s
                 "funderProgram": "Program",
                 "grantNumber": "123",
                 "projectTitle": "Project"
             }
-            """.formatted(fieldEntry);
-      case "intellectualProperties" -> """
+            """
+              .formatted(fieldEntry);
+      case "intellectualProperties" ->
+          """
             {
                 %s
                 "title": "Title",
@@ -1696,7 +1713,8 @@ class DatasetResourceTest extends AbstractTestHelper {
                 "url": "https://ip.com",
                 "contact": "Contact"
             }
-            """.formatted(fieldEntry);
+            """
+              .formatted(fieldEntry);
       default -> throw new IllegalArgumentException("Unknown asset type: " + assetType);
     };
   }

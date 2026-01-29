@@ -850,7 +850,6 @@ class JsonSchemaUtilTest {
     assertFieldHasError(errors, "url");
   }
 
-
   @Test
   void testGetFieldLabelAndAssetTypeMap_basicFields() {
     var map = JsonSchemaUtil.getFieldLabelAndAssetTypeMap();
@@ -880,10 +879,11 @@ class JsonSchemaUtilTest {
 
   @Test
   void testFormatGroupedValidationErrors_studyFields() {
-    Set<ValidationMessage> errors = Set.of(
-        dummyValidationMessage("$.studyName: required property 'studyName' not found"),
-        dummyValidationMessage("$.studyDescription: required property 'studyDescription' not found")
-    );
+    Set<ValidationMessage> errors =
+        Set.of(
+            dummyValidationMessage("$.studyName: required property 'studyName' not found"),
+            dummyValidationMessage(
+                "$.studyDescription: required property 'studyDescription' not found"));
     String result = JsonSchemaUtil.formatGroupedValidationErrors(errors);
     assertTrue(result.contains("Study:"));
     assertTrue(result.contains("Study Name"));
@@ -892,10 +892,11 @@ class JsonSchemaUtilTest {
 
   @Test
   void testFormatGroupedValidationErrors_assetFields() {
-    Set<ValidationMessage> errors = Set.of(
-        dummyValidationMessage("$.assets.models[0]: required property 'name' not found"),
-        dummyValidationMessage("$.assets.intellectualProperties[0]: required property 'type' not found")
-    );
+    Set<ValidationMessage> errors =
+        Set.of(
+            dummyValidationMessage("$.assets.models[0]: required property 'name' not found"),
+            dummyValidationMessage(
+                "$.assets.intellectualProperties[0]: required property 'type' not found"));
     String result = JsonSchemaUtil.formatGroupedValidationErrors(errors);
     assertTrue(result.contains("Models:"));
     assertTrue(result.contains("Intellectual Property:"));

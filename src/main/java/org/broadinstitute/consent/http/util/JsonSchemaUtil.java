@@ -110,12 +110,15 @@ public class JsonSchemaUtil implements ConsentLogger {
   }
 
   /**
-   * Utility to load field label and asset type mappings from the schema. Returns a map: fieldName -> [label, assetType]
+   * Utility to load field label and asset type mappings from the schema. Returns a map: fieldName
+   * -> [label, assetType]
    */
   public static Map<String, String[]> getFieldLabelAndAssetTypeMap() {
     Map<String, String[]> map = new HashMap<>();
-    try (InputStream is = JsonSchemaUtil.class.getResourceAsStream("/dataset-registration-schema_v1.json");
-        InputStreamReader reader = new InputStreamReader(Objects.requireNonNull(is), StandardCharsets.UTF_8)) {
+    try (InputStream is =
+            JsonSchemaUtil.class.getResourceAsStream("/dataset-registration-schema_v1.json");
+        InputStreamReader reader =
+            new InputStreamReader(Objects.requireNonNull(is), StandardCharsets.UTF_8)) {
       JsonObject schema = JsonParser.parseReader(reader).getAsJsonObject();
       JsonObject properties = schema.getAsJsonObject("properties");
 
@@ -126,7 +129,7 @@ public class JsonSchemaUtil implements ConsentLogger {
           JsonObject assetsProps = assets.getAsJsonObject("properties");
           for (String assetKey : assetsProps.keySet()) {
             String assetLabel = getAssetLabel(assetKey);
-            map.put(assetKey, new String[]{assetLabel, assetLabel});
+            map.put(assetKey, new String[] {assetLabel, assetLabel});
             JsonObject assetDef = assetsProps.getAsJsonObject(assetKey);
             if (assetDef != null && assetDef.has("items")) {
               JsonObject itemDef = assetDef.getAsJsonObject("items");
@@ -140,10 +143,11 @@ public class JsonSchemaUtil implements ConsentLogger {
                     JsonObject subProps = def.getAsJsonObject("properties");
                     for (String subKey : subProps.keySet()) {
                       JsonObject subProp = subProps.getAsJsonObject(subKey);
-                      String subLabel = subProp != null && subProp.has("label")
-                          ? subProp.get("label").getAsString()
-                          : subKey;
-                      map.put(assetKey + "." + subKey, new String[]{subLabel, assetKey});
+                      String subLabel =
+                          subProp != null && subProp.has("label")
+                              ? subProp.get("label").getAsString()
+                              : subKey;
+                      map.put(assetKey + "." + subKey, new String[] {subLabel, assetKey});
                     }
                   }
                 }
@@ -159,7 +163,7 @@ public class JsonSchemaUtil implements ConsentLogger {
         JsonObject prop = properties.getAsJsonObject(key);
         String label = prop.has("label") ? prop.get("label").getAsString() : key;
         String assetType = key.equals("consentGroups") ? "Dataset" : "Study";
-        map.put(key, new String[]{label, assetType});
+        map.put(key, new String[] {label, assetType});
       }
     } catch (Exception e) {
       // fallback use field names
@@ -168,7 +172,8 @@ public class JsonSchemaUtil implements ConsentLogger {
   }
 
   /**
-   * Enhanced error formatting for schema validation errors. Groups by asset type and uses user-facing labels.
+   * Enhanced error formatting for schema validation errors. Groups by asset type and uses
+   * user-facing labels.
    */
   public static String formatGroupedValidationErrors(Set<ValidationMessage> errors) {
     Map<String, String[]> fieldMap = getFieldLabelAndAssetTypeMap();
@@ -185,9 +190,10 @@ public class JsonSchemaUtil implements ConsentLogger {
       if (m.matches()) {
         String assetKey = m.group(1);
         String[] assetLabelAndType = fieldMap.get(assetKey);
-        assetType = assetLabelAndType != null && assetLabelAndType[1] != null
-            ? capitalize(assetLabelAndType[1])
-            : capitalize(assetKey);
+        assetType =
+            assetLabelAndType != null && assetLabelAndType[1] != null
+                ? capitalize(assetLabelAndType[1])
+                : capitalize(assetKey);
         String subKey = m.group(3);
         label = subKey != null ? subKey : assetKey;
       } else {
@@ -197,7 +203,7 @@ public class JsonSchemaUtil implements ConsentLogger {
           labelAndType = fieldMap.get(assetKey);
         }
         if (labelAndType == null) {
-          labelAndType = new String[]{field, "Other"};
+          labelAndType = new String[] {field, "Other"};
         }
         assetType = capitalize(labelAndType[1]);
         label = labelAndType[0];
@@ -230,9 +236,10 @@ public class JsonSchemaUtil implements ConsentLogger {
 
   /** Helper to extract the field from a validation message */
   private static String extractFieldFromMessage(String msgText) {
-    var assetMatcher = java.util.regex.Pattern
-        .compile("^\\$\\.assets\\.(\\w+)\\[(\\d+)]: required property '([^']+)' not found")
-        .matcher(msgText);
+    var assetMatcher =
+        java.util.regex.Pattern.compile(
+                "^\\$\\.assets\\.(\\w+)\\[(\\d+)]: required property '([^']+)' not found")
+            .matcher(msgText);
     if (assetMatcher.find()) {
       return assetMatcher.group(1) + "[" + assetMatcher.group(2) + "]." + assetMatcher.group(3);
     }
@@ -258,7 +265,8 @@ public class JsonSchemaUtil implements ConsentLogger {
   }
 
   /**
-   * Enhanced error formatting for schema validation errors. Groups by asset type and uses user-facing labels.
+   * Enhanced error formatting for schema validation errors. Groups by asset type and uses
+   * user-facing labels.
    */
   private static String capitalize(String s) {
     if (s == null || s.isEmpty()) return s;
