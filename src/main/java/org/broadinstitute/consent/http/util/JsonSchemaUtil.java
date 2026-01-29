@@ -33,6 +33,8 @@ public class JsonSchemaUtil implements ConsentLogger {
 
   private final LoadingCache<String, String> cache;
   private final JsonSchemaFactory factory;
+  private static final String FUNDING_KEY = "funding";
+  private static final String INTELLECTUAL_PROPERTIES_KEY = "intellectualProperties";
 
   public JsonSchemaUtil() {
     factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V201909);
@@ -108,15 +110,12 @@ public class JsonSchemaUtil implements ConsentLogger {
   }
 
   /**
-   * Utility to load field label and asset type mappings from the schema. Returns a map: fieldName
-   * -> [label, assetType]
+   * Utility to load field label and asset type mappings from the schema. Returns a map: fieldName -> [label, assetType]
    */
   public static Map<String, String[]> getFieldLabelAndAssetTypeMap() {
     Map<String, String[]> map = new HashMap<>();
-    try (InputStream is =
-            JsonSchemaUtil.class.getResourceAsStream("/dataset-registration-schema_v1.json");
-        InputStreamReader reader =
-            new InputStreamReader(Objects.requireNonNull(is), StandardCharsets.UTF_8)) {
+    try (InputStream is = JsonSchemaUtil.class.getResourceAsStream("/dataset-registration-schema_v1.json");
+        InputStreamReader reader = new InputStreamReader(Objects.requireNonNull(is), StandardCharsets.UTF_8)) {
       JsonObject schema = JsonParser.parseReader(reader).getAsJsonObject();
       JsonObject properties = schema.getAsJsonObject("properties");
 
@@ -126,9 +125,8 @@ public class JsonSchemaUtil implements ConsentLogger {
         if (assets.has("properties")) {
           JsonObject assetsProps = assets.getAsJsonObject("properties");
           for (String assetKey : assetsProps.keySet()) {
-            String assetLabel = assetKey.substring(0, 1).toUpperCase() + assetKey.substring(1);
-            // Add the top-level asset key mapping ONCE, before subfields
-            map.put(assetKey, new String[] {assetLabel, assetLabel});
+            String assetLabel = getAssetLabel(assetKey);
+            map.put(assetKey, new String[]{assetLabel, assetLabel});
             JsonObject assetDef = assetsProps.getAsJsonObject(assetKey);
             if (assetDef != null && assetDef.has("items")) {
               JsonObject itemDef = assetDef.getAsJsonObject("items");
@@ -141,7 +139,11 @@ public class JsonSchemaUtil implements ConsentLogger {
                   if (def.has("properties")) {
                     JsonObject subProps = def.getAsJsonObject("properties");
                     for (String subKey : subProps.keySet()) {
-                      map.put(assetKey + "." + subKey, new String[] {subKey, assetKey});
+                      JsonObject subProp = subProps.getAsJsonObject(subKey);
+                      String subLabel = subProp != null && subProp.has("label")
+                          ? subProp.get("label").getAsString()
+                          : subKey;
+                      map.put(assetKey + "." + subKey, new String[]{subLabel, assetKey});
                     }
                   }
                 }
@@ -153,12 +155,11 @@ public class JsonSchemaUtil implements ConsentLogger {
 
       // Handle all other fields
       for (String key : properties.keySet()) {
-        if (key.equals("assets")) continue; // already handled
+        if (key.equals("assets")) continue;
         JsonObject prop = properties.getAsJsonObject(key);
         String label = prop.has("label") ? prop.get("label").getAsString() : key;
-        String assetType = "Study";
-        if (key.equals("consentGroups")) assetType = "Dataset";
-        map.put(key, new String[] {label, assetType});
+        String assetType = key.equals("consentGroups") ? "Dataset" : "Study";
+        map.put(key, new String[]{label, assetType});
       }
     } catch (Exception e) {
       // fallback use field names
@@ -167,73 +168,28 @@ public class JsonSchemaUtil implements ConsentLogger {
   }
 
   /**
-   * Enhanced error formatting for schema validation errors. Groups by asset type and uses
-   * user-facing labels.
+   * Enhanced error formatting for schema validation errors. Groups by asset type and uses user-facing labels.
    */
   public static String formatGroupedValidationErrors(Set<ValidationMessage> errors) {
     Map<String, String[]> fieldMap = getFieldLabelAndAssetTypeMap();
     Map<String, List<String>> grouped = new LinkedHashMap<>();
     for (ValidationMessage error : errors) {
-      String field = "";
       String msgText = error.getMessage();
-
-      // Extract field for asset arrays
-      java.util.regex.Matcher assetMatcher =
-          java.util.regex.Pattern.compile(
-                          "^\\$\\.assets\\.(\\w+)\\[(\\d+)]: required property '([^']+)' not found")
-              .matcher(msgText);
-      if (assetMatcher.find()) {
-        String assetKey = assetMatcher.group(1);
-        String idx = assetMatcher.group(2);
-        String subKey = assetMatcher.group(3);
-        field = assetKey + "[" + idx + "]." + subKey;
-      } else if (msgText.contains("required property")) {
-        int idx = msgText.indexOf("'");
-        if (idx >= 0) {
-          int end = msgText.indexOf("'", idx + 1);
-          if (end > idx) field = msgText.substring(idx + 1, end);
-        }
-      } else if (msgText.startsWith("$.") || msgText.startsWith("$")) {
-        int start = msgText.startsWith("$.") ? 2 : 1;
-        int colon = msgText.indexOf(":");
-        if (colon > start) {
-          field = msgText.substring(start, colon);
-          if (field.startsWith("assets.")) {
-            field = field.substring("assets.".length());
-          }
-        }
-      }
+      String field = extractFieldFromMessage(msgText);
 
       String label;
       String assetType;
 
-      // Format label for asset arrays
       java.util.regex.Matcher m =
           java.util.regex.Pattern.compile("^(\\w+)\\[(\\d+)](?:\\.(\\w+))?$").matcher(field);
       if (m.matches()) {
         String assetKey = m.group(1);
-        int idx = Integer.parseInt(m.group(2)) + 1;
-        String subKey = m.group(3);
         String[] assetLabelAndType = fieldMap.get(assetKey);
-        String assetLabel;
-        if ("funding".equals(assetKey)) {
-          assetLabel = "Funding";
-        } else if ("intellectualProperties".equals(assetKey)) {
-          assetLabel = "Intellectual Property";
-        } else {
-          assetLabel = assetLabelAndType != null ? assetLabelAndType[0] : assetKey;
-          // Default: remove trailing 's' for other asset types
-          if (assetLabel.endsWith("s")) {
-            assetLabel = assetLabel.substring(0, assetLabel.length() - 1);
-          }
-        }
-        label = assetLabel + " " + idx;
-        if (subKey != null) {
-          String[] subLabelAndType = fieldMap.get(assetKey + "." + subKey);
-          String subLabel = subLabelAndType != null ? subLabelAndType[0] : subKey;
-          label += ": " + subLabel;
-        }
-        assetType = assetLabelAndType != null ? assetLabelAndType[1] : assetKey;
+        assetType = assetLabelAndType != null && assetLabelAndType[1] != null
+            ? capitalize(assetLabelAndType[1])
+            : capitalize(assetKey);
+        String subKey = m.group(3);
+        label = subKey != null ? subKey : assetKey;
       } else {
         String[] labelAndType = fieldMap.get(field);
         if (labelAndType == null && field.contains(".")) {
@@ -241,15 +197,13 @@ public class JsonSchemaUtil implements ConsentLogger {
           labelAndType = fieldMap.get(assetKey);
         }
         if (labelAndType == null) {
-          labelAndType = new String[] {field, "Other"};
+          labelAndType = new String[]{field, "Other"};
         }
+        assetType = capitalize(labelAndType[1]);
         label = labelAndType[0];
-        assetType = labelAndType[1];
       }
 
-      // Clean up the error message for user display
       String cleanedMsg = getCleanedMsg(msgText, field, label);
-
       grouped.computeIfAbsent(assetType, _ -> new java.util.ArrayList<>()).add(cleanedMsg);
     }
 
@@ -263,6 +217,55 @@ public class JsonSchemaUtil implements ConsentLogger {
     return sb.toString().trim();
   }
 
+  /** Helper to get the user-facing asset label */
+  private static String getAssetLabel(String assetKey) {
+    if (FUNDING_KEY.equals(assetKey)) return "Funding";
+    if (INTELLECTUAL_PROPERTIES_KEY.equals(assetKey)) return "Intellectual Property";
+    // Capitalize and pluralize
+    String label = assetKey.substring(0, 1).toUpperCase() + assetKey.substring(1);
+    // If not already plural, add 's'
+    if (!label.endsWith("s")) label += "s";
+    return label;
+  }
+
+  /** Helper to extract the field from a validation message */
+  private static String extractFieldFromMessage(String msgText) {
+    var assetMatcher = java.util.regex.Pattern
+        .compile("^\\$\\.assets\\.(\\w+)\\[(\\d+)]: required property '([^']+)' not found")
+        .matcher(msgText);
+    if (assetMatcher.find()) {
+      return assetMatcher.group(1) + "[" + assetMatcher.group(2) + "]." + assetMatcher.group(3);
+    }
+    if (msgText.contains("required property")) {
+      int idx = msgText.indexOf("'");
+      int end = msgText.indexOf("'", idx + 1);
+      if (idx >= 0 && end > idx) {
+        return msgText.substring(idx + 1, end);
+      }
+    }
+    if (msgText.startsWith("$.") || msgText.startsWith("$")) {
+      int start = msgText.startsWith("$.") ? 2 : 1;
+      int colon = msgText.indexOf(":");
+      if (colon > start) {
+        String field = msgText.substring(start, colon);
+        if (field.startsWith("assets.")) {
+          field = field.substring("assets.".length());
+        }
+        return field;
+      }
+    }
+    return "";
+  }
+
+  /**
+   * Enhanced error formatting for schema validation errors. Groups by asset type and uses user-facing labels.
+   */
+  private static String capitalize(String s) {
+    if (s == null || s.isEmpty()) return s;
+    return s.substring(0, 1).toUpperCase() + s.substring(1);
+  }
+
+  /** Cleans up a validation message by removing raw field references and adding labels */
   private static @NonNull String getCleanedMsg(String msgText, String field, String label) {
     String cleanedMsg = msgText.replaceFirst("^\\$\\.?", "");
 
