@@ -126,53 +126,59 @@ public class JsonSchemaUtil implements ConsentLogger {
       JsonObject schema = JsonParser.parseReader(reader).getAsJsonObject();
       JsonObject properties = schema.getAsJsonObject(PROPERTIES);
 
-      // Handle asset fields
-      if (properties.has(ASSETS)) {
-        JsonObject assets = properties.getAsJsonObject(ASSETS);
-        if (assets.has(PROPERTIES)) {
-          JsonObject assetsProps = assets.getAsJsonObject(PROPERTIES);
-          for (String assetKey : assetsProps.keySet()) {
-            String assetLabel = getAssetLabel(assetKey);
-            map.put(assetKey, new String[] {assetLabel, assetLabel});
-            JsonObject assetDef = assetsProps.getAsJsonObject(assetKey);
-            if (assetDef != null && assetDef.has("items")) {
-              JsonObject itemDef = assetDef.getAsJsonObject("items");
-              if (itemDef.has("$ref")) {
-                String ref = itemDef.get("$ref").getAsString();
-                String defName = ref.substring(ref.lastIndexOf("/") + 1);
-                JsonObject defs = schema.getAsJsonObject("$defs");
-                if (defs != null && defs.has(defName)) {
-                  JsonObject def = defs.getAsJsonObject(defName);
-                  if (def.has(PROPERTIES)) {
-                    JsonObject subProps = def.getAsJsonObject(PROPERTIES);
-                    for (String subKey : subProps.keySet()) {
-                      JsonObject subProp = subProps.getAsJsonObject(subKey);
-                      String subLabel =
-                          subProp != null && subProp.has(LABEL)
-                              ? subProp.get(LABEL).getAsString()
-                              : subKey;
-                      map.put(assetKey + "." + subKey, new String[] {subLabel, assetKey});
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-
-      // Handle all other fields
-      for (String index : properties.keySet()) {
-        if (index.equals(ASSETS)) continue;
-        JsonObject prop = properties.getAsJsonObject(index);
-        String label = prop.has(LABEL) ? prop.get(LABEL).getAsString() : index;
-        String assetType = index.equals(CONSENT_GROUPS) ? "Datasets" : "Study";
-        map.put(index, new String[] {label, assetType});
-      }
+      mapAssetFields(map, schema, properties);
+      mapOtherFields(map, properties);
     } catch (Exception e) {
       // fallback use field names
     }
     return map;
+  }
+
+  /** Helper to map asset fields and their sub-fields */
+  private static void mapAssetFields(
+      Map<String, String[]> map, JsonObject schema, JsonObject properties) {
+    if (!properties.has(ASSETS)) return;
+    JsonObject assets = properties.getAsJsonObject(ASSETS);
+    if (!assets.has(PROPERTIES)) return;
+    JsonObject assetsProps = assets.getAsJsonObject(PROPERTIES);
+    for (String assetKey : assetsProps.keySet()) {
+      String assetLabel = getAssetLabel(assetKey);
+      map.put(assetKey, new String[] {assetLabel, assetLabel});
+      mapAssetSubFields(map, schema, assetsProps, assetKey);
+    }
+  }
+
+  /** Helper to map sub-fields of an asset */
+  private static void mapAssetSubFields(
+      Map<String, String[]> map, JsonObject schema, JsonObject assetsProps, String assetKey) {
+    JsonObject assetDef = assetsProps.getAsJsonObject(assetKey);
+    if (assetDef == null || !assetDef.has("items")) return;
+    JsonObject itemDef = assetDef.getAsJsonObject("items");
+    if (!itemDef.has("$ref")) return;
+    String ref = itemDef.get("$ref").getAsString();
+    String defName = ref.substring(ref.lastIndexOf("/") + 1);
+    JsonObject defs = schema.getAsJsonObject("$defs");
+    if (defs == null || !defs.has(defName)) return;
+    JsonObject def = defs.getAsJsonObject(defName);
+    if (!def.has(PROPERTIES)) return;
+    JsonObject subProps = def.getAsJsonObject(PROPERTIES);
+    for (String subKey : subProps.keySet()) {
+      JsonObject subProp = subProps.getAsJsonObject(subKey);
+      String subLabel =
+          (subProp != null && subProp.has(LABEL)) ? subProp.get(LABEL).getAsString() : subKey;
+      map.put(assetKey + "." + subKey, new String[] {subLabel, assetKey});
+    }
+  }
+
+  /** Helper to map non-asset fields */
+  private static void mapOtherFields(Map<String, String[]> map, JsonObject properties) {
+    for (String index : properties.keySet()) {
+      if (index.equals(ASSETS)) continue;
+      JsonObject prop = properties.getAsJsonObject(index);
+      String label = prop.has(LABEL) ? prop.get(LABEL).getAsString() : index;
+      String assetType = index.equals(CONSENT_GROUPS) ? "Datasets" : "Study";
+      map.put(index, new String[] {label, assetType});
+    }
   }
 
   /**
