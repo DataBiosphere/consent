@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -22,11 +23,29 @@ import org.broadinstitute.consent.http.service.DatasetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DatasetRegistrationSchemaV1UpdateValidatorTest {
+
+  private static final Study STATIC_STUDY;
+  private static final Integer STATIC_DATASET_ID;
+
+  static {
+    STATIC_STUDY = new Study();
+    STATIC_STUDY.setName("TestStudy");
+    Dataset dataset = new Dataset();
+    dataset.setName("");
+    dataset.setDatasetId(16); // Use a fixed ID for consistency
+    dataset.setDacId(42);
+    STATIC_STUDY.addDatasets(List.of(dataset));
+    STATIC_STUDY.addDatasetIds(Set.of(dataset.getDatasetId()));
+    STATIC_DATASET_ID = dataset.getDatasetId();
+  }
 
   @Mock private DatasetService datasetService;
   private DatasetRegistrationSchemaV1UpdateValidator validator;
@@ -463,6 +482,431 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
         () -> {
           validator.validate(study, registration);
         });
+  }
+
+  @ParameterizedTest
+  @MethodSource("assetRequiredFieldProvider")
+  void testAssetRequiredFields(String json, String expectedMessage) {
+    DatasetRegistrationSchemaV1 registration = validator.deserializeRegistration(json);
+    BadRequestException ex =
+        assertThrows(
+            BadRequestException.class, () -> validator.validate(STATIC_STUDY, registration));
+    System.out.println(ex.getMessage());
+    assertTrue(ex.getMessage().contains(expectedMessage));
+  }
+
+  static Stream<Arguments> assetRequiredFieldProvider() {
+    String baseJson =
+        """
+      {
+        "studyName": "Test Study",
+        "studyDescription": "desc",
+        "dataTypes": ["Genomic"],
+        "publicVisibility": true,
+        "nihAnvilUse": "I_AM_NOT_NHGRI_FUNDED_AND_DO_NOT_PLAN_TO_STORE_DATA_IN_AN_VIL",
+        "piName": "PI",
+        "consentGroups": [
+          {
+            "consentGroupName": "Group 1",
+            "numberOfParticipants": 100,
+            "accessManagement": "open",
+            "dataLocation": "TDR_LOCATION",
+            "datasetId": %d
+          }
+        ],
+        "assets": %s
+      }
+      """;
+
+    return Stream.of(
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"models":[{"name":"","url":"https://example.com","format":"format","license":"license","maintainer":{"name":"Name","email":"email@example.com"}}]}
+        """),
+            "AI Model name is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"models":[{"name":"Model","url":null,"format":"format","license":"license","maintainer":{"name":"Name","email":"email@example.com"}}]}
+        """),
+            "AI Model url is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"models":[{"name":"Model","url":"invalid-url","format":"format","license":"license","maintainer":{"name":"Name","email":"email@example.com"}}]}
+        """),
+            "AI Model url is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"models":[{"name":"Model","url":"https://example.com","format":"","license":"license","maintainer":{"name":"Name","email":"email@example.com"}}]}
+        """),
+            "AI Model format is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"models":[{"name":"Model","url":"https://example.com","format":"format","license":"","maintainer":{"name":"Name","email":"email@example.com"}}]}
+        """),
+            "AI Model license is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"models":[{"name":"Model","url":"https://example.com","format":"format","license":"license","maintainer":null}]}
+        """),
+            "AI Model maintainer name and email are required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"models":[{"name":"Model","url":"https://example.com","format":"format","license":"license","maintainer":{"name":"","email":"email@example.com"}}]}
+        """),
+            "AI Model maintainer name and email are required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"models":[{"name":"Model","url":"https://example.com","format":"format","license":"license","maintainer":{"name":"Name","email":""}}]}
+        """),
+            "AI Model maintainer name and email are required"),
+
+        // Workspace required fields
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"workspaces":[{"name":"","platform":"Terra","url":"https://workspace.com","description":"desc"}]}
+        """),
+            "Workspace name is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"workspaces":[{"name":"WS","platform":"","url":"https://workspace.com","description":"desc"}]}
+        """),
+            "Workspace platform is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"workspaces":[{"name":"WS","platform":"Terra","url":null,"description":"desc"}]}
+        """),
+            "Workspace url is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"workspaces":[{"name":"WS","platform":"Terra","url":"invalid-url","description":"desc"}]}
+        """),
+            "Workspace url is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"workspaces":[{"name":"WS","platform":"Terra","url":"https://workspace.com","description":""}]}
+        """),
+            "Workspace description is required"),
+
+        // Presentation required fields
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"presentations":[{"title":"","date":"2024-01-01"}]}
+        """),
+            "Presentation title is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"presentations":[{"title":"Pres","date":null}]}
+        """),
+            "Presentation date is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"presentations":[{"title":"Pres","date":"invalid-date"}]}
+        """),
+            "Presentation date is required"),
+
+        // Publication required fields
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"publications":[{"title":"","publishedDate":"2024-01-01","datasetCitation":"cite","journal":"journal","doi":"doi"}]}
+        """),
+            "Publication title is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"publications":[{"title":"Pub","publishedDate":null,"datasetCitation":"cite","journal":"journal","doi":"doi"}]}
+        """),
+            "Publication publishedDate is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"publications":[{"title":"Pub","publishedDate":"invalid-date","datasetCitation":"cite","journal":"journal","doi":"doi"}]}
+        """),
+            "Publication publishedDate is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"publications":[{"title":"Pub","publishedDate":"2024-01-01","datasetCitation":"","journal":"journal","doi":"doi"}]}
+        """),
+            "Publication datasetCitation is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"publications":[{"title":"Pub","publishedDate":"2024-01-01","datasetCitation":"cite","journal":"","doi":"doi"}]}
+        """),
+            "Publication journal is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"publications":[{"title":"Pub","publishedDate":"2024-01-01","datasetCitation":"cite","journal":"journal","doi":""}]}
+        """),
+            "Publication doi is required"),
+
+        // ClinicalTrial required fields
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"clinicalTrials":[{"title":"","registry":"reg","identifier":"id","status":"COMPLETED","sponsor":"sponsor","startDate":"2024-01-01","interventionType":"DRUG","phase":"PHASE2","url":"https://trial.com"}]}
+        """),
+            "Clinical Trial title is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"clinicalTrials":[{"title":"CT","registry":"","identifier":"id","status":"COMPLETED","sponsor":"sponsor","startDate":"2024-01-01","interventionType":"DRUG","phase":"PHASE2","url":"https://trial.com"}]}
+        """),
+            "Clinical Trial registry is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"clinicalTrials":[{"title":"CT","registry":"reg","identifier":"","status":"COMPLETED","sponsor":"sponsor","startDate":"2024-01-01","interventionType":"DRUG","phase":"PHASE2","url":"https://trial.com"}]}
+        """),
+            "Clinical Trial identifier is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"clinicalTrials":[{"title":"CT","registry":"reg","identifier":"id","status":null,"sponsor":"sponsor","startDate":"2024-01-01","interventionType":"DRUG","phase":"PHASE2","url":"https://trial.com"}]}
+        """),
+            "Clinical Trial status is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"clinicalTrials":[{"title":"CT","registry":"reg","identifier":"id","status":"COMPLETED","sponsor":"","startDate":"2024-01-01","interventionType":"DRUG","phase":"PHASE2","url":"https://trial.com"}]}
+        """),
+            "Clinical Trial sponsor is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"clinicalTrials":[{"title":"CT","registry":"reg","identifier":"id","status":"COMPLETED","sponsor":"sponsor","startDate":null,"interventionType":"DRUG","phase":"PHASE2","url":"https://trial.com"}]}
+        """),
+            "Clinical Trial startDate is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"clinicalTrials":[{"title":"CT","registry":"reg","identifier":"id","status":"COMPLETED","sponsor":"sponsor","startDate":"invalid-date","interventionType":"DRUG","phase":"PHASE2","url":"https://trial.com"}]}
+        """),
+            "Clinical Trial startDate is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"clinicalTrials":[{"title":"CT","registry":"reg","identifier":"id","status":"COMPLETED","sponsor":"sponsor","startDate":"2024-01-01","interventionType":null,"phase":"PHASE2","url":"https://trial.com"}]}
+        """),
+            "Clinical Trial interventionType is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"clinicalTrials":[{"title":"CT","registry":"reg","identifier":"id","status":"COMPLETED","sponsor":"sponsor","startDate":"2024-01-01","interventionType":"DRUG","phase":null,"url":"https://trial.com"}]}
+        """),
+            "Clinical Trial phase is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"clinicalTrials":[{"title":"CT","registry":"reg","identifier":"id","status":"COMPLETED","sponsor":"sponsor","startDate":"2024-01-01","interventionType":"DRUG","phase":"PHASE2","url":null}]}
+        """),
+            "Clinical Trial url is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"clinicalTrials":[{"title":"CT","registry":"reg","identifier":"id","status":"COMPLETED","sponsor":"sponsor","startDate":"2024-01-01","interventionType":"DRUG","phase":"PHASE2","url":"invalid-url"}]}
+        """),
+            "Clinical Trial url is required"),
+
+        // FundingResource required fields
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"funding":[{"funderName":"","funderProgram":"prog","grantNumber":"grant","projectTitle":"title"}]}
+        """),
+            "FundingResource funderName is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"funding":[{"funderName":"Funder","funderProgram":"","grantNumber":"grant","projectTitle":"title"}]}
+        """),
+            "FundingResource funderProgram is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"funding":[{"funderName":"Funder","funderProgram":"prog","grantNumber":"","projectTitle":"title"}]}
+        """),
+            "FundingResource grantNumber is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"funding":[{"funderName":"Funder","funderProgram":"prog","grantNumber":"grant","projectTitle":""}]}
+        """),
+            "FundingResource projectTitle is required"),
+
+        // IntellectualProperty required fields
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"intellectualProperties":[{"type":"","title":"title","assignee":"assignee","patentNumber":"patent","filingDate":"2024-01-01","status":"status","url":"https://ip.com","contact":"contact"}]}
+        """),
+            "Intellectual Property type is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"intellectualProperties":[{"type":"type","title":"","assignee":"assignee","patentNumber":"patent","filingDate":"2024-01-01","status":"status","url":"https://ip.com","contact":"contact"}]}
+        """),
+            "Intellectual Property title is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"intellectualProperties":[{"type":"type","title":"title","assignee":"","patentNumber":"patent","filingDate":"2024-01-01","status":"status","url":"https://ip.com","contact":"contact"}]}
+        """),
+            "Intellectual Property assignee is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"intellectualProperties":[{"type":"type","title":"title","assignee":"assignee","patentNumber":"","filingDate":"2024-01-01","status":"status","url":"https://ip.com","contact":"contact"}]}
+        """),
+            "Intellectual Property patentNumber is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"intellectualProperties":[{"type":"type","title":"title","assignee":"assignee","patentNumber":"patent","filingDate":null,"status":"status","url":"https://ip.com","contact":"contact"}]}
+        """),
+            "Intellectual Property filingDate is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"intellectualProperties":[{"type":"type","title":"title","assignee":"assignee","patentNumber":"patent","filingDate":"invalid-date","status":"status","url":"https://ip.com","contact":"contact"}]}
+        """),
+            "Intellectual Property filingDate is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"intellectualProperties":[{"type":"type","title":"title","assignee":"assignee","patentNumber":"patent","filingDate":"2024-01-01","status":"","url":"https://ip.com","contact":"contact"}]}
+        """),
+            "Intellectual Property status is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"intellectualProperties":[{"type":"type","title":"title","assignee":"assignee","patentNumber":"patent","filingDate":"2024-01-01","status":"status","url":null,"contact":"contact"}]}
+        """),
+            "Intellectual Property url is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"intellectualProperties":[{"type":"type","title":"title","assignee":"assignee","patentNumber":"patent","filingDate":"2024-01-01","status":"status","url":"invalid-url","contact":"contact"}]}
+        """),
+            "Intellectual Property url is required"),
+        Arguments.of(
+            String.format(
+                baseJson,
+                STATIC_DATASET_ID,
+                """
+          {"intellectualProperties":[{"type":"type","title":"title","assignee":"assignee","patentNumber":"patent","filingDate":"2024-01-01","status":"status","url":"https://ip.com","contact":""}]}
+        """),
+            "Intellectual Property contact is required"));
   }
 
   private Study createMockStudy() {

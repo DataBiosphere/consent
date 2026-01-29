@@ -13,11 +13,19 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.collections4.SetUtils;
+import org.broadinstitute.consent.http.models.AIModel;
+import org.broadinstitute.consent.http.models.ClinicalTrial;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.FundingResource;
+import org.broadinstitute.consent.http.models.IntellectualProperty;
+import org.broadinstitute.consent.http.models.Presentation;
+import org.broadinstitute.consent.http.models.Publication;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.Workspace;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.NihAnvilUse;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.util.ValidatorUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class DatasetRegistrationSchemaV1UpdateValidator {
@@ -235,6 +243,166 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
     }
     if (Objects.isNull(registration.getPiName())) {
       throw new BadRequestException("Principal Investigator is required");
+    }
+
+    // Validate assets if present
+    if (registration.getAssets() != null) {
+      // Validate models
+      List<AIModel> models = registration.getModels();
+      for (AIModel model : models) {
+        if (model.name() == null || model.name().isBlank()) {
+          throw new BadRequestException("AI Model name is required");
+        }
+        if (model.url() == null || ValidatorUtil.isInvalidURI(model.url().toString())) {
+          throw new BadRequestException("AI Model url is required");
+        }
+        if (model.format() == null || model.format().isBlank()) {
+          throw new BadRequestException("AI Model format is required");
+        }
+        if (model.license() == null || model.license().isBlank()) {
+          throw new BadRequestException("AI Model license is required");
+        }
+        if (model.maintainer() == null
+            || model.maintainer().name() == null
+            || model.maintainer().name().isBlank()
+            || model.maintainer().email() == null
+            || model.maintainer().email().isBlank()) {
+          throw new BadRequestException("AI Model maintainer name and email are required");
+        }
+      }
+
+      // Validate workspaces
+      List<Workspace> workspaces = registration.getWorkspaces();
+      for (Workspace workspace : workspaces) {
+        if (workspace.name() == null || workspace.name().isBlank()) {
+          throw new BadRequestException("Workspace name is required");
+        }
+        if (workspace.platform() == null || workspace.platform().isBlank()) {
+          throw new BadRequestException("Workspace platform is required");
+        }
+        if (workspace.url() == null || ValidatorUtil.isInvalidURI(workspace.url().toString())) {
+          throw new BadRequestException("Workspace url is required");
+        }
+        if (workspace.description() == null || workspace.description().isBlank()) {
+          throw new BadRequestException("Workspace description is required");
+        }
+      }
+
+      // Validate presentations
+      List<Presentation> presentations = registration.getPresentations();
+      for (Presentation presentation : presentations) {
+        if (presentation.title() == null || presentation.title().isBlank()) {
+          throw new BadRequestException("Presentation title is required");
+        }
+        if (presentation.date() == null
+            || ValidatorUtil.isInvalidDate(presentation.date().toString())) {
+          throw new BadRequestException("Presentation date is required");
+        }
+      }
+
+      // Validate publications
+      List<Publication> publications = registration.getPublications();
+      for (Publication publication : publications) {
+        if (publication.title() == null || publication.title().isBlank()) {
+          throw new BadRequestException("Publication title is required");
+        }
+        if (publication.publishedDate() == null
+            || ValidatorUtil.isInvalidDate(publication.publishedDate().toString())) {
+          throw new BadRequestException("Publication publishedDate is required");
+        }
+        if (publication.datasetCitation() == null || publication.datasetCitation().isBlank()) {
+          throw new BadRequestException("Publication datasetCitation is required");
+        }
+        if (publication.journal() == null || publication.journal().isBlank()) {
+          throw new BadRequestException("Publication journal is required");
+        }
+        if (publication.doi() == null || publication.doi().isBlank()) {
+          throw new BadRequestException("Publication doi is required");
+        }
+      }
+
+      // Validate clinicalTrials
+      List<ClinicalTrial> clinicalTrials = registration.getClinicalTrials();
+      for (ClinicalTrial clinicalTrial : clinicalTrials) {
+        if (clinicalTrial.title() == null || clinicalTrial.title().isBlank()) {
+          throw new BadRequestException("Clinical Trial title is required");
+        }
+        if (clinicalTrial.registry() == null || clinicalTrial.registry().isBlank()) {
+          throw new BadRequestException("Clinical Trial registry is required");
+        }
+        if (clinicalTrial.identifier() == null || clinicalTrial.identifier().isBlank()) {
+          throw new BadRequestException("Clinical Trial identifier is required");
+        }
+        if (clinicalTrial.status() == null) {
+          throw new BadRequestException("Clinical Trial status is required");
+        }
+        if (clinicalTrial.sponsor() == null || clinicalTrial.sponsor().isBlank()) {
+          throw new BadRequestException("Clinical Trial sponsor is required");
+        }
+        if (clinicalTrial.startDate() == null
+            || ValidatorUtil.isInvalidDate(clinicalTrial.startDate().toString())) {
+          throw new BadRequestException("Clinical Trial startDate is required");
+        }
+        if (clinicalTrial.interventionType() == null) {
+          throw new BadRequestException("Clinical Trial interventionType is required");
+        }
+        if (clinicalTrial.phase() == null) {
+          throw new BadRequestException("Clinical Trial phase is required");
+        }
+        if (clinicalTrial.url() == null
+            || ValidatorUtil.isInvalidURI(clinicalTrial.url().toString())) {
+          throw new BadRequestException("Clinical Trial url is required");
+        }
+      }
+
+      // Validate funding
+      List<FundingResource> fundingResources = registration.getFundingResources();
+      for (FundingResource fundingResource : fundingResources) {
+        if (fundingResource.funderName() == null || fundingResource.funderName().isBlank()) {
+          throw new BadRequestException("FundingResource funderName is required");
+        }
+        if (fundingResource.funderProgram() == null || fundingResource.funderProgram().isBlank()) {
+          throw new BadRequestException("FundingResource funderProgram is required");
+        }
+        if (fundingResource.grantNumber() == null || fundingResource.grantNumber().isBlank()) {
+          throw new BadRequestException("FundingResource grantNumber is required");
+        }
+        if (fundingResource.projectTitle() == null || fundingResource.projectTitle().isBlank()) {
+          throw new BadRequestException("FundingResource projectTitle is required");
+        }
+      }
+
+      // Validate intellectualProperties
+      List<IntellectualProperty> intellectualProperties = registration.getIntellectualProperties();
+      for (IntellectualProperty intellectualProperty : intellectualProperties) {
+        if (intellectualProperty.type() == null || intellectualProperty.type().isBlank()) {
+          throw new BadRequestException("Intellectual Property type is required");
+        }
+        if (intellectualProperty.title() == null || intellectualProperty.title().isBlank()) {
+          throw new BadRequestException("Intellectual Property title is required");
+        }
+        if (intellectualProperty.assignee() == null || intellectualProperty.assignee().isBlank()) {
+          throw new BadRequestException("Intellectual Property assignee is required");
+        }
+        if (intellectualProperty.patentNumber() == null
+            || intellectualProperty.patentNumber().isBlank()) {
+          throw new BadRequestException("Intellectual Property patentNumber is required");
+        }
+        if (intellectualProperty.filingDate() == null
+            || ValidatorUtil.isInvalidDate(intellectualProperty.filingDate().toString())) {
+          throw new BadRequestException("Intellectual Property filingDate is required");
+        }
+        if (intellectualProperty.status() == null || intellectualProperty.status().isBlank()) {
+          throw new BadRequestException("Intellectual Property status is required");
+        }
+        if (intellectualProperty.url() == null
+            || ValidatorUtil.isInvalidURI(intellectualProperty.url().toString())) {
+          throw new BadRequestException("Intellectual Property url is required");
+        }
+        if (intellectualProperty.contact() == null || intellectualProperty.contact().isBlank()) {
+          throw new BadRequestException("Intellectual Property contact is required");
+        }
+      }
     }
 
     return true;
