@@ -24,14 +24,6 @@ class OntologyIndexServiceTest {
   @Mock GCSService gcsService;
   @Mock StoreConfiguration storeConfiguration;
 
-  private Collection<OntologyTerm> generateTerms() throws Exception {
-    when(storeConfiguration.getBucket()).thenReturn("my-bucket");
-    when(gcsService.getDocument(any(BlobId.class)))
-        .thenReturn(new FileInputStream("src/test/resources/" + OntologyType.DUO.getFileName()));
-    OntologyIndexService indexer = new OntologyIndexService(gcsService, storeConfiguration);
-    return indexer.generateTerms(OntologyType.DUO.getFileName(), OntologyType.DUO.name());
-  }
-
   @Test
   void testGenerateTerms() throws Exception {
     Collection<OntologyTerm> terms = generateTerms();
@@ -73,5 +65,19 @@ class OntologyIndexServiceTest {
 
     // All terms returned should be usable (obsolete ones are filtered out)
     assertTrue(terms.stream().allMatch(OntologyTerm::usable));
+  }
+
+  /**
+   * Helper method to generate ontology terms for testing.
+   *
+   * @return Collection of OntologyTerm objects populated from the DUO ontology file.
+   * @throws Exception If there is an error during term generation.
+   */
+  private Collection<OntologyTerm> generateTerms() throws Exception {
+    when(storeConfiguration.getBucket()).thenReturn("my-bucket");
+    when(gcsService.getDocument(any(BlobId.class)))
+        .thenReturn(new FileInputStream("src/test/resources/" + OntologyType.DUO.getFileName()));
+    OntologyIndexService indexer = new OntologyIndexService(gcsService, storeConfiguration);
+    return indexer.generateTerms(OntologyType.DUO.getFileName(), OntologyType.DUO.name());
   }
 }
