@@ -36,7 +36,7 @@ class OntologyResourceTest extends AbstractTestHelper {
     admin.setAdminRole();
     DuosUser duosUser = new DuosUser(authUser, admin);
 
-    doNothing().when(ontologyService).indexOntology(any(), any(), any());
+    doNothing().when(ontologyService).indexOntology(any(), any());
 
     resource = new OntologyResource(ontologyService);
     try (Response response = resource.indexOntologyTerms(duosUser, OntologyType.DOID.name())) {
@@ -62,7 +62,7 @@ class OntologyResourceTest extends AbstractTestHelper {
     admin.setAdminRole();
     DuosUser duosUser = new DuosUser(authUser, admin);
 
-    doThrow(new RuntimeException()).when(ontologyService).indexOntology(any(), any(), any());
+    doThrow(new RuntimeException()).when(ontologyService).indexOntology(any(), any());
 
     resource = new OntologyResource(ontologyService);
     try (Response response = resource.indexOntologyTerms(duosUser, OntologyType.DOID.name())) {

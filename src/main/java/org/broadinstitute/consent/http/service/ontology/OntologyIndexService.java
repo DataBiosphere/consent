@@ -49,14 +49,14 @@ public class OntologyIndexService implements ConsentLogger {
   /**
    * Generate OntologyTerms from an ontology file stored in GCS.
    *
-   * @param ontologyFile The file name of the ontology file in GCS
-   * @param ontologyType The ontology type (e.g. "DOID", "DUO")
+   * @param ontologyType The ontology type enumeration that includes the file name and type
    * @return A collection of generated OntologyTerms
    * @throws OWLOntologyCreationException If there is an error loading the ontology
    */
-  public Collection<OntologyTerm> generateTerms(String ontologyFile, String ontologyType)
+  public Collection<OntologyTerm> generateTerms(OntologyType ontologyType)
       throws OWLOntologyCreationException {
-    BlobId blobId = BlobId.of(storeConfiguration.getBucket(), "ontology/" + ontologyFile);
+    BlobId blobId =
+        BlobId.of(storeConfiguration.getBucket(), "ontology/" + ontologyType.getFileName());
     InputStream is = gcsService.getDocument(blobId);
     OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
     OWLOntology ontology = manager.loadOntologyFromOntologyDocument(is);
@@ -73,7 +73,7 @@ public class OntologyIndexService implements ConsentLogger {
             .collect(Collectors.toSet()));
     return owlClasses.stream()
         .filter(this::isValidOWLClass)
-        .map(o -> generateTerm(o, ontologyType, ontology, reasoner, version))
+        .map(o -> generateTerm(o, ontologyType.name(), ontology, reasoner, version))
         .filter(t -> t.usable)
         .collect(Collectors.toSet());
   }

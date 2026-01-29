@@ -2,6 +2,10 @@ package org.broadinstitute.consent.http.enumeration;
 
 import java.util.Arrays;
 
+/**
+ * Enumeration representing different types of ontologies with their associated file names. Indexing
+ * functionality requires that these files exist in a specific GCS location.
+ */
 public enum OntologyType {
   DUO("duo.owl"),
   DOID("doid.owl");

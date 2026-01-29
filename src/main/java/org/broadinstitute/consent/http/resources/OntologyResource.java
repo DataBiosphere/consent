@@ -40,7 +40,7 @@ public class OntologyResource extends Resource {
       if (type == null) {
         throw new IllegalArgumentException("Invalid ontology type: " + ontologyType);
       }
-      ontologyService.indexOntology(duosUser.getUser(), type.getFileName(), type.name());
+      ontologyService.indexOntology(duosUser.getUser(), type);
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);

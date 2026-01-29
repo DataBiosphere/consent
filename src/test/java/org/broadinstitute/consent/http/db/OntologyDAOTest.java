@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
+import org.broadinstitute.consent.http.enumeration.OntologyType;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
 import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
@@ -33,7 +34,7 @@ class OntologyDAOTest extends DAOTestHelper {
     when(gcsService.getDocument(any(BlobId.class)))
         .thenReturn(new FileInputStream("src/test/resources/duo.owl"));
     OntologyIndexService indexer = new OntologyIndexService(gcsService, storeConfiguration);
-    Collection<OntologyTerm> terms = indexer.generateTerms("duo.owl", "DUO");
+    Collection<OntologyTerm> terms = indexer.generateTerms(OntologyType.DUO);
     User user = createUser();
     ontologyDAO.batchInsertTerms(terms, user.getUserId());
     return terms;

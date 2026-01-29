@@ -119,6 +119,6 @@ class OntologyIndexServiceTest {
     when(storeConfiguration.getBucket()).thenReturn("my-bucket");
     when(gcsService.getDocument(any(BlobId.class)))
         .thenReturn(new FileInputStream("src/test/resources/" + OntologyType.DUO.getFileName()));
-    return indexer.generateTerms(OntologyType.DUO.getFileName(), OntologyType.DUO.name());
+    return indexer.generateTerms(OntologyType.DUO);
   }
 }

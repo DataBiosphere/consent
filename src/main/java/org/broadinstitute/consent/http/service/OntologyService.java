@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
+import org.broadinstitute.consent.http.enumeration.OntologyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
@@ -71,9 +72,9 @@ public class OntologyService implements ConsentLogger {
     }
   }
 
-  public void indexOntology(User user, String ontologyFile, String ontologyType)
+  public void indexOntology(User user, OntologyType ontologyType)
       throws OWLOntologyCreationException {
-    Collection<OntologyTerm> terms = indexService.generateTerms(ontologyFile, ontologyType);
+    Collection<OntologyTerm> terms = indexService.generateTerms(ontologyType);
     ontologyDAO.batchInsertTerms(terms, user.getUserId());
   }
 
