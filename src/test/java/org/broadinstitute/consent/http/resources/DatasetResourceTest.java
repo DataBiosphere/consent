@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -72,9 +73,13 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -764,6 +769,142 @@ class DatasetResourceTest extends AbstractTestHelper {
 
     try (var response = resource.createDatasetRegistration(authUser, null, schemaString)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testCreateDatasetRegistration_invalidSchema_response_message() {
+    // Invalid JSON: missing required fields
+    String invalidJson =
+        """
+    {
+      "studyType": "",
+      "dataTypes": [],
+      "publicVisibility": true,
+      "consentGroups": []
+    }
+    """;
+    try (var response = resource.createDatasetRegistration(authUser, null, invalidJson)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+      String entity = response.getEntity().toString();
+      // Check that the response message contains details about the missing required fields
+      assertTrue(entity.contains("Please correct the following fields:"));
+      assertTrue(entity.contains("Study Type"));
+      assertTrue(entity.contains("Data Types"));
+      assertTrue(entity.contains("Consent Groups"));
+      assertTrue(entity.contains("Study Name"));
+      assertTrue(entity.contains("Study Description"));
+      assertTrue(entity.contains("Principal Investigator Name"));
+    }
+  }
+
+  /*
+   * Parameterized test to validate required fields for different asset types (Models, Workspaces, Publications, Presentations, ClinicalTrials, Funding, IntellectualProperty).
+   * Each test case provides:
+   * - assetType: The type of asset (e.g., models, workspaces, publications, etc.)
+   * - requiredField: The field that is required for that asset type
+   * - value: The value to set for the required field (null or empty string to test failure cases)
+   * - shouldPass: Whether the test case is expected to pass or fail validation
+   * - expectedError: The expected error message substring if the test case is expected to fail
+   */
+  static Stream<Arguments> assetTestCases() {
+    // assetType, requiredField, value, shouldPass, expectedErrorSubstring
+    return Stream.of(
+        // AI Model
+        Arguments.of("models", "name", null, false, "name"),
+        Arguments.of("models", "name", "", false, "name"),
+        Arguments.of("models", "name", "Model 1", true, null),
+        // Workspace
+        Arguments.of("workspaces", "name", null, false, "name"),
+        Arguments.of("workspaces", "name", "", false, "name"),
+        Arguments.of("workspaces", "name", "Workspace 1", true, null),
+        // Publication
+        Arguments.of("publications", "title", null, false, "title"),
+        Arguments.of("publications", "title", "", false, "title"),
+        Arguments.of("publications", "title", "Publication 1", true, null),
+        // Presentation
+        Arguments.of("presentations", "title", null, false, "title"),
+        Arguments.of("presentations", "title", "", false, "title"),
+        Arguments.of("presentations", "title", "Presentation 1", true, null),
+        // Clinical Trial
+        Arguments.of("clinicalTrials", "title", null, false, "title"),
+        Arguments.of("clinicalTrials", "title", "", false, "title"),
+        Arguments.of("clinicalTrials", "title", "Trial 1", true, null),
+        // Funding
+        Arguments.of("funding", "funderName", null, false, "funderName"),
+        Arguments.of("funding", "funderName", "", false, "funderName"),
+        Arguments.of("funding", "funderName", "Funder 1", true, null),
+        // Intellectual Property
+        Arguments.of("intellectualProperties", "type", null, false, "type"),
+        Arguments.of("intellectualProperties", "type", "", false, "type"),
+        Arguments.of("intellectualProperties", "type", "Patent", true, null)
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("assetTestCases")
+  void testAssetRequiredFieldValidation(String assetType, String field, Object value, boolean shouldPass, String expectedError) throws Exception {
+    // Build asset JSON with all required fields for each asset type
+    String assetJson = getAssetJson(assetType, field, value);
+
+    String json = """
+        {
+          "studyType": "Observational",
+          "studyName": "name",
+          "studyDescription": "description",
+          "dataTypes": ["types"],
+          "piName": "PI Name",
+          "nihAnvilUse": "I am not NHGRI funded and do not plan to store data in AnVIL",
+          "dataSubmitterUserId": 1,
+          "dataCustodianEmail": ["email@abc.com"],
+          "publicVisibility": true,
+          "consentGroups": [{
+            "fileTypes": [{
+              "fileType": "Arrays",
+              "functionalEquivalence": "equivalence"
+            }],
+            "numberOfParticipants": 2,
+            "consentGroupName": "name",
+            "generalResearchUse": true,
+            "dataAccessCommitteeId": 1,
+            "url": "https://asdf.com"
+          }],
+          "assets": {
+            "%s": [%s]
+          }
+        }
+        """.formatted(assetType, assetJson);
+
+    if (shouldPass) {
+      when(userService.findUserByEmail(any())).thenReturn(user);
+      user.setUserId(1);
+      Dataset dataset = new Dataset();
+      Study study = new Study();
+      study.setStudyId(1);
+      dataset.setStudy(study);
+      dataset.setStudyId(study.getStudyId());
+      when(datasetRegistrationService.createDatasetsFromRegistration(any(), any(), any()))
+          .thenReturn(List.of(dataset));
+      when(datasetService.findStudy(anyInt())).thenReturn(study);
+
+      try (var response = resource.createDatasetRegistration(authUser, null, json)) {
+        assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+      }
+    } else {
+      try (var response = resource.createDatasetRegistration(authUser, null, json)) {
+        assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+        String entity = response.getEntity().toString();
+        assertTrue(entity.contains("Please correct the following fields:"));
+        String expectedLabel = switch (assetType) {
+          case "intellectualProperties" -> "Intellectual Property";
+          case "funding" -> "Funding";
+          default -> assetType.substring(0, 1).toUpperCase() + assetType.substring(1);
+        };
+        assertTrue(entity.contains(expectedLabel));
+        if (expectedError != null) {
+          assertTrue(entity.toLowerCase().contains(expectedError.toLowerCase()));
+        }
+      }
     }
   }
 
@@ -1476,5 +1617,87 @@ class DatasetResourceTest extends AbstractTestHelper {
 
     dataset.setProperties(Set.of(accessManagementProp, dataLocationProp, numParticipantsProp));
     return dataset;
+  }
+
+  private static @NonNull String getAssetJson(String assetType, String field, Object value) {
+    String fieldEntry = "";
+    if (field != null) {
+      if (value == null) {
+        // Omit the field entirely for "missing" test
+        fieldEntry = "";
+      } else if (value instanceof String) {
+        fieldEntry = "\"%s\": \"%s\",".formatted(field, value);
+      } else {
+        fieldEntry = "\"%s\": %s,".formatted(field, value);
+      }
+    }
+    return switch (assetType) {
+      case "models" -> """
+            {
+                %s
+                "url": "https://model.com",
+                "format": "format",
+                "license": "MIT",
+                "maintainer": { "name": "Maintainer", "email": "maintainer@abc.com" }
+            }
+            """.formatted(fieldEntry);
+      case "workspaces" -> """
+            {
+                %s
+                "platform": "Terra",
+                "url": "https://workspace.com",
+                "description": "desc"
+            }
+            """.formatted(fieldEntry);
+      case "publications" -> """
+            {
+                %s
+                "publishedDate": "2024-01-01",
+                "datasetCitation": "citation",
+                "journal": "journal",
+                "doi": "10.1000/xyz123"
+            }
+            """.formatted(fieldEntry);
+      case "presentations" -> """
+            {
+                %s
+                "date": "2024-01-01"
+            }
+            """.formatted(fieldEntry);
+      case "clinicalTrials" -> """
+            {
+                %s
+                "registry": "ClinicalTrials.gov",
+                "identifier": "NCT12345678",
+                "status": "COMPLETED",
+                "sponsor": "Sponsor",
+                "startDate": "2024-01-01",
+                "interventionType": "DRUG",
+                "phase": "PHASE1",
+                "url": "https://trial.com"
+            }
+            """.formatted(fieldEntry);
+      case "funding" -> """
+            {
+                %s
+                "funderProgram": "Program",
+                "grantNumber": "123",
+                "projectTitle": "Project"
+            }
+            """.formatted(fieldEntry);
+      case "intellectualProperties" -> """
+            {
+                %s
+                "title": "Title",
+                "assignee": "Assignee",
+                "patentNumber": "PN123",
+                "filingDate": "2024-01-01",
+                "status": "Active",
+                "url": "https://ip.com",
+                "contact": "Contact"
+            }
+            """.formatted(fieldEntry);
+      default -> throw new IllegalArgumentException("Unknown asset type: " + assetType);
+    };
   }
 }
