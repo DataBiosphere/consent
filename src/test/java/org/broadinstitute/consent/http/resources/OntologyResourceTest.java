@@ -9,8 +9,7 @@ import static org.mockito.Mockito.when;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonObject;
 import jakarta.ws.rs.core.Response;
-import java.util.Collections;
-import java.util.List;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.OntologyType;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -78,31 +77,11 @@ class OntologyResourceTest extends AbstractTestHelper {
     JsonObject term2 = new JsonObject();
     term2.addProperty("id", "DOID_5678");
 
-    when(ontologyService.findByTermIds("DOID_1234,DOID_5678")).thenReturn(List.of(term1, term2));
+    when(ontologyService.findByTermIds("DOID_1234,DOID_5678")).thenReturn(Stream.of(term1, term2));
 
     resource = new OntologyResource(ontologyService);
     try (Response response = resource.searchTerm("DOID_1234,DOID_5678")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    }
-  }
-
-  @Test
-  void testSearchTermNotFound() {
-    when(ontologyService.findByTermIds(any())).thenReturn(Collections.emptyList());
-
-    resource = new OntologyResource(ontologyService);
-    try (Response response = resource.searchTerm("INVALID_0000")) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-    }
-  }
-
-  @Test
-  void testSearchTermNullResult() {
-    when(ontologyService.findByTermIds(any())).thenReturn(null);
-
-    resource = new OntologyResource(ontologyService);
-    try (Response response = resource.searchTerm("DOID_1234")) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
 

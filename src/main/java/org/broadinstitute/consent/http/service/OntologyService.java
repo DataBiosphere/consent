@@ -9,6 +9,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -76,7 +77,7 @@ public class OntologyService implements ConsentLogger {
     ontologyDAO.batchInsertTerms(terms, user.getUserId());
   }
 
-  public List<JsonObject> findByTermIds(String termIds) {
+  public Stream<JsonObject> findByTermIds(String termIds) {
     return ontologyDAO.findByIds(List.of(termIds.split(",")));
   }
 }

@@ -9,6 +9,7 @@ import com.google.gson.JsonObject;
 import java.io.FileInputStream;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.broadinstitute.consent.http.models.User;
@@ -53,14 +54,14 @@ class OntologyDAOTest extends DAOTestHelper {
       })
   void testFindByIds(String id) throws Exception {
     batchInsertTerms();
-    List<JsonObject> terms = ontologyDAO.findByIds(List.of(id));
-    assertEquals(1, terms.size());
+    Stream<JsonObject> terms = ontologyDAO.findByIds(List.of(id));
+    assertEquals(1, terms.toList().size());
   }
 
   @Test
   void testFindByIdsMultiple() throws Exception {
     batchInsertTerms();
-    List<JsonObject> terms = ontologyDAO.findByIds(List.of("DUO_0000006", "DUO_0000007"));
-    assertEquals(2, terms.size());
+    Stream<JsonObject> terms = ontologyDAO.findByIds(List.of("DUO_0000006", "DUO_0000007"));
+    assertEquals(2, terms.toList().size());
   }
 }

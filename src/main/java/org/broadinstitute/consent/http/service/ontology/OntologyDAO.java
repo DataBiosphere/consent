@@ -4,7 +4,7 @@ import com.google.gson.JsonObject;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.List;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -12,6 +12,7 @@ import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.json.Json;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindMethods;
+import org.jdbi.v3.sqlobject.statement.BatchChunkSize;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
@@ -24,6 +25,7 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
       VALUES (:id, :version, :ontology, :synonyms, :label, :definition, :usable, :oboId, :jsonDocument::jsonb, :userId)
       ON CONFLICT (id) DO NOTHING
     """)
+  @BatchChunkSize(100)
   void batchInsertTerms(
       @BindMethods Collection<OntologyTerm> terms, @Bind("userId") Integer userId);
 
@@ -31,7 +33,7 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
   int countTerms();
 
   @Json
-  default List<JsonObject> findByIds(Collection<String> ids) {
+  default Stream<JsonObject> findByIds(Collection<String> ids) {
     String query =
         """
         SELECT json_document
@@ -43,7 +45,7 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
     return inTransaction(
         _ -> {
           Handle handle = getHandle();
-          return handle.createQuery(query).bindArray("ids", idArray).map(new JsonMapper()).list();
+          return handle.createQuery(query).bindArray("ids", idArray).map(new JsonMapper()).stream();
         });
   }
 

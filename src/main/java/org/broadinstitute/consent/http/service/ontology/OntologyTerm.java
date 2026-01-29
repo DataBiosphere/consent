@@ -91,7 +91,6 @@ public class OntologyTerm {
   public String toString() {
     return GsonUtil.gsonBuilderWithAdapters()
         .excludeFieldsWithoutExposeAnnotation()
-        .setPrettyPrinting()
         .create()
         .toJson(this);
   }

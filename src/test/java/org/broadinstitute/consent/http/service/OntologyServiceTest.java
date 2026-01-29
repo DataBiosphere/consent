@@ -21,6 +21,7 @@ import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.core.MediaType;
 import java.util.List;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.MockServerTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
@@ -179,8 +180,8 @@ class OntologyServiceTest extends MockServerTestHelper {
 
   @Test
   void testFindByTermIds() {
-    when(ontologyDAO.findByIds(List.of("DUO_0000006", "DUO_0000007"))).thenReturn(List.of());
-    List<JsonObject> results = service.findByTermIds("DUO_0000006,DUO_0000007");
+    when(ontologyDAO.findByIds(List.of("DUO_0000006", "DUO_0000007"))).thenReturn(Stream.of());
+    Stream<JsonObject> results = service.findByTermIds("DUO_0000006,DUO_0000007");
     assertNotNull(results);
   }
 

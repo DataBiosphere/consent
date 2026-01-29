@@ -5,12 +5,13 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.util.List;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.enumeration.OntologyType;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.service.OntologyService;
@@ -48,14 +49,11 @@ public class OntologyResource extends Resource {
 
   @GET
   @Path("search")
+  @Produces({MediaType.APPLICATION_JSON})
   public Response searchTerm(@QueryParam("ids") String ids) {
     try {
-      List<JsonObject> termList = ontologyService.findByTermIds(ids);
-      if (termList != null && !termList.isEmpty()) {
-        return Response.ok(termList).build();
-      } else {
-        throw new NotFoundException("Ontology term not found for term IDs: " + ids);
-      }
+      Stream<JsonObject> terms = ontologyService.findByTermIds(ids);
+      return Response.ok(terms.toList()).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
