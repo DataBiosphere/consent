@@ -43,10 +43,11 @@ class OntologyIndexServiceTest {
     Collection<OntologyTerm> terms = generateTerms();
 
     // Find a term with parents to test
-    OntologyTerm termWithParents = terms.stream()
-        .filter(t -> t.getParents() != null && !t.getParents().isEmpty())
-        .findFirst()
-        .orElseThrow(() -> new AssertionError("No terms with parents found"));
+    OntologyTerm termWithParents =
+        terms.stream()
+            .filter(t -> t.getParents() != null && !t.getParents().isEmpty())
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("No terms with parents found"));
 
     // Verify term properties
     assertNotNull(termWithParents.id());
@@ -67,9 +68,7 @@ class OntologyIndexServiceTest {
     Collection<OntologyTerm> terms = generateTerms();
 
     // Verify no obsolete terms are marked as usable
-    long obsoleteCount = terms.stream()
-        .filter(t -> !t.usable())
-        .count();
+    long obsoleteCount = terms.stream().filter(t -> !t.usable()).count();
     assertEquals(0, obsoleteCount, "There should be no obsolete terms marked as usable");
 
     // All terms returned should be usable (obsolete ones are filtered out)
