@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
+import java.net.URI;
+import java.time.LocalDate;
 import java.util.List;
 
 public record IntellectualProperty(
@@ -7,9 +9,9 @@ public record IntellectualProperty(
     String title,
     String assignee,
     String patentNumber,
-    String filingDate,
+    LocalDate filingDate,
     String status,
-    String url,
+    URI url,
     String contact,
     String ipId,
     String studyId,

@@ -1,11 +1,13 @@
 package org.broadinstitute.consent.http.models;
 
+import java.net.URI;
+import java.time.LocalDate;
 import java.util.List;
 
 public record Publication(
     String title,
     String pubmedId,
-    String publishedDate,
+    LocalDate publishedDate,
     List<Author> authors,
     String bibliographicCitation,
     String datasetCitation,
@@ -14,6 +16,6 @@ public record Publication(
     String studyId,
     String journal,
     String doi,
-    String url,
+    URI url,
     String access,
     List<String> tags) {}
