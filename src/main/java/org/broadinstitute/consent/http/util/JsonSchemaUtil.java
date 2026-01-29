@@ -176,7 +176,7 @@ public class JsonSchemaUtil implements ConsentLogger {
   }
 
   /**
-   * Enhanced error formatting for schema validation errors. Groups by asset type and uses
+   * Utility to enhance error formatting for schema validation errors. Groups by asset type and uses
    * user-facing labels.
    */
   public static String formatGroupedValidationErrors(Set<ValidationMessage> errors) {
@@ -269,16 +269,15 @@ public class JsonSchemaUtil implements ConsentLogger {
     return "";
   }
 
-  /**
-   * Enhanced error formatting for schema validation errors. Groups by asset type and uses
-   * user-facing labels.
-   */
+  /** Helper that capitalizes the first letter of a string */
   private static String capitalize(String s) {
     if (s == null || s.isEmpty()) return s;
     return s.substring(0, 1).toUpperCase() + s.substring(1);
   }
 
-  /** Cleans up a validation message by removing raw field references and adding labels */
+  /**
+   * Helper that cleans up a validation message by removing raw field references and adding labels
+   */
   private static @NonNull String getCleanedMsg(String msgText, String field, String label) {
     String cleanedMsg = msgText.replaceFirst("^\\$\\.?", "");
 
