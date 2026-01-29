@@ -60,7 +60,7 @@ public class OntologyTerm {
   }
 
   public String jsonDocument() {
-    return GsonUtil.getInstance().toJson(this);
+    return this.toString();
   }
 
   public void setSynonyms(List<String> synonyms) {
