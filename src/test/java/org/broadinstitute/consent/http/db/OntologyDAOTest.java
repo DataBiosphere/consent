@@ -51,9 +51,9 @@ class OntologyDAOTest extends DAOTestHelper {
         "DUO_0000006", // normalized obo id
         "http://purl.obolibrary.org/obo/DUO_0000006" // full term_id
       })
-  void testFindByIds(String term) throws Exception {
+  void testFindByIds(String id) throws Exception {
     batchInsertTerms();
-    List<JsonObject> terms = ontologyDAO.findByIds(List.of(term));
+    List<JsonObject> terms = ontologyDAO.findByIds(List.of(id));
     assertEquals(1, terms.size());
   }
 
