@@ -1,8 +1,11 @@
 package org.broadinstitute.consent.http.util;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.networknt.schema.ValidationMessage;
 import java.util.Set;
@@ -845,6 +848,66 @@ class JsonSchemaUtilTest {
     assertFieldHasError(errors, "nihGrantContractNumber");
     assertFieldHasError(errors, "consentGroupName");
     assertFieldHasError(errors, "url");
+  }
+
+
+  @Test
+  void testGetFieldLabelAndAssetTypeMap_basicFields() {
+    var map = JsonSchemaUtil.getFieldLabelAndAssetTypeMap();
+    assertNotNull(map);
+    assertTrue(map.containsKey("studyName"));
+    assertEquals("Study Name", map.get("studyName")[0]);
+    assertEquals("Study", map.get("studyName")[1]);
+    assertTrue(map.containsKey("consentGroups"));
+    assertEquals("Consent Groups", map.get("consentGroups")[0]);
+    assertEquals("Dataset", map.get("consentGroups")[1]);
+  }
+
+  @Test
+  void testGetFieldLabelAndAssetTypeMap_assetFields() {
+    var map = JsonSchemaUtil.getFieldLabelAndAssetTypeMap();
+    assertTrue(map.containsKey("models"));
+    assertEquals("Models", map.get("models")[0]);
+    assertEquals("Models", map.get("models")[1]);
+    assertTrue(map.containsKey("intellectualProperties"));
+    assertEquals("Intellectual Property", map.get("intellectualProperties")[0]);
+    assertEquals("Intellectual Property", map.get("intellectualProperties")[1]);
+    // Check a subfield label
+    assertTrue(map.containsKey("models.name"));
+    assertEquals("name", map.get("models.name")[0]);
+    assertEquals("models", map.get("models.name")[1]);
+  }
+
+  @Test
+  void testFormatGroupedValidationErrors_studyFields() {
+    Set<ValidationMessage> errors = Set.of(
+        dummyValidationMessage("$.studyName: required property 'studyName' not found"),
+        dummyValidationMessage("$.studyDescription: required property 'studyDescription' not found")
+    );
+    String result = JsonSchemaUtil.formatGroupedValidationErrors(errors);
+    assertTrue(result.contains("Study:"));
+    assertTrue(result.contains("Study Name"));
+    assertTrue(result.contains("Study Description"));
+  }
+
+  @Test
+  void testFormatGroupedValidationErrors_assetFields() {
+    Set<ValidationMessage> errors = Set.of(
+        dummyValidationMessage("$.assets.models[0]: required property 'name' not found"),
+        dummyValidationMessage("$.assets.intellectualProperties[0]: required property 'type' not found")
+    );
+    String result = JsonSchemaUtil.formatGroupedValidationErrors(errors);
+    assertTrue(result.contains("Models:"));
+    assertTrue(result.contains("Intellectual Property:"));
+    assertTrue(result.contains("name"));
+    assertTrue(result.contains("type"));
+  }
+
+  // DummyValidationMessage for testing
+  private static ValidationMessage dummyValidationMessage(String msg) {
+    ValidationMessage mockMsg = mock(ValidationMessage.class);
+    when(mockMsg.getMessage()).thenReturn(msg);
+    return mockMsg;
   }
 
   private void assertNoErrors(Set<ValidationMessage> errors) {
