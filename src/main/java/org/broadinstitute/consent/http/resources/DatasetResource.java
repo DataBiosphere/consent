@@ -108,9 +108,10 @@ public class DatasetResource extends Resource {
     try {
       Set<ValidationMessage> errors = jsonSchemaUtil.validateSchema_v1(json);
       if (!errors.isEmpty()) {
-        throw new BadRequestException(
-            "Invalid schema:\n"
-                + String.join("\n", errors.stream().map(ValidationMessage::getMessage).toList()));
+        String userError = JsonSchemaUtil.formatGroupedValidationErrors(errors);
+        return Response.status(HttpStatusCodes.STATUS_CODE_BAD_REQUEST)
+            .entity(Map.of("message", userError, "code", 400))
+            .build();
       }
 
       DatasetRegistrationSchemaV1 registration =
@@ -123,7 +124,7 @@ public class DatasetResource extends Resource {
       // Generate datasets from registration
       List<Dataset> datasets =
           datasetRegistrationService.createDatasetsFromRegistration(registration, user, files);
-      Integer studyId = datasets.get(0).getStudyId();
+      Integer studyId = datasets.getFirst().getStudyId();
       Study study = datasetService.findStudy(studyId);
       DatasetRegistrationSchemaV1Builder builder = new DatasetRegistrationSchemaV1Builder();
       DatasetRegistrationSchemaV1 createdRegistration = builder.build(study, datasets);
