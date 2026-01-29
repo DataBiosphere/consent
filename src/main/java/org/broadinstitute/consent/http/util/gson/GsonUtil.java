@@ -4,8 +4,10 @@ import com.google.cloud.storage.BlobId;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.ToNumberPolicy;
+import java.net.URI;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.Objects;
 
@@ -35,6 +37,8 @@ public class GsonUtil {
         .registerTypeAdapter(BlobId.class, new BlobIdTypeAdapter())
         .registerTypeAdapter(Date.class, new DateTypeAdapter())
         .registerTypeAdapter(Timestamp.class, new TimestampTypeAdapter())
-        .registerTypeHierarchyAdapter(Throwable.class, new ThrowableTypeAdapter());
+        .registerTypeHierarchyAdapter(Throwable.class, new ThrowableTypeAdapter())
+        .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
+        .registerTypeAdapter(URI.class, new URIAdapter());
   }
 }
