@@ -181,41 +181,7 @@ public class JsonSchemaUtil implements ConsentLogger {
    */
   public static String formatGroupedValidationErrors(Set<ValidationMessage> errors) {
     Map<String, String[]> fieldMap = getFieldLabelAndAssetTypeMap();
-    Map<String, List<String>> grouped = new LinkedHashMap<>();
-    for (ValidationMessage error : errors) {
-      String msgText = error.getMessage();
-      String field = extractFieldFromMessage(msgText);
-
-      String label;
-      String assetType;
-
-      java.util.regex.Matcher m =
-          java.util.regex.Pattern.compile("^(\\w+)\\[(\\d+)](?:\\.(\\w+))?$").matcher(field);
-      if (m.matches()) {
-        String assetKey = m.group(1);
-        String[] assetLabelAndType = fieldMap.get(assetKey);
-        assetType =
-            assetLabelAndType != null && assetLabelAndType[1] != null
-                ? capitalize(assetLabelAndType[1])
-                : capitalize(assetKey);
-        String subKey = m.group(3);
-        label = subKey != null ? subKey : assetKey;
-      } else {
-        String[] labelAndType = fieldMap.get(field);
-        if (labelAndType == null && field.contains(".")) {
-          String assetKey = field.split("\\.")[0];
-          labelAndType = fieldMap.get(assetKey);
-        }
-        if (labelAndType == null) {
-          labelAndType = new String[] {field, "Other"};
-        }
-        assetType = capitalize(labelAndType[1]);
-        label = labelAndType[0];
-      }
-
-      String cleanedMsg = getCleanedMsg(msgText, field, label);
-      grouped.computeIfAbsent(assetType, _ -> new java.util.ArrayList<>()).add(cleanedMsg);
-    }
+    Map<String, List<String>> grouped = groupValidationMessages(errors, fieldMap);
 
     StringBuilder sb = new StringBuilder("Please correct the following fields:\n");
     for (var entry : grouped.entrySet()) {
@@ -225,6 +191,51 @@ public class JsonSchemaUtil implements ConsentLogger {
       }
     }
     return sb.toString().trim();
+  }
+
+  /** Helper to group validation messages by asset type */
+  private static Map<String, List<String>> groupValidationMessages(
+      Set<ValidationMessage> errors, Map<String, String[]> fieldMap) {
+    Map<String, List<String>> grouped = new LinkedHashMap<>();
+    for (ValidationMessage error : errors) {
+      String msgText = error.getMessage();
+      String field = extractFieldFromMessage(msgText);
+
+      String[] labelAndType = getLabelAndAssetType(field, fieldMap);
+      String label = labelAndType[0];
+      String assetType = capitalize(labelAndType[1]);
+
+      String cleanedMsg = getCleanedMsg(msgText, field, label);
+      grouped.computeIfAbsent(assetType, _ -> new java.util.ArrayList<>()).add(cleanedMsg);
+    }
+    return grouped;
+  }
+
+  /** Helper to get the label and asset type for a given field */
+  private static String[] getLabelAndAssetType(String field, Map<String, String[]> fieldMap) {
+    java.util.regex.Matcher m =
+        java.util.regex.Pattern.compile("^(\\w+)\\[(\\d+)](?:\\.(\\w+))?$").matcher(field);
+    if (m.matches()) {
+      String assetKey = m.group(1);
+      String[] assetLabelAndType = fieldMap.get(assetKey);
+      String assetType =
+          (assetLabelAndType != null && assetLabelAndType[1] != null)
+              ? assetLabelAndType[1]
+              : assetKey;
+      String subKey = m.group(3);
+      String label = subKey != null ? subKey : assetKey;
+      return new String[] {label, assetType};
+    } else {
+      String[] labelAndType = fieldMap.get(field);
+      if (labelAndType == null && field.contains(".")) {
+        String assetKey = field.split("\\.")[0];
+        labelAndType = fieldMap.get(assetKey);
+      }
+      if (labelAndType == null) {
+        labelAndType = new String[] {field, "Other"};
+      }
+      return labelAndType;
+    }
   }
 
   /** Helper to get the user-facing asset label */
