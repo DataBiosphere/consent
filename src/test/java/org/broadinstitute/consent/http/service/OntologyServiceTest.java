@@ -173,8 +173,7 @@ class OntologyServiceTest extends MockServerTestHelper {
     when(indexService.generateTerms(OntologyType.DUO)).thenReturn(List.of());
     User user = new User();
     user.setUserId(1);
-    assertDoesNotThrow(
-        () -> service.indexOntology(user, OntologyType.DUO));
+    assertDoesNotThrow(() -> service.indexOntology(user, OntologyType.DUO));
   }
 
   @Test
