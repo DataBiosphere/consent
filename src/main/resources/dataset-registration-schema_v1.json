@@ -212,6 +212,15 @@
       "type" : "object",
       "label" : "Assets",
       "description" : "Additional assets or metadata associated with this study registration",
+      "properties": {
+        "models": { "type": "array", "items": { "$ref": "#/$defs/aiModel" } },
+        "workspaces": { "type": "array", "items": { "$ref": "#/$defs/workspace" } },
+        "publications": { "type": "array", "items": { "$ref": "#/$defs/publication" } },
+        "presentations": { "type": "array", "items": { "$ref": "#/$defs/presentation" } },
+        "clinicalTrials": { "type": "array", "items": { "$ref": "#/$defs/clinicalTrial" } },
+        "funding": { "type": "array", "items": { "$ref": "#/$defs/fundingResource" } },
+        "intellectualProperties": { "type": "array", "items": { "$ref": "#/$defs/intellectualProperty" } }
+      },
       "additionalProperties" : true
     }
   },
@@ -697,6 +706,184 @@
           "description" : "List of File Types"
         }
       }
+    },
+    "aiModel": {
+      "type": "object",
+      "properties": {
+        "modelId": { "type": "string" },
+        "studyId": { "type": "string" },
+        "name": { "type": "string", "minLength" : 1 },
+        "description": { "type": "string" },
+        "url": { "type": "string", "format": "uri", "minLength" : 1  },
+        "format": { "type": "string", "minLength" : 1  },
+        "license": { "type": "string", "minLength" : 1  },
+        "trainedOnDatasets": { "type": "array", "items": { "type": "string" } },
+        "maintainer": {
+          "type": "object",
+          "minLength" : 1,
+          "properties": {
+            "name": { "type": "string" },
+            "email": { "type": "string", "format": "email" }
+          },
+          "required": ["name", "email"]
+        },
+        "tags": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["name", "url", "format", "license", "maintainer"]
+    },
+    "workspace": {
+      "type": "object",
+      "properties": {
+        "workspaceId": { "type": "string" },
+        "studyId": { "type": "string" },
+        "name": { "type": "string", "minLength" : 1 },
+        "platform": { "type": "string", "minLength" : 1 },
+        "url": { "type": "string", "format": "uri", "minLength" : 1 },
+        "description": { "type": "string", "minLength" : 1 },
+        "tools": { "type": "array", "items": { "type": "string" } },
+        "access": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["name", "platform", "url", "description"]
+    },
+    "publication": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength" : 1 },
+        "pubmedId": { "type": "string" },
+        "publishedDate": { "type": "string", "format": "date", "minLength" : 1 },
+        "authors": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "orcId": { "type": "string" } }, "required": ["name"] } },
+        "bibliographicCitation": { "type": "string" },
+        "datasetCitation": { "type": "string", "minLength" : 1 },
+        "citation": { "type": "boolean" },
+        "publicationId": { "type": "string" },
+        "studyId": { "type": "string" },
+        "journal": { "type": "string", "minLength" : 1 },
+        "doi": { "type": "string", "minLength" : 1 },
+        "url": { "type": "string", "format": "uri" },
+        "access": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["title", "publishedDate", "datasetCitation", "journal", "doi"]
+    },
+    "presentation": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength" : 1 },
+        "date": { "type": "string", "format": "date", "minLength" : 1 },
+        "url": { "type": "string", "format": "uri" },
+        "authors": { "type": "string" },
+        "datasetCitation": { "type": "string" },
+        "citation": { "type": "boolean" },
+        "presentationId": { "type": "string" },
+        "studyId": { "type": "string" },
+        "presenter": { "type": "object", "properties": { "name": { "type": "string" }, "email": { "type": "string", "format": "email" } } },
+        "event": { "type": "string" },
+        "location": { "type": "string" },
+        "format": { "type": "string" },
+        "access": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["title", "date"]
+    },
+    "clinicalTrial": {
+      "type": "object",
+      "properties": {
+        "clinicalTrialId": { "type": "string" },
+        "studyId": { "type": "string" },
+        "title": { "type": "string", "minLength" : 1 },
+        "registry": { "type": "string", "minLength" : 1 },
+        "identifier": { "type": "string", "minLength" : 1 },
+        "status": {
+          "type": "string",
+          "minLength" : 1,
+          "enum": [
+            "ACTIVE_NOT_RECRUITING",
+            "COMPLETED",
+            "ENROLLING_BY_INVITATION",
+            "NOT_YET_RECRUITING",
+            "RECRUITING",
+            "SUSPENDED",
+            "TERMINATED",
+            "WITHDRAWN",
+            "AVAILABLE",
+            "NO_LONGER_AVAILABLE",
+            "TEMPORARILY_NOT_AVAILABLE",
+            "APPROVED_FOR_MARKETING",
+            "WITHHELD",
+            "UNKNOWN"
+          ]
+        },
+        "sponsor": { "type": "string", "minLength" : 1 },
+        "startDate": { "type": "string", "format": "date" },
+        "endDate": { "type": "string", "format": "date" },
+        "interventionType": {
+          "type": "string",
+          "minLength" : 1,
+          "enum": [
+            "BEHAVIORAL",
+            "BIOLOGICAL",
+            "COMBINATION_PRODUCT",
+            "DEVICE",
+            "DIAGNOSTIC_TEST",
+            "DIETARY_SUPPLEMENT",
+            "DRUG",
+            "GENETIC",
+            "PROCEDURE",
+            "RADIATION",
+            "OTHER"
+          ]
+        },
+        "description": { "type": "string" },
+        "phase": {
+          "type": "string",
+          "minLength" : 1,
+          "enum": [
+            "NA",
+            "EARLY_PHASE1",
+            "PHASE1",
+            "PHASE2",
+            "PHASE3",
+            "PHASE4"
+          ]
+        },
+        "url": { "type": "string", "format": "uri", "minLength" : 1 },
+        "tags": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["title", "registry", "identifier", "status", "sponsor", "startDate", "interventionType", "phase", "url"]
+    },
+    "fundingResource": {
+      "type": "object",
+      "properties": {
+        "fundingId": { "type": "string" },
+        "studyId": { "type": "string" },
+        "funderName": { "type": "string", "minLength" : 1 },
+        "funderProgram": { "type": "string", "minLength" : 1 },
+        "grantNumber": { "type": "string", "minLength" : 1 },
+        "projectTitle": { "type": "string", "minLength" : 1 },
+        "startDate": { "type": "string", "format": "date" },
+        "endDate": { "type": "string", "format": "date" },
+        "url": { "type": "string", "format": "uri" },
+        "tags": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["funderName", "funderProgram", "grantNumber", "projectTitle"]
+    },
+    "intellectualProperty": {
+      "type": "object",
+      "properties": {
+        "ipId": { "type": "string" },
+        "studyId": { "type": "string" },
+        "type": { "type": "string", "minLength" : 1 },
+        "title": { "type": "string", "minLength" : 1 },
+        "assignee": { "type": "string", "minLength" : 1 },
+        "patentNumber": { "type": "string", "minLength" : 1 },
+        "filingDate": { "type": "string", "format": "date", "minLength" : 1 },
+        "status": { "type": "string", "minLength" : 1 },
+        "url": { "type": "string", "format": "uri", "minLength" : 1 },
+        "contact": { "type": "string", "minLength" : 1 },
+        "tags": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["type", "title", "assignee", "patentNumber", "filingDate", "status", "url", "contact"]
     }
   }
 }
