@@ -50,8 +50,4 @@ public class ParentTerm {
   public void setSynonyms(List<String> synonyms) {
     this.synonyms = synonyms;
   }
-
-  public void addSynonym(String synonym) {
-    this.synonyms.add(synonym);
-  }
 }
