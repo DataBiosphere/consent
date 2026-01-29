@@ -6,10 +6,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
+import jakarta.ws.rs.BadRequestException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.broadinstitute.consent.http.models.AIModel;
+import org.broadinstitute.consent.http.models.ClinicalTrial;
+import org.broadinstitute.consent.http.models.FundingResource;
+import org.broadinstitute.consent.http.models.IntellectualProperty;
+import org.broadinstitute.consent.http.models.Presentation;
+import org.broadinstitute.consent.http.models.Publication;
+import org.broadinstitute.consent.http.models.Workspace;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 /**
  * Dataset Registration Schema
@@ -763,6 +774,124 @@ public class DatasetRegistrationSchemaV1 {
   @JsonProperty("assets")
   public void setAssets(Map<String, Object> assets) {
     this.assets = assets;
+  }
+
+  /** Get AI Models from assets */
+  public List<AIModel> getModels() {
+    Object obj = assets.get("models");
+    if (obj instanceof List<?> list) {
+      List<AIModel> models = new ArrayList<>();
+      Gson gson = GsonUtil.getInstance();
+      for (Object item : list) {
+        models.add(gson.fromJson(gson.toJson(item), AIModel.class));
+      }
+      return models;
+    }
+    return List.of();
+  }
+
+  /** Get Workspaces from assets */
+  public List<Workspace> getWorkspaces() {
+    Object obj = assets.get("workspaces");
+    if (obj instanceof List<?> list) {
+      List<Workspace> workspaces = new ArrayList<>();
+      Gson gson = GsonUtil.getInstance();
+      for (Object item : list) {
+        workspaces.add(gson.fromJson(gson.toJson(item), Workspace.class));
+      }
+      return workspaces;
+    }
+    return List.of();
+  }
+
+  /** Get Publications from assets */
+  public List<Publication> getPublications() {
+    Object obj = assets.get("publications");
+    if (obj instanceof List<?> list) {
+      List<Publication> publications = new ArrayList<>();
+      Gson gson = GsonUtil.getInstance();
+      for (Object item : list) {
+        try {
+          publications.add(gson.fromJson(gson.toJson(item), Publication.class));
+        } catch (JsonParseException e) {
+          throw new BadRequestException("Publication publishedDate is required", e);
+        }
+      }
+      return publications;
+    }
+    return List.of();
+  }
+
+  /** Get Presentations from assets */
+  public List<Presentation> getPresentations() {
+    Object obj = assets.get("presentations");
+    if (obj instanceof List<?> list) {
+      List<Presentation> presentations = new ArrayList<>();
+      Gson gson = GsonUtil.getInstance();
+      for (Object item : list) {
+        try {
+          presentations.add(gson.fromJson(gson.toJson(item), Presentation.class));
+        } catch (JsonParseException e) {
+          throw new BadRequestException("Presentation date is required", e);
+        }
+      }
+      return presentations;
+    }
+    return List.of();
+  }
+
+  /** Get Clinical Trials from assets */
+  public List<ClinicalTrial> getClinicalTrials() {
+    Object obj = assets.get("clinicalTrials");
+    if (obj instanceof List<?> list) {
+      List<ClinicalTrial> trials = new ArrayList<>();
+      Gson gson = GsonUtil.getInstance();
+      for (Object item : list) {
+        try {
+          trials.add(gson.fromJson(gson.toJson(item), ClinicalTrial.class));
+        } catch (JsonParseException e) {
+          throw new BadRequestException("Clinical Trial startDate is required", e);
+        }
+      }
+      return trials;
+    }
+    return List.of();
+  }
+
+  /** Get Funding Resources from assets */
+  public List<FundingResource> getFundingResources() {
+    Object obj = assets.get("funding");
+    if (obj instanceof List<?> list) {
+      List<FundingResource> funding = new ArrayList<>();
+      Gson gson = GsonUtil.getInstance();
+      for (Object item : list) {
+        try {
+          funding.add(gson.fromJson(gson.toJson(item), FundingResource.class));
+        } catch (JsonParseException e) {
+          throw new BadRequestException("Presentation date is required", e);
+        }
+      }
+      return funding;
+    }
+    return List.of();
+  }
+
+  /** Get Intellectual Properties from assets */
+  public List<IntellectualProperty> getIntellectualProperties() {
+    Object obj = assets.get("intellectualProperties");
+    if (obj instanceof List<?> list) {
+      List<IntellectualProperty> ips = new ArrayList<>();
+      Gson gson = GsonUtil.getInstance();
+      for (Object item : list) {
+        try {
+          ips.add(gson.fromJson(gson.toJson(item), IntellectualProperty.class));
+        } catch (JsonParseException e) {
+          throw new BadRequestException("Intellectual Property filingDate is required", e);
+        }
+      }
+      return ips;
+    }
+    return List.of();
   }
 
   @Override
