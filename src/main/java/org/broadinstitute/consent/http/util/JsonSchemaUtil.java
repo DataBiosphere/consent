@@ -124,7 +124,7 @@ public class JsonSchemaUtil implements ConsentLogger {
         InputStreamReader reader =
             new InputStreamReader(Objects.requireNonNull(is), StandardCharsets.UTF_8)) {
       JsonObject schema = JsonParser.parseReader(reader).getAsJsonObject();
-      JsonObject properties = schema.getAsJsonObject("properties");
+      JsonObject properties = schema.getAsJsonObject(PROPERTIES);
 
       // Handle asset fields
       if (properties.has(ASSETS)) {
