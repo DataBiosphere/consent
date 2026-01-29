@@ -33,8 +33,9 @@ public class JsonSchemaUtil implements ConsentLogger {
 
   private final LoadingCache<String, String> cache;
   private final JsonSchemaFactory factory;
-  private static final String FUNDING_KEY = "funding";
-  private static final String INTELLECTUAL_PROPERTIES_KEY = "intellectualProperties";
+  private static final String CONSENT_GROUPS_LABEL = "consentGroups";
+  private static final String FUNDING_LABEL = "funding";
+  private static final String INTELLECTUAL_PROPERTIES_LABEL = "intellectualProperties";
 
   public JsonSchemaUtil() {
     factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V201909);
@@ -162,7 +163,7 @@ public class JsonSchemaUtil implements ConsentLogger {
         if (key.equals("assets")) continue;
         JsonObject prop = properties.getAsJsonObject(key);
         String label = prop.has("label") ? prop.get("label").getAsString() : key;
-        String assetType = key.equals("consentGroups") ? "Dataset" : "Study";
+        String assetType = key.equals("consentGroups") ? "Datasets" : "Study";
         map.put(key, new String[] {label, assetType});
       }
     } catch (Exception e) {
@@ -225,8 +226,9 @@ public class JsonSchemaUtil implements ConsentLogger {
 
   /** Helper to get the user-facing asset label */
   private static String getAssetLabel(String assetKey) {
-    if (FUNDING_KEY.equals(assetKey)) return "Funding";
-    if (INTELLECTUAL_PROPERTIES_KEY.equals(assetKey)) return "Intellectual Property";
+    if (FUNDING_LABEL.equals(assetKey)) return "Funding";
+    if (INTELLECTUAL_PROPERTIES_LABEL.equals(assetKey)) return "Intellectual Property";
+    if (CONSENT_GROUPS_LABEL.equals(assetKey)) return "Datasets";
     // Capitalize and pluralize
     String label = assetKey.substring(0, 1).toUpperCase() + assetKey.substring(1);
     // If not already plural, add 's'

@@ -859,7 +859,7 @@ class JsonSchemaUtilTest {
     assertEquals("Study", map.get("studyName")[1]);
     assertTrue(map.containsKey("consentGroups"));
     assertEquals("Consent Groups", map.get("consentGroups")[0]);
-    assertEquals("Dataset", map.get("consentGroups")[1]);
+    assertEquals("Datasets", map.get("consentGroups")[1]);
   }
 
   @Test
