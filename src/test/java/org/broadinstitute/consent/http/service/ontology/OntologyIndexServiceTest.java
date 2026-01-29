@@ -95,11 +95,12 @@ class OntologyIndexServiceTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {
-      "http://purl.obolibrary.org/obo/BFO_0000001", // Is not a DOID or DUO class
-      "http://www.w3.org/2002/07/owl#Thing",        // OWL Thing class
-      "http://www.w3.org/2002/07/owl#Nothing"       // OWL Nothing class
-  })
+  @ValueSource(
+      strings = {
+        "http://purl.obolibrary.org/obo/BFO_0000001", // Is not a DOID or DUO class
+        "http://www.w3.org/2002/07/owl#Thing", // OWL Thing class
+        "http://www.w3.org/2002/07/owl#Nothing" // OWL Nothing class
+      })
   void testIsValidOWLClassInvalid(String iriString) {
     IRI iri = IRI.create(iriString);
     OWLClass owlClass = new OWLClassImpl(iri);
