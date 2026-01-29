@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -218,6 +219,28 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
         dacAutomationRuleDAO.findAutomationAuditsForDac(dacId1, rulesByDacId.size(), 0);
     Assertions.assertEquals(rulesByDacId.size(), deleteByUserAudits.size());
     deleteByUserAudits.forEach(r -> Assertions.assertEquals(RuleAuditAction.REMOVE, r.action()));
+  }
+
+  @Test
+  void testRuleFindAllOrderResponse() {
+    List<DACAutomationRule> rulesByDacIdDBResponse = dacAutomationRuleDAO.findAll();
+    List<DACAutomationRule> sortedRules =
+        rulesByDacIdDBResponse.stream()
+            .sorted(Comparator.comparingInt(DACAutomationRule::id))
+            .toList();
+    assertEquals(rulesByDacIdDBResponse, sortedRules);
+  }
+
+  @Test
+  void testFindAllByDACIdRuleOrderResponse() {
+    Integer dacId1 = createRandomDAC();
+    List<DACAutomationRule> rulesByDacIdDBResponse =
+        dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(dacId1);
+    List<DACAutomationRule> sortedRules =
+        rulesByDacIdDBResponse.stream()
+            .sorted(Comparator.comparingInt(DACAutomationRule::id))
+            .toList();
+    assertEquals(rulesByDacIdDBResponse, sortedRules);
   }
 
   @Test
