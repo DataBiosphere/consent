@@ -491,7 +491,6 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
     BadRequestException ex =
         assertThrows(
             BadRequestException.class, () -> validator.validate(STATIC_STUDY, registration));
-    System.out.println(ex.getMessage());
     assertTrue(ex.getMessage().contains(expectedMessage));
   }
 
