@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service.ontology;
 
 import com.google.cloud.storage.BlobId;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
+import org.broadinstitute.consent.http.enumeration.OntologyType;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.HasClassesInSignature;
@@ -30,7 +32,8 @@ import org.semanticweb.owlapi.search.EntitySearcher;
 
 public class OntologyIndexService implements ConsentLogger {
 
-  private static final List<String> IRI_FILTERS = List.of("DOID", "DUO");
+  private static final List<String> IRI_FILTERS =
+      List.of(OntologyType.DOID.name(), OntologyType.DUO.name());
   private static final String OBSOLETE_CLASS_IRI =
       "http://www.geneontology.org/formats/oboInOwl#ObsoleteClass";
 
@@ -171,7 +174,8 @@ public class OntologyIndexService implements ConsentLogger {
    * @param owlClass The OWLClass to validate
    * @return True if the class is valid, false otherwise
    */
-  private boolean isValidOWLClass(OWLClass owlClass) {
+  @VisibleForTesting
+  protected boolean isValidOWLClass(OWLClass owlClass) {
     return owlClass != null
         && owlClass.isOWLClass()
         && !owlClass.isOWLThing()

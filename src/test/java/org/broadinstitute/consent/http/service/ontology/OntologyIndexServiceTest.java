@@ -13,16 +13,28 @@ import java.util.Collection;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.configurations.StoreConfiguration;
 import org.broadinstitute.consent.http.enumeration.OntologyType;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLClass;
+import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
 
 @ExtendWith(MockitoExtension.class)
 class OntologyIndexServiceTest {
 
+  private OntologyIndexService indexer;
   @Mock GCSService gcsService;
   @Mock StoreConfiguration storeConfiguration;
+
+  @BeforeEach
+  void setUp() {
+    indexer = new OntologyIndexService(gcsService, storeConfiguration);
+  }
 
   @Test
   void testGenerateTerms() throws Exception {
@@ -67,6 +79,35 @@ class OntologyIndexServiceTest {
     assertTrue(terms.stream().allMatch(OntologyTerm::usable));
   }
 
+  @Test
+  void testIsValidOWLClass() {
+    IRI iri = IRI.create("http://purl.obolibrary.org/obo/DUO");
+    OWLClass owlClass = new OWLClassImpl(iri);
+
+    boolean isValid = indexer.isValidOWLClass(owlClass);
+    assertTrue(isValid, "The OWLClass should be valid");
+  }
+
+  @Test
+  void testIsValidOWLClassInvalidNull() {
+    boolean isValid = indexer.isValidOWLClass(null);
+    assertFalse(isValid, "The OWLClass should be invalid");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "http://purl.obolibrary.org/obo/BFO_0000001", // Is not a DOID or DUO class
+      "http://www.w3.org/2002/07/owl#Thing",        // OWL Thing class
+      "http://www.w3.org/2002/07/owl#Nothing"       // OWL Nothing class
+  })
+  void testIsValidOWLClassInvalid(String iriString) {
+    IRI iri = IRI.create(iriString);
+    OWLClass owlClass = new OWLClassImpl(iri);
+
+    boolean isValid = indexer.isValidOWLClass(owlClass);
+    assertFalse(isValid, "The OWLClass should be invalid");
+  }
+
   /**
    * Helper method to generate ontology terms for testing.
    *
@@ -77,7 +118,6 @@ class OntologyIndexServiceTest {
     when(storeConfiguration.getBucket()).thenReturn("my-bucket");
     when(gcsService.getDocument(any(BlobId.class)))
         .thenReturn(new FileInputStream("src/test/resources/" + OntologyType.DUO.getFileName()));
-    OntologyIndexService indexer = new OntologyIndexService(gcsService, storeConfiguration);
     return indexer.generateTerms(OntologyType.DUO.getFileName(), OntologyType.DUO.name());
   }
 }
