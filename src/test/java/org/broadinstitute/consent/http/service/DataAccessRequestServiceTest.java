@@ -27,8 +27,10 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
+import java.net.URI;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -912,9 +914,9 @@ institution or library cards issued: Internal Collaborator member:  \
                     "Description of patent",
                     "Test Assignee",
                     "US12345678",
-                    "2024-01-01",
+                    LocalDate.parse("2024-01-01"),
                     "Active",
-                    "https://example.com",
+                    URI.create("https://example.com"),
                     "contact@example.com",
                     "ip-123",
                     "study-456",
