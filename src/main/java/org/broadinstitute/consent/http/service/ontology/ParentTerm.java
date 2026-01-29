@@ -1,14 +1,15 @@
 package org.broadinstitute.consent.http.service.ontology;
 
+import com.google.gson.annotations.Expose;
 import java.util.List;
 
 public class ParentTerm {
 
-  private String id;
-  private String label;
-  private Integer order;
-  private String definition;
-  private List<String> synonyms;
+  @Expose private String id;
+  @Expose private String label;
+  @Expose private Integer order;
+  @Expose private String definition;
+  @Expose private List<String> synonyms;
 
   public String getId() {
     return id;

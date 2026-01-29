@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service.ontology;
 
+import com.google.gson.annotations.Expose;
 import java.util.ArrayList;
 import java.util.List;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -7,15 +8,15 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 @SuppressWarnings("unused") // Getters are used in JDBI @BindMethods
 public class OntologyTerm {
 
-  String id;
+  @Expose String id;
   String version;
-  String ontology;
-  List<String> synonyms;
-  String label;
-  String definition;
+  @Expose String ontology;
+  @Expose List<String> synonyms;
+  @Expose String label;
+  @Expose String definition;
   Boolean usable;
   String oboId;
-  List<ParentTerm> parents;
+  @Expose List<ParentTerm> parents;
 
   public OntologyTerm(String id, String version, String ontology) {
     this.id = id;
@@ -88,6 +89,10 @@ public class OntologyTerm {
 
   @Override
   public String toString() {
-    return GsonUtil.getInstance().toJson(this);
+    return GsonUtil.gsonBuilderWithAdapters()
+        .excludeFieldsWithoutExposeAnnotation()
+        .setPrettyPrinting()
+        .create()
+        .toJson(this);
   }
 }
