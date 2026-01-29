@@ -43,6 +43,14 @@ public class OntologyIndexService implements ConsentLogger {
     this.storeConfiguration = storeConfiguration;
   }
 
+  /**
+   * Generate OntologyTerms from an ontology file stored in GCS.
+   *
+   * @param ontologyFile The file name of the ontology file in GCS
+   * @param ontologyType The ontology type (e.g. "DOID", "DUO")
+   * @return A collection of generated OntologyTerms
+   * @throws OWLOntologyCreationException If there is an error loading the ontology
+   */
   public Collection<OntologyTerm> generateTerms(String ontologyFile, String ontologyType)
       throws OWLOntologyCreationException {
     BlobId blobId = BlobId.of(storeConfiguration.getBucket(), "ontology/" + ontologyFile);

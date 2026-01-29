@@ -87,6 +87,10 @@ public class OntologyTerm {
     parents.add(term);
   }
 
+  public List<ParentTerm> getParents() {
+    return parents;
+  }
+
   @Override
   public String toString() {
     return GsonUtil.gsonBuilderWithAdapters()
