@@ -5,7 +5,11 @@ import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
-public class ValidatorUtil {
+public final class ValidatorUtil {
+
+  private ValidatorUtil() {
+    // Prevent instantiation
+  }
 
   public static boolean isInvalidDate(String value) {
     if (value == null || value.isEmpty()) {
