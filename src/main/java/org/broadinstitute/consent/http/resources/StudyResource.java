@@ -107,7 +107,7 @@ public class StudyResource extends Resource {
       @Auth AuthUser authUser, @PathParam("studyId") Integer studyId, String json) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      Gson gson = GsonUtil.getInstance();
+      Gson gson = new Gson();
       Type listOfStringObject = new TypeToken<ArrayList<String>>() {}.getType();
       List<String> custodians = gson.fromJson(json, listOfStringObject);
       // Validate that the custodians are all valid email addresses:

@@ -27,7 +27,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
-import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jspecify.annotations.NonNull;
 
 public class JsonSchemaUtil implements ConsentLogger {
@@ -106,7 +105,7 @@ public class JsonSchemaUtil implements ConsentLogger {
         return null;
       }
 
-      Gson gson = GsonUtil.getInstance();
+      Gson gson = new Gson();
       return gson.fromJson(datasetRegistrationInstance, DatasetRegistrationSchemaV1.class);
     } catch (Exception ee) {
       logException("Unable to load the data submitter schema: %s".formatted(ee.getMessage()), ee);

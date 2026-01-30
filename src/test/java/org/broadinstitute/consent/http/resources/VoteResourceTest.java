@@ -21,7 +21,6 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
-import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,7 +46,7 @@ class VoteResourceTest {
 
   private VoteResource resource;
 
-  private final Gson gson = GsonUtil.getInstance();
+  private final Gson gson = new Gson();
 
   private void initResource() {
     resource = new VoteResource(userService, voteService, electionService);

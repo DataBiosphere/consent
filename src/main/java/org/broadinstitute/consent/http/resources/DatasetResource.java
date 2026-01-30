@@ -463,7 +463,7 @@ public class DatasetResource extends Resource {
       @Auth AuthUser authUser, @PathParam("id") Integer id, String dataUseJson) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
-      Gson gson = GsonUtil.getInstance();
+      Gson gson = new Gson();
       DataUse dataUse = gson.fromJson(dataUseJson, DataUse.class);
       Dataset originalDataset = datasetService.findDatasetById(user, id);
       if (Objects.isNull(originalDataset)) {
