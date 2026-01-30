@@ -1,17 +1,10 @@
 package org.broadinstitute.consent.http.service.ontology;
 
 import com.google.gson.JsonObject;
-import com.google.gson.stream.JsonWriter;
-import jakarta.ws.rs.ServerErrorException;
-import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
+import org.broadinstitute.consent.http.db.StreamingOutputIterator;
 import org.broadinstitute.consent.http.db.mapper.JsonMapper;
 import org.jdbi.v3.core.result.ResultIterable;
 import org.jdbi.v3.json.Json;
@@ -54,26 +47,8 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
                   .createQuery(query)
                   .bindArray("ids", lowerIds)
                   .map(new JsonMapper("json_document"));
-          Iterator<JsonObject> terms = results.stream().iterator();
-          return output -> {
-            try (JsonWriter writer =
-                new JsonWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8))) {
-              writer.beginArray();
-              terms.forEachRemaining(
-                  term -> {
-                    try {
-                      writer.jsonValue(term.toString());
-                    } catch (IOException e) {
-                      throw new UncheckedIOException(e);
-                    }
-                  });
-              writer.endArray();
-            } catch (Exception e) {
-              throw new ServerErrorException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-            } finally {
-              handle.close();
-            }
-          };
+          StreamingOutputIterator iterator = new StreamingOutputIterator();
+          return iterator.streamResults(results, handle);
         });
   }
 }
