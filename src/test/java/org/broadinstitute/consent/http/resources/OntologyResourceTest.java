@@ -7,9 +7,8 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.JsonObject;
 import jakarta.ws.rs.core.Response;
-import java.util.stream.Stream;
+import jakarta.ws.rs.core.StreamingOutput;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.OntologyType;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -25,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class OntologyResourceTest extends AbstractTestHelper {
 
   @Mock private OntologyService ontologyService;
+  @Mock private StreamingOutput mockStreamingOutput;
 
   private final AuthUser authUser = new AuthUser("test@test.com");
 
@@ -71,26 +71,21 @@ class OntologyResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSearchTermSuccess() {
-    JsonObject term1 = new JsonObject();
-    term1.addProperty("id", "DOID_1234");
-    JsonObject term2 = new JsonObject();
-    term2.addProperty("id", "DOID_5678");
-
-    when(ontologyService.findByTermIds("DOID_1234,DOID_5678")).thenReturn(Stream.of(term1, term2));
-
+  void testSearchByTermIdsSuccess() {
+    when(ontologyService.findByTermIds("DOID_1234,DOID_5678".split(",")))
+        .thenReturn(mockStreamingOutput);
     resource = new OntologyResource(ontologyService);
-    try (Response response = resource.searchTerm("DOID_1234,DOID_5678")) {
+    try (Response response = resource.searchByTermIds("DOID_1234,DOID_5678")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
 
   @Test
-  void testSearchTermException() {
+  void testSearchByTermIdsException() {
     when(ontologyService.findByTermIds(any())).thenThrow(new RuntimeException());
 
     resource = new OntologyResource(ontologyService);
-    try (Response response = resource.searchTerm("DOID_1234")) {
+    try (Response response = resource.searchByTermIds("DOID_1234")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
   }

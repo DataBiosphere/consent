@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.RolesAllowed;
@@ -11,7 +10,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.util.stream.Stream;
+import jakarta.ws.rs.core.StreamingOutput;
 import org.broadinstitute.consent.http.enumeration.OntologyType;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.service.OntologyService;
@@ -50,10 +49,10 @@ public class OntologyResource extends Resource {
   @GET
   @Path("search")
   @Produces({MediaType.APPLICATION_JSON})
-  public Response searchTerm(@QueryParam("ids") String ids) {
+  public Response searchByTermIds(@QueryParam("ids") String ids) {
     try {
-      Stream<JsonObject> terms = ontologyService.findByTermIds(ids);
-      return Response.ok(terms.toList()).build();
+      StreamingOutput stream = ontologyService.findByTermIds(ids.split(","));
+      return Response.ok(stream).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

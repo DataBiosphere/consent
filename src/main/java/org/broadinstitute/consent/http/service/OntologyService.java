@@ -1,15 +1,13 @@
 package org.broadinstitute.consent.http.service;
 
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Stream;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.OntologyType;
@@ -78,7 +76,7 @@ public class OntologyService implements ConsentLogger {
     ontologyDAO.batchInsertTerms(terms, user.getUserId());
   }
 
-  public Stream<JsonObject> findByTermIds(String termIds) {
-    return ontologyDAO.findByIds(List.of(termIds.split(",")));
+  public StreamingOutput findByTermIds(String[] termIds) {
+    return ontologyDAO.findByTermIds(termIds);
   }
 }

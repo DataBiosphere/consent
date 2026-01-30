@@ -16,12 +16,12 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.StreamingOutput;
 import java.util.List;
-import java.util.stream.Stream;
 import org.broadinstitute.consent.http.MockServerTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
@@ -177,10 +177,22 @@ class OntologyServiceTest extends MockServerTestHelper {
   }
 
   @Test
-  void testFindByTermIds() {
-    when(ontologyDAO.findByIds(List.of("DUO_0000006", "DUO_0000007"))).thenReturn(Stream.of());
-    Stream<JsonObject> results = service.findByTermIds("DUO_0000006,DUO_0000007");
+  void testFindByTermIds() throws Exception {
+    String[] termIds = new String[] {"DUO_0000006", "DUO_0000007"};
+    String json =
+        """
+          [{id:"DUO_0000006"}, {id:"DUO_0000007"}]
+        """;
+    when(ontologyDAO.findByTermIds(termIds))
+        .thenReturn(
+            output -> {
+              // Mock streaming output that writes an empty JSON array
+              output.write(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            });
+    StreamingOutput results = service.findByTermIds(termIds);
     assertNotNull(results);
+    JsonArray jsonArray = getJsonArrayFromStreamingOutput(results);
+    assertEquals(2, jsonArray.size());
   }
 
   private void mockDataUseTranslateSummarySuccess() {
