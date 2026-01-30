@@ -79,6 +79,7 @@ properties:
       - Terra Workspace
       - TDR Location
       - Not Determined
+      - Other
   url:
     type: string
     format: uri

@@ -1,36 +1,3 @@
-get:
-  summary: Get feature flag by ID
-  operationId: getFeatureFlagById
-  description: Retrieve a specific feature flag by its ID
-  tags:
-    - Feature Flags
-  parameters:
-    - name: id
-      in: path
-      description: The feature flag ID
-      required: true
-      schema:
-        type: string
-  responses:
-    200:
-      description: Feature flag found
-      content:
-        application/json:
-          schema:
-            $ref: '../schemas/FeatureFlag.yaml'
-    404:
-      description: Feature flag not found
-      content:
-        application/json:
-          schema:
-            $ref: '../schemas/ErrorResponse.yaml'
-    500:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '../schemas/ErrorResponse.yaml'
-
 post:
   summary: Create or update feature flag
   operationId: createOrUpdateFeatureFlag
