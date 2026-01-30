@@ -2,11 +2,9 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -16,7 +14,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.FeatureFlag;
@@ -34,42 +31,6 @@ public class FeatureFlagResource extends Resource {
   public FeatureFlagResource(FeatureFlagService featureFlagService, UserService userService) {
     this.featureFlagService = featureFlagService;
     this.userService = userService;
-  }
-
-  /**
-   * Get all feature flags
-   *
-   * @return List of all feature flags
-   */
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  @PermitAll
-  public Response getAllFeatureFlags() {
-    try {
-      List<FeatureFlag> flags = featureFlagService.getAllFeatureFlags();
-      return Response.ok(flags).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  /**
-   * Get a specific feature flag by id
-   *
-   * @param id The feature flag id
-   * @return The feature flag
-   */
-  @GET
-  @Path("/{id}")
-  @Produces(MediaType.APPLICATION_JSON)
-  @PermitAll
-  public Response getFeatureFlagById(@PathParam("id") String id) {
-    try {
-      FeatureFlag flag = featureFlagService.getFeatureFlagById(id);
-      return Response.ok(flag).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
   }
 
   /**
@@ -106,7 +67,7 @@ public class FeatureFlagResource extends Resource {
       if (existed) {
         return Response.ok(flag).build();
       } else {
-        URI uri = info.getAbsolutePathBuilder().path(id).build();
+        URI uri = info.getBaseUriBuilder().path("feature").path(id).build();
         return Response.created(uri).entity(flag).build();
       }
     } catch (Exception e) {
