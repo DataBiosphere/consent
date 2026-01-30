@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.enumeration.DraftType;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 /**
  * Draft represents a partial submission of 0 or more elements. This is an internal structure, not
@@ -128,7 +129,7 @@ public class DraftStudyDataset implements DraftInterface {
   /* Uses the provided study name or the current time to create a draft name.  */
   private String computeDraftName(String json) {
     StringBuilder name = new StringBuilder();
-    Gson gson = new Gson();
+    Gson gson = GsonUtil.getInstance();
     try {
       DatasetRegistrationSchemaV1 partial = gson.fromJson(json, DatasetRegistrationSchemaV1.class);
       Optional<String> studyName = Optional.ofNullable(partial.getStudyName());

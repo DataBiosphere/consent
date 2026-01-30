@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.broadinstitute.consent.http.util.JsonSchemaUtil;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
 
 class DatasetRegistrationSchemaV1AssetsTest {
@@ -53,7 +54,7 @@ class DatasetRegistrationSchemaV1AssetsTest {
     registration.setAssets(assets);
 
     // Serialize to JSON
-    Gson gson = new Gson();
+    Gson gson = GsonUtil.getInstance();
     String json = gson.toJson(registration);
 
     // Verify JSON contains assets
