@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.models.sam;
 
-import com.google.gson.Gson;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 /** This represents part of the Sam response to GET /api/config/v1/resourceTypes */
 public class ActionPattern {
@@ -38,6 +38,6 @@ public class ActionPattern {
 
   @Override
   public String toString() {
-    return new Gson().toJson(this);
+    return GsonUtil.gsonBuilderWithAdapters().create().toJson(this);
   }
 }

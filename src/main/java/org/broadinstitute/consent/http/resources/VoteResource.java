@@ -25,6 +25,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.server.ContainerRequest;
 
 @Path("api/votes")
@@ -33,7 +34,7 @@ public class VoteResource extends Resource {
   private final UserService userService;
   private final VoteService voteService;
   private final ElectionService electionService;
-  private final Gson gson = new Gson();
+  private final Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
 
   @Inject
   public VoteResource(
@@ -136,7 +137,8 @@ public class VoteResource extends Resource {
     User user = userService.findUserByEmail(authUser.getEmail());
     Vote.RationaleUpdate update;
     try {
-      update = new Gson().fromJson(json, Vote.RationaleUpdate.class);
+      update =
+          GsonUtil.gsonBuilderWithAdapters().create().fromJson(json, Vote.RationaleUpdate.class);
     } catch (Exception e) {
       return createExceptionResponse(
           new BadRequestException("Unable to parse rationale update: " + json));

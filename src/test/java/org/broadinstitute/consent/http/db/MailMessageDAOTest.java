@@ -350,15 +350,16 @@ class MailMessageDAOTest extends DAOTestHelper {
   @Test
   void testFetchByCreateDate_with_limit_and_offset() {
     // To fully test mail messages, we'll need a minimum of two to test limits and offsets.
-    Instant now = Instant.now();
-    Instant yesterday = now.minus(1, ChronoUnit.DAYS);
-    MailMessage messageToday = generateMessage(now);
-    MailMessage messageYesterday = generateMessage(yesterday);
+    LocalDate baseDate = LocalDate.of(2023, 1, 2); // Fixed date for deterministic tests
+    Instant now = baseDate.atStartOfDay().toInstant(ZoneOffset.UTC);
+    Instant yesterday = baseDate.minusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+    MailMessage messageToday = generateMessage(now.plus(1, ChronoUnit.HOURS));
+    MailMessage messageYesterday = generateMessage(yesterday.plus(1, ChronoUnit.HOURS));
 
     // We'll use these times to search with
-    Instant yesterdayStart = LocalDate.now().minusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
-    Instant todayStart = LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC);
-    Instant tomorrowStart = LocalDate.now().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+    Instant yesterdayStart = baseDate.minusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+    Instant todayStart = baseDate.atStartOfDay().toInstant(ZoneOffset.UTC);
+    Instant tomorrowStart = baseDate.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
 
     // Find messages from beginning of today to the beginning of tomorrow. Should return
     // `messageToday`

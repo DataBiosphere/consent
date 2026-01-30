@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.util;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
@@ -12,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class CountryValidator {
   private static final String FILEPATH = "assets/ISO-3166-countries.json";
@@ -47,7 +47,10 @@ public class CountryValidator {
     try (InputStream is = getClass().getClassLoader().getResourceAsStream(FILEPATH)) {
       if (is != null) {
         Type type = new TypeToken<Set<String>>() {}.getType();
-        countries = new Gson().fromJson(new InputStreamReader(is, StandardCharsets.UTF_8), type);
+        countries =
+            GsonUtil.gsonBuilderWithAdapters()
+                .create()
+                .fromJson(new InputStreamReader(is, StandardCharsets.UTF_8), type);
       }
     } catch (JsonParseException | IOException e) {
       countries = new HashSet<>();

@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -29,6 +28,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 
 public class DaaService implements ConsentLogger {
@@ -241,7 +241,8 @@ public class DaaService implements ConsentLogger {
   public List<DataAccessAgreement> findDAAsInJsonArray(String json, String arrayKey) {
     List<JsonElement> jsonElementList;
     try {
-      JsonObject jsonObject = new Gson().fromJson(json, JsonObject.class);
+      JsonObject jsonObject =
+          GsonUtil.gsonBuilderWithAdapters().create().fromJson(json, JsonObject.class);
       jsonElementList = jsonObject.getAsJsonArray(arrayKey).asList();
     } catch (Exception e) {
       throw new BadRequestException("Invalid JSON or missing array with key: " + arrayKey);

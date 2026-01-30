@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.models;
 
-import com.google.gson.Gson;
 import com.google.gson.annotations.Expose;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -13,6 +12,7 @@ import java.util.Objects;
 import java.util.Set;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.enumeration.DarCollectionActions;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class DarCollectionSummary {
 
@@ -337,6 +337,6 @@ public class DarCollectionSummary {
 
   @Override
   public String toString() {
-    return new Gson().toJson(this);
+    return GsonUtil.gsonBuilderWithAdapters().create().toJson(this);
   }
 }

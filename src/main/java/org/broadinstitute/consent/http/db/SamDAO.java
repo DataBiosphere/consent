@@ -9,7 +9,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
@@ -33,6 +32,7 @@ import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.ThreadUtils;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -65,7 +65,7 @@ public class SamDAO implements ConsentLogger {
     }
     String body = response.parseAsString();
     Type resourceTypesListType = new TypeToken<ArrayList<ResourceType>>() {}.getType();
-    return new Gson().fromJson(body, resourceTypesListType);
+    return GsonUtil.gsonBuilderWithAdapters().create().fromJson(body, resourceTypesListType);
   }
 
   public UserStatusInfo getRegistrationInfo(AuthUser authUser) throws Exception {
@@ -78,7 +78,7 @@ public class SamDAO implements ConsentLogger {
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
     String body = response.parseAsString();
-    return new Gson().fromJson(body, UserStatusInfo.class);
+    return GsonUtil.gsonBuilderWithAdapters().create().fromJson(body, UserStatusInfo.class);
   }
 
   public UserStatusDiagnostics getSelfDiagnostics(DuosUser duosUser) throws Exception {
@@ -91,7 +91,7 @@ public class SamDAO implements ConsentLogger {
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
     String body = response.parseAsString();
-    return new Gson().fromJson(body, UserStatusDiagnostics.class);
+    return GsonUtil.gsonBuilderWithAdapters().create().fromJson(body, UserStatusDiagnostics.class);
   }
 
   public UserStatus postRegistrationInfo(DuosUser duosUser) throws Exception {
@@ -105,7 +105,7 @@ public class SamDAO implements ConsentLogger {
       logException(errorMsg, new Exception(body));
       throw e;
     }
-    return new Gson().fromJson(body, UserStatus.class);
+    return GsonUtil.gsonBuilderWithAdapters().create().fromJson(body, UserStatus.class);
   }
 
   public static String getErrorMessage(DuosUser duosUser, String body) {
@@ -179,7 +179,7 @@ public class SamDAO implements ConsentLogger {
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
     String body = response.parseAsString();
-    return new Gson().fromJson(body, TosResponse.class);
+    return GsonUtil.gsonBuilderWithAdapters().create().fromJson(body, TosResponse.class);
   }
 
   public int acceptTosStatus(DuosUser duosUser) throws Exception {
@@ -220,7 +220,7 @@ public class SamDAO implements ConsentLogger {
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
     String body = response.parseAsString();
-    return new Gson().fromJson(body, EmailResponse.class);
+    return GsonUtil.gsonBuilderWithAdapters().create().fromJson(body, EmailResponse.class);
   }
 
   /**

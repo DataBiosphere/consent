@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.models.sam;
 
-import com.google.gson.Gson;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 /** This represents the Sam response when a new user is created via POST /register/user/v2/self */
 public class UserStatus {
@@ -28,7 +28,7 @@ public class UserStatus {
 
   @Override
   public String toString() {
-    return new Gson().toJson(this);
+    return GsonUtil.gsonBuilderWithAdapters().create().toJson(this);
   }
 
   public static class UserInfo {

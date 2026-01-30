@@ -8,7 +8,6 @@ import static org.broadinstitute.consent.http.resources.Resource.MEMBER;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
@@ -59,6 +58,7 @@ import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.service.dao.DarCollectionServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.jdbi.v3.core.Jdbi;
 
@@ -488,7 +488,9 @@ public class DarCollectionService implements ConsentLogger {
             (d) -> {
               Date now = new Date();
               DataAccessRequestData newData =
-                  new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
+                  GsonUtil.gsonBuilderWithAdapters()
+                      .create()
+                      .fromJson(d.getData().toString(), DataAccessRequestData.class);
               newData.setStatus(null);
               newData.setReferenceId(d.getReferenceId());
               dataAccessRequestDAO.updateDataByReferenceId(

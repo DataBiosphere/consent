@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject.FileType;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
 
 public class DatasetUpdateTest {
@@ -56,7 +57,7 @@ public class DatasetUpdateTest {
     DatasetProperty fileTypeProp = getPropByName("File Types", props);
     java.lang.reflect.Type listOfFileTypes =
         new TypeToken<ArrayList<FileTypeObject>>() {}.getType();
-    Gson gson = new Gson();
+    Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
     List<FileTypeObject> fileTypes =
         gson.fromJson(fileTypeProp.getPropertyValueAsString(), listOfFileTypes);
     assertFalse(fileTypes.isEmpty());

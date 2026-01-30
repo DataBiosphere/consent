@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
-import com.google.gson.Gson;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class UserRole {
 
@@ -89,6 +89,6 @@ public class UserRole {
 
   @Override
   public String toString() {
-    return new Gson().toJson(this);
+    return GsonUtil.gsonBuilderWithAdapters().create().toJson(this);
   }
 }

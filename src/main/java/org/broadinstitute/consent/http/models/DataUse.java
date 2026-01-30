@@ -1,10 +1,10 @@
 package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.google.gson.GsonBuilder;
 import java.util.List;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DataUse {
@@ -38,7 +38,7 @@ public class DataUse {
 
   @Override
   public String toString() {
-    return new GsonBuilder().create().toJson(this);
+    return GsonUtil.gsonBuilderWithAdapters().create().toJson(this);
   }
 
   public Boolean getGeneralUse() {

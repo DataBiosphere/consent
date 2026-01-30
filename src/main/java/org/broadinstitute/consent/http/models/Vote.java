@@ -3,9 +3,9 @@ package org.broadinstitute.consent.http.models;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.gson.Gson;
 import java.util.Date;
 import java.util.List;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 @JsonInclude(Include.NON_NULL)
 public class Vote {
@@ -157,7 +157,7 @@ public class Vote {
 
   @Override
   public String toString() {
-    return new Gson().toJson(this);
+    return GsonUtil.gsonBuilderWithAdapters().create().toJson(this);
   }
 
   public static class VoteUpdate {

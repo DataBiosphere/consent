@@ -9,10 +9,10 @@ import static org.mockito.Mockito.when;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.Gson;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.HttpClientUtil.SimpleResponse;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,7 +46,7 @@ class SendGridHealthCheckTest {
   void testCheckSuccess() throws Exception {
     when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
     try {
-      String statusJson = new Gson().toJson(goodStatus);
+      String statusJson = GsonUtil.gsonBuilderWithAdapters().create().toJson(goodStatus);
       when(response.entity()).thenReturn(statusJson);
       when(clientUtil.getCachedResponse(any())).thenReturn(response);
       when(mailConfiguration.getSendGridStatusUrl()).thenReturn("http://localhost:8000");
@@ -78,7 +78,7 @@ class SendGridHealthCheckTest {
   void testCheckExternalFailure() throws Exception {
     when(response.code()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
     try {
-      String statusJson = new Gson().toJson(badStatus);
+      String statusJson = GsonUtil.gsonBuilderWithAdapters().create().toJson(badStatus);
       when(response.entity()).thenReturn(statusJson);
       when(clientUtil.getCachedResponse(any())).thenReturn(response);
       when(mailConfiguration.getSendGridStatusUrl()).thenReturn("http://localhost:8000");

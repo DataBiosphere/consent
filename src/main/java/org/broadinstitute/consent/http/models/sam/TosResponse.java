@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.models.sam;
 
-import com.google.gson.Gson;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public record TosResponse(
     String acceptedOn,
@@ -10,6 +10,6 @@ public record TosResponse(
 
   @Override
   public String toString() {
-    return new Gson().toJson(this);
+    return GsonUtil.gsonBuilderWithAdapters().create().toJson(this);
   }
 }

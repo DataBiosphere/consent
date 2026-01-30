@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.health;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -10,6 +9,7 @@ import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.resources.StatusResource;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.HttpClientUtil.SimpleResponse;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class OntologyHealthCheck extends HealthCheck implements Managed {
 
@@ -32,7 +32,8 @@ public class OntologyHealthCheck extends HealthCheck implements Managed {
         SimpleResponse response = clientUtil.getCachedResponse(httpGet);
         if (response.code() == HttpStatusCodes.STATUS_CODE_OK) {
           String content = response.entity();
-          Object ontologyStatus = new Gson().fromJson(content, Object.class);
+          Object ontologyStatus =
+              GsonUtil.gsonBuilderWithAdapters().create().fromJson(content, Object.class);
           return Result.builder()
               .withDetail(StatusResource.OK, true)
               .withDetail(StatusResource.SYSTEMS, ontologyStatus)

@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service;
 import static org.broadinstitute.consent.http.models.Match.matchFailure;
 import static org.broadinstitute.consent.http.models.Match.matchSuccess;
 
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.client.Client;
@@ -26,6 +25,7 @@ import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.matching.DataUseRequestMatchingObject;
 import org.broadinstitute.consent.http.models.matching.DataUseResponseMatchingObject;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.client.ClientProperties;
 
 public class MatchService implements ConsentLogger {
@@ -136,14 +136,16 @@ public class MatchService implements ConsentLogger {
     }
     Match match;
     DataUseRequestMatchingObject requestObject = createRequestObject(dataset, dar);
-    String json = new Gson().toJson(requestObject);
+    String json = GsonUtil.gsonBuilderWithAdapters().create().toJson(requestObject);
     Response res = matchServiceTargetV4.request(MediaType.APPLICATION_JSON).post(Entity.json(json));
     String datasetId = dataset.getDatasetIdentifier();
     String darReferenceId = dar.getReferenceId();
     if (res.getStatus() == Response.Status.OK.getStatusCode()) {
       String stringEntity = res.readEntity(String.class);
       DataUseResponseMatchingObject entity =
-          new Gson().fromJson(stringEntity, DataUseResponseMatchingObject.class);
+          GsonUtil.gsonBuilderWithAdapters()
+              .create()
+              .fromJson(stringEntity, DataUseResponseMatchingObject.class);
       match = matchSuccess(datasetId, darReferenceId, entity.getResult(), entity.getRationale());
     } else {
       match = matchFailure(datasetId, darReferenceId, List.of());

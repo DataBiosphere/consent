@@ -1,10 +1,10 @@
 package org.broadinstitute.consent.http.enumeration;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public enum PropertyType {
   String("string"),
@@ -86,7 +86,7 @@ public enum PropertyType {
 
   public static JsonElement coerceToJson(String value) throws IllegalArgumentException {
     try {
-      return new Gson().fromJson(value, JsonElement.class);
+      return GsonUtil.gsonBuilderWithAdapters().create().fromJson(value, JsonElement.class);
     } catch (JsonSyntaxException e) {
       throw new IllegalArgumentException("Could not parse as Json: " + e.getMessage());
     }

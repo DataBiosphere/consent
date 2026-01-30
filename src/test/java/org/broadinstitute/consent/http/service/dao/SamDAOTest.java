@@ -80,7 +80,7 @@ class SamDAOTest extends MockServerTestHelper {
             .setName(RandomStringUtils.random(10, true, true))
             .setReuseIds(RandomUtils.nextBoolean());
     List<ResourceType> mockResponseList = Collections.singletonList(resourceType);
-    Gson gson = new Gson();
+    Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
     mockServerClient
         .when(request())
         .respond(

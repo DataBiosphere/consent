@@ -765,7 +765,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   @Test
   void testCreateDatasetRegistration_invalidSchema_case3() {
     DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
-    String schemaString = new Gson().toJson(schemaV1);
+    String schemaString = GsonUtil.gsonBuilderWithAdapters().create().toJson(schemaV1);
 
     try (var response = resource.createDatasetRegistration(authUser, null, schemaString)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());

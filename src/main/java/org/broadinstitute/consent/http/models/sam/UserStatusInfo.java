@@ -1,6 +1,6 @@
 package org.broadinstitute.consent.http.models.sam;
 
-import com.google.gson.Gson;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 /** This represents the Sam response to GET /register/user/v2/self/info */
 public class UserStatusInfo {
@@ -48,6 +48,6 @@ public class UserStatusInfo {
 
   @Override
   public String toString() {
-    return new Gson().toJson(this);
+    return GsonUtil.gsonBuilderWithAdapters().create().toJson(this);
   }
 }

@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.resources;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -13,6 +12,7 @@ import java.nio.charset.Charset;
 import java.util.Objects;
 import java.util.Optional;
 import org.apache.commons.io.IOUtils;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 @Path("/version")
 public class VersionResource extends Resource {
@@ -48,7 +48,8 @@ public class VersionResource extends Resource {
         this.hash = "error";
         this.version = "error";
       } else {
-        JsonObject jsonObject = new Gson().fromJson(props, JsonObject.class);
+        JsonObject jsonObject =
+            GsonUtil.gsonBuilderWithAdapters().create().fromJson(props, JsonObject.class);
         String longHash =
             Optional.ofNullable(jsonObject.get("git.commit.id"))
                 .orElse(new JsonPrimitive("error"))

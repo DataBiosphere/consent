@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.models;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import jakarta.ws.rs.BadRequestException;
 import java.util.Arrays;
@@ -11,6 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 @JsonInclude(Include.NON_NULL)
 public class DataAccessRequestData {
@@ -164,11 +164,14 @@ public class DataAccessRequestData {
 
   @Override
   public String toString() {
-    return new Gson().toJson(this);
+    return GsonUtil.gsonBuilderWithAdapters().create().toJson(this);
   }
 
   public static DataAccessRequestData fromString(String jsonString) {
-    DataAccessRequestData data = new Gson().fromJson(jsonString, DataAccessRequestData.class);
+    DataAccessRequestData data =
+        GsonUtil.gsonBuilderWithAdapters()
+            .create()
+            .fromJson(jsonString, DataAccessRequestData.class);
     validateOntologyEntries(data);
     return data;
   }

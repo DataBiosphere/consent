@@ -21,6 +21,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.service.ElectionService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.VoteService;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,7 +47,7 @@ class VoteResourceTest {
 
   private VoteResource resource;
 
-  private final Gson gson = new Gson();
+  private final Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
 
   private void initResource() {
     resource = new VoteResource(userService, voteService, electionService);
@@ -330,7 +331,9 @@ class VoteResourceTest {
     update.setRationale("Rationale");
     initResource();
 
-    try (var response = resource.updateVoteRationale(authUser, new Gson().toJson(update))) {
+    try (var response =
+        resource.updateVoteRationale(
+            authUser, GsonUtil.gsonBuilderWithAdapters().create().toJson(update))) {
       assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
   }
@@ -345,7 +348,9 @@ class VoteResourceTest {
     update.setRationale("Rationale");
     initResource();
 
-    try (var response = resource.updateVoteRationale(authUser, new Gson().toJson(update))) {
+    try (var response =
+        resource.updateVoteRationale(
+            authUser, GsonUtil.gsonBuilderWithAdapters().create().toJson(update))) {
       assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
     }
   }
@@ -361,7 +366,9 @@ class VoteResourceTest {
     update.setRationale("Rationale");
     initResource();
 
-    try (var response = resource.updateVoteRationale(authUser, new Gson().toJson(update))) {
+    try (var response =
+        resource.updateVoteRationale(
+            authUser, GsonUtil.gsonBuilderWithAdapters().create().toJson(update))) {
       assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
     }
   }
@@ -378,7 +385,9 @@ class VoteResourceTest {
     update.setRationale("Rationale");
     initResource();
 
-    try (var response = resource.updateVoteRationale(authUser, new Gson().toJson(update))) {
+    try (var response =
+        resource.updateVoteRationale(
+            authUser, GsonUtil.gsonBuilderWithAdapters().create().toJson(update))) {
       assertEquals(Status.OK.getStatusCode(), response.getStatus());
     }
   }

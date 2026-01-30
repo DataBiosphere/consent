@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.gson.Gson;
 import java.util.Map;
 import java.util.Set;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
 
 class InstitutionDomainMapTest {
@@ -32,7 +33,7 @@ class InstitutionDomainMapTest {
 
   @Test
   void testInstitutionDomainMapSerDeser() {
-    Gson gson = new Gson();
+    Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
 
     // json string representation
     String domainMapJson =

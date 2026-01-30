@@ -1,8 +1,8 @@
 package org.broadinstitute.consent.http.models.sam;
 
-import com.google.gson.Gson;
 import java.util.List;
 import java.util.Map;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 /** This represents part of the Sam response to GET /api/config/v1/resourceTypes */
 public class ResourceTypeRole {
@@ -50,6 +50,6 @@ public class ResourceTypeRole {
 
   @Override
   public String toString() {
-    return new Gson().toJson(this);
+    return GsonUtil.gsonBuilderWithAdapters().create().toJson(this);
   }
 }

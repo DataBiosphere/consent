@@ -2,13 +2,13 @@ package org.broadinstitute.consent.http.health;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.HttpClientUtil.SimpleResponse;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class SendGridHealthCheck extends HealthCheck implements Managed {
 
@@ -30,7 +30,8 @@ public class SendGridHealthCheck extends HealthCheck implements Managed {
         SimpleResponse response = clientUtil.getCachedResponse(httpGet);
         if (response.code() == HttpStatusCodes.STATUS_CODE_OK) {
           String content = response.entity();
-          SendGridStatus status = new Gson().fromJson(content, SendGridStatus.class);
+          SendGridStatus status =
+              GsonUtil.gsonBuilderWithAdapters().create().fromJson(content, SendGridStatus.class);
           return status.getResult();
         } else {
           return Result.unhealthy("SendGrid status is unhealthy: " + response.code());

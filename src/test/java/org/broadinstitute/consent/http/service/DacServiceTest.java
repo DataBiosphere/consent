@@ -48,6 +48,7 @@ import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.dao.DacServiceDAO;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -256,7 +257,7 @@ class DacServiceTest extends AbstractTestHelper {
 
   @Test
   void testAddDacMember() {
-    Gson gson = new Gson();
+    Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
     User user = getDacUsers().get(0);
     Dac dac = getDacs().get(0);
     when(userDAO.findUserById(any())).thenReturn(user);

@@ -397,7 +397,8 @@ public class UserService implements ConsentLogger {
   public List<User> findUsersInJsonArray(String json, String arrayKey) {
     List<JsonElement> jsonElementList;
     try {
-      JsonObject jsonObject = new Gson().fromJson(json, JsonObject.class);
+      JsonObject jsonObject =
+          GsonUtil.gsonBuilderWithAdapters().create().fromJson(json, JsonObject.class);
       jsonElementList = jsonObject.getAsJsonArray(arrayKey).asList();
     } catch (Exception e) {
       throw new BadRequestException("Invalid JSON or missing array with key: " + arrayKey);

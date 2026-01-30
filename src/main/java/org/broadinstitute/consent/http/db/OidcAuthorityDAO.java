@@ -5,7 +5,6 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.UrlEncodedContent;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.gson.Gson;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
@@ -15,6 +14,7 @@ import org.broadinstitute.consent.http.configurations.OidcConfiguration;
 import org.broadinstitute.consent.http.models.OidcAuthorityConfiguration;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class OidcAuthorityDAO implements ConsentLogger {
   private static final String OIDC_METADATA_URL_SUFFIX = ".well-known/openid-configuration";
@@ -87,7 +87,9 @@ public class OidcAuthorityDAO implements ConsentLogger {
         logException(exception);
         throw exception;
       }
-      return new Gson().fromJson(body, OidcAuthorityConfiguration.class);
+      return GsonUtil.gsonBuilderWithAdapters()
+          .create()
+          .fromJson(body, OidcAuthorityConfiguration.class);
     } catch (Exception e) {
       logException(e);
       throw new ServerErrorException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);

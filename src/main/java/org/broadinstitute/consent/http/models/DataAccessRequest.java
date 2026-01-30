@@ -6,10 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CaseFormat;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.BadRequestException;
 import java.lang.reflect.Type;
@@ -24,6 +21,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 @JsonInclude(Include.NON_NULL)
 public class DataAccessRequest {
@@ -298,18 +296,8 @@ public class DataAccessRequest {
   public Map<String, Object> convertToSimplifiedDar() {
     // Serialize dates/timestamps as longs, but do not deserialize longs into dates so we can
     // output long values in the final result.
-    Gson gson =
-        new GsonBuilder()
-            .registerTypeAdapter(
-                Date.class,
-                (JsonSerializer<Date>)
-                    (date, type, jsonSerializationContext) -> new JsonPrimitive(date.getTime()))
-            .registerTypeAdapter(
-                Timestamp.class,
-                (JsonSerializer<Timestamp>)
-                    (timestamp, type, jsonSerializationContext) ->
-                        new JsonPrimitive(timestamp.getTime()))
-            .create();
+    Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
+
     DataAccessRequestData dataCopy = this.getData();
     this.setData(null);
 
