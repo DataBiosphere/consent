@@ -105,7 +105,7 @@ public class DatasetResource extends Resource {
   public Response createDatasetRegistration(
       @Auth AuthUser authUser, FormDataMultiPart multipart, @FormDataParam("dataset") String json) {
     try {
-      Set<String> errors = jsonSchemaUtil.validateSchemaMessages_v1(json);
+      Set<String> errors = jsonSchemaUtil.validateSchemaMessagesV1(json);
       if (!errors.isEmpty()) {
         throw new BadRequestException(
             "Please correct the following fields:\n"

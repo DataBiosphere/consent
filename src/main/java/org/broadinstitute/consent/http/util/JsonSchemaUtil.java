@@ -104,7 +104,7 @@ public class JsonSchemaUtil implements ConsentLogger {
    * @param json The string instance of a dataset registration object
    * @return Set of human-readable validation error messages, or an empty list if valid.
    */
-  public Set<String> validateSchemaMessages_v1(String json) {
+  public Set<String> validateSchemaMessagesV1(String json) {
     return validateSchema_v1(json).stream()
         .map(this::formatMessage)
         .collect(Collectors.toCollection(LinkedHashSet::new));
