@@ -9,12 +9,10 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.core.HttpHeaders;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collections;
 import java.util.List;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -73,7 +71,7 @@ class ComplianceLoggerTest extends AbstractTestHelper {
     ComplianceLogger.logDARApproval(
         user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
     assertEquals(1, testAppender.getSize());
-    ILoggingEvent event = testAppender.getLoggedEvents().get(0);
+    ILoggingEvent event = testAppender.getLoggedEvents().getFirst();
     assertMessageContainsValueFields(event);
     assertThat(
         event.getFormattedMessage(), containsString(ComplianceEvent.DAR_APPROVAL.toString()));
@@ -84,7 +82,7 @@ class ComplianceLoggerTest extends AbstractTestHelper {
     ComplianceLogger.logRadarApproval(
         user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
     assertEquals(1, testAppender.getSize());
-    ILoggingEvent event = testAppender.getLoggedEvents().get(0);
+    ILoggingEvent event = testAppender.getLoggedEvents().getFirst();
     assertMessageContainsValueFields(event);
     assertThat(
         event.getFormattedMessage(), containsString(ComplianceEvent.RADAR_APPROVAL.toString()));
@@ -95,7 +93,7 @@ class ComplianceLoggerTest extends AbstractTestHelper {
     ComplianceLogger.logDARRejection(
         user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
     assertEquals(1, testAppender.getSize());
-    ILoggingEvent event = testAppender.getLoggedEvents().get(0);
+    ILoggingEvent event = testAppender.getLoggedEvents().getFirst();
     assertMessageContainsValueFields(event);
     assertThat(
         event.getFormattedMessage(), containsString(ComplianceEvent.DAR_REJECTION.toString()));
@@ -106,7 +104,7 @@ class ComplianceLoggerTest extends AbstractTestHelper {
     ComplianceLogger.logDARSubmission(
         user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_CREATED);
     assertEquals(1, testAppender.getSize());
-    ILoggingEvent event = testAppender.getLoggedEvents().get(0);
+    ILoggingEvent event = testAppender.getLoggedEvents().getFirst();
     assertMessageContainsValueFields(event);
     assertThat(
         event.getFormattedMessage(), containsString(ComplianceEvent.DAR_SUBMISSION.toString()));
@@ -117,7 +115,7 @@ class ComplianceLoggerTest extends AbstractTestHelper {
     ComplianceLogger.logDARCancellation(
         user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
     assertEquals(1, testAppender.getSize());
-    ILoggingEvent event = testAppender.getLoggedEvents().get(0);
+    ILoggingEvent event = testAppender.getLoggedEvents().getFirst();
     assertMessageContainsValueFields(event);
     assertThat(
         event.getFormattedMessage(), containsString(ComplianceEvent.DAR_CANCELLATION.toString()));
@@ -128,24 +126,10 @@ class ComplianceLoggerTest extends AbstractTestHelper {
     ComplianceLogger.logCloseoutApprovalBySigningOfficial(
         user, List.of(dataset), request, HttpStatusCodes.STATUS_CODE_OK);
     assertEquals(1, testAppender.getSize());
-    ILoggingEvent event = testAppender.getLoggedEvents().get(0);
+    ILoggingEvent event = testAppender.getLoggedEvents().getFirst();
     assertMessageContainsValueFields(event);
     assertThat(
         event.getFormattedMessage(),
         containsString(ComplianceEvent.CLOSEOUT_SO_APPROVAL.toString()));
-  }
-
-  private static class TestAppender extends ListAppender<ILoggingEvent> {
-    public void reset() {
-      this.list.clear();
-    }
-
-    public int getSize() {
-      return this.list.size();
-    }
-
-    public List<ILoggingEvent> getLoggedEvents() {
-      return Collections.unmodifiableList(this.list);
-    }
   }
 }

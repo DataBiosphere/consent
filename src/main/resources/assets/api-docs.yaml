@@ -910,6 +910,8 @@ paths:
     $ref: './paths/votes.yaml'
   /api/votes/rationale:
     $ref: './paths/votesRationale.yaml'
+  /api/ontology:
+    $ref: './paths/ontology.yaml'
   /metrics/dataset/{datasetId}:
     get:
       summary: Dataset Metrics
@@ -935,6 +937,8 @@ paths:
           description: Internal Server Error
   /liveness:
     $ref: './paths/liveness.yaml'
+  /ontology/search:
+    $ref: './paths/ontologySearch.yaml'
   /schemas/dataset-registration/v1:
     $ref: './paths/schemaDatasetRegistrationV1.yaml'
   /status:

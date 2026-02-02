@@ -1,24 +1,42 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.inject.Inject;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
+import java.util.Collection;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
+import org.broadinstitute.consent.http.enumeration.OntologyType;
 import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
+import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
+import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
+import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 
 public class OntologyService implements ConsentLogger {
 
   private final ServicesConfiguration servicesConfiguration;
   private final Client client;
+  private final OntologyDAO ontologyDAO;
+  private final OntologyIndexService indexService;
 
-  public OntologyService(Client client, ServicesConfiguration config) {
+  @Inject
+  public OntologyService(
+      Client client,
+      ServicesConfiguration config,
+      OntologyDAO ontologyDAO,
+      OntologyIndexService indexService) {
     this.client = client;
     this.servicesConfiguration = config;
+    this.ontologyDAO = ontologyDAO;
+    this.indexService = indexService;
   }
 
   public DataUseSummary translateDataUseSummary(DataUse dataUse) {
@@ -50,5 +68,15 @@ public class OntologyService implements ConsentLogger {
       logWarn("Error parsing response from Ontology service: " + e);
       throw e;
     }
+  }
+
+  public void indexOntology(User user, OntologyType ontologyType)
+      throws OWLOntologyCreationException {
+    Collection<OntologyTerm> terms = indexService.generateTerms(ontologyType);
+    ontologyDAO.batchInsertTerms(terms, user.getUserId());
+  }
+
+  public StreamingOutput findByTermIds(String[] termIds) {
+    return ontologyDAO.findByTermIds(termIds);
   }
 }

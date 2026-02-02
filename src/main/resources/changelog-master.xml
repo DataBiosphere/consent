@@ -230,4 +230,5 @@
            relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-01-26-feature-flag-audit.xml"
            relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-01-30-ontology-index.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>

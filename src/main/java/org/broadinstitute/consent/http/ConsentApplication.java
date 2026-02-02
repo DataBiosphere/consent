@@ -69,6 +69,7 @@ import org.broadinstitute.consent.http.resources.MatchResource;
 import org.broadinstitute.consent.http.resources.MetricsResource;
 import org.broadinstitute.consent.http.resources.NihAccountResource;
 import org.broadinstitute.consent.http.resources.OAuth2Resource;
+import org.broadinstitute.consent.http.resources.OntologyResource;
 import org.broadinstitute.consent.http.resources.PublicFeatureFlagResource;
 import org.broadinstitute.consent.http.resources.SamResource;
 import org.broadinstitute.consent.http.resources.SchemaResource;
@@ -179,6 +180,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(injector.getInstance(MetricsResource.class));
     env.jersey().register(injector.getInstance(NihAccountResource.class));
     env.jersey().register(injector.getInstance(OAuth2Resource.class));
+    env.jersey().register(injector.getInstance(OntologyResource.class));
     env.jersey().register(injector.getInstance(SamResource.class));
     env.jersey().register(injector.getInstance(SchemaResource.class));
     env.jersey().register(injector.getInstance(SwaggerResource.class));
