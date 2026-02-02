@@ -1,11 +1,15 @@
 package org.broadinstitute.consent.http.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.networknt.schema.ValidationMessage;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -79,8 +83,8 @@ class JsonSchemaUtilTest {
     assertFalse(instance.getDataCustodianEmail().isEmpty());
     assertNotNull(instance.getPublicVisibility());
     assertFalse(instance.getConsentGroups().isEmpty());
-    assertFalse(instance.getConsentGroups().get(0).getFileTypes().isEmpty());
-    assertNotNull(instance.getConsentGroups().get(0).getDataAccessCommitteeId());
+    assertFalse(instance.getConsentGroups().getFirst().getFileTypes().isEmpty());
+    assertNotNull(instance.getConsentGroups().getFirst().getDataAccessCommitteeId());
   }
 
   @Test
@@ -764,7 +768,6 @@ class JsonSchemaUtilTest {
           }]
         }
         """;
-    ;
     String tdrLocationNoUrl =
         """
         {
@@ -845,6 +848,44 @@ class JsonSchemaUtilTest {
     assertFieldHasError(errors, "nihGrantContractNumber");
     assertFieldHasError(errors, "consentGroupName");
     assertFieldHasError(errors, "url");
+  }
+
+  @Test
+  void testExtractLabelsAndDescriptions() throws ExecutionException {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+
+    // Ensure schema is loaded and labels/descriptions are extracted
+    util.getDatasetRegistrationSchema();
+
+    assertTrue(util.fieldLabels.containsKey("studyName"));
+    assertEquals("Study Name", util.fieldLabels.get("studyName"));
+    assertTrue(util.fieldDescriptions.containsKey("studyName"));
+    assertEquals("The study name", util.fieldDescriptions.get("studyName"));
+  }
+
+  @Test
+  void testFormatMessageRequired() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    ValidationMessage vm = mock(ValidationMessage.class);
+    when(vm.getType()).thenReturn("required");
+    when(vm.getArguments()).thenReturn(new Object[] {"studyName"});
+
+    String msg = util.formatMessage(vm);
+    assertTrue(msg.contains("is required"));
+  }
+
+  @Test
+  void testDisplayNameOverrides() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    String name = util.displayName("consentGroups");
+    assertEquals("Datasets", name);
+  }
+
+  @Test
+  void testDisplayNameFallback() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    String name = util.displayName("nonexistentField");
+    assertEquals("nonexistentField", name);
   }
 
   private void assertNoErrors(Set<ValidationMessage> errors) {
