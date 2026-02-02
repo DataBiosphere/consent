@@ -47,7 +47,7 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
                   .createQuery(query)
                   .bindArray("ids", lowerIds)
                   .map(new JsonMapper("json_document"));
-          StreamingOutputIterator iterator = new StreamingOutputIterator();
+          StreamingOutputIterator<JsonObject> iterator = new StreamingOutputIterator<>();
           return iterator.streamResults(results, handle);
         });
   }

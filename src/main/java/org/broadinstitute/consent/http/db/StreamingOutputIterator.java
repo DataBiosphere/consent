@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.db;
 
-import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonWriter;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.Response;
@@ -13,18 +12,18 @@ import java.util.Iterator;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.result.ResultIterable;
 
-public class StreamingOutputIterator {
+public class StreamingOutputIterator<T> {
 
   /**
    * Streams the results from a ResultIterable as a JSON array.
    *
-   * @param resultIterable the iterable result set to stream. Requires mapping to JsonObject.
+   * @param resultIterable the typed iterable result set to stream.
    * @param handle the JDBI handle to close after streaming.
    * @return a StreamingOutput that writes the JSON array to the output stream.
    */
-  public StreamingOutput streamResults(ResultIterable<JsonObject> resultIterable, Handle handle) {
+  public StreamingOutput streamResults(ResultIterable<T> resultIterable, Handle handle) {
     try (handle) {
-      Iterator<JsonObject> resultIterator = resultIterable.stream().iterator();
+      Iterator<T> resultIterator = resultIterable.stream().iterator();
       return output -> {
         try (JsonWriter writer =
             new JsonWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8))) {

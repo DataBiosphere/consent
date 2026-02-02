@@ -31,7 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class StreamingOutputIteratorTest extends AbstractTestHelper {
 
-  private StreamingOutputIterator streamingOutputIterator;
+  private StreamingOutputIterator<JsonObject> streamingOutputIterator;
 
   @Mock private ResultIterable<JsonObject> resultIterable;
 
@@ -39,7 +39,7 @@ class StreamingOutputIteratorTest extends AbstractTestHelper {
 
   @BeforeEach
   void setUp() {
-    streamingOutputIterator = new StreamingOutputIterator();
+    streamingOutputIterator = new StreamingOutputIterator<>();
   }
 
   @Test
@@ -126,7 +126,6 @@ class StreamingOutputIteratorTest extends AbstractTestHelper {
 
     StreamingOutput output = streamingOutputIterator.streamResults(resultIterable, handle);
 
-    // Create a mock OutputStream that throws when written to
     java.io.OutputStream baos = mock(java.io.OutputStream.class);
     doThrow(new IOException("Write error")).when(baos).write(any(byte[].class), anyInt(), anyInt());
 
