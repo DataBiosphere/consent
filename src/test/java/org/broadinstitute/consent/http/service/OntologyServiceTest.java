@@ -183,6 +183,24 @@ class OntologyServiceTest extends MockServerTestHelper {
   }
 
   @Test
+  @SuppressWarnings("java:S2925") // Thread.sleep needed to wait for async callback
+  void testIndexOntologyFailure() throws Exception {
+    User user = new User();
+    user.setUserId(1);
+    String message = "Failed to generate terms";
+    when(indexService.generateTerms(OntologyType.DUO))
+        .thenThrow(new RuntimeException(message));
+
+    service.indexOntology(user, OntologyType.DUO);
+    // Wait a bit for the async callback to execute
+    Thread.sleep(100);
+    // Verify that the failure was logged
+    assertEquals(1, testAppender.getSize());
+    ILoggingEvent event = testAppender.getLoggedEvents().getFirst();
+    assertThat(event.getFormattedMessage(), containsString(message));
+  }
+
+  @Test
   void testFindByTermIds() throws Exception {
     String[] termIds = new String[] {"DUO_0000006", "DUO_0000007"};
     String json =
