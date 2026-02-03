@@ -64,7 +64,7 @@ public class OntologyIndexService implements ConsentLogger {
     Optional<IRI> versionIRI = ontologyID.getVersionIRI();
     String version = versionIRI.map(IRI::toString).orElse("unknown_version");
     OWLReasonerFactory reasonerFactory = new StructuralReasonerFactory();
-    OWLReasoner reasoner = reasonerFactory.createNonBufferingReasoner(ontology);
+    OWLReasoner reasoner = reasonerFactory.createReasoner(ontology);
     Set<OWLClass> owlClasses = ontology.classesInSignature().collect(Collectors.toSet());
     owlClasses.addAll(
         ontology
