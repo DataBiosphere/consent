@@ -188,8 +188,7 @@ class OntologyServiceTest extends MockServerTestHelper {
     User user = new User();
     user.setUserId(1);
     String message = "Failed to generate terms";
-    when(indexService.generateTerms(OntologyType.DUO))
-        .thenThrow(new RuntimeException(message));
+    when(indexService.generateTerms(OntologyType.DUO)).thenThrow(new RuntimeException(message));
 
     service.indexOntology(user, OntologyType.DUO);
     // Wait a bit for the async callback to execute
