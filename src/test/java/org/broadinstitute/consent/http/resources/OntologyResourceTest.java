@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
@@ -31,12 +30,12 @@ class OntologyResourceTest extends AbstractTestHelper {
   private OntologyResource resource;
 
   @Test
-  void testIndexOntologyTermsSuccess() throws Exception {
+  void testIndexOntologyTermsSuccess() {
     User admin = new User();
     admin.setAdminRole();
     DuosUser duosUser = new DuosUser(authUser, admin);
 
-    doNothing().when(ontologyService).indexOntology(any(), any());
+    doNothing().when(ontologyService).indexOntology(duosUser.getUser(), OntologyType.DOID);
 
     resource = new OntologyResource(ontologyService);
     try (Response response = resource.indexOntologyTerms(duosUser, OntologyType.DOID.name())) {
@@ -57,15 +56,55 @@ class OntologyResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testIndexOntologyTermsException() throws Exception {
+  void testIndexOntologyTermsException() {
     User admin = new User();
     admin.setAdminRole();
     DuosUser duosUser = new DuosUser(authUser, admin);
 
-    doThrow(new RuntimeException()).when(ontologyService).indexOntology(any(), any());
+    doThrow(new RuntimeException()).when(ontologyService).indexOntology(duosUser.getUser(), OntologyType.DOID);
 
     resource = new OntologyResource(ontologyService);
     try (Response response = resource.indexOntologyTerms(duosUser, OntologyType.DOID.name())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+    }
+  }
+
+  @Test
+  void testDeleteOntologyTermsSuccess() {
+    User admin = new User();
+    admin.setAdminRole();
+    DuosUser duosUser = new DuosUser(authUser, admin);
+
+    doNothing().when(ontologyService).deleteOntologyTerms(OntologyType.DOID);
+
+    resource = new OntologyResource(ontologyService);
+    try (Response response = resource.deleteOntologyTerms(duosUser, OntologyType.DOID.name())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testDeleteOntologyTermsInvalidType() {
+    User admin = new User();
+    admin.setAdminRole();
+    DuosUser duosUser = new DuosUser(authUser, admin);
+
+    resource = new OntologyResource(ontologyService);
+    try (Response response = resource.deleteOntologyTerms(duosUser, "INVALID_TYPE")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testDeleteOntologyTermsException() {
+    User admin = new User();
+    admin.setAdminRole();
+    DuosUser duosUser = new DuosUser(authUser, admin);
+
+    doThrow(new RuntimeException()).when(ontologyService).deleteOntologyTerms(OntologyType.DOID);
+
+    resource = new OntologyResource(ontologyService);
+    try (Response response = resource.deleteOntologyTerms(duosUser, OntologyType.DOID.name())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
   }
@@ -82,7 +121,7 @@ class OntologyResourceTest extends AbstractTestHelper {
 
   @Test
   void testSearchByTermIdsException() {
-    when(ontologyService.findByTermIds(any())).thenThrow(new RuntimeException());
+    when(ontologyService.findByTermIds(new String[]{"DOID_1234"})).thenThrow(new RuntimeException());
 
     resource = new OntologyResource(ontologyService);
     try (Response response = resource.searchByTermIds("DOID_1234")) {

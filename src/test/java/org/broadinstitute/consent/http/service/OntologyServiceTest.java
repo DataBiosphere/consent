@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -166,6 +167,12 @@ class OntologyServiceTest extends MockServerTestHelper {
     String actualMessage = exception.getMessage();
 
     assertEquals(expectedMessage, actualMessage);
+  }
+
+  @Test
+  void testDeleteOntologyTerms() {
+    doNothing().when(ontologyDAO).deleteByOntology(OntologyType.DUO.name());
+    assertDoesNotThrow(() -> service.deleteOntologyTerms(OntologyType.DUO));
   }
 
   @Test

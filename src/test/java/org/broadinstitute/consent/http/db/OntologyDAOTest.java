@@ -46,6 +46,16 @@ class OntologyDAOTest extends DAOTestHelper {
     assertEquals(terms.size(), count);
   }
 
+  @Test
+  void testDeleteTerms() throws Exception {
+    Collection<OntologyTerm> terms = batchInsertTerms();
+    int count = ontologyDAO.countTerms();
+    assertEquals(terms.size(), count);
+    ontologyDAO.deleteByOntology(OntologyType.DUO.name());
+    int count2 = ontologyDAO.countTerms();
+    assertEquals(0, count2);
+  }
+
   @ParameterizedTest
   @ValueSource(
       strings = {
