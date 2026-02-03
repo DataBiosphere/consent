@@ -61,7 +61,9 @@ class OntologyResourceTest extends AbstractTestHelper {
     admin.setAdminRole();
     DuosUser duosUser = new DuosUser(authUser, admin);
 
-    doThrow(new RuntimeException()).when(ontologyService).indexOntology(duosUser.getUser(), OntologyType.DOID);
+    doThrow(new RuntimeException())
+        .when(ontologyService)
+        .indexOntology(duosUser.getUser(), OntologyType.DOID);
 
     resource = new OntologyResource(ontologyService);
     try (Response response = resource.indexOntologyTerms(duosUser, OntologyType.DOID.name())) {
@@ -121,7 +123,8 @@ class OntologyResourceTest extends AbstractTestHelper {
 
   @Test
   void testSearchByTermIdsException() {
-    when(ontologyService.findByTermIds(new String[]{"DOID_1234"})).thenThrow(new RuntimeException());
+    when(ontologyService.findByTermIds(new String[] {"DOID_1234"}))
+        .thenThrow(new RuntimeException());
 
     resource = new OntologyResource(ontologyService);
     try (Response response = resource.searchByTermIds("DOID_1234")) {
