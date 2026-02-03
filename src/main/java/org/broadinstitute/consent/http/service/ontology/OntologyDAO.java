@@ -39,7 +39,8 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
             WHERE LOWER(id) = ANY (:ids)
                OR LOWER(obo_id) = ANY (:ids)
             """;
-    String[] lowerIds = Arrays.stream(ids).map(String::toLowerCase).toArray(String[]::new);
+    String[] lowerIds =
+        Arrays.stream(ids).map(String::toLowerCase).map(String::trim).toArray(String[]::new);
     return withHandle(
         handle -> {
           ResultIterable<JsonObject> results =

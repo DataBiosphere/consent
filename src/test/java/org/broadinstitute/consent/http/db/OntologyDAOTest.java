@@ -50,6 +50,7 @@ class OntologyDAOTest extends DAOTestHelper {
   @ValueSource(
       strings = {
         "DUO_0000006", // normalized obo id
+        " DUO_0000007 ", // normalized obo id with spaces
         "http://purl.obolibrary.org/obo/DUO_0000006" // full term_id
       })
   void testFindByIds(String id) throws Exception {
