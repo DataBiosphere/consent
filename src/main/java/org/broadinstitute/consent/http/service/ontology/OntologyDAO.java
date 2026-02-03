@@ -13,6 +13,7 @@ import org.jdbi.v3.sqlobject.customizer.BindMethods;
 import org.jdbi.v3.sqlobject.statement.BatchChunkSize;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 public interface OntologyDAO extends Transactional<OntologyDAO> {
@@ -29,6 +30,9 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
 
   @SqlQuery("SELECT COUNT(*) FROM ontology_index")
   int countTerms();
+
+  @SqlUpdate("DELETE FROM ontology_index where ontology = :ontology")
+  void deleteByOntology(@Bind("ontology") String ontology);
 
   @Json
   default StreamingOutput findByTermIds(@Bind("ids") String[] ids) {

@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -40,6 +41,22 @@ public class OntologyResource extends Resource {
         throw new IllegalArgumentException("Invalid ontology type: " + ontologyType);
       }
       ontologyService.indexOntology(duosUser.getUser(), type);
+      return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @DELETE
+  @RolesAllowed({ADMIN})
+  public Response deleteOntologyTerms(
+      @Auth DuosUser duosUser, @QueryParam("ontologyType") String ontologyType) {
+    try {
+      OntologyType type = OntologyType.getFromName(ontologyType);
+      if (type == null) {
+        throw new IllegalArgumentException("Invalid ontology type: " + ontologyType);
+      }
+      ontologyService.deleteOntologyTerms(type);
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);

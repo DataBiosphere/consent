@@ -79,6 +79,11 @@ public class OntologyService implements ConsentLogger {
     }
   }
 
+  public void deleteOntologyTerms(OntologyType ontologyType) {
+    ontologyDAO.deleteByOntology(ontologyType.name());
+    logInfo("Deleted ontology terms for ontology: %s".formatted(ontologyType.name()));
+  }
+
   public void indexOntology(User user, OntologyType ontologyType) {
     ListeningExecutorService listeningExecutorService =
         MoreExecutors.listeningDecorator(executorService);
@@ -96,6 +101,7 @@ public class OntologyService implements ConsentLogger {
           public void onSuccess(Collection<OntologyTerm> terms) {
             logInfo("Successfully indexed %s ontology terms".formatted(terms.size()));
           }
+
           @Override
           public void onFailure(@NonNull Throwable t) {
             logThrowable(t);
