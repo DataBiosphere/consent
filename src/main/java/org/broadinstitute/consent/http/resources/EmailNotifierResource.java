@@ -10,15 +10,19 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
+import org.broadinstitute.consent.http.service.EmailService;
 
 @Path("api/emailNotifier")
 public class EmailNotifierResource extends Resource {
 
   private final DataAccessRequestService dataAccessRequestService;
+  private final EmailService emailService;
 
   @Inject
-  public EmailNotifierResource(DataAccessRequestService dataAccessRequestService) {
+  public EmailNotifierResource(
+      DataAccessRequestService dataAccessRequestService, EmailService emailService) {
     this.dataAccessRequestService = dataAccessRequestService;
+    this.emailService = emailService;
   }
 
   @POST
@@ -39,6 +43,19 @@ public class EmailNotifierResource extends Resource {
   public Response sendDarExpirationNotices(@Auth AuthUser authUser) {
     try {
       dataAccessRequestService.sendExpirationNotices();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+
+    return Response.ok().build();
+  }
+
+  @GET
+  @Path("/dacVoteDigestNotices")
+  @RolesAllowed({SERVICE_ACCOUNT})
+  public Response sendDacVoteDigestNotices(@Auth AuthUser authUser) {
+    try {
+      emailService.sendVoteDigestMessages();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

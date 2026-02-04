@@ -12,12 +12,15 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
@@ -25,6 +28,7 @@ import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.message.DACMembersDARRADARApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.DaaRequestMessage;
+import org.broadinstitute.consent.http.mail.message.DacVoteDigestMessage;
 import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
 import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
 import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
@@ -52,6 +56,7 @@ import org.broadinstitute.consent.http.mail.message.SoPRSubmitted;
 import org.broadinstitute.consent.http.mail.message.SubmittedCloseoutMessage;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserVoteReminder;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -60,6 +65,7 @@ public class EmailService implements ConsentLogger {
 
   private final UserDAO userDAO;
   private final MailMessageDAO emailDAO;
+  private final ElectionDAO electionDAO;
   private final FreeMarkerTemplateHelper templateHelper;
   private final SendGridAPI sendGridAPI;
   private final String fromAccount;
@@ -69,12 +75,14 @@ public class EmailService implements ConsentLogger {
   public EmailService(
       UserDAO userDAO,
       MailMessageDAO emailDAO,
+      ElectionDAO electionDAO,
       SendGridAPI sendGridAPI,
       FreeMarkerTemplateHelper helper,
       ConsentConfiguration config) {
     this.userDAO = userDAO;
     this.templateHelper = helper;
     this.emailDAO = emailDAO;
+    this.electionDAO = electionDAO;
     this.sendGridAPI = sendGridAPI;
     this.serverUrl = config.getServicesConfiguration().getLocalURL();
     this.fromAccount = config.getMailConfiguration().getGoogleAccount();
@@ -460,5 +468,27 @@ public class EmailService implements ConsentLogger {
         new DACMembersDARRADARApprovedMessage(
             dacMember, darCode, researcher, referenceId, datasetList),
         dacMember.getUserId());
+  }
+
+  public void sendVoteDigestMessages() {
+    Instant timeBasis = Instant.now();
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE.withZone(ZoneOffset.UTC);
+    String referenceId = dateTimeFormatter.format(timeBasis);
+    Integer emailType = EmailType.DAC_VOTE_REMINDER_DIGEST.getTypeInt();
+    List<UserVoteReminder> userOpenElections =
+        electionDAO.findElectionReminders(24, emailType, referenceId);
+    for (UserVoteReminder entry : userOpenElections) {
+      try {
+        sendMessage(
+            new DacVoteDigestMessage(
+                userDAO.findUserById(entry.getuserId()),
+                entry.getUserReminderList(),
+                referenceId,
+                timeBasis),
+            entry.getuserId());
+      } catch (Exception e) {
+        logWarn(e.getMessage());
+      }
+    }
   }
 }

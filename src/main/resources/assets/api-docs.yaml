@@ -553,6 +553,8 @@ paths:
           description: Server error.
   /api/emailNotifier/darExpirationNotices:
     $ref: './paths/darExpirationNotices.yaml'
+  /api/emailNotifier/dacVoteDigestNotices:
+    $ref: './paths/dacOpenVotesNotificationDigest.yaml'
   /feature:
     $ref: './paths/feature.yaml'
   /feature/{id}:

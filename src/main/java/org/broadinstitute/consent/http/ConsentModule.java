@@ -349,6 +349,7 @@ public class ConsentModule extends AbstractModule {
     return new EmailService(
         providesUserDAO(),
         providesMailMessageDAO(),
+        providesElectionDAO(),
         providesSendGridAPI(),
         providesFreeMarkerTemplateHelper(),
         config);

@@ -20,6 +20,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Config;
@@ -63,6 +64,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   protected static DraftDAO draftDAO;
   protected static DACAutomationRuleDAO dacAutomationRuleDAO;
   protected static FeatureFlagDAO featureFlagDAO;
+  protected static VoteServiceDAO voteServiceDAO;
   private static DropwizardTestSupport<ConsentConfiguration> testApp;
   // This is a test-only DAO class where we manage the deletion
   // of all records between test runs.
@@ -155,6 +157,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     dacAutomationRuleDAO = jdbi.onDemand(DACAutomationRuleDAO.class);
     featureFlagDAO = jdbi.onDemand(FeatureFlagDAO.class);
     testingDAO = jdbi.onDemand(TestingDAO.class);
+    voteServiceDAO = new VoteServiceDAO(jdbi, voteDAO);
   }
 
   @BeforeEach()
