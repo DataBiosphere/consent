@@ -21,7 +21,7 @@ import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class DacVoteDigestMessageTest {
+class DacVoteDigestMessageTest {
   private FreeMarkerTemplateHelper helper;
 
   @BeforeEach
