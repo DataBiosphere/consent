@@ -460,21 +460,6 @@
       ],
       "allOf" : [
         {
-          "if" : {
-            "properties" : {
-              "dataLocation" : {
-                "const" : "Not Determined"
-              }
-            }
-          },
-          "then" : {},
-          "else" : {
-            "required" : [
-              "url"
-            ]
-          }
-        },
-        {
           "$comment" : "if accessManagement is controlled OR not present, then require dac id & add secondary consent fields",
           "if" : {
             "properties" : {
@@ -673,7 +658,8 @@
             "AnVIL Workspace",
             "Terra Workspace",
             "TDR Location",
-            "Not Determined"
+            "Not Determined",
+            "Other"
           ],
           "label" : "Please provide the location of your data resource for this consent group",
           "description" : "Data Location"

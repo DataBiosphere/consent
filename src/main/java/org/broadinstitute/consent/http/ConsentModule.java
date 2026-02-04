@@ -83,6 +83,8 @@ import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
 import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
+import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
+import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -122,6 +124,7 @@ public class ConsentModule extends AbstractModule {
   private final DraftDAO draftDAO;
   private final DACAutomationRuleDAO rulesDAO;
   private final FeatureFlagDAO featureFlagDAO;
+  private final OntologyDAO ontologyDAO;
 
   ConsentModule(ConsentConfiguration consentConfiguration, Environment environment) {
     this.config = consentConfiguration;
@@ -160,6 +163,7 @@ public class ConsentModule extends AbstractModule {
     this.draftDAO = this.jdbi.onDemand(DraftDAO.class);
     this.rulesDAO = this.jdbi.onDemand(DACAutomationRuleDAO.class);
     this.featureFlagDAO = this.jdbi.onDemand(FeatureFlagDAO.class);
+    this.ontologyDAO = this.jdbi.onDemand(OntologyDAO.class);
   }
 
   @Override
@@ -239,7 +243,16 @@ public class ConsentModule extends AbstractModule {
 
   @Provides
   OntologyService providesOntologyService() {
-    return new OntologyService(providesClient(), config.getServicesConfiguration());
+    return new OntologyService(
+        providesClient(),
+        config.getServicesConfiguration(),
+        providesOntologyDAO(),
+        providesOntologyIndexService());
+  }
+
+  @Provides
+  OntologyIndexService providesOntologyIndexService() {
+    return new OntologyIndexService(providesGCSService(), config.getCloudStoreConfiguration());
   }
 
   @Provides
@@ -693,5 +706,10 @@ public class ConsentModule extends AbstractModule {
   @Provides
   FeatureFlagDAO providesFeatureFlagDAO() {
     return featureFlagDAO;
+  }
+
+  @Provides
+  OntologyDAO providesOntologyDAO() {
+    return ontologyDAO;
   }
 }

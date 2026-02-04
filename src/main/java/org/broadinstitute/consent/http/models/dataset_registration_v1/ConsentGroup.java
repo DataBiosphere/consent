@@ -716,7 +716,8 @@ public class ConsentGroup {
     AN_VIL_WORKSPACE("AnVIL Workspace"),
     TERRA_WORKSPACE("Terra Workspace"),
     TDR_LOCATION("TDR Location"),
-    NOT_DETERMINED("Not Determined");
+    NOT_DETERMINED("Not Determined"),
+    OTHER("Other");
     private final String value;
     private static final Map<String, ConsentGroup.DataLocation> CONSTANTS =
         new HashMap<String, ConsentGroup.DataLocation>();

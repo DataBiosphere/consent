@@ -5,7 +5,6 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
-import com.networknt.schema.ValidationMessage;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
@@ -100,17 +99,17 @@ public class DatasetResource extends Resource {
   @RolesAllowed({ADMIN, CHAIRPERSON, DATASUBMITTER})
   @Timed
   /*
-   * This endpoint accepts a json instance of a dataset-registration-schema_v1.json schema.
+   * This endpoint accepts a JSON instance of a dataset-registration-schema_v1.json schema.
    * With that object, we can fully create datasets from the provided values.
    */
   public Response createDatasetRegistration(
       @Auth AuthUser authUser, FormDataMultiPart multipart, @FormDataParam("dataset") String json) {
     try {
-      Set<ValidationMessage> errors = jsonSchemaUtil.validateSchema_v1(json);
+      Set<String> errors = jsonSchemaUtil.validateSchemaMessagesV1(json);
       if (!errors.isEmpty()) {
         throw new BadRequestException(
-            "Invalid schema:\n"
-                + String.join("\n", errors.stream().map(ValidationMessage::getMessage).toList()));
+            "Please correct the following fields:\n"
+                + errors.stream().map(error -> " - " + error + "\n").collect(Collectors.joining()));
       }
 
       DatasetRegistrationSchemaV1 registration =
@@ -123,7 +122,7 @@ public class DatasetResource extends Resource {
       // Generate datasets from registration
       List<Dataset> datasets =
           datasetRegistrationService.createDatasetsFromRegistration(registration, user, files);
-      Integer studyId = datasets.get(0).getStudyId();
+      Integer studyId = datasets.getFirst().getStudyId();
       Study study = datasetService.findStudy(studyId);
       DatasetRegistrationSchemaV1Builder builder = new DatasetRegistrationSchemaV1Builder();
       DatasetRegistrationSchemaV1 createdRegistration = builder.build(study, datasets);

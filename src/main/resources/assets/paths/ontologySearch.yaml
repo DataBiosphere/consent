@@ -1,0 +1,21 @@
+get:
+  summary: Search Ontology terms by ids
+  description: Search Ontology terms by ids
+  operationId: searchOntologyTerms
+  parameters:
+    - name: ids
+      in: query
+      description: |
+        A comma-separated list of term ids to search for in the ontology.
+        The term id can be a full purl Term URI or an abbreviation.
+      required: true
+      schema:
+        type: string
+        example: "http://purl.obolibrary.org/obo/DOID_162, DOID_14566"
+  tags:
+    - Ontology
+  responses:
+    200:
+      description: Ontology Search Results
+    500:
+      description: Internal Server Error

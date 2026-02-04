@@ -768,6 +768,32 @@ class DatasetResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testCreateDatasetRegistration_invalidSchema_errorMessages() {
+    // Invalid JSON: missing required fields
+    String invalidJson =
+        """
+      {
+        "dataTypes": [],
+        "consentGroups": []
+      }
+      """;
+    try (var response = resource.createDatasetRegistration(authUser, null, invalidJson)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+      String entity = response.getEntity().toString();
+
+      // Check for specific user-facing error messages
+      assertTrue(entity.contains("Please correct the following fields:"));
+      assertTrue(entity.contains("Study Name is required"));
+      assertTrue(entity.contains("Study Description is required"));
+      assertTrue(entity.contains("Data Types must have at least one item"));
+      assertTrue(entity.contains("Datasets must have at least one item"));
+      assertTrue(entity.contains("NIH Anvil Use is required"));
+      assertTrue(entity.contains("Principal Investigator Name is required"));
+      assertTrue(entity.contains("Public Visibility is required"));
+    }
+  }
+
+  @Test
   void testCreateDatasetRegistration_validSchema() throws SQLException, IOException {
     when(userService.findUserByEmail(any())).thenReturn(user);
     user.setUserId(1);
