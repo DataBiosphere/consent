@@ -8,13 +8,11 @@ public class UserVoteReminder {
   List<Reminder> userReminderList;
 
   public UserVoteReminder(int userId) {
+    this.userReminderList = new ArrayList<>();
     this.userId = userId;
   }
 
   public void addReminder(Reminder reminder) {
-    if (this.userReminderList == null) {
-      this.userReminderList = new ArrayList<>();
-    }
     userReminderList.add(reminder);
   }
 
