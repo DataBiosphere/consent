@@ -5,18 +5,6 @@
          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
   <changeSet id="changelog-consent-2026-02-05-fix-dataset-access-control" author="grushton">
-    <!-- Impute DAC Approval for datasets with a DAC ID but no access management prop or approval: -->
-    <sql>
-      UPDATE dataset
-      SET dac_approval = true
-      WHERE dac_id IS NOT NULL
-        AND dac_approval IS NULL
-        -- No access management property set:
-        AND NOT EXISTS (SELECT 1
-                        FROM dataset_property dp
-                        WHERE dp.dataset_id = dataset.dataset_id
-                          AND dp.schema_property = 'accessManagement')
-    </sql>
     <!-- Add access management prop for datasets with a DAC ID: -->
     <sql>
       INSERT INTO dataset_property
@@ -25,12 +13,12 @@
              (SELECT key_id FROM dictionary WHERE key = 'Access Management'), 'controlled', NOW(), 'String', 'accessManagement'
       FROM dataset d
       WHERE d.dac_id IS NOT NULL
-      -- No access management property set:
+        -- No access management property set:
         AND NOT EXISTS (
         SELECT 1
-        FROM dataset_property dp
+         FROM dataset_property dp
         WHERE dp.dataset_id = d.dataset_id
-        AND dp.schema_property = 'accessManagement'
+          AND dp.schema_property = 'accessManagement'
         )
     </sql>
   </changeSet>
