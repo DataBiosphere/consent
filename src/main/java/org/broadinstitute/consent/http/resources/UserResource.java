@@ -483,14 +483,27 @@ public class UserResource extends Resource {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/create")
-  @RolesAllowed({ADMIN, CHAIRPERSON})
+  @RolesAllowed({ADMIN, CHAIRPERSON, SIGNINGOFFICIAL})
   public Response createNewUser(@Auth DuosUser duosUser, String json) {
     try {
       CreateDuosUserRequest createDuosUserRequest =
           gson.fromJson(json, CreateDuosUserRequest.class);
       createDuosUserRequest.validate();
+      // Non-admins can only create users with emails from the same institution
       // Non-admins can only create users with the Researcher role
       if (!duosUser.getUser().hasUserRole(UserRoles.ADMIN)) {
+
+        String authenticatedEmail = duosUser.getUser().getEmail();
+        String newUserEmail = createDuosUserRequest.newUser().getEmail();
+
+        String authenticatedDomain = authenticatedEmail.substring(authenticatedEmail.indexOf("@"));
+        String newUserDomain = newUserEmail.substring(newUserEmail.indexOf("@"));
+
+        if (!authenticatedDomain.equals(newUserDomain)) {
+          throw new ForbiddenException(
+              "You can only create users with email addresses from your institution domain.");
+        }
+
         createDuosUserRequest
             .roles()
             .forEach(
