@@ -40,11 +40,13 @@ import org.broadinstitute.consent.http.models.CreateDuosUserRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Error;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
+import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
@@ -61,6 +63,7 @@ public class UserResource extends Resource {
   private final AcknowledgementService acknowledgementService;
   private final NihService nihService;
   private final ServicesConfiguration servicesConfiguration;
+  private final InstitutionService institutionService;
 
   @Inject
   public UserResource(
@@ -69,13 +72,15 @@ public class UserResource extends Resource {
       DatasetService datasetService,
       AcknowledgementService acknowledgementService,
       NihService nihService,
-      ServicesConfiguration servicesConfiguration) {
+      ServicesConfiguration servicesConfiguration,
+      InstitutionService institutionService) {
     this.samService = samService;
     this.userService = userService;
     this.datasetService = datasetService;
     this.acknowledgementService = acknowledgementService;
     this.nihService = nihService;
     this.servicesConfiguration = servicesConfiguration;
+    this.institutionService = institutionService;
   }
 
   @GET
@@ -489,28 +494,37 @@ public class UserResource extends Resource {
       CreateDuosUserRequest createDuosUserRequest =
           gson.fromJson(json, CreateDuosUserRequest.class);
       createDuosUserRequest.validate();
-      // Non-admins can only create users with emails from the same institution
-      // Non-admins can only create users with the Researcher role
+
+      // Non-admins have additional restrictions when creating new users
       if (!duosUser.getUser().hasUserRole(UserRoles.ADMIN)) {
+        Integer userInstitutionId = duosUser.getUser().getInstitutionId();
+        if (userInstitutionId == null) {
+          throw new ForbiddenException(
+              "You must be associated with an institution to create new users.");
+        }
+        Institution institution = institutionService.findInstitutionById(userInstitutionId);
+        List<String> institutionDomains = institution.getDomains();
 
-        String authenticatedEmail = duosUser.getUser().getEmail();
         String newUserEmail = createDuosUserRequest.newUser().getEmail();
-
-        String authenticatedDomain = authenticatedEmail.substring(authenticatedEmail.indexOf("@"));
         String newUserDomain = newUserEmail.substring(newUserEmail.indexOf("@"));
 
-        if (!authenticatedDomain.equals(newUserDomain)) {
+        // Non-admins can only create users with emails from their institutional domains
+        if (institutionDomains != null
+            && !institutionDomains.isEmpty()
+            && !institutionDomains.contains(newUserDomain)) {
           throw new ForbiddenException(
-              "You can only create users with email addresses from your institution domain.");
+              "You can only create users with email addresses from your institutional domains: "
+                  + institutionDomains);
         }
 
+        // Non-admins can only create users with the Researcher role
         createDuosUserRequest
             .roles()
             .forEach(
                 role -> {
                   if (!role.getName().equals(UserRoles.RESEARCHER.getRoleName())) {
                     throw new ForbiddenException(
-                        "Chairs can only create users with the Researcher role.");
+                        "You can only create users with the Researcher role.");
                   }
                 });
       }
