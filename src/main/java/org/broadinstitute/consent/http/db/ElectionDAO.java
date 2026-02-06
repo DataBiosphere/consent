@@ -5,8 +5,12 @@ import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.ElectionMapper;
 import org.broadinstitute.consent.http.db.mapper.SimpleElectionMapper;
+import org.broadinstitute.consent.http.db.mapper.VoteReminderReducer;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Reminder;
+import org.broadinstitute.consent.http.models.UserVoteReminder;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
@@ -15,6 +19,7 @@ import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
+import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 @RegisterRowMapper(ElectionMapper.class)
@@ -257,4 +262,36 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       WHERE LOWER(e1.status) = 'open'
       """)
   List<Election> findOpenElectionsByDacId(@Bind("dacId") Integer dacId);
+
+  @UseRowReducer(VoteReminderReducer.class)
+  @RegisterConstructorMapper(Reminder.class)
+  @SqlQuery(
+"""
+      SELECT DISTINCT
+          u.user_id,
+          dc.dar_code,
+          dc.collection_id,
+          v.create_date
+      FROM (
+               SELECT reference_id, MAX(create_date) max_date, election_id
+               FROM election
+               WHERE LOWER(status) = 'open'
+                 AND LOWER(election_type) = 'dataaccess'
+                 AND create_date <= NOW() - make_interval(hours => :start)
+               GROUP BY reference_id, election_id
+           ) e_sub
+               INNER JOIN data_access_request dar ON dar.reference_id = e_sub.reference_id
+               INNER JOIN dar_dataset dar_ds ON dar_ds.reference_id = dar.reference_id
+               INNER JOIN dar_collection dc ON dc.collection_id = dar.collection_id
+               INNER JOIN vote v ON v.election_id = e_sub.election_id
+               INNER JOIN users u ON u.user_id = v.user_id
+               LEFT OUTER JOIN email_entity ee ON ee.user_id = u.user_id AND ee.email_type = :emailType AND ee.entity_reference_id = :referenceId
+      WHERE v.vote IS NULL
+        AND dc.dar_code IS NOT NULL
+        AND ee.entity_reference_id IS NULL
+""")
+  List<UserVoteReminder> findElectionReminders(
+      @Bind("start") int start,
+      @Bind("emailType") Integer emailType,
+      @Bind("referenceId") String referenceId);
 }

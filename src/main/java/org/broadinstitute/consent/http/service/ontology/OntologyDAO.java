@@ -13,6 +13,7 @@ import org.jdbi.v3.sqlobject.customizer.BindMethods;
 import org.jdbi.v3.sqlobject.statement.BatchChunkSize;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 public interface OntologyDAO extends Transactional<OntologyDAO> {
@@ -30,6 +31,9 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
   @SqlQuery("SELECT COUNT(*) FROM ontology_index")
   int countTerms();
 
+  @SqlUpdate("DELETE FROM ontology_index where ontology = :ontology")
+  void deleteByOntology(@Bind("ontology") String ontology);
+
   @Json
   default StreamingOutput findByTermIds(@Bind("ids") String[] ids) {
     String query =
@@ -39,7 +43,8 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
             WHERE LOWER(id) = ANY (:ids)
                OR LOWER(obo_id) = ANY (:ids)
             """;
-    String[] lowerIds = Arrays.stream(ids).map(String::toLowerCase).toArray(String[]::new);
+    String[] lowerIds =
+        Arrays.stream(ids).map(String::toLowerCase).map(String::trim).toArray(String[]::new);
     return withHandle(
         handle -> {
           ResultIterable<JsonObject> results =

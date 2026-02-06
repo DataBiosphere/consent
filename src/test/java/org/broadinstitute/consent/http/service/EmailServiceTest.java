@@ -1,14 +1,18 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -27,13 +31,16 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.Reminder;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserVoteReminder;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,6 +62,7 @@ class EmailServiceTest extends AbstractTestHelper {
   private static final String SERVER_URL = "http://localhost:8000/#/";
   private static final String FROM = "from@duos";
   private EmailService service;
+  @Mock private ElectionDAO electionDAO;
   @Mock private UserDAO userDAO;
   @Mock private MailMessageDAO emailDAO;
   @Mock private SendGridAPI sendGridAPI;
@@ -68,7 +76,7 @@ class EmailServiceTest extends AbstractTestHelper {
 
     ServicesConfiguration servicesConfiguration = config.getServicesConfiguration();
     servicesConfiguration.setLocalURL(SERVER_URL);
-    service = new EmailService(userDAO, emailDAO, sendGridAPI, templateHelper, config);
+    service = new EmailService(userDAO, emailDAO, electionDAO, sendGridAPI, templateHelper, config);
   }
 
   @Test
@@ -512,6 +520,54 @@ class EmailServiceTest extends AbstractTestHelper {
             eq(null),
             eq(signingOfficial.getUserId()),
             eq(EmailType.NEW_DAR_SO_NEEDS_TO_APPROVE.getTypeInt()),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
+  }
+
+  @Test
+  void testSendVoteDigestMessages_no_notices() {
+    when(electionDAO.findElectionReminders(anyInt(), anyInt(), anyString())).thenReturn(List.of());
+    assertDoesNotThrow(() -> service.sendVoteDigestMessages());
+  }
+
+  @Test
+  void testSendVoteDigestMessages_continues_to_process_with_error() throws IOException {
+    User user = new User();
+    user.setDisplayName("Test User");
+    user.setEmail("test@example.com");
+    user.setUserId(1);
+
+    User user2 = new User();
+    user2.setDisplayName("Test User");
+    user2.setEmail("test@example.com");
+    user2.setUserId(2);
+
+    Reminder user1Reminder = new Reminder(user.getUserId(), "1234", 1234, Instant.now());
+    UserVoteReminder user1VoteReminder = new UserVoteReminder(user1Reminder.userId());
+    user1VoteReminder.addReminder(user1Reminder);
+
+    Reminder user2Reminder = new Reminder(user2.getUserId(), "1234", 1234, Instant.now());
+    UserVoteReminder user2VoteReminder = new UserVoteReminder(user2Reminder.userId());
+    user2VoteReminder.addReminder(user2Reminder);
+
+    when(templateHelper.getTemplate(EmailType.DAC_VOTE_REMINDER_DIGEST.templateName))
+        .thenReturn(mock());
+    when(electionDAO.findElectionReminders(anyInt(), anyInt(), anyString()))
+        .thenReturn(List.of(user1VoteReminder, user2VoteReminder));
+    when(userDAO.findUserById(user2.getUserId())).thenReturn(user);
+    doThrow(new RuntimeException("Some IO Exception")).when(userDAO).findUserById(user.getUserId());
+
+    assertDoesNotThrow(() -> service.sendVoteDigestMessages());
+
+    verify(emailDAO, times(1))
+        .insert(
+            any(),
+            any(),
+            eq(user2.getUserId()),
+            eq(EmailType.DAC_VOTE_REMINDER_DIGEST.getTypeInt()),
             any(),
             any(),
             any(),
