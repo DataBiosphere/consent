@@ -46,10 +46,21 @@ class OntologyDAOTest extends DAOTestHelper {
     assertEquals(terms.size(), count);
   }
 
+  @Test
+  void testDeleteTerms() throws Exception {
+    Collection<OntologyTerm> terms = batchInsertTerms();
+    int count = ontologyDAO.countTerms();
+    assertEquals(terms.size(), count);
+    ontologyDAO.deleteByOntology(OntologyType.DUO.name());
+    int count2 = ontologyDAO.countTerms();
+    assertEquals(0, count2);
+  }
+
   @ParameterizedTest
   @ValueSource(
       strings = {
         "DUO_0000006", // normalized obo id
+        " DUO_0000007 ", // normalized obo id with spaces
         "http://purl.obolibrary.org/obo/DUO_0000006" // full term_id
       })
   void testFindByIds(String id) throws Exception {
