@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -15,6 +16,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
+import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.models.Dac;
@@ -25,7 +27,9 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
+import org.broadinstitute.consent.http.models.Reminder;
 import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.UserVoteReminder;
 import org.broadinstitute.consent.http.models.Vote;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -664,6 +668,75 @@ class ElectionDAOTest extends DAOTestHelper {
     assertTrue(found.contains(e1));
     assertTrue(found.contains(e2));
     assertTrue(found.contains(e3));
+  }
+
+  @Test
+  void testFindVotesThatNeedReminders() {
+    Vote vote = createElectionAndVote();
+    // there's a timing issue in this test due to the precision of time in the column.
+    // it's reliably resolved by setting the query start time early enough so that it
+    // includes the SQL inserts contemplated by createElectionAndVote.
+    // the core issue is that we're using Java dates for the election insert, not NOW()
+
+    List<UserVoteReminder> userVoteReminders =
+        electionDAO.findElectionReminders(
+            -1, EmailType.COLLECT.getTypeInt(), Instant.now().toString());
+    assertEquals(1, userVoteReminders.size());
+    assertEquals(1, userVoteReminders.getFirst().getUserReminderList().size());
+    Reminder reminder = userVoteReminders.getFirst().getUserReminderList().getFirst();
+    assertNotNull(reminder.userId());
+    assertNotNull(reminder.collectionId());
+    assertNotNull(reminder.createDate());
+    assertEquals(vote.getUserId(), reminder.userId());
+    assertEquals(vote.getCreateDate().toInstant(), reminder.createDate());
+  }
+
+  @Test
+  void testFindVotesThatNeedReminders_AlreadyVoted() {
+    Vote vote = createElectionAndVote();
+    voteServiceDAO.updateVotesWithValue(List.of(vote), true, "rationale");
+
+    List<UserVoteReminder> userVoteReminders =
+        electionDAO.findElectionReminders(
+            -1, EmailType.COLLECT.getTypeInt(), Instant.now().toString());
+    assertEquals(0, userVoteReminders.size());
+  }
+
+  @Test
+  void testFindVotesThatNeedReminders_AlreadyEmailed() {
+    Vote vote = createElectionAndVote();
+    String referenceId = Instant.now().toString();
+    Integer emailType = EmailType.COLLECT.getTypeInt();
+    mailMessageDAO.insert(
+        referenceId,
+        null,
+        vote.getUserId(),
+        emailType,
+        null,
+        "Extra, Extra!",
+        null,
+        null,
+        Instant.now());
+
+    List<UserVoteReminder> userVoteReminders =
+        electionDAO.findElectionReminders(-1, emailType, referenceId);
+    assertEquals(0, userVoteReminders.size());
+  }
+
+  private Vote createElectionAndVote() {
+    Dac dac = createDac();
+    User chairperson = createUser();
+    Dataset dataset = createDatasetWithDac(dac.getDacId());
+
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String referenceId = dar.getReferenceId();
+    Integer datasetId = dataset.getDatasetId();
+    dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
+
+    Election e1 = createDataAccessElection(referenceId, datasetId);
+    Integer v1 =
+        voteDAO.insertVote(chairperson.getUserId(), e1.getElectionId(), VoteType.FINAL.getValue());
+    return voteDAO.findVoteById(v1);
   }
 
   private Vote createPopulatedChairpersonVote(Integer userId, Integer electionId) {
