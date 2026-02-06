@@ -19,7 +19,7 @@ post:
                 bool:
                   must:
                     - match:
-                        _type: dataset
+                        _index: dataset
                     - match:
                         _id: 1440
           example2:
@@ -31,7 +31,7 @@ post:
                 bool:
                   must:
                     - match:
-                        _type: dataset
+                        _index: dataset
                     - exists:
                         field: study
   tags:
