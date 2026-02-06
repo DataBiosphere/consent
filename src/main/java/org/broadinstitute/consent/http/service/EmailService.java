@@ -63,6 +63,7 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 
 public class EmailService implements ConsentLogger {
 
+  private static final int LOOKBACK_DELAY_HOURS = 24;
   private final UserDAO userDAO;
   private final MailMessageDAO emailDAO;
   private final ElectionDAO electionDAO;
@@ -476,7 +477,7 @@ public class EmailService implements ConsentLogger {
     String referenceId = dateTimeFormatter.format(timeBasis);
     Integer emailType = EmailType.DAC_VOTE_REMINDER_DIGEST.getTypeInt();
     List<UserVoteReminder> userOpenElections =
-        electionDAO.findElectionReminders(24, emailType, referenceId);
+        electionDAO.findElectionReminders(LOOKBACK_DELAY_HOURS, emailType, referenceId);
     for (UserVoteReminder entry : userOpenElections) {
       try {
         sendMessage(
