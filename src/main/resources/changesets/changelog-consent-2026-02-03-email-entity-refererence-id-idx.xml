@@ -6,22 +6,22 @@
   <changeSet id="changelog-consent-2026-02-03-email-entity-refererence-id-idx" author="otchet">
     <preConditions onFail="MARK_RAN">
       <not>
-        <indexExists indexName="idx_entity_reference_id" tableName="email_entity"/>
-        <indexExists indexName="idx_email_type" tableName="email_entity"/>
-        <indexExists indexName="idx_user" tableName="email_entity"/>
-        <indexExists indexName="idx_user_type_ref" tableName="email_entity"/>
+        <indexExists indexName="idx_email_entity_entity_reference_id" tableName="email_entity"/>
+        <indexExists indexName="idx_email_entity_email_type" tableName="email_entity"/>
+        <indexExists indexName="idx_email_entity_user" tableName="email_entity"/>
+        <indexExists indexName="idx_email_entity_user_type_ref" tableName="email_entity"/>
       </not>
     </preConditions>
-    <createIndex tableName="email_entity" indexName="idx_entity_reference_id">
+    <createIndex tableName="email_entity" indexName="idx_email_entity_entity_reference_id">
       <column name="entity_reference_id"/>
     </createIndex>
-    <createIndex tableName="email_entity" indexName="idx_email_type">
+    <createIndex tableName="email_entity" indexName="idx_email_entity_email_type">
       <column name="email_type"/>
     </createIndex>
-    <createIndex tableName="email_entity" indexName="idx_user">
+    <createIndex tableName="email_entity" indexName="idx_email_entity_user">
       <column name="user_id"/>
     </createIndex>
-    <createIndex tableName="email_entity" indexName="idx_user_type_ref">
+    <createIndex tableName="email_entity" indexName="idx_email_entity_user_type_ref">
       <column name="user_id" />
       <column name="email_type"/>
       <column name="entity_reference_id"/>
