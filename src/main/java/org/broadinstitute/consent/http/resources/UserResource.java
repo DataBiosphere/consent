@@ -40,16 +40,15 @@ import org.broadinstitute.consent.http.models.CreateDuosUserRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Error;
-import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
@@ -63,7 +62,7 @@ public class UserResource extends Resource {
   private final AcknowledgementService acknowledgementService;
   private final NihService nihService;
   private final ServicesConfiguration servicesConfiguration;
-  private final InstitutionService institutionService;
+  private final InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
 
   @Inject
   public UserResource(
@@ -73,14 +72,14 @@ public class UserResource extends Resource {
       AcknowledgementService acknowledgementService,
       NihService nihService,
       ServicesConfiguration servicesConfiguration,
-      InstitutionService institutionService) {
+      InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement) {
     this.samService = samService;
     this.userService = userService;
     this.datasetService = datasetService;
     this.acknowledgementService = acknowledgementService;
     this.nihService = nihService;
     this.servicesConfiguration = servicesConfiguration;
-    this.institutionService = institutionService;
+    this.institutionAndLibraryCardEnforcement = institutionAndLibraryCardEnforcement;
   }
 
   @GET
@@ -497,25 +496,12 @@ public class UserResource extends Resource {
 
       // Non-admins have additional restrictions when creating new users
       if (!duosUser.getUser().hasUserRole(UserRoles.ADMIN)) {
-        Integer userInstitutionId = duosUser.getUser().getInstitutionId();
-        if (userInstitutionId == null) {
-          throw new ForbiddenException(
-              "You must be associated with an institution to create new users.");
-        }
-        Institution institution = institutionService.findInstitutionById(userInstitutionId);
-        List<String> institutionDomains = institution.getDomains();
-
+        String existingUserEmail = duosUser.getUser().getEmail();
         String newUserEmail = createDuosUserRequest.newUser().getEmail();
-        String newUserDomain = newUserEmail.substring(newUserEmail.indexOf("@"));
 
-        // Non-admins can only create users with emails from their institutional domains
-        if (institutionDomains != null
-            && !institutionDomains.isEmpty()
-            && !institutionDomains.contains(newUserDomain)) {
-          throw new ForbiddenException(
-              "You can only create users with email addresses from your institutional domains: "
-                  + institutionDomains);
-        }
+        // Enforce that the new user email domain matches the creator's institution domains
+        institutionAndLibraryCardEnforcement.validateEmailsFromSameInstitution(
+            newUserEmail, existingUserEmail);
 
         // Non-admins can only create users with the Researcher role
         createDuosUserRequest

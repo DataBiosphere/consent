@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
@@ -48,9 +49,9 @@ import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.InstitutionService;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.statement.StatementContext;
@@ -90,7 +91,7 @@ class UserResourceTest extends AbstractTestHelper {
 
   @Mock private ServicesConfiguration servicesConfiguration;
 
-  @Mock private InstitutionService institutionService;
+  @Mock private InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
 
   private static final String TEST_EMAIL = "test@gmail.com";
 
@@ -117,7 +118,7 @@ class UserResourceTest extends AbstractTestHelper {
             acknowledgementService,
             nihService,
             servicesConfiguration,
-            institutionService);
+            institutionAndLibraryCardEnforcement);
   }
 
   @Test
@@ -418,7 +419,7 @@ class UserResourceTest extends AbstractTestHelper {
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     var body = (List<UserService.SimplifiedUser>) response.getEntity();
     assertFalse(body.isEmpty());
-    assertEquals(so.getDisplayName(), body.get(0).getDisplayName());
+    assertEquals(so.getDisplayName(), body.getFirst().getDisplayName());
   }
 
   @SuppressWarnings("rawtypes")
@@ -1028,8 +1029,6 @@ class UserResourceTest extends AbstractTestHelper {
     institution.setId(nonAdminUser.getInstitutionId());
     institution.setDomains(List.of("@example.com"));
 
-    when(institutionService.findInstitutionById(nonAdminUser.getInstitutionId()))
-        .thenReturn(institution);
     when(userService.createUser(request.newUser())).thenReturn(createdUser);
     when(servicesConfiguration.getLocalURL()).thenReturn("http://localhost:8080");
 
@@ -1046,12 +1045,17 @@ class UserResourceTest extends AbstractTestHelper {
     User nonAdminUser = createUserWithInstitution();
     DuosUser nonAdminDuosUser = new DuosUser(authUser, nonAdminUser);
 
+    List<String> allowedDomains = List.of("@example.com");
     Institution institution = new Institution();
     institution.setId(nonAdminUser.getInstitutionId());
-    institution.setDomains(List.of("@example.com"));
+    institution.setDomains(allowedDomains);
 
-    when(institutionService.findInstitutionById(nonAdminUser.getInstitutionId()))
-        .thenReturn(institution);
+    doThrow(
+            new ForbiddenException(
+                "You can only create users with email addresses from your institutional domains: "
+                    + allowedDomains))
+        .when(institutionAndLibraryCardEnforcement)
+        .validateEmailsFromSameInstitution(anyString(), anyString());
 
     try (var response = userResource.createNewUser(nonAdminDuosUser, gson.toJson(request))) {
       assertEquals(Status.FORBIDDEN.getStatusCode(), response.getStatus());
