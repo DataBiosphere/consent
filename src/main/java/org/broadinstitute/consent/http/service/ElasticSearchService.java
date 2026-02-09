@@ -91,12 +91,12 @@ public class ElasticSearchService implements ConsentLogger {
 
   private static final String BULK_HEADER =
       """
-      { "index": {"_type": "dataset", "_id": "%d"} }
+      { "index": {"_index": "dataset", "_id": "%d"} }
       """;
 
   private static final String DELETE_QUERY =
       """
-      { "query": { "bool": { "must": [ { "match": { "_type": "dataset" } }, { "match": { "_id": "%d" } } ] } } }
+      { "query": { "bool": { "must": [ { "match": { "_index": "dataset" } }, { "match": { "_id": "%d" } } ] } } }
       """;
 
   private Response performRequest(Request request) throws IOException {
