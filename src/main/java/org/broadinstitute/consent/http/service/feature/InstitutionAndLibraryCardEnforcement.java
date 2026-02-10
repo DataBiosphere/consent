@@ -7,6 +7,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.util.concurrent.ExecutorService;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
@@ -94,6 +95,25 @@ public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
   public String trimmedEmailDomain(String email) {
     String trimmedEmail = email.trim();
     return trimmedEmail.substring(trimmedEmail.indexOf('@') + 1);
+  }
+
+  /**
+   * Method to validate that two email addresses belong to the same institution based on their
+   * domain. This is used to enforce the rule that a user must have an email from the same
+   * institution as the issuer of their library card.
+   *
+   * @param existingEmail The email address currently associated with the user in our system.
+   * @param newEmail The new email address being evaluated for association with the user.
+   */
+  public void validateEmailsFromSameInstitution(String existingEmail, String newEmail) {
+    Institution institutionForExistingEmail = findInstitutionForEmail(existingEmail);
+    Institution institutionForNewEmail = findInstitutionForEmail(newEmail);
+
+    if (!hasMatchingInstitutionInDatabase(institutionForExistingEmail, institutionForNewEmail)) {
+      throw new ForbiddenException(
+          "You can only create users with email addresses from your institutional domains: "
+              + institutionForExistingEmail.getDomains());
+    }
   }
 
   /**

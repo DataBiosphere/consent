@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
@@ -41,6 +42,7 @@ import org.broadinstitute.consent.http.models.CreateDuosUserRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
@@ -49,6 +51,7 @@ import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.statement.StatementContext;
@@ -88,6 +91,8 @@ class UserResourceTest extends AbstractTestHelper {
 
   @Mock private ServicesConfiguration servicesConfiguration;
 
+  @Mock private InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
+
   private static final String TEST_EMAIL = "test@gmail.com";
 
   private final Gson gson = GsonUtil.getInstance();
@@ -112,7 +117,8 @@ class UserResourceTest extends AbstractTestHelper {
             datasetService,
             acknowledgementService,
             nihService,
-            servicesConfiguration);
+            servicesConfiguration,
+            institutionAndLibraryCardEnforcement);
   }
 
   @Test
@@ -413,7 +419,7 @@ class UserResourceTest extends AbstractTestHelper {
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     var body = (List<UserService.SimplifiedUser>) response.getEntity();
     assertFalse(body.isEmpty());
-    assertEquals(so.getDisplayName(), body.get(0).getDisplayName());
+    assertEquals(so.getDisplayName(), body.getFirst().getDisplayName());
   }
 
   @SuppressWarnings("rawtypes")
@@ -991,16 +997,68 @@ class UserResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testCreateNewUser() {
+  void testCreateNewUserAsAdmin() {
     CreateDuosUserRequest request =
         new CreateDuosUserRequest(
             "New User", "test@test.com", true, List.of(UserRoles.Researcher()));
     User createdUser =
         new User(1, request.email(), request.displayName(), new Date(), request.roles());
+    User adminUser = createUserWithRole();
+    adminUser.setAdminRole();
+    DuosUser adminDuosUser = new DuosUser(authUser, adminUser);
+
     when(userService.createUser(request.newUser())).thenReturn(createdUser);
     when(servicesConfiguration.getLocalURL()).thenReturn("http://localhost:8080");
-    try (var response = userResource.createNewUser(duosUser, gson.toJson(request))) {
+
+    try (var response = userResource.createNewUser(adminDuosUser, gson.toJson(request))) {
       assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
+    }
+  }
+
+  @Test
+  void testCreateNewUserAsNonAdminWithValidDomain() {
+    CreateDuosUserRequest request =
+        new CreateDuosUserRequest(
+            "New User", "test@example.com", true, List.of(UserRoles.Researcher()));
+    User createdUser =
+        new User(1, request.email(), request.displayName(), new Date(), request.roles());
+    User nonAdminUser = createUserWithInstitution();
+    DuosUser nonAdminDuosUser = new DuosUser(authUser, nonAdminUser);
+
+    Institution institution = new Institution();
+    institution.setId(nonAdminUser.getInstitutionId());
+    institution.setDomains(List.of("@example.com"));
+
+    when(userService.createUser(request.newUser())).thenReturn(createdUser);
+    when(servicesConfiguration.getLocalURL()).thenReturn("http://localhost:8080");
+
+    try (var response = userResource.createNewUser(nonAdminDuosUser, gson.toJson(request))) {
+      assertEquals(Status.CREATED.getStatusCode(), response.getStatus());
+    }
+  }
+
+  @Test
+  void testCreateNewUserAsNonAdminWithInvalidDomain() {
+    CreateDuosUserRequest request =
+        new CreateDuosUserRequest(
+            "New User", "test@invalid.com", true, List.of(UserRoles.Researcher()));
+    User nonAdminUser = createUserWithInstitution();
+    DuosUser nonAdminDuosUser = new DuosUser(authUser, nonAdminUser);
+
+    List<String> allowedDomains = List.of("@example.com");
+    Institution institution = new Institution();
+    institution.setId(nonAdminUser.getInstitutionId());
+    institution.setDomains(allowedDomains);
+
+    doThrow(
+            new ForbiddenException(
+                "You can only create users with email addresses from your institutional domains: "
+                    + allowedDomains))
+        .when(institutionAndLibraryCardEnforcement)
+        .validateEmailsFromSameInstitution(anyString(), anyString());
+
+    try (var response = userResource.createNewUser(nonAdminDuosUser, gson.toJson(request))) {
+      assertEquals(Status.FORBIDDEN.getStatusCode(), response.getStatus());
     }
   }
 

@@ -12,6 +12,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -162,12 +163,12 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
     testUser.setLibraryCard(lc);
 
     Institution institutionFromEmail = new Institution();
-    institutionFromEmail.setId(Integer.valueOf(1));
+    institutionFromEmail.setId(1);
     institutionFromEmail.setName("Institution One");
     testUser.setInstitution(institutionFromEmail);
 
     Institution institutionFromDatabase = new Institution();
-    institutionFromDatabase.setId(Integer.valueOf(2));
+    institutionFromDatabase.setId(2);
     institutionFromDatabase.setName("Institution Two");
 
     // Mock SO not found
@@ -257,6 +258,52 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
     when(userDAO.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
     when(institutionDAO.findInstitutionByDomain(soDomain)).thenReturn(soInstitution);
     assertTrue(service.needsLibraryCardRemovedForUser(testUser, institutionFromEmail.getId()));
+  }
+
+  @Test
+  void validateEmailsFromSameInstitution_SameInstitution() {
+    Institution institution = new Institution();
+    institution.setId(1);
+    institution.setName("Test Institution");
+
+    String existingEmail = "user1@example.com";
+    String newEmail = "user2@example.com";
+
+    when(institutionDAO.findInstitutionByDomain("example.com")).thenReturn(institution);
+
+    // Should not throw exception
+    service.validateEmailsFromSameInstitution(existingEmail, newEmail);
+  }
+
+  @Test
+  void validateEmailsFromSameInstitution_DifferentInstitutions() {
+    Institution institution1 = new Institution();
+    institution1.setId(1);
+    institution1.setName("Institution One");
+    institution1.setDomains(List.of("example.com"));
+
+    Institution institution2 = new Institution();
+    institution2.setId(2);
+    institution2.setName("Institution Two");
+    institution2.setDomains(List.of("different.com"));
+
+    String existingEmail = "user1@example.com";
+    String newEmail = "user2@different.com";
+
+    when(institutionDAO.findInstitutionByDomain("example.com")).thenReturn(institution1);
+    when(institutionDAO.findInstitutionByDomain("different.com")).thenReturn(institution2);
+
+    ForbiddenException exception =
+        assertThrows(
+            ForbiddenException.class,
+            () -> service.validateEmailsFromSameInstitution(existingEmail, newEmail));
+
+    assertTrue(
+        exception
+            .getMessage()
+            .contains(
+                "You can only create users with email addresses from your institutional domains: "
+                    + institution1.getDomains()));
   }
 
   public static Stream<Arguments> testEnforceInstitutionAndLibraryCardVariations() {
