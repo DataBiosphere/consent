@@ -16,8 +16,9 @@ public class ElasticSearchSupport {
 
   public static RestClient createRestClient(ElasticSearchConfiguration configuration) {
     RestClientBuilder builder;
-    if (configuration.getCloudId() != null && !configuration.getCloudId().isBlank()) {
-      builder = RestClient.builder(configuration.getCloudId());
+    String cloudId = configuration.getCloudId();
+    if (cloudId != null && !cloudId.trim().isEmpty()) {
+      builder = RestClient.builder(cloudId);
     } else {
       HttpHost[] hosts =
           configuration.getServers().stream()
@@ -28,15 +29,15 @@ public class ElasticSearchSupport {
               .toArray(new HttpHost[configuration.getServers().size()]);
       builder = RestClient.builder(hosts);
     }
-    if (configuration.getAuthUser() != null
-        && !configuration.getAuthUser().isBlank()
-        && configuration.getAuthPassword() != null
-        && !configuration.getAuthPassword().isBlank()) {
+    String authUser = configuration.getAuthUser();
+    String authPassword = configuration.getAuthPassword();
+    if (authUser != null
+        && !authUser.trim().isEmpty()
+        && authPassword != null
+        && !authPassword.trim().isEmpty()) {
       CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
       credentialsProvider.setCredentials(
-          AuthScope.ANY,
-          new UsernamePasswordCredentials(
-              configuration.getAuthUser(), configuration.getAuthPassword()));
+          AuthScope.ANY, new UsernamePasswordCredentials(authUser, authPassword));
       builder.setHttpClientConfigCallback(
           httpClientBuilder ->
               httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));

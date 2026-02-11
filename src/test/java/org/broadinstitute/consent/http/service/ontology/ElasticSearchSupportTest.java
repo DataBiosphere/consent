@@ -1,9 +1,11 @@
 package org.broadinstitute.consent.http.service.ontology;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
+import org.elasticsearch.client.Node;
 import org.elasticsearch.client.RestClient;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +29,11 @@ class ElasticSearchSupportTest {
 
     RestClient client = ElasticSearchSupport.createRestClient(config);
     assertNotNull(client);
+    List<Node> nodes = client.getNodes();
+    assertEquals(1, nodes.size());
+    assertEquals("localhost", nodes.get(0).getHost().getHostName());
+    assertEquals(9200, nodes.get(0).getHost().getPort());
+    assertEquals("http", nodes.get(0).getHost().getSchemeName());
   }
 
   @Test
@@ -39,6 +46,11 @@ class ElasticSearchSupportTest {
 
     RestClient client = ElasticSearchSupport.createRestClient(config);
     assertNotNull(client);
+    List<Node> nodes = client.getNodes();
+    assertEquals(1, nodes.size());
+    assertEquals("myuuid.localhost", nodes.get(0).getHost().getHostName());
+    assertEquals(9200, nodes.get(0).getHost().getPort());
+    assertEquals("https", nodes.get(0).getHost().getSchemeName());
   }
 
   @Test
@@ -54,6 +66,9 @@ class ElasticSearchSupportTest {
 
     RestClient client = ElasticSearchSupport.createRestClient(config);
     assertNotNull(client);
+    List<Node> nodes = client.getNodes();
+    assertEquals(1, nodes.size());
+    assertEquals("localhost", nodes.get(0).getHost().getHostName());
   }
 
   @Test
@@ -68,6 +83,9 @@ class ElasticSearchSupportTest {
 
     RestClient client = ElasticSearchSupport.createRestClient(config);
     assertNotNull(client);
+    List<Node> nodes = client.getNodes();
+    assertEquals(1, nodes.size());
+    assertEquals("myuuid.localhost", nodes.get(0).getHost().getHostName());
   }
 
   @Test
@@ -82,6 +100,9 @@ class ElasticSearchSupportTest {
 
     RestClient client = ElasticSearchSupport.createRestClient(config);
     assertNotNull(client);
+    List<Node> nodes = client.getNodes();
+    assertEquals(1, nodes.size());
+    assertEquals("localhost", nodes.get(0).getHost().getHostName());
   }
 
   @Test
@@ -97,6 +118,9 @@ class ElasticSearchSupportTest {
 
     RestClient client = ElasticSearchSupport.createRestClient(config);
     assertNotNull(client);
+    List<Node> nodes = client.getNodes();
+    assertEquals(1, nodes.size());
+    assertEquals("localhost", nodes.get(0).getHost().getHostName());
   }
 
   @Test
@@ -111,5 +135,8 @@ class ElasticSearchSupportTest {
 
     RestClient client = ElasticSearchSupport.createRestClient(config);
     assertNotNull(client);
+    List<Node> nodes = client.getNodes();
+    assertEquals(1, nodes.size());
+    assertEquals("myuuid.localhost", nodes.get(0).getHost().getHostName());
   }
 }
