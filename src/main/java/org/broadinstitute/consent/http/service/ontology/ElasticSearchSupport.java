@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service.ontology;
 
-import java.util.Objects;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -17,8 +16,9 @@ public class ElasticSearchSupport {
 
   public static RestClient createRestClient(ElasticSearchConfiguration configuration) {
     RestClientBuilder builder;
-    if (Objects.nonNull(configuration.getCloudId())) {
-      builder = RestClient.builder(configuration.getCloudId());
+    String cloudId = configuration.getCloudId();
+    if (cloudId != null && !cloudId.trim().isEmpty()) {
+      builder = RestClient.builder(cloudId);
     } else {
       HttpHost[] hosts =
           configuration.getServers().stream()
@@ -29,13 +29,15 @@ public class ElasticSearchSupport {
               .toArray(new HttpHost[configuration.getServers().size()]);
       builder = RestClient.builder(hosts);
     }
-    if (Objects.nonNull(configuration.getAuthUser())
-        && Objects.nonNull(configuration.getAuthPassword())) {
+    String authUser = configuration.getAuthUser();
+    String authPassword = configuration.getAuthPassword();
+    if (authUser != null
+        && !authUser.trim().isEmpty()
+        && authPassword != null
+        && !authPassword.trim().isEmpty()) {
       CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
       credentialsProvider.setCredentials(
-          AuthScope.ANY,
-          new UsernamePasswordCredentials(
-              configuration.getAuthUser(), configuration.getAuthPassword()));
+          AuthScope.ANY, new UsernamePasswordCredentials(authUser, authPassword));
       builder.setHttpClientConfigCallback(
           httpClientBuilder ->
               httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
