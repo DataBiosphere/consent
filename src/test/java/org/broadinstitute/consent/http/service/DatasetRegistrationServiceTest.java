@@ -137,6 +137,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
             bodyPart);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("asdf", "hjkl"), BlobId.of("qwer", "tyuio"));
+    when(gcsService.hasBytes(any())).thenReturn(true);
     when(dacDAO.findById(any())).thenReturn(new Dac());
 
     datasetRegistrationService.createDatasetsFromRegistration(schema, user, files);
