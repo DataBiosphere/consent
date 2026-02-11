@@ -51,7 +51,6 @@ import org.broadinstitute.consent.http.health.SendGridHealthCheck;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.resources.DACAutomationRuleResource;
-import org.broadinstitute.consent.http.resources.DACUserResource;
 import org.broadinstitute.consent.http.resources.DaaResource;
 import org.broadinstitute.consent.http.resources.DacResource;
 import org.broadinstitute.consent.http.resources.DarCollectionResource;
@@ -164,7 +163,6 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(injector.getInstance(DaaResource.class));
     env.jersey().register(injector.getInstance(DACAutomationRuleResource.class));
     env.jersey().register(injector.getInstance(DacResource.class));
-    env.jersey().register(injector.getInstance(DACUserResource.class));
     env.jersey().register(injector.getInstance(DarCollectionResource.class));
     env.jersey().register(injector.getInstance(DataAccessRequestResource.class));
     env.jersey().register(injector.getInstance(DatasetResource.class));

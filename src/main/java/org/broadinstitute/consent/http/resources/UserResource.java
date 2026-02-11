@@ -48,6 +48,7 @@ import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
@@ -61,6 +62,7 @@ public class UserResource extends Resource {
   private final AcknowledgementService acknowledgementService;
   private final NihService nihService;
   private final ServicesConfiguration servicesConfiguration;
+  private final InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
 
   @Inject
   public UserResource(
@@ -69,13 +71,15 @@ public class UserResource extends Resource {
       DatasetService datasetService,
       AcknowledgementService acknowledgementService,
       NihService nihService,
-      ServicesConfiguration servicesConfiguration) {
+      ServicesConfiguration servicesConfiguration,
+      InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement) {
     this.samService = samService;
     this.userService = userService;
     this.datasetService = datasetService;
     this.acknowledgementService = acknowledgementService;
     this.nihService = nihService;
     this.servicesConfiguration = servicesConfiguration;
+    this.institutionAndLibraryCardEnforcement = institutionAndLibraryCardEnforcement;
   }
 
   @GET
@@ -483,21 +487,30 @@ public class UserResource extends Resource {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/create")
-  @RolesAllowed({ADMIN, CHAIRPERSON})
+  @RolesAllowed({ADMIN, CHAIRPERSON, SIGNINGOFFICIAL})
   public Response createNewUser(@Auth DuosUser duosUser, String json) {
     try {
       CreateDuosUserRequest createDuosUserRequest =
           gson.fromJson(json, CreateDuosUserRequest.class);
       createDuosUserRequest.validate();
-      // Non-admins can only create users with the Researcher role
+
+      // Non-admins have additional restrictions when creating new users
       if (!duosUser.getUser().hasUserRole(UserRoles.ADMIN)) {
+        String existingUserEmail = duosUser.getUser().getEmail();
+        String newUserEmail = createDuosUserRequest.newUser().getEmail();
+
+        // Enforce that the new user email domain matches the creator's institution domains
+        institutionAndLibraryCardEnforcement.validateEmailsFromSameInstitution(
+            newUserEmail, existingUserEmail);
+
+        // Non-admins can only create users with the Researcher role
         createDuosUserRequest
             .roles()
             .forEach(
                 role -> {
                   if (!role.getName().equals(UserRoles.RESEARCHER.getRoleName())) {
                     throw new ForbiddenException(
-                        "Chairs can only create users with the Researcher role.");
+                        "You can only create users with the Researcher role.");
                   }
                 });
       }

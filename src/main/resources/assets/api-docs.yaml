@@ -232,9 +232,6 @@ paths:
                   $ref: '#/components/schemas/User'
         500:
           description: Internal Server Error
-  /api/dacuser:
-    $ref: './paths/dacuser.yaml'
-
   /api/dar/v2:
     $ref: './paths/darV2.yaml'
 
