@@ -72,7 +72,6 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     FileStorageObject origFile = createFileStorageObject();
 
     User deleteUser = createUser();
-    Instant deleteDate = Instant.now();
 
     assertFalse(origFile.getDeleted());
     assertNull(origFile.getDeleteUserId());
