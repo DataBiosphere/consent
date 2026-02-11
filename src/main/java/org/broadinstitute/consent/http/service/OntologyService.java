@@ -113,4 +113,22 @@ public class OntologyService implements ConsentLogger {
   public StreamingOutput findByTermIds(String[] termIds) {
     return ontologyDAO.findByTermIds(termIds);
   }
+
+  /**
+   * Find ontology terms matching the provided query string and optional filters for ontology type
+   * and result count. If no ontology type is provided, results will be returned for all ontology
+   * types. If no count is provided, a default value of 20 will be used.
+   *
+   * @param q Required query string to search for in the ontology index.
+   * @param ontologyType Optional ontology type to filter results by. If null, results will be
+   *     returned for all ontology types.
+   * @param count Optional maximum number of results to return. If null, a default value of 20 will
+   *     be used.
+   * @return A StreamingOutput containing the search results matching the query and filters
+   *     provided.
+   */
+  public StreamingOutput findByQuery(String q, OntologyType ontologyType, Integer count) {
+    Integer defaultCount = count == null ? 20 : count;
+    return ontologyDAO.findByQuery(q, ontologyType, defaultCount);
+  }
 }

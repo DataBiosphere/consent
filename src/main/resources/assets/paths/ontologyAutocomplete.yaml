@@ -1,0 +1,41 @@
+get:
+  summary: autocomplete
+  description: |
+    Ontology terms can be queried based on term; type and count. This provides an easy filtering
+    mechanism that allows users to select ontology terms that are applicable to datasets or
+    research purposes.
+  parameters:
+    - name: q
+      in: query
+      description: The query term (word fragment) which the service will query on
+      required: true
+      schema:
+        type: string
+    - name: type
+      in: query
+      description: An optional type of the ontology file filter results.
+      required: false
+      schema:
+        type: string
+        enum: [ DOID, DUO ]
+    - name: count
+      in: query
+      description: |
+        An optional limit on the number of autosuggested results that are returned. Default value
+        is 20.
+      required: false
+      schema:
+        type: number
+  tags:
+    - Ontology
+  responses:
+    200:
+      description: Array of results.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/OntologyTerm.yaml'
+    500:
+      description: Internal Server Error

@@ -938,6 +938,8 @@ paths:
     $ref: './paths/liveness.yaml'
   /ontology/search:
     $ref: './paths/ontologySearch.yaml'
+  /ontology/autocomplete:
+    $ref: './paths/ontologyAutocomplete.yaml'
   /schemas/dataset-registration/v1:
     $ref: './paths/schemaDatasetRegistrationV1.yaml'
   /status:

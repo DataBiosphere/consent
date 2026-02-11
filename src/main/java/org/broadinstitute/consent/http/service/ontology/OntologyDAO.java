@@ -4,8 +4,10 @@ import com.google.gson.JsonObject;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
 import org.broadinstitute.consent.http.db.StreamingOutputIterator;
 import org.broadinstitute.consent.http.db.mapper.JsonMapper;
+import org.broadinstitute.consent.http.enumeration.OntologyType;
 import org.jdbi.v3.core.result.ResultIterable;
 import org.jdbi.v3.json.Json;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -51,6 +53,37 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
               handle
                   .createQuery(query)
                   .bindArray("ids", lowerIds)
+                  .map(new JsonMapper("json_document"));
+          StreamingOutputIterator<JsonObject> iterator = new StreamingOutputIterator<>();
+          return iterator.streamResults(results, handle);
+        });
+  }
+
+  @Json
+  default StreamingOutput findByQuery(String term, OntologyType type, Integer count) {
+    String[] defaultTypes =
+        type != null
+            ? new String[] {type.name().toLowerCase()}
+            : EnumSet.allOf(OntologyType.class).stream()
+                .map(t -> t.name().toLowerCase())
+                .toArray(String[]::new);
+    String query =
+        """
+            SELECT json_document, ts_rank(search_vector, query) AS rank
+              FROM ontology_index, to_tsquery('english', :term) query
+             WHERE search_vector @@ query
+               AND LOWER(ontology) = ANY (:types)
+             ORDER BY rank DESC
+             LIMIT :count
+            """;
+    return withHandle(
+        handle -> {
+          ResultIterable<JsonObject> results =
+              handle
+                  .createQuery(query)
+                  .bindArray("types", defaultTypes)
+                  .bind("term", term.toLowerCase().trim().replaceAll("\\s+", " \\| "))
+                  .bind("count", count)
                   .map(new JsonMapper("json_document"));
           StreamingOutputIterator<JsonObject> iterator = new StreamingOutputIterator<>();
           return iterator.streamResults(results, handle);

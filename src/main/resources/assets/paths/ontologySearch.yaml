@@ -17,5 +17,11 @@ get:
   responses:
     200:
       description: Ontology Search Results
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/OntologyTerm.yaml'
     500:
       description: Internal Server Error
