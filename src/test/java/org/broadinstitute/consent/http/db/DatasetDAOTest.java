@@ -338,8 +338,7 @@ class DatasetDAOTest extends DAOTestHelper {
 
     User deleteUser = createUser();
 
-    fileStorageObjectDAO.deleteFileById(
-        nihFile.getFileStorageObjectId(), deleteUser.getUserId(), Instant.now());
+    fileStorageObjectDAO.deleteFileById(nihFile.getFileStorageObjectId(), deleteUser.getUserId());
 
     Dataset found = datasetDAO.findDatasetById(dataset.getDatasetId());
 

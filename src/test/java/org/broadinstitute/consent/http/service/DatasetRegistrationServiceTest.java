@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -32,12 +34,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
@@ -45,6 +49,7 @@ import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
+import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
@@ -79,6 +84,8 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
   @Mock private DatasetServiceDAO datasetServiceDAO;
 
+  @Mock private FileStorageObjectDAO fileStorageObjectDAO;
+
   @Mock private StudyDAO studyDAO;
 
   @Mock private GCSService gcsService;
@@ -94,6 +101,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
             datasetDAO,
             dacDAO,
             datasetServiceDAO,
+            fileStorageObjectDAO,
             gcsService,
             elasticSearchService,
             studyDAO,
@@ -734,6 +742,112 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     assertEquals(extractor.name(), prop.get().getPropertyName());
     assertEquals(extractor.schemaProp(), prop.get().getSchemaProperty());
     assertEquals(extractor.type(), prop.get().getPropertyType());
+  }
+
+  @Test
+  void cleanupEmptyDatasetNihInstitutionalCertificationFile() {
+    User user = new User();
+    user.setUserId(1);
+
+    Study study1 = new Study();
+    study1.setStudyId(5);
+    study1.setUuid(UUID.randomUUID());
+    FileStorageObject alternateSharingPlan1 = new FileStorageObject();
+    alternateSharingPlan1.setFileStorageObjectId(92);
+    BlobId asp2BlobId = mock(BlobId.class);
+    alternateSharingPlan1.setBlobId(asp2BlobId);
+    study1.setAlternativeDataSharingPlan(alternateSharingPlan1);
+
+    Dataset dataset1 = new Dataset();
+    dataset1.setDatasetId(1);
+    FileStorageObject fso1 = new FileStorageObject();
+    fso1.setFileStorageObjectId(7);
+    BlobId fso1BlobId = mock(BlobId.class);
+    fso1.setBlobId(fso1BlobId);
+    dataset1.setNihInstitutionalCertificationFile(fso1);
+    dataset1.setStudy(study1);
+
+    Dataset dataset2 = new Dataset();
+    dataset2.setDatasetId(2);
+    Study study7 = new Study();
+    study7.setStudyId(8);
+    dataset2.setStudy(study7);
+
+    Study study3 = new Study();
+    study3.setStudyId(9);
+    study3.setUuid(UUID.randomUUID());
+    FileStorageObject alternateSharingPlan3 = new FileStorageObject();
+    alternateSharingPlan3.setFileStorageObjectId(91);
+    BlobId asp3BlobId = mock(BlobId.class);
+    String asp3Name = "ASP3";
+    alternateSharingPlan3.setBlobId(asp3BlobId);
+    study3.setAlternativeDataSharingPlan(alternateSharingPlan3);
+
+    Dataset dataset3 = new Dataset();
+    FileStorageObject fso3 = new FileStorageObject();
+    fso3.setFileStorageObjectId(8);
+    dataset3.setDatasetId(3);
+    BlobId fso3BlobId = mock(BlobId.class);
+    fso3.setBlobId(fso3BlobId);
+    String fso3Name = "FSO3";
+    dataset3.setNihInstitutionalCertificationFile(fso3);
+    dataset3.setStudy(study3);
+
+    Dataset dataset4 = new Dataset();
+    FileStorageObject fso4 = new FileStorageObject();
+    fso4.setFileStorageObjectId(9);
+    dataset4.setDatasetId(4);
+    BlobId fso4BlobId = mock(BlobId.class);
+    fso4.setBlobId(fso4BlobId);
+    dataset4.setNihInstitutionalCertificationFile(fso4);
+    Study study2 = new Study();
+    study2.setStudyId(4);
+    study2.setUuid(UUID.randomUUID());
+    FileStorageObject alternateSharingPlan = new FileStorageObject();
+    BlobId asp1BlobId = mock(BlobId.class);
+    alternateSharingPlan.setBlobId(asp1BlobId);
+    alternateSharingPlan.setFileStorageObjectId(90);
+    study2.setAlternativeDataSharingPlan(alternateSharingPlan);
+    dataset4.setStudy(study2);
+
+    List<Dataset> datasetList = List.of(dataset1, dataset2, dataset3, dataset4);
+    List<Integer> datasetIds = datasetList.stream().map(Dataset::getDatasetId).toList();
+    when(datasetDAO.findAllDatasetIds()).thenReturn(datasetIds);
+    when(datasetDAO.findDatasetById(dataset1.getDatasetId())).thenReturn(dataset1);
+    when(datasetDAO.findDatasetById(dataset2.getDatasetId())).thenReturn(dataset2);
+    when(datasetDAO.findDatasetById(dataset3.getDatasetId())).thenReturn(dataset3);
+    when(datasetDAO.findDatasetById(dataset4.getDatasetId())).thenReturn(dataset4);
+    when(studyDAO.findStudyById(study2.getStudyId())).thenReturn(study2);
+    when(studyDAO.findStudyById(study1.getStudyId())).thenReturn(study1);
+    when(studyDAO.findStudyById(study3.getStudyId())).thenReturn(study3);
+    when(studyDAO.findStudyById(study7.getStudyId())).thenReturn(study7);
+    when(fso3BlobId.getName()).thenReturn(fso3Name);
+    when(asp3BlobId.getName()).thenReturn(asp3Name);
+    doThrow(new NotFoundException("File not found")).when(gcsService).hasBytes(fso3BlobId);
+    doThrow(new NotFoundException("File not found")).when(gcsService).deleteDocument(fso3Name);
+    doThrow(new NotFoundException("File not found")).when(gcsService).hasBytes(asp3BlobId);
+    doThrow(new NotFoundException("File not found")).when(gcsService).deleteDocument(asp3Name);
+
+    when(gcsService.hasBytes(fso1BlobId)).thenReturn(true);
+    when(gcsService.hasBytes(fso4BlobId)).thenReturn(false);
+    when(gcsService.hasBytes(asp1BlobId)).thenReturn(true);
+    when(gcsService.hasBytes(asp2BlobId)).thenReturn(false);
+
+    assertDoesNotThrow(
+        () -> datasetRegistrationService.cleanupDatasetsAndStudiesWithEmptyFiles(user));
+
+    verify(gcsService, times(4)).deleteDocument(any());
+    verify(fileStorageObjectDAO, times(4)).deleteFileById(anyInt(), anyInt());
+  }
+
+  @Test
+  void testDeleteFile_No_File() {
+    assertDoesNotThrow(() -> datasetRegistrationService.deleteFile(null, new User()));
+  }
+
+  @Test
+  void testDeleteFile_No_User() {
+    assertDoesNotThrow(() -> datasetRegistrationService.deleteFile(new FileStorageObject(), null));
   }
 
   private void assertDataUse(ConsentGroup consentGroup, DataUse dataUse) {

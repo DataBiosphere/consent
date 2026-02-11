@@ -245,8 +245,7 @@ class StudyDAOTest extends DAOTestHelper {
 
     User deleteUser = createUser();
 
-    fileStorageObjectDAO.deleteFileById(
-        altFile.getFileStorageObjectId(), deleteUser.getUserId(), Instant.now());
+    fileStorageObjectDAO.deleteFileById(altFile.getFileStorageObjectId(), deleteUser.getUserId());
 
     Study found = studyDAO.findStudyById(study.getStudyId());
 

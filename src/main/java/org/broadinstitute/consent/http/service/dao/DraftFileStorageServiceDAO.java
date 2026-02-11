@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -73,9 +72,7 @@ public class DraftFileStorageServiceDAO implements ConsentLogger {
           try {
             gcsService.deleteDocument(fileStorageObject.getBlobId().getName());
             fileStorageObjectDAO.deleteFileById(
-                fileStorageObject.getFileStorageObjectId(),
-                user.getUserId(),
-                new Date().toInstant());
+                fileStorageObject.getFileStorageObjectId(), user.getUserId());
           } catch (Exception e) {
             logWarn(
                 String.format(

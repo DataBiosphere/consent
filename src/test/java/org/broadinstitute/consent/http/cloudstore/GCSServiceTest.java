@@ -2,7 +2,9 @@ package org.broadinstitute.consent.http.cloudstore;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -12,6 +14,7 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.MediaType;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -131,5 +134,31 @@ class GCSServiceTest extends AbstractTestHelper {
     initStore();
     boolean deleted = service.deleteDocument(randomAlphabetic(10));
     assertTrue(deleted);
+  }
+
+  @Test
+  void testHasBytes_true() {
+    BlobId blobId = BlobId.of("bucket", "hasBytes");
+    when(storage.get(blobId)).thenReturn(blob);
+    when(blob.getSize()).thenReturn(5L);
+    initStore();
+    assertTrue(service.hasBytes(blobId));
+  }
+
+  @Test
+  void testHasBytes_false() {
+    BlobId blobId = BlobId.of("bucket", "hasNoBytes");
+    when(storage.get(blobId)).thenReturn(blob);
+    when(blob.getSize()).thenReturn(0L);
+    initStore();
+    assertFalse(service.hasBytes(blobId));
+  }
+
+  @Test
+  void testHasBytes_throws() {
+    BlobId blobId = BlobId.of("bucket", "deletedfromgcs");
+    when(storage.get(blobId)).thenReturn(null);
+    initStore();
+    assertThrows(NotFoundException.class, () -> service.hasBytes(blobId));
   }
 }

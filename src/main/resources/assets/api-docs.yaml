@@ -521,6 +521,8 @@ paths:
     $ref: './paths/datasetAuthorizedReadersAddDelete.yaml'
   /api/dataset/{identifier}/approvedUsers:
     $ref: './paths/datasetAuthorizedUsers.yaml'
+  /api/dataset/cleanupEmptyCertificationAndAlternativeSharingFiles:
+    $ref: './paths/cleanupEmptyCertificationAndAlternativeSharingFiles.yaml'
   /api/draft/v1:
     $ref: './paths/draftIndex.yaml'
   /api/draft/v1/{draftUUID}:
