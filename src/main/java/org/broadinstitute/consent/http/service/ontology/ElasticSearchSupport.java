@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service.ontology;
 
-import java.util.Objects;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -17,7 +16,7 @@ public class ElasticSearchSupport {
 
   public static RestClient createRestClient(ElasticSearchConfiguration configuration) {
     RestClientBuilder builder;
-    if (Objects.nonNull(configuration.getCloudId())) {
+    if (configuration.getCloudId() != null && !configuration.getCloudId().isBlank()) {
       builder = RestClient.builder(configuration.getCloudId());
     } else {
       HttpHost[] hosts =
@@ -29,8 +28,10 @@ public class ElasticSearchSupport {
               .toArray(new HttpHost[configuration.getServers().size()]);
       builder = RestClient.builder(hosts);
     }
-    if (Objects.nonNull(configuration.getAuthUser())
-        && Objects.nonNull(configuration.getAuthPassword())) {
+    if (configuration.getAuthUser() != null
+        && !configuration.getAuthUser().isBlank()
+        && configuration.getAuthPassword() != null
+        && !configuration.getAuthPassword().isBlank()) {
       CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
       credentialsProvider.setCredentials(
           AuthScope.ANY,

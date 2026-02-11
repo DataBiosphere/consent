@@ -69,4 +69,47 @@ class ElasticSearchSupportTest {
     RestClient client = ElasticSearchSupport.createRestClient(config);
     assertNotNull(client);
   }
+
+  @Test
+  void testCreateRestClientWithBlankCloudId() {
+    ElasticSearchConfiguration config = new ElasticSearchConfiguration();
+    config.setCloudId(" ");
+    config.setServers(List.of("localhost"));
+    config.setPort(9200);
+    config.setProtocol("http");
+    config.setIndexName("test");
+    config.setDatasetIndexName("test");
+
+    RestClient client = ElasticSearchSupport.createRestClient(config);
+    assertNotNull(client);
+  }
+
+  @Test
+  void testCreateRestClientWithBlankAuth() {
+    ElasticSearchConfiguration config = new ElasticSearchConfiguration();
+    config.setServers(List.of("localhost"));
+    config.setPort(9200);
+    config.setProtocol("http");
+    config.setAuthUser(" ");
+    config.setAuthPassword("password");
+    config.setIndexName("test");
+    config.setDatasetIndexName("test");
+
+    RestClient client = ElasticSearchSupport.createRestClient(config);
+    assertNotNull(client);
+  }
+
+  @Test
+  void testCreateRestClientWithCloudIdAndBlankAuth() {
+    ElasticSearchConfiguration config = new ElasticSearchConfiguration();
+    config.setCloudId(CLOUD_ID);
+    config.setAuthUser("user");
+    config.setAuthPassword("");
+    config.setIndexName("test");
+    config.setDatasetIndexName("test");
+    config.setServers(List.of());
+
+    RestClient client = ElasticSearchSupport.createRestClient(config);
+    assertNotNull(client);
+  }
 }
