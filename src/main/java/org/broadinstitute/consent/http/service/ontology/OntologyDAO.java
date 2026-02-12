@@ -101,14 +101,13 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
    * @return A formatted tsquery string (e.g., "term1:* | term2:*")
    */
   default String sanitizeForTsQuery(String term) {
-    if (term == null || term.isBlank()) {
+    if (term == null || term.trim().isBlank()) {
       return "";
     }
     // Remove characters that conflict with tsquery syntax (keep alphanumeric and whitespace)
     String cleanTerm = term.replaceAll("[^a-zA-Z0-9\\s]", "");
 
     return Arrays.stream(cleanTerm.trim().split("\\s+"))
-        .filter(s -> !s.isBlank())
         .map(s -> s + ":*")
         .collect(Collectors.joining(" | "));
   }

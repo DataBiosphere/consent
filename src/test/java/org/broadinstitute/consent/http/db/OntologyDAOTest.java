@@ -143,4 +143,21 @@ class OntologyDAOTest extends DAOTestHelper {
     JsonArray jsonArray = getJsonArrayFromStreamingOutput(output);
     assertFalse(jsonArray.isEmpty());
   }
+
+  @Test
+  void testSanitizeForTsQueryNull() throws Exception {
+    batchInsertTerms();
+    StreamingOutput output = ontologyDAO.findByQuery(null, null, null);
+    JsonArray jsonArray = getJsonArrayFromStreamingOutput(output);
+    assertTrue(jsonArray.isEmpty());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {" ", "", "\t", "\n"})
+  void testSanitizeForTsQueryEmpty(String partial) throws Exception {
+    batchInsertTerms();
+    StreamingOutput output = ontologyDAO.findByQuery(partial, null, null);
+    JsonArray jsonArray = getJsonArrayFromStreamingOutput(output);
+    assertTrue(jsonArray.isEmpty());
+  }
 }
