@@ -154,6 +154,15 @@ class OntologyResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testAutocompleteSuccessBlankType() {
+    when(ontologyService.findByQuery("cancer", null, 10)).thenReturn(mockStreamingOutput);
+    resource = new OntologyResource(ontologyService);
+    try (Response response = resource.autocomplete("cancer", "", 10)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
   void testAutocompleteSuccessNullTypeAndCount() {
     when(ontologyService.findByQuery("cancer", null, null)).thenReturn(mockStreamingOutput);
     resource = new OntologyResource(ontologyService);
