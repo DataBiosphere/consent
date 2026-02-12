@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -89,6 +90,16 @@ class OntologyDAOTest extends DAOTestHelper {
     StreamingOutput output = ontologyDAO.findByQuery("data use modifier", OntologyType.DUO, 5);
     JsonArray jsonArray = getJsonArrayFromStreamingOutput(output);
     assertEquals(5, jsonArray.size());
+  }
+
+  @Test
+  // If invalid count is provided, default value of 20 should be used and results should be
+  // returned.
+  void testFindByQueryDefaultCount() throws Exception {
+    batchInsertTerms();
+    StreamingOutput output = ontologyDAO.findByQuery("data use modifier", OntologyType.DUO, 0);
+    JsonArray jsonArray = getJsonArrayFromStreamingOutput(output);
+    assertFalse(jsonArray.isEmpty());
   }
 
   @Test
