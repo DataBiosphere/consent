@@ -584,7 +584,8 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     User user = createUser(1, 100);
     when(datasetDAO.findDatasetById(1)).thenReturn(null);
     try (var response = service.indexDatasets(List.of(1), user)) {
-      verify(datasetDAO, times(1)).findDatasetById(1);
+      verify(datasetDAO).findDatasetById(1);
+      verify(esClient, never()).performRequest(any());
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
