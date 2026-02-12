@@ -61,7 +61,8 @@ import java.util.Map;
   "alternativeDataSharingPlanTargetPublicReleaseDate",
   "alternativeDataSharingPlanAccessManagement",
   "consentGroups",
-  "assets"
+  "assets",
+  "data"
 })
 public class DatasetRegistrationSchemaV1 {
 
@@ -271,6 +272,10 @@ public class DatasetRegistrationSchemaV1 {
   @JsonProperty("assets")
   @JsonPropertyDescription("Additional assets or metadata associated with this study registration")
   private Map<String, Object> assets = new HashMap<>();
+
+  @JsonProperty
+  @JsonPropertyDescription("Additional data or metadata associated with this study registration")
+  private Map<String, Object> data = new HashMap<>();
 
   /** The study id */
   @JsonProperty("studyId")
@@ -765,6 +770,18 @@ public class DatasetRegistrationSchemaV1 {
     this.assets = assets;
   }
 
+  /** Additional data associated with this study registration */
+  @JsonProperty("data")
+  public Map<String, Object> getData() {
+    return data;
+  }
+
+  /** Additional data associated with this study registration */
+  @JsonProperty("data")
+  public void setData(Map<String, Object> data) {
+    this.data = data;
+  }
+
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
@@ -962,6 +979,10 @@ public class DatasetRegistrationSchemaV1 {
     sb.append('=');
     sb.append(((this.assets == null) ? "<null>" : this.assets));
     sb.append(',');
+    sb.append("data");
+    sb.append('=');
+    sb.append(((this.data == null) ? "<null>" : this.data));
+    sb.append(',');
     if (sb.charAt((sb.length() - 1)) == ',') {
       sb.setCharAt((sb.length() - 1), ']');
     } else {
@@ -1090,6 +1111,7 @@ public class DatasetRegistrationSchemaV1 {
                 : this.controlledAccessRequiredForGenomicSummaryResultsGSR.hashCode()));
     result = ((result * 31) + ((this.piInstitution == null) ? 0 : this.piInstitution.hashCode()));
     result = ((result * 31) + ((this.assets == null) ? 0 : this.assets.hashCode()));
+    result = ((result * 31) + ((this.data == null) ? 0 : this.data.hashCode()));
     return result;
   }
 
@@ -1390,7 +1412,9 @@ public class DatasetRegistrationSchemaV1 {
             && ((this.piInstitution == rhs.piInstitution)
                 || ((this.piInstitution != null) && this.piInstitution.equals(rhs.piInstitution))))
         && ((this.assets == rhs.assets)
-            || ((this.assets != null) && this.assets.equals(rhs.assets)));
+            || ((this.assets != null) && this.assets.equals(rhs.assets))
+                && ((this.data == rhs.data)
+                    || ((this.data != null) && this.data.equals(rhs.data))));
   }
 
   /** Does the data need to be managed under Controlled, Open, or External Access? */

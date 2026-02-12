@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
 import static jakarta.ws.rs.core.Response.Status.fromStatusCode;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.assets;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.data;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,6 +31,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -343,17 +347,18 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     assertEquals(datasetRecord.study.getDataTypes(), term.getStudy().getDataTypes());
   }
 
-  @Test
-  void testToDatasetTerm_StudyAssets() {
+  @ParameterizedTest
+  @ValueSource(strings = {assets, data})
+  void testToDatasetTerm_JsonBlobs(String propKey) {
     DatasetRecord datasetRecord = createDatasetRecord();
-    Map<String, Object> assetsMap = Map.of("key", List.of("value1", "value2"));
-    String assetsJson = GsonUtil.getInstance().toJson(assetsMap);
-    StudyProperty assetsProp = new StudyProperty();
-    assetsProp.setStudyId(datasetRecord.study.getStudyId());
-    assetsProp.setKey("assets");
-    assetsProp.setType(PropertyType.Json);
-    assetsProp.setValue(GsonUtil.getInstance().fromJson(assetsJson, Object.class));
-    datasetRecord.study.addProperty(assetsProp);
+    Map<String, Object> refMap = Map.of("key", List.of("value1", "value2"));
+    String refJson = GsonUtil.getInstance().toJson(refMap);
+    StudyProperty jsonBlob = new StudyProperty();
+    jsonBlob.setStudyId(datasetRecord.study.getStudyId());
+    jsonBlob.setKey(propKey);
+    jsonBlob.setType(PropertyType.Json);
+    jsonBlob.setValue(GsonUtil.getInstance().fromJson(refJson, Object.class));
+    datasetRecord.study.addProperty(jsonBlob);
 
     when(userDao.findUserById(datasetRecord.createUser.getUserId()))
         .thenReturn(datasetRecord.createUser);
@@ -362,8 +367,15 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
 
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
-
-    assertEquals(assetsMap, term.getStudy().getAssets());
+    switch (propKey) {
+      case assets:
+        assertEquals(refMap, term.getStudy().getAssets());
+        return;
+      case data:
+        assertEquals(refMap, term.getStudy().getData());
+        return;
+      default:
+    }
   }
 
   @Test
@@ -420,6 +432,35 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     assertTrue(accessManagementProp.isPresent());
     assertEquals(
         accessManagementProp.get().getPropertyValue().toString(), term.getAccessManagement());
+  }
+
+  @Test
+  void testToDatasetTerm_Data() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    Set<DatasetProperty> datasetProperties = new HashSet<>();
+    Map<String, Object> refMap = Map.of("key", List.of("value1", "value2"));
+    DatasetProperty newProperty =
+        new DatasetProperty(
+            99,
+            dataset.getDatasetId(),
+            99,
+            data,
+            GsonUtil.getInstance().toJson(refMap),
+            PropertyType.Json,
+            new Date());
+    newProperty.setPropertyName(data);
+    newProperty.setSchemaProperty(data);
+    datasetProperties.add(newProperty);
+    dataset.setProperties(datasetProperties);
+
+    DatasetTerm term = service.toDatasetTerm(dataset);
+    Optional<DatasetProperty> dataProp =
+        dataset.getProperties().stream()
+            .filter(p -> p.getSchemaProperty().equals(data))
+            .findFirst();
+    assertTrue(dataProp.isPresent());
+    assertEquals(refMap, term.getData());
   }
 
   @Test

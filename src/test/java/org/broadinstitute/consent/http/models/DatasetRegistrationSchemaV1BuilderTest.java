@@ -12,6 +12,7 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.collaboratingSites;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.controlledAccessRequiredForGenomicSummaryResultsGSR;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.data;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataLocation;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dbGaPPhsID;
@@ -43,6 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -142,6 +144,8 @@ class DatasetRegistrationSchemaV1BuilderTest {
     assertNotNull(consentGroup.getNumberOfParticipants());
     assertNotNull(consentGroup.getFileTypes());
     assertFalse(consentGroup.getFileTypes().isEmpty());
+    assertNotNull(consentGroup.getData());
+    assertTrue(consentGroup.getData().isEmpty());
   }
 
   @Test
@@ -415,6 +419,8 @@ class DatasetRegistrationSchemaV1BuilderTest {
         createDatasetProperty(dataset, numberOfParticipants, PropertyType.Number, null));
     dataset.addProperty(
         createDatasetProperty(dataset, fileTypes, PropertyType.Json, new FileTypeObject()));
+    dataset.addProperty(
+        createDatasetProperty(dataset, data, PropertyType.Json, new HashMap<String, Object>()));
   }
 
   private DatasetProperty createDatasetProperty(
@@ -428,13 +434,17 @@ class DatasetRegistrationSchemaV1BuilderTest {
       case Boolean -> prop.setPropertyValue(Objects.nonNull(propValue) ? propValue : true);
       case Number -> prop.setPropertyValue(Objects.nonNull(propValue) ? propValue : randomInt());
       case Json -> {
-        List<Object> list = new ArrayList<>();
-        if (Objects.nonNull(propValue)) {
-          list.add(GsonUtil.getInstance().toJson(propValue));
+        if (propValue instanceof FileTypeObject) {
+          List<Object> list = new ArrayList<>();
+          if (Objects.nonNull(propValue)) {
+            list.add(GsonUtil.getInstance().toJson(propValue));
+          } else {
+            list.add(randomString());
+          }
+          prop.setPropertyValue(list);
         } else {
-          list.add(randomString());
+          prop.setPropertyValue(GsonUtil.getInstance().toJson(propValue));
         }
-        prop.setPropertyValue(list);
       }
       // Default to string
       default -> prop.setPropertyValue(Objects.nonNull(propValue) ? propValue : randomString());

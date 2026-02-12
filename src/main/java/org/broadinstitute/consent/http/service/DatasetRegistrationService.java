@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.data;
+
 import com.google.cloud.storage.BlobId;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.ws.rs.BadRequestException;
@@ -735,6 +737,16 @@ public class DatasetRegistrationService implements ConsentLogger {
                       return GsonUtil.getInstance().toJson(registration.getAssets());
                     }
                     return null;
+                  }),
+              new StudyPropertyExtractor(
+                  data,
+                  PropertyType.Json,
+                  (registration) -> {
+                    if (Objects.nonNull(registration.getData())
+                        && !registration.getData().isEmpty()) {
+                      return GsonUtil.getInstance().toJson(registration.getData());
+                    }
+                    return null;
                   }));
 
   private static final List<DatasetPropertyExtractor>
@@ -782,6 +794,16 @@ public class DatasetRegistrationService implements ConsentLogger {
                   (consentGroup) -> {
                     if (Objects.nonNull(consentGroup.getAccessManagement())) {
                       return consentGroup.getAccessManagement().value();
+                    }
+                    return null;
+                  }),
+              new DatasetPropertyExtractor(
+                  data,
+                  data,
+                  PropertyType.Json,
+                  (consentGroup) -> {
+                    if (Objects.nonNull(consentGroup.getData())) {
+                      return GsonUtil.getInstance().toJson(consentGroup.getData());
                     }
                     return null;
                   }));

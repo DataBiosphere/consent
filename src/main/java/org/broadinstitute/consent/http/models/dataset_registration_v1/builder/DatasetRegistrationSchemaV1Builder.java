@@ -50,6 +50,7 @@ public class DatasetRegistrationSchemaV1Builder {
   public static final String alternativeDataSharingPlanAccessManagement =
       "alternativeDataSharingPlanAccessManagement";
   public static final String assets = "assets";
+  public static final String data = "data";
   public static final String accessManagement = "accessManagement";
   public static final String generalResearchUse = "generalResearchUse";
   public static final String hmb = "hmb";

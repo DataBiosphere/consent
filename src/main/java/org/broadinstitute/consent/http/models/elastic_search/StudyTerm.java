@@ -18,6 +18,7 @@ public class StudyTerm {
   private Boolean publicVisibility;
   private List<String> dataTypes;
   private Map<String, Object> assets;
+  private Map<String, Object> data;
 
   public String getDescription() {
     return description;
@@ -121,5 +122,13 @@ public class StudyTerm {
 
   public void setAssets(Map<String, Object> assets) {
     this.assets = assets;
+  }
+
+  public Map<String, Object> getData() {
+    return data;
+  }
+
+  public void setData(Map<String, Object> data) {
+    this.data = data;
   }
 }

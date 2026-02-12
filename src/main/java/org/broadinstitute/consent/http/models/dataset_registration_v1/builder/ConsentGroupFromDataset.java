@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models.dataset_registration_v1.builder;
 
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.accessManagement;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.data;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataLocation;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.fileTypes;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.numberOfParticipants;
@@ -9,7 +10,9 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 import com.google.gson.JsonArray;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
@@ -20,6 +23,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGro
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.AccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup.DataLocation;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
+import org.broadinstitute.consent.http.service.ElasticSearchService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class ConsentGroupFromDataset {
@@ -69,6 +73,10 @@ public class ConsentGroupFromDataset {
       consentGroup.setNumberOfParticipants(
           findIntegerDSPropValue(dataset.getProperties(), numberOfParticipants));
       consentGroup.setFileTypes(findListFTSODSPropValue(dataset.getProperties()));
+      Map<String, Object> dataVal = findDataPropValue(dataset.getProperties());
+      if (Objects.nonNull(dataVal)) {
+        consentGroup.setData(dataVal);
+      }
       return consentGroup;
     }
     return null;
@@ -118,6 +126,22 @@ public class ConsentGroupFromDataset {
           .flatMap(List::stream)
           .map(p -> GsonUtil.getInstance().fromJson(p, FileTypeObject.class))
           .toList();
+    }
+    return null;
+  }
+
+  @Nullable
+  private Map<String, Object> findDataPropValue(Set<DatasetProperty> props) {
+    if (Objects.nonNull(props) && !props.isEmpty()) {
+      Optional<DatasetProperty> prop =
+          props.stream()
+              .filter(
+                  p ->
+                      p.getSchemaProperty() != null && p.getSchemaProperty().equalsIgnoreCase(data))
+              .findFirst();
+      if (prop.isPresent()) {
+        return ElasticSearchService.buildMapFromPropertyValue(prop.get().getPropertyValue());
+      }
     }
     return null;
   }
