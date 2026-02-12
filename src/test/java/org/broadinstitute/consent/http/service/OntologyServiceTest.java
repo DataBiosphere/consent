@@ -218,6 +218,27 @@ class OntologyServiceTest extends MockServerTestHelper {
     assertEquals(2, jsonArray.size());
   }
 
+  @Test
+  void testFindByQuery() throws Exception {
+    String term = "data use modifier";
+    OntologyType type = OntologyType.DUO;
+    Integer count = 5;
+    String json =
+        """
+          [{id:"DUO_0000006"}, {id:"DUO_0000007"}, {id:"DUO_0000008"}, {id:"DUO_0000009"}, {id:"DUO_0000010"}]
+        """;
+    when(ontologyDAO.findByQuery(term, type, count))
+        .thenReturn(
+            output -> {
+              // Mock streaming output that writes an empty JSON array
+              output.write(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            });
+    StreamingOutput results = service.findByQuery(term, type, count);
+    assertNotNull(results);
+    JsonArray jsonArray = getJsonArrayFromStreamingOutput(results);
+    assertEquals(5, jsonArray.size());
+  }
+
   private void mockDataUseTranslateSummarySuccess() {
     mockServerClient
         .when(request().withMethod("POST").withPath("/translate/summary"))

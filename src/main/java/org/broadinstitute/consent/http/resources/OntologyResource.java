@@ -83,6 +83,9 @@ public class OntologyResource extends Resource {
       @QueryParam("type") String type,
       @QueryParam("count") Integer count) {
     try {
+      if (q == null || q.isBlank()) {
+        throw new IllegalArgumentException("Query parameter 'q' is required for autocomplete.");
+      }
       OntologyType ontologyType = null;
       if (type != null && !type.isBlank()) {
         ontologyType = OntologyType.getFromName(type);

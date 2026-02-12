@@ -128,7 +128,6 @@ public class OntologyService implements ConsentLogger {
    *     provided.
    */
   public StreamingOutput findByQuery(String q, OntologyType ontologyType, Integer count) {
-    Integer defaultCount = count == null ? 20 : count;
-    return ontologyDAO.findByQuery(q, ontologyType, defaultCount);
+    return ontologyDAO.findByQuery(q, ontologyType, count);
   }
 }

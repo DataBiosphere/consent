@@ -67,6 +67,7 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
             : EnumSet.allOf(OntologyType.class).stream()
                 .map(t -> t.name().toLowerCase())
                 .toArray(String[]::new);
+    Integer defaultCount = (count == null || count < 1) ? 20 : count;
     String query =
         """
             SELECT json_document, ts_rank(search_vector, query) AS rank
@@ -83,7 +84,7 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
                   .createQuery(query)
                   .bindArray("types", defaultTypes)
                   .bind("term", term.toLowerCase().trim().replaceAll("\\s+", " \\| "))
-                  .bind("count", count)
+                  .bind("count", defaultCount)
                   .map(new JsonMapper("json_document"));
           StreamingOutputIterator<JsonObject> iterator = new StreamingOutputIterator<>();
           return iterator.streamResults(results, handle);

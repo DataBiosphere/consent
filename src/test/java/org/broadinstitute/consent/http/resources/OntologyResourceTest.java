@@ -16,6 +16,8 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.OntologyService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -128,6 +130,60 @@ class OntologyResourceTest extends AbstractTestHelper {
 
     resource = new OntologyResource(ontologyService);
     try (Response response = resource.searchByTermIds("DOID_1234")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+    }
+  }
+
+  @Test
+  void testAutocompleteSuccessAllValuesPopulated() {
+    when(ontologyService.findByQuery("cancer", OntologyType.DOID, 10))
+        .thenReturn(mockStreamingOutput);
+    resource = new OntologyResource(ontologyService);
+    try (Response response = resource.autocomplete("cancer", OntologyType.DOID.name(), 10)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testAutocompleteSuccessNullType() {
+    when(ontologyService.findByQuery("cancer", null, 10)).thenReturn(mockStreamingOutput);
+    resource = new OntologyResource(ontologyService);
+    try (Response response = resource.autocomplete("cancer", null, 10)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testAutocompleteSuccessNullTypeAndCount() {
+    when(ontologyService.findByQuery("cancer", null, null)).thenReturn(mockStreamingOutput);
+    resource = new OntologyResource(ontologyService);
+    try (Response response = resource.autocomplete("cancer", null, null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"", "   ", "\t", "\n"})
+  void testAutocompleteInvalidQuery(String q) {
+    resource = new OntologyResource(ontologyService);
+    try (Response response = resource.autocomplete(q, null, null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testAutocompleteNullQuery() {
+    resource = new OntologyResource(ontologyService);
+    try (Response response = resource.autocomplete(null, null, null)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testAutocompleteException() {
+    when(ontologyService.findByQuery("cancer", null, null)).thenThrow(new RuntimeException());
+    resource = new OntologyResource(ontologyService);
+    try (Response response = resource.autocomplete("cancer", null, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
   }
