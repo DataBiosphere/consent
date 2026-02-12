@@ -459,7 +459,6 @@ public class ConsentGroup {
   public Map<String, Object> getData() {
     return data;
   }
-  ;
 
   /** Data and metadata about this dataset. */
   @JsonProperty("data")

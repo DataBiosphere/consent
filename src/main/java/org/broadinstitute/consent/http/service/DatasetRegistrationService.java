@@ -568,7 +568,7 @@ public class DatasetRegistrationService implements ConsentLogger {
               new StudyPropertyExtractor(
                   "studyType",
                   PropertyType.String,
-                  (registration) -> {
+                  registration -> {
                     if (Objects.nonNull(registration.getStudyType())) {
                       return registration.getStudyType().value();
                     }
@@ -583,7 +583,7 @@ public class DatasetRegistrationService implements ConsentLogger {
               new StudyPropertyExtractor(
                   "dataCustodianEmail",
                   PropertyType.Json,
-                  (registration) -> {
+                  registration -> {
                     if (Objects.nonNull(registration.getDataCustodianEmail())) {
                       return GsonUtil.getInstance().toJson(registration.getDataCustodianEmail());
                     }
@@ -620,7 +620,7 @@ public class DatasetRegistrationService implements ConsentLogger {
               new StudyPropertyExtractor(
                   "nihICsSupportingStudy",
                   PropertyType.Json,
-                  (registration) -> {
+                  registration -> {
                     if (Objects.nonNull(registration.getNihICsSupportingStudy())) {
                       return GsonUtil.getInstance()
                           .toJson(
@@ -637,7 +637,7 @@ public class DatasetRegistrationService implements ConsentLogger {
               new StudyPropertyExtractor(
                   "nihInstitutionCenterSubmission",
                   PropertyType.String,
-                  (registration) -> {
+                  registration -> {
                     if (Objects.nonNull(registration.getNihInstitutionCenterSubmission())) {
                       return registration.getNihInstitutionCenterSubmission().value();
                     }
@@ -654,7 +654,7 @@ public class DatasetRegistrationService implements ConsentLogger {
               new StudyPropertyExtractor(
                   "collaboratingSites",
                   PropertyType.Json,
-                  (registration) -> {
+                  registration -> {
                     if (Objects.nonNull(registration.getCollaboratingSites())) {
                       return GsonUtil.getInstance().toJson(registration.getCollaboratingSites());
                     }
@@ -677,7 +677,7 @@ public class DatasetRegistrationService implements ConsentLogger {
               new StudyPropertyExtractor(
                   "alternativeDataSharingPlanReasons",
                   PropertyType.Json,
-                  (registration) -> {
+                  registration -> {
                     if (Objects.nonNull(registration.getAlternativeDataSharingPlanReasons())) {
                       return GsonUtil.getInstance()
                           .toJson(
@@ -698,7 +698,7 @@ public class DatasetRegistrationService implements ConsentLogger {
               new StudyPropertyExtractor(
                   "alternativeDataSharingPlanDataSubmitted",
                   PropertyType.String,
-                  (registration) -> {
+                  registration -> {
                     if (Objects.nonNull(
                         registration.getAlternativeDataSharingPlanDataSubmitted())) {
                       return registration.getAlternativeDataSharingPlanDataSubmitted().value();
@@ -721,7 +721,7 @@ public class DatasetRegistrationService implements ConsentLogger {
               new StudyPropertyExtractor(
                   "alternativeDataSharingPlanAccessManagement",
                   PropertyType.String,
-                  (registration) -> {
+                  registration -> {
                     if (Objects.nonNull(
                         registration.getAlternativeDataSharingPlanAccessManagement())) {
                       return registration.getAlternativeDataSharingPlanAccessManagement().value();
@@ -731,7 +731,7 @@ public class DatasetRegistrationService implements ConsentLogger {
               new StudyPropertyExtractor(
                   "assets",
                   PropertyType.Json,
-                  (registration) -> {
+                  registration -> {
                     if (Objects.nonNull(registration.getAssets())
                         && !registration.getAssets().isEmpty()) {
                       return GsonUtil.getInstance().toJson(registration.getAssets());
@@ -741,7 +741,7 @@ public class DatasetRegistrationService implements ConsentLogger {
               new StudyPropertyExtractor(
                   data,
                   PropertyType.Json,
-                  (registration) -> {
+                  registration -> {
                     if (Objects.nonNull(registration.getData())
                         && !registration.getData().isEmpty()) {
                       return GsonUtil.getInstance().toJson(registration.getData());
@@ -756,7 +756,7 @@ public class DatasetRegistrationService implements ConsentLogger {
                   "Data Location",
                   "dataLocation",
                   PropertyType.String,
-                  (consentGroup) -> {
+                  consentGroup -> {
                     if (Objects.nonNull(consentGroup.getDataLocation())) {
                       return consentGroup.getDataLocation().value();
                     }
@@ -771,7 +771,7 @@ public class DatasetRegistrationService implements ConsentLogger {
                   "File Types",
                   "fileTypes",
                   PropertyType.Json,
-                  (consentGroup) -> {
+                  consentGroup -> {
                     if (Objects.nonNull(consentGroup.getFileTypes())) {
                       return GsonUtil.getInstance().toJson(consentGroup.getFileTypes());
                     }
@@ -781,7 +781,7 @@ public class DatasetRegistrationService implements ConsentLogger {
                   "URL",
                   "url",
                   PropertyType.String,
-                  (consentGroup) -> {
+                  consentGroup -> {
                     if (Objects.nonNull(consentGroup.getUrl())) {
                       return consentGroup.getUrl();
                     }
@@ -791,7 +791,7 @@ public class DatasetRegistrationService implements ConsentLogger {
                   "Access Management",
                   "accessManagement",
                   PropertyType.String,
-                  (consentGroup) -> {
+                  consentGroup -> {
                     if (Objects.nonNull(consentGroup.getAccessManagement())) {
                       return consentGroup.getAccessManagement().value();
                     }
@@ -801,7 +801,7 @@ public class DatasetRegistrationService implements ConsentLogger {
                   data,
                   data,
                   PropertyType.Json,
-                  (consentGroup) -> {
+                  consentGroup -> {
                     if (Objects.nonNull(consentGroup.getData())) {
                       return GsonUtil.getInstance().toJson(consentGroup.getData());
                     }
@@ -812,7 +812,7 @@ public class DatasetRegistrationService implements ConsentLogger {
       DatasetRegistrationSchemaV1 registration) {
 
     return DATASET_REGISTRATION_V1_STUDY_PROPERTY_EXTRACTORS.stream()
-        .map((e) -> e.extract(registration))
+        .map(e -> e.extract(registration))
         .filter(Optional::isPresent)
         .map(Optional::get)
         .toList();
