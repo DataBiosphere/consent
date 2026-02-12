@@ -72,21 +72,19 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     FileStorageObject origFile = createFileStorageObject();
 
     User deleteUser = createUser();
-    Instant deleteDate = Instant.now();
 
     assertFalse(origFile.getDeleted());
     assertNull(origFile.getDeleteUserId());
     assertNull(origFile.getDeleteDate());
 
-    fileStorageObjectDAO.deleteFileById(
-        origFile.getFileStorageObjectId(), deleteUser.getUserId(), deleteDate);
+    fileStorageObjectDAO.deleteFileById(origFile.getFileStorageObjectId(), deleteUser.getUserId());
 
     FileStorageObject deletedFile =
         fileStorageObjectDAO.findFileById(origFile.getFileStorageObjectId());
 
     assertTrue(deletedFile.getDeleted());
     assertEquals(deleteUser.getUserId(), deletedFile.getDeleteUserId());
-    assertEquals(deleteDate.getEpochSecond(), deletedFile.getDeleteDate().getEpochSecond());
+    assertTrue(deletedFile.getDeleteDate().getEpochSecond() > 0);
   }
 
   @Test

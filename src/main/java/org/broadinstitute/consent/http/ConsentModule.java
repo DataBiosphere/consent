@@ -605,6 +605,7 @@ public class ConsentModule extends AbstractModule {
         providesDatasetDAO(),
         providesDacDAO(),
         providesDatasetServiceDAO(),
+        providesFileStorageObjectDAO(),
         providesGCSService(),
         providesElasticSearchService(),
         providesStudyDAO(),

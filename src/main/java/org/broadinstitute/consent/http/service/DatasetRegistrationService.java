@@ -18,11 +18,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
@@ -44,6 +47,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.NihICsSupp
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.ThreadUtils;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 
@@ -56,15 +60,19 @@ public class DatasetRegistrationService implements ConsentLogger {
   private final DatasetDAO datasetDAO;
   private final DacDAO dacDAO;
   private final DatasetServiceDAO datasetServiceDAO;
+  private final FileStorageObjectDAO fileStorageObjectDAO;
   private final GCSService gcsService;
   private final ElasticSearchService elasticSearchService;
   private final StudyDAO studyDAO;
   private final EmailService emailService;
+  private final ExecutorService executorService =
+      new ThreadUtils().getExecutorService(DatasetRegistrationService.class);
 
   public DatasetRegistrationService(
       DatasetDAO datasetDAO,
       DacDAO dacDAO,
       DatasetServiceDAO datasetServiceDAO,
+      FileStorageObjectDAO fileStorageObjectDAO,
       GCSService gcsService,
       ElasticSearchService elasticSearchService,
       StudyDAO studyDAO,
@@ -72,6 +80,7 @@ public class DatasetRegistrationService implements ConsentLogger {
     this.datasetDAO = datasetDAO;
     this.dacDAO = dacDAO;
     this.datasetServiceDAO = datasetServiceDAO;
+    this.fileStorageObjectDAO = fileStorageObjectDAO;
     this.gcsService = gcsService;
     this.elasticSearchService = elasticSearchService;
     this.studyDAO = studyDAO;
@@ -397,13 +406,17 @@ public class DatasetRegistrationService implements ConsentLogger {
     List<FileStorageObject> consentGroupFSOs = new ArrayList<>();
 
     if (files.containsKey(String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME, consentGroupIdx))) {
-      consentGroupFSOs.add(
+      FileStorageObject fso =
           uploadFile(
               files,
               uploadedFileCache,
               user,
               String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME, consentGroupIdx),
-              FileCategory.NIH_INSTITUTIONAL_CERTIFICATION));
+              FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
+      if (!gcsService.hasBytes(fso.getBlobId())) {
+        gcsService.deleteDocument(fso.getBlobId().getName());
+      }
+      consentGroupFSOs.add(fso);
     }
 
     return consentGroupFSOs;
@@ -419,13 +432,17 @@ public class DatasetRegistrationService implements ConsentLogger {
     String fileKey = String.format(NIH_INSTITUTIONAL_CERTIFICATION_NAME, idx);
     FormDataBodyPart fileToUpdate = files.get(fileKey);
     if (fileToUpdate != null) {
-      updateDatasetFSOs.add(
+      FileStorageObject fso =
           uploadFile(
               files,
               uploadedFileCache,
               user,
               fileKey,
-              FileCategory.NIH_INSTITUTIONAL_CERTIFICATION));
+              FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
+      if (!gcsService.hasBytes(fso.getBlobId())) {
+        gcsService.deleteDocument(fso.getBlobId().getName());
+      }
+      updateDatasetFSOs.add(fso);
     }
 
     return updateDatasetFSOs;
@@ -449,13 +466,18 @@ public class DatasetRegistrationService implements ConsentLogger {
     List<FileStorageObject> studyFSOs = new ArrayList<>();
     FormDataBodyPart alternateSharingPlanFile = files.get(ALTERNATIVE_DATA_SHARING_PLAN_NAME);
     if (alternateSharingPlanFile != null) {
-      studyFSOs.add(
+      FileStorageObject fso =
           uploadFile(
               files,
               uploadedFileCache,
               user,
               ALTERNATIVE_DATA_SHARING_PLAN_NAME,
-              FileCategory.ALTERNATIVE_DATA_SHARING_PLAN));
+              FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+      if (!gcsService.hasBytes(fso.getBlobId())) {
+        gcsService.deleteDocument(fso.getBlobId().getName());
+      } else {
+        studyFSOs.add(fso);
+      }
     }
 
     return studyFSOs;
@@ -879,6 +901,116 @@ public class DatasetRegistrationService implements ConsentLogger {
       }
     } catch (Exception e) {
       logException(e);
+    }
+  }
+
+  public void asyncCleanupDatasetsAndStudiesWithEmptyFiles(User user) {
+    executorService.submit(() -> cleanupDatasetsAndStudiesWithEmptyFiles(user));
+  }
+
+  protected void cleanupDatasetsAndStudiesWithEmptyFiles(User user) {
+    List<Integer> allDatasetIDs = datasetDAO.findAllDatasetIds();
+    logWarn(
+        String.format(
+            "Cleaning empty NIH Institutional files requested.  %d datasets to be considered",
+            allDatasetIDs.size()));
+    AtomicInteger datasetDeleted = new AtomicInteger();
+    AtomicInteger datasetErrors = new AtomicInteger();
+    AtomicInteger datasetProgress = new AtomicInteger();
+    AtomicInteger studyProgress = new AtomicInteger();
+    AtomicInteger studyDeleted = new AtomicInteger();
+    AtomicInteger studyError = new AtomicInteger();
+    allDatasetIDs.forEach(
+        id -> {
+          processDataset(
+              id, user, datasetDeleted, datasetErrors, studyProgress, studyDeleted, studyError);
+          datasetProgress.getAndIncrement();
+          if (datasetProgress.get() % 100 == 0) {
+            logWarn(String.format("Cleaned %d entries.", datasetProgress.get()));
+          }
+        });
+    logWarn(
+        String.format(
+            "Cleaning empty NIH Institutional and Alternative Sharing Plan files complete.  %d datasets, %d dataset files deleted, %d  dataset unexpected errors.  Study files deleted: %d, Study file errors: %d",
+            allDatasetIDs.size(),
+            datasetDeleted.get(),
+            datasetErrors.get(),
+            studyDeleted.get(),
+            studyError.get()));
+  }
+
+  private void processStudy(
+      Study study,
+      User user,
+      AtomicInteger studyProgress,
+      AtomicInteger studyDeleted,
+      AtomicInteger studyError) {
+    FileStorageObject studySharingPlan = study.getAlternativeDataSharingPlan();
+    try {
+      if (studySharingPlan != null && !gcsService.hasBytes(studySharingPlan.getBlobId())) {
+        deleteFile(studySharingPlan, user);
+        studyDeleted.getAndIncrement();
+      }
+    } catch (NotFoundException _) {
+      deleteFile(studySharingPlan, user);
+      studyDeleted.getAndIncrement();
+    } catch (Exception e) {
+      logWarn(
+          String.format(
+              "Error when cleaning up alternative sharing plan for study: %d.  %s",
+              study.getStudyId(), e.getMessage()));
+      studyError.getAndIncrement();
+    }
+    studyProgress.getAndIncrement();
+  }
+
+  private void processDataset(
+      Integer id,
+      User user,
+      AtomicInteger deleted,
+      AtomicInteger errors,
+      AtomicInteger studyProgress,
+      AtomicInteger studyDeleted,
+      AtomicInteger studyError) {
+    Dataset dataset = datasetDAO.findDatasetById(id);
+    if (dataset != null) {
+      FileStorageObject nihFile = dataset.getNihInstitutionalCertificationFile();
+      try {
+        if (nihFile != null && !gcsService.hasBytes(nihFile.getBlobId())) {
+          deleteFile(nihFile, user);
+          deleted.getAndIncrement();
+        }
+      } catch (NotFoundException _) {
+        deleteFile(nihFile, user);
+        deleted.getAndIncrement();
+      } catch (Exception e) {
+        logWarn(
+            String.format("Error checking file for dataset id %d.  Error: %s", id, e.getMessage()));
+        errors.getAndIncrement();
+      } finally {
+        Study study = dataset.getStudy();
+        if (study != null) {
+          Study fullStudyObject = studyDAO.findStudyById(study.getStudyId());
+          processStudy(fullStudyObject, user, studyProgress, studyDeleted, studyError);
+        }
+      }
+    }
+  }
+
+  protected void deleteFile(FileStorageObject fileStorageObject, User user) {
+    if (fileStorageObject == null || user == null) {
+      return;
+    }
+    try {
+      gcsService.deleteDocument(fileStorageObject.getBlobId().getName());
+    } catch (Exception e) {
+      logWarn(
+          "Error deleting file from GCS.  This can happen when attempting to delete a file in a storage bucket that has already been deleted.");
+    } finally {
+      // set FSO record to be deleted
+      // this will cause the dataset to not join on the file storage object.
+      fileStorageObjectDAO.deleteFileById(
+          fileStorageObject.getFileStorageObjectId(), user.getUserId());
     }
   }
 }

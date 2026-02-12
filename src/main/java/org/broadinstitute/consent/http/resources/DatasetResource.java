@@ -635,4 +635,14 @@ public class DatasetResource extends Resource {
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
     }
   }
+
+  @PUT
+  @Produces(MediaType.APPLICATION_OCTET_STREAM)
+  @Path("/cleanupEmptyCertificationAndAlternativeSharingFiles")
+  @RolesAllowed({ADMIN})
+  public Response cleanupEmptyFiles(@Auth DuosUser duosUser) {
+    User user = duosUser.getUser();
+    datasetRegistrationService.asyncCleanupDatasetsAndStudiesWithEmptyFiles(user);
+    return Response.status(Status.OK).build();
+  }
 }

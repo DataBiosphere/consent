@@ -1,0 +1,13 @@
+put:
+  description: A cleanup process to find and remove 0 byte files stored as both NIH Institution Certification files on datasets and Alternative Data Sharing Plans on studies.
+  responses:
+    200:
+      description: Cleanup task started.  Check logs for details and progress.
+    401:
+      description: Authentication required.
+    403:
+      description: Forbidden - Admin role required
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
