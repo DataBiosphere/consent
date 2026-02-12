@@ -101,7 +101,7 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
    * @return A formatted tsquery string (e.g., "term1:* | term2:*")
    */
   default String sanitizeForTsQuery(String term) {
-    if (term == null || term.trim().isBlank()) {
+    if (term == null || term.isBlank()) {
       return "";
     }
     // Remove characters that conflict with tsquery syntax (keep alphanumeric and whitespace)
