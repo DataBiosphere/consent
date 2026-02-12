@@ -5,6 +5,7 @@ import jakarta.ws.rs.core.StreamingOutput;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.StreamingOutputIterator;
 import org.broadinstitute.consent.http.db.mapper.JsonMapper;
 import org.broadinstitute.consent.http.enumeration.OntologyType;
@@ -61,6 +62,14 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
 
   @Json
   default StreamingOutput findByQuery(String term, OntologyType type, Integer count) {
+    // Format the query string for full text search
+    // 1. Split the words on whitespace
+    // 2. Add `:*` to the end of each word for prefix matching
+    // 3. Join the words with '|' operator for OR search in to_tsquery
+    String formattedTerm =
+        Arrays.stream(term.toLowerCase().trim().split("\\s+"))
+            .map(s -> s + ":*")
+            .collect(Collectors.joining(" | "));
     String[] defaultTypes =
         type != null
             ? new String[] {type.name().toLowerCase()}
@@ -83,7 +92,7 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
               handle
                   .createQuery(query)
                   .bindArray("types", defaultTypes)
-                  .bind("term", term.toLowerCase().trim().replaceAll("\\s+", " \\| "))
+                  .bind("term", formattedTerm)
                   .bind("count", defaultCount)
                   .map(new JsonMapper("json_document"));
           StreamingOutputIterator<JsonObject> iterator = new StreamingOutputIterator<>();
