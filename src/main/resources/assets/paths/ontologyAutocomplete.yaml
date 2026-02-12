@@ -25,7 +25,8 @@ get:
         is 20.
       required: false
       schema:
-        type: number
+        type: integer
+        format: int32
   tags:
     - Ontology
   responses:
