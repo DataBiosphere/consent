@@ -132,4 +132,15 @@ class OntologyDAOTest extends DAOTestHelper {
     assertTrue(termIds.contains("DUO_0000006"));
     assertTrue(termIds.contains("DUO_0000037"));
   }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"hea", "med", "bio"})
+  void testSanitizeForTsQuery(String partial) throws Exception {
+    batchInsertTerms();
+    // Test that special characters are sanitized and do not cause errors in the query
+    String queryWithSpecialChars = partial + ":&|!";
+    StreamingOutput output = ontologyDAO.findByQuery(queryWithSpecialChars, null, null);
+    JsonArray jsonArray = getJsonArrayFromStreamingOutput(output);
+    assertFalse(jsonArray.isEmpty());
+  }
 }

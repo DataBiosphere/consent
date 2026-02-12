@@ -59,17 +59,9 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
           return iterator.streamResults(results, handle);
         });
   }
-
   @Json
   default StreamingOutput findByQuery(String term, OntologyType type, Integer count) {
-    // Format the query string for full text search
-    // 1. Split the words on whitespace
-    // 2. Add `:*` to the end of each word for prefix matching
-    // 3. Join the words with '|' operator for OR search in to_tsquery
-    String formattedTerm =
-        Arrays.stream(term.toLowerCase().trim().split("\\s+"))
-            .map(s -> s + ":*")
-            .collect(Collectors.joining(" | "));
+    String formattedTerm = sanitizeForTsQuery(term);
     String[] defaultTypes =
         type != null
             ? new String[] {type.name().toLowerCase()}
@@ -98,5 +90,25 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
           StreamingOutputIterator<JsonObject> iterator = new StreamingOutputIterator<>();
           return iterator.streamResults(results, handle);
         });
+  }
+
+  /**
+   * Sanitizes a string for use in a postgres to_tsquery statement.
+   * Removes non-alphanumeric characters and formats tokens for prefix matching.
+   *
+   * @param term The user input string
+   * @return A formatted tsquery string (e.g., "term1:* | term2:*")
+   */
+  default String sanitizeForTsQuery(String term) {
+    if (term == null || term.isBlank()) {
+      return "";
+    }
+    // Remove characters that conflict with tsquery syntax (keep alphanumeric and whitespace)
+    String cleanTerm = term.replaceAll("[^a-zA-Z0-9\\s]", "");
+
+    return Arrays.stream(cleanTerm.trim().split("\\s+"))
+        .filter(s -> !s.isBlank())
+        .map(s -> s + ":*")
+        .collect(Collectors.joining(" | "));
   }
 }
