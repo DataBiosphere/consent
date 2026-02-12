@@ -209,9 +209,7 @@ class OntologyServiceTest extends MockServerTestHelper {
         """;
     when(ontologyDAO.findByTermIds(termIds))
         .thenReturn(
-            output -> {
-              output.write(json.getBytes(StandardCharsets.UTF_8));
-            });
+            output -> output.write(json.getBytes(StandardCharsets.UTF_8)));
     StreamingOutput results = service.findByTermIds(termIds);
     assertNotNull(results);
     JsonArray jsonArray = getJsonArrayFromStreamingOutput(results);
@@ -229,9 +227,7 @@ class OntologyServiceTest extends MockServerTestHelper {
         """;
     when(ontologyDAO.findByQuery(term, type, count))
         .thenReturn(
-            output -> {
-              output.write(json.getBytes(StandardCharsets.UTF_8));
-            });
+            output -> output.write(json.getBytes(StandardCharsets.UTF_8)));
     StreamingOutput results = service.findByQuery(term, type, count);
     assertNotNull(results);
     JsonArray jsonArray = getJsonArrayFromStreamingOutput(results);
