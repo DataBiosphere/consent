@@ -59,6 +59,7 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
           return iterator.streamResults(results, handle);
         });
   }
+
   @Json
   default StreamingOutput findByQuery(String term, OntologyType type, Integer count) {
     String formattedTerm = sanitizeForTsQuery(term);
@@ -93,8 +94,8 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
   }
 
   /**
-   * Sanitizes a string for use in a postgres to_tsquery statement.
-   * Removes non-alphanumeric characters and formats tokens for prefix matching.
+   * Sanitizes a string for use in a postgres to_tsquery statement. Removes non-alphanumeric
+   * characters and formats tokens for prefix matching.
    *
    * @param term The user input string
    * @return A formatted tsquery string (e.g., "term1:* | term2:*")
