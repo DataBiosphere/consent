@@ -63,6 +63,9 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
   @Json
   default StreamingOutput findByQuery(String term, OntologyType type, Integer count) {
     String formattedTerm = sanitizeForTsQuery(term);
+    if (formattedTerm.isBlank()) {
+      return outputStream -> outputStream.write("[]".getBytes());
+    }
     String[] defaultTypes =
         type != null
             ? new String[] {type.name().toLowerCase()}
