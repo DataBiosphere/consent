@@ -580,6 +580,16 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testIndexDatasetsHandleNullDatasets() throws Exception {
+    User user = createUser(1, 100);
+    when(datasetDAO.findDatasetById(1)).thenReturn(null);
+    try (var response = service.indexDatasets(List.of(1), user)) {
+      verify(datasetDAO, times(1)).findDatasetById(1);
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
   void testSearchDatasets() throws IOException {
     String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
 

@@ -367,7 +367,14 @@ public class ElasticSearchService implements ConsentLogger {
     // Datasets in list context may not have their study populated, so we need to ensure that is
     // true before trying to index them in ES.
     List<DatasetTerm> datasetTerms =
-        datasetIds.stream().map(datasetDAO::findDatasetById).map(this::toDatasetTerm).toList();
+        datasetIds.stream()
+            .map(datasetDAO::findDatasetById)
+            .filter(Objects::nonNull)
+            .map(this::toDatasetTerm)
+            .toList();
+    if (datasetTerms.isEmpty()) {
+      return Response.status(Status.NOT_FOUND).build();
+    }
     return indexDatasetTerms(datasetTerms, user);
   }
 

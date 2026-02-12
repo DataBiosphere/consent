@@ -14,6 +14,8 @@ post:
   responses:
     200:
       description: The dataset has been indexed
+    404:
+      description: Dataset not found
 delete:
   summary: Delete dataset index by id
   description: Delete a specific dataset index in the system
