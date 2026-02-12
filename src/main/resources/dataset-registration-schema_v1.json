@@ -183,7 +183,9 @@
         "I am NHGRI funded and I have a dbGaP PHS ID already",
         "I am NHGRI funded and I do not have a dbGaP PHS ID",
         "I am not NHGRI funded but I am seeking to submit data to AnVIL",
-        "I am not NHGRI funded and do not plan to store data in AnVIL"
+        "I am not NHGRI funded and do not plan to store data in AnVIL",
+        "Yes",
+        "No"
       ],
       "description" : "NIH Anvil Use"
     },
