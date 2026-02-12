@@ -115,6 +115,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
             datasetDAO,
             datasetServiceDAO,
             studyDAO);
+    service.setIndexKey("_index");
   }
 
   private void mockElasticSearchResponse(String body) throws IOException {
@@ -855,5 +856,49 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   void testInvalidResultWindow_ExtraFieldsInQuery() {
     String query = "{\"size\": 100, \"from\": 50, \"query\": {\"match_all\": {}}}";
     assertFalse(service.invalidResultWindow(query));
+  }
+
+  @Test
+  void testGetIndexKey_SetKey() {
+    service.setIndexKey("custom-key");
+    assertEquals("custom-key", service.getIndexKey());
+  }
+
+  @Test
+  void testGetIndexKey_DefaultIndex() throws IOException {
+    service.setIndexKey(null);
+    String body = "{ \"version\": { \"number\": \"7.10.2\" } }";
+    mockElasticSearchResponse(body);
+    assertEquals("_index", service.getIndexKey());
+  }
+
+  @Test
+  void testGetIndexKey_LegacyType() throws IOException {
+    service.setIndexKey(null);
+    String body = "{ \"version\": { \"number\": \"6.8.0\" } }";
+    mockElasticSearchResponse(body);
+    assertEquals("_type", service.getIndexKey());
+  }
+
+  @Test
+  void testGetIndexKey_OpenSearch() throws IOException {
+    service.setIndexKey(null);
+    String body = "{ \"version\": { \"number\": \"3.3.0\", \"distribution\": \"opensearch\" } }";
+    mockElasticSearchResponse(body);
+    assertEquals("_index", service.getIndexKey());
+  }
+
+  @Test
+  void testGetIndexKey_ExceptionDefaultsToIndex() throws IOException {
+    service.setIndexKey(null);
+    when(esClient.performRequest(any())).thenThrow(new IOException("Connection failed"));
+    assertEquals("_index", service.getIndexKey());
+  }
+
+  @Test
+  void testGetIndexKey_NullInfoDefaultsToIndex() throws IOException {
+    service.setIndexKey(null);
+    mockElasticSearchResponse("{}");
+    assertEquals("_index", service.getIndexKey());
   }
 }
