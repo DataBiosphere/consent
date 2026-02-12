@@ -40,13 +40,12 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
           UPDATE file_storage_object
           SET deleted=true,
               delete_user_id=:deleteUserId,
-              delete_date=:deleteDate
+              delete_date=NOW()
           WHERE file_storage_object_id = :fileStorageObjectId
           """)
   void deleteFileById(
       @Bind("fileStorageObjectId") Integer fileStorageObjectId,
-      @Bind("deleteUserId") Integer deleteUserId,
-      @Bind("deleteDate") Instant deleteDate);
+      @Bind("deleteUserId") Integer deleteUserId);
 
   @SqlUpdate(
       """

@@ -134,6 +134,14 @@ public class GCSService implements ConsentLogger {
     }
   }
 
+  public boolean hasBytes(BlobId blobId) throws NotFoundException {
+    Blob blob = storage.get(blobId);
+    if (blob != null) {
+      return blob.getSize() > 0;
+    }
+    throw new NotFoundException(String.format("Document not found: %s", blobId.toString()));
+  }
+
   /**
    * Find a blob in the current storage bucket.
    *
