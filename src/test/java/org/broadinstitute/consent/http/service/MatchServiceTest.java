@@ -92,6 +92,34 @@ class MatchServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testCreateMatchesForDataAccessRequestFailure() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setName("Test Dataset 1");
+    dataset.setDataUse(new DataUseBuilder().setHmbResearch(true).build());
+    dataset.setProperties(Collections.emptySet());
+    DataAccessRequest dar = getSampleDataAccessRequest(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(dataset.getDatasetId()));
+    dar.setData(new DataAccessRequestData());
+    dar.getData().setHmb(true);
+    dar.getData().setDiseases(false);
+    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+    when(useRestrictionConverter.parseDataUsePurpose(dar))
+        .thenThrow(new IllegalArgumentException());
+
+    try {
+      List<Match> matches = service.createMatchesForDataAccessRequest(dar);
+      assertFalse(matches.isEmpty());
+      // Each match should be false since the exception is thrown during the matching process
+      matches.forEach(m -> assertFalse(m.getMatch()));
+    } catch (Exception e) {
+      fail(
+          "createMatchesForDataAccessRequest should not throw an exception even if singleEntitiesMatch fails: "
+              + e.getMessage());
+    }
+  }
+
+  @Test
   void testSingleEntitiesMatchEmptyDataset() {
     DataAccessRequest dar = new DataAccessRequest();
 
@@ -154,13 +182,25 @@ class MatchServiceTest extends AbstractTestHelper {
 
   @Test
   void testReprocessMatchesForPurpose() {
-    Match m = createMatchObject();
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setName("Test Dataset 1");
+    dataset.setDataUse(new DataUseBuilder().setHmbResearch(true).build());
+    dataset.setProperties(Collections.emptySet());
+    DataAccessRequest dar = getSampleDataAccessRequest(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(dataset.getDatasetId()));
+    dar.setData(new DataAccessRequestData());
+    dar.getData().setHmb(true);
+    dar.getData().setDiseases(false);
+    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    when(useRestrictionConverter.parseDataUsePurpose(dar))
+        .thenReturn(new DataUseBuilder().setHmbResearch(true).build());
 
-    try {
-      service.reprocessMatchesForPurpose(m.getPurpose());
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
+    service.reprocessMatchesForPurpose(dar.getReferenceId());
+    verify(matchDAO).deleteRationalesByPurposeIds(List.of(dar.getReferenceId()));
+    verify(matchDAO).deleteMatchesByPurposeId(dar.getReferenceId());
+    verify(matchDAO).insertMatch(any(), any(), any(), any(), any(), any(), any());
   }
 
   @Test
@@ -190,7 +230,6 @@ class MatchServiceTest extends AbstractTestHelper {
     data.setReferenceId(referenceId);
     data.setHmb(true);
     data.setDiseases(false);
-    data.setOntologies(List.of());
     dar.addDatasetId(1);
     dar.setData(data);
     return dar;
