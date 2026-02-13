@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.matching;
 import static org.broadinstitute.consent.http.models.matching.DataUseMatchResultType.Abstain;
 import static org.broadinstitute.consent.http.models.matching.DataUseMatchResultType.Approve;
 import static org.broadinstitute.consent.http.models.matching.DataUseMatchResultType.Deny;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -14,6 +15,7 @@ import java.util.List;
 import org.broadinstitute.consent.http.enumeration.OntologyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
+import org.broadinstitute.consent.http.models.matching.DataUseMatchResultType;
 import org.broadinstitute.consent.http.service.OntologyService;
 import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.broadinstitute.consent.http.service.ontology.ParentTerm;
@@ -95,6 +97,15 @@ class DataUseMatcherV4Test {
               output.write(gson.toJson(termResources).getBytes(StandardCharsets.UTF_8));
             });
     assertDeny(purpose, dataset);
+  }
+
+  @Test
+  void testMatchPurposeAndDatasetV4Failure() {
+    DataUseMatcherV4 matcher = new DataUseMatcherV4();
+    matcher.setOntologyService(ontologyService);
+
+    MatchResult result = matcher.matchPurposeAndDatasetV4(null, null);
+    assertEquals(DataUseMatchResultType.DENY, result.getMatchResultType());
   }
 
   @Test

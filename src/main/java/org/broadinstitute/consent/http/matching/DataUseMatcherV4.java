@@ -38,7 +38,11 @@ public class DataUseMatcherV4 {
       purposeDiseaseIdMap =
           dataUseUtil.generatePurposeDiseaseIdMap(purpose.getDiseaseRestrictions());
     } catch (Exception e) {
-      String purposeRestrictions = StringUtils.join(purpose.getDiseaseRestrictions(), ", ");
+      List<String> diseases =
+          (purpose == null || purpose.getDiseaseRestrictions() == null)
+              ? List.of()
+              : purpose.getDiseaseRestrictions();
+      String purposeRestrictions = StringUtils.join(diseases, ", ");
       List<String> errors =
           Arrays.asList(
               e.getMessage(), "Error found in one of the purpose terms: " + purposeRestrictions);
