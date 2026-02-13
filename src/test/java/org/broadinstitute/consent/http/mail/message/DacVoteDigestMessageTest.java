@@ -140,6 +140,62 @@ class DacVoteDigestMessageTest {
     assertTrue(hasElementWithId(parsedTemplate, "olderRequests"));
   }
 
+  @Test
+  void testMessageTemplate_Reminders_template_missing_dar_code()
+      throws IOException, TemplateException {
+    User toUser = new User();
+    toUser.setUserId(1);
+    toUser.setDisplayName("Reminder User");
+    Instant timeBasis = Instant.now();
+    String refId = timeBasis.toString();
+    List<Reminder> olderReminders =
+        List.of(
+            new Reminder(toUser.getUserId(), "DAR-1", 2, timeBasis.minus(21, ChronoUnit.DAYS)),
+            new Reminder(toUser.getUserId(), null, 3, timeBasis.minus(14, ChronoUnit.DAYS)));
+
+    var message = new DacVoteDigestMessage(toUser, olderReminders, refId, timeBasis);
+
+    var template = helper.getTemplate(message.getTemplateName());
+    var out = new StringWriter();
+    template.process(message.createModel("localhost:8080"), out);
+    var templateString = out.toString();
+    Document parsedTemplate = Jsoup.parse(templateString);
+    assertEquals(
+        "Dear %s,".formatted(toUser.getDisplayName()),
+        getElementTextById(parsedTemplate, "userName"));
+    assertFalse(hasElementWithId(parsedTemplate, "submittedThisWeek"));
+    assertFalse(hasElementWithId(parsedTemplate, "submittedLastWeek"));
+    assertTrue(hasElementWithId(parsedTemplate, "olderRequests"));
+  }
+
+  @Test
+  void testMessageTemplate_Reminders_template_missing_create_date()
+      throws IOException, TemplateException {
+    User toUser = new User();
+    toUser.setUserId(1);
+    toUser.setDisplayName("Reminder User");
+    Instant timeBasis = Instant.now();
+    String refId = timeBasis.toString();
+    List<Reminder> olderReminders =
+        List.of(
+            new Reminder(toUser.getUserId(), "DAR-1", 2, timeBasis.minus(21, ChronoUnit.DAYS)),
+            new Reminder(toUser.getUserId(), "DAR-2", 3, null));
+
+    var message = new DacVoteDigestMessage(toUser, olderReminders, refId, timeBasis);
+
+    var template = helper.getTemplate(message.getTemplateName());
+    var out = new StringWriter();
+    template.process(message.createModel("localhost:8080"), out);
+    var templateString = out.toString();
+    Document parsedTemplate = Jsoup.parse(templateString);
+    assertEquals(
+        "Dear %s,".formatted(toUser.getDisplayName()),
+        getElementTextById(parsedTemplate, "userName"));
+    assertFalse(hasElementWithId(parsedTemplate, "submittedThisWeek"));
+    assertFalse(hasElementWithId(parsedTemplate, "submittedLastWeek"));
+    assertTrue(hasElementWithId(parsedTemplate, "olderRequests"));
+  }
+
   String getElementTextById(Document document, String id) {
     return Objects.requireNonNull(document.getElementById(id)).text();
   }

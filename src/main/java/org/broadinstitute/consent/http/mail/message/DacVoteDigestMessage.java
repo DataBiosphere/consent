@@ -33,6 +33,7 @@ public class DacVoteDigestMessage extends MailMessage {
   public Object createModel(String serverUrl) {
     List<Reminder> sortedReminderList =
         userReminderList.stream()
+            .filter(r -> r.createDate() != null)
             .sorted(Comparator.comparing(Reminder::createDate).reversed())
             .toList();
     List<Reminder> currentWeekReminders = getCurrentWeekReminders(sortedReminderList);
@@ -86,8 +87,8 @@ public class DacVoteDigestMessage extends MailMessage {
             reminder ->
                 reminder.darCode() != null
                         && reminder.createDate() != null
-                        && reminder.createDate().isBefore(twoWeeksAgo)
-                    || reminder.createDate().equals(twoWeeksAgo))
+                        && (reminder.createDate().isBefore(twoWeeksAgo)
+                    || reminder.createDate().equals(twoWeeksAgo)))
         .toList();
   }
 }
