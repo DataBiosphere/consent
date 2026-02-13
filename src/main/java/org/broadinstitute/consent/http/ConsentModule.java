@@ -523,7 +523,6 @@ public class ConsentModule extends AbstractModule {
   @Provides
   MatchService providesMatchService() {
     return new MatchService(
-        providesClient(),
         config.getServicesConfiguration(),
         providesMatchDAO(),
         providesDataAccessRequestDAO(),

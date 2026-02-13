@@ -22,6 +22,7 @@ import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.StreamingOutput;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.broadinstitute.consent.http.MockServerTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
@@ -210,7 +211,7 @@ class OntologyServiceTest extends MockServerTestHelper {
         .thenReturn(
             output -> {
               // Mock streaming output that writes an empty JSON array
-              output.write(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+              output.write(json.getBytes(StandardCharsets.UTF_8));
             });
     StreamingOutput results = service.findByTermIds(termIds);
     assertNotNull(results);
