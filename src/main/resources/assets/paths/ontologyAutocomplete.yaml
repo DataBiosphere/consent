@@ -3,7 +3,7 @@ get:
   description: |
     Ontology terms can be queried based on term; type and count. This provides an easy filtering
     mechanism that allows users to select ontology terms that are applicable to datasets or
-    research purposes.
+    research purposes. Non-word characters (e.g. $, :, %) in the query term are ignored.
   parameters:
     - name: q
       in: query
