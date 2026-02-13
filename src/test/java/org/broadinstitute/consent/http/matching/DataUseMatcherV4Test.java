@@ -32,17 +32,11 @@ class DataUseMatcherV4Test {
 
   @Mock private OntologyService ontologyService;
 
-  private DataUseBuilder dataUseBuilder() {
-    // Initialize a DataUseBuilder with empty disease restrictions for reuse in tests.
-    // Legacy logic assumes non-null disease restrictions, so we set it to an empty list here.
-    return new DataUseBuilder().setDiseaseRestrictions(new ArrayList<>());
-  }
-
   @Test
   void testDiseaseMatching_positive() {
-    DataUse dataset = dataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
+    DataUse dataset = new DataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
     DataUse purpose =
-        dataUseBuilder().setDiseaseRestrictions(List.of(INTESTINAL_CANCER_NODE)).build();
+        new DataUseBuilder().setDiseaseRestrictions(List.of(INTESTINAL_CANCER_NODE)).build();
     // Build a mock response of term parents based on what is returned when searching on DOID_10155
     List<OntologyTerm> termResources = new ArrayList<>();
     OntologyTerm resource =
@@ -78,8 +72,8 @@ class DataUseMatcherV4Test {
   @Test
   void testDiseaseMatching_negative() {
     DataUse dataset =
-        dataUseBuilder().setDiseaseRestrictions(List.of(INTESTINAL_CANCER_NODE)).build();
-    DataUse purpose = dataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
+        new DataUseBuilder().setDiseaseRestrictions(List.of(INTESTINAL_CANCER_NODE)).build();
+    DataUse purpose = new DataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
 
     // Build a mock response of term parents based on what is returned when searching on DOID_162
     List<OntologyTerm> termResources = new ArrayList<>();
@@ -105,106 +99,106 @@ class DataUseMatcherV4Test {
 
   @Test
   void testHMB_positive_case_1() {
-    DataUse dataset = dataUseBuilder().setGeneralUse(true).build();
-    DataUse purpose = dataUseBuilder().setHmbResearch(true).build();
+    DataUse dataset = new DataUseBuilder().setGeneralUse(true).build();
+    DataUse purpose = new DataUseBuilder().setHmbResearch(true).build();
     assertApprove(purpose, dataset);
   }
 
   @Test
   void testHMB_positive_case_2() {
-    DataUse dataset = dataUseBuilder().setHmbResearch(true).build();
-    DataUse purpose = dataUseBuilder().setHmbResearch(true).build();
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
+    DataUse purpose = new DataUseBuilder().setHmbResearch(true).build();
     assertApprove(purpose, dataset);
   }
 
   @Test
   void testHMB_negative_case_1() {
-    DataUse dataset = dataUseBuilder().setHmbResearch(true).build();
-    DataUse purpose = dataUseBuilder().setGeneralUse(true).build();
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
+    DataUse purpose = new DataUseBuilder().setGeneralUse(true).build();
     assertDeny(purpose, dataset);
   }
 
   @Test
   void testHMB_negative_case_2() {
-    DataUse purpose = dataUseBuilder().setHmbResearch(true).build();
-    DataUse dataset = dataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
+    DataUse purpose = new DataUseBuilder().setHmbResearch(true).build();
+    DataUse dataset = new DataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
     assertDeny(purpose, dataset);
   }
 
   @Test
   void testHMB_negative_case_3() {
-    DataUse purpose = dataUseBuilder().setHmbResearch(true).build();
-    DataUse dataset = dataUseBuilder().setPopulationOriginsAncestry(true).build();
+    DataUse purpose = new DataUseBuilder().setHmbResearch(true).build();
+    DataUse dataset = new DataUseBuilder().setPopulationOriginsAncestry(true).build();
     assertDeny(purpose, dataset);
   }
 
   @Test
   void testPOA_positive_case_1() {
-    DataUse dataset = dataUseBuilder().setGeneralUse(true).build();
-    DataUse purpose = dataUseBuilder().setPopulationOriginsAncestry(true).build();
+    DataUse dataset = new DataUseBuilder().setGeneralUse(true).build();
+    DataUse purpose = new DataUseBuilder().setPopulationOriginsAncestry(true).build();
     assertApprove(purpose, dataset);
   }
 
   @Test
   void testPOA_positive_case_2() {
-    DataUse dataset = dataUseBuilder().setPopulationOriginsAncestry(true).build();
-    DataUse purpose = dataUseBuilder().setPopulationOriginsAncestry(true).build();
+    DataUse dataset = new DataUseBuilder().setPopulationOriginsAncestry(true).build();
+    DataUse purpose = new DataUseBuilder().setPopulationOriginsAncestry(true).build();
     assertApprove(purpose, dataset);
   }
 
   @Test
   void testPOA_negative_case_1() {
-    DataUse dataset = dataUseBuilder().setHmbResearch(true).build();
-    DataUse purpose = dataUseBuilder().setPopulationOriginsAncestry(true).build();
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
+    DataUse purpose = new DataUseBuilder().setPopulationOriginsAncestry(true).build();
     assertDeny(purpose, dataset);
   }
 
   @Test
   void testPOA_negative_case_2() {
-    DataUse dataset = dataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
-    DataUse purpose = dataUseBuilder().setPopulationOriginsAncestry(true).build();
+    DataUse dataset = new DataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
+    DataUse purpose = new DataUseBuilder().setPopulationOriginsAncestry(true).build();
     assertDeny(purpose, dataset);
   }
 
   @Test
   void testMDS_positive_case_1() {
-    DataUse dataset = dataUseBuilder().setGeneralUse(true).build();
-    DataUse purpose = dataUseBuilder().setMethodsResearch(true).build();
+    DataUse dataset = new DataUseBuilder().setGeneralUse(true).build();
+    DataUse purpose = new DataUseBuilder().setMethodsResearch(true).build();
     assertApprove(purpose, dataset);
   }
 
   @Test
   void testMDS_positive_case_2() {
-    DataUse dataset = dataUseBuilder().setPopulationOriginsAncestry(true).build();
-    DataUse purpose = dataUseBuilder().setMethodsResearch(true).build();
+    DataUse dataset = new DataUseBuilder().setPopulationOriginsAncestry(true).build();
+    DataUse purpose = new DataUseBuilder().setMethodsResearch(true).build();
     assertApprove(purpose, dataset);
   }
 
   @Test
   void testMDS_positive_case_3() {
-    DataUse dataset = dataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
-    DataUse purpose = dataUseBuilder().setMethodsResearch(true).build();
+    DataUse dataset = new DataUseBuilder().setDiseaseRestrictions(List.of(CANCER_NODE)).build();
+    DataUse purpose = new DataUseBuilder().setMethodsResearch(true).build();
     assertApprove(purpose, dataset);
   }
 
   @Test
   void testMDS_positive_case_4() {
-    DataUse dataset = dataUseBuilder().setHmbResearch(true).build();
-    DataUse purpose = dataUseBuilder().setMethodsResearch(true).build();
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
+    DataUse purpose = new DataUseBuilder().setMethodsResearch(true).build();
     assertApprove(purpose, dataset);
   }
 
   @Test
   void testNPU_positive_case_1() {
-    DataUse dataset = dataUseBuilder().setNonProfitUse(true).build();
-    DataUse purpose = dataUseBuilder().setNonProfitUse(true).build();
+    DataUse dataset = new DataUseBuilder().setNonProfitUse(true).build();
+    DataUse purpose = new DataUseBuilder().setNonProfitUse(true).build();
     assertApprove(purpose, dataset);
   }
 
   @Test
   void testNPU_positive_case_2() {
-    DataUse dataset = dataUseBuilder().setNonProfitUse(false).build();
-    DataUse purpose = dataUseBuilder().setNonProfitUse(false).build();
+    DataUse dataset = new DataUseBuilder().setNonProfitUse(false).build();
+    DataUse purpose = new DataUseBuilder().setNonProfitUse(false).build();
     assertApprove(purpose, dataset);
   }
 
@@ -212,113 +206,115 @@ class DataUseMatcherV4Test {
   // NPU restrictions on it. That means that any purpose NPU == true|false should be approved.
   @Test
   void testNPU_positive_case_3() {
-    DataUse dataset = dataUseBuilder().setNonProfitUse(false).build();
-    DataUse purpose = dataUseBuilder().setNonProfitUse(true).build();
+    DataUse dataset = new DataUseBuilder().setNonProfitUse(false).build();
+    DataUse purpose = new DataUseBuilder().setNonProfitUse(true).build();
     assertApprove(purpose, dataset);
   }
 
   @Test
   void testNPU_negative_case_1() {
-    DataUse dataset = dataUseBuilder().setNonProfitUse(true).build();
-    DataUse purpose = dataUseBuilder().setNonProfitUse(false).build();
+    DataUse dataset = new DataUseBuilder().setNonProfitUse(true).build();
+    DataUse purpose = new DataUseBuilder().setNonProfitUse(false).build();
     assertDeny(purpose, dataset);
   }
 
   @Test
   void testAbstainDecision_COL() {
-    DataUse purpose = dataUseBuilder().setCollaboratorRequired(true).build();
-    DataUse dataset = dataUseBuilder().setHmbResearch(true).build();
+    DataUse purpose = new DataUseBuilder().setCollaboratorRequired(true).build();
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
     assertAbstain(purpose, dataset);
   }
 
   @Test
   void testAbstainDecision_Other() {
-    DataUse purpose = dataUseBuilder().setOther("other").build();
-    DataUse dataset = dataUseBuilder().setHmbResearch(true).build();
+    DataUse purpose = new DataUseBuilder().setOther("other").build();
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
     assertAbstain(purpose, dataset);
   }
 
   @Test
   void testAbstainDecision_SecondaryOther() {
-    DataUse purpose = dataUseBuilder().setSecondaryOther("secondary other").build();
-    DataUse dataset = dataUseBuilder().setHmbResearch(true).build();
+    DataUse purpose = new DataUseBuilder().setSecondaryOther("secondary other").build();
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
     assertAbstain(purpose, dataset);
   }
 
   @Test
   void testAbstainDecision_ethicsApprovalRequired() {
-    DataUse purpose = dataUseBuilder().setEthicsApprovalRequired(true).build();
-    DataUse dataset = dataUseBuilder().setHmbResearch(true).build();
+    DataUse purpose = new DataUseBuilder().setEthicsApprovalRequired(true).build();
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
     assertAbstain(purpose, dataset);
   }
 
   @Test
   void testAbstainDecision_controls() {
-    DataUse purpose = dataUseBuilder().setHmbResearch(true).setControl(true).build();
-    DataUse dataset = dataUseBuilder().setHmbResearch(true).build();
+    DataUse purpose = new DataUseBuilder().setHmbResearch(true).setControl(true).build();
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
     assertAbstain(purpose, dataset);
   }
 
   @Test
   void testAbstainDecision_population() {
-    DataUse purpose = dataUseBuilder().setHmbResearch(true).setPopulation(true).build();
-    DataUse dataset = dataUseBuilder().setHmbResearch(true).build();
+    DataUse purpose = new DataUseBuilder().setHmbResearch(true).setPopulation(true).build();
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
     assertAbstain(purpose, dataset);
   }
 
   @Test
   void testAbstainDecision_gender() {
-    DataUse purpose = dataUseBuilder().setHmbResearch(true).setGender("M").build();
-    DataUse dataset = dataUseBuilder().setHmbResearch(true).build();
+    DataUse purpose = new DataUseBuilder().setHmbResearch(true).setGender("M").build();
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
     assertAbstain(purpose, dataset);
   }
 
   @Test
   void testAbstainDecision_pediatric() {
-    DataUse purpose = dataUseBuilder().setHmbResearch(true).setPediatric(true).build();
-    DataUse dataset = dataUseBuilder().setHmbResearch(true).build();
+    DataUse purpose = new DataUseBuilder().setHmbResearch(true).setPediatric(true).build();
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
     assertAbstain(purpose, dataset);
   }
 
   @Test
   void testAbstainDecision_vulnerablePopulations() {
-    DataUse purpose = dataUseBuilder().setHmbResearch(true).setVulnerablePopulations(true).build();
-    DataUse dataset = dataUseBuilder().setHmbResearch(true).build();
+    DataUse purpose =
+        new DataUseBuilder().setHmbResearch(true).setVulnerablePopulations(true).build();
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
     assertAbstain(purpose, dataset);
   }
 
   @Test
   void testAbstainDecision_illegalBehavior() {
-    DataUse purpose = dataUseBuilder().setHmbResearch(true).setIllegalBehavior(true).build();
-    DataUse dataset = dataUseBuilder().setHmbResearch(true).build();
+    DataUse purpose = new DataUseBuilder().setHmbResearch(true).setIllegalBehavior(true).build();
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
     assertAbstain(purpose, dataset);
   }
 
   @Test
   void testAbstainDecision_sexualDiseases() {
-    DataUse purpose = dataUseBuilder().setHmbResearch(true).setSexualDiseases(true).build();
-    DataUse dataset = dataUseBuilder().setHmbResearch(true).build();
+    DataUse purpose = new DataUseBuilder().setHmbResearch(true).setSexualDiseases(true).build();
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
     assertAbstain(purpose, dataset);
   }
 
   @Test
   void testAbstainDecision_psychologicalTraits() {
-    DataUse purpose = dataUseBuilder().setHmbResearch(true).setPsychologicalTraits(true).build();
-    DataUse dataset = dataUseBuilder().setHmbResearch(true).build();
+    DataUse purpose =
+        new DataUseBuilder().setHmbResearch(true).setPsychologicalTraits(true).build();
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
     assertAbstain(purpose, dataset);
   }
 
   @Test
   void testAbstainDecision_notHealth() {
-    DataUse purpose = dataUseBuilder().setHmbResearch(true).setNotHealth(true).build();
-    DataUse dataset = dataUseBuilder().setHmbResearch(true).build();
+    DataUse purpose = new DataUseBuilder().setHmbResearch(true).setNotHealth(true).build();
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
     assertAbstain(purpose, dataset);
   }
 
   @Test
   void testAbstainDecision_stigmatizedDiseases() {
-    DataUse purpose = dataUseBuilder().setHmbResearch(true).setStigmatizeDiseases(true).build();
-    DataUse dataset = dataUseBuilder().setHmbResearch(true).build();
+    DataUse purpose = new DataUseBuilder().setHmbResearch(true).setStigmatizeDiseases(true).build();
+    DataUse dataset = new DataUseBuilder().setHmbResearch(true).build();
     assertAbstain(purpose, dataset);
   }
 
