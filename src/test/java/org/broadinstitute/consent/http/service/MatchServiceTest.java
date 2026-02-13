@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -13,6 +14,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.NotFoundException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -24,9 +26,11 @@ import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.enumeration.MatchAlgorithm;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.models.matching.DataUseResponseMatchingObject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -44,7 +48,8 @@ class MatchServiceTest extends AbstractTestHelper {
 
   private MatchService service;
 
-  private void initService() {
+  @BeforeEach
+  void setUp() {
     service =
         new MatchService(
             config, matchDAO, dataAccessRequestDAO, datasetDAO, useRestrictionConverter);
@@ -53,7 +58,6 @@ class MatchServiceTest extends AbstractTestHelper {
   @Test
   void testInsertMatches() {
     when(matchDAO.insertMatch(any(), any(), any(), any(), any(), any(), any())).thenReturn(1);
-    initService();
 
     service.insertMatches(List.of(new Match()));
     verify(matchDAO, atLeastOnce()).insertMatch(any(), any(), any(), any(), any(), any(), any());
@@ -63,7 +67,6 @@ class MatchServiceTest extends AbstractTestHelper {
   void testFindMatchById() {
     Match m = createMatchObject();
     when(matchDAO.findMatchById(m.getId())).thenReturn(m);
-    initService();
 
     Match match = service.findMatchById(m.getId());
     assertNotNull(match);
@@ -74,7 +77,6 @@ class MatchServiceTest extends AbstractTestHelper {
   void testFindMatchByIdNotFound() {
     Match m = createMatchObject();
     when(matchDAO.findMatchById(m.getId())).thenReturn(null);
-    initService();
 
     assertThrows(NotFoundException.class, () -> service.findMatchById(m.getId()));
   }
@@ -84,7 +86,6 @@ class MatchServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
     dar.setDatasetIds(List.of(1, 2, 3));
     Mockito.mock(DataUseResponseMatchingObject.class);
-    initService();
 
     service.createMatchesForDataAccessRequest(dar);
     verify(datasetDAO, times(dar.getDatasetIds().size())).findDatasetById(any());
@@ -93,22 +94,57 @@ class MatchServiceTest extends AbstractTestHelper {
   @Test
   void testSingleEntitiesMatchEmptyDataset() {
     DataAccessRequest dar = new DataAccessRequest();
-    initService();
+
     assertThrows(IllegalArgumentException.class, () -> service.singleEntitiesMatch(null, dar));
   }
 
   @Test
   void testSingleEntitiesMatchEmptyDar() {
     Dataset dataset = new Dataset();
-    initService();
+
     assertThrows(IllegalArgumentException.class, () -> service.singleEntitiesMatch(dataset, null));
+  }
+
+  @Test
+  void testSingleEntitiesMatchNullDarDataUse() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setName("Test Dataset 1");
+    dataset.setDataUse(new DataUseBuilder().setHmbResearch(true).build());
+    dataset.setProperties(Collections.emptySet());
+    DataAccessRequest dar = getSampleDataAccessRequest(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(dataset.getDatasetId()));
+    dar.setData(new DataAccessRequestData());
+    dar.getData().setHmb(true);
+    dar.getData().setDiseases(false);
+    when(useRestrictionConverter.parseDataUsePurpose(dar)).thenReturn(null);
+
+    assertThrows(IllegalArgumentException.class, () -> service.singleEntitiesMatch(dataset, dar));
+  }
+
+  @Test
+  void testSingleEntitiesMatch() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setName("Test Dataset 1");
+    dataset.setDataUse(new DataUseBuilder().setHmbResearch(true).build());
+    dataset.setProperties(Collections.emptySet());
+    DataAccessRequest dar = getSampleDataAccessRequest(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(dataset.getDatasetId()));
+    dar.setData(new DataAccessRequestData());
+    dar.getData().setHmb(true);
+    dar.getData().setDiseases(false);
+    when(useRestrictionConverter.parseDataUsePurpose(dar)).thenReturn(new DataUseBuilder().setHmbResearch(true).build());
+
+    Match match = service.singleEntitiesMatch(dataset, dar);
+    assertNotNull(match);
+    assertTrue(match.getMatch());
   }
 
   @Test
   void testFindMatchesByPurposeId() {
     Match m = createMatchObject();
     when(matchDAO.findMatchesByPurposeId(any())).thenReturn(List.of(m));
-    initService();
 
     List<Match> matches = service.findMatchesByPurposeId(m.getConsent());
     assertFalse(matches.isEmpty());
@@ -118,7 +154,6 @@ class MatchServiceTest extends AbstractTestHelper {
   @Test
   void testReprocessMatchesForPurpose() {
     Match m = createMatchObject();
-    initService();
 
     try {
       service.reprocessMatchesForPurpose(m.getPurpose());
@@ -129,8 +164,6 @@ class MatchServiceTest extends AbstractTestHelper {
 
   @Test
   void testRemoveMatchesForPurpose() {
-    initService();
-
     service.removeMatchesForPurpose("DAR-2");
     verify(matchDAO, atLeastOnce()).deleteRationalesByPurposeIds(anyList());
     verify(matchDAO, atLeastOnce()).deleteMatchesByPurposeId(any());
@@ -141,11 +174,11 @@ class MatchServiceTest extends AbstractTestHelper {
     Match m = createMatchObject();
     when(matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(anyList()))
         .thenReturn(List.of(m));
-    initService();
+
     List<Match> matches =
         service.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of("test"));
     assertEquals(1, matches.size());
-    assertEquals(m.getId(), matches.get(0).getId());
+    assertEquals(m.getId(), matches.getFirst().getId());
     verify(matchDAO, atLeastOnce()).findMatchesForLatestDataAccessElectionsByPurposeIds(anyList());
   }
 
