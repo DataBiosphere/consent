@@ -4,8 +4,11 @@ import com.google.gson.JsonObject;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.db.StreamingOutputIterator;
 import org.broadinstitute.consent.http.db.mapper.JsonMapper;
+import org.broadinstitute.consent.http.enumeration.OntologyType;
 import org.jdbi.v3.core.result.ResultIterable;
 import org.jdbi.v3.json.Json;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -55,5 +58,60 @@ public interface OntologyDAO extends Transactional<OntologyDAO> {
           StreamingOutputIterator<JsonObject> iterator = new StreamingOutputIterator<>();
           return iterator.streamResults(results, handle);
         });
+  }
+
+  @Json
+  default StreamingOutput findByQuery(String term, OntologyType type, Integer count) {
+    String formattedTerm = sanitizeForTsQuery(term);
+    if (formattedTerm.isBlank()) {
+      return outputStream -> outputStream.write("[]".getBytes());
+    }
+    String[] defaultTypes =
+        type != null
+            ? new String[] {type.name().toLowerCase()}
+            : EnumSet.allOf(OntologyType.class).stream()
+                .map(t -> t.name().toLowerCase())
+                .toArray(String[]::new);
+    Integer defaultCount = (count == null || count < 1) ? 20 : count;
+    String query =
+        """
+            SELECT json_document, ts_rank(search_vector, query) AS rank
+              FROM ontology_index, to_tsquery('english', :term) query
+             WHERE search_vector @@ query
+               AND LOWER(ontology) = ANY (:types)
+             ORDER BY rank DESC
+             LIMIT :count
+            """;
+    return withHandle(
+        handle -> {
+          ResultIterable<JsonObject> results =
+              handle
+                  .createQuery(query)
+                  .bindArray("types", defaultTypes)
+                  .bind("term", formattedTerm)
+                  .bind("count", defaultCount)
+                  .map(new JsonMapper("json_document"));
+          StreamingOutputIterator<JsonObject> iterator = new StreamingOutputIterator<>();
+          return iterator.streamResults(results, handle);
+        });
+  }
+
+  /**
+   * Sanitizes a string for use in a postgres to_tsquery statement. Removes non-alphanumeric
+   * characters and formats tokens for prefix matching.
+   *
+   * @param term The user input string
+   * @return A formatted tsquery string (e.g., "term1:* | term2:*")
+   */
+  default String sanitizeForTsQuery(String term) {
+    if (term == null || term.isBlank()) {
+      return "";
+    }
+    // Remove characters that conflict with tsquery syntax (keep alphanumeric and whitespace)
+    String cleanTerm = term.replaceAll("[^a-zA-Z0-9\\s]", "");
+
+    return Arrays.stream(cleanTerm.trim().split("\\s+"))
+        .map(s -> s + ":*")
+        .collect(Collectors.joining(" | "));
   }
 }

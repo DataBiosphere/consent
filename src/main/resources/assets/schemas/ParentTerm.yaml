@@ -1,0 +1,20 @@
+type: object
+description: A parent term that is a parent of a child OntologyTerm
+properties:
+  id:
+    type: string
+    description: The unique identifier for the parent term. This is typically the full purl Term URI.
+  label:
+    type: string
+    description: The human readable label for the term.
+  order:
+    type: number
+    description: The order of the parent term in relation to other parent terms.
+  synonyms:
+    type: array
+    description: An array of synonyms for the ontology term.
+    items:
+      type: string
+  definition:
+    type: string
+    description: A human readable definition of the ontology term.

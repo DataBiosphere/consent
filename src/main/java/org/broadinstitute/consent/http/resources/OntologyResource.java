@@ -74,4 +74,26 @@ public class OntologyResource extends Resource {
       return createExceptionResponse(e);
     }
   }
+
+  @GET
+  @Path("autocomplete")
+  @Produces({MediaType.APPLICATION_JSON})
+  public Response autocomplete(
+      @QueryParam("q") String q,
+      @QueryParam("type") String type,
+      @QueryParam("count") Integer count) {
+    try {
+      if (q == null || q.isBlank()) {
+        throw new IllegalArgumentException("Query parameter 'q' is required for autocomplete.");
+      }
+      OntologyType ontologyType = null;
+      if (type != null && !type.isBlank()) {
+        ontologyType = OntologyType.getFromName(type);
+      }
+      StreamingOutput stream = ontologyService.findByQuery(q, ontologyType, count);
+      return Response.ok(stream).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
 }
