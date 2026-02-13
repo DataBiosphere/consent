@@ -13,7 +13,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import jakarta.ws.rs.NotFoundException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -61,24 +60,6 @@ class MatchServiceTest extends AbstractTestHelper {
 
     service.insertMatches(List.of(new Match()));
     verify(matchDAO, atLeastOnce()).insertMatch(any(), any(), any(), any(), any(), any(), any());
-  }
-
-  @Test
-  void testFindMatchById() {
-    Match m = createMatchObject();
-    when(matchDAO.findMatchById(m.getId())).thenReturn(m);
-
-    Match match = service.findMatchById(m.getId());
-    assertNotNull(match);
-    verify(matchDAO, atLeastOnce()).findMatchById(any());
-  }
-
-  @Test
-  void testFindMatchByIdNotFound() {
-    Match m = createMatchObject();
-    when(matchDAO.findMatchById(m.getId())).thenReturn(null);
-
-    assertThrows(NotFoundException.class, () -> service.findMatchById(m.getId()));
   }
 
   @Test

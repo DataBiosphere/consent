@@ -4,7 +4,6 @@ import static org.broadinstitute.consent.http.models.Match.matchFailure;
 import static org.broadinstitute.consent.http.models.Match.matchSuccess;
 
 import com.google.inject.Inject;
-import jakarta.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -57,19 +56,9 @@ public class MatchService implements ConsentLogger {
           if (!m.getRationales().isEmpty()) {
             m.getRationales()
                 .forEach(
-                    f -> {
-                      matchDAO.insertRationale(id, f);
-                    });
+                    f -> matchDAO.insertRationale(id, f));
           }
         });
-  }
-
-  public Match findMatchById(Integer id) {
-    Match match = matchDAO.findMatchById(id);
-    if (match == null) {
-      throw new NotFoundException("Match for the specified id does not exist");
-    }
-    return match;
   }
 
   public List<Match> findMatchesForLatestDataAccessElectionsByPurposeIds(List<String> purposeIds) {
