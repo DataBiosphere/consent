@@ -38,6 +38,7 @@ public class DataUseMatcherV4 {
       purposeDiseaseIdMap =
           dataUseUtil.generatePurposeDiseaseIdMap(purpose.getDiseaseRestrictions());
     } catch (Exception e) {
+      @SuppressWarnings("java:S2589") // Null check is necessary
       List<String> diseases =
           (purpose == null || purpose.getDiseaseRestrictions() == null)
               ? List.of()
