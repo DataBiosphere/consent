@@ -13,7 +13,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.matching.DataUseMatchResultType;
@@ -68,13 +67,17 @@ public class DataUseMatcherV4 {
             .map(MatchResult::getMessage)
             .flatMap(Collection::stream)
             .filter(StringUtils::isNotBlank)
-            .collect(Collectors.toList());
+            .toList();
     // if all items match, decision is APPROVED
     // if not, determine whether DENY or ABSTAIN
-    DataUseMatchResultType type =
-        allMatch
-            ? DataUseMatchResultType.APPROVE
-            : anyAbstain ? DataUseMatchResultType.ABSTAIN : DataUseMatchResultType.DENY;
+    DataUseMatchResultType type;
+    if (allMatch) {
+      type = DataUseMatchResultType.APPROVE;
+    } else if (anyAbstain) {
+      type = DataUseMatchResultType.ABSTAIN;
+    } else {
+      type = DataUseMatchResultType.DENY;
+    }
     return MatchResult.from(type, reasons);
   }
 }
