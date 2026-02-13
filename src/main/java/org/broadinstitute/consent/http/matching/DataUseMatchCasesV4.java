@@ -64,8 +64,8 @@ public class DataUseMatchCasesV4 {
   static MatchResult matchDiseases(
       DataUse purpose, DataUse dataset, Map<String, List<String>> purposeDiseaseIdMap) {
 
-    boolean purposeDSX = getNullableOrFalse(!purpose.getDiseaseRestrictions().isEmpty());
-    boolean datasetDSX = getNullableOrFalse(!dataset.getDiseaseRestrictions().isEmpty());
+    boolean purposeDSX = getNullableOrFalse(!isNullOrEmpty(purpose.getDiseaseRestrictions()));
+    boolean datasetDSX = getNullableOrFalse(!isNullOrEmpty(dataset.getDiseaseRestrictions()));
     boolean datasetGRU = getNullableOrFalse(dataset.getGeneralUse());
     boolean datasetHMB = getNullableOrFalse(dataset.getHmbResearch());
 
@@ -117,7 +117,7 @@ public class DataUseMatchCasesV4 {
     boolean purposeHMB = getNullableOrFalse(purpose.getHmbResearch());
     boolean datasetGRU = getNullableOrFalse(dataset.getGeneralUse());
     boolean datasetHMB = getNullableOrFalse(dataset.getHmbResearch());
-    boolean datasetDSX = getNullableOrFalse(!dataset.getDiseaseRestrictions().isEmpty());
+    boolean datasetDSX = getNullableOrFalse(!isNullOrEmpty(dataset.getDiseaseRestrictions()));
     boolean datasetPOA = getNullableOrFalse(dataset.getPopulationOriginsAncestry());
 
     // Deny purpose GRU condition
@@ -197,7 +197,8 @@ public class DataUseMatchCasesV4 {
   static MatchResult matchMDS(
       DataUse purpose, DataUse dataset, DataUseMatchResultType diseaseMatch) {
     // short-circuit if no disease focused research
-    if (purpose.getDiseaseRestrictions().isEmpty() && dataset.getDiseaseRestrictions().isEmpty()) {
+    if (isNullOrEmpty(purpose.getDiseaseRestrictions())
+        && isNullOrEmpty(dataset.getDiseaseRestrictions())) {
       return MatchResult.from(DataUseMatchResultType.APPROVE, Collections.emptyList());
     }
 
@@ -297,7 +298,7 @@ public class DataUseMatchCasesV4 {
     }
 
     // Valid RPs
-    boolean purposeDSX = getNullableOrFalse(!purpose.getDiseaseRestrictions().isEmpty());
+    boolean purposeDSX = getNullableOrFalse(!isNullOrEmpty(purpose.getDiseaseRestrictions()));
     boolean purposeHMB = getNullableOrFalse(purpose.getHmbResearch());
     boolean purposePOA = getNullableOrFalse(purpose.getPopulationOriginsAncestry());
     boolean purposeMDS = getNullableOrFalse(purpose.getMethodsResearch());
@@ -332,5 +333,17 @@ public class DataUseMatchCasesV4 {
    */
   private static boolean getNullableOrFalse(Boolean bool) {
     return Optional.ofNullable(bool).orElse(false);
+  }
+
+  /**
+   * Helper method to check if a list of strings is null or empty. Original Ontology code assumed
+   * all lists were non-null, but this is not the case for all datasets and purposes, and we want to
+   * avoid null pointer exceptions in the matching algorithm.
+   *
+   * @param list nullable list of strings
+   * @return boolean true if the list is null or empty, false otherwise
+   */
+  private static boolean isNullOrEmpty(List<String> list) {
+    return list == null || list.isEmpty();
   }
 }

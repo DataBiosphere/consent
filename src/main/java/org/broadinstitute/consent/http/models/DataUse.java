@@ -58,9 +58,6 @@ public class DataUse {
   }
 
   public List<String> getDiseaseRestrictions() {
-    if (diseaseRestrictions == null) {
-      return List.of();
-    }
     return diseaseRestrictions;
   }
 
