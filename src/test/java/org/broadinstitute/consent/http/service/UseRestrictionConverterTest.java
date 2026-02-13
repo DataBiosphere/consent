@@ -108,7 +108,7 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
     DataAccessRequest dar = createDataAccessRequest();
     DataUse dataUse = converter.parseDataUsePurpose(dar);
     assertNull(dataUse.getGeneralUse());
-    assertNull(dataUse.getDiseaseRestrictions());
+    assertTrue(dataUse.getDiseaseRestrictions().isEmpty());
     assertNull(dataUse.getHmbResearch());
     assertNull(dataUse.getPopulationOriginsAncestry());
     assertNull(dataUse.getMethodsResearch());
@@ -157,7 +157,7 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
     dar.setData(data);
     DataUse dataUse = converter.parseDataUsePurpose(dar);
     assertNull(dataUse.getGeneralUse());
-    assertNull(dataUse.getDiseaseRestrictions());
+    assertTrue(dataUse.getDiseaseRestrictions().isEmpty());
     assertNull(dataUse.getHmbResearch());
     assertNull(dataUse.getPopulationOriginsAncestry());
     assertNull(dataUse.getMethodsResearch());
