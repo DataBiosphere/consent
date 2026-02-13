@@ -205,18 +205,31 @@ class OntologyServiceTest extends MockServerTestHelper {
     String[] termIds = new String[] {"DUO_0000006", "DUO_0000007"};
     String json =
         """
-          [{id:"DUO_0000006"}, {id:"DUO_0000007"}]
+          [{"id":"DUO_0000006"}, {"id":"DUO_0000007"}]
         """;
     when(ontologyDAO.findByTermIds(termIds))
-        .thenReturn(
-            output -> {
-              // Mock streaming output that writes an empty JSON array
-              output.write(json.getBytes(StandardCharsets.UTF_8));
-            });
+        .thenReturn(output -> output.write(json.getBytes(StandardCharsets.UTF_8)));
     StreamingOutput results = service.findByTermIds(termIds);
     assertNotNull(results);
     JsonArray jsonArray = getJsonArrayFromStreamingOutput(results);
     assertEquals(2, jsonArray.size());
+  }
+
+  @Test
+  void testFindByQuery() throws Exception {
+    String term = "data use modifier";
+    OntologyType type = OntologyType.DUO;
+    Integer count = 5;
+    String json =
+        """
+          [{"id":"DUO_0000006"}, {"id":"DUO_0000007"}, {"id":"DUO_0000008"}, {"id":"DUO_0000009"}, {"id":"DUO_0000010"}]
+        """;
+    when(ontologyDAO.findByQuery(term, type, count))
+        .thenReturn(output -> output.write(json.getBytes(StandardCharsets.UTF_8)));
+    StreamingOutput results = service.findByQuery(term, type, count);
+    assertNotNull(results);
+    JsonArray jsonArray = getJsonArrayFromStreamingOutput(results);
+    assertEquals(5, jsonArray.size());
   }
 
   private void mockDataUseTranslateSummarySuccess() {

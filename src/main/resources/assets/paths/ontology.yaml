@@ -9,7 +9,7 @@ post:
   parameters:
     - name: ontologyType
       in: query
-      description: | 
+      description: |
         The type of the ontology file to index. Note that the ontology file
         specified must exist in the configured ontology file storage location.
       required: true

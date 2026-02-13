@@ -41,6 +41,8 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.elastic_search.DacTerm;
 import org.broadinstitute.consent.http.models.elastic_search.DatasetTerm;
 import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchHits;
+import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchInfo;
+import org.broadinstitute.consent.http.models.elastic_search.ElasticSearchVersion;
 import org.broadinstitute.consent.http.models.elastic_search.InstitutionTerm;
 import org.broadinstitute.consent.http.models.elastic_search.StudyTerm;
 import org.broadinstitute.consent.http.models.elastic_search.UserTerm;
@@ -65,6 +67,8 @@ public class ElasticSearchService implements ConsentLogger {
   private final DatasetDAO datasetDAO;
   private final DatasetServiceDAO datasetServiceDAO;
   private final StudyDAO studyDAO;
+
+  private String indexKey;
 
   public ElasticSearchService(
       RestClient esClient,
@@ -91,7 +95,7 @@ public class ElasticSearchService implements ConsentLogger {
 
   private static final String BULK_HEADER =
       """
-      { "index": {"_index": "dataset", "_id": "%d"} }
+      { "index": {"%s": "dataset", "_id": "%d"} }
       """;
 
   private static final String DELETE_QUERY =
@@ -109,12 +113,46 @@ public class ElasticSearchService implements ConsentLogger {
     return Response.status(status).entity(body).build();
   }
 
+  public String getIndexKey() {
+    if (this.indexKey != null) {
+      return this.indexKey;
+    }
+    // nosemgrep
+    String defaultKey = "_index";
+    try {
+      Request request = new Request(HttpMethod.GET, "/");
+      Response response = performRequest(request);
+      ElasticSearchInfo info =
+          GsonUtil.getInstance().fromJson(response.getEntity().toString(), ElasticSearchInfo.class);
+      if (info != null && info.version() != null && info.version().number() != null) {
+        ElasticSearchVersion version = info.version();
+        int majorVersion = Integer.parseInt(version.number().split("\\.")[0]);
+        String distribution = version.distribution();
+        if (distribution == null && majorVersion < 7) {
+          defaultKey = "_type";
+        }
+      }
+    } catch (Exception e) {
+      logWarn(
+          "Unable to get Elasticsearch index key, defaulting to "
+              + defaultKey
+              + ": "
+              + e.getMessage());
+    }
+    return setIndexKey(defaultKey);
+  }
+
+  String setIndexKey(String indexKey) {
+    this.indexKey = indexKey;
+    return this.indexKey;
+  }
+
   public Response indexDatasetTerms(List<DatasetTerm> datasets, User user) throws IOException {
     List<String> bulkApiCall = new ArrayList<>();
 
     datasets.forEach(
         dsTerm -> {
-          bulkApiCall.add(BULK_HEADER.formatted(dsTerm.getDatasetId()));
+          bulkApiCall.add(BULK_HEADER.formatted(getIndexKey(), dsTerm.getDatasetId()));
           bulkApiCall.add(GsonUtil.getInstance().toJson(dsTerm) + "\n");
           updateDatasetIndexDate(dsTerm.getDatasetId(), user.getUserId(), Instant.now());
         });
@@ -367,7 +405,14 @@ public class ElasticSearchService implements ConsentLogger {
     // Datasets in list context may not have their study populated, so we need to ensure that is
     // true before trying to index them in ES.
     List<DatasetTerm> datasetTerms =
-        datasetIds.stream().map(datasetDAO::findDatasetById).map(this::toDatasetTerm).toList();
+        datasetIds.stream()
+            .map(datasetDAO::findDatasetById)
+            .filter(Objects::nonNull)
+            .map(this::toDatasetTerm)
+            .toList();
+    if (datasetTerms.isEmpty()) {
+      return Response.status(Status.NOT_FOUND).build();
+    }
     return indexDatasetTerms(datasetTerms, user);
   }
 

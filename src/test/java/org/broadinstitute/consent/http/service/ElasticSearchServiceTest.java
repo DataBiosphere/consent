@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -115,6 +116,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
             datasetDAO,
             datasetServiceDAO,
             studyDAO);
+    service.setIndexKey("_index");
   }
 
   private void mockElasticSearchResponse(String body) throws IOException {
@@ -580,6 +582,44 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testIndexDatasetsHandleSingleNullDataset() throws Exception {
+    User user = createUser(1, 100);
+    when(datasetDAO.findDatasetById(1)).thenReturn(null);
+    try (var response = service.indexDatasets(List.of(1), user)) {
+      verify(datasetDAO).findDatasetById(1);
+      verify(esClient, never()).performRequest(any());
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
+  void testIndexDatasetsHandleNullDatasetInBatch() throws Exception {
+    User user = createUser(1, 100);
+    Dataset d1 = createDataset(user, user, new DataUse(), createDac());
+    Dataset d2 = createDataset(user, user, new DataUse(), createDac());
+    // List of IDs includes two valid datasets and a third ID that does not correspond to an
+    // existing dataset
+    List<Integer> datasetIds =
+        List.of(d1.getDatasetId(), d2.getDatasetId(), d1.getDatasetId() + d2.getDatasetId());
+    when(datasetDAO.findDatasetById(d1.getDatasetId())).thenReturn(d1);
+    when(datasetDAO.findDatasetById(d2.getDatasetId())).thenReturn(d2);
+    when(datasetDAO.findDatasetById(d1.getDatasetId() + d2.getDatasetId())).thenReturn(null);
+    when(userDao.findUserById(user.getUserId())).thenReturn(user);
+    org.elasticsearch.client.Response mockResponse = mock();
+    when(esClient.performRequest(any())).thenReturn(mockResponse);
+    when(mockResponse.getEntity()).thenReturn(new StringEntity("response body"));
+    StatusLine statusLine = mock();
+    when(mockResponse.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(200);
+    try (var response = service.indexDatasets(datasetIds, user)) {
+      verify(datasetDAO, atLeastOnce()).findDatasetById(d1.getDatasetId());
+      verify(datasetDAO, atLeastOnce()).findDatasetById(d2.getDatasetId());
+      verify(datasetDAO).findDatasetById(d1.getDatasetId() + d2.getDatasetId());
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
   void testSearchDatasets() throws IOException {
     String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
 
@@ -855,5 +895,49 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   void testInvalidResultWindow_ExtraFieldsInQuery() {
     String query = "{\"size\": 100, \"from\": 50, \"query\": {\"match_all\": {}}}";
     assertFalse(service.invalidResultWindow(query));
+  }
+
+  @Test
+  void testGetIndexKey_SetKey() {
+    service.setIndexKey("custom-key");
+    assertEquals("custom-key", service.getIndexKey());
+  }
+
+  @Test
+  void testGetIndexKey_DefaultIndex() throws IOException {
+    service.setIndexKey(null);
+    String body = "{ \"version\": { \"number\": \"7.10.2\" } }";
+    mockElasticSearchResponse(body);
+    assertEquals("_index", service.getIndexKey());
+  }
+
+  @Test
+  void testGetIndexKey_LegacyType() throws IOException {
+    service.setIndexKey(null);
+    String body = "{ \"version\": { \"number\": \"6.8.0\" } }";
+    mockElasticSearchResponse(body);
+    assertEquals("_type", service.getIndexKey());
+  }
+
+  @Test
+  void testGetIndexKey_OpenSearch() throws IOException {
+    service.setIndexKey(null);
+    String body = "{ \"version\": { \"number\": \"3.3.0\", \"distribution\": \"opensearch\" } }";
+    mockElasticSearchResponse(body);
+    assertEquals("_index", service.getIndexKey());
+  }
+
+  @Test
+  void testGetIndexKey_ExceptionDefaultsToIndex() throws IOException {
+    service.setIndexKey(null);
+    when(esClient.performRequest(any())).thenThrow(new IOException("Connection failed"));
+    assertEquals("_index", service.getIndexKey());
+  }
+
+  @Test
+  void testGetIndexKey_NullInfoDefaultsToIndex() throws IOException {
+    service.setIndexKey(null);
+    mockElasticSearchResponse("{}");
+    assertEquals("_index", service.getIndexKey());
   }
 }
