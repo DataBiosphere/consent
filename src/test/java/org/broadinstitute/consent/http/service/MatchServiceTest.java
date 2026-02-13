@@ -134,7 +134,8 @@ class MatchServiceTest extends AbstractTestHelper {
     dar.setData(new DataAccessRequestData());
     dar.getData().setHmb(true);
     dar.getData().setDiseases(false);
-    when(useRestrictionConverter.parseDataUsePurpose(dar)).thenReturn(new DataUseBuilder().setHmbResearch(true).build());
+    when(useRestrictionConverter.parseDataUsePurpose(dar))
+        .thenReturn(new DataUseBuilder().setHmbResearch(true).build());
 
     Match match = service.singleEntitiesMatch(dataset, dar);
     assertNotNull(match);
