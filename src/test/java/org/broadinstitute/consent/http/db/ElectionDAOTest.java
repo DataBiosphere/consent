@@ -673,6 +673,7 @@ class ElectionDAOTest extends DAOTestHelper {
   @Test
   void testFindVotesThatNeedReminders() {
     Vote vote = createElectionAndVote();
+    Election election = electionDAO.findElectionById(vote.getElectionId());
     // there's a timing issue in this test due to the precision of time in the column.
     // it's reliably resolved by setting the query start time early enough so that it
     // includes the SQL inserts contemplated by createElectionAndVote.
@@ -688,7 +689,7 @@ class ElectionDAOTest extends DAOTestHelper {
     assertNotNull(reminder.collectionId());
     assertNotNull(reminder.createDate());
     assertEquals(vote.getUserId(), reminder.userId());
-    assertEquals(vote.getCreateDate().toInstant(), reminder.createDate());
+    assertEquals(Instant.ofEpochMilli(election.getCreateDate().getTime()), reminder.createDate());
   }
 
   @Test

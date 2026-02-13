@@ -55,7 +55,11 @@ public class DacVoteDigestMessage extends MailMessage {
   protected List<Reminder> getCurrentWeekReminders(List<Reminder> reminders) {
     Instant oneWeekAgo = timeBasis.minus(7, ChronoUnit.DAYS);
     return reminders.stream()
-        .filter(reminder -> reminder.createDate().isAfter(oneWeekAgo))
+        .filter(
+            reminder ->
+                reminder.darCode() != null
+                    && reminder.createDate() != null
+                    && reminder.createDate().isAfter(oneWeekAgo))
         .toList();
   }
 
@@ -66,7 +70,9 @@ public class DacVoteDigestMessage extends MailMessage {
     return reminders.stream()
         .filter(
             reminder ->
-                (reminder.createDate().equals(oneWeekAgo)
+                reminder.darCode() != null
+                    && reminder.createDate() != null
+                    && (reminder.createDate().equals(oneWeekAgo)
                         || reminder.createDate().isBefore(oneWeekAgo))
                     && reminder.createDate().isAfter(twoWeeksAgo))
         .toList();
@@ -78,7 +84,9 @@ public class DacVoteDigestMessage extends MailMessage {
     return reminders.stream()
         .filter(
             reminder ->
-                reminder.createDate().isBefore(twoWeeksAgo)
+                reminder.darCode() != null
+                        && reminder.createDate() != null
+                        && reminder.createDate().isBefore(twoWeeksAgo)
                     || reminder.createDate().equals(twoWeeksAgo))
         .toList();
   }

@@ -16,9 +16,9 @@ public class SimpleElectionMapper implements RowMapper<Election>, RowMapperHelpe
             r.getInt(ElectionFields.ID.getValue()),
             r.getString(ElectionFields.TYPE.getValue()),
             r.getString(ElectionFields.STATUS.getValue()),
-            r.getDate(ElectionFields.CREATE_DATE.getValue()),
+            r.getTimestamp(ElectionFields.CREATE_DATE.getValue()),
             r.getString(ElectionFields.REFERENCE_ID.getValue()),
-            r.getDate(ElectionFields.LAST_UPDATE.getValue()),
+            r.getTimestamp(ElectionFields.LAST_UPDATE.getValue()),
             (r.getString(ElectionFields.FINAL_ACCESS_VOTE.getValue()) == null)
                 ? null
                 : r.getBoolean(ElectionFields.FINAL_ACCESS_VOTE.getValue()),

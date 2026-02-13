@@ -271,7 +271,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
           u.user_id,
           dc.dar_code,
           dc.collection_id,
-          v.create_date
+          max(e_sub.max_date) as create_date
       FROM (
                SELECT reference_id, MAX(create_date) max_date, election_id
                FROM election
@@ -279,7 +279,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                  AND LOWER(election_type) = 'dataaccess'
                  AND create_date <= NOW() - make_interval(hours => :start)
                GROUP BY reference_id, election_id
-           ) e_sub
+           ) AS e_sub
                INNER JOIN data_access_request dar ON dar.reference_id = e_sub.reference_id
                INNER JOIN dar_dataset dar_ds ON dar_ds.reference_id = dar.reference_id
                INNER JOIN dar_collection dc ON dc.collection_id = dar.collection_id
@@ -289,6 +289,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       WHERE v.vote IS NULL
         AND dc.dar_code IS NOT NULL
         AND ee.entity_reference_id IS NULL
+      GROUP BY u.user_id, dc.dar_code, dc.collection_id
 """)
   List<UserVoteReminder> findElectionReminders(
       @Bind("start") int start,
