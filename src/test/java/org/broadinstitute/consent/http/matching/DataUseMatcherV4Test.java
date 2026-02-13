@@ -200,6 +200,7 @@ class DataUseMatcherV4Test {
   }
 
   @Test
+  @SuppressWarnings("java:S5976")
   void testNPU_positive_case_1() {
     DataUse dataset = new DataUseBuilder().setNonProfitUse(true).build();
     DataUse purpose = new DataUseBuilder().setNonProfitUse(true).build();
