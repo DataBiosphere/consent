@@ -86,9 +86,9 @@ public class DacVoteDigestMessage extends MailMessage {
         .filter(
             reminder ->
                 reminder.darCode() != null
-                        && reminder.createDate() != null
-                        && (reminder.createDate().isBefore(twoWeeksAgo)
-                    || reminder.createDate().equals(twoWeeksAgo)))
+                    && reminder.createDate() != null
+                    && (reminder.createDate().isBefore(twoWeeksAgo)
+                        || reminder.createDate().equals(twoWeeksAgo)))
         .toList();
   }
 }
