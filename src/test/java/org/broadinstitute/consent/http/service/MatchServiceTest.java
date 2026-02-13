@@ -18,7 +18,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
-import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
@@ -40,7 +39,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class MatchServiceTest extends AbstractTestHelper {
 
   @Mock DatasetDAO datasetDAO;
-  @Mock private ServicesConfiguration config;
   @Mock private DataAccessRequestDAO dataAccessRequestDAO;
   @Mock private MatchDAO matchDAO;
   @Mock private UseRestrictionConverter useRestrictionConverter;
@@ -49,9 +47,7 @@ class MatchServiceTest extends AbstractTestHelper {
 
   @BeforeEach
   void setUp() {
-    service =
-        new MatchService(
-            config, matchDAO, dataAccessRequestDAO, datasetDAO, useRestrictionConverter);
+    service = new MatchService(matchDAO, dataAccessRequestDAO, datasetDAO, useRestrictionConverter);
   }
 
   @Test

@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
@@ -30,7 +29,6 @@ public class MatchService implements ConsentLogger {
 
   @Inject
   public MatchService(
-      ServicesConfiguration config,
       MatchDAO matchDAO,
       DataAccessRequestDAO dataAccessRequestDAO,
       DatasetDAO datasetDAO,
@@ -54,9 +52,7 @@ public class MatchService implements ConsentLogger {
                   m.getAlgorithmVersion(),
                   m.getAbstain());
           if (!m.getRationales().isEmpty()) {
-            m.getRationales()
-                .forEach(
-                    f -> matchDAO.insertRationale(id, f));
+            m.getRationales().forEach(f -> matchDAO.insertRationale(id, f));
           }
         });
   }
@@ -88,7 +84,7 @@ public class MatchService implements ConsentLogger {
               if (Objects.nonNull(dataset)) {
                 try {
                   matches.add(singleEntitiesMatch(dataset, dar));
-                } catch (Exception e) {
+                } catch (Exception _) {
                   String message =
                       "Error finding single match for purpose: " + dar.getReferenceId();
                   logWarn(message);
