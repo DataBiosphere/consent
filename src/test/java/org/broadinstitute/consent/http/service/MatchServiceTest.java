@@ -27,12 +27,10 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Match;
-import org.broadinstitute.consent.http.models.matching.DataUseResponseMatchingObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -65,7 +63,6 @@ class MatchServiceTest extends AbstractTestHelper {
   void testFindMatchForDataAccessRequest() {
     DataAccessRequest dar = getSampleDataAccessRequest("DAR-2");
     dar.setDatasetIds(List.of(1, 2, 3));
-    Mockito.mock(DataUseResponseMatchingObject.class);
 
     service.createMatchesForDataAccessRequest(dar);
     verify(datasetDAO, times(dar.getDatasetIds().size())).findDatasetById(any());
