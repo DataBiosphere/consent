@@ -42,12 +42,15 @@ class MatchServiceTest extends AbstractTestHelper {
   @Mock private DataAccessRequestDAO dataAccessRequestDAO;
   @Mock private MatchDAO matchDAO;
   @Mock private UseRestrictionConverter useRestrictionConverter;
+  @Mock private OntologyService ontologyService;
 
   private MatchService service;
 
   @BeforeEach
   void setUp() {
-    service = new MatchService(matchDAO, dataAccessRequestDAO, datasetDAO, useRestrictionConverter);
+    service =
+        new MatchService(
+            matchDAO, dataAccessRequestDAO, datasetDAO, useRestrictionConverter, ontologyService);
   }
 
   @Test

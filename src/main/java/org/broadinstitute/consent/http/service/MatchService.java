@@ -25,18 +25,20 @@ public class MatchService implements ConsentLogger {
   private final UseRestrictionConverter useRestrictionConverter;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DatasetDAO datasetDAO;
-  private final DataUseMatcherV4 dataUseMatcherV4 = new DataUseMatcherV4();
+  private final DataUseMatcherV4 dataUseMatcherV4;
 
   @Inject
   public MatchService(
       MatchDAO matchDAO,
       DataAccessRequestDAO dataAccessRequestDAO,
       DatasetDAO datasetDAO,
-      UseRestrictionConverter useRestrictionConverter) {
+      UseRestrictionConverter useRestrictionConverter,
+      OntologyService ontologyService) {
     this.matchDAO = matchDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.useRestrictionConverter = useRestrictionConverter;
     this.datasetDAO = datasetDAO;
+    this.dataUseMatcherV4 = new DataUseMatcherV4(ontologyService);
   }
 
   public void insertMatches(List<Match> match) {

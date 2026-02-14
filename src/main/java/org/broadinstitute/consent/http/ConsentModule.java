@@ -526,7 +526,8 @@ public class ConsentModule extends AbstractModule {
         providesMatchDAO(),
         providesDataAccessRequestDAO(),
         providesDatasetDAO(),
-        providesUseRestrictionConverter());
+        providesUseRestrictionConverter(),
+        providesOntologyService());
   }
 
   @Provides

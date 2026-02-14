@@ -28,8 +28,7 @@ class DataUseUtilTest {
 
   @BeforeEach
   void setUp() {
-    dataUseUtil = new DataUseUtil();
-    dataUseUtil.setOntologyService(ontologyService);
+    dataUseUtil = new DataUseUtil(ontologyService);
   }
 
   @Test

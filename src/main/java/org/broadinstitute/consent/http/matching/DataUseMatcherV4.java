@@ -22,13 +22,9 @@ public class DataUseMatcherV4 {
 
   private final DataUseUtil dataUseUtil;
 
-  public DataUseMatcherV4() {
-    dataUseUtil = new DataUseUtil();
-  }
-
   @Inject
-  public void setOntologyService(OntologyService ontologyService) {
-    dataUseUtil.setOntologyService(ontologyService);
+  public DataUseMatcherV4(OntologyService ontologyService) {
+    dataUseUtil = new DataUseUtil(ontologyService);
   }
 
   // Matching Algorithm
