@@ -102,7 +102,7 @@ public class MatchService implements ConsentLogger {
   public Match singleEntitiesMatch(Dataset dataset, DataAccessRequest dar) {
     if (dataset == null) {
       logWarn("Dataset is null");
-      throw new IllegalArgumentException("Consent cannot be null");
+      throw new IllegalArgumentException("Dataset cannot be null");
     }
     if (dar == null) {
       logWarn("Data Access Request is null");
