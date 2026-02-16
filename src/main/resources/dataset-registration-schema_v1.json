@@ -213,6 +213,12 @@
       "label" : "Assets",
       "description" : "Additional assets or metadata associated with this study registration",
       "additionalProperties" : true
+    },
+    "data" : {
+      "type" : "object",
+      "label" : "data",
+      "description" : "Additional data or metadata associated with this study registration",
+      "additionalProperties" : true
     }
   },
   "$defs" : {

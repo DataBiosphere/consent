@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.assets;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.data;
+
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -289,34 +292,10 @@ public class ElasticSearchService implements ConsentLogger {
       term.setDataSubmitterEmail(study.getCreateUserEmail());
     }
 
-    findStudyProperty(study.getProperties(), "assets")
-        .ifPresent(
-            prop -> {
-              Object value = prop.getValue();
-              Map<String, Object> assetsMap;
-              // When property is loaded from db it is deserialized as JsonObject
-              if (value instanceof com.google.gson.JsonElement) {
-                assetsMap =
-                    GsonUtil.getInstance()
-                        .fromJson(
-                            (com.google.gson.JsonElement) value,
-                            new com.google.gson.reflect.TypeToken<
-                                Map<String, Object>>() {}.getType());
-                // Otherwise Gson deserializes JSON and creates a LinkedTreeMap
-              } else if (value instanceof Map) {
-                assetsMap = (Map<String, Object>) value;
-                // Fallback: try to parse as JSON string
-              } else {
-                assetsMap =
-                    GsonUtil.getInstance()
-                        .fromJson(
-                            value.toString(),
-                            new com.google.gson.reflect.TypeToken<
-                                Map<String, Object>>() {}.getType());
-              }
-              term.setAssets(assetsMap);
-            });
-
+    findStudyProperty(study.getProperties(), assets)
+        .ifPresent(prop -> term.setAssets(buildMapFromPropertyValue(prop.getValue())));
+    findStudyProperty(study.getProperties(), data)
+        .ifPresent(prop -> term.setData(buildMapFromPropertyValue(prop.getValue())));
     return term;
   }
 
@@ -534,7 +513,10 @@ public class ElasticSearchService implements ConsentLogger {
     findDatasetProperty(dataset.getProperties(), "dataLocation")
         .ifPresent(
             datasetProperty -> term.setDataLocation(datasetProperty.getPropertyValueAsString()));
-
+    findDatasetProperty(dataset.getProperties(), "data")
+        .ifPresent(
+            datasetProperty ->
+                term.setData(buildMapFromPropertyValue(datasetProperty.getPropertyValue())));
     return term;
   }
 
@@ -574,5 +556,28 @@ public class ElasticSearchService implements ConsentLogger {
     return (props == null)
         ? Optional.empty()
         : props.stream().filter(p -> p.getKey().equals(key)).findFirst();
+  }
+
+  public static Map<String, Object> buildMapFromPropertyValue(Object value) {
+    Map<String, Object> objectMap;
+    // When property is loaded from db it is deserialized as JsonObject
+    if (value instanceof com.google.gson.JsonElement) {
+      objectMap =
+          GsonUtil.getInstance()
+              .fromJson(
+                  (com.google.gson.JsonElement) value,
+                  new com.google.gson.reflect.TypeToken<Map<String, Object>>() {}.getType());
+      // Otherwise Gson deserializes JSON and creates a LinkedTreeMap
+    } else if (value instanceof Map) {
+      objectMap = (Map<String, Object>) value;
+      // Fallback: try to parse as JSON string
+    } else {
+      objectMap =
+          GsonUtil.getInstance()
+              .fromJson(
+                  value.toString(),
+                  new com.google.gson.reflect.TypeToken<Map<String, Object>>() {}.getType());
+    }
+    return objectMap;
   }
 }

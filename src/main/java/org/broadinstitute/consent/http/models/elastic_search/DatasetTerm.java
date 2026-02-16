@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models.elastic_search;
 
+import java.util.Map;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 
 public class DatasetTerm {
@@ -23,6 +24,7 @@ public class DatasetTerm {
   private UserTerm updateUser;
   private DacTerm dac;
   private Boolean hasInstitutionCertification;
+  private Map<String, Object> data;
 
   public Integer getDatasetId() {
     return datasetId;
@@ -166,5 +168,13 @@ public class DatasetTerm {
 
   public void setHasInstitutionCertification(Boolean hasInstitutionCertification) {
     this.hasInstitutionCertification = hasInstitutionCertification;
+  }
+
+  public void setData(Map<String, Object> data) {
+    this.data = data;
+  }
+
+  public Map<String, Object> getData() {
+    return this.data;
   }
 }

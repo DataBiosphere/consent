@@ -37,7 +37,8 @@ import java.util.Map;
   "dataLocation",
   "url",
   "numberOfParticipants",
-  "fileTypes"
+  "fileTypes",
+  "data"
 })
 public class ConsentGroup {
 
@@ -160,6 +161,10 @@ public class ConsentGroup {
   @JsonProperty("fileTypes")
   @JsonPropertyDescription("List of File Types")
   private List<FileTypeObject> fileTypes = new ArrayList<FileTypeObject>();
+
+  @JsonProperty("data")
+  @JsonPropertyDescription("Data and metadata about this dataset.")
+  private Map<String, Object> data = new HashMap<>();
 
   /** Dataset Id */
   @JsonProperty("datasetId")
@@ -449,6 +454,18 @@ public class ConsentGroup {
     this.fileTypes = fileTypes;
   }
 
+  /** Data and metadata about this dataset. */
+  @JsonProperty("data")
+  public Map<String, Object> getData() {
+    return data;
+  }
+
+  /** Data and metadata about this dataset. */
+  @JsonProperty("data")
+  public void setData(Map<String, Object> data) {
+    this.data = data;
+  }
+
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
@@ -552,6 +569,10 @@ public class ConsentGroup {
     sb.append('=');
     sb.append(((this.fileTypes == null) ? "<null>" : this.fileTypes));
     sb.append(',');
+    sb.append("data");
+    sb.append('=');
+    sb.append(((this.data == null) ? "<null>" : this.data));
+    sb.append(',');
     if (sb.charAt((sb.length() - 1)) == ',') {
       sb.setCharAt((sb.length() - 1), ']');
     } else {
@@ -599,6 +620,7 @@ public class ConsentGroup {
     result = ((result * 31) + ((this.pub == null) ? 0 : this.pub.hashCode()));
     result = ((result * 31) + ((this.nmds == null) ? 0 : this.nmds.hashCode()));
     result = ((result * 31) + ((this.otherSecondary == null) ? 0 : this.otherSecondary.hashCode()));
+    result = ((result * 31) + ((this.data == null) ? 0 : this.data.hashCode()));
     return result;
   }
 
@@ -708,7 +730,8 @@ public class ConsentGroup {
                 && ((this.pub == rhs.pub) || ((this.pub != null) && this.pub.equals(rhs.pub))))
             && ((this.nmds == rhs.nmds) || ((this.nmds != null) && this.nmds.equals(rhs.nmds))))
         && ((this.otherSecondary == rhs.otherSecondary)
-            || ((this.otherSecondary != null) && this.otherSecondary.equals(rhs.otherSecondary))));
+            || ((this.otherSecondary != null) && this.otherSecondary.equals(rhs.otherSecondary)))
+        && ((this.data == rhs.data) || ((this.data != null) && this.data.equals(rhs.data))));
   }
 
   /** Data Location */
