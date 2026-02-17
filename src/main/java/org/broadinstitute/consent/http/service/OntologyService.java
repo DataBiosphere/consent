@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutorService;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.OntologyType;
+import org.broadinstitute.consent.http.matching.TranslationUtil;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
@@ -35,6 +36,7 @@ public class OntologyService implements ConsentLogger {
   private final Client client;
   private final OntologyDAO ontologyDAO;
   private final OntologyIndexService indexService;
+  private final TranslationUtil translationUtil;
 
   @Inject
   public OntologyService(
@@ -46,6 +48,7 @@ public class OntologyService implements ConsentLogger {
     this.servicesConfiguration = config;
     this.ontologyDAO = ontologyDAO;
     this.indexService = indexService;
+    this.translationUtil = new TranslationUtil(ontologyDAO);
   }
 
   public DataUseSummary translateDataUseSummary(DataUse dataUse) {
@@ -63,20 +66,13 @@ public class OntologyService implements ConsentLogger {
   }
 
   public String translateDataUse(DataUse dataUse, DataUseTranslationType type) {
-    WebTarget target =
-        client.target(servicesConfiguration.getOntologyURL() + "translate?for=" + type.getValue());
-    try (Response response =
-        target.request(MediaType.TEXT_PLAIN).post(Entity.json(dataUse.toString()))) {
-      if (response.getStatus() == 200) {
-        return response.readEntity(String.class);
-      }
-
-      throw new RuntimeException(
-          "Error response from Ontology service: " + response.readEntity(String.class));
-    } catch (Exception e) {
-      logWarn("Error parsing response from Ontology service: " + e);
-      throw e;
+    if (type.equals(DataUseTranslationType.DATASET)) {
+      return translationUtil.translateDataset(dataUse.toString());
     }
+    if (type.equals(DataUseTranslationType.PURPOSE)) {
+      return translationUtil.translatePurpose(dataUse.toString());
+    }
+    throw new IllegalArgumentException("Unsupported translation type: " + type);
   }
 
   public void deleteOntologyTerms(OntologyType ontologyType) {

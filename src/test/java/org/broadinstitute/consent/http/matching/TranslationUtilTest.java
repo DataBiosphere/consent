@@ -14,7 +14,7 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
-import org.broadinstitute.consent.http.service.OntologyService;
+import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,11 +29,11 @@ class TranslationUtilTest extends AbstractTestHelper {
   private TranslationUtil service;
   private final Gson gson = GsonUtil.getInstance();
 
-  @Mock private OntologyService ontologyService;
+  @Mock private OntologyDAO ontologyDAO;
 
   @BeforeEach
   void setUpClass() {
-    service = new TranslationUtil(ontologyService);
+    service = new TranslationUtil(ontologyDAO);
   }
 
   @Test
@@ -157,7 +157,7 @@ class TranslationUtilTest extends AbstractTestHelper {
 
   @Test
   void testFindTermsByIdsError() {
-    when(ontologyService.findByTermIds(any()))
+    when(ontologyDAO.findByTermIds(any()))
         .thenThrow(new RuntimeException("Ontology service error"));
     List<OntologyTerm> terms = service.findTermsByIds(List.of("DOID_1"));
     assertNotNull(terms);
@@ -170,7 +170,7 @@ class TranslationUtilTest extends AbstractTestHelper {
     // Label is the value we use for a disease translation.
     term.setLabel(term.id());
     String json = GsonUtil.getInstance().toJson(List.of(term));
-    when(ontologyService.findByTermIds(new String[] {term.id()}))
+    when(ontologyDAO.findByTermIds(new String[] {term.id()}))
         .thenReturn(output -> output.write(json.getBytes(StandardCharsets.UTF_8)));
     return term;
   }

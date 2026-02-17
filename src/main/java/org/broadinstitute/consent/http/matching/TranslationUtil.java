@@ -14,7 +14,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataUse;
-import org.broadinstitute.consent.http.service.OntologyService;
+import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -24,13 +24,13 @@ public class TranslationUtil implements ConsentLogger {
   protected static final String FEMALE = "Female";
   protected static final String MALE = "Male";
   private static final String GRU = "Data is available for general research use. [GRU]";
-  private static final String DS = "Data use is limited for studying: %s [DS]";
-  private static final String HMB = "Data is limited for health/medical/biomedical research. [HMB]";
+  public static final String DS = "Data use is limited for studying: %s [DS]";
+  public static final String HMB = "Data is limited for health/medical/biomedical research. [HMB]";
   private static final String POA =
       "Future use for population origins or ancestry research is prohibited. [POA]";
-  private static final String NMDS =
+  public static final String NMDS =
       "Data use for methods development research ONLY within the bounds of other data use limitations. [NMDS]";
-  private static final String NCU = "Commercial use prohibited. [NCU]";
+  public static final String NCU = "Commercial use prohibited. [NCU]";
   private static final String OTHER = "Other restrictions: %s.";
   private static final String SECONDARY_OTHER = "Secondary other restrictions: %s.";
   private static final String ETHICS_APPROVAL = "Local ethics committee approval is required.";
@@ -42,7 +42,7 @@ public class TranslationUtil implements ConsentLogger {
       "Publishing results of studies using the data available to the larger scientific community is required";
   private static final String PUB_MORATORIUM =
       "Publishing moratorium until '%s' is in effect. [MOR]";
-  private static final String NCTRL =
+  public static final String NCTRL =
       "Future use as a control set for diseases other than those specified is prohibited. [NCTRL]";
   private static final String RS_M = "Data use is limited to research on males. [RS-M]";
   private static final String RS_FM = "Data use is limited to research on females. [RS-FM]";
@@ -50,11 +50,11 @@ public class TranslationUtil implements ConsentLogger {
   private static final String POP =
       "Future use for study variation in the general population (e.g. calling variants and/or studying their distribution). [POP]";
 
-  private final OntologyService ontologyService;
+  private final OntologyDAO ontologyDAO;
   private final Gson gson = GsonUtil.getInstance();
 
-  public TranslationUtil(OntologyService ontologyService) {
-    this.ontologyService = ontologyService;
+  public TranslationUtil(OntologyDAO ontologyDAO) {
+    this.ontologyDAO = ontologyDAO;
   }
 
   public String translateDataset(String dataUseString) {
@@ -189,7 +189,7 @@ public class TranslationUtil implements ConsentLogger {
   protected List<OntologyTerm> findTermsByIds(List<String> ids) {
     try {
       String[] idArray = ids.toArray(new String[0]);
-      StreamingOutput output = ontologyService.findByTermIds(idArray);
+      StreamingOutput output = ontologyDAO.findByTermIds(idArray);
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       output.write(baos);
       String jsonString = baos.toString(StandardCharsets.UTF_8);

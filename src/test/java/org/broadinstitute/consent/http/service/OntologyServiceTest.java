@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.matching.TranslationUtil.DS;
+import static org.broadinstitute.consent.http.matching.TranslationUtil.HMB;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -7,7 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.mockserver.model.HttpRequest.request;
@@ -17,6 +20,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -34,10 +38,14 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
+import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.broadinstitute.consent.http.util.TestAppender;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockserver.model.Header;
@@ -48,6 +56,7 @@ class OntologyServiceTest extends MockServerTestHelper {
 
   private OntologyService service;
   private TestAppender testAppender;
+  private final Gson gson = GsonUtil.getInstance();
   @Mock private OntologyDAO ontologyDAO;
   @Mock private OntologyIndexService indexService;
 
@@ -126,48 +135,56 @@ class OntologyServiceTest extends MockServerTestHelper {
         containsString("Error parsing response from Ontology service:"));
   }
 
-  @Test
-  void testTranslateDataUse() {
-    mockDataUseTranslateSuccess();
-
+  @ParameterizedTest
+  @EnumSource(DataUseTranslationType.class)
+  void testTranslateDataUse(DataUseTranslationType type) {
+    OntologyTerm term = new OntologyTerm("DOID_1", "v1", "DOID");
+    term.setLabel("cancerophobia");
     DataUse dataUse =
-        new DataUseBuilder().setHmbResearch(true).setDiseaseRestrictions(List.of("")).build();
-    String translation = service.translateDataUse(dataUse, DataUseTranslationType.DATASET);
+        new DataUseBuilder()
+            .setHmbResearch(true)
+            .setDiseaseRestrictions(List.of(term.id()))
+            .build();
+    String responseJson = gson.toJson(List.of(term));
+    when(ontologyDAO.findByTermIds(new String[] {term.id()}))
+        .thenReturn(output -> output.write(responseJson.getBytes(StandardCharsets.UTF_8)));
 
-    assertEquals(
-        """
-            Samples are restricted for use under the following conditions:
-            Data is limited for health/medical/biomedical research. [HMB]
-            Data use is limited for studying: cancerophobia [DS]
-            Commercial use is not prohibited.
-            Data use for methods development research irrespective of the specified data use limitations is not prohibited.
-            Restrictions for use as a control set for diseases other than those defined were not specified.
-            """,
-        translation);
+    String translation = service.translateDataUse(dataUse, type);
+    assertNotNull(translation);
+    if (type == DataUseTranslationType.DATASET) {
+      assertTrue(
+          translation.contains("Samples are restricted for use under the following conditions:"));
+    }
+    if (type == DataUseTranslationType.PURPOSE) {
+      assertTrue(
+          translation.contains(
+              "Research is limited to samples restricted for use under the following conditions:"));
+    }
+    assertTrue(translation.contains(HMB));
+    assertTrue(translation.contains(DS.formatted(term.label())));
   }
 
-  @Test
-  void testTranslateDataUseError() {
-    mockServerClient
-        .when(request().withMethod("POST").withPath("/translate"))
-        .respond(
-            response()
-                .withStatusCode(500)
-                .withHeaders(new Header("Content-Type", MediaType.TEXT_PLAIN))
-                .withBody("Internal Server Error"));
-
+  @ParameterizedTest
+  @EnumSource(DataUseTranslationType.class)
+  void testTranslateDataUseOntologyError(DataUseTranslationType type) {
     DataUse dataUse =
         new DataUseBuilder().setHmbResearch(true).setDiseaseRestrictions(List.of("")).build();
+    when(ontologyDAO.findByTermIds(any()))
+        .thenThrow(new RuntimeException("Ontology service error"));
 
-    Exception exception =
-        assertThrows(
-            RuntimeException.class,
-            () -> service.translateDataUse(dataUse, DataUseTranslationType.DATASET));
-
-    String expectedMessage = "Error response from Ontology service: Internal Server Error";
-    String actualMessage = exception.getMessage();
-
-    assertEquals(expectedMessage, actualMessage);
+    String translation = service.translateDataUse(dataUse, type);
+    assertNotNull(translation);
+    if (type == DataUseTranslationType.DATASET) {
+      assertTrue(
+          translation.contains("Samples are restricted for use under the following conditions:"));
+    }
+    if (type == DataUseTranslationType.PURPOSE) {
+      assertTrue(
+          translation.contains(
+              "Research is limited to samples restricted for use under the following conditions:"));
+      assertTrue(translation.contains(HMB));
+      assertFalse(translation.contains(DS.formatted("")));
+    }
   }
 
   @Test
@@ -271,24 +288,6 @@ class OntologyServiceTest extends MockServerTestHelper {
                             }
                           ]
                         }
-                        """));
-  }
-
-  private void mockDataUseTranslateSuccess() {
-    mockServerClient
-        .when(request().withMethod("POST").withPath("/translate"))
-        .respond(
-            response()
-                .withStatusCode(200)
-                .withHeaders(new Header("Content-Type", MediaType.TEXT_PLAIN))
-                .withBody(
-                    """
-                        Samples are restricted for use under the following conditions:
-                        Data is limited for health/medical/biomedical research. [HMB]
-                        Data use is limited for studying: cancerophobia [DS]
-                        Commercial use is not prohibited.
-                        Data use for methods development research irrespective of the specified data use limitations is not prohibited.
-                        Restrictions for use as a control set for diseases other than those defined were not specified.
                         """));
   }
 }
