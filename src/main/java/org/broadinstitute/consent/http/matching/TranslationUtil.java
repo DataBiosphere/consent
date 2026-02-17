@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParser;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -187,7 +186,7 @@ public class TranslationUtil implements ConsentLogger {
     return String.join("\n", summary);
   }
 
-  private List<OntologyTerm> findTermsByIds(List<String> ids) {
+  protected List<OntologyTerm> findTermsByIds(List<String> ids) {
     try {
       String[] idArray = ids.toArray(new String[0]);
       StreamingOutput output = ontologyService.findByTermIds(idArray);
@@ -197,7 +196,7 @@ public class TranslationUtil implements ConsentLogger {
       return JsonParser.parseString(jsonString).getAsJsonArray().asList().stream()
           .map(t -> gson.fromJson(t, OntologyTerm.class))
           .toList();
-    } catch (IOException e) {
+    } catch (Exception e) {
       logException("Unable to retrieve term ids: " + String.join(", ", ids), e);
       return List.of();
     }

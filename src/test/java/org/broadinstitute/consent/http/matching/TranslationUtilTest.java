@@ -2,13 +2,16 @@ package org.broadinstitute.consent.http.matching;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.google.gson.Gson;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.service.OntologyService;
@@ -132,6 +135,33 @@ class TranslationUtilTest extends AbstractTestHelper {
     String translation = service.translatePurpose(datasetString);
     assertNotNull(translation);
     assertFalse(translation.contains("[GRU]"));
+  }
+
+  @Test
+  void tesTranslateDatasetInvalidJson() {
+    String invalidJson = "{invalid json}";
+    assertThrows(IllegalArgumentException.class, () -> service.translateDataset(invalidJson));
+  }
+
+  @Test
+  void tesTranslatePurposeInvalidJson() {
+    String invalidJson = "{invalid json}";
+    assertThrows(IllegalArgumentException.class, () -> service.translatePurpose(invalidJson));
+  }
+
+  @Test
+  void testTranslateNull() {
+    String translation = service.translate(null, DataUseTranslationType.DATASET);
+    assertNotNull(translation);
+  }
+
+  @Test
+  void testFindTermsByIdsError() {
+    when(ontologyService.findByTermIds(any()))
+        .thenThrow(new RuntimeException("Ontology service error"));
+    List<OntologyTerm> terms = service.findTermsByIds(List.of("DOID_1"));
+    assertNotNull(terms);
+    assertTrue(terms.isEmpty());
   }
 
   private OntologyTerm initializeDiseaseTerm() {
