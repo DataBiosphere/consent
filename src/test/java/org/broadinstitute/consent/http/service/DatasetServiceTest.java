@@ -14,6 +14,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import jakarta.ws.rs.core.Response;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -59,6 +61,8 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -264,6 +268,13 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  @SuppressWarnings({"java:S5778"})
+  void testUpdateDatasetDataUseNullDataset() {
+    when(datasetDAO.findDatasetById(any())).thenReturn(null);
+    assertThrows(NotFoundException.class, () -> datasetService.updateDatasetDataUse(mockUser, 1, new DataUse()));
+  }
+
+  @Test
   void testApproveDataset_AlreadyApproved_TrueSubmission() throws Exception {
     Dataset dataset = new Dataset();
     User user = new User();
@@ -397,10 +408,49 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testSyncDataUseTranslation() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
+
+    Dataset updated = datasetService.syncDatasetDataUseTranslation(1, mockUser);
+    assertNotNull(updated);
+    assertEquals(dataset.getDatasetId(), updated.getDatasetId());
+  }
+
+  @Test
   void testSyncDataUseTranslationNotFound() {
     when(datasetDAO.findDatasetById(1)).thenReturn(null);
     assertThrows(
         NotFoundException.class, () -> datasetService.syncDatasetDataUseTranslation(1, mockUser));
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {200, 500})
+  void testDeleteDataset(int status) throws Exception {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
+    Response response = mock(Response.class);
+    when(response.getStatus()).thenReturn(status);
+    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(response);
+
+    datasetService.deleteDataset(dataset.getDatasetId(), mockUser.getUserId());
+    verify(datasetServiceDAO).deleteDataset(dataset, mockUser.getUserId());
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {200, 500})
+  void testDeleteStudy(int status) throws Exception {
+    Study study = new Study();
+    study.setStudyId(1);
+    study.addDatasetIds(Set.of(1));
+    Response response = mock(Response.class);
+    when(response.getStatus()).thenReturn(status);
+    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(response);
+
+    datasetService.deleteStudy(study, mockUser);
+    verify(datasetServiceDAO).deleteStudy(study, mockUser);
   }
 
   @Test
