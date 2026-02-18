@@ -287,7 +287,7 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
   }
 
   @Test
-  void testValidation_consent_group_data_location_required() {
+  void testValidation_consent_group_data_not_required() {
     Study study = createMockStudy();
     DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
     registration
