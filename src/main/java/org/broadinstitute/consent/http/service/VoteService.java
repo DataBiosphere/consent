@@ -57,9 +57,9 @@ public class VoteService implements ConsentLogger {
   private final ElectionDAO electionDAO;
   private final EmailService emailService;
   private final ElasticSearchService elasticSearchService;
-  private final UseRestrictionConverter useRestrictionConverter;
   private final VoteDAO voteDAO;
   private final VoteServiceDAO voteServiceDAO;
+  private final OntologyService ontologyService;
 
   @Inject
   public VoteService(
@@ -70,9 +70,9 @@ public class VoteService implements ConsentLogger {
       ElectionDAO electionDAO,
       EmailService emailService,
       ElasticSearchService elasticSearchService,
-      UseRestrictionConverter useRestrictionConverter,
       VoteDAO voteDAO,
-      VoteServiceDAO voteServiceDAO) {
+      VoteServiceDAO voteServiceDAO,
+      OntologyService ontologyService) {
     this.userDAO = userDAO;
     this.dacDAO = dacDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
@@ -80,9 +80,9 @@ public class VoteService implements ConsentLogger {
     this.electionDAO = electionDAO;
     this.emailService = emailService;
     this.elasticSearchService = elasticSearchService;
-    this.useRestrictionConverter = useRestrictionConverter;
     this.voteDAO = voteDAO;
     this.voteServiceDAO = voteServiceDAO;
+    this.ontologyService = ontologyService;
   }
 
   /**
@@ -289,7 +289,7 @@ public class VoteService implements ConsentLogger {
                 approvedDatasetsInDar.stream()
                     .map(
                         dataset ->
-                            useRestrictionConverter.translateDataUse(
+                            ontologyService.translateDataUse(
                                 dataset.getDataUse(), DataUseTranslationType.DATASET))
                     .distinct()
                     .collect(Collectors.joining(";"));

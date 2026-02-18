@@ -78,10 +78,10 @@ class VoteServiceTest extends AbstractTestHelper {
   @Mock private ElectionDAO electionDAO;
   @Mock private EmailService emailService;
   @Mock private ElasticSearchService elasticSearchService;
-  @Mock private UseRestrictionConverter useRestrictionConverter;
   @Mock private VoteDAO voteDAO;
   @Mock private VoteServiceDAO voteServiceDAO;
   @Mock private User user;
+  @Mock private OntologyService ontologyService;
 
   @BeforeEach
   void initService() {
@@ -94,9 +94,9 @@ class VoteServiceTest extends AbstractTestHelper {
             electionDAO,
             emailService,
             elasticSearchService,
-            useRestrictionConverter,
             voteDAO,
-            voteServiceDAO);
+            voteServiceDAO,
+            ontologyService);
   }
 
   @Test

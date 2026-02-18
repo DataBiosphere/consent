@@ -29,6 +29,7 @@ class DataAccessReportsParserTest {
 
   @Mock private DatasetDAO datasetDAO;
   @Mock private UseRestrictionConverter useRestrictionConverter;
+  @Mock private OntologyService ontologyService;
   private DataAccessReportsParser parser;
   private final String CONSENT_NAME = "ORSP-1903";
   private final String NAME = "Test";
@@ -46,7 +47,7 @@ class DataAccessReportsParserTest {
   private final String DAR_CODE = "DAR_3";
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     Dataset d = new Dataset();
     d.setDatasetId(1); // This translates to an identifier of "DUOS-000001"
     d.setAlias(1);
@@ -58,8 +59,8 @@ class DataAccessReportsParserTest {
         Research is limited to samples restricted for use under the following conditions:
         Data is limited for health/medical/biomedical research. [HMB]
     """;
-    when(useRestrictionConverter.translateDataUse(any(), any())).thenReturn(translation);
-    this.parser = new DataAccessReportsParser(datasetDAO, useRestrictionConverter);
+    when(ontologyService.translateDataUse(any(), any())).thenReturn(translation);
+    this.parser = new DataAccessReportsParser(datasetDAO, useRestrictionConverter, ontologyService);
   }
 
   @Test
