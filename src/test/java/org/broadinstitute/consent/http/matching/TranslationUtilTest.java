@@ -20,6 +20,8 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -29,7 +31,8 @@ class TranslationUtilTest extends AbstractTestHelper {
   private TranslationUtil service;
   private final Gson gson = GsonUtil.getInstance();
 
-  @Mock private OntologyDAO ontologyDAO;
+  @Mock
+  private OntologyDAO ontologyDAO;
 
   @BeforeEach
   void setUpClass() {
@@ -49,26 +52,28 @@ class TranslationUtilTest extends AbstractTestHelper {
 
   @Test
   void testTranslateDataset() {
-    DataUse dataset = new DataUseBuilder().setGeneralUse(true).build();
-    String datasetString = gson.toJson(dataset);
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    String datasetString = gson.toJson(dataUse);
     String translation = service.translateDataset(datasetString);
     assertNotNull(translation);
+    assertTrue(translation.contains(TranslationUtil.DATASET_HEADER));
     assertTrue(translation.contains("[GRU]"));
   }
 
   @Test
   void testTranslatePurpose() {
-    DataUse dataset = new DataUseBuilder().setGeneralUse(true).build();
-    String datasetString = gson.toJson(dataset);
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    String datasetString = gson.toJson(dataUse);
     String translation = service.translatePurpose(datasetString);
     assertNotNull(translation);
+    assertTrue(translation.contains(TranslationUtil.PURPOSE_HEADER));
     assertTrue(translation.contains("[GRU]"));
   }
 
   @Test
   void testTranslateCoverageTrue() {
     OntologyTerm term = initializeDiseaseTerm();
-    DataUse dataset =
+    DataUse dataUse =
         new DataUseBuilder()
             .setGeneralUse(true)
             .setHmbResearch(true)
@@ -95,7 +100,7 @@ class TranslationUtilTest extends AbstractTestHelper {
             .setStigmatizeDiseases(true)
             .setVulnerablePopulations(true)
             .build();
-    String datasetString = gson.toJson(dataset);
+    String datasetString = gson.toJson(dataUse);
     String translation = service.translatePurpose(datasetString);
     assertNotNull(translation);
     assertTrue(translation.contains("[GRU]"));
@@ -104,7 +109,7 @@ class TranslationUtilTest extends AbstractTestHelper {
   @Test
   void testTranslateCoverageFalse() {
     OntologyTerm term = initializeDiseaseTerm();
-    DataUse dataset =
+    DataUse dataUse =
         new DataUseBuilder()
             .setGeneralUse(false)
             .setHmbResearch(false)
@@ -131,7 +136,7 @@ class TranslationUtilTest extends AbstractTestHelper {
             .setStigmatizeDiseases(false)
             .setVulnerablePopulations(false)
             .build();
-    String datasetString = gson.toJson(dataset);
+    String datasetString = gson.toJson(dataUse);
     String translation = service.translatePurpose(datasetString);
     assertNotNull(translation);
     assertFalse(translation.contains("[GRU]"));
@@ -149,9 +154,28 @@ class TranslationUtilTest extends AbstractTestHelper {
     assertThrows(IllegalArgumentException.class, () -> service.translatePurpose(invalidJson));
   }
 
-  @Test
-  void testTranslateNull() {
-    String translation = service.translate(null, DataUseTranslationType.DATASET);
+  @ParameterizedTest
+  @EnumSource(DataUseTranslationType.class)
+  void testTranslateNullDataUse(DataUseTranslationType type) {
+    String translation = service.translate(null, type);
+    assertNotNull(translation);
+  }
+
+  @ParameterizedTest
+  @EnumSource(DataUseTranslationType.class)
+  void testTranslateNullDiseases(DataUseTranslationType type) {
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(false).build();
+    dataUse.setDiseaseRestrictions(null);
+    String translation = service.translate(dataUse, type);
+    assertNotNull(translation);
+  }
+
+  @ParameterizedTest
+  @EnumSource(DataUseTranslationType.class)
+  void testTranslateEmptyDiseases(DataUseTranslationType type) {
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(false).build();
+    dataUse.setDiseaseRestrictions(List.of());
+    String translation = service.translate(dataUse, type);
     assertNotNull(translation);
   }
 
@@ -170,7 +194,7 @@ class TranslationUtilTest extends AbstractTestHelper {
     // Label is the value we use for a disease translation.
     term.setLabel(term.id());
     String json = GsonUtil.getInstance().toJson(List.of(term));
-    when(ontologyDAO.findByTermIds(new String[] {term.id()}))
+    when(ontologyDAO.findByTermIds(new String[]{term.id()}))
         .thenReturn(output -> output.write(json.getBytes(StandardCharsets.UTF_8)));
     return term;
   }

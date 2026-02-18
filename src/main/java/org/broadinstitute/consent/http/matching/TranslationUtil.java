@@ -21,6 +21,8 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class TranslationUtil implements ConsentLogger {
 
+  protected static final String DATASET_HEADER = "Samples are restricted for use under the following conditions:";
+  protected static final String PURPOSE_HEADER = "Research is limited to samples restricted for use under the following conditions:";
   protected static final String FEMALE = "Female";
   protected static final String MALE = "Male";
   private static final String GRU = "Data is available for general research use. [GRU]";
@@ -83,16 +85,14 @@ public class TranslationUtil implements ConsentLogger {
    * @param dataUse The DataUse object
    * @return Summary list of restrictions in string format
    */
-  @SuppressWarnings(
-      "java:S3776") // Suppress warning for method complexity: due for reevaluation after initial
-  // migration
+  // Suppress warning for method complexity: due for reevaluation after initial migration
+  @SuppressWarnings("java:S3776")
   public String translate(DataUse dataUse, DataUseTranslationType translateFor) {
     List<String> summary = new ArrayList<>();
     if (translateFor.equals(DataUseTranslationType.DATASET)) {
-      summary.add("Samples are restricted for use under the following conditions:");
+      summary.add(DATASET_HEADER);
     } else if (translateFor.equals(DataUseTranslationType.PURPOSE)) {
-      summary.add(
-          "Research is limited to samples restricted for use under the following conditions:");
+      summary.add(PURPOSE_HEADER);
     }
 
     if (dataUse == null) {
