@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
@@ -89,15 +88,9 @@ public class TranslationUtil implements ConsentLogger {
     }
 
     if (dataUse.getDiseaseRestrictions() != null && !dataUse.getDiseaseRestrictions().isEmpty()) {
-      List<OntologyTerm> terms = findTermsByIds(dataUse.getDiseaseRestrictions());
-      List<String> labels = new ArrayList<>(terms.stream().map(OntologyTerm::label).toList());
+      List<String> labels = findLabelsForTermIds(dataUse.getDiseaseRestrictions());
       if (!labels.isEmpty()) {
-        String dsRestrictions =
-            labels.stream()
-                .filter(Objects::nonNull)
-                .filter(r -> !r.isEmpty())
-                .collect(Collectors.joining(", "));
-        summary.add(String.format(DS, dsRestrictions));
+        summary.add(String.format(DS, String.join(", ", labels)));
       }
     }
 
@@ -193,15 +186,9 @@ public class TranslationUtil implements ConsentLogger {
     }
 
     if (dataUse.getDiseaseRestrictions() != null && !dataUse.getDiseaseRestrictions().isEmpty()) {
-      List<OntologyTerm> terms = findTermsByIds(dataUse.getDiseaseRestrictions());
-      List<String> labels = new ArrayList<>(terms.stream().map(OntologyTerm::label).toList());
+      List<String> labels = findLabelsForTermIds(dataUse.getDiseaseRestrictions());
       if (!labels.isEmpty()) {
-        String dsRestrictions =
-            labels.stream()
-                .filter(Objects::nonNull)
-                .filter(r -> !r.isEmpty())
-                .collect(Collectors.joining(", "));
-        primary.add(new DataUseTerm("DS", String.format(DS, dsRestrictions)));
+        primary.add(new DataUseTerm("DS", String.format(DS, String.join(", ", labels))));
       }
     }
 
@@ -297,5 +284,14 @@ public class TranslationUtil implements ConsentLogger {
       logException("Unable to retrieve term ids: " + String.join(", ", ids), e);
       return List.of();
     }
+  }
+
+  private List<String> findLabelsForTermIds(List<String> ids) {
+    List<OntologyTerm> terms = findTermsByIds(ids);
+    return terms.stream()
+        .map(OntologyTerm::label)
+        .filter(Objects::nonNull)
+        .filter(r -> !r.isBlank())
+        .toList();
   }
 }

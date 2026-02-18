@@ -51,6 +51,20 @@ class TranslationUtilTest extends AbstractTestHelper {
   }
 
   @Test
+  void testTranslateDiseaseLookupWithEmptyLabels() {
+    OntologyTerm term =
+        new OntologyTerm("DOID_" + randomInt(1, 100), "term label", "term definition");
+    term.setLabel("");
+    String json = GsonUtil.getInstance().toJson(List.of(term));
+    when(ontologyDAO.findByTermIds(new String[] {term.id()}))
+        .thenReturn(output -> output.write(json.getBytes(StandardCharsets.UTF_8)));
+    DataUse dataUse = new DataUseBuilder().setDiseaseRestrictions(List.of(term.id())).build();
+    String translation = service.translate(dataUse, DataUseTranslationType.DATASET);
+    assertNotNull(translation);
+    assertFalse(translation.contains("[DS]"));
+  }
+
+  @Test
   void testTranslateDataset() {
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     String translation = service.translate(dataUse, DataUseTranslationType.DATASET);
@@ -214,6 +228,21 @@ class TranslationUtilTest extends AbstractTestHelper {
             .getFirst()
             .getDescription()
             .equalsIgnoreCase(TranslationUtil.DS.formatted(cancer)));
+  }
+
+  @Test
+  void testTranslateSummaryDiseaseLookupWithEmptyLabels() {
+    OntologyTerm term =
+        new OntologyTerm("DOID_" + randomInt(1, 100), "term label", "term definition");
+    term.setLabel("");
+    String json = GsonUtil.getInstance().toJson(List.of(term));
+    when(ontologyDAO.findByTermIds(new String[] {term.id()}))
+        .thenReturn(output -> output.write(json.getBytes(StandardCharsets.UTF_8)));
+    DataUse dataUse = new DataUseBuilder().setDiseaseRestrictions(List.of(term.id())).build();
+    DataUseSummary summary = service.translateSummary(dataUse);
+    assertNotNull(summary);
+    assertTrue(summary.getPrimary().isEmpty());
+    assertTrue(summary.getSecondary().isEmpty());
   }
 
   @Test
