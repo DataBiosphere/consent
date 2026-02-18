@@ -37,7 +37,6 @@ import org.broadinstitute.consent.http.db.DatasetAuthorizationReaderDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
@@ -180,7 +179,6 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   @Test
   void testUpdateDatasetDataUseAdmin() {
-    doNothing().when(datasetDAO).updateDatasetDataUse(any(), any());
     when(datasetDAO.findDatasetById(any())).thenReturn(new Dataset());
     User u = new User();
     u.setAdminRole();
@@ -345,29 +343,6 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     // do not send denied email
     verify(emailService, times(0)).sendDatasetDeniedMessage(user, "DAC NAME", "DUOS-000001", "");
-  }
-
-  @Test
-  void testSyncDataUseTranslation() {
-    Dataset ds = new Dataset();
-    ds.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
-
-    when(datasetDAO.findDatasetById(1)).thenReturn(ds);
-    String translation =
-        """
-        Samples are restricted for use under the following conditions:
-        Data is limited for health/medical/biomedical research. [HMB]
-        Data use is limited for studying: cancerophobia [DS]
-        Commercial use is not prohibited.
-        Data use for methods development research irrespective of the specified data use limitations is not prohibited.
-        Restrictions for use as a control set for diseases other than those defined were not specified.
-        """;
-    when(ontologyService.translateDataUse(ds.getDataUse(), DataUseTranslationType.DATASET))
-        .thenReturn(translation);
-
-    datasetService.syncDatasetDataUseTranslation(1, mockUser);
-
-    verify(datasetDAO, times(1)).updateDatasetTranslatedDataUse(1, translation);
   }
 
   @Test

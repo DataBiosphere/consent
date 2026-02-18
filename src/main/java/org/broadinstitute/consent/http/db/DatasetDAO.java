@@ -428,11 +428,6 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlUpdate("UPDATE dataset SET dac_id = :dacId WHERE dataset_id = :datasetId")
   void updateDatasetDacId(@Bind("datasetId") Integer datasetId, @Bind("dacId") Integer dacId);
 
-  @SqlUpdate(
-      "UPDATE dataset SET translated_data_use = :translatedDataUse WHERE dataset_id = :datasetId")
-  void updateDatasetTranslatedDataUse(
-      @Bind("datasetId") Integer datasetId, @Bind("translatedDataUse") String translatedDataUse);
-
   @SqlUpdate("UPDATE dataset SET name = :name WHERE dataset_id = :datasetId")
   void updateDatasetName(@Bind("datasetId") Integer datasetId, @Bind("name") String name);
 
@@ -514,10 +509,17 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlUpdate(
       """
       UPDATE dataset
-      SET data_use = :dataUse
+      SET data_use = :dataUse,
+          translated_data_use = :translation,
+          update_date = current_timestamp,
+          update_user_id = :updateUserId
       WHERE dataset_id = :datasetId
       """)
-  void updateDatasetDataUse(@Bind("datasetId") Integer datasetId, @Bind("dataUse") String dataUse);
+  void updateDatasetDataUse(
+      @Bind("datasetId") Integer datasetId,
+      @Bind("dataUse") String dataUse,
+      @Bind("translation") String translation,
+      @Bind("updateUserId") Integer updateUserId);
 
   @SqlUpdate(
       """

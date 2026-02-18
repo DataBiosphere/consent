@@ -678,6 +678,20 @@ public class DatasetServiceDAO implements ConsentLogger {
     return insert;
   }
 
+  public void updateDatasetDataUse(
+      User user, Dataset dataset, DataUse dataUse, String translation) {
+    jdbi.useTransaction(
+        handle -> {
+          datasetDAO.updateDatasetDataUse(
+              dataset.getDatasetId(), dataUse.toString(), translation, user.getUserId());
+          addAuditRecord(
+              dataset.getDatasetId(),
+              dataset.getDatasetName(),
+              user.getUserId(),
+              AuditActions.UPDATE);
+        });
+  }
+
   // Helper methods to generate DatasetProperty updates
 
   public record StudyInsert(
