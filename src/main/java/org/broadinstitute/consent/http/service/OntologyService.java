@@ -66,13 +66,10 @@ public class OntologyService implements ConsentLogger {
   }
 
   public String translateDataUse(DataUse dataUse, DataUseTranslationType type) {
-    if (type.equals(DataUseTranslationType.DATASET)) {
-      return translationUtil.translateDataset(dataUse.toString());
-    }
-    if (type.equals(DataUseTranslationType.PURPOSE)) {
-      return translationUtil.translatePurpose(dataUse.toString());
-    }
-    throw new IllegalArgumentException("Unsupported translation type: " + type);
+    return switch (type) {
+      case DATASET -> translationUtil.translateDataset(dataUse.toString());
+      case PURPOSE -> translationUtil.translatePurpose(dataUse.toString());
+    };
   }
 
   public void deleteOntologyTerms(OntologyType ontologyType) {
