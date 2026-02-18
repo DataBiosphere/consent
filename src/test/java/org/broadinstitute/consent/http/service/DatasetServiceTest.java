@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 import com.google.gson.Gson;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collections;
@@ -31,7 +32,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import jakarta.ws.rs.core.Response;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
@@ -191,7 +191,9 @@ class DatasetServiceTest extends AbstractTestHelper {
     study.setPublicVisibility(Boolean.TRUE);
     dataset.setStudy(study);
     when(datasetDAO.findMinimalDatasetByAlias(dataset.getAlias())).thenReturn(dataset);
-    Dataset found = datasetService.findMinimalDatasetByIdentifier(mockUser, dataset.getDatasetIdentifier(), false);
+    Dataset found =
+        datasetService.findMinimalDatasetByIdentifier(
+            mockUser, dataset.getDatasetIdentifier(), false);
     assertNotNull(found);
   }
 
@@ -207,7 +209,9 @@ class DatasetServiceTest extends AbstractTestHelper {
     dataset.setStudyId(study.getStudyId());
     when(datasetDAO.findMinimalDatasetByAlias(dataset.getAlias())).thenReturn(dataset);
     when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
-    Dataset found = datasetService.findMinimalDatasetByIdentifier(mockUser, dataset.getDatasetIdentifier(), true);
+    Dataset found =
+        datasetService.findMinimalDatasetByIdentifier(
+            mockUser, dataset.getDatasetIdentifier(), true);
     assertNotNull(found);
   }
 
@@ -218,7 +222,11 @@ class DatasetServiceTest extends AbstractTestHelper {
     dataset.setAlias(1);
     dataset.setDatasetIdentifier();
     when(datasetDAO.findMinimalDatasetByAlias(dataset.getAlias())).thenReturn(null);
-    assertThrows(NotFoundException.class, () -> datasetService.findMinimalDatasetByIdentifier(mockUser, dataset.getDatasetIdentifier(), false));
+    assertThrows(
+        NotFoundException.class,
+        () ->
+            datasetService.findMinimalDatasetByIdentifier(
+                mockUser, dataset.getDatasetIdentifier(), false));
   }
 
   @Test
@@ -271,7 +279,9 @@ class DatasetServiceTest extends AbstractTestHelper {
   @SuppressWarnings({"java:S5778"})
   void testUpdateDatasetDataUseNullDataset() {
     when(datasetDAO.findDatasetById(any())).thenReturn(null);
-    assertThrows(NotFoundException.class, () -> datasetService.updateDatasetDataUse(mockUser, 1, new DataUse()));
+    assertThrows(
+        NotFoundException.class,
+        () -> datasetService.updateDatasetDataUse(mockUser, 1, new DataUse()));
   }
 
   @Test
