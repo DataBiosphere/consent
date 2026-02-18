@@ -21,8 +21,10 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class TranslationUtil implements ConsentLogger {
 
-  protected static final String DATASET_HEADER = "Samples are restricted for use under the following conditions:";
-  protected static final String PURPOSE_HEADER = "Research is limited to samples restricted for use under the following conditions:";
+  protected static final String DATASET_HEADER =
+      "Samples are restricted for use under the following conditions:";
+  protected static final String PURPOSE_HEADER =
+      "Research is limited to samples restricted for use under the following conditions:";
   protected static final String FEMALE = "Female";
   protected static final String MALE = "Male";
   private static final String GRU = "Data is available for general research use. [GRU]";

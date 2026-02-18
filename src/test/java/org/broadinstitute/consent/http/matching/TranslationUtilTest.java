@@ -31,8 +31,7 @@ class TranslationUtilTest extends AbstractTestHelper {
   private TranslationUtil service;
   private final Gson gson = GsonUtil.getInstance();
 
-  @Mock
-  private OntologyDAO ontologyDAO;
+  @Mock private OntologyDAO ontologyDAO;
 
   @BeforeEach
   void setUpClass() {
@@ -194,7 +193,7 @@ class TranslationUtilTest extends AbstractTestHelper {
     // Label is the value we use for a disease translation.
     term.setLabel(term.id());
     String json = GsonUtil.getInstance().toJson(List.of(term));
-    when(ontologyDAO.findByTermIds(new String[]{term.id()}))
+    when(ontologyDAO.findByTermIds(new String[] {term.id()}))
         .thenReturn(output -> output.write(json.getBytes(StandardCharsets.UTF_8)));
     return term;
   }
