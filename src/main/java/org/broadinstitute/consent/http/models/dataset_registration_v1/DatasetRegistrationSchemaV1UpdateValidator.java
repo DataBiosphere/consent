@@ -172,15 +172,6 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
       throw new BadRequestException("Invalid Name changes to existing Consent Groups");
     }
 
-    // Data Location required for all consent groups
-    List<ConsentGroup> missingDataLocationConsentGroups =
-        registration.getConsentGroups().stream()
-            .filter(cg -> Objects.isNull(cg.getDataLocation()))
-            .toList();
-    if (!missingDataLocationConsentGroups.isEmpty()) {
-      throw new BadRequestException("Missing Data Location for Consent Groups");
-    }
-
     // Validate that we're not trying to delete any datasets in the registration payload.
     // The list of non-null dataset ids in the consent groups MUST be the same as the list of
     // existing dataset ids.
