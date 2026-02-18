@@ -8,10 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import com.google.gson.Gson;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.stream.Stream;
-import com.google.gson.Gson;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -187,14 +186,14 @@ class TranslationUtilTest extends AbstractTestHelper {
     assertNull(summary.getSecondary());
   }
 
-
   @Test
   void testTranslateSummaryGRU() {
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
     DataUseSummary summary = service.translateSummary(dataUse);
     assertFalse(summary.getPrimary().isEmpty());
     assertTrue(summary.getPrimary().getFirst().getCode().equalsIgnoreCase("GRU"));
-    assertTrue(summary.getPrimary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.GRU));
+    assertTrue(
+        summary.getPrimary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.GRU));
   }
 
   @Test
@@ -203,11 +202,18 @@ class TranslationUtilTest extends AbstractTestHelper {
     DataUse dataUse = new DataUseBuilder().setDiseaseRestrictions(List.of(cancer)).build();
     OntologyTerm term = new OntologyTerm("DOID_1", "v1", "term definition");
     term.setLabel(cancer);
-    when(ontologyDAO.findByTermIds(new String[] {cancer})).thenReturn(output -> output.write(gson.toJson(List.of(term)).getBytes(StandardCharsets.UTF_8)));
+    when(ontologyDAO.findByTermIds(new String[] {cancer}))
+        .thenReturn(
+            output -> output.write(gson.toJson(List.of(term)).getBytes(StandardCharsets.UTF_8)));
     DataUseSummary summary = service.translateSummary(dataUse);
     assertFalse(summary.getPrimary().isEmpty());
     assertTrue(summary.getPrimary().getFirst().getCode().equalsIgnoreCase("DS"));
-    assertTrue(summary.getPrimary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.DS.formatted(cancer)));
+    assertTrue(
+        summary
+            .getPrimary()
+            .getFirst()
+            .getDescription()
+            .equalsIgnoreCase(TranslationUtil.DS.formatted(cancer)));
   }
 
   @Test
@@ -216,7 +222,8 @@ class TranslationUtilTest extends AbstractTestHelper {
     DataUseSummary summary = service.translateSummary(dataUse);
     assertFalse(summary.getPrimary().isEmpty());
     assertTrue(summary.getPrimary().getFirst().getCode().equalsIgnoreCase("HMB"));
-    assertTrue(summary.getPrimary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.HMB));
+    assertTrue(
+        summary.getPrimary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.HMB));
   }
 
   @Test
@@ -225,7 +232,8 @@ class TranslationUtilTest extends AbstractTestHelper {
     DataUseSummary summary = service.translateSummary(dataUse);
     assertFalse(summary.getPrimary().isEmpty());
     assertTrue(summary.getPrimary().getFirst().getCode().equalsIgnoreCase("NPOA"));
-    assertTrue(summary.getPrimary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.POA));
+    assertTrue(
+        summary.getPrimary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.POA));
   }
 
   @Test
@@ -234,7 +242,12 @@ class TranslationUtilTest extends AbstractTestHelper {
     DataUseSummary summary = service.translateSummary(dataUse);
     assertFalse(summary.getPrimary().isEmpty());
     assertTrue(summary.getPrimary().getFirst().getCode().equalsIgnoreCase("OTHER"));
-    assertTrue(summary.getPrimary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.OTHER.formatted("Other")));
+    assertTrue(
+        summary
+            .getPrimary()
+            .getFirst()
+            .getDescription()
+            .equalsIgnoreCase(TranslationUtil.OTHER.formatted("Other")));
   }
 
   @Test
@@ -244,7 +257,8 @@ class TranslationUtilTest extends AbstractTestHelper {
     assertTrue(summary.getPrimary().isEmpty());
     assertFalse(summary.getSecondary().isEmpty());
     assertTrue(summary.getSecondary().getFirst().getCode().equalsIgnoreCase("NMDS"));
-    assertTrue(summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.NMDS));
+    assertTrue(
+        summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.NMDS));
   }
 
   @Test
@@ -254,7 +268,8 @@ class TranslationUtilTest extends AbstractTestHelper {
     assertTrue(summary.getPrimary().isEmpty());
     assertFalse(summary.getSecondary().isEmpty());
     assertTrue(summary.getSecondary().getFirst().getCode().equalsIgnoreCase("NCU"));
-    assertTrue(summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.NCU));
+    assertTrue(
+        summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.NCU));
   }
 
   @Test
@@ -264,7 +279,12 @@ class TranslationUtilTest extends AbstractTestHelper {
     assertTrue(summary.getPrimary().isEmpty());
     assertFalse(summary.getSecondary().isEmpty());
     assertTrue(summary.getSecondary().getFirst().getCode().equalsIgnoreCase("OTHER"));
-    assertTrue(summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.SECONDARY_OTHER.formatted("Secondary other")));
+    assertTrue(
+        summary
+            .getSecondary()
+            .getFirst()
+            .getDescription()
+            .equalsIgnoreCase(TranslationUtil.SECONDARY_OTHER.formatted("Secondary other")));
   }
 
   @Test
@@ -274,7 +294,12 @@ class TranslationUtilTest extends AbstractTestHelper {
     assertTrue(summary.getPrimary().isEmpty());
     assertFalse(summary.getSecondary().isEmpty());
     assertTrue(summary.getSecondary().getFirst().getCode().equalsIgnoreCase("IRB"));
-    assertTrue(summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.ETHICS_APPROVAL));
+    assertTrue(
+        summary
+            .getSecondary()
+            .getFirst()
+            .getDescription()
+            .equalsIgnoreCase(TranslationUtil.ETHICS_APPROVAL));
   }
 
   @Test
@@ -284,7 +309,12 @@ class TranslationUtilTest extends AbstractTestHelper {
     assertTrue(summary.getPrimary().isEmpty());
     assertFalse(summary.getSecondary().isEmpty());
     assertTrue(summary.getSecondary().getFirst().getCode().equalsIgnoreCase("COL"));
-    assertTrue(summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.COLLABORATION_REQUIRED));
+    assertTrue(
+        summary
+            .getSecondary()
+            .getFirst()
+            .getDescription()
+            .equalsIgnoreCase(TranslationUtil.COLLABORATION_REQUIRED));
   }
 
   @Test
@@ -294,7 +324,12 @@ class TranslationUtilTest extends AbstractTestHelper {
     assertTrue(summary.getPrimary().isEmpty());
     assertFalse(summary.getSecondary().isEmpty());
     assertTrue(summary.getSecondary().getFirst().getCode().equalsIgnoreCase("GS"));
-    assertTrue(summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.GEO_RESTRICTION.formatted("BOSTON")));
+    assertTrue(
+        summary
+            .getSecondary()
+            .getFirst()
+            .getDescription()
+            .equalsIgnoreCase(TranslationUtil.GEO_RESTRICTION.formatted("BOSTON")));
   }
 
   @Test
@@ -304,7 +339,8 @@ class TranslationUtilTest extends AbstractTestHelper {
     assertTrue(summary.getPrimary().isEmpty());
     assertFalse(summary.getSecondary().isEmpty());
     assertTrue(summary.getSecondary().getFirst().getCode().equalsIgnoreCase("GSO"));
-    assertTrue(summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.GSO));
+    assertTrue(
+        summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.GSO));
   }
 
   @Test
@@ -314,7 +350,12 @@ class TranslationUtilTest extends AbstractTestHelper {
     assertTrue(summary.getPrimary().isEmpty());
     assertFalse(summary.getSecondary().isEmpty());
     assertTrue(summary.getSecondary().getFirst().getCode().equalsIgnoreCase("PUB"));
-    assertTrue(summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.PUB_REQUIRED));
+    assertTrue(
+        summary
+            .getSecondary()
+            .getFirst()
+            .getDescription()
+            .equalsIgnoreCase(TranslationUtil.PUB_REQUIRED));
   }
 
   @Test
@@ -324,7 +365,12 @@ class TranslationUtilTest extends AbstractTestHelper {
     assertTrue(summary.getPrimary().isEmpty());
     assertFalse(summary.getSecondary().isEmpty());
     assertTrue(summary.getSecondary().getFirst().getCode().equalsIgnoreCase("MOR"));
-    assertTrue(summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.PUB_MORATORIUM.formatted("Moratorium")));
+    assertTrue(
+        summary
+            .getSecondary()
+            .getFirst()
+            .getDescription()
+            .equalsIgnoreCase(TranslationUtil.PUB_MORATORIUM.formatted("Moratorium")));
   }
 
   @Test
@@ -334,7 +380,8 @@ class TranslationUtilTest extends AbstractTestHelper {
     assertTrue(summary.getPrimary().isEmpty());
     assertFalse(summary.getSecondary().isEmpty());
     assertTrue(summary.getSecondary().getFirst().getCode().equalsIgnoreCase("NCTRL"));
-    assertTrue(summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.NCTRL));
+    assertTrue(
+        summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.NCTRL));
   }
 
   @Test
@@ -344,7 +391,8 @@ class TranslationUtilTest extends AbstractTestHelper {
     assertTrue(summary.getPrimary().isEmpty());
     assertFalse(summary.getSecondary().isEmpty());
     assertTrue(summary.getSecondary().getFirst().getCode().equalsIgnoreCase("POP-M"));
-    assertTrue(summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.RS_M));
+    assertTrue(
+        summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.RS_M));
   }
 
   @Test
@@ -354,7 +402,8 @@ class TranslationUtilTest extends AbstractTestHelper {
     assertTrue(summary.getPrimary().isEmpty());
     assertFalse(summary.getSecondary().isEmpty());
     assertTrue(summary.getSecondary().getFirst().getCode().equalsIgnoreCase("POP-F"));
-    assertTrue(summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.RS_FM));
+    assertTrue(
+        summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.RS_FM));
   }
 
   @Test
@@ -364,7 +413,8 @@ class TranslationUtilTest extends AbstractTestHelper {
     assertTrue(summary.getPrimary().isEmpty());
     assertFalse(summary.getSecondary().isEmpty());
     assertTrue(summary.getSecondary().getFirst().getCode().equalsIgnoreCase("POP-PD"));
-    assertTrue(summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.RS_PD));
+    assertTrue(
+        summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.RS_PD));
   }
 
   @Test
@@ -374,7 +424,8 @@ class TranslationUtilTest extends AbstractTestHelper {
     assertTrue(summary.getPrimary().isEmpty());
     assertFalse(summary.getSecondary().isEmpty());
     assertTrue(summary.getSecondary().getFirst().getCode().equalsIgnoreCase("POP"));
-    assertTrue(summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.POP));
+    assertTrue(
+        summary.getSecondary().getFirst().getDescription().equalsIgnoreCase(TranslationUtil.POP));
   }
 
   private OntologyTerm initializeDiseaseTerm() {

@@ -29,7 +29,7 @@ public class TranslationUtil implements ConsentLogger {
       "Research is limited to samples restricted for use under the following conditions:";
   protected static final String FEMALE = "Female";
   protected static final String MALE = "Male";
-  protected static final String GRU = "Data is available for general research use. [GRU]";
+  public static final String GRU = "Data is available for general research use. [GRU]";
   public static final String DS = "Data use is limited for studying: %s [DS]";
   public static final String HMB = "Data is limited for health/medical/biomedical research. [HMB]";
   protected static final String POA =
@@ -239,8 +239,9 @@ public class TranslationUtil implements ConsentLogger {
     }
 
     if (StringUtils.isNotBlank(dataUse.getGeographicalRestrictions())) {
-      secondary.add(new DataUseTerm("GS",
-          String.format(GEO_RESTRICTION, dataUse.getGeographicalRestrictions())));
+      secondary.add(
+          new DataUseTerm(
+              "GS", String.format(GEO_RESTRICTION, dataUse.getGeographicalRestrictions())));
     }
 
     if (BooleanUtils.isTrue(dataUse.getGeneticStudiesOnly())) {
@@ -252,8 +253,9 @@ public class TranslationUtil implements ConsentLogger {
     }
 
     if (StringUtils.isNotBlank(dataUse.getPublicationMoratorium())) {
-      secondary.add(new DataUseTerm("MOR",
-          String.format(PUB_MORATORIUM, dataUse.getPublicationMoratorium())));
+      secondary.add(
+          new DataUseTerm(
+              "MOR", String.format(PUB_MORATORIUM, dataUse.getPublicationMoratorium())));
     }
 
     if (BooleanUtils.isTrue(dataUse.getControls())) {

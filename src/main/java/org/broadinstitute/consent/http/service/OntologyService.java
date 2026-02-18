@@ -6,15 +6,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
-import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.OntologyType;
 import org.broadinstitute.consent.http.matching.TranslationUtil;
@@ -32,37 +26,19 @@ public class OntologyService implements ConsentLogger {
 
   private final ExecutorService executorService =
       new ThreadUtils().getExecutorService(OntologyService.class);
-  private final ServicesConfiguration servicesConfiguration;
-  private final Client client;
   private final OntologyDAO ontologyDAO;
   private final OntologyIndexService indexService;
   private final TranslationUtil translationUtil;
 
   @Inject
-  public OntologyService(
-      Client client,
-      ServicesConfiguration config,
-      OntologyDAO ontologyDAO,
-      OntologyIndexService indexService) {
-    this.client = client;
-    this.servicesConfiguration = config;
+  public OntologyService(OntologyDAO ontologyDAO, OntologyIndexService indexService) {
     this.ontologyDAO = ontologyDAO;
     this.indexService = indexService;
     this.translationUtil = new TranslationUtil(ontologyDAO);
   }
 
   public DataUseSummary translateDataUseSummary(DataUse dataUse) {
-    WebTarget target = client.target(servicesConfiguration.getOntologyURL() + "translate/summary");
-    try (Response response =
-        target.request(MediaType.APPLICATION_JSON).post(Entity.json(dataUse.toString()))) {
-      if (response.getStatus() >= 200 || response.getStatus() <= 299) {
-        return response.readEntity(DataUseSummary.class);
-      }
-      logWarn("Error response from Ontology service: " + response.readEntity(String.class));
-    } catch (Exception e) {
-      logWarn("Error parsing response from Ontology service: " + e);
-    }
-    return null;
+    return translationUtil.translateSummary(dataUse);
   }
 
   public String translateDataUse(DataUse dataUse, DataUseTranslationType type) {
