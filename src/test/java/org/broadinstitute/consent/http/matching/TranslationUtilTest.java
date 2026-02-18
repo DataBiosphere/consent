@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.matching;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -165,6 +166,12 @@ class TranslationUtilTest extends AbstractTestHelper {
     List<OntologyTerm> terms = service.findTermsByIds(List.of("DOID_1"));
     assertNotNull(terms);
     assertTrue(terms.isEmpty());
+  }
+
+  @Test
+  void testTranslateNullType() {
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(false).build();
+    assertThrows(IllegalArgumentException.class, () -> service.translate(dataUse, null));
   }
 
   private OntologyTerm initializeDiseaseTerm() {

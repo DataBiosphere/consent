@@ -76,6 +76,7 @@ public class TranslationUtil implements ConsentLogger {
     switch (type) {
       case DATASET -> summary.add(DATASET_HEADER);
       case PURPOSE -> summary.add(PURPOSE_HEADER);
+      case null -> throw new IllegalArgumentException("Translation type is required");
     }
 
     if (dataUse == null) {
