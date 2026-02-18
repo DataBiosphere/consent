@@ -67,14 +67,15 @@ public class TranslationUtil implements ConsentLogger {
    * @param dataUse The DataUse object
    * @return Summary list of restrictions in string format
    */
-  // Suppress warning for method complexity: due for reevaluation after initial migration
-  @SuppressWarnings("java:S3776")
-  public String translate(DataUse dataUse, DataUseTranslationType translateFor) {
+  // Suppress warning for method complexity (S3776). Due for reevaluation after initial migration
+  // Suppress warning for switch statement (S1301). This is more readable as a switch than if/else
+  // statements.
+  @SuppressWarnings({"java:S3776", "java:S1301"})
+  public String translate(DataUse dataUse, DataUseTranslationType type) {
     List<String> summary = new ArrayList<>();
-    if (translateFor.equals(DataUseTranslationType.DATASET)) {
-      summary.add(DATASET_HEADER);
-    } else if (translateFor.equals(DataUseTranslationType.PURPOSE)) {
-      summary.add(PURPOSE_HEADER);
+    switch (type) {
+      case DATASET -> summary.add(DATASET_HEADER);
+      case PURPOSE -> summary.add(PURPOSE_HEADER);
     }
 
     if (dataUse == null) {
