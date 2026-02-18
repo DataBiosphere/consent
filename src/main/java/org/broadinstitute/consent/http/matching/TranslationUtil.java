@@ -14,6 +14,8 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
+import org.broadinstitute.consent.http.models.ontology.DataUseTerm;
 import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -27,31 +29,31 @@ public class TranslationUtil implements ConsentLogger {
       "Research is limited to samples restricted for use under the following conditions:";
   protected static final String FEMALE = "Female";
   protected static final String MALE = "Male";
-  private static final String GRU = "Data is available for general research use. [GRU]";
+  protected static final String GRU = "Data is available for general research use. [GRU]";
   public static final String DS = "Data use is limited for studying: %s [DS]";
   public static final String HMB = "Data is limited for health/medical/biomedical research. [HMB]";
-  private static final String POA =
+  protected static final String POA =
       "Future use for population origins or ancestry research is prohibited. [POA]";
   public static final String NMDS =
       "Data use for methods development research ONLY within the bounds of other data use limitations. [NMDS]";
   public static final String NCU = "Commercial use prohibited. [NCU]";
-  private static final String OTHER = "Other restrictions: %s.";
-  private static final String SECONDARY_OTHER = "Secondary other restrictions: %s.";
-  private static final String ETHICS_APPROVAL = "Local ethics committee approval is required.";
-  private static final String COLLABORATION_REQUIRED =
+  protected static final String OTHER = "Other restrictions: %s.";
+  protected static final String SECONDARY_OTHER = "Secondary other restrictions: %s.";
+  protected static final String ETHICS_APPROVAL = "Local ethics committee approval is required.";
+  protected static final String COLLABORATION_REQUIRED =
       "Collaboration with the primary study investigators required. [COL]";
-  private static final String GEO_RESTRICTION = "Geographical restrictions: %s.";
-  private static final String GSO = "Future use is limited to genetic studies only [GSO]";
-  private static final String PUB_REQUIRED =
+  protected static final String GEO_RESTRICTION = "Geographical restrictions: %s.";
+  protected static final String GSO = "Future use is limited to genetic studies only [GSO]";
+  protected static final String PUB_REQUIRED =
       "Publishing results of studies using the data available to the larger scientific community is required";
-  private static final String PUB_MORATORIUM =
+  protected static final String PUB_MORATORIUM =
       "Publishing moratorium until '%s' is in effect. [MOR]";
   public static final String NCTRL =
       "Future use as a control set for diseases other than those specified is prohibited. [NCTRL]";
-  private static final String RS_M = "Data use is limited to research on males. [RS-M]";
-  private static final String RS_FM = "Data use is limited to research on females. [RS-FM]";
-  private static final String RS_PD = "Data use is limited to pediatric research. [RS-PD]";
-  private static final String POP =
+  protected static final String RS_M = "Data use is limited to research on males. [RS-M]";
+  protected static final String RS_FM = "Data use is limited to research on females. [RS-FM]";
+  protected static final String RS_PD = "Data use is limited to pediatric research. [RS-PD]";
+  protected static final String POP =
       "Future use for study variation in the general population (e.g. calling variants and/or studying their distribution). [POP]";
 
   private final OntologyDAO ontologyDAO;
@@ -168,6 +170,115 @@ public class TranslationUtil implements ConsentLogger {
     }
 
     return String.join("\n", summary);
+  }
+
+  /**
+   * Generate a structured summary of the data use. This method is Dataset specific.
+   *
+   * @param dataUse The DataUse
+   * @return DataUseSummary The structured summary
+   */
+  // Suppress warning for method complexity (S3776). Due for reevaluation after initial migration
+  @SuppressWarnings({"java:S3776"})
+  public DataUseSummary translateSummary(DataUse dataUse) {
+    DataUseSummary summary = new DataUseSummary();
+    List<DataUseTerm> primary = new ArrayList<>();
+    List<DataUseTerm> secondary = new ArrayList<>();
+    if (Objects.isNull(dataUse)) {
+      return summary;
+    }
+
+    if (BooleanUtils.isTrue(dataUse.getGeneralUse())) {
+      primary.add(new DataUseTerm("GRU", GRU));
+    }
+
+    if (dataUse.getDiseaseRestrictions() != null && !dataUse.getDiseaseRestrictions().isEmpty()) {
+      List<OntologyTerm> terms = findTermsByIds(dataUse.getDiseaseRestrictions());
+      List<String> labels = new ArrayList<>(terms.stream().map(OntologyTerm::label).toList());
+      if (!labels.isEmpty()) {
+        String dsRestrictions =
+            labels.stream()
+                .filter(Objects::nonNull)
+                .filter(r -> !r.isEmpty())
+                .collect(Collectors.joining(", "));
+        primary.add(new DataUseTerm("DS", String.format(DS, dsRestrictions)));
+      }
+    }
+
+    if (BooleanUtils.isTrue(dataUse.getHmbResearch())) {
+      primary.add(new DataUseTerm("HMB", HMB));
+    }
+
+    if (BooleanUtils.isTrue(dataUse.getPopulationOriginsAncestry())) {
+      primary.add(new DataUseTerm("NPOA", POA));
+    }
+
+    if (StringUtils.isNotBlank(dataUse.getOther())) {
+      primary.add(new DataUseTerm("OTHER", String.format(OTHER, dataUse.getOther())));
+    }
+
+    if (BooleanUtils.isTrue(dataUse.getMethodsResearch())) {
+      secondary.add(new DataUseTerm("NMDS", NMDS));
+    }
+
+    if (BooleanUtils.isTrue(dataUse.getNonProfitUse())) {
+      secondary.add(new DataUseTerm("NCU", NCU));
+    }
+
+    if (StringUtils.isNotBlank(dataUse.getSecondaryOther())) {
+      secondary.add(
+          new DataUseTerm("OTHER", String.format(SECONDARY_OTHER, dataUse.getSecondaryOther())));
+    }
+
+    if (BooleanUtils.isTrue(dataUse.getEthicsApprovalRequired())) {
+      secondary.add(new DataUseTerm("IRB", ETHICS_APPROVAL));
+    }
+
+    if (BooleanUtils.isTrue(dataUse.getCollaboratorRequired())) {
+      secondary.add(new DataUseTerm("COL", COLLABORATION_REQUIRED));
+    }
+
+    if (StringUtils.isNotBlank(dataUse.getGeographicalRestrictions())) {
+      secondary.add(new DataUseTerm("GS",
+          String.format(GEO_RESTRICTION, dataUse.getGeographicalRestrictions())));
+    }
+
+    if (BooleanUtils.isTrue(dataUse.getGeneticStudiesOnly())) {
+      secondary.add(new DataUseTerm("GSO", GSO));
+    }
+
+    if (BooleanUtils.isTrue(dataUse.getPublicationResults())) {
+      secondary.add(new DataUseTerm("PUB", PUB_REQUIRED));
+    }
+
+    if (StringUtils.isNotBlank(dataUse.getPublicationMoratorium())) {
+      secondary.add(new DataUseTerm("MOR",
+          String.format(PUB_MORATORIUM, dataUse.getPublicationMoratorium())));
+    }
+
+    if (BooleanUtils.isTrue(dataUse.getControls())) {
+      secondary.add(new DataUseTerm("NCTRL", NCTRL));
+    }
+
+    if (Optional.ofNullable(dataUse.getGender()).orElse("na").equalsIgnoreCase(MALE)) {
+      secondary.add(new DataUseTerm("POP-M", RS_M));
+    }
+
+    if (Optional.ofNullable(dataUse.getGender()).orElse("na").equalsIgnoreCase(FEMALE)) {
+      secondary.add(new DataUseTerm("POP-F", RS_FM));
+    }
+
+    if (BooleanUtils.isTrue(dataUse.getPediatric())) {
+      secondary.add(new DataUseTerm("POP-PD", RS_PD));
+    }
+
+    if (BooleanUtils.isTrue(dataUse.getPopulation())) {
+      secondary.add(new DataUseTerm("POP", POP));
+    }
+
+    summary.setPrimary(primary);
+    summary.setSecondary(secondary);
+    return summary;
   }
 
   protected List<OntologyTerm> findTermsByIds(List<String> ids) {
