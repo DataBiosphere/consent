@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -176,6 +177,12 @@ class OntologyServiceTest extends MockServerTestHelper {
     }
     assertTrue(translation.contains(HMB));
     assertFalse(translation.contains(DS.formatted("")));
+  }
+
+  @Test
+  void testTranslateNullType() {
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(false).build();
+    assertThrows(IllegalArgumentException.class, () -> service.translateDataUse(dataUse, null));
   }
 
   @Test
