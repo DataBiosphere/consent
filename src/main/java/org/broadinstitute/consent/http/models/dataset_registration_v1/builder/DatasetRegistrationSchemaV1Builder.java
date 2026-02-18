@@ -73,6 +73,7 @@ public class DatasetRegistrationSchemaV1Builder {
   public static final String url = "url";
   public static final String numberOfParticipants = "numberOfParticipants";
   public static final String fileTypes = "fileTypes";
+  public static final String throughBioId = "throughBioId";
 
   public DatasetRegistrationSchemaV1 build(Study study, List<Dataset> datasets) {
     DatasetRegistrationSchemaV1 schema = new SchemaFromStudy().build(study);
