@@ -178,6 +178,57 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testFindMinimalDatasetByIdentifierVisible() {
+    Dataset dataset = new Dataset();
+    dataset.setAlias(1);
+    dataset.setDatasetIdentifier();
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setPublicVisibility(Boolean.TRUE);
+    dataset.setStudy(study);
+    when(datasetDAO.findMinimalDatasetByAlias(dataset.getAlias())).thenReturn(dataset);
+    Dataset found = datasetService.findMinimalDatasetByIdentifier(mockUser, dataset.getDatasetIdentifier(), false);
+    assertNotNull(found);
+  }
+
+  @Test
+  void testFindMinimalDatasetByIdentifierVisible2() {
+    Dataset dataset = new Dataset();
+    dataset.setAlias(1);
+    dataset.setDatasetIdentifier();
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setPublicVisibility(Boolean.TRUE);
+    dataset.setStudy(study);
+    dataset.setStudyId(study.getStudyId());
+    when(datasetDAO.findMinimalDatasetByAlias(dataset.getAlias())).thenReturn(dataset);
+    when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
+    Dataset found = datasetService.findMinimalDatasetByIdentifier(mockUser, dataset.getDatasetIdentifier(), true);
+    assertNotNull(found);
+  }
+
+  @Test
+  @SuppressWarnings({"java:S5778"})
+  void testFindMinimalDatasetByIdentifierNotFound() {
+    Dataset dataset = new Dataset();
+    dataset.setAlias(1);
+    dataset.setDatasetIdentifier();
+    when(datasetDAO.findMinimalDatasetByAlias(dataset.getAlias())).thenReturn(null);
+    assertThrows(NotFoundException.class, () -> datasetService.findMinimalDatasetByIdentifier(mockUser, dataset.getDatasetIdentifier(), false));
+  }
+
+  @Test
+  @SuppressWarnings({"java:S5778"})
+  void testFindMinimalDatasetByIdentifierIncorrectIdentifier() {
+    Dataset dataset = new Dataset();
+    dataset.setAlias(1);
+    dataset.setDatasetIdentifier();
+    when(datasetDAO.findMinimalDatasetByAlias(2)).thenReturn(dataset);
+    Dataset found = datasetService.findMinimalDatasetByIdentifier(mockUser, "DUOS-000002", false);
+    assertNull(found);
+  }
+
+  @Test
   void testUpdateDatasetDataUseAdmin() {
     when(datasetDAO.findDatasetById(any())).thenReturn(new Dataset());
     User u = new User();
