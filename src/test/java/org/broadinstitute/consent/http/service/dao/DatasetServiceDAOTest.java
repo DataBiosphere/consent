@@ -626,7 +626,8 @@ class DatasetServiceDAOTest extends DAOTestHelper {
   @Test
   void testUpdateStudyWithDatasetUpdates() throws Exception {
     Study study = createStudy(null, null, null);
-    Dataset dataset = datasetDAO.findDatasetsByIdList(List.copyOf(study.getDatasetIds())).getFirst();
+    Dataset dataset =
+        datasetDAO.findDatasetsByIdList(List.copyOf(study.getDatasetIds())).getFirst();
 
     StudyUpdate studyUpdate =
         new StudyUpdate(
@@ -1589,7 +1590,9 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     Dataset dataset = createDataset();
     User user = userDAO.findUserById(dataset.getCreateUserId());
     DataUse newDataUse = new DataUseBuilder().setGeneralUse(true).setHmbResearch(true).build();
-    String translatedDataUse = new TranslationUtil(ontologyDAO).translate(dataset.getDataUse(), DataUseTranslationType.DATASET);
+    String translatedDataUse =
+        new TranslationUtil(ontologyDAO)
+            .translate(dataset.getDataUse(), DataUseTranslationType.DATASET);
     serviceDAO.updateDatasetDataUse(user, dataset, newDataUse, translatedDataUse);
     Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertEquals(translatedDataUse, updatedDataset.getTranslatedDataUse());

@@ -615,13 +615,14 @@ public class DatasetServiceDAO implements ConsentLogger {
                     prop.getPropertyName(), datasetId));
           }
           matchingProps.forEach(
-              existingProp -> updates.add(
-                  createPropertyUpdate(
-                      handle,
-                      datasetId,
-                      prop.getPropertyValueAsString(),
-                      existingProp.getPropertyKey(),
-                      existingProp.getPropertyId())));
+              existingProp ->
+                  updates.add(
+                      createPropertyUpdate(
+                          handle,
+                          datasetId,
+                          prop.getPropertyValueAsString(),
+                          existingProp.getPropertyKey(),
+                          existingProp.getPropertyId())));
         });
     return updates;
   }
