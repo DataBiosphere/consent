@@ -1,6 +1,9 @@
 put:
-  summary: Admin Only API to sync the Dataset's Data Use with Ontology
-  description: This endpoint calls ontology with the dataset's DataUse and updates its `dataUseTranslation`
+  summary: Admin Only API to update a Dataset's Translated Data Use
+  description: | 
+    This endpoint allows an admin to update the translated data use for a dataset. This is used 
+    when the data use has changed and the dataset needs to be reprocessed to update the translated 
+    data use.
   parameters:
     - name: id
       in: path
