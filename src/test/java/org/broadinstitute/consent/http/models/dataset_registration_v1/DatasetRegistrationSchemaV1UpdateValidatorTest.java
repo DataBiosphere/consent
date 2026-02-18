@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.models.dataset_registration_v1;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -286,7 +287,7 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
   }
 
   @Test
-  void testValidation_consent_group_data_location_required() {
+  void testValidation_consent_group_data_not_required() {
     Study study = createMockStudy();
     DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
     registration
@@ -296,8 +297,7 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
               cg.setDataLocation(null);
             });
 
-    assertThrows(
-        BadRequestException.class,
+    assertDoesNotThrow(
         () -> {
           validator.validate(study, registration);
         });
