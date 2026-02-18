@@ -402,8 +402,7 @@ public class DatasetService implements ConsentLogger {
 
   public List<ApprovedDataset> getApprovedDatasets(User user) {
     try {
-      List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
-      return approvedDatasets;
+      return datasetDAO.getApprovedDatasets(user.getUserId());
     } catch (Exception e) {
       logException(e);
       throw e;

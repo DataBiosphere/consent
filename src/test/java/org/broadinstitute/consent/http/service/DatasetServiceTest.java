@@ -116,13 +116,13 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   @Test
   void testGetDatasetByName() {
-    when(datasetDAO.getDatasetByName(getDatasets().get(0).getName().toLowerCase()))
-        .thenReturn(getDatasets().get(0));
+    when(datasetDAO.getDatasetByName(getDatasets().getFirst().getName().toLowerCase()))
+        .thenReturn(getDatasets().getFirst());
 
     Dataset dataset = datasetService.getDatasetByName("Test Dataset 1");
 
     assertNotNull(dataset);
-    assertEquals(dataset.getDatasetId(), getDatasets().get(0).getDatasetId());
+    assertEquals(dataset.getDatasetId(), getDatasets().getFirst().getDatasetId());
   }
 
   @Test
@@ -137,13 +137,13 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   @Test
   void testFindDatasetById() {
-    when(datasetDAO.findDatasetById(getDatasets().get(0).getDatasetId()))
-        .thenReturn(getDatasets().get(0));
+    when(datasetDAO.findDatasetById(getDatasets().getFirst().getDatasetId()))
+        .thenReturn(getDatasets().getFirst());
 
     Dataset dataset = datasetService.findDatasetById(mockUser, 1);
 
     assertNotNull(dataset);
-    assertEquals(dataset.getName(), getDatasets().get(0).getName());
+    assertEquals(dataset.getName(), getDatasets().getFirst().getName());
   }
 
   @Test
@@ -207,7 +207,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     try {
       datasetService.updateDatasetDataUse(u, 1, dataUse);
       fail("Should have thrown an exception on datasetService.updateDatasetDataUse()");
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException _) {
       assertTrue(true);
     }
   }
@@ -386,7 +386,7 @@ class DatasetServiceTest extends AbstractTestHelper {
                     Instant.now().toEpochMilli() + DataAccessRequest.EXPIRATION_DURATION_MILLIS)));
     when(datasetDAO.getApprovedDatasets(anyInt())).thenReturn(List.of(example));
     assertEquals(1, datasetService.getApprovedDatasets(user).size());
-    assertTrue(datasetService.getApprovedDatasets(user).get(0).isApprovedDatasetEqual(example));
+    assertTrue(datasetService.getApprovedDatasets(user).getFirst().isApprovedDatasetEqual(example));
   }
 
   @Test
@@ -452,7 +452,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     List<DatasetStudySummary> authorizedSummaries =
         datasetService.findAllDatasetStudySummaries(user);
     assertEquals(1, authorizedSummaries.size());
-    assertEquals(summary, authorizedSummaries.get(0));
+    assertEquals(summary, authorizedSummaries.getFirst());
   }
 
   @Test
@@ -464,7 +464,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     List<DatasetStudySummary> authorizedSummaries =
         datasetService.verifyPublicVisibilityAccess(List.of(summary), admin);
     assertEquals(1, authorizedSummaries.size());
-    assertEquals(summary, authorizedSummaries.get(0));
+    assertEquals(summary, authorizedSummaries.getFirst());
   }
 
   @Test
@@ -476,7 +476,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     List<DatasetStudySummary> authorizedSummaries =
         datasetService.verifyPublicVisibilityAccess(List.of(summary), admin);
     assertEquals(1, authorizedSummaries.size());
-    assertEquals(summary, authorizedSummaries.get(0));
+    assertEquals(summary, authorizedSummaries.getFirst());
   }
 
   @Test
@@ -501,7 +501,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     List<DatasetStudySummary> authorizedSummaries =
         datasetService.verifyPublicVisibilityAccess(List.of(summary), user);
     assertEquals(1, authorizedSummaries.size());
-    assertEquals(summary, authorizedSummaries.get(0));
+    assertEquals(summary, authorizedSummaries.getFirst());
   }
 
   @Test
@@ -514,7 +514,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     List<DatasetStudySummary> authorizedSummaries =
         datasetService.verifyPublicVisibilityAccess(List.of(summary), user);
     assertEquals(1, authorizedSummaries.size());
-    assertEquals(summary, authorizedSummaries.get(0));
+    assertEquals(summary, authorizedSummaries.getFirst());
   }
 
   @Test
@@ -534,7 +534,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     List<DatasetStudySummary> authorizedSummaries =
         datasetService.verifyPublicVisibilityAccess(List.of(summary), user);
     assertEquals(1, authorizedSummaries.size());
-    assertEquals(summary, authorizedSummaries.get(0));
+    assertEquals(summary, authorizedSummaries.getFirst());
   }
 
   @Test
@@ -567,7 +567,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     List<DatasetStudySummary> authorizedSummaries =
         datasetService.verifyPublicVisibilityAccess(List.of(summary), custodian);
     assertEquals(1, authorizedSummaries.size());
-    assertEquals(summary, authorizedSummaries.get(0));
+    assertEquals(summary, authorizedSummaries.getFirst());
   }
 
   @Test
@@ -614,7 +614,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     List<DatasetStudySummary> authorizedSummaries =
         datasetService.findAllDatasetStudySummaries(user);
     assertEquals(1, authorizedSummaries.size());
-    assertEquals(summary, authorizedSummaries.get(0));
+    assertEquals(summary, authorizedSummaries.getFirst());
   }
 
   @Test

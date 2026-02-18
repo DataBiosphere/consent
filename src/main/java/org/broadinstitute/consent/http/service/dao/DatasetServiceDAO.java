@@ -216,10 +216,10 @@ public class DatasetServiceDAO implements ConsentLogger {
   }
 
   private Integer executeInsertStudy(Handle handle, StudyInsert insert) {
-    StudyDAO studyDAO = handle.attach(StudyDAO.class);
+    StudyDAO studyDAOLocal = handle.attach(StudyDAO.class);
     UUID uuid = UUID.randomUUID();
     Integer studyId =
-        studyDAO.insertStudy(
+        studyDAOLocal.insertStudy(
             insert.name,
             insert.description,
             insert.piName,
@@ -230,7 +230,7 @@ public class DatasetServiceDAO implements ConsentLogger {
             uuid);
 
     for (StudyProperty prop : insert.props) {
-      studyDAO.insertStudyProperty(
+      studyDAOLocal.insertStudyProperty(
           studyId, prop.getKey(), prop.getType().toString(), prop.getValue().toString());
     }
 
@@ -284,9 +284,9 @@ public class DatasetServiceDAO implements ConsentLogger {
   }
 
   private void executeUpdateStudy(Handle handle, StudyUpdate update, boolean replaceProps) {
-    StudyDAO studyDAO = handle.attach(StudyDAO.class);
-    Study study = studyDAO.findStudyById(update.studyId);
-    studyDAO.updateStudy(
+    StudyDAO studyDAOLocal = handle.attach(StudyDAO.class);
+    Study study = studyDAOLocal.findStudyById(update.studyId);
+    studyDAOLocal.updateStudy(
         update.studyId,
         update.name,
         update.description,
@@ -297,15 +297,15 @@ public class DatasetServiceDAO implements ConsentLogger {
         Instant.now());
 
     if (replaceProps) {
-      studyDAO.deleteStudyPropertiesByStudyId(update.studyId);
+      studyDAOLocal.deleteStudyPropertiesByStudyId(update.studyId);
       update.props.forEach(
           p ->
-              studyDAO.insertStudyProperty(
+              studyDAOLocal.insertStudyProperty(
                   update.studyId, p.getKey(), p.getType().toString(), p.getValue().toString()));
     } else {
       // Handle property inserts and updates
       Set<StudyProperty> existingStudyProperties =
-          studyDAO.findStudyById(update.studyId).getProperties();
+          studyDAOLocal.findStudyById(update.studyId).getProperties();
       update.props.forEach(
           p -> {
             Optional<StudyProperty> existingProp =
@@ -315,11 +315,11 @@ public class DatasetServiceDAO implements ConsentLogger {
                     .findFirst();
             if (existingProp.isPresent()) {
               // Update existing study prop:
-              studyDAO.updateStudyProperty(
+              studyDAOLocal.updateStudyProperty(
                   update.studyId, p.getKey(), p.getType().toString(), p.getValue().toString());
             } else {
               // Add new study prop:
-              studyDAO.insertStudyProperty(
+              studyDAOLocal.insertStudyProperty(
                   update.studyId, p.getKey(), p.getType().toString(), p.getValue().toString());
             }
           });
@@ -615,15 +615,13 @@ public class DatasetServiceDAO implements ConsentLogger {
                     prop.getPropertyName(), datasetId));
           }
           matchingProps.forEach(
-              existingProp -> {
-                updates.add(
-                    createPropertyUpdate(
-                        handle,
-                        datasetId,
-                        prop.getPropertyValueAsString(),
-                        existingProp.getPropertyKey(),
-                        existingProp.getPropertyId()));
-              });
+              existingProp -> updates.add(
+                  createPropertyUpdate(
+                      handle,
+                      datasetId,
+                      prop.getPropertyValueAsString(),
+                      existingProp.getPropertyKey(),
+                      existingProp.getPropertyId())));
         });
     return updates;
   }
@@ -681,7 +679,7 @@ public class DatasetServiceDAO implements ConsentLogger {
   public void updateDatasetDataUse(
       User user, Dataset dataset, DataUse dataUse, String translation) {
     jdbi.useTransaction(
-        handle -> {
+        _ -> {
           datasetDAO.updateDatasetDataUse(
               dataset.getDatasetId(), dataUse.toString(), translation, user.getUserId());
           addAuditRecord(
