@@ -32,6 +32,7 @@ import org.broadinstitute.consent.http.MockServerTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.OntologyType;
+import org.broadinstitute.consent.http.matching.TranslationUtil;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.User;
@@ -151,14 +152,9 @@ class OntologyServiceTest extends MockServerTestHelper {
 
     String translation = service.translateDataUse(dataUse, type);
     assertNotNull(translation);
-    if (type == DataUseTranslationType.DATASET) {
-      assertTrue(
-          translation.contains("Samples are restricted for use under the following conditions:"));
-    }
-    if (type == DataUseTranslationType.PURPOSE) {
-      assertTrue(
-          translation.contains(
-              "Research is limited to samples restricted for use under the following conditions:"));
+    switch (type) {
+      case DATASET -> assertTrue(translation.contains(TranslationUtil.DATASET_HEADER));
+      case PURPOSE -> assertTrue(translation.contains(TranslationUtil.PURPOSE_HEADER));
     }
     assertTrue(translation.contains(HMB));
     assertTrue(translation.contains(DS.formatted(term.label())));
@@ -174,17 +170,12 @@ class OntologyServiceTest extends MockServerTestHelper {
 
     String translation = service.translateDataUse(dataUse, type);
     assertNotNull(translation);
-    if (type == DataUseTranslationType.DATASET) {
-      assertTrue(
-          translation.contains("Samples are restricted for use under the following conditions:"));
+    switch (type) {
+      case DATASET -> assertTrue(translation.contains(TranslationUtil.DATASET_HEADER));
+      case PURPOSE -> assertTrue(translation.contains(TranslationUtil.PURPOSE_HEADER));
     }
-    if (type == DataUseTranslationType.PURPOSE) {
-      assertTrue(
-          translation.contains(
-              "Research is limited to samples restricted for use under the following conditions:"));
-      assertTrue(translation.contains(HMB));
-      assertFalse(translation.contains(DS.formatted("")));
-    }
+    assertTrue(translation.contains(HMB));
+    assertFalse(translation.contains(DS.formatted("")));
   }
 
   @Test

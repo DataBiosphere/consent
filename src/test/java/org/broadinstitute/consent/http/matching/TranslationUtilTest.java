@@ -2,12 +2,10 @@ package org.broadinstitute.consent.http.matching;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import com.google.gson.Gson;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.broadinstitute.consent.http.AbstractTestHelper;
@@ -29,7 +27,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class TranslationUtilTest extends AbstractTestHelper {
 
   private TranslationUtil service;
-  private final Gson gson = GsonUtil.getInstance();
 
   @Mock private OntologyDAO ontologyDAO;
 
@@ -42,8 +39,7 @@ class TranslationUtilTest extends AbstractTestHelper {
   void testDiseaseLookup() {
     OntologyTerm term = initializeDiseaseTerm();
     DataUse dataUse = new DataUseBuilder().setDiseaseRestrictions(List.of(term.id())).build();
-    String dataUseJson = gson.toJson(dataUse);
-    String translation = service.translateDataset(dataUseJson);
+    String translation = service.translate(dataUse, DataUseTranslationType.DATASET);
     assertNotNull(translation);
     assertTrue(translation.contains(term.label()));
     assertTrue(translation.contains("[DS]"));
@@ -52,8 +48,7 @@ class TranslationUtilTest extends AbstractTestHelper {
   @Test
   void testTranslateDataset() {
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    String datasetString = gson.toJson(dataUse);
-    String translation = service.translateDataset(datasetString);
+    String translation = service.translate(dataUse, DataUseTranslationType.DATASET);
     assertNotNull(translation);
     assertTrue(translation.contains(TranslationUtil.DATASET_HEADER));
     assertTrue(translation.contains("[GRU]"));
@@ -62,8 +57,7 @@ class TranslationUtilTest extends AbstractTestHelper {
   @Test
   void testTranslatePurpose() {
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    String datasetString = gson.toJson(dataUse);
-    String translation = service.translatePurpose(datasetString);
+    String translation = service.translate(dataUse, DataUseTranslationType.PURPOSE);
     assertNotNull(translation);
     assertTrue(translation.contains(TranslationUtil.PURPOSE_HEADER));
     assertTrue(translation.contains("[GRU]"));
@@ -99,8 +93,7 @@ class TranslationUtilTest extends AbstractTestHelper {
             .setStigmatizeDiseases(true)
             .setVulnerablePopulations(true)
             .build();
-    String datasetString = gson.toJson(dataUse);
-    String translation = service.translatePurpose(datasetString);
+    String translation = service.translate(dataUse, DataUseTranslationType.PURPOSE);
     assertNotNull(translation);
     assertTrue(translation.contains("[GRU]"));
   }
@@ -135,22 +128,9 @@ class TranslationUtilTest extends AbstractTestHelper {
             .setStigmatizeDiseases(false)
             .setVulnerablePopulations(false)
             .build();
-    String datasetString = gson.toJson(dataUse);
-    String translation = service.translatePurpose(datasetString);
+    String translation = service.translate(dataUse, DataUseTranslationType.PURPOSE);
     assertNotNull(translation);
     assertFalse(translation.contains("[GRU]"));
-  }
-
-  @Test
-  void tesTranslateDatasetInvalidJson() {
-    String invalidJson = "{invalid json}";
-    assertThrows(IllegalArgumentException.class, () -> service.translateDataset(invalidJson));
-  }
-
-  @Test
-  void tesTranslatePurposeInvalidJson() {
-    String invalidJson = "{invalid json}";
-    assertThrows(IllegalArgumentException.class, () -> service.translatePurpose(invalidJson));
   }
 
   @ParameterizedTest

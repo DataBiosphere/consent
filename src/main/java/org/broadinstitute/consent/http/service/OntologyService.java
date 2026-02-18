@@ -66,10 +66,7 @@ public class OntologyService implements ConsentLogger {
   }
 
   public String translateDataUse(DataUse dataUse, DataUseTranslationType type) {
-    return switch (type) {
-      case DATASET -> translationUtil.translateDataset(dataUse.toString());
-      case PURPOSE -> translationUtil.translatePurpose(dataUse.toString());
-    };
+    return translationUtil.translate(dataUse, type);
   }
 
   public void deleteOntologyTerms(OntologyType ontologyType) {

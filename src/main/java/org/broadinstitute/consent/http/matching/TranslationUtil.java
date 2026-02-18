@@ -21,9 +21,9 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class TranslationUtil implements ConsentLogger {
 
-  protected static final String DATASET_HEADER =
+  public static final String DATASET_HEADER =
       "Samples are restricted for use under the following conditions:";
-  protected static final String PURPOSE_HEADER =
+  public static final String PURPOSE_HEADER =
       "Research is limited to samples restricted for use under the following conditions:";
   protected static final String FEMALE = "Female";
   protected static final String MALE = "Male";
@@ -59,26 +59,6 @@ public class TranslationUtil implements ConsentLogger {
 
   public TranslationUtil(OntologyDAO ontologyDAO) {
     this.ontologyDAO = ontologyDAO;
-  }
-
-  public String translateDataset(String dataUseString) {
-    try {
-      DataUse dataUse = gson.fromJson(dataUseString, DataUse.class);
-      return translate(dataUse, DataUseTranslationType.DATASET);
-    } catch (Exception e) {
-      throw new IllegalArgumentException(
-          "Error translating: " + dataUseString + " - " + e.getMessage());
-    }
-  }
-
-  public String translatePurpose(String dataUseString) {
-    try {
-      DataUse dataUse = gson.fromJson(dataUseString, DataUse.class);
-      return translate(dataUse, DataUseTranslationType.PURPOSE);
-    } catch (Exception e) {
-      throw new IllegalArgumentException(
-          "Error translating: " + dataUseString + " - " + e.getMessage());
-    }
   }
 
   /**
