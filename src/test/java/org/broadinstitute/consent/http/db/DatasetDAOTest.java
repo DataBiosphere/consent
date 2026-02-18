@@ -775,7 +775,7 @@ class DatasetDAOTest extends DAOTestHelper {
     Dataset updated = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertEquals(newDataUse, updated.getDataUse());
     assertNotEquals(oldDataUse, updated.getDataUse());
-    assertEquals("translation", dataset.getTranslatedDataUse());
+    assertEquals("translation", updated.getTranslatedDataUse());
   }
 
   @Test
