@@ -266,7 +266,8 @@ public class DatasetService implements ConsentLogger {
     if (!user.hasUserRole(UserRoles.ADMIN)) {
       throw new IllegalArgumentException("Admin use only");
     }
-    datasetDAO.updateDatasetDataUse(datasetId, dataUse.toString());
+    String translation = ontologyService.translateDataUse(dataUse, DataUseTranslationType.DATASET);
+    datasetServiceDAO.updateDatasetDataUse(user, d, dataUse, translation);
     elasticSearchService.synchronizeDatasetInESIndex(d, user, false);
     return datasetDAO.findDatasetById(datasetId);
   }
@@ -279,7 +280,7 @@ public class DatasetService implements ConsentLogger {
 
     String translation =
         ontologyService.translateDataUse(dataset.getDataUse(), DataUseTranslationType.DATASET);
-    datasetDAO.updateDatasetTranslatedDataUse(datasetId, translation);
+    datasetServiceDAO.updateDatasetDataUse(user, dataset, dataset.getDataUse(), translation);
     elasticSearchService.synchronizeDatasetInESIndex(dataset, user, false);
     return datasetDAO.findDatasetById(datasetId);
   }
@@ -401,8 +402,7 @@ public class DatasetService implements ConsentLogger {
 
   public List<ApprovedDataset> getApprovedDatasets(User user) {
     try {
-      List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
-      return approvedDatasets;
+      return datasetDAO.getApprovedDatasets(user.getUserId());
     } catch (Exception e) {
       logException(e);
       throw e;
@@ -429,14 +429,11 @@ public class DatasetService implements ConsentLogger {
       datasetDAO.updateDatasetDacId(dataset.getDatasetId(), studyConversion.getDacId());
     }
     if (studyConversion.getDataUse() != null) {
-      datasetDAO.updateDatasetDataUse(
-          dataset.getDatasetId(), studyConversion.getDataUse().toString());
-    }
-    if (studyConversion.getDataUse() != null) {
       String translation =
           ontologyService.translateDataUse(
               studyConversion.getDataUse(), DataUseTranslationType.DATASET);
-      datasetDAO.updateDatasetTranslatedDataUse(dataset.getDatasetId(), translation);
+      datasetServiceDAO.updateDatasetDataUse(
+          user, dataset, studyConversion.getDataUse(), translation);
     }
     if (studyConversion.getDatasetName() != null) {
       datasetDAO.updateDatasetName(dataset.getDatasetId(), studyConversion.getDatasetName());

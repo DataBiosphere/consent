@@ -162,18 +162,6 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testTranslatedDataUse() {
-    Dataset d1 = insertDataset();
-
-    String tdu = randomAlphabetic(10);
-    datasetDAO.updateDatasetTranslatedDataUse(d1.getDatasetId(), tdu);
-
-    d1 = datasetDAO.findDatasetById(d1.getDatasetId());
-
-    assertEquals(tdu, d1.getTranslatedDataUse());
-  }
-
-  @Test
   void testUpdateDatasetName() {
     Dataset dataset = insertDataset();
     String newName = randomAlphabetic(25);
@@ -782,10 +770,12 @@ class DatasetDAOTest extends DAOTestHelper {
             .setDiseaseRestrictions(List.of("DOID_1"))
             .build();
 
-    datasetDAO.updateDatasetDataUse(dataset.getDatasetId(), newDataUse.toString());
+    datasetDAO.updateDatasetDataUse(
+        dataset.getDatasetId(), newDataUse.toString(), "translation", dataset.getCreateUserId());
     Dataset updated = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertEquals(newDataUse, updated.getDataUse());
     assertNotEquals(oldDataUse, updated.getDataUse());
+    assertEquals("translation", updated.getTranslatedDataUse());
   }
 
   @Test
