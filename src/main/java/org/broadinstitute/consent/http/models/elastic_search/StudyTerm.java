@@ -16,6 +16,7 @@ public class StudyTerm {
   private Integer dataSubmitterId;
   private List<String> dataCustodianEmail;
   private Boolean publicVisibility;
+  private String throughBioId;
   private List<String> dataTypes;
   private Map<String, Object> assets;
   private Map<String, Object> data;
@@ -106,6 +107,14 @@ public class StudyTerm {
 
   public void setPublicVisibility(Boolean publicVisibility) {
     this.publicVisibility = publicVisibility;
+  }
+
+  public String getThroughBioId() {
+    return throughBioId;
+  }
+
+  public void setThroughBioId(String throughBioId) {
+    this.throughBioId = throughBioId;
   }
 
   public List<String> getDataTypes() {

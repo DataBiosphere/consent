@@ -241,7 +241,8 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
         createStudyProperty("dbGaPPhsID", PropertyType.String),
         createStudyProperty("phenotypeIndication", PropertyType.String),
         createStudyProperty("species", PropertyType.String),
-        createStudyProperty("dataCustodianEmail", PropertyType.Json));
+        createStudyProperty("dataCustodianEmail", PropertyType.Json),
+        createStudyProperty("throughBioId", PropertyType.String));
     Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
     dataset.setProperties(
         Set.of(
@@ -347,6 +348,11 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     assertEquals(custodianProp.get().getValue().toString(), termCustodians);
     assertEquals(datasetRecord.study.getPublicVisibility(), term.getStudy().getPublicVisibility());
     assertEquals(datasetRecord.study.getDataTypes(), term.getStudy().getDataTypes());
+    Optional<StudyProperty> throughBioIdProp =
+        datasetRecord.study.getProperties().stream()
+            .filter(p -> p.getKey().equals("throughBioId"))
+            .findFirst();
+    assertTrue(throughBioIdProp.isPresent());
   }
 
   @ParameterizedTest
