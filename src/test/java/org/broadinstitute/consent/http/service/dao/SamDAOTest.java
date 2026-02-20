@@ -276,6 +276,15 @@ class SamDAOTest extends MockServerTestHelper {
   }
 
   @Test
+  void testGetCombinedUserStatusInfoNotFound() {
+    mockServerClient
+        .when(request())
+        .respond(response().withStatusCode(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
+
+    assertThrows(NotFoundException.class, () -> samDAO.getCombinedUserStatusInfo(duosUser));
+  }
+
+  @Test
   void testGetToSText() {
     String mockText = "Plain Text";
     mockServerClient

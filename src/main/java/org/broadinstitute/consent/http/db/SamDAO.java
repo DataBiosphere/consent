@@ -4,7 +4,6 @@ import com.google.api.client.http.EmptyContent;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpStatusCodes;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -15,6 +14,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.WebApplicationException;
@@ -116,27 +116,30 @@ public class SamDAO implements ConsentLogger {
   public UserStatusInfo getCombinedUserStatusInfo(AuthUser authUser) throws Exception {
     GenericUrl genericUrl = new GenericUrl(configuration.getCombinedStateUrl());
     HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
-    HttpResponse response = executeRequest(request);
-    String body = response.parseAsString();
-    if (!response.isSuccessStatusCode()) {
-      // Sam throws a 403, not a 404, when the user is not found at this API
-      if (response.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
-        throw new NotFoundException("User not found in Sam.");
+    try {
+      HttpResponse response = executeRequest(request);
+      String body = response.parseAsString();
+      if (!response.isSuccessStatusCode()) {
+        var errorMsg = getErrorMessage(new DuosUser(authUser, null), body);
+        Exception e = new WebApplicationException(errorMsg, response.getStatusCode());
+        logException(errorMsg, new Exception(body));
+        throw e;
       }
-      var errorMsg = getErrorMessage(new DuosUser(authUser, null), body);
-      Exception e = new WebApplicationException(errorMsg, response.getStatusCode());
-      logException(errorMsg, new Exception(body));
-      throw e;
+      CombinedState combinedState = gson.fromJson(body, CombinedState.class);
+      return new UserStatusInfo()
+          .setUserEmail(combinedState.getSamUser().email())
+          .setUserSubjectId(combinedState.getSamUser().googleSubjectId())
+          .setEnabled(combinedState.getSamUser().enabled())
+          // Ensure that the user has both accepted the ToS and that it is the most recent version.
+          .setTosAccepted(
+              combinedState.getTermsOfServiceDetails().permitsSystemUsage()
+                  && combinedState.getTermsOfServiceDetails().isCurrentVersion());
+    } catch (ForbiddenException e) {
+      // Sam throws a 403, not a 404, when the user is not found at this API
+      // which is re-thrown in executeRequest
+      throw new NotFoundException(
+          String.format("User %s not found in Sam: %s", authUser.getEmail(), e.getMessage()), e);
     }
-    CombinedState combinedState = gson.fromJson(body, CombinedState.class);
-    return new UserStatusInfo()
-        .setUserEmail(combinedState.getSamUser().email())
-        .setUserSubjectId(combinedState.getSamUser().googleSubjectId())
-        .setEnabled(combinedState.getSamUser().enabled())
-        // Ensure that the user has both accepted the ToS and that it is the most recent version.
-        .setTosAccepted(
-            combinedState.getTermsOfServiceDetails().permitsSystemUsage()
-                && combinedState.getTermsOfServiceDetails().isCurrentVersion());
   }
 
   public static String getErrorMessage(DuosUser duosUser, String body) {
