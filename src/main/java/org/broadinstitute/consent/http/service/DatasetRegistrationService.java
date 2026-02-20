@@ -908,6 +908,42 @@ public class DatasetRegistrationService implements ConsentLogger {
     }
   }
 
+  /**
+   * Combines the assets field on the registration object with the datasets (consent groups) into a
+   * single map to be sent in the submission confirmation email. This allows the email template to
+   * access all the assets that the user submitted in the registration form, including both the
+   * assets field on the registration object and the datasets as 'consentGroups' on the registration
+   * object.
+   */
+  public Map<String, Object> getAssetsWithDatasets(DatasetRegistrationSchemaV1 registration) {
+    Map<String, Object> assetsMap = new HashMap<>();
+    if (registration.getAssets() != null) {
+      assetsMap.putAll(registration.getAssets());
+    }
+    assetsMap.put("datasets", registration.getConsentGroups());
+    return assetsMap;
+  }
+
+  /**
+   * Sends a confirmation email to the submitter of a dataset registration request with details of
+   * their submission.
+   *
+   * @param submitter The user who submitted the dataset registration request
+   * @param registration The dataset registration object containing the details of the submission
+   */
+  public void sendSubmissionConfirmationEmail(
+      User submitter, DatasetRegistrationSchemaV1 registration) {
+    try {
+      emailService.sendStudySubmissionConfirmation(
+          submitter,
+          registration.getStudyName(),
+          registration.getStudyId(),
+          getAssetsWithDatasets(registration));
+    } catch (Exception e) {
+      logException(e);
+    }
+  }
+
   public void asyncCleanupDatasetsAndStudiesWithEmptyFiles(User user) {
     executorService.submit(() -> cleanupDatasetsAndStudiesWithEmptyFiles(user));
   }
