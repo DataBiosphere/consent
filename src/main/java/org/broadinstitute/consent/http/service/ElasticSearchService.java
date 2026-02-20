@@ -353,7 +353,7 @@ public class ElasticSearchService implements ConsentLogger {
           logWarn("Response error, unable to index dataset: %s".formatted(dataset.getDatasetId()));
         }
       } catch (IOException e) {
-        logWarn("Exception, unable to index dataset: %s".formatted(dataset.getDatasetId()));
+        logWarn("Exception, unable to index dataset: %s".formatted(dataset.getDatasetId()), e);
       }
     }
   }
@@ -364,7 +364,7 @@ public class ElasticSearchService implements ConsentLogger {
         logWarn("Response error, unable to index datasets");
       }
     } catch (IOException e) {
-      logWarn("Exception, unable to index datasets");
+      logWarn("Exception, unable to index datasets", e);
     }
   }
 
@@ -492,7 +492,8 @@ public class ElasticSearchService implements ConsentLogger {
                 logWarn(
                     String.format(
                         "Unable to coerce participant count to integer: %s for dataset: %s",
-                        value, dataset.getDatasetIdentifier()));
+                        value, dataset.getDatasetIdentifier()),
+                    e);
               }
             });
 
@@ -556,11 +557,11 @@ public class ElasticSearchService implements ConsentLogger {
   public static Map<String, Object> buildMapFromPropertyValue(Object value) {
     Map<String, Object> objectMap;
     // When property is loaded from db it is deserialized as JsonObject
-    if (value instanceof com.google.gson.JsonElement) {
+    if (value instanceof com.google.gson.JsonElement element) {
       objectMap =
           GsonUtil.getInstance()
               .fromJson(
-                  (com.google.gson.JsonElement) value,
+                  element,
                   new com.google.gson.reflect.TypeToken<Map<String, Object>>() {}.getType());
       // Otherwise Gson deserializes JSON and creates a LinkedTreeMap
     } else if (value instanceof Map) {
