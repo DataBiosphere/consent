@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -148,9 +149,26 @@ class UserResourceTest extends AbstractTestHelper {
     when(nihService.syncAccount(du)).thenReturn(user);
 
     Response response = userResource.getUser(du);
+    User responseUser = gson.fromJson(response.getEntity().toString(), User.class);
+    assertEquals(user.getEmail(), responseUser.getEmail());
+    assertNotNull(responseUser.getUserStatusInfo());
+    assertEquals(info.getUserSubjectId(), responseUser.getUserStatusInfo().getUserSubjectId());
+    assertTrue(responseUser.getUserStatusInfo().getEnabled());
+    assertTrue(responseUser.getUserStatusInfo().getTosAccepted());
     verify(samService, never()).asyncPostRegistrationInfo(du);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
+
+  @Test
+  void testGetMeFailure() throws Exception {
+    User user = createUserWithRole();
+    DuosUser du = new DuosUser(authUser, user);
+    when(samService.getCombinedUserStatusInfo(du)).thenThrow(new RuntimeException("Sam failure"));
+
+    Response response = userResource.getUser(du);
+    assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
+  }
+
 
   @Test
   void testGetUserById() {
