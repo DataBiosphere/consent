@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -614,19 +615,19 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
         () -> datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of()));
   }
 
-  //  @Test
-  //  void testRegistrationSucceedsWithESError() throws Exception {
-  //    User user = mock();
-  //    DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
-  //    when(dacDAO.findById(any())).thenReturn(new Dac());
-  //    when(elasticSearchService.indexDatasets(any(), any()))
-  //        .thenThrow(new ServerErrorException("Timeout connecting to [elasticsearch]", 500));
-  //    assertDoesNotThrow(
-  //        () -> {
-  //          datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
-  //        },
-  //        "Registration Error");
-  //  }
+    @Test
+    void testRegistrationSucceedsWithESError() throws Exception {
+      User user = mock();
+      DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
+      when(dacDAO.findById(any())).thenReturn(new Dac());
+      when(elasticSearchService.indexDatasets(any()))
+          .thenThrow(new ServerErrorException("Timeout connecting to [elasticsearch]", 500));
+      assertDoesNotThrow(
+          () -> {
+            datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
+          },
+          "Registration Error");
+    }
 
   @Test
   void testUpdateDatasetSucceedsWithESError() {
