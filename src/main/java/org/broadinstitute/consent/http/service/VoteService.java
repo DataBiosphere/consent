@@ -56,7 +56,6 @@ public class VoteService implements ConsentLogger {
   private final DatasetDAO datasetDAO;
   private final ElectionDAO electionDAO;
   private final EmailService emailService;
-  private final ElasticSearchService elasticSearchService;
   private final VoteDAO voteDAO;
   private final VoteServiceDAO voteServiceDAO;
   private final OntologyService ontologyService;
@@ -69,7 +68,6 @@ public class VoteService implements ConsentLogger {
       DatasetDAO datasetDAO,
       ElectionDAO electionDAO,
       EmailService emailService,
-      ElasticSearchService elasticSearchService,
       VoteDAO voteDAO,
       VoteServiceDAO voteServiceDAO,
       OntologyService ontologyService) {
@@ -79,7 +77,6 @@ public class VoteService implements ConsentLogger {
     this.datasetDAO = datasetDAO;
     this.electionDAO = electionDAO;
     this.emailService = emailService;
-    this.elasticSearchService = elasticSearchService;
     this.voteDAO = voteDAO;
     this.voteServiceDAO = voteServiceDAO;
     this.ontologyService = ontologyService;
@@ -257,12 +254,6 @@ public class VoteService implements ConsentLogger {
     List<Integer> datasetIds = finalElections.stream().map(Election::getDatasetId).toList();
     List<Dataset> datasets =
         datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
-
-    try {
-      elasticSearchService.indexDatasets(datasetIds, user);
-    } catch (Exception e) {
-      logException("Error indexing datasets for approved DARs: " + e.getMessage(), e);
-    }
 
     // For each dar, email the researcher summarizing the approved datasets in that dar
     dars.forEach(

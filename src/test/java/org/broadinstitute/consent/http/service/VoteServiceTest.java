@@ -77,7 +77,6 @@ class VoteServiceTest extends AbstractTestHelper {
   @Mock private DatasetDAO datasetDAO;
   @Mock private ElectionDAO electionDAO;
   @Mock private EmailService emailService;
-  @Mock private ElasticSearchService elasticSearchService;
   @Mock private VoteDAO voteDAO;
   @Mock private VoteServiceDAO voteServiceDAO;
   @Mock private User user;
@@ -93,7 +92,6 @@ class VoteServiceTest extends AbstractTestHelper {
             datasetDAO,
             electionDAO,
             emailService,
-            elasticSearchService,
             voteDAO,
             voteServiceDAO,
             ontologyService);

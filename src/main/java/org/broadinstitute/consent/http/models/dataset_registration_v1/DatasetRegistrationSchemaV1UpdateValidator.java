@@ -135,11 +135,6 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
       throw new BadRequestException("Invalid change to Data Submitter");
     }
 
-    // Minimum number of consent groups is 1
-    if (registration.getConsentGroups().isEmpty()) {
-      throw new BadRequestException("Invalid number of Consent Groups");
-    }
-
     // Ensure that all consent group changes are for datasets in the current study
     List<ConsentGroup> nonStudyConsentGroups =
         registration.getConsentGroups().stream()
@@ -185,7 +180,8 @@ public class DatasetRegistrationSchemaV1UpdateValidator {
                 .map(ConsentGroup::getDatasetId)
                 .filter(Objects::nonNull)
                 .toList());
-    if (!consentGroupDatasetIds.containsAll(existingDatasetIds)) {
+    if (!consentGroupDatasetIds.containsAll(existingDatasetIds)
+        && !registration.getConsentGroups().isEmpty()) {
       throw new BadRequestException("Invalid removal of Consent Groups");
     }
 
