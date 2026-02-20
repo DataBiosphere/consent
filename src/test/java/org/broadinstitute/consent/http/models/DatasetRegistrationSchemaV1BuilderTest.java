@@ -34,6 +34,7 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.species;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.studyType;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.submittingToAnvil;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.throughBioId;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.url;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -99,6 +100,7 @@ class DatasetRegistrationSchemaV1BuilderTest {
     assertNotNull(schemaV1.getDataSubmitterUserId());
     assertNotNull(schemaV1.getDataCustodianEmail());
     assertNotNull(schemaV1.getPublicVisibility());
+    assertNotNull(schemaV1.getThroughBioId());
     assertNotNull(schemaV1.getNihAnvilUse());
     assertNotNull(schemaV1.getSubmittingToAnvil());
     assertNotNull(schemaV1.getDbGaPPhsID());
@@ -360,6 +362,8 @@ class DatasetRegistrationSchemaV1BuilderTest {
             study.getStudyId(),
             AlternativeDataSharingPlanAccessManagement.OPEN_ACCESS.value(),
             PropertyType.String));
+    study.addProperty(
+        createStudyProperty(throughBioId, study.getStudyId(), randomString(), PropertyType.String));
   }
 
   private String randomString() {

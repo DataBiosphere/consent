@@ -30,6 +30,7 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.species;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.studyType;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.submittingToAnvil;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.throughBioId;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -70,6 +71,7 @@ public class SchemaFromStudy {
       schemaV1.setDataCustodianEmail(
           findListStringPropValue(study.getProperties(), dataCustodianEmail));
       schemaV1.setPublicVisibility(study.getPublicVisibility());
+      schemaV1.setThroughBioId(findStringPropValue(study.getProperties(), throughBioId));
       String nihAnvilUseVal = findStringPropValue(study.getProperties(), nihAnvilUse);
       if (Objects.nonNull(nihAnvilUseVal)) {
         schemaV1.setNihAnvilUse(NihAnvilUse.fromValue(nihAnvilUseVal));

@@ -14,6 +14,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -22,6 +23,7 @@ import static org.mockito.Mockito.when;
 import com.google.gson.Gson;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collections;
@@ -37,7 +39,6 @@ import org.broadinstitute.consent.http.db.DatasetAuthorizationReaderDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
@@ -60,6 +61,8 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -117,13 +120,13 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   @Test
   void testGetDatasetByName() {
-    when(datasetDAO.getDatasetByName(getDatasets().get(0).getName().toLowerCase()))
-        .thenReturn(getDatasets().get(0));
+    when(datasetDAO.getDatasetByName(getDatasets().getFirst().getName().toLowerCase()))
+        .thenReturn(getDatasets().getFirst());
 
     Dataset dataset = datasetService.getDatasetByName("Test Dataset 1");
 
     assertNotNull(dataset);
-    assertEquals(dataset.getDatasetId(), getDatasets().get(0).getDatasetId());
+    assertEquals(dataset.getDatasetId(), getDatasets().getFirst().getDatasetId());
   }
 
   @Test
@@ -138,13 +141,13 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   @Test
   void testFindDatasetById() {
-    when(datasetDAO.findDatasetById(getDatasets().get(0).getDatasetId()))
-        .thenReturn(getDatasets().get(0));
+    when(datasetDAO.findDatasetById(getDatasets().getFirst().getDatasetId()))
+        .thenReturn(getDatasets().getFirst());
 
     Dataset dataset = datasetService.findDatasetById(mockUser, 1);
 
     assertNotNull(dataset);
-    assertEquals(dataset.getName(), getDatasets().get(0).getName());
+    assertEquals(dataset.getName(), getDatasets().getFirst().getName());
   }
 
   @Test
@@ -179,8 +182,66 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testFindMinimalDatasetByIdentifierVisible() {
+    Dataset dataset = new Dataset();
+    dataset.setAlias(1);
+    dataset.setDatasetIdentifier();
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setPublicVisibility(Boolean.TRUE);
+    dataset.setStudy(study);
+    when(datasetDAO.findMinimalDatasetByAlias(dataset.getAlias())).thenReturn(dataset);
+    Dataset found =
+        datasetService.findMinimalDatasetByIdentifier(
+            mockUser, dataset.getDatasetIdentifier(), false);
+    assertNotNull(found);
+  }
+
+  @Test
+  void testFindMinimalDatasetByIdentifierVisible2() {
+    Dataset dataset = new Dataset();
+    dataset.setAlias(1);
+    dataset.setDatasetIdentifier();
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setPublicVisibility(Boolean.TRUE);
+    dataset.setStudy(study);
+    dataset.setStudyId(study.getStudyId());
+    when(datasetDAO.findMinimalDatasetByAlias(dataset.getAlias())).thenReturn(dataset);
+    when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
+    Dataset found =
+        datasetService.findMinimalDatasetByIdentifier(
+            mockUser, dataset.getDatasetIdentifier(), true);
+    assertNotNull(found);
+  }
+
+  @Test
+  @SuppressWarnings({"java:S5778"})
+  void testFindMinimalDatasetByIdentifierNotFound() {
+    Dataset dataset = new Dataset();
+    dataset.setAlias(1);
+    dataset.setDatasetIdentifier();
+    when(datasetDAO.findMinimalDatasetByAlias(dataset.getAlias())).thenReturn(null);
+    assertThrows(
+        NotFoundException.class,
+        () ->
+            datasetService.findMinimalDatasetByIdentifier(
+                mockUser, dataset.getDatasetIdentifier(), false));
+  }
+
+  @Test
+  @SuppressWarnings({"java:S5778"})
+  void testFindMinimalDatasetByIdentifierIncorrectIdentifier() {
+    Dataset dataset = new Dataset();
+    dataset.setAlias(1);
+    dataset.setDatasetIdentifier();
+    when(datasetDAO.findMinimalDatasetByAlias(2)).thenReturn(dataset);
+    Dataset found = datasetService.findMinimalDatasetByIdentifier(mockUser, "DUOS-000002", false);
+    assertNull(found);
+  }
+
+  @Test
   void testUpdateDatasetDataUseAdmin() {
-    doNothing().when(datasetDAO).updateDatasetDataUse(any(), any());
     when(datasetDAO.findDatasetById(any())).thenReturn(new Dataset());
     User u = new User();
     u.setAdminRole();
@@ -209,9 +270,18 @@ class DatasetServiceTest extends AbstractTestHelper {
     try {
       datasetService.updateDatasetDataUse(u, 1, dataUse);
       fail("Should have thrown an exception on datasetService.updateDatasetDataUse()");
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException _) {
       assertTrue(true);
     }
+  }
+
+  @Test
+  @SuppressWarnings({"java:S5778"})
+  void testUpdateDatasetDataUseNullDataset() {
+    when(datasetDAO.findDatasetById(any())).thenReturn(null);
+    assertThrows(
+        NotFoundException.class,
+        () -> datasetService.updateDatasetDataUse(mockUser, 1, new DataUse()));
   }
 
   @Test
@@ -349,25 +419,13 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   @Test
   void testSyncDataUseTranslation() {
-    Dataset ds = new Dataset();
-    ds.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
 
-    when(datasetDAO.findDatasetById(1)).thenReturn(ds);
-    String translation =
-        """
-        Samples are restricted for use under the following conditions:
-        Data is limited for health/medical/biomedical research. [HMB]
-        Data use is limited for studying: cancerophobia [DS]
-        Commercial use is not prohibited.
-        Data use for methods development research irrespective of the specified data use limitations is not prohibited.
-        Restrictions for use as a control set for diseases other than those defined were not specified.
-        """;
-    when(ontologyService.translateDataUse(ds.getDataUse(), DataUseTranslationType.DATASET))
-        .thenReturn(translation);
-
-    datasetService.syncDatasetDataUseTranslation(1, mockUser);
-
-    verify(datasetDAO, times(1)).updateDatasetTranslatedDataUse(1, translation);
+    Dataset updated = datasetService.syncDatasetDataUseTranslation(1, mockUser);
+    assertNotNull(updated);
+    assertEquals(dataset.getDatasetId(), updated.getDatasetId());
   }
 
   @Test
@@ -375,6 +433,34 @@ class DatasetServiceTest extends AbstractTestHelper {
     when(datasetDAO.findDatasetById(1)).thenReturn(null);
     assertThrows(
         NotFoundException.class, () -> datasetService.syncDatasetDataUseTranslation(1, mockUser));
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {200, 500})
+  void testDeleteDataset(int status) throws Exception {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
+    Response response = mock(Response.class);
+    when(response.getStatus()).thenReturn(status);
+    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(response);
+
+    datasetService.deleteDataset(dataset.getDatasetId(), mockUser.getUserId());
+    verify(datasetServiceDAO).deleteDataset(dataset, mockUser.getUserId());
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {200, 500})
+  void testDeleteStudy(int status) throws Exception {
+    Study study = new Study();
+    study.setStudyId(1);
+    study.addDatasetIds(Set.of(1));
+    Response response = mock(Response.class);
+    when(response.getStatus()).thenReturn(status);
+    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(response);
+
+    datasetService.deleteStudy(study, mockUser);
+    verify(datasetServiceDAO).deleteStudy(study, mockUser);
   }
 
   @Test
@@ -411,7 +497,7 @@ class DatasetServiceTest extends AbstractTestHelper {
                     Instant.now().toEpochMilli() + DataAccessRequest.EXPIRATION_DURATION_MILLIS)));
     when(datasetDAO.getApprovedDatasets(anyInt())).thenReturn(List.of(example));
     assertEquals(1, datasetService.getApprovedDatasets(user).size());
-    assertTrue(datasetService.getApprovedDatasets(user).get(0).isApprovedDatasetEqual(example));
+    assertTrue(datasetService.getApprovedDatasets(user).getFirst().isApprovedDatasetEqual(example));
   }
 
   @Test
@@ -477,7 +563,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     List<DatasetStudySummary> authorizedSummaries =
         datasetService.findAllDatasetStudySummaries(user);
     assertEquals(1, authorizedSummaries.size());
-    assertEquals(summary, authorizedSummaries.get(0));
+    assertEquals(summary, authorizedSummaries.getFirst());
   }
 
   @Test
@@ -489,7 +575,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     List<DatasetStudySummary> authorizedSummaries =
         datasetService.verifyPublicVisibilityAccess(List.of(summary), admin);
     assertEquals(1, authorizedSummaries.size());
-    assertEquals(summary, authorizedSummaries.get(0));
+    assertEquals(summary, authorizedSummaries.getFirst());
   }
 
   @Test
@@ -501,7 +587,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     List<DatasetStudySummary> authorizedSummaries =
         datasetService.verifyPublicVisibilityAccess(List.of(summary), admin);
     assertEquals(1, authorizedSummaries.size());
-    assertEquals(summary, authorizedSummaries.get(0));
+    assertEquals(summary, authorizedSummaries.getFirst());
   }
 
   @Test
@@ -526,7 +612,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     List<DatasetStudySummary> authorizedSummaries =
         datasetService.verifyPublicVisibilityAccess(List.of(summary), user);
     assertEquals(1, authorizedSummaries.size());
-    assertEquals(summary, authorizedSummaries.get(0));
+    assertEquals(summary, authorizedSummaries.getFirst());
   }
 
   @Test
@@ -539,7 +625,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     List<DatasetStudySummary> authorizedSummaries =
         datasetService.verifyPublicVisibilityAccess(List.of(summary), user);
     assertEquals(1, authorizedSummaries.size());
-    assertEquals(summary, authorizedSummaries.get(0));
+    assertEquals(summary, authorizedSummaries.getFirst());
   }
 
   @Test
@@ -559,7 +645,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     List<DatasetStudySummary> authorizedSummaries =
         datasetService.verifyPublicVisibilityAccess(List.of(summary), user);
     assertEquals(1, authorizedSummaries.size());
-    assertEquals(summary, authorizedSummaries.get(0));
+    assertEquals(summary, authorizedSummaries.getFirst());
   }
 
   @Test
@@ -592,7 +678,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     List<DatasetStudySummary> authorizedSummaries =
         datasetService.verifyPublicVisibilityAccess(List.of(summary), custodian);
     assertEquals(1, authorizedSummaries.size());
-    assertEquals(summary, authorizedSummaries.get(0));
+    assertEquals(summary, authorizedSummaries.getFirst());
   }
 
   @Test
@@ -639,7 +725,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     List<DatasetStudySummary> authorizedSummaries =
         datasetService.findAllDatasetStudySummaries(user);
     assertEquals(1, authorizedSummaries.size());
-    assertEquals(summary, authorizedSummaries.get(0));
+    assertEquals(summary, authorizedSummaries.getFirst());
   }
 
   @Test

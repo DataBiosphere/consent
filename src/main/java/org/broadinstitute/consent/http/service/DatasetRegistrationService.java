@@ -613,6 +613,10 @@ public class DatasetRegistrationService implements ConsentLogger {
                     return null;
                   }),
               new StudyPropertyExtractor(
+                  "throughBioId",
+                  PropertyType.String,
+                  DatasetRegistrationSchemaV1::getThroughBioId),
+              new StudyPropertyExtractor(
                   "nihAnvilUse", PropertyType.String, DatasetRegistrationSchemaV1::getNihAnvilUse),
               new StudyPropertyExtractor(
                   "submittingToAnvil",

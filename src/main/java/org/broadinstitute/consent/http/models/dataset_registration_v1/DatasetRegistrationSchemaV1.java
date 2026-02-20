@@ -35,6 +35,7 @@ import java.util.Map;
   "dataSubmitterUserId",
   "dataCustodianEmail",
   "publicVisibility",
+  "throughBioId",
   "nihAnvilUse",
   "submittingToAnvil",
   "dbGaPPhsID",
@@ -120,6 +121,11 @@ public class DatasetRegistrationSchemaV1 {
   @JsonProperty("publicVisibility")
   @JsonPropertyDescription("Public Visibility of this study")
   private Boolean publicVisibility;
+
+  /** Through.bio Identifier */
+  @JsonProperty("throughBioId")
+  @JsonPropertyDescription("Through.bio Identifier")
+  private String throughBioId;
 
   /** NIH Anvil Use (Required) */
   @JsonProperty("nihAnvilUse")
@@ -407,6 +413,18 @@ public class DatasetRegistrationSchemaV1 {
   @JsonProperty("publicVisibility")
   public void setPublicVisibility(Boolean publicVisibility) {
     this.publicVisibility = publicVisibility;
+  }
+
+  /** Through.bio Identifier */
+  @JsonProperty("throughBioId")
+  public String getThroughBioId() {
+    return throughBioId;
+  }
+
+  /** Through.bio Identifier */
+  @JsonProperty("throughBioId")
+  public void setThroughBioId(String throughBioId) {
+    this.throughBioId = throughBioId;
   }
 
   /** NIH Anvil Use (Required) */
@@ -833,6 +851,10 @@ public class DatasetRegistrationSchemaV1 {
     sb.append('=');
     sb.append(((this.publicVisibility == null) ? "<null>" : this.publicVisibility));
     sb.append(',');
+    sb.append("throughBioId");
+    sb.append('=');
+    sb.append(((this.throughBioId == null) ? "<null>" : this.throughBioId));
+    sb.append(',');
     sb.append("nihAnvilUse");
     sb.append('=');
     sb.append(((this.nihAnvilUse == null) ? "<null>" : this.nihAnvilUse));
@@ -1011,6 +1033,7 @@ public class DatasetRegistrationSchemaV1 {
             + ((this.dataSubmitterUserId == null) ? 0 : this.dataSubmitterUserId.hashCode()));
     result =
         ((result * 31) + ((this.publicVisibility == null) ? 0 : this.publicVisibility.hashCode()));
+    result = ((result * 31) + ((this.throughBioId == null) ? 0 : this.throughBioId.hashCode()));
     result =
         ((result * 31)
             + ((this.dataCustodianEmail == null) ? 0 : this.dataCustodianEmail.hashCode()));
@@ -1184,6 +1207,16 @@ public class DatasetRegistrationSchemaV1 {
                                                                                                                                                     .publicVisibility
                                                                                                                                                     .equals(
                                                                                                                                                         rhs.publicVisibility))))
+                                                                                                                                    && ((this
+                                                                                                                                                .throughBioId
+                                                                                                                                            == rhs.throughBioId)
+                                                                                                                                        || ((this
+                                                                                                                                                    .throughBioId
+                                                                                                                                                != null)
+                                                                                                                                            && this
+                                                                                                                                                .throughBioId
+                                                                                                                                                .equals(
+                                                                                                                                                    rhs.throughBioId)))
                                                                                                                                     && ((this
                                                                                                                                                 .dataCustodianEmail
                                                                                                                                             == rhs.dataCustodianEmail)
