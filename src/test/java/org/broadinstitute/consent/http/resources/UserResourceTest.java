@@ -169,7 +169,6 @@ class UserResourceTest extends AbstractTestHelper {
     assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
   }
 
-
   @Test
   void testGetUserById() {
 
