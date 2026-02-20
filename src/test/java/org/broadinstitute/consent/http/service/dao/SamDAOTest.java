@@ -21,6 +21,7 @@ import jakarta.ws.rs.WebApplicationException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.MockServerTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.SamDAO;
@@ -39,7 +40,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockserver.model.Delay;
@@ -250,14 +252,26 @@ class SamDAOTest extends MockServerTestHelper {
     }
   }
 
+  // Provide all combinations of true/false for isCurrentVersion and permitsSystemUsage to test the
+  // logic in getCombinedUserStatusInfo
+  private static Stream<Arguments> provideBooleansForUserStatus() {
+    return Stream.of(
+        Arguments.of(false, false),
+        Arguments.of(false, true),
+        Arguments.of(true, false),
+        Arguments.of(true, true));
+  }
+
   @ParameterizedTest
-  @ValueSource(booleans = {true, false})
-  void testGetCombinedUserStatusInfo(boolean tos) throws Exception {
+  @MethodSource("provideBooleansForUserStatus")
+  void testGetCombinedUserStatusInfo(boolean isCurrentVersion, boolean permitsSystemUsage)
+      throws Exception {
     CombinedState.SamUser samUser =
         new CombinedState.SamUser(
             "azureB2CId", "createdAt", "email", true, "googleSubjectId", "id", "updatedAt");
     CombinedState.TermsOfServiceDetails tosDetails =
-        new CombinedState.TermsOfServiceDetails("acceptedOn", tos, "latestAcceptedVersion", tos);
+        new CombinedState.TermsOfServiceDetails(
+            "acceptedOn", isCurrentVersion, "latestAcceptedVersion", permitsSystemUsage);
     CombinedState combinedState =
         new CombinedState().setSamUser(samUser).setTermsOfServiceDetails(tosDetails);
     Gson gson = new Gson();
