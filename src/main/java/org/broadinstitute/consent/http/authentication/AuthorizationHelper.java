@@ -72,7 +72,7 @@ public class AuthorizationHelper implements ConsentLogger {
    */
   protected UserStatusInfo getUserStatusInfo(DuosUser duosUser) {
     try {
-      return samService.getRegistrationInfo(duosUser);
+      return samService.getCombinedUserStatusInfo(duosUser);
     } catch (NotFoundException e) {
       try {
         // Try to post the user to Sam if they have not registered previously

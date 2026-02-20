@@ -21,13 +21,12 @@ import jakarta.ws.rs.WebApplicationException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.MockServerTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.sam.CombinedState;
 import org.broadinstitute.consent.http.models.sam.EmailResponse;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
@@ -56,7 +55,7 @@ class SamDAOTest extends MockServerTestHelper {
   private UserStatus status;
 
   @BeforeAll
-  public static void setUp() {
+  static void setUp() {
     ServicesConfiguration servicesConfig = new ServicesConfiguration();
     servicesConfig.setTimeoutSeconds(1);
     servicesConfig.setSamUrl(
@@ -65,7 +64,7 @@ class SamDAOTest extends MockServerTestHelper {
   }
 
   @BeforeEach
-  public void init() {
+  void init() {
     UserStatus.UserInfo info =
         new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
     UserStatus.Enabled enabled =
@@ -76,9 +75,7 @@ class SamDAOTest extends MockServerTestHelper {
   @Test
   void testGetResourceTypes() throws Exception {
     ResourceType resourceType =
-        new ResourceType()
-            .setName(RandomStringUtils.random(10, true, true))
-            .setReuseIds(RandomUtils.nextBoolean());
+        new ResourceType().setName(randomAlphanumeric(10)).setReuseIds(randomBoolean());
     List<ResourceType> mockResponseList = Collections.singletonList(resourceType);
     Gson gson = new Gson();
     mockServerClient
@@ -97,10 +94,10 @@ class SamDAOTest extends MockServerTestHelper {
   void testGetRegistrationInfo() throws Exception {
     UserStatusInfo userInfo =
         new UserStatusInfo()
-            .setAdminEnabled(RandomUtils.nextBoolean())
+            .setAdminEnabled(randomBoolean())
             .setUserEmail("test@test.org")
-            .setUserSubjectId(RandomStringUtils.random(10, false, true))
-            .setEnabled(RandomUtils.nextBoolean());
+            .setUserSubjectId(randomAlphanumeric(10))
+            .setEnabled(randomBoolean());
     mockServerClient
         .when(request())
         .respond(
@@ -176,11 +173,11 @@ class SamDAOTest extends MockServerTestHelper {
   void testGetSelfDiagnostics() throws Exception {
     UserStatusDiagnostics diagnostics =
         new UserStatusDiagnostics()
-            .setAdminEnabled(RandomUtils.nextBoolean())
-            .setEnabled(RandomUtils.nextBoolean())
-            .setInAllUsersGroup(RandomUtils.nextBoolean())
-            .setInGoogleProxyGroup(RandomUtils.nextBoolean())
-            .setTosAccepted(RandomUtils.nextBoolean());
+            .setAdminEnabled(randomBoolean())
+            .setEnabled(randomBoolean())
+            .setInAllUsersGroup(randomBoolean())
+            .setInGoogleProxyGroup(randomBoolean())
+            .setTosAccepted(randomBoolean());
     mockServerClient
         .when(request())
         .respond(
@@ -249,6 +246,33 @@ class SamDAOTest extends MockServerTestHelper {
     } catch (Exception e) {
       fail(e.getMessage());
     }
+  }
+
+  @Test
+  void testGetCombinedUserStatusInfo() throws Exception {
+    CombinedState.SamUser samUser =
+        new CombinedState.SamUser(
+            "azureB2CId", "createdAt", "email", true, "googleSubjectId", "id", "updatedAt");
+    CombinedState.TermsOfServiceDetails tosDetails =
+        new CombinedState.TermsOfServiceDetails("acceptedOn", true, "latestAcceptedVersion", true);
+    CombinedState combinedState =
+        new CombinedState().setSamUser(samUser).setTermsOfServiceDetails(tosDetails);
+    Gson gson = new Gson();
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+                .withBody(gson.toJson(combinedState)));
+
+    UserStatusInfo userStatusInfo = samDAO.getCombinedUserStatusInfo(duosUser);
+    assertNotNull(userStatusInfo);
+    assertEquals(samUser.email(), userStatusInfo.getUserEmail());
+    assertEquals(samUser.googleSubjectId(), userStatusInfo.getUserSubjectId());
+    assertEquals(samUser.enabled(), userStatusInfo.getEnabled());
+    assertEquals(
+        (tosDetails.permitsSystemUsage() && tosDetails.isCurrentVersion()),
+        userStatusInfo.getTosAccepted());
   }
 
   @Test
@@ -338,14 +362,15 @@ class SamDAOTest extends MockServerTestHelper {
   }
 
   @Test
+  @SuppressWarnings({"java:S5778"})
   void testConnectTimeout() {
     mockServerClient.when(request()).error(HttpError.error().withDropConnection(true));
     assertThrows(
-        ServerErrorException.class,
-        () -> samDAO.getV1UserByEmail(duosUser, RandomStringUtils.randomAlphabetic(10)));
+        ServerErrorException.class, () -> samDAO.getV1UserByEmail(duosUser, randomAlphabetic(10)));
   }
 
   @Test
+  @SuppressWarnings({"java:S5778"})
   void testReadTimeout() {
     // Increase the delay to push the response beyond the read timeout value
     int delayMilliseconds = samDAO.readTimeoutMilliseconds + 10;
@@ -357,8 +382,7 @@ class SamDAOTest extends MockServerTestHelper {
                 .withHeader(Header.header("Content-Type", "application/json"))
                 .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
     assertThrows(
-        ServerErrorException.class,
-        () -> samDAO.getV1UserByEmail(duosUser, RandomStringUtils.randomAlphabetic(10)));
+        ServerErrorException.class, () -> samDAO.getV1UserByEmail(duosUser, randomAlphabetic(10)));
   }
 
   @Test
@@ -366,7 +390,7 @@ class SamDAOTest extends MockServerTestHelper {
     when(duosUser.getEmail()).thenReturn("email@email.com");
     String body =
         """
-        {"code":500, "message": "Cannot update azureB2cId"}""";
+            {"code":500, "message": "Cannot update azureB2cId"}""";
     assertEquals(
         "Email: email@email.com. You may have previously signed in with a different authentication provider (Google or Microsoft). Please sign in with that provider. For more information visit: https://support.terra.bio/hc/en-us/community/posts/24089648317467-Cannot-update-azureB2cId-for-user",
         getErrorMessage(duosUser, body));
@@ -377,7 +401,7 @@ class SamDAOTest extends MockServerTestHelper {
     when(duosUser.getEmail()).thenReturn("email@email.com");
     String body =
         """
-        {"code":500, "message": "some other error"}""";
+            {"code":500, "message": "some other error"}""";
     assertEquals(
         "Error posting user registration information. Email: email@email.com. some other error.",
         getErrorMessage(duosUser, body));
@@ -388,7 +412,7 @@ class SamDAOTest extends MockServerTestHelper {
     when(duosUser.getEmail()).thenReturn("email@email.com");
     String body =
         """
-        {"code":500}""";
+            {"code":500}""";
     assertEquals(
         """
             Error posting user registration information. Email: email@email.com. {"code":500}.""",

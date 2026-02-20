@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -128,7 +129,26 @@ class UserResourceTest extends AbstractTestHelper {
 
     Response response = userResource.getUser(du);
     verify(samService).asyncPostRegistrationInfo(du);
+    verify(samService).getCombinedUserStatusInfo(du);
     verify(nihService).syncAccount(du);
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  void testGetMeWithUserStatusInfo() throws Exception {
+    User user = createUserWithRole();
+    DuosUser du = new DuosUser(authUser, user);
+    UserStatusInfo info =
+        new UserStatusInfo()
+            .setUserEmail(user.getEmail())
+            .setUserSubjectId("test-subject-id")
+            .setEnabled(true)
+            .setTosAccepted(true);
+    du.setUserStatusInfo(info);
+    when(nihService.syncAccount(du)).thenReturn(user);
+
+    Response response = userResource.getUser(du);
+    verify(samService, never()).asyncPostRegistrationInfo(du);
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 

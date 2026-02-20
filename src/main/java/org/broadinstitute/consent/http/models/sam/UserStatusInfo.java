@@ -9,6 +9,7 @@ public class UserStatusInfo {
   private String userSubjectId;
   private String userEmail;
   private Boolean enabled;
+  private Boolean tosAccepted;
 
   public Boolean getAdminEnabled() {
     return adminEnabled;
@@ -43,6 +44,15 @@ public class UserStatusInfo {
 
   public UserStatusInfo setEnabled(Boolean enabled) {
     this.enabled = enabled;
+    return this;
+  }
+
+  public Boolean getTosAccepted() {
+    return tosAccepted;
+  }
+
+  public UserStatusInfo setTosAccepted(Boolean tosAccepted) {
+    this.tosAccepted = tosAccepted;
     return this;
   }
 

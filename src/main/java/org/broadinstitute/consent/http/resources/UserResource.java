@@ -43,6 +43,7 @@ import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
+import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.NihService;
@@ -117,11 +118,16 @@ public class UserResource extends Resource {
   @Timed
   public Response getUser(@Auth DuosUser duosUser) {
     try {
-      if (Objects.isNull(duosUser.getUserStatusInfo())) {
+      UserStatusInfo userStatusInfo = duosUser.getUserStatusInfo();
+      if (userStatusInfo == null) {
         samService.asyncPostRegistrationInfo(duosUser);
+        userStatusInfo = samService.getCombinedUserStatusInfo(duosUser);
       }
-      User syncedUser = nihService.syncAccount(duosUser);
-      return Response.ok(gson.toJson(syncedUser)).build();
+      User user = nihService.syncAccount(duosUser);
+      if (userStatusInfo != null) {
+        user.setUserStatusInfo(userStatusInfo);
+      }
+      return Response.ok(gson.toJson(user)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
