@@ -56,7 +56,6 @@ public class VoteService implements ConsentLogger {
   private final DatasetDAO datasetDAO;
   private final ElectionDAO electionDAO;
   private final EmailService emailService;
-  private final ElasticSearchService elasticSearchService;
   private final VoteDAO voteDAO;
   private final VoteServiceDAO voteServiceDAO;
   private final OntologyService ontologyService;
@@ -69,7 +68,6 @@ public class VoteService implements ConsentLogger {
       DatasetDAO datasetDAO,
       ElectionDAO electionDAO,
       EmailService emailService,
-      ElasticSearchService elasticSearchService,
       VoteDAO voteDAO,
       VoteServiceDAO voteServiceDAO,
       OntologyService ontologyService) {
@@ -79,7 +77,6 @@ public class VoteService implements ConsentLogger {
     this.datasetDAO = datasetDAO;
     this.electionDAO = electionDAO;
     this.emailService = emailService;
-    this.elasticSearchService = elasticSearchService;
     this.voteDAO = voteDAO;
     this.voteServiceDAO = voteServiceDAO;
     this.ontologyService = ontologyService;
