@@ -7,6 +7,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
@@ -19,15 +20,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -250,25 +247,34 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
             createDatasetProperty("url", PropertyType.String, "url"),
             createDatasetProperty("dataLocation", PropertyType.String, "dataLocation")));
     dataset.setStudy(study);
+    dataset.setStudyId(study.getStudyId());
+    study.addDatasetId(dataset.getDatasetId());
     return new DatasetRecord(user, updateUser, dac, dataset, study);
   }
 
   @Test
-  void testAsyncESIndexUpdate() {
+  void testIndexStudy() throws IOException {
     DatasetRecord datasetRecord = createDatasetRecord();
-    datasetRecord.dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
     when(userDao.findUserById(datasetRecord.createUser.getUserId()))
         .thenReturn(datasetRecord.createUser);
-    when(datasetDAO.findDatasetById(datasetRecord.dataset.getDatasetId()))
-        .thenReturn(datasetRecord.dataset);
+    when(datasetDAO.findDatasetsByIdList(datasetRecord.study.getDatasetIds()))
+        .thenReturn(List.of(datasetRecord.dataset));
+    when(studyDAO.findStudyById(datasetRecord.study.getStudyId())).thenReturn(datasetRecord.study);
+    org.elasticsearch.client.Response mockResponse = mock();
+    when(esClient.performRequest(any())).thenReturn(mockResponse);
+    when(mockResponse.getEntity()).thenReturn(new StringEntity("response body"));
+    StatusLine statusLine = mock();
+    when(mockResponse.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(200);
+
     ElasticSearchService elasticSearchSpy = spy(service);
-    // Call the async method ...
-    elasticSearchSpy.asyncDatasetInESIndex(
-        datasetRecord.dataset.getDatasetId(), datasetRecord.createUser, true);
+
+    jakarta.ws.rs.core.Response response =
+        elasticSearchSpy.indexStudy(datasetRecord.study.getStudyId());
     // Ensure that the synchronous method was called with the expected parameters
     verify(elasticSearchSpy, timeout(1000))
-        .synchronizeDatasetInESIndex(
-            datasetRecord.dataset, datasetRecord.dataset.getCreateUser(), true);
+        .synchronizeDatasetListInESIndex(List.of(datasetRecord.dataset));
+    assertEquals(200, response.getStatus());
   }
 
   @Test
@@ -499,7 +505,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
         .thenReturn(datasetRecord.createUser);
     datasetRecord.dataset.setNihInstitutionalCertificationFile(null);
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
-    assertEquals(null, term.getHasInstitutionCertification());
+    assertNull(term.getHasInstitutionCertification());
   }
 
   @Test
@@ -566,14 +572,12 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     term1.setDatasetId(1);
     DatasetTerm term2 = new DatasetTerm();
     term2.setDatasetId(2);
-    User user = new User();
-    user.setUserId(1);
     String datasetIndexName = randomAlphabetic(10);
 
     when(esConfig.getDatasetIndexName()).thenReturn(datasetIndexName);
     mockElasticSearchResponse("");
 
-    try (var response = service.indexDatasetTerms(List.of(term1, term2), user)) {
+    try (var _ = service.indexDatasetTerms(List.of(term1, term2))) {
       verify(esClient).performRequest(request.capture());
       Request capturedRequest = request.getValue();
       assertEquals("PUT", capturedRequest.getMethod());
@@ -591,6 +595,26 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testIndexDataset() throws Exception {
+    DatasetRecord datasetRecord = createDatasetRecord();
+    Dataset dataset1 = datasetRecord.dataset;
+    when(datasetDAO.findDatasetsByIdList(List.of(dataset1.getDatasetId())))
+        .thenReturn(List.of(dataset1));
+    when(studyDAO.findStudyById(datasetRecord.study.getStudyId())).thenReturn(datasetRecord.study);
+    when(userDao.findUserById(dataset1.getCreateUserId())).thenReturn(datasetRecord.createUser);
+    org.elasticsearch.client.Response mockResponse = mock();
+    when(esClient.performRequest(any())).thenReturn(mockResponse);
+    when(mockResponse.getEntity()).thenReturn(new StringEntity("response body"));
+    StatusLine statusLine = mock();
+    when(mockResponse.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(200);
+    try (var _ = service.indexDataset(dataset1.getDatasetId())) {
+      verify(datasetDAO, times(1)).findDatasetsByIdList(List.of(dataset1.getDatasetId()));
+      verify(studyDAO, times(1)).findStudyById(dataset1.getStudyId());
+    }
+  }
+
+  @Test
   void testIndexDatasets() throws Exception {
     DatasetRecord datasetRecord = createDatasetRecord();
     Dataset dataset1 = datasetRecord.dataset;
@@ -601,8 +625,10 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
             new DataUseBuilder().setGeneralUse(true).build(),
             datasetRecord.dac);
     dataset2.setStudy(datasetRecord.study);
-    when(datasetDAO.findDatasetById(dataset1.getDatasetId())).thenReturn(dataset1);
-    when(datasetDAO.findDatasetById(dataset2.getDatasetId())).thenReturn(dataset2);
+    dataset2.setStudyId(dataset1.getStudyId());
+    when(datasetDAO.findDatasetsByIdList(List.of(dataset1.getDatasetId(), dataset2.getDatasetId())))
+        .thenReturn(List.of(dataset1, dataset2));
+    when(studyDAO.findStudyById(datasetRecord.study.getStudyId())).thenReturn(datasetRecord.study);
     when(userDao.findUserById(dataset1.getCreateUserId())).thenReturn(datasetRecord.createUser);
     when(userDao.findUserById(dataset2.getCreateUserId())).thenReturn(datasetRecord.createUser);
     org.elasticsearch.client.Response mockResponse = mock();
@@ -612,22 +638,19 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(mockResponse.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(200);
 
-    try (var ignored =
-        service.indexDatasets(
-            List.of(dataset1.getDatasetId(), dataset2.getDatasetId()), datasetRecord.createUser)) {
-      // Each dataset should be looked up once when defining the term and a second time
-      // when updating the indexed date.
-      verify(datasetDAO, times(2)).findDatasetById(dataset1.getDatasetId());
-      verify(datasetDAO, times(2)).findDatasetById(dataset2.getDatasetId());
+    try (var _ = service.indexDatasets(List.of(dataset1.getDatasetId(), dataset2.getDatasetId()))) {
+      verify(datasetDAO, times(1))
+          .findDatasetsByIdList(List.of(dataset1.getDatasetId(), dataset2.getDatasetId()));
+      assertEquals(dataset1.getStudyId(), dataset2.getStudyId());
+      verify(studyDAO, times(1)).findStudyById(dataset1.getStudyId());
     }
   }
 
   @Test
   void testIndexDatasetsHandleSingleNullDataset() throws Exception {
-    User user = createUser(1, 100);
-    when(datasetDAO.findDatasetById(1)).thenReturn(null);
-    try (var response = service.indexDatasets(List.of(1), user)) {
-      verify(datasetDAO).findDatasetById(1);
+    when(datasetDAO.findDatasetsByIdList(List.of(1))).thenReturn(List.of());
+    try (var response = service.indexDatasets(List.of(1))) {
+      verify(datasetDAO).findDatasetsByIdList(List.of(1));
       verify(esClient, never()).performRequest(any());
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
@@ -642,9 +665,9 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     // existing dataset
     List<Integer> datasetIds =
         List.of(d1.getDatasetId(), d2.getDatasetId(), d1.getDatasetId() + d2.getDatasetId());
-    when(datasetDAO.findDatasetById(d1.getDatasetId())).thenReturn(d1);
-    when(datasetDAO.findDatasetById(d2.getDatasetId())).thenReturn(d2);
-    when(datasetDAO.findDatasetById(d1.getDatasetId() + d2.getDatasetId())).thenReturn(null);
+    when(datasetDAO.findDatasetsByIdList(
+            List.of(d1.getDatasetId(), d2.getDatasetId(), d1.getDatasetId() + d2.getDatasetId())))
+        .thenReturn(List.of(d1, d2));
     when(userDao.findUserById(user.getUserId())).thenReturn(user);
     org.elasticsearch.client.Response mockResponse = mock();
     when(esClient.performRequest(any())).thenReturn(mockResponse);
@@ -652,10 +675,10 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     StatusLine statusLine = mock();
     when(mockResponse.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(200);
-    try (var response = service.indexDatasets(datasetIds, user)) {
-      verify(datasetDAO, atLeastOnce()).findDatasetById(d1.getDatasetId());
-      verify(datasetDAO, atLeastOnce()).findDatasetById(d2.getDatasetId());
-      verify(datasetDAO).findDatasetById(d1.getDatasetId() + d2.getDatasetId());
+    try (var response = service.indexDatasets(datasetIds)) {
+      verify(datasetDAO, atLeastOnce())
+          .findDatasetsByIdList(
+              List.of(d1.getDatasetId(), d2.getDatasetId(), d1.getDatasetId() + d2.getDatasetId()));
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -725,69 +748,33 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testIndexDatasetIds() throws Exception {
-    User user = new User();
-    user.setUserId(1);
-    Gson gson = GsonUtil.buildGson();
+  void testIndexDatasetIdsErrors() throws Exception {
+    String mockErrorMessage = "error condition";
     Dataset dataset = new Dataset();
     dataset.setDatasetId(randomInt(10, 100));
-    String esResponseBody =
-        """
-          {
-            "took": 2,
-            "errors": false,
-            "items": [
-              {
-                "index": {
-                  "_index": "dataset",
-                  "_type": "dataset",
-                  "_id": "%d",
-                  "_version": 3,
-                  "result": "updated",
-                  "_shards": {
-                    "total": 2,
-                    "successful": 1,
-                    "failed": 0
-                  },
-                  "created": false,
-                  "status": 200
-                }
-              }
-            ]
-          }
-        """;
+    when(datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId())))
+        .thenReturn(List.of(dataset));
+    mockESClientResponse(200, mockErrorMessage);
 
-    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
-    mockESClientResponse(200, esResponseBody.formatted(dataset.getDatasetId()));
-    StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDatasetId()), user);
+    StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDatasetId()));
     var baos = new ByteArrayOutputStream();
     output.write(baos);
-    var entityString = baos.toString();
-    Type listOfEsResponses = new TypeToken<List<JsonObject>>() {}.getType();
-    List<JsonObject> responseList = gson.fromJson(entityString, listOfEsResponses);
-    assertEquals(1, responseList.size());
-    JsonArray items = responseList.get(0).getAsJsonArray("items");
-    assertEquals(1, items.size());
-    assertEquals(
-        dataset.getDatasetId(),
-        items.get(0).getAsJsonObject().getAsJsonObject("index").get("_id").getAsInt());
+    assertTrue(baos.toString().contains(mockErrorMessage));
   }
 
   @Test
-  void testIndexDatasetIdsErrors() throws Exception {
-    User user = new User();
-    user.setUserId(1);
-    Gson gson = GsonUtil.buildGson();
+  void testIndexDatasetIdsErrors_Not_200_response() throws Exception {
+    String mockErrorMessage = "error condition";
     Dataset dataset = new Dataset();
     dataset.setDatasetId(randomInt(10, 100));
-    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
-    mockESClientResponse(500, "error condition");
+    when(datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId())))
+        .thenReturn(List.of(dataset));
+    mockESClientResponse(500, mockErrorMessage);
 
-    StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDatasetId()), user);
+    StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDatasetId()));
     var baos = new ByteArrayOutputStream();
     output.write(baos);
-    JsonArray jsonArray = gson.fromJson(baos.toString(), JsonArray.class);
-    assertEquals(0, jsonArray.size());
+    assertTrue(baos.toString().contains("Error indexing datasets"));
   }
 
   // Helper method to mock an ElasticSearch Client response
@@ -807,8 +794,6 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
 
   @Test
   void testIndexStudyWithDatasets() {
-    User user = new User();
-    user.setUserId(1);
     Study study = new Study();
     study.setStudyId(1);
     Dataset d = new Dataset();
@@ -816,20 +801,18 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     study.addDatasetId(d.getDatasetId());
     when(studyDAO.findStudyById(any())).thenReturn(study);
 
-    assertDoesNotThrow(() -> service.indexStudy(1, user));
+    assertDoesNotThrow(() -> service.indexStudy(1));
   }
 
   @Test
   void testIndexStudyWithNoDatasets() {
-    User user = new User();
-    user.setUserId(1);
     Study study = new Study();
     study.setStudyId(1);
     when(studyDAO.findStudyById(any())).thenReturn(study);
 
     assertDoesNotThrow(
         () -> {
-          try (var response = service.indexStudy(1, user)) {
+          try (var response = service.indexStudy(1)) {
             assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
           }
         });

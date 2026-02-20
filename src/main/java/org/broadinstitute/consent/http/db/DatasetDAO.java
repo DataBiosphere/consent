@@ -608,6 +608,14 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   void updateDatasetIndexedDate(
       @Bind("datasetId") Integer datasetId, @Bind("indexedDate") Instant indexedDate);
 
+  @SqlUpdate(
+      """
+        UPDATE dataset
+        SET indexed_date = NOW()
+        WHERE dataset_id IN (<datasetIds>)
+    """)
+  void updateDatasetsIndexedDate(@BindList("datasetIds") Set<Integer> datasetIds);
+
   @RegisterRowMapper(ApprovedDatasetMapper.class)
   @UseRowReducer(ApprovedDatasetReducer.class)
   @SqlQuery(

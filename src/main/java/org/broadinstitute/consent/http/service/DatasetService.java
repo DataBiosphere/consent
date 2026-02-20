@@ -267,7 +267,7 @@ public class DatasetService implements ConsentLogger {
       throw new IllegalArgumentException("Admin use only");
     }
     datasetDAO.updateDatasetDataUse(datasetId, dataUse.toString());
-    elasticSearchService.synchronizeDatasetInESIndex(d, user, false);
+    elasticSearchService.synchronizeDatasetInESIndex(d, false);
     return datasetDAO.findDatasetById(datasetId);
   }
 
@@ -280,7 +280,7 @@ public class DatasetService implements ConsentLogger {
     String translation =
         ontologyService.translateDataUse(dataset.getDataUse(), DataUseTranslationType.DATASET);
     datasetDAO.updateDatasetTranslatedDataUse(datasetId, translation);
-    elasticSearchService.synchronizeDatasetInESIndex(dataset, user, false);
+    elasticSearchService.synchronizeDatasetInESIndex(dataset, false);
     return datasetDAO.findDatasetById(datasetId);
   }
 
@@ -332,7 +332,13 @@ public class DatasetService implements ConsentLogger {
     // resource)
     if (currentApprovalState == null || !currentApprovalState) {
       datasetDAO.updateDatasetApproval(approval, Instant.now(), user.getUserId(), datasetId);
-      elasticSearchService.asyncDatasetInESIndex(datasetId, user, true);
+      try {
+        elasticSearchService.indexDatasets(List.of(datasetId));
+      } catch (IOException ioException) {
+        logException(
+            "Error updating entry in ElasticSearch for dataset Id: %d".formatted(datasetId),
+            ioException);
+      }
       datasetReturn = datasetDAO.findDatasetWithoutFSOInformation(datasetId);
     } else {
       if (approval == null || !approval) {
@@ -441,7 +447,7 @@ public class DatasetService implements ConsentLogger {
     if (studyConversion.getDatasetName() != null) {
       datasetDAO.updateDatasetName(dataset.getDatasetId(), studyConversion.getDatasetName());
     }
-    elasticSearchService.synchronizeDatasetInESIndex(dataset, user, false);
+    elasticSearchService.synchronizeDatasetInESIndex(dataset, false);
     List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
     // Handle "Phenotype/Indication"
     if (studyConversion.getPhenotype() != null) {
@@ -523,8 +529,7 @@ public class DatasetService implements ConsentLogger {
           studyId, dataCustodianEmail, PropertyType.Json.toString(), custodians);
     }
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds());
-    datasets.forEach(
-        dataset -> elasticSearchService.synchronizeDatasetInESIndex(dataset, user, false));
+    datasets.forEach(dataset -> elasticSearchService.synchronizeDatasetInESIndex(dataset, false));
     return studyDAO.findStudyById(studyId);
   }
 
@@ -721,9 +726,7 @@ public class DatasetService implements ConsentLogger {
     try {
       Study study = studyDAO.findStudyById(studyId);
       datasetServiceDAO.patchStudy(study, user, patch);
-      study
-          .getDatasetIds()
-          .forEach(datasetId -> elasticSearchService.asyncDatasetInESIndex(datasetId, user, true));
+      elasticSearchService.indexStudy(studyId);
       return studyDAO.findStudyById(studyId);
     } catch (Exception ex) {
       logException(ex);
