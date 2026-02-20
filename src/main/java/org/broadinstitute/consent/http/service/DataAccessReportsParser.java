@@ -20,15 +20,19 @@ public class DataAccessReportsParser implements ConsentLogger {
 
   private final DatasetDAO datasetDAO;
   private final UseRestrictionConverter useRestrictionConverter;
+  private final OntologyService ontologyService;
 
   private static final String DEFAULT_SEPARATOR = "\t";
 
   private static final String END_OF_LINE = System.lineSeparator();
 
   public DataAccessReportsParser(
-      DatasetDAO datasetDAO, UseRestrictionConverter useRestrictionConverter) {
+      DatasetDAO datasetDAO,
+      UseRestrictionConverter useRestrictionConverter,
+      OntologyService ontologyService) {
     this.datasetDAO = datasetDAO;
     this.useRestrictionConverter = useRestrictionConverter;
+    this.ontologyService = ontologyService;
   }
 
   public void setApprovedDARHeader(FileWriter darWriter) throws IOException {
@@ -163,8 +167,7 @@ public class DataAccessReportsParser implements ConsentLogger {
               ? translatedUseRestriction.replace("\n", " ")
               : "";
       DataUse dataUse = useRestrictionConverter.parseDataUsePurpose(dar);
-      String sDAR =
-          useRestrictionConverter.translateDataUse(dataUse, DataUseTranslationType.PURPOSE);
+      String sDAR = ontologyService.translateDataUse(dataUse, DataUseTranslationType.PURPOSE);
       String formattedSDAR = sDAR.replace("\n", " ");
       darWriter.write(
           darCode
