@@ -38,6 +38,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockserver.model.Delay;
@@ -248,13 +250,14 @@ class SamDAOTest extends MockServerTestHelper {
     }
   }
 
-  @Test
-  void testGetCombinedUserStatusInfo() throws Exception {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void testGetCombinedUserStatusInfo(boolean tos) throws Exception {
     CombinedState.SamUser samUser =
         new CombinedState.SamUser(
             "azureB2CId", "createdAt", "email", true, "googleSubjectId", "id", "updatedAt");
     CombinedState.TermsOfServiceDetails tosDetails =
-        new CombinedState.TermsOfServiceDetails("acceptedOn", true, "latestAcceptedVersion", true);
+        new CombinedState.TermsOfServiceDetails("acceptedOn", tos, "latestAcceptedVersion", tos);
     CombinedState combinedState =
         new CombinedState().setSamUser(samUser).setTermsOfServiceDetails(tosDetails);
     Gson gson = new Gson();
@@ -282,6 +285,15 @@ class SamDAOTest extends MockServerTestHelper {
         .respond(response().withStatusCode(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
 
     assertThrows(NotFoundException.class, () -> samDAO.getCombinedUserStatusInfo(duosUser));
+  }
+
+  @Test
+  void testGetCombinedUserStatusInfoNonSuccessStatus() {
+    mockServerClient
+        .when(request())
+        .respond(response().withStatusCode(HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY));
+
+    assertThrows(WebApplicationException.class, () -> samDAO.getCombinedUserStatusInfo(duosUser));
   }
 
   @Test
