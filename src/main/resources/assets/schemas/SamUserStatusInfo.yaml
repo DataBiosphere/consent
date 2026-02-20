@@ -1,0 +1,14 @@
+type: object
+properties:
+  userSubjectId:
+    type: string
+    description: User subject id
+  userEmail:
+    type: string
+    description: User email
+  enabled:
+    type: boolean
+    description: Enabled status
+  tosAcceptance:
+    type: boolean
+    description: Whether the user has accepted the most recent version of the Terms of Service
