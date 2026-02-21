@@ -121,13 +121,8 @@ public class UserResource extends Resource {
       UserStatusInfo userStatusInfo = duosUser.getUserStatusInfo();
       if (userStatusInfo == null) {
         samService.asyncPostRegistrationInfo(duosUser);
-        try {
-          // Best-effort enrichment from Sam; proceed without status info on failure.
-          userStatusInfo = samService.getCombinedUserStatusInfo(duosUser);
-        } catch (Exception ex) {
-          // Intentionally ignore Sam errors here to avoid failing /me on transient outages.
-          userStatusInfo = null;
-        }
+        // Refresh the user status info after posting registration info to Sam
+        userStatusInfo = getUserStatusInfo(duosUser);
       }
       User user = nihService.syncAccount(duosUser);
       if (userStatusInfo != null) {
@@ -136,6 +131,16 @@ public class UserResource extends Resource {
       return Response.ok(gson.toJson(user)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  private UserStatusInfo getUserStatusInfo(DuosUser duosUser) {
+    try {
+      return samService.getCombinedUserStatusInfo(duosUser);
+    } catch (Exception ex) {
+      logWarn("Unable to retrieve user status info from Sam: " + ex.getMessage());
+      // Intentionally ignore Sam errors here to avoid failing /me on transient outages.
+      return null;
     }
   }
 

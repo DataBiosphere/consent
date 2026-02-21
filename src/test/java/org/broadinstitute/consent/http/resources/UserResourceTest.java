@@ -160,13 +160,14 @@ class UserResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testGetMeFailure() throws Exception {
+  void testGetMeSamFailure() throws Exception {
     User user = createUserWithRole();
     DuosUser du = new DuosUser(authUser, user);
     when(samService.getCombinedUserStatusInfo(du)).thenThrow(new RuntimeException("Sam failure"));
 
     Response response = userResource.getUser(du);
-    assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
+    // Ensure that even if Sam fails, we still return the user information.
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 
   @Test
