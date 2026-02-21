@@ -120,20 +120,28 @@ public class SamDAO implements ConsentLogger {
       HttpResponse response = executeRequest(request);
       String body = response.parseAsString();
       if (!response.isSuccessStatusCode()) {
-        var errorMsg = getErrorMessage(new DuosUser(authUser, null), body);
+        String errorMsg =
+            String.format(
+                "Error getting combined user status info for user %s: %s",
+                authUser.getEmail(), body);
         Exception e = new WebApplicationException(errorMsg, response.getStatusCode());
         logException(errorMsg, new Exception(body));
         throw e;
       }
       CombinedState combinedState = gson.fromJson(body, CombinedState.class);
+      var tosDetails = combinedState.getTermsOfServiceDetails();
+      boolean tosAccepted = false;
+      if (tosDetails != null) {
+        tosAccepted =
+            Boolean.TRUE.equals(tosDetails.permitsSystemUsage())
+                && Boolean.TRUE.equals(tosDetails.isCurrentVersion());
+      }
       return new UserStatusInfo()
           .setUserEmail(combinedState.getSamUser().email())
           .setUserSubjectId(combinedState.getSamUser().googleSubjectId())
           .setEnabled(combinedState.getSamUser().enabled())
           // Ensure that the user has both accepted the ToS and that it is the most recent version.
-          .setTosAccepted(
-              combinedState.getTermsOfServiceDetails().permitsSystemUsage()
-                  && combinedState.getTermsOfServiceDetails().isCurrentVersion());
+          .setTosAccepted(tosAccepted);
     } catch (ForbiddenException e) {
       // Sam throws a 403, not a 404, when the user is not found at this API
       // which is re-thrown in executeRequest

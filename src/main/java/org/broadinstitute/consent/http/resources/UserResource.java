@@ -121,7 +121,13 @@ public class UserResource extends Resource {
       UserStatusInfo userStatusInfo = duosUser.getUserStatusInfo();
       if (userStatusInfo == null) {
         samService.asyncPostRegistrationInfo(duosUser);
-        userStatusInfo = samService.getCombinedUserStatusInfo(duosUser);
+        try {
+          // Best-effort enrichment from Sam; proceed without status info on failure.
+          userStatusInfo = samService.getCombinedUserStatusInfo(duosUser);
+        } catch (Exception ex) {
+          // Intentionally ignore Sam errors here to avoid failing /me on transient outages.
+          userStatusInfo = null;
+        }
       }
       User user = nihService.syncAccount(duosUser);
       if (userStatusInfo != null) {

@@ -9,6 +9,6 @@ properties:
   enabled:
     type: boolean
     description: Enabled status
-  tosAcceptance:
+  tosAccepted:
     type: boolean
     description: Whether the user has accepted the most recent version of the Terms of Service
