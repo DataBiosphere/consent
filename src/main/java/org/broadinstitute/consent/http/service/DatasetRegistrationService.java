@@ -130,7 +130,8 @@ public class DatasetRegistrationService implements ConsentLogger {
             idx -> {
               ConsentGroup cg = registration.getConsentGroups().get(idx);
               if (Objects.nonNull(cg.getDatasetId())) {
-                Dataset existingDataset = datasetDAO.findDatasetById(cg.getDatasetId());
+                Dataset existingDataset =
+                    datasetDAO.findDatasetsByIdList(List.of(cg.getDatasetId())).getFirst();
                 try {
                   DatasetUpdate datasetUpdate =
                       new DatasetUpdate(
@@ -213,7 +214,7 @@ public class DatasetRegistrationService implements ConsentLogger {
 
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdDatasetIds);
     sendDatasetSubmittedEmails(datasets);
-    try (Response response = elasticSearchService.indexDatasets(createdDatasetIds, user)) {
+    try (Response response = elasticSearchService.indexDatasets(createdDatasetIds)) {
       if (response.getStatus() >= 400) {
         logWarn(
             String.format(
@@ -290,7 +291,7 @@ public class DatasetRegistrationService implements ConsentLogger {
     }
 
     Dataset updatedDataset = datasetDAO.findDatasetById(datasetId);
-    elasticSearchService.synchronizeDatasetInESIndex(updatedDataset, user, false);
+    elasticSearchService.synchronizeDatasetInESIndex(updatedDataset, false);
     return updatedDataset;
   }
 

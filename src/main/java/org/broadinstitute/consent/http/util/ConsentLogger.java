@@ -39,7 +39,7 @@ public interface ConsentLogger {
    * @param e Exception
    */
   default void logException(String message, Exception e) {
-    getLogger(this.getClass()).error(message + e.getMessage());
+    getLogger(this.getClass()).error("%s %s".formatted(message, e.getMessage()));
     Sentry.captureEvent(new SentryEvent(e));
   }
 

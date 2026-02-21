@@ -56,10 +56,9 @@ public class VoteService implements ConsentLogger {
   private final DatasetDAO datasetDAO;
   private final ElectionDAO electionDAO;
   private final EmailService emailService;
-  private final ElasticSearchService elasticSearchService;
-  private final UseRestrictionConverter useRestrictionConverter;
   private final VoteDAO voteDAO;
   private final VoteServiceDAO voteServiceDAO;
+  private final OntologyService ontologyService;
 
   @Inject
   public VoteService(
@@ -69,20 +68,18 @@ public class VoteService implements ConsentLogger {
       DatasetDAO datasetDAO,
       ElectionDAO electionDAO,
       EmailService emailService,
-      ElasticSearchService elasticSearchService,
-      UseRestrictionConverter useRestrictionConverter,
       VoteDAO voteDAO,
-      VoteServiceDAO voteServiceDAO) {
+      VoteServiceDAO voteServiceDAO,
+      OntologyService ontologyService) {
     this.userDAO = userDAO;
     this.dacDAO = dacDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.datasetDAO = datasetDAO;
     this.electionDAO = electionDAO;
     this.emailService = emailService;
-    this.elasticSearchService = elasticSearchService;
-    this.useRestrictionConverter = useRestrictionConverter;
     this.voteDAO = voteDAO;
     this.voteServiceDAO = voteServiceDAO;
+    this.ontologyService = ontologyService;
   }
 
   /**
@@ -258,12 +255,6 @@ public class VoteService implements ConsentLogger {
     List<Dataset> datasets =
         datasetIds.isEmpty() ? List.of() : datasetDAO.findDatasetsByIdList(datasetIds);
 
-    try {
-      elasticSearchService.indexDatasets(datasetIds, user);
-    } catch (Exception e) {
-      logException("Error indexing datasets for approved DARs: " + e.getMessage(), e);
-    }
-
     // For each dar, email the researcher summarizing the approved datasets in that dar
     dars.forEach(
         dar -> {
@@ -289,7 +280,7 @@ public class VoteService implements ConsentLogger {
                 approvedDatasetsInDar.stream()
                     .map(
                         dataset ->
-                            useRestrictionConverter.translateDataUse(
+                            ontologyService.translateDataUse(
                                 dataset.getDataUse(), DataUseTranslationType.DATASET))
                     .distinct()
                     .collect(Collectors.joining(";"));

@@ -379,7 +379,7 @@ public class DatasetServiceDAO implements ConsentLogger {
       boolean executeDeletes) {
 
     // Don't update the name if it isn't provided
-    Dataset dataset = datasetDAO.findDatasetById(datasetId);
+    Dataset dataset = datasetDAO.findDatasetsByIdList(List.of(datasetId)).getFirst();
     String updateName = StringUtils.isBlank(datasetName) ? dataset.getName() : datasetName;
     addAuditRecord(datasetId, updateName, userId, AuditActions.UPDATE);
     // update dataset
@@ -420,7 +420,7 @@ public class DatasetServiceDAO implements ConsentLogger {
       logWarn(
           "Attempt to update dataset name with null or blank value: dataset id: %s; user id: %s"
               .formatted(datasetId, userId));
-      Dataset dataset = datasetDAO.findDatasetById(datasetId);
+      Dataset dataset = datasetDAO.findDatasetsByIdList(List.of(datasetId)).getFirst();
       addAuditRecord(datasetId, dataset.getDatasetName(), userId, AuditActions.UPDATE);
       datasetDAO.updateDatasetUpdateUser(datasetId, new Timestamp(new Date().getTime()), userId);
     } else {

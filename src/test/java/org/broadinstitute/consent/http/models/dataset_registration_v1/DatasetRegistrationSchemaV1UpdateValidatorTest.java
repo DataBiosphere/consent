@@ -227,13 +227,12 @@ class DatasetRegistrationSchemaV1UpdateValidatorTest {
   }
 
   @Test
-  void testValidation_empty_consent_groups() {
+  void testValidation_allow_empty_consent_groups() {
     Study study = createMockStudy();
     DatasetRegistrationSchemaV1 registration = createMockRegistration(study);
     registration.setConsentGroups(List.of());
 
-    assertThrows(
-        BadRequestException.class,
+    assertDoesNotThrow(
         () -> {
           validator.validate(study, registration);
         });

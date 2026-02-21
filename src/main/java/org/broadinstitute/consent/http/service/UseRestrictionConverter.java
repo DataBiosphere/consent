@@ -1,16 +1,8 @@
 package org.broadinstitute.consent.http.service;
 
-import jakarta.ws.rs.InternalServerErrorException;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Objects;
 import org.apache.commons.collections4.CollectionUtils;
-import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.OntologyEntry;
@@ -18,13 +10,7 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 
 public class UseRestrictionConverter implements ConsentLogger {
 
-  private final ServicesConfiguration servicesConfiguration;
-  private final Client client;
-
-  public UseRestrictionConverter(Client client, ServicesConfiguration config) {
-    this.client = client;
-    this.servicesConfiguration = config;
-  }
+  public UseRestrictionConverter() {}
 
   /**
    * This method, and its counterpart that processes a map, translates DAR questions to a DataUse
@@ -129,23 +115,5 @@ public class UseRestrictionConverter implements ConsentLogger {
       }
     }
     return dataUse;
-  }
-
-  public String translateDataUse(DataUse dataUse, DataUseTranslationType type) {
-    WebTarget target =
-        client.target(servicesConfiguration.getOntologyURL() + "translate?for=" + type.getValue());
-    Response response =
-        target.request(MediaType.APPLICATION_JSON).post(Entity.json(dataUse.toString()));
-    if (response.getStatus() == 200) {
-      try {
-        return response.readEntity(String.class);
-      } catch (Exception e) {
-        logException("Error parsing response from Ontology service", e);
-      }
-    }
-    logException(
-        "Error response from Ontology service: " + response.readEntity(String.class),
-        new InternalServerErrorException());
-    return null;
   }
 }

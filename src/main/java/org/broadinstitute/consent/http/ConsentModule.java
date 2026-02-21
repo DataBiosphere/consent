@@ -238,7 +238,7 @@ public class ConsentModule extends AbstractModule {
 
   @Provides
   UseRestrictionConverter providesUseRestrictionConverter() {
-    return new UseRestrictionConverter(providesClient(), config.getServicesConfiguration());
+    return new UseRestrictionConverter();
   }
 
   @Provides
@@ -430,10 +430,9 @@ public class ConsentModule extends AbstractModule {
         providesDatasetDAO(),
         providesElectionDAO(),
         providesEmailService(),
-        providesElasticSearchService(),
-        providesUseRestrictionConverter(),
         providesVoteDAO(),
-        providesVoteServiceDAO());
+        providesVoteServiceDAO(),
+        providesOntologyService());
   }
 
   @Provides
