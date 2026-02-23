@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.mail.message;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -194,6 +196,29 @@ class DacVoteDigestMessageTest {
     assertFalse(hasElementWithId(parsedTemplate, "submittedThisWeek"));
     assertFalse(hasElementWithId(parsedTemplate, "submittedLastWeek"));
     assertTrue(hasElementWithId(parsedTemplate, "olderRequests"));
+  }
+
+  @Test
+  void testReminderInTemplate() throws IOException, TemplateException {
+    User toUser = new User();
+    toUser.setUserId(1);
+    toUser.setDisplayName("Reminder User");
+    Instant timeBasis = Instant.now().minus(48, ChronoUnit.HOURS);
+    Reminder reminder = new Reminder(1, "DAR-1", 2, timeBasis);
+    String refId = timeBasis.toString();
+
+    var message = new DacVoteDigestMessage(toUser, List.of(reminder), refId, timeBasis);
+
+    var template = helper.getTemplate(message.getTemplateName());
+    var out = new StringWriter();
+    template.process(message.createModel("localhost:8080"), out);
+    var templateString = out.toString();
+
+    assertEquals(1, reminder.userId());
+    assertEquals("DAR-1", reminder.darCode());
+    assertEquals(2, reminder.collectionId());
+    assertEquals(timeBasis, reminder.createDate());
+    assertThat(templateString, containsString("DAR-1"));
   }
 
   String getElementTextById(Document document, String id) {
