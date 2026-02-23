@@ -28,7 +28,31 @@ class NewStudyRegistrationConfirmationMessageTest {
   }
 
   @Test
-  void testMessageTemplate() throws IOException, TemplateException {
+  void testMessageTemplate_singleAsset() throws IOException, TemplateException {
+    User submitter = new User();
+    submitter.setDisplayName("Test User");
+    String studyName = "Cancer Research";
+    Integer studyId = 123;
+    Map<String, Object> assets = Map.of("assetType", List.of("asset1"));
+
+    var message =
+        new NewStudyRegistrationConfirmationMessage(submitter, studyName, studyId, assets);
+
+    var template = helper.getTemplate(message.getTemplateName());
+    var out = new StringWriter();
+    template.process(message.createModel("localhost:8080"), out);
+    var templateString = out.toString();
+    Document parsedTemplate = Jsoup.parse(templateString);
+
+    assertTrue(parsedTemplate.text().contains("Test User"));
+    assertTrue(parsedTemplate.text().contains(studyName));
+    assertTrue(parsedTemplate.text().contains(String.valueOf(studyId)));
+    assertTrue(parsedTemplate.text().contains("assetType"));
+    assertTrue(parsedTemplate.text().contains("1 item"));
+  }
+
+  @Test
+  void testMessageTemplate_multipleAssets() throws IOException, TemplateException {
     User submitter = new User();
     submitter.setDisplayName("Test User");
     String studyName = "Cancer Research";
@@ -48,6 +72,6 @@ class NewStudyRegistrationConfirmationMessageTest {
     assertTrue(parsedTemplate.text().contains(studyName));
     assertTrue(parsedTemplate.text().contains(String.valueOf(studyId)));
     assertTrue(parsedTemplate.text().contains("assetType"));
-    assertTrue(parsedTemplate.text().contains("2 item(s)"));
+    assertTrue(parsedTemplate.text().contains("2 items"));
   }
 }

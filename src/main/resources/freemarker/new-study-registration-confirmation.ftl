@@ -31,7 +31,10 @@
         </p>
         <ul>
           <#list studyAssets?keys as assetType>
-          <li>${assetType}: ${studyAssets[assetType]?size} item(s)</li>
+
+          <li>
+            ${assetType}: ${studyAssets[assetType]?size} <#if studyAssets[assetType]?size == 1>item<#else>items</#if>
+          </li>
         </#list>
         </ul>
         <p>
