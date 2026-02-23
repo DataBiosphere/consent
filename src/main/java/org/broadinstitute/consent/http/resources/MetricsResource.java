@@ -1,15 +1,20 @@
 package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
+import io.dropwizard.auth.Auth;
+import jakarta.annotation.security.PermitAll;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
+import java.util.List;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.service.MetricsService;
+import org.broadinstitute.consent.http.service.MetricsService.DarMetricsSummary;
 
-@Path("/metrics")
+@Path("{api : (api/)?}metrics")
 public class MetricsResource extends Resource {
 
   private final MetricsService metricsService;
@@ -19,6 +24,7 @@ public class MetricsResource extends Resource {
     this.metricsService = metricsService;
   }
 
+  @Deprecated(forRemoval = true, since = "2026-02-23")
   @GET
   @Path("/dataset/{datasetId}")
   @Produces("application/json")
@@ -26,6 +32,20 @@ public class MetricsResource extends Resource {
     try {
       DatasetMetrics metrics = metricsService.generateDatasetMetrics(datasetId);
       return Response.ok().entity(metrics).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Path("/dar-summaries/{datasetId}")
+  @Produces("application/json")
+  @PermitAll
+  public Response getDarSummaryData(
+      @Auth DuosUser user, @PathParam("datasetId") Integer datasetId) {
+    try {
+      List<DarMetricsSummary> summaries = metricsService.generateDarSummaries(datasetId);
+      return Response.ok().entity(summaries).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

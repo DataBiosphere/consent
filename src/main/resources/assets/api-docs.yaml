@@ -715,6 +715,8 @@ paths:
           description: Server error.
   /api/match/purpose/batch/:
     $ref: './paths/getMatchesForLatestDataAccessElectionsByPurposeIds.yaml'
+  /api/metrics/dar-summaries/{datasetId}:
+    $ref: './paths/darSummariesByDatasetId.yaml'
   /api/user:
     $ref: './paths/user.yaml'
   /api/user/me:

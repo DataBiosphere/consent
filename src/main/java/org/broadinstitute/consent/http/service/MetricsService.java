@@ -48,22 +48,18 @@ public class MetricsService {
   }
 
   public DatasetMetrics generateDatasetMetrics(Integer datasetId) {
-
     DatasetMetrics metrics = new DatasetMetrics();
+    List<DarMetricsSummary> darMetricsSummaries = generateDarSummaries(datasetId);
+    metrics.setDars(darMetricsSummaries);
+    return metrics;
+  }
 
-    // get datasetDTO with properties and data use restrictions
+  public List<DarMetricsSummary> generateDarSummaries(Integer datasetId) {
     Dataset dataset = dataSetDAO.findDatasetById(datasetId);
     if (dataset == null) {
       throw new NotFoundException("Dataset with specified ID does not exist.");
     }
-
-    // find dars with the given datasetId in their list of datasetIds, datasetId is a String so it
-    // can be converted to jsonb in query
-    // convert all dars into smaller objects that only contain the information needed
     List<DataAccessRequest> dars = darDAO.findApprovedDARsByDatasetId(datasetId);
-    List<DarMetricsSummary> darMetricsSummaries =
-        dars.stream().map(DarMetricsSummary::new).toList();
-    metrics.setDars(darMetricsSummaries);
-    return metrics;
+    return dars.stream().map(DarMetricsSummary::new).toList();
   }
 }
