@@ -135,8 +135,6 @@ public class DatasetResource extends Resource {
       URI uri =
           UriBuilder.fromPath(String.format("/api/dataset/study/%s", study.getStudyId())).build();
       String entity = GsonUtil.buildGsonNullSerializer().toJson(createdRegistration);
-      // Send confirmation email to submitter
-      datasetRegistrationService.sendSubmissionConfirmationEmail(user, createdRegistration);
       return Response.created(uri).entity(entity).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

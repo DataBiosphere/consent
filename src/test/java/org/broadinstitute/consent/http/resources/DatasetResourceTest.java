@@ -743,22 +743,10 @@ class DatasetResourceTest extends AbstractTestHelper {
     }
   }
 
-  // Ensure confirmation email is sent when schema is valid and dataset creation is successful
-  private void verifyConfirmationEmailSent() {
-    verify(datasetRegistrationService, times(1))
-        .sendSubmissionConfirmationEmail(eq(user), any(DatasetRegistrationSchemaV1.class));
-  }
-
-  // Ensure confirmation email is NOT sent when schema is invalid
-  private void verifyConfirmationEmailNotSent() {
-    verify(datasetRegistrationService, never()).sendSubmissionConfirmationEmail(any(), any());
-  }
-
   @Test
   void testCreateDatasetRegistration_invalidSchema_case1() {
     try (var response = resource.createDatasetRegistration(authUser, null, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-      verifyConfirmationEmailNotSent();
     }
   }
 
@@ -766,7 +754,6 @@ class DatasetResourceTest extends AbstractTestHelper {
   void testCreateDatasetRegistration_invalidSchema_case2() {
     try (var response = resource.createDatasetRegistration(authUser, null, "{}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-      verifyConfirmationEmailNotSent();
     }
   }
 
@@ -777,7 +764,6 @@ class DatasetResourceTest extends AbstractTestHelper {
 
     try (var response = resource.createDatasetRegistration(authUser, null, schemaString)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-      verifyConfirmationEmailNotSent();
     }
   }
 
@@ -804,8 +790,6 @@ class DatasetResourceTest extends AbstractTestHelper {
       assertTrue(entity.contains("NIH Anvil Use is required"));
       assertTrue(entity.contains("Principal Investigator Name is required"));
       assertTrue(entity.contains("Public Visibility is required"));
-
-      verifyConfirmationEmailNotSent();
     }
   }
 
@@ -825,7 +809,6 @@ class DatasetResourceTest extends AbstractTestHelper {
 
     try (var response = resource.createDatasetRegistration(authUser, null, schemaV1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
-      verifyConfirmationEmailSent();
     }
   }
 
@@ -844,7 +827,6 @@ class DatasetResourceTest extends AbstractTestHelper {
     String schemaV1 = createDatasetRegistrationMock(user);
     Response response = resource.createDatasetRegistration(authUser, null, schemaV1);
     assertEquals(HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY, response.getStatus());
-    verifyConfirmationEmailNotSent();
   }
 
   @Test
@@ -870,7 +852,6 @@ class DatasetResourceTest extends AbstractTestHelper {
     when(datasetService.findStudy(anyInt())).thenReturn(study);
     Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, schemaV1);
     assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
-    verifyConfirmationEmailSent();
   }
 
   @Test
@@ -919,7 +900,6 @@ class DatasetResourceTest extends AbstractTestHelper {
             any(),
             eq(user),
             eq(Map.of("file", formDataBodyPartFile, "other", formDataBodyPartOther)));
-    verifyConfirmationEmailSent();
   }
 
   @Test
@@ -929,7 +909,6 @@ class DatasetResourceTest extends AbstractTestHelper {
 
     Response response = resource.createDatasetRegistration(authUser, formDataMultiPart, schemaV1);
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-    verifyConfirmationEmailNotSent();
   }
 
   @Test

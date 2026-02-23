@@ -212,7 +212,10 @@ public class DatasetRegistrationService implements ConsentLogger {
         datasetServiceDAO.insertDatasetRegistration(studyInsert, datasetInserts);
 
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(createdDatasetIds);
+    // Send notification emails to DAC chairs about new datasets
     sendDatasetSubmittedEmails(datasets);
+    // Send confirmation email to submitter
+    sendSubmissionConfirmationEmail(user, registration);
     try (Response response = elasticSearchService.indexDatasets(createdDatasetIds, user)) {
       if (response.getStatus() >= 400) {
         logWarn(
