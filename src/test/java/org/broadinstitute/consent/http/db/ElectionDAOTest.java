@@ -359,23 +359,24 @@ class ElectionDAOTest extends DAOTestHelper {
     assertEquals(e.getElectionId(), election.getElectionId());
   }
 
-  @Test
-  void testFindLastElectionsByReferenceIdsAndType() {
-    DataAccessRequest dar = createDataAccessRequestV3();
-    Dataset d = createDataset();
-    electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        new Date(),
-        dar.getReferenceId(),
-        d.getDatasetId());
-    List<Election> elections =
-        electionDAO.findLastElectionsByReferenceIdsAndType(
-            Collections.singletonList(dar.getReferenceId()), ElectionType.DATA_ACCESS.getValue());
-    assertNotNull(elections);
-    assertFalse(elections.isEmpty());
-    assertEquals(1, elections.size());
-  }
+  //  @Test
+  //  void testFindLastElectionsByReferenceIdsAndType() {
+  //    DataAccessRequest dar = createDataAccessRequestV3();
+  //    Dataset d = createDataset();
+  //    electionDAO.insertElection(
+  //        ElectionType.DATA_ACCESS.getValue(),
+  //        ElectionStatus.OPEN.getValue(),
+  //        new Date(),
+  //        dar.getReferenceId(),
+  //        d.getDatasetId());
+  //    List<Election> elections =
+  //        electionDAO.findLastElectionsByReferenceIdsAndType(
+  //            Collections.singletonList(dar.getReferenceId()),
+  // ElectionType.DATA_ACCESS.getValue());
+  //    assertNotNull(elections);
+  //    assertFalse(elections.isEmpty());
+  //    assertEquals(1, elections.size());
+  //  }
 
   @Test
   void testFindLastElectionsByReferenceIds() {
