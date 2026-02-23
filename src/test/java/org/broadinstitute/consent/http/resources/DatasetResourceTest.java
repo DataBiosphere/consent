@@ -258,7 +258,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     try (Response response =
         resource.patchByDatasetUpdate(duosUser, dataset.getDatasetId(), gson.toJson(patch))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-      verify(elasticSearchService, never()).indexDataset(dataset.getDatasetId(), user);
+      verify(elasticSearchService, never()).indexDataset(dataset.getDatasetId());
     }
   }
 
@@ -314,7 +314,7 @@ class DatasetResourceTest extends AbstractTestHelper {
 
     try (Response response =
         resource.patchByDatasetUpdate(duosUser, dataset.getDatasetId(), gson.toJson(patch))) {
-      verify(elasticSearchService).synchronizeDatasetInESIndex(dataset, user, false);
+      verify(elasticSearchService).synchronizeDatasetInESIndex(dataset, false);
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -502,9 +502,7 @@ class DatasetResourceTest extends AbstractTestHelper {
     StreamingOutput output =
         out -> out.write(esResponseArray.formatted(dataset.getDatasetId()).getBytes());
     when(datasetService.findAllDatasetIds()).thenReturn(List.of(dataset.getDatasetId()));
-    when(elasticSearchService.indexDatasetIds(List.of(dataset.getDatasetId()), user))
-        .thenReturn(output);
-    when(userService.findUserByEmail(duosUser.getEmail())).thenReturn(user);
+    when(elasticSearchService.indexDatasetIds(List.of(dataset.getDatasetId()))).thenReturn(output);
 
     try (Response response = resource.indexDatasets(duosUser)) {
       var entity = (StreamingOutput) response.getEntity();
@@ -526,8 +524,7 @@ class DatasetResourceTest extends AbstractTestHelper {
   void testIndexDataset() throws IOException {
     Dataset dataset = new Dataset();
     when(mockResponse.getStatus()).thenReturn(HttpStatusCodes.STATUS_CODE_OK);
-    when(elasticSearchService.indexDataset(dataset.getDatasetId(), user)).thenReturn(mockResponse);
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
+    when(elasticSearchService.indexDataset(dataset.getDatasetId())).thenReturn(mockResponse);
 
     try (var response = resource.indexDataset(authUser, dataset.getDatasetId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());

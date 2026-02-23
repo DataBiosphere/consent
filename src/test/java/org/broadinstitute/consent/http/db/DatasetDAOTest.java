@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -1342,6 +1343,19 @@ class DatasetDAOTest extends DAOTestHelper {
   void testUpdateDatasetIndexedDate() {
     Dataset dataset = insertDataset();
     datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), Instant.now());
+    Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
+    assertNotNull(updatedDataset.getIndexedDate());
+    datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), null);
+    Dataset updatedDataset2 = datasetDAO.findDatasetById(dataset.getDatasetId());
+    assertNull(updatedDataset2.getIndexedDate());
+  }
+
+  @Test
+  void testUpdateDatasetIdListIndexedDate() {
+    Dataset dataset = insertDataset();
+    Set<Integer> datasetIds = new HashSet<>();
+    datasetIds.add(dataset.getDatasetId());
+    datasetDAO.updateDatasetsIndexedDate(datasetIds);
     Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertNotNull(updatedDataset.getIndexedDate());
     datasetDAO.updateDatasetIndexedDate(dataset.getDatasetId(), null);

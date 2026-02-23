@@ -220,7 +220,7 @@ public class DatasetResource extends Resource {
         throw new BadRequestException("Properties are invalid");
       }
       Dataset patched = datasetRegistrationService.patchDataset(datasetId, user, patch);
-      elasticSearchService.synchronizeDatasetInESIndex(patched, user, false);
+      elasticSearchService.synchronizeDatasetInESIndex(patched, false);
       return Response.ok(patched).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -389,9 +389,8 @@ public class DatasetResource extends Resource {
   @RolesAllowed(ADMIN)
   public Response indexDatasets(@Auth AuthUser authUser) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
       var datasetIds = datasetService.findAllDatasetIds();
-      StreamingOutput indexResponse = elasticSearchService.indexDatasetIds(datasetIds, user);
+      StreamingOutput indexResponse = elasticSearchService.indexDatasetIds(datasetIds);
       return Response.ok(indexResponse, MediaType.APPLICATION_JSON).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -403,8 +402,7 @@ public class DatasetResource extends Resource {
   @RolesAllowed(ADMIN)
   public Response indexDataset(@Auth AuthUser authUser, @PathParam("datasetId") Integer datasetId) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
-      return elasticSearchService.indexDataset(datasetId, user);
+      return elasticSearchService.indexDataset(datasetId);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
