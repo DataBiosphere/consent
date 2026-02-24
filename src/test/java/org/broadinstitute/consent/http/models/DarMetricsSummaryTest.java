@@ -1,8 +1,6 @@
 package org.broadinstitute.consent.http.models;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -32,13 +30,11 @@ class DarMetricsSummaryTest extends AbstractTestHelper {
   void testConstructor_updateDate() {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setUpdateDate(Timestamp.from(Instant.now()));
+    DataAccessRequestData data = new DataAccessRequestData();
+    dar.setData(data);
+
     DarMetricsSummary summary = new DarMetricsSummary(dar);
-    assertNotNull(summary.updateDate());
-    assertNull(summary.projectTitle());
-    assertNull(summary.darCode());
-    assertNull(summary.nonTechRus());
-    assertNull(summary.referenceId());
-    assertTrue(summary.expired());
+    assertEntityEquivalence(dar, summary, true);
   }
 
   @Test
@@ -47,13 +43,9 @@ class DarMetricsSummaryTest extends AbstractTestHelper {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setProjectTitle(randomAlphabetic(10));
     dar.setData(data);
+
     DarMetricsSummary summary = new DarMetricsSummary(dar);
-    assertEquals(dar.getUpdateDate(), summary.updateDate());
-    assertEquals(dar.getData().getProjectTitle(), summary.projectTitle());
-    assertEquals(dar.getDarCode(), summary.darCode());
-    assertEquals(dar.getData().getNonTechRus(), summary.nonTechRus());
-    assertEquals(dar.getReferenceId(), summary.referenceId());
-    assertTrue(summary.expired());
+    assertEntityEquivalence(dar, summary, true);
   }
 
   @Test
@@ -62,13 +54,9 @@ class DarMetricsSummaryTest extends AbstractTestHelper {
     dar.setDarCode(randomAlphabetic(10));
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setData(data);
+
     DarMetricsSummary summary = new DarMetricsSummary(dar);
-    assertEquals(dar.getUpdateDate(), summary.updateDate());
-    assertEquals(dar.getData().getProjectTitle(), summary.projectTitle());
-    assertEquals(dar.getDarCode(), summary.darCode());
-    assertEquals(dar.getData().getNonTechRus(), summary.nonTechRus());
-    assertEquals(dar.getReferenceId(), summary.referenceId());
-    assertTrue(summary.expired());
+    assertEntityEquivalence(dar, summary, true);
   }
 
   @Test
@@ -77,13 +65,9 @@ class DarMetricsSummaryTest extends AbstractTestHelper {
     DataAccessRequestData data = new DataAccessRequestData();
     data.setNonTechRus(randomAlphabetic(10));
     dar.setData(data);
+
     DarMetricsSummary summary = new DarMetricsSummary(dar);
-    assertEquals(dar.getUpdateDate(), summary.updateDate());
-    assertEquals(dar.getData().getProjectTitle(), summary.projectTitle());
-    assertEquals(dar.getDarCode(), summary.darCode());
-    assertEquals(dar.getData().getNonTechRus(), summary.nonTechRus());
-    assertEquals(dar.getReferenceId(), summary.referenceId());
-    assertTrue(summary.expired());
+    assertEntityEquivalence(dar, summary, true);
   }
 
   @Test
@@ -92,13 +76,9 @@ class DarMetricsSummaryTest extends AbstractTestHelper {
     dar.setReferenceId(UUID.randomUUID().toString());
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setData(data);
+
     DarMetricsSummary summary = new DarMetricsSummary(dar);
-    assertEquals(dar.getUpdateDate(), summary.updateDate());
-    assertEquals(dar.getData().getProjectTitle(), summary.projectTitle());
-    assertEquals(dar.getDarCode(), summary.darCode());
-    assertEquals(dar.getData().getNonTechRus(), summary.nonTechRus());
-    assertEquals(dar.getReferenceId(), summary.referenceId());
-    assertTrue(summary.expired());
+    assertEntityEquivalence(dar, summary, true);
   }
 
   @Test
@@ -107,13 +87,9 @@ class DarMetricsSummaryTest extends AbstractTestHelper {
     dar.setSubmissionDate(Timestamp.from(Instant.now()));
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setData(data);
+
     DarMetricsSummary summary = new DarMetricsSummary(dar);
-    assertEquals(dar.getUpdateDate(), summary.updateDate());
-    assertEquals(dar.getData().getProjectTitle(), summary.projectTitle());
-    assertEquals(dar.getDarCode(), summary.darCode());
-    assertEquals(dar.getData().getNonTechRus(), summary.nonTechRus());
-    assertEquals(dar.getReferenceId(), summary.referenceId());
-    assertFalse(summary.expired());
+    assertEntityEquivalence(dar, summary, false);
   }
 
   @Test
@@ -124,12 +100,18 @@ class DarMetricsSummaryTest extends AbstractTestHelper {
     dar.setSubmissionDate(Timestamp.from(zonedDateTime.toInstant()));
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setData(data);
+
     DarMetricsSummary summary = new DarMetricsSummary(dar);
+    assertEntityEquivalence(dar, summary, true);
+  }
+
+  private void assertEntityEquivalence(
+      DataAccessRequest dar, DarMetricsSummary summary, Boolean expectedExpired) {
     assertEquals(dar.getUpdateDate(), summary.updateDate());
     assertEquals(dar.getData().getProjectTitle(), summary.projectTitle());
     assertEquals(dar.getDarCode(), summary.darCode());
     assertEquals(dar.getData().getNonTechRus(), summary.nonTechRus());
     assertEquals(dar.getReferenceId(), summary.referenceId());
-    assertTrue(summary.expired());
+    assertEquals(expectedExpired, summary.expired());
   }
 }
