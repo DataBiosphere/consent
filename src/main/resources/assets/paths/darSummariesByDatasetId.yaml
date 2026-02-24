@@ -1,5 +1,6 @@
 get:
   summary: DAR Summary Metrics
+  operationId: darSummariesByDatasetId
   description: get Data Access Request Summaries associated to a datasetId
   parameters:
     - name: datasetId

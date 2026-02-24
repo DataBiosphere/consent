@@ -1,5 +1,6 @@
 get:
   summary: Dataset Metrics
+  operationId: metricsByDatasetId
   deprecated: true
   description: |
     Get Data Access Requests associated to a datasetId. Scheduled for removal.
