@@ -1,12 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
-import java.sql.Timestamp;
 import java.util.List;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
@@ -22,31 +21,6 @@ public class MetricsService {
     this.darDAO = darDAO;
   }
 
-  public static class DarMetricsSummary {
-
-    final Timestamp updateDate;
-    @JsonProperty final String projectTitle;
-    @JsonProperty final String darCode;
-    @JsonProperty final String nonTechRus;
-    @JsonProperty final String referenceId;
-
-    public DarMetricsSummary(DataAccessRequest dar) {
-      if (dar != null && dar.getData() != null) {
-        this.updateDate = dar.getUpdateDate();
-        this.projectTitle = dar.getData().getProjectTitle();
-        this.darCode = dar.getDarCode();
-        this.nonTechRus = dar.getData().getNonTechRus();
-        this.referenceId = dar.getReferenceId();
-      } else {
-        this.updateDate = null;
-        this.projectTitle = null;
-        this.darCode = null;
-        this.nonTechRus = null;
-        this.referenceId = null;
-      }
-    }
-  }
-
   public DatasetMetrics generateDatasetMetrics(Integer datasetId) {
     DatasetMetrics metrics = new DatasetMetrics();
     List<DarMetricsSummary> darMetricsSummaries = generateDarSummaries(datasetId);
@@ -59,7 +33,7 @@ public class MetricsService {
     if (dataset == null) {
       throw new NotFoundException("Dataset with specified ID does not exist.");
     }
-    List<DataAccessRequest> dars = darDAO.findApprovedDARsByDatasetId(datasetId);
+    List<DataAccessRequest> dars = darDAO.findSummaryMetricApprovedDARsByDatasetId(datasetId);
     return dars.stream().map(DarMetricsSummary::new).toList();
   }
 }

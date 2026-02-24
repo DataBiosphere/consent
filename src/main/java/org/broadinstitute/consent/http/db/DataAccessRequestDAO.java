@@ -102,6 +102,52 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
   List<DataAccessRequest> findApprovedDARsByDatasetId(@Bind("datasetId") Integer datasetId);
 
   /**
+   * This query finds DARs submitted on dar-dataset combinations where the most recent vote is true
+   * similar to {@link #findApprovedDARsByDatasetId(Integer datasetId) findApprovedDARsByDatasetId}.
+   * The primary difference is that we want to include expired DARs to show in dataset usage
+   * metrics.
+   *
+   * @param datasetId The dataset id
+   * @return List of approved DARs for the dataset
+   */
+  @UseRowReducer(DataAccessRequestReducer.class)
+  @SqlQuery(
+      """
+      SELECT dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id,
+        dar.create_date, dar.submission_date, dar.update_date, dar.data, dar.era_commons_id,
+        dar.approving_so_id, dar.approving_so_timestamp, dar.requires_so_approval,
+        dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id,
+        dd.dataset_id, collection.dar_code
+      FROM data_access_request dar
+      LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
+      INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
+               INNER JOIN (
+                SELECT DISTINCT e.reference_id, e.dataset_id, LAST_VALUE(v.vote)
+                    OVER(
+                        PARTITION BY e.reference_id, e.dataset_id
+                        ORDER BY v.create_date
+                        RANGE BETWEEN
+                            UNBOUNDED PRECEDING AND
+                            UNBOUNDED FOLLOWING
+                        ) last_vote
+                  FROM election e
+                    INNER JOIN vote v ON e.election_id = v.election_id AND v.vote IS NOT NULL
+                    AND LOWER(e.election_type) = 'dataaccess'
+                    AND LOWER(v.type) IN ('final', 'radar_approve')) final_access_vote ON final_access_vote.reference_id = dar.reference_id AND final_access_vote.dataset_id = dd.dataset_id
+      WHERE dd.dataset_id = :datasetId
+      AND dar.submission_date IS NOT NULL
+      AND final_access_vote.last_vote = TRUE
+      AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
+      -- Exclude DARs that have a closeoutSupplement
+      AND dar.collection_id NOT IN (
+        SELECT DISTINCT collection_id
+        FROM data_access_request
+        WHERE data ->> 'closeoutSupplement' IS NOT NULL)
+      """)
+  List<DataAccessRequest> findSummaryMetricApprovedDARsByDatasetId(
+      @Bind("datasetId") Integer datasetId);
+
+  /**
    * This query finds dataset ids on dar-dataset combinations where the most recent vote is true.
    * This includes datasets that are a part of expired DARs, UNLIKE findApprovedDARsByDatasetId. The
    * query accomplishes this by creating a view that is a grouping of election reference ids and

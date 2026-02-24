@@ -9,10 +9,10 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.service.MetricsService;
-import org.broadinstitute.consent.http.service.MetricsService.DarMetricsSummary;
 
 @Path("{api : (api/)?}metrics")
 public class MetricsResource extends Resource {
