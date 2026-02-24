@@ -4,32 +4,31 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-public class DarMetricsSummary {
-
-  final Timestamp updateDate;
-  final String projectTitle;
-  final String darCode;
-  final String nonTechRus;
-  final String referenceId;
-  final Boolean expired;
+public record DarMetricsSummary(
+    Timestamp updateDate,
+    String projectTitle,
+    String darCode,
+    String nonTechRus,
+    String referenceId,
+    Boolean expired) {
 
   public DarMetricsSummary(DataAccessRequest dar) {
+    this(
+        dar != null && dar.getData() != null ? dar.getUpdateDate() : null,
+        dar != null && dar.getData() != null ? dar.getData().getProjectTitle() : null,
+        dar != null && dar.getData() != null ? dar.getDarCode() : null,
+        dar != null && dar.getData() != null ? dar.getData().getNonTechRus() : null,
+        dar != null && dar.getData() != null ? dar.getReferenceId() : null,
+        computeExpired(dar));
+  }
+
+  private static Boolean computeExpired(DataAccessRequest dar) {
+    // If the DAR or its submission date is null, we consider it expired for metrics purposes
+    if (dar == null || dar.getSubmissionDate() == null) {
+      return true;
+    }
     Instant instant = Instant.now().minus(1, ChronoUnit.YEARS);
     Timestamp lastYear = Timestamp.from(instant);
-    if (dar != null && dar.getData() != null) {
-      this.updateDate = dar.getUpdateDate();
-      this.projectTitle = dar.getData().getProjectTitle();
-      this.darCode = dar.getDarCode();
-      this.nonTechRus = dar.getData().getNonTechRus();
-      this.referenceId = dar.getReferenceId();
-      this.expired = dar.getSubmissionDate().before(lastYear);
-    } else {
-      this.updateDate = null;
-      this.projectTitle = null;
-      this.darCode = null;
-      this.nonTechRus = null;
-      this.referenceId = null;
-      this.expired = null;
-    }
+    return dar.getSubmissionDate().before(lastYear);
   }
 }

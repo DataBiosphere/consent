@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.NotFoundException;
@@ -42,12 +43,14 @@ class MetricsServiceTest extends AbstractTestHelper {
     Dataset dataset = generateDataset();
 
     when(dataSetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
-    when(darDAO.findApprovedDARsByDatasetId(any())).thenReturn(List.of(dar));
+    when(darDAO.findSummaryMetricApprovedDARsByDatasetId(any())).thenReturn(List.of(dar));
 
-    DatasetMetrics metrics = service.generateDatasetMetrics(1);
+    DatasetMetrics metrics = service.generateDatasetMetrics(dataset.getDatasetId());
 
-    assertEquals(dar.getData().getProjectTitle(), metrics.getDars().getFirst().projectTitle);
-    assertEquals(dar.getDarCode(), metrics.getDars().getFirst().darCode);
+    assertEquals(dar.getData().getProjectTitle(), metrics.getDars().getFirst().projectTitle());
+    assertEquals(dar.getDarCode(), metrics.getDars().getFirst().darCode());
+    verify(dataSetDAO).findDatasetById(dataset.getDatasetId());
+    verify(darDAO).findSummaryMetricApprovedDARsByDatasetId(dataset.getDatasetId());
   }
 
   @Test
