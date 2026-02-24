@@ -42,6 +42,7 @@ public class MetricsResource extends Resource {
     }
   }
 
+  @SuppressWarnings("unused")
   @GET
   @Path("/dar-summaries/{datasetId}")
   @Produces("application/json")
