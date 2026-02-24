@@ -24,6 +24,11 @@ public class MetricsResource extends Resource {
     this.metricsService = metricsService;
   }
 
+  /**
+   * @deprecated
+   * @param datasetId the id of the dataset for which to generate metrics
+   * @return Response containing DatasetMetrics for the given datasetId
+   */
   @Deprecated(forRemoval = true, since = "2026-02-23")
   @GET
   @Path("/dataset/{datasetId}")
