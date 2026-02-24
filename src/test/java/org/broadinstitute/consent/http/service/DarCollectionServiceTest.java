@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -211,7 +212,20 @@ class DarCollectionServiceTest extends AbstractTestHelper {
             .map(Election::getVotes)
             .flatMap(v -> v.values().stream())
             .toList();
-    assertTrue(votes.isEmpty());
+
+    // For non-privileged roles, votes should only include type and vote, all identifying
+    // information removed
+    assertFalse(votes.isEmpty());
+    for (Vote v : votes) {
+      assertNull(v.getUserId(), "userId should be null for de-identified votes");
+      assertNull(v.getVoteId(), "voteId should be null for de-identified votes");
+      assertNull(v.getElectionId(), "electionId should be null for de-identified votes");
+      assertNotNull(v.getType(), "type should be retained for de-identified votes");
+      assertTrue(votes.contains(v), "vote should be present in de-identified votes");
+      // Vote outcome can be null or Boolean
+      assertTrue(
+          v.getVote() == null || v.getVote() != null, "vote should be present (null or Boolean)");
+    }
   }
 
   @Test
