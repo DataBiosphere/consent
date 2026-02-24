@@ -348,11 +348,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
     """)
   void deleteByReferenceId(@Bind("referenceId") String referenceId);
 
-  @SqlUpdate("DELETE FROM data_access_request WHERE reference_id IN (<referenceIds>)")
-  void deleteByReferenceIds(
-      @BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING)
-          List<String> referenceIds);
-
   @SqlUpdate(
       """
           UPDATE data_access_request
@@ -536,16 +531,6 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           DELETE FROM dar_dataset WHERE reference_id = :referenceId
        """)
   void deleteDARDatasetRelationByReferenceId(@Bind("referenceId") String referenceId);
-
-  /**
-   * Delete rows which have a referenceId that is in the list referenceIds
-   *
-   * @param referenceIds List<String>
-   */
-  @SqlUpdate("DELETE FROM dar_dataset WHERE reference_id in (<referenceIds>)")
-  void deleteDARDatasetRelationByReferenceIds(
-      @BindList(value = "referenceIds", onEmpty = EmptyHandling.NULL_STRING)
-          List<String> referenceIds);
 
   /**
    * Returns all dataset_ids that match any of the referenceIds inside the "referenceIds" list
