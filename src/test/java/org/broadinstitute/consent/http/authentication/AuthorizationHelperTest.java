@@ -142,7 +142,7 @@ class AuthorizationHelperTest extends AbstractTestHelper {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_name, List.of("name"));
     headerCache.loadCache(bearerToken, headerMap);
-    when(samService.getRegistrationInfo(any())).thenThrow(new NotFoundException());
+    when(samService.getCombinedUserStatusInfo(any())).thenThrow(new NotFoundException());
     when(samService.postRegistrationInfo(any()))
         .thenReturn(
             new UserStatus()
@@ -161,7 +161,7 @@ class AuthorizationHelperTest extends AbstractTestHelper {
   void testAuthenticateGetUserWithStatusInfoFailurePostUserFailureWebAppEx() throws Exception {
     headerMap.put(ClaimsCache.OAUTH2_CLAIM_email, List.of("email"));
     headerCache.loadCache(bearerToken, headerMap);
-    when(samService.getRegistrationInfo(any())).thenThrow(new NotFoundException());
+    when(samService.getCombinedUserStatusInfo(any())).thenThrow(new NotFoundException());
     when(samService.postRegistrationInfo(any())).thenThrow(new Exception("errorMessage"));
 
     WebApplicationException ex =

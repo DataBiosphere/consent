@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -17,6 +18,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
+import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
@@ -111,6 +113,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   // captor: allows you to inspect the arguments sent to a function.
   @Captor ArgumentCaptor<List<DatasetServiceDAO.DatasetInsert>> datasetInsertCaptor;
   @Captor ArgumentCaptor<DatasetServiceDAO.StudyInsert> studyInsert;
+  @Captor ArgumentCaptor<Map<String, Object>> assetsCaptor;
 
   // ------------------------ test multiple dataset insert ----------------------------------- //
   @Test
@@ -420,6 +423,55 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
     datasetRegistrationService.sendDatasetSubmittedEmails(List.of(dataset));
     verify(emailService, never()).sendDatasetSubmittedMessage(any(), any(), any(), any());
+  }
+
+  @Test
+  void testGetAssetsWithDatasets() {
+    DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1();
+    registration.setAssets(Map.of("asset1", List.of("file1", "file2")));
+    ConsentGroup cg = new ConsentGroup();
+    registration.setConsentGroups(List.of(cg));
+
+    Map<String, Object> result = datasetRegistrationService.getAssetsWithDatasets(registration);
+
+    assertTrue(result.containsKey("asset1"));
+    assertTrue(result.containsKey("datasets"));
+    assertEquals(List.of(cg), result.get("datasets"));
+  }
+
+  @Test
+  void testGetAssetsWithDatasetsEmptyAssets() {
+    DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1();
+    ConsentGroup cg = new ConsentGroup();
+    registration.setConsentGroups(List.of(cg));
+
+    Map<String, Object> result = datasetRegistrationService.getAssetsWithDatasets(registration);
+
+    assertTrue(result.isEmpty() || !result.containsKey("asset1"));
+    assertTrue(result.containsKey("datasets"));
+    assertEquals(List.of(cg), result.get("datasets"));
+  }
+
+  @Test
+  void testSendSubmissionConfirmationEmail() throws TemplateException, IOException {
+    User submitter = new User();
+    DatasetRegistrationSchemaV1 registration = new DatasetRegistrationSchemaV1();
+    registration.setStudyName("Study");
+    registration.setStudyId(123);
+    registration.setAssets(Map.of("asset1", List.of("file1")));
+    registration.setConsentGroups(List.of(new ConsentGroup()));
+
+    datasetRegistrationService.sendSubmissionConfirmationEmail(submitter, registration);
+
+    verify(emailService, times(1))
+        .sendStudySubmissionConfirmation(
+            eq(submitter), eq("Study"), eq(123), assetsCaptor.capture());
+
+    // assert that the assets sent in the email are correct
+    Map<String, Object> sentAssets = assetsCaptor.getValue();
+    assertTrue(sentAssets.containsKey("asset1"));
+    assertEquals(List.of("file1"), sentAssets.get("asset1"));
+    assertTrue(sentAssets.containsKey("datasets"));
   }
 
   @Test

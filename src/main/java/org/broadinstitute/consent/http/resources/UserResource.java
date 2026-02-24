@@ -43,6 +43,7 @@ import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
+import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.NihService;
@@ -117,13 +118,29 @@ public class UserResource extends Resource {
   @Timed
   public Response getUser(@Auth DuosUser duosUser) {
     try {
-      if (Objects.isNull(duosUser.getUserStatusInfo())) {
+      UserStatusInfo userStatusInfo = duosUser.getUserStatusInfo();
+      if (userStatusInfo == null) {
         samService.asyncPostRegistrationInfo(duosUser);
+        // Refresh the user status info after posting registration info to Sam
+        userStatusInfo = getUserStatusInfo(duosUser);
       }
-      User syncedUser = nihService.syncAccount(duosUser);
-      return Response.ok(gson.toJson(syncedUser)).build();
+      User user = nihService.syncAccount(duosUser);
+      if (userStatusInfo != null) {
+        user.setUserStatusInfo(userStatusInfo);
+      }
+      return Response.ok(gson.toJson(user)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
+    }
+  }
+
+  private UserStatusInfo getUserStatusInfo(DuosUser duosUser) {
+    try {
+      return samService.getCombinedUserStatusInfo(duosUser);
+    } catch (Exception ex) {
+      logWarn("Unable to retrieve user status info from Sam: " + ex.getMessage());
+      // Intentionally ignore Sam errors here to avoid failing /me on transient outages.
+      return null;
     }
   }
 

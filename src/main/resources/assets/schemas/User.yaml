@@ -24,3 +24,5 @@ properties:
     $ref: './UserProperties.yaml'
   libraryCard:
     $ref: './LibraryCard.yaml'
+  userStatusInfo:
+    $ref: './SamUserStatusInfo.yaml'
