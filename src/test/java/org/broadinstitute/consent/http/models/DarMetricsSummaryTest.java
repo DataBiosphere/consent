@@ -106,7 +106,7 @@ class DarMetricsSummaryTest extends AbstractTestHelper {
   }
 
   private void assertEntityEquivalence(
-      DataAccessRequest dar, DarMetricsSummary summary, Boolean expectedExpired) {
+      DataAccessRequest dar, DarMetricsSummary summary, boolean expectedExpired) {
     assertEquals(dar.getUpdateDate(), summary.updateDate());
     assertEquals(dar.getData().getProjectTitle(), summary.projectTitle());
     assertEquals(dar.getDarCode(), summary.darCode());
