@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -10,6 +11,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -128,7 +130,43 @@ class UserResourceTest extends AbstractTestHelper {
 
     Response response = userResource.getUser(du);
     verify(samService).asyncPostRegistrationInfo(du);
+    verify(samService).getCombinedUserStatusInfo(du);
     verify(nihService).syncAccount(du);
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  void testGetMeWithUserStatusInfo() throws Exception {
+    User user = createUserWithRole();
+    DuosUser du = new DuosUser(authUser, user);
+    UserStatusInfo info =
+        new UserStatusInfo()
+            .setUserEmail(user.getEmail())
+            .setUserSubjectId("test-subject-id")
+            .setEnabled(true)
+            .setTosAccepted(true);
+    du.setUserStatusInfo(info);
+    when(nihService.syncAccount(du)).thenReturn(user);
+
+    Response response = userResource.getUser(du);
+    User responseUser = gson.fromJson(response.getEntity().toString(), User.class);
+    assertEquals(user.getEmail(), responseUser.getEmail());
+    assertNotNull(responseUser.getUserStatusInfo());
+    assertEquals(info.getUserSubjectId(), responseUser.getUserStatusInfo().getUserSubjectId());
+    assertTrue(responseUser.getUserStatusInfo().getEnabled());
+    assertTrue(responseUser.getUserStatusInfo().getTosAccepted());
+    verify(samService, never()).asyncPostRegistrationInfo(du);
+    assertEquals(Status.OK.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  void testGetMeSamFailure() throws Exception {
+    User user = createUserWithRole();
+    DuosUser du = new DuosUser(authUser, user);
+    when(samService.getCombinedUserStatusInfo(du)).thenThrow(new RuntimeException("Sam failure"));
+
+    Response response = userResource.getUser(du);
+    // Ensure that even if Sam fails, we still return the user information.
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
   }
 

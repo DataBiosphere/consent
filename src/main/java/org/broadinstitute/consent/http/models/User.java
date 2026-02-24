@@ -16,6 +16,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 public class User {
@@ -46,6 +47,8 @@ public class User {
   @JsonProperty private Integer institutionId;
 
   @JsonProperty private String eraCommonsId;
+
+  @JsonProperty private UserStatusInfo userStatusInfo;
 
   private Institution institution;
 
@@ -294,6 +297,14 @@ public class User {
     if (!this.getProperties().contains(userProp)) {
       this.getProperties().add(userProp);
     }
+  }
+
+  public UserStatusInfo getUserStatusInfo() {
+    return userStatusInfo;
+  }
+
+  public void setUserStatusInfo(UserStatusInfo userStatusInfo) {
+    this.userStatusInfo = userStatusInfo;
   }
 
   @Override

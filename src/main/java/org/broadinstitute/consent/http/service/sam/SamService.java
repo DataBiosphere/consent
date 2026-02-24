@@ -40,6 +40,10 @@ public class SamService implements ConsentLogger {
     samDAO.asyncPostRegistrationInfo(duosUser);
   }
 
+  public UserStatusInfo getCombinedUserStatusInfo(DuosUser duosUser) throws Exception {
+    return samDAO.getCombinedUserStatusInfo(duosUser);
+  }
+
   public String getToSText() throws Exception {
     return samDAO.getToSText();
   }

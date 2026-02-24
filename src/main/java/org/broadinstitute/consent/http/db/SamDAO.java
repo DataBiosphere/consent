@@ -14,6 +14,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
@@ -24,6 +26,7 @@ import java.util.concurrent.ExecutorService;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.sam.CombinedState;
 import org.broadinstitute.consent.http.models.sam.EmailResponse;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.TosResponse;
@@ -33,6 +36,7 @@ import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.ThreadUtils;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -44,6 +48,7 @@ public class SamDAO implements ConsentLogger {
   private final ServicesConfiguration configuration;
   private final Integer connectTimeoutMilliseconds;
   public final Integer readTimeoutMilliseconds;
+  private final Gson gson = GsonUtil.getInstance();
 
   public SamDAO(HttpClientUtil clientUtil, ServicesConfiguration configuration) {
     this.clientUtil = clientUtil;
@@ -65,7 +70,7 @@ public class SamDAO implements ConsentLogger {
     }
     String body = response.parseAsString();
     Type resourceTypesListType = new TypeToken<ArrayList<ResourceType>>() {}.getType();
-    return new Gson().fromJson(body, resourceTypesListType);
+    return gson.fromJson(body, resourceTypesListType);
   }
 
   public UserStatusInfo getRegistrationInfo(AuthUser authUser) throws Exception {
@@ -78,7 +83,7 @@ public class SamDAO implements ConsentLogger {
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
     String body = response.parseAsString();
-    return new Gson().fromJson(body, UserStatusInfo.class);
+    return gson.fromJson(body, UserStatusInfo.class);
   }
 
   public UserStatusDiagnostics getSelfDiagnostics(DuosUser duosUser) throws Exception {
@@ -91,7 +96,7 @@ public class SamDAO implements ConsentLogger {
           new ServerErrorException(response.getStatusMessage(), response.getStatusCode()));
     }
     String body = response.parseAsString();
-    return new Gson().fromJson(body, UserStatusDiagnostics.class);
+    return gson.fromJson(body, UserStatusDiagnostics.class);
   }
 
   public UserStatus postRegistrationInfo(DuosUser duosUser) throws Exception {
@@ -106,6 +111,43 @@ public class SamDAO implements ConsentLogger {
       throw e;
     }
     return new Gson().fromJson(body, UserStatus.class);
+  }
+
+  public UserStatusInfo getCombinedUserStatusInfo(AuthUser authUser) throws Exception {
+    GenericUrl genericUrl = new GenericUrl(configuration.getCombinedStateUrl());
+    HttpRequest request = clientUtil.buildGetRequest(genericUrl, authUser);
+    try {
+      HttpResponse response = executeRequest(request);
+      String body = response.parseAsString();
+      if (!response.isSuccessStatusCode()) {
+        String errorMsg =
+            String.format(
+                "Error getting combined user status info for user %s: %s",
+                authUser.getEmail(), body);
+        Exception e = new WebApplicationException(errorMsg, response.getStatusCode());
+        logException(errorMsg, new Exception(body));
+        throw e;
+      }
+      CombinedState combinedState = gson.fromJson(body, CombinedState.class);
+      var tosDetails = combinedState.getTermsOfServiceDetails();
+      boolean tosAccepted = false;
+      if (tosDetails != null) {
+        tosAccepted =
+            Boolean.TRUE.equals(tosDetails.permitsSystemUsage())
+                && Boolean.TRUE.equals(tosDetails.isCurrentVersion());
+      }
+      return new UserStatusInfo()
+          .setUserEmail(combinedState.getSamUser().email())
+          .setUserSubjectId(combinedState.getSamUser().googleSubjectId())
+          .setEnabled(combinedState.getSamUser().enabled())
+          // Ensure that the user has both accepted the ToS and that it is the most recent version.
+          .setTosAccepted(tosAccepted);
+    } catch (ForbiddenException e) {
+      // Sam throws a 403, not a 404, when the user is not found at this API
+      // which is re-thrown in executeRequest
+      throw new NotFoundException(
+          String.format("User %s not found in Sam: %s", authUser.getEmail(), e.getMessage()), e);
+    }
   }
 
   public static String getErrorMessage(DuosUser duosUser, String body) {
