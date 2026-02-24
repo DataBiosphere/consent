@@ -551,8 +551,33 @@ public class DarCollectionService implements ConsentLogger {
         .getDars()
         .values()
         .forEach(
-            dar -> dar.getElections().values().forEach(election -> election.setVotes(Map.of())));
+            dar ->
+                dar.getElections()
+                    .values()
+                    .forEach(election -> election.setVotes(deIdentifyVotes(election.getVotes()))));
     return collection;
+  }
+
+  /**
+   * Given a map of votes, return a new map with the same keys but with de-identified votes (userId
+   * and vote value removed).
+   *
+   * @param votes The original map of votes to de-identify
+   * @return A new map of votes with all info removed except for the type of vote (DAC or RP) and
+   *     Vote Result (True/False/null)
+   */
+  private Map<Integer, Vote> deIdentifyVotes(Map<Integer, Vote> votes) {
+    return votes.entrySet().stream()
+        .collect(
+            Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> {
+                  Vote v = entry.getValue();
+                  Vote deidentified = new Vote();
+                  deidentified.setVote(v.getVote());
+                  deidentified.setType(v.getType());
+                  return deidentified;
+                }));
   }
 
   public DarCollection getCollectionWithAllElectionsByCollectionId(
