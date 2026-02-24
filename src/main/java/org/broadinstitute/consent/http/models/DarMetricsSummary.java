@@ -1,8 +1,9 @@
 package org.broadinstitute.consent.http.models;
 
 import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 public record DarMetricsSummary(
     Timestamp updateDate,
@@ -14,11 +15,11 @@ public record DarMetricsSummary(
 
   public DarMetricsSummary(DataAccessRequest dar) {
     this(
-        dar != null && dar.getData() != null ? dar.getUpdateDate() : null,
+        dar != null ? dar.getUpdateDate() : null,
         dar != null && dar.getData() != null ? dar.getData().getProjectTitle() : null,
-        dar != null && dar.getData() != null ? dar.getDarCode() : null,
+        dar != null ? dar.getDarCode() : null,
         dar != null && dar.getData() != null ? dar.getData().getNonTechRus() : null,
-        dar != null && dar.getData() != null ? dar.getReferenceId() : null,
+        dar != null ? dar.getReferenceId() : null,
         computeExpired(dar));
   }
 
@@ -27,8 +28,9 @@ public record DarMetricsSummary(
     if (dar == null || dar.getSubmissionDate() == null) {
       return true;
     }
-    Instant instant = Instant.now().minus(1, ChronoUnit.YEARS);
-    Timestamp lastYear = Timestamp.from(instant);
+    LocalDateTime oneYearAgo = LocalDateTime.now().minusYears(1);
+    ZonedDateTime zonedDateTime = oneYearAgo.atZone(ZoneId.systemDefault());
+    Timestamp lastYear = Timestamp.from(zonedDateTime.toInstant());
     return dar.getSubmissionDate().before(lastYear);
   }
 }

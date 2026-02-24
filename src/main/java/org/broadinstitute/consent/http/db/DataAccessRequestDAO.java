@@ -139,10 +139,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       AND final_access_vote.last_vote = TRUE
       AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
       -- Exclude DARs that have a closeoutSupplement
-      AND dar.collection_id NOT IN (
-        SELECT DISTINCT collection_id
-        FROM data_access_request
-        WHERE data ->> 'closeoutSupplement' IS NOT NULL)
+      AND data ->> 'closeoutSupplement' IS NULL
       """)
   List<DataAccessRequest> findSummaryMetricApprovedDARsByDatasetId(
       @Bind("datasetId") Integer datasetId);
