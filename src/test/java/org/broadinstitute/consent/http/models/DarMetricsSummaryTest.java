@@ -16,8 +16,20 @@ import org.junit.jupiter.api.Test;
 class DarMetricsSummaryTest extends AbstractTestHelper {
 
   @Test
-  void testConstructor_null() {
+  void testConstructor_nullDar() {
     DarMetricsSummary summary = new DarMetricsSummary(null);
+    assertNull(summary.updateDate());
+    assertNull(summary.projectTitle());
+    assertNull(summary.darCode());
+    assertNull(summary.nonTechRus());
+    assertNull(summary.referenceId());
+    assertTrue(summary.expired());
+  }
+
+  @Test
+  void testConstructor_nullDarData() {
+    DataAccessRequest dar = new DataAccessRequest();
+    DarMetricsSummary summary = new DarMetricsSummary(dar);
     assertNull(summary.updateDate());
     assertNull(summary.projectTitle());
     assertNull(summary.darCode());
