@@ -1,6 +1,9 @@
 get:
   summary: Dataset Metrics
-  description: get Data Access Requests associated to a datasetId
+  deprecated: true
+  description: |
+    Get Data Access Requests associated to a datasetId. Scheduled for removal.
+    Deprecated in favor of /api/metrics/dar-summaries/{datasetId}
   parameters:
     - name: datasetId
       in: path
