@@ -138,8 +138,20 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       AND dar.submission_date IS NOT NULL
       AND final_access_vote.last_vote = TRUE
       AND (LOWER(dar.data->>'status') != 'archived' OR dar.data->>'status' IS NULL)
-      -- Exclude DARs that have a closeoutSupplement
-      AND data ->> 'closeoutSupplement' IS NULL
+      -- Pull in all closeouts for this dataset. Closeouts do not have elections,
+      -- but we want to include them in the dataset usage metrics.
+      UNION
+      SELECT dar.id, dar.reference_id, dar.collection_id, dar.parent_id, dar.user_id,
+        dar.create_date, dar.submission_date, dar.update_date, dar.data, dar.era_commons_id,
+        dar.approving_so_id, dar.approving_so_timestamp, dar.requires_so_approval,
+        dar.closeout_so_approval_timestamp, dar.closeout_approving_so_id,
+        dd.dataset_id, collection.dar_code
+      FROM data_access_request dar
+      LEFT JOIN dar_collection collection on collection.collection_id = dar.collection_id
+      INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
+      WHERE dd.dataset_id = :datasetId
+      AND dar.submission_date IS NOT NULL
+      AND data ->> 'closeoutSupplement' IS NOT NULL
       """)
   List<DataAccessRequest> findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
       @Bind("datasetId") Integer datasetId);

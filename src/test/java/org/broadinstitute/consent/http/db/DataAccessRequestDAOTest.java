@@ -843,10 +843,20 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(
         unsubmittedDAR.getReferenceId(), dataset.getDatasetId());
 
-    // Create a closeout DAR from the approved DAR
+    // Create a Progress Report on the approved DAR
+    DataAccessRequest prDAR = createDataAccessRequest(user.getUserId(), approvedCollectionId);
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        prDAR.getReferenceId(), dataset.getDatasetId());
+    Election prElection =
+        createDataAccessElection(prDAR.getReferenceId(), dataset.getDatasetId());
+    Vote prVote = createFinalVote(dataset.getCreateUserId(), prElection.getElectionId());
+    updateVote(true, "", now, prVote.getVoteId(), false, prElection.getElectionId(), now, false);
+
+    // Create a closeout DAR from the PR DAR
     DataAccessRequest closeoutDAR =
         createProgressReport(
-            user.getEraCommonsId(), user.getUserId(), approvedCollectionId, approvedDAR.getId());
+            user.getEraCommonsId(), user.getUserId(), approvedCollectionId, prDAR.getId());
+    dataAccessRequestDAO.insertDARDatasetRelation(closeoutDAR.getReferenceId(), dataset.getDatasetId());
     CloseoutSupplement closeout =
         new CloseoutSupplement(List.of("Reason"), "Other Reason", user.getUserId());
     closeoutDAR.getData().setCloseoutSupplement(closeout);
@@ -893,18 +903,23 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
             dataset.getDatasetId());
     assertFalse(summaryDARs.isEmpty());
+    // Only DAR that should not be returned
+    assertTrue(
+        summaryDARs.stream()
+            .noneMatch(dar -> dar.getReferenceId().equals(unsubmittedDAR.getReferenceId())));
+    // All other DARs should be returned
     assertTrue(
         summaryDARs.stream()
             .anyMatch(dar -> dar.getReferenceId().equals(approvedDAR.getReferenceId())));
     assertTrue(
         summaryDARs.stream()
-            .noneMatch(dar -> dar.getReferenceId().equals(unsubmittedDAR.getReferenceId())));
+            .anyMatch(dar -> dar.getReferenceId().equals(prDAR.getReferenceId())));
     assertTrue(
         summaryDARs.stream()
-            .noneMatch(dar -> dar.getReferenceId().equals(closeoutDAR.getReferenceId())));
+            .anyMatch(dar -> dar.getReferenceId().equals(closeoutDAR.getReferenceId())));
     assertTrue(
         summaryDARs.stream().anyMatch(dar -> dar.getReferenceId().equals(expiredReferenceId)));
-    assertEquals(2, summaryDARs.size());
+    assertEquals(4, summaryDARs.size());
   }
 
   // findAllDraftDataAccessRequests should exclude archived DARs
