@@ -43,14 +43,15 @@ class MetricsServiceTest extends AbstractTestHelper {
     Dataset dataset = generateDataset();
 
     when(dataSetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
-    when(darDAO.findSummaryMetricApprovedDARsByDatasetId(any())).thenReturn(List.of(dar));
+    when(darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(any()))
+        .thenReturn(List.of(dar));
 
     DatasetMetrics metrics = service.generateDatasetMetrics(dataset.getDatasetId());
 
     assertEquals(dar.getData().getProjectTitle(), metrics.getDars().getFirst().projectTitle());
     assertEquals(dar.getDarCode(), metrics.getDars().getFirst().darCode());
     verify(dataSetDAO).findDatasetById(dataset.getDatasetId());
-    verify(darDAO).findSummaryMetricApprovedDARsByDatasetId(dataset.getDatasetId());
+    verify(darDAO).findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(dataset.getDatasetId());
   }
 
   @Test

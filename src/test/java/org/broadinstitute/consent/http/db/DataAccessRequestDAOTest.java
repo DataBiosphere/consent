@@ -818,7 +818,7 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindSummaryMetricApprovedDARsByDatasetId() {
+  void testFindSummaryMetricApprovedDARsByDatasetIdIncludesExpired() {
     // Create a dataset to request access to
     Dataset dataset = createDataset();
 
@@ -890,7 +890,8 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         true, "", now, expiredVote.getVoteId(), false, expiredElectionId, submissionDate, false);
 
     List<DataAccessRequest> summaryDARs =
-        dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetId(dataset.getDatasetId());
+        dataAccessRequestDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
+            dataset.getDatasetId());
     assertFalse(summaryDARs.isEmpty());
     assertTrue(
         summaryDARs.stream()

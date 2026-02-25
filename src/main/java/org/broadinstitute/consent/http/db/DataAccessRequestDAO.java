@@ -141,7 +141,7 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
       -- Exclude DARs that have a closeoutSupplement
       AND data ->> 'closeoutSupplement' IS NULL
       """)
-  List<DataAccessRequest> findSummaryMetricApprovedDARsByDatasetId(
+  List<DataAccessRequest> findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(
       @Bind("datasetId") Integer datasetId);
 
   /**

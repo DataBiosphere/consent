@@ -33,7 +33,8 @@ public class MetricsService {
     if (dataset == null) {
       throw new NotFoundException("Dataset with specified ID does not exist.");
     }
-    List<DataAccessRequest> dars = darDAO.findSummaryMetricApprovedDARsByDatasetId(datasetId);
+    List<DataAccessRequest> dars =
+        darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(datasetId);
     return dars.stream().map(DarMetricsSummary::new).toList();
   }
 }
