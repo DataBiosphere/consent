@@ -285,10 +285,12 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                INNER JOIN dar_collection dc ON dc.collection_id = dar.collection_id
                INNER JOIN vote v ON v.election_id = e_sub.election_id
                INNER JOIN users u ON u.user_id = v.user_id
+               INNER JOIN users dar_u ON dar_u.user_id = dar.user_id
                LEFT OUTER JOIN email_entity ee ON ee.user_id = u.user_id AND ee.email_type = :emailType AND ee.entity_reference_id = :referenceId
       WHERE v.vote IS NULL
         AND dc.dar_code IS NOT NULL
         AND ee.entity_reference_id IS NULL
+        AND dar.submission_date > NOW() - make_interval(years => 1)
       GROUP BY u.user_id, dc.dar_code, dc.collection_id
 """)
   List<UserVoteReminder> findElectionReminders(
