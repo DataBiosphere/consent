@@ -15,3 +15,6 @@ properties:
   expired:
     type: boolean
     description: Whether the DAR is expired
+  referenceId:
+    type: string
+    description: The reference identifier for the DAR
