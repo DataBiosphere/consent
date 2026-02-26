@@ -1,6 +1,4 @@
-package org.broadinstitute.consent.http.models.passport;
-
-import org.broadinstitute.consent.http.service.PassportService;
+package org.broadinstitute.consent.http.service.passport;
 
 public class AcceptedTermsAndPolicies implements VisaClaimType {
 
@@ -28,5 +26,4 @@ public class AcceptedTermsAndPolicies implements VisaClaimType {
   public String by() {
     return VisaBy.SELF.name().toLowerCase();
   }
-
 }

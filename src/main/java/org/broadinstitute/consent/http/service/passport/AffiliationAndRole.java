@@ -1,12 +1,12 @@
-package org.broadinstitute.consent.http.models.passport;
+package org.broadinstitute.consent.http.service.passport;
 
 import java.util.Optional;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.PassportService;
 
 /**
- * <a href="https://github.com/ga4gh-duri/ga4gh-duri.github.io/blob/master/researcher_ids/ga4gh_passport_v1.md#affiliationandrole">AffiliationAndRole</a>
+ * <a
+ * href="https://github.com/ga4gh-duri/ga4gh-duri.github.io/blob/master/researcher_ids/ga4gh_passport_v1.md#affiliationandrole">AffiliationAndRole</a>
  */
 public class AffiliationAndRole implements VisaClaimType {
 
@@ -23,9 +23,10 @@ public class AffiliationAndRole implements VisaClaimType {
 
   @Override
   public Long asserted() {
-    var assertedDate = Optional.ofNullable(user.getLibraryCard())
-        .map(LibraryCard::getCreateDate)
-        .orElse(user.getCreateDate());
+    var assertedDate =
+        Optional.ofNullable(user.getLibraryCard())
+            .map(LibraryCard::getCreateDate)
+            .orElse(user.getCreateDate());
     return assertedDate.getTime();
   }
 

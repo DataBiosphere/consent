@@ -9,8 +9,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.broadinstitute.consent.http.models.DuosUser;
-import org.broadinstitute.consent.http.models.passport.PassportClaim;
-import org.broadinstitute.consent.http.service.PassportService;
+import org.broadinstitute.consent.http.service.passport.PassportClaim;
+import org.broadinstitute.consent.http.service.passport.PassportService;
 
 @Path("/api/passport")
 public class PassportResource extends Resource {

@@ -1,14 +1,14 @@
-package org.broadinstitute.consent.http.models.passport;
+package org.broadinstitute.consent.http.service.passport;
 
 import java.util.Optional;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.PassportService;
 
 /**
- * <a href="https://github.com/ga4gh-duri/ga4gh-duri.github.io/tree/master/researcher_ids#researcherstatus">ResearcherStatus</a>
+ * <a
+ * href="https://github.com/ga4gh-duri/ga4gh-duri.github.io/tree/master/researcher_ids#researcherstatus">ResearcherStatus</a>
  */
-public class ResearcherStatus implements  VisaClaimType {
+public class ResearcherStatus implements VisaClaimType {
 
   private final User user;
 
@@ -23,9 +23,10 @@ public class ResearcherStatus implements  VisaClaimType {
 
   @Override
   public Long asserted() {
-    var assertedDate = Optional.ofNullable(user.getLibraryCard())
-        .map(LibraryCard::getCreateDate)
-        .orElse(user.getCreateDate());
+    var assertedDate =
+        Optional.ofNullable(user.getLibraryCard())
+            .map(LibraryCard::getCreateDate)
+            .orElse(user.getCreateDate());
     return assertedDate.getTime();
   }
 

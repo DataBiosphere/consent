@@ -1,11 +1,11 @@
-package org.broadinstitute.consent.http.models.passport;
+package org.broadinstitute.consent.http.service.passport;
 
 import java.util.Calendar;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
-import org.broadinstitute.consent.http.service.PassportService;
 
 /**
- * <a href="https://github.com/ga4gh-duri/ga4gh-duri.github.io/blob/master/researcher_ids/ga4gh_passport_v1.md#controlledaccessgrants">ControlledAccessGrants</a>
+ * <a
+ * href="https://github.com/ga4gh-duri/ga4gh-duri.github.io/blob/master/researcher_ids/ga4gh_passport_v1.md#controlledaccessgrants">ControlledAccessGrants</a>
  */
 public class ControlledAccessGrants implements VisaClaimType {
 
@@ -33,7 +33,8 @@ public class ControlledAccessGrants implements VisaClaimType {
 
   @Override
   public String value() {
-    return String.format("%s/dataset/%s", PassportService.ISS, approvedDataset.getDatasetIdentifier());
+    return String.format(
+        "%s/dataset/%s", PassportService.ISS, approvedDataset.getDatasetIdentifier());
   }
 
   @Override
