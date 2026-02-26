@@ -8,7 +8,6 @@ import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DatasetMetrics;
 
 public class MetricsService {
 
@@ -19,13 +18,6 @@ public class MetricsService {
   public MetricsService(DatasetDAO dataSetDAO, DataAccessRequestDAO darDAO) {
     this.dataSetDAO = dataSetDAO;
     this.darDAO = darDAO;
-  }
-
-  public DatasetMetrics generateDatasetMetrics(Integer datasetId) {
-    DatasetMetrics metrics = new DatasetMetrics();
-    List<DarMetricsSummary> darMetricsSummaries = generateDarSummaries(datasetId);
-    metrics.setDars(darMetricsSummaries);
-    return metrics;
   }
 
   public List<DarMetricsSummary> generateDarSummaries(Integer datasetId) {

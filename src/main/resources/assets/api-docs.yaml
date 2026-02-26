@@ -915,8 +915,6 @@ paths:
     $ref: './paths/votesRationale.yaml'
   /api/ontology:
     $ref: './paths/ontology.yaml'
-  /metrics/dataset/{datasetId}:
-    $ref: './paths/metricsDatasetById.yaml'
   /liveness:
     $ref: './paths/liveness.yaml'
   /ontology/search:

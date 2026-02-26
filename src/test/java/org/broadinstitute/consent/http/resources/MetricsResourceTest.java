@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -15,7 +14,6 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
-import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.service.MetricsService;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,26 +33,6 @@ class MetricsResourceTest extends AbstractTestHelper {
   @BeforeEach
   void setUp() {
     resource = new MetricsResource(service);
-  }
-
-  @Test
-  void testGetDatasetMetricsData() {
-    DatasetMetrics metrics = new DatasetMetrics();
-    when(service.generateDatasetMetrics(any())).thenReturn(metrics);
-
-    @SuppressWarnings("removal")
-    Response response = resource.getDatasetMetricsData(1);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    assertFalse(response.getEntity().toString().isEmpty());
-  }
-
-  @Test
-  void testGetDatasetMetricsDataNotFound() {
-    when(service.generateDatasetMetrics(any())).thenThrow(new NotFoundException());
-
-    @SuppressWarnings("removal")
-    Response response = resource.getDatasetMetricsData(1);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
   @Test
