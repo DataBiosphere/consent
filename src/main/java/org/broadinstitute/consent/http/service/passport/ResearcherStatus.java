@@ -43,6 +43,6 @@ public class ResearcherStatus implements VisaClaimType {
 
   @Override
   public String by() {
-    return VisaBy.SO.name();
+    return VisaBy.SO.name().toLowerCase();
   }
 }
