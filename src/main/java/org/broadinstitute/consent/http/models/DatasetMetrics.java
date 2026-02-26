@@ -1,21 +1,10 @@
 package org.broadinstitute.consent.http.models;
 
 import java.util.List;
-import org.broadinstitute.consent.http.service.MetricsService.DarMetricsSummary;
 
 public class DatasetMetrics {
 
-  private Dataset dataset;
   private List<DarMetricsSummary> dars;
-  private List<Election> elections;
-
-  public Dataset getDataset() {
-    return dataset;
-  }
-
-  public void setDataset(Dataset dataset) {
-    this.dataset = dataset;
-  }
 
   public List<DarMetricsSummary> getDars() {
     return dars;
@@ -23,13 +12,5 @@ public class DatasetMetrics {
 
   public void setDars(List<DarMetricsSummary> dars) {
     this.dars = dars;
-  }
-
-  public List<Election> getElections() {
-    return elections;
-  }
-
-  public void setElections(List<Election> elections) {
-    this.elections = elections;
   }
 }

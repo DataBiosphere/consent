@@ -73,7 +73,7 @@ class ElectionDAOTest extends DAOTestHelper {
 
     List<Election> foundElections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
     assertNotNull(foundElections);
-    assertEquals(election.getElectionId(), foundElections.get(0).getElectionId());
+    assertEquals(election.getElectionId(), foundElections.getFirst().getElectionId());
   }
 
   @Test
@@ -230,7 +230,7 @@ class ElectionDAOTest extends DAOTestHelper {
 
     List<Election> foundElections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
     assertNotNull(foundElections);
-    assertEquals(election.getElectionId(), foundElections.get(0).getElectionId());
+    assertEquals(election.getElectionId(), foundElections.getFirst().getElectionId());
   }
 
   @Test
@@ -360,24 +360,6 @@ class ElectionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindLastElectionsByReferenceIdsAndType() {
-    DataAccessRequest dar = createDataAccessRequestV3();
-    Dataset d = createDataset();
-    electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        new Date(),
-        dar.getReferenceId(),
-        d.getDatasetId());
-    List<Election> elections =
-        electionDAO.findLastElectionsByReferenceIdsAndType(
-            Collections.singletonList(dar.getReferenceId()), ElectionType.DATA_ACCESS.getValue());
-    assertNotNull(elections);
-    assertFalse(elections.isEmpty());
-    assertEquals(1, elections.size());
-  }
-
-  @Test
   void testFindLastElectionsByReferenceIds() {
     Dac dac = createDac();
     Dataset dataset = createDataset();
@@ -425,7 +407,7 @@ class ElectionDAOTest extends DAOTestHelper {
     List<Election> elections = electionDAO.findElectionsByVoteIdsAndType(voteIds, "dataaccess");
 
     assertEquals(1, elections.size());
-    assertEquals(accessElection.getElectionId(), elections.get(0).getElectionId());
+    assertEquals(accessElection.getElectionId(), elections.getFirst().getElectionId());
   }
 
   @Test
@@ -444,7 +426,7 @@ class ElectionDAOTest extends DAOTestHelper {
     List<Election> elections = electionDAO.findElectionsByVoteIdsAndType(voteIds, "rp");
 
     assertEquals(1, elections.size());
-    assertEquals(rpElection.getElectionId(), elections.get(0).getElectionId());
+    assertEquals(rpElection.getElectionId(), elections.getFirst().getElectionId());
   }
 
   @Test
@@ -465,7 +447,7 @@ class ElectionDAOTest extends DAOTestHelper {
         electionDAO.findElectionsWithCardHoldingUsersByElectionIds(electionIds);
 
     assertEquals(1, elections.size());
-    assertEquals(elections.get(0).getElectionId(), lcElection.getElectionId());
+    assertEquals(elections.getFirst().getElectionId(), lcElection.getElectionId());
   }
 
   @Test
