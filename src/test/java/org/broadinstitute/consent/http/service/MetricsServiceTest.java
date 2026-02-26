@@ -55,7 +55,7 @@ class MetricsServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testGenerateDatasetMetricsNotFound() {
+  void testGenerateDaSummariesNotFound() {
     when(dataSetDAO.findDatasetById(any())).thenReturn(null);
 
     assertThrows(NotFoundException.class, () -> service.generateDarSummaries(1));
