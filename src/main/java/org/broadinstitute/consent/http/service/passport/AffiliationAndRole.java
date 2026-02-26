@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.models.User;
 public class AffiliationAndRole implements VisaClaimType {
 
   private final User user;
+  public static final String DEFAULT_VALUE = "faculty@faculty@no.organization";
 
   public AffiliationAndRole(User user) {
     this.user = user;
@@ -32,12 +33,15 @@ public class AffiliationAndRole implements VisaClaimType {
 
   @Override
   public String value() {
+    if (user.getEmail() == null) {
+      return DEFAULT_VALUE;
+    }
     String[] splitEmail = user.getEmail().split("@");
     if (splitEmail.length > 1) {
       String domain = splitEmail[splitEmail.length - 1];
       return String.format("faculty@%s", domain);
     }
-    return "faculty@no.organization";
+    return DEFAULT_VALUE;
   }
 
   @Override

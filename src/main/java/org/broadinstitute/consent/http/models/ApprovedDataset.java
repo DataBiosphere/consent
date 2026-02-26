@@ -9,7 +9,7 @@ public class ApprovedDataset {
   private String datasetName;
   private String dacName;
   private String datasetIdentifier;
-  private final Timestamp expirationDate;
+  private Timestamp expirationDate;
 
   public ApprovedDataset(
       int alias, String darId, String datasetName, String dacName, Timestamp expirationDate) {
@@ -63,6 +63,10 @@ public class ApprovedDataset {
 
   public Timestamp getExpirationDate() {
     return expirationDate;
+  }
+
+  public void setExpirationDate(Timestamp expirationDate) {
+    this.expirationDate = expirationDate;
   }
 
   public Boolean isApprovedDatasetEqual(ApprovedDataset that) {

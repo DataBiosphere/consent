@@ -1,3 +1,3 @@
 package org.broadinstitute.consent.http.service.passport;
 
-public record Visa(String iss, String sub, Long iat, Long exp, VisaClaim ga4gh_visa_v1) {}
+public record Visa(String iss, String sub, Long iat, Long exp, VisaClaim visaClaim) {}

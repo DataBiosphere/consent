@@ -1,7 +1,5 @@
 package org.broadinstitute.consent.http.service.passport;
 
-import java.util.List;
-
 public interface VisaClaimType {
   String type();
 
@@ -12,8 +10,4 @@ public interface VisaClaimType {
   String source();
 
   String by();
-
-  default List<VisaCondition> conditions() {
-    return List.of();
-  }
 }

@@ -27,7 +27,7 @@ public class PassportService implements ConsentLogger {
     this.datasetDAO = datasetDAO;
   }
 
-  public PassportClaim generatePassport(DuosUser duosUser) throws Exception {
+  public PassportClaim generatePassport(DuosUser duosUser) {
     User user = duosUser.getUser();
     UserStatusInfo userStatusInfo = duosUser.getUserStatusInfo();
     // Affiliation and Role
