@@ -1,12 +1,6 @@
 type: object
 properties:
-  dataset:
-    $ref: './Dataset.yaml'
   dars:
     type: array
     items:
         $ref: './DarMetric.yaml'
-  elections:
-    type: array
-    items:
-      $ref: './Election.yaml'

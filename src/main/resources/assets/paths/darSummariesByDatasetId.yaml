@@ -1,0 +1,25 @@
+get:
+  summary: DAR Summary Metrics
+  operationId: darSummariesByDatasetId
+  description: get Data Access Request Summaries associated to a datasetId
+  parameters:
+    - name: datasetId
+      in: path
+      required: true
+      schema:
+        type: integer
+  tags:
+    - Metrics
+  responses:
+    200:
+      description: Dataset Metrics
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/DarMetric.yaml'
+    404:
+      description: Dataset with specified ID does not exist
+    500:
+      description: Internal Server Error
