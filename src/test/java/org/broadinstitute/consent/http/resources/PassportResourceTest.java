@@ -1,7 +1,12 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import java.sql.Timestamp;
+import java.time.Instant;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
@@ -12,11 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import java.sql.Timestamp;
-import java.time.Instant;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PassportResourceTest extends AbstractTestHelper {
@@ -40,7 +40,8 @@ class PassportResourceTest extends AbstractTestHelper {
   @Test
   void testGetPassportFailure() {
     DuosUser duosUser = new DuosUser(authUser, null);
-    when(passportService.generatePassport(duosUser)).thenThrow(new RuntimeException("Passport generation failed"));
+    when(passportService.generatePassport(duosUser))
+        .thenThrow(new RuntimeException("Passport generation failed"));
 
     PassportResource resource = new PassportResource(passportService);
     Response response = resource.getPassport(duosUser);
@@ -63,6 +64,4 @@ class PassportResourceTest extends AbstractTestHelper {
     info.setTosAccepted(true);
     return info;
   }
-
-
 }
