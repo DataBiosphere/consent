@@ -30,7 +30,7 @@ properties:
   datasets:
     type: array
     items:
-      type: './Dataset.yaml'
+      $ref: './Dataset.yaml'
     description: All of the datasets related to this study.
   properties:
     type: array

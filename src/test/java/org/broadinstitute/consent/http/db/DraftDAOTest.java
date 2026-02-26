@@ -30,7 +30,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-
 @ExtendWith(MockitoExtension.class)
 class DraftDAOTest extends DAOTestHelper {
 
@@ -44,10 +43,14 @@ class DraftDAOTest extends DAOTestHelper {
     Date createDate = draft.getCreateDate();
     Date updateDate = draft.getUpdateDate();
     String name = draft.getName();
-    draftDAO.insert(draft.getName(), createDate.toInstant(), user1.getUserId(),
-        draft.getJson(), draft.getUUID(), draft.getType().getValue());
-    Collection<DraftInterface> user1submissions = draftDAO.findDraftsByUserId(
-        user1.getUserId());
+    draftDAO.insert(
+        draft.getName(),
+        createDate.toInstant(),
+        user1.getUserId(),
+        draft.getJson(),
+        draft.getUUID(),
+        draft.getType().getValue());
+    Collection<DraftInterface> user1submissions = draftDAO.findDraftsByUserId(user1.getUserId());
     assertThat(user1submissions, hasSize(1));
     DraftInterface returnedDraft = user1submissions.iterator().next();
     assertEquals(jsonText, returnedDraft.getJson());
@@ -63,8 +66,7 @@ class DraftDAOTest extends DAOTestHelper {
     assertEquals(returnedDraft.getUpdateUser().getEmail(), user1.getEmail());
     assertEquals(returnedDraft.getUpdateUser().getInstitutionId(), user1.getInstitutionId());
     assertEquals(returnedDraft.getUpdateUser().getEraCommonsId(), user1.getEraCommonsId());
-    Collection<DraftInterface> user2submissions = draftDAO.findDraftsByUserId(
-        user2.getUserId());
+    Collection<DraftInterface> user2submissions = draftDAO.findDraftsByUserId(user2.getUserId());
     assertThat(user2submissions, hasSize(0));
   }
 
@@ -73,12 +75,23 @@ class DraftDAOTest extends DAOTestHelper {
     String jsonText = "{\"Name\": \"Greg\"}";
     User user1 = createUser();
     DraftStudyDataset draft = new DraftStudyDataset(jsonText, user1);
-    draftDAO.insert(draft.getName(), draft.getCreateDate().toInstant(), user1.getUserId(),
-        draft.getJson(), draft.getUUID(), draft.getType().getValue());
-    assertThrows(UnableToExecuteStatementException.class,
-        () -> draftDAO.insert(draft.getName(), draft.getCreateDate().toInstant(),
-            user1.getUserId(), draft.getJson(), draft.getUUID(),
-            draft.getType().getValue()));
+    draftDAO.insert(
+        draft.getName(),
+        draft.getCreateDate().toInstant(),
+        user1.getUserId(),
+        draft.getJson(),
+        draft.getUUID(),
+        draft.getType().getValue());
+    assertThrows(
+        UnableToExecuteStatementException.class,
+        () ->
+            draftDAO.insert(
+                draft.getName(),
+                draft.getCreateDate().toInstant(),
+                user1.getUserId(),
+                draft.getJson(),
+                draft.getUUID(),
+                draft.getType().getValue()));
   }
 
   @Test
@@ -88,8 +101,13 @@ class DraftDAOTest extends DAOTestHelper {
     DraftStudyDataset draft = new DraftStudyDataset(jsonText, user1);
     UUID uuid = draft.getUUID();
     Date createDate = draft.getCreateDate();
-    draftDAO.insert(draft.getName(), createDate.toInstant(), user1.getUserId(),
-        draft.getJson(), draft.getUUID(), draft.getType().getValue());
+    draftDAO.insert(
+        draft.getName(),
+        createDate.toInstant(),
+        user1.getUserId(),
+        draft.getJson(),
+        draft.getUUID(),
+        draft.getType().getValue());
     DraftInterface returnedDraft = draftDAO.findDraftById(uuid);
     assertFalse(Objects.isNull(returnedDraft));
     assertEquals(jsonText, returnedDraft.getJson());
@@ -97,9 +115,13 @@ class DraftDAOTest extends DAOTestHelper {
     String revisedJson = "{\"Name\": \"Bob\"}";
     returnedDraft.setJson(revisedJson);
     returnedDraft.setUpdateDate(new Date());
-    draftDAO.updateDraftByDraftUUID(returnedDraft.getName(),
-        returnedDraft.getUpdateDate().toInstant(), user1.getUserId(), returnedDraft.getJson(),
-        returnedDraft.getUUID(), returnedDraft.getType().getValue());
+    draftDAO.updateDraftByDraftUUID(
+        returnedDraft.getName(),
+        returnedDraft.getUpdateDate().toInstant(),
+        user1.getUserId(),
+        returnedDraft.getJson(),
+        returnedDraft.getUUID(),
+        returnedDraft.getType().getValue());
     returnedDraft = draftDAO.findDraftById(uuid);
     assertFalse(Objects.isNull(returnedDraft));
     assertEquals(revisedJson, returnedDraft.getJson());
@@ -114,8 +136,13 @@ class DraftDAOTest extends DAOTestHelper {
     DraftStudyDataset draft = new DraftStudyDataset(jsonText, user1);
     UUID uuid = draft.getUUID();
     Date createDate = draft.getCreateDate();
-    draftDAO.insert(draft.getName(), createDate.toInstant(), user1.getUserId(),
-        draft.getJson(), draft.getUUID(), draft.getType().getValue());
+    draftDAO.insert(
+        draft.getName(),
+        createDate.toInstant(),
+        user1.getUserId(),
+        draft.getJson(),
+        draft.getUUID(),
+        draft.getType().getValue());
     DraftInterface returnedDraft = draftDAO.findDraftById(uuid);
     assertEquals(uuid, returnedDraft.getUUID());
     assertEquals(user1.getUserId(), returnedDraft.getUpdateUser().getUserId());
@@ -125,7 +152,6 @@ class DraftDAOTest extends DAOTestHelper {
 
     returnedDraft = draftDAO.findDraftById(uuid);
     assertEquals(user2.getUserId(), returnedDraft.getUpdateUser().getUserId());
-
   }
 
   @Test
@@ -134,24 +160,31 @@ class DraftDAOTest extends DAOTestHelper {
     User user2 = createUser();
     DraftStudyDataset draft = new DraftStudyDataset("{\"Name\": \"User1\"}", user1);
     DraftStudyDataset draft2 = new DraftStudyDataset("{\"Name\": \"User2\"}", user2);
-    draftDAO.insert(draft.getName(), draft.getCreateDate().toInstant(), user1.getUserId(),
-        draft.getJson(), draft.getUUID(), draft.getType().getValue());
-    draftDAO.insert(draft2.getName(), draft2.getCreateDate().toInstant(),
+    draftDAO.insert(
+        draft.getName(),
+        draft.getCreateDate().toInstant(),
+        user1.getUserId(),
+        draft.getJson(),
+        draft.getUUID(),
+        draft.getType().getValue());
+    draftDAO.insert(
+        draft2.getName(),
+        draft2.getCreateDate().toInstant(),
         user2.getUserId(),
-        draft2.getJson(), draft2.getUUID(), draft2.getType().getValue());
-    Collection<DraftInterface> user1submissions = draftDAO.findDraftsByUserId(
-        user1.getUserId());
-    Collection<DraftSummary> user1summaries = draftDAO.findDraftSummariesByUserId(
-        user1.getUserId());
+        draft2.getJson(),
+        draft2.getUUID(),
+        draft2.getType().getValue());
+    Collection<DraftInterface> user1submissions = draftDAO.findDraftsByUserId(user1.getUserId());
+    Collection<DraftSummary> user1summaries =
+        draftDAO.findDraftSummariesByUserId(user1.getUserId());
     assertThat(user1submissions, hasSize(1));
     assertThat(user1summaries, hasSize(1));
     DraftSummary user1DraftSummary = user1summaries.iterator().next();
     DraftInterface user1Draft = user1submissions.iterator().next();
     summaryMatchesDetails(user1DraftSummary, user1Draft);
-    Collection<DraftInterface> user2Drafts = draftDAO.findDraftsByUserId(
-        user2.getUserId());
-    Collection<DraftSummary> user2summaries = draftDAO.findDraftSummariesByUserId(
-        user2.getUserId());
+    Collection<DraftInterface> user2Drafts = draftDAO.findDraftsByUserId(user2.getUserId());
+    Collection<DraftSummary> user2summaries =
+        draftDAO.findDraftSummariesByUserId(user2.getUserId());
     DraftSummary user2DraftSummary = user2summaries.iterator().next();
     DraftInterface user2Draft = user2Drafts.iterator().next();
     assertThat(user2Drafts, hasSize(1));
@@ -171,14 +204,22 @@ class DraftDAOTest extends DAOTestHelper {
     fso.setUpdateDate(draft.getUpdateDate().toInstant());
     fso.setCreateUserId(user1.getUserId());
     fso.setEntityId(draft.getUUID().toString());
-    draftDAO.insert(draft.getName(), draft.getCreateDate().toInstant(),
-        draft.getCreateUser().getUserId(), draft.getJson(), draft.getUUID(),
+    draftDAO.insert(
+        draft.getName(),
+        draft.getCreateDate().toInstant(),
+        draft.getCreateUser().getUserId(),
+        draft.getJson(),
+        draft.getUUID(),
         draft.getType().getValue());
-    fileStorageObjectDAO.insertNewFile(fso.getFileName(), fso.getCategory().getValue(),
-        fso.getBlobId().toGsUtilUri(), fso.getMediaType(), draft.getUUID().toString(),
-        user1.getUserId(), fso.getCreateDate());
-    Collection<DraftInterface> drafts = draftDAO.findDraftsByUserId(
-        user1.getUserId());
+    fileStorageObjectDAO.insertNewFile(
+        fso.getFileName(),
+        fso.getCategory().getValue(),
+        fso.getBlobId().toGsUtilUri(),
+        fso.getMediaType(),
+        draft.getUUID().toString(),
+        user1.getUserId(),
+        fso.getCreateDate());
+    Collection<DraftInterface> drafts = draftDAO.findDraftsByUserId(user1.getUserId());
     assertThat(drafts, hasSize(1));
     Set<FileStorageObject> storedFiles = drafts.iterator().next().getStoredFiles();
     assertThat(storedFiles, hasSize(1));
@@ -194,13 +235,21 @@ class DraftDAOTest extends DAOTestHelper {
     User user1 = createUser();
     DraftStudyDataset draft = new DraftStudyDataset("{\"Name\": \"First\"}", user1);
     DraftStudyDataset draft2 = new DraftStudyDataset("{\"Name\": \"Second\"}", user1);
-    draftDAO.insert(draft.getName(), draft.getCreateDate().toInstant(), user1.getUserId(),
-        draft.getJson(), draft.getUUID(), draft.getType().getValue());
-    draftDAO.insert(draft2.getName(), draft2.getCreateDate().toInstant(),
+    draftDAO.insert(
+        draft.getName(),
+        draft.getCreateDate().toInstant(),
         user1.getUserId(),
-        draft2.getJson(), draft2.getUUID(), draft2.getType().getValue());
-    Collection<DraftInterface> user1submissions = draftDAO.findDraftsByUserId(
-        user1.getUserId());
+        draft.getJson(),
+        draft.getUUID(),
+        draft.getType().getValue());
+    draftDAO.insert(
+        draft2.getName(),
+        draft2.getCreateDate().toInstant(),
+        user1.getUserId(),
+        draft2.getJson(),
+        draft2.getUUID(),
+        draft2.getType().getValue());
+    Collection<DraftInterface> user1submissions = draftDAO.findDraftsByUserId(user1.getUserId());
     assertThat(user1submissions, hasSize(2));
     draftDAO.deleteDraftByUUIDList(List.of(draft2.getUUID()));
     user1submissions = draftDAO.findDraftsByUserId(user1.getUserId());
@@ -211,14 +260,13 @@ class DraftDAOTest extends DAOTestHelper {
   void testUnknownDraftValue() throws SQLException {
     try (ResultSet resultSet = mock(ResultSet.class)) {
       try (StatementContext ctx = mock(StatementContext.class)) {
-        assertThrows(UnknownDraftTypeException.class,
-            () -> new DraftInterfaceMapper().map(resultSet, ctx));
+        assertThrows(
+            UnknownDraftTypeException.class, () -> new DraftInterfaceMapper().map(resultSet, ctx));
       }
     }
   }
 
-  private void summaryMatchesDetails(DraftSummary draftSummary,
-      DraftInterface draftInterface) {
+  private void summaryMatchesDetails(DraftSummary draftSummary, DraftInterface draftInterface) {
     assertEquals(draftSummary.getId(), draftInterface.getUUID());
     assertEquals(draftSummary.getName(), draftInterface.getName());
     assertEquals(draftSummary.getCreateDate(), draftInterface.getCreateDate());

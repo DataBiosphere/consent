@@ -80,33 +80,50 @@ class MatchDAOTest extends DAOTestHelper {
   @Test
   void testFindMatchesForLatestDataAccessElectionsByPurposeIds() {
     Dataset dataset = createDataset();
-    //query should pull the latest election for a given reference id
-    //creating two access elections with the same reference id and datasetid to test that condition
+    // query should pull the latest election for a given reference id
+    // creating two access elections with the same reference id and datasetid to test that condition
     String darReferenceId = UUID.randomUUID().toString();
-    Election targetElection = createDataAccessElection(
-        darReferenceId, dataset.getDatasetId()
-    );
-    Election ignoredAccessElection = createDataAccessElection(
-        UUID.randomUUID().toString(), dataset.getDatasetId()
-    );
+    Election targetElection = createDataAccessElection(darReferenceId, dataset.getDatasetId());
+    Election ignoredAccessElection =
+        createDataAccessElection(UUID.randomUUID().toString(), dataset.getDatasetId());
 
-    //Generate RP election to test that the query only references DataAccess elections
+    // Generate RP election to test that the query only references DataAccess elections
     Election rpElection = createRPElection(UUID.randomUUID().toString(), dataset.getDatasetId());
     String datasetIdentifier = dataset.getDatasetIdentifier();
 
-    //This match represents the match record generated for the target election
-    matchDAO.insertMatch(datasetIdentifier, darReferenceId, true, false, new Date(), MatchAlgorithm.V4.getVersion(), false);
+    // This match represents the match record generated for the target election
+    matchDAO.insertMatch(
+        datasetIdentifier,
+        darReferenceId,
+        true,
+        false,
+        new Date(),
+        MatchAlgorithm.V4.getVersion(),
+        false);
 
     // This match represents the match record generated for the ignored access election
-    matchDAO.insertMatch(datasetIdentifier, ignoredAccessElection.getReferenceId(), false, false,
-        new Date(), MatchAlgorithm.V4.getVersion(), false);
+    matchDAO.insertMatch(
+        datasetIdentifier,
+        ignoredAccessElection.getReferenceId(),
+        false,
+        false,
+        new Date(),
+        MatchAlgorithm.V4.getVersion(),
+        false);
 
     // This match is never created under consent's workflow (unless the cause is a bug)
     // This is included simply to test the DataAccess conditional on the INNER JOIN statement
-    matchDAO.insertMatch(datasetIdentifier, rpElection.getReferenceId(), false, false, new Date(), MatchAlgorithm.V4.getVersion(), true);
+    matchDAO.insertMatch(
+        datasetIdentifier,
+        rpElection.getReferenceId(),
+        false,
+        false,
+        new Date(),
+        MatchAlgorithm.V4.getVersion(),
+        true);
 
-    List<Match> matchResults = matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(
-        List.of(darReferenceId));
+    List<Match> matchResults =
+        matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
     assertEquals(1, matchResults.size());
     Match result = matchResults.get(0);
     assertEquals(targetElection.getReferenceId(), result.getPurpose());
@@ -117,39 +134,56 @@ class MatchDAOTest extends DAOTestHelper {
     Dataset dataset = createDataset();
     String darReferenceId = UUID.randomUUID().toString();
 
-    //Generate access election for test
-    Election accessElection = createDataAccessElection(
-        UUID.randomUUID().toString(), dataset.getDatasetId());
+    // Generate access election for test
+    Election accessElection =
+        createDataAccessElection(UUID.randomUUID().toString(), dataset.getDatasetId());
 
-    //Generate RP election for test
+    // Generate RP election for test
     Election rpElection = createRPElection(darReferenceId, dataset.getDatasetId());
     String datasetIdentifier = dataset.getDatasetIdentifier();
 
     // This match represents the match record generated for the access election
-    matchDAO.insertMatch(datasetIdentifier, accessElection.getReferenceId(), true, false, new Date(), MatchAlgorithm.V4.getVersion(), false);
+    matchDAO.insertMatch(
+        datasetIdentifier,
+        accessElection.getReferenceId(),
+        true,
+        false,
+        new Date(),
+        MatchAlgorithm.V4.getVersion(),
+        false);
 
     // This match is never created under consent's workflow (unless the cause is a bug)
     // This is included simply to test the DataAccess conditional on the INNER JOIN statement
-    matchDAO.insertMatch(datasetIdentifier, rpElection.getReferenceId(), false, false, new Date(), MatchAlgorithm.V4.getVersion(), false);
+    matchDAO.insertMatch(
+        datasetIdentifier,
+        rpElection.getReferenceId(),
+        false,
+        false,
+        new Date(),
+        MatchAlgorithm.V4.getVersion(),
+        false);
 
-    //Negative testing means we'll feed the query a reference id that isn't tied to a DataAccess election
-    //Again, a match like this usually isn't generated in a normal workflow unless bug occurs, but having the 'DataAccess' condition is a nice safety net
-    List<Match> matchResults = matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(
-        List.of(darReferenceId));
+    // Negative testing means we'll feed the query a reference id that isn't tied to a DataAccess
+    // election
+    // Again, a match like this usually isn't generated in a normal workflow unless bug occurs, but
+    // having the 'DataAccess' condition is a nice safety net
+    List<Match> matchResults =
+        matchDAO.findMatchesForLatestDataAccessElectionsByPurposeIds(List.of(darReferenceId));
     assertTrue(matchResults.isEmpty());
   }
 
   @Test
   void testFindMatchById() {
     Match match = makeMockMatch(UUID.randomUUID().toString());
-    Integer matchId = matchDAO.insertMatch(
-        match.getConsent(),
-        match.getPurpose(),
-        match.getMatch(),
-        match.getFailed(),
-        match.getCreateDate(),
-        match.getAlgorithmVersion(),
-        match.getAbstain());
+    Integer matchId =
+        matchDAO.insertMatch(
+            match.getConsent(),
+            match.getPurpose(),
+            match.getMatch(),
+            match.getFailed(),
+            match.getCreateDate(),
+            match.getAlgorithmVersion(),
+            match.getAbstain());
     Match foundMatch = matchDAO.findMatchById(matchId);
     assertNotNull(foundMatch);
   }
@@ -161,19 +195,19 @@ class MatchDAOTest extends DAOTestHelper {
     match.setAlgorithmVersion(MatchAlgorithm.V4.getVersion());
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
-    Integer matchId = matchDAO.insertMatch(
-        match.getConsent(),
-        match.getPurpose(),
-        match.getMatch(),
-        match.getFailed(),
-        match.getCreateDate(),
-        match.getAlgorithmVersion(),
-        match.getAbstain());
+    Integer matchId =
+        matchDAO.insertMatch(
+            match.getConsent(),
+            match.getPurpose(),
+            match.getMatch(),
+            match.getFailed(),
+            match.getCreateDate(),
+            match.getAlgorithmVersion(),
+            match.getAbstain());
     match.getRationales().forEach(f -> matchDAO.insertRationale(matchId, f));
     Match foundMatch = matchDAO.findMatchById(matchId);
     assertNotNull(foundMatch);
-    assertEquals(match.getRationales().size(),
-        foundMatch.getRationales().size());
+    assertEquals(match.getRationales().size(), foundMatch.getRationales().size());
   }
 
   @Test
@@ -183,14 +217,15 @@ class MatchDAOTest extends DAOTestHelper {
     match.setAlgorithmVersion(MatchAlgorithm.V4.getVersion());
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
     match.addRationale(RandomStringUtils.randomAlphabetic(100));
-    Integer matchId = matchDAO.insertMatch(
-        match.getConsent(),
-        match.getPurpose(),
-        match.getMatch(),
-        match.getFailed(),
-        match.getCreateDate(),
-        match.getAlgorithmVersion(),
-        match.getAbstain());
+    Integer matchId =
+        matchDAO.insertMatch(
+            match.getConsent(),
+            match.getPurpose(),
+            match.getMatch(),
+            match.getFailed(),
+            match.getCreateDate(),
+            match.getAlgorithmVersion(),
+            match.getAbstain());
     match.getRationales().forEach(f -> matchDAO.insertRationale(matchId, f));
     matchDAO.deleteRationalesByPurposeIds(List.of(match.getPurpose()));
     Match foundMatch = matchDAO.findMatchById(matchId);
@@ -215,10 +250,11 @@ class MatchDAOTest extends DAOTestHelper {
   }
 
   private Dac createDac() {
-    Integer id = dacDAO.createDac(
-        "Test_" + RandomStringUtils.random(20, true, true),
-        "Test_" + RandomStringUtils.random(20, true, true),
-        new Date());
+    Integer id =
+        dacDAO.createDac(
+            "Test_" + RandomStringUtils.random(20, true, true),
+            "Test_" + RandomStringUtils.random(20, true, true),
+            new Date());
     return dacDAO.findById(id);
   }
 
@@ -228,8 +264,8 @@ class MatchDAOTest extends DAOTestHelper {
     Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
-        dataUse.toString(), null);
+    Integer id =
+        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }
@@ -246,25 +282,24 @@ class MatchDAOTest extends DAOTestHelper {
   }
 
   private Election createRPElection(String referenceId, Integer datasetId) {
-    Integer electionId = electionDAO.insertElection(
-        ElectionType.RP.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        new Date(),
-        referenceId,
-        datasetId
-    );
+    Integer electionId =
+        electionDAO.insertElection(
+            ElectionType.RP.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            new Date(),
+            referenceId,
+            datasetId);
     return electionDAO.findElectionById(electionId);
   }
 
   private Election createDataAccessElection(String referenceId, Integer datasetId) {
-    Integer electionId = electionDAO.insertElection(
-        ElectionType.DATA_ACCESS.getValue(),
-        ElectionStatus.OPEN.getValue(),
-        new Date(),
-        referenceId,
-        datasetId
-    );
+    Integer electionId =
+        electionDAO.insertElection(
+            ElectionType.DATA_ACCESS.getValue(),
+            ElectionStatus.OPEN.getValue(),
+            new Date(),
+            referenceId,
+            datasetId);
     return electionDAO.findElectionById(electionId);
   }
-
 }

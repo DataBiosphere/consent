@@ -10,16 +10,10 @@ import org.junit.jupiter.api.Test;
 
 /**
  * These tests are not parameterized because that displays poorly in the results xml, i.e. compare:
- *   Parameterized:
- *     <testcase name="testPageOk(String 1)" ...
- *     <testcase name="testPageOk(String 2)" ...
- *     <testcase name="testPageOk(String 3)" ...
- *   Non-parameterized:
- *     <testcase name="version_page_OK" ...
- *     <testcase name="status_page_OK" ...
- *     <testcase name="liveness_page_OK" ...
- * It would be ideal if the provided display name was used in the xml, but that only appears in the
- * IDE display.
+ * Parameterized: <testcase name="testPageOk(String 1)" ... <testcase name="testPageOk(String 2)"
+ * ... <testcase name="testPageOk(String 3)" ... Non-parameterized: <testcase name="version_page_OK"
+ * ... <testcase name="status_page_OK" ... <testcase name="liveness_page_OK" ... It would be ideal
+ * if the provided display name was used in the xml, but that only appears in the IDE display.
  */
 @DisplayName("Status Related Tests")
 class StatusTests implements IntegrationTestHelper {
@@ -44,5 +38,4 @@ class StatusTests implements IntegrationTestHelper {
     SimpleResponse response = fetchGetResponse("version");
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.code());
   }
-
 }

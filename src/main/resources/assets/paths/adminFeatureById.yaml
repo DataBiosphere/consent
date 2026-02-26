@@ -1,0 +1,109 @@
+post:
+  summary: Create or update feature flag
+  operationId: createOrUpdateFeatureFlag
+  description: |
+    Create a new feature flag or update an existing one. 
+    Requires Admin role.
+  tags:
+    - Feature Flags
+  parameters:
+    - name: id
+      in: path
+      description: The feature flag ID
+      required: true
+      schema:
+        type: string
+  requestBody:
+    description: Feature flag value
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            value:
+              type: string
+              description: The value to set for the feature flag
+          required:
+            - value
+        examples:
+          enableFeature:
+            summary: Enable a feature
+            value:
+              value: "true"
+          disableFeature:
+            summary: Disable a feature
+            value:
+              value: "false"
+          customValue:
+            summary: Custom configuration value
+            value:
+              value: "custom-config-value"
+  responses:
+    200:
+      description: Feature flag updated successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/FeatureFlag.yaml'
+    201:
+      description: Feature flag created successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/FeatureFlag.yaml'
+    400:
+      description: Bad Request - Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    403:
+      description: Forbidden - Admin role required
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+
+delete:
+  summary: Delete feature flag
+  operationId: deleteFeatureFlag
+  description: |
+    Delete a feature flag by its ID.
+    Requires Admin role.
+  tags:
+    - Feature Flags
+  parameters:
+    - name: id
+      in: path
+      description: The feature flag ID
+      required: true
+      schema:
+        type: string
+  responses:
+    204:
+      description: Feature flag deleted successfully
+    403:
+      description: Forbidden - Admin role required
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    404:
+      description: Feature flag not found
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
+    500:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

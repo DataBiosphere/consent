@@ -1,0 +1,9 @@
+type: object
+description: A Presenter object.
+properties:
+  name:
+    type: string
+    description: The presenter's name.
+  email:
+    type: string
+    description: The presenter's email address.

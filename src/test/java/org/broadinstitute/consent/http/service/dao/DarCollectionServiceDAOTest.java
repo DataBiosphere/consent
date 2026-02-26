@@ -12,9 +12,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
@@ -47,111 +44,6 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
   }
 
   /**
-   * This test covers the case where: - User is an admin - Collection has 1 DAR/Dataset combinations
-   * - Elections created should be for the DAR/Dataset for the user
-   */
-  @Test
-  void testCreateElectionsForDarByUserAdmin() throws Exception {
-    User user = new User();
-    user.setAdminRole();
-    DarCollection collection = setUpDarCollectionWithDacDataset();
-    DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
-    assertNotNull(dar);
-
-    List<String> referenceIds = serviceDAO.createElectionsForDarByUser(user, dar);
-
-    List<Election> createdElections =
-        electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
-    List<Vote> createdVotes =
-        voteDAO.findVotesByElectionIds(
-            createdElections.stream().map(Election::getElectionId).collect(Collectors.toList()));
-
-    assertTrue(referenceIds.contains(dar.getReferenceId()));
-    assertFalse(createdElections.isEmpty());
-    assertFalse(createdVotes.isEmpty());
-
-    // Ensure that we have all primary vote types for each election type
-    // Data Access Elections have Chair, Dac, Final, and Agreement votes
-    Optional<Election> daElectionOption = createdElections.stream()
-        .filter(e -> ElectionType.DATA_ACCESS.getValue().equals(e.getElectionType())).findFirst();
-    assertTrue(daElectionOption.isPresent());
-    assertTrue(createdVotes
-        .stream()
-        .filter(v -> v.getElectionId().equals(daElectionOption.get().getElectionId()))
-        .anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
-    assertTrue(createdVotes
-        .stream()
-        .filter(v -> v.getElectionId().equals(daElectionOption.get().getElectionId()))
-        .anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
-    assertTrue(createdVotes
-        .stream()
-        .filter(v -> v.getElectionId().equals(daElectionOption.get().getElectionId()))
-        .anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
-    assertTrue(createdVotes
-        .stream()
-        .filter(v -> v.getElectionId().equals(daElectionOption.get().getElectionId()))
-        .anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
-
-    // RP Elections have Chair and Dac votes
-    Optional<Election> rpElectionOption = createdElections.stream()
-        .filter(e -> ElectionType.RP.getValue().equals(e.getElectionType())).findFirst();
-    assertTrue(rpElectionOption.isPresent());
-    assertTrue(createdVotes
-        .stream()
-        .filter(v -> v.getElectionId().equals(rpElectionOption.get().getElectionId()))
-        .anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
-    assertTrue(createdVotes
-        .stream()
-        .filter(v -> v.getElectionId().equals(rpElectionOption.get().getElectionId()))
-        .anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
-  }
-
-  /**
-   * This test covers the case where: - User is an admin - Collection has 2 DAR/Dataset combinations
-   * - User is an Admin - Elections created should only be for ALL the DAR/Dataset combinations
-   */
-  @Test
-  void testCreateElectionsForDarCollectionWithMultipleDatasetsForAdminBy() throws Exception {
-    User user = new User();
-    user.setAdminRole();
-    DarCollection collection = setUpDarCollectionWithDacDataset();
-    DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
-    assertNotNull(dar);
-
-    // refresh the collection
-    collection = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
-
-    List<String> referenceIds = serviceDAO.createElectionsForDarByUser(user, dar);
-
-    List<Election> createdElections =
-        electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
-    List<Vote> createdVotes =
-        voteDAO.findVotesByElectionIds(
-            createdElections.stream().map(Election::getElectionId).collect(Collectors.toList()));
-
-    assertTrue(referenceIds.contains(dar.getReferenceId()));
-    // Ensure that we have an access and rp election
-    assertFalse(createdElections.isEmpty());
-    assertTrue(
-        createdElections.stream()
-            .anyMatch(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue())));
-    assertTrue(
-        createdElections.stream()
-            .anyMatch(e -> e.getElectionType().equals(ElectionType.RP.getValue())));
-    // Ensure that we have primary vote types
-    assertFalse(createdVotes.isEmpty());
-    assertTrue(
-        createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
-    assertTrue(
-        createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
-    assertTrue(
-        createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
-    assertTrue(
-        createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
-
-  }
-
-  /**
    * This test covers the case where: - User is a chairperson - Collection has 1 DAR/Dataset
    * combinations - Elections created should be for the DAR/Dataset for the user
    */
@@ -159,13 +51,13 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
   void testCreateElectionsForDarByUserChair() throws Exception {
     DarCollection collection = setUpDarCollectionWithDacDataset();
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElseThrow();
-    Integer datasetId = dar.getDatasetIds().get(0);
+    Integer datasetId = dar.getDatasetIds().getFirst();
     assertNotNull(datasetId);
     Optional<Dac> dac = dacDAO.findDacsForDatasetIds(List.of(datasetId)).stream().findFirst();
     assertTrue(dac.isPresent());
     List<User> dacUsers = dacDAO.findMembersByDacId(dac.get().getDacId());
-    Optional<User> chair = dacUsers.stream().filter(u -> u.hasUserRole(UserRoles.CHAIRPERSON))
-        .findFirst();
+    Optional<User> chair =
+        dacUsers.stream().filter(u -> u.hasUserRole(UserRoles.CHAIRPERSON)).findFirst();
     assertTrue(chair.isPresent());
 
     List<String> referenceIds = serviceDAO.createElectionsForDarByUser(chair.get(), dar);
@@ -174,7 +66,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
     List<Vote> createdVotes =
         voteDAO.findVotesByElectionIds(
-            createdElections.stream().map(Election::getElectionId).collect(Collectors.toList()));
+            createdElections.stream().map(Election::getElectionId).toList());
 
     assertTrue(referenceIds.contains(dar.getReferenceId()));
     // Ensure that we have an access and rp election
@@ -189,10 +81,8 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     assertFalse(createdVotes.isEmpty());
     assertTrue(
         createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
-    assertTrue(
-        createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
-    assertTrue(
-        createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
+    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
+    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
     assertTrue(
         createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
   }
@@ -209,7 +99,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     DataAccessRequest dar = collection.getMostRecentDar();
     assertNotNull(dar);
     assertFalse(dar.getDatasetIds().isEmpty());
-    Integer datasetId1 = dar.getDatasetIds().get(0);
+    Integer datasetId1 = dar.getDatasetIds().getFirst();
     Integer datasetId2 = dar.getDatasetIds().get(1);
     assertEquals(2, dar.getDatasetIds().size());
 
@@ -217,11 +107,14 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     Dac dac = dacDAO.findDacsForDatasetIds(List.of(datasetId1)).stream().findFirst().orElseThrow();
     assertNotNull(dac);
     List<User> dacUsers = dacDAO.findMembersByDacId(dac.getDacId());
-    User chair = dacUsers.stream().filter(u -> u.hasUserRole(UserRoles.CHAIRPERSON))
-        .findFirst().orElseThrow();
+    User chair =
+        dacUsers.stream()
+            .filter(u -> u.hasUserRole(UserRoles.CHAIRPERSON))
+            .findFirst()
+            .orElseThrow();
 
     // refresh the collection
-    collection = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
+    darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
 
     List<String> referenceIds = serviceDAO.createElectionsForDarByUser(chair, dar);
 
@@ -229,10 +122,10 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
     List<Vote> createdVotes =
         voteDAO.findVotesByElectionIds(
-            createdElections.stream().map(Election::getElectionId).collect(Collectors.toList()));
+            createdElections.stream().map(Election::getElectionId).toList());
 
     assertTrue(referenceIds.contains(dar.getReferenceId()));
-    assertEquals(2, createdElections.size());  //
+    assertEquals(2, createdElections.size()); //
     // Ensure that we have an access and rp election
     assertFalse(createdElections.isEmpty());
     assertTrue(
@@ -245,38 +138,47 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     assertFalse(createdVotes.isEmpty());
     assertTrue(
         createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.CHAIRPERSON.getValue())));
-    assertTrue(
-        createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
-    assertTrue(
-        createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
+    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.FINAL.getValue())));
+    assertTrue(createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.DAC.getValue())));
     assertTrue(
         createdVotes.stream().anyMatch(v -> v.getType().equals(VoteType.AGREEMENT.getValue())));
 
-    assertEquals(8, createdVotes.size());  // 1 dataset X 2 elections/dataset X 4 votes/election each = 8 votes.
+    assertEquals(
+        8,
+        createdVotes.size()); // 1 dataset X 2 elections/dataset X 4 votes/election each = 8 votes.
 
     // Find the dac chairperson for the second Dataset in the DAR.
 
     Dac dac2 = dacDAO.findDacsForDatasetIds(List.of(datasetId2)).stream().findFirst().orElseThrow();
     assertNotNull(dac2);
     List<User> dacUsers2 = dacDAO.findMembersByDacId(dac2.getDacId());
-    User chair2 = dacUsers2.stream().filter(u -> u.hasUserRole(UserRoles.CHAIRPERSON))
-        .findFirst().orElseThrow();
+    User chair2 =
+        dacUsers2.stream()
+            .filter(u -> u.hasUserRole(UserRoles.CHAIRPERSON))
+            .findFirst()
+            .orElseThrow();
     List<String> referenceIds2 = serviceDAO.createElectionsForDarByUser(chair2, dar);
     assertTrue(referenceIds2.contains(dar.getReferenceId()));
 
-    createdElections =
-        electionDAO.findElectionsByReferenceId(dar.getReferenceId());
+    createdElections = electionDAO.findElectionsByReferenceId(dar.getReferenceId());
     assertEquals(4, createdElections.size());
 
     // Verify we have elections for both DACs
-    assertTrue(createdElections.stream().anyMatch(e -> e.getDatasetId().equals(dac.getDatasetIds().get(0))));
-    assertTrue(createdElections.stream().anyMatch(e -> e.getDatasetId().equals(dac2.getDatasetIds().get(0))));
+    assertTrue(
+        createdElections.stream()
+            .anyMatch(e -> e.getDatasetId().equals(dac.getDatasetIds().getFirst())));
+    assertTrue(
+        createdElections.stream()
+            .anyMatch(e -> e.getDatasetId().equals(dac2.getDatasetIds().getFirst())));
 
     // Verify we have open votes for both datasets on the DAR.
     createdVotes =
         voteDAO.findVotesByElectionIds(
             createdElections.stream().map(Election::getElectionId).toList());
-    assertEquals(16, createdVotes.size()); // 2 datasets X 2 elections/dataset X 4 votes/election each = 16 votes.
+    assertEquals(
+        16,
+        createdVotes
+            .size()); // 2 datasets X 2 elections/dataset X 4 votes/election each = 16 votes.
   }
 
   @Test
@@ -285,13 +187,16 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     DarCollection collection = setUpDarCollectionWithDacDataset();
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElseThrow();
     assertFalse(dar.getDatasetIds().isEmpty());
-    Integer datasetId = dar.getDatasetIds().get(0);
+    Integer datasetId = dar.getDatasetIds().getFirst();
 
     // Find the dac chairperson for the current DAR/Dataset combination
     Dac dac = dacDAO.findDacsForDatasetIds(List.of(datasetId)).stream().findFirst().orElseThrow();
     List<User> dacUsers = dacDAO.findMembersByDacId(dac.getDacId());
-    User chair = dacUsers.stream().filter(u -> u.hasUserRole(UserRoles.CHAIRPERSON))
-        .findFirst().orElseThrow();
+    User chair =
+        dacUsers.stream()
+            .filter(u -> u.hasUserRole(UserRoles.CHAIRPERSON))
+            .findFirst()
+            .orElseThrow();
 
     // Refresh the collection
     collection = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
@@ -303,55 +208,9 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     // Refresh the collection to get the version with the progress report.
     collection = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
 
-    List<String> electionReferenceIds = serviceDAO.createElectionsForDarByUser(chair, collection.getMostRecentDar());
+    List<String> electionReferenceIds =
+        serviceDAO.createElectionsForDarByUser(chair, collection.getMostRecentDar());
     assertTrue(electionReferenceIds.contains(progressReport.getReferenceId()));
-  }
-
-  /**
-   * This test covers the case where: - User is an admin - Elections have been created for a
-   * Collection - Elections are then canceled - Elections re-created correctly - Previous canceled
-   * elections are correctly archived
-   */
-  @Test
-  void testCreateElectionsForDarCollectionAfterCancelingEarlierElectionsAsAdminBy()
-      throws Exception {
-    User user = new User();
-    user.setAdminRole();
-    DarCollection collection = setUpDarCollectionWithDacDataset();
-    DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
-    assertNotNull(dar);
-
-    // create elections & votes:
-    List<String> referenceIds = serviceDAO.createElectionsForDarByUser(user, dar);
-
-    // cancel those elections:
-    List<Integer> canceledElectionIds = electionDAO.findLastElectionsByReferenceIds(
-            List.of(dar.getReferenceId()))
-        .stream()
-        .map(Election::getElectionId)
-        .toList();
-    canceledElectionIds.forEach(id ->
-        electionDAO.updateElectionById(id, ElectionStatus.CANCELED.getValue(), new Date()));
-
-    // re-create elections & new votes:
-    referenceIds.addAll(serviceDAO.createElectionsForDarByUser(user, dar));
-
-    List<Election> createdElections =
-        electionDAO.findLastElectionsByReferenceIds(List.of(dar.getReferenceId()));
-
-    assertTrue(referenceIds.contains(dar.getReferenceId()));
-
-    // Ensure that we have the right number of access and rp elections, i.e. 1 each
-    assertFalse(createdElections.isEmpty());
-    assertEquals(2, createdElections.size());
-    assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(
-        ElectionType.DATA_ACCESS.getValue())).count());
-    assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(
-        ElectionType.RP.getValue())).count());
-
-    // Check that the canceled elections are archived
-    List<Election> canceledElections = electionDAO.findElectionsByIds(canceledElectionIds);
-    canceledElections.forEach(e -> assertTrue(e.getArchived()));
   }
 
   /**
@@ -368,15 +227,15 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElse(null);
     assertNotNull(dar);
     assertFalse(dar.getDatasetIds().isEmpty());
-    Integer datasetId = dar.getDatasetIds().get(0);
+    Integer datasetId = dar.getDatasetIds().getFirst();
     assertNotNull(datasetId);
 
     // Find the dac chairperson for the current DAR/Dataset combination
     Optional<Dac> dac = dacDAO.findDacsForDatasetIds(List.of(datasetId)).stream().findFirst();
     assertTrue(dac.isPresent());
     List<User> dacUsers = dacDAO.findMembersByDacId(dac.get().getDacId());
-    Optional<User> chair = dacUsers.stream().filter(u -> u.hasUserRole(UserRoles.CHAIRPERSON))
-        .findFirst();
+    Optional<User> chair =
+        dacUsers.stream().filter(u -> u.hasUserRole(UserRoles.CHAIRPERSON)).findFirst();
     assertTrue(chair.isPresent());
 
     // refresh the collection
@@ -386,11 +245,19 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     List<String> referenceIds = serviceDAO.createElectionsForDarByUser(chair.get(), dar);
 
     // cancel elections for all DARs in the collection:
-    collection.getDars().values().forEach(d ->
-        electionDAO.findLastElectionsByReferenceIds(List.of(d.getReferenceId())).forEach(e ->
-            electionDAO.updateElectionById(e.getElectionId(), ElectionStatus.CANCELED.getValue(),
-                new Date()))
-    );
+    collection
+        .getDars()
+        .values()
+        .forEach(
+            d ->
+                electionDAO
+                    .findLastElectionsByReferenceIds(List.of(d.getReferenceId()))
+                    .forEach(
+                        e ->
+                            electionDAO.updateElectionById(
+                                e.getElectionId(),
+                                ElectionStatus.CANCELED.getValue(),
+                                new Date())));
 
     // re-create elections & new votes:
     referenceIds.addAll(serviceDAO.createElectionsForDarByUser(chair.get(), dar));
@@ -401,15 +268,22 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     // Ensure that we have the right number of access and rp elections, i.e. 1 each
     assertFalse(createdElections.isEmpty());
     assertEquals(2, createdElections.size());
-    assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(
-        ElectionType.DATA_ACCESS.getValue())).count());
-    assertEquals(1, createdElections.stream().filter(e -> e.getElectionType().equals(
-        ElectionType.RP.getValue())).count());
+    assertEquals(
+        1,
+        createdElections.stream()
+            .filter(e -> e.getElectionType().equals(ElectionType.DATA_ACCESS.getValue()))
+            .count());
+    assertEquals(
+        1,
+        createdElections.stream()
+            .filter(e -> e.getElectionType().equals(ElectionType.RP.getValue()))
+            .count());
 
-    //create progress report
+    // create progress report
     createProgressReportFromDAR(dar);
     collection = darCollectionDAO.findDARCollectionByCollectionId(collection.getDarCollectionId());
-    List<String> createdElectionsForProgressReport = serviceDAO.createElectionsForDarByUser(chair.get(), collection.getMostRecentDar());
+    List<String> createdElectionsForProgressReport =
+        serviceDAO.createElectionsForDarByUser(chair.get(), collection.getMostRecentDar());
     assertFalse(createdElectionsForProgressReport.isEmpty());
     assertEquals(1, createdElectionsForProgressReport.size());
   }
@@ -424,30 +298,31 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
         dar.getData(),
         randomAlphabetic(8));
     DataAccessRequest progressReport = dataAccessRequestDAO.findByReferenceId(referenceId);
-    dar.getDatasetIds().forEach(datasetId ->
-      dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId)
-    );
+    dar.getDatasetIds()
+        .forEach(
+            datasetId -> dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId));
     return progressReport;
   }
-  /**
-   * Helper method to generate a DarCollection with a Dac, a Dataset, and a create User
-   */
+
+  /** Helper method to generate a DarCollection with a Dac, a Dataset, and a create User */
   private DarCollection setUpDarCollectionWithDacDataset() {
     User user = createUser();
-    String darCode = "DAR-" + RandomUtils.nextInt(100, 1000);
+    String darCode = "DAR-" + randomInt(100, 1000);
     DacAndDataset dacAndDataset = createDacAndDataset();
     DacAndDataset dacAndDataset2 = createDacAndDataset();
-    Integer collectionId = darCollectionDAO.insertDarCollection(darCode, user.getUserId(),
-        new Date());
+    Integer collectionId =
+        darCollectionDAO.insertDarCollection(darCode, user.getUserId(), new Date());
     createDarForCollection(user, collectionId, dacAndDataset.dataset);
     DarCollection collection = darCollectionDAO.findDARCollectionByCollectionId(collectionId);
     DataAccessRequest dar = collection.getDars().values().stream().findFirst().orElseThrow();
     assertNotNull(dar.getData());
-    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dacAndDataset.dataset.getDatasetId());
-    dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dacAndDataset2.dataset.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        dar.getReferenceId(), dacAndDataset.dataset.getDatasetId());
+    dataAccessRequestDAO.insertDARDatasetRelation(
+        dar.getReferenceId(), dacAndDataset2.dataset.getDatasetId());
     Date now = new Date();
     dataAccessRequestDAO.updateDataByReferenceId(
-        dar.getReferenceId(), dar.getUserId(), now, now, now, dar.getData(), user.getEraCommonsId());
+        dar.getReferenceId(), dar.getUserId(), now, now, dar.getData(), user.getEraCommonsId());
     return darCollectionDAO.findDARCollectionByReferenceId(dar.getReferenceId());
   }
 
@@ -455,17 +330,18 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
 
   private DacAndDataset createDacAndDataset() {
     Dac dac = createDac();
-    createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
-    createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
+    User chair = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
+    User member = createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
+    dac.setChairpersons(List.of(chair));
+    dac.setMembers(List.of(member));
     Dataset dataset = createDatasetWithDac(dac.getDacId());
     return new DacAndDataset(dac, dataset);
   }
 
   private Dac createDac() {
-    Integer id = dacDAO.createDac(
-        "Test_" + RandomStringUtils.random(20, true, true),
-        "Test_" + RandomStringUtils.random(20, true, true),
-        new Date());
+    Integer id =
+        dacDAO.createDac(
+            "Test_" + randomAlphabetic(20), "Test_" + randomAlphabetic(20), new Date());
     return dacDAO.findById(id);
   }
 
@@ -480,30 +356,28 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
     datasetDAO.insertDatasetProperties(list);
   }
 
-  private DataAccessRequest createDarForCollection(User user, Integer collectionId,
-      Dataset dataset) {
+  private void createDarForCollection(User user, Integer collectionId, Dataset dataset) {
     Date now = new Date();
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setData(data);
-    dataAccessRequestDAO.insertDraftDataAccessRequest(dar.getReferenceId(), user.getUserId(), now,
-        now, now, data);
+    dataAccessRequestDAO.insertDraftDataAccessRequest(
+        dar.getReferenceId(), user.getUserId(), now, now, data);
     dataAccessRequestDAO.updateDraftToSubmittedForCollection(collectionId, dar.getReferenceId());
-    dataAccessRequestDAO.updateDataByReferenceId(dar.referenceId, dar.userId, new Date(),
-        new Date(), new Date(), data, user.getEraCommonsId());
+    dataAccessRequestDAO.updateDataByReferenceId(
+        dar.referenceId, dar.userId, new Date(), new Date(), data, user.getEraCommonsId());
     dataAccessRequestDAO.insertDARDatasetRelation(dar.getReferenceId(), dataset.getDatasetId());
-    return dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
   }
 
   private Dataset createDatasetWithDac(Integer dacId) {
     User user = createUser();
-    String name = "Name_" + RandomStringUtils.random(20, true, true);
+    String name = "Name_" + randomAlphabetic(20);
     Timestamp now = new Timestamp(new Date().getTime());
-    String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
+    String objectId = "Object ID_" + randomAlphabetic(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
-        dataUse.toString(), dacId);
+    Integer id =
+        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), dacId);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }

@@ -28,8 +28,11 @@ public class MetricsService {
   private final ElectionDAO electionDAO;
 
   @Inject
-  public MetricsService(DatasetDAO dataSetDAO, DataAccessRequestDAO darDAO,
-      DarCollectionDAO darCollectionDAO, ElectionDAO electionDAO) {
+  public MetricsService(
+      DatasetDAO dataSetDAO,
+      DataAccessRequestDAO darDAO,
+      DarCollectionDAO darCollectionDAO,
+      ElectionDAO electionDAO) {
     this.dataSetDAO = dataSetDAO;
     this.darDAO = darDAO;
     this.darCollectionDAO = darCollectionDAO;
@@ -39,14 +42,10 @@ public class MetricsService {
   public static class DarMetricsSummary {
 
     final Timestamp updateDate;
-    @JsonProperty
-    final String projectTitle;
-    @JsonProperty
-    final String darCode;
-    @JsonProperty
-    final String nonTechRus;
-    @JsonProperty
-    final String referenceId;
+    @JsonProperty final String projectTitle;
+    @JsonProperty final String darCode;
+    @JsonProperty final String nonTechRus;
+    @JsonProperty final String referenceId;
 
     public DarMetricsSummary(DataAccessRequest dar, String darCode) {
       if (dar != null && dar.data != null) {
@@ -69,33 +68,42 @@ public class MetricsService {
 
     DatasetMetrics metrics = new DatasetMetrics();
 
-    //get datasetDTO with properties and data use restrictions
+    // get datasetDTO with properties and data use restrictions
     Dataset dataset = dataSetDAO.findDatasetById(datasetId);
     if (dataset == null) {
       throw new NotFoundException("Dataset with specified ID does not exist.");
     }
 
-    //find dars with the given datasetId in their list of datasetIds, datasetId is a String so it can be converted to jsonb in query
-    //convert all dars into smaller objects that only contain the information needed
+    // find dars with the given datasetId in their list of datasetIds, datasetId is a String so it
+    // can be converted to jsonb in query
+    // convert all dars into smaller objects that only contain the information needed
     List<DataAccessRequest> dars = darDAO.findApprovedDARsByDatasetId(datasetId);
     List<Integer> darCollectionIds = dars.stream().map(DataAccessRequest::getCollectionId).toList();
-    List<DarCollection> darCollections = darCollectionIds.isEmpty() ? List.of() :
-        darCollectionDAO.findDARCollectionByCollectionIds(darCollectionIds);
-    Map<Integer, DarCollection> collectionMap = darCollections.stream()
-        .collect(Collectors.toMap(DarCollection::getDarCollectionId, Function.identity()));
+    List<DarCollection> darCollections =
+        darCollectionIds.isEmpty()
+            ? List.of()
+            : darCollectionDAO.findDARCollectionByCollectionIds(darCollectionIds);
+    Map<Integer, DarCollection> collectionMap =
+        darCollections.stream()
+            .collect(Collectors.toMap(DarCollection::getDarCollectionId, Function.identity()));
 
-    List<DarMetricsSummary> darInfo = dars.stream().map(dar -> {
-      DarCollection collection = collectionMap.get(dar.getCollectionId());
-      String darCode = Objects.nonNull(collection) ? collection.getDarCode() : null;
-      return new DarMetricsSummary(dar, darCode);
-    }).collect(Collectors.toList());
+    List<DarMetricsSummary> darInfo =
+        dars.stream()
+            .map(
+                dar -> {
+                  DarCollection collection = collectionMap.get(dar.getCollectionId());
+                  String darCode = Objects.nonNull(collection) ? collection.getDarCode() : null;
+                  return new DarMetricsSummary(dar, darCode);
+                })
+            .collect(Collectors.toList());
 
-    //if there are associated dars, find associated access elections so we know how many and which dars are approved/denied
-    List<String> referenceIds = dars.stream().map(dar -> (dar.referenceId))
-        .collect(Collectors.toList());
+    // if there are associated dars, find associated access elections so we know how many and which
+    // dars are approved/denied
+    List<String> referenceIds =
+        dars.stream().map(dar -> (dar.referenceId)).collect(Collectors.toList());
     if (!referenceIds.isEmpty()) {
-      List<Election> elections = electionDAO.findLastElectionsByReferenceIdsAndType(referenceIds,
-          "DataAccess");
+      List<Election> elections =
+          electionDAO.findLastElectionsByReferenceIdsAndType(referenceIds, "DataAccess");
       metrics.setElections(elections);
     } else {
       metrics.setElections(Collections.emptyList());
@@ -104,5 +112,4 @@ public class MetricsService {
     metrics.setDars(darInfo);
     return metrics;
   }
-
 }

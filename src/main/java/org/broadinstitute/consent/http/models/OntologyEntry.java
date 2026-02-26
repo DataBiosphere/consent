@@ -9,8 +9,7 @@ public class OntologyEntry {
   String definition;
   List<String> synonyms;
 
-  public OntologyEntry() {
-  }
+  public OntologyEntry() {}
 
   public String getId() {
     return id;
@@ -43,5 +42,4 @@ public class OntologyEntry {
   public void setSynonyms(List<String> synonyms) {
     this.synonyms = synonyms;
   }
-
 }

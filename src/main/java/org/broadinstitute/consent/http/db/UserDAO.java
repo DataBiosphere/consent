@@ -31,7 +31,8 @@ public interface UserDAO extends Transactional<UserDAO> {
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
   @UseRowReducer(UserWithRolesReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT
           u.user_id as u_user_id,
           u.email as u_email,
@@ -69,7 +70,8 @@ public interface UserDAO extends Transactional<UserDAO> {
   @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
   @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
   @UseRowReducer(UserWithRolesReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT
           u.user_id as u_user_id,
           u.email as u_email,
@@ -102,64 +104,78 @@ public interface UserDAO extends Transactional<UserDAO> {
       LEFT JOIN user_property up ON up.user_id = u.user_id AND up.property_key IN (<keys>)
       WHERE u.user_id = :userId
       """)
-  User findUserWithPropertiesById(@Bind("userId") Integer userId, @BindList(value = "keys", onEmpty = EmptyHandling.NULL_STRING) List<String> keys);
+  User findUserWithPropertiesById(
+      @Bind("userId") Integer userId,
+      @BindList(value = "keys", onEmpty = EmptyHandling.NULL_STRING) List<String> keys);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @UseRowReducer(UserWithRolesReducer.class)
-  @SqlQuery("SELECT "
-      + User.QUERY_FIELDS_WITH_U_PREFIX
-      + " FROM users u WHERE u.user_id IN (<userIds>)")
-  Collection<User> findUsers(@BindList(value = "userIds", onEmpty = EmptyHandling.NULL_STRING) Collection<Integer> userIds);
+  @SqlQuery(
+      "SELECT " + User.QUERY_FIELDS_WITH_U_PREFIX + " FROM users u WHERE u.user_id IN (<userIds>)")
+  Collection<User> findUsers(
+      @BindList(value = "userIds", onEmpty = EmptyHandling.NULL_STRING)
+          Collection<Integer> userIds);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class)
   @UseRowReducer(UserWithRolesReducer.class)
-  @SqlQuery("SELECT "
-      + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-      + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
-      + " FROM users u "
-      + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
-      + " LEFT JOIN roles r ON r.role_id = ur.role_id "
-      + " WHERE r.name = :name")
+  @SqlQuery(
+      "SELECT "
+          + User.QUERY_FIELDS_WITH_U_PREFIX
+          + QUERY_FIELD_SEPARATOR
+          + "     ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id, r.name "
+          + " FROM users u "
+          + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
+          + " LEFT JOIN roles r ON r.role_id = ur.role_id "
+          + " WHERE r.name = :name")
   List<User> describeUsersByRole(@Bind("name") String name);
 
-  @SqlQuery("select du.user_id from users du inner join user_role ur on ur.user_id = du.user_id inner join roles r on r.role_id = ur.role_id where du.user_id = :userId and r.name = 'Chairperson'")
+  @SqlQuery(
+      "select du.user_id from users du inner join user_role ur on ur.user_id = du.user_id inner join roles r on r.role_id = ur.role_id where du.user_id = :userId and r.name = 'Chairperson'")
   Integer checkChairpersonUser(@Bind("userId") Integer userId);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class)
   @UseRowReducer(UserWithRolesReducer.class)
-  @SqlQuery("SELECT "
-      + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-      + " r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id "
-      + " FROM users u "
-      + " INNER JOIN user_role ur ON ur.user_id = u.user_id AND ur.dac_id = :dacId "
-      + " INNER JOIN roles r ON r.role_id = ur.role_id "
-      + " WHERE r.name = 'Chairperson' OR r.name = 'Member'")
+  @SqlQuery(
+      "SELECT "
+          + User.QUERY_FIELDS_WITH_U_PREFIX
+          + QUERY_FIELD_SEPARATOR
+          + " r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id "
+          + " FROM users u "
+          + " INNER JOIN user_role ur ON ur.user_id = u.user_id AND ur.dac_id = :dacId "
+          + " INNER JOIN roles r ON r.role_id = ur.role_id "
+          + " WHERE r.name = 'Chairperson' OR r.name = 'Member'")
   Set<User> findUsersEnabledToVoteByDAC(@Bind("dacId") Integer dacId);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class)
   @UseRowReducer(UserWithRolesReducer.class)
-  @SqlQuery("select "
-      + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-      + " r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id "
-      + " FROM users u "
-      + " INNER JOIN user_role ur ON ur.user_id = u.user_id AND ur.dac_id is null "
-      + " INNER JOIN roles r on r.role_id = ur.role_id "
-      + " WHERE r.name = 'Chairperson' OR r.name = 'Member'")
+  @SqlQuery(
+      "select "
+          + User.QUERY_FIELDS_WITH_U_PREFIX
+          + QUERY_FIELD_SEPARATOR
+          + " r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id "
+          + " FROM users u "
+          + " INNER JOIN user_role ur ON ur.user_id = u.user_id AND ur.dac_id is null "
+          + " INNER JOIN roles r on r.role_id = ur.role_id "
+          + " WHERE r.name = 'Chairperson' OR r.name = 'Member'")
   Set<User> findNonDacUsersEnabledToVote();
 
   @UseRowMapper(UserWithRolesMapper.class)
-  @SqlQuery("select du.*, r.role_id, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from users du inner join user_role ur on ur.user_id = du.user_id inner join roles r on r.role_id = ur.role_id where  du.user_id IN (<userIds>)")
-  Set<User> findUsersWithRoles(@BindList(value = "userIds", onEmpty = EmptyHandling.NULL_STRING) Collection<Integer> userIds);
+  @SqlQuery(
+      "select du.*, r.role_id, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id from users du inner join user_role ur on ur.user_id = du.user_id inner join roles r on r.role_id = ur.role_id where  du.user_id IN (<userIds>)")
+  Set<User> findUsersWithRoles(
+      @BindList(value = "userIds", onEmpty = EmptyHandling.NULL_STRING)
+          Collection<Integer> userIds);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class, prefix = "ur")
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
   @UseRowReducer(UserWithRolesReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT
           u.user_id as u_user_id,
           u.email as u_email,
@@ -194,7 +210,8 @@ public interface UserDAO extends Transactional<UserDAO> {
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class, prefix = "ur")
   @UseRowReducer(UserWithRolesReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT
           u.user_id as u_user_id, u.email as u_email, u.display_name as u_display_name,
           u.create_date as u_create_date, u.email_preference as u_email_preference,
@@ -206,11 +223,14 @@ public interface UserDAO extends Transactional<UserDAO> {
       LEFT JOIN roles r ON r.role_id = ur.role_id
       WHERE LOWER(u.email) ILIKE ANY (array[<emails>])
       """)
-  List<User> findUsersByEmailList(@BindList(value = "emails", onEmpty = EmptyHandling.NULL_STRING) List<String> emails);
+  List<User> findUsersByEmailList(
+      @BindList(value = "emails", onEmpty = EmptyHandling.NULL_STRING) List<String> emails);
 
-  @SqlUpdate("INSERT INTO users (email, display_name, institution_id, create_date) values (:email, :displayName, :institutionId, :createDate)")
+  @SqlUpdate(
+      "INSERT INTO users (email, display_name, institution_id, create_date) values (:email, :displayName, :institutionId, :createDate)")
   @GetGeneratedKeys
-  Integer insertUser(@Bind("email") String email,
+  Integer insertUser(
+      @Bind("email") String email,
       @Bind("displayName") String displayName,
       @Bind("institutionId") Integer institutionId,
       @Bind("createDate") Date createDate);
@@ -224,8 +244,8 @@ public interface UserDAO extends Transactional<UserDAO> {
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @UseRowReducer(UserWithRolesReducer.class)
   @SqlQuery(
-      //This will pull in users tied to the institution
-      //Users will come with LCs issued by SOs institution (if any)
+      // This will pull in users tied to the institution
+      // Users will come with LCs issued by SOs institution (if any)
       """
           SELECT DISTINCT
           u.user_id as u_user_id,
@@ -257,7 +277,8 @@ public interface UserDAO extends Transactional<UserDAO> {
   List<User> findUsersWithLCsAndInstitution();
 
   @UseRowMapper(UserWithRolesMapper.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT u.*, r.role_id, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id
       FROM users u
       INNER JOIN user_role ur ON ur.user_id = u.user_id AND ur.role_id = :roleId
@@ -266,7 +287,8 @@ public interface UserDAO extends Transactional<UserDAO> {
   List<User> findUsersByRoleId(@Bind("roleId") Integer roleId);
 
   @UseRowMapper(UserWithRolesMapper.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT u.*, r.role_id, r.name, ur.user_role_id, ur.user_id, ur.role_id, ur.dac_id
       FROM users u
       INNER JOIN user_role ur ON ur.user_id = u.user_id AND ur.role_id in (<roleIds>)
@@ -274,8 +296,7 @@ public interface UserDAO extends Transactional<UserDAO> {
       INNER JOIN dac d ON d.dac_id = ur.dac_id
       INNER JOIN dataset ds ON ds.dac_id = d.dac_id
       WHERE ds.dataset_id in (<datasetIds>)
-    """
-  )
+    """)
   Set<User> findUsersForDatasetsByRole(
       @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> datasetIds,
       @BindList(value = "roleIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> roleIds);
@@ -283,11 +304,12 @@ public interface UserDAO extends Transactional<UserDAO> {
   @RegisterBeanMapper(value = User.class)
   @RegisterBeanMapper(value = UserRole.class)
   @UseRowReducer(UserWithRolesReducer.class)
-  @SqlQuery("SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id "
-      + " FROM users du "
-      + " LEFT JOIN user_role ur ON ur.user_id = du.user_id "
-      + " LEFT JOIN roles r ON r.role_id = ur.role_id "
-      + " WHERE du.institution_id = :institutionId")
+  @SqlQuery(
+      "SELECT du.*, r.name, ur.role_id, ur.user_role_id, ur.dac_id "
+          + " FROM users du "
+          + " LEFT JOIN user_role ur ON ur.user_id = du.user_id "
+          + " LEFT JOIN roles r ON r.role_id = ur.role_id "
+          + " WHERE du.institution_id = :institutionId")
   List<User> findUsersByInstitution(@Bind("institutionId") Integer institutionId);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
@@ -296,8 +318,8 @@ public interface UserDAO extends Transactional<UserDAO> {
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
   @UseRowReducer(UserWithRolesReducer.class)
   @SqlQuery(
-      //This will pull in users tied to the institution
-      //Users will come with LCs issued by SOs institution (if any)
+      // This will pull in users tied to the institution
+      // Users will come with LCs issued by SOs institution (if any)
       """
           SELECT
           u.user_id as u_user_id,
@@ -366,42 +388,27 @@ public interface UserDAO extends Transactional<UserDAO> {
         """)
   List<User> getUsersWithCardsByDaaId(@Bind("daaId") Integer daaId);
 
-  //SO only endpoint (so far)
-  //Meant to pull in users that have not yet been assigned an institution
-  //(SOs can assign LCs to these users as well)
-  @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = UserRole.class)
-  @UseRowReducer(UserWithRolesReducer.class)
-  @SqlQuery(" SELECT " +
-      User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
-      " r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id " +
-      " FROM users u " +
-      " LEFT JOIN user_role ur ON ur.user_id = u.user_id " +
-      " LEFT JOIN roles r ON r.role_id = ur.role_id " +
-      " WHERE u.institution_id IS NULL")
-  List<User> getUsersWithNoInstitution();
-
   @RegisterBeanMapper(value = User.class)
-  @SqlQuery("SELECT u.user_id, u.display_name, u.email FROM users u "
-      + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
-      + " LEFT JOIN roles r ON r.role_id = ur.role_id "
-      + " WHERE LOWER(r.name) = 'signingofficial' "
-      + " AND u.institution_id = :institutionId")
+  @SqlQuery(
+      "SELECT u.user_id, u.display_name, u.email FROM users u "
+          + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
+          + " LEFT JOIN roles r ON r.role_id = ur.role_id "
+          + " WHERE LOWER(r.name) = 'signingofficial' "
+          + " AND u.institution_id = :institutionId")
   List<User> getSOsByInstitution(@Bind("institutionId") Integer institutionId);
 
   @SqlUpdate("update users set email_preference = :emailPreference WHERE user_id = :userId")
-  void updateEmailPreference(@Bind("userId") Integer userId,
-      @Bind("emailPreference") Boolean emailPreference);
+  void updateEmailPreference(
+      @Bind("userId") Integer userId, @Bind("emailPreference") Boolean emailPreference);
 
   @SqlUpdate("UPDATE users SET era_commons_id = :eraCommonsId WHERE user_id = :userId")
-  void updateEraCommonsId(@Bind("userId") Integer userId,
-      @Bind("eraCommonsId") String eraCommonsId);
+  void updateEraCommonsId(
+      @Bind("userId") Integer userId, @Bind("eraCommonsId") String eraCommonsId);
 
   @SqlUpdate("UPDATE users SET institution_id = :institutionId WHERE user_id = :userId")
-  void updateInstitutionId(@Bind("userId") Integer userId,
-      @Bind("institutionId") Integer institutionId);
+  void updateInstitutionId(
+      @Bind("userId") Integer userId, @Bind("institutionId") Integer institutionId);
 
   @SqlUpdate("UPDATE users SET display_name = :displayName WHERE user_id = :userId")
   void updateDisplayName(@Bind("userId") Integer userId, @Bind("displayName") String displayName);
-
 }

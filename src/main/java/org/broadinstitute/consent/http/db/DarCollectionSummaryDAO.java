@@ -21,12 +21,15 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @RegisterBeanMapper(value = Vote.class, prefix = "v")
   @RegisterBeanMapper(value = Election.class)
   @UseRowReducer(DarCollectionSummaryReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT c.collection_id as dar_collection_id, c.dar_code,
         latest_dar.submission_date, latest_dar.reference_id as latest_dar_reference_id,
         latest_dar.parent_id as latest_dar_parent_id,
         latest_dar.closeout_approving_so_id as latest_dar_closeout_approving_so_id,
         latest_dar.closeout_so_approval_timestamp AS latest_dar_closeout_so_approval_timestamp,
+        latest_dar.requires_so_approval as latest_dar_requires_so_approval,
+        latest_dar.approving_so_id as latest_dar_so_approver_id,
         researcher.display_name as researcher_name, i.institution_name,
         e.election_id, e.status, e.dataset_id, e.reference_id,
         v.vote_id as v_vote_id, dd.dataset_id as dd_datasetid,
@@ -35,6 +38,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         latest_dar.data ->> 'projectTitle' AS name,
         latest_dar.data ->> 'status' AS dar_status,
         latest_dar.data ->> 'closeoutSupplement' AS closeout,
+        dac.name AS dac_name,
         ARRAY_AGG(dar_all.reference_id) AS reference_ids
       FROM dar_collection c
       -- DAR Collection Researcher join
@@ -86,9 +90,9 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       GROUP BY
         c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id,
         latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
-        researcher.display_name, i.institution_name, e.election_id, e.status,
-        e.reference_id, e.dataset_id, v.vote_id, dd.dataset_id, v.user_id,
-        v.vote, v.election_id, v.create_date, v.update_date, v.type, latest_dar.data
+        latest_dar.requires_so_approval, latest_dar.approving_so_id, researcher.display_name, i.institution_name,
+        e.election_id, e.status, e.reference_id, e.dataset_id, v.vote_id, dd.dataset_id, v.user_id,
+        v.vote, v.election_id, v.create_date, v.update_date, v.type, latest_dar.data, dac.name
       """)
   List<DarCollectionSummary> getDarCollectionSummariesForDACRole(
       @Bind("currentUserId") Integer currentUserId, @Bind("roleId") Integer roleId);
@@ -97,9 +101,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = Election.class)
   @UseRowReducer(DarCollectionSummaryReducer.class)
-  @SqlQuery
-      (
-          """
+  @SqlQuery(
+      """
               SELECT c.collection_id as dar_collection_id,
                c.dar_code,
                latest_dar.submission_date,
@@ -107,6 +110,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                latest_dar.parent_id as latest_dar_parent_id,
                latest_dar.closeout_approving_so_id as latest_dar_closeout_approving_so_id,
                latest_dar.closeout_so_approval_timestamp as latest_dar_closeout_so_approval_timestamp,
+               latest_dar.requires_so_approval as latest_dar_requires_so_approval,
+               latest_dar.approving_so_id as latest_dar_so_approver_id,
                u.display_name as researcher_name,
                i.institution_name,
                e.election_id,
@@ -114,9 +119,11 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                e.dataset_id,
                e.reference_id,
                dd.dataset_id as dd_datasetid,
+               dac.name AS dac_name,
                latest_dar.data ->> 'projectTitle' AS name,
                latest_dar.data ->> 'status' AS dar_status,
                latest_dar.data ->> 'closeoutSupplement' AS closeout,
+               latest_dar.data ->> 'signingOfficialEmail' AS signingOfficialEmail,
                ARRAY_AGG(dar_all.reference_id) AS reference_ids
               FROM dar_collection c
               INNER JOIN users u
@@ -142,15 +149,17 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               ON e.reference_id = latest_dar.reference_id
               INNER JOIN dar_dataset dd
               ON latest_dar.reference_id = dd.reference_id
+              LEFT JOIN dataset ON dataset.dataset_id = dd.dataset_id
+              LEFT JOIN dac ON dac.dac_id = dataset.dac_id
               WHERE u.institution_id = :institutionId
                 AND (e.latest = e.election_id OR e.election_id IS NULL)
               GROUP BY
               c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id,
               latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
-              u.display_name, i.institution_name, e.election_id, e.status,
-              e.reference_id, e.dataset_id, dd.dataset_id, latest_dar.data
-          """
-      )
+              latest_dar.requires_so_approval, latest_dar.approving_so_id, u.display_name,
+              i.institution_name, e.election_id, e.status, e.reference_id, e.dataset_id,
+              dd.dataset_id, latest_dar.data, dac.name
+          """)
   List<DarCollectionSummary> getDarCollectionSummariesForSO(
       @Bind("institutionId") Integer institutionId);
 
@@ -158,7 +167,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = Election.class)
   @UseRowReducer(DarCollectionSummaryReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
           SELECT
               c.collection_id AS dar_collection_id,
               c.dar_code,
@@ -167,6 +177,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               latest_dar.parent_id AS latest_dar_parent_id,
               latest_dar.closeout_approving_so_id as latest_dar_closeout_approving_so_id,
               latest_dar.closeout_so_approval_timestamp as latest_dar_closeout_so_approval_timestamp,
+              latest_dar.requires_so_approval as latest_dar_requires_so_approval,
+              latest_dar.approving_so_id as latest_dar_so_approver_id,
               u.display_name AS researcher_name,
               i.institution_name,
               e.election_id,
@@ -204,8 +216,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
           GROUP BY
               c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id,
               latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
-              u.display_name, i.institution_name, e.election_id, e.status,
-              e.dataset_id, dd.dataset_id, latest_dar.data, dac.name
+              latest_dar.requires_so_approval, latest_dar.approving_so_id, u.display_name,
+              i.institution_name, e.election_id, e.status, e.dataset_id, dd.dataset_id, latest_dar.data, dac.name
       """)
   List<DarCollectionSummary> getDarCollectionSummariesForAdmin();
 
@@ -213,7 +225,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = Election.class)
   @UseRowReducer(DarCollectionSummaryReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
           SELECT
               c.collection_id AS dar_collection_id,
               c.dar_code,
@@ -222,6 +235,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               latest_dar.parent_id AS latest_dar_parent_id,
               latest_dar.closeout_approving_so_id as latest_dar_closeout_approving_so_id,
               latest_dar.closeout_so_approval_timestamp as latest_dar_closeout_so_approval_timestamp,
+              latest_dar.requires_so_approval as latest_dar_requires_so_approval,
+              latest_dar.approving_so_id as latest_dar_so_approver_id,
               u.display_name AS researcher_name,
               i.institution_name,
               e.election_id,
@@ -229,6 +244,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               e.dataset_id,
               e.reference_id AS election_reference_id,
               dd.dataset_id AS dd_datasetid,
+              dac.name AS dac_name,
               latest_dar.data ->> 'projectTitle' AS name,
               latest_dar.data ->> 'status' AS dar_status,
               latest_dar.data ->> 'closeoutSupplement' AS closeout,
@@ -258,13 +274,15 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
           ) AS e ON e.reference_id = latest_dar.reference_id
           INNER JOIN
               dar_dataset dd ON latest_dar.reference_id = dd.reference_id
+          LEFT JOIN dataset ON dataset.dataset_id = dd.dataset_id
+          LEFT JOIN dac ON dac.dac_id = dataset.dac_id
           WHERE
               c.create_user_id = :userId
               AND (e.latest = e.election_id OR e.election_id IS NULL)
           GROUP BY
               c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id, u.display_name, i.institution_name,
-              latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
-              e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id, latest_dar.data
+              latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp, latest_dar.requires_so_approval, latest_dar.approving_so_id,
+              e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id, latest_dar.data, dac.name
       """)
   List<DarCollectionSummary> getDarCollectionSummariesForResearcher(@Bind("userId") Integer userId);
 
@@ -273,17 +291,21 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
   @RegisterBeanMapper(value = Vote.class, prefix = "v")
   @RegisterBeanMapper(value = Election.class)
   @UseRowReducer(DarCollectionSummaryReducer.class)
-  @SqlQuery("""
+  @SqlQuery(
+      """
       SELECT c.collection_id as dar_collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id AS latest_dar_reference_id,
         latest_dar.parent_id AS latest_dar_parent_id,
         latest_dar.closeout_approving_so_id as latest_dar_closeout_approving_so_id,
         latest_dar.closeout_so_approval_timestamp as latest_dar_closeout_so_approval_timestamp,
+        latest_dar.requires_so_approval as latest_dar_requires_so_approval,
+        latest_dar.approving_so_id as latest_dar_so_approver_id,
         u.display_name as researcher_name, u.user_id as researcher_id,
         i.institution_name, i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, v.vote_id as v_vote_id, dd.dataset_id as dd_datasetid,
         v.user_id as v_user_id, v.vote as v_vote, v.election_id as v_election_id, v.create_date as v_create_date, v.update_date as v_update_date, v.type as v_type,
         latest_dar.data ->> 'projectTitle' AS name,
         latest_dar.data ->> 'status' AS dar_status,
         latest_dar.data ->> 'closeoutSupplement' AS closeout,
+        dac.name AS dac_name,
         ARRAY_AGG(dar_all.reference_id) AS reference_ids
       FROM dar_collection c
       INNER JOIN users u
@@ -311,6 +333,8 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         ON e.election_id = v.election_id
       INNER JOIN dar_dataset dd
         ON latest_dar.reference_id = dd.reference_id
+      LEFT JOIN dataset ON dataset.dataset_id = dd.dataset_id
+      LEFT JOIN dac ON dac.dac_id = dataset.dac_id
       WHERE c.collection_id= :collectionId
         AND dd.dataset_id IN (<datasetIds>)
         AND (e.latest = e.election_id OR e.election_id IS NULL)
@@ -318,30 +342,32 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       GROUP BY
         c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id,
         latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
+        latest_dar.requires_so_approval, latest_dar.approving_so_id,
         u.display_name, u.user_id,
         i.institution_name, i.institution_id, e.election_id, e.status,
         e.reference_id, e.dataset_id, v.vote_id, dd.dataset_id, v.user_id,
-        v.vote, v.election_id, v.create_date, v.update_date, v.type, latest_dar.data
+        v.vote, v.election_id, v.create_date, v.update_date, v.type, latest_dar.data, dac.name
       """)
   DarCollectionSummary getDarCollectionSummaryForDACByCollectionId(
       @Bind("currentUserId") Integer currentUserId,
       @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> datasetIds,
       @Bind("collectionId") Integer collectionId);
 
-
   @RegisterBeanMapper(value = DarCollectionSummary.class)
   @RegisterBeanMapper(value = DarCollection.class)
   @RegisterBeanMapper(value = Election.class)
   @UseRowReducer(DarCollectionSummaryReducer.class)
-  @SqlQuery
-      (
-          """
+  @SqlQuery(
+      """
               SELECT c.collection_id as dar_collection_id, c.dar_code, latest_dar.submission_date,
                 latest_dar.reference_id as latest_dar_reference_id, latest_dar.parent_id as latest_dar_parent_id,
                 latest_dar.closeout_approving_so_id as latest_dar_closeout_approving_so_id,
                 latest_dar.closeout_so_approval_timestamp as latest_dar_closeout_so_approval_timestamp,
+                latest_dar.requires_so_approval as latest_dar_requires_so_approval,
+                latest_dar.approving_so_id as latest_dar_so_approver_id,
                 u.display_name as researcher_name,
                 u.user_id as researcher_id, i.institution_name, i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id as dd_datasetid,
+                dac.name AS dac_name,
                 latest_dar.data ->> 'projectTitle' AS name,
                 latest_dar.data ->> 'status' AS dar_status,
                 latest_dar.data ->> 'closeoutSupplement' AS closeout,
@@ -370,15 +396,17 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               ON e.reference_id = latest_dar.reference_id
               INNER JOIN dar_dataset dd
               ON latest_dar.reference_id = dd.reference_id
+              LEFT JOIN dataset ON dataset.dataset_id = dd.dataset_id
+              LEFT JOIN dac ON dac.dac_id = dataset.dac_id
               WHERE c.collection_id = :collectionId
                 AND (e.latest = e.election_id OR e.election_id IS NULL)
               GROUP BY
                 c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id,
                 latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
-                u.display_name, u.user_id, i.institution_name,
-                i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id, latest_dar.data
-          """
-      )
+                latest_dar.requires_so_approval, latest_dar.approving_so_id,
+                latest_dar.requires_so_approval, latest_dar.approving_so_id, u.display_name, u.user_id, i.institution_name,
+                i.institution_id, e.election_id, e.status, e.dataset_id, e.reference_id, dd.dataset_id, latest_dar.data, dac.name
+          """)
   DarCollectionSummary getDarCollectionSummaryByCollectionId(
       @Bind("collectionId") Integer collectionId);
 }

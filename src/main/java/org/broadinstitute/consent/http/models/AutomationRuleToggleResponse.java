@@ -4,23 +4,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public final class AutomationRuleToggleResponse {
 
-  @JsonProperty
-  private final int ruleId;
+  @JsonProperty private final int ruleId;
 
-  @JsonProperty
-  private final boolean isRuleEnabled;
+  @JsonProperty private final boolean isRuleEnabled;
 
-  @JsonProperty
-  private final long enabledTime;
+  @JsonProperty private final long enabledTime;
 
-  @JsonProperty
-  private final String displayName;
+  @JsonProperty private final String displayName;
 
-  @JsonProperty
-  private final String email;
+  @JsonProperty private final String email;
 
-  public AutomationRuleToggleResponse(int id, boolean enabled, long enabledTime, String displayName,
-      String email) {
+  public AutomationRuleToggleResponse(
+      int id, boolean enabled, long enabledTime, String displayName, String email) {
     this.ruleId = id;
     this.isRuleEnabled = enabled;
     this.enabledTime = enabledTime;

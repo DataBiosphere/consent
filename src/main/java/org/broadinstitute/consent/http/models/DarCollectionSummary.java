@@ -16,48 +16,30 @@ import org.broadinstitute.consent.http.enumeration.DarCollectionActions;
 
 public class DarCollectionSummary {
 
-  @Expose
-  private Integer darCollectionId;
-  @Expose
-  private Set<String> referenceIds;
-  @Expose
-  private String darCode;
-  @Expose
-  private String name;
-  @Expose
-  private Timestamp submissionDate;
-  @Expose
-  private boolean expired;
-  @Expose
-  private Timestamp expiresAt;
-  @Expose
-  private String researcherName;
-  @Expose
-  private String institutionName;
-  @Expose
-  private String status;
-  @Expose
-  private Set<String> actions;
-  @Expose
-  private int datasetCount;
-  @Expose
-  private final Map<Integer, Set<String>> parentToReferenceIds;
-  @Expose
-  private boolean progressReport;
-  @Expose
-  private String latestReferenceId;
-  @Expose
-  private Integer closeoutSigningOfficialId;
-  @Expose
-  private Timestamp closeoutSigningOfficialApprovalDate;
-  @Expose
-  private List<String> dacNames;
-  @Expose
-  private Integer researcherId;
-  @Expose
-  private Integer institutionId;
-  @Expose
-  private Set<Integer> datasetIds;
+  @Expose private Integer darCollectionId;
+  @Expose private Set<String> referenceIds;
+  @Expose private String darCode;
+  @Expose private String name;
+  @Expose private Timestamp submissionDate;
+  @Expose private boolean expired;
+  @Expose private Timestamp expiresAt;
+  @Expose private String researcherName;
+  @Expose private String institutionName;
+  @Expose private String status;
+  @Expose private Set<String> actions;
+  @Expose private int datasetCount;
+  @Expose private final Map<Integer, Set<String>> parentToReferenceIds;
+  @Expose private boolean progressReport;
+  @Expose private String latestReferenceId;
+  @Expose private Integer closeoutSigningOfficialId;
+  @Expose private Timestamp closeoutSigningOfficialApprovalDate;
+  @Expose private List<String> dacNames;
+  @Expose private Integer researcherId;
+  @Expose private Integer institutionId;
+  @Expose private Set<Integer> datasetIds;
+  @Expose private boolean requiresSOApproval;
+  @Expose private Integer soApproverId;
+  private String signingOfficialEmail;
 
   // Normally unused by the UI, but used in data population. Can be included in the JSON response
   // if needed by using a GsonBuilder without `excludeFieldsWithoutExposeAnnotation`.
@@ -157,7 +139,10 @@ public class DarCollectionSummary {
   public void setSubmissionDate(Timestamp submissionDate) {
     this.submissionDate = submissionDate;
     if (submissionDate != null) {
-      this.expiresAt = Timestamp.from(Instant.ofEpochMilli(submissionDate.getTime() + DataAccessRequest.EXPIRATION_DURATION_MILLIS));
+      this.expiresAt =
+          Timestamp.from(
+              Instant.ofEpochMilli(
+                  submissionDate.getTime() + DataAccessRequest.EXPIRATION_DURATION_MILLIS));
       this.expired = this.expiresAt.before(Timestamp.from(Instant.now()));
     }
     updateProgressReportStatus();
@@ -222,6 +207,22 @@ public class DarCollectionSummary {
 
   public Set<Integer> getDatasetIds() {
     return datasetIds;
+  }
+
+  public void setRequiresSOApproval(boolean requiresSOApproval) {
+    this.requiresSOApproval = requiresSOApproval;
+  }
+
+  public boolean requiresSOApproval() {
+    return this.requiresSOApproval;
+  }
+
+  public void setSOApprover(Integer soUserId) {
+    this.soApproverId = soUserId;
+  }
+
+  public Integer getSOApprover() {
+    return this.soApproverId;
   }
 
   public void setDatasetIds(Set<Integer> datasetIds) {
@@ -299,9 +300,16 @@ public class DarCollectionSummary {
     return closeoutSupplement;
   }
 
-  public void setCloseoutSupplement(
-      CloseoutSupplement closeoutSupplement) {
+  public void setCloseoutSupplement(CloseoutSupplement closeoutSupplement) {
     this.closeoutSupplement = closeoutSupplement;
+  }
+
+  public void setSigningOfficialEmail(String signingOfficialEmail) {
+    this.signingOfficialEmail = signingOfficialEmail;
+  }
+
+  public String getSigningOfficialEmail() {
+    return this.signingOfficialEmail;
   }
 
   private void updateProgressReportStatus() {

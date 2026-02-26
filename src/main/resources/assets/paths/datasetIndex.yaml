@@ -7,3 +7,5 @@ post:
   responses:
     200:
       description: All datasets have been indexed
+    404:
+      description: No datasets found to index

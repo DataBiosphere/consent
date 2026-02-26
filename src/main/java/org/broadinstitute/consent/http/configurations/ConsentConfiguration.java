@@ -11,54 +11,34 @@ import jakarta.validation.constraints.NotNull;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ConsentConfiguration extends Configuration {
 
-  public ConsentConfiguration() {
-  }
+  public ConsentConfiguration() {}
 
-  @Valid
-  @NotNull
-  @JsonProperty
-  private final DataSourceFactory database = new DataSourceFactory();
+  @Valid @NotNull @JsonProperty private final DataSourceFactory database = new DataSourceFactory();
 
-  @Valid
-  @NotNull
-  @JsonProperty
+  @Valid @NotNull @JsonProperty
   private final StoreConfiguration googleStore = new StoreConfiguration();
 
-  @Valid
-  @NotNull
-  @JsonProperty
+  @Valid @NotNull @JsonProperty
   private final ServicesConfiguration services = new ServicesConfiguration();
 
-  @Valid
-  @NotNull
-  private JerseyClientConfiguration httpClient = new JerseyClientConfiguration();
+  @Valid @NotNull private JerseyClientConfiguration httpClient = new JerseyClientConfiguration();
 
-  @Valid
-  @NotNull
-  private MailConfiguration mailConfiguration = new MailConfiguration();
+  @Valid @NotNull private MailConfiguration mailConfiguration = new MailConfiguration();
 
-  @Valid
-  @NotNull
+  @Valid @NotNull
   private FreeMarkerConfiguration freeMarkerConfiguration = new FreeMarkerConfiguration();
 
-  @Valid
-  @NotNull
-  private GoogleOAuth2Config googleAuthentication = new GoogleOAuth2Config();
+  @Valid @NotNull private GoogleOAuth2Config googleAuthentication = new GoogleOAuth2Config();
 
   @JsonProperty("httpClient")
   public JerseyClientConfiguration getJerseyClientConfiguration() {
     return httpClient;
   }
 
-
-  @Valid
-  @NotNull
-  @JsonProperty
+  @Valid @NotNull @JsonProperty
   private final ElasticSearchConfiguration elasticSearch = new ElasticSearchConfiguration();
 
-  @Valid
-  @NotNull
-  @JsonProperty
+  @Valid @NotNull @JsonProperty
   private final OidcConfiguration oidcConfiguration = new OidcConfiguration();
 
   public DataSourceFactory getDataSourceFactory() {

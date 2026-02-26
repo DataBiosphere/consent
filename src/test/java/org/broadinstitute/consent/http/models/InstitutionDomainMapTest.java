@@ -19,10 +19,10 @@ class InstitutionDomainMapTest {
     assertNull(map.getInstitutionDomainMap());
 
     // set a test map
-    Map<String, Set<String>> testMap = Map.of(
-        "Broad Institute", Set.of("broadinstitute.org", "broad.mit.edu"),
-        "Harvard", Set.of("harvard.edu", "hms.harvard.edu")
-    );
+    Map<String, Set<String>> testMap =
+        Map.of(
+            "Broad Institute", Set.of("broadinstitute.org", "broad.mit.edu"),
+            "Harvard", Set.of("harvard.edu", "hms.harvard.edu"));
     map.setInstitutionDomainMap(testMap);
 
     assertEquals(testMap, map.getInstitutionDomainMap());
@@ -35,7 +35,8 @@ class InstitutionDomainMapTest {
     Gson gson = new Gson();
 
     // json string representation
-    String domainMapJson = """
+    String domainMapJson =
+        """
         {
           "institutionDomainMap": {
             "Broad Institute": ["broadinstitute.org", "broad.mit.edu"],
@@ -43,15 +44,14 @@ class InstitutionDomainMapTest {
           }
         }
         """;
-    InstitutionDomainMap map1 = gson.fromJson(domainMapJson,
-        InstitutionDomainMap.class);
+    InstitutionDomainMap map1 = gson.fromJson(domainMapJson, InstitutionDomainMap.class);
 
     // object representation
     InstitutionDomainMap map2 = new InstitutionDomainMap();
-    Map<String, Set<String>> domainMap = Map.of(
-        "Broad Institute", Set.of("broadinstitute.org", "broad.mit.edu"),
-        "Harvard", Set.of("harvard.edu", "hms.harvard.edu")
-    );
+    Map<String, Set<String>> domainMap =
+        Map.of(
+            "Broad Institute", Set.of("broadinstitute.org", "broad.mit.edu"),
+            "Harvard", Set.of("harvard.edu", "hms.harvard.edu"));
     map2.setInstitutionDomainMap(domainMap);
 
     String json = gson.toJson(map2);
@@ -65,10 +65,10 @@ class InstitutionDomainMapTest {
   @Test
   void testGetDomainsForInstitution() {
     InstitutionDomainMap map = new InstitutionDomainMap();
-    Map<String, Set<String>> testMap = Map.of(
-        "Broad Institute", Set.of("broadinstitute.org", "broad.mit.edu"),
-        "Harvard", Set.of("harvard.edu", "hms.harvard.edu")
-    );
+    Map<String, Set<String>> testMap =
+        Map.of(
+            "Broad Institute", Set.of("broadinstitute.org", "broad.mit.edu"),
+            "Harvard", Set.of("harvard.edu", "hms.harvard.edu"));
 
     map.setInstitutionDomainMap(testMap);
 

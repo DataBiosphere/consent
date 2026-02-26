@@ -3,9 +3,7 @@ package org.broadinstitute.consent.http.models;
 import java.util.Date;
 import java.util.List;
 
-/**
- * Convenience class for building Dacs.
- */
+/** Convenience class for building Dacs. */
 public class DacBuilder {
 
   private Dac dac;
@@ -62,5 +60,4 @@ public class DacBuilder {
     this.dac.setMembers(members);
     return this;
   }
-
 }

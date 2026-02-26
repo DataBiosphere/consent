@@ -12,7 +12,6 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
-import org.broadinstitute.consent.http.mail.message.NewLibraryCardIssuedMessage;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
@@ -27,9 +26,12 @@ public class LibraryCardService implements ConsentLogger {
   private final EmailService emailService;
 
   @Inject
-  public LibraryCardService(LibraryCardDAO libraryCardDAO, InstitutionDAO institutionDAO,
+  public LibraryCardService(
+      LibraryCardDAO libraryCardDAO,
+      InstitutionDAO institutionDAO,
       InstitutionService institutionService,
-      UserDAO userDAO, EmailService emailService) {
+      UserDAO userDAO,
+      EmailService emailService) {
     this.libraryCardDAO = libraryCardDAO;
     this.institutionDAO = institutionDAO;
     this.institutionService = institutionService;
@@ -43,19 +45,21 @@ public class LibraryCardService implements ConsentLogger {
     processUserOnNewLC(libraryCard);
     checkForValidInstitution(user.getInstitutionId(), libraryCard.getUserEmail());
     Date createDate = new Date();
-    Integer id = libraryCardDAO.insertLibraryCard(
-        libraryCard.getUserId(),
-        libraryCard.getUserName(),
-        libraryCard.getUserEmail(),
-        libraryCard.getCreateUserId(),
-        createDate);
+    Integer id =
+        libraryCardDAO.insertLibraryCard(
+            libraryCard.getUserId(),
+            libraryCard.getUserName(),
+            libraryCard.getUserEmail(),
+            libraryCard.getCreateUserId(),
+            createDate);
     User toUser = userDAO.findUserByEmail(libraryCard.getUserEmail());
     if (toUser != null) {
       try {
         emailService.sendNewLibraryCardIssuedMessage(toUser);
       } catch (IOException | TemplateException e) {
-          logWarn("Failed to send library card issuance notification for user " + user.getUserId(), e);
-        }
+        logWarn(
+            "Failed to send library card issuance notification for user " + user.getUserId(), e);
+      }
     }
     return libraryCardDAO.findLibraryCardById(id);
   }
@@ -140,7 +144,8 @@ public class LibraryCardService implements ConsentLogger {
     var userInstitution = institutionService.findInstitutionForEmail(userEmail);
     if (userInstitution == null || !userInstitution.getId().equals(institutionId)) {
       throw new BadRequestException(
-          "User email %s does not match institution %s".formatted(userEmail, institution.getName()));
+          "User email %s does not match institution %s"
+              .formatted(userEmail, institution.getName()));
     }
   }
 
@@ -156,7 +161,7 @@ public class LibraryCardService implements ConsentLogger {
     }
   }
 
-  //helper method for create method, checks to see if card already exists
+  // helper method for create method, checks to see if card already exists
   private void checkIfCardExists(LibraryCard payload) {
     LibraryCard result = null;
 
@@ -169,8 +174,11 @@ public class LibraryCardService implements ConsentLogger {
     }
 
     if (result != null) {
-      Boolean sameUserId = payload.getUserId() != null && result.getUserId().equals(payload.getUserId());
-      Boolean sameUserEmail = payload.getUserEmail() != null && result.getUserEmail().equalsIgnoreCase(payload.getUserEmail());
+      Boolean sameUserId =
+          payload.getUserId() != null && result.getUserId().equals(payload.getUserId());
+      Boolean sameUserEmail =
+          payload.getUserEmail() != null
+              && result.getUserEmail().equalsIgnoreCase(payload.getUserEmail());
       if (sameUserId || sameUserEmail) {
         throw new ConsentConflictException("Library card already exists for this user.");
       }

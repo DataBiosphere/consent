@@ -11,7 +11,8 @@ public class ApprovedDataset {
   private String datasetIdentifier;
   private final Timestamp expirationDate;
 
-  public ApprovedDataset(int alias, String darId, String datasetName, String dacName, Timestamp expirationDate) {
+  public ApprovedDataset(
+      int alias, String darId, String datasetName, String dacName, Timestamp expirationDate) {
     this.alias = alias;
     this.darCode = darId;
     this.datasetName = datasetName;
@@ -64,7 +65,6 @@ public class ApprovedDataset {
     return expirationDate;
   }
 
-
   public Boolean isApprovedDatasetEqual(ApprovedDataset that) {
     return this.getAlias() == that.getAlias()
         && this.getDatasetName().equals(that.getDatasetName())
@@ -72,5 +72,4 @@ public class ApprovedDataset {
         && this.getDarCode().equals(that.getDarCode())
         && this.getDacName().equals(that.getDacName());
   }
-
 }

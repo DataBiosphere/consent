@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.health;
 import com.codahale.metrics.health.HealthCheck;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
+import com.google.inject.Inject;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
@@ -14,6 +15,7 @@ public class SendGridHealthCheck extends HealthCheck implements Managed {
   private final HttpClientUtil clientUtil;
   private final MailConfiguration configuration;
 
+  @Inject
   public SendGridHealthCheck(HttpClientUtil clientUtil, MailConfiguration configuration) {
     this.clientUtil = clientUtil;
     this.configuration = configuration;
@@ -42,10 +44,8 @@ public class SendGridHealthCheck extends HealthCheck implements Managed {
   }
 
   @Override
-  public void start() throws Exception {
-  }
+  public void start() throws Exception {}
 
   @Override
-  public void stop() throws Exception {
-  }
+  public void stop() throws Exception {}
 }

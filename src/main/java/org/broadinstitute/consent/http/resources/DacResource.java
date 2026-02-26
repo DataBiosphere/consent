@@ -41,7 +41,8 @@ public class DacResource extends Resource {
   private final DatasetService datasetService;
 
   @Inject
-  public DacResource(DacService dacService, UserService userService, DatasetService datasetService) {
+  public DacResource(
+      DacService dacService, UserService userService, DatasetService datasetService) {
     this.dacService = dacService;
     this.userService = userService;
     this.datasetService = datasetService;
@@ -50,8 +51,8 @@ public class DacResource extends Resource {
   @GET
   @Produces("application/json")
   @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, RESEARCHER})
-  public Response findAll(@Auth AuthUser authUser,
-      @QueryParam("withUsers") Optional<Boolean> withUsers) {
+  public Response findAll(
+      @Auth AuthUser authUser, @QueryParam("withUsers") Optional<Boolean> withUsers) {
     try {
       final Boolean includeUsers = withUsers.orElse(true);
       List<Dac> dacs = dacService.findDacsWithMembersOption(includeUsers);
@@ -83,8 +84,12 @@ public class DacResource extends Resource {
         dacId = dacService.createDac(dac.getName(), dac.getDescription(), dac.getEmail());
       }
       if (dacId == null) {
-        throw new ServerErrorException("Unable to create DAC with name: " + dac.getName() + " and description: "
-            + dac.getDescription(), HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+        throw new ServerErrorException(
+            "Unable to create DAC with name: "
+                + dac.getName()
+                + " and description: "
+                + dac.getDescription(),
+            HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
       }
       Dac savedDac = dacService.findById(dacId);
       return Response.ok().entity(unmarshal(savedDac)).build();
@@ -135,9 +140,9 @@ public class DacResource extends Resource {
   @Path("{dacId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
-  public Response findById(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId) {
+  public Response findDacById(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId) {
     try {
-      Dac dac = findDacById(dacId);
+      Dac dac = findDacOrThrow(dacId);
       return Response.ok().entity(unmarshal(dac)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -150,7 +155,7 @@ public class DacResource extends Resource {
   @RolesAllowed({ADMIN})
   public Response deleteDac(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId) {
     try {
-      findDacById(dacId);
+      findDacOrThrow(dacId);
       User user = userService.findUserByEmail(authUser.getEmail());
       dacService.deleteDac(user, dacId);
       return Response.ok().build();
@@ -162,13 +167,15 @@ public class DacResource extends Resource {
   @POST
   @Path("{dacId}/member/{userId}")
   @RolesAllowed({ADMIN, CHAIRPERSON})
-  public Response addDacMember(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId,
+  public Response addDacMember(
+      @Auth AuthUser authUser,
+      @PathParam("dacId") Integer dacId,
       @PathParam("userId") Integer userId) {
     try {
       checkUserExistsInDac(dacId, userId);
       Role role = dacService.getMemberRole();
       User user = findDacUser(userId);
-      Dac dac = findDacById(dacId);
+      Dac dac = findDacOrThrow(dacId);
       checkUserRoleInDac(dac, authUser);
       User member = dacService.addDacMember(role, user, dac);
       return Response.ok().entity(member).build();
@@ -180,12 +187,14 @@ public class DacResource extends Resource {
   @DELETE
   @Path("{dacId}/member/{userId}")
   @RolesAllowed({ADMIN, CHAIRPERSON})
-  public Response removeDacMember(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId,
+  public Response removeDacMember(
+      @Auth AuthUser authUser,
+      @PathParam("dacId") Integer dacId,
       @PathParam("userId") Integer userId) {
     try {
       Role role = dacService.getMemberRole();
       User user = findDacUser(userId);
-      Dac dac = findDacById(dacId);
+      Dac dac = findDacOrThrow(dacId);
       checkUserRoleInDac(dac, authUser);
       User auditUser = userService.findUserByEmail(authUser.getEmail());
       dacService.removeDacMember(role, user, dac, auditUser.getUserId());
@@ -198,13 +207,15 @@ public class DacResource extends Resource {
   @POST
   @Path("{dacId}/chair/{userId}")
   @RolesAllowed({ADMIN, CHAIRPERSON})
-  public Response addDacChair(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId,
+  public Response addDacChair(
+      @Auth AuthUser authUser,
+      @PathParam("dacId") Integer dacId,
       @PathParam("userId") Integer userId) {
     try {
       checkUserExistsInDac(dacId, userId);
       Role role = dacService.getChairpersonRole();
       User user = findDacUser(userId);
-      Dac dac = findDacById(dacId);
+      Dac dac = findDacOrThrow(dacId);
       checkUserRoleInDac(dac, authUser);
       User member = dacService.addDacMember(role, user, dac);
       return Response.ok().entity(member).build();
@@ -216,12 +227,14 @@ public class DacResource extends Resource {
   @DELETE
   @Path("{dacId}/chair/{userId}")
   @RolesAllowed({ADMIN, CHAIRPERSON})
-  public Response removeDacChair(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId,
+  public Response removeDacChair(
+      @Auth AuthUser authUser,
+      @PathParam("dacId") Integer dacId,
       @PathParam("userId") Integer userId) {
     try {
       Role role = dacService.getChairpersonRole();
       User user = findDacUser(userId);
-      Dac dac = findDacById(dacId);
+      Dac dac = findDacOrThrow(dacId);
       checkUserRoleInDac(dac, authUser);
       User auditUser = userService.findUserByEmail(authUser.getEmail());
       dacService.removeDacMember(role, user, dac, auditUser.getUserId());
@@ -237,7 +250,7 @@ public class DacResource extends Resource {
   @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
   public Response findAllDacDatasets(@Auth AuthUser user, @PathParam("dacId") Integer dacId) {
     try {
-      Dac dac = findDacById(dacId);
+      Dac dac = findDacOrThrow(dacId);
       checkUserRoleInDac(dac, user);
       List<Dataset> datasets = dacService.findDatasetsByDacId(dacId);
       return Response.ok().entity(unmarshal(datasets)).build();
@@ -264,13 +277,16 @@ public class DacResource extends Resource {
   @Produces("application/json")
   @Path("{dacId}/dataset/{datasetId}")
   @RolesAllowed({CHAIRPERSON})
-  public Response approveDataset(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId,
-      @PathParam("datasetId") Integer datasetId, String json) {
+  public Response approveDataset(
+      @Auth AuthUser authUser,
+      @PathParam("dacId") Integer dacId,
+      @PathParam("datasetId") Integer datasetId,
+      String json) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       Dataset dataset = datasetService.findDatasetWithoutFSOInformation(datasetId);
       if (Objects.isNull(dataset) || !Objects.equals(dataset.getDacId(), dacId)) {
-        //Vague message is intentional, don't want to reveal too much info
+        // Vague message is intentional, don't want to reveal too much info
         throw new NotFoundException("Dataset not found");
       }
       boolean userHasRole = user.verifyDACRole(UserRoles.CHAIRPERSON.getRoleName(), dacId);
@@ -299,7 +315,7 @@ public class DacResource extends Resource {
     return user;
   }
 
-  private Dac findDacById(Integer dacId) {
+  private Dac findDacOrThrow(Integer dacId) {
     Dac dac = dacService.findById(dacId);
     if (dac == null) {
       throw new NotFoundException(
@@ -309,20 +325,17 @@ public class DacResource extends Resource {
   }
 
   /**
-   * Validate that a user is not already a member of a DAC. If they are, throw a conflict
-   * exception.
+   * Validate that a user is not already a member of a DAC. If they are, throw a conflict exception.
    *
-   * @param dacId  The DAC Id
+   * @param dacId The DAC Id
    * @param userId The User Id
    * @throws UnsupportedOperationException Conflicts
    */
   private void checkUserExistsInDac(Integer dacId, Integer userId)
       throws UnsupportedOperationException {
     List<User> currentMembers = dacService.findMembersByDacId(dacId);
-    Optional<User> isMember = currentMembers.
-        stream().
-        filter(u -> u.getUserId().equals(userId)).
-        findFirst();
+    Optional<User> isMember =
+        currentMembers.stream().filter(u -> u.getUserId().equals(userId)).findFirst();
     if (isMember.isPresent()) {
       // This is handled as a 409 Conflict
       throw new UnsupportedOperationException(
@@ -334,7 +347,7 @@ public class DacResource extends Resource {
    * - Admins can make any modifications to any Dac chairs or members - Chairpersons can only make
    * modifications to chairs and members in a DAC that they are a chairperson in.
    *
-   * @param dac      The Dac
+   * @param dac The Dac
    * @param authUser The AuthUser
    * @throws NotAuthorizedException Not authorized
    */
@@ -350,9 +363,10 @@ public class DacResource extends Resource {
       throw e;
     }
 
-    Optional<User> chair = dac.getChairpersons().stream()
-        .filter(u -> u.getUserId().equals(user.getUserId()))
-        .findFirst();
+    Optional<User> chair =
+        dac.getChairpersons().stream()
+            .filter(u -> u.getUserId().equals(user.getUserId()))
+            .findFirst();
     if (chair.isEmpty()) {
       throw e;
     }

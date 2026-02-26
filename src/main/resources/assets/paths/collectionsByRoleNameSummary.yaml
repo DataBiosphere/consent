@@ -1,5 +1,6 @@
 get:
   summary: Get DAR Collection Summaries By Role Name
+  operationId: getCollectionSummariesForUserByRole
   description: |
     Returns DAR collection summaries by Role Name
       * Admin - all DAR collection summaries
@@ -12,6 +13,7 @@ get:
     - name: roleName
       in: path
       description: String value that represents the role name to query by
+      required: true
       schema:
         type: string
         enum: [Admin, Chairperson, Member, SigningOfficial, Researcher]

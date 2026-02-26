@@ -10,22 +10,23 @@
   <name>Consent Management Services</name>
 
   <properties>
-    <java.version>21</java.version>
-    <maven.compiler.source>21</maven.compiler.source>
-    <maven.compiler.target>21</maven.compiler.target>
+    <java.version>25</java.version>
+    <maven.compiler.source>25</maven.compiler.source>
+    <maven.compiler.target>25</maven.compiler.target>
+    <maven.version>3.9.11</maven.version>
     <liquibase.version>4.33.0</liquibase.version>
-    <dropwizard.version>4.0.16</dropwizard.version>
-    <logback.version>1.5.18</logback.version>
-    <pact.version>4.6.17</pact.version>
+    <dropwizard.version>5.0.0</dropwizard.version>
+    <logback.version>1.5.25</logback.version>
     <postgres.version>42.7.8</postgres.version>
     <surefire.version>3.5.4</surefire.version>
-    <swagger.ui.version>5.28.1</swagger.ui.version>
+    <swagger.ui.version>5.31.0</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
     <mockserver.version>5.15.0</mockserver.version>
-    <junit.version>5.13.4</junit.version>
-    <mockito.version>5.19.0</mockito.version>
-    <sonar.plugin.version>5.2.0.4988</sonar.plugin.version>
-    <netty.override.version>4.1.127.Final</netty.override.version>
+    <junit.version>6.0.1</junit.version>
+    <mockito.version>5.21.0</mockito.version>
+    <sonar.plugin.version>5.5.0.6356</sonar.plugin.version>
+    <netty.override.version>4.2.9.Final</netty.override.version>
+    <spotless.version>3.1.0</spotless.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -53,29 +54,8 @@
                 -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar
                 -Xshare:off
               </argLine>
-              <systemPropertyVariables>
-                <pact.rootDir>target/pacts</pact.rootDir>
-              </systemPropertyVariables>
               <includes>**/*.java</includes>
               <excludes>**/integration/**/*.java</excludes>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>pact-tests</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>${surefire.version}</version>
-            <configuration>
-              <systemPropertyVariables>
-                <pact.rootDir>target/pacts</pact.rootDir>
-              </systemPropertyVariables>
-              <includes>**/pact/**/*.java</includes>
             </configuration>
           </plugin>
         </plugins>
@@ -120,16 +100,61 @@
     <plugins>
 
       <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>${spotless.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>${spotless.version}</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <java>
+            <googleJavaFormat/>
+          </java>
+        </configuration>
+        <executions>
+          <execution>
+            <id>spotless-check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>verify</phase>
+            <configuration>
+              <!-- In CI workflows, run verify. -->
+              <skip>${env.CI != true}</skip>
+            </configuration>
+          </execution>
+          <execution>
+            <id>spotless-apply</id>
+            <goals>
+              <goal>apply</goal>
+            </goals>
+            <phase>process-sources</phase>
+            <configuration>
+              <!-- In local workflows, run apply. -->
+              <skip>${env.CI}</skip>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
         <configuration>
           <nvdApiKeyEnvironmentVariable>NVD_API_KEY</nvdApiKeyEnvironmentVariable>
-          <failBuildOnCVSS>1</failBuildOnCVSS>
+          <failBuildOnCVSS>7.0</failBuildOnCVSS>
+          <ossIndexUsername>${OSS_INDEX_USERNAME}</ossIndexUsername>
+          <ossIndexPassword>${OSS_INDEX_PASSWORD}</ossIndexPassword>
           <suppressionFiles>
             <suppressionFile>owaspSuppression.xml</suppressionFile>
           </suppressionFiles>
+          <autoUpdate>true</autoUpdate>
         </configuration>
-        <version>12.1.3</version>
+        <version>12.1.9</version>
         <executions>
           <execution>
             <goals>
@@ -142,7 +167,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.6.1</version>
+        <version>3.6.2</version>
         <executions>
           <execution>
             <id>enforce-versions</id>
@@ -152,10 +177,10 @@
             <configuration>
               <rules>
                 <requireMavenVersion>
-                  <version>3.6.1</version>
+                  <version>${maven.version}</version>
                 </requireMavenVersion>
                 <requireJavaVersion>
-                  <version>{java.version}</version>
+                  <version>${java.version}</version>
                 </requireJavaVersion>
               </rules>
             </configuration>
@@ -232,7 +257,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.13</version>
+        <version>0.8.14</version>
         <executions>
           <execution>
             <id>prepare-agent</id>
@@ -259,16 +284,16 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.14.0</version>
+        <version>3.14.1</version>
         <configuration>
-          <release>17</release>
+          <release>${java.version}</release>
         </configuration>
       </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.8.1</version>
+        <version>3.9.0</version>
         <executions>
           <execution>
             <id>copy-dependencies</id>
@@ -332,6 +357,50 @@
           </execution>
         </executions>
       </plugin>
+
+      <!-- OpenAPI bundling using exec-maven-plugin -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.6.3</version>
+        <executions>
+          <execution>
+            <id>bundle-openapi</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>java</goal>
+            </goals>
+            <configuration>
+              <mainClass>org.broadinstitute.consent.http.util.OpenAPIBundler</mainClass>
+              <includePluginDependencies>true</includePluginDependencies>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- OpenAPI/Swagger Validator Plugin -->
+      <plugin>
+        <groupId>org.openapitools</groupId>
+        <artifactId>openapi-generator-maven-plugin</artifactId>
+        <version>7.18.0</version>
+        <executions>
+          <execution>
+            <id>validate-openapi-spec</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${project.basedir}/src/main/resources/assets/api-docs.yaml</inputSpec>
+              <generatorName>html2</generatorName>
+              <output>${project.build.directory}/openapi-validation</output>
+              <skipValidateSpec>false</skipValidateSpec>
+              <strictSpec>true</strictSpec>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
     <pluginManagement>
       <plugins>
@@ -350,7 +419,7 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.49.5</version>
+        <version>3.51.0</version>
         <scope>import</scope>
       </dependency>
       <dependency>
@@ -365,6 +434,13 @@
 
   <dependencies>
 
+    <!-- Swagger Parser for OpenAPI bundling -->
+    <dependency>
+      <groupId>io.swagger.parser.v3</groupId>
+      <artifactId>swagger-parser</artifactId>
+      <version>2.1.37</version>
+    </dependency>
+
     <!-- json-schema-validator 1.0.83 -> 1.0.84 introduced a breaking dependency change, it now requires jackson core -->
     <dependency>
       <groupId>com.networknt</groupId>
@@ -374,7 +450,7 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.20.0</version>
+      <version>2.20.1</version>
     </dependency>
 
     <dependency>
@@ -448,13 +524,13 @@
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcprov-jdk18on</artifactId>
-      <version>1.81</version>
+      <version>1.83</version>
     </dependency>
 
     <dependency>
       <groupId>org.apache.httpcomponents.client5</groupId>
       <artifactId>httpclient5</artifactId>
-      <version>5.5</version>
+      <version>5.6</version>
     </dependency>
 
     <dependency>
@@ -466,7 +542,7 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry</artifactId>
-      <version>8.21.1</version>
+      <version>8.29.0</version>
     </dependency>
 
     <dependency>
@@ -506,18 +582,11 @@
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-http2</artifactId>
       <version>${dropwizard.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.eclipse.jetty.http2</groupId>
-          <artifactId>http2-common</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
-    <!-- OWASP dependency vulnerability: http2-common-11.0.16.jar 10/12/2023 -->
     <dependency>
-      <groupId>org.eclipse.jetty.http2</groupId>
-      <artifactId>http2-common</artifactId>
+      <groupId>org.eclipse.jetty.http3</groupId>
+      <artifactId>http3-common</artifactId>
       <version>11.0.26</version>
     </dependency>
 
@@ -550,7 +619,7 @@
     <dependency>
       <groupId>ch.qos.logback.access</groupId>
       <artifactId>logback-access-common</artifactId>
-      <version>2.0.6</version>
+      <version>2.0.7</version>
     </dependency>
     <!-- Security update. See https://broadworkbench.atlassian.net/browse/DUOS-2826 -->
     <dependency>
@@ -596,35 +665,6 @@
       <version>${netty.override.version}</version>
     </dependency>
 
-    <!--suppress VulnerableLibrariesLocal -->
-    <dependency>
-      <groupId>au.com.dius.pact</groupId>
-      <artifactId>consumer</artifactId>
-      <version>${pact.version}</version>
-      <!-- See comments re: CVE-2023-33953 for google-cloud-storage -->
-      <exclusions>
-        <exclusion>
-          <groupId>io.grpc</groupId>
-          <artifactId>grpc-netty</artifactId>
-        </exclusion>
-      </exclusions>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>au.com.dius.pact</groupId>
-      <artifactId>provider</artifactId>
-      <version>${pact.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>au.com.dius.pact.consumer</groupId>
-      <artifactId>junit5</artifactId>
-      <version>${pact.version}</version>
-      <scope>test</scope>
-    </dependency>
-
     <dependency>
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-testing</artifactId>
@@ -649,7 +689,7 @@
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-launcher</artifactId>
-      <version>1.13.4</version>
+      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -691,9 +731,15 @@
     </dependency>
 
     <dependency>
+      <groupId>net.sourceforge.owlapi</groupId>
+      <artifactId>owlapi-distribution</artifactId>
+      <version>5.5.1</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <version>1.21.3</version>
+      <version>1.21.4</version>
       <scope>test</scope>
     </dependency>
 
@@ -701,7 +747,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>mockserver</artifactId>
-      <version>1.21.3</version>
+      <version>1.21.4</version>
       <scope>test</scope>
     </dependency>
 
@@ -724,13 +770,13 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>2.58.0</version>
+      <version>2.61.0</version>
     </dependency>
 
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <version>2.20.0</version>
+      <version>2.21.0</version>
     </dependency>
 
     <dependency>
@@ -760,13 +806,13 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <version>3.19.0</version>
+      <version>3.20.0</version>
     </dependency>
 
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>9.1.4</version>
+      <version>9.2.3</version>
     </dependency>
 
     <dependency>
@@ -779,7 +825,7 @@
     <dependency>
       <groupId>commons-validator</groupId>
       <artifactId>commons-validator</artifactId>
-      <version>1.10.0</version>
+      <version>1.10.1</version>
       <exclusions>
         <exclusion>
           <groupId>commons-beanutils</groupId>

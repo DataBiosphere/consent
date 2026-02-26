@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -33,23 +35,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class TDRServiceTest extends AbstractTestHelper {
 
-  @Mock
-  private DataAccessRequestService darService;
+  @Mock private DataAccessRequestService darService;
 
-  @Mock
-  private DatasetDAO datasetDAO;
+  @Mock private DatasetDAO datasetDAO;
 
-  @Mock
-  private LibraryCardDAO libraryCardDAO;
+  @Mock private LibraryCardDAO libraryCardDAO;
 
-  @Mock
-  private UserDAO userDAO;
+  @Mock private UserDAO userDAO;
 
-  @Mock
-  SamDAO samDAO;
+  @Mock SamDAO samDAO;
 
-  @Mock
-  AuthUser authUser;
+  @Mock AuthUser authUser;
   private TDRService service;
 
   private void initService() {
@@ -69,8 +65,7 @@ class TDRServiceTest extends AbstractTestHelper {
     DataAccessRequest dar1 = new DataAccessRequest();
     dar1.setUserId(user1.getUserId());
     DataAccessRequestData data = new DataAccessRequestData();
-    Collaborator lab =
-        new Collaborator(null, "lab@gmail.com", null, null, null, null, null);
+    Collaborator lab = new Collaborator(null, "lab@gmail.com", null, null, null, null, null);
     data.setLabCollaborators(List.of(lab));
     Collaborator internal =
         new Collaborator(null, "internal@gmail.com", null, null, null, null, null);
@@ -89,15 +84,15 @@ class TDRServiceTest extends AbstractTestHelper {
 
     when(darService.getApprovedDARsForDataset(dataset)).thenReturn(List.of(dar1, dar2));
     when(userDAO.findUsers(any())).thenReturn(List.of(user1, user2));
-    // Mock that the library cards exist for user 1, 2, and internal collaborator, but not the internal lab staff.
+    // Mock that the library cards exist for user 1, 2, and internal collaborator, but not the
+    // internal lab staff.
     when(libraryCardDAO.findByUserEmails(anyList()))
         .thenReturn(List.of(libraryCard1, libraryCard2, libraryCard3));
     initService();
 
     ApprovedUsers approvedUsers = service.getApprovedUsersForDataset(authUser, dataset);
-    List<String> approvedUsersEmails = approvedUsers.approvedUsers().stream()
-        .map(ApprovedUser::email)
-        .toList();
+    List<String> approvedUsersEmails =
+        approvedUsers.approvedUsers().stream().map(ApprovedUser::email).toList();
 
     assertTrue(
         approvedUsersEmails.containsAll(
@@ -105,8 +100,7 @@ class TDRServiceTest extends AbstractTestHelper {
         "Approved users should include user1, user2, and internal collaborator");
     assertFalse(
         approvedUsersEmails.contains(lab.email()),
-        "Lab collaborator should not be included as they do not have a library card"
-    );
+        "Lab collaborator should not be included as they do not have a library card");
   }
 
   @Test
@@ -149,11 +143,12 @@ class TDRServiceTest extends AbstractTestHelper {
   @Test
   void testGetDatasetsByIdentifier() {
     String identifiers = "DUOS-00001, DUOS-00002";
-    List<Integer> identifierList = Arrays.stream(identifiers.split(","))
-        .map(String::trim)
-        .filter(identifier -> !identifier.isBlank())
-        .map(Dataset::parseIdentifierToAlias)
-        .toList();
+    List<Integer> identifierList =
+        Arrays.stream(identifiers.split(","))
+            .map(String::trim)
+            .filter(identifier -> !identifier.isBlank())
+            .map(Dataset::parseIdentifierToAlias)
+            .toList();
 
     Dataset dataset1 = new Dataset();
     dataset1.setDatasetId(1);
@@ -172,4 +167,36 @@ class TDRServiceTest extends AbstractTestHelper {
     assertTrue(datasetIds.containsAll(List.of(dataset1, dataset2)));
   }
 
+  @Test
+  void testGetApprovedUsersForDataset_logsInfo() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setAlias(00001);
+    User user1 = new User();
+    user1.setUserId(1);
+    user1.setEmail("user1@example.com");
+    LibraryCard libraryCard1 = new LibraryCard();
+    libraryCard1.setUserEmail(user1.getEmail());
+    user1.setLibraryCard(libraryCard1);
+    DataAccessRequest dar1 = new DataAccessRequest();
+    dar1.setUserId(user1.getUserId());
+    dar1.setData(new DataAccessRequestData());
+
+    when(darService.getApprovedDARsForDataset(dataset)).thenReturn(List.of(dar1));
+    when(userDAO.findUsers(any())).thenReturn(List.of(user1));
+    when(libraryCardDAO.findByUserEmails(anyList())).thenReturn(List.of(libraryCard1));
+
+    // Spy the service to intercept logInfo
+    initService();
+    TDRService spyService = spy(service);
+    doNothing().when(spyService).logInfo(any());
+
+    spyService.getApprovedUsersForDataset(authUser, dataset);
+
+    verify(spyService)
+        .logInfo(
+            org.mockito.ArgumentMatchers.contains("Approved users requested. Requesting user:"));
+    verify(spyService).logInfo(org.mockito.ArgumentMatchers.contains("user1@example.com"));
+    verify(spyService).logInfo(org.mockito.ArgumentMatchers.contains("DUOS-000001"));
+  }
 }

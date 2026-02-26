@@ -29,7 +29,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -61,36 +60,36 @@ class DacServiceTest extends AbstractTestHelper {
 
   private DacService service;
 
-  @Mock
-  private DacDAO dacDAO;
+  @Mock private DacDAO dacDAO;
 
-  @Mock
-  private UserDAO userDAO;
+  @Mock private UserDAO userDAO;
 
-  @Mock
-  private DatasetDAO dataSetDAO;
+  @Mock private DatasetDAO dataSetDAO;
 
-  @Mock
-  private ElectionDAO electionDAO;
+  @Mock private ElectionDAO electionDAO;
 
-  @Mock
-  DataAccessRequestDAO dataAccessRequestDAO;
+  @Mock DataAccessRequestDAO dataAccessRequestDAO;
 
-  @Mock
-  private VoteService voteService;
+  @Mock private VoteService voteService;
 
-  @Mock
-  private DaaService daaService;
+  @Mock private DaaService daaService;
 
-  @Mock
-  private DacServiceDAO dacServiceDAO;
+  @Mock private DacServiceDAO dacServiceDAO;
 
-  @Mock
-  private DACAutomationRuleDAO  ruleDAO;
+  @Mock private DACAutomationRuleDAO ruleDAO;
 
   private void initService() {
-    service = new DacService(dacDAO, userDAO, dataSetDAO, electionDAO, dataAccessRequestDAO,
-        voteService, daaService, dacServiceDAO, ruleDAO);
+    service =
+        new DacService(
+            dacDAO,
+            userDAO,
+            dataSetDAO,
+            electionDAO,
+            dataAccessRequestDAO,
+            voteService,
+            daaService,
+            dacServiceDAO,
+            ruleDAO);
   }
 
   @Test
@@ -104,12 +103,12 @@ class DacServiceTest extends AbstractTestHelper {
   @Test
   void testFindAllWithDaas() {
     Dac broadDac = new Dac();
-    int broadDacId = randomInt(3,50);
+    int broadDacId = randomInt(3, 50);
     broadDac.setName("broadDac");
     broadDac.setDacId(broadDacId);
 
     Dac dac2 = new Dac();
-    int dac2Id = randomInt(3,50);
+    int dac2Id = randomInt(3, 50);
     dac2.setName("dac2");
     dac2.setDacId(dac2Id);
 
@@ -138,10 +137,10 @@ class DacServiceTest extends AbstractTestHelper {
   void testFindById() {
     int dacId = 1;
     when(dacDAO.findById(dacId)).thenReturn(getDacs().get(0));
-    when(dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.CHAIRPERSON.getRoleId())).thenReturn(
-        Collections.singletonList(getDacUsers().get(0)));
-    when(dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.MEMBER.getRoleId())).thenReturn(
-        Collections.singletonList(getDacUsers().get(1)));
+    when(dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.CHAIRPERSON.getRoleId()))
+        .thenReturn(Collections.singletonList(getDacUsers().get(0)));
+    when(dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.MEMBER.getRoleId()))
+        .thenReturn(Collections.singletonList(getDacUsers().get(1)));
     when(daaService.isBroadDAA(anyInt(), any(), any())).thenReturn(true);
     initService();
 
@@ -164,8 +163,8 @@ class DacServiceTest extends AbstractTestHelper {
 
   @Test
   void testCreateDacWithEmail() {
-    when(dacDAO.createDac(anyString(), anyString(), anyString(), any())).thenReturn(
-        getDacs().get(0).getDacId());
+    when(dacDAO.createDac(anyString(), anyString(), anyString(), any()))
+        .thenReturn(getDacs().get(0).getDacId());
     initService();
 
     Integer dacId = service.createDac("name", "description", "email@test.com");
@@ -212,13 +211,7 @@ class DacServiceTest extends AbstractTestHelper {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {
-      "Broad DAC",
-      "Dac 2",
-      "Dac 3",
-      "Dac 4",
-      "Dac 5"
-  })
+  @ValueSource(strings = {"Broad DAC", "Dac 2", "Dac 3", "Dac 4", "Dac 5"})
   void testDeleteDac(String dacName) {
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(randomInt(1, 10));
@@ -251,8 +244,8 @@ class DacServiceTest extends AbstractTestHelper {
 
   @Test
   void testFindMembersByDacId() {
-    when(dacDAO.findMembersByDacId(anyInt())).thenReturn(
-        Collections.singletonList(getDacUsers().get(0)));
+    when(dacDAO.findMembersByDacId(anyInt()))
+        .thenReturn(Collections.singletonList(getDacUsers().get(0)));
     when(dacDAO.findUserRolesForUsers(any())).thenReturn(getDacUsers().get(0).getRoles());
     initService();
 
@@ -268,14 +261,16 @@ class DacServiceTest extends AbstractTestHelper {
     Dac dac = getDacs().get(0);
     when(userDAO.findUserById(any())).thenReturn(user);
     when(userDAO.findUserById(any())).thenReturn(user);
-    List<Election> elections = getElections().stream().
-        map(e -> {
-          Election newE = gson.fromJson(gson.toJson(e), Election.class);
-          newE.setElectionType(ElectionType.DATA_ACCESS.getValue());
-          newE.setReferenceId(UUID.randomUUID().toString());
-          return newE;
-        }).
-        collect(Collectors.toList());
+    List<Election> elections =
+        getElections().stream()
+            .map(
+                e -> {
+                  Election newE = gson.fromJson(gson.toJson(e), Election.class);
+                  newE.setElectionType(ElectionType.DATA_ACCESS.getValue());
+                  newE.setReferenceId(UUID.randomUUID().toString());
+                  return newE;
+                })
+            .collect(Collectors.toList());
     DataAccessRequest dar = new DataAccessRequest();
     dar.setData(new DataAccessRequestData());
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
@@ -287,8 +282,8 @@ class DacServiceTest extends AbstractTestHelper {
     User user1 = service.addDacMember(role, user, dac);
     assertNotNull(user1);
     assertFalse(user1.getRoles().isEmpty());
-    verify(voteService, times(elections.size())).createVotesForUser(any(), any(), any(),
-        anyBoolean());
+    verify(voteService, times(elections.size()))
+        .createVotesForUser(any(), any(), any(), anyBoolean());
   }
 
   @Test
@@ -343,12 +338,14 @@ class DacServiceTest extends AbstractTestHelper {
     dac.setMembers(Collections.singletonList(getDacUsers().get(1)));
     initService();
 
-    assertThrows(BadRequestException.class, () -> {
-      service.removeDacMember(role, chair, dac, 1);
-      verify(dacDAO, times(0)).removeDacMember(anyInt());
-      verify(voteService, times(0)).deleteOpenDacVotesForUser(any(), any());
-      verify(ruleDAO, times(0)).auditedDeleteDACRuleSettingByUser(anyInt(), anyInt(), anyInt());
-    });
+    assertThrows(
+        BadRequestException.class,
+        () -> {
+          service.removeDacMember(role, chair, dac, 1);
+          verify(dacDAO, times(0)).removeDacMember(anyInt());
+          verify(voteService, times(0)).deleteOpenDacVotesForUser(any(), any());
+          verify(ruleDAO, times(0)).auditedDeleteDACRuleSettingByUser(anyInt(), anyInt(), anyInt());
+        });
   }
 
   @Test
@@ -371,7 +368,8 @@ class DacServiceTest extends AbstractTestHelper {
   void testFilterDataAccessRequestsByDAC_memberCase_1() {
     // Member has access to DataSet 1
     List<Dataset> memberDataSets = Collections.singletonList(getDatasets().get(0));
-    when(dataSetDAO.findDatasetIdsByDACUserId(getMember().getUserId())).thenReturn(List.of(memberDataSets.get(0).getDatasetId()));
+    when(dataSetDAO.findDatasetIdsByDACUserId(getMember().getUserId()))
+        .thenReturn(List.of(memberDataSets.get(0).getDatasetId()));
 
     initService();
 
@@ -387,7 +385,8 @@ class DacServiceTest extends AbstractTestHelper {
   void testFilterDataAccessRequestsByDAC_memberCase_2() {
     // Member has access to datasets
     List<Dataset> memberDataSets = Collections.singletonList(getDatasets().get(0));
-    when(dataSetDAO.findDatasetIdsByDACUserId(getMember().getUserId())).thenReturn(List.of(memberDataSets.get(0).getDatasetId()));
+    when(dataSetDAO.findDatasetIdsByDACUserId(getMember().getUserId()))
+        .thenReturn(List.of(memberDataSets.get(0).getDatasetId()));
 
     initService();
 
@@ -435,9 +434,7 @@ class DacServiceTest extends AbstractTestHelper {
     assertEquals(dacsForUser.size(), dacs.size());
   }
 
-
   /* Helper functions */
-
 
   private AuthUser getUser() {
     return new AuthUser("User");
@@ -447,42 +444,48 @@ class DacServiceTest extends AbstractTestHelper {
    * @return A list of 5 elections with DataSet ids
    */
   private List<Election> getElections() {
-    return IntStream.range(1, 5).
-        mapToObj(i -> {
-          Election election = new Election();
-          election.setDatasetId(i);
-          return election;
-        }).collect(Collectors.toList());
+    return IntStream.range(1, 5)
+        .mapToObj(
+            i -> {
+              Election election = new Election();
+              election.setDatasetId(i);
+              return election;
+            })
+        .collect(Collectors.toList());
   }
 
   /**
    * @return A list of 5 DataAccessRequest with DataSet ids and Reference ids
    */
   private List<DataAccessRequest> getDataAccessRequests() {
-    return IntStream.range(1, 5).
-        mapToObj(i -> {
-          String referenceId = UUID.randomUUID().toString();
-          List<Integer> datasetIds = Collections.singletonList(i);
-          DataAccessRequest dar = new DataAccessRequest();
-          dar.setReferenceId(referenceId);
-          DataAccessRequestData data = new DataAccessRequestData();
-          dar.setDatasetIds(datasetIds);
-          data.setReferenceId(referenceId);
-          dar.setData(data);
-          return dar;
-        }).collect(Collectors.toList());
+    return IntStream.range(1, 5)
+        .mapToObj(
+            i -> {
+              String referenceId = UUID.randomUUID().toString();
+              List<Integer> datasetIds = Collections.singletonList(i);
+              DataAccessRequest dar = new DataAccessRequest();
+              dar.setReferenceId(referenceId);
+              DataAccessRequestData data = new DataAccessRequestData();
+              dar.setDatasetIds(datasetIds);
+              data.setReferenceId(referenceId);
+              dar.setData(data);
+              return dar;
+            })
+        .collect(Collectors.toList());
   }
 
   /**
    * @return A list of 5 datasets with ids
    */
   private List<Dataset> getDatasets() {
-    return IntStream.range(1, 5).
-        mapToObj(i -> {
-          Dataset dataSet = new Dataset();
-          dataSet.setDatasetId(i);
-          return dataSet;
-        }).collect(Collectors.toList());
+    return IntStream.range(1, 5)
+        .mapToObj(
+            i -> {
+              Dataset dataSet = new Dataset();
+              dataSet.setDatasetId(i);
+              return dataSet;
+            })
+        .collect(Collectors.toList());
   }
 
   /**
@@ -491,15 +494,17 @@ class DacServiceTest extends AbstractTestHelper {
   private List<Dac> getDacs() {
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(1);
-    return IntStream.range(1, 5).
-        mapToObj(i -> {
-          Dac dac = new Dac();
-          dac.setDacId(i);
-          dac.setDescription("Dac " + i);
-          dac.setName("Dac " + i);
-          dac.setAssociatedDaa(daa);
-          return dac;
-        }).collect(Collectors.toList());
+    return IntStream.range(1, 5)
+        .mapToObj(
+            i -> {
+              Dac dac = new Dac();
+              dac.setDacId(i);
+              dac.setDescription("Dac " + i);
+              dac.setName("Dac " + i);
+              dac.setAssociatedDaa(daa);
+              return dac;
+            })
+        .collect(Collectors.toList());
   }
 
   /**
@@ -515,8 +520,15 @@ class DacServiceTest extends AbstractTestHelper {
     chair.setDisplayName("Chair");
     chair.setEmail("chair@duos.org");
     chair.setRoles(new ArrayList<>());
-    chair.getRoles().add(new UserRole(1, chair.getUserId(), UserRoles.CHAIRPERSON.getRoleId(),
-        UserRoles.CHAIRPERSON.getRoleName(), 1));
+    chair
+        .getRoles()
+        .add(
+            new UserRole(
+                1,
+                chair.getUserId(),
+                UserRoles.CHAIRPERSON.getRoleId(),
+                UserRoles.CHAIRPERSON.getRoleName(),
+                1));
     return chair;
   }
 
@@ -526,9 +538,15 @@ class DacServiceTest extends AbstractTestHelper {
     member.setDisplayName("Member");
     member.setEmail("member@duos.org");
     member.setRoles(new ArrayList<>());
-    member.getRoles().add(new UserRole(2, member.getUserId(), UserRoles.MEMBER.getRoleId(),
-        UserRoles.MEMBER.getRoleName(), 1));
+    member
+        .getRoles()
+        .add(
+            new UserRole(
+                2,
+                member.getUserId(),
+                UserRoles.MEMBER.getRoleId(),
+                UserRoles.MEMBER.getRoleName(),
+                1));
     return member;
   }
-
 }

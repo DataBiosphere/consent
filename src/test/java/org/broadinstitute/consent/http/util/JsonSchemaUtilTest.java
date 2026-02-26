@@ -1,11 +1,15 @@
 package org.broadinstitute.consent.http.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.networknt.schema.ValidationMessage;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -17,7 +21,8 @@ class JsonSchemaUtilTest {
 
   private static JsonSchemaUtil schemaUtil;
 
-  private final String datasetRegistrationInstance = """
+  private final String datasetRegistrationInstance =
+      """
       {
         "studyType": "Observational",
         "studyName": "name",
@@ -44,7 +49,6 @@ class JsonSchemaUtilTest {
       }
       """;
 
-
   @BeforeAll
   static void setUp() {
     schemaUtil = new JsonSchemaUtil();
@@ -65,8 +69,8 @@ class JsonSchemaUtilTest {
 
   @Test
   void testParseDatasetRegistrationObject_v1() {
-    DatasetRegistrationSchemaV1 instance = schemaUtil.deserializeDatasetRegistration(
-        datasetRegistrationInstance);
+    DatasetRegistrationSchemaV1 instance =
+        schemaUtil.deserializeDatasetRegistration(datasetRegistrationInstance);
     assertNotNull(instance);
     assertNotNull(instance.getStudyType());
     assertNotNull(instance.getStudyName());
@@ -79,13 +83,14 @@ class JsonSchemaUtilTest {
     assertFalse(instance.getDataCustodianEmail().isEmpty());
     assertNotNull(instance.getPublicVisibility());
     assertFalse(instance.getConsentGroups().isEmpty());
-    assertFalse(instance.getConsentGroups().get(0).getFileTypes().isEmpty());
-    assertNotNull(instance.getConsentGroups().get(0).getDataAccessCommitteeId());
+    assertFalse(instance.getConsentGroups().getFirst().getFileTypes().isEmpty());
+    assertNotNull(instance.getConsentGroups().getFirst().getDataAccessCommitteeId());
   }
 
   @Test
   void testValidateDatasetRegistrationObject_v1_valid_date() {
-    String instance = """
+    String instance =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -123,7 +128,8 @@ class JsonSchemaUtilTest {
 
   @Test
   void testValidateDatasetRegistrationObject_v1_invalid_dates() {
-    String instance = """
+    String instance =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -163,7 +169,8 @@ class JsonSchemaUtilTest {
 
   @Test
   void testValidateDatasetRegistrationObject_v1_gsr_explanation_conditionally_required() {
-    String noGsrSelected = """
+    String noGsrSelected =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -190,7 +197,8 @@ class JsonSchemaUtilTest {
           }]
         }
         """;
-    String gsrSelectedNoExplanation = """
+    String gsrSelectedNoExplanation =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -218,7 +226,8 @@ class JsonSchemaUtilTest {
         }
         """;
 
-    String gsrSelectedWithExplanation = """
+    String gsrSelectedWithExplanation =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -250,8 +259,8 @@ class JsonSchemaUtilTest {
     assertNoErrors(errors);
 
     errors = schemaUtil.validateSchema_v1(gsrSelectedNoExplanation);
-    assertFieldHasError(errors,
-        "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation");
+    assertFieldHasError(
+        errors, "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation");
 
     errors = schemaUtil.validateSchema_v1(gsrSelectedWithExplanation);
     assertNoErrors(errors);
@@ -260,7 +269,8 @@ class JsonSchemaUtilTest {
   @Test
   void testValidateDatasetRegistrationObject_v1_dbgap_info_conditionally_required() {
 
-    String anvilUseYesRequiresDbGapFields = """
+    String anvilUseYesRequiresDbGapFields =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -297,7 +307,8 @@ class JsonSchemaUtilTest {
   @Test
   void testParseValidateRegistrationObject_v1_nih_admin_info_conditionally_required() {
 
-    String anvilUseFundedHaveId = """
+    String anvilUseFundedHaveId =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -324,7 +335,8 @@ class JsonSchemaUtilTest {
         }
         """;
 
-    String anvilUseFundedNoId = """
+    String anvilUseFundedNoId =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -351,7 +363,8 @@ class JsonSchemaUtilTest {
         }
         """;
 
-    String anvilUseNotFundedSeekingToSubmit = """
+    String anvilUseNotFundedSeekingToSubmit =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -383,8 +396,8 @@ class JsonSchemaUtilTest {
 
     Set<ValidationMessage> fundedHaveIdErrors = schemaUtil.validateSchema_v1(anvilUseFundedHaveId);
     Set<ValidationMessage> fundedNoIdErrors = schemaUtil.validateSchema_v1(anvilUseFundedNoId);
-    Set<ValidationMessage> seekingToSubmitErrors = schemaUtil.validateSchema_v1(
-        anvilUseNotFundedSeekingToSubmit);
+    Set<ValidationMessage> seekingToSubmitErrors =
+        schemaUtil.validateSchema_v1(anvilUseNotFundedSeekingToSubmit);
 
     assertFieldHasError(fundedHaveIdErrors, "piInstitution");
     assertFieldHasError(fundedNoIdErrors, "piInstitution");
@@ -393,12 +406,12 @@ class JsonSchemaUtilTest {
     assertFieldHasError(fundedHaveIdErrors, "nihGrantContractNumber");
     assertFieldHasError(fundedNoIdErrors, "nihGrantContractNumber");
     assertFieldHasError(seekingToSubmitErrors, "nihGrantContractNumber");
-
   }
 
   @Test
   void testParseValidateRegistrationObject_v1_dac_id_conditionally_required() {
-    String openAccessNoDacId = """
+    String openAccessNoDacId =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -424,7 +437,8 @@ class JsonSchemaUtilTest {
         }
         """;
 
-    String controlledAccessNoDacId = """
+    String controlledAccessNoDacId =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -451,7 +465,8 @@ class JsonSchemaUtilTest {
         }
         """;
 
-    String noAccessManagementNoDacId = """
+    String noAccessManagementNoDacId =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -492,7 +507,8 @@ class JsonSchemaUtilTest {
 
   @Test
   void testParseValidateRegistrationObject_v1_consent_group_required() {
-    String noConsentGroup = """
+    String noConsentGroup =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -508,7 +524,8 @@ class JsonSchemaUtilTest {
         }
         """;
 
-    String emptyConsentGroup = """
+    String emptyConsentGroup =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -534,7 +551,8 @@ class JsonSchemaUtilTest {
 
   @Test
   void testValidateDatasetRegistrationObject_v1_file_types_not_required() {
-    String noFileTypes = """
+    String noFileTypes =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -557,7 +575,8 @@ class JsonSchemaUtilTest {
         }
         """;
 
-    String emptyFileTypes = """
+    String emptyFileTypes =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -588,10 +607,10 @@ class JsonSchemaUtilTest {
     assertNoErrors(errors);
   }
 
-
   @Test
   void testValidateDatasetRegistrationObject_v1_needs_at_least_one_disease() {
-    String emptyDiseaseSpecificUse = """
+    String emptyDiseaseSpecificUse =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -618,7 +637,8 @@ class JsonSchemaUtilTest {
         }
         """;
 
-    String filledDiseaseSpecificUse = """
+    String filledDiseaseSpecificUse =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -654,7 +674,8 @@ class JsonSchemaUtilTest {
 
   @Test
   void testValidateDatasetRegistrationObject_v1_only_one_primary_consent() {
-    String hmbAndGru = """
+    String hmbAndGru =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -682,7 +703,8 @@ class JsonSchemaUtilTest {
         }
         """;
 
-    String diseaseSpecificAndOpenAccess = """
+    String diseaseSpecificAndOpenAccess =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -718,8 +740,9 @@ class JsonSchemaUtilTest {
   }
 
   @Test
-  void testValidateDatasetRegistrationObject_v1_url_not_required_if_data_loc_not_determined() {
-    String notDeterminedNoURL = """
+  void testValidateDatasetRegistrationObject_v1_url_not_required_for_any_data_loc() {
+    String notDeterminedNoURL =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -745,8 +768,8 @@ class JsonSchemaUtilTest {
           }]
         }
         """;
-    ;
-    String tdrLocationNoUrl = """
+    String tdrLocationNoUrl =
+        """
         {
           "studyType": "Observational",
           "studyName": "name",
@@ -777,14 +800,13 @@ class JsonSchemaUtilTest {
     assertNoErrors(errors);
 
     errors = schemaUtil.validateSchema_v1(tdrLocationNoUrl);
-    assertFieldHasError(errors, "url");
-
+    assertNoErrors(errors);
   }
-
 
   @Test
   void testValidateDatasetRegistrationObject_v1_empty_string_is_invalid_if_required() {
-    String instance = """
+    String instance =
+        """
          {
            "studyType": "Observational",
            "studyName": "",
@@ -821,18 +843,57 @@ class JsonSchemaUtilTest {
     assertFieldHasError(errors, "studyDescription");
     assertFieldHasError(errors, "piName");
     assertFieldHasError(errors, "dbGaPPhsID");
-    assertFieldHasError(errors,
-        "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation");
+    assertFieldHasError(
+        errors, "controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation");
     assertFieldHasError(errors, "nihGrantContractNumber");
     assertFieldHasError(errors, "consentGroupName");
     assertFieldHasError(errors, "url");
   }
 
+  @Test
+  void testExtractLabelsAndDescriptions() throws ExecutionException {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+
+    // Ensure schema is loaded and labels/descriptions are extracted
+    util.getDatasetRegistrationSchema();
+
+    assertTrue(util.fieldLabels.containsKey("studyName"));
+    assertEquals("Study Name", util.fieldLabels.get("studyName"));
+    assertTrue(util.fieldDescriptions.containsKey("studyName"));
+    assertEquals("The study name", util.fieldDescriptions.get("studyName"));
+  }
+
+  @Test
+  void testFormatMessageRequired() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    ValidationMessage vm = mock(ValidationMessage.class);
+    when(vm.getType()).thenReturn("required");
+    when(vm.getArguments()).thenReturn(new Object[] {"studyName"});
+
+    String msg = util.formatMessage(vm);
+    assertTrue(msg.contains("is required"));
+  }
+
+  @Test
+  void testDisplayNameOverrides() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    String name = util.displayName("consentGroups");
+    assertEquals("Datasets", name);
+  }
+
+  @Test
+  void testDisplayNameFallback() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    String name = util.displayName("nonexistentField");
+    assertEquals("nonexistentField", name);
+  }
 
   private void assertNoErrors(Set<ValidationMessage> errors) {
-    assertTrue(errors.isEmpty(),
-        String.format("Should be empty, instead was: %s", errors.stream().map(
-            ValidationMessage::toString).toList()));
+    assertTrue(
+        errors.isEmpty(),
+        String.format(
+            "Should be empty, instead was: %s",
+            errors.stream().map(ValidationMessage::toString).toList()));
   }
 
   private void assertHasErrors(Set<ValidationMessage> errors) {

@@ -48,13 +48,14 @@ public class DarExpirationReminderMessageTest extends AbstractTestHelper {
     Document parsedTemplate = Jsoup.parse(templateString);
 
     assertEquals(
-        "Broad Data Use Oversight System - Your DAR is about to expire",
-        parsedTemplate.title());
+        "Broad Data Use Oversight System - Your DAR is about to expire", parsedTemplate.title());
     assertEquals("Hello %s,".formatted(userName), getElementTextById(parsedTemplate, "userName"));
     assertEquals(
-        "Your Data Access Request %s is expiring in 30 days. Please complete a progress report to preserve your access to this data.".formatted(
-            darCode), getElementTextById(parsedTemplate, "expirationWarning"));
-    assertEquals("Login to DUOS to submit a progress report.",
+        "Your Data Access Request %s is expiring in 30 days. Please complete a progress report to preserve your access to this data."
+            .formatted(darCode),
+        getElementTextById(parsedTemplate, "expirationWarning"));
+    assertEquals(
+        "Login to DUOS to submit a progress report.",
         getElementTextById(parsedTemplate, "loginLink"));
   }
 }

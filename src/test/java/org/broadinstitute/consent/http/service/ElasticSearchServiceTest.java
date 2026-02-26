@@ -1,12 +1,16 @@
 package org.broadinstitute.consent.http.service;
 
 import static jakarta.ws.rs.core.Response.Status.fromStatusCode;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.assets;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.data;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -16,21 +20,22 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Type;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpVersion;
 import org.apache.http.StatusLine;
@@ -81,45 +86,38 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
 
   private ElasticSearchService service;
 
-  @Mock
-  private RestClient esClient;
+  @Mock private RestClient esClient;
 
-  @Mock
-  private OntologyService ontologyService;
+  @Mock private OntologyService ontologyService;
 
-  @Mock
-  private ElasticSearchConfiguration esConfig;
+  @Mock private ElasticSearchConfiguration esConfig;
 
-  @Mock
-  private DacDAO dacDAO;
+  @Mock private DacDAO dacDAO;
 
-  @Mock
-  private UserDAO userDao;
+  @Mock private UserDAO userDao;
 
-  @Mock
-  private InstitutionDAO institutionDAO;
+  @Mock private InstitutionDAO institutionDAO;
 
-  @Mock
-  private DatasetDAO datasetDAO;
+  @Mock private DatasetDAO datasetDAO;
 
-  @Mock
-  private DatasetServiceDAO datasetServiceDAO;
+  @Mock private DatasetServiceDAO datasetServiceDAO;
 
-  @Mock
-  private StudyDAO studyDAO;
+  @Mock private StudyDAO studyDAO;
 
   @BeforeEach
   void initService() {
-    service = new ElasticSearchService(
-        esClient,
-        esConfig,
-        dacDAO,
-        userDao,
-        ontologyService,
-        institutionDAO,
-        datasetDAO,
-        datasetServiceDAO,
-        studyDAO);
+    service =
+        new ElasticSearchService(
+            esClient,
+            esConfig,
+            dacDAO,
+            userDao,
+            ontologyService,
+            institutionDAO,
+            datasetDAO,
+            datasetServiceDAO,
+            studyDAO);
+    service.setIndexKey("_index");
   }
 
   private void mockElasticSearchResponse(String body) throws IOException {
@@ -206,8 +204,8 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     return prop;
   }
 
-  private DatasetProperty createDatasetProperty(String schemaProp, PropertyType type,
-      String propertyName) {
+  private DatasetProperty createDatasetProperty(
+      String schemaProp, PropertyType type, String propertyName) {
     DatasetProperty prop = new DatasetProperty();
     prop.setSchemaProperty(schemaProp);
     prop.setPropertyType(type);
@@ -227,13 +225,9 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     return dataUseSummary;
   }
 
-  /**
-   * Private container record to consolidate dataset and associated object creation
-   */
-  private record DatasetRecord(User createUser, User updateUser, Dac dac, Dataset dataset,
-                               Study study) {
-
-  }
+  /** Private container record to consolidate dataset and associated object creation */
+  private record DatasetRecord(
+      User createUser, User updateUser, Dac dac, Dataset dataset, Study study) {}
 
   private DatasetRecord createDatasetRecord() {
     User user = createUser(1, 100);
@@ -244,47 +238,57 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
         createStudyProperty("dbGaPPhsID", PropertyType.String),
         createStudyProperty("phenotypeIndication", PropertyType.String),
         createStudyProperty("species", PropertyType.String),
-        createStudyProperty("dataCustodianEmail", PropertyType.Json)
-    );
+        createStudyProperty("dataCustodianEmail", PropertyType.Json),
+        createStudyProperty("throughBioId", PropertyType.String));
     Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
-    dataset.setProperties(Set.of(
-        createDatasetProperty("accessManagement", PropertyType.Boolean, "accessManagement"),
-        createDatasetProperty("numberOfParticipants", PropertyType.Number, "# of participants"),
-        createDatasetProperty("url", PropertyType.String, "url"),
-        createDatasetProperty("dataLocation", PropertyType.String, "dataLocation")
-    ));
+    dataset.setProperties(
+        Set.of(
+            createDatasetProperty("accessManagement", PropertyType.Boolean, "accessManagement"),
+            createDatasetProperty("numberOfParticipants", PropertyType.Number, "# of participants"),
+            createDatasetProperty("url", PropertyType.String, "url"),
+            createDatasetProperty("dataLocation", PropertyType.String, "dataLocation")));
     dataset.setStudy(study);
+    dataset.setStudyId(study.getStudyId());
+    study.addDatasetId(dataset.getDatasetId());
     return new DatasetRecord(user, updateUser, dac, dataset, study);
   }
 
-
   @Test
-  void testAsyncESIndexUpdate() {
+  void testIndexStudy() throws IOException {
     DatasetRecord datasetRecord = createDatasetRecord();
-    datasetRecord.dataset.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
-    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(
-        datasetRecord.createUser);
-    when(datasetDAO.findDatasetById(datasetRecord.dataset.getDatasetId())).thenReturn(datasetRecord.dataset);
+    when(userDao.findUserById(datasetRecord.createUser.getUserId()))
+        .thenReturn(datasetRecord.createUser);
+    when(datasetDAO.findDatasetsByIdList(datasetRecord.study.getDatasetIds()))
+        .thenReturn(List.of(datasetRecord.dataset));
+    when(studyDAO.findStudyById(datasetRecord.study.getStudyId())).thenReturn(datasetRecord.study);
+    org.elasticsearch.client.Response mockResponse = mock();
+    when(esClient.performRequest(any())).thenReturn(mockResponse);
+    when(mockResponse.getEntity()).thenReturn(new StringEntity("response body"));
+    StatusLine statusLine = mock();
+    when(mockResponse.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(200);
+
     ElasticSearchService elasticSearchSpy = spy(service);
-    // Call the async method ...
-    elasticSearchSpy.asyncDatasetInESIndex(datasetRecord.dataset.getDatasetId(), datasetRecord.createUser, true);
+
+    jakarta.ws.rs.core.Response response =
+        elasticSearchSpy.indexStudy(datasetRecord.study.getStudyId());
     // Ensure that the synchronous method was called with the expected parameters
-    verify(elasticSearchSpy, timeout(1000)).synchronizeDatasetInESIndex(datasetRecord.dataset, datasetRecord.dataset.getCreateUser(), true);
+    verify(elasticSearchSpy, timeout(1000))
+        .synchronizeDatasetListInESIndex(List.of(datasetRecord.dataset));
+    assertEquals(200, response.getStatus());
   }
 
   @Test
   void testToDatasetTerm_UserInfo() {
     DatasetRecord datasetRecord = createDatasetRecord();
-    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(
-        datasetRecord.createUser);
-    when(userDao.findUserById(datasetRecord.updateUser.getUserId())).thenReturn(
-        datasetRecord.updateUser);
-    when(
-        institutionDAO.findInstitutionById(datasetRecord.createUser.getInstitutionId())).thenReturn(
-        datasetRecord.createUser.getInstitution());
-    when(
-        institutionDAO.findInstitutionById(datasetRecord.updateUser.getInstitutionId())).thenReturn(
-        datasetRecord.updateUser.getInstitution());
+    when(userDao.findUserById(datasetRecord.createUser.getUserId()))
+        .thenReturn(datasetRecord.createUser);
+    when(userDao.findUserById(datasetRecord.updateUser.getUserId()))
+        .thenReturn(datasetRecord.updateUser);
+    when(institutionDAO.findInstitutionById(datasetRecord.createUser.getInstitutionId()))
+        .thenReturn(datasetRecord.createUser.getInstitution());
+    when(institutionDAO.findInstitutionById(datasetRecord.updateUser.getInstitutionId()))
+        .thenReturn(datasetRecord.updateUser.getInstitution());
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
 
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
@@ -292,54 +296,100 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     assertEquals(datasetRecord.createUser.getDisplayName(), term.getCreateUserDisplayName());
     assertEquals(datasetRecord.createUser.getUserId(), term.getSubmitter().userId());
     assertEquals(datasetRecord.createUser.getDisplayName(), term.getSubmitter().displayName());
-    assertEquals(datasetRecord.createUser.getInstitutionId(),
-        term.getSubmitter().institution().id());
-    assertEquals(datasetRecord.createUser.getInstitution().getName(),
+    assertEquals(
+        datasetRecord.createUser.getInstitutionId(), term.getSubmitter().institution().id());
+    assertEquals(
+        datasetRecord.createUser.getInstitution().getName(),
         term.getSubmitter().institution().name());
     assertEquals(datasetRecord.updateUser.getUserId(), term.getUpdateUser().userId());
     assertEquals(datasetRecord.updateUser.getDisplayName(), term.getUpdateUser().displayName());
-    assertEquals(datasetRecord.updateUser.getInstitutionId(),
-        term.getUpdateUser().institution().id());
-    assertEquals(datasetRecord.updateUser.getInstitution().getName(),
+    assertEquals(
+        datasetRecord.updateUser.getInstitutionId(), term.getUpdateUser().institution().id());
+    assertEquals(
+        datasetRecord.updateUser.getInstitution().getName(),
         term.getUpdateUser().institution().name());
   }
 
   @Test
   void testToDatasetTerm_StudyInfo() {
     DatasetRecord datasetRecord = createDatasetRecord();
-    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(
-        datasetRecord.createUser);
-    when(userDao.findUserById(datasetRecord.updateUser.getUserId())).thenReturn(
-        datasetRecord.updateUser);
+    when(userDao.findUserById(datasetRecord.createUser.getUserId()))
+        .thenReturn(datasetRecord.createUser);
+    when(userDao.findUserById(datasetRecord.updateUser.getUserId()))
+        .thenReturn(datasetRecord.updateUser);
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
 
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
     assertEquals(datasetRecord.study.getDescription(), term.getStudy().getDescription());
     assertEquals(datasetRecord.study.getName(), term.getStudy().getStudyName());
     assertEquals(datasetRecord.study.getStudyId(), term.getStudy().getStudyId());
-    Optional<StudyProperty> phsIdProp = datasetRecord.study.getProperties().stream()
-        .filter(p -> p.getKey().equals("dbGaPPhsID")).findFirst();
+    Optional<StudyProperty> phsIdProp =
+        datasetRecord.study.getProperties().stream()
+            .filter(p -> p.getKey().equals("dbGaPPhsID"))
+            .findFirst();
     assertTrue(phsIdProp.isPresent());
     assertEquals(phsIdProp.get().getValue().toString(), term.getStudy().getPhsId());
-    Optional<StudyProperty> phenoProp = datasetRecord.study.getProperties().stream()
-        .filter(p -> p.getKey().equals("phenotypeIndication")).findFirst();
+    Optional<StudyProperty> phenoProp =
+        datasetRecord.study.getProperties().stream()
+            .filter(p -> p.getKey().equals("phenotypeIndication"))
+            .findFirst();
     assertTrue(phenoProp.isPresent());
     assertEquals(phenoProp.get().getValue().toString(), term.getStudy().getPhenotype());
-    Optional<StudyProperty> speciesProp = datasetRecord.study.getProperties().stream()
-        .filter(p -> p.getKey().equals("species")).findFirst();
+    Optional<StudyProperty> speciesProp =
+        datasetRecord.study.getProperties().stream()
+            .filter(p -> p.getKey().equals("species"))
+            .findFirst();
     assertTrue(speciesProp.isPresent());
     assertEquals(speciesProp.get().getValue().toString(), term.getStudy().getSpecies());
     assertEquals(datasetRecord.study.getPiName(), term.getStudy().getPiName());
     assertEquals(datasetRecord.study.getCreateUserEmail(), term.getStudy().getDataSubmitterEmail());
     assertEquals(datasetRecord.study.getCreateUserId(), term.getStudy().getDataSubmitterId());
-    Optional<StudyProperty> custodianProp = datasetRecord.study.getProperties().stream()
-        .filter(p -> p.getKey().equals("dataCustodianEmail")).findFirst();
+    Optional<StudyProperty> custodianProp =
+        datasetRecord.study.getProperties().stream()
+            .filter(p -> p.getKey().equals("dataCustodianEmail"))
+            .findFirst();
     assertTrue(custodianProp.isPresent());
-    String termCustodians = GsonUtil.getInstance()
-        .toJson(term.getStudy().getDataCustodianEmail(), ArrayList.class);
+    String termCustodians =
+        GsonUtil.getInstance().toJson(term.getStudy().getDataCustodianEmail(), ArrayList.class);
     assertEquals(custodianProp.get().getValue().toString(), termCustodians);
     assertEquals(datasetRecord.study.getPublicVisibility(), term.getStudy().getPublicVisibility());
     assertEquals(datasetRecord.study.getDataTypes(), term.getStudy().getDataTypes());
+    Optional<StudyProperty> throughBioIdProp =
+        datasetRecord.study.getProperties().stream()
+            .filter(p -> p.getKey().equals("throughBioId"))
+            .findFirst();
+    assertTrue(throughBioIdProp.isPresent());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {assets, data})
+  void testToDatasetTerm_JsonBlobs(String propKey) {
+    DatasetRecord datasetRecord = createDatasetRecord();
+    Map<String, Object> refMap = Map.of("key", List.of("value1", "value2"));
+    String refJson = GsonUtil.getInstance().toJson(refMap);
+    StudyProperty jsonBlob = new StudyProperty();
+    jsonBlob.setStudyId(datasetRecord.study.getStudyId());
+    jsonBlob.setKey(propKey);
+    jsonBlob.setType(PropertyType.Json);
+    jsonBlob.setValue(GsonUtil.getInstance().fromJson(refJson, Object.class));
+    datasetRecord.study.addProperty(jsonBlob);
+
+    when(userDao.findUserById(datasetRecord.createUser.getUserId()))
+        .thenReturn(datasetRecord.createUser);
+    when(userDao.findUserById(datasetRecord.updateUser.getUserId()))
+        .thenReturn(datasetRecord.updateUser);
+    when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
+
+    DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
+    switch (propKey) {
+      case assets:
+        assertEquals(refMap, term.getStudy().getAssets());
+        return;
+      case data:
+        assertEquals(refMap, term.getStudy().getData());
+        return;
+      default:
+    }
   }
 
   @Test
@@ -350,10 +400,10 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     dar2.setUserId(2);
     DataUseSummary dataUseSummary = createDataUseSummary();
     DatasetRecord datasetRecord = createDatasetRecord();
-    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(
-        datasetRecord.createUser);
-    when(userDao.findUserById(datasetRecord.updateUser.getUserId())).thenReturn(
-        datasetRecord.updateUser);
+    when(userDao.findUserById(datasetRecord.createUser.getUserId()))
+        .thenReturn(datasetRecord.createUser);
+    when(userDao.findUserById(datasetRecord.updateUser.getUserId()))
+        .thenReturn(datasetRecord.updateUser);
     LibraryCard card1 = new LibraryCard();
     card1.setUserId(dar1.getUserId());
     LibraryCard card2 = new LibraryCard();
@@ -368,34 +418,71 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     assertEquals(datasetRecord.dataset.getName(), term.getDatasetName());
     assertEquals(datasetRecord.dataset.getDatasetName(), term.getDatasetName());
 
-    Optional<DatasetProperty> countProp = datasetRecord.dataset.getProperties().stream()
-        .filter(p -> p.getSchemaProperty().equals("numberOfParticipants")).findFirst();
+    Optional<DatasetProperty> countProp =
+        datasetRecord.dataset.getProperties().stream()
+            .filter(p -> p.getSchemaProperty().equals("numberOfParticipants"))
+            .findFirst();
     assertTrue(countProp.isPresent());
-    assertEquals(Integer.valueOf(countProp.get().getPropertyValue().toString()),
-        term.getParticipantCount());
+    assertEquals(
+        Integer.valueOf(countProp.get().getPropertyValue().toString()), term.getParticipantCount());
     assertEquals(dataUseSummary, term.getDataUse());
-    Optional<DatasetProperty> locationProp = datasetRecord.dataset.getProperties().stream()
-        .filter(p -> p.getSchemaProperty().equals("dataLocation")).findFirst();
+    Optional<DatasetProperty> locationProp =
+        datasetRecord.dataset.getProperties().stream()
+            .filter(p -> p.getSchemaProperty().equals("dataLocation"))
+            .findFirst();
     assertTrue(locationProp.isPresent());
     assertEquals(locationProp.get().getPropertyValue().toString(), term.getDataLocation());
-    Optional<DatasetProperty> urlProp = datasetRecord.dataset.getProperties().stream()
-        .filter(p -> p.getSchemaProperty().equals("url")).findFirst();
+    Optional<DatasetProperty> urlProp =
+        datasetRecord.dataset.getProperties().stream()
+            .filter(p -> p.getSchemaProperty().equals("url"))
+            .findFirst();
     assertTrue(urlProp.isPresent());
     assertEquals(urlProp.get().getPropertyValue().toString(), term.getUrl());
     assertEquals(datasetRecord.dataset.getDacApproval(), term.getDacApproval());
-    Optional<DatasetProperty> accessManagementProp = datasetRecord.dataset.getProperties().stream()
-        .filter(p -> p.getSchemaProperty().equals("accessManagement")).findFirst();
+    Optional<DatasetProperty> accessManagementProp =
+        datasetRecord.dataset.getProperties().stream()
+            .filter(p -> p.getSchemaProperty().equals("accessManagement"))
+            .findFirst();
     assertTrue(accessManagementProp.isPresent());
-    assertEquals(accessManagementProp.get().getPropertyValue().toString(),
-        term.getAccessManagement());
+    assertEquals(
+        accessManagementProp.get().getPropertyValue().toString(), term.getAccessManagement());
+  }
+
+  @Test
+  void testToDatasetTerm_Data() {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    Set<DatasetProperty> datasetProperties = new HashSet<>();
+    Map<String, Object> refMap = Map.of("key", List.of("value1", "value2"));
+    DatasetProperty newProperty =
+        new DatasetProperty(
+            99,
+            dataset.getDatasetId(),
+            99,
+            data,
+            GsonUtil.getInstance().toJson(refMap),
+            PropertyType.Json,
+            new Date());
+    newProperty.setPropertyName(data);
+    newProperty.setSchemaProperty(data);
+    datasetProperties.add(newProperty);
+    dataset.setProperties(datasetProperties);
+
+    DatasetTerm term = service.toDatasetTerm(dataset);
+    Optional<DatasetProperty> dataProp =
+        dataset.getProperties().stream()
+            .filter(p -> p.getSchemaProperty().equals(data))
+            .findFirst();
+    assertTrue(dataProp.isPresent());
+    assertEquals(refMap, term.getData());
   }
 
   @Test
   void testToDatasetTerm_DacInfo() {
     DatasetRecord datasetRecord = createDatasetRecord();
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
-    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(
-        datasetRecord.createUser);
+    when(userDao.findUserById(datasetRecord.createUser.getUserId()))
+        .thenReturn(datasetRecord.createUser);
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
 
     assertEquals(datasetRecord.dataset.getDacApproval(), term.getDacApproval());
@@ -408,22 +495,23 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   void testToDatasetTerm_NIHInstitutionalCertification() {
     DatasetRecord datasetRecord = createDatasetRecord();
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
-    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(
-        datasetRecord.createUser);
+    when(userDao.findUserById(datasetRecord.createUser.getUserId()))
+        .thenReturn(datasetRecord.createUser);
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
-    assertEquals(datasetRecord.dataset.getNihInstitutionalCertificationFile() != null, term.getHasInstitutionCertification());
+    assertEquals(
+        datasetRecord.dataset.getNihInstitutionalCertificationFile() != null,
+        term.getHasInstitutionCertification());
   }
-
 
   @Test
   void testToDatasetTerm_Missing_NIHInstitutionalCertification() {
     DatasetRecord datasetRecord = createDatasetRecord();
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
-    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(
-        datasetRecord.createUser);
+    when(userDao.findUserById(datasetRecord.createUser.getUserId()))
+        .thenReturn(datasetRecord.createUser);
     datasetRecord.dataset.setNihInstitutionalCertificationFile(null);
     DatasetTerm term = service.toDatasetTerm(datasetRecord.dataset);
-    assertEquals(null, term.getHasInstitutionCertification());
+    assertNull(term.getHasInstitutionCertification());
   }
 
   @Test
@@ -435,20 +523,19 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     study.addProperties(
         createStudyProperty("phenotypeIndication", PropertyType.String),
         createStudyProperty("species", PropertyType.String),
-        createStudyProperty("dataCustodianEmail", PropertyType.Json)
-    );
+        createStudyProperty("dataCustodianEmail", PropertyType.Json));
     Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
-    dataset.setProperties(Set.of(
-        createDatasetProperty("numberOfParticipants", PropertyType.String, "# of participants"),
-        createDatasetProperty("url", PropertyType.String, "url")
-    ));
+    dataset.setProperties(
+        Set.of(
+            createDatasetProperty("numberOfParticipants", PropertyType.String, "# of participants"),
+            createDatasetProperty("url", PropertyType.String, "url")));
     dataset.setStudy(study);
     DatasetRecord datasetRecord = new DatasetRecord(user, updateUser, dac, dataset, study);
     when(dacDAO.findById(any())).thenReturn(dac);
     when(userDao.findUserById(user.getUserId())).thenReturn(user);
     when(dacDAO.findById(any())).thenReturn(datasetRecord.dac);
-    when(userDao.findUserById(datasetRecord.createUser.getUserId())).thenReturn(
-        datasetRecord.createUser);
+    when(userDao.findUserById(datasetRecord.createUser.getUserId()))
+        .thenReturn(datasetRecord.createUser);
     assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
   }
 
@@ -483,8 +570,7 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
   }
 
-  @Captor
-  ArgumentCaptor<Request> request;
+  @Captor ArgumentCaptor<Request> request;
 
   @Test
   void testIndexDatasetTerms() throws IOException {
@@ -492,26 +578,45 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     term1.setDatasetId(1);
     DatasetTerm term2 = new DatasetTerm();
     term2.setDatasetId(2);
-    User user = new User();
-    user.setUserId(1);
     String datasetIndexName = randomAlphabetic(10);
 
     when(esConfig.getDatasetIndexName()).thenReturn(datasetIndexName);
     mockElasticSearchResponse("");
 
-    try (var response = service.indexDatasetTerms(List.of(term1, term2), user)) {
+    try (var _ = service.indexDatasetTerms(List.of(term1, term2))) {
       verify(esClient).performRequest(request.capture());
       Request capturedRequest = request.getValue();
       assertEquals("PUT", capturedRequest.getMethod());
-      assertEquals("""
-              { "index": {"_type": "dataset", "_id": "1"} }
+      assertEquals(
+          """
+              { "index": {"_index": "dataset", "_id": "1"} }
               {"datasetId":1}
-              { "index": {"_type": "dataset", "_id": "2"} }
+              { "index": {"_index": "dataset", "_id": "2"} }
               {"datasetId":2}
-              
+
               """,
-          new String(capturedRequest.getEntity().getContent().readAllBytes(),
-              StandardCharsets.UTF_8));
+          new String(
+              capturedRequest.getEntity().getContent().readAllBytes(), StandardCharsets.UTF_8));
+    }
+  }
+
+  @Test
+  void testIndexDataset() throws Exception {
+    DatasetRecord datasetRecord = createDatasetRecord();
+    Dataset dataset1 = datasetRecord.dataset;
+    when(datasetDAO.findDatasetsByIdList(List.of(dataset1.getDatasetId())))
+        .thenReturn(List.of(dataset1));
+    when(studyDAO.findStudyById(datasetRecord.study.getStudyId())).thenReturn(datasetRecord.study);
+    when(userDao.findUserById(dataset1.getCreateUserId())).thenReturn(datasetRecord.createUser);
+    org.elasticsearch.client.Response mockResponse = mock();
+    when(esClient.performRequest(any())).thenReturn(mockResponse);
+    when(mockResponse.getEntity()).thenReturn(new StringEntity("response body"));
+    StatusLine statusLine = mock();
+    when(mockResponse.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(200);
+    try (var _ = service.indexDataset(dataset1.getDatasetId())) {
+      verify(datasetDAO, times(1)).findDatasetsByIdList(List.of(dataset1.getDatasetId()));
+      verify(studyDAO, times(1)).findStudyById(dataset1.getStudyId());
     }
   }
 
@@ -519,11 +624,17 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   void testIndexDatasets() throws Exception {
     DatasetRecord datasetRecord = createDatasetRecord();
     Dataset dataset1 = datasetRecord.dataset;
-    Dataset dataset2 = createDataset(datasetRecord.createUser, datasetRecord.updateUser,
-        new DataUseBuilder().setGeneralUse(true).build(), datasetRecord.dac);
+    Dataset dataset2 =
+        createDataset(
+            datasetRecord.createUser,
+            datasetRecord.updateUser,
+            new DataUseBuilder().setGeneralUse(true).build(),
+            datasetRecord.dac);
     dataset2.setStudy(datasetRecord.study);
-    when(datasetDAO.findDatasetById(dataset1.getDatasetId())).thenReturn(dataset1);
-    when(datasetDAO.findDatasetById(dataset2.getDatasetId())).thenReturn(dataset2);
+    dataset2.setStudyId(dataset1.getStudyId());
+    when(datasetDAO.findDatasetsByIdList(List.of(dataset1.getDatasetId(), dataset2.getDatasetId())))
+        .thenReturn(List.of(dataset1, dataset2));
+    when(studyDAO.findStudyById(datasetRecord.study.getStudyId())).thenReturn(datasetRecord.study);
     when(userDao.findUserById(dataset1.getCreateUserId())).thenReturn(datasetRecord.createUser);
     when(userDao.findUserById(dataset2.getCreateUserId())).thenReturn(datasetRecord.createUser);
     org.elasticsearch.client.Response mockResponse = mock();
@@ -533,13 +644,48 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(mockResponse.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(200);
 
-    try (var ignored = service.indexDatasets(
-        List.of(dataset1.getDatasetId(), dataset2.getDatasetId()),
-        datasetRecord.createUser)) {
-      // Each dataset should be looked up once when defining the term and a second time
-      // when updating the indexed date.
-      verify(datasetDAO, times(2)).findDatasetById(dataset1.getDatasetId());
-      verify(datasetDAO, times(2)).findDatasetById(dataset2.getDatasetId());
+    try (var _ = service.indexDatasets(List.of(dataset1.getDatasetId(), dataset2.getDatasetId()))) {
+      verify(datasetDAO, times(1))
+          .findDatasetsByIdList(List.of(dataset1.getDatasetId(), dataset2.getDatasetId()));
+      assertEquals(dataset1.getStudyId(), dataset2.getStudyId());
+      verify(studyDAO, times(1)).findStudyById(dataset1.getStudyId());
+    }
+  }
+
+  @Test
+  void testIndexDatasetsHandleSingleNullDataset() throws Exception {
+    when(datasetDAO.findDatasetsByIdList(List.of(1))).thenReturn(List.of());
+    try (var response = service.indexDatasets(List.of(1))) {
+      verify(datasetDAO).findDatasetsByIdList(List.of(1));
+      verify(esClient, never()).performRequest(any());
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
+  void testIndexDatasetsHandleNullDatasetInBatch() throws Exception {
+    User user = createUser(1, 100);
+    Dataset d1 = createDataset(user, user, new DataUse(), createDac());
+    Dataset d2 = createDataset(user, user, new DataUse(), createDac());
+    // List of IDs includes two valid datasets and a third ID that does not correspond to an
+    // existing dataset
+    List<Integer> datasetIds =
+        List.of(d1.getDatasetId(), d2.getDatasetId(), d1.getDatasetId() + d2.getDatasetId());
+    when(datasetDAO.findDatasetsByIdList(
+            List.of(d1.getDatasetId(), d2.getDatasetId(), d1.getDatasetId() + d2.getDatasetId())))
+        .thenReturn(List.of(d1, d2));
+    when(userDao.findUserById(user.getUserId())).thenReturn(user);
+    org.elasticsearch.client.Response mockResponse = mock();
+    when(esClient.performRequest(any())).thenReturn(mockResponse);
+    when(mockResponse.getEntity()).thenReturn(new StringEntity("response body"));
+    StatusLine statusLine = mock();
+    when(mockResponse.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(200);
+    try (var response = service.indexDatasets(datasetIds)) {
+      verify(datasetDAO, atLeastOnce())
+          .findDatasetsByIdList(
+              List.of(d1.getDatasetId(), d2.getDatasetId(), d1.getDatasetId() + d2.getDatasetId()));
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
 
@@ -561,13 +707,25 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     }
   }
 
+  @Test
+  void testSearchDatasetsStream() throws IOException {
+    String query = "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }";
+    String mockResponse = "{\"valid\":true,\"hits\":{\"hits\":[]}}";
+    mockElasticSearchResponse(mockResponse);
+    try (var inputStream = service.searchDatasetsStream(query)) {
+      String received = IOUtils.toString(inputStream, Charset.defaultCharset());
+      assertEquals(mockResponse, received);
+    }
+  }
+
   @ParameterizedTest
-  @ValueSource(strings = {
-      "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }",
-      "{ \"from\": 0, \"size\": 100, \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }",
-      "{ \"sort\": [\"datasetIdentifier\"], \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }",
-      "{ \"from\": 0, \"size\": 100, \"sort\": [\"datasetIdentifier\"], \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }",
-  })
+  @ValueSource(
+      strings = {
+        "{ \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }",
+        "{ \"from\": 0, \"size\": 100, \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }",
+        "{ \"sort\": [\"datasetIdentifier\"], \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }",
+        "{ \"from\": 0, \"size\": 100, \"sort\": [\"datasetIdentifier\"], \"query\": { \"query_string\": { \"query\": \"(GRU) AND (HMB)\" } } }",
+      })
   void testValidateQuerySuccess(String query) throws IOException {
     mockElasticSearchResponse("{\"valid\":true}");
     assertTrue(service.validateQuery(query));
@@ -596,73 +754,33 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testIndexDatasetIds() throws Exception {
-    User user = new User();
-    user.setUserId(1);
-    Gson gson = GsonUtil.buildGson();
+  void testIndexDatasetIdsErrors() throws Exception {
+    String mockErrorMessage = "error condition";
     Dataset dataset = new Dataset();
     dataset.setDatasetId(randomInt(10, 100));
-    String esResponseBody = """
-          {
-            "took": 2,
-            "errors": false,
-            "items": [
-              {
-                "index": {
-                  "_index": "dataset",
-                  "_type": "dataset",
-                  "_id": "%d",
-                  "_version": 3,
-                  "result": "updated",
-                  "_shards": {
-                    "total": 2,
-                    "successful": 1,
-                    "failed": 0
-                  },
-                  "created": false,
-                  "status": 200
-                }
-              }
-            ]
-          }
-        """;
+    when(datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId())))
+        .thenReturn(List.of(dataset));
+    mockESClientResponse(200, mockErrorMessage);
 
-    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
-    mockESClientResponse(200, esResponseBody.formatted(dataset.getDatasetId()));
-    StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDatasetId()), user);
+    StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDatasetId()));
     var baos = new ByteArrayOutputStream();
     output.write(baos);
-    var entityString = baos.toString();
-    Type listOfEsResponses = new TypeToken<List<JsonObject>>() {
-    }.getType();
-    List<JsonObject> responseList = gson.fromJson(entityString, listOfEsResponses);
-    assertEquals(1, responseList.size());
-    JsonArray items = responseList.get(0).getAsJsonArray("items");
-    assertEquals(1, items.size());
-    assertEquals(
-        dataset.getDatasetId(),
-        items.get(0)
-            .getAsJsonObject()
-            .getAsJsonObject("index")
-            .get("_id")
-            .getAsInt());
+    assertTrue(baos.toString().contains(mockErrorMessage));
   }
 
   @Test
-  void testIndexDatasetIdsErrors() throws Exception {
-    User user = new User();
-    user.setUserId(1);
-    Gson gson = GsonUtil.buildGson();
+  void testIndexDatasetIdsErrors_Not_200_response() throws Exception {
+    String mockErrorMessage = "error condition";
     Dataset dataset = new Dataset();
     dataset.setDatasetId(randomInt(10, 100));
-    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
-    mockESClientResponse(500, "error condition");
+    when(datasetDAO.findDatasetsByIdList(List.of(dataset.getDatasetId())))
+        .thenReturn(List.of(dataset));
+    mockESClientResponse(500, mockErrorMessage);
 
-    StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDatasetId()), user);
+    StreamingOutput output = service.indexDatasetIds(List.of(dataset.getDatasetId()));
     var baos = new ByteArrayOutputStream();
     output.write(baos);
-    JsonArray jsonArray = gson.fromJson(baos.toString(), JsonArray.class);
-    assertEquals(0, jsonArray.size());
+    assertTrue(baos.toString().contains("Error indexing datasets"));
   }
 
   // Helper method to mock an ElasticSearch Client response
@@ -680,11 +798,8 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     when(esClient.performRequest(any())).thenReturn(esClientResponse);
   }
 
-
   @Test
   void testIndexStudyWithDatasets() {
-    User user = new User();
-    user.setUserId(1);
     Study study = new Study();
     study.setStudyId(1);
     Dataset d = new Dataset();
@@ -692,22 +807,21 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     study.addDatasetId(d.getDatasetId());
     when(studyDAO.findStudyById(any())).thenReturn(study);
 
-    assertDoesNotThrow(() -> service.indexStudy(1, user));
+    assertDoesNotThrow(() -> service.indexStudy(1));
   }
 
   @Test
   void testIndexStudyWithNoDatasets() {
-    User user = new User();
-    user.setUserId(1);
     Study study = new Study();
     study.setStudyId(1);
     when(studyDAO.findStudyById(any())).thenReturn(study);
 
-    assertDoesNotThrow(() -> {
-      try (var response = service.indexStudy(1, user)) {
-        assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-      }
-    });
+    assertDoesNotThrow(
+        () -> {
+          try (var response = service.indexStudy(1)) {
+            assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+          }
+        });
   }
 
   @Test
@@ -813,4 +927,47 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
     assertFalse(service.invalidResultWindow(query));
   }
 
+  @Test
+  void testGetIndexKey_SetKey() {
+    service.setIndexKey("custom-key");
+    assertEquals("custom-key", service.getIndexKey());
+  }
+
+  @Test
+  void testGetIndexKey_DefaultIndex() throws IOException {
+    service.setIndexKey(null);
+    String body = "{ \"version\": { \"number\": \"7.10.2\" } }";
+    mockElasticSearchResponse(body);
+    assertEquals("_index", service.getIndexKey());
+  }
+
+  @Test
+  void testGetIndexKey_LegacyType() throws IOException {
+    service.setIndexKey(null);
+    String body = "{ \"version\": { \"number\": \"6.8.0\" } }";
+    mockElasticSearchResponse(body);
+    assertEquals("_type", service.getIndexKey());
+  }
+
+  @Test
+  void testGetIndexKey_OpenSearch() throws IOException {
+    service.setIndexKey(null);
+    String body = "{ \"version\": { \"number\": \"3.3.0\", \"distribution\": \"opensearch\" } }";
+    mockElasticSearchResponse(body);
+    assertEquals("_index", service.getIndexKey());
+  }
+
+  @Test
+  void testGetIndexKey_ExceptionDefaultsToIndex() throws IOException {
+    service.setIndexKey(null);
+    when(esClient.performRequest(any())).thenThrow(new IOException("Connection failed"));
+    assertEquals("_index", service.getIndexKey());
+  }
+
+  @Test
+  void testGetIndexKey_NullInfoDefaultsToIndex() throws IOException {
+    service.setIndexKey(null);
+    mockElasticSearchResponse("{}");
+    assertEquals("_index", service.getIndexKey());
+  }
 }

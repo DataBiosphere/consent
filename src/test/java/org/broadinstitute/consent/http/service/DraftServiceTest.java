@@ -47,14 +47,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DraftServiceTest {
 
-  @Mock
-  private DraftDAO draftDAO;
+  @Mock private DraftDAO draftDAO;
 
-  @Mock
-  private DraftServiceDAO draftServiceDAO;
+  @Mock private DraftServiceDAO draftServiceDAO;
 
-  @Mock
-  private GCSService gcsService;
+  @Mock private GCSService gcsService;
 
   private DraftService draftService;
 
@@ -80,12 +77,13 @@ class DraftServiceTest {
   @Test
   void testInsertDraft() throws SQLException {
     doNothing().when(draftServiceDAO).insertDraft(draft);
-    assertDoesNotThrow(()->draftService.insertDraft(draft));
+    assertDoesNotThrow(() -> draftService.insertDraft(draft));
   }
 
   @Test
   void testGetAuthorizedDraftNotFound() {
-    doThrow(new NotFoundException("Not Found")).when(draftServiceDAO)
+    doThrow(new NotFoundException("Not Found"))
+        .when(draftServiceDAO)
         .getAuthorizedDraft(any(), any());
     assertThrows(NotFoundException.class, () -> draftService.getAuthorizedDraft(null, user));
   }
@@ -93,10 +91,11 @@ class DraftServiceTest {
   @Test
   void testGetAuthorizedDraftsNotAuthorized() {
     UUID draftId = UUID.randomUUID();
-    doThrow(new NotAuthorizedException("Not Authorized")).when(draftServiceDAO)
+    doThrow(new NotAuthorizedException("Not Authorized"))
+        .when(draftServiceDAO)
         .getAuthorizedDraft(draftId, user);
-    assertThrows(NotAuthorizedException.class,
-        () -> draftService.getAuthorizedDraft(draftId, user));
+    assertThrows(
+        NotAuthorizedException.class, () -> draftService.getAuthorizedDraft(draftId, user));
   }
 
   @Test
@@ -112,8 +111,8 @@ class DraftServiceTest {
     FileStorageObject fileStorageObject = new FileStorageObject();
     fileStorageObject.setFileName("test");
     when(draftServiceDAO.addAttachments(draft, user, files)).thenReturn(List.of(fileStorageObject));
-    assertEquals(fileStorageObject,
-        draftService.addAttachments(draft, user, files).iterator().next());
+    assertEquals(
+        fileStorageObject, draftService.addAttachments(draft, user, files).iterator().next());
   }
 
   @Test
@@ -124,15 +123,21 @@ class DraftServiceTest {
 
   @Test
   void testDeleteAttachmentThrows() throws SQLException {
-    doThrow(new SQLException("Couldn't delete document")).when(draftServiceDAO)
+    doThrow(new SQLException("Couldn't delete document"))
+        .when(draftServiceDAO)
         .deleteDraftAttachment(any(), any(), anyInt());
     assertThrows(SQLException.class, () -> draftService.deleteDraftAttachment(null, null, 1));
   }
 
   @Test
   void testFindDraftSummariesForUser() {
-    DraftSummary draftSummary = new DraftSummary(UUID.randomUUID(), "test", new Date(), new Date(),
-        DraftType.STUDY_DATASET_SUBMISSION_V1);
+    DraftSummary draftSummary =
+        new DraftSummary(
+            UUID.randomUUID(),
+            "test",
+            new Date(),
+            new Date(),
+            DraftType.STUDY_DATASET_SUBMISSION_V1);
     when(draftDAO.findDraftSummariesByUserId(user.getUserId())).thenReturn(List.of(draftSummary));
     draftService.findDraftSummariesForUser(user);
     assertEquals(draftSummary, draftService.findDraftSummariesForUser(user).iterator().next());
@@ -166,10 +171,9 @@ class DraftServiceTest {
     output.write(byteArrayOutputStream);
     byteArrayOutputStream.close();
     Gson gson = GsonUtil.buildGson();
-    StreamingDeserializer streamedData = gson.fromJson(byteArrayOutputStream.toString(),
-        StreamingDeserializer.class);
-    assertEquals(draft.getCreateDate().getTime(),
-        streamedData.meta.getCreateDate().getTime());
+    StreamingDeserializer streamedData =
+        gson.fromJson(byteArrayOutputStream.toString(), StreamingDeserializer.class);
+    assertEquals(draft.getCreateDate().getTime(), streamedData.meta.getCreateDate().getTime());
     assertEquals("{}", streamedData.document.toString());
   }
 
@@ -177,9 +181,9 @@ class DraftServiceTest {
   void testGetDraftFileInputStream() throws IOException {
     FileStorageObject fileStorageObject = new FileStorageObject();
     fileStorageObject.setBlobId(BlobId.of(UUID.randomUUID().toString(), "test"));
-    when(gcsService.getDocument(fileStorageObject.getBlobId())).thenAnswer(
-        inputStream -> new ByteArrayInputStream("{}".getBytes(StandardCharsets.UTF_8)) {
-        });
+    when(gcsService.getDocument(fileStorageObject.getBlobId()))
+        .thenAnswer(
+            inputStream -> new ByteArrayInputStream("{}".getBytes(StandardCharsets.UTF_8)) {});
     InputStream fileContents = draftService.getDraftAttachmentStream(fileStorageObject);
     assertEquals("{}", new String(fileContents.readAllBytes(), StandardCharsets.UTF_8));
   }

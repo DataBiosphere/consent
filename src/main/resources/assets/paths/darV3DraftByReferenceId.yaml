@@ -10,12 +10,13 @@ put:
       required: true
       schema:
         type: string
-    - name: dar
-      in: body
-      description: The fields that represent a Data Access Request, json format.
-      required: true
-      schema:
-        $ref: '../schemas/DataAccessRequest.yaml'
+  requestBody:
+    description: The fields that represent a Data Access Request, json format.
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../schemas/DataAccessRequest.yaml'
   tags:
     - Data Access Request
   responses:

@@ -49,7 +49,10 @@ public class DaaResource extends Resource implements ConsentLogger {
   private final LibraryCardService libraryCardService;
 
   @Inject
-  public DaaResource(DaaService daaService, DacService dacService, UserService userService,
+  public DaaResource(
+      DaaService daaService,
+      DacService dacService,
+      UserService userService,
       LibraryCardService libraryCardService) {
     this.daaService = daaService;
     this.dacService = dacService;
@@ -81,12 +84,13 @@ public class DaaResource extends Resource implements ConsentLogger {
           return Response.status(Status.FORBIDDEN).build();
         }
       }
-      DataAccessAgreement daa = daaService.createDaaWithFso(user.getUserId(), dacId,
-          uploadInputStream, fileDetail);
-      URI uri = info.getBaseUriBuilder()
-          // This will be the GET endpoint for the created DAA
-          .replacePath("api/daa/{daaId}")
-          .build(daa.getDaaId());
+      DataAccessAgreement daa =
+          daaService.createDaaWithFso(user.getUserId(), dacId, uploadInputStream, fileDetail);
+      URI uri =
+          info.getBaseUriBuilder()
+              // This will be the GET endpoint for the created DAA
+              .replacePath("api/daa/{daaId}")
+              .build(daa.getDaaId());
       return Response.created(uri).entity(daa).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -110,18 +114,22 @@ public class DaaResource extends Resource implements ConsentLogger {
       // Assert that the user has the correct institution permissions to add a DAA-LC relationship.
       // Admins can add a DAA with any DAC, but signing officials can only create relationships for
       // library cards associated with the same institution they are associated with.
-      if (!authedUser.hasUserRole(UserRoles.ADMIN) && !authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+      if (!authedUser.hasUserRole(UserRoles.ADMIN)
+          && !authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
         return Response.status(Status.FORBIDDEN).build();
-      } else if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL) && authedUserInstitutionId != userInstitutionId) {
-          return Response.status(Status.FORBIDDEN).build();
+      } else if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)
+          && authedUserInstitutionId != userInstitutionId) {
+        return Response.status(Status.FORBIDDEN).build();
       }
-      LibraryCard libraryCard = user.getLibraryCard() == null ?
-          libraryCardService.createLibraryCardForSigningOfficial(user, authedUser) :
-          user.getLibraryCard();
+      LibraryCard libraryCard =
+          user.getLibraryCard() == null
+              ? libraryCardService.createLibraryCardForSigningOfficial(user, authedUser)
+              : user.getLibraryCard();
       libraryCardService.addDaaToLibraryCard(libraryCard.getId(), daaId);
-      URI uri = info.getBaseUriBuilder()
-          .replacePath("api/libraryCards/{libraryCardId}")
-          .build(libraryCard.getId());
+      URI uri =
+          info.getBaseUriBuilder()
+              .replacePath("api/libraryCards/{libraryCardId}")
+              .build(libraryCard.getId());
       return Response.ok().location(uri).entity(libraryCard).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -144,9 +152,7 @@ public class DaaResource extends Resource implements ConsentLogger {
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, RESEARCHER})
   @Path("{daaId}")
-  public Response findById(
-      @Auth AuthUser authUser,
-      @PathParam("daaId") Integer daaId) {
+  public Response findDaaById(@Auth AuthUser authUser, @PathParam("daaId") Integer daaId) {
     try {
       DataAccessAgreement daa = daaService.findById(daaId);
       return Response.ok(daa).build();
@@ -159,8 +165,7 @@ public class DaaResource extends Resource implements ConsentLogger {
   @PermitAll
   @Path("{daaId}/file")
   @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
-  public Response findFileById(@Auth DuosUser duosUser,
-      @PathParam("daaId") Integer daaId) {
+  public Response findFileById(@Auth DuosUser duosUser, @PathParam("daaId") Integer daaId) {
     try {
       InputStream daa = daaService.findFileById(daaId);
       StreamingOutput stream = createStreamingOutput(daa);
@@ -196,9 +201,7 @@ public class DaaResource extends Resource implements ConsentLogger {
   @Path("{daaId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN})
-  public Response adminDeleteDaa(
-      @Auth AuthUser authUser,
-      @PathParam("daaId") Integer daaId) {
+  public Response adminDeleteDaa(@Auth AuthUser authUser, @PathParam("daaId") Integer daaId) {
     try {
       daaService.findById(daaId);
       User user = userService.findUserByEmail(authUser.getEmail());
@@ -213,18 +216,20 @@ public class DaaResource extends Resource implements ConsentLogger {
   @PermitAll
   @Path("/request/{daaId}")
   public Response sendDaaRequestMessage(
-      @Auth DuosUser duosUser,
-      @PathParam("daaId") Integer daaId) {
+      @Auth DuosUser duosUser, @PathParam("daaId") Integer daaId) {
     try {
       User user = duosUser.getUser();
       if (user.getInstitutionId() == null) {
-        throw new BadRequestException("This user has not set their institution: " + user.getDisplayName());
+        throw new BadRequestException(
+            "This user has not set their institution: " + user.getDisplayName());
       }
       if (user.getLibraryCard() == null) {
-        throw new BadRequestException("This user does not have a library card: " + user.getDisplayName());
+        throw new BadRequestException(
+            "This user does not have a library card: " + user.getDisplayName());
       }
       if (user.getLibraryCard().getDaaIds().contains(daaId)) {
-        throw new IllegalArgumentException("User already has this DAA associated with their Library Card");
+        throw new IllegalArgumentException(
+            "User already has this DAA associated with their Library Card");
       }
       daaService.sendDaaRequestEmails(user, daaId);
       return Response.ok().build();
@@ -238,13 +243,12 @@ public class DaaResource extends Resource implements ConsentLogger {
   @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
   @Path("/bulk/{daaId}")
   public Response bulkAddUsersToDaa(
-      @Auth AuthUser authUser,
-      @PathParam("daaId") Integer daaId,
-      String json) {
+      @Auth AuthUser authUser, @PathParam("daaId") Integer daaId, String json) {
     try {
       User authedUser = userService.findUserByEmail(authUser.getEmail());
       List<User> users = userService.findUsersInJsonArray(json, "users");
-      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL) && !authedUser.hasUserRole(UserRoles.ADMIN)) {
+      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)
+          && !authedUser.hasUserRole(UserRoles.ADMIN)) {
         for (User user : users) {
           if (!Objects.equals(authedUser.getInstitutionId(), user.getInstitutionId())) {
             return Response.status(Status.FORBIDDEN).build();
@@ -266,13 +270,12 @@ public class DaaResource extends Resource implements ConsentLogger {
   @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
   @Path("/bulk/{daaId}")
   public Response bulkRemoveUsersFromDaa(
-      @Auth AuthUser authUser,
-      @PathParam("daaId") Integer daaId,
-      String json) {
+      @Auth AuthUser authUser, @PathParam("daaId") Integer daaId, String json) {
     try {
       User authedUser = userService.findUserByEmail(authUser.getEmail());
       List<User> users = userService.findUsersInJsonArray(json, "users");
-      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL) && !authedUser.hasUserRole(UserRoles.ADMIN)) {
+      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)
+          && !authedUser.hasUserRole(UserRoles.ADMIN)) {
         for (User user : users) {
           if (!Objects.equals(authedUser.getInstitutionId(), user.getInstitutionId())) {
             return Response.status(Status.FORBIDDEN).build();
@@ -294,13 +297,12 @@ public class DaaResource extends Resource implements ConsentLogger {
   @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
   @Path("/bulk/user/{userId}")
   public Response bulkAddDAAsToUser(
-      @Auth AuthUser authUser,
-      @PathParam("userId") Integer userId,
-      String json) {
+      @Auth AuthUser authUser, @PathParam("userId") Integer userId, String json) {
     try {
       User authedUser = userService.findUserByEmail(authUser.getEmail());
       User user = userService.findUserById(userId);
-      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL) && !Objects.equals(authedUser.getInstitutionId(), user.getInstitutionId())) {
+      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)
+          && !Objects.equals(authedUser.getInstitutionId(), user.getInstitutionId())) {
         return Response.status(Status.FORBIDDEN).build();
       }
       List<DataAccessAgreement> daaList = daaService.findDAAsInJsonArray(json, "daaList");
@@ -318,13 +320,12 @@ public class DaaResource extends Resource implements ConsentLogger {
   @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
   @Path("/bulk/user/{userId}")
   public Response bulkRemoveDAAsFromUser(
-      @Auth AuthUser authUser,
-      @PathParam("userId") Integer userId,
-      String json) {
+      @Auth AuthUser authUser, @PathParam("userId") Integer userId, String json) {
     try {
       User authedUser = userService.findUserByEmail(authUser.getEmail());
       User user = userService.findUserById(userId);
-      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL) && !Objects.equals(authedUser.getInstitutionId(), user.getInstitutionId())) {
+      if (authedUser.hasUserRole(UserRoles.SIGNINGOFFICIAL)
+          && !Objects.equals(authedUser.getInstitutionId(), user.getInstitutionId())) {
         return Response.status(Status.FORBIDDEN).build();
       }
       List<DataAccessAgreement> daaList = daaService.findDAAsInJsonArray(json, "daaList");
@@ -348,12 +349,13 @@ public class DaaResource extends Resource implements ConsentLogger {
     try {
       dacService.findById(dacId);
       User user = userService.findUserByEmail(authUser.getEmail());
-      // Assert that the user has the correct DAC permissions to add a DAC to a DAA for the provided DacId.
-      // Admins can add a DAC to a DAA with any DAC, but chairpersons can only add DACs to DAAs for DACs they are a
+      // Assert that the user has the correct DAC permissions to add a DAC to a DAA for the provided
+      // DacId.
+      // Admins can add a DAC to a DAA with any DAC, but chairpersons can only add DACs to DAAs for
+      // DACs they are a
       // chairperson for.
       if (!user.hasUserRole(UserRoles.ADMIN)) {
-        if (user.getRoles()
-            .stream()
+        if (user.getRoles().stream()
             .filter(r -> r.getRoleId().equals(UserRoles.Chairperson().getRoleId()))
             .map(UserRole::getDacId)
             .noneMatch(dacId::equals)) {
@@ -363,12 +365,11 @@ public class DaaResource extends Resource implements ConsentLogger {
       DataAccessAgreement daa = daaService.findById(daaId);
       Optional<Dac> matchingDac = Optional.empty();
       if (daa.getDacs() != null) {
-        matchingDac = daa.getDacs().stream()
-            .filter(dac -> Objects.equals(dac.getDacId(), dacId))
-            .findFirst();
+        matchingDac =
+            daa.getDacs().stream().filter(dac -> Objects.equals(dac.getDacId(), dacId)).findFirst();
       }
       if (matchingDac.isEmpty()) {
-        daaService.addDacToDaa(dacId,daaId);
+        daaService.addDacToDaa(dacId, daaId);
       }
       DataAccessAgreement updatedDaa = daaService.findById(daaId);
       return Response.ok().entity(updatedDaa).build();
@@ -388,17 +389,18 @@ public class DaaResource extends Resource implements ConsentLogger {
     try {
       dacService.findById(dacId);
       User user = userService.findUserByEmail(authUser.getEmail());
-      // Assert that the user has the correct DAC permissions to add a DAC to a DAA for the provided DacId.
-      // Admins can add a DAC to a DAA with any DAC, but chairpersons can only add DACs to DAAs for DACs they are a
+      // Assert that the user has the correct DAC permissions to add a DAC to a DAA for the provided
+      // DacId.
+      // Admins can add a DAC to a DAA with any DAC, but chairpersons can only add DACs to DAAs for
+      // DACs they are a
       // chairperson for.
       if (!user.hasUserRole(UserRoles.ADMIN)) {
-        List<Integer> matchedChairpersonDacIds = user
-            .getRoles()
-            .stream()
-            .filter(r -> r.getRoleId().equals(UserRoles.Chairperson().getRoleId()))
-            .map(UserRole::getDacId)
-            .filter(id -> Objects.equals(id, dacId))
-            .toList();
+        List<Integer> matchedChairpersonDacIds =
+            user.getRoles().stream()
+                .filter(r -> r.getRoleId().equals(UserRoles.Chairperson().getRoleId()))
+                .map(UserRole::getDacId)
+                .filter(id -> Objects.equals(id, dacId))
+                .toList();
         if (matchedChairpersonDacIds.isEmpty()) {
           return Response.status(Status.FORBIDDEN).build();
         }
@@ -406,9 +408,8 @@ public class DaaResource extends Resource implements ConsentLogger {
       DataAccessAgreement daa = daaService.findById(daaId);
       Optional<Dac> matchingDac = Optional.empty();
       if (daa.getDacs() != null) {
-        matchingDac = daa.getDacs().stream()
-            .filter(dac -> Objects.equals(dac.getDacId(), dacId))
-            .findFirst();
+        matchingDac =
+            daa.getDacs().stream().filter(dac -> Objects.equals(dac.getDacId(), dacId)).findFirst();
       }
       if (matchingDac.isEmpty()) {
         throw new BadRequestException("The given DAC is not associated with the provided DAA.");
@@ -429,8 +430,7 @@ public class DaaResource extends Resource implements ConsentLogger {
       @Auth AuthUser authUser,
       @PathParam("dacId") Integer dacId,
       @PathParam("oldDaaId") Integer oldDaaId,
-      @PathParam("newDaaName") String newDaaName
-      ) {
+      @PathParam("newDaaName") String newDaaName) {
     try {
       daaService.findById(oldDaaId);
       User user = userService.findUserByEmail(authUser.getEmail());

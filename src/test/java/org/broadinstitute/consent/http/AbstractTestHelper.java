@@ -1,5 +1,10 @@
 package org.broadinstitute.consent.http;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonParser;
+import jakarta.ws.rs.core.StreamingOutput;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 
@@ -22,8 +27,18 @@ public abstract class AbstractTestHelper {
     return RandomUtils.secureStrong().randomInt(startInclusive, endExclusive);
   }
 
+  public static boolean randomBoolean() {
+    return RandomUtils.secureStrong().randomBoolean();
+  }
+
   public static int nextInt() {
     return RandomUtils.secure().randomInt();
   }
 
+  public JsonArray getJsonArrayFromStreamingOutput(StreamingOutput output) throws Exception {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    output.write(baos);
+    String jsonString = baos.toString(StandardCharsets.UTF_8);
+    return JsonParser.parseString(jsonString).getAsJsonArray();
+  }
 }

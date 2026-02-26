@@ -9,11 +9,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.Timestamp;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Stream;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.enumeration.HeaderDAR;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -29,16 +27,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DataAccessReportsParserTest {
 
-  @Mock
-  private DatasetDAO datasetDAO;
-  @Mock
-  private UseRestrictionConverter useRestrictionConverter;
+  @Mock private DatasetDAO datasetDAO;
+  @Mock private UseRestrictionConverter useRestrictionConverter;
+  @Mock private OntologyService ontologyService;
   private DataAccessReportsParser parser;
   private final String CONSENT_NAME = "ORSP-1903";
   private final String NAME = "Test";
   private final String DS_IDENTIFIER = "DUOS-000001";
   private final String RUS_SUMMARY = "Purpose";
-  private final String sDUL = """
+  private final String sDUL =
+      """
       Samples Restricted for use with "cancer" [DOID_162(CC)]
       Future use by for-profit entities is prohibited [NPU]
       Future use of aggregate-level data for general research purposes is prohibited [NPNV]
@@ -49,19 +47,20 @@ class DataAccessReportsParserTest {
   private final String DAR_CODE = "DAR_3";
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     Dataset d = new Dataset();
     d.setDatasetId(1); // This translates to an identifier of "DUOS-000001"
     d.setAlias(1);
     d.setName(NAME);
     List<Dataset> datasets = List.of(d);
     when(datasetDAO.findDatasetsByIdList(List.of(1))).thenReturn(datasets);
-    String translation = """
+    String translation =
+        """
         Research is limited to samples restricted for use under the following conditions:
         Data is limited for health/medical/biomedical research. [HMB]
     """;
-    when(useRestrictionConverter.translateDataUse(any(), any())).thenReturn(translation);
-    this.parser = new DataAccessReportsParser(datasetDAO, useRestrictionConverter);
+    when(ontologyService.translateDataUse(any(), any())).thenReturn(translation);
+    this.parser = new DataAccessReportsParser(datasetDAO, useRestrictionConverter, ontologyService);
   }
 
   @Test
@@ -69,13 +68,13 @@ class DataAccessReportsParserTest {
     File file = File.createTempFile("ApprovedDataAccessRequests.tsv", ".tsv");
     Date currentDate = new Date();
     Election election = createElection(currentDate);
-    DataAccessRequest dar = createDAR(currentDate);
+    DataAccessRequest dar = createDAR();
     FileWriter darWriter = new FileWriter(file);
     parser.setApprovedDARHeader(darWriter);
     String REQUESTER = "Wesley";
     String ORGANIZATION = "Broad";
-    parser.addApprovedDARLine(darWriter, election, dar, DAR_CODE, REQUESTER, ORGANIZATION,
-        CONSENT_NAME, sDUL);
+    parser.addApprovedDARLine(
+        darWriter, election, dar, DAR_CODE, REQUESTER, ORGANIZATION, CONSENT_NAME, sDUL);
     darWriter.flush();
     try (var stream = Files.lines(Paths.get(file.getPath()))) {
       Iterator<String> iterator = stream.iterator();
@@ -96,8 +95,7 @@ class DataAccessReportsParserTest {
           assertEquals(columns[8], HeaderDAR.RESEARCH_PURPOSE.getValue());
           assertEquals(columns[9], HeaderDAR.DATE_REQUEST_SUBMISSION.getValue());
           assertEquals(columns[10], HeaderDAR.DATE_REQUEST_APPROVAL.getValue());
-          assertEquals(columns[11],
-              HeaderDAR.DATE_REQUEST_RE_ATTESTATION.getValue());
+          assertEquals(columns[11], HeaderDAR.DATE_REQUEST_RE_ATTESTATION.getValue());
         }
         if (i == 1) {
           assertEquals(DAR_CODE, columns[0]);
@@ -120,12 +118,12 @@ class DataAccessReportsParserTest {
     File file = File.createTempFile("ApprovedDataAccessRequests.tsv", ".tsv");
     Date currentDate = new Date();
     Election election = createElection(currentDate);
-    DataAccessRequest dar = createDAR(currentDate);
+    DataAccessRequest dar = createDAR();
     FileWriter darWriter = new FileWriter(file);
     parser.setReviewedDARHeader(darWriter);
     parser.addReviewedDARLine(darWriter, election, dar, DAR_CODE, CONSENT_NAME, sDUL);
     darWriter.flush();
-    try(var stream = Files.lines(Paths.get(file.getPath()))){
+    try (var stream = Files.lines(Paths.get(file.getPath()))) {
       Iterator<String> iterator = stream.iterator();
       int i = 0;
       while (iterator.hasNext()) {
@@ -139,8 +137,7 @@ class DataAccessReportsParserTest {
           assertEquals(columns[3], HeaderDAR.CONSENT_ID.getValue());
           assertEquals(columns[4], HeaderDAR.CODED_VERSION_SDUL.getValue());
           assertEquals(columns[5], HeaderDAR.CODED_VERSION_DAR.getValue());
-          assertEquals(columns[6],
-              HeaderDAR.DATE_REQUEST_APPROVAL_DISAPROVAL.getValue());
+          assertEquals(columns[6], HeaderDAR.DATE_REQUEST_APPROVAL_DISAPROVAL.getValue());
           assertEquals(columns[7], HeaderDAR.APPROVED_DISAPPROVED.getValue());
         }
         if (i == 1) {
@@ -160,15 +157,14 @@ class DataAccessReportsParserTest {
   @Test
   void testDataAccessReviewedReportNullElectionDate() throws IOException {
     File file = File.createTempFile("ApprovedDataAccessRequests.tsv", ".tsv");
-    Date currentDate = new Date();
     Election election = new Election();
     election.setFinalVote(true);
-    DataAccessRequest dar = createDAR(currentDate);
+    DataAccessRequest dar = createDAR();
     FileWriter darWriter = new FileWriter(file);
     parser.setReviewedDARHeader(darWriter);
     parser.addReviewedDARLine(darWriter, election, dar, DAR_CODE, CONSENT_NAME, sDUL);
     darWriter.flush();
-    try(var stream = Files.lines(Paths.get(file.getPath()))){
+    try (var stream = Files.lines(Paths.get(file.getPath()))) {
       Iterator<String> iterator = stream.iterator();
       int i = 0;
       while (iterator.hasNext()) {
@@ -182,8 +178,7 @@ class DataAccessReportsParserTest {
           assertEquals(columns[3], HeaderDAR.CONSENT_ID.getValue());
           assertEquals(columns[4], HeaderDAR.CODED_VERSION_SDUL.getValue());
           assertEquals(columns[5], HeaderDAR.CODED_VERSION_DAR.getValue());
-          assertEquals(columns[6],
-              HeaderDAR.DATE_REQUEST_APPROVAL_DISAPROVAL.getValue());
+          assertEquals(columns[6], HeaderDAR.DATE_REQUEST_APPROVAL_DISAPROVAL.getValue());
           assertEquals(columns[7], HeaderDAR.APPROVED_DISAPPROVED.getValue());
         }
         if (i == 1) {
@@ -207,13 +202,12 @@ class DataAccessReportsParserTest {
     return election;
   }
 
-  private DataAccessRequest createDAR(Date currentDate) {
+  private DataAccessRequest createDAR() {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setDatasetIds(List.of(1));
     DataAccessRequestData data = new DataAccessRequestData();
     data.setNonTechRus(RUS_SUMMARY);
     dar.setData(data);
-    dar.setSortDate(new Timestamp(currentDate.getTime()));
     return dar;
   }
 }

@@ -6,23 +6,17 @@ import com.google.gson.Gson;
 
 public class UserRole {
 
-  @JsonProperty
-  private Integer userRoleId;
+  @JsonProperty private Integer userRoleId;
 
-  @JsonProperty
-  private Integer userId;
+  @JsonProperty private Integer userId;
 
-  @JsonProperty
-  private Integer roleId;
+  @JsonProperty private Integer roleId;
 
-  @JsonProperty
-  private String name;
+  @JsonProperty private String name;
 
-  @JsonProperty
-  private Integer dacId;
+  @JsonProperty private Integer dacId;
 
-  public UserRole() {
-  }
+  public UserRole() {}
 
   public UserRole(Integer roleId, String name) {
     this.roleId = roleId;
@@ -97,5 +91,4 @@ public class UserRole {
   public String toString() {
     return new Gson().toJson(this);
   }
-
 }

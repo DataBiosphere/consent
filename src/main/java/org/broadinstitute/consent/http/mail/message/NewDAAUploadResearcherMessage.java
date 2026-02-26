@@ -27,11 +27,17 @@ public class NewDAAUploadResearcherMessage extends MailMessage {
 
   @Override
   public Object createModel(String serverUrl) {
-    return Map.of("serverUrl", serverUrl,
-        "dacName", dacName,
-        "researcherUserName", toUser.getDisplayName(),
-        "previousDaaName", previousDaaName,
-        "newDaaName", newDaaName);
+    return Map.of(
+        "serverUrl",
+        serverUrl,
+        "dacName",
+        dacName,
+        "researcherUserName",
+        toUser.getDisplayName(),
+        "previousDaaName",
+        previousDaaName,
+        "newDaaName",
+        newDaaName);
   }
 
   @Override

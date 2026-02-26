@@ -10,8 +10,8 @@ import org.broadinstitute.consent.http.enumeration.DraftType;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
 
 /**
- * Draft represents a partial submission of 0 or more elements. This is
- * an internal structure, not intended to be serialized back to the client in the entirety.
+ * Draft represents a partial submission of 0 or more elements. This is an internal structure, not
+ * intended to be serialized back to the client in the entirety.
  */
 public class DraftStudyDataset implements DraftInterface {
 

@@ -14,6 +14,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -22,6 +23,7 @@ import static org.mockito.Mockito.when;
 import com.google.gson.Gson;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collections;
@@ -37,7 +39,6 @@ import org.broadinstitute.consent.http.db.DatasetAuthorizationReaderDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
@@ -47,16 +48,21 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAuthorizationReader;
+import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.StudyType;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -114,13 +120,13 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   @Test
   void testGetDatasetByName() {
-    when(datasetDAO.getDatasetByName(getDatasets().get(0).getName().toLowerCase()))
-        .thenReturn(getDatasets().get(0));
+    when(datasetDAO.getDatasetByName(getDatasets().getFirst().getName().toLowerCase()))
+        .thenReturn(getDatasets().getFirst());
 
     Dataset dataset = datasetService.getDatasetByName("Test Dataset 1");
 
     assertNotNull(dataset);
-    assertEquals(dataset.getDatasetId(), getDatasets().get(0).getDatasetId());
+    assertEquals(dataset.getDatasetId(), getDatasets().getFirst().getDatasetId());
   }
 
   @Test
@@ -135,13 +141,13 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   @Test
   void testFindDatasetById() {
-    when(datasetDAO.findDatasetById(getDatasets().get(0).getDatasetId()))
-        .thenReturn(getDatasets().get(0));
+    when(datasetDAO.findDatasetById(getDatasets().getFirst().getDatasetId()))
+        .thenReturn(getDatasets().getFirst());
 
     Dataset dataset = datasetService.findDatasetById(mockUser, 1);
 
     assertNotNull(dataset);
-    assertEquals(dataset.getName(), getDatasets().get(0).getName());
+    assertEquals(dataset.getName(), getDatasets().getFirst().getName());
   }
 
   @Test
@@ -176,8 +182,66 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testFindMinimalDatasetByIdentifierVisible() {
+    Dataset dataset = new Dataset();
+    dataset.setAlias(1);
+    dataset.setDatasetIdentifier();
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setPublicVisibility(Boolean.TRUE);
+    dataset.setStudy(study);
+    when(datasetDAO.findMinimalDatasetByAlias(dataset.getAlias())).thenReturn(dataset);
+    Dataset found =
+        datasetService.findMinimalDatasetByIdentifier(
+            mockUser, dataset.getDatasetIdentifier(), false);
+    assertNotNull(found);
+  }
+
+  @Test
+  void testFindMinimalDatasetByIdentifierVisible2() {
+    Dataset dataset = new Dataset();
+    dataset.setAlias(1);
+    dataset.setDatasetIdentifier();
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setPublicVisibility(Boolean.TRUE);
+    dataset.setStudy(study);
+    dataset.setStudyId(study.getStudyId());
+    when(datasetDAO.findMinimalDatasetByAlias(dataset.getAlias())).thenReturn(dataset);
+    when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
+    Dataset found =
+        datasetService.findMinimalDatasetByIdentifier(
+            mockUser, dataset.getDatasetIdentifier(), true);
+    assertNotNull(found);
+  }
+
+  @Test
+  @SuppressWarnings({"java:S5778"})
+  void testFindMinimalDatasetByIdentifierNotFound() {
+    Dataset dataset = new Dataset();
+    dataset.setAlias(1);
+    dataset.setDatasetIdentifier();
+    when(datasetDAO.findMinimalDatasetByAlias(dataset.getAlias())).thenReturn(null);
+    assertThrows(
+        NotFoundException.class,
+        () ->
+            datasetService.findMinimalDatasetByIdentifier(
+                mockUser, dataset.getDatasetIdentifier(), false));
+  }
+
+  @Test
+  @SuppressWarnings({"java:S5778"})
+  void testFindMinimalDatasetByIdentifierIncorrectIdentifier() {
+    Dataset dataset = new Dataset();
+    dataset.setAlias(1);
+    dataset.setDatasetIdentifier();
+    when(datasetDAO.findMinimalDatasetByAlias(2)).thenReturn(dataset);
+    Dataset found = datasetService.findMinimalDatasetByIdentifier(mockUser, "DUOS-000002", false);
+    assertNull(found);
+  }
+
+  @Test
   void testUpdateDatasetDataUseAdmin() {
-    doNothing().when(datasetDAO).updateDatasetDataUse(any(), any());
     when(datasetDAO.findDatasetById(any())).thenReturn(new Dataset());
     User u = new User();
     u.setAdminRole();
@@ -206,9 +270,18 @@ class DatasetServiceTest extends AbstractTestHelper {
     try {
       datasetService.updateDatasetDataUse(u, 1, dataUse);
       fail("Should have thrown an exception on datasetService.updateDatasetDataUse()");
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException _) {
       assertTrue(true);
     }
+  }
+
+  @Test
+  @SuppressWarnings({"java:S5778"})
+  void testUpdateDatasetDataUseNullDataset() {
+    when(datasetDAO.findDatasetById(any())).thenReturn(null);
+    assertThrows(
+        NotFoundException.class,
+        () -> datasetService.updateDatasetDataUse(mockUser, 1, new DataUse()));
   }
 
   @Test
@@ -346,25 +419,13 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   @Test
   void testSyncDataUseTranslation() {
-    Dataset ds = new Dataset();
-    ds.setDataUse(new DataUseBuilder().setGeneralUse(true).build());
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
 
-    when(datasetDAO.findDatasetById(1)).thenReturn(ds);
-    String translation =
-        """
-        Samples are restricted for use under the following conditions:
-        Data is limited for health/medical/biomedical research. [HMB]
-        Data use is limited for studying: cancerophobia [DS]
-        Commercial use is not prohibited.
-        Data use for methods development research irrespective of the specified data use limitations is not prohibited.
-        Restrictions for use as a control set for diseases other than those defined were not specified.
-        """;
-    when(ontologyService.translateDataUse(ds.getDataUse(), DataUseTranslationType.DATASET))
-        .thenReturn(translation);
-
-    datasetService.syncDatasetDataUseTranslation(1, mockUser);
-
-    verify(datasetDAO, times(1)).updateDatasetTranslatedDataUse(1, translation);
+    Dataset updated = datasetService.syncDatasetDataUseTranslation(1, mockUser);
+    assertNotNull(updated);
+    assertEquals(dataset.getDatasetId(), updated.getDatasetId());
   }
 
   @Test
@@ -372,6 +433,34 @@ class DatasetServiceTest extends AbstractTestHelper {
     when(datasetDAO.findDatasetById(1)).thenReturn(null);
     assertThrows(
         NotFoundException.class, () -> datasetService.syncDatasetDataUseTranslation(1, mockUser));
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {200, 500})
+  void testDeleteDataset(int status) throws Exception {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
+    Response response = mock(Response.class);
+    when(response.getStatus()).thenReturn(status);
+    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(response);
+
+    datasetService.deleteDataset(dataset.getDatasetId(), mockUser.getUserId());
+    verify(datasetServiceDAO).deleteDataset(dataset, mockUser.getUserId());
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {200, 500})
+  void testDeleteStudy(int status) throws Exception {
+    Study study = new Study();
+    study.setStudyId(1);
+    study.addDatasetIds(Set.of(1));
+    Response response = mock(Response.class);
+    when(response.getStatus()).thenReturn(status);
+    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(response);
+
+    datasetService.deleteStudy(study, mockUser);
+    verify(datasetServiceDAO).deleteStudy(study, mockUser);
   }
 
   @Test
@@ -408,7 +497,7 @@ class DatasetServiceTest extends AbstractTestHelper {
                     Instant.now().toEpochMilli() + DataAccessRequest.EXPIRATION_DURATION_MILLIS)));
     when(datasetDAO.getApprovedDatasets(anyInt())).thenReturn(List.of(example));
     assertEquals(1, datasetService.getApprovedDatasets(user).size());
-    assertTrue(datasetService.getApprovedDatasets(user).get(0).isApprovedDatasetEqual(example));
+    assertTrue(datasetService.getApprovedDatasets(user).getFirst().isApprovedDatasetEqual(example));
   }
 
   @Test
@@ -463,12 +552,185 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testFindAllDatasetStudySummaries() {
+    User user = new User();
+    user.setUserId(1);
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1, user.getUserId() + 1, "Dataset Name", "DUOS-123", 1, "Study Name", 1000, true);
+    when(datasetDAO.findAllDatasetStudySummaries()).thenReturn(List.of(summary));
+
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.findAllDatasetStudySummaries(user);
+    assertEquals(1, authorizedSummaries.size());
+    assertEquals(summary, authorizedSummaries.getFirst());
+  }
+
+  @Test
+  void testVerifyPublicVisibilitySummaries_Admin_PV_False() {
+    User admin = getAdmin();
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1, admin.getUserId() + 1, "Dataset Name", "DUOS-123", 1, "Study Name", 1000, false);
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.verifyPublicVisibilityAccess(List.of(summary), admin);
+    assertEquals(1, authorizedSummaries.size());
+    assertEquals(summary, authorizedSummaries.getFirst());
+  }
+
+  @Test
+  void testVerifyPublicVisibilitySummaries_Admin_PV_True() {
+    User admin = getAdmin();
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1, admin.getUserId() + 1, "Dataset Name", "DUOS-123", 1, "Study Name", 1000, true);
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.verifyPublicVisibilityAccess(List.of(summary), admin);
+    assertEquals(1, authorizedSummaries.size());
+    assertEquals(summary, authorizedSummaries.getFirst());
+  }
+
+  @Test
+  void testVerifyPublicVisibilitySummaries_User_HiddenStudy() {
+    User user = new User();
+    user.setUserId(1);
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1, user.getUserId() + 1, "Dataset Name", "DUOS-123", 1, "Study Name", 1000, false);
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.verifyPublicVisibilityAccess(List.of(summary), user);
+    assertEquals(0, authorizedSummaries.size());
+  }
+
+  @Test
+  void testVerifyPublicVisibilitySummaries_User_PV_True() {
+    User user = new User();
+    user.setUserId(1);
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1, user.getUserId() + 1, "Dataset Name", "DUOS-123", 1, "Study Name", 1000, true);
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.verifyPublicVisibilityAccess(List.of(summary), user);
+    assertEquals(1, authorizedSummaries.size());
+    assertEquals(summary, authorizedSummaries.getFirst());
+  }
+
+  @Test
+  void testVerifyPublicVisibilitySummaries_User_Created_Dataset_PV_False() {
+    User user = new User();
+    user.setUserId(1);
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1, user.getUserId(), "Dataset Name", "DUOS-123", 1, "Study Name", 1000, false);
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.verifyPublicVisibilityAccess(List.of(summary), user);
+    assertEquals(1, authorizedSummaries.size());
+    assertEquals(summary, authorizedSummaries.getFirst());
+  }
+
+  @Test
+  void testVerifyPublicVisibilitySummaries_User_StudyCreator() {
+    User user = new User();
+    user.setUserId(1);
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1,
+            user.getUserId() + 1,
+            "Dataset Name",
+            "DUOS-123",
+            1,
+            "Study Name",
+            user.getUserId(),
+            false);
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.verifyPublicVisibilityAccess(List.of(summary), user);
+    assertEquals(1, authorizedSummaries.size());
+    assertEquals(summary, authorizedSummaries.getFirst());
+  }
+
+  @Test
+  void testVerifyPublicVisibilitySummaries_User_IS_StudyCustodian() {
+    Gson gson = GsonUtil.getInstance();
+    User custodian = new User();
+    custodian.setUserId(1);
+    custodian.setEmail("alice@custodiansRus.org");
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setCreateUserId(custodian.getUserId() + 1);
+    study.setPublicVisibility(false);
+    StudyProperty prop = new StudyProperty();
+    prop.setKey(DatasetRegistrationSchemaV1Builder.dataCustodianEmail);
+    prop.setType(PropertyType.Json);
+    prop.setValue(gson.toJson(List.of(custodian.getEmail())));
+    study.addProperties(prop);
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1,
+            custodian.getUserId() + 1,
+            "Dataset Name",
+            "DUOS-123",
+            study.getStudyId(),
+            "Study Name",
+            study.getCreateUserId(),
+            false);
+    when(studyDAO.findStudyById(summary.study_id())).thenReturn(study);
+
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.verifyPublicVisibilityAccess(List.of(summary), custodian);
+    assertEquals(1, authorizedSummaries.size());
+    assertEquals(summary, authorizedSummaries.getFirst());
+  }
+
+  @Test
+  void testVerifyPublicVisibilitySummaries_User_NOT_StudyCustodian() {
+    Gson gson = GsonUtil.getInstance();
+    User custodian = new User();
+    custodian.setUserId(1);
+    custodian.setEmail("alice@custodiansRus.org");
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setCreateUserId(custodian.getUserId() + 1);
+    study.setPublicVisibility(false);
+    StudyProperty prop = new StudyProperty();
+    prop.setKey(DatasetRegistrationSchemaV1Builder.dataCustodianEmail);
+    prop.setType(PropertyType.Json);
+    prop.setValue(gson.toJson(List.of("jane@custodiansRus.org")));
+    study.addProperties(prop);
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1,
+            custodian.getUserId() + 1,
+            "Dataset Name",
+            "DUOS-123",
+            study.getStudyId(),
+            "Study Name",
+            study.getCreateUserId(),
+            false);
+    when(studyDAO.findStudyById(summary.study_id())).thenReturn(study);
+
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.verifyPublicVisibilityAccess(List.of(summary), custodian);
+    assertEquals(0, authorizedSummaries.size());
+  }
+
+  @Test
+  void testVerifyPublicVisibilitySummaries_Study_DoesntExist() {
+    User user = new User();
+    user.setUserId(1);
+    DatasetStudySummary summary =
+        new DatasetStudySummary(
+            1, user.getUserId() + 1, "Dataset Name", "DUOS-123", null, null, null, null);
+    when(datasetDAO.findAllDatasetStudySummaries()).thenReturn(List.of(summary));
+
+    List<DatasetStudySummary> authorizedSummaries =
+        datasetService.findAllDatasetStudySummaries(user);
+    assertEquals(1, authorizedSummaries.size());
+    assertEquals(summary, authorizedSummaries.getFirst());
+  }
+
+  @Test
   void testVerifyPublicVisibilityAccess_Admin() {
-    User admin = new User();
-    admin.setUserId(1);
-    admin.setEmail("admin@email.com");
-    // Without the admin role this test condition would fail.
-    admin.setAdminRole();
+    User admin = getAdmin();
     Dataset dataset = new Dataset();
     dataset.setCreateUserId(2);
     User studyCreator = new User();
@@ -484,6 +746,15 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     Dataset verfiedDataset = datasetService.verifyPublicVisibilityAccess(dataset, admin);
     assertEquals(dataset.getDatasetId(), verfiedDataset.getDatasetId());
+  }
+
+  private static User getAdmin() {
+    User admin = new User();
+    admin.setUserId(1);
+    admin.setEmail("admin@email.com");
+    // Without the admin role this test condition would fail.
+    admin.setAdminRole();
+    return admin;
   }
 
   @Test
@@ -646,13 +917,17 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   @Test
   void testIsAuthorizedToListUsers() {
-    when(datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetIdAndUserId(anyLong(), anyLong())).thenReturn(new DatasetAuthorizationReader(1, 1, 1, 1, Timestamp.from(Instant.now())));
+    when(datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetIdAndUserId(
+            anyLong(), anyLong()))
+        .thenReturn(new DatasetAuthorizationReader(1, 1, 1, 1, Timestamp.from(Instant.now())));
     assertTrue(datasetService.isAuthorizedToListUsers(1, 1));
   }
 
   @Test
   void testIsAuthorizedToListUsersNotFound() {
-    when(datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetIdAndUserId(anyLong(), anyLong())).thenReturn(null);
+    when(datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetIdAndUserId(
+            anyLong(), anyLong()))
+        .thenReturn(null);
     assertFalse(datasetService.isAuthorizedToListUsers(1, 1));
   }
 
@@ -660,7 +935,8 @@ class DatasetServiceTest extends AbstractTestHelper {
   void testAddAuthorizedReader() {
     DatasetAuthorizationReader dauthr =
         new DatasetAuthorizationReader(1, 1, 1, 1, Timestamp.from(Instant.now()));
-    when(datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(anyLong(), anyLong(), anyLong()))
+    when(datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(
+            anyLong(), anyLong(), anyLong()))
         .thenReturn(dauthr.id());
     when(datasetAuthorizationReaderDAO.findAuthorizedReaderByRecordId(anyLong()))
         .thenReturn(dauthr);
@@ -673,6 +949,31 @@ class DatasetServiceTest extends AbstractTestHelper {
   void testRemoveAuthorizedAccessReader() {
     doNothing().when(datasetAuthorizationReaderDAO).deleteByDatasetAndUserId(anyLong(), anyLong());
     assertDoesNotThrow(() -> datasetAuthorizationReaderDAO.deleteByDatasetAndUserId(1, 1));
+  }
+
+  @Test
+  void testPatchStudy() throws Exception {
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setName("Study Name");
+    User user = new User();
+    user.setUserId(1);
+    StudyPatch patch =
+        new StudyPatch(
+            "New Study Name",
+            StudyType.OBSERVATIONAL,
+            "New Description",
+            null,
+            "New Phenotype",
+            "New Species",
+            "New PI",
+            null,
+            null,
+            null,
+            true);
+    when(datasetServiceDAO.patchStudy(study, user, patch)).thenReturn(study);
+    when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
+    assertDoesNotThrow(() -> datasetService.patchStudy(study.getStudyId(), user, patch));
   }
 
   /* Helper functions */

@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.enumeration;
 
 public enum EmailType {
-
   COLLECT(1),
   NEW_CASE(2, "new-case.html"),
   REMINDER(3, "reminder.html"),
@@ -33,7 +32,10 @@ public enum EmailType {
   SO_DAR_APPROVED(29, "so-dar-approved.html"),
   SO_PROGRESS_REPORT_SUBMITTED(30, "so-progress-report-submitted.html"),
   SO_PROGRESS_REPORT_APPROVED(31, "so-progress-report-approved.html"),
-  DAC_RADAR_APPROVED(32, "dac-radar-approved.html"),;
+  DAC_RADAR_APPROVED(32, "dac-radar-approved.html"),
+  NEW_DAR_SO_NEEDS_TO_APPROVE(33, "new-dar-so-needs-to-approve.html"),
+  DAC_VOTE_REMINDER_DIGEST(34, "vote-digest.ftl"),
+  NEW_STUDY_REGISTRATION_CONFIRMATION(35, "new-study-registration-confirmation.ftl");
 
   private final Integer typeInt;
   public final String templateName;

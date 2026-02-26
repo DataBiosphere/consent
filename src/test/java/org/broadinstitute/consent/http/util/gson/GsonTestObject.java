@@ -9,14 +9,12 @@ import java.util.Date;
  */
 class GsonTestObject {
 
-  GsonTestObject() {
-  }
+  GsonTestObject() {}
 
   private transient String transientField;
 
   private Date date;
   private Instant instant;
-
 
   String getTransientField() {
     return transientField;

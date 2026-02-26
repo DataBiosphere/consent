@@ -1,5 +1,6 @@
 post:
   summary: Create Elections for Collection By ID
+  operationId: createElectionsForCollection
   description: Returns created Elections for Dars in Collection
   tags:
     - DAR Collection
@@ -19,8 +20,12 @@ post:
           schema:
             $ref: '../schemas/DarCollection.yaml'
     400:
-      description: Bad Request
+      description: Bad Request.  Check error details
+    401:
+      description: Not authorized to perform this action.
     404:
       description: Not Found
+    409:
+      description: Conflict.  Check error details
     500:
       description: Internal Server Error

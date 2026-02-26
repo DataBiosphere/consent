@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.google.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -15,6 +16,11 @@ import org.apache.commons.io.IOUtils;
 
 @Path("/version")
 public class VersionResource extends Resource {
+
+  @Inject
+  public VersionResource() {
+    // For injection
+  }
 
   @GET
   @Produces("application/json")
@@ -43,10 +49,10 @@ public class VersionResource extends Resource {
         this.version = "error";
       } else {
         JsonObject jsonObject = new Gson().fromJson(props, JsonObject.class);
-        String longHash = Optional
-            .ofNullable(jsonObject.get("git.commit.id"))
-            .orElse(new JsonPrimitive("error"))
-            .getAsString();
+        String longHash =
+            Optional.ofNullable(jsonObject.get("git.commit.id"))
+                .orElse(new JsonPrimitive("error"))
+                .getAsString();
         String shortHash = longHash.substring(0, Math.min(longHash.length(), 12));
         JsonElement buildVersion = jsonObject.get("git.build.version");
         if (Objects.nonNull(buildVersion)) {
@@ -64,5 +70,4 @@ public class VersionResource extends Resource {
       return version;
     }
   }
-
 }

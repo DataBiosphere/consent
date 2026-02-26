@@ -111,7 +111,6 @@ public class SamResource extends Resource {
     }
   }
 
-
   @Path("register/self/tos")
   @DELETE
   @Produces("application/json")

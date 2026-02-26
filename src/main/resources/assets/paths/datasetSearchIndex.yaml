@@ -1,5 +1,6 @@
 post:
   summary: Search the dataset index
+  operationId: searchDatasetIndex
   description: Returns all results matching a search query.
   requestBody:
     description: Search query
@@ -8,6 +9,8 @@ post:
       application/json:
         schema:
           type: object
+          description: Elasticsearch query object
+          additionalProperties: true
         examples:
           example1:
             summary: Search request 1
@@ -16,7 +19,7 @@ post:
                 bool:
                   must:
                     - match:
-                        _type: dataset
+                        _index: dataset
                     - match:
                         _id: 1440
           example2:
@@ -28,7 +31,7 @@ post:
                 bool:
                   must:
                     - match:
-                        _type: dataset
+                        _index: dataset
                     - exists:
                         field: study
   tags:

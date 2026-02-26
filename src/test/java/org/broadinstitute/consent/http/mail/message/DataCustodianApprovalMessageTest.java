@@ -79,7 +79,9 @@ class DataCustodianApprovalMessageTest {
     var message =
         new DataCustodianApprovalMessage(
             toUser, darCode, datasetMailDTOs, "Depositor", "researcher@email.com", true);
-    assertEquals("Dar Code has been Rule Automated DAR (RADAR) approved by the DAC", message.createSubject());
+    assertEquals(
+        "Dar Code has been Rule Automated DAR (RADAR) approved by the DAC",
+        message.createSubject());
 
     Template template = helper.getTemplate(message.getTemplateName());
     Writer out = new StringWriter();

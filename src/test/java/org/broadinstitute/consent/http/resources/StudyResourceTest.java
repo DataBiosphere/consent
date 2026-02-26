@@ -26,6 +26,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
@@ -49,39 +50,33 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class StudyResourceTest extends AbstractTestHelper {
 
-  @Mock
-  private DatasetService datasetService;
+  @Mock private DatasetService datasetService;
 
-  @Mock
-  private DatasetRegistrationService datasetRegistrationService;
+  @Mock private DatasetRegistrationService datasetRegistrationService;
 
-  @Mock
-  private UserService userService;
+  @Mock private UserService userService;
 
-  @Mock
-  private ElasticSearchService elasticSearchService;
+  @Mock private ElasticSearchService elasticSearchService;
 
-  @Mock
-  private AuthUser authUser;
+  @Mock private AuthUser authUser;
 
-  @Mock
-  private User user;
+  @Mock private User user;
 
-  @Mock
-  private DuosUser duosUser;
+  @Mock private DuosUser duosUser;
 
   private StudyResource resource;
 
   @BeforeEach
   void setUp() {
-    resource = new StudyResource(datasetService, userService, datasetRegistrationService,
-        elasticSearchService);
+    resource =
+        new StudyResource(
+            datasetService, userService, datasetRegistrationService, elasticSearchService);
   }
 
   @Test
   void testUpdateCustodiansSuccess() {
-    try (var response = resource.updateCustodians(authUser, 1,
-        "[\"user_1@test.com\", \"user_2@test.com\"]")) {
+    try (var response =
+        resource.updateCustodians(authUser, 1, "[\"user_1@test.com\", \"user_2@test.com\"]")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -95,11 +90,11 @@ class StudyResourceTest extends AbstractTestHelper {
 
   @Test
   void testUpdateCustodiansNotFound() {
-    when(datasetService.updateStudyCustodians(any(), any(), any())).thenThrow(
-        new NotFoundException("Study not found"));
+    when(datasetService.updateStudyCustodians(any(), any(), any()))
+        .thenThrow(new NotFoundException("Study not found"));
 
-    try (var response = resource.updateCustodians(authUser, 1,
-        "[\"user_1@test.com\", \"user_2@test.com\"]")) {
+    try (var response =
+        resource.updateCustodians(authUser, 1, "[\"user_1@test.com\", \"user_2@test.com\"]")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
@@ -113,7 +108,7 @@ class StudyResourceTest extends AbstractTestHelper {
     study.setName("asdfasdfasdfasdfasdfasdf");
     when(datasetService.getStudyWithDatasetsById(user, study.getStudyId())).thenReturn(study);
     when(duosUser.getUser()).thenReturn(user);
-    when(user.getUserId()).thenReturn(study.getCreateUserId());
+    when(datasetService.isCreatorCustodianOrAdmin(user, study)).thenReturn(true);
 
     try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -139,7 +134,7 @@ class StudyResourceTest extends AbstractTestHelper {
 
     when(datasetService.getStudyWithDatasetsById(user, study.getStudyId())).thenReturn(study);
     when(duosUser.getUser()).thenReturn(user);
-    when(user.getUserId()).thenReturn(study.getCreateUserId());
+    when(datasetService.isCreatorCustodianOrAdmin(user, study)).thenReturn(true);
 
     try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -149,7 +144,8 @@ class StudyResourceTest extends AbstractTestHelper {
 
   @Test
   void testGetStudyByIdNotFound() {
-    when(datasetService.getStudyWithDatasetsById(duosUser.getUser(), 1)).thenThrow(new NotFoundException());
+    when(datasetService.getStudyWithDatasetsById(duosUser.getUser(), 1))
+        .thenThrow(new NotFoundException());
 
     try (var response = resource.getStudyById(duosUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -163,7 +159,9 @@ class StudyResourceTest extends AbstractTestHelper {
     User generalUser = new User();
     generalUser.setUserId(randomInt(1000, 1100));
     when(duosUser.getUser()).thenReturn(generalUser);
-    when(datasetService.getStudyWithDatasetsById(duosUser.getUser(), study.getStudyId())).thenReturn(study);
+    when(datasetService.getStudyWithDatasetsById(duosUser.getUser(), study.getStudyId()))
+        .thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(generalUser, study)).thenReturn(false);
 
     try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -177,7 +175,9 @@ class StudyResourceTest extends AbstractTestHelper {
     User createUser = new User();
     createUser.setUserId(study.getCreateUserId());
     when(duosUser.getUser()).thenReturn(createUser);
-    when(datasetService.getStudyWithDatasetsById(duosUser.getUser(), study.getStudyId())).thenReturn(study);
+    when(datasetService.getStudyWithDatasetsById(duosUser.getUser(), study.getStudyId()))
+        .thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(true);
 
     try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -189,7 +189,7 @@ class StudyResourceTest extends AbstractTestHelper {
     Study study = createMockStudy();
     when(datasetService.getStudyWithDatasetsById(user, study.getStudyId())).thenReturn(study);
     when(duosUser.getUser()).thenReturn(user);
-    when(user.getUserId()).thenReturn(study.getCreateUserId());
+    when(datasetService.isCreatorCustodianOrAdmin(user, study)).thenReturn(true);
 
     try (var response = resource.getRegistrationFromStudy(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -202,7 +202,7 @@ class StudyResourceTest extends AbstractTestHelper {
     study.getDatasets().clear();
     when(datasetService.getStudyWithDatasetsById(user, study.getStudyId())).thenReturn(study);
     when(duosUser.getUser()).thenReturn(user);
-    when(user.getUserId()).thenReturn(study.getCreateUserId());
+    when(datasetService.isCreatorCustodianOrAdmin(user, study)).thenReturn(true);
 
     try (var response = resource.getRegistrationFromStudy(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -212,7 +212,8 @@ class StudyResourceTest extends AbstractTestHelper {
   @Test
   void testGetRegistrationFromStudyNotFound() {
     Study study = createMockStudy();
-    when(datasetService.getStudyWithDatasetsById(duosUser.getUser(), study.getStudyId())).thenThrow(new NotFoundException());
+    when(datasetService.getStudyWithDatasetsById(duosUser.getUser(), study.getStudyId()))
+        .thenThrow(new NotFoundException());
 
     try (var response = resource.getRegistrationFromStudy(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -226,7 +227,9 @@ class StudyResourceTest extends AbstractTestHelper {
     User generalUser = new User();
     generalUser.setUserId(randomInt(1000, 1100));
     when(duosUser.getUser()).thenReturn(generalUser);
-    when(datasetService.getStudyWithDatasetsById(generalUser, study.getStudyId())).thenReturn(study);
+    when(datasetService.getStudyWithDatasetsById(generalUser, study.getStudyId()))
+        .thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(generalUser, study)).thenReturn(false);
 
     try (var response = resource.getRegistrationFromStudy(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -240,7 +243,9 @@ class StudyResourceTest extends AbstractTestHelper {
     User createUser = new User();
     createUser.setUserId(study.getCreateUserId());
     when(duosUser.getUser()).thenReturn(createUser);
-    when(datasetService.getStudyWithDatasetsById(duosUser.getUser(), study.getStudyId())).thenReturn(study);
+    when(datasetService.getStudyWithDatasetsById(duosUser.getUser(), study.getStudyId()))
+        .thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(true);
 
     try (var response = resource.getRegistrationFromStudy(duosUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -248,23 +253,24 @@ class StudyResourceTest extends AbstractTestHelper {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {
-      DataResourceTestData.registrationWithMalformedJson,
-      DataResourceTestData.registrationWithStudyName,
-      DataResourceTestData.registrationWithDataSubmitterUserId,
-      DataResourceTestData.registrationWithExistingCGDataUse,
-      DataResourceTestData.registrationWithExistingCG
-  })
+  @ValueSource(
+      strings = {
+        DataResourceTestData.registrationWithMalformedJson,
+        DataResourceTestData.registrationWithStudyName,
+        DataResourceTestData.registrationWithDataSubmitterUserId,
+        DataResourceTestData.registrationWithExistingCGDataUse,
+        DataResourceTestData.registrationWithExistingCG
+      })
   void testUpdateStudyByRegistrationInvalidInput(String input) {
     Study study = createMockStudy();
     // for DataResourceTestData.registrationWithExistingCG, manipulate the dataset ids to simulate
     // a dataset deletion
     if (input.equals(DataResourceTestData.registrationWithExistingCG)) {
       Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
-      DatasetRegistrationSchemaV1 schemaV1 = gson.fromJson(input,
-          DatasetRegistrationSchemaV1.class);
-      List<Integer> datasetIds = schemaV1.getConsentGroups().stream()
-          .map(ConsentGroup::getDatasetId).toList();
+      DatasetRegistrationSchemaV1 schemaV1 =
+          gson.fromJson(input, DatasetRegistrationSchemaV1.class);
+      List<Integer> datasetIds =
+          schemaV1.getConsentGroups().stream().map(ConsentGroup::getDatasetId).toList();
       study.addDatasetIds(Set.of(datasetIds.get(0) + 1));
     }
     when(userService.findUserByEmail(any())).thenReturn(user);
@@ -274,9 +280,10 @@ class StudyResourceTest extends AbstractTestHelper {
     when(authUser.getEmail()).thenReturn(createUser.getEmail());
     when(userService.findUserByEmail(createUser.getEmail())).thenReturn(createUser);
     when(datasetRegistrationService.findStudyById(study.getStudyId())).thenReturn(study);
-    when(datasetService.isCreatorOrCustodian(createUser, study)).thenReturn(true);
+    when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(true);
 
-    try (var response = resource.updateStudyByRegistration(authUser, null, study.getStudyId(), input)) {
+    try (var response =
+        resource.updateStudyByRegistration(authUser, null, study.getStudyId(), input)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -287,12 +294,11 @@ class StudyResourceTest extends AbstractTestHelper {
     Study study = createMockStudy();
     Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
     DatasetRegistrationSchemaV1 schemaV1 = gson.fromJson(input, DatasetRegistrationSchemaV1.class);
-    Set<Integer> datasetIds = schemaV1
-        .getConsentGroups()
-        .stream()
-        .map(ConsentGroup::getDatasetId)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toSet());
+    Set<Integer> datasetIds =
+        schemaV1.getConsentGroups().stream()
+            .map(ConsentGroup::getDatasetId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
     study.getDatasetIds().clear();
     study.addDatasetIds(datasetIds);
     User createUser = new User();
@@ -301,9 +307,10 @@ class StudyResourceTest extends AbstractTestHelper {
     when(authUser.getEmail()).thenReturn(createUser.getEmail());
     when(userService.findUserByEmail(createUser.getEmail())).thenReturn(createUser);
     when(datasetRegistrationService.findStudyById(study.getStudyId())).thenReturn(study);
-    when(datasetService.isCreatorOrCustodian(createUser, study)).thenReturn(true);
+    when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(true);
 
-    try (var response = resource.updateStudyByRegistration(authUser, null, study.getStudyId(), input)) {
+    try (var response =
+        resource.updateStudyByRegistration(authUser, null, study.getStudyId(), input)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -314,12 +321,11 @@ class StudyResourceTest extends AbstractTestHelper {
     Study study = createMockStudy();
     Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
     DatasetRegistrationSchemaV1 schemaV1 = gson.fromJson(input, DatasetRegistrationSchemaV1.class);
-    Set<Integer> datasetIds = schemaV1
-        .getConsentGroups()
-        .stream()
-        .map(ConsentGroup::getDatasetId)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toSet());
+    Set<Integer> datasetIds =
+        schemaV1.getConsentGroups().stream()
+            .map(ConsentGroup::getDatasetId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
     study.getDatasetIds().clear();
     study.addDatasetIds(datasetIds);
     User createUser = new User();
@@ -329,8 +335,10 @@ class StudyResourceTest extends AbstractTestHelper {
     when(authUser.getEmail()).thenReturn(createUser.getEmail());
     when(userService.findUserByEmail(createUser.getEmail())).thenReturn(createUser);
     when(datasetRegistrationService.findStudyById(study.getStudyId())).thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(true);
 
-    try (var response = resource.updateStudyByRegistration(authUser, null, study.getStudyId(), input)) {
+    try (var response =
+        resource.updateStudyByRegistration(authUser, null, study.getStudyId(), input)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -341,12 +349,11 @@ class StudyResourceTest extends AbstractTestHelper {
     Study study = createMockStudy();
     Gson gson = GsonUtil.gsonBuilderWithAdapters().create();
     DatasetRegistrationSchemaV1 schemaV1 = gson.fromJson(input, DatasetRegistrationSchemaV1.class);
-    Set<Integer> datasetIds = schemaV1
-        .getConsentGroups()
-        .stream()
-        .map(ConsentGroup::getDatasetId)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toSet());
+    Set<Integer> datasetIds =
+        schemaV1.getConsentGroups().stream()
+            .map(ConsentGroup::getDatasetId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
     study.getDatasetIds().clear();
     study.addDatasetIds(datasetIds);
     User createUser = new User();
@@ -356,9 +363,10 @@ class StudyResourceTest extends AbstractTestHelper {
     when(authUser.getEmail()).thenReturn(createUser.getEmail());
     when(userService.findUserByEmail(createUser.getEmail())).thenReturn(createUser);
     when(datasetRegistrationService.findStudyById(study.getStudyId())).thenReturn(study);
-    when(datasetService.isCreatorOrCustodian(createUser, study)).thenReturn(false);
+    when(datasetService.isCreatorCustodianOrAdmin(createUser, study)).thenReturn(false);
 
-    try (var response = resource.updateStudyByRegistration(authUser, null, study.getStudyId(), input)) {
+    try (var response =
+        resource.updateStudyByRegistration(authUser, null, study.getStudyId(), input)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
   }
@@ -439,7 +447,6 @@ class StudyResourceTest extends AbstractTestHelper {
     }
   }
 
-
   @Test
   void testDeleteStudyByIdNoDatasets() throws Exception {
     Study study = createMockStudy();
@@ -473,7 +480,6 @@ class StudyResourceTest extends AbstractTestHelper {
       verify(elasticSearchService, atLeastOnce()).deleteIndex(any(), any());
     }
   }
-
 
   /*
    * Study mock
@@ -537,4 +543,181 @@ class StudyResourceTest extends AbstractTestHelper {
     return study;
   }
 
+  @Test
+  void testCheckPublicVisibilityForUser_PublicStudy_ApprovedRole() {
+    Study study = createMockStudy();
+    study.setPublicVisibility(true);
+    User approvedUser = new User();
+    approvedUser.setUserId(study.getCreateUserId());
+    when(datasetService.getStudyWithDatasetsById(approvedUser, study.getStudyId()))
+        .thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(approvedUser, study)).thenReturn(true);
+    when(duosUser.getUser()).thenReturn(approvedUser);
+
+    try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testCheckPublicVisibilityForUser_PublicStudy_NoApprovedRole() {
+    Study study = createMockStudy();
+    study.setPublicVisibility(true);
+    User generalUser = new User();
+    generalUser.setUserId(randomInt(1000, 1100));
+    when(datasetService.getStudyWithDatasetsById(generalUser, study.getStudyId()))
+        .thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(generalUser, study)).thenReturn(false);
+    when(duosUser.getUser()).thenReturn(generalUser);
+
+    try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testCheckPublicVisibilityForUser_PrivateStudy_Creator() {
+    Study study = createMockStudy();
+    study.setPublicVisibility(false);
+    User creator = new User();
+    creator.setUserId(study.getCreateUserId());
+    when(datasetService.getStudyWithDatasetsById(creator, study.getStudyId())).thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(creator, study)).thenReturn(true);
+    when(duosUser.getUser()).thenReturn(creator);
+
+    try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testCheckPublicVisibilityForUser_PrivateStudy_Custodian() {
+    Study study = createMockStudy();
+    study.setPublicVisibility(false);
+    User custodian = new User();
+    custodian.setUserId(randomInt(1000, 1100));
+    when(datasetService.getStudyWithDatasetsById(custodian, study.getStudyId())).thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(custodian, study)).thenReturn(true);
+    when(duosUser.getUser()).thenReturn(custodian);
+
+    try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testCheckPublicVisibilityForUser_PrivateStudy_Admin() {
+    Study study = createMockStudy();
+    study.setPublicVisibility(false);
+    User admin = new User();
+    admin.setUserId(randomInt(1000, 1100));
+    admin.setAdminRole();
+    when(datasetService.getStudyWithDatasetsById(admin, study.getStudyId())).thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(admin, study)).thenReturn(true);
+    when(duosUser.getUser()).thenReturn(admin);
+
+    try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testCheckPublicVisibilityForUser_PrivateStudy_NoApprovedRole() {
+    Study study = createMockStudy();
+    study.setPublicVisibility(false);
+    User generalUser = new User();
+    generalUser.setUserId(randomInt(1000, 1100));
+    when(datasetService.getStudyWithDatasetsById(generalUser, study.getStudyId()))
+        .thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(generalUser, study)).thenReturn(false);
+    when(duosUser.getUser()).thenReturn(generalUser);
+
+    try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
+  void testCheckPublicVisibilityForUser_PublicVisibilityNull_CausesError() {
+    Study study = createMockStudy();
+    study.setPublicVisibility(null);
+    User approvedUser = new User();
+    approvedUser.setUserId(study.getCreateUserId());
+    when(datasetService.getStudyWithDatasetsById(approvedUser, study.getStudyId()))
+        .thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(approvedUser, study)).thenReturn(true);
+    when(duosUser.getUser()).thenReturn(approvedUser);
+
+    try (var response = resource.getStudyById(duosUser, study.getStudyId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+    }
+  }
+
+  @Test
+  void testPatchStudyById() {
+    Study study = createMockStudy();
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    when(duosUser.getUser()).thenReturn(admin);
+    String patchJson =
+        """
+            {
+              "name": "Updated Study Name"
+            }
+            """;
+    StudyPatch studyPatch = GsonUtil.getInstance().fromJson(patchJson, StudyPatch.class);
+    when(datasetService.patchStudy(study.getStudyId(), duosUser.getUser(), studyPatch))
+        .thenReturn(study);
+    try (var response = resource.patchStudyById(duosUser, study.getStudyId(), patchJson)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testPatchStudyByIdNotFound() {
+    Study study = createMockStudy();
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(datasetService.findStudy(study.getStudyId())).thenReturn(null);
+    try (var response = resource.patchStudyById(duosUser, study.getStudyId(), "{}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
+  void testPatchStudyByIdNotModified() {
+    Study study = createMockStudy();
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    try (var response = resource.patchStudyById(duosUser, study.getStudyId(), "{}")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_MODIFIED, response.getStatus());
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "{ invalid json }",
+        "{ \"unknownField\": \"some value\" }",
+        "{ \"name\": 12345 }",
+        "{ \"studyType\": \"not a study type\" }",
+        "{ \"publicVisibility\": \"not a boolean\" }",
+        "{ \"publicVisibility\": \"true\" }",
+        "{ \"publicVisibility\": \"false\" }"
+      })
+  void testPatchStudyByIdInvalidPatch(String json) {
+    Study study = createMockStudy();
+    User admin = new User();
+    admin.setAdminRole();
+    admin.setUserId(study.getCreateUserId());
+    when(datasetService.findStudy(study.getStudyId())).thenReturn(study);
+    try (var response = resource.patchStudyById(duosUser, study.getStudyId(), json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
 }

@@ -52,8 +52,8 @@ class GsonUtilTest {
     Gson gson = GsonUtil.buildGson();
     boolean serializationFailed = false;
     boolean deserializationFailed = false;
-    BlobId id = BlobId.of(RandomStringUtils.randomAlphabetic(20),
-        RandomStringUtils.randomAlphabetic(20));
+    BlobId id =
+        BlobId.of(RandomStringUtils.randomAlphabetic(20), RandomStringUtils.randomAlphabetic(20));
     try {
       gson.toJson(id);
     } catch (RuntimeException rte) {
@@ -90,7 +90,8 @@ class GsonUtilTest {
     assertEquals(2, parsedJsonObj.size());
     assertEquals(parsedJsonObj.get("date"), parsedJsonObj.get("instant"));
     assertEquals(obj.getDate().getTime(), parsedJsonObj.get("date").getAsLong());
-    assertEquals(obj.getInstant().truncatedTo(ChronoUnit.MILLIS).toEpochMilli(),
+    assertEquals(
+        obj.getInstant().truncatedTo(ChronoUnit.MILLIS).toEpochMilli(),
         parsedJsonObj.get("instant").getAsLong());
 
     assertFalse(parsedJsonObj.has("transientField"));
@@ -100,7 +101,8 @@ class GsonUtilTest {
   void testBuildJsonWithCustomObjects_Deserialization() {
     Gson gson = GsonUtil.buildGson();
 
-    String json = """
+    String json =
+        """
         {
             "transientField": "asdfasdfa",
             "date": 123456,
@@ -114,5 +116,4 @@ class GsonUtilTest {
     assertEquals(567890, parsedObj.getInstant().toEpochMilli());
     assertNull(parsedObj.getTransientField());
   }
-
 }

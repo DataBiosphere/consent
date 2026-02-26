@@ -19,6 +19,8 @@ import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.VoteType;
+import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
 import org.broadinstitute.consent.http.models.AutomationRuleToggleResponse;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -86,14 +88,22 @@ public class DACAutomationRuleService implements ConsentLogger {
     return ruleDAO.findAllDACAutomationRulesByDACId(dacId);
   }
 
-  public AutomationRuleToggleResponse toggleRule(Integer dacId, Integer ruleId, User user) {
+  public AutomationRuleToggleResponse toggleRule(Integer dacId, Integer ruleId, User user)
+      throws ConsentConflictException, UnprocessableEntityException {
+    List<DACAutomationRule> dacRules = ruleDAO.findAllDACAutomationRulesByDACId(dacId);
     Optional<DACAutomationRule> matchingRule =
-        ruleDAO.findAllDACAutomationRulesByDACId(dacId).stream()
+        dacRules.stream()
             .filter(r -> Objects.equals(r.id(), ruleId) && !isNull(r.enabledByUserId()))
             .findFirst();
     if (matchingRule.isPresent()) {
       ruleDAO.auditedDeleteDACRuleSetting(dacId, ruleId, user.getUserId());
       return new AutomationRuleToggleResponse(ruleId, false, -1, null, null);
+    } else {
+      Optional<DACAutomationRule> optionalRuleBeingUpdated =
+          dacRules.stream().filter(r -> Objects.equals(r.id(), ruleId)).findFirst();
+      if (optionalRuleBeingUpdated.isEmpty()) {
+        throw new UnprocessableEntityException("Rule ID not found.");
+      }
     }
     Instant insertTime = Instant.now();
     ruleDAO.auditedInsertDACRuleSetting(dacId, ruleId, user.getUserId(), insertTime);
@@ -150,7 +160,6 @@ public class DACAutomationRuleService implements ConsentLogger {
     } catch (Exception e) {
       logWarn("Error triggering DAC Rule Settings", e);
     }
-
   }
 
   @VisibleForTesting
@@ -183,25 +192,27 @@ public class DACAutomationRuleService implements ConsentLogger {
       DataAccessRequest dar,
       Dataset dataset,
       ContainerRequest request) {
-    int electionId =
-        electionDAO.insertElection(
-            ElectionType.DATA_ACCESS.getValue(),
-            ElectionStatus.OPEN.getValue(),
-            new Date(),
-            dar.getReferenceId(),
-            dataset.getDatasetId());
-    int voteId =
-        voteDAO.insertVote(rule.enabledByUserId(), electionId, VoteType.RADAR_APPROVE.getValue());
-    Vote vote = voteDAO.findVoteById(voteId);
+
+    // Wrap in transaction to ensure election and vote are created together
+    Vote vote =
+        electionDAO.inTransaction(
+            _ -> {
+              int electionId = createOpenElectionForDAR(dar, dataset, ElectionType.DATA_ACCESS);
+              int voteId =
+                  createVoteForElection(electionId, rule.enabledByUserId(), VoteType.RADAR_APPROVE);
+              return voteDAO.findVoteById(voteId);
+            });
+
     try {
-      List<Vote> updatedVotes = voteServiceDAO.updateVotesWithValue(
-          List.of(vote),
-          true,
-          String.format(
-              "Rule Automated DAR (RADAR) Approval using rule: %s",
-              ruleImplementation.getRuleType()));
-      assert(updatedVotes.size() == 1);
-      vote = updatedVotes.get(0);
+      List<Vote> updatedVotes =
+          voteServiceDAO.updateVotesWithValue(
+              List.of(vote),
+              true,
+              String.format(
+                  "Rule Automated DAR (RADAR) Approval using rule: %s",
+                  ruleImplementation.getRuleType()));
+      assert (updatedVotes.size() == 1);
+      vote = updatedVotes.getFirst();
     } catch (Exception e) {
       logException("Error updating vote", e);
       return null;
@@ -213,5 +224,26 @@ public class DACAutomationRuleService implements ConsentLogger {
             "Rule %s triggered for DAC id: %s and dataset id: %s",
             rule.ruleType(), dataset.getDacId(), dataset.getDatasetId()));
     return vote;
+  }
+
+  protected int createOpenElectionForDAR(
+      DataAccessRequest dar, Dataset dataset, ElectionType electionType) {
+    return electionDAO.insertElection(
+        electionType.getValue(),
+        ElectionStatus.OPEN.getValue(),
+        new Date(),
+        dar.getReferenceId(),
+        dataset.getDatasetId());
+  }
+
+  protected int createVoteForElection(int electionId, int userId, VoteType voteType) {
+    return voteDAO.insertVote(userId, electionId, voteType.getValue());
+  }
+
+  protected Optional<DACAutomationRule> getEnabledRuleOfInterest(
+      List<DACAutomationRule> dacRules, DACAutomationRuleType ruleType) {
+    return dacRules.stream()
+        .filter(r -> Objects.equals(r.ruleType(), ruleType) && !isNull(r.enabledByUserId()))
+        .findFirst();
   }
 }

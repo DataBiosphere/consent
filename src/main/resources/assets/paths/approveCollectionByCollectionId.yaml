@@ -1,0 +1,31 @@
+post:
+  summary: Allows a SIGNING OFFICIAL to approve a collection by collection ID
+  operationId: approveCollection
+  description: Returns an approved DAR collection
+  tags:
+    - DAR Collection
+    - Election
+  parameters:
+    - name: collectionId
+      in: path
+      description: DAR Collection Id
+      required: true
+      schema:
+        type: integer
+  responses:
+    200:
+      description: Returns target dar collection
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/DarCollection.yaml'
+    400:
+      description: Bad Request.  Check error details
+    401:
+      description: Not authorized to perform this action.
+    404:
+      description: Not Found
+    409:
+      description: Conflict.  Check error details
+    500:
+      description: Internal Server Error

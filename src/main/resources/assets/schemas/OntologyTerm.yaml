@@ -1,0 +1,25 @@
+type: object
+description: An ontology term that is used to annotate datasets and research purposes.
+properties:
+  id:
+    type: string
+    description: The unique identifier for the ontology term. This is typically the full purl Term URI.
+  label:
+    type: string
+    description: The human readable label for the ontology term.
+  parents:
+    type: array
+    description: An array of parent terms that also have an order associated with them.
+    items:
+      $ref: './ParentTerm.yaml'
+  ontology:
+    type: string
+    description: The ontology that this term belongs to. This is typically the filename of the ontology file without the extension (e.g. DOID, DUO).
+  synonyms:
+    type: array
+    description: An array of synonyms for the ontology term.
+    items:
+      type: string
+  definition:
+    type: string
+    description: A human readable definition of the ontology term.

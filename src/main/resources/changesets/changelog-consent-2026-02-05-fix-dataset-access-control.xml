@@ -1,0 +1,25 @@
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+  <changeSet id="changelog-consent-2026-02-05-fix-dataset-access-control" author="grushton">
+    <!-- Add access management prop for datasets with a DAC ID: -->
+    <sql>
+      INSERT INTO dataset_property
+      (dataset_id, property_key, property_value, create_date, property_type, schema_property)
+      SELECT d.dataset_id,
+             (SELECT key_id FROM dictionary WHERE key = 'Access Management'), 'controlled', NOW(), 'String', 'accessManagement'
+      FROM dataset d
+      WHERE d.dac_id IS NOT NULL
+        -- No access management property set:
+        AND NOT EXISTS (
+        SELECT 1
+         FROM dataset_property dp
+        WHERE dp.dataset_id = d.dataset_id
+          AND dp.schema_property = 'accessManagement'
+        )
+    </sql>
+  </changeSet>
+</databaseChangeLog>

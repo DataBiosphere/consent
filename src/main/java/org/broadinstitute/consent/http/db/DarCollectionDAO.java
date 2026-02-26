@@ -26,32 +26,34 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   String QUERY_FIELD_SEPARATOR = ", ";
 
   String getCollectionAndDars =
-      " SELECT c.*, i.institution_name, u.display_name AS researcher, dd.dataset_id, " +
-          User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
-          Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR +
-          Election.QUERY_FIELDS_WITH_E_PREFIX + QUERY_FIELD_SEPARATOR +
-          Vote.QUERY_FIELDS_WITH_V_PREFIX + QUERY_FIELD_SEPARATOR +
-          UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR +
-          DarCollection.DAR_FILTER_QUERY_COLUMNS +
-          " FROM dar_collection c " +
-          " INNER JOIN users u ON u.user_id = c.create_user_id " +
-          " LEFT JOIN user_property up ON u.user_id = up.user_id AND up.property_key in ('isThePI', 'piName', 'havePI', 'piERACommonsID') "
-          +
-          " LEFT JOIN institution i ON i.institution_id = u.institution_id " +
-          " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id " +
-          " LEFT JOIN dar_dataset dd ON dd.reference_id = dar.reference_id " +
-          " LEFT JOIN (" +
-          "   SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.election_type, election.dataset_id) AS latest "
-          +
-          "   FROM election " +
-          "   WHERE LOWER(election.election_type) = 'dataaccess' OR LOWER(election.election_type) = 'rp'"
-          +
-          " ) AS e " +
-          "   ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id) AND (e.latest = e.election_id OR e.latest IS NULL) "
-          +
-          " LEFT JOIN vote v ON v.election_id = e.election_id ";
+      " SELECT c.*, i.institution_name, u.display_name AS researcher, dd.dataset_id, "
+          + User.QUERY_FIELDS_WITH_U_PREFIX
+          + QUERY_FIELD_SEPARATOR
+          + Institution.QUERY_FIELDS_WITH_I_PREFIX
+          + QUERY_FIELD_SEPARATOR
+          + Election.QUERY_FIELDS_WITH_E_PREFIX
+          + QUERY_FIELD_SEPARATOR
+          + Vote.QUERY_FIELDS_WITH_V_PREFIX
+          + QUERY_FIELD_SEPARATOR
+          + UserProperty.QUERY_FIELDS_WITH_UP_PREFIX
+          + QUERY_FIELD_SEPARATOR
+          + DarCollection.DAR_FILTER_QUERY_COLUMNS
+          + " FROM dar_collection c "
+          + " INNER JOIN users u ON u.user_id = c.create_user_id "
+          + " LEFT JOIN user_property up ON u.user_id = up.user_id AND up.property_key in ('isThePI', 'piName', 'havePI', 'piERACommonsID') "
+          + " LEFT JOIN institution i ON i.institution_id = u.institution_id "
+          + " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
+          + " LEFT JOIN dar_dataset dd ON dd.reference_id = dar.reference_id "
+          + " LEFT JOIN ("
+          + "   SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.election_type, election.dataset_id) AS latest "
+          + "   FROM election "
+          + "   WHERE LOWER(election.election_type) = 'dataaccess' OR LOWER(election.election_type) = 'rp'"
+          + " ) AS e "
+          + "   ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id) AND (e.latest = e.election_id OR e.latest IS NULL) "
+          + " LEFT JOIN vote v ON v.election_id = e.election_id ";
 
-  String archiveFilterQuery = " AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL) ";
+  String archiveFilterQuery =
+      " AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL) ";
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = Institution.class, prefix = "i")
@@ -64,7 +66,8 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   @SqlQuery(
       getCollectionAndDars + " WHERE c.collection_id in (<collectionIds>)" + archiveFilterQuery)
   List<DarCollection> findDARCollectionByCollectionIds(
-      @BindList(value = "collectionIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> collectionIds);
+      @BindList(value = "collectionIds", onEmpty = EmptyHandling.NULL_STRING)
+          List<Integer> collectionIds);
 
   /**
    * Find all DARCollections with their DataAccessRequests
@@ -79,35 +82,36 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   @RegisterBeanMapper(value = Election.class, prefix = "e")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
-      " SELECT c.*, " +
-          User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR +
-          Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR +
-          UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR +
-          Election.QUERY_FIELDS_WITH_E_PREFIX + QUERY_FIELD_SEPARATOR +
-          "dd.dataset_id, " +
-          "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
-          +
-          "dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, " +
-          "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, " +
-          "dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date, "+
-          "dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id, " +
-          "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data " +
-          "FROM dar_collection c " +
-          "INNER JOIN users u ON c.create_user_id = u.user_id " +
-          "LEFT JOIN user_property up ON u.user_id = up.user_id " +
-          "INNER JOIN data_access_request dar on c.collection_id = dar.collection_id " +
-          "LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id " +
-          "LEFT JOIN institution i ON i.institution_id = u.institution_id " +
-          "LEFT JOIN (" +
-          "   SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.election_type, election.dataset_id) AS latest FROM election "
-          +
-          "   WHERE LOWER(election.election_type) = 'dataaccess' OR LOWER(election.election_type) = 'rp' "
-          +
-          ") AS e " +
-          "   ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id) AND (e.latest = e.election_id OR e.latest IS NULL) "
-          +
-          "WHERE (LOWER(data->>'status')!='archived' OR data->>'status' IS NULL) "
-  )
+      " SELECT c.*, "
+          + User.QUERY_FIELDS_WITH_U_PREFIX
+          + QUERY_FIELD_SEPARATOR
+          + Institution.QUERY_FIELDS_WITH_I_PREFIX
+          + QUERY_FIELD_SEPARATOR
+          + UserProperty.QUERY_FIELDS_WITH_UP_PREFIX
+          + QUERY_FIELD_SEPARATOR
+          + Election.QUERY_FIELDS_WITH_E_PREFIX
+          + QUERY_FIELD_SEPARATOR
+          + "dd.dataset_id, "
+          + "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
+          + "dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, "
+          + "dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date, "
+          + "dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date, "
+          + "dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id, "
+          + "dar.requires_so_approval AS dar_requires_so_approval, dar.approving_so_timestamp AS dar_approving_signing_official_approved_date,"
+          + "dar.approving_so_id AS dar_approving_signing_official_user_id,"
+          + "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data "
+          + "FROM dar_collection c "
+          + "INNER JOIN users u ON c.create_user_id = u.user_id "
+          + "LEFT JOIN user_property up ON u.user_id = up.user_id "
+          + "INNER JOIN data_access_request dar on c.collection_id = dar.collection_id "
+          + "LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
+          + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
+          + "LEFT JOIN ("
+          + "   SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.election_type, election.dataset_id) AS latest FROM election "
+          + "   WHERE LOWER(election.election_type) = 'dataaccess' OR LOWER(election.election_type) = 'rp' "
+          + ") AS e "
+          + "   ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id) AND (e.latest = e.election_id OR e.latest IS NULL) "
+          + "WHERE (LOWER(data->>'status')!='archived' OR data->>'status' IS NULL) ")
   List<DarCollection> findAllDARCollections();
 
   /**
@@ -136,7 +140,9 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
         dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, dar.era_commons_id AS dar_era_commons_id,
         dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date,
         dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id,
-        dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date,
+        dar.requires_so_approval AS dar_requires_so_approval, dar.approving_so_timestamp AS dar_approving_signing_official_approved_date,
+        dar.approving_so_id AS dar_approving_signing_official_user_id,
+        dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date,
         dar.update_date AS dar_update_date, dar.data AS data, dd.dataset_id
         FROM dar_collection c
         INNER JOIN users u ON c.create_user_id = u.user_id
@@ -166,17 +172,23 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   @SqlQuery(
       // nosemgrep
       "SELECT c.*, "
-          + User.QUERY_FIELDS_WITH_U_PREFIX + QUERY_FIELD_SEPARATOR
-          + Institution.QUERY_FIELDS_WITH_I_PREFIX + QUERY_FIELD_SEPARATOR
-          + UserProperty.QUERY_FIELDS_WITH_UP_PREFIX + QUERY_FIELD_SEPARATOR
-          + LibraryCard.QUERY_FIELDS_WITH_LC_PREFIX + QUERY_FIELD_SEPARATOR
+          + User.QUERY_FIELDS_WITH_U_PREFIX
+          + QUERY_FIELD_SEPARATOR
+          + Institution.QUERY_FIELDS_WITH_I_PREFIX
+          + QUERY_FIELD_SEPARATOR
+          + UserProperty.QUERY_FIELDS_WITH_UP_PREFIX
+          + QUERY_FIELD_SEPARATOR
+          + LibraryCard.QUERY_FIELDS_WITH_LC_PREFIX
+          + QUERY_FIELD_SEPARATOR
           + "dd.dataset_id, "
           + "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
           + "dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, dar.era_commons_id AS dar_era_commons_id, "
-          + "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
+          + "dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date, "
           + "dar.update_date AS dar_update_date, dar.data AS data, "
           + "dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date, "
           + "dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id, "
+          + "dar.requires_so_approval AS dar_requires_so_approval, dar.approving_so_timestamp AS dar_approving_signing_official_approved_date,"
+          + "dar.approving_so_id AS dar_approving_signing_official_user_id,"
           + "e.election_id AS e_election_id, e.reference_id AS e_reference_id, e.status AS e_status, e.create_date AS e_create_date, "
           + "e.last_update AS e_last_update, e.dataset_id AS e_dataset_id, e.election_type AS e_election_type, e.latest, "
           + "v.vote_id as v_vote_id, v.vote as v_vote, v.user_id as v_user_id, v.rationale as v_rationale, v.election_id as v_election_id, "
@@ -199,8 +211,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           + "LEFT JOIN users du "
           + "ON du.user_id = v.user_id "
           + "WHERE c.collection_id = :collectionId "
-          + "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )"
-  )
+          + "AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )")
   DarCollection findDARCollectionByCollectionId(@Bind("collectionId") Integer collectionId);
 
   /**
@@ -220,7 +231,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")
   @UseRowReducer(DarCollectionReducer.class)
   @SqlQuery(
-      """
+"""
     SELECT c.*,
        u.user_id as u_user_id, u.email as u_email, u.display_name as u_display_name, u.create_date as u_create_date, u.email_preference as u_email_preference, u.institution_id as u_institution_id, u.era_commons_id as u_era_commons_id,
        i.institution_id as i_id, i.institution_name as i_name, i.it_director_name as i_it_director_name, i.it_director_email as i_it_director_email, i.create_date as i_create_date, i.update_date as i_update_date,
@@ -229,10 +240,12 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
        dd.dataset_id,
        dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id,
        dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, dar.era_commons_id AS dar_era_commons_id,
-       dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date,
+       dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date,
        dar.update_date AS dar_update_date, (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
        dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date,
        dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id,
+       dar.requires_so_approval AS dar_requires_so_approval, dar.approving_so_timestamp AS dar_approving_signing_official_approved_date,
+       dar.approving_so_id AS dar_approving_signing_official_user_id,
        e.election_id AS e_election_id, e.reference_id AS e_reference_id, e.status AS e_status, e.create_date AS e_create_date,
        e.last_update AS e_last_update, e.dataset_id AS e_dataset_id, e.election_type AS e_election_type,
        v.vote_id as v_vote_id, v.vote as v_vote, v.user_id as v_user_id, v.rationale as v_rationale, v.election_id as v_election_id,
@@ -252,15 +265,15 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
       ON du.user_id = v.user_id
     WHERE c.collection_id = :collectionId
     AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )
-"""
-  )
-  DarCollection findCollectionWithAllElectionsByCollectionId(@Bind("collectionId") Integer collectionId);
-
+""")
+  DarCollection findCollectionWithAllElectionsByCollectionId(
+      @Bind("collectionId") Integer collectionId);
 
   /**
    * Find the DARCollection and all of its Data Access Requests that has the given collectionId
-   * Instead of including all elections for each DAR like findCollectionWithAllElectionsByCollectionId
-   * this query returns only elections for the datasets in the given datasetIds list
+   * Instead of including all elections for each DAR like
+   * findCollectionWithAllElectionsByCollectionId this query returns only elections for the datasets
+   * in the given datasetIds list
    *
    * @return DarCollection
    */
@@ -283,10 +296,12 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
        dd.dataset_id,
        dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id,
        dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, dar.era_commons_id AS dar_era_commons_id,
-       dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date,
+       dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date,
        dar.update_date AS dar_update_date, (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
        dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date,
        dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id,
+       dar.requires_so_approval AS dar_requires_so_approval, dar.approving_so_timestamp AS dar_approving_signing_official_approved_date,
+       dar.approving_so_id AS dar_approving_signing_official_user_id,
        e.election_id AS e_election_id, e.reference_id AS e_reference_id, e.status AS e_status, e.create_date AS e_create_date,
        e.last_update AS e_last_update, e.dataset_id AS e_dataset_id, e.election_type AS e_election_type,
        v.vote_id as v_vote_id, v.vote as v_vote, v.user_id as v_user_id, v.rationale as v_rationale, v.election_id as v_election_id,
@@ -307,9 +322,10 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
       ON du.user_id = v.user_id
     WHERE c.collection_id = :collectionId
     AND (LOWER(data->>'status') != 'archived' OR data->>'status' IS NULL )
-    """
-  )
-  DarCollection findCollectionWithElectionsByCollectionIdAndDatasetIds(@BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> datasetIds, @Bind("collectionId") Integer collectionId);
+    """)
+  DarCollection findCollectionWithElectionsByCollectionIdAndDatasetIds(
+      @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> datasetIds,
+      @Bind("collectionId") Integer collectionId);
 
   /**
    * Create a new DAR Collection with the given dar code, create user ID, and create date
@@ -323,22 +339,16 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
         VALUES (:darCode, :createUserId, :createDate)
       """)
   @GetGeneratedKeys
-  Integer insertDarCollection(@Bind("darCode") String darCode,
+  Integer insertDarCollection(
+      @Bind("darCode") String darCode,
       @Bind("createUserId") Integer createUserId,
       @Bind("createDate") Date createDate);
 
-  /**
-   * Update the update user and update date of the DAR Collection with the given collection ID
-   */
-  @SqlUpdate("UPDATE dar_collection SET update_user_id = :updateUserId, update_date = :updateDate WHERE collection_id = :collectionId")
-  void updateDarCollection(@Bind("collectionId") Integer collectionId,
+  /** Update the update user and update date of the DAR Collection with the given collection ID */
+  @SqlUpdate(
+      "UPDATE dar_collection SET update_user_id = :updateUserId, update_date = :updateDate WHERE collection_id = :collectionId")
+  void updateDarCollection(
+      @Bind("collectionId") Integer collectionId,
       @Bind("updateUserId") Integer updateUserId,
       @Bind("updateDate") Date updateDate);
-
 }
-
-
-
-
-
-

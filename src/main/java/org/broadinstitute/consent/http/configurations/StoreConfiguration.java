@@ -8,11 +8,9 @@ public class StoreConfiguration {
 
   public String password;
 
-  @NotNull
-  public String endpoint;
+  @NotNull public String endpoint;
 
-  @NotNull
-  public String bucket;
+  @NotNull public String bucket;
 
   public String getPassword() {
     return password;
@@ -37,5 +35,4 @@ public class StoreConfiguration {
   public void setBucket(String bucket) {
     this.bucket = bucket;
   }
-
 }

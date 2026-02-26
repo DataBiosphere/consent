@@ -30,5 +30,4 @@ public class MetricsResource extends Resource {
       return createExceptionResponse(e);
     }
   }
-
 }

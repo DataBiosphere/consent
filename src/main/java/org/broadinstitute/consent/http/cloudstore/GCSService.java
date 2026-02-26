@@ -28,20 +28,20 @@ public class GCSService implements ConsentLogger {
   private StoreConfiguration config;
   private Storage storage;
 
-  public GCSService() {
-  }
+  public GCSService() {}
 
   @Inject
   public GCSService(StoreConfiguration config) {
     this.config = config;
     try {
-      ServiceAccountCredentials credentials = ServiceAccountCredentials.
-          fromStream(new FileInputStream(config.getPassword()));
-      Storage storage = StorageOptions.newBuilder().
-          setProjectId(credentials.getProjectId()).
-          setCredentials(credentials).
-          build().
-          getService();
+      ServiceAccountCredentials credentials =
+          ServiceAccountCredentials.fromStream(new FileInputStream(config.getPassword()));
+      Storage storage =
+          StorageOptions.newBuilder()
+              .setProjectId(credentials.getProjectId())
+              .setCredentials(credentials)
+              .build()
+              .getService();
       this.setStorage(storage);
     } catch (Exception e) {
       logException("Exception initializing GCSService: " + e.getMessage(), e);
@@ -65,28 +65,26 @@ public class GCSService implements ConsentLogger {
    * @return Bucket
    */
   public Bucket getRootBucketWithMetadata() {
-    return storage.get(config.getBucket(),
-        Storage.BucketGetOption.fields(Storage.BucketField.values()));
+    return storage.get(
+        config.getBucket(), Storage.BucketGetOption.fields(Storage.BucketField.values()));
   }
 
   /**
    * Store an input stream as a Blob
    *
-   * @param content   InputStream content
+   * @param content InputStream content
    * @param mediaType String media type
-   * @param id        String UUID of the file
+   * @param id String UUID of the file
    * @return BlobId of the stored document
    * @throws IOException Exception when storing document
    */
-  public BlobId storeDocument(InputStream content, String mediaType, UUID id)
-      throws IOException {
+  public BlobId storeDocument(InputStream content, String mediaType, UUID id) throws IOException {
     byte[] bytes = IOUtils.toByteArray(content);
     BlobId blobId = BlobId.of(config.getBucket(), id.toString());
     BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(mediaType).build();
     Blob blob = storage.create(blobInfo, bytes);
     return blob.getBlobId();
   }
-
 
   /**
    * Delete a document by Blob Id Name
@@ -96,9 +94,7 @@ public class GCSService implements ConsentLogger {
    */
   public boolean deleteDocument(String blobIdName) {
     Optional<Blob> blobOptional = getBlobFromUrl(blobIdName);
-    return blobOptional
-        .map(blob -> storage.delete(blob.getBlobId()))
-        .orElse(false);
+    return blobOptional.map(blob -> storage.delete(blob.getBlobId())).orElse(false);
   }
 
   /**
@@ -136,6 +132,14 @@ public class GCSService implements ConsentLogger {
     } else {
       throw new NotFoundException("Document Not Found: " + blobIds.toString());
     }
+  }
+
+  public boolean hasBytes(BlobId blobId) throws NotFoundException {
+    Blob blob = storage.get(blobId);
+    if (blob != null) {
+      return blob.getSize() > 0;
+    }
+    throw new NotFoundException(String.format("Document not found: %s", blobId.toString()));
   }
 
   /**

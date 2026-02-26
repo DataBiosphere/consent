@@ -16,13 +16,14 @@ public class ElectionService {
   }
 
   public List<Election> findElectionsWithCardHoldingUsersByElectionIds(List<Integer> electionIds) {
-    return !electionIds.isEmpty() ? electionDAO.findElectionsWithCardHoldingUsersByElectionIds(
-        electionIds) : Collections.emptyList();
-  }
-
-  public List<Election> findElectionsByVoteIdsAndType(List<Integer> voteIds, String electionType) {
-    return !voteIds.isEmpty() ? electionDAO.findElectionsByVoteIdsAndType(voteIds, electionType)
+    return !electionIds.isEmpty()
+        ? electionDAO.findElectionsWithCardHoldingUsersByElectionIds(electionIds)
         : Collections.emptyList();
   }
 
+  public List<Election> findElectionsByVoteIdsAndType(List<Integer> voteIds, String electionType) {
+    return !voteIds.isEmpty()
+        ? electionDAO.findElectionsByVoteIdsAndType(voteIds, electionType)
+        : Collections.emptyList();
+  }
 }

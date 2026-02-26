@@ -16,7 +16,8 @@ public class DatasetUpdateTest {
 
   @Test
   void testDatasetUpdate() {
-    String json = """
+    String json =
+        """
         {
           "name": "Test Dataset Update",
           "dacId": 1,
@@ -53,21 +54,24 @@ public class DatasetUpdateTest {
 
     // Parsing the object value of this prop is a little complicated due to JSON serialization
     DatasetProperty fileTypeProp = getPropByName("File Types", props);
-    java.lang.reflect.Type listOfFileTypes = new TypeToken<ArrayList<FileTypeObject>>() {}.getType();
+    java.lang.reflect.Type listOfFileTypes =
+        new TypeToken<ArrayList<FileTypeObject>>() {}.getType();
     Gson gson = new Gson();
-    List<FileTypeObject> fileTypes = gson.fromJson(fileTypeProp.getPropertyValueAsString(), listOfFileTypes);
+    List<FileTypeObject> fileTypes =
+        gson.fromJson(fileTypeProp.getPropertyValueAsString(), listOfFileTypes);
     assertFalse(fileTypes.isEmpty());
     FileTypeObject type = fileTypes.get(0);
     assertEquals(FileType.ARRAYS, type.getFileType());
   }
 
-  private DatasetProperty getPropByName(String name, List<DatasetProperty> props ) {
+  private DatasetProperty getPropByName(String name, List<DatasetProperty> props) {
     return props.stream().filter(p -> p.getPropertyName().equals(name)).findFirst().orElse(null);
   }
 
   @Test
   void testDatasetUpdateNullValues() {
-    String json = """
+    String json =
+        """
         {
           "not_a_name": "Test Dataset Update",
           "not_a_dac_id": 1,
@@ -83,5 +87,4 @@ public class DatasetUpdateTest {
     assertNull(update.getDacId());
     assertNull(update.getDatasetProperties());
   }
-
 }

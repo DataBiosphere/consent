@@ -9,13 +9,13 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 public class LibraryCard {
 
   public static final String QUERY_FIELDS_WITH_LC_PREFIX =
-      " lc.id AS lc_id, " +
-          " lc.user_id AS lc_user_id, " +
-          " lc.user_name AS lc_user_name, " +
-          " lc.user_email AS lc_user_email, " +
-          " lc.create_user_id AS lc_create_user_id, " +
-          " lc.create_date AS lc_create_date, " +
-          " lc.update_user_id AS lc_update_user_id ";
+      " lc.id AS lc_id, "
+          + " lc.user_id AS lc_user_id, "
+          + " lc.user_name AS lc_user_name, "
+          + " lc.user_email AS lc_user_email, "
+          + " lc.create_user_id AS lc_create_user_id, "
+          + " lc.create_date AS lc_create_date, "
+          + " lc.update_user_id AS lc_update_user_id ";
 
   private Integer id;
   private Integer userId;
@@ -97,13 +97,21 @@ public class LibraryCard {
     this.updateUserId = updateUser;
   }
 
-  public List<Integer> getDaaIds() {return daaIds;}
+  public List<Integer> getDaaIds() {
+    return daaIds;
+  }
 
-  public void setDaaIds(List<Integer> daaIds) {this.daaIds = daaIds;}
+  public void setDaaIds(List<Integer> daaIds) {
+    this.daaIds = daaIds;
+  }
 
-  public List<DataAccessAgreement> getDaas() {return daas;}
+  public List<DataAccessAgreement> getDaas() {
+    return daas;
+  }
 
-  public void setDaas(List<DataAccessAgreement> daas) {this.daas = daas;}
+  public void setDaas(List<DataAccessAgreement> daas) {
+    this.daas = daas;
+  }
 
   @Override
   public boolean equals(Object libraryCard) {
@@ -119,17 +127,23 @@ public class LibraryCard {
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, userId, userName, userEmail, createDate, createUserId, updateDate,
-        updateUserId, daaIds);
+    return Objects.hash(
+        id,
+        userId,
+        userName,
+        userEmail,
+        createDate,
+        createUserId,
+        updateDate,
+        updateUserId,
+        daaIds);
   }
 
   public void addDaa(Integer daaId) {
     if (this.daaIds == null) {
       this.daaIds = new ArrayList<>();
     }
-    if (this.daaIds
-        .stream()
-        .noneMatch(d -> d.equals(daaId))) {
+    if (this.daaIds.stream().noneMatch(d -> d.equals(daaId))) {
       this.daaIds.add(daaId);
     }
   }
@@ -138,9 +152,7 @@ public class LibraryCard {
     if (this.daaIds == null) {
       return;
     }
-    if (this.daaIds
-        .stream()
-        .anyMatch(d -> d.equals(daaId))) {
+    if (this.daaIds.stream().anyMatch(d -> d.equals(daaId))) {
       this.daaIds.remove(daaId);
     }
   }
@@ -149,9 +161,7 @@ public class LibraryCard {
     if (this.daas == null) {
       this.daas = new ArrayList<>();
     }
-    if (this.daas
-        .stream()
-        .noneMatch(d -> d.equals(daa))) {
+    if (this.daas.stream().noneMatch(d -> d.equals(daa))) {
       this.daas.add(daa);
     }
   }

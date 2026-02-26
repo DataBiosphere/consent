@@ -15,10 +15,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class UserUpdateFieldsTest {
 
-  private static final List<Integer> ALL_ROLE_IDS = Stream.of(UserRoles.values())
-      .map(UserRoles::getRoleId).collect(Collectors.toList());
-  private static final List<Integer> NON_IGNORABLE_ROLES = ALL_ROLE_IDS.stream()
-      .filter(id -> !UserUpdateFields.IGNORE_ROLE_IDS.contains(id)).collect(Collectors.toList());
+  private static final List<Integer> ALL_ROLE_IDS =
+      Stream.of(UserRoles.values()).map(UserRoles::getRoleId).collect(Collectors.toList());
+  private static final List<Integer> NON_IGNORABLE_ROLES =
+      ALL_ROLE_IDS.stream()
+          .filter(id -> !UserUpdateFields.IGNORE_ROLE_IDS.contains(id))
+          .collect(Collectors.toList());
 
   @Test
   void testGetRoleIdsToAdd_Case_1() {
@@ -67,9 +69,10 @@ class UserUpdateFieldsTest {
     List<Integer> roleIdsToRemove = fields.getRoleIdsToRemove(ALL_ROLE_IDS);
     assertFalse(roleIdsToRemove.isEmpty());
     // We can never remove the ignorable roles, so they should not be in the list
-    roleIdsToRemove.forEach(id -> {
-      assertFalse(UserUpdateFields.IGNORE_ROLE_IDS.contains(id));
-    });
+    roleIdsToRemove.forEach(
+        id -> {
+          assertFalse(UserUpdateFields.IGNORE_ROLE_IDS.contains(id));
+        });
     // We can also never remove the Researcher role from a user
     assertFalse(roleIdsToRemove.contains(UserRoles.RESEARCHER.getRoleId()));
   }
@@ -84,5 +87,4 @@ class UserUpdateFieldsTest {
     List<Integer> roleIdsToRemove = fields.getRoleIdsToRemove(ALL_ROLE_IDS);
     assertTrue(roleIdsToRemove.isEmpty());
   }
-
 }

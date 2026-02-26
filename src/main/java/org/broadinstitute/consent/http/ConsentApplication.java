@@ -40,7 +40,6 @@ import org.broadinstitute.consent.http.authentication.AuthorizationHelper;
 import org.broadinstitute.consent.http.authentication.DuosUserAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthCustomAuthFilter;
-import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.filters.RequestHeaderCacheFilter;
 import org.broadinstitute.consent.http.filters.ResponseServerFilter;
@@ -52,7 +51,6 @@ import org.broadinstitute.consent.http.health.SendGridHealthCheck;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.resources.DACAutomationRuleResource;
-import org.broadinstitute.consent.http.resources.DACUserResource;
 import org.broadinstitute.consent.http.resources.DaaResource;
 import org.broadinstitute.consent.http.resources.DacResource;
 import org.broadinstitute.consent.http.resources.DarCollectionResource;
@@ -61,6 +59,7 @@ import org.broadinstitute.consent.http.resources.DatasetResource;
 import org.broadinstitute.consent.http.resources.DraftResource;
 import org.broadinstitute.consent.http.resources.EmailNotifierResource;
 import org.broadinstitute.consent.http.resources.ErrorResource;
+import org.broadinstitute.consent.http.resources.FeatureFlagResource;
 import org.broadinstitute.consent.http.resources.InstitutionResource;
 import org.broadinstitute.consent.http.resources.LibraryCardResource;
 import org.broadinstitute.consent.http.resources.LivenessResource;
@@ -70,6 +69,8 @@ import org.broadinstitute.consent.http.resources.MetricsResource;
 import org.broadinstitute.consent.http.resources.NihAccountResource;
 import org.broadinstitute.consent.http.resources.OAuth2Resource;
 import org.broadinstitute.consent.http.resources.PassportResource;
+import org.broadinstitute.consent.http.resources.OntologyResource;
+import org.broadinstitute.consent.http.resources.PublicFeatureFlagResource;
 import org.broadinstitute.consent.http.resources.SamResource;
 import org.broadinstitute.consent.http.resources.SchemaResource;
 import org.broadinstitute.consent.http.resources.StatusResource;
@@ -81,28 +82,8 @@ import org.broadinstitute.consent.http.resources.TosResource;
 import org.broadinstitute.consent.http.resources.UserResource;
 import org.broadinstitute.consent.http.resources.VersionResource;
 import org.broadinstitute.consent.http.resources.VoteResource;
-import org.broadinstitute.consent.http.service.AcknowledgementService;
-import org.broadinstitute.consent.http.service.DarCollectionService;
-import org.broadinstitute.consent.http.service.DataAccessRequestService;
-import org.broadinstitute.consent.http.service.DatasetRegistrationService;
-import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.DraftService;
-import org.broadinstitute.consent.http.service.ElasticSearchService;
-import org.broadinstitute.consent.http.service.ElectionService;
-import org.broadinstitute.consent.http.service.EmailService;
-import org.broadinstitute.consent.http.service.InstitutionService;
-import org.broadinstitute.consent.http.service.LibraryCardService;
-import org.broadinstitute.consent.http.service.MatchService;
-import org.broadinstitute.consent.http.service.MetricsService;
-import org.broadinstitute.consent.http.service.NihService;
-import org.broadinstitute.consent.http.service.OidcService;
-import org.broadinstitute.consent.http.service.TDRService;
-import org.broadinstitute.consent.http.service.UserService;
-import org.broadinstitute.consent.http.service.VoteService;
-import org.broadinstitute.consent.http.service.sam.SamService;
-import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.gson.JerseyGsonProvider;
-import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
+import org.eclipse.jetty.ee10.servlet.ErrorPageErrorHandler;
 import org.glassfish.jersey.internal.inject.AbstractBinder;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.slf4j.Logger;
@@ -110,9 +91,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Top-level entry point to the entire application.
- * <p>
- * See the Dropwizard docs here:
- * <a href="https://dropwizard.github.io">https://dropwizard.github.io</a>
+ *
+ * <p>See the Dropwizard docs here: <a
+ * href="https://dropwizard.github.io">https://dropwizard.github.io</a>
  */
 public class ConsentApplication extends Application<ConsentConfiguration> {
 
@@ -128,13 +109,14 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     try {
       String dsn = System.getProperties().getProperty("sentry.dsn");
       if (StringUtils.isNotBlank(dsn)) {
-        Sentry.init(config -> {
-          config.setDsn(dsn);
-          config.setDiagnosticLevel(SentryLevel.ERROR);
-          config.setServerName("Consent");
-          config.addContextTag("Consent");
-          config.addInAppInclude("org.broadinstitute");
-        });
+        Sentry.init(
+            config -> {
+              config.setDsn(dsn);
+              config.setDiagnosticLevel(SentryLevel.ERROR);
+              config.setServerName("Consent");
+              config.addContextTag("Consent");
+              config.addInAppInclude("org.broadinstitute");
+            });
         Thread.currentThread().setUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
       } else {
         LOGGER.error("Unable to bootstrap sentry logging.");
@@ -156,43 +138,8 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
       LOGGER.error(MessageFormat.format("Exception initializing liquibase: {0}", e));
     }
 
-    // Previously, this code was working around a dropwizard+Guice issue with singletons and JDBI.
     final Injector injector = Guice.createInjector(new ConsentModule(config, env));
-
-    // Clients
-    final HttpClientUtil clientUtil = new HttpClientUtil(config.getServicesConfiguration());
-
-    // Services
-    final DarCollectionService darCollectionService = injector.getProvider(
-        DarCollectionService.class).get();
-    final DataAccessRequestService dataAccessRequestService = injector.getProvider(
-        DataAccessRequestService.class).get();
-    final DatasetService datasetService = injector.getProvider(DatasetService.class).get();
-    final ElectionService electionService = injector.getProvider(ElectionService.class).get();
-    final EmailService emailService = injector.getProvider(EmailService.class).get();
-    final GCSService gcsService = injector.getProvider(GCSService.class).get();
-    final InstitutionService institutionService = injector.getProvider(InstitutionService.class)
-        .get();
-    final MetricsService metricsService = injector.getProvider(MetricsService.class).get();
-    final UserService userService = injector.getProvider(UserService.class).get();
-    final VoteService voteService = injector.getProvider(VoteService.class).get();
-    final MatchService matchService = injector.getProvider(MatchService.class).get();
-    final LibraryCardService libraryCardService = injector.getProvider(LibraryCardService.class)
-        .get();
-    final SamService samService = injector.getProvider(SamService.class).get();
-    final TDRService tdrService = injector.getProvider(TDRService.class).get();
-    final AcknowledgementService acknowledgementService = injector.getProvider(
-        AcknowledgementService.class).get();
-    final DatasetRegistrationService datasetRegistrationService = injector.getProvider(
-        DatasetRegistrationService.class).get();
-    final ElasticSearchService elasticSearchService = injector.getProvider(
-        ElasticSearchService.class).get();
-    final OidcService oidcService = injector.getProvider(OidcService.class).get();
-    final DraftService draftService = injector.getProvider(
-        DraftService.class).get();
-
     System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
-
     env.jersey().register(JerseyGsonProvider.class);
 
     // Metric Registry
@@ -200,17 +147,12 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(new InstrumentedResourceMethodApplicationListener(metricRegistry));
 
     // Health Checks
-    env.healthChecks().register(GCS_CHECK, new GCSHealthCheck(gcsService));
-    env.healthChecks()
-        .register(ES_CHECK, new ElasticSearchHealthCheck(config.getElasticSearchConfiguration()));
-    env.healthChecks().register(ONTOLOGY_CHECK,
-        new OntologyHealthCheck(clientUtil, config.getServicesConfiguration()));
-    env.healthChecks()
-        .register(SAM_CHECK, new SamHealthCheck(clientUtil, config.getServicesConfiguration()));
-    env.healthChecks()
-        .register(SG_CHECK, new SendGridHealthCheck(clientUtil, config.getMailConfiguration()));
+    env.healthChecks().register(GCS_CHECK, injector.getInstance(GCSHealthCheck.class));
+    env.healthChecks().register(ES_CHECK, injector.getInstance(ElasticSearchHealthCheck.class));
+    env.healthChecks().register(ONTOLOGY_CHECK, injector.getInstance(OntologyHealthCheck.class));
+    env.healthChecks().register(SAM_CHECK, injector.getInstance(SamHealthCheck.class));
+    env.healthChecks().register(SG_CHECK, injector.getInstance(SendGridHealthCheck.class));
 
-    final NihService nihService = injector.getProvider(NihService.class).get();
     // Custom Error handling. Expand to include other codes when necessary
     final ErrorPageErrorHandler errorHandler = new ErrorPageErrorHandler();
     errorHandler.addErrorPage(404, "/error/404");
@@ -220,57 +162,57 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
 
     // Register standard application resources.
     env.jersey().register(injector.getInstance(DaaResource.class));
+    env.jersey().register(injector.getInstance(DACAutomationRuleResource.class));
+    env.jersey().register(injector.getInstance(DacResource.class));
+    env.jersey().register(injector.getInstance(DarCollectionResource.class));
     env.jersey().register(injector.getInstance(DataAccessRequestResource.class));
     env.jersey().register(injector.getInstance(DatasetResource.class));
-    env.jersey().register(injector.getInstance(DacResource.class));
-    env.jersey().register(injector.getInstance(DACAutomationRuleResource.class));
-    env.jersey().register(new DACUserResource(userService));
-    env.jersey().register(
-        new DarCollectionResource(darCollectionService));
-    env.jersey().register(new EmailNotifierResource(dataAccessRequestService));
-    env.jersey().register(new InstitutionResource(institutionService));
-    env.jersey().register(new LibraryCardResource(userService, libraryCardService));
-    env.jersey().register(new MatchResource(matchService));
-    env.jersey().register(new MetricsResource(metricsService));
-    env.jersey().register(new NihAccountResource(nihService));
+    env.jersey().register(injector.getInstance(DraftResource.class));
+    env.jersey().register(injector.getInstance(EmailNotifierResource.class));
+    env.jersey().register(injector.getInstance(FeatureFlagResource.class));
+    env.jersey().register(injector.getInstance(PublicFeatureFlagResource.class));
+    env.jersey().register(injector.getInstance(InstitutionResource.class));
+    env.jersey().register(injector.getInstance(LibraryCardResource.class));
+    env.jersey().register(injector.getInstance(LivenessResource.class));
+    env.jersey().register(injector.getInstance(MailResource.class));
+    env.jersey().register(injector.getInstance(MatchResource.class));
+    env.jersey().register(injector.getInstance(MetricsResource.class));
+    env.jersey().register(injector.getInstance(NihAccountResource.class));
+    env.jersey().register(injector.getInstance(OAuth2Resource.class));
+    env.jersey().register(injector.getInstance(OntologyResource.class));
     env.jersey().register(injector.getInstance(PassportResource.class));
-    env.jersey().register(new SamResource(samService, userService));
-    env.jersey().register(new SchemaResource());
-    env.jersey().register(new SwaggerResource(config.getGoogleAuthentication()));
-    env.jersey().register(new StatusResource(env.healthChecks()));
-    env.jersey().register(injector.getInstance(SupportResource.class));
-    env.jersey().register(
-        new UserResource(samService, userService, datasetService, acknowledgementService,
-            nihService));
-    env.jersey().register(new TosResource(samService));
-    env.jersey().register(injector.getInstance(VersionResource.class));
-    env.jersey().register(new VoteResource(userService, voteService, electionService));
-    env.jersey().register(new LivenessResource());
-    env.jersey().register(
-        new TDRResource(tdrService, datasetService));
-    env.jersey().register(new MailResource(emailService));
+    env.jersey().register(injector.getInstance(SamResource.class));
+    env.jersey().register(injector.getInstance(SchemaResource.class));
+    env.jersey().register(injector.getInstance(SwaggerResource.class));
+    env.jersey().register(injector.getInstance(StatusResource.class));
     env.jersey().register(injector.getInstance(StudyResource.class));
-    env.jersey().register(new OAuth2Resource(oidcService));
-    env.jersey().register(new DraftResource(userService, draftService));
+    env.jersey().register(injector.getInstance(SupportResource.class));
+    env.jersey().register(injector.getInstance(TDRResource.class));
+    env.jersey().register(injector.getInstance(TosResource.class));
+    env.jersey().register(injector.getInstance(UserResource.class));
+    env.jersey().register(injector.getInstance(VersionResource.class));
+    env.jersey().register(injector.getInstance(VoteResource.class));
 
     // Authentication filters
     final OAuthAuthenticator authenticator = injector.getProvider(OAuthAuthenticator.class).get();
-    final DuosUserAuthenticator duosUserAuthenticator = injector.getProvider(
-        DuosUserAuthenticator.class).get();
-    final AuthorizationHelper authorizationHelper = injector.getProvider(AuthorizationHelper.class)
-        .get();
+    final DuosUserAuthenticator duosUserAuthenticator =
+        injector.getProvider(DuosUserAuthenticator.class).get();
+    final AuthorizationHelper authorizationHelper =
+        injector.getProvider(AuthorizationHelper.class).get();
     // Requests annotated with @Auth AuthUser will be authenticated through this filter
-    final AuthFilter<String, AuthUser> primaryAuthFilter = new OAuthCustomAuthFilter<>(
-        authenticator, authorizationHelper);
-    // Requests annotated with @Auth DuosUser will be authenticated through this filter and are guaranteed to have a populated User object
-    final AuthFilter<String, DuosUser> duosAuthUserFilter = new OAuthCustomAuthFilter<>(
-        duosUserAuthenticator, authorizationHelper);
-    final PolymorphicAuthDynamicFeature<AuthUser> feature = new PolymorphicAuthDynamicFeature<>(
-        Map.of(
-            AuthUser.class, primaryAuthFilter,
-            DuosUser.class, duosAuthUserFilter));
-    final AbstractBinder binder = new PolymorphicAuthValueFactoryProvider.Binder<>(
-        Set.of(AuthUser.class, DuosUser.class));
+    final AuthFilter<String, AuthUser> primaryAuthFilter =
+        new OAuthCustomAuthFilter<>(authenticator, authorizationHelper);
+    // Requests annotated with @Auth DuosUser will be authenticated through this filter and are
+    // guaranteed to have a populated User object
+    final AuthFilter<String, DuosUser> duosAuthUserFilter =
+        new OAuthCustomAuthFilter<>(duosUserAuthenticator, authorizationHelper);
+    final PolymorphicAuthDynamicFeature<AuthUser> feature =
+        new PolymorphicAuthDynamicFeature<>(
+            Map.of(
+                AuthUser.class, primaryAuthFilter,
+                DuosUser.class, duosAuthUserFilter));
+    final AbstractBinder binder =
+        new PolymorphicAuthValueFactoryProvider.Binder<>(Set.of(AuthUser.class, DuosUser.class));
     env.jersey().register(feature);
     env.jersey().register(binder);
 
@@ -296,15 +238,16 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
       values.set("ui", new LoggerUIService());
     } catch (IllegalAccessException | NoSuchFieldException ignored) {
     }
-    Connection connection = DriverManager.getConnection(
-        config.getDataSourceFactory().getUrl(),
-        config.getDataSourceFactory().getUser(),
-        config.getDataSourceFactory().getPassword()
-    );
-    Database database = DatabaseFactory.getInstance()
-        .findCorrectDatabaseImplementation(new JdbcConnection(connection));
-    Liquibase liquibase = new Liquibase(liquibaseFile(), new ClassLoaderResourceAccessor(),
-        database);
+    Connection connection =
+        DriverManager.getConnection(
+            config.getDataSourceFactory().getUrl(),
+            config.getDataSourceFactory().getUser(),
+            config.getDataSourceFactory().getPassword());
+    Database database =
+        DatabaseFactory.getInstance()
+            .findCorrectDatabaseImplementation(new JdbcConnection(connection));
+    Liquibase liquibase =
+        new Liquibase(liquibaseFile(), new ClassLoaderResourceAccessor(), database);
     liquibase.update(new Contexts(), new LabelExpression());
   }
 
@@ -318,5 +261,4 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     }
     return changeLogFile;
   }
-
 }

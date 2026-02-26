@@ -20,44 +20,40 @@ public class Vote {
           + " v.update_date as v_update_date, "
           + " v.type as v_type ";
 
-  @JsonProperty
-  private Integer voteId;
+  @JsonProperty private Integer voteId;
 
-  @JsonProperty
-  private Boolean vote;
+  @JsonProperty private Boolean vote;
 
-  @JsonProperty
-  private Integer userId;
+  @JsonProperty private Integer userId;
 
-  @JsonProperty
-  private Date createDate;
+  @JsonProperty private Date createDate;
 
-  @JsonProperty
-  private Date updateDate;
+  @JsonProperty private Date updateDate;
 
-  @JsonProperty
-  private Integer electionId;
+  @JsonProperty private Integer electionId;
 
-  @JsonProperty
-  private String rationale;
+  @JsonProperty private String rationale;
 
-  @JsonProperty
-  private String type;
+  @JsonProperty private String type;
 
-  @JsonProperty
-  private Boolean isReminderSent;
+  @JsonProperty private Boolean isReminderSent;
 
-  @JsonProperty
-  private Boolean hasConcerns;
+  @JsonProperty private Boolean hasConcerns;
 
-  @JsonProperty
-  private String displayName;
+  @JsonProperty private String displayName;
 
-  public Vote() {
-  }
+  public Vote() {}
 
-  public Vote(Integer voteId, Boolean vote, Integer userId, Date createDate, Date updateDate,
-      Integer electionId, String rationale, String type, Boolean isReminderSent,
+  public Vote(
+      Integer voteId,
+      Boolean vote,
+      Integer userId,
+      Date createDate,
+      Date updateDate,
+      Integer electionId,
+      String rationale,
+      String type,
+      Boolean isReminderSent,
       Boolean hasConcerns) {
     this.voteId = voteId;
     this.vote = vote;
@@ -164,15 +160,13 @@ public class Vote {
     return new Gson().toJson(this);
   }
 
-
   public static class VoteUpdate {
 
     private Boolean vote;
     private String rationale;
     private List<Integer> voteIds;
 
-    public VoteUpdate() {
-    }
+    public VoteUpdate() {}
 
     public VoteUpdate(Boolean vote, String rationale, List<Integer> voteIds) {
       this.vote = vote;
@@ -210,8 +204,7 @@ public class Vote {
     private List<Integer> voteIds;
     private String rationale;
 
-    public RationaleUpdate() {
-    }
+    public RationaleUpdate() {}
 
     public List<Integer> getVoteIds() {
       return voteIds;

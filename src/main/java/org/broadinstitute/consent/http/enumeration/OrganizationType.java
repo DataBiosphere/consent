@@ -19,7 +19,6 @@ public enum OrganizationType {
     return null;
   }
 
-
   public String getValue() {
     return value;
   }

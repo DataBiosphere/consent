@@ -43,5 +43,4 @@ class DataUseParserTest {
     DataUse dataUse = dataUseParser.parseDataUse("");
     assertNull(dataUse);
   }
-
 }

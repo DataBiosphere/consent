@@ -41,7 +41,8 @@ public interface RowMapperHelper extends ConsentLogger {
    */
   default boolean hasNonZeroColumn(RowView rowView, String columnName) {
     try {
-      return rowView.getColumn(columnName, Integer.class) != null && rowView.getColumn(columnName, Integer.class) > 0;
+      return rowView.getColumn(columnName, Integer.class) != null
+          && rowView.getColumn(columnName, Integer.class) > 0;
     } catch (Exception e) {
       logDebug("RowView does not contain column %s".formatted(columnName));
       return false;
@@ -68,7 +69,7 @@ public interface RowMapperHelper extends ConsentLogger {
   /**
    * Utility method to check if a column exists in the result set or not.
    *
-   * @param rs         The ResultSet
+   * @param rs The ResultSet
    * @param columnName The column name
    * @return True if column name exists, false otherwise
    * @throws SQLException The exception
@@ -104,7 +105,6 @@ public interface RowMapperHelper extends ConsentLogger {
     return false;
   }
 
-
   static String unescapeJava(String value) {
     return StringEscapeUtils.unescapeJava(StringEscapeUtils.unescapeJava(value));
   }
@@ -126,22 +126,25 @@ public interface RowMapperHelper extends ConsentLogger {
     return data;
   }
 
-  default void setStringFieldValue(ResultSet resultSet, String columnName,
-      java.util.function.Consumer<String> setter) throws SQLException {
+  default void setStringFieldValue(
+      ResultSet resultSet, String columnName, java.util.function.Consumer<String> setter)
+      throws SQLException {
     if (hasColumn(resultSet, columnName)) {
       setter.accept(resultSet.getString(columnName));
     }
   }
 
-  default void setNonZeroFieldValue(ResultSet resultSet, String columnName,
-      java.util.function.IntConsumer setter) throws SQLException {
+  default void setNonZeroFieldValue(
+      ResultSet resultSet, String columnName, java.util.function.IntConsumer setter)
+      throws SQLException {
     if (hasNonZeroColumn(resultSet, columnName)) {
       setter.accept(resultSet.getInt(columnName));
     }
   }
 
-  default void setDateFieldValue(ResultSet resultSet, String columnName,
-      java.util.function.Consumer<Date> setter) throws SQLException {
+  default void setDateFieldValue(
+      ResultSet resultSet, String columnName, java.util.function.Consumer<Date> setter)
+      throws SQLException {
     if (hasColumn(resultSet, columnName)) {
       setter.accept(resultSet.getDate(columnName));
     }

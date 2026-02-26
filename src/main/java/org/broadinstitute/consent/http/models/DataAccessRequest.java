@@ -30,77 +30,55 @@ public class DataAccessRequest {
 
   public static final long EXPIRATION_DURATION_MILLIS = TimeUnit.DAYS.toMillis(365);
 
-  @JsonProperty
-  public Integer id;
+  @JsonProperty public Integer id;
 
-  @JsonProperty
-  public String referenceId;
+  @JsonProperty public String referenceId;
 
-  @JsonProperty
-  public Integer collectionId;
+  @JsonProperty public Integer collectionId;
 
-  @JsonProperty
-  public Integer parentId;
+  @JsonProperty public Integer parentId;
 
-  @JsonProperty
-  public DataAccessRequestData data;
+  @JsonProperty public DataAccessRequestData data;
 
-  @JsonProperty
-  public String darCode;
+  @JsonProperty public String darCode;
 
-  @JsonProperty
-  public Boolean draft = true;
+  @JsonProperty public Boolean draft = true;
 
-  @JsonProperty
-  public Boolean progressReport = false;
+  @JsonProperty public Boolean progressReport = false;
 
-  @JsonProperty
-  public Boolean expired = false;
+  @JsonProperty public Boolean expired = false;
 
-  @JsonProperty
-  public Timestamp expiresAt;
+  @JsonProperty public Timestamp expiresAt;
 
-  @JsonProperty
-  public Integer userId;
+  @JsonProperty public Integer userId;
 
-  @JsonProperty
-  public Timestamp createDate;
+  @JsonProperty public Timestamp createDate;
 
-  /*
-   * Legacy property on DARs. Used to display the sort order for a DAR. In practice, this also
-   * functions as the Update Date. See also https://broadinstitute.atlassian.net/browse/DUOS-728
-   */
-  @JsonProperty
-  public Timestamp sortDate;
+  @JsonProperty public Timestamp submissionDate;
 
-  @JsonProperty
-  public Timestamp submissionDate;
+  @JsonProperty public Timestamp updateDate;
+  @JsonProperty public List<Integer> datasetIds;
+  @JsonProperty private Map<Integer, Election> elections;
+  @JsonProperty private String eraCommonsId;
 
-  @JsonProperty
-  public Timestamp updateDate;
-  @JsonProperty
-  public List<Integer> datasetIds;
-  @JsonProperty
-  private Map<Integer, Election> elections;
-  @JsonProperty
-  private String eraCommonsId;
+  @JsonProperty public Integer approvingSigningOfficialUserId;
+  @JsonProperty public Timestamp approvingSigningOfficialApprovedDate;
 
-  @JsonProperty
-  public Timestamp closeoutSigningOfficialApprovedDate;
+  @JsonProperty public Timestamp closeoutSigningOfficialApprovedDate;
 
-  @JsonProperty
-  public Integer closeoutSigningOfficialApprovedUserId;
+  @JsonProperty public Integer closeoutSigningOfficialApprovedUserId;
+
+  @JsonProperty public boolean requiresSOApproval;
 
   public DataAccessRequest() {
     this.elections = new HashMap<>();
   }
 
   public static boolean isCanceled(DataAccessRequest dar) {
-    return
-        Objects.nonNull(dar) &&
-            Objects.nonNull(dar.getData()) &&
-            Objects.nonNull(dar.getData().getStatus()) &&
-            dar.getData().getStatus().equalsIgnoreCase("canceled");
+    return Objects.nonNull(dar)
+        && Objects.nonNull(dar.getData())
+        && Objects.nonNull(dar.getData().getStatus())
+        && dar.getData().getStatus().equalsIgnoreCase("canceled");
   }
 
   public Integer getId() {
@@ -172,14 +150,6 @@ public class DataAccessRequest {
     this.createDate = createDate;
   }
 
-  public Date getSortDate() {
-    return sortDate;
-  }
-
-  public void setSortDate(Timestamp sortDate) {
-    this.sortDate = sortDate;
-  }
-
   public Timestamp getSubmissionDate() {
     return submissionDate;
   }
@@ -187,15 +157,20 @@ public class DataAccessRequest {
   public void setSubmissionDate(Timestamp submissionDate) {
     this.submissionDate = submissionDate;
     draft = submissionDate == null;
-    expired = submissionDate != null
-        && submissionDate.before(
-        new Timestamp(System.currentTimeMillis() - EXPIRATION_DURATION_MILLIS));
-    expiresAt = (submissionDate != null) ? new Timestamp(
-        submissionDate.getTime() + EXPIRATION_DURATION_MILLIS) : null;
+    expired =
+        submissionDate != null
+            && submissionDate.before(
+                new Timestamp(System.currentTimeMillis() - EXPIRATION_DURATION_MILLIS));
+    expiresAt =
+        (submissionDate != null)
+            ? new Timestamp(submissionDate.getTime() + EXPIRATION_DURATION_MILLIS)
+            : null;
     updateProgressReportState();
   }
 
-  public boolean getProgressReport() { return progressReport; }
+  public boolean getProgressReport() {
+    return progressReport;
+  }
 
   public Timestamp getUpdateDate() {
     return updateDate;
@@ -251,10 +226,8 @@ public class DataAccessRequest {
       datasetIds = new ArrayList<>();
     }
     if (Objects.nonNull(ids) && !ids.isEmpty()) {
-      datasetIds = Stream.of(datasetIds, ids)
-          .flatMap(List::stream)
-          .distinct()
-          .collect(Collectors.toList());
+      datasetIds =
+          Stream.of(datasetIds, ids).flatMap(List::stream).distinct().collect(Collectors.toList());
     }
   }
 
@@ -278,7 +251,8 @@ public class DataAccessRequest {
     return closeoutSigningOfficialApprovedUserId;
   }
 
-  public void setCloseoutSigningOfficialApprovedUserId(Integer closeoutSigningOfficialApprovedUserId) {
+  public void setCloseoutSigningOfficialApprovedUserId(
+      Integer closeoutSigningOfficialApprovedUserId) {
     this.closeoutSigningOfficialApprovedUserId = closeoutSigningOfficialApprovedUserId;
   }
 
@@ -286,8 +260,33 @@ public class DataAccessRequest {
     return closeoutSigningOfficialApprovedDate;
   }
 
-  public void setCloseoutSigningOfficialApprovedDate(Timestamp closeoutSigningOfficialApprovedDate) {
+  public void setCloseoutSigningOfficialApprovedDate(
+      Timestamp closeoutSigningOfficialApprovedDate) {
     this.closeoutSigningOfficialApprovedDate = closeoutSigningOfficialApprovedDate;
+  }
+
+  public Integer getApprovingSigningOfficialUserId() {
+    return this.approvingSigningOfficialUserId;
+  }
+
+  public Timestamp getApprovingSigningOfficialApprovedDate() {
+    return this.approvingSigningOfficialApprovedDate;
+  }
+
+  public void setApprovingSigningOfficialUserId(Integer userId) {
+    this.approvingSigningOfficialUserId = userId;
+  }
+
+  public void setApprovingSigningOfficialApprovedDate(Timestamp when) {
+    this.approvingSigningOfficialApprovedDate = when;
+  }
+
+  public void setRequiresSOApproval(boolean requiresSOApproval) {
+    this.requiresSOApproval = requiresSOApproval;
+  }
+
+  public boolean getRequiresSOApproval() {
+    return this.requiresSOApproval;
   }
 
   /**
@@ -299,14 +298,18 @@ public class DataAccessRequest {
   public Map<String, Object> convertToSimplifiedDar() {
     // Serialize dates/timestamps as longs, but do not deserialize longs into dates so we can
     // output long values in the final result.
-    Gson gson = new GsonBuilder()
-        .registerTypeAdapter(Date.class,
-            (JsonSerializer<Date>) (date, type, jsonSerializationContext) -> new JsonPrimitive(
-                date.getTime()))
-        .registerTypeAdapter(Timestamp.class,
-            (JsonSerializer<Timestamp>) (timestamp, type, jsonSerializationContext) -> new JsonPrimitive(
-                timestamp.getTime()))
-        .create();
+    Gson gson =
+        new GsonBuilder()
+            .registerTypeAdapter(
+                Date.class,
+                (JsonSerializer<Date>)
+                    (date, type, jsonSerializationContext) -> new JsonPrimitive(date.getTime()))
+            .registerTypeAdapter(
+                Timestamp.class,
+                (JsonSerializer<Timestamp>)
+                    (timestamp, type, jsonSerializationContext) ->
+                        new JsonPrimitive(timestamp.getTime()))
+            .create();
     DataAccessRequestData dataCopy = this.getData();
     this.setData(null);
 
@@ -326,35 +329,31 @@ public class DataAccessRequest {
         dar.add(camelCasedDataKey, darData.get(dataKey));
       }
     }
-    Type darMapType = new TypeToken<Map<String, Object>>() {
-    }.getType();
+    Type darMapType = new TypeToken<Map<String, Object>>() {}.getType();
     return gson.fromJson(dar.toString(), darMapType);
   }
 
   public boolean requiresManualReview() {
-    return
-        Objects.nonNull(this.getData()) && (
-            (Objects.nonNull(this.getData().getPoa()) && this.getData().getPoa()) ||
-                (Objects.nonNull(this.getData().getPopulation()) && this.getData().getPopulation())
-                ||
-                (Objects.nonNull(this.getData().getOther()) && this.getData().getOther()) ||
-                (Objects.nonNull(this.getData().getOtherText()) && !this.getData().getOtherText()
-                    .isBlank()) ||
-                (Objects.nonNull(this.getData().getIllegalBehavior()) && this.getData()
-                    .getIllegalBehavior()) ||
-                (Objects.nonNull(this.getData().getAddiction()) && this.getData().getAddiction()) ||
-                (Objects.nonNull(this.getData().getSexualDiseases()) && this.getData()
-                    .getSexualDiseases()) ||
-                (Objects.nonNull(this.getData().getStigmatizedDiseases()) && this.getData()
-                    .getStigmatizedDiseases()) ||
-                (Objects.nonNull(this.getData().getVulnerablePopulation()) && this.getData()
-                    .getVulnerablePopulation()) ||
-                (Objects.nonNull(this.getData().getPopulationMigration()) && this.getData()
-                    .getPopulationMigration()) ||
-                (Objects.nonNull(this.getData().getPsychiatricTraits()) && this.getData()
-                    .getPsychiatricTraits()) ||
-                (Objects.nonNull(this.getData().getNotHealth()) && this.getData().getNotHealth())
-        );
+    return Objects.nonNull(this.getData())
+        && ((Objects.nonNull(this.getData().getPoa()) && this.getData().getPoa())
+            || (Objects.nonNull(this.getData().getPopulation()) && this.getData().getPopulation())
+            || (Objects.nonNull(this.getData().getOther()) && this.getData().getOther())
+            || (Objects.nonNull(this.getData().getOtherText())
+                && !this.getData().getOtherText().isBlank())
+            || (Objects.nonNull(this.getData().getIllegalBehavior())
+                && this.getData().getIllegalBehavior())
+            || (Objects.nonNull(this.getData().getAddiction()) && this.getData().getAddiction())
+            || (Objects.nonNull(this.getData().getSexualDiseases())
+                && this.getData().getSexualDiseases())
+            || (Objects.nonNull(this.getData().getStigmatizedDiseases())
+                && this.getData().getStigmatizedDiseases())
+            || (Objects.nonNull(this.getData().getVulnerablePopulation())
+                && this.getData().getVulnerablePopulation())
+            || (Objects.nonNull(this.getData().getPopulationMigration())
+                && this.getData().getPopulationMigration())
+            || (Objects.nonNull(this.getData().getPsychiatricTraits())
+                && this.getData().getPsychiatricTraits())
+            || (Objects.nonNull(this.getData().getNotHealth()) && this.getData().getNotHealth()));
   }
 
   /**
@@ -362,16 +361,16 @@ public class DataAccessRequest {
    * Copies all the data from the parent dar, then overwrites the collaborators and datasets. Adds
    * all progress report specific fields.
    *
-   * @param json      The JSON string to populate the new Progress Report.
+   * @param json The JSON string to populate the new Progress Report.
    * @param parentDar The parent Data Access Request to copy data from.
    * @return A new Progress Report populated with the provided JSON string and parent DAR data.
    */
-  public static DataAccessRequest populateProgressReportFromJsonString(String json,
-      DataAccessRequest parentDar) {
+  public static DataAccessRequest populateProgressReportFromJsonString(
+      String json, DataAccessRequest parentDar) {
     DataAccessRequest newDar = new DataAccessRequest();
     DataAccessRequestData newData = DataAccessRequestData.populateDARData(json);
-    DataAccessRequestData originalDataCopy = DataAccessRequestData.fromString(
-        parentDar.getData().toString());
+    DataAccessRequestData originalDataCopy =
+        DataAccessRequestData.fromString(parentDar.getData().toString());
 
     String referenceId = UUID.randomUUID().toString();
     newDar.setReferenceId(referenceId);
@@ -383,7 +382,7 @@ public class DataAccessRequest {
     originalDataCopy.setExternalCollaborators(newData.getExternalCollaborators());
     originalDataCopy.setLabCollaborators(newData.getLabCollaborators());
     originalDataCopy.setProgressReportSummary(newData.getProgressReportSummary());
-    originalDataCopy.setIntellectualPropertySummary(newData.getIntellectualPropertySummary());
+    originalDataCopy.setIntellectualProperties(newData.getIntellectualProperties());
     originalDataCopy.setPublications(newData.getPublications());
     originalDataCopy.setPresentations(newData.getPresentations());
     originalDataCopy.setDmi(newData.getDmi());
@@ -428,10 +427,10 @@ public class DataAccessRequest {
     }
 
     if (Objects.isNull(closeoutSupplement.signingOfficialId())) {
-      throw new BadRequestException("A closeout supplement must have a signing official id provided.");
+      throw new BadRequestException(
+          "A closeout supplement must have a signing official id provided.");
     }
   }
-
 
   /**
    * Make a shallow copy of the dar. This is mostly a workaround for problems serializing dates when
@@ -453,9 +452,6 @@ public class DataAccessRequest {
     }
     if (Objects.nonNull(dar.getReferenceId())) {
       copy.put("referenceId", dar.getReferenceId());
-    }
-    if (Objects.nonNull(dar.getSortDate())) {
-      copy.put("sortDate", dar.getSortDate().getTime());
     }
     if (Objects.nonNull(dar.getSubmissionDate())) {
       copy.put("submissionDate", dar.getSubmissionDate().getTime());
@@ -482,10 +478,22 @@ public class DataAccessRequest {
       copy.put("eraCommonsId", dar.getEraCommonsId());
     }
     if (dar.getCloseoutSigningOfficialApprovedUserId() != null) {
-      copy.put("closeoutSigningOfficialApprovedUserId", dar.getCloseoutSigningOfficialApprovedUserId());
+      copy.put(
+          "closeoutSigningOfficialApprovedUserId", dar.getCloseoutSigningOfficialApprovedUserId());
     }
     if (dar.getCloseoutSigningOfficialApprovedDate() != null) {
-      copy.put("closeoutSigningOfficialApprovedDate", dar.getCloseoutSigningOfficialApprovedUserId());
+      copy.put(
+          "closeoutSigningOfficialApprovedDate", dar.getCloseoutSigningOfficialApprovedUserId());
+    }
+    if (dar.getApprovingSigningOfficialUserId() != null) {
+      copy.put("approvingSigningOfficialUserId", dar.getApprovingSigningOfficialUserId());
+    }
+    if (dar.getApprovingSigningOfficialApprovedDate() != null) {
+      copy.put(
+          "approvingSigningOfficialApprovedDate", dar.getApprovingSigningOfficialApprovedDate());
+    }
+    if (dar.getRequiresSOApproval()) {
+      copy.put("requiresSOApproval", dar.getRequiresSOApproval());
     }
     return copy;
   }

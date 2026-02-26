@@ -35,7 +35,8 @@ class DataAccessRequestTest {
     parentData.setPubAcknowledgement(false);
     parentDar.setData(parentData);
 
-    String json = """
+    String json =
+        """
             {
                 "projectTitle": "New Project Title",
                 "internalCollaborators": [],
@@ -52,7 +53,8 @@ class DataAccessRequestTest {
             }
         """;
 
-    DataAccessRequest newDar = DataAccessRequest.populateProgressReportFromJsonString(json, parentDar);
+    DataAccessRequest newDar =
+        DataAccessRequest.populateProgressReportFromJsonString(json, parentDar);
     DataAccessRequestData newData = newDar.getData();
 
     assertNotNull(newDar);
@@ -69,7 +71,8 @@ class DataAccessRequestTest {
     assertNull(newData.getIrbDocumentName());
     assertNull(newData.getCollaborationLetterLocation());
     assertNull(newData.getIrbDocumentLocation());
-    assertEquals(List.of(collaborator),
+    assertEquals(
+        List.of(collaborator),
         parentDar.getData().getInternalCollaborators()); // Ensure parent is unchanged
     assertEquals("collaboration_letter.txt", parentDar.getData().getCollaborationLetterName());
     assertTrue(newData.getDSAcknowledgement());
@@ -165,34 +168,79 @@ class DataAccessRequestTest {
     DataAccessRequestData darData = new DataAccessRequestData();
     darData.setCloseoutSupplement(null);
     dar.setData(darData);
-    assertDoesNotThrow(() -> DataAccessRequest.validateCloseoutSupplement(dar.getData().getCloseoutSupplement()));
+    assertDoesNotThrow(
+        () -> DataAccessRequest.validateCloseoutSupplement(dar.getData().getCloseoutSupplement()));
   }
 
   @Test
   void testValidateCloseoutApprovalThrowsExceptionWithEmptyReasonsOtherTextSigningOfficial() {
     CloseoutSupplement supplement = new CloseoutSupplement(List.of(), "", null);
-    BadRequestException exception = assertThrows(BadRequestException.class, () -> DataAccessRequest.validateCloseoutSupplement(supplement));
-    assertThat(exception.getMessage(), containsString("A closeout supplement must have values provided."));
+    BadRequestException exception =
+        assertThrows(
+            BadRequestException.class,
+            () -> DataAccessRequest.validateCloseoutSupplement(supplement));
+    assertThat(
+        exception.getMessage(), containsString("A closeout supplement must have values provided."));
   }
 
   @Test
   void testValidateCloseoutApprovalThrowsExceptionWithEmptyReasons() {
     CloseoutSupplement supplement = new CloseoutSupplement(List.of(), "", 1);
-    BadRequestException exception = assertThrows(BadRequestException.class, () -> DataAccessRequest.validateCloseoutSupplement(supplement));
-    assertThat(exception.getMessage(), containsString("A closeout supplement must have reasons provided."));
+    BadRequestException exception =
+        assertThrows(
+            BadRequestException.class,
+            () -> DataAccessRequest.validateCloseoutSupplement(supplement));
+    assertThat(
+        exception.getMessage(),
+        containsString("A closeout supplement must have reasons provided."));
   }
 
   @Test
   void testValidateCloseoutApprovalThrowsExceptionWithNullReasons() {
     CloseoutSupplement supplement = new CloseoutSupplement(null, "", 1);
-    BadRequestException exception = assertThrows(BadRequestException.class, () -> DataAccessRequest.validateCloseoutSupplement(supplement));
-    assertThat(exception.getMessage(), containsString("A closeout supplement must have reasons provided."));
+    BadRequestException exception =
+        assertThrows(
+            BadRequestException.class,
+            () -> DataAccessRequest.validateCloseoutSupplement(supplement));
+    assertThat(
+        exception.getMessage(),
+        containsString("A closeout supplement must have reasons provided."));
   }
 
   @Test
   void testValidateCloseoutApprovalThrowsExceptionWithEmptySigningOfficial() {
     CloseoutSupplement supplement = new CloseoutSupplement(List.of("test"), "", null);
-    BadRequestException exception = assertThrows(BadRequestException.class, () -> DataAccessRequest.validateCloseoutSupplement(supplement));
-    assertThat(exception.getMessage(), containsString("A closeout supplement must have a signing official id provided."));
+    BadRequestException exception =
+        assertThrows(
+            BadRequestException.class,
+            () -> DataAccessRequest.validateCloseoutSupplement(supplement));
+    assertThat(
+        exception.getMessage(),
+        containsString("A closeout supplement must have a signing official id provided."));
+  }
+
+  @Test
+  void testConvertToSimplifiedDar() {
+    Timestamp now = Timestamp.from(Instant.now());
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setData(new DataAccessRequestData());
+    dar.setDatasetIds(List.of());
+    dar.setCreateDate(now);
+    dar.setApprovingSigningOfficialUserId(1);
+    dar.setApprovingSigningOfficialApprovedDate(now);
+    dar.setCloseoutSigningOfficialApprovedDate(now);
+    dar.setCloseoutSigningOfficialApprovedUserId(1);
+    dar.setRequiresSOApproval(true);
+    assertDoesNotThrow(dar::convertToSimplifiedDar);
+  }
+
+  @Test
+  void testConvertToSimplifiedDarWithMissingValues() {
+    Timestamp now = Timestamp.from(Instant.now());
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setData(new DataAccessRequestData());
+    dar.setDatasetIds(List.of());
+    dar.setCreateDate(now);
+    assertDoesNotThrow(dar::convertToSimplifiedDar);
   }
 }

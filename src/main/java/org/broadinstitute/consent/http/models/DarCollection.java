@@ -12,50 +12,36 @@ import java.util.Set;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
-//represents a multi-dataset access request
+// represents a multi-dataset access request
 public class DarCollection {
 
-  //This query is specific to DAR Collections, which is why it's defined here
+  // This query is specific to DAR Collections, which is why it's defined here
   public static final String DAR_FILTER_QUERY_COLUMNS =
       "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
-          +
-          "dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, " +
-          "dar.create_date AS dar_create_date, dar.sort_date AS dar_sort_date, dar.submission_date AS dar_submission_date, "
-          +
-          "dar.update_date AS dar_update_date, dar.data AS data, "
-          +
-          "dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date, "
-          +
-          "dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id, "
-          +
-          "dar.data ->> 'projectTitle' as projectTitle ";
+          + "dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, "
+          + "dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date, "
+          + "dar.update_date AS dar_update_date, dar.data AS data, "
+          + "dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date, "
+          + "dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id, "
+          + "dar.data ->> 'projectTitle' as projectTitle ";
 
-  @JsonProperty
-  private Integer darCollectionId;
+  @JsonProperty private Integer darCollectionId;
 
-  @JsonProperty
-  private String darCode;
+  @JsonProperty private String darCode;
 
-  @JsonProperty
-  private Timestamp createDate;
+  @JsonProperty private Timestamp createDate;
 
-  @JsonProperty
-  private User createUser;
+  @JsonProperty private User createUser;
 
-  @JsonProperty
-  private Integer createUserId;
+  @JsonProperty private Integer createUserId;
 
-  @JsonProperty
-  private Timestamp updateDate;
+  @JsonProperty private Timestamp updateDate;
 
-  @JsonProperty
-  private Integer updateUserId;
+  @JsonProperty private Integer updateUserId;
 
-  @JsonProperty
-  private final Map<String, DataAccessRequest> dars = new HashMap<>();
+  @JsonProperty private final Map<String, DataAccessRequest> dars = new HashMap<>();
 
-  @JsonProperty
-  private Set<Dataset> datasets;
+  @JsonProperty private Set<Dataset> datasets;
 
   public DarCollection() {
     this.createDate = new Timestamp(System.currentTimeMillis());

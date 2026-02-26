@@ -8,9 +8,11 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanReasons;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanTargetDeliveryDate;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.alternativeDataSharingPlanTargetPublicReleaseDate;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.assets;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.collaboratingSites;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.controlledAccessRequiredForGenomicSummaryResultsGSR;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.data;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dbGaPPhsID;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dbGaPStudyRegistrationName;
@@ -28,6 +30,7 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.species;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.studyType;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.submittingToAnvil;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.throughBioId;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -49,7 +52,7 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 public class SchemaFromStudy {
 
   public DatasetRegistrationSchemaV1 build(Study study) {
-        DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
+    DatasetRegistrationSchemaV1 schemaV1 = new DatasetRegistrationSchemaV1();
 
     if (Objects.nonNull(study)) {
       schemaV1.setStudyId(study.getStudyId());
@@ -68,6 +71,7 @@ public class SchemaFromStudy {
       schemaV1.setDataCustodianEmail(
           findListStringPropValue(study.getProperties(), dataCustodianEmail));
       schemaV1.setPublicVisibility(study.getPublicVisibility());
+      schemaV1.setThroughBioId(findStringPropValue(study.getProperties(), throughBioId));
       String nihAnvilUseVal = findStringPropValue(study.getProperties(), nihAnvilUse);
       if (Objects.nonNull(nihAnvilUseVal)) {
         schemaV1.setNihAnvilUse(NihAnvilUse.fromValue(nihAnvilUseVal));
@@ -85,8 +89,8 @@ public class SchemaFromStudy {
       schemaV1.setNihICsSupportingStudy(findListNICSSPropValue(study.getProperties()));
       schemaV1.setNihProgramOfficerName(
           findStringPropValue(study.getProperties(), nihProgramOfficerName));
-      String nihInstitutionCenterSubmissionVal = findStringPropValue(study.getProperties(),
-          nihInstitutionCenterSubmission);
+      String nihInstitutionCenterSubmissionVal =
+          findStringPropValue(study.getProperties(), nihInstitutionCenterSubmission);
       if (Objects.nonNull(nihInstitutionCenterSubmissionVal)) {
         schemaV1.setNihInstitutionCenterSubmission(
             NihInstitutionCenterSubmission.fromValue(nihInstitutionCenterSubmissionVal));
@@ -97,10 +101,11 @@ public class SchemaFromStudy {
       schemaV1.setCollaboratingSites(
           findListStringPropValue(study.getProperties(), collaboratingSites));
       schemaV1.setControlledAccessRequiredForGenomicSummaryResultsGSR(
-          findBooleanPropValue(study.getProperties(),
-              controlledAccessRequiredForGenomicSummaryResultsGSR));
+          findBooleanPropValue(
+              study.getProperties(), controlledAccessRequiredForGenomicSummaryResultsGSR));
       schemaV1.setControlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation(
-          findStringPropValue(study.getProperties(),
+          findStringPropValue(
+              study.getProperties(),
               controlledAccessRequiredForGenomicSummaryResultsGSRRequiredExplanation));
       if (Objects.nonNull(study.getAlternativeDataSharingPlan())) {
         schemaV1.setAlternativeDataSharingPlan(Boolean.TRUE);
@@ -110,8 +115,8 @@ public class SchemaFromStudy {
           findStringPropValue(study.getProperties(), alternativeDataSharingPlanExplanation));
       schemaV1.setAlternativeDataSharingPlanFileName(
           findStringPropValue(study.getProperties(), alternativeDataSharingPlanFileName));
-      String alternativeDataSharingPlanDataSubmittedVal = findStringPropValue(study.getProperties(),
-          alternativeDataSharingPlanDataSubmitted);
+      String alternativeDataSharingPlanDataSubmittedVal =
+          findStringPropValue(study.getProperties(), alternativeDataSharingPlanDataSubmitted);
       if (Objects.nonNull(alternativeDataSharingPlanDataSubmittedVal)) {
         schemaV1.setAlternativeDataSharingPlanDataSubmitted(
             AlternativeDataSharingPlanDataSubmitted.fromValue(
@@ -122,26 +127,26 @@ public class SchemaFromStudy {
       schemaV1.setAlternativeDataSharingPlanTargetDeliveryDate(
           findStringPropValue(study.getProperties(), alternativeDataSharingPlanTargetDeliveryDate));
       schemaV1.setAlternativeDataSharingPlanTargetPublicReleaseDate(
-          findStringPropValue(study.getProperties(),
-              alternativeDataSharingPlanTargetPublicReleaseDate));
-      String alternativeDataSharingPlanAccessManagementVal = findStringPropValue(
-          study.getProperties(), alternativeDataSharingPlanAccessManagement);
+          findStringPropValue(
+              study.getProperties(), alternativeDataSharingPlanTargetPublicReleaseDate));
+      String alternativeDataSharingPlanAccessManagementVal =
+          findStringPropValue(study.getProperties(), alternativeDataSharingPlanAccessManagement);
       if (Objects.nonNull(alternativeDataSharingPlanAccessManagementVal)) {
         schemaV1.setAlternativeDataSharingPlanAccessManagement(
             AlternativeDataSharingPlanAccessManagement.fromValue(
                 alternativeDataSharingPlanAccessManagementVal));
       }
+      schemaV1.setAssets(findMapPropValue(study.getProperties(), assets));
+      schemaV1.setData(findMapPropValue(study.getProperties(), data));
     }
 
     return schemaV1;
   }
 
-
   @Nullable
   private List<String> findListStringPropValue(Set<StudyProperty> props, String key) {
     if (Objects.nonNull(props) && !props.isEmpty()) {
-      return props
-          .stream()
+      return props.stream()
           .filter(p -> p.getKey().equalsIgnoreCase(key))
           .map(StudyProperty::getValue)
           .map(p -> GsonUtil.getInstance().fromJson(p.toString(), JsonElement.class))
@@ -157,8 +162,7 @@ public class SchemaFromStudy {
   @Nullable
   private List<AlternativeDataSharingPlanReason> findListADSPRPropValue(Set<StudyProperty> props) {
     if (Objects.nonNull(props) && !props.isEmpty()) {
-      return props
-          .stream()
+      return props.stream()
           .filter(p -> p.getKey().equalsIgnoreCase(alternativeDataSharingPlanReasons))
           .map(StudyProperty::getValue)
           .map(p -> GsonUtil.getInstance().fromJson(p.toString(), JsonElement.class))
@@ -175,8 +179,7 @@ public class SchemaFromStudy {
   @Nullable
   private List<NihICsSupportingStudy> findListNICSSPropValue(Set<StudyProperty> props) {
     if (Objects.nonNull(props) && !props.isEmpty()) {
-      return props
-          .stream()
+      return props.stream()
           .filter(p -> p.getKey().equalsIgnoreCase(nihICsSupportingStudy))
           .map(StudyProperty::getValue)
           .map(p -> GsonUtil.getInstance().fromJson(p.toString(), JsonElement.class))
@@ -193,8 +196,7 @@ public class SchemaFromStudy {
   @Nullable
   private String findStringPropValue(Set<StudyProperty> props, String propName) {
     if (Objects.nonNull(props) && !props.isEmpty()) {
-      return props
-          .stream()
+      return props.stream()
           .filter(p -> p.getKey().equalsIgnoreCase(propName))
           .map(StudyProperty::getValue)
           .map(Object::toString)
@@ -207,8 +209,7 @@ public class SchemaFromStudy {
   @Nullable
   private Boolean findBooleanPropValue(Set<StudyProperty> props, String propName) {
     if (Objects.nonNull(props) && !props.isEmpty()) {
-      return props
-          .stream()
+      return props.stream()
           .filter(p -> p.getKey().equalsIgnoreCase(propName))
           .map(StudyProperty::getValue)
           .map(Object::toString)
@@ -221,8 +222,7 @@ public class SchemaFromStudy {
 
   private Integer findIntegerPropValue(Set<StudyProperty> props, String propName) {
     if (Objects.nonNull(props) && !props.isEmpty()) {
-      return props
-          .stream()
+      return props.stream()
           .filter(p -> p.getKey().equalsIgnoreCase(propName))
           .map(StudyProperty::getValue)
           .map(Object::toString)
@@ -233,4 +233,24 @@ public class SchemaFromStudy {
     return null;
   }
 
+  @Nullable
+  private java.util.Map<String, Object> findMapPropValue(
+      Set<StudyProperty> props, String propName) {
+    if (Objects.nonNull(props) && !props.isEmpty()) {
+      return props.stream()
+          .filter(p -> p.getKey().equalsIgnoreCase(propName))
+          .map(StudyProperty::getValue)
+          .map(
+              p ->
+                  (java.util.Map<String, Object>)
+                      GsonUtil.getInstance()
+                          .fromJson(
+                              p.toString(),
+                              new com.google.gson.reflect.TypeToken<
+                                  java.util.Map<String, Object>>() {}.getType()))
+          .findFirst()
+          .orElse(null);
+    }
+    return null;
+  }
 }

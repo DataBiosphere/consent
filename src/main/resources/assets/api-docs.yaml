@@ -43,6 +43,8 @@ paths:
     $ref: './paths/cancelCollectionByCollectionId.yaml'
   /api/collections/{collectionId}/election:
     $ref: './paths/createCollectionElectionsByCollectionId.yaml'
+  /api/collections/{collectionId}/approve:
+    $ref: './paths/approveCollectionByCollectionId.yaml'
   /api/collections/{collectionId}/resubmit:
     $ref: './paths/resubmitCollectionByCollectionId.yaml'
   /api/mail/type/{type}:
@@ -230,9 +232,6 @@ paths:
                   $ref: '#/components/schemas/User'
         500:
           description: Internal Server Error
-  /api/dacuser:
-    $ref: './paths/dacuser.yaml'
-
   /api/dar/v2:
     $ref: './paths/darV2.yaml'
 
@@ -511,12 +510,16 @@ paths:
     $ref: './paths/datasetIndexById.yaml'
   /api/dataset/search/index:
     $ref: './paths/datasetSearchIndex.yaml'
+  /api/dataset/search/index/v2:
+    $ref: './paths/datasetSearchIndexV2.yaml'
   /api/dataset/{id}/authorizedAccessReaders:
     $ref: './paths/datasetAuthorizedReaders.yaml'
   /api/dataset/{id}/authorizedAccessReaders/{userId}:
     $ref: './paths/datasetAuthorizedReadersAddDelete.yaml'
   /api/dataset/{identifier}/approvedUsers:
     $ref: './paths/datasetAuthorizedUsers.yaml'
+  /api/dataset/cleanupEmptyCertificationAndAlternativeSharingFiles:
+    $ref: './paths/cleanupEmptyCertificationAndAlternativeSharingFiles.yaml'
   /api/draft/v1:
     $ref: './paths/draftIndex.yaml'
   /api/draft/v1/{draftUUID}:
@@ -549,6 +552,14 @@ paths:
           description: Server error.
   /api/emailNotifier/darExpirationNotices:
     $ref: './paths/darExpirationNotices.yaml'
+  /api/emailNotifier/dacVoteDigestNotices:
+    $ref: './paths/dacOpenVotesNotificationDigest.yaml'
+  /feature:
+    $ref: './paths/feature.yaml'
+  /feature/{id}:
+    $ref: './paths/publicFeatureById.yaml'
+  /api/feature/{id}:
+    $ref: './paths/adminFeatureById.yaml'
   /api/institutions:
     $ref: './paths/institutions.yaml'
   /api/institutions/{id}:
@@ -733,23 +744,6 @@ paths:
     $ref: './paths/getApprovedDatasets.yaml'
   /api/user/institution/{institutionId}:
     $ref: './paths/userInstitutionByInstitutionId.yaml'
-  /api/user/institution/unassigned:
-    get:
-      summary: Find users that do not belong to an institution
-      description: Find users that do not belong to an institution
-      tags:
-        - User
-      responses:
-        200:
-          description: An array of users that do not belong to an institution
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
-        500:
-          description: Internal Server Error
   /api/user/signing-officials:
     get:
       summary: Find SOs for currently authenticated user's institution
@@ -779,9 +773,9 @@ paths:
         - name: roleName
           in: path
           description: The name of the role of the user
+          required: true
           schema:
             type: string
-            required: true
             enum: [ Admin, SigningOfficial ]
       tags:
         - User
@@ -899,6 +893,8 @@ paths:
           description: Unauthorized, log in and try the operation again.
         500:
           description: Error processing the request.
+  /api/user/create:
+    $ref: './paths/userCreate.yaml'
   /api/nih:
     $ref: './paths/nih.yaml'
   /api/nih/sync:
@@ -917,6 +913,8 @@ paths:
     $ref: './paths/votes.yaml'
   /api/votes/rationale:
     $ref: './paths/votesRationale.yaml'
+  /api/ontology:
+    $ref: './paths/ontology.yaml'
   /metrics/dataset/{datasetId}:
     get:
       summary: Dataset Metrics
@@ -942,6 +940,10 @@ paths:
           description: Internal Server Error
   /liveness:
     $ref: './paths/liveness.yaml'
+  /ontology/search:
+    $ref: './paths/ontologySearch.yaml'
+  /ontology/autocomplete:
+    $ref: './paths/ontologyAutocomplete.yaml'
   /schemas/dataset-registration/v1:
     $ref: './paths/schemaDatasetRegistrationV1.yaml'
   /status:
@@ -1036,9 +1038,9 @@ components:
       $ref: './schemas/Collaborator.yaml'
     DarCollection:
       $ref: './schemas/DarCollection.yaml'
-    Data Access Agreement:
+    DataAccessAgreement:
       $ref: './schemas/DataAccessAgreement.yaml'
-    Data Access Committee:
+    DataAccessCommittee:
       $ref: './schemas/Dac.yaml'
     DataAccessRequest:
       $ref: './schemas/DataAccessRequest.yaml'

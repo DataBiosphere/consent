@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.models;
 
-
 import java.util.List;
 import org.broadinstitute.consent.http.service.MetricsService.DarMetricsSummary;
 

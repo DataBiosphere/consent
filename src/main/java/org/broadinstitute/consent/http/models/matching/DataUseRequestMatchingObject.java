@@ -29,5 +29,4 @@ public class DataUseRequestMatchingObject {
   public void setPurpose(DataUse purpose) {
     this.purpose = purpose;
   }
-
 }

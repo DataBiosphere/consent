@@ -12,6 +12,7 @@ public class ServicesConfiguration {
   public static final String REGISTER_SELF_INFO_PATH = "register/user/v2/self/info";
   public static final String REGISTER_SELF_DIAGNOSTICS_PATH = "register/user/v2/self/diagnostics";
   public static final String REGISTER_SELF_PATH = "register/user/v2/self";
+  public static final String COMBINED_STATE_PATH = "api/users/v2/self/combinedState";
   public static final String TOS_TEXT_PATH = "termsOfService/v1/docs";
   public static final String TOS_SELF_PATH = "api/termsOfService/v1/user/self";
   public static final String ACCEPT_TOS_PATH = "api/termsOfService/v1/user/self/accept";
@@ -21,17 +22,13 @@ public class ServicesConfiguration {
   // nosemgrep
   public static final String BROAD_ZENDESK_URL = "https://broadinstitute.zendesk.com";
 
-  @NotNull
-  private String ontologyURL;
+  @NotNull private String ontologyURL;
 
-  @NotNull
-  private String localURL;
+  @NotNull private String localURL;
 
-  @NotNull
-  private String samUrl;
+  @NotNull private String samUrl;
 
-  @NotNull
-  private String ecmUrl;
+  @NotNull private String ecmUrl;
 
   /**
    * This represents the max time we'll wait for an external status check to return. If it does not
@@ -57,7 +54,6 @@ public class ServicesConfiguration {
 
   private boolean activateSupportNotifications = false;
 
-
   public String getOntologyURL() {
     return ontologyURL;
   }
@@ -72,10 +68,6 @@ public class ServicesConfiguration {
 
   public void setLocalURL(String localURL) {
     this.localURL = localURL;
-  }
-
-  public String getMatchURL_v4() {
-    return getOntologyURL() + "match/v4";
   }
 
   public String getSamUrl() {
@@ -112,6 +104,10 @@ public class ServicesConfiguration {
 
   public String postRegisterUserV2SelfUrl() {
     return getSamUrl() + REGISTER_SELF_PATH;
+  }
+
+  public String getCombinedStateUrl() {
+    return getSamUrl() + COMBINED_STATE_PATH;
   }
 
   public String getToSTextUrl() {

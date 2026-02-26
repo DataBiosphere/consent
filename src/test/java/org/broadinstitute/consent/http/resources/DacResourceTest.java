@@ -39,14 +39,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DacResourceTest extends AbstractTestHelper {
 
-  @Mock
-  private DacService dacService;
+  @Mock private DacService dacService;
 
-  @Mock
-  private DatasetService datasetService;
+  @Mock private DatasetService datasetService;
 
-  @Mock
-  private UserService userService;
+  @Mock private UserService userService;
 
   private DacResource dacResource;
 
@@ -72,10 +69,7 @@ class DacResourceTest extends AbstractTestHelper {
 
   @Test
   void testFindAll_success_2() {
-    Dac dac = new DacBuilder()
-        .setName("name")
-        .setDescription("description")
-        .build();
+    Dac dac = new DacBuilder().setName("name").setDescription("description").build();
     when(dacService.findDacsWithMembersOption(true)).thenReturn(Collections.singletonList(dac));
 
     try (Response response = dacResource.findAll(authUser, Optional.of(true))) {
@@ -121,7 +115,7 @@ class DacResourceTest extends AbstractTestHelper {
 
     when(dacService.findById(1)).thenReturn(null);
 
-    try(Response response = dacResource.findAllDacDatasets(authUser, 1)) {
+    try (Response response = dacResource.findAllDacDatasets(authUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
@@ -165,13 +159,9 @@ class DacResourceTest extends AbstractTestHelper {
     }
   }
 
-
   @Test
   void testCreateDac_success() {
-    Dac dac = new DacBuilder()
-        .setName("name")
-        .setDescription("description")
-        .build();
+    Dac dac = new DacBuilder().setName("name").setDescription("description").build();
     when(dacService.createDac(any(), any())).thenReturn(1);
     when(dacService.findById(1)).thenReturn(dac);
 
@@ -182,11 +172,12 @@ class DacResourceTest extends AbstractTestHelper {
 
   @Test
   void testCreateDacWithEmail_success() {
-    Dac dac = new DacBuilder()
-        .setName("name")
-        .setDescription("description")
-        .setEmail("test@email.com")
-        .build();
+    Dac dac =
+        new DacBuilder()
+            .setName("name")
+            .setDescription("description")
+            .setEmail("test@email.com")
+            .build();
     when(dacService.createDac(any(), any(), any())).thenReturn(1);
     when(dacService.findById(1)).thenReturn(dac);
 
@@ -204,23 +195,17 @@ class DacResourceTest extends AbstractTestHelper {
 
   @Test
   void testCreateDac_badRequest_2() {
-    Dac dac = new DacBuilder()
-        .setName(null)
-        .setDescription("description")
-        .build();
+    Dac dac = new DacBuilder().setName(null).setDescription("description").build();
 
-    try(Response response = dacResource.createDac(authUser, gson.toJson(dac))) {
+    try (Response response = dacResource.createDac(authUser, gson.toJson(dac))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
 
   @Test
   void testCreateDac_badRequest_3() {
-    Dac dac = new DacBuilder()
-        .setName("name")
-        .setDescription(null)
-        .build();
-    try(Response response = dacResource.createDac(authUser, gson.toJson(dac))) {
+    Dac dac = new DacBuilder().setName("name").setDescription(null).build();
+    try (Response response = dacResource.createDac(authUser, gson.toJson(dac))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -230,12 +215,9 @@ class DacResourceTest extends AbstractTestHelper {
     User user = new User();
     user.setAdminRole();
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    Dac dac = new DacBuilder()
-        .setDacId(1)
-        .setName("name")
-        .setDescription("description")
-        .build();
-    doNothing().when(dacService)
+    Dac dac = new DacBuilder().setDacId(1).setName("name").setDescription("description").build();
+    doNothing()
+        .when(dacService)
         .updateDac(isA(String.class), isA(String.class), isA(Integer.class));
     when(dacService.findById(1)).thenReturn(dac);
 
@@ -249,13 +231,15 @@ class DacResourceTest extends AbstractTestHelper {
     User user = new User();
     user.setAdminRole();
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    Dac dac = new DacBuilder()
-        .setDacId(1)
-        .setName("name")
-        .setEmail("test@email.com")
-        .setDescription("description")
-        .build();
-    doNothing().when(dacService)
+    Dac dac =
+        new DacBuilder()
+            .setDacId(1)
+            .setName("name")
+            .setEmail("test@email.com")
+            .setDescription("description")
+            .build();
+    doNothing()
+        .when(dacService)
         .updateDac(isA(String.class), isA(String.class), isA(String.class), isA(Integer.class));
     when(dacService.findById(1)).thenReturn(dac);
 
@@ -276,11 +260,7 @@ class DacResourceTest extends AbstractTestHelper {
     User user = new User();
     user.setAdminRole();
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    Dac dac = new DacBuilder()
-        .setDacId(null)
-        .setName("name")
-        .setDescription("description")
-        .build();
+    Dac dac = new DacBuilder().setDacId(null).setName("name").setDescription("description").build();
     try (Response response = dacResource.updateDac(authUser, gson.toJson(dac))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
@@ -291,11 +271,7 @@ class DacResourceTest extends AbstractTestHelper {
     User user = new User();
     user.setAdminRole();
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    Dac dac = new DacBuilder()
-        .setDacId(1)
-        .setName(null)
-        .setDescription("description")
-        .build();
+    Dac dac = new DacBuilder().setDacId(1).setName(null).setDescription("description").build();
     try (Response response = dacResource.updateDac(authUser, gson.toJson(dac))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
@@ -306,11 +282,7 @@ class DacResourceTest extends AbstractTestHelper {
     User user = new User();
     user.setAdminRole();
     when(userService.findUserByEmail(anyString())).thenReturn(user);
-    Dac dac = new DacBuilder()
-        .setDacId(1)
-        .setName("name")
-        .setDescription(null)
-        .build();
+    Dac dac = new DacBuilder().setDacId(1).setName("name").setDescription(null).build();
     try (Response response = dacResource.updateDac(authUser, gson.toJson(dac))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
@@ -318,11 +290,7 @@ class DacResourceTest extends AbstractTestHelper {
 
   @Test
   void testUpdateDac_notAuthorized() {
-    Dac dac = new DacBuilder()
-        .setDacId(1)
-        .setName("name")
-        .setDescription("description")
-        .build();
+    Dac dac = new DacBuilder().setDacId(1).setName("name").setDescription("description").build();
     User user = new User();
     user.setChairpersonRoleWithDAC(dac.getDacId() + 1);
     when(userService.findUserByEmail(anyString())).thenReturn(user);
@@ -334,15 +302,16 @@ class DacResourceTest extends AbstractTestHelper {
 
   @Test
   void testFindById_success() {
-    Dac dac = new DacBuilder()
-        .setDacId(1)
-        .setName("name")
-        .setDescription("description")
-        .setAssociatedDaa(new DataAccessAgreement())
-        .build();
+    Dac dac =
+        new DacBuilder()
+            .setDacId(1)
+            .setName("name")
+            .setDescription("description")
+            .setAssociatedDaa(new DataAccessAgreement())
+            .build();
     when(dacService.findById(1)).thenReturn(dac);
 
-    try (Response response = dacResource.findById(authUser, dac.getDacId())) {
+    try (Response response = dacResource.findDacById(authUser, dac.getDacId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -351,24 +320,19 @@ class DacResourceTest extends AbstractTestHelper {
   void testFindById_failure() {
     when(dacService.findById(1)).thenReturn(null);
 
-    try (Response response = dacResource.findById(authUser, 1)) {
+    try (Response response = dacResource.findDacById(authUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
 
   @Test
   void testDeleteDac_success() {
-    Dac dac = new DacBuilder()
-        .setDacId(1)
-        .setName("name")
-        .setDescription("description")
-        .build();
+    Dac dac = new DacBuilder().setDacId(1).setName("name").setDescription("description").build();
     when(dacService.findById(1)).thenReturn(dac);
 
     try (Response response = dacResource.deleteDac(authUser, dac.getDacId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
-
   }
 
   @Test
@@ -389,8 +353,8 @@ class DacResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(admin);
     when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
-    try (Response response = dacResource.addDacMember(authUser, dac.getDacId(),
-        member.getUserId())) {
+    try (Response response =
+        dacResource.addDacMember(authUser, dac.getDacId(), member.getUserId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -404,8 +368,8 @@ class DacResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(chair);
     when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
-    try (Response response = dacResource.addDacMember(authUser, dac.getDacId(),
-        member.getUserId())) {
+    try (Response response =
+        dacResource.addDacMember(authUser, dac.getDacId(), member.getUserId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -419,7 +383,8 @@ class DacResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(chair);
     when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
-    try(Response response = dacResource.addDacMember(authUser, dac.getDacId(), member.getUserId())) {
+    try (Response response =
+        dacResource.addDacMember(authUser, dac.getDacId(), member.getUserId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatus());
     }
   }
@@ -433,8 +398,8 @@ class DacResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(admin);
     when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
-    try (Response response = dacResource.removeDacMember(authUser, dac.getDacId(),
-        member.getUserId())) {
+    try (Response response =
+        dacResource.removeDacMember(authUser, dac.getDacId(), member.getUserId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -448,8 +413,8 @@ class DacResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(chair);
     when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
-    try (Response response = dacResource.removeDacMember(authUser, dac.getDacId(),
-        member.getUserId())) {
+    try (Response response =
+        dacResource.removeDacMember(authUser, dac.getDacId(), member.getUserId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -463,7 +428,8 @@ class DacResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(chair);
     when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
-    try (Response response = dacResource.removeDacMember(authUser, dac.getDacId(), member.getUserId())) {
+    try (Response response =
+        dacResource.removeDacMember(authUser, dac.getDacId(), member.getUserId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatus());
     }
   }
@@ -477,8 +443,8 @@ class DacResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(admin);
     when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
-    try (Response response = dacResource.addDacChair(authUser, dac.getDacId(),
-        member.getUserId())) {
+    try (Response response =
+        dacResource.addDacChair(authUser, dac.getDacId(), member.getUserId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -492,8 +458,8 @@ class DacResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(chair);
     when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
-    try (Response response = dacResource.addDacChair(authUser, dac.getDacId(),
-        member.getUserId())) {
+    try (Response response =
+        dacResource.addDacChair(authUser, dac.getDacId(), member.getUserId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -507,8 +473,8 @@ class DacResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(chair);
     when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
-    try (Response response = dacResource.addDacChair(authUser, dac.getDacId(),
-        member.getUserId())) {
+    try (Response response =
+        dacResource.addDacChair(authUser, dac.getDacId(), member.getUserId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatus());
     }
   }
@@ -522,8 +488,8 @@ class DacResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(admin);
     when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
-    try (Response response = dacResource.removeDacChair(authUser, dac.getDacId(),
-        member.getUserId())) {
+    try (Response response =
+        dacResource.removeDacChair(authUser, dac.getDacId(), member.getUserId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -537,8 +503,8 @@ class DacResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(authUser.getEmail())).thenReturn(chair);
     when(dacService.findUserById(member.getUserId())).thenReturn(member);
 
-    try (Response response = dacResource.removeDacChair(authUser, dac.getDacId(),
-        member.getUserId())) {
+    try (Response response =
+        dacResource.removeDacChair(authUser, dac.getDacId(), member.getUserId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -664,11 +630,8 @@ class DacResourceTest extends AbstractTestHelper {
   }
 
   private Dac buildDac(User chair) {
-    Dac dac = new DacBuilder()
-        .setDacId(nextInt())
-        .setName("name")
-        .setDescription("description")
-        .build();
+    Dac dac =
+        new DacBuilder().setDacId(nextInt()).setName("name").setDescription("description").build();
     if (Objects.nonNull(chair)) {
       dac.setChairpersons(Collections.singletonList(chair));
     }

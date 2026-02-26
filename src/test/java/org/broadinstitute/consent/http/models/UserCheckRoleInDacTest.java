@@ -53,5 +53,4 @@ class UserCheckRoleInDacTest {
     assertFalse(isUserChair);
     assertTrue(isUserAdmin);
   }
-
 }

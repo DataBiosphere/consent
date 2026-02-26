@@ -54,7 +54,8 @@ class NewProgressReportCaseMessageTest extends AbstractTestHelper {
     Document parsedTemplate = Jsoup.parse(templateString);
 
     assertEquals(
-        "Broad Data Use Oversight System - New Progress Report ready for your vote", parsedTemplate.title());
+        "Broad Data Use Oversight System - New Progress Report ready for your vote",
+        parsedTemplate.title());
     assertEquals("Hello " + userName + ",", getElementTextById(parsedTemplate, "userName"));
     assertTrue(
         templateString.contains(

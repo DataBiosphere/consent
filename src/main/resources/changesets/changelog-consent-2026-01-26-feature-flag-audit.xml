@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="2026-01-26-feature-flag-audit" author="consent">
+    <createTable tableName="feature_flag_audit">
+      <column name="id" type="bigint" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="user_id" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="feature_flag_id" type="varchar(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="action" type="varchar(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="action_date" type="timestamp" defaultValueDate="current_timestamp">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="feature_flag_audit"
+                             baseColumnNames="user_id"
+                             constraintName="fk_feature_flag_audit_user"
+                             referencedTableName="users"
+                             referencedColumnNames="user_id"/>
+  </changeSet>
+</databaseChangeLog>

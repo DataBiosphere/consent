@@ -4,19 +4,7 @@ properties:
     type: string
     description: The study name
   studyType:
-    type: string
-    enum:
-      - Observational
-      - Interventional
-      - Descriptive
-      - Analytical
-      - Prospective
-      - Retrospective
-      - Case report
-      - Case series
-      - Cross-sectional
-      - Cohort study
-    description: The study type
+    $ref: './StudyType.yaml'
   studyDescription:
     type: string
     description: Description of the study
@@ -219,6 +207,9 @@ properties:
     description: Consent Groups
     items:
       "$ref": "./ConsentGroup.yaml"
+  assets:
+    type: object
+    description: Study Assets
 required:
   - studyName
   - studyDescription

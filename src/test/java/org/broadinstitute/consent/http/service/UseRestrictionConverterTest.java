@@ -4,108 +4,24 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
 
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.MediaType;
 import java.util.List;
 import java.util.UUID;
 import org.broadinstitute.consent.http.MockServerTestHelper;
-import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
-import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.OntologyEntry;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockserver.model.Header;
 
 @ExtendWith(MockitoExtension.class)
 class UseRestrictionConverterTest extends MockServerTestHelper {
 
-  private void mockDataUseTranslateSuccess() {
-    mockServerClient
-        .when(request().withMethod("POST").withPath("/translate"))
-        .respond(
-            response()
-                .withStatusCode(200)
-                .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
-                .withBody(
-                    """
-                        Samples are restricted for use under the following conditions:
-                        Data is limited for health/medical/biomedical research. [HMB]
-                        Commercial use is not prohibited.
-                        Data use for methods development research irrespective of the specified data use limitations is not prohibited.
-                        Restrictions for use as a control set for diseases other than those defined were not specified."""));
-  }
-
-  private void mockDataUseTranslateFailure() {
-    mockServerClient
-        .when(request().withMethod("POST").withPath("/translate"))
-        .respond(
-            response()
-                .withStatusCode(500)
-                .withHeaders(new Header("Content-Type", MediaType.APPLICATION_JSON))
-                .withBody("Exception")
-        );
-  }
-
-  public ServicesConfiguration config() {
-    ServicesConfiguration config = new ServicesConfiguration();
-    config.setLocalURL("http://localhost:8180/");
-    config.setOntologyURL(getRootUrl(CONTAINER));
-    return config;
-  }
-
-  /*
-   * Test that the UseRestrictionConverter makes a call to the ontology service and gets back a valid translation
-   */
-  @Test
-  void testTranslateDataUsePurpose() {
-    mockDataUseTranslateSuccess();
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
-    DataUse dataUse = new DataUseBuilder().setHmbResearch(true).build();
-    String translation = converter.translateDataUse(dataUse, DataUseTranslationType.PURPOSE);
-    assertNotNull(translation);
-  }
-
-  /*
-   * Test that the UseRestrictionConverter makes a call to the ontology service and gets back a valid translation
-   */
-  @Test
-  void testTranslateDataUseDataset() {
-    mockDataUseTranslateSuccess();
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
-    DataUse dataUse = new DataUseBuilder().setHmbResearch(true).build();
-    String translation = converter.translateDataUse(dataUse, DataUseTranslationType.DATASET);
-    assertNotNull(translation);
-  }
-
-  /*
-   * Test that when the UseRestrictionConverter makes a failed call to the ontology service, a null is returned.
-   */
-  @Test
-  void testFailedDataUseTranslateConverterConnection() {
-    mockDataUseTranslateFailure();
-
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
-    DataUse dataUse = new DataUseBuilder().setHmbResearch(true).build();
-    String translation = converter.translateDataUse(dataUse, DataUseTranslationType.PURPOSE);
-    assertNull(translation);
-  }
-
   @Test
   void testParseDataUsePurposeEmpty() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    UseRestrictionConverter converter = new UseRestrictionConverter();
     DataAccessRequest dar = createDataAccessRequest();
     DataUse dataUse = converter.parseDataUsePurpose(dar);
     assertNull(dataUse.getGeneralUse());
@@ -136,8 +52,7 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
 
   @Test
   void testParseDataUsePurposeFalseAsNull() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    UseRestrictionConverter converter = new UseRestrictionConverter();
     DataAccessRequest dar = createDataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
 
@@ -185,8 +100,7 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
 
   @Test
   void testParseDataUsePurposeMethods() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    UseRestrictionConverter converter = new UseRestrictionConverter();
     DataAccessRequest dar = createDataAccessRequest();
     dar.getData().setMethods(true);
     DataUse dataUse = converter.parseDataUsePurpose(dar);
@@ -195,8 +109,7 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
 
   @Test
   void testParseDataUseAiLlmUse() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    UseRestrictionConverter converter = new UseRestrictionConverter();
     DataAccessRequest dar = createDataAccessRequest();
     dar.getData().setAiLlmUse(true);
     DataUse dataUse = converter.parseDataUsePurpose(dar);
@@ -205,8 +118,7 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
 
   @Test
   void testParseDataUsePurposeControls() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    UseRestrictionConverter converter = new UseRestrictionConverter();
     DataAccessRequest dar = createDataAccessRequest();
     dar.getData().setControls(true);
     DataUse dataUse = converter.parseDataUsePurpose(dar);
@@ -215,8 +127,7 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
 
   @Test
   void testParseDataUsePurposeDisease() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    UseRestrictionConverter converter = new UseRestrictionConverter();
     DataAccessRequest dar = createDataAccessRequest();
     OntologyEntry entry = new OntologyEntry();
     entry.setId("id");
@@ -230,8 +141,7 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
 
   @Test
   void testParseDataUsePurposeNonProfit() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    UseRestrictionConverter converter = new UseRestrictionConverter();
     DataAccessRequest dar = createDataAccessRequest();
     dar.getData().setForProfit(true);
     DataUse dataUse = converter.parseDataUsePurpose(dar);
@@ -240,8 +150,7 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
 
   @Test
   void testParseDataUsePurposeGender() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    UseRestrictionConverter converter = new UseRestrictionConverter();
     DataAccessRequest dar = createDataAccessRequest();
     dar.getData().setOneGender(true);
     dar.getData().setGender("F");
@@ -251,8 +160,7 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
 
   @Test
   void testParseDataUsePurposePediatric() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    UseRestrictionConverter converter = new UseRestrictionConverter();
     DataAccessRequest dar = createDataAccessRequest();
     dar.getData().setPediatric(true);
     DataUse dataUse = converter.parseDataUsePurpose(dar);
@@ -261,8 +169,7 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
 
   @Test
   void testParseDataUsePurposeHMB() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    UseRestrictionConverter converter = new UseRestrictionConverter();
     DataAccessRequest dar = createDataAccessRequest();
     dar.getData().setHmb(true);
     DataUse dataUse = converter.parseDataUsePurpose(dar);
@@ -271,8 +178,7 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
 
   @Test
   void testParseDataUsePurposeOther() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    UseRestrictionConverter converter = new UseRestrictionConverter();
     DataAccessRequest dar = createDataAccessRequest();
     dar.getData().setOther(true);
     dar.getData().setOtherText("Other Text");
@@ -282,8 +188,7 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
 
   @Test
   void testParseDataUseIllegalBehavior() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    UseRestrictionConverter converter = new UseRestrictionConverter();
     DataAccessRequest dar = createDataAccessRequest();
     dar.getData().setIllegalBehavior(true);
     DataUse dataUse = converter.parseDataUsePurpose(dar);
@@ -292,8 +197,7 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
 
   @Test
   void testParseDataUseSexualDiseases() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    UseRestrictionConverter converter = new UseRestrictionConverter();
     DataAccessRequest dar = createDataAccessRequest();
     dar.getData().setSexualDiseases(true);
     DataUse dataUse = converter.parseDataUsePurpose(dar);
@@ -302,8 +206,7 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
 
   @Test
   void testParseDataUseStigmatizeDiseases() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    UseRestrictionConverter converter = new UseRestrictionConverter();
     DataAccessRequest dar = createDataAccessRequest();
     dar.getData().setStigmatizedDiseases(true);
     DataUse dataUse = converter.parseDataUsePurpose(dar);
@@ -312,8 +215,7 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
 
   @Test
   void testParseDataUseVulnerablePopulations() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    UseRestrictionConverter converter = new UseRestrictionConverter();
     DataAccessRequest dar = createDataAccessRequest();
     dar.getData().setVulnerablePopulation(true);
     DataUse dataUse = converter.parseDataUsePurpose(dar);
@@ -322,8 +224,7 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
 
   @Test
   void testParseDataUsePsychologicalTraits() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    UseRestrictionConverter converter = new UseRestrictionConverter();
     DataAccessRequest dar = createDataAccessRequest();
     dar.getData().setPsychiatricTraits(true);
     DataUse dataUse = converter.parseDataUsePurpose(dar);
@@ -332,8 +233,7 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
 
   @Test
   void testParseDataUseNotHealth() {
-    Client client = ClientBuilder.newClient();
-    UseRestrictionConverter converter = new UseRestrictionConverter(client, config());
+    UseRestrictionConverter converter = new UseRestrictionConverter();
     DataAccessRequest dar = createDataAccessRequest();
     dar.getData().setNotHealth(true);
     DataUse dataUse = converter.parseDataUsePurpose(dar);
@@ -348,5 +248,4 @@ class UseRestrictionConverterTest extends MockServerTestHelper {
     dar.setData(data);
     return dar;
   }
-
 }

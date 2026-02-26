@@ -36,25 +36,25 @@ class StudyDAOTest extends DAOTestHelper {
 
     String name = RandomStringUtils.randomAlphabetic(20);
     String description = RandomStringUtils.randomAlphabetic(20);
-    List<String> dataTypes = List.of(
-        RandomStringUtils.randomAlphabetic(20),
-        RandomStringUtils.randomAlphabetic(20),
-        RandomStringUtils.randomAlphabetic(20)
-    );
+    List<String> dataTypes =
+        List.of(
+            RandomStringUtils.randomAlphabetic(20),
+            RandomStringUtils.randomAlphabetic(20),
+            RandomStringUtils.randomAlphabetic(20));
     String piName = RandomStringUtils.randomAlphabetic(20);
     Boolean publicVisibility = true;
     UUID uuid = UUID.randomUUID();
 
-    Integer id = studyDAO.insertStudy(
-        name,
-        description,
-        piName,
-        dataTypes,
-        publicVisibility,
-        u.getUserId(),
-        Instant.now(),
-        uuid
-    );
+    Integer id =
+        studyDAO.insertStudy(
+            name,
+            description,
+            piName,
+            dataTypes,
+            publicVisibility,
+            u.getUserId(),
+            Instant.now(),
+            uuid);
 
     studyDAO.insertStudy(
         RandomStringUtils.randomAlphabetic(20),
@@ -64,8 +64,7 @@ class StudyDAOTest extends DAOTestHelper {
         publicVisibility,
         u.getUserId(),
         Instant.now(),
-        UUID.randomUUID()
-    );
+        UUID.randomUUID());
 
     Study study = studyDAO.findStudyById(id);
 
@@ -86,103 +85,85 @@ class StudyDAOTest extends DAOTestHelper {
 
     String name = RandomStringUtils.randomAlphabetic(20);
     String description = RandomStringUtils.randomAlphabetic(20);
-    List<String> dataTypes = List.of(
-        RandomStringUtils.randomAlphabetic(20),
-        RandomStringUtils.randomAlphabetic(20),
-        RandomStringUtils.randomAlphabetic(20)
-    );
+    List<String> dataTypes =
+        List.of(
+            RandomStringUtils.randomAlphabetic(20),
+            RandomStringUtils.randomAlphabetic(20),
+            RandomStringUtils.randomAlphabetic(20));
     String piName = RandomStringUtils.randomAlphabetic(20);
     Boolean publicVisibility = true;
 
-    Integer id = studyDAO.insertStudy(
-        name,
-        description,
-        piName,
-        dataTypes,
-        publicVisibility,
-        u.getUserId(),
-        Instant.now(),
-        UUID.randomUUID()
-    );
+    Integer id =
+        studyDAO.insertStudy(
+            name,
+            description,
+            piName,
+            dataTypes,
+            publicVisibility,
+            u.getUserId(),
+            Instant.now(),
+            UUID.randomUUID());
 
-    Integer id2 = studyDAO.insertStudy(
-        RandomStringUtils.randomAlphabetic(20),
-        description,
-        piName,
-        dataTypes,
-        publicVisibility,
-        u.getUserId(),
-        Instant.now(),
-        UUID.randomUUID()
-    );
+    Integer id2 =
+        studyDAO.insertStudy(
+            RandomStringUtils.randomAlphabetic(20),
+            description,
+            piName,
+            dataTypes,
+            publicVisibility,
+            u.getUserId(),
+            Instant.now(),
+            UUID.randomUUID());
 
-    Integer prop1Id = studyDAO.insertStudyProperty(
-        id,
-        "prop1",
-        PropertyType.String.toString(),
-        "asdf"
-    );
+    Integer prop1Id =
+        studyDAO.insertStudyProperty(id, "prop1", PropertyType.String.toString(), "asdf");
 
-    Integer prop2Id = studyDAO.insertStudyProperty(
-        id,
-        "prop2",
-        PropertyType.Number.toString(),
-        "1"
-    );
+    Integer prop2Id =
+        studyDAO.insertStudyProperty(id, "prop2", PropertyType.Number.toString(), "1");
 
     // create some random, other property
-    studyDAO.insertStudyProperty(
-        id2,
-        "unrelated",
-        PropertyType.String.toString(),
-        "asdfasdfasdf"
-    );
+    studyDAO.insertStudyProperty(id2, "unrelated", PropertyType.String.toString(), "asdfasdfasdf");
 
     Study study = studyDAO.findStudyById(id);
 
     assertEquals(study.getProperties().size(), 2);
 
-    study.getProperties().forEach((prop) -> {
-      if (prop.getStudyPropertyId().equals(prop1Id)) {
-        assertEquals("prop1", prop.getKey());
-        assertEquals(PropertyType.String, prop.getType());
-        assertEquals("asdf", prop.getValue());
-      } else if (prop.getStudyPropertyId().equals(prop2Id)) {
-        assertEquals("prop2", prop.getKey());
-        assertEquals(PropertyType.Number, prop.getType());
-        assertEquals(1, prop.getValue());
-      } else {
-        fail("Unexpected property");
-      }
-    });
+    study
+        .getProperties()
+        .forEach(
+            (prop) -> {
+              if (prop.getStudyPropertyId().equals(prop1Id)) {
+                assertEquals("prop1", prop.getKey());
+                assertEquals(PropertyType.String, prop.getType());
+                assertEquals("asdf", prop.getValue());
+              } else if (prop.getStudyPropertyId().equals(prop2Id)) {
+                assertEquals("prop2", prop.getKey());
+                assertEquals(PropertyType.Number, prop.getType());
+                assertEquals(1, prop.getValue());
+              } else {
+                fail("Unexpected property");
+              }
+            });
   }
-
 
   @Test
   void testAlternativeDataSharingPlan() {
     User u = createUser();
 
     UUID uuid = UUID.randomUUID();
-    Integer id = studyDAO.insertStudy(
-        "name",
-        "description",
-        "asdf",
-        List.of(),
-        true,
-        u.getUserId(),
-        Instant.now(),
-        uuid
-    );
+    Integer id =
+        studyDAO.insertStudy(
+            "name", "description", "asdf", List.of(), true, u.getUserId(), Instant.now(), uuid);
 
-    FileStorageObject fso = createFileStorageObject(uuid.toString(),
-        FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+    FileStorageObject fso =
+        createFileStorageObject(uuid.toString(), FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
 
     Study study = studyDAO.findStudyById(id);
 
-    assertEquals(fso.getFileStorageObjectId(),
+    assertEquals(
+        fso.getFileStorageObjectId(),
         study.getAlternativeDataSharingPlan().getFileStorageObjectId());
     assertEquals(fso.getBlobId(), study.getAlternativeDataSharingPlan().getBlobId());
-
   }
 
   @Test
@@ -191,28 +172,22 @@ class StudyDAOTest extends DAOTestHelper {
 
     // create unrelated file with the same id as dataset id but different category, timestamp before
     createFileStorageObject(
-        study.getUuid().toString(),
-        FileCategory.NIH_INSTITUTIONAL_CERTIFICATION
-    );
+        study.getUuid().toString(), FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
 
-    FileStorageObject altFile = createFileStorageObject(
-        study.getUuid().toString(),
-        FileCategory.ALTERNATIVE_DATA_SHARING_PLAN
-    );
+    FileStorageObject altFile =
+        createFileStorageObject(
+            study.getUuid().toString(), FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
 
     // create unrelated files with timestamp later than the ADSP file: one attached to dataset, one
-    // completely separate from the dataset. ensures that the Mapper is selecting only the right file.
+    // completely separate from the dataset. ensures that the Mapper is selecting only the right
+    // file.
     createFileStorageObject("asdfasdf", FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
-    createFileStorageObject(
-        study.getUuid().toString(),
-        FileCategory.DATA_USE_LETTER
-    );
+    createFileStorageObject(study.getUuid().toString(), FileCategory.DATA_USE_LETTER);
 
     Study found = studyDAO.findStudyById(study.getStudyId());
 
     assertEquals(altFile, found.getAlternativeDataSharingPlan());
-    assertEquals(altFile.getBlobId(),
-        found.getAlternativeDataSharingPlan().getBlobId());
+    assertEquals(altFile.getBlobId(), found.getAlternativeDataSharingPlan().getBlobId());
   }
 
   @Test
@@ -224,15 +199,15 @@ class StudyDAOTest extends DAOTestHelper {
     String gcsFileUri = org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(10);
     User createUser = createUser();
 
-    Integer altFileIdCreatedFirst = fileStorageObjectDAO.insertNewFile(
-        fileName,
-        FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue(),
-        bucketName,
-        gcsFileUri,
-        study.getUuid().toString(),
-        createUser.getUserId(),
-        Instant.ofEpochMilli(100)
-    );
+    Integer altFileIdCreatedFirst =
+        fileStorageObjectDAO.insertNewFile(
+            fileName,
+            FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue(),
+            bucketName,
+            gcsFileUri,
+            study.getUuid().toString(),
+            createUser.getUserId(),
+            Instant.ofEpochMilli(100));
 
     User updateUser = createUser();
 
@@ -243,39 +218,34 @@ class StudyDAOTest extends DAOTestHelper {
         updateUser.getUserId(),
         Instant.ofEpochMilli(120));
 
-    Integer altFileIdCreatedSecond = fileStorageObjectDAO.insertNewFile(
-        fileName,
-        FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue(),
-        bucketName,
-        gcsFileUri,
-        study.getUuid().toString(),
-        createUser.getUserId(),
-        Instant.ofEpochMilli(130)
-    );
+    Integer altFileIdCreatedSecond =
+        fileStorageObjectDAO.insertNewFile(
+            fileName,
+            FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue(),
+            bucketName,
+            gcsFileUri,
+            study.getUuid().toString(),
+            createUser.getUserId(),
+            Instant.ofEpochMilli(130));
 
     Study found = studyDAO.findStudyById(study.getStudyId());
 
     // returns last updated file
-    assertEquals(altFileIdCreatedSecond,
-        found.getAlternativeDataSharingPlan().getFileStorageObjectId());
+    assertEquals(
+        altFileIdCreatedSecond, found.getAlternativeDataSharingPlan().getFileStorageObjectId());
   }
 
   @Test
   void testGetAlternativeDataSharingPlanFile_NotDeleted() {
     Study study = insertStudyWithProperties();
 
-    FileStorageObject altFile = createFileStorageObject(
-        study.getUuid().toString(),
-        FileCategory.ALTERNATIVE_DATA_SHARING_PLAN
-    );
+    FileStorageObject altFile =
+        createFileStorageObject(
+            study.getUuid().toString(), FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
 
     User deleteUser = createUser();
 
-    fileStorageObjectDAO.deleteFileById(
-        altFile.getFileStorageObjectId(),
-        deleteUser.getUserId(),
-        Instant.now()
-    );
+    fileStorageObjectDAO.deleteFileById(altFile.getFileStorageObjectId(), deleteUser.getUserId());
 
     Study found = studyDAO.findStudyById(study.getStudyId());
 
@@ -332,26 +302,32 @@ class StudyDAOTest extends DAOTestHelper {
     Study study = insertStudyWithProperties();
     String newPropStringVal = RandomStringUtils.randomAlphabetic(15);
     Integer newPropNumberVal = RandomUtils.nextInt(100, 1000);
-    study.getProperties().forEach(p -> {
-      if (p.getType().equals(PropertyType.String)) {
-        studyDAO.updateStudyProperty(
-            study.getStudyId(),
-            p.getKey(),
-            p.getType().toString(),
-            newPropStringVal);
-      }
-      if (p.getType().equals(PropertyType.Number)) {
-        studyDAO.updateStudyProperty(
-            study.getStudyId(),
-            p.getKey(),
-            p.getType().toString(),
-            newPropNumberVal.toString());
-      }
-    });
+    study
+        .getProperties()
+        .forEach(
+            p -> {
+              if (p.getType().equals(PropertyType.String)) {
+                studyDAO.updateStudyProperty(
+                    study.getStudyId(), p.getKey(), p.getType().toString(), newPropStringVal);
+              }
+              if (p.getType().equals(PropertyType.Number)) {
+                studyDAO.updateStudyProperty(
+                    study.getStudyId(),
+                    p.getKey(),
+                    p.getType().toString(),
+                    newPropNumberVal.toString());
+              }
+            });
 
     Study updatedStudy = studyDAO.findStudyById(study.getStudyId());
-    Optional<StudyProperty> stringProp = updatedStudy.getProperties().stream().filter(p -> p.getValue().equals(newPropStringVal)).findFirst();
-    Optional<StudyProperty> numberProp = updatedStudy.getProperties().stream().filter(p -> p.getValue().equals(newPropNumberVal)).findFirst();
+    Optional<StudyProperty> stringProp =
+        updatedStudy.getProperties().stream()
+            .filter(p -> p.getValue().equals(newPropStringVal))
+            .findFirst();
+    Optional<StudyProperty> numberProp =
+        updatedStudy.getProperties().stream()
+            .filter(p -> p.getValue().equals(newPropNumberVal))
+            .findFirst();
     assertTrue(stringProp.isPresent());
     assertTrue(numberProp.isPresent());
   }
@@ -364,6 +340,19 @@ class StudyDAOTest extends DAOTestHelper {
     studyDAO.deleteStudyByStudyId(id);
     Study deletedStudy = studyDAO.findStudyById(id);
     assertNull(deletedStudy);
+  }
+
+  @Test
+  void testDeleteStudyPropertiesById() {
+    Study study = insertStudyWithProperties();
+    Integer id = study.getStudyId();
+    int propertyCount = study.getProperties().size();
+    assertTrue(propertyCount > 0);
+
+    studyDAO.deleteStudyPropertiesByStudyId(id);
+
+    Study foundStudy = studyDAO.findStudyById(id);
+    assertEquals(0, foundStudy.getProperties().size());
   }
 
   @Test
@@ -381,15 +370,15 @@ class StudyDAOTest extends DAOTestHelper {
     User createUser = createUser();
     Instant createDate = Instant.now();
 
-    Integer newFileStorageObjectId = fileStorageObjectDAO.insertNewFile(
-        fileName,
-        category.getValue(),
-        bucketName,
-        gcsFileUri,
-        entityId,
-        createUser.getUserId(),
-        createDate
-    );
+    Integer newFileStorageObjectId =
+        fileStorageObjectDAO.insertNewFile(
+            fileName,
+            category.getValue(),
+            bucketName,
+            gcsFileUri,
+            entityId,
+            createUser.getUserId(),
+            createDate);
     return fileStorageObjectDAO.findFileById(newFileStorageObjectId);
   }
 
@@ -398,37 +387,25 @@ class StudyDAOTest extends DAOTestHelper {
 
     String name = RandomStringUtils.randomAlphabetic(20);
     String description = RandomStringUtils.randomAlphabetic(20);
-    List<String> dataTypes = List.of(
-        RandomStringUtils.randomAlphabetic(20),
-        RandomStringUtils.randomAlphabetic(20)
-    );
+    List<String> dataTypes =
+        List.of(RandomStringUtils.randomAlphabetic(20), RandomStringUtils.randomAlphabetic(20));
     String piName = RandomStringUtils.randomAlphabetic(20);
     Boolean publicVisibility = true;
 
-    Integer id = studyDAO.insertStudy(
-        name,
-        description,
-        piName,
-        dataTypes,
-        publicVisibility,
-        u.getUserId(),
-        Instant.now(),
-        UUID.randomUUID()
-    );
+    Integer id =
+        studyDAO.insertStudy(
+            name,
+            description,
+            piName,
+            dataTypes,
+            publicVisibility,
+            u.getUserId(),
+            Instant.now(),
+            UUID.randomUUID());
 
-    studyDAO.insertStudyProperty(
-        id,
-        "prop1",
-        PropertyType.String.toString(),
-        "asdf"
-    );
+    studyDAO.insertStudyProperty(id, "prop1", PropertyType.String.toString(), "asdf");
 
-    studyDAO.insertStudyProperty(
-        id,
-        "prop2",
-        PropertyType.Number.toString(),
-        "1"
-    );
+    studyDAO.insertStudyProperty(id, "prop2", PropertyType.Number.toString(), "1");
 
     return studyDAO.findStudyById(id);
   }
@@ -439,8 +416,8 @@ class StudyDAOTest extends DAOTestHelper {
     Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
-        dataUse.toString(), null);
+    Integer id =
+        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
 
     datasetDAO.updateStudyId(id, studyId);
 
@@ -453,9 +430,8 @@ class StudyDAOTest extends DAOTestHelper {
     Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + RandomStringUtils.random(20, true, true);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
-        dataUse.toString(), null);
+    Integer id =
+        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
     return datasetDAO.findDatasetById(id);
   }
-
 }

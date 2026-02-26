@@ -12,7 +12,6 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.UriInfo;
 import java.security.Principal;
 import java.util.Optional;
-import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,22 +23,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class OAuthCustomAuthFilterTest {
 
-  @Mock
-  private ContainerRequestContext requestContext;
-  @Mock
-  private MultivaluedMap<String, String> headers;
-  @Mock
-  private UriInfo uriInfo;
-  @Mock
-  private OAuthAuthenticator authenticator;
-  @Mock
-  private AuthorizationHelper authorizationHelper;
+  @Mock private ContainerRequestContext requestContext;
+  @Mock private MultivaluedMap<String, String> headers;
+  @Mock private UriInfo uriInfo;
+  @Mock private OAuthAuthenticator authenticator;
+  @Mock private AuthorizationHelper authorizationHelper;
 
-  @Mock
-  private OAuthCustomAuthFilter<Principal> filter;
+  @Mock private OAuthCustomAuthFilter<Principal> filter;
 
-  @Mock
-  private AuthUser user;
+  @Mock private AuthUser user;
 
   private final String token = "0cx2G9gKm4XZdK8BFxoWy7AE025tvq";
 
@@ -60,7 +52,6 @@ class OAuthCustomAuthFilterTest {
     assertDoesNotThrow(() -> filter.filter(requestContext));
   }
 
-
   @Test
   void testFilterExceptionBadCredentials() {
     when(uriInfo.getPath()).thenReturn("api/something");
@@ -72,7 +63,8 @@ class OAuthCustomAuthFilterTest {
   void testFilterAuthWebApplicationException() {
     when(uriInfo.getPath()).thenReturn("api/something");
     when(authenticator.authenticate(token)).thenThrow(new WebApplicationException("errorMessage"));
-    WebApplicationException ex = assertThrows(WebApplicationException.class, () -> filter.filter(requestContext));
+    WebApplicationException ex =
+        assertThrows(WebApplicationException.class, () -> filter.filter(requestContext));
     assertEquals("errorMessage", ex.getMessage());
   }
 }

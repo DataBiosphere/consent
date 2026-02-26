@@ -6,19 +6,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: 17
-      - uses: actions/cache@v4
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
+          java-version: 25
+          cache: 'maven'
+      - name: Spotless Check
+        run: mvn -q spotless:check --batch-mode
       - name: Package
         env:
           MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn -Dmaven.test.skip=true -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120

@@ -11,14 +11,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @ExtendWith(DropwizardExtensionsSupport.class)
 class VersionResourceTest {
 
-  private static final ResourceExtension RESOURCE_EXTENSION = ResourceExtension.builder()
-      .addResource(new VersionResource())
-      .build();
+  private static final ResourceExtension RESOURCE_EXTENSION =
+      ResourceExtension.builder().addResource(new VersionResource()).build();
 
   @Test
   void testGetVersion() {
     Response response = RESOURCE_EXTENSION.target("/version").request().get();
     assertEquals(200, response.getStatus());
   }
-
 }

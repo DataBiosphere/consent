@@ -10,7 +10,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGro
 /**
  * This model represents the values of a dataset that are modifiable via the PATCH operation
  *
- * @param name       Dataset name
+ * @param name Dataset name
  * @param properties List of DatasetProperties
  */
 public record DatasetPatch(String name, List<DatasetProperty> properties) {
@@ -26,46 +26,52 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
       return true;
     }
     // Find any cases where the new property value is different from the existing one
-    return properties().stream().anyMatch(p -> {
-      Optional<DatasetProperty> existingProp = dataset.getProperties()
-          .stream()
-          .filter(eProp -> {
-            // Favor the property name as the primary comparator
-            if (eProp.getPropertyName() != null) {
-              return eProp.getPropertyName().equalsIgnoreCase(p.getPropertyName());
-            } else if (eProp.getPropertyKey() != null) {
-              return eProp.getPropertyKey().equals(p.getPropertyKey());
-            } else if (eProp.getSchemaProperty() != null) {
-              return eProp.getSchemaProperty().equalsIgnoreCase(p.getSchemaProperty());
-            }
-            return false;
-          })
-          .findFirst();
-      return existingProp.map(
-              eProp ->
-                  // If the existing prop value is different from the new one, this is patchable
-                  (!eProp.getPropertyValueAsString().equals(p.getPropertyValueAsString())))
-          // If no existing prop, we're adding a new prop, and therefore patchable.
-          .orElse(true);
-    });
+    return properties().stream()
+        .anyMatch(
+            p -> {
+              Optional<DatasetProperty> existingProp =
+                  dataset.getProperties().stream()
+                      .filter(
+                          eProp -> {
+                            // Favor the property name as the primary comparator
+                            if (eProp.getPropertyName() != null) {
+                              return eProp.getPropertyName().equalsIgnoreCase(p.getPropertyName());
+                            } else if (eProp.getPropertyKey() != null) {
+                              return eProp.getPropertyKey().equals(p.getPropertyKey());
+                            } else if (eProp.getSchemaProperty() != null) {
+                              return eProp
+                                  .getSchemaProperty()
+                                  .equalsIgnoreCase(p.getSchemaProperty());
+                            }
+                            return false;
+                          })
+                      .findFirst();
+              return existingProp
+                  .map(
+                      eProp ->
+                          // If the existing prop value is different from the new one, this is
+                          // patchable
+                          (!eProp.getPropertyValueAsString().equals(p.getPropertyValueAsString())))
+                  // If no existing prop, we're adding a new prop, and therefore patchable.
+                  .orElse(true);
+            });
   }
 
   public boolean validateProperties() {
     // The following properties are patch-able:
-    Map<String, Function<Object, Boolean>> validators = Map.of(
-        "# of participants", this::isNumeric,
-        "url", this::isUrl,
-        "data location", this::isDataLocation
-    );
+    Map<String, Function<Object, Boolean>> validators =
+        Map.of(
+            "# of participants", this::isNumeric,
+            "url", this::isUrl,
+            "data location", this::isDataLocation);
     return properties.stream()
-        .map(p -> {
-          if (!validators.containsKey(p.getPropertyName().toLowerCase())) {
-            return false;
-          }
-          return validators
-              .get(p.getPropertyName().toLowerCase())
-              .apply(p.getPropertyValue());
-        })
+        .map(
+            p -> {
+              if (!validators.containsKey(p.getPropertyName().toLowerCase())) {
+                return false;
+              }
+              return validators.get(p.getPropertyName().toLowerCase()).apply(p.getPropertyValue());
+            })
         .distinct()
         .allMatch(valid -> valid);
   }
@@ -95,5 +101,4 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
       return false;
     }
   }
-
 }

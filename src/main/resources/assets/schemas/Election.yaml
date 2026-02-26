@@ -53,5 +53,5 @@ properties:
   votes:
     type: object
     description: Map of votes tied to this election (voteId - vote)
-    items:
+    additionalProperties:
       $ref: './Vote.yaml'

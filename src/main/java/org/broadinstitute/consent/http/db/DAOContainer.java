@@ -2,9 +2,8 @@ package org.broadinstitute.consent.http.db;
 
 /**
  * Generic container class for DAOs that can be used in service constructors to simplify instance
- * creation.
- * Per feedback in https://github.com/DataBiosphere/consent/pull/2408
- * 'We should only expand this usage if necessary.'
+ * creation. Per feedback in https://github.com/DataBiosphere/consent/pull/2408 'We should only
+ * expand this usage if necessary.'
  */
 @SuppressWarnings("unused")
 public class DAOContainer {
@@ -48,8 +47,7 @@ public class DAOContainer {
     return dataAccessRequestDAO;
   }
 
-  public void setDataAccessRequestDAO(
-      DataAccessRequestDAO dataAccessRequestDAO) {
+  public void setDataAccessRequestDAO(DataAccessRequestDAO dataAccessRequestDAO) {
     this.dataAccessRequestDAO = dataAccessRequestDAO;
   }
 
@@ -61,14 +59,11 @@ public class DAOContainer {
     return darCollectionSummaryDAO;
   }
 
-  public void setDarCollectionDAO(
-      DarCollectionDAO darCollectionDAO) {
+  public void setDarCollectionDAO(DarCollectionDAO darCollectionDAO) {
     this.darCollectionDAO = darCollectionDAO;
   }
 
-  public void setDarCollectionSummaryDAO(
-      DarCollectionSummaryDAO darCollectionSummaryDAO
-  ) {
+  public void setDarCollectionSummaryDAO(DarCollectionSummaryDAO darCollectionSummaryDAO) {
     this.darCollectionSummaryDAO = darCollectionSummaryDAO;
   }
 
@@ -80,7 +75,8 @@ public class DAOContainer {
     this.datasetDAO = datasetDAO;
   }
 
-  public void setDatasetAuthorizationReaderDAO(DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO) {
+  public void setDatasetAuthorizationReaderDAO(
+      DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO) {
     this.datasetAuthorizationReaderDAO = datasetAuthorizationReaderDAO;
   }
 
@@ -116,8 +112,7 @@ public class DAOContainer {
     return userPropertyDAO;
   }
 
-  public void setUserPropertyDAO(
-      UserPropertyDAO userPropertyDAO) {
+  public void setUserPropertyDAO(UserPropertyDAO userPropertyDAO) {
     this.userPropertyDAO = userPropertyDAO;
   }
 

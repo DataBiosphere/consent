@@ -23,13 +23,13 @@ jobs:
           REPO_NAME: ${{ github.event.repository.name }}
           RUN_ID: ${{ github.run_id }}
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
       - uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: 21
+          java-version: 25
           cache: 'maven'
       - name: Bee Create
         uses: broadinstitute/workflow-dispatch@v4
@@ -45,7 +45,7 @@ jobs:
         env:
           BEE_NAME: ${{ steps.setup.outputs.bee-name }}
       - name: Store Test Result Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: test-reports

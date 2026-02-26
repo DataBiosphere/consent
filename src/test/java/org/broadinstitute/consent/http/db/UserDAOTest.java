@@ -50,14 +50,16 @@ class UserDAOTest extends DAOTestHelper {
     assertEquals(user.getEmail(), user2.getEmail());
 
     // Assert roles are fetched correctly
-    assertTrue(user2.getRoles().stream()
-        .anyMatch(r -> r.getRoleId().equals(UserRoles.ALUMNI.getRoleId())));
-    assertTrue(user2.getRoles().stream()
-        .anyMatch(r -> r.getRoleId().equals(UserRoles.ADMIN.getRoleId())));
-    assertTrue(user2.getRoles().stream()
-        .anyMatch(r -> r.getRoleId().equals(UserRoles.RESEARCHER.getRoleId())));
+    assertTrue(
+        user2.getRoles().stream()
+            .anyMatch(r -> r.getRoleId().equals(UserRoles.ALUMNI.getRoleId())));
+    assertTrue(
+        user2.getRoles().stream().anyMatch(r -> r.getRoleId().equals(UserRoles.ADMIN.getRoleId())));
+    assertTrue(
+        user2.getRoles().stream()
+            .anyMatch(r -> r.getRoleId().equals(UserRoles.RESEARCHER.getRoleId())));
 
-    //assert institution base data is present if available
+    // assert institution base data is present if available
     User user3 = createUserWithInstitution();
     User queriedUser3 = userDAO.findUserById(user3.getUserId());
     assert (queriedUser3.getUserId()).equals(user3.getUserId());
@@ -68,8 +70,9 @@ class UserDAOTest extends DAOTestHelper {
   @Test
   void testFindUserWithPropertiesById() {
     User user = createUserWithInstitution();
-    int lcId = libraryCardDAO.insertLibraryCard(user.getUserId(), user.getDisplayName(),
-        user.getEmail(), user.getUserId(), new Date());
+    int lcId =
+        libraryCardDAO.insertLibraryCard(
+            user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
     UserProperty eraExpProp = new UserProperty();
     eraExpProp.setPropertyKey(UserFields.ERA_EXPIRATION_DATE.getValue());
     eraExpProp.setPropertyValue(Instant.now().toString());
@@ -80,21 +83,25 @@ class UserDAOTest extends DAOTestHelper {
     eraAuthProp.setUserId(user.getUserId());
     userPropertyDAO.insertAll(List.of(eraExpProp, eraAuthProp));
 
-    User foundUser = userDAO.findUserWithPropertiesById(user.getUserId(),
-        UserFields.getValues());
+    User foundUser = userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues());
     assertNotNull(foundUser);
     assertFalse(foundUser.getRoles().isEmpty());
     assertEquals(lcId, foundUser.getLibraryCard().getId());
     assertEquals(user.getInstitutionId(), foundUser.getInstitutionId());
     assertFalse(foundUser.getProperties().isEmpty());
-    assertTrue(foundUser.getProperties().stream()
-        .anyMatch(p -> p.getPropertyKey().equals(UserFields.ERA_EXPIRATION_DATE.getValue())
-            && p.getPropertyValue().equals(eraExpProp.getPropertyValue())));
-    assertTrue(foundUser.getProperties().stream()
-        .anyMatch(p -> p.getPropertyKey().equals(UserFields.ERA_STATUS.getValue())
-            && p.getPropertyValue().equals(eraAuthProp.getPropertyValue())));
+    assertTrue(
+        foundUser.getProperties().stream()
+            .anyMatch(
+                p ->
+                    p.getPropertyKey().equals(UserFields.ERA_EXPIRATION_DATE.getValue())
+                        && p.getPropertyValue().equals(eraExpProp.getPropertyValue())));
+    assertTrue(
+        foundUser.getProperties().stream()
+            .anyMatch(
+                p ->
+                    p.getPropertyKey().equals(UserFields.ERA_STATUS.getValue())
+                        && p.getPropertyValue().equals(eraAuthProp.getPropertyValue())));
   }
-
 
   @Test
   void testFindUserByIdWithLibraryCard() {
@@ -181,8 +188,8 @@ class UserDAOTest extends DAOTestHelper {
     userRoleDAO.insertSingleUserRole(UserRoles.MEMBER.getRoleId(), chair.getUserId());
     Collection<Integer> userIds = Collections.singletonList(chair.getUserId());
     Collection<User> users = userDAO.findUsersWithRoles(userIds);
-    users.forEach(u -> assertFalse(u.getRoles().isEmpty(),
-        "User: " + u.getUserId() + " has no roles"));
+    users.forEach(
+        u -> assertFalse(u.getRoles().isEmpty(), "User: " + u.getUserId() + " has no roles"));
     assertEquals(1, users.size());
     User user = users.stream().findFirst().orElse(null);
     assertNotNull(user);
@@ -199,12 +206,14 @@ class UserDAOTest extends DAOTestHelper {
     assertNotNull(user1);
 
     // Assert roles are fetched correctly
-    assertTrue(user1.getRoles().stream()
-        .anyMatch(r -> r.getRoleId().equals(UserRoles.ALUMNI.getRoleId())));
-    assertTrue(user1.getRoles().stream()
-        .anyMatch(r -> r.getRoleId().equals(UserRoles.ADMIN.getRoleId())));
-    assertTrue(user1.getRoles().stream()
-        .anyMatch(r -> r.getRoleId().equals(UserRoles.RESEARCHER.getRoleId())));
+    assertTrue(
+        user1.getRoles().stream()
+            .anyMatch(r -> r.getRoleId().equals(UserRoles.ALUMNI.getRoleId())));
+    assertTrue(
+        user1.getRoles().stream().anyMatch(r -> r.getRoleId().equals(UserRoles.ADMIN.getRoleId())));
+    assertTrue(
+        user1.getRoles().stream()
+            .anyMatch(r -> r.getRoleId().equals(UserRoles.RESEARCHER.getRoleId())));
 
     User user2 = userDAO.findUserByEmail("no.one@nowhere.com");
     assertNull(user2);
@@ -229,26 +238,29 @@ class UserDAOTest extends DAOTestHelper {
   @Test
   void testFindUsersWithLCsAndInstitution() {
     User user = createUserWithInstitution();
-    int dacId = dacDAO.createDac(randomAlphabetic(5),
-        randomAlphabetic(5), new Date());
+    int dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), new Date());
     Instant now = Instant.now();
     int daaId = daaDAO.createDaa(user.getUserId(), now, user.getUserId(), now, dacId);
-    int lcId1 = libraryCardDAO.insertLibraryCard(user.getUserId(),
-        user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+    int lcId1 =
+        libraryCardDAO.insertLibraryCard(
+            user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
     libraryCardDAO.createLibraryCardDaaRelation(lcId1, daaId);
 
     User user2 = createUserWithInstitution();
-    int lcId2 = libraryCardDAO.insertLibraryCard(user2.getUserId(),
-        user2.getDisplayName(), user2.getEmail(), user2.getUserId(), new Date());
+    int lcId2 =
+        libraryCardDAO.insertLibraryCard(
+            user2.getUserId(),
+            user2.getDisplayName(),
+            user2.getEmail(),
+            user2.getUserId(),
+            new Date());
     libraryCardDAO.createLibraryCardDaaRelation(lcId2, daaId);
 
     List<User> users = userDAO.findUsersWithLCsAndInstitution();
     // Four users: two admin users, two signing official users with library cards.
     assertEquals(4, users.size());
     // Filter out admin users, which don't have institutions.
-    users = users.stream()
-        .filter(u -> u.getInstitution() != null)
-        .toList();
+    users = users.stream().filter(u -> u.getInstitution() != null).toList();
     assertEquals(2, users.size());
     assertNotNull(users.get(0).getInstitution());
     assertNotNull(users.get(0).getLibraryCard());
@@ -278,9 +290,19 @@ class UserDAOTest extends DAOTestHelper {
   @Test
   void testUpdateInstitutionId() {
     User researcher = createUser();
-    Integer institutionId = institutionDAO.insertInstitution("Institution", "it director",
-        "it director email", null, null, null, null, null, null, researcher.getUserId(),
-        new Date());
+    Integer institutionId =
+        institutionDAO.insertInstitution(
+            "Institution",
+            "it director",
+            "it director email",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            researcher.getUserId(),
+            new Date());
     userDAO.updateInstitutionId(researcher.getUserId(), institutionId);
     User u1 = userDAO.findUserById(researcher.getUserId());
     assertEquals(institutionId, u1.getInstitutionId());
@@ -299,7 +321,8 @@ class UserDAOTest extends DAOTestHelper {
   void testUpdateDisplayNameInvalidChars() {
     User researcher = createUser();
     String newName = "invalid\0name";
-    assertThrows(UnableToExecuteStatementException.class,
+    assertThrows(
+        UnableToExecuteStatementException.class,
         () -> userDAO.updateDisplayName(researcher.getUserId(), newName));
   }
 
@@ -310,9 +333,10 @@ class UserDAOTest extends DAOTestHelper {
     User user = createUserWithRoleInDac(UserRoles.CHAIRPERSON.getRoleId(), dac.getDacId());
     datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
 
-    Set<User> users = userDAO.findUsersForDatasetsByRole(
-        Collections.singletonList(dataset.getDatasetId()),
-        Collections.singletonList(UserRoles.CHAIRPERSON.getRoleId()));
+    Set<User> users =
+        userDAO.findUsersForDatasetsByRole(
+            Collections.singletonList(dataset.getDatasetId()),
+            Collections.singletonList(UserRoles.CHAIRPERSON.getRoleId()));
     Optional<User> foundUser = users.stream().findFirst();
     assertNotNull(users);
     assertFalse(users.isEmpty());
@@ -327,9 +351,10 @@ class UserDAOTest extends DAOTestHelper {
     createUserWithRoleInDac(UserRoles.MEMBER.getRoleId(), dac.getDacId());
     datasetDAO.updateDatasetDacId(dataset.getDatasetId(), dac.getDacId());
 
-    Set<User> users = userDAO.findUsersForDatasetsByRole(
-        Collections.singletonList(dataset.getDatasetId()),
-        Collections.singletonList(UserRoles.CHAIRPERSON.getRoleId()));
+    Set<User> users =
+        userDAO.findUsersForDatasetsByRole(
+            Collections.singletonList(dataset.getDatasetId()),
+            Collections.singletonList(UserRoles.CHAIRPERSON.getRoleId()));
     assertNotNull(users);
     assertTrue(users.isEmpty());
   }
@@ -338,7 +363,7 @@ class UserDAOTest extends DAOTestHelper {
   void testFindUsersByInstitution() {
     Integer institutionId = createUserWithInstitution().getInstitutionId();
     List<User> beforeList = userDAO.findUsersByInstitution(institutionId);
-    //should not change results since they are not in the institution
+    // should not change results since they are not in the institution
     createUser();
     createUser();
     List<User> afterList = userDAO.findUsersByInstitution(institutionId);
@@ -348,7 +373,7 @@ class UserDAOTest extends DAOTestHelper {
 
   @Test
   void testGetSOsByInstitution() {
-    //user with institutionId and SO role
+    // user with institutionId and SO role
     User user = createUserWithInstitution();
     Integer institutionId = user.getInstitutionId();
     String displayName = user.getDisplayName();
@@ -364,8 +389,7 @@ class UserDAOTest extends DAOTestHelper {
 
   @Test
   void testGetUsersFromInstitutionWithCards() {
-    int dacId = dacDAO.createDac(randomAlphabetic(5),
-        randomAlphabetic(5), new Date());
+    int dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), new Date());
     Instant now = Instant.now();
     LibraryCard card = createLibraryCard();
     int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
@@ -410,17 +434,6 @@ class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testGetUsersWithNoInstitution() {
-    createUserWithInstitution();
-    User user = createUser();
-    List<User> users = userDAO.getUsersWithNoInstitution();
-    // One user we created just now, one is the admin user for the institution.
-    assertEquals(2, users.size());
-    assertTrue(users.stream()
-        .anyMatch(u -> u.getUserId().equals(user.getUserId())));
-  }
-
-  @Test
   void testUpdateEraCommonsId() {
     User u = createUser();
     String era = u.getEraCommonsId();
@@ -446,10 +459,12 @@ class UserDAOTest extends DAOTestHelper {
 
     for (UserRoles role : roles) {
       // ensure that each role exists on user
-      assertTrue(found.getRoles().stream().anyMatch(
-          existingRole -> (
-              role.getRoleId().equals(existingRole.getRoleId())
-                  && role.getRoleName().equals(existingRole.getName()))));
+      assertTrue(
+          found.getRoles().stream()
+              .anyMatch(
+                  existingRole ->
+                      (role.getRoleId().equals(existingRole.getRoleId())
+                          && role.getRoleName().equals(existingRole.getName()))));
     }
   }
 
@@ -484,10 +499,9 @@ class UserDAOTest extends DAOTestHelper {
   }
 
   private Dac createDac() {
-    Integer id = dacDAO.createDac(
-        "Test_" + randomAlphanumeric(20),
-        "Test_" + randomAlphanumeric(20),
-        new Date());
+    Integer id =
+        dacDAO.createDac(
+            "Test_" + randomAlphanumeric(20), "Test_" + randomAlphanumeric(20), new Date());
     return dacDAO.findById(id);
   }
 
@@ -497,8 +511,8 @@ class UserDAOTest extends DAOTestHelper {
     Timestamp now = new Timestamp(new Date().getTime());
     String objectId = "Object ID_" + randomAlphanumeric(20);
     DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
-    Integer id = datasetDAO.insertDataset(name, now, user.getUserId(), objectId,
-        dataUse.toString(), null);
+    Integer id =
+        datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
     createDatasetProperties(id);
     return datasetDAO.findDatasetById(id);
   }
@@ -516,8 +530,9 @@ class UserDAOTest extends DAOTestHelper {
 
   private LibraryCard createLibraryCard() {
     User user = createUserWithInstitution();
-    Integer id = libraryCardDAO.insertLibraryCard(user.getUserId(), user.getDisplayName(),
-        user.getEmail(), user.getUserId(), new Date());
+    Integer id =
+        libraryCardDAO.insertLibraryCard(
+            user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
     return libraryCardDAO.findLibraryCardById(id);
   }
 }

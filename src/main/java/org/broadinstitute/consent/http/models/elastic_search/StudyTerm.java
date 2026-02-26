@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models.elastic_search;
 
 import java.util.List;
+import java.util.Map;
 
 public class StudyTerm {
 
@@ -15,8 +16,10 @@ public class StudyTerm {
   private Integer dataSubmitterId;
   private List<String> dataCustodianEmail;
   private Boolean publicVisibility;
+  private String throughBioId;
   private List<String> dataTypes;
-
+  private Map<String, Object> assets;
+  private Map<String, Object> data;
 
   public String getDescription() {
     return description;
@@ -42,9 +45,13 @@ public class StudyTerm {
     this.studyId = studyId;
   }
 
-  public String getPhsId() { return phsId; }
+  public String getPhsId() {
+    return phsId;
+  }
 
-  public void setPhsId(String phsId) { this.phsId = phsId; }
+  public void setPhsId(String phsId) {
+    this.phsId = phsId;
+  }
 
   public String getPhenotype() {
     return phenotype;
@@ -82,8 +89,7 @@ public class StudyTerm {
     return dataSubmitterId;
   }
 
-  public void setDataSubmitterId(
-      Integer dataSubmitterId) {
+  public void setDataSubmitterId(Integer dataSubmitterId) {
     this.dataSubmitterId = dataSubmitterId;
   }
 
@@ -103,11 +109,35 @@ public class StudyTerm {
     this.publicVisibility = publicVisibility;
   }
 
+  public String getThroughBioId() {
+    return throughBioId;
+  }
+
+  public void setThroughBioId(String throughBioId) {
+    this.throughBioId = throughBioId;
+  }
+
   public List<String> getDataTypes() {
     return dataTypes;
   }
 
   public void setDataTypes(List<String> dataTypes) {
     this.dataTypes = dataTypes;
+  }
+
+  public Map<String, Object> getAssets() {
+    return assets;
+  }
+
+  public void setAssets(Map<String, Object> assets) {
+    this.assets = assets;
+  }
+
+  public Map<String, Object> getData() {
+    return data;
+  }
+
+  public void setData(Map<String, Object> data) {
+    this.data = data;
   }
 }

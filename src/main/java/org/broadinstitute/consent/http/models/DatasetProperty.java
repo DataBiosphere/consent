@@ -15,11 +15,11 @@ public class DatasetProperty {
   private String schemaProperty;
   private PropertyType propertyType;
 
-  public DatasetProperty() {
-  }
+  public DatasetProperty() {}
 
   @Deprecated
-  public DatasetProperty(Integer propertyId,
+  public DatasetProperty(
+      Integer propertyId,
       Integer datasetId,
       Integer propertyKey,
       String propertyValue,
@@ -30,7 +30,8 @@ public class DatasetProperty {
   }
 
   @Deprecated
-  public DatasetProperty(Integer datasetId,
+  public DatasetProperty(
+      Integer datasetId,
       Integer propertyKey,
       String propertyValue,
       PropertyType type,
@@ -42,7 +43,8 @@ public class DatasetProperty {
     this.createDate = createDate;
   }
 
-  public DatasetProperty(Integer propertyId,
+  public DatasetProperty(
+      Integer propertyId,
       Integer datasetId,
       Integer propertyKey,
       String schemaProperty,
@@ -53,7 +55,8 @@ public class DatasetProperty {
     this.propertyId = propertyId;
   }
 
-  public DatasetProperty(Integer datasetId,
+  public DatasetProperty(
+      Integer datasetId,
       Integer propertyKey,
       String schemaProperty,
       String propertyValue,
@@ -156,8 +159,9 @@ public class DatasetProperty {
       return false;
     }
     DatasetProperty that = (DatasetProperty) o;
-    return Objects.equal(datasetId, that.datasetId) && Objects.equal(propertyName,
-        that.propertyName) && Objects.equal(propertyValue, that.propertyValue);
+    return Objects.equal(datasetId, that.datasetId)
+        && Objects.equal(propertyName, that.propertyName)
+        && Objects.equal(propertyValue, that.propertyValue);
   }
 
   @Override

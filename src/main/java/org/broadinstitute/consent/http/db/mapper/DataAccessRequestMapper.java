@@ -26,7 +26,7 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
       dar.setDarCode(resultSet.getString("dar_code"));
     }
 
-    if (hasNonZeroColumn(resultSet,"parent_id")) {
+    if (hasNonZeroColumn(resultSet, "parent_id")) {
       dar.setParentId(resultSet.getInt("parent_id"));
     }
 
@@ -35,7 +35,6 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
     }
 
     dar.setCreateDate(resultSet.getTimestamp("create_date"));
-    dar.setSortDate(resultSet.getTimestamp("sort_date"));
     dar.setSubmissionDate(resultSet.getTimestamp("submission_date"));
     dar.setUpdateDate(resultSet.getTimestamp("update_date"));
     String darDataString = resultSet.getObject("data", PGobject.class).getValue();
@@ -45,9 +44,19 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
     }
     dar.setData(data);
     dar.setEraCommonsId(resultSet.getString("era_commons_id"));
-    dar.setCloseoutSigningOfficialApprovedDate(resultSet.getTimestamp("closeout_so_approval_timestamp"));
-    dar.setCloseoutSigningOfficialApprovedUserId(resultSet.getInt("closeout_approving_so_id"));
+    dar.setCloseoutSigningOfficialApprovedDate(
+        resultSet.getTimestamp("closeout_so_approval_timestamp"));
+    if (hasNonZeroColumn(resultSet, "closeout_approving_so_id")) {
+      dar.setCloseoutSigningOfficialApprovedUserId(resultSet.getInt("closeout_approving_so_id"));
+    }
+
+    dar.setApprovingSigningOfficialApprovedDate(resultSet.getTimestamp("approving_so_timestamp"));
+    if (hasNonZeroColumn(resultSet, "approving_so_id")) {
+      dar.setApprovingSigningOfficialUserId(resultSet.getInt("approving_so_id"));
+    }
+
+    dar.setRequiresSOApproval(resultSet.getBoolean("requires_so_approval"));
+
     return dar;
   }
-
 }

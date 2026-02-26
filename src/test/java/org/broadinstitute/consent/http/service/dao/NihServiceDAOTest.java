@@ -39,22 +39,18 @@ class NihServiceDAOTest extends DAOTestHelper {
     // create a user
     User user = createUser();
     // Create ERA Account Props
-    UserProperty prop1 = new UserProperty(
-        user.getUserId(),
-        UserFields.ERA_STATUS.getValue(),
-        Boolean.TRUE.toString()
-    );
-    UserProperty prop2 = new UserProperty(
-        user.getUserId(),
-        UserFields.ERA_EXPIRATION_DATE.getValue(),
-        new Date().toString()
-    );
+    UserProperty prop1 =
+        new UserProperty(
+            user.getUserId(), UserFields.ERA_STATUS.getValue(), Boolean.TRUE.toString());
+    UserProperty prop2 =
+        new UserProperty(
+            user.getUserId(), UserFields.ERA_EXPIRATION_DATE.getValue(), new Date().toString());
     String commonsId = "COMMONS_ID";
     userDAO.updateEraCommonsId(user.getUserId(), commonsId);
     userPropertyDAO.insertAll(List.of(prop1, prop2));
     // Create Library Card
-    libraryCardDAO.insertLibraryCard(user.getUserId(),
-        user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+    libraryCardDAO.insertLibraryCard(
+        user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
 
     // Build a new NIHUserAccount to update
     NIHUserAccount userAccount = new NIHUserAccount();
@@ -64,27 +60,28 @@ class NihServiceDAOTest extends DAOTestHelper {
     serviceDAO.updateUserNihStatus(user, userAccount);
 
     // assert that props are updated to the new values
-    List<UserProperty> updatedProps = userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
-        user.getUserId(),
-        List.of(UserFields.ERA_STATUS.getValue(), UserFields.ERA_EXPIRATION_DATE.getValue()));
+    List<UserProperty> updatedProps =
+        userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
+            user.getUserId(),
+            List.of(UserFields.ERA_STATUS.getValue(), UserFields.ERA_EXPIRATION_DATE.getValue()));
 
-    Optional<UserProperty> statusProp = updatedProps
-        .stream()
-        .filter(
-            userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_STATUS.getValue()))
-        .findFirst();
+    Optional<UserProperty> statusProp =
+        updatedProps.stream()
+            .filter(
+                userProperty ->
+                    userProperty.getPropertyKey().equals(UserFields.ERA_STATUS.getValue()))
+            .findFirst();
     assertTrue(statusProp.isPresent());
-    assertEquals(statusProp.get().getPropertyValue(),
-        userAccount.getStatus().toString());
+    assertEquals(statusProp.get().getPropertyValue(), userAccount.getStatus().toString());
 
-    Optional<UserProperty> expirationProp = updatedProps
-        .stream()
-        .filter(userProperty -> userProperty.getPropertyKey()
-            .equals(UserFields.ERA_EXPIRATION_DATE.getValue()))
-        .findFirst();
+    Optional<UserProperty> expirationProp =
+        updatedProps.stream()
+            .filter(
+                userProperty ->
+                    userProperty.getPropertyKey().equals(UserFields.ERA_EXPIRATION_DATE.getValue()))
+            .findFirst();
     assertTrue(expirationProp.isPresent());
-    assertEquals(expirationProp.get().getPropertyValue(),
-        userAccount.getEraExpiration());
+    assertEquals(expirationProp.get().getPropertyValue(), userAccount.getEraExpiration());
 
     // assert that era commons user id is updated appropriately
     User updatedUser = userDAO.findUserById(user.getUserId());
@@ -107,27 +104,28 @@ class NihServiceDAOTest extends DAOTestHelper {
     serviceDAO.updateUserNihStatus(user, userAccount);
 
     // assert that props are updated to the new values
-    List<UserProperty> updatedProps = userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
-        user.getUserId(),
-        List.of(UserFields.ERA_STATUS.getValue(), UserFields.ERA_EXPIRATION_DATE.getValue()));
+    List<UserProperty> updatedProps =
+        userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
+            user.getUserId(),
+            List.of(UserFields.ERA_STATUS.getValue(), UserFields.ERA_EXPIRATION_DATE.getValue()));
 
-    Optional<UserProperty> statusProp = updatedProps
-        .stream()
-        .filter(
-            userProperty -> userProperty.getPropertyKey().equals(UserFields.ERA_STATUS.getValue()))
-        .findFirst();
+    Optional<UserProperty> statusProp =
+        updatedProps.stream()
+            .filter(
+                userProperty ->
+                    userProperty.getPropertyKey().equals(UserFields.ERA_STATUS.getValue()))
+            .findFirst();
     assertTrue(statusProp.isPresent());
-    assertEquals(statusProp.get().getPropertyValue(),
-        userAccount.getStatus().toString());
+    assertEquals(statusProp.get().getPropertyValue(), userAccount.getStatus().toString());
 
-    Optional<UserProperty> expirationProp = updatedProps
-        .stream()
-        .filter(userProperty -> userProperty.getPropertyKey()
-            .equals(UserFields.ERA_EXPIRATION_DATE.getValue()))
-        .findFirst();
+    Optional<UserProperty> expirationProp =
+        updatedProps.stream()
+            .filter(
+                userProperty ->
+                    userProperty.getPropertyKey().equals(UserFields.ERA_EXPIRATION_DATE.getValue()))
+            .findFirst();
     assertTrue(expirationProp.isPresent());
-    assertEquals(expirationProp.get().getPropertyValue(),
-        userAccount.getEraExpiration());
+    assertEquals(expirationProp.get().getPropertyValue(), userAccount.getEraExpiration());
 
     // assert that era commons user id is updated appropriately
     User updatedUser = userDAO.findUserById(user.getUserId());
@@ -161,16 +159,12 @@ class NihServiceDAOTest extends DAOTestHelper {
   @Test
   void testDeleteNihAccountById() {
     User user = createUser();
-    UserProperty prop1 = new UserProperty(
-        user.getUserId(),
-        UserFields.ERA_STATUS.getValue(),
-        Boolean.TRUE.toString()
-    );
-    UserProperty prop2 = new UserProperty(
-        user.getUserId(),
-        UserFields.ERA_EXPIRATION_DATE.getValue(),
-        new Date().toString()
-    );
+    UserProperty prop1 =
+        new UserProperty(
+            user.getUserId(), UserFields.ERA_STATUS.getValue(), Boolean.TRUE.toString());
+    UserProperty prop2 =
+        new UserProperty(
+            user.getUserId(), UserFields.ERA_EXPIRATION_DATE.getValue(), new Date().toString());
     String commonsId = "COMMONS_ID";
     userDAO.updateEraCommonsId(user.getUserId(), commonsId);
     userPropertyDAO.insertAll(List.of(prop1, prop2));
@@ -178,9 +172,10 @@ class NihServiceDAOTest extends DAOTestHelper {
     serviceDAO.deleteNihAccountById(user.getUserId());
 
     // assert that props are deleted
-    List<UserProperty> updatedProps = userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
-        user.getUserId(),
-        List.of(UserFields.ERA_STATUS.getValue(), UserFields.ERA_EXPIRATION_DATE.getValue()));
+    List<UserProperty> updatedProps =
+        userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
+            user.getUserId(),
+            List.of(UserFields.ERA_STATUS.getValue(), UserFields.ERA_EXPIRATION_DATE.getValue()));
     assertTrue(updatedProps.isEmpty());
 
     // assert that era commons id is null

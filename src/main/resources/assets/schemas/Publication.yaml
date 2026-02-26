@@ -7,12 +7,13 @@ properties:
   pubmedId:
     type: string
     description: The PubMed ID of the publication.
-  date:
+  publishedDate:
     type: string
-    format: date
     description: The publication date.
   authors:
-    type: string
+    type: array
+    items:
+      $ref: './Author.yaml'
     description: The authors of the publication.
   bibliographicCitation:
     type: string
@@ -23,3 +24,26 @@ properties:
   citation:
     type: boolean
     description: Indicates if the dataset(s) were cited in the Publication.
+  publicationId:
+    type: string
+    description: The unique identifier for the publication.
+  studyId:
+    type: string
+    description: The study ID associated with the publication.
+  journal:
+    type: string
+    description: The journal name.
+  doi:
+    type: string
+    description: The Digital Object Identifier.
+  url:
+    type: string
+    description: The URL to the publication.
+  access:
+    type: string
+    description: The access level of the publication.
+  tags:
+    type: array
+    items:
+      type: string
+    description: Tags associated with the publication.

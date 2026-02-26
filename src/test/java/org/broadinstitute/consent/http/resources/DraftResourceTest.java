@@ -42,20 +42,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DraftResourceTest {
 
-  @Mock
-  private DraftService draftService;
+  @Mock private DraftService draftService;
 
-  @Mock
-  private AuthUser authUser;
+  @Mock private AuthUser authUser;
 
-  @Mock
-  private User user;
+  @Mock private User user;
 
-  @Mock
-  private User user2;
+  @Mock private User user2;
 
-  @Mock
-  private UserService userService;
+  @Mock private UserService userService;
 
   private DraftResource resource;
 
@@ -66,8 +61,7 @@ class DraftResourceTest {
   @Test
   void testGetDraftWhenNoneExistForUser() {
     when(userService.findUserByEmail(any())).thenReturn(user);
-    when(draftService.findDraftSummariesForUser(any())).thenReturn(
-        Collections.emptySet());
+    when(draftService.findDraftSummariesForUser(any())).thenReturn(Collections.emptySet());
     initResource();
     Response response = resource.getDrafts(authUser);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -78,7 +72,11 @@ class DraftResourceTest {
   void testGetDraftsWhenOneExistForUser() {
     Set<DraftSummary> draftSummaries = new HashSet<>();
     draftSummaries.add(
-        new DraftSummary(UUID.randomUUID(), "test", new Date(), new Date(),
+        new DraftSummary(
+            UUID.randomUUID(),
+            "test",
+            new Date(),
+            new Date(),
             DraftType.STUDY_DATASET_SUBMISSION_V1));
     when(userService.findUserByEmail(any())).thenReturn(user);
     when(draftService.findDraftSummariesForUser(any())).thenReturn(draftSummaries);
@@ -99,7 +97,8 @@ class DraftResourceTest {
 
   @Test
   void tesCreateDraftRegistrationWithoutJSON() throws SQLException {
-    doThrow(new BadRequestException("Error submitting draft")).when(draftService)
+    doThrow(new BadRequestException("Error submitting draft"))
+        .when(draftService)
         .insertDraft(any());
     String draft = "";
     initResource();
@@ -109,8 +108,8 @@ class DraftResourceTest {
 
   @Test
   void testGetDraftDocumentNotFound() {
-    when(draftService.getAuthorizedDraft(any(), any())).thenThrow(
-        new NotFoundException("Not found exception."));
+    when(draftService.getAuthorizedDraft(any(), any()))
+        .thenThrow(new NotFoundException("Not found exception."));
     initResource();
     Response response = resource.getDraftDocument(authUser, UUID.randomUUID().toString());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -133,8 +132,8 @@ class DraftResourceTest {
 
   @Test
   void testGetDraftDocumentNotAuthorized() {
-    when(draftService.getAuthorizedDraft(any(), any())).thenThrow(
-        new NotAuthorizedException("Not authorized."));
+    when(draftService.getAuthorizedDraft(any(), any()))
+        .thenThrow(new NotAuthorizedException("Not authorized."));
     initResource();
     Response response = resource.getDraftDocument(authUser, UUID.randomUUID().toString());
     assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatus());
@@ -142,8 +141,8 @@ class DraftResourceTest {
 
   @Test
   void testPutDraftDocumentUnauthorized() {
-    when(draftService.getAuthorizedDraft(any(), any())).thenThrow(
-        new NotAuthorizedException("Not authorized."));
+    when(draftService.getAuthorizedDraft(any(), any()))
+        .thenThrow(new NotAuthorizedException("Not authorized."));
     initResource();
     Response response = resource.updateDraft(authUser, UUID.randomUUID().toString(), "{}");
     assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatus());
@@ -151,8 +150,8 @@ class DraftResourceTest {
 
   @Test
   void testPutDraftDocumentNotFound() {
-    when(draftService.getAuthorizedDraft(any(), any())).thenThrow(
-        new NotFoundException("Not found exception."));
+    when(draftService.getAuthorizedDraft(any(), any()))
+        .thenThrow(new NotFoundException("Not found exception."));
     initResource();
     Response response = resource.updateDraft(authUser, UUID.randomUUID().toString(), "{}");
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -176,8 +175,7 @@ class DraftResourceTest {
 
   @Test
   void testDeleteDraftDocumentNotFound() {
-    when(draftService.getAuthorizedDraft(any(), any())).thenThrow(
-        NotFoundException.class);
+    when(draftService.getAuthorizedDraft(any(), any())).thenThrow(NotFoundException.class);
     initResource();
     Response response = resource.deleteDraft(authUser, UUID.randomUUID().toString());
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -185,8 +183,7 @@ class DraftResourceTest {
 
   @Test
   void testDeleteDraftDocumentNotAuthorized() {
-    when(draftService.getAuthorizedDraft(any(), any())).thenThrow(
-        NotAuthorizedException.class);
+    when(draftService.getAuthorizedDraft(any(), any())).thenThrow(NotAuthorizedException.class);
     initResource();
     Response response = resource.deleteDraft(authUser, UUID.randomUUID().toString());
     assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatus());
@@ -194,8 +191,8 @@ class DraftResourceTest {
 
   @Test
   void testDeleteDraftDocumentSuccess() {
-    when(draftService.getAuthorizedDraft(any(), any())).thenReturn(
-        new DraftStudyDataset("{}", user));
+    when(draftService.getAuthorizedDraft(any(), any()))
+        .thenReturn(new DraftStudyDataset("{}", user));
     initResource();
     Response response = resource.deleteDraft(authUser, UUID.randomUUID().toString());
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
@@ -245,8 +242,9 @@ class DraftResourceTest {
   void testUploadAttachmentNotFound() {
     when(draftService.getAuthorizedDraft(any(), any())).thenThrow(NotFoundException.class);
     initResource();
-    Response response = resource.addAttachments(authUser, UUID.randomUUID().toString(), mock(
-        FormDataMultiPart.class));
+    Response response =
+        resource.addAttachments(
+            authUser, UUID.randomUUID().toString(), mock(FormDataMultiPart.class));
     assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
   }
 
@@ -254,23 +252,24 @@ class DraftResourceTest {
   void testUploadAttachmentNotAuthorized() {
     when(draftService.getAuthorizedDraft(any(), any())).thenThrow(NotAuthorizedException.class);
     initResource();
-    Response response = resource.addAttachments(authUser, UUID.randomUUID().toString(), mock(
-        FormDataMultiPart.class));
+    Response response =
+        resource.addAttachments(
+            authUser, UUID.randomUUID().toString(), mock(FormDataMultiPart.class));
     assertEquals(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, response.getStatus());
   }
 
-
   @Test
   void testUploadAttachmentSuccess() throws SQLException {
-    when(draftService.getAuthorizedDraft(any(), any())).thenReturn(
-        new DraftStudyDataset("{}", user));
+    when(draftService.getAuthorizedDraft(any(), any()))
+        .thenReturn(new DraftStudyDataset("{}", user));
     DraftInterface draftWithAttachment = new DraftStudyDataset("{}", user);
     draftWithAttachment.addStoredFile(mock(FileStorageObject.class));
-    when(draftService.addAttachments(any(), any(), any())).thenReturn(
-        List.copyOf(draftWithAttachment.getStoredFiles()));
+    when(draftService.addAttachments(any(), any(), any()))
+        .thenReturn(List.copyOf(draftWithAttachment.getStoredFiles()));
     initResource();
-    Response response = resource.addAttachments(authUser, UUID.randomUUID().toString(), mock(
-        FormDataMultiPart.class));
+    Response response =
+        resource.addAttachments(
+            authUser, UUID.randomUUID().toString(), mock(FormDataMultiPart.class));
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     assertEquals(List.copyOf(draftWithAttachment.getStoredFiles()), response.getEntity());
   }
@@ -299,13 +298,15 @@ class DraftResourceTest {
     when(fileStorageObject1.getFileStorageObjectId()).thenReturn(1);
     draftWithAttachment.addStoredFile(fileStorageObject1);
     when(draftService.getAuthorizedDraft(any(), any())).thenReturn(draftWithAttachment);
-    when(draftService.getDraftAttachmentStream(fileStorageObject1)).thenReturn(mock(
-        InputStream.class));
+    when(draftService.getDraftAttachmentStream(fileStorageObject1))
+        .thenReturn(mock(InputStream.class));
     initResource();
     Response response = resource.getAttachment(authUser, UUID.randomUUID().toString(), 1);
     assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    assertTrue(response.getHeaderString("Content-Disposition")
-        .contains("attachment; filename=\"fileName1.txt\""));
+    assertTrue(
+        response
+            .getHeaderString("Content-Disposition")
+            .contains("attachment; filename=\"fileName1.txt\""));
   }
 
   @Test
@@ -341,8 +342,8 @@ class DraftResourceTest {
 
   @Test
   void testDeleteFileAttachmentSuccess() throws SQLException {
-    when(draftService.getAuthorizedDraft(any(), any())).thenReturn(
-        new DraftStudyDataset("{}", user));
+    when(draftService.getAuthorizedDraft(any(), any()))
+        .thenReturn(new DraftStudyDataset("{}", user));
     doNothing().when(draftService).deleteDraftAttachment(any(), any(), any());
     initResource();
     Response response = resource.deleteDraftAttachment(authUser, UUID.randomUUID().toString(), 1);

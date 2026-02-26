@@ -11,8 +11,7 @@ import java.lang.reflect.Type;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 
-public class InstantTypeAdapter
-    implements JsonSerializer<Instant>, JsonDeserializer<Instant> {
+public class InstantTypeAdapter implements JsonSerializer<Instant>, JsonDeserializer<Instant> {
 
   @Override
   public JsonElement serialize(Instant src, Type srcType, JsonSerializationContext context) {

@@ -52,3 +52,11 @@ properties:
   closeoutSigningOfficialApprovedUserId:
     type: number
     description: The user ID of the Signing Official that approved the closeout.
+  dacNames:
+    type: array
+    description: List of DAC names associated with this collection.
+    items:
+      type: string
+  requiresSOApproval:
+    type: boolean
+    description: True if the most recent DAR in the collection requires Signing Official Approval

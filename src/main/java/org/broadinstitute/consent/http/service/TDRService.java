@@ -32,8 +32,12 @@ public class TDRService implements ConsentLogger {
   private final UserDAO userDAO;
 
   @Inject
-  public TDRService(DataAccessRequestService dataAccessRequestService, DatasetDAO datasetDAO,
-      LibraryCardDAO libraryCardDAO, SamDAO samDAO, UserDAO userDAO) {
+  public TDRService(
+      DataAccessRequestService dataAccessRequestService,
+      DatasetDAO datasetDAO,
+      LibraryCardDAO libraryCardDAO,
+      SamDAO samDAO,
+      UserDAO userDAO) {
     this.dataAccessRequestService = dataAccessRequestService;
     this.datasetDAO = datasetDAO;
     this.libraryCardDAO = libraryCardDAO;
@@ -42,57 +46,64 @@ public class TDRService implements ConsentLogger {
   }
 
   public ApprovedUsers getApprovedUsersForDataset(AuthUser authUser, Dataset dataset) {
-    Collection<DataAccessRequest> dars = dataAccessRequestService.getApprovedDARsForDataset(
-        dataset);
-    List<String> labCollaborators = dars.stream()
-        .map(DataAccessRequest::getData)
-        .filter(Objects::nonNull)
-        .map(DataAccessRequestData::getLabAndInternalCollaborators)
-        .flatMap(List::stream)
-        .filter(Objects::nonNull)
-        .map(Collaborator::email)
-        .filter(email -> !email.isBlank())
-        // Sam has an endpoint for validating a single email at a time
-        .map(email -> {
-          try {
-            samDAO.getV1UserByEmail(new DuosUser(authUser, null), email);
-            return email;
-          } catch (NotAuthorizedException e) {
-            logWarn("User " + authUser.getEmail() + " is not authorized to look for users in Sam");
-            return null;
-          } catch (Exception e) {
-            logWarn("Collaborator: " + email + " does not exist in Sam");
-            return null;
-          }
-        })
-        .filter(Objects::nonNull)
-        .toList();
+    Collection<DataAccessRequest> dars =
+        dataAccessRequestService.getApprovedDARsForDataset(dataset);
+    List<String> labCollaborators =
+        dars.stream()
+            .map(DataAccessRequest::getData)
+            .filter(Objects::nonNull)
+            .map(DataAccessRequestData::getLabAndInternalCollaborators)
+            .flatMap(List::stream)
+            .filter(Objects::nonNull)
+            .map(Collaborator::email)
+            .filter(email -> !email.isBlank())
+            // Sam has an endpoint for validating a single email at a time
+            .map(
+                email -> {
+                  try {
+                    samDAO.getV1UserByEmail(new DuosUser(authUser, null), email);
+                    return email;
+                  } catch (NotAuthorizedException e) {
+                    logWarn(
+                        "User "
+                            + authUser.getEmail()
+                            + " is not authorized to look for users in Sam");
+                    return null;
+                  } catch (Exception e) {
+                    logWarn("Collaborator: " + email + " does not exist in Sam");
+                    return null;
+                  }
+                })
+            .filter(Objects::nonNull)
+            .toList();
     List<Integer> userIds = dars.stream().map(DataAccessRequest::getUserId).toList();
     Collection<User> users = userIds.isEmpty() ? List.of() : userDAO.findUsers(userIds);
-    List<String> userEmails = users.stream()
-        .map(User::getEmail)
-        .filter(email -> !email.isBlank())
-        .toList();
+    List<String> userEmails =
+        users.stream().map(User::getEmail).filter(email -> !email.isBlank()).toList();
 
     // Filter to users where that have a library card
-    List<String> allEmails = Stream.of(labCollaborators, userEmails)
-        .flatMap(List::stream)
-        .distinct()
-        .toList();
+    List<String> allEmails =
+        Stream.of(labCollaborators, userEmails).flatMap(List::stream).distinct().toList();
 
-    List<ApprovedUser> approvedUsers = libraryCardDAO.findByUserEmails(allEmails)
-        .stream()
-        .map(LibraryCard::getUserEmail)
-        .map(ApprovedUser::new)
-        .sorted(Comparator.comparing(ApprovedUser::email))
-        .toList();
+    List<ApprovedUser> approvedUsers =
+        libraryCardDAO.findByUserEmails(allEmails).stream()
+            .map(LibraryCard::getUserEmail)
+            .map(ApprovedUser::new)
+            .sorted(Comparator.comparing(ApprovedUser::email))
+            .toList();
+
+    logInfo(
+        String.format(
+            "Approved users requested. Requesting user: %s, Dataset: %s, Approved users: %s",
+            authUser.getEmail(),
+            dataset.getDatasetIdentifier(),
+            approvedUsers.stream().map(ApprovedUser::email).toList()));
 
     return new ApprovedUsers(approvedUsers);
   }
 
   public List<Dataset> getDatasetsByIdentifier(List<Integer> aliases) {
-    return datasetDAO.findDatasetsByAlias(aliases)
-        .stream()
+    return datasetDAO.findDatasetsByAlias(aliases).stream()
         // technically, it is possible to have two dataset identifiers which
         // have the same alias but are not the same: e.g., DUOS-5 and DUOS-00005
         .filter(d -> aliases.contains(d.getAlias()))

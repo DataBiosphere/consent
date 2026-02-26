@@ -50,9 +50,9 @@ public class SupportRequestService implements ConsentLogger {
       if (!response.isSuccessStatusCode()) {
         String errorMessage = "Error sending attachment to support: " + response.getStatusMessage();
         var errorException =
-            response.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY ?
-                new UnprocessableEntityException(errorMessage) :
-                new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
+            response.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY
+                ? new UnprocessableEntityException(errorMessage)
+                : new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
         logException(errorMessage, errorException);
         throw errorException;
       }
@@ -61,8 +61,9 @@ public class SupportRequestService implements ConsentLogger {
       if (obj != null && obj.get("upload") != null) {
         return obj.get("upload").getAsJsonObject();
       } else {
-        var errorException = new ServerErrorException(response.getStatusMessage(),
-            HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
+        var errorException =
+            new ServerErrorException(
+                response.getStatusMessage(), HttpStatusCodes.STATUS_CODE_SERVER_ERROR);
         String errorMessage = "Error reading attachment response content: " + responseContent;
         logException(errorMessage, errorException);
         throw errorException;
@@ -81,17 +82,18 @@ public class SupportRequestService implements ConsentLogger {
   public Request postTicketToSupport(DuosTicket ticket) throws Exception {
     if (configuration.isActivateSupportNotifications()) {
       GenericUrl genericUrl = new GenericUrl(configuration.postSupportRequestUrl());
-      ByteArrayContent content = new ByteArrayContent("application/json",
-          ticket.toString().getBytes(StandardCharsets.UTF_8));
+      ByteArrayContent content =
+          new ByteArrayContent(
+              "application/json", ticket.toString().getBytes(StandardCharsets.UTF_8));
       HttpRequest request = clientUtil.buildUnAuthedPostRequest(genericUrl, content);
       HttpResponse response = clientUtil.handleHttpRequest(request);
 
       if (!response.isSuccessStatusCode()) {
         String errorMessage = "Error posting ticket to support: " + response.getStatusMessage();
         var errorException =
-            response.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY ?
-                new UnprocessableEntityException(errorMessage) :
-                new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
+            response.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNPROCESSABLE_ENTITY
+                ? new UnprocessableEntityException(errorMessage)
+                : new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
         logException(errorMessage, errorException);
         throw errorException;
       }
@@ -100,5 +102,4 @@ public class SupportRequestService implements ConsentLogger {
     }
     throw new BadRequestException("Not configured to send support requests");
   }
-
 }

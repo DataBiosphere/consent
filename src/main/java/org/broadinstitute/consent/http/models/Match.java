@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.models;
 
-
 import static org.broadinstitute.consent.http.models.matching.DataUseMatchResultType.Abstain;
 import static org.broadinstitute.consent.http.models.matching.DataUseMatchResultType.Approve;
 
@@ -31,8 +30,15 @@ public class Match {
 
   private List<String> rationales;
 
-  public Match(Integer id, String consent, String purpose, Boolean match, Boolean abstain,
-      Boolean failed, Date createDate, String algorithmVersion) {
+  public Match(
+      Integer id,
+      String consent,
+      String purpose,
+      Boolean match,
+      Boolean abstain,
+      Boolean failed,
+      Date createDate,
+      String algorithmVersion) {
     this.id = id;
     this.consent = consent;
     this.purpose = purpose;
@@ -43,8 +49,14 @@ public class Match {
     this.algorithmVersion = algorithmVersion;
   }
 
-  public Match(String consentId, String purposeId, boolean match, boolean abstain, boolean failed,
-      MatchAlgorithm algorithm, List<String> rationales) {
+  public Match(
+      String consentId,
+      String purposeId,
+      boolean match,
+      boolean abstain,
+      boolean failed,
+      MatchAlgorithm algorithm,
+      List<String> rationales) {
     this.setConsent(consentId);
     this.setPurpose(purposeId);
     this.setMatch(match);
@@ -55,8 +67,7 @@ public class Match {
     this.setRationales(rationales);
   }
 
-  public Match() {
-  }
+  public Match() {}
 
   public Integer getId() {
     return id;
@@ -142,14 +153,13 @@ public class Match {
     }
   }
 
-  public static Match matchFailure(String consentId, String purposeId,
-      List<String> rationales) {
+  public static Match matchFailure(String consentId, String purposeId, List<String> rationales) {
     return new Match(consentId, purposeId, false, false, true, MatchAlgorithm.V4, rationales);
   }
 
-  public static Match matchSuccess(String consentId, String purposeId, DataUseMatchResultType match,
-      List<String> rationales) {
-    return new Match(consentId, purposeId, Approve(match), Abstain(match), false, MatchAlgorithm.V4,
-        rationales);
+  public static Match matchSuccess(
+      String consentId, String purposeId, DataUseMatchResultType match, List<String> rationales) {
+    return new Match(
+        consentId, purposeId, Approve(match), Abstain(match), false, MatchAlgorithm.V4, rationales);
   }
 }

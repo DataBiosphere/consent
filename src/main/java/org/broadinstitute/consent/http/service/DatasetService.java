@@ -7,6 +7,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
@@ -39,6 +40,7 @@ import org.broadinstitute.consent.http.models.DatasetStudySummary;
 import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyConversion;
+import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
@@ -90,8 +92,8 @@ public class DatasetService implements ConsentLogger {
   }
 
   /**
-   * TODO: Refactor this to throw a NotFoundException instead of returning null
-   * Finds a Dataset by a formatted dataset identifier.
+   * TODO: Refactor this to throw a NotFoundException instead of returning null Finds a Dataset by a
+   * formatted dataset identifier.
    *
    * @param datasetIdentifier The formatted identifier, e.g. DUOS-123456
    * @return the Dataset with the given identifier, if found.
@@ -121,8 +123,8 @@ public class DatasetService implements ConsentLogger {
    * @return the Dataset with the given identifier, if found.
    * @throws IllegalArgumentException if datasetIdentifier is invalid
    */
-  public Dataset findMinimalDatasetByIdentifier(User user, String datasetIdentifier, boolean populateStudy)
-      throws IllegalArgumentException {
+  public Dataset findMinimalDatasetByIdentifier(
+      User user, String datasetIdentifier, boolean populateStudy) throws IllegalArgumentException {
     Integer alias = Dataset.parseIdentifierToAlias(datasetIdentifier);
     Dataset d = datasetDAO.findMinimalDatasetByAlias(alias);
     if (d == null) {
@@ -138,6 +140,32 @@ public class DatasetService implements ConsentLogger {
       d.setStudy(studyDAO.findStudyById(d.getStudyId()));
     }
     return verifyPublicVisibilityAccess(d, user);
+  }
+
+  protected List<DatasetStudySummary> verifyPublicVisibilityAccess(
+      List<DatasetStudySummary> summaries, User user) {
+    if (user.hasUserRole(UserRoles.ADMIN)) {
+      return summaries;
+    }
+    List<DatasetStudySummary> authorizedSummaries = new ArrayList<>();
+    for (DatasetStudySummary summary : summaries) {
+      if (Boolean.TRUE.equals(summary.public_visibility())) {
+        authorizedSummaries.add(summary);
+      } else if (user.getUserId().equals(summary.study_create_user_id())) {
+        authorizedSummaries.add(summary);
+      } else if (summary.dataset_create_user_id().equals(user.getUserId())) {
+        authorizedSummaries.add(summary);
+      } else if (summary.study_id() != null) {
+        // fetch study and see if the user is a custodian
+        Study study = studyDAO.findStudyById(summary.study_id());
+        if (study != null && isCreatorOrCustodian(user, study)) {
+          authorizedSummaries.add(summary);
+        }
+      } else {
+        authorizedSummaries.add(summary);
+      }
+    }
+    return authorizedSummaries;
   }
 
   protected Dataset verifyPublicVisibilityAccess(Dataset dataset, User user) {
@@ -197,6 +225,10 @@ public class DatasetService implements ConsentLogger {
     return false;
   }
 
+  public boolean isCreatorCustodianOrAdmin(User user, Study study) {
+    return user.hasUserRole(UserRoles.ADMIN) || isCreatorOrCustodian(user, study);
+  }
+
   public Dataset getDatasetByName(String name) {
     String lowercaseName = name.toLowerCase();
     return datasetDAO.getDatasetByName(lowercaseName);
@@ -234,8 +266,9 @@ public class DatasetService implements ConsentLogger {
     if (!user.hasUserRole(UserRoles.ADMIN)) {
       throw new IllegalArgumentException("Admin use only");
     }
-    datasetDAO.updateDatasetDataUse(datasetId, dataUse.toString());
-    elasticSearchService.synchronizeDatasetInESIndex(d, user, false);
+    String translation = ontologyService.translateDataUse(dataUse, DataUseTranslationType.DATASET);
+    datasetServiceDAO.updateDatasetDataUse(user, d, dataUse, translation);
+    elasticSearchService.synchronizeDatasetInESIndex(d, false);
     return datasetDAO.findDatasetById(datasetId);
   }
 
@@ -247,8 +280,8 @@ public class DatasetService implements ConsentLogger {
 
     String translation =
         ontologyService.translateDataUse(dataset.getDataUse(), DataUseTranslationType.DATASET);
-    datasetDAO.updateDatasetTranslatedDataUse(datasetId, translation);
-    elasticSearchService.synchronizeDatasetInESIndex(dataset, user, false);
+    datasetServiceDAO.updateDatasetDataUse(user, dataset, dataset.getDataUse(), translation);
+    elasticSearchService.synchronizeDatasetInESIndex(dataset, false);
     return datasetDAO.findDatasetById(datasetId);
   }
 
@@ -286,8 +319,9 @@ public class DatasetService implements ConsentLogger {
     return studyDAO.findStudyById(studyId);
   }
 
-  public List<DatasetStudySummary> findAllDatasetStudySummaries() {
-    return datasetDAO.findAllDatasetStudySummaries();
+  public List<DatasetStudySummary> findAllDatasetStudySummaries(User user) {
+    List<DatasetStudySummary> summaries = datasetDAO.findAllDatasetStudySummaries();
+    return verifyPublicVisibilityAccess(summaries, user);
   }
 
   public Dataset approveDataset(Dataset dataset, User user, Boolean approval) {
@@ -299,7 +333,13 @@ public class DatasetService implements ConsentLogger {
     // resource)
     if (currentApprovalState == null || !currentApprovalState) {
       datasetDAO.updateDatasetApproval(approval, Instant.now(), user.getUserId(), datasetId);
-      elasticSearchService.asyncDatasetInESIndex(datasetId, user, true);
+      try {
+        elasticSearchService.indexDatasets(List.of(datasetId));
+      } catch (IOException ioException) {
+        logWarn(
+            "Error updating entry in ElasticSearch for dataset Id: %d".formatted(datasetId),
+            ioException);
+      }
       datasetReturn = datasetDAO.findDatasetWithoutFSOInformation(datasetId);
     } else {
       if (approval == null || !approval) {
@@ -368,8 +408,7 @@ public class DatasetService implements ConsentLogger {
 
   public List<ApprovedDataset> getApprovedDatasets(User user) {
     try {
-      List<ApprovedDataset> approvedDatasets = datasetDAO.getApprovedDatasets(user.getUserId());
-      return approvedDatasets;
+      return datasetDAO.getApprovedDatasets(user.getUserId());
     } catch (Exception e) {
       logException(e);
       throw e;
@@ -396,19 +435,16 @@ public class DatasetService implements ConsentLogger {
       datasetDAO.updateDatasetDacId(dataset.getDatasetId(), studyConversion.getDacId());
     }
     if (studyConversion.getDataUse() != null) {
-      datasetDAO.updateDatasetDataUse(
-          dataset.getDatasetId(), studyConversion.getDataUse().toString());
-    }
-    if (studyConversion.getDataUse() != null) {
       String translation =
           ontologyService.translateDataUse(
               studyConversion.getDataUse(), DataUseTranslationType.DATASET);
-      datasetDAO.updateDatasetTranslatedDataUse(dataset.getDatasetId(), translation);
+      datasetServiceDAO.updateDatasetDataUse(
+          user, dataset, studyConversion.getDataUse(), translation);
     }
     if (studyConversion.getDatasetName() != null) {
       datasetDAO.updateDatasetName(dataset.getDatasetId(), studyConversion.getDatasetName());
     }
-    elasticSearchService.synchronizeDatasetInESIndex(dataset, user, false);
+    elasticSearchService.synchronizeDatasetInESIndex(dataset, false);
     List<Dictionary> dictionaries = datasetDAO.getDictionaryTerms();
     // Handle "Phenotype/Indication"
     if (studyConversion.getPhenotype() != null) {
@@ -490,8 +526,7 @@ public class DatasetService implements ConsentLogger {
           studyId, dataCustodianEmail, PropertyType.Json.toString(), custodians);
     }
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(study.getDatasetIds());
-    datasets.forEach(
-        dataset -> elasticSearchService.synchronizeDatasetInESIndex(dataset, user, false));
+    datasets.forEach(dataset -> elasticSearchService.synchronizeDatasetInESIndex(dataset, false));
     return studyDAO.findStudyById(studyId);
   }
 
@@ -669,8 +704,7 @@ public class DatasetService implements ConsentLogger {
     return studyId;
   }
 
-  public DatasetAuthorizationReader addAuthorizedReader(
-      long id, long userId, long operatorId) {
+  public DatasetAuthorizationReader addAuthorizedReader(long id, long userId, long operatorId) {
     long recordId =
         datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(id, userId, operatorId);
     return datasetAuthorizationReaderDAO.findAuthorizedReaderByRecordId(recordId);
@@ -683,5 +717,18 @@ public class DatasetService implements ConsentLogger {
 
   public void removeAuthorizedAccessReader(long datasetId, long userId) {
     datasetAuthorizationReaderDAO.deleteByDatasetAndUserId(datasetId, userId);
+  }
+
+  public Study patchStudy(Integer studyId, User user, StudyPatch patch) {
+    try {
+      Study study = studyDAO.findStudyById(studyId);
+      datasetServiceDAO.patchStudy(study, user, patch);
+      elasticSearchService.indexStudy(studyId);
+      return studyDAO.findStudyById(studyId);
+    } catch (Exception ex) {
+      logException(ex);
+      throw new InternalServerErrorException(
+          "An error occurred patching study %s".formatted(studyId));
+    }
   }
 }

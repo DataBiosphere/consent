@@ -78,7 +78,8 @@ public class InstitutionResource extends Resource {
   public Response createInstitution(@Auth DuosUser duosUser, String institution) {
     try {
       Institution payload = GsonUtil.getInstance().fromJson(institution, Institution.class);
-      Institution newInstitution = institutionService.createInstitution(payload, duosUser.getUser().getUserId());
+      Institution newInstitution =
+          institutionService.createInstitution(payload, duosUser.getUser().getUserId());
       return Response.ok().entity(newInstitution).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -90,14 +91,14 @@ public class InstitutionResource extends Resource {
   @Produces("application/json")
   @Path("/{id}")
   @RolesAllowed(ADMIN)
-  public Response patchInstitution(@Auth DuosUser duosUser, @PathParam("id") Integer id,
-      String institution) {
+  public Response patchInstitution(
+      @Auth DuosUser duosUser, @PathParam("id") Integer id, String institution) {
     try {
       Institution existingInstitution = institutionService.findInstitutionById(id);
       Institution payload = GsonUtil.getInstance().fromJson(institution, Institution.class);
       Institution mergedPayload = payload.mergeUpdatableFields(existingInstitution);
-      Institution updatedInstitution = institutionService.updateInstitutionById(mergedPayload, id,
-          duosUser.getUserId());
+      Institution updatedInstitution =
+          institutionService.updateInstitutionById(mergedPayload, id, duosUser.getUserId());
       return Response.ok().entity(updatedInstitution).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -109,12 +110,12 @@ public class InstitutionResource extends Resource {
   @Produces("application/json")
   @Path("/{id}")
   @RolesAllowed(ADMIN)
-  public Response updateInstitution(@Auth DuosUser duosUser, @PathParam("id") Integer id,
-      String institution) {
+  public Response updateInstitution(
+      @Auth DuosUser duosUser, @PathParam("id") Integer id, String institution) {
     try {
       Institution payload = GsonUtil.getInstance().fromJson(institution, Institution.class);
-      Institution updatedInstitution = institutionService.updateInstitutionById(payload, id,
-          duosUser.getUserId());
+      Institution updatedInstitution =
+          institutionService.updateInstitutionById(payload, id, duosUser.getUserId());
       return Response.ok().entity(updatedInstitution).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -142,28 +143,34 @@ public class InstitutionResource extends Resource {
   public Response updateInstitutionDomains(@Auth DuosUser duosUser, String institutionDomainMap) {
     try {
       List<Institution> updatedInstitutions = new ArrayList<>();
-      InstitutionDomainMap domainMap = GsonUtil.getInstance().fromJson(institutionDomainMap, InstitutionDomainMap.class);
-      domainMap.getInstitutionDomainMap().forEach((institutionName, value) -> {
-        List<String> domains = value.stream().toList();
-        List<Institution> institutions = institutionService.findAllInstitutionsByName(
-            institutionName);
-        if (institutions.isEmpty()) {
-          logWarn("No institution found with name: [%s]".formatted(institutionName));
-        } else if (institutions.size() == 1) {
-          Institution institution = institutions.get(0);
-          institution.setDomains(domains);
-          try {
-            updatedInstitutions.add(institutionService.updateInstitutionById(
-                institution,
-                institution.getId(),
-                duosUser.getUserId()));
-          } catch (Exception e) {
-            logException("Failed to update institution: [%s] with domains: %s".formatted(institutionName, domains), e);
-          }
-        } else {
-          logWarn("Multiple institutions found with name: [%s]".formatted(institutionName));
-        }
-      });
+      InstitutionDomainMap domainMap =
+          GsonUtil.getInstance().fromJson(institutionDomainMap, InstitutionDomainMap.class);
+      domainMap
+          .getInstitutionDomainMap()
+          .forEach(
+              (institutionName, value) -> {
+                List<String> domains = value.stream().toList();
+                List<Institution> institutions =
+                    institutionService.findAllInstitutionsByName(institutionName);
+                if (institutions.isEmpty()) {
+                  logWarn("No institution found with name: [%s]".formatted(institutionName));
+                } else if (institutions.size() == 1) {
+                  Institution institution = institutions.get(0);
+                  institution.setDomains(domains);
+                  try {
+                    updatedInstitutions.add(
+                        institutionService.updateInstitutionById(
+                            institution, institution.getId(), duosUser.getUserId()));
+                  } catch (Exception e) {
+                    logException(
+                        "Failed to update institution: [%s] with domains: %s"
+                            .formatted(institutionName, domains),
+                        e);
+                  }
+                } else {
+                  logWarn("Multiple institutions found with name: [%s]".formatted(institutionName));
+                }
+              });
       return Response.ok(updatedInstitutions).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

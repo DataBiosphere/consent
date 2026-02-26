@@ -1,5 +1,8 @@
 package org.broadinstitute.consent.http.rules;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.core.IsNot.not;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -19,8 +22,9 @@ class RuleImplementationInterfaceTest {
     }
 
     @Override
-    public boolean compare(org.broadinstitute.consent.http.models.Dataset dataset,
-                          org.broadinstitute.consent.http.models.DataAccessRequest dataAccessRequest) {
+    public boolean compare(
+        org.broadinstitute.consent.http.models.Dataset dataset,
+        org.broadinstitute.consent.http.models.DataAccessRequest dataAccessRequest) {
       return false;
     }
   }
@@ -70,11 +74,21 @@ class RuleImplementationInterfaceTest {
     TestRuleImplementation rule = new TestRuleImplementation();
     DataAccessRequestData data = new DataAccessRequestData();
     data.setDiseases(true);
-    data.setOntologies(java.util.List.of(new org.broadinstitute.consent.http.models.OntologyEntry()));
+    data.setOntologies(
+        java.util.List.of(new org.broadinstitute.consent.http.models.OntologyEntry()));
 
     assertTrue(rule.requestHasDiseases(data));
 
     data.setAiLlmUse(true);
     assertFalse(rule.requestHasDiseases(data));
+  }
+
+  @Test
+  void testEnsureEachRuleHasImplementation() {
+    for (DACAutomationRuleType value : DACAutomationRuleType.values()) {
+      assertThat(
+          Rules.implementationList.stream().filter(r -> r.getRuleType() == value).toList(),
+          not(empty()));
+    }
   }
 }

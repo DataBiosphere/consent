@@ -33,8 +33,7 @@ public class DACAutomationRuleMapper implements RowMapper<DACAutomationRule>, Ro
     if (hasColumn(rs, "display_name")) {
       userName = rs.getString("display_name");
     }
-    return new DACAutomationRule(id, ruleType, description, ruleState, activationDate, enabledByUserId, userName,
-        userEmail);
+    return new DACAutomationRule(
+        id, ruleType, description, ruleState, activationDate, enabledByUserId, userName, userEmail);
   }
-
 }

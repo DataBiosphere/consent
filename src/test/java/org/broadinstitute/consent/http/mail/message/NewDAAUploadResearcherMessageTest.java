@@ -43,7 +43,8 @@ class NewDAAUploadResearcherMessageTest extends AbstractTestHelper {
     User researcher = new User();
     researcher.setDisplayName(researcherUserName);
 
-    var message = new NewDAAUploadResearcherMessage(researcher, dacName, previousDaaName, newDaaName);
+    var message =
+        new NewDAAUploadResearcherMessage(researcher, dacName, previousDaaName, newDaaName);
     assertEquals(dacName, message.getEntityReferenceId());
 
     Template template = helper.getTemplate(message.getTemplateName());

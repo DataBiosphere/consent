@@ -1,0 +1,45 @@
+post:
+  summary: Index Ontology
+  description: |
+    Index Ontology by type. The ontology file must exist in the configured
+    ontology file storage location. Note that this starts an async operation
+    that may take several minutes to complete depending on the size of the
+    ontology file.
+  operationId: indexOntology
+  parameters:
+    - name: ontologyType
+      in: query
+      description: |
+        The type of the ontology file to index. Note that the ontology file
+        specified must exist in the configured ontology file storage location.
+      required: true
+      schema:
+        type: string
+        enum: [ DOID, DUO ]
+  tags:
+    - Admin
+  responses:
+    200:
+      description: Ontology Index Results
+    500:
+      description: Internal Server Error
+
+delete:
+  summary: Index Ontology Deletion
+  description: Index Ontology Deletion
+  operationId: indexOntologyDeletion
+  parameters:
+    - name: ontologyType
+      in: query
+      description: The type of the ontology file to remove
+      required: true
+      schema:
+        type: string
+        enum: [ DOID, DUO ]
+  tags:
+    - Admin
+  responses:
+    200:
+      description: Ontology Deletion Results
+    500:
+      description: Internal Server Error

@@ -36,10 +36,11 @@ public interface IntegrationTestHelper {
     HttpGet request = new HttpGet(getBaseUrl() + path);
     final ScheduledExecutorService executor = Executors.newScheduledThreadPool(poolSize);
     executor.schedule(request::cancel, delay, TimeUnit.SECONDS);
-    return client.execute(request, httpResponse ->
-        new SimpleResponse(
-            httpResponse.getCode(),
-            IOUtils.toString(httpResponse.getEntity().getContent(), Charset.defaultCharset())));
+    return client.execute(
+        request,
+        httpResponse ->
+            new SimpleResponse(
+                httpResponse.getCode(),
+                IOUtils.toString(httpResponse.getEntity().getContent(), Charset.defaultCharset())));
   }
-
 }

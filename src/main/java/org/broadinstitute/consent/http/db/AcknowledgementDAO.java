@@ -20,18 +20,22 @@ public interface AcknowledgementDAO extends Transactional<AcknowledgementDAO> {
           + " ON CONFLICT (ack_key, user_id) DO UPDATE SET last_acknowledged = current_timestamp ")
   void upsertAcknowledgement(@Bind("key") String key, @Bind("userId") Integer userId);
 
-  @SqlQuery("SELECT ack_key, user_id, first_acknowledged, last_acknowledged "
-      + " FROM acknowledgement WHERE ack_key = :key and user_id = :userId")
-  Acknowledgement findAcknowledgementsByKeyForUser(@Bind("key") String key,
-      @Bind("userId") Integer userId);
+  @SqlQuery(
+      "SELECT ack_key, user_id, first_acknowledged, last_acknowledged "
+          + " FROM acknowledgement WHERE ack_key = :key and user_id = :userId")
+  Acknowledgement findAcknowledgementsByKeyForUser(
+      @Bind("key") String key, @Bind("userId") Integer userId);
 
-  @SqlQuery("SELECT ack_key, user_id, first_acknowledged, last_acknowledged "
-      + " FROM acknowledgement WHERE user_id = :userId")
+  @SqlQuery(
+      "SELECT ack_key, user_id, first_acknowledged, last_acknowledged "
+          + " FROM acknowledgement WHERE user_id = :userId")
   List<Acknowledgement> findAcknowledgementsForUser(@Bind("userId") Integer userId);
 
-  @SqlQuery("SELECT ack_key, user_id, first_acknowledged, last_acknowledged "
-      + " FROM acknowledgement WHERE user_id = :userId and ack_key IN (<key_list>)")
-  List<Acknowledgement> findAcknowledgementsForUser(@BindList(value = "key_list", onEmpty = EmptyHandling.NULL_STRING) List<String> keys,
+  @SqlQuery(
+      "SELECT ack_key, user_id, first_acknowledged, last_acknowledged "
+          + " FROM acknowledgement WHERE user_id = :userId and ack_key IN (<key_list>)")
+  List<Acknowledgement> findAcknowledgementsForUser(
+      @BindList(value = "key_list", onEmpty = EmptyHandling.NULL_STRING) List<String> keys,
       @Bind("userId") Integer userId);
 
   @SqlUpdate("DELETE FROM acknowledgement where user_id = :userId AND ack_key = :key")

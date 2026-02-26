@@ -12,17 +12,24 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
+import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.InstitutionUtil;
 
-public class InstitutionService {
+public class InstitutionService implements ConsentLogger {
 
   private final InstitutionDAO institutionDAO;
   private final UserDAO userDAO;
+  private final InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
 
   @Inject
-  public InstitutionService(InstitutionDAO institutionDAO, UserDAO userDAO) {
+  public InstitutionService(
+      InstitutionDAO institutionDAO,
+      UserDAO userDAO,
+      InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement) {
     this.institutionDAO = institutionDAO;
     this.userDAO = userDAO;
+    this.institutionAndLibraryCardEnforcement = institutionAndLibraryCardEnforcement;
   }
 
   public Institution createInstitution(Institution institution, Integer userId) {
@@ -37,14 +44,18 @@ public class InstitutionService {
     InstitutionUtil.validateInstitutionDomains(institution);
     checkDomainUniqueness(institution);
     try {
-      return institutionDAO.insertFullInstitution(institution, userId);
+      Institution createdInstitution = institutionDAO.insertFullInstitution(institution, userId);
+      // Enforce Institution and Library Card rules for all users after an institution is created
+      enforceInstitutionAndLibraryCardRules();
+      return createdInstitution;
     } catch (SQLException e) {
-      throw new ServerErrorException("Could not create institution", HttpStatusCodes.STATUS_CODE_SERVER_ERROR, e);
+      throw new ServerErrorException(
+          "Could not create institution", HttpStatusCodes.STATUS_CODE_SERVER_ERROR, e);
     }
   }
 
-  public Institution updateInstitutionById(Institution institutionPayload, Integer id,
-      Integer userId) throws SQLException {
+  public Institution updateInstitutionById(
+      Institution institutionPayload, Integer id, Integer userId) throws SQLException {
     checkUserId(userId);
     Institution targetInstitution = institutionDAO.findInstitutionById(id);
     isInstitutionNull(targetInstitution);
@@ -52,28 +63,34 @@ public class InstitutionService {
     // Name validation
     checkForEmptyName(institutionPayload);
     checkNameUniqueness(institutionPayload);
-    String canonicalName = InstitutionUtil.canonicalizeInstitutionName(institutionPayload.getName());
+    String canonicalName =
+        InstitutionUtil.canonicalizeInstitutionName(institutionPayload.getName());
     institutionPayload.setName(canonicalName);
 
     // Domain validation
     InstitutionUtil.validateInstitutionDomains(institutionPayload);
     checkDomainUniqueness(institutionPayload);
-    return institutionDAO.updateFullInstitution(institutionPayload, userId);
+    Institution updatedInstitution =
+        institutionDAO.updateFullInstitution(institutionPayload, userId);
+    // Enforce Institution and Library Card rules for all users after an institution is updated
+    enforceInstitutionAndLibraryCardRules();
+    return updatedInstitution;
   }
 
   public void deleteInstitutionById(Integer id) {
     Institution institution = institutionDAO.findInstitutionById(id);
     isInstitutionNull(institution);
     institutionDAO.deleteInstitutionById(id);
+    // Enforce Institution and Library Card rules for all users after an institution is deleted
+    enforceInstitutionAndLibraryCardRules();
   }
 
   public Institution findInstitutionById(Integer id) throws NotFoundException {
     Institution institution = institutionDAO.findInstitutionById(id);
     isInstitutionNull(institution);
 
-    List<SimplifiedUser> signingOfficials = userDAO.getSOsByInstitution(id).stream()
-        .map(SimplifiedUser::new)
-        .toList();
+    List<SimplifiedUser> signingOfficials =
+        userDAO.getSOsByInstitution(id).stream().map(SimplifiedUser::new).toList();
     institution.setSigningOfficials(signingOfficials);
 
     return institution;
@@ -87,24 +104,8 @@ public class InstitutionService {
    * @return The Institution associated with the email's domain, or null if not found
    */
   public Institution findInstitutionForEmail(String email) {
-    return institutionDAO.findInstitutionByDomain(trimmedEmailDomain(email));
-  }
-
-  /**
-   * Finds the institution ID for a given email address. This is a simplified version of the more
-   * expansive findInstitutionForEmail method that will only return just the ID for verification and
-   * validation of a user's institutional affiliation and library card assignments.
-   *
-   * @param email the email address to search for
-   * @return The Institution ID associated with the email's domain, or null if not found
-   */
-  public Integer findInstitutionIdForEmail(String email) {
-    return institutionDAO.findInstitutionIdByDomain(trimmedEmailDomain(email));
-  }
-
-  private String trimmedEmailDomain(String email) {
-    String trimmedEmail = email.trim();
-    return trimmedEmail.substring(trimmedEmail.indexOf('@') + 1);
+    return institutionDAO.findInstitutionByDomain(
+        institutionAndLibraryCardEnforcement.trimmedEmailDomain(email));
   }
 
   public List<Institution> findAllInstitutions() {
@@ -135,12 +136,11 @@ public class InstitutionService {
   }
 
   private void checkNameUniqueness(Institution institution) {
-    List<Institution> conflicts = findAllInstitutionsByName(institution.getName())
-        .stream()
-        // Filter out the institution being updated, so it doesn't conflict with itself
-        .filter(existingInstitution ->
-            !existingInstitution.getId().equals(institution.getId()))
-        .toList();
+    List<Institution> conflicts =
+        findAllInstitutionsByName(institution.getName()).stream()
+            // Filter out the institution being updated, so it doesn't conflict with itself
+            .filter(existingInstitution -> !existingInstitution.getId().equals(institution.getId()))
+            .toList();
 
     if (!conflicts.isEmpty()) {
       throw new ConsentConflictException(
@@ -157,23 +157,35 @@ public class InstitutionService {
       throw new IllegalArgumentException("Institution domains must be unique");
     }
 
-    List<String> conflictingDomains = institution.getDomains().stream()
-        .map(domain -> {
-          Integer existingInstitutionId = institutionDAO.findInstitutionIdByDomain(domain);
-          if (existingInstitutionId != null && !existingInstitutionId.equals(institution.getId())) {
-            // Return the domain if it conflicts with another institution.
-            // If the domain is already associated with the institution being updated, it's not a conflict.
-            return domain;
-          }
-          return null; // No conflict
-        })
-        .filter(Objects::nonNull)
-        .toList();
+    List<String> conflictingDomains =
+        institution.getDomains().stream()
+            .map(
+                domain -> {
+                  Integer existingInstitutionId = institutionDAO.findInstitutionIdByDomain(domain);
+                  if (existingInstitutionId != null
+                      && !existingInstitutionId.equals(institution.getId())) {
+                    // Return the domain if it conflicts with another institution.
+                    // If the domain is already associated with the institution being updated, it's
+                    // not a conflict.
+                    return domain;
+                  }
+                  return null; // No conflict
+                })
+            .filter(Objects::nonNull)
+            .toList();
 
     if (!conflictingDomains.isEmpty()) {
       throw new IllegalArgumentException(
-          "Domain(s) already associated with another institution: " + String.join(", ",
-              conflictingDomains));
+          "Domain(s) already associated with another institution: "
+              + String.join(", ", conflictingDomains));
+    }
+  }
+
+  private void enforceInstitutionAndLibraryCardRules() {
+    try {
+      institutionAndLibraryCardEnforcement.asyncEnforceInstitutionAndLibraryCardRulesForAllUsers();
+    } catch (Exception e) {
+      logException(e);
     }
   }
 }

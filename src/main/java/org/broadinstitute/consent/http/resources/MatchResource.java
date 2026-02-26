@@ -39,17 +39,17 @@ public class MatchResource extends Resource {
       if (Objects.isNull(purposeIds) || purposeIds.isBlank()) {
         throw new BadRequestException("No purpose ids were provided");
       } else {
-        List<String> purposeIdsList = Arrays.asList(purposeIds.split(","))
-            .stream()
-            .filter(id -> !id.isBlank())
-            .map(id -> id.strip())
-            .collect(Collectors.toList());
+        List<String> purposeIdsList =
+            Arrays.asList(purposeIds.split(",")).stream()
+                .filter(id -> !id.isBlank())
+                .map(id -> id.strip())
+                .collect(Collectors.toList());
 
         if (purposeIdsList.isEmpty()) {
           throw new BadRequestException("Invalid query params provided");
         } else {
-          List<Match> matchList = service.findMatchesForLatestDataAccessElectionsByPurposeIds(
-              purposeIdsList);
+          List<Match> matchList =
+              service.findMatchesForLatestDataAccessElectionsByPurposeIds(purposeIdsList);
           return Response.ok().entity(matchList).build();
         }
       }

@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.mail.message;
 
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -68,13 +67,12 @@ class NewDAAUploadSOMessageTest extends AbstractTestHelper {
                 + dacName
                 + "."));
     assertTrue(
-        content
-            .contains(
-                "The "
-                    + dacName
-                    + " has recently transitioned to using the "
-                    + newDaaName
-                    + " which will apply for all future requests to this DAC."));
+        content.contains(
+            "The "
+                + dacName
+                + " has recently transitioned to using the "
+                + newDaaName
+                + " which will apply for all future requests to this DAC."));
 
     // no unspecified values
     assertFalse(templateString.contains("${"));

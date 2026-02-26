@@ -7,14 +7,15 @@ import org.broadinstitute.consent.http.models.User;
 
 public class NewDARRequestMessage extends MailMessage {
 
-  private static final String NEW_DAR_REQUEST = "Create an election for Data Access Request id: %s.";
+  private static final String NEW_DAR_REQUEST =
+      "Create an election for Data Access Request id: %s.";
 
   private final String darCode;
   private final Map<String, List<String>> dacDatasetMap;
   private final String researcherName;
 
-  public NewDARRequestMessage(User toUser, String darCode, Map<String, List<String>> dacDatasetMap,
-      String researcherName) {
+  public NewDARRequestMessage(
+      User toUser, String darCode, Map<String, List<String>> dacDatasetMap, String researcherName) {
     super(toUser, EmailType.NEW_DAR);
     this.darCode = darCode;
     this.dacDatasetMap = dacDatasetMap;

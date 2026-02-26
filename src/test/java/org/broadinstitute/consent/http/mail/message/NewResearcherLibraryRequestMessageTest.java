@@ -56,8 +56,7 @@ class NewResearcherLibraryRequestMessageTest {
             .contains("A researcher from your institution, John Doe, has registered in DUOS"));
 
     assertEquals(
-        serverUrl,
-        Objects.requireNonNull(parsedTemplate.getElementById("serverUrl")).attr("href"));
+        serverUrl, Objects.requireNonNull(parsedTemplate.getElementById("serverUrl")).attr("href"));
 
     // no unspecified values
     assertFalse(templateString.contains("${"));

@@ -8,13 +8,19 @@ import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 
 public class DACMembersDARRADARApprovedMessage extends MailMessage {
 
-  private static final String SUBJECT = "Broad Data Use Oversight System - Data Access Committee - Data Access Request %s is Rule Automated DAR (RADAR) Approved";
+  private static final String SUBJECT =
+      "Broad Data Use Oversight System - Data Access Committee - Data Access Request %s is Rule Automated DAR (RADAR) Approved";
   private final String darCode;
   private final User researcher;
   private final String referenceId;
   private final List<DatasetMailDTO> datasets;
 
-  public DACMembersDARRADARApprovedMessage(User toUser, String darCode, User researcher, String referenceId, List<DatasetMailDTO> datasets) {
+  public DACMembersDARRADARApprovedMessage(
+      User toUser,
+      String darCode,
+      User researcher,
+      String referenceId,
+      List<DatasetMailDTO> datasets) {
     super(toUser, EmailType.DAC_RADAR_APPROVED);
     this.darCode = darCode;
     this.researcher = researcher;

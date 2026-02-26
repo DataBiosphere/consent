@@ -1,5 +1,6 @@
 get:
   summary: Get DAR Collection Summary For Role Name By Collection Id
+  operationId: getCollectionSummaryForRoleById
   description: |
     Returns DAR collection summary by darCollectionId based on Role Name. 
     Access is restricted to:
@@ -13,13 +14,16 @@ get:
     - name: roleName
       in: path
       description: String value that represents the role name to query by
+      required: true
       schema:
         type: string
         enum: [Admin, Chairperson, Member, SigningOfficial, Researcher]
     - name: collectionId
       in: path
       description: DAR Collection Id
-      type: integer
+      required: true
+      schema:
+        type: integer
   responses:
     200:
       description: Returns the request DAR Collection Summary

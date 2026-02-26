@@ -11,6 +11,7 @@ public interface RuleImplementationInterface {
   DACAutomationRuleType getRuleType();
 
   boolean compare(Dataset dataset, DataAccessRequest dataAccessRequest);
+
   default boolean hasNoModifiers(DataUse data) {
     if (Boolean.TRUE.equals(data.getCollaboratorRequired())) {
       return false;
@@ -21,7 +22,7 @@ public interface RuleImplementationInterface {
     if (Boolean.TRUE.equals(data.getEthicsApprovalRequired())) {
       return false;
     }
-    if (Boolean.TRUE.equals(data.getMethodsResearch())) {
+    if (Boolean.FALSE.equals(data.getMethodsResearch())) {
       return false;
     }
     if (Boolean.TRUE.equals(data.getNonProfitUse())) {

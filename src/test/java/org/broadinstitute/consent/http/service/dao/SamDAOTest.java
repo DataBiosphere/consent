@@ -21,13 +21,13 @@ import jakarta.ws.rs.WebApplicationException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.MockServerTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.sam.CombinedState;
 import org.broadinstitute.consent.http.models.sam.EmailResponse;
 import org.broadinstitute.consent.http.models.sam.ResourceType;
 import org.broadinstitute.consent.http.models.sam.UserStatus;
@@ -39,6 +39,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockserver.model.Delay;
@@ -51,13 +54,12 @@ class SamDAOTest extends MockServerTestHelper {
 
   private static SamDAO samDAO;
 
-  @Mock
-  private DuosUser duosUser;
+  @Mock private DuosUser duosUser;
 
   private UserStatus status;
 
   @BeforeAll
-  public static void setUp() {
+  static void setUp() {
     ServicesConfiguration servicesConfig = new ServicesConfiguration();
     servicesConfig.setTimeoutSeconds(1);
     servicesConfig.setSamUrl(
@@ -66,25 +68,26 @@ class SamDAOTest extends MockServerTestHelper {
   }
 
   @BeforeEach
-  public void init() {
-    UserStatus.UserInfo info = new UserStatus.UserInfo().setUserEmail("test@test.org")
-        .setUserSubjectId("subjectId");
-    UserStatus.Enabled enabled = new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true)
-        .setLdap(true);
+  void init() {
+    UserStatus.UserInfo info =
+        new UserStatus.UserInfo().setUserEmail("test@test.org").setUserSubjectId("subjectId");
+    UserStatus.Enabled enabled =
+        new UserStatus.Enabled().setAllUsersGroup(true).setGoogle(true).setLdap(true);
     status = new UserStatus().setUserInfo(info).setEnabled(enabled);
   }
 
   @Test
   void testGetResourceTypes() throws Exception {
-    ResourceType resourceType = new ResourceType()
-        .setName(RandomStringUtils.random(10, true, true))
-        .setReuseIds(RandomUtils.nextBoolean());
+    ResourceType resourceType =
+        new ResourceType().setName(randomAlphanumeric(10)).setReuseIds(randomBoolean());
     List<ResourceType> mockResponseList = Collections.singletonList(resourceType);
     Gson gson = new Gson();
-    mockServerClient.when(request())
-        .respond(response()
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
-            .withBody(gson.toJson(mockResponseList)));
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+                .withBody(gson.toJson(mockResponseList)));
 
     List<ResourceType> resourceTypeList = samDAO.getResourceTypes(duosUser);
     assertFalse(resourceTypeList.isEmpty());
@@ -93,16 +96,19 @@ class SamDAOTest extends MockServerTestHelper {
 
   @Test
   void testGetRegistrationInfo() throws Exception {
-    UserStatusInfo userInfo = new UserStatusInfo()
-        .setAdminEnabled(RandomUtils.nextBoolean())
-        .setUserEmail("test@test.org")
-        .setUserSubjectId(RandomStringUtils.random(10, false, true))
-        .setEnabled(RandomUtils.nextBoolean());
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
-            .withBody(userInfo.toString()));
+    UserStatusInfo userInfo =
+        new UserStatusInfo()
+            .setAdminEnabled(randomBoolean())
+            .setUserEmail("test@test.org")
+            .setUserSubjectId(randomAlphanumeric(10))
+            .setEnabled(randomBoolean());
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+                .withBody(userInfo.toString()));
 
     UserStatusInfo authUserUserInfo = samDAO.getRegistrationInfo(duosUser);
     assertNotNull(authUserUserInfo);
@@ -113,80 +119,93 @@ class SamDAOTest extends MockServerTestHelper {
 
   @Test
   void testGetRegistrationInfoBadRequest() {
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_BAD_REQUEST));
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_BAD_REQUEST));
     assertThrows(BadRequestException.class, () -> samDAO.getRegistrationInfo(duosUser));
   }
 
   @Test
   void testNotAuthorized() {
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED));
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED));
     assertThrows(NotAuthorizedException.class, () -> samDAO.getRegistrationInfo(duosUser));
   }
 
   @Test
   void testForbidden() {
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
     assertThrows(ForbiddenException.class, () -> samDAO.getRegistrationInfo(duosUser));
   }
 
   @Test
   void testNotFound() {
     setDebugLogging();
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_NOT_FOUND));
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_NOT_FOUND));
     assertThrows(NotFoundException.class, () -> samDAO.getRegistrationInfo(duosUser));
   }
 
   @Test
   void testConflict() {
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_CONFLICT));
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_CONFLICT));
     assertThrows(ConsentConflictException.class, () -> samDAO.getRegistrationInfo(duosUser));
   }
 
   @Test
   void testGetSelfDiagnostics() throws Exception {
-    UserStatusDiagnostics diagnostics = new UserStatusDiagnostics()
-        .setAdminEnabled(RandomUtils.nextBoolean())
-        .setEnabled(RandomUtils.nextBoolean())
-        .setInAllUsersGroup(RandomUtils.nextBoolean())
-        .setInGoogleProxyGroup(RandomUtils.nextBoolean())
-        .setTosAccepted(RandomUtils.nextBoolean());
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
-            .withBody(diagnostics.toString()));
+    UserStatusDiagnostics diagnostics =
+        new UserStatusDiagnostics()
+            .setAdminEnabled(randomBoolean())
+            .setEnabled(randomBoolean())
+            .setInAllUsersGroup(randomBoolean())
+            .setInGoogleProxyGroup(randomBoolean())
+            .setTosAccepted(randomBoolean());
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+                .withBody(diagnostics.toString()));
 
     UserStatusDiagnostics userDiagnostics = samDAO.getSelfDiagnostics(duosUser);
     assertNotNull(userDiagnostics);
     assertEquals(diagnostics.getEnabled(), userDiagnostics.getEnabled());
-    assertEquals(diagnostics.getInAllUsersGroup(),
-        userDiagnostics.getInAllUsersGroup());
-    assertEquals(diagnostics.getInGoogleProxyGroup(),
-        userDiagnostics.getInGoogleProxyGroup());
+    assertEquals(diagnostics.getInAllUsersGroup(), userDiagnostics.getInAllUsersGroup());
+    assertEquals(diagnostics.getInGoogleProxyGroup(), userDiagnostics.getInGoogleProxyGroup());
   }
 
   @Test
   void testPostRegistrationInfo() throws Exception {
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
-            .withBody(status.toString()));
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
+                .withBody(status.toString()));
 
     UserStatus userStatus = samDAO.postRegistrationInfo(duosUser);
     assertNotNull(userStatus);
@@ -194,15 +213,17 @@ class SamDAOTest extends MockServerTestHelper {
 
   @Test
   void testPostRegistrationInfo_Error() {
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
-            .withBody(("{\"message\":\"errorMessage\"}")));
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
+                .withBody(("{\"message\":\"errorMessage\"}")));
     when(duosUser.getEmail()).thenReturn("email@email.com");
 
-    WebApplicationException ex = assertThrows(WebApplicationException.class,
-        () -> samDAO.postRegistrationInfo(duosUser));
+    WebApplicationException ex =
+        assertThrows(WebApplicationException.class, () -> samDAO.postRegistrationInfo(duosUser));
     assertEquals(
         "Error posting user registration information. Email: email@email.com. errorMessage.",
         ex.getMessage());
@@ -216,11 +237,13 @@ class SamDAOTest extends MockServerTestHelper {
    */
   @Test
   void testAsyncPostRegistrationInfo() {
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
-            .withBody(status.toString()));
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_CREATED)
+                .withBody(status.toString()));
 
     try {
       samDAO.asyncPostRegistrationInfo(duosUser);
@@ -229,14 +252,74 @@ class SamDAOTest extends MockServerTestHelper {
     }
   }
 
+  // Provide all combinations of true/false for isCurrentVersion and permitsSystemUsage to test the
+  // logic in getCombinedUserStatusInfo
+  private static Stream<Arguments> provideBooleansForUserStatus() {
+    return Stream.of(
+        Arguments.of(false, false),
+        Arguments.of(false, true),
+        Arguments.of(true, false),
+        Arguments.of(true, true));
+  }
+
+  @ParameterizedTest
+  @MethodSource("provideBooleansForUserStatus")
+  void testGetCombinedUserStatusInfo(boolean isCurrentVersion, boolean permitsSystemUsage)
+      throws Exception {
+    CombinedState.SamUser samUser =
+        new CombinedState.SamUser(
+            "azureB2CId", "createdAt", "email", true, "googleSubjectId", "id", "updatedAt");
+    CombinedState.TermsOfServiceDetails tosDetails =
+        new CombinedState.TermsOfServiceDetails(
+            "acceptedOn", isCurrentVersion, "latestAcceptedVersion", permitsSystemUsage);
+    CombinedState combinedState =
+        new CombinedState().setSamUser(samUser).setTermsOfServiceDetails(tosDetails);
+    Gson gson = new Gson();
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+                .withBody(gson.toJson(combinedState)));
+
+    UserStatusInfo userStatusInfo = samDAO.getCombinedUserStatusInfo(duosUser);
+    assertNotNull(userStatusInfo);
+    assertEquals(samUser.email(), userStatusInfo.getUserEmail());
+    assertEquals(samUser.googleSubjectId(), userStatusInfo.getUserSubjectId());
+    assertEquals(samUser.enabled(), userStatusInfo.getEnabled());
+    assertEquals(
+        (tosDetails.permitsSystemUsage() && tosDetails.isCurrentVersion()),
+        userStatusInfo.getTosAccepted());
+  }
+
+  @Test
+  void testGetCombinedUserStatusInfoNotFound() {
+    mockServerClient
+        .when(request())
+        .respond(response().withStatusCode(HttpStatusCodes.STATUS_CODE_FORBIDDEN));
+
+    assertThrows(NotFoundException.class, () -> samDAO.getCombinedUserStatusInfo(duosUser));
+  }
+
+  @Test
+  void testGetCombinedUserStatusInfoNonSuccessStatus() {
+    mockServerClient
+        .when(request())
+        .respond(response().withStatusCode(HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY));
+
+    assertThrows(WebApplicationException.class, () -> samDAO.getCombinedUserStatusInfo(duosUser));
+  }
+
   @Test
   void testGetToSText() {
     String mockText = "Plain Text";
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", MediaType.TEXT_PLAIN.getType()))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
-            .withBody(mockText));
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", MediaType.TEXT_PLAIN.getType()))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+                .withBody(mockText));
 
     try {
       String text = samDAO.getToSText();
@@ -248,10 +331,12 @@ class SamDAOTest extends MockServerTestHelper {
 
   @Test
   void testGetTosResponse() {
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
     try {
       samDAO.getTosResponse(duosUser);
     } catch (Exception e) {
@@ -261,10 +346,12 @@ class SamDAOTest extends MockServerTestHelper {
 
   @Test
   void testPostTosAcceptedStatus() {
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
 
     try {
       samDAO.acceptTosStatus(duosUser);
@@ -275,10 +362,12 @@ class SamDAOTest extends MockServerTestHelper {
 
   @Test
   void testRemoveTosAcceptedStatus() {
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
 
     try {
       samDAO.rejectTosStatus(duosUser);
@@ -291,11 +380,13 @@ class SamDAOTest extends MockServerTestHelper {
   void testGetV1UserByEmail() {
     EmailResponse emailResponse = new EmailResponse("googleId", "email", "subjectId");
     Gson gson = GsonUtil.buildGson();
-    mockServerClient.when(request())
-        .respond(response()
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
-            .withBody(gson.toJson(emailResponse)));
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
+                .withBody(gson.toJson(emailResponse)));
 
     try {
       EmailResponse response = samDAO.getV1UserByEmail(duosUser, "test@gmail.com");
@@ -306,32 +397,35 @@ class SamDAOTest extends MockServerTestHelper {
   }
 
   @Test
+  @SuppressWarnings({"java:S5778"})
   void testConnectTimeout() {
     mockServerClient.when(request()).error(HttpError.error().withDropConnection(true));
     assertThrows(
-        ServerErrorException.class,
-        () -> samDAO.getV1UserByEmail(duosUser, RandomStringUtils.randomAlphabetic(10)));
+        ServerErrorException.class, () -> samDAO.getV1UserByEmail(duosUser, randomAlphabetic(10)));
   }
 
   @Test
+  @SuppressWarnings({"java:S5778"})
   void testReadTimeout() {
     // Increase the delay to push the response beyond the read timeout value
     int delayMilliseconds = samDAO.readTimeoutMilliseconds + 10;
-    mockServerClient.when(request())
-        .respond(response()
-            .withDelay(new Delay(TimeUnit.MILLISECONDS, delayMilliseconds))
-            .withHeader(Header.header("Content-Type", "application/json"))
-            .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
+    mockServerClient
+        .when(request())
+        .respond(
+            response()
+                .withDelay(new Delay(TimeUnit.MILLISECONDS, delayMilliseconds))
+                .withHeader(Header.header("Content-Type", "application/json"))
+                .withStatusCode(HttpStatusCodes.STATUS_CODE_OK));
     assertThrows(
-        ServerErrorException.class,
-        () -> samDAO.getV1UserByEmail(duosUser, RandomStringUtils.randomAlphabetic(10)));
+        ServerErrorException.class, () -> samDAO.getV1UserByEmail(duosUser, randomAlphabetic(10)));
   }
 
   @Test
   void testGetErrorMessageAzureB2cId() {
     when(duosUser.getEmail()).thenReturn("email@email.com");
-    String body = """
-        {"code":500, "message": "Cannot update azureB2cId"}""";
+    String body =
+        """
+            {"code":500, "message": "Cannot update azureB2cId"}""";
     assertEquals(
         "Email: email@email.com. You may have previously signed in with a different authentication provider (Google or Microsoft). Please sign in with that provider. For more information visit: https://support.terra.bio/hc/en-us/community/posts/24089648317467-Cannot-update-azureB2cId-for-user",
         getErrorMessage(duosUser, body));
@@ -340,8 +434,9 @@ class SamDAOTest extends MockServerTestHelper {
   @Test
   void testGetErrorMessageOther() {
     when(duosUser.getEmail()).thenReturn("email@email.com");
-    String body = """
-        {"code":500, "message": "some other error"}""";
+    String body =
+        """
+            {"code":500, "message": "some other error"}""";
     assertEquals(
         "Error posting user registration information. Email: email@email.com. some other error.",
         getErrorMessage(duosUser, body));
@@ -350,9 +445,11 @@ class SamDAOTest extends MockServerTestHelper {
   @Test
   void testGetErrorMessageNoMessage() {
     when(duosUser.getEmail()).thenReturn("email@email.com");
-    String body = """
-        {"code":500}""";
-    assertEquals("""
+    String body =
+        """
+            {"code":500}""";
+    assertEquals(
+        """
             Error posting user registration information. Email: email@email.com. {"code":500}.""",
         getErrorMessage(duosUser, body));
   }
@@ -361,7 +458,8 @@ class SamDAOTest extends MockServerTestHelper {
   void testGetErrorMessageNoBody() {
     when(duosUser.getEmail()).thenReturn("email@email.com");
     String body = null;
-    assertEquals("""
+    assertEquals(
+        """
             Error posting user registration information. Email: email@email.com.""",
         getErrorMessage(duosUser, body));
   }
@@ -370,7 +468,8 @@ class SamDAOTest extends MockServerTestHelper {
   void testGetErrorMessageNotJson() {
     when(duosUser.getEmail()).thenReturn("email@email.com");
     String body = "random non-JSON string";
-    assertEquals("""
+    assertEquals(
+        """
             Error posting user registration information. Email: email@email.com. random non-JSON string.""",
         getErrorMessage(duosUser, body));
   }

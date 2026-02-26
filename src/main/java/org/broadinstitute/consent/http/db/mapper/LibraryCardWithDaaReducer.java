@@ -7,14 +7,14 @@ import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 
-public class LibraryCardWithDaaReducer implements LinkedHashMapRowReducer<Integer, LibraryCard>,
-    RowMapperHelper {
+public class LibraryCardWithDaaReducer
+    implements LinkedHashMapRowReducer<Integer, LibraryCard>, RowMapperHelper {
 
   @Override
   public void accumulate(Map<Integer, LibraryCard> map, RowView rowView) {
-    LibraryCard card = map.computeIfAbsent(
-        rowView.getColumn("id", Integer.class),
-        id -> rowView.getRow(LibraryCard.class));
+    LibraryCard card =
+        map.computeIfAbsent(
+            rowView.getColumn("id", Integer.class), id -> rowView.getRow(LibraryCard.class));
     DataAccessAgreement daa = new DataAccessAgreement();
 
     try {

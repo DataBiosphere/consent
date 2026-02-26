@@ -28,30 +28,30 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     createFileStorageObject();
 
     String fileName = RandomStringUtils.randomAlphabetic(10);
-    String category = FileCategory.getValues()
-        .get(new Random().nextInt(FileCategory.getValues().size()));
-    String gcsFileUri = BlobId.of(
-        RandomStringUtils.randomAlphabetic(10),
-        RandomStringUtils.randomAlphabetic(10)).toGsUtilUri();
+    String category =
+        FileCategory.getValues().get(new Random().nextInt(FileCategory.getValues().size()));
+    String gcsFileUri =
+        BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10))
+            .toGsUtilUri();
     String mediaType = RandomStringUtils.randomAlphabetic(10);
     String entityId = RandomStringUtils.randomAlphabetic(10);
     User createUser = createUser();
     Instant createDate = Instant.now();
 
-    Integer newFileStorageObjectId = fileStorageObjectDAO.insertNewFile(
-        fileName,
-        category,
-        gcsFileUri,
-        mediaType,
-        entityId,
-        createUser.getUserId(),
-        createDate
-    );
+    Integer newFileStorageObjectId =
+        fileStorageObjectDAO.insertNewFile(
+            fileName,
+            category,
+            gcsFileUri,
+            mediaType,
+            entityId,
+            createUser.getUserId(),
+            createDate);
 
     createFileStorageObject();
 
-    FileStorageObject newFileStorageObject = fileStorageObjectDAO.findFileById(
-        newFileStorageObjectId);
+    FileStorageObject newFileStorageObject =
+        fileStorageObjectDAO.findFileById(newFileStorageObjectId);
 
     assertNotNull(newFileStorageObject);
     assertNotNull(newFileStorageObject.getFileStorageObjectId());
@@ -61,8 +61,8 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     assertEquals(mediaType, newFileStorageObject.getMediaType());
     assertEquals(entityId, newFileStorageObject.getEntityId());
     assertEquals(createUser.getUserId(), newFileStorageObject.getCreateUserId());
-    assertEquals(createDate.getEpochSecond(),
-        newFileStorageObject.getCreateDate().getEpochSecond());
+    assertEquals(
+        createDate.getEpochSecond(), newFileStorageObject.getCreateDate().getEpochSecond());
     assertFalse(newFileStorageObject.getDeleted());
     assertNull(newFileStorageObject.getUploadedFile());
   }
@@ -72,22 +72,19 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     FileStorageObject origFile = createFileStorageObject();
 
     User deleteUser = createUser();
-    Instant deleteDate = Instant.now();
 
     assertFalse(origFile.getDeleted());
     assertNull(origFile.getDeleteUserId());
     assertNull(origFile.getDeleteDate());
 
-    fileStorageObjectDAO.deleteFileById(origFile.getFileStorageObjectId(), deleteUser.getUserId(),
-        deleteDate);
+    fileStorageObjectDAO.deleteFileById(origFile.getFileStorageObjectId(), deleteUser.getUserId());
 
-    FileStorageObject deletedFile = fileStorageObjectDAO.findFileById(
-        origFile.getFileStorageObjectId());
+    FileStorageObject deletedFile =
+        fileStorageObjectDAO.findFileById(origFile.getFileStorageObjectId());
 
     assertTrue(deletedFile.getDeleted());
     assertEquals(deleteUser.getUserId(), deletedFile.getDeleteUserId());
-    assertEquals(deleteDate.getEpochSecond(),
-        deletedFile.getDeleteDate().getEpochSecond());
+    assertTrue(deletedFile.getDeleteDate().getEpochSecond() > 0);
   }
 
   @Test
@@ -98,13 +95,13 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     User deleteUser = createUser();
     Instant deleteDate = Instant.now();
 
-    FileStorageObject file1 = createFileStorageObject(entityId,
-        FileCategory.IRB_COLLABORATION_LETTER);
+    FileStorageObject file1 =
+        createFileStorageObject(entityId, FileCategory.IRB_COLLABORATION_LETTER);
     FileStorageObject file2 = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
-    FileStorageObject file3 = createFileStorageObject(entityId,
-        FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
-    FileStorageObject file4 = createFileStorageObject(otherEntityId,
-        FileCategory.IRB_COLLABORATION_LETTER);
+    FileStorageObject file3 =
+        createFileStorageObject(entityId, FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+    FileStorageObject file4 =
+        createFileStorageObject(otherEntityId, FileCategory.IRB_COLLABORATION_LETTER);
 
     assertFalse(file1.getDeleted());
     assertNull(file1.getDeleteUserId());
@@ -128,16 +125,13 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
 
     assertTrue(file1.getDeleted());
     assertEquals(deleteUser.getUserId(), file1.getDeleteUserId());
-    assertEquals(deleteDate.getEpochSecond(),
-        file1.getDeleteDate().getEpochSecond());
+    assertEquals(deleteDate.getEpochSecond(), file1.getDeleteDate().getEpochSecond());
     assertTrue(file2.getDeleted());
     assertEquals(deleteUser.getUserId(), file2.getDeleteUserId());
-    assertEquals(deleteDate.getEpochSecond(),
-        file2.getDeleteDate().getEpochSecond());
+    assertEquals(deleteDate.getEpochSecond(), file2.getDeleteDate().getEpochSecond());
     assertTrue(file3.getDeleted());
     assertEquals(deleteUser.getUserId(), file3.getDeleteUserId());
-    assertEquals(deleteDate.getEpochSecond(),
-        file3.getDeleteDate().getEpochSecond());
+    assertEquals(deleteDate.getEpochSecond(), file3.getDeleteDate().getEpochSecond());
     assertFalse(file4.getDeleted()); // should not be effected
     assertNull(file4.getDeleteUserId());
     assertNull(file4.getDeleteDate());
@@ -149,15 +143,15 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
 
     createFileStorageObject();
     createFileStorageObject(); // random other files
-    FileStorageObject file1 = createFileStorageObject(entityId,
-        FileCategory.IRB_COLLABORATION_LETTER);
+    FileStorageObject file1 =
+        createFileStorageObject(entityId, FileCategory.IRB_COLLABORATION_LETTER);
     FileStorageObject file2 = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
-    FileStorageObject file3 = createFileStorageObject(entityId,
-        FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+    FileStorageObject file3 =
+        createFileStorageObject(entityId, FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
 
     List<FileStorageObject> filesFound = fileStorageObjectDAO.findFilesByEntityId(entityId);
-    List<Integer> fileIdsfound = filesFound.stream().map(FileStorageObject::getFileStorageObjectId)
-        .toList();
+    List<Integer> fileIdsfound =
+        filesFound.stream().map(FileStorageObject::getFileStorageObjectId).toList();
 
     assertEquals(3, filesFound.size());
     assertTrue(fileIdsfound.contains(file1.getFileStorageObjectId()));
@@ -172,17 +166,19 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     // different entity id, same category, shouldn't be returned.
     createFileStorageObject("asdf", FileCategory.IRB_COLLABORATION_LETTER);
     createFileStorageObject();
-    FileStorageObject file1 = createFileStorageObject(entityId,
-        FileCategory.IRB_COLLABORATION_LETTER);
-    FileStorageObject file2 = createFileStorageObject(entityId,
-        FileCategory.IRB_COLLABORATION_LETTER);
-    FileStorageObject file3 = createFileStorageObject(entityId,
-        FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
+    FileStorageObject file1 =
+        createFileStorageObject(entityId, FileCategory.IRB_COLLABORATION_LETTER);
+    FileStorageObject file2 =
+        createFileStorageObject(entityId, FileCategory.IRB_COLLABORATION_LETTER);
+    FileStorageObject file3 =
+        createFileStorageObject(entityId, FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
 
-    List<FileStorageObject> irbFiles = fileStorageObjectDAO.findFilesByEntityIdAndCategory(entityId,
-        FileCategory.IRB_COLLABORATION_LETTER.getValue());
-    List<FileStorageObject> altDataSharingFiles = fileStorageObjectDAO.findFilesByEntityIdAndCategory(
-        entityId, FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue());
+    List<FileStorageObject> irbFiles =
+        fileStorageObjectDAO.findFilesByEntityIdAndCategory(
+            entityId, FileCategory.IRB_COLLABORATION_LETTER.getValue());
+    List<FileStorageObject> altDataSharingFiles =
+        fileStorageObjectDAO.findFilesByEntityIdAndCategory(
+            entityId, FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue());
 
     assertEquals(2, irbFiles.size());
     assertTrue(irbFiles.contains(file1));
@@ -208,8 +204,8 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
   }
 
   private FileStorageObject createFileStorageObject() {
-    FileCategory category = List.of(FileCategory.values())
-        .get(new Random().nextInt(FileCategory.values().length));
+    FileCategory category =
+        List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
     String entityId = RandomStringUtils.randomAlphabetic(10);
 
     return createFileStorageObject(entityId, category);
@@ -222,16 +218,15 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     User createUser = createUser();
     Instant createDate = Instant.now();
 
-    Integer newFileStorageObjectId = fileStorageObjectDAO.insertNewFile(
-        fileName,
-        category.getValue(),
-        bucketName,
-        gcsFileUri,
-        entityId,
-        createUser.getUserId(),
-        createDate
-    );
+    Integer newFileStorageObjectId =
+        fileStorageObjectDAO.insertNewFile(
+            fileName,
+            category.getValue(),
+            bucketName,
+            gcsFileUri,
+            entityId,
+            createUser.getUserId(),
+            createDate);
     return fileStorageObjectDAO.findFileById(newFileStorageObjectId);
   }
-
 }

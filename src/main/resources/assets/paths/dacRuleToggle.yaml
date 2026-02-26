@@ -26,5 +26,9 @@ put:
       description: The user is not authorized to set this value
     401:
       description: No DAC found with the given ID
+    409:
+      description: Rules are conflicting.  See exception message for how to deconflict.
+    422:
+      description: No Rule exists with this ID number.
     500:
       description: Internal Server Error

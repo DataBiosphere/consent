@@ -35,12 +35,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class InstitutionResourceTest {
 
   private final AuthUser authUser = new AuthUser("test@test.com");
-  private final User user = new User(1, "test@test.com", "Display Name", new Date(),
-      Collections.emptyList());
+  private final User user =
+      new User(1, "test@test.com", "Display Name", new Date(), Collections.emptyList());
   private final DuosUser duosUser = new DuosUser(authUser, user);
 
-  @Mock
-  private InstitutionService institutionService;
+  @Mock private InstitutionService institutionService;
 
   private InstitutionResource resource;
 
@@ -118,7 +117,6 @@ class InstitutionResourceTest {
     }
   }
 
-
   @Test
   void testCreateInstitution() {
     Institution mockInstitution = mockInstitutionSetup();
@@ -138,8 +136,8 @@ class InstitutionResourceTest {
     Institution mockInstitution = mockInstitutionSetup();
     when(institutionService.createInstitution(any(), anyInt())).thenThrow(error);
 
-    try (var response = resource.createInstitution(duosUser,
-        GsonUtil.getInstance().toJson(mockInstitution))) {
+    try (var response =
+        resource.createInstitution(duosUser, GsonUtil.getInstance().toJson(mockInstitution))) {
       assertEquals(400, response.getStatus());
     }
   }
@@ -150,8 +148,8 @@ class InstitutionResourceTest {
     Institution mockInstitution = mockInstitutionSetup();
     when(institutionService.createInstitution(any(), anyInt())).thenThrow(error);
 
-    try (var response = resource.createInstitution(duosUser,
-        GsonUtil.getInstance().toJson(mockInstitution))) {
+    try (var response =
+        resource.createInstitution(duosUser, GsonUtil.getInstance().toJson(mockInstitution))) {
       assertEquals(400, response.getStatus());
     }
   }
@@ -159,12 +157,13 @@ class InstitutionResourceTest {
   @Test
   void testCreateInstitutionDuplicate() {
     Institution mockInstitution = mockInstitutionSetup();
-    ConsentConflictException conflictException = new ConsentConflictException(
-        "An institution exists with the name of '" + mockInstitution.getName() + "'");
+    ConsentConflictException conflictException =
+        new ConsentConflictException(
+            "An institution exists with the name of '" + mockInstitution.getName() + "'");
     when(institutionService.createInstitution(any(), anyInt())).thenThrow(conflictException);
 
-    try (var response = resource.createInstitution(duosUser,
-        GsonUtil.getInstance().toJson(mockInstitution))) {
+    try (var response =
+        resource.createInstitution(duosUser, GsonUtil.getInstance().toJson(mockInstitution))) {
       assertEquals(409, response.getStatus());
     }
   }
@@ -173,14 +172,14 @@ class InstitutionResourceTest {
   void testPatchInstitution() throws Exception {
     Institution mockInstitution = mockInstitutionSetup();
     mockInstitution.setId(1);
-    when(institutionService.findInstitutionById(mockInstitution.getId())).thenReturn(
-        mockInstitution);
-    when(institutionService.updateInstitutionById(mockInstitution, mockInstitution.getId(),
-        duosUser.getUserId())).thenReturn(
-        mockInstitution);
+    when(institutionService.findInstitutionById(mockInstitution.getId()))
+        .thenReturn(mockInstitution);
+    when(institutionService.updateInstitutionById(
+            mockInstitution, mockInstitution.getId(), duosUser.getUserId()))
+        .thenReturn(mockInstitution);
     initResource();
-    try (var response = resource.patchInstitution(duosUser, 1,
-        GsonUtil.getInstance().toJson(mockInstitution))) {
+    try (var response =
+        resource.patchInstitution(duosUser, 1, GsonUtil.getInstance().toJson(mockInstitution))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertNotNull(response.getEntity().toString());
     }
@@ -190,11 +189,11 @@ class InstitutionResourceTest {
   void testPatchInstitutionNotFound() {
     Institution mockInstitution = mockInstitutionSetup();
     mockInstitution.setId(1);
-    when(institutionService.findInstitutionById(mockInstitution.getId())).thenThrow(
-        new NotFoundException("Institution not found"));
+    when(institutionService.findInstitutionById(mockInstitution.getId()))
+        .thenThrow(new NotFoundException("Institution not found"));
     initResource();
-    try (var response = resource.patchInstitution(duosUser, 1,
-        GsonUtil.getInstance().toJson(mockInstitution))) {
+    try (var response =
+        resource.patchInstitution(duosUser, 1, GsonUtil.getInstance().toJson(mockInstitution))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
       assertNotNull(response.getEntity().toString());
     }
@@ -204,8 +203,8 @@ class InstitutionResourceTest {
   void testPatchInstitutionBadRequest() {
     Institution mockInstitution = mockInstitutionSetup();
     mockInstitution.setId(1);
-    when(institutionService.findInstitutionById(mockInstitution.getId())).thenReturn(
-        mockInstitution);
+    when(institutionService.findInstitutionById(mockInstitution.getId()))
+        .thenReturn(mockInstitution);
     initResource();
     try (var response = resource.patchInstitution(duosUser, 1, "bad json")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
@@ -217,14 +216,14 @@ class InstitutionResourceTest {
   void testPatchInstitutionServerError() throws Exception {
     Institution mockInstitution = mockInstitutionSetup();
     mockInstitution.setId(1);
-    when(institutionService.findInstitutionById(mockInstitution.getId())).thenReturn(
-        mockInstitution);
-    when(institutionService.updateInstitutionById(mockInstitution, mockInstitution.getId(),
-        duosUser.getUserId())).thenThrow(
-        new ServerErrorException(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
+    when(institutionService.findInstitutionById(mockInstitution.getId()))
+        .thenReturn(mockInstitution);
+    when(institutionService.updateInstitutionById(
+            mockInstitution, mockInstitution.getId(), duosUser.getUserId()))
+        .thenThrow(new ServerErrorException(HttpStatusCodes.STATUS_CODE_SERVER_ERROR));
     initResource();
-    try (var response = resource.patchInstitution(duosUser, 1,
-        GsonUtil.getInstance().toJson(mockInstitution))) {
+    try (var response =
+        resource.patchInstitution(duosUser, 1, GsonUtil.getInstance().toJson(mockInstitution))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
       assertNotNull(response.getEntity().toString());
     }
@@ -233,11 +232,11 @@ class InstitutionResourceTest {
   @Test
   void testUpdateInstitution() throws Exception {
     Institution mockInstitution = mockInstitutionSetup();
-    when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenReturn(
-        mockInstitution);
+    when(institutionService.updateInstitutionById(any(), anyInt(), anyInt()))
+        .thenReturn(mockInstitution);
 
-    try (var response = resource.updateInstitution(duosUser, 1,
-        GsonUtil.getInstance().toJson(mockInstitution))) {
+    try (var response =
+        resource.updateInstitution(duosUser, 1, GsonUtil.getInstance().toJson(mockInstitution))) {
       assertEquals(200, response.getStatus());
       assertNotNull(response.getEntity().toString());
     }
@@ -249,8 +248,8 @@ class InstitutionResourceTest {
     Institution mockInstitution = mockInstitutionSetup();
     when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
 
-    try (var response = resource.updateInstitution(duosUser, 1,
-        GsonUtil.getInstance().toJson(mockInstitution))) {
+    try (var response =
+        resource.updateInstitution(duosUser, 1, GsonUtil.getInstance().toJson(mockInstitution))) {
       assertEquals(404, response.getStatus());
     }
   }
@@ -262,8 +261,8 @@ class InstitutionResourceTest {
     mockInstitution.setName(null);
     when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
 
-    try (var response = resource.updateInstitution(duosUser, 1,
-        GsonUtil.getInstance().toJson(mockInstitution))) {
+    try (var response =
+        resource.updateInstitution(duosUser, 1, GsonUtil.getInstance().toJson(mockInstitution))) {
       assertEquals(400, response.getStatus());
     }
   }
@@ -275,8 +274,8 @@ class InstitutionResourceTest {
     mockInstitution.setName("");
     when(institutionService.updateInstitutionById(any(), anyInt(), anyInt())).thenThrow(error);
 
-    try (var response = resource.updateInstitution(duosUser, 1,
-        GsonUtil.getInstance().toJson(mockInstitution))) {
+    try (var response =
+        resource.updateInstitution(duosUser, 1, GsonUtil.getInstance().toJson(mockInstitution))) {
       assertEquals(400, response.getStatus());
     }
   }
@@ -302,42 +301,46 @@ class InstitutionResourceTest {
   @Test
   void testUpdateInstitutionDomains() throws Exception {
     Institution mockInstitution = mockInstitutionSetup();
-    String institutionDomainMapJson = """
+    String institutionDomainMapJson =
+        """
         {
           "institutionDomainMap":
           {
             "%s": ["test.edu"]
           }
         }
-        """.formatted(mockInstitution.getName());
-    when(institutionService.findAllInstitutionsByName(mockInstitution.getName())).thenReturn(
-        List.of(mockInstitution));
+        """
+            .formatted(mockInstitution.getName());
+    when(institutionService.findAllInstitutionsByName(mockInstitution.getName()))
+        .thenReturn(List.of(mockInstitution));
     try (var response = resource.updateInstitutionDomains(duosUser, institutionDomainMapJson)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertTrue(mockInstitution.getDomains().contains("test.edu"));
-      verify(institutionService, times(1)).updateInstitutionById(mockInstitution,
-          mockInstitution.getId(), duosUser.getUserId());
+      verify(institutionService, times(1))
+          .updateInstitutionById(mockInstitution, mockInstitution.getId(), duosUser.getUserId());
     }
   }
 
   @Test
   void testUpdateInstitutionDomainsMissingInstitution() throws Exception {
     Institution mockInstitution = mockInstitutionSetup();
-    String institutionDomainMapJson = """
+    String institutionDomainMapJson =
+        """
         {
           "institutionDomainMap":
           {
             "%s": ["test.edu"]
           }
         }
-        """.formatted(mockInstitution.getName());
-    when(institutionService.findAllInstitutionsByName(mockInstitution.getName())).thenReturn(
-        List.of());
+        """
+            .formatted(mockInstitution.getName());
+    when(institutionService.findAllInstitutionsByName(mockInstitution.getName()))
+        .thenReturn(List.of());
     try (var response = resource.updateInstitutionDomains(duosUser, institutionDomainMapJson)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertNull(mockInstitution.getDomains());
-      verify(institutionService, never()).updateInstitutionById(mockInstitution,
-          mockInstitution.getId(), duosUser.getUserId());
+      verify(institutionService, never())
+          .updateInstitutionById(mockInstitution, mockInstitution.getId(), duosUser.getUserId());
     }
   }
 
