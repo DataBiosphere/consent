@@ -30,17 +30,14 @@ public class AffiliationAndRole implements VisaClaimType {
     return assertedDate.getTime();
   }
 
-  // TODO
-  //    Is there a better way to get the user's singular institutional domain?
-  //    Institutions can have multiple domains, e.g. "broadinstitute.org" and "broad.mit.edu".
   @Override
   public String value() {
     String[] splitEmail = user.getEmail().split("@");
     if (splitEmail.length > 1) {
       String domain = splitEmail[splitEmail.length - 1];
-      return String.format("duos.researcher@%s", domain);
+      return String.format("faculty@%s", domain);
     }
-    return "duos.researcher@no.organization";
+    return "faculty@no.organization";
   }
 
   @Override
