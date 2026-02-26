@@ -53,12 +53,12 @@ class PassportServiceTest extends AbstractTestHelper {
     PassportClaim claim = service.generatePassport(duosUser);
 
     assertNotNull(claim);
-    assertNotNull(claim.visas());
-    assertEquals(4, claim.visas().size(), "2 dataset grants + role + researcher");
+    assertNotNull(claim.ga4gh_passport_v1());
+    assertEquals(4, claim.ga4gh_passport_v1().size(), "2 dataset grants + role + researcher");
 
-    // Ensure all visas have common fields set correctly
+    // Ensure all ga4gh_passport_v1 have common fields set correctly
     claim
-        .visas()
+        .ga4gh_passport_v1()
         .forEach(
             v -> {
               assertEquals(PassportService.ISS, v.iss());
@@ -66,22 +66,23 @@ class PassportServiceTest extends AbstractTestHelper {
               assertNotNull(v.iat());
               assertNotNull(v.exp());
               assertTrue(v.exp() > v.iat(), "exp should be after iat");
-              assertNotNull(v.visaClaim());
-              assertNotNull(v.visaClaim().type());
-              assertNotNull(v.visaClaim().value());
+              assertNotNull(v.ga4gh_visa_v1());
+              assertNotNull(v.ga4gh_visa_v1().type());
+              assertNotNull(v.ga4gh_visa_v1().value());
             });
 
     long roleCount =
-        claim.visas().stream()
-            .filter(v -> VisaClaimTypes.AFFILIATION_AND_ROLE.type.equals(v.visaClaim().type()))
+        claim.ga4gh_passport_v1().stream()
+            .filter(v -> VisaClaimTypes.AFFILIATION_AND_ROLE.type.equals(v.ga4gh_visa_v1().type()))
             .count();
     long researcherCount =
-        claim.visas().stream()
-            .filter(v -> VisaClaimTypes.RESEARCHER_STATUS.type.equals(v.visaClaim().type()))
+        claim.ga4gh_passport_v1().stream()
+            .filter(v -> VisaClaimTypes.RESEARCHER_STATUS.type.equals(v.ga4gh_visa_v1().type()))
             .count();
     long grantCount =
-        claim.visas().stream()
-            .filter(v -> VisaClaimTypes.CONTROLLED_ACCESS_GRANTS.type.equals(v.visaClaim().type()))
+        claim.ga4gh_passport_v1().stream()
+            .filter(
+                v -> VisaClaimTypes.CONTROLLED_ACCESS_GRANTS.type.equals(v.ga4gh_visa_v1().type()))
             .count();
 
     assertEquals(1, roleCount);
@@ -110,7 +111,7 @@ class PassportServiceTest extends AbstractTestHelper {
                     PassportService.ISS.equals(v.iss())
                         && userStatusInfo.getUserSubjectId().equals(v.sub())
                         && VisaClaimTypes.CONTROLLED_ACCESS_GRANTS.type.equals(
-                            v.visaClaim().type())));
+                            v.ga4gh_visa_v1().type())));
   }
 
   @ParameterizedTest
