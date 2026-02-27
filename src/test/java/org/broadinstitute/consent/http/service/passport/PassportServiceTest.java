@@ -3,12 +3,14 @@ package org.broadinstitute.consent.http.service.passport;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
+import jakarta.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
@@ -32,11 +34,16 @@ class PassportServiceTest extends AbstractTestHelper {
 
   private PassportService service;
 
-  private int datasetCounter = 0;
-
   @BeforeEach
   void setUp() {
     service = new PassportService(datasetDAO);
+  }
+
+  @Test
+  void testGeneratePassport_nullUser() {
+    when(duosUser.getUser()).thenReturn(null);
+    assertThrows(NotFoundException.class, () -> service.generatePassport(null));
+    assertThrows(NotFoundException.class, () -> service.generatePassport(duosUser));
   }
 
   @Test
@@ -174,6 +181,7 @@ class PassportServiceTest extends AbstractTestHelper {
     return info;
   }
 
+  private int datasetCounter = 0;
   private ApprovedDataset createApprovedDataset() {
     datasetCounter++;
     String datasetIdentifier = "DUOS-" + datasetCounter;

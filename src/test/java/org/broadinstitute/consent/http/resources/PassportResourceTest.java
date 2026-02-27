@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import java.sql.Timestamp;
@@ -46,6 +47,27 @@ class PassportResourceTest extends AbstractTestHelper {
     PassportResource resource = new PassportResource(passportService);
     Response response = resource.getPassport(duosUser);
     assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  void testGetPassportNotFoundNullDuosUser() {
+    PassportResource resource = new PassportResource(passportService);
+    when(passportService.generatePassport(null))
+        .thenThrow(new NotFoundException("User not found"));
+
+    Response response = resource.getPassport(null);
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  void testGetPassportNotFoundNullUser() {
+    DuosUser duosUser = new DuosUser(authUser, null);
+    PassportResource resource = new PassportResource(passportService);
+    when(passportService.generatePassport(duosUser))
+        .thenThrow(new NotFoundException("User not found"));
+
+    Response response = resource.getPassport(duosUser);
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
   }
 
   private User createUser() {

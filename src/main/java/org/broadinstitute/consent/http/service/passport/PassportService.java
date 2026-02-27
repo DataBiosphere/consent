@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+import jakarta.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.DuosUser;
@@ -15,7 +16,9 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
-/** <a href="https://ga4gh.github.io/data-security/ga4gh-passport">GA4GH Passport</a> */
+/**
+ * <a href="https://ga4gh.github.io/data-security/ga4gh-passport">GA4GH Passport</a>
+ */
 public class PassportService implements ConsentLogger {
 
   public static final String ISS = "https://duos.org";
@@ -29,6 +32,10 @@ public class PassportService implements ConsentLogger {
   }
 
   public PassportClaim generatePassport(DuosUser duosUser) {
+    if (duosUser == null || duosUser.getUser() == null) {
+      throw new NotFoundException("User  not found");
+    }
+
     User user = duosUser.getUser();
     UserStatusInfo userStatusInfo = duosUser.getUserStatusInfo();
     // Affiliation and Role
@@ -45,9 +52,7 @@ public class PassportService implements ConsentLogger {
         Stream.of(grantVisas, List.of(roleVisa), List.of(researcherVisa))
             .flatMap(List::stream)
             .toList();
-    PassportClaim claim = new PassportClaim(allVisas);
-    logInfo("Generated PassportClaim for user: " + user.getEmail() + ": " + claim);
-    return claim;
+    return new PassportClaim(allVisas);
   }
 
   protected List<Visa> buildControlledAccessGrants(
