@@ -10,11 +10,10 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import org.broadinstitute.consent.http.models.DarMetricsSummary;
-import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.service.MetricsService;
 
-@Path("{api : (api/)?}metrics")
+@Path("api/metrics")
 public class MetricsResource extends Resource {
 
   private final MetricsService metricsService;
@@ -22,24 +21,6 @@ public class MetricsResource extends Resource {
   @Inject
   public MetricsResource(MetricsService metricsService) {
     this.metricsService = metricsService;
-  }
-
-  /**
-   * @deprecated
-   * @param datasetId the id of the dataset for which to generate metrics
-   * @return Response containing DatasetMetrics for the given datasetId
-   */
-  @Deprecated(forRemoval = true, since = "2026-02-23")
-  @GET
-  @Path("/dataset/{datasetId}")
-  @Produces("application/json")
-  public Response getDatasetMetricsData(@PathParam("datasetId") Integer datasetId) {
-    try {
-      DatasetMetrics metrics = metricsService.generateDatasetMetrics(datasetId);
-      return Response.ok().entity(metrics).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
   }
 
   @SuppressWarnings("unused")
