@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 public class PassportService implements ConsentLogger {
 
   public static final String ISS = "https://duos.org";
+  public static final int EXPIRATION_SECONDS = 3600;
 
   private final DatasetDAO datasetDAO;
 
@@ -68,7 +69,7 @@ public class PassportService implements ConsentLogger {
         new VisaClaim(type.type(), type.asserted(), type.value(), type.source(), type.by());
     Instant now = Instant.now();
     Long iat = now.getEpochSecond();
-    Long exp = now.plusSeconds(3600).getEpochSecond();
+    Long exp = now.plusSeconds(EXPIRATION_SECONDS).getEpochSecond();
     return new Visa(ISS, userStatusInfo.getUserSubjectId(), iat, exp, claim);
   }
 }

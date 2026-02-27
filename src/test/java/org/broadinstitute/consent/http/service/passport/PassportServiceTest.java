@@ -65,6 +65,7 @@ class PassportServiceTest extends AbstractTestHelper {
               assertEquals(userStatusInfo.getUserSubjectId(), v.sub());
               assertNotNull(v.iat());
               assertNotNull(v.exp());
+              assertSeconds(v);
               assertTrue(v.exp() > v.iat(), "exp should be after iat");
               assertNotNull(v.ga4gh_visa_v1());
               assertNotNull(v.ga4gh_visa_v1().type());
@@ -88,6 +89,17 @@ class PassportServiceTest extends AbstractTestHelper {
     assertEquals(1, roleCount);
     assertEquals(1, researcherCount);
     assertEquals(2, grantCount);
+  }
+
+  void assertSeconds(Visa v) {
+    // iat should be Unix seconds, not milliseconds (ms would be ~1000x larger than nowSeconds)
+    long nowSeconds = Instant.now().getEpochSecond();
+    assertTrue(
+        v.iat() <= nowSeconds + 300,
+        "iat should be expressed in seconds since epoch, not milliseconds");
+    assertTrue(
+        v.exp() <= nowSeconds + 300 + PassportService.EXPIRATION_SECONDS,
+        "exp should be expressed in seconds since epoch, not milliseconds");
   }
 
   @Test

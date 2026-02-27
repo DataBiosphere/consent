@@ -26,6 +26,7 @@ public class ControlledAccessGrants implements VisaClaimType {
       var calendar = Calendar.getInstance();
       calendar.setTime(approvedDataset.getExpirationDate());
       calendar.set(Calendar.YEAR, calendar.get(Calendar.YEAR) - 1);
+      // GA4GH requires Unix timestamps in seconds; Date#getTime() returns milliseconds.
       return calendar.getTimeInMillis() / 1000L;
     }
     return null;
