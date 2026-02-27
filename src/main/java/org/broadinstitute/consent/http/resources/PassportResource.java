@@ -25,6 +25,7 @@ public class PassportResource extends Resource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
+  @Path("userinfo")
   public Response getPassport(@Auth DuosUser duosUser) {
     try {
       PassportClaim passport = passportService.generatePassport(duosUser);

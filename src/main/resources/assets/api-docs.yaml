@@ -717,8 +717,8 @@ paths:
     $ref: './paths/getMatchesForLatestDataAccessElectionsByPurposeIds.yaml'
   /api/metrics/dar-summaries/{datasetId}:
     $ref: './paths/darSummariesByDatasetId.yaml'
-  /api/passport:
-    $ref: './paths/passport.yaml'
+  /api/passport/userinfo:
+    $ref: './paths/passportUserInfo.yaml'
   /api/user:
     $ref: './paths/user.yaml'
   /api/user/me:

@@ -7,8 +7,6 @@ properties:
       - AffiliationAndRole
       - ControlledAccessGrants
       - ResearcherStatus
-      - AcceptedTermsAndPolicies
-      - LinkedIdentities
   asserted:
     type: number
     description: The Asserted timestamp
