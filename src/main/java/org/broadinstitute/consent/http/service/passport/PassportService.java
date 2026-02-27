@@ -3,9 +3,9 @@ package org.broadinstitute.consent.http.service.passport;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -60,6 +60,7 @@ public class PassportService implements ConsentLogger {
   protected List<Visa> buildControlledAccessGrants(
       String userSubjectId, List<ApprovedDataset> approvedDatasets) {
     return approvedDatasets.stream()
+        .filter(d -> d.getDatasetIdentifier() != null)
         // A user can be approved for a dataset on multiple DARs so filter them here.
         .filter(distinctByKey(ApprovedDataset::getDatasetIdentifier))
         .map(d -> visaFromVisaClaimType(userSubjectId, new ControlledAccessGrants(d)))
@@ -67,7 +68,7 @@ public class PassportService implements ConsentLogger {
   }
 
   private static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
-    Set<Object> seen = ConcurrentHashMap.newKeySet();
+    Set<Object> seen = new HashSet<>();
     return t -> seen.add(keyExtractor.apply(t));
   }
 

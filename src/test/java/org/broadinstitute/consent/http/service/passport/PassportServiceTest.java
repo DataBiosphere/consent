@@ -160,10 +160,20 @@ class PassportServiceTest extends AbstractTestHelper {
 
   @Test
   void testApprovedDataset_nullDatasetExpiration() {
-    ApprovedDataset d = createApprovedDataset();
-    d.setExpirationDate(null);
+    ApprovedDataset d = new ApprovedDataset(1, "DUOS-000001", "DUOS-000001 name", "DAC 001", null);
     ControlledAccessGrants grants = new ControlledAccessGrants(d);
     assertNull(grants.asserted(), "asserted should be null if expiration date is null");
+  }
+
+  @Test
+  void testApprovedDataset_nullDatasetIdentifier() {
+    ApprovedDataset d1 = createApprovedDataset();
+    d1.setDatasetIdentifier(null); // should be filtered out
+    ApprovedDataset d2 = createApprovedDataset();
+
+    List<Visa> visas = service.buildControlledAccessGrants("userSubjectId", List.of(d1, d2));
+    assertNotNull(visas);
+    assertEquals(1, visas.size(), "null dataset identifiers should not be included");
   }
 
   @Test
