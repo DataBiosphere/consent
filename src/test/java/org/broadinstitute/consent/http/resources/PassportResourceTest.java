@@ -52,8 +52,7 @@ class PassportResourceTest extends AbstractTestHelper {
   @Test
   void testGetPassportNotFoundNullDuosUser() {
     PassportResource resource = new PassportResource(passportService);
-    when(passportService.generatePassport(null))
-        .thenThrow(new NotFoundException("User not found"));
+    when(passportService.generatePassport(null)).thenThrow(new NotFoundException("User not found"));
 
     Response response = resource.getPassport(null);
     assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());

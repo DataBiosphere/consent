@@ -7,10 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
+import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
-import jakarta.ws.rs.NotFoundException;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
@@ -98,7 +98,7 @@ class PassportServiceTest extends AbstractTestHelper {
     assertEquals(2, grantCount);
   }
 
-  void assertSeconds(Visa v) {
+  private void assertSeconds(Visa v) {
     // iat should be Unix seconds, not milliseconds (ms would be ~1000x larger than nowSeconds)
     long nowSeconds = Instant.now().getEpochSecond();
     assertTrue(
@@ -118,7 +118,9 @@ class PassportServiceTest extends AbstractTestHelper {
     User user = createUser();
     UserStatusInfo userStatusInfo = createUserStatusInfo(user);
 
-    List<Visa> visas = service.buildControlledAccessGrants(userStatusInfo, List.of(d1, d1Dup, d2));
+    List<Visa> visas =
+        service.buildControlledAccessGrants(
+            userStatusInfo.getUserSubjectId(), List.of(d1, d1Dup, d2));
 
     assertNotNull(visas);
     assertEquals(2, visas.size(), "duplicate dataset identifiers should be collapsed");
@@ -164,6 +166,22 @@ class PassportServiceTest extends AbstractTestHelper {
     assertNull(grants.asserted(), "asserted should be null if expiration date is null");
   }
 
+  @Test
+  void testNullUserSubjectInfo() {
+    User user = createUser();
+    when(duosUser.getUser()).thenReturn(user);
+    when(duosUser.getUserStatusInfo()).thenReturn(null);
+    when(datasetDAO.getApprovedDatasets(user.getUserId())).thenReturn(List.of());
+
+    PassportClaim claim = service.generatePassport(duosUser);
+
+    assertNotNull(claim);
+    assertNotNull(claim.ga4gh_passport_v1());
+    claim
+        .ga4gh_passport_v1()
+        .forEach(v -> assertEquals("internal_subject_id_" + user.getUserId(), v.sub()));
+  }
+
   private User createUser() {
     User user = new User();
     user.setUserId(123);
@@ -182,6 +200,7 @@ class PassportServiceTest extends AbstractTestHelper {
   }
 
   private int datasetCounter = 0;
+
   private ApprovedDataset createApprovedDataset() {
     datasetCounter++;
     String datasetIdentifier = "DUOS-" + datasetCounter;
