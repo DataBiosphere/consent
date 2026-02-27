@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service.passport;
 
 import java.util.Calendar;
+import java.util.Date;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 
 /**
@@ -25,11 +26,15 @@ public class ControlledAccessGrants implements VisaClaimType {
     if (approvedDataset.getExpirationDate() != null) {
       var calendar = Calendar.getInstance();
       calendar.setTime(approvedDataset.getExpirationDate());
+      // We don't capture the exact asserted time in the ApprovedDataset object. Generally,the
+      // expiration date is set to one year after the asserted date, so we can usually infer the
+      // asserted time.
       calendar.set(Calendar.YEAR, calendar.get(Calendar.YEAR) - 1);
       // GA4GH requires Unix timestamps in seconds; Date#getTime() returns milliseconds.
       return calendar.getTimeInMillis() / 1000L;
     }
-    return null;
+    // If there is no expiration date, we will use the current time as the asserted time.
+    return new Date().getTime() / 1000L;
   }
 
   @Override

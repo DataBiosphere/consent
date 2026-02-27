@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http.service.passport;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -162,7 +161,7 @@ class PassportServiceTest extends AbstractTestHelper {
   void testApprovedDataset_nullDatasetExpiration() {
     ApprovedDataset d = new ApprovedDataset(1, "DUOS-000001", "DUOS-000001 name", "DAC 001", null);
     ControlledAccessGrants grants = new ControlledAccessGrants(d);
-    assertNull(grants.asserted(), "asserted should be null if expiration date is null");
+    assertNotNull(grants.asserted(), "asserted should not be if expiration date is null");
   }
 
   @Test
