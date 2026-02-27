@@ -11,7 +11,7 @@ import org.broadinstitute.consent.http.models.User;
 public class AffiliationAndRole implements VisaClaimType {
 
   private final User user;
-  public static final String DEFAULT_VALUE = "faculty@faculty@no.organization";
+  public static final String DEFAULT_VALUE = "faculty@no.organization";
 
   public AffiliationAndRole(User user) {
     this.user = user;

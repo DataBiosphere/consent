@@ -27,7 +27,8 @@ public class ResearcherStatus implements VisaClaimType {
         Optional.ofNullable(user.getLibraryCard())
             .map(LibraryCard::getCreateDate)
             .orElse(user.getCreateDate());
-    return assertedDate.getTime();
+    // GA4GH requires Unix timestamps in seconds; Date#getTime() returns milliseconds.
+    return assertedDate.getTime() / 1000L;
   }
 
   @Override
