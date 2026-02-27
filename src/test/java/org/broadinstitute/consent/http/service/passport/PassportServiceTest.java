@@ -217,8 +217,8 @@ class PassportServiceTest extends AbstractTestHelper {
     ApprovedDataset d =
         new ApprovedDataset(
             datasetCounter,
-            datasetIdentifier,
-            datasetIdentifier + " name",
+            "DAR-" + datasetCounter,
+            " Dataset " + randomAlphabetic(10),
             "DAC 001",
             Timestamp.from(Instant.now()));
     d.setDatasetIdentifier(datasetIdentifier);
