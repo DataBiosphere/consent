@@ -590,12 +590,15 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       @BindList(value = "dacIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> dacIds);
 
   @SqlUpdate(
-      "UPDATE dataset "
-          + "SET dac_approval = :dacApproval, "
-          + "dac_approval_date = now(), "
-          + "update_date = :updateDate, "
-          + "update_user_id = :updateUserId "
-          + "WHERE dataset_id = :datasetId")
+  """
+  UPDATE dataset
+  SET
+    dac_approval = :dacApproval,
+    dac_approval_date = now(),
+    update_date = :updateDate,
+    update_user_id = :updateUserId
+  WHERE dataset_id = :datasetId
+  """)
   void updateDatasetApproval(
       @Bind("dacApproval") Boolean dacApproved,
       @Bind("updateDate") Instant updateDate,
