@@ -29,7 +29,7 @@ public class AffiliationAndRole implements VisaClaimType {
             .map(LibraryCard::getCreateDate)
             .orElse(user.getCreateDate());
     // GA4GH requires Unix timestamps in seconds; Date#getTime() returns milliseconds.
-    return assertedDate.getTime() / 1000L;
+    return PassportService.getEpochSeconds(assertedDate.toInstant());
   }
 
   @Override

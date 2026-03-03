@@ -30,11 +30,10 @@ public class ControlledAccessGrants implements VisaClaimType {
       // expiration date is set to one year after the asserted date, so we can usually infer the
       // asserted time.
       calendar.set(Calendar.YEAR, calendar.get(Calendar.YEAR) - 1);
-      // GA4GH requires Unix timestamps in seconds; Date#getTime() returns milliseconds.
-      return calendar.getTimeInMillis() / 1000L;
+      return PassportService.getEpochSeconds(calendar.toInstant());
     }
     // If there is no expiration date, we will use the current time as the asserted time.
-    return new Date().getTime() / 1000L;
+    return PassportService.getEpochSeconds(new Date().toInstant());
   }
 
   @Override

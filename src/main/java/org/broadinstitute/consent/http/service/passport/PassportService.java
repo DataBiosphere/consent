@@ -76,8 +76,15 @@ public class PassportService implements ConsentLogger {
     VisaClaim claim =
         new VisaClaim(type.type(), type.asserted(), type.value(), type.source(), type.by());
     Instant now = Instant.now();
-    Long iat = now.getEpochSecond();
-    Long exp = now.plusSeconds(EXPIRATION_SECONDS).getEpochSecond();
-    return new Visa(ISS, userSubjectId, iat, exp, claim);
+    return new Visa(
+        ISS,
+        userSubjectId,
+        getEpochSeconds(now),
+        getEpochSeconds(now.plusSeconds(EXPIRATION_SECONDS)),
+        claim);
+  }
+
+  public static long getEpochSeconds(Instant instant) {
+    return instant.getEpochSecond();
   }
 }
