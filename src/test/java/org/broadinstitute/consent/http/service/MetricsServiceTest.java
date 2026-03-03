@@ -13,10 +13,10 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
+import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
-import org.broadinstitute.consent.http.models.DatasetMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,7 +38,7 @@ class MetricsServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testGenerateDatasetMetrics() {
+  void testGenerateDarSummaries() {
     DataAccessRequest dar = generateDar();
     Dataset dataset = generateDataset();
 
@@ -46,19 +46,19 @@ class MetricsServiceTest extends AbstractTestHelper {
     when(darDAO.findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(any()))
         .thenReturn(List.of(dar));
 
-    DatasetMetrics metrics = service.generateDatasetMetrics(dataset.getDatasetId());
+    List<DarMetricsSummary> metrics = service.generateDarSummaries(dataset.getDatasetId());
 
-    assertEquals(dar.getData().getProjectTitle(), metrics.getDars().getFirst().projectTitle());
-    assertEquals(dar.getDarCode(), metrics.getDars().getFirst().darCode());
+    assertEquals(dar.getData().getProjectTitle(), metrics.getFirst().projectTitle());
+    assertEquals(dar.getDarCode(), metrics.getFirst().darCode());
     verify(dataSetDAO).findDatasetById(dataset.getDatasetId());
     verify(darDAO).findSummaryMetricApprovedDARsByDatasetIdIncludesExpired(dataset.getDatasetId());
   }
 
   @Test
-  void testGenerateDatasetMetricsNotFound() {
+  void testGenerateDarSummariesNotFound() {
     when(dataSetDAO.findDatasetById(any())).thenReturn(null);
 
-    assertThrows(NotFoundException.class, () -> service.generateDatasetMetrics(1));
+    assertThrows(NotFoundException.class, () -> service.generateDarSummaries(1));
   }
 
   private DataAccessRequest generateDar() {

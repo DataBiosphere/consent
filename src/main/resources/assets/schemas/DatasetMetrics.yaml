@@ -1,6 +1,0 @@
-type: object
-properties:
-  dars:
-    type: array
-    items:
-        $ref: './DarMetric.yaml'
