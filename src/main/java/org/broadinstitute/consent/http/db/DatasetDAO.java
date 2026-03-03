@@ -590,7 +590,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
       @BindList(value = "dacIds", onEmpty = EmptyHandling.NULL_STRING) List<Integer> dacIds);
 
   @SqlUpdate(
-  """
+      """
   UPDATE dataset
   SET
     dac_approval = :dacApproval,
