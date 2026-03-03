@@ -236,4 +236,6 @@
   <include file="changesets/changelog-consent-2026-02-05-fix-dataset-access-control.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-02-11-new-dataset-property-dictionary-entry.xml"
            relativeToChangelogFile="true"/>
+  <include file="changesets/changelog-consent-2026-03-03-dac-dataset-approval-time.xml"
+           relativeToChangelogFile="true" />
 </databaseChangeLog>

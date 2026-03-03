@@ -592,6 +592,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
   @SqlUpdate(
       "UPDATE dataset "
           + "SET dac_approval = :dacApproval, "
+          + "dac_approval_date = now(), "
           + "update_date = :updateDate, "
           + "update_user_id = :updateUserId "
           + "WHERE dataset_id = :datasetId")
