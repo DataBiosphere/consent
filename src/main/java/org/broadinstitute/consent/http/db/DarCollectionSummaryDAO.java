@@ -42,12 +42,12 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         ARRAY_AGG(dar_all.reference_id) AS reference_ids
       FROM dar_collection c
       -- DAR Collection Researcher join
-      INNER JOIN users researcher
+      LEFT JOIN users researcher
         ON researcher.user_id = c.create_user_id
       LEFT JOIN institution i
         ON i.institution_id = researcher.institution_id
       -- DAC User join
-      INNER JOIN users dacUser
+      LEFT JOIN users dacUser
         ON dacUser.user_id = :currentUserId
       INNER JOIN user_role ur
         ON dacUser.user_id = ur.user_id AND ur.role_id = :roleId AND ur.dac_id IS NOT NULL
@@ -126,7 +126,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                latest_dar.data ->> 'signingOfficialEmail' AS signingOfficialEmail,
                ARRAY_AGG(dar_all.reference_id) AS reference_ids
               FROM dar_collection c
-              INNER JOIN users u
+              LEFT JOIN users u
                 ON u.user_id = c.create_user_id
               LEFT JOIN institution i
                 ON i.institution_id = u.institution_id
@@ -191,7 +191,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               dac.name AS dac_name,
               ARRAY_AGG(dar_all.reference_id) AS reference_ids
           FROM dar_collection c
-          INNER JOIN users u ON u.user_id = c.create_user_id
+          LEFT JOIN users u ON u.user_id = c.create_user_id
           LEFT JOIN institution i ON i.institution_id = u.institution_id
           INNER JOIN (
               SELECT DISTINCT ON (collection_id) *
@@ -308,7 +308,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         dac.name AS dac_name,
         ARRAY_AGG(dar_all.reference_id) AS reference_ids
       FROM dar_collection c
-      INNER JOIN users u
+      LEFT JOIN users u
         ON u.user_id = c.create_user_id
       LEFT JOIN institution i
         ON i.institution_id = u.institution_id
@@ -373,7 +373,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                 latest_dar.data ->> 'closeoutSupplement' AS closeout,
                 ARRAY_AGG(dar_all.reference_id) AS reference_ids
               FROM dar_collection c
-              INNER JOIN users u
+              LEFT JOIN users u
               ON u.user_id = c.create_user_id
               LEFT JOIN institution i
               ON i.institution_id = u.institution_id
