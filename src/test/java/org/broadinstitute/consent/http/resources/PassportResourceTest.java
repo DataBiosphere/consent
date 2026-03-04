@@ -1,0 +1,88 @@
+package org.broadinstitute.consent.http.resources;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
+import java.sql.Timestamp;
+import java.time.Instant;
+import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
+import org.broadinstitute.consent.http.models.User;
+import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
+import org.broadinstitute.consent.http.service.passport.PassportService;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class PassportResourceTest extends AbstractTestHelper {
+
+  @Mock private PassportService passportService;
+  private final AuthUser authUser = new AuthUser("test@test.com");
+
+  @Test
+  void testGetPassportSuccess() {
+    User user = createUser();
+    authUser.setEmail(user.getEmail());
+    UserStatusInfo userStatusInfo = createUserStatusInfo(user);
+    DuosUser duosUser = new DuosUser(authUser, user);
+    duosUser.setUserStatusInfo(userStatusInfo);
+
+    PassportResource resource = new PassportResource(passportService);
+    Response response = resource.getPassport(duosUser);
+    assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  void testGetPassportFailure() {
+    DuosUser duosUser = new DuosUser(authUser, null);
+    when(passportService.generatePassport(duosUser))
+        .thenThrow(new RuntimeException("Passport generation failed"));
+
+    PassportResource resource = new PassportResource(passportService);
+    Response response = resource.getPassport(duosUser);
+    assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  void testGetPassportNotFoundNullDuosUser() {
+    PassportResource resource = new PassportResource(passportService);
+    when(passportService.generatePassport(null)).thenThrow(new NotFoundException("User not found"));
+
+    Response response = resource.getPassport(null);
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  void testGetPassportNotFoundNullUser() {
+    DuosUser duosUser = new DuosUser(authUser, null);
+    PassportResource resource = new PassportResource(passportService);
+    when(passportService.generatePassport(duosUser))
+        .thenThrow(new NotFoundException("User not found"));
+
+    Response response = resource.getPassport(duosUser);
+    assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+  }
+
+  private User createUser() {
+    User user = new User();
+    user.setUserId(123);
+    user.setEmail("test@example.org");
+    user.setCreateDate(Timestamp.from(Instant.now()));
+    return user;
+  }
+
+  private UserStatusInfo createUserStatusInfo(User user) {
+    UserStatusInfo info = new UserStatusInfo();
+    info.setUserEmail(user.getEmail());
+    info.setUserSubjectId(randomAlphanumeric(10));
+    info.setEnabled(true);
+    info.setTosAccepted(true);
+    return info;
+  }
+}
