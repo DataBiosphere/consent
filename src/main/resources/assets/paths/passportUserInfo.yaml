@@ -6,7 +6,7 @@ get:
     and is meant to be used by a client application that has authenticated a user via OIDC and received an access token.
     The client application can then use that access token to call this endpoint and receive the user's DUOS visas in the form of a GA4GH Passport.
   tags:
-    - GA4GH
+    - Admin
   responses:
     200:
       description: A Passport Object representing the authenticated user's known visas

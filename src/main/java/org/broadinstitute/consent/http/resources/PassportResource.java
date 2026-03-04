@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.resources;
 
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
-import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -24,7 +24,7 @@ public class PassportResource extends Resource {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  @PermitAll
+  @RolesAllowed({ADMIN})
   @Path("userinfo")
   public Response getPassport(@Auth DuosUser duosUser) {
     try {
