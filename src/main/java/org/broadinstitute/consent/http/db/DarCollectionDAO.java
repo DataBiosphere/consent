@@ -70,51 +70,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           List<Integer> collectionIds);
 
   /**
-   * Find all DARCollections with their DataAccessRequests
-   *
-   * @return List<DarCollection>
-   */
-  @RegisterBeanMapper(value = User.class, prefix = "u")
-  @RegisterBeanMapper(value = Institution.class, prefix = "i")
-  @RegisterBeanMapper(value = DarCollection.class)
-  @RegisterBeanMapper(value = DataAccessRequest.class, prefix = "dar")
-  @RegisterBeanMapper(value = UserProperty.class, prefix = "up")
-  @RegisterBeanMapper(value = Election.class, prefix = "e")
-  @UseRowReducer(DarCollectionReducer.class)
-  @SqlQuery(
-      " SELECT c.*, "
-          + User.QUERY_FIELDS_WITH_U_PREFIX
-          + QUERY_FIELD_SEPARATOR
-          + Institution.QUERY_FIELDS_WITH_I_PREFIX
-          + QUERY_FIELD_SEPARATOR
-          + UserProperty.QUERY_FIELDS_WITH_UP_PREFIX
-          + QUERY_FIELD_SEPARATOR
-          + Election.QUERY_FIELDS_WITH_E_PREFIX
-          + QUERY_FIELD_SEPARATOR
-          + "dd.dataset_id, "
-          + "dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id, "
-          + "dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, "
-          + "dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date, "
-          + "dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date, "
-          + "dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id, "
-          + "dar.requires_so_approval AS dar_requires_so_approval, dar.approving_so_timestamp AS dar_approving_signing_official_approved_date,"
-          + "dar.approving_so_id AS dar_approving_signing_official_user_id,"
-          + "dar.update_date AS dar_update_date, (dar.data #>> '{}')::jsonb AS data "
-          + "FROM dar_collection c "
-          + "INNER JOIN users u ON c.create_user_id = u.user_id "
-          + "LEFT JOIN user_property up ON u.user_id = up.user_id "
-          + "INNER JOIN data_access_request dar on c.collection_id = dar.collection_id "
-          + "LEFT JOIN dar_dataset dd on dd.reference_id = dar.reference_id "
-          + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
-          + "LEFT JOIN ("
-          + "   SELECT election.*, MAX(election.election_id) OVER (PARTITION BY election.reference_id, election.election_type, election.dataset_id) AS latest FROM election "
-          + "   WHERE LOWER(election.election_type) = 'dataaccess' OR LOWER(election.election_type) = 'rp' "
-          + ") AS e "
-          + "   ON (dar.reference_id = e.reference_id AND dd.dataset_id = e.dataset_id) AND (e.latest = e.election_id OR e.latest IS NULL) "
-          + "WHERE (LOWER(data->>'status')!='archived' OR data->>'status' IS NULL) ")
-  List<DarCollection> findAllDARCollections();
-
-  /**
    * Find the DARCollection and all of its Data Access Requests that contains the DAR with the given
    * referenceId
    *
