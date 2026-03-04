@@ -33,7 +33,7 @@ public interface UserRoleDAO extends Transactional<UserRoleDAO> {
     SELECT DISTINCT name
     FROM roles r
     INNER JOIN user_role ur ON ur.role_id = r.role_id
-    INNER JOIN users u ON u.user_id = ur.user_id
+    LEFT JOIN users u ON u.user_id = ur.user_id
     WHERE LOWER(u.email) = LOWER(:email)
     """)
   List<String> findRoleNamesByUserEmail(@Bind("email") String email);
