@@ -270,7 +270,7 @@ public interface DatasetDAO extends Transactional<DatasetDAO> {
           SELECT distinct d.dataset_id
           FROM dataset d
           INNER JOIN user_role dac_role ON dac_role.dac_id = d.dac_id
-          INNER JOIN users dac_user ON dac_role.user_id = dac_user.user_id AND dac_user.user_id = :userId
+          LEFT JOIN users dac_user ON dac_role.user_id = dac_user.user_id AND dac_user.user_id = :userId
       """)
   List<Integer> findDatasetIdsByDACUserId(@Bind("userId") Integer userId);
 
