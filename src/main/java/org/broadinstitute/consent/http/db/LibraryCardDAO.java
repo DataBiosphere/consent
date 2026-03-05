@@ -108,7 +108,7 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       SELECT library_card.*, ld.daa_id
       FROM library_card
       LEFT JOIN lc_daa ld ON library_card.id = ld.lc_id
-      LEFT JOIN users u ON library_card.user_id = u.user_id AND u.institution_id = :institutionId
+      INNER JOIN users u ON library_card.user_id = u.user_id AND u.institution_id = :institutionId
       """)
   List<LibraryCard> findLibraryCardsByInstitutionId(@Bind("institutionId") Integer institutionId);
 

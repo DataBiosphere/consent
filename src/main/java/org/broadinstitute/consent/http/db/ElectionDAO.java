@@ -78,7 +78,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       """
       SELECT e.* FROM election e
       INNER JOIN data_access_request dar ON dar.reference_id = e.reference_id
-      LEFT JOIN users u ON u.user_id = dar.user_id
+      INNER JOIN users u ON u.user_id = dar.user_id
       INNER JOIN library_card lc ON lc.user_id = u.user_id
       WHERE e.election_id IN (<electionIds>)
     """)
@@ -265,8 +265,8 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
                INNER JOIN dar_dataset dar_ds ON dar_ds.reference_id = dar.reference_id
                INNER JOIN dar_collection dc ON dc.collection_id = dar.collection_id
                INNER JOIN vote v ON v.election_id = e_sub.election_id
-               LEFT JOIN users u ON u.user_id = v.user_id
-               LEFT JOIN users dar_u ON dar_u.user_id = dar.user_id
+               INNER JOIN users u ON u.user_id = v.user_id
+               INNER JOIN users dar_u ON dar_u.user_id = dar.user_id
                LEFT OUTER JOIN email_entity ee ON ee.user_id = u.user_id AND ee.email_type = :emailType AND ee.entity_reference_id = :referenceId
       WHERE v.vote IS NULL
         AND dc.dar_code IS NOT NULL

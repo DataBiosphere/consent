@@ -39,7 +39,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           + QUERY_FIELD_SEPARATOR
           + DarCollection.DAR_FILTER_QUERY_COLUMNS
           + " FROM dar_collection c "
-          + " LEFT JOIN users u ON u.user_id = c.create_user_id "
+          + " INNER JOIN users u ON u.user_id = c.create_user_id "
           + " LEFT JOIN user_property up ON u.user_id = up.user_id AND up.property_key in ('isThePI', 'piName', 'havePI', 'piERACommonsID') "
           + " LEFT JOIN institution i ON i.institution_id = u.institution_id "
           + " INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id "
@@ -100,7 +100,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
         dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date,
         dar.update_date AS dar_update_date, dar.data AS data, dd.dataset_id
         FROM dar_collection c
-        LEFT JOIN users u ON c.create_user_id = u.user_id
+        INNER JOIN users u ON c.create_user_id = u.user_id
         LEFT JOIN user_property up ON u.user_id = up.user_id
         LEFT JOIN institution i ON i.institution_id = u.institution_id
         INNER JOIN data_access_request dar ON c.collection_id = dar.collection_id
@@ -149,7 +149,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           + "v.vote_id as v_vote_id, v.vote as v_vote, v.user_id as v_user_id, v.rationale as v_rationale, v.election_id as v_election_id, "
           + "v.create_date as v_create_date, v.update_date as v_update_date, v.type as v_type, du.display_name as v_display_name "
           + "FROM dar_collection c "
-          + "LEFT JOIN users u ON c.create_user_id = u.user_id "
+          + "INNER JOIN users u ON c.create_user_id = u.user_id "
           + "LEFT JOIN user_property up ON u.user_id = up.user_id "
           + "LEFT JOIN institution i ON i.institution_id = u.institution_id "
           + "LEFT JOIN library_card lc ON u.user_id = lc.user_id "
@@ -206,7 +206,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
        v.vote_id as v_vote_id, v.vote as v_vote, v.user_id as v_user_id, v.rationale as v_rationale, v.election_id as v_election_id,
        v.create_date as v_create_date, v.update_date as v_update_date, v.type as v_type, du.display_name as v_display_name
     FROM dar_collection c
-    LEFT JOIN users u ON c.create_user_id = u.user_id
+    INNER JOIN users u ON c.create_user_id = u.user_id
     LEFT JOIN user_property up ON u.user_id = up.user_id
     LEFT JOIN institution i ON i.institution_id = u.institution_id
     LEFT JOIN library_card lc ON u.user_id = lc.user_id
@@ -262,7 +262,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
        v.vote_id as v_vote_id, v.vote as v_vote, v.user_id as v_user_id, v.rationale as v_rationale, v.election_id as v_election_id,
        v.create_date as v_create_date, v.update_date as v_update_date, v.type as v_type, du.display_name as v_display_name
     FROM dar_collection c
-    LEFT JOIN users u ON c.create_user_id = u.user_id
+    INNER JOIN users u ON c.create_user_id = u.user_id
     LEFT JOIN user_property up ON u.user_id = up.user_id
     LEFT JOIN institution i ON i.institution_id = u.institution_id
     LEFT JOIN library_card lc ON u.user_id = lc.user_id
