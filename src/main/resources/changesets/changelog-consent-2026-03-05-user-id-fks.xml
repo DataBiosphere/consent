@@ -77,10 +77,37 @@
       SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM vote WHERE user_id NOT IN (SELECT user_id FROM users)
     </sql>
     <rollback>
+      <!-- Delete the users that were inserted by this migration in the rollback. -->
       <sql>
-        -- Delete the users that were inserted by this migration in the rollback, to keep the database clean.
-        DELETE FROM users WHERE display_name = 'redacted'
+        DELETE FROM users WHERE display_name = 'redacted' AND email LIKE 'redacted_%';
       </sql>
     </rollback>
+    <addForeignKeyConstraint baseTableName="dac_rule_audit" baseColumnNames="user_id"
+                             constraintName="fk_dac_rule_audit_user_id"
+                             referencedTableName="users" referencedColumnNames="user_id"/>
+    <addForeignKeyConstraint baseTableName="dar_collection" baseColumnNames="create_user_id"
+                             constraintName="fk_dar_collection_create_user_id"
+                             referencedTableName="users" referencedColumnNames="user_id"/>
+    <addForeignKeyConstraint baseTableName="dar_collection" baseColumnNames="update_user_id"
+                             constraintName="fk_dar_collection_update_user_id"
+                             referencedTableName="users" referencedColumnNames="user_id"/>
+    <addForeignKeyConstraint baseTableName="data_access_request" baseColumnNames="user_id"
+                             constraintName="fk_data_access_request_user_id"
+                             referencedTableName="users" referencedColumnNames="user_id"/>
+    <addForeignKeyConstraint baseTableName="dataset" baseColumnNames="update_user_id"
+                             constraintName="fk_dataset_update_user_id"
+                             referencedTableName="users" referencedColumnNames="user_id"/>
+    <addForeignKeyConstraint baseTableName="dataset_authorized_readers" baseColumnNames="created_by"
+                             constraintName="fk_dataset_authorized_readers_created_by"
+                             referencedTableName="users" referencedColumnNames="user_id"/>
+    <addForeignKeyConstraint baseTableName="email_entity" baseColumnNames="user_id"
+                             constraintName="fk_email_entity_user_id"
+                             referencedTableName="users" referencedColumnNames="user_id"/>
+    <addForeignKeyConstraint baseTableName="ontology_index" baseColumnNames="create_user_id"
+                             constraintName="fk_ontology_index_create_user_id"
+                             referencedTableName="users" referencedColumnNames="user_id"/>
+    <addForeignKeyConstraint baseTableName="ontology_index" baseColumnNames="update_user_id"
+                             constraintName="fk_ontology_index_update_user_id"
+                             referencedTableName="users" referencedColumnNames="user_id"/>
   </changeSet>
 </databaseChangeLog>
