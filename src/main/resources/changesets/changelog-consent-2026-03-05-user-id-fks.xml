@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2026-03-05-user-id-fks" author="grushton">
+    <!--
+      Populate the users table with any user_ids that are referenced in other tables but do not exist in the users table.
+      This is necessary before adding user_id foreign key constraints.
+    -->
+    <sql>
+      INSERT INTO users (user_id, email, display_name, create_date)
+      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM acknowledgement WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM approval_expiration_time WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM dac_rule_audit WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM dac_rule_settings WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT create_user_id, 'redacted_' || create_user_id, 'redacted', now() FROM dar_collection WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT update_user_id, 'redacted_' || update_user_id, 'redacted', now() FROM dar_collection WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT create_user_id, 'redacted_' || create_user_id, 'redacted', now() FROM data_access_agreement WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT update_user_id, 'redacted_' || update_user_id, 'redacted', now() FROM data_access_agreement WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM data_access_request WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT create_user_id, 'redacted_' || create_user_id, 'redacted', now() FROM dataset WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT update_user_id, 'redacted_' || update_user_id, 'redacted', now() FROM dataset WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT modified_by_user, 'redacted_' || modified_by_user, 'redacted', now() FROM dataset_audit WHERE modified_by_user NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM dataset_authorized_readers WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT created_by, 'redacted_' || created_by, 'redacted', now() FROM dataset_authorized_readers WHERE created_by NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT create_user_id, 'redacted_' || create_user_id, 'redacted', now() FROM draft WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT update_user_id, 'redacted_' || update_user_id, 'redacted', now() FROM draft WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM email_entity WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM feature_flag_audit WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT create_user_id, 'redacted_' || create_user_id, 'redacted', now() FROM file_storage_object WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT delete_user_id, 'redacted_' || delete_user_id, 'redacted', now() FROM file_storage_object WHERE delete_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT update_user_id, 'redacted_' || update_user_id, 'redacted', now() FROM file_storage_object WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT create_user, 'redacted_' || create_user, 'redacted', now() FROM institution WHERE create_user NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT update_user, 'redacted_' || update_user, 'redacted', now() FROM institution WHERE update_user NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM library_card WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT create_user_id, 'redacted_' || create_user_id, 'redacted', now() FROM library_card WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT update_user_id, 'redacted_' || update_user_id, 'redacted', now() FROM library_card WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT create_user_id, 'redacted_' || create_user_id, 'redacted', now() FROM ontology_index WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT update_user_id, 'redacted_' || update_user_id, 'redacted', now() FROM ontology_index WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT create_user_id, 'redacted_' || create_user_id, 'redacted', now() FROM study WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT update_user_id, 'redacted_' || update_user_id, 'redacted', now() FROM study WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM user_property WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM user_role WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM vote WHERE user_id NOT IN (SELECT user_id FROM users)
+    </sql>
+    <rollback>
+      <sql>
+        -- Delete the users that were inserted by this migration in the rollback, to keep the database clean.
+        DELETE FROM users WHERE display_name = 'redacted'
+      </sql>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
