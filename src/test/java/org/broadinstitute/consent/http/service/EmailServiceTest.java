@@ -690,6 +690,42 @@ class EmailServiceTest extends AbstractTestHelper {
             any());
   }
 
+  @Test
+  void testSendNewDatasetInDUOSNotifications_IOException() throws IOException {
+    User toUser = new User();
+    toUser.setDisplayName("Test User");
+    toUser.setUserId(1);
+    toUser.setEmail("test@example.com");
+    toUser.setEmailPreference(true);
+    when(datasetDAO.getRecentDacApprovedDatasetStudyIds()).thenReturn(List.of());
+    when(datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds()).thenReturn(List.of());
+    when(studyDAO.findNameAndDatasetCount(any()))
+        .thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, 7)));
+    Handle handle = mock(Handle.class);
+    Jdbi jdbi = mock(Jdbi.class);
+    when(userDAO.getHandle()).thenReturn(handle);
+    when(handle.getJdbi()).thenReturn(jdbi);
+    doAnswer(
+            invocation -> {
+              HandleConsumer<Exception> consumer = invocation.getArgument(0);
+              consumer.useHandle(handle);
+              return null;
+            })
+        .when(jdbi)
+        .useHandle(any());
+    ResultIterator<User> mockIterator = mock(ResultIterator.class);
+    when(mockIterator.hasNext()).thenReturn(true, false);
+    when(mockIterator.next()).thenReturn(toUser);
+    when(userDAO.allEmailReceivingThinlyPopulatedUsers(any(), any()))
+        .thenReturn(ResultIterable.of(mockIterator));
+    doThrow(new IOException("Some exception", null))
+        .when(templateHelper)
+        .getTemplate(EmailType.NEW_STUDY_DIGEST.templateName);
+
+    service.sendNewDatasetInDUOSNotifications();
+    verify(userDAO, times(1)).getHandle();
+  }
+
   private List<MailMessage> generateMailMessageList() {
     return Collections.nCopies(2, generateMailMessage());
   }

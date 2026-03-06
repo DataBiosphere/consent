@@ -11,6 +11,7 @@ import freemarker.template.TemplateException;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -519,6 +521,8 @@ public class EmailService implements ConsentLogger {
     Integer emailType = EmailType.NEW_STUDY_DIGEST.getTypeInt();
     List<StudyDatasetCountRecord> studyInfo = getRecentStudyInfoForDigestMessage();
     if (studyInfo != null && !studyInfo.isEmpty()) {
+      AtomicInteger success = new AtomicInteger(0);
+      AtomicInteger errors = new AtomicInteger(0);
       userDAO
           .getHandle()
           .getJdbi()
@@ -532,14 +536,33 @@ public class EmailService implements ConsentLogger {
                         sendMessage(
                             new NewStudyDigestMessage(user, studyInfo, referenceId),
                             user.getUserId());
+                        success.incrementAndGet();
                       } catch (IOException | TemplateException e) {
                         logWarn(
                             "Failed to send NewStudyDigestMessage email for user "
                                 + user.getUserId(),
                             e);
+                        errors.incrementAndGet();
+                      }
+                      // sleep for a minute after each batch of 500 because Twillow may throw
+                      // 429s if we send too many email messages too quickly.
+                      if ((success.get() + errors.get() % 500) == 0) {
+                        logInfo(
+                            "Processing user emails for NewStudyDigestMessage, %d processed.  Pausing for 60 seconds."
+                                .formatted(success.get() + errors.get()));
+                        try {
+                          Thread.sleep(Duration.ofSeconds(60).toMillis());
+                        } catch (InterruptedException e) {
+                          logWarn(
+                              "NewStudyDigestMessage process interrupted. %d successfully sent, %d failed"
+                                  .formatted(success.get(), errors.get()));
+                        }
                       }
                     });
               });
+      logInfo(
+          "NewStudyDigestMessage stats: %d successfully sent, %d failed."
+              .formatted(success.get(), errors.get()));
     } else {
       logInfo("Skipping New Study Digest emails, no data found to send.");
     }
