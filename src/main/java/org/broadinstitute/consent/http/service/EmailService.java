@@ -75,6 +75,8 @@ import org.jdbi.v3.core.result.ResultIterable;
 public class EmailService implements ConsentLogger {
 
   private static final int LOOKBACK_DELAY_HOURS = 24;
+  private static final int SENDGRID_THROTTLE_MESSAGE_COUNT = 500;
+  private static final int SENDGRID_THROTTLE_RESET_TIME = 60;
   private final UserDAO userDAO;
   private final MailMessageDAO emailDAO;
   private final ElectionDAO electionDAO;
@@ -553,12 +555,12 @@ public class EmailService implements ConsentLogger {
                     }
                     // sleep for a minute after each batch of 500 because Twillow may throw
                     // 429s if we send too many email messages too quickly.
-                    if ((success.get() + errors.get() % 500) == 0) {
+                    if ((success.get() + errors.get() % SENDGRID_THROTTLE_MESSAGE_COUNT) == 0) {
                       logInfo(
-                          "Processing user emails for NewStudyDigestMessage, %d processed.  Pausing for 60 seconds."
-                              .formatted(success.get() + errors.get()));
+                          "Processing user emails for NewStudyDigestMessage, %d processed.  Pausing for %d seconds."
+                              .formatted(success.get() + errors.get(), SENDGRID_THROTTLE_RESET_TIME));
                       try {
-                        Thread.sleep(Duration.ofSeconds(60).toMillis());
+                        Thread.sleep(Duration.ofSeconds(SENDGRID_THROTTLE_RESET_TIME).toMillis());
                       } catch (InterruptedException e) {
                         logWarn(
                             "NewStudyDigestMessage process interrupted. %d successfully sent, %d failed"
