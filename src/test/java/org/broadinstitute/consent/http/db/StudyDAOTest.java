@@ -11,7 +11,9 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
@@ -21,6 +23,7 @@ import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
@@ -361,6 +364,25 @@ class StudyDAOTest extends DAOTestHelper {
     Study foundStudy = studyDAO.findStudyByName(study.getName());
     assertNotNull(foundStudy);
     assertEquals(study.getStudyId(), foundStudy.getStudyId());
+  }
+
+  @Test
+  void testFindNameAndDatasetCount() {
+    Study study1 = insertStudyWithProperties();
+    Study study2 = insertStudyWithProperties();
+    IntStream.range(0, 19).forEach(i -> insertDatasetForStudy(study1.getStudyId()));
+    IntStream.range(0, 5).forEach(i -> insertDatasetForStudy(study2.getStudyId()));
+    List<StudyDatasetCountRecord> records =
+        studyDAO.findNameAndDatasetCount(Set.of(study1.getStudyId()));
+    assertEquals(1, records.size());
+    assertEquals(19, records.getFirst().datasetCount());
+
+    records = studyDAO.findNameAndDatasetCount(Set.of(study2.getStudyId()));
+    assertEquals(1, records.size());
+    assertEquals(5, records.getFirst().datasetCount());
+
+    records = studyDAO.findNameAndDatasetCount(Set.of(study1.getStudyId(), study2.getStudyId()));
+    assertEquals(2, records.size());
   }
 
   private FileStorageObject createFileStorageObject(String entityId, FileCategory category) {

@@ -8,15 +8,19 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.Response;
+import java.util.concurrent.ExecutorService;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.EmailService;
+import org.broadinstitute.consent.http.util.ThreadUtils;
 
 @Path("api/emailNotifier")
 public class EmailNotifierResource extends Resource {
 
   private final DataAccessRequestService dataAccessRequestService;
   private final EmailService emailService;
+  private final ExecutorService executor =
+      new ThreadUtils().getExecutorService(EmailNotifierResource.class);
 
   @Inject
   public EmailNotifierResource(
@@ -60,6 +64,26 @@ public class EmailNotifierResource extends Resource {
       return createExceptionResponse(e);
     }
 
+    return Response.ok().build();
+  }
+
+  @GET
+  @Path("/dailyDigestMessages")
+  @RolesAllowed({SERVICE_ACCOUNT})
+  public Response sendDailyDigestMessages(@Auth AuthUser authUser) {
+    executor.submit(
+        () -> {
+          try {
+            emailService.sendVoteDigestMessages();
+          } catch (Exception e) {
+            logWarn("Failed to send daily vote digest messages", e);
+          }
+          try {
+            emailService.sendNewDatasetInDUOSNotifications();
+          } catch (Exception e) {
+            logWarn("Failed to send new dataset in duos messages", e);
+          }
+        });
     return Response.ok().build();
   }
 }

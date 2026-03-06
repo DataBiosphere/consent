@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.jdbi.v3.core.result.ResultIterable;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
@@ -206,6 +207,25 @@ public interface UserDAO extends Transactional<UserDAO> {
       WHERE LOWER(u.email) = LOWER(:email)
       """)
   User findUserByEmail(@Bind("email") String email);
+
+  @RegisterBeanMapper(value = User.class, prefix = "u")
+  @SqlQuery(
+      """
+      SELECT
+          u.user_id as u_user_id,
+          u.email as u_email,
+          u.display_name as u_display_name,
+          u.create_date as u_create_date,
+          u.email_preference as u_email_preference,
+          u.institution_id as u_institution_id,
+          u.era_commons_id as u_era_commons_id
+      FROM users u
+      LEFT OUTER JOIN email_entity ee ON ee.user_id = u.user_id AND ee.email_type = :emailType AND ee.entity_reference_id = :referenceId
+      WHERE u.email_preference = true
+        AND ee.entity_reference_id IS NULL
+      """)
+  ResultIterable<User> allEmailReceivingThinlyPopulatedUsers(
+      @Bind("emailType") Integer emailType, @Bind("referenceId") String referenceId);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class, prefix = "ur")

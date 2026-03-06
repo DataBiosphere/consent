@@ -655,4 +655,26 @@ WHERE dar.submission_date > now() - interval '1 year'
     WHERE data ->> 'closeoutSupplement' IS NOT NULL)
   """)
   List<ApprovedDataset> getApprovedDatasets(@Bind("userId") Integer userId);
+
+  @SqlQuery(
+      """
+    SELECT dataset.study_id from dataset
+        INNER JOIN study on dataset.study_id = study.study_id
+    WHERE dataset.dac_approval_date > now() - make_interval(hours => 24)
+        AND dataset.dac_approval = true
+        AND study.public_visibility = true
+    """)
+  List<Integer> getRecentDacApprovedDatasetStudyIds();
+
+  @SqlQuery(
+"""
+      SELECT dataset.study_id from dataset
+          INNER JOIN study on dataset.study_id = study.study_id
+          INNER JOIN dataset_property on dataset.dataset_id = dataset_property.dataset_id
+      WHERE dataset.create_date > now() - make_interval(hours => 24)
+          AND study.public_visibility = true
+          AND dataset_property.schema_property = 'accessManagement'
+          AND dataset_property.property_value IN ('open', 'external')
+""")
+  List<Integer> getRecentlyCreatedOpenOrExternalDatasetStudyIds();
 }

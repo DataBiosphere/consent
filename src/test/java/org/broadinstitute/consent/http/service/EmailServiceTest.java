@@ -31,6 +31,7 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -67,6 +68,7 @@ class EmailServiceTest extends AbstractTestHelper {
   @Mock private MailMessageDAO emailDAO;
   @Mock private SendGridAPI sendGridAPI;
   @Mock private FreeMarkerTemplateHelper templateHelper;
+  @Mock private DAOContainer daoContainer;
 
   @BeforeEach
   void initService() {
@@ -76,7 +78,10 @@ class EmailServiceTest extends AbstractTestHelper {
 
     ServicesConfiguration servicesConfiguration = config.getServicesConfiguration();
     servicesConfiguration.setLocalURL(SERVER_URL);
-    service = new EmailService(userDAO, emailDAO, electionDAO, sendGridAPI, templateHelper, config);
+    service = new EmailService(daoContainer, sendGridAPI, templateHelper, config);
+    when(daoContainer.getElectionDAO()).thenReturn(electionDAO);
+    when(daoContainer.getUserDAO()).thenReturn(userDAO);
+    when(daoContainer.getMailMessageDAO()).thenReturn(emailDAO);
   }
 
   @Test

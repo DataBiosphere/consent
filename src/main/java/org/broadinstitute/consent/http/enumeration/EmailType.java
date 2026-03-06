@@ -35,7 +35,9 @@ public enum EmailType {
   DAC_RADAR_APPROVED(32, "dac-radar-approved.html"),
   NEW_DAR_SO_NEEDS_TO_APPROVE(33, "new-dar-so-needs-to-approve.html"),
   DAC_VOTE_REMINDER_DIGEST(34, "vote-digest.ftl"),
-  NEW_STUDY_REGISTRATION_CONFIRMATION(35, "new-study-registration-confirmation.ftl");
+  NEW_STUDY_REGISTRATION_CONFIRMATION(35, "new-study-registration-confirmation.ftl"),
+  NEW_STUDY_DIGEST(36, "new-study-digest.ftl"),
+  ;
 
   private final Integer typeInt;
   public final String templateName;

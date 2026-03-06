@@ -1363,6 +1363,64 @@ class DatasetDAOTest extends DAOTestHelper {
     assertNull(updatedDataset2.getIndexedDate());
   }
 
+  @Test
+  void testGetRecentDacApprovedDatasetStudyIds() {
+    Dataset dataset = insertDataset();
+    Study study = insertStudyWithProperties();
+    datasetDAO.updateStudyId(dataset.getDatasetId(), study.getStudyId());
+    List<Integer> studyIds = datasetDAO.getRecentDacApprovedDatasetStudyIds();
+
+    assertEquals(0, studyIds.size());
+    datasetDAO.updateDatasetApproval(true, Instant.now(), 1, dataset.getDatasetId());
+
+    studyIds = datasetDAO.getRecentDacApprovedDatasetStudyIds();
+    assertEquals(1, studyIds.size());
+    assertEquals(study.getStudyId(), studyIds.getFirst());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"open", "external"})
+  void testGetRecentlyCreatedOpenOrExternalDatasetStudyIds(String accessManagementType) {
+    Dataset dataset = insertDataset();
+    Study study = insertStudyWithProperties();
+    datasetDAO.updateStudyId(dataset.getDatasetId(), study.getStudyId());
+    PropertyType type = PropertyType.String;
+    DatasetProperty dsp = new DatasetProperty();
+    dsp.setDatasetId(dataset.getDatasetId());
+    dsp.setPropertyKey(1);
+    dsp.setSchemaProperty("accessManagement");
+    dsp.setPropertyValue(accessManagementType);
+    dsp.setPropertyType(type);
+    dsp.setCreateDate(new Date());
+    List<DatasetProperty> datasetProperties = List.of(dsp);
+    datasetDAO.insertDatasetProperties(datasetProperties);
+
+    List<Integer> studyIds = datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds();
+    assertEquals(1, studyIds.size());
+    assertEquals(study.getStudyId(), studyIds.getFirst());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"controlled", "somethingNew"})
+  void testGetRecentlyCreatedOpenOrExternalDatasetStudyIds_BadAMTypes(String accessManagementType) {
+    Dataset dataset = insertDataset();
+    Study study = insertStudyWithProperties();
+    datasetDAO.updateStudyId(dataset.getDatasetId(), study.getStudyId());
+    PropertyType type = PropertyType.String;
+    DatasetProperty dsp = new DatasetProperty();
+    dsp.setDatasetId(dataset.getDatasetId());
+    dsp.setPropertyKey(1);
+    dsp.setSchemaProperty("accessManagement");
+    dsp.setPropertyValue(accessManagementType);
+    dsp.setPropertyType(type);
+    dsp.setCreateDate(new Date());
+    List<DatasetProperty> datasetProperties = List.of(dsp);
+    datasetDAO.insertDatasetProperties(datasetProperties);
+
+    List<Integer> studyIds = datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds();
+    assertEquals(0, studyIds.size());
+  }
+
   private DarCollection createDarCollectionWithDatasets(
       int dacId, User user, List<Dataset> datasets) {
     String darCode = "DAR-" + randomInt(1, 999999);

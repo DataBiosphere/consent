@@ -17,6 +17,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
@@ -28,6 +31,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.jdbi.v3.core.result.ResultIterable;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -496,6 +500,67 @@ class UserDAOTest extends DAOTestHelper {
     assertTrue(found.getRoles().contains(chairperson1));
     assertTrue(found.getRoles().stream().anyMatch(chairperson2::equals));
     assertTrue(found.getRoles().contains(chairperson2));
+  }
+
+  @Test
+  void testFindAllEmailReceivingThinlyPopulatedUsers() {
+    createUser();
+    createUser();
+    User u3 = createUser();
+
+    userDAO.updateEmailPreference(u3.getUserId(), false);
+
+    AtomicInteger count = new AtomicInteger();
+    AtomicBoolean user3Found = new AtomicBoolean(false);
+    Integer emailType = EmailType.NEW_STUDY_DIGEST.getTypeInt();
+    String referenceId = "referenceId";
+
+    userDAO
+        .getHandle()
+        .getJdbi()
+        .useHandle(
+            handle -> {
+              ResultIterable<User> users =
+                  userDAO.allEmailReceivingThinlyPopulatedUsers(emailType, referenceId);
+              for (User user : users) {
+                count.getAndIncrement();
+                if (user.getUserId().equals(u3.getUserId())) {
+                  user3Found.set(true);
+                } else {
+                  // simulate having sent a message so we won't send one again.
+                  mailMessageDAO.insert(
+                      referenceId,
+                      null,
+                      user.getUserId(),
+                      emailType,
+                      Instant.now(),
+                      "",
+                      null,
+                      null,
+                      Instant.now());
+                }
+              }
+            });
+    assertEquals(2, count.get());
+    assertFalse(user3Found.get());
+
+    // verify entries that were "sent messages" don't show up in the list again.
+    count.set(0);
+    userDAO
+        .getHandle()
+        .getJdbi()
+        .useHandle(
+            handle -> {
+              ResultIterable<User> users =
+                  userDAO.allEmailReceivingThinlyPopulatedUsers(emailType, referenceId);
+              for (User user : users) {
+                count.getAndIncrement();
+                if (user.getUserId().equals(u3.getUserId())) {
+                  user3Found.set(true);
+                }
+              }
+            });
+    assertEquals(0, count.get());
   }
 
   private Dac createDac() {
