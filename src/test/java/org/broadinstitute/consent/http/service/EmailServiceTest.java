@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.service;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -24,14 +23,11 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Consumer;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
@@ -63,7 +59,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.stubbing.Answer;
 
 /**
  * This class can be used to functionally test email notifications as well as unit test. To enable
@@ -100,7 +95,6 @@ class EmailServiceTest extends AbstractTestHelper {
     when(daoContainer.getDatasetDAO()).thenReturn(datasetDAO);
     when(daoContainer.getStudyDAO()).thenReturn(studyDAO);
     service = new EmailService(daoContainer, sendGridAPI, templateHelper, config);
-
   }
 
   @Test
@@ -660,35 +654,40 @@ class EmailServiceTest extends AbstractTestHelper {
     toUser.setEmailPreference(true);
     when(datasetDAO.getRecentDacApprovedDatasetStudyIds()).thenReturn(List.of());
     when(datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds()).thenReturn(List.of());
-    when(studyDAO.findNameAndDatasetCount(any())).thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, 7)));
+    when(studyDAO.findNameAndDatasetCount(any()))
+        .thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, 7)));
     Handle handle = mock(Handle.class);
     Jdbi jdbi = mock(Jdbi.class);
     when(userDAO.getHandle()).thenReturn(handle);
     when(handle.getJdbi()).thenReturn(jdbi);
-    doAnswer(invocation -> {
-      HandleConsumer<Exception> consumer = invocation.getArgument(0);
-      consumer.useHandle(handle);
-      return null;
-    }).when(jdbi).useHandle(any());
+    doAnswer(
+            invocation -> {
+              HandleConsumer<Exception> consumer = invocation.getArgument(0);
+              consumer.useHandle(handle);
+              return null;
+            })
+        .when(jdbi)
+        .useHandle(any());
     ResultIterator<User> mockIterator = mock(ResultIterator.class);
     when(mockIterator.hasNext()).thenReturn(true, false);
     when(mockIterator.next()).thenReturn(toUser);
-    when(userDAO.allEmailReceivingThinlyPopulatedUsers(any(), any())).thenReturn(ResultIterable.of(mockIterator));
-    when(templateHelper.getTemplate(EmailType.NEW_STUDY_DIGEST.templateName))
-        .thenReturn(mock());
+    when(userDAO.allEmailReceivingThinlyPopulatedUsers(any(), any()))
+        .thenReturn(ResultIterable.of(mockIterator));
+    when(templateHelper.getTemplate(EmailType.NEW_STUDY_DIGEST.templateName)).thenReturn(mock());
 
     service.sendNewDatasetInDUOSNotifications();
     verify(userDAO, times(1)).getHandle();
-    verify(emailDAO, times(1)).insert(
-        any(),
-        any(),
-        eq(toUser.getUserId()),
-        eq(EmailType.NEW_STUDY_DIGEST.getTypeInt()),
-        any(),
-        any(),
-        any(),
-        any(),
-        any());
+    verify(emailDAO, times(1))
+        .insert(
+            any(),
+            any(),
+            eq(toUser.getUserId()),
+            eq(EmailType.NEW_STUDY_DIGEST.getTypeInt()),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
   }
 
   private List<MailMessage> generateMailMessageList() {
