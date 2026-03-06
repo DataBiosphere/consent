@@ -518,26 +518,30 @@ public class EmailService implements ConsentLogger {
     String referenceId = dateTimeFormatter.format(timeBasis);
     Integer emailType = EmailType.NEW_STUDY_DIGEST.getTypeInt();
     List<StudyDatasetCountRecord> studyInfo = getRecentStudyInfoForDigestMessage();
-    userDAO
-        .getHandle()
-        .getJdbi()
-        .useHandle(
-            handle -> {
-              ResultIterable<User> users =
-                  userDAO.allEmailReceivingThinlyPopulatedUsers(emailType, referenceId);
-              users.forEach(
-                  user -> {
-                    try {
-                      sendMessage(
-                          new NewStudyDigestMessage(user, studyInfo, referenceId),
-                          user.getUserId());
-                    } catch (IOException | TemplateException e) {
-                      logWarn(
-                          "Failed to send NewStudyDigestMessage email for user " + user.getUserId(),
-                          e);
-                    }
-                  });
-            });
+    if (studyInfo != null && !studyInfo.isEmpty()) {
+      userDAO
+          .getHandle()
+          .getJdbi()
+          .useHandle(
+              handle -> {
+                ResultIterable<User> users =
+                    userDAO.allEmailReceivingThinlyPopulatedUsers(emailType, referenceId);
+                users.forEach(
+                    user -> {
+                      try {
+                        sendMessage(
+                            new NewStudyDigestMessage(user, studyInfo, referenceId),
+                            user.getUserId());
+                      } catch (IOException | TemplateException e) {
+                        logWarn(
+                            "Failed to send NewStudyDigestMessage email for user " + user.getUserId(),
+                            e);
+                      }
+                    });
+              });
+    } else {
+      logInfo("Skipping New Study Digest emails, no data found to send.");
+    }
   }
 
   private List<StudyDatasetCountRecord> getRecentStudyInfoForDigestMessage() {
