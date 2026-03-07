@@ -558,7 +558,8 @@ public class EmailService implements ConsentLogger {
                     if ((success.get() + errors.get() % SENDGRID_THROTTLE_MESSAGE_COUNT) == 0) {
                       logInfo(
                           "Processing user emails for NewStudyDigestMessage, %d processed.  Pausing for %d seconds."
-                              .formatted(success.get() + errors.get(), SENDGRID_THROTTLE_RESET_TIME));
+                              .formatted(
+                                  success.get() + errors.get(), SENDGRID_THROTTLE_RESET_TIME));
                       try {
                         Thread.sleep(Duration.ofSeconds(SENDGRID_THROTTLE_RESET_TIME).toMillis());
                       } catch (InterruptedException e) {

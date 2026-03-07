@@ -20,8 +20,7 @@ public class EmailNotifierResource extends Resource {
 
   private final DataAccessRequestService dataAccessRequestService;
   private final EmailService emailService;
-  @VisibleForTesting
-  protected final ExecutorService executor;
+  @VisibleForTesting protected final ExecutorService executor;
 
   @Inject
   public EmailNotifierResource(
