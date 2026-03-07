@@ -75,8 +75,8 @@ import org.jdbi.v3.core.result.ResultIterable;
 public class EmailService implements ConsentLogger {
 
   private static final int LOOKBACK_DELAY_HOURS = 24;
-  private static final int SENDGRID_THROTTLE_MESSAGE_COUNT = 500;
-  private static final int SENDGRID_THROTTLE_RESET_TIME = 60;
+  @VisibleForTesting protected static int SENDGRID_THROTTLE_MESSAGE_COUNT = 500;
+  @VisibleForTesting protected static int SENDGRID_THROTTLE_RESET_TIME = 60;
   private final UserDAO userDAO;
   private final MailMessageDAO emailDAO;
   private final ElectionDAO electionDAO;

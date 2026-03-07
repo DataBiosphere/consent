@@ -721,7 +721,8 @@ class EmailServiceTest extends AbstractTestHelper {
     doThrow(new IOException("Some exception", null))
         .when(templateHelper)
         .getTemplate(EmailType.NEW_STUDY_DIGEST.templateName);
-
+    EmailService.SENDGRID_THROTTLE_MESSAGE_COUNT = 1;
+    EmailService.SENDGRID_THROTTLE_RESET_TIME = 1;
     service.sendNewDatasetInDUOSNotifications();
     verify(userDAO, times(1)).getHandle();
   }
