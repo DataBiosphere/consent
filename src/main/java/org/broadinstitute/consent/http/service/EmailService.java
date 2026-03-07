@@ -549,7 +549,8 @@ public class EmailService implements ConsentLogger {
                       success.incrementAndGet();
                     } catch (IOException | TemplateException e) {
                       logWarn(
-                          "Failed to send NewStudyDigestMessage email for user %d".formatted(user.getUserId()),
+                          "Failed to send NewStudyDigestMessage email for user %d"
+                              .formatted(user.getUserId()),
                           e);
                       errors.incrementAndGet();
                     }
