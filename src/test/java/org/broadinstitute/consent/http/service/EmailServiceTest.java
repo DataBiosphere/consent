@@ -668,13 +668,15 @@ class EmailServiceTest extends AbstractTestHelper {
             })
         .when(jdbi)
         .useHandle(any());
+    @SuppressWarnings("unchecked")
     ResultIterator<User> mockIterator = mock(ResultIterator.class);
     when(mockIterator.hasNext()).thenReturn(true, false);
     when(mockIterator.next()).thenReturn(toUser);
     when(userDAO.allEmailReceivingThinlyPopulatedUsers(any(), any()))
         .thenReturn(ResultIterable.of(mockIterator));
     when(templateHelper.getTemplate(EmailType.NEW_STUDY_DIGEST.templateName)).thenReturn(mock());
-
+    EmailService.sendgridThrottleMessageCount = 500;
+    EmailService.sendgridThrottleResetTime = 60;
     service.sendNewDatasetInDUOSNotifications();
     verify(userDAO, times(1)).getHandle();
     verify(emailDAO, times(1))
@@ -721,8 +723,9 @@ class EmailServiceTest extends AbstractTestHelper {
     doThrow(new IOException("Some exception", null))
         .when(templateHelper)
         .getTemplate(EmailType.NEW_STUDY_DIGEST.templateName);
-    EmailService.SENDGRID_THROTTLE_MESSAGE_COUNT = 1;
-    EmailService.SENDGRID_THROTTLE_RESET_TIME = 1;
+    EmailService.sendgridThrottleMessageCount = 1;
+    EmailService.sendgridThrottleResetTime = 1;
+    Thread.currentThread().interrupt();
     service.sendNewDatasetInDUOSNotifications();
     verify(userDAO, times(1)).getHandle();
   }
