@@ -556,7 +556,7 @@ public class EmailService implements ConsentLogger {
                     }
                     // sleep for a minute after each batch of 500 because Twillow may throw
                     // 429s if we send too many email messages too quickly.
-                    if ((success.get() + errors.get() % sendgridThrottleMessageCount) == 0) {
+                    if (((success.get() + errors.get()) % sendgridThrottleMessageCount) == 0) {
                       logInfo(
                           "Processing user emails for NewStudyDigestMessage, %d processed.  Pausing for %d seconds."
                               .formatted(success.get() + errors.get(), sendgridThrottleResetTime));
