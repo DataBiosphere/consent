@@ -10,71 +10,71 @@
     -->
     <sql>
       INSERT INTO users (user_id, email, display_name, create_date)
-      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM acknowledgement WHERE user_id NOT IN (SELECT user_id FROM users)
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM acknowledgement WHERE user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM approval_expiration_time WHERE user_id NOT IN (SELECT user_id FROM users)
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM approval_expiration_time WHERE user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM dac_rule_audit WHERE user_id NOT IN (SELECT user_id FROM users)
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM dac_rule_audit WHERE user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM dac_rule_settings WHERE user_id NOT IN (SELECT user_id FROM users)
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM dac_rule_settings WHERE user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT create_user_id, 'redacted_' || create_user_id, 'redacted', now() FROM dar_collection WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      SELECT create_user_id, 'redacted_' || encode(create_user_id::text::bytea, 'base64'), 'redacted', now() FROM dar_collection WHERE create_user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT update_user_id, 'redacted_' || update_user_id, 'redacted', now() FROM dar_collection WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      SELECT update_user_id, 'redacted_' || encode(update_user_id::text::bytea, 'base64'), 'redacted', now() FROM dar_collection WHERE update_user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT create_user_id, 'redacted_' || create_user_id, 'redacted', now() FROM data_access_agreement WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      SELECT create_user_id, 'redacted_' || encode(create_user_id::text::bytea, 'base64'), 'redacted', now() FROM data_access_agreement WHERE create_user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT update_user_id, 'redacted_' || update_user_id, 'redacted', now() FROM data_access_agreement WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      SELECT update_user_id, 'redacted_' || encode(update_user_id::text::bytea, 'base64'), 'redacted', now() FROM data_access_agreement WHERE update_user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM data_access_request WHERE user_id NOT IN (SELECT user_id FROM users)
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM data_access_request WHERE user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT create_user_id, 'redacted_' || create_user_id, 'redacted', now() FROM dataset WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      SELECT create_user_id, 'redacted_' || encode(create_user_id::text::bytea, 'base64'), 'redacted', now() FROM dataset WHERE create_user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT update_user_id, 'redacted_' || update_user_id, 'redacted', now() FROM dataset WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      SELECT update_user_id, 'redacted_' || encode(update_user_id::text::bytea, 'base64'), 'redacted', now() FROM dataset WHERE update_user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT modified_by_user, 'redacted_' || modified_by_user, 'redacted', now() FROM dataset_audit WHERE modified_by_user NOT IN (SELECT user_id FROM users)
+      SELECT modified_by_user, 'redacted_' || encode(modified_by_user::text::bytea, 'base64'), 'redacted', now() FROM dataset_audit WHERE modified_by_user NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM dataset_authorized_readers WHERE user_id NOT IN (SELECT user_id FROM users)
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM dataset_authorized_readers WHERE user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT created_by, 'redacted_' || created_by, 'redacted', now() FROM dataset_authorized_readers WHERE created_by NOT IN (SELECT user_id FROM users)
+      SELECT created_by, 'redacted_' || encode(created_by::text::bytea, 'base64'), 'redacted', now() FROM dataset_authorized_readers WHERE created_by NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT create_user_id, 'redacted_' || create_user_id, 'redacted', now() FROM draft WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      SELECT create_user_id, 'redacted_' || encode(create_user_id::text::bytea, 'base64'), 'redacted', now() FROM draft WHERE create_user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT update_user_id, 'redacted_' || update_user_id, 'redacted', now() FROM draft WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      SELECT update_user_id, 'redacted_' || encode(update_user_id::text::bytea, 'base64'), 'redacted', now() FROM draft WHERE update_user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM email_entity WHERE user_id NOT IN (SELECT user_id FROM users)
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM email_entity WHERE user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM feature_flag_audit WHERE user_id NOT IN (SELECT user_id FROM users)
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM feature_flag_audit WHERE user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT create_user_id, 'redacted_' || create_user_id, 'redacted', now() FROM file_storage_object WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      SELECT create_user_id, 'redacted_' || encode(create_user_id::text::bytea, 'base64'), 'redacted', now() FROM file_storage_object WHERE create_user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT delete_user_id, 'redacted_' || delete_user_id, 'redacted', now() FROM file_storage_object WHERE delete_user_id NOT IN (SELECT user_id FROM users)
+      SELECT delete_user_id, 'redacted_' || encode(delete_user_id::text::bytea, 'base64'), 'redacted', now() FROM file_storage_object WHERE delete_user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT update_user_id, 'redacted_' || update_user_id, 'redacted', now() FROM file_storage_object WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      SELECT update_user_id, 'redacted_' || encode(update_user_id::text::bytea, 'base64'), 'redacted', now() FROM file_storage_object WHERE update_user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT create_user, 'redacted_' || create_user, 'redacted', now() FROM institution WHERE create_user NOT IN (SELECT user_id FROM users)
+      SELECT create_user, 'redacted_' || encode(create_user::text::bytea, 'base64'), 'redacted', now() FROM institution WHERE create_user NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT update_user, 'redacted_' || update_user, 'redacted', now() FROM institution WHERE update_user NOT IN (SELECT user_id FROM users)
+      SELECT update_user, 'redacted_' || encode(update_user::text::bytea, 'base64'), 'redacted', now() FROM institution WHERE update_user NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM library_card WHERE user_id NOT IN (SELECT user_id FROM users)
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM library_card WHERE user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT create_user_id, 'redacted_' || create_user_id, 'redacted', now() FROM library_card WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      SELECT create_user_id, 'redacted_' || encode(create_user_id::text::bytea, 'base64'), 'redacted', now() FROM library_card WHERE create_user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT update_user_id, 'redacted_' || update_user_id, 'redacted', now() FROM library_card WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      SELECT update_user_id, 'redacted_' || encode(update_user_id::text::bytea, 'base64'), 'redacted', now() FROM library_card WHERE update_user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT create_user_id, 'redacted_' || create_user_id, 'redacted', now() FROM ontology_index WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      SELECT create_user_id, 'redacted_' || encode(create_user_id::text::bytea, 'base64'), 'redacted', now() FROM ontology_index WHERE create_user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT update_user_id, 'redacted_' || update_user_id, 'redacted', now() FROM ontology_index WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      SELECT update_user_id, 'redacted_' || encode(update_user_id::text::bytea, 'base64'), 'redacted', now() FROM ontology_index WHERE update_user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT create_user_id, 'redacted_' || create_user_id, 'redacted', now() FROM study WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      SELECT create_user_id, 'redacted_' || encode(create_user_id::text::bytea, 'base64'), 'redacted', now() FROM study WHERE create_user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT update_user_id, 'redacted_' || update_user_id, 'redacted', now() FROM study WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      SELECT update_user_id, 'redacted_' || encode(update_user_id::text::bytea, 'base64'), 'redacted', now() FROM study WHERE update_user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM user_property WHERE user_id NOT IN (SELECT user_id FROM users)
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM user_property WHERE user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM user_role WHERE user_id NOT IN (SELECT user_id FROM users)
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM user_role WHERE user_id NOT IN (SELECT user_id FROM users)
       UNION
-      SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM vote WHERE user_id NOT IN (SELECT user_id FROM users)
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM vote WHERE user_id NOT IN (SELECT user_id FROM users)
     </sql>
     <addForeignKeyConstraint baseTableName="dac_rule_audit" baseColumnNames="user_id"
                              constraintName="fk_dac_rule_audit_user_id"
