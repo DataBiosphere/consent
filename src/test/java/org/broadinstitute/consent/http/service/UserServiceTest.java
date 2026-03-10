@@ -30,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
-import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
@@ -66,7 +65,6 @@ class UserServiceTest extends AbstractTestHelper {
   @Mock private UserPropertyDAO userPropertyDAO;
   @Mock private UserRoleDAO userRoleDAO;
   @Mock private InstitutionDAO institutionDAO;
-  @Mock private LibraryCardDAO libraryCardDAO;
   @Mock private UserServiceDAO userServiceDAO;
   @Mock private DaaDAO daaDAO;
   @Mock private InstitutionService institutionService;
@@ -487,7 +485,6 @@ class UserServiceTest extends AbstractTestHelper {
     daa.setDaaId(daaId);
     when(daaDAO.findById(any())).thenReturn(daa);
     when(userDAO.getUsersWithCardsByDaaId(any())).thenReturn(List.of(u1));
-    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
     List<SimplifiedUser> users = service.getUsersByDaaId(daaId);
     assertNotNull(users);
     assertEquals(1, users.size());
@@ -507,8 +504,6 @@ class UserServiceTest extends AbstractTestHelper {
     daa.setDaaId(daaId);
     when(daaDAO.findById(daaId)).thenReturn(daa);
     when(userDAO.getUsersWithCardsByDaaId(any())).thenReturn(List.of(u1, u2));
-    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
-    libraryCardDAO.createLibraryCardDaaRelation(card2.getId(), daaId);
     List<SimplifiedUser> users = service.getUsersByDaaId(daaId);
     assertNotNull(users);
     assertEquals(2, users.size());
@@ -534,9 +529,6 @@ class UserServiceTest extends AbstractTestHelper {
     daa2.setDaaId(daaId2);
     when(daaDAO.findById(any())).thenReturn(daa, daa2);
     when(userDAO.getUsersWithCardsByDaaId(any())).thenReturn(List.of(u1, u2), List.of(u3));
-    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
-    libraryCardDAO.createLibraryCardDaaRelation(card2.getId(), daaId);
-    libraryCardDAO.createLibraryCardDaaRelation(card3.getId(), daaId2);
     List<SimplifiedUser> users = service.getUsersByDaaId(daaId);
     assertNotNull(users);
     assertEquals(2, users.size());
