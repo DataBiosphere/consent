@@ -76,12 +76,6 @@
       UNION
       SELECT user_id, 'redacted_' || user_id, 'redacted', now() FROM vote WHERE user_id NOT IN (SELECT user_id FROM users)
     </sql>
-    <rollback>
-      <!-- Delete the users that were inserted by this migration in the rollback. -->
-      <sql>
-        DELETE FROM users WHERE display_name = 'redacted' AND email LIKE 'redacted_%';
-      </sql>
-    </rollback>
     <addForeignKeyConstraint baseTableName="dac_rule_audit" baseColumnNames="user_id"
                              constraintName="fk_dac_rule_audit_user_id"
                              referencedTableName="users" referencedColumnNames="user_id"/>
@@ -109,5 +103,21 @@
     <addForeignKeyConstraint baseTableName="ontology_index" baseColumnNames="update_user_id"
                              constraintName="fk_ontology_index_update_user_id"
                              referencedTableName="users" referencedColumnNames="user_id"/>
+    <rollback>
+      <!-- Delete the added constraints -->
+      <dropForeignKeyConstraint baseTableName="dac_rule_audit" constraintName="fk_dac_rule_audit_user_id"/>
+      <dropForeignKeyConstraint baseTableName="dar_collection" constraintName="fk_dar_collection_create_user_id"/>
+      <dropForeignKeyConstraint baseTableName="dar_collection" constraintName="fk_dar_collection_update_user_id"/>
+      <dropForeignKeyConstraint baseTableName="data_access_request" constraintName="fk_data_access_request_user_id"/>
+      <dropForeignKeyConstraint baseTableName="dataset" constraintName="fk_dataset_update_user_id"/>
+      <dropForeignKeyConstraint baseTableName="dataset_authorized_readers" constraintName="fk_dataset_authorized_readers_created_by"/>
+      <dropForeignKeyConstraint baseTableName="email_entity" constraintName="fk_email_entity_user_id"/>
+      <dropForeignKeyConstraint baseTableName="ontology_index" constraintName="fk_ontology_index_create_user_id"/>
+      <dropForeignKeyConstraint baseTableName="ontology_index" constraintName="fk_ontology_index_update_user_id"/>
+      <!-- Delete the users that were inserted by this migration in the rollback. -->
+      <sql>
+        DELETE FROM users WHERE display_name = 'redacted' AND email LIKE 'redacted_%';
+      </sql>
+    </rollback>
   </changeSet>
 </databaseChangeLog>
