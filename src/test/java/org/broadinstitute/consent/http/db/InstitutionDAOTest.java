@@ -164,10 +164,10 @@ class InstitutionDAOTest extends DAOTestHelper {
     List<Institution> instituteListUpdated = institutionDAO.findAllInstitutions();
     assertEquals(1, instituteListUpdated.size());
 
-    Institution institution = instituteListUpdated.get(0);
+    Institution institution = instituteListUpdated.getFirst();
     assertEquals(1, institution.getSigningOfficials().size());
     assertEquals(user.getInstitutionId(), institution.getId());
-    assertEquals(user.getDisplayName(), institution.getSigningOfficials().get(0).getDisplayName());
+    assertEquals(user.getDisplayName(), institution.getSigningOfficials().getFirst().getDisplayName());
   }
 
   @Test
@@ -177,7 +177,7 @@ class InstitutionDAOTest extends DAOTestHelper {
     List<Institution> found = institutionDAO.findInstitutionsByName(institution.getName());
     assertFalse(found.isEmpty());
     assertEquals(1, found.size());
-    assertEquals(institution.getId(), found.get(0).getId());
+    assertEquals(institution.getId(), found.getFirst().getId());
   }
 
   @Test
@@ -188,7 +188,7 @@ class InstitutionDAOTest extends DAOTestHelper {
         institutionDAO.findInstitutionsByName("  " + institution.getName() + "  ");
     assertFalse(found.isEmpty());
     assertEquals(1, found.size());
-    assertEquals(institution.getId(), found.get(0).getId());
+    assertEquals(institution.getId(), found.getFirst().getId());
   }
 
   @Test
@@ -211,7 +211,7 @@ class InstitutionDAOTest extends DAOTestHelper {
     List<Institution> found = institutionDAO.findInstitutionsByName(institution.getName());
     assertFalse(found.isEmpty());
     assertEquals(1, found.size());
-    assertEquals(institution.getId(), found.get(0).getId());
+    assertEquals(institution.getId(), found.getFirst().getId());
   }
 
   @Test
@@ -221,41 +221,13 @@ class InstitutionDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDeleteInstitutionByUserId() throws SQLException {
-    Institution institution = createInstitution();
-    Integer userId = institution.getCreateUserId();
-    institutionDAO.deleteAllInstitutionsByUser(userId);
-    assertNull(institutionDAO.findInstitutionById(institution.getId()));
-  }
-
-  @Test
-  void testDeleteInstitutionWithDomainsByUserId() throws SQLException {
-    Institution institution = createInstitution();
-    institution.setDomains(List.of("domain1.com", "domain2.com"));
-    institutionDAO.updateFullInstitution(institution, institution.getCreateUserId());
-    Integer userId = institution.getCreateUserId();
-    institutionDAO.deleteAllInstitutionsByUser(userId);
-    assertNull(institutionDAO.findInstitutionById(institution.getId()));
-    jdbi.useHandle(
-        handle -> {
-          List<String> domains =
-              handle
-                  .createQuery("SELECT domain FROM institution_domains WHERE institution_id = :id")
-                  .bind("id", institution.getId())
-                  .mapTo(String.class)
-                  .list();
-          assertTrue(domains.isEmpty(), "Domains should be deleted when institution is deleted");
-        });
-  }
-
-  @Test
   void testFindInstitutionWithSOById() {
     User user = createUserWithInstitution();
     Institution institutionWithSO =
         institutionDAO.findInstitutionWithSOById(user.getInstitutionId());
     assertEquals(1, institutionWithSO.getSigningOfficials().size());
     assertEquals(
-        user.getDisplayName(), institutionWithSO.getSigningOfficials().get(0).getDisplayName());
+        user.getDisplayName(), institutionWithSO.getSigningOfficials().getFirst().getDisplayName());
   }
 
   private Institution createInstitution() {

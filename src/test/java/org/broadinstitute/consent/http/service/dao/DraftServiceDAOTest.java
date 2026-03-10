@@ -124,21 +124,6 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDeleteDraftsForUser() throws SQLException {
-    User user = createUser();
-    User user2 = createUser();
-    createDraft(user, 3);
-    createDraft(user2, 1);
-    createDraft(user2, 4);
-    assertThat(draftServiceDAO.findDraftsForUser(user2), hasSize(2));
-    assertThat(draftServiceDAO.findDraftsForUser(user), hasSize(1));
-    draftServiceDAO.deleteDraftsByUser(user2);
-    assertThat(draftServiceDAO.findDraftsForUser(user), hasSize(1));
-    assertThat(draftServiceDAO.findDraftsForUser(user2), hasSize(0));
-    draftServiceDAO.deleteDraftsByUser(user2);
-  }
-
-  @Test
   void testAddAttachmentToDraft() throws SQLException {
     User user = createUser();
     DraftInterface draft = createDraft(user, 3);
@@ -200,7 +185,6 @@ class DraftServiceDAOTest extends DAOTestHelper {
   }
 
   private Map<String, FormDataBodyPart> getRandomFiles(Integer count) {
-    Map<String, FormDataBodyPart> mapOfFiles = new HashMap<>();
     return IntStream.range(0, count)
         .mapToObj("file%d"::formatted)
         .collect(Collectors.toMap(Function.identity(), this::getFormDataBodyPartMock));

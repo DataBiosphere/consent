@@ -50,12 +50,6 @@ DELETE FROM dataset_authorized_readers WHERE dataset_id = :datasetId
 
   @SqlUpdate(
 """
-DELETE FROM dataset_authorized_readers WHERE user_id = :userId
-""")
-  void deleteByUserId(@Bind("userId") int userId);
-
-  @SqlUpdate(
-"""
 DELETE FROM dataset_authorized_readers WHERE dataset_id =:datasetId AND user_id = :userId
 """)
   void deleteByDatasetAndUserId(@Bind("datasetId") long datasetId, @Bind("userId") long userId);
