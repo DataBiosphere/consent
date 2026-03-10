@@ -12,7 +12,7 @@ properties:
     description: The name of the user requesting support
   type:
     type: string
-    enum: ["QUESTION", "BUG", "FEATURE_REQUEST", "TASK"]
+    enum: ["QUESTION", "BUG", "FEATURE_REQUEST", "TASK", "DAC_USAGE"]
   email:
     type: string
     description: The email of the user requesting support
