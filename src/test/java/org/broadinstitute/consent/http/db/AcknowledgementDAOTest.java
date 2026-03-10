@@ -41,7 +41,8 @@ class AcknowledgementDAOTest extends DAOTestHelper {
     sleep(1);
     acknowledgementDAO.upsertAcknowledgement(key, user_id);
     assertEquals(1, acknowledgementDAO.findAcknowledgementsForUser(user_id).size());
-    Acknowledgement upsertResult = acknowledgementDAO.findAcknowledgementsForUser(user_id).getFirst();
+    Acknowledgement upsertResult =
+        acknowledgementDAO.findAcknowledgementsForUser(user_id).getFirst();
     assertNotEquals(newAcknowledgement, upsertResult);
     assertEquals(newAcknowledgement.getAckKey(), upsertResult.getAckKey());
     assertEquals(
@@ -63,7 +64,8 @@ class AcknowledgementDAOTest extends DAOTestHelper {
 
     acknowledgementDAO.upsertAcknowledgement(key1, user_id);
     acknowledgementDAO.upsertAcknowledgement(key2, user_id);
-    Acknowledgement upsertResult = acknowledgementDAO.findAcknowledgementsForUser(user_id).getFirst();
+    Acknowledgement upsertResult =
+        acknowledgementDAO.findAcknowledgementsForUser(user_id).getFirst();
 
     assertEquals(2, acknowledgementDAO.findAcknowledgementsForUser(user_id).size());
     assertEquals(upsertResult, acknowledgementDAO.findAcknowledgementsForUser(user_id).getFirst());
