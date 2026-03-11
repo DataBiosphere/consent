@@ -4,5 +4,6 @@ public enum SupportRequestType {
   QUESTION,
   BUG,
   FEATURE_REQUEST,
-  TASK
+  TASK,
+  DAC_USAGE
 }
