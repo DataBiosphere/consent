@@ -42,6 +42,7 @@ import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -116,6 +117,52 @@ class VoteServiceTest extends AbstractTestHelper {
     List<Vote> votes = service.findVotesByIds(List.of());
     assertNotNull(votes);
     assertTrue(votes.isEmpty());
+  }
+
+  @Test
+  void testDeleteOpenDacVotesForUser() {
+    Dac dac = new Dac();
+    dac.setDacId(1);
+    User u = new User();
+    u.setUserId(2);
+    Election e = new Election();
+    e.setElectionId(3);
+    Vote v = new Vote();
+    v.setVoteId(4);
+    v.setUserId(u.getUserId());
+    when(electionDAO.findOpenElectionsByDacId(dac.getDacId())).thenReturn(List.of(e));
+    when(voteDAO.findVotesByElectionIds(List.of(e.getElectionId()))).thenReturn(List.of(v));
+
+    service.deleteOpenDacVotesForUser(dac, u);
+    verify(voteDAO).removeVotesByIds(List.of(v.getVoteId()));
+  }
+
+  @Test
+  void testDeleteOpenDacVotesForUserNoElections() {
+    Dac dac = new Dac();
+    dac.setDacId(1);
+    User u = new User();
+    u.setUserId(2);
+    when(electionDAO.findOpenElectionsByDacId(dac.getDacId())).thenReturn(List.of());
+
+    service.deleteOpenDacVotesForUser(dac, u);
+    verify(voteDAO, never()).findVotesByElectionIds(any());
+    verify(voteDAO, never()).removeVotesByIds(any());
+  }
+
+  @Test
+  void testDeleteOpenDacVotesForUserNoVotes() {
+    Dac dac = new Dac();
+    dac.setDacId(1);
+    User u = new User();
+    u.setUserId(2);
+    Election e = new Election();
+    e.setElectionId(3);
+    when(electionDAO.findOpenElectionsByDacId(dac.getDacId())).thenReturn(List.of(e));
+    when(voteDAO.findVotesByElectionIds(List.of(e.getElectionId()))).thenReturn(List.of());
+
+    service.deleteOpenDacVotesForUser(dac, u);
+    verify(voteDAO, never()).removeVotesByIds(any());
   }
 
   @Test
