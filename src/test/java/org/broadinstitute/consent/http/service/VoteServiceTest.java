@@ -59,8 +59,6 @@ import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.server.ContainerRequest;
-import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -85,8 +83,6 @@ class VoteServiceTest extends AbstractTestHelper {
   @Mock private VoteServiceDAO voteServiceDAO;
   @Mock private User user;
   @Mock private OntologyService ontologyService;
-  @Mock private Jdbi jdbi;
-  @Mock private Handle handle;
 
   @BeforeEach
   void initService() {
