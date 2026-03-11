@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -35,6 +36,7 @@ import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyProperty;
@@ -62,22 +64,17 @@ public class VoteService implements ConsentLogger {
 
   @Inject
   public VoteService(
-      UserDAO userDAO,
-      DacDAO dacDAO,
-      DataAccessRequestDAO dataAccessRequestDAO,
-      DatasetDAO datasetDAO,
-      ElectionDAO electionDAO,
+      DAOContainer daoContainer,
       EmailService emailService,
-      VoteDAO voteDAO,
       VoteServiceDAO voteServiceDAO,
       OntologyService ontologyService) {
-    this.userDAO = userDAO;
-    this.dacDAO = dacDAO;
-    this.dataAccessRequestDAO = dataAccessRequestDAO;
-    this.datasetDAO = datasetDAO;
-    this.electionDAO = electionDAO;
+    this.userDAO = daoContainer.getUserDAO();
+    this.dacDAO = daoContainer.getDacDAO();
+    this.dataAccessRequestDAO = daoContainer.getDataAccessRequestDAO();
+    this.datasetDAO = daoContainer.getDatasetDAO();
+    this.electionDAO = daoContainer.getElectionDAO();
     this.emailService = emailService;
-    this.voteDAO = voteDAO;
+    this.voteDAO = daoContainer.getVoteDAO();
     this.voteServiceDAO = voteServiceDAO;
     this.ontologyService = ontologyService;
   }
@@ -136,7 +133,7 @@ public class VoteService implements ConsentLogger {
             voteDAO.insertVote(
                 user.getUserId(), election.getElectionId(), VoteType.FINAL.getValue());
         votes.add(voteDAO.findVoteById(finalVoteId));
-        if (!isManualReview) {
+        if (Boolean.FALSE.equals(isManualReview)) {
           Integer agreementVoteId =
               voteDAO.insertVote(
                   user.getUserId(), election.getElectionId(), VoteType.AGREEMENT.getValue());
@@ -213,7 +210,7 @@ public class VoteService implements ConsentLogger {
         }
       }
       return updatedVotes;
-    } catch (Exception e) {
+    } catch (Exception _) {
       throw new IllegalArgumentException("Unable to update election votes.");
     }
   }
@@ -270,7 +267,10 @@ public class VoteService implements ConsentLogger {
             Integer researcherId = researcher.getUserId();
             List<DatasetMailDTO> datasetMailDTOs =
                 approvedDatasetsInDar.stream()
-                    .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
+                    .map(
+                        d ->
+                            new DatasetMailDTO(
+                                d.getName(), d.getDatasetIdentifier(), getDataLocation(d)))
                     .toList();
 
             // Get all Data Use translations, distinctly in the case that there are several with the
@@ -337,7 +337,9 @@ public class VoteService implements ConsentLogger {
                 .computeIfAbsent(approvedDataset.getDacId(), d -> new HashSet<>())
                 .add(
                     new DatasetMailDTO(
-                        approvedDataset.getName(), approvedDataset.getDatasetIdentifier())));
+                        approvedDataset.getName(),
+                        approvedDataset.getDatasetIdentifier(),
+                        getDataLocation(approvedDataset))));
     dacIdToDatasetMap.forEach(
         (dacId, datasets) -> {
           List<User> members = dacDAO.findMembersByDacId(dacId);
@@ -476,7 +478,9 @@ public class VoteService implements ConsentLogger {
     for (Map.Entry<User, HashSet<Dataset>> entry : validCustodians.entrySet()) {
       List<DatasetMailDTO> datasetMailDTOs =
           entry.getValue().stream()
-              .map(d -> new DatasetMailDTO(d.getName(), d.getDatasetIdentifier()))
+              .map(
+                  d ->
+                      new DatasetMailDTO(d.getName(), d.getDatasetIdentifier(), getDataLocation(d)))
               .toList();
       try {
         emailService.sendDataCustodianApprovalMessage(
@@ -585,5 +589,20 @@ public class VoteService implements ConsentLogger {
     List<Dataset> rejectedDatasets = datasetDAO.findDatasetsByIdList(rejectedDatasetIds);
     ComplianceLogger.logDARRejection(
         user, rejectedDatasets, request, HttpStatusCodes.STATUS_CODE_OK);
+  }
+
+  private String getDataLocation(Dataset dataset) {
+    if (dataset.getProperties() == null || dataset.getProperties().isEmpty()) {
+      return null;
+    }
+    return dataset.getProperties().stream()
+        .filter(
+            p ->
+                p.getSchemaProperty() != null
+                    && p.getSchemaProperty()
+                        .equalsIgnoreCase(DatasetRegistrationSchemaV1Builder.dataLocation))
+        .map(DatasetProperty::getPropertyValueAsString)
+        .findFirst()
+        .orElse(null);
   }
 }

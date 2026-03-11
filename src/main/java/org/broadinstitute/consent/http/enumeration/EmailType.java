@@ -8,7 +8,7 @@ public enum EmailType {
   DISABLED_DATASET(5),
   CLOSED_DATASET_ELECTION(6),
   DATA_CUSTODIAN_APPROVAL(7, "data-custodian-approval.html"),
-  RESEARCHER_DAR_APPROVED(8, "researcher-dar-approved.html"),
+  RESEARCHER_DAR_APPROVED(8, "researcher-dar-approved.ftl"),
   ADMIN_FLAGGED_DAR_APPROVED(9),
   DAR_CANCEL(10),
   DELEGATE_RESPONSIBILITIES(11),

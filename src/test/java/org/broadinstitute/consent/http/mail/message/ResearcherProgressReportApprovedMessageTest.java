@@ -54,7 +54,11 @@ class ResearcherProgressReportApprovedMessageTest extends AbstractTestHelper {
 
     var message =
         new ResearcherApprovedProgressReportMessage(
-            researcher, darCode, List.of(new DatasetMailDTO(datasetName, datasetId)), "", false);
+            researcher,
+            darCode,
+            List.of(new DatasetMailDTO(datasetName, datasetId, null)),
+            "",
+            false);
     assertEquals(darCode, message.getEntityReferenceId());
 
     Template template = helper.getTemplate(message.getTemplateName());
@@ -88,7 +92,11 @@ class ResearcherProgressReportApprovedMessageTest extends AbstractTestHelper {
 
     var message =
         new ResearcherApprovedProgressReportMessage(
-            researcher, darCode, List.of(new DatasetMailDTO(datasetName, datasetId)), "", true);
+            researcher,
+            darCode,
+            List.of(new DatasetMailDTO(datasetName, datasetId, null)),
+            "",
+            true);
     assertEquals(darCode, message.getEntityReferenceId());
 
     Template template = helper.getTemplate(message.getTemplateName());
