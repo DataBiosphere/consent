@@ -45,11 +45,11 @@
                                 <td style="font-family: 'Montserrat', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">
                                     ${dataset.name}
                                 </td>
-                                <#if (dataset.dataLocation)??>
-                                    <td style="font-family: 'Montserrat', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">
+                                <td style="font-family: 'Montserrat', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">
+                                    <#if (dataset.dataLocation)??>
                                         <a href="${dataset.dataLocation}" style="text-decoration: none; font-family: 'Montserrat', sans-serif; color: #00609F;">${dataset.dataLocation}</a>
-                                    </td>
-                                </#if>
+                                    </#if>
+                                </td>
                             </tr>
                         </#items>
                     </#list>
