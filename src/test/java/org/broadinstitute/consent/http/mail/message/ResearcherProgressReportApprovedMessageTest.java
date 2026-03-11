@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.mail.message;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import freemarker.template.Template;
@@ -48,6 +49,7 @@ class ResearcherProgressReportApprovedMessageTest extends AbstractTestHelper {
     String darCode = randomAlphabetic(10);
     String datasetName = randomAlphabetic(10);
     String datasetId = randomAlphabetic(10);
+    String dataLocation = randomAlphabetic(10);
     User researcher = new User();
     researcher.setDisplayName(researcherUserName);
     researcher.setEmail(researcherEmail);
@@ -56,7 +58,7 @@ class ResearcherProgressReportApprovedMessageTest extends AbstractTestHelper {
         new ResearcherApprovedProgressReportMessage(
             researcher,
             darCode,
-            List.of(new DatasetMailDTO(datasetName, datasetId, null)),
+            List.of(new DatasetMailDTO(datasetName, datasetId, dataLocation)),
             "",
             false);
     assertEquals(darCode, message.getEntityReferenceId());
@@ -76,6 +78,8 @@ class ResearcherProgressReportApprovedMessageTest extends AbstractTestHelper {
         templateString.contains("Your progress report application " + darCode + " was approved"));
     assertTrue(templateString.contains(datasetId));
     assertTrue(templateString.contains(datasetName));
+    // Positive test to ensure data location is in the template.
+    assertTrue(templateString.contains(dataLocation));
     assertTrue(templateString.contains(researcherEmail));
   }
 
@@ -86,6 +90,7 @@ class ResearcherProgressReportApprovedMessageTest extends AbstractTestHelper {
     String darCode = randomAlphabetic(10);
     String datasetName = randomAlphabetic(10);
     String datasetId = randomAlphabetic(10);
+    String dataLocation = randomAlphabetic(10);
     User researcher = new User();
     researcher.setDisplayName(researcherUserName);
     researcher.setEmail(researcherEmail);
@@ -117,6 +122,8 @@ class ResearcherProgressReportApprovedMessageTest extends AbstractTestHelper {
                 + " was Rule Automated DAR (RADAR) approved"));
     assertTrue(templateString.contains(datasetId));
     assertTrue(templateString.contains(datasetName));
+    // Negative test to ensure data location is not in the template.
+    assertFalse(templateString.contains(dataLocation));
     assertTrue(templateString.contains(researcherEmail));
   }
 }
