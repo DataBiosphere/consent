@@ -32,6 +32,9 @@
                         <th style="text-align: left; font-family: 'Montserrat', sans-serif; font-style: italic; font-size: 15px; color: #00609f; border-bottom: 1px solid #cccccc;">
                             Dataset Name
                         </th>
+                        <th style="text-align: left; font-family: 'Montserrat', sans-serif; font-style: italic; font-size: 15px; color: #00609f; border-bottom: 1px solid #cccccc;">
+                            Dataset Location
+                        </th>
                     </tr>
                     <#list datasets>
                         <#items as dataset>
@@ -41,6 +44,11 @@
                                 </td>
                                 <td style="font-family: 'Montserrat', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">
                                     ${dataset.name}
+                                </td>
+                                <td style="font-family: 'Montserrat', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">
+                                    <#if (dataset.dataLocation)??>
+                                        <a href="${dataset.dataLocation}" style="text-decoration: none; font-family: 'Montserrat', sans-serif; color: #00609F;">${dataset.dataLocation}</a>
+                                    </#if>
                                 </td>
                             </tr>
                         </#items>

@@ -24,7 +24,7 @@ public enum EmailType {
   DAR_EXPIRATION_REMINDER(21, "dar-expiration-reminder.html"),
   NEW_PROGRESS_REPORT_REQUEST(22, "new-progress-report-request.html"),
   NEW_PROGRESS_REPORT_CASE(23, "new-progress-report-case.html"),
-  RESEARCHER_PROGRESS_REPORT_APPROVED(24, "researcher-progress-report-approved.html"),
+  RESEARCHER_PROGRESS_REPORT_APPROVED(24, "researcher-progress-report-approved.ftl"),
   RESEARCHER_CLOSEOUT_COMPLETED(25, "researcher-closeout-completed.html"),
   SUBMITTED_CLOSEOUT(26, "submitted-closeout.html"),
   NEW_LIBRARY_CARD_ISSUED(27, "new-library-card-issued.html"),
