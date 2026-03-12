@@ -235,9 +235,6 @@ public interface UserDAO extends Transactional<UserDAO> {
       @Bind("institutionId") Integer institutionId,
       @Bind("createDate") Date createDate);
 
-  @SqlUpdate("delete from users where user_id = :id")
-  void deleteUserById(@Bind("id") Integer id);
-
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class)
   @RegisterBeanMapper(value = LibraryCard.class, prefix = "lc")

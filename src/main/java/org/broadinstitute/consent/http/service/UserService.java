@@ -19,17 +19,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.db.AcknowledgementDAO;
-import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
-import org.broadinstitute.consent.http.db.DatasetAuthorizationReaderDAO;
-import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
-import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
@@ -40,9 +34,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
-import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.resources.Resource;
-import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -57,17 +49,10 @@ public class UserService implements ConsentLogger {
   private final UserPropertyDAO userPropertyDAO;
   private final UserDAO userDAO;
   private final UserRoleDAO userRoleDAO;
-  private final VoteDAO voteDAO;
   private final InstitutionDAO institutionDAO;
-  private final LibraryCardDAO libraryCardDAO;
-  private final AcknowledgementDAO acknowledgementDAO;
-  private final FileStorageObjectDAO fileStorageObjectDAO;
   private final UserServiceDAO userServiceDAO;
   private final DaaDAO daaDAO;
-  private final DraftServiceDAO draftServiceDAO;
   private final InstitutionService institutionService;
-  private final DACAutomationRuleDAO ruleDAO;
-  private final DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
   private final InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
 
   @Inject
@@ -75,32 +60,18 @@ public class UserService implements ConsentLogger {
       UserDAO userDAO,
       UserPropertyDAO userPropertyDAO,
       UserRoleDAO userRoleDAO,
-      VoteDAO voteDAO,
       InstitutionDAO institutionDAO,
-      LibraryCardDAO libraryCardDAO,
-      AcknowledgementDAO acknowledgementDAO,
-      FileStorageObjectDAO fileStorageObjectDAO,
       UserServiceDAO userServiceDAO,
       DaaDAO daaDAO,
-      DraftServiceDAO draftServiceDAO,
       InstitutionService institutionService,
-      DACAutomationRuleDAO ruleDAO,
-      DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO,
       InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement) {
     this.userDAO = userDAO;
     this.userPropertyDAO = userPropertyDAO;
     this.userRoleDAO = userRoleDAO;
-    this.voteDAO = voteDAO;
     this.institutionDAO = institutionDAO;
-    this.libraryCardDAO = libraryCardDAO;
-    this.acknowledgementDAO = acknowledgementDAO;
-    this.fileStorageObjectDAO = fileStorageObjectDAO;
     this.userServiceDAO = userServiceDAO;
     this.daaDAO = daaDAO;
-    this.draftServiceDAO = draftServiceDAO;
-    this.datasetAuthorizationReaderDAO = datasetAuthorizationReaderDAO;
     this.institutionService = institutionService;
-    this.ruleDAO = ruleDAO;
     this.institutionAndLibraryCardEnforcement = institutionAndLibraryCardEnforcement;
   }
 
@@ -259,56 +230,9 @@ public class UserService implements ConsentLogger {
     return users.stream().map(SimplifiedUser::new).toList();
   }
 
-  public void deleteUserByEmail(String email, Integer auditUserId) {
-    User user = userDAO.findUserByEmail(email);
-    if (user == null) {
-      throw new NotFoundException("The user for the specified E-Mail address does not exist");
-    }
-    Integer userId = user.getUserId();
-    List<Integer> roleIds =
-        userRoleDAO.findRolesByUserId(userId).stream().map(UserRole::getRoleId).toList();
-    if (!roleIds.isEmpty()) {
-      userRoleDAO.removeUserRoles(userId, roleIds);
-    }
-    List<Vote> votes = voteDAO.findVotesByUserId(userId);
-    if (!votes.isEmpty()) {
-      List<Integer> voteIds = votes.stream().map(Vote::getVoteId).toList();
-      voteDAO.removeVotesByIds(voteIds);
-    }
-    try {
-      draftServiceDAO.deleteDraftsByUser(user);
-    } catch (Exception e) {
-      logException(
-          String.format(
-              "Unable to delete all drafts and files for userId %d. Error was: %s",
-              userId, e.getMessage()),
-          e);
-    }
-    try {
-      institutionDAO.deleteAllInstitutionsByUser(userId);
-    } catch (Exception e) {
-      logException(
-          String.format(
-              "Unable to delete all institutions for userId %d. Error was: %s",
-              userId, e.getMessage()),
-          e);
-    }
-    userPropertyDAO.deleteAllPropertiesByUser(userId);
-    libraryCardDAO.deleteAllLibraryCardsByUser(userId);
-    acknowledgementDAO.deleteAllAcknowledgementsByUser(userId);
-    fileStorageObjectDAO.deleteAllUserFiles(userId);
-    ruleDAO.auditedDeleteAllDACRuleSettingForUser(userId, auditUserId);
-    datasetAuthorizationReaderDAO.deleteByUserId(userId);
-    userDAO.deleteUserById(userId);
-  }
-
   public List<UserProperty> findAllUserProperties(Integer userId) {
     return userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
         userId, UserFields.getValues());
-  }
-
-  public void updateEmailPreference(boolean preference, Integer userId) {
-    userDAO.updateEmailPreference(userId, preference);
   }
 
   public List<SimplifiedUser> findSOsByInstitutionId(Integer institutionId) {

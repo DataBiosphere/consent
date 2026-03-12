@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
@@ -21,7 +20,7 @@ class AcknowledgementDAOTest extends DAOTestHelper {
   void createAndRetrieveAcknowledgement() throws InterruptedException {
     User user = createUser();
     Integer user_id = user.getUserId();
-    String key = RandomStringUtils.randomAlphabetic(100);
+    String key = randomAlphabetic(100);
     assertTrue(acknowledgementDAO.findAcknowledgementsForUser(user_id).isEmpty());
 
     acknowledgementDAO.upsertAcknowledgement(key, user_id);
@@ -34,7 +33,7 @@ class AcknowledgementDAOTest extends DAOTestHelper {
 
     assertEquals(1, acknowledgementDAO.findAcknowledgementsForUser(user_id).size());
     assertEquals(
-        newAcknowledgement, acknowledgementDAO.findAcknowledgementsForUser(user_id).get(0));
+        newAcknowledgement, acknowledgementDAO.findAcknowledgementsForUser(user_id).getFirst());
 
     // Theoretically possible that on a fast enough system not enough
     // time will have passed to tick a millisecond in the clock.  We should be lucky enough to see
@@ -42,7 +41,8 @@ class AcknowledgementDAOTest extends DAOTestHelper {
     sleep(1);
     acknowledgementDAO.upsertAcknowledgement(key, user_id);
     assertEquals(1, acknowledgementDAO.findAcknowledgementsForUser(user_id).size());
-    Acknowledgement upsertResult = acknowledgementDAO.findAcknowledgementsForUser(user_id).get(0);
+    Acknowledgement upsertResult =
+        acknowledgementDAO.findAcknowledgementsForUser(user_id).getFirst();
     assertNotEquals(newAcknowledgement, upsertResult);
     assertEquals(newAcknowledgement.getAckKey(), upsertResult.getAckKey());
     assertEquals(
@@ -58,21 +58,22 @@ class AcknowledgementDAOTest extends DAOTestHelper {
   void createAndDeleteAcknowledgement() {
     User user = createUser();
     Integer user_id = user.getUserId();
-    String key1 = RandomStringUtils.randomAlphabetic(100);
-    String key2 = RandomStringUtils.randomAlphabetic(100);
+    String key1 = randomAlphabetic(100);
+    String key2 = randomAlphabetic(100);
     assertTrue(acknowledgementDAO.findAcknowledgementsForUser(user_id).isEmpty());
 
     acknowledgementDAO.upsertAcknowledgement(key1, user_id);
     acknowledgementDAO.upsertAcknowledgement(key2, user_id);
-    Acknowledgement upsertResult = acknowledgementDAO.findAcknowledgementsForUser(user_id).get(0);
+    Acknowledgement upsertResult =
+        acknowledgementDAO.findAcknowledgementsForUser(user_id).getFirst();
 
     assertEquals(2, acknowledgementDAO.findAcknowledgementsForUser(user_id).size());
-    assertEquals(upsertResult, acknowledgementDAO.findAcknowledgementsForUser(user_id).get(0));
+    assertEquals(upsertResult, acknowledgementDAO.findAcknowledgementsForUser(user_id).getFirst());
 
     acknowledgementDAO.deleteAcknowledgement(key1, user_id);
     assertEquals(1, acknowledgementDAO.findAcknowledgementsForUser(user_id).size());
     Acknowledgement secondAcknowledgement =
-        acknowledgementDAO.findAcknowledgementsForUser(user_id).get(0);
+        acknowledgementDAO.findAcknowledgementsForUser(user_id).getFirst();
     assertEquals(key2, secondAcknowledgement.getAckKey());
   }
 
@@ -82,8 +83,8 @@ class AcknowledgementDAOTest extends DAOTestHelper {
     User user3 = createUser();
     Integer user1Id = user2.getUserId();
     Integer user2Id = user3.getUserId();
-    String key1 = RandomStringUtils.randomAlphabetic(100);
-    String key2 = RandomStringUtils.randomAlphabetic(100);
+    String key1 = randomAlphabetic(100);
+    String key2 = randomAlphabetic(100);
     List<String> key_list = Arrays.asList(key1, key2);
     assertTrue(acknowledgementDAO.findAcknowledgementsForUser(user1Id).isEmpty());
     assertTrue(acknowledgementDAO.findAcknowledgementsForUser(user2Id).isEmpty());
@@ -114,15 +115,5 @@ class AcknowledgementDAOTest extends DAOTestHelper {
     List<Acknowledgement> user2AcknowledgementsWithList =
         acknowledgementDAO.findAcknowledgementsForUser(key_list, user2Id);
     assertEquals(1, user2AcknowledgementsWithList.size());
-  }
-
-  @Test
-  void testDeleteAcknowledgmentByUserId() {
-    User user = createUser();
-    String ack = RandomStringUtils.randomAlphabetic(100);
-    acknowledgementDAO.upsertAcknowledgement(ack, user.getUserId());
-    assertEquals(1, acknowledgementDAO.findAcknowledgementsForUser(user.getUserId()).size());
-    acknowledgementDAO.deleteAllAcknowledgementsByUser(user.getUserId());
-    assertEquals(0, acknowledgementDAO.findAcknowledgementsForUser(user.getUserId()).size());
   }
 }
