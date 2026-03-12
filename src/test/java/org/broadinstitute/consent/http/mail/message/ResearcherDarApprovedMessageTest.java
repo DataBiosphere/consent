@@ -48,7 +48,7 @@ class ResearcherDarApprovedMessageTest extends AbstractTestHelper {
     String darCode = randomAlphabetic(10);
     String datasetName = randomAlphabetic(10);
     String datasetId = randomAlphabetic(10);
-    String dataLocation = randomAlphabetic(10);
+    String dataLocationUrl = randomAlphabetic(10);
     User researcher = new User();
     researcher.setDisplayName(researcherUserName);
     researcher.setEmail(researcherEmail);
@@ -57,7 +57,7 @@ class ResearcherDarApprovedMessageTest extends AbstractTestHelper {
         new ResearcherDarApprovedMessage(
             researcher,
             darCode,
-            List.of(new DatasetMailDTO(datasetName, datasetId, dataLocation)),
+            List.of(new DatasetMailDTO(datasetName, datasetId, dataLocationUrl)),
             "",
             false);
     assertEquals(darCode, message.getEntityReferenceId());
@@ -79,7 +79,7 @@ class ResearcherDarApprovedMessageTest extends AbstractTestHelper {
     assertTrue(templateString.contains(datasetId));
     assertTrue(templateString.contains(datasetName));
     // Positive test to ensure data location is in the template.
-    assertTrue(templateString.contains(dataLocation));
+    assertTrue(templateString.contains(dataLocationUrl));
     assertTrue(templateString.contains(researcherEmail));
   }
 

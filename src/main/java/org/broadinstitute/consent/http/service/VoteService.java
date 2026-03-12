@@ -270,7 +270,7 @@ public class VoteService implements ConsentLogger {
                     .map(
                         d ->
                             new DatasetMailDTO(
-                                d.getName(), d.getDatasetIdentifier(), getDataLocation(d)))
+                                d.getName(), d.getDatasetIdentifier(), getDataLocationUrl(d)))
                     .toList();
 
             // Get all Data Use translations, distinctly in the case that there are several with the
@@ -339,7 +339,7 @@ public class VoteService implements ConsentLogger {
                     new DatasetMailDTO(
                         approvedDataset.getName(),
                         approvedDataset.getDatasetIdentifier(),
-                        getDataLocation(approvedDataset))));
+                        getDataLocationUrl(approvedDataset))));
     dacIdToDatasetMap.forEach(
         (dacId, datasets) -> {
           List<User> members = dacDAO.findMembersByDacId(dacId);
@@ -480,7 +480,8 @@ public class VoteService implements ConsentLogger {
           entry.getValue().stream()
               .map(
                   d ->
-                      new DatasetMailDTO(d.getName(), d.getDatasetIdentifier(), getDataLocation(d)))
+                      new DatasetMailDTO(
+                          d.getName(), d.getDatasetIdentifier(), getDataLocationUrl(d)))
               .toList();
       try {
         emailService.sendDataCustodianApprovalMessage(
@@ -591,7 +592,7 @@ public class VoteService implements ConsentLogger {
         user, rejectedDatasets, request, HttpStatusCodes.STATUS_CODE_OK);
   }
 
-  private String getDataLocation(Dataset dataset) {
+  private String getDataLocationUrl(Dataset dataset) {
     if (dataset.getProperties() == null || dataset.getProperties().isEmpty()) {
       return null;
     }
@@ -600,7 +601,7 @@ public class VoteService implements ConsentLogger {
             p ->
                 p.getSchemaProperty() != null
                     && p.getSchemaProperty()
-                        .equalsIgnoreCase(DatasetRegistrationSchemaV1Builder.dataLocation))
+                        .equalsIgnoreCase(DatasetRegistrationSchemaV1Builder.url))
         .map(DatasetProperty::getPropertyValueAsString)
         .findFirst()
         .orElse(null);

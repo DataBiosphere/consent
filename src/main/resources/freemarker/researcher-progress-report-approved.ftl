@@ -46,8 +46,8 @@
                                     ${dataset.name}
                                 </td>
                                 <td style="font-family: 'Montserrat', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">
-                                    <#if (dataset.dataLocation)??>
-                                        <a href="${dataset.dataLocation}" style="text-decoration: none; font-family: 'Montserrat', sans-serif; color: #00609F;">${dataset.dataLocation}</a>
+                                    <#if (dataset.dataLocationUrl)??>
+                                        <a href="${dataset.dataLocationUrl}" style="text-decoration: none; font-family: 'Montserrat', sans-serif; color: #00609F;">${dataset.dataLocationUrl}</a>
                                     </#if>
                                 </td>
                             </tr>
@@ -61,7 +61,7 @@
                 <p style="font-family: 'Montserrat', sans-serif; font-style: italic; font-size: 15px; color: #00609f; font-weight: 600; margin-bottom: 0;">Data Use Restrictions:</p>
                 <p style="font-family: 'Montserrat', sans-serif; margin-top: 0;">${dataUseRestriction}</p>
                 <hr style="border: none; border-bottom: 1px solid #cccccc;">
-                <p style="margin-top: 20px 0 0;">Please remember you attested to the following in your progress report:</p>
+                <p style="margin-top: 20px;">Please remember you attested to the following in your progress report:</p>
                 <ol style="font-size: 15px; margin: 0px;">
                     <li>Data will only be used for approved research.</li>
                     <li>Data confidentiality will be protected and the investigator will never make any attempt at “re-identification”.</li>

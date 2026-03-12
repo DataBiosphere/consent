@@ -1178,15 +1178,15 @@ class VoteServiceTest extends AbstractTestHelper {
     dataset1.setAlias(1);
     dataset1.setName("DUOS Dataset 1");
     dataset1.setDacId(1);
-    String dataLocation = "gs://bucket/dataset1";
+    String dataLocationUrl = "gs://bucket/dataset1";
     dataset1.setProperties(
         Set.of(
             new DatasetProperty(
                 1,
                 dataset1.getDatasetId(),
                 1,
-                DatasetRegistrationSchemaV1Builder.dataLocation,
-                dataLocation,
+                DatasetRegistrationSchemaV1Builder.url,
+                dataLocationUrl,
                 PropertyType.String,
                 new Date())));
 
@@ -1211,7 +1211,7 @@ class VoteServiceTest extends AbstractTestHelper {
             referenceId,
             List.of(
                 new DatasetMailDTO(
-                    dataset1.getName(), dataset1.getDatasetIdentifier(), dataLocation)),
+                    dataset1.getName(), dataset1.getDatasetIdentifier(), dataLocationUrl)),
             researcher);
     verify(emailService)
         .sendNewDARRADARApprovalToDAC(
@@ -1220,7 +1220,7 @@ class VoteServiceTest extends AbstractTestHelper {
             referenceId,
             List.of(
                 new DatasetMailDTO(
-                    dataset1.getName(), dataset1.getDatasetIdentifier(), dataLocation)),
+                    dataset1.getName(), dataset1.getDatasetIdentifier(), dataLocationUrl)),
             researcher);
     verify(emailService)
         .sendNewDARRADARApprovalToDAC(

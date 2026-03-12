@@ -46,8 +46,8 @@
                                     ${dataset.name}
                                 </td>
                                 <td style="font-family: 'Montserrat', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">
-                                    <#if (dataset.dataLocation)??>
-                                        <a href="${dataset.dataLocation}" style="text-decoration: none; font-family: 'Montserrat', sans-serif; color: #00609F;">${dataset.dataLocation}</a>
+                                    <#if (dataset.dataLocationUrl)??>
+                                        <a href="${dataset.dataLocationUrl}" style="text-decoration: none; font-family: 'Montserrat', sans-serif; color: #00609F;">${dataset.dataLocationUrl}</a>
                                     </#if>
                                 </td>
                             </tr>
