@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -1177,6 +1178,17 @@ class VoteServiceTest extends AbstractTestHelper {
     dataset1.setAlias(1);
     dataset1.setName("DUOS Dataset 1");
     dataset1.setDacId(1);
+    String dataLocation = "gs://bucket/dataset1";
+    dataset1.setProperties(
+        Set.of(
+            new DatasetProperty(
+                1,
+                dataset1.getDatasetId(),
+                1,
+                DatasetRegistrationSchemaV1Builder.dataLocation,
+                dataLocation,
+                PropertyType.String,
+                new Date())));
 
     Dataset dataset2 = new Dataset();
     dataset1.setDatasetId(2);
@@ -1197,14 +1209,18 @@ class VoteServiceTest extends AbstractTestHelper {
             dac1Member,
             darCode,
             referenceId,
-            List.of(new DatasetMailDTO(dataset1.getName(), dataset1.getDatasetIdentifier(), null)),
+            List.of(
+                new DatasetMailDTO(
+                    dataset1.getName(), dataset1.getDatasetIdentifier(), dataLocation)),
             researcher);
     verify(emailService)
         .sendNewDARRADARApprovalToDAC(
             dac1Chair,
             darCode,
             referenceId,
-            List.of(new DatasetMailDTO(dataset1.getName(), dataset1.getDatasetIdentifier(), null)),
+            List.of(
+                new DatasetMailDTO(
+                    dataset1.getName(), dataset1.getDatasetIdentifier(), dataLocation)),
             researcher);
     verify(emailService)
         .sendNewDARRADARApprovalToDAC(
