@@ -10,11 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -31,17 +28,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.broadinstitute.consent.http.AbstractTestHelper;
-import org.broadinstitute.consent.http.db.AcknowledgementDAO;
-import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
 import org.broadinstitute.consent.http.db.DaaDAO;
-import org.broadinstitute.consent.http.db.DatasetAuthorizationReaderDAO;
-import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
-import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
-import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
@@ -56,7 +47,6 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.UserUpdateFields;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
-import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
 import org.jdbi.v3.core.transaction.TransactionException;
@@ -72,30 +62,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class UserServiceTest extends AbstractTestHelper {
 
   @Mock private UserDAO userDAO;
-
   @Mock private UserPropertyDAO userPropertyDAO;
-
   @Mock private UserRoleDAO userRoleDAO;
-
-  @Mock private VoteDAO voteDAO;
-
   @Mock private InstitutionDAO institutionDAO;
-
-  @Mock private LibraryCardDAO libraryCardDAO;
-
-  @Mock private AcknowledgementDAO acknowledgementDAO;
-
-  @Mock private FileStorageObjectDAO fileStorageObjectDAO;
-
   @Mock private UserServiceDAO userServiceDAO;
-
   @Mock private DaaDAO daaDAO;
-
-  @Mock private DraftServiceDAO draftServiceDAO;
-
   @Mock private InstitutionService institutionService;
-  @Mock private DACAutomationRuleDAO ruleDAO;
-  @Mock private DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
   @Mock private InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
 
   private UserService service;
@@ -107,17 +79,10 @@ class UserServiceTest extends AbstractTestHelper {
             userDAO,
             userPropertyDAO,
             userRoleDAO,
-            voteDAO,
             institutionDAO,
-            libraryCardDAO,
-            acknowledgementDAO,
-            fileStorageObjectDAO,
             userServiceDAO,
             daaDAO,
-            draftServiceDAO,
             institutionService,
-            ruleDAO,
-            datasetAuthorizationReaderDAO,
             institutionAndLibraryCardEnforcement);
   }
 
@@ -410,38 +375,14 @@ class UserServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testDeleteUser() {
-    User u = generateUser();
-    doNothing().when(userPropertyDAO).deleteAllPropertiesByUser(any());
-    when(userDAO.findUserByEmail(any())).thenReturn(u);
-
-    try {
-      service.deleteUserByEmail(randomAlphabetic(10), randomInt(1, 100));
-      verify(draftServiceDAO).deleteDraftsByUser(u);
-      verify(ruleDAO, atLeastOnce()).auditedDeleteAllDACRuleSettingForUser(anyInt(), anyInt());
-      verify(datasetAuthorizationReaderDAO, atLeastOnce()).deleteByUserId(u.getUserId());
-    } catch (Exception e) {
-      fail("Should not fail: " + e.getMessage());
-    }
-  }
-
-  @Test
-  void testDeleteUserFailure() {
-    when(userDAO.findUserByEmail(any())).thenThrow(new NotFoundException());
-    assertThrows(
-        NotFoundException.class,
-        () -> service.deleteUserByEmail(randomAlphabetic(10), randomInt(1, 100)));
-  }
-
-  @Test
   void testFindSOsByInstitutionId() {
     User u = generateUser();
     Integer institutionId = u.getInstitutionId();
     when(userDAO.getSOsByInstitution(any())).thenReturn(List.of(u, u, u));
     List<SimplifiedUser> users = service.findSOsByInstitutionId(institutionId);
     assertEquals(3, users.size());
-    assertEquals(u.getDisplayName(), users.get(0).getDisplayName());
-    assertEquals(u.getEmail(), users.get(0).getEmail());
+    assertEquals(u.getDisplayName(), users.getFirst().getDisplayName());
+    assertEquals(u.getEmail(), users.getFirst().getEmail());
   }
 
   @Test
@@ -489,7 +430,7 @@ class UserServiceTest extends AbstractTestHelper {
     List<User> users = service.getUsersAsRole(u, UserRoles.SIGNINGOFFICIAL.getRoleName());
     assertNotNull(users);
     assertEquals(2, users.size());
-    assertSame(lc, users.get(0).getLibraryCard());
+    assertSame(lc, users.getFirst().getLibraryCard());
   }
 
   @Test
@@ -544,7 +485,6 @@ class UserServiceTest extends AbstractTestHelper {
     daa.setDaaId(daaId);
     when(daaDAO.findById(any())).thenReturn(daa);
     when(userDAO.getUsersWithCardsByDaaId(any())).thenReturn(List.of(u1));
-    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
     List<SimplifiedUser> users = service.getUsersByDaaId(daaId);
     assertNotNull(users);
     assertEquals(1, users.size());
@@ -564,8 +504,6 @@ class UserServiceTest extends AbstractTestHelper {
     daa.setDaaId(daaId);
     when(daaDAO.findById(daaId)).thenReturn(daa);
     when(userDAO.getUsersWithCardsByDaaId(any())).thenReturn(List.of(u1, u2));
-    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
-    libraryCardDAO.createLibraryCardDaaRelation(card2.getId(), daaId);
     List<SimplifiedUser> users = service.getUsersByDaaId(daaId);
     assertNotNull(users);
     assertEquals(2, users.size());
@@ -591,9 +529,6 @@ class UserServiceTest extends AbstractTestHelper {
     daa2.setDaaId(daaId2);
     when(daaDAO.findById(any())).thenReturn(daa, daa2);
     when(userDAO.getUsersWithCardsByDaaId(any())).thenReturn(List.of(u1, u2), List.of(u3));
-    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
-    libraryCardDAO.createLibraryCardDaaRelation(card2.getId(), daaId);
-    libraryCardDAO.createLibraryCardDaaRelation(card3.getId(), daaId2);
     List<SimplifiedUser> users = service.getUsersByDaaId(daaId);
     assertNotNull(users);
     assertEquals(2, users.size());

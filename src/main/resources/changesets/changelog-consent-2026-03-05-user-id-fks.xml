@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2026-03-05-user-id-fks" author="grushton">
+    <!--
+      Populate the users table with any user_ids that are referenced in other tables but do not exist in the users table.
+      This is necessary before adding user_id foreign key constraints.
+    -->
+    <sql>
+      INSERT INTO users (user_id, email, display_name, create_date)
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM acknowledgement WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM approval_expiration_time WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM dac_rule_audit WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM dac_rule_settings WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT create_user_id, 'redacted_' || encode(create_user_id::text::bytea, 'base64'), 'redacted', now() FROM dar_collection WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT update_user_id, 'redacted_' || encode(update_user_id::text::bytea, 'base64'), 'redacted', now() FROM dar_collection WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT create_user_id, 'redacted_' || encode(create_user_id::text::bytea, 'base64'), 'redacted', now() FROM data_access_agreement WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT update_user_id, 'redacted_' || encode(update_user_id::text::bytea, 'base64'), 'redacted', now() FROM data_access_agreement WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM data_access_request WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT create_user_id, 'redacted_' || encode(create_user_id::text::bytea, 'base64'), 'redacted', now() FROM dataset WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT update_user_id, 'redacted_' || encode(update_user_id::text::bytea, 'base64'), 'redacted', now() FROM dataset WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT modified_by_user, 'redacted_' || encode(modified_by_user::text::bytea, 'base64'), 'redacted', now() FROM dataset_audit WHERE modified_by_user NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM dataset_authorized_readers WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT created_by, 'redacted_' || encode(created_by::text::bytea, 'base64'), 'redacted', now() FROM dataset_authorized_readers WHERE created_by NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT create_user_id, 'redacted_' || encode(create_user_id::text::bytea, 'base64'), 'redacted', now() FROM draft WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT update_user_id, 'redacted_' || encode(update_user_id::text::bytea, 'base64'), 'redacted', now() FROM draft WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM email_entity WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM feature_flag_audit WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT create_user_id, 'redacted_' || encode(create_user_id::text::bytea, 'base64'), 'redacted', now() FROM file_storage_object WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT delete_user_id, 'redacted_' || encode(delete_user_id::text::bytea, 'base64'), 'redacted', now() FROM file_storage_object WHERE delete_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT update_user_id, 'redacted_' || encode(update_user_id::text::bytea, 'base64'), 'redacted', now() FROM file_storage_object WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT create_user, 'redacted_' || encode(create_user::text::bytea, 'base64'), 'redacted', now() FROM institution WHERE create_user NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT update_user, 'redacted_' || encode(update_user::text::bytea, 'base64'), 'redacted', now() FROM institution WHERE update_user NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM library_card WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT create_user_id, 'redacted_' || encode(create_user_id::text::bytea, 'base64'), 'redacted', now() FROM library_card WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT update_user_id, 'redacted_' || encode(update_user_id::text::bytea, 'base64'), 'redacted', now() FROM library_card WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT create_user_id, 'redacted_' || encode(create_user_id::text::bytea, 'base64'), 'redacted', now() FROM ontology_index WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT update_user_id, 'redacted_' || encode(update_user_id::text::bytea, 'base64'), 'redacted', now() FROM ontology_index WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT create_user_id, 'redacted_' || encode(create_user_id::text::bytea, 'base64'), 'redacted', now() FROM study WHERE create_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT update_user_id, 'redacted_' || encode(update_user_id::text::bytea, 'base64'), 'redacted', now() FROM study WHERE update_user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM user_property WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM user_role WHERE user_id NOT IN (SELECT user_id FROM users)
+      UNION
+      SELECT user_id, 'redacted_' || encode(user_id::text::bytea, 'base64'), 'redacted', now() FROM vote WHERE user_id NOT IN (SELECT user_id FROM users)
+    </sql>
+    <addForeignKeyConstraint baseTableName="dac_rule_audit" baseColumnNames="user_id"
+                             constraintName="fk_dac_rule_audit_user_id"
+                             referencedTableName="users" referencedColumnNames="user_id"/>
+    <addForeignKeyConstraint baseTableName="dar_collection" baseColumnNames="create_user_id"
+                             constraintName="fk_dar_collection_create_user_id"
+                             referencedTableName="users" referencedColumnNames="user_id"/>
+    <addForeignKeyConstraint baseTableName="dar_collection" baseColumnNames="update_user_id"
+                             constraintName="fk_dar_collection_update_user_id"
+                             referencedTableName="users" referencedColumnNames="user_id"/>
+    <addForeignKeyConstraint baseTableName="data_access_request" baseColumnNames="user_id"
+                             constraintName="fk_data_access_request_user_id"
+                             referencedTableName="users" referencedColumnNames="user_id"/>
+    <addForeignKeyConstraint baseTableName="dataset" baseColumnNames="update_user_id"
+                             constraintName="fk_dataset_update_user_id"
+                             referencedTableName="users" referencedColumnNames="user_id"/>
+    <addForeignKeyConstraint baseTableName="dataset_authorized_readers" baseColumnNames="created_by"
+                             constraintName="fk_dataset_authorized_readers_created_by"
+                             referencedTableName="users" referencedColumnNames="user_id"/>
+    <addForeignKeyConstraint baseTableName="email_entity" baseColumnNames="user_id"
+                             constraintName="fk_email_entity_user_id"
+                             referencedTableName="users" referencedColumnNames="user_id"/>
+    <addForeignKeyConstraint baseTableName="ontology_index" baseColumnNames="create_user_id"
+                             constraintName="fk_ontology_index_create_user_id"
+                             referencedTableName="users" referencedColumnNames="user_id"/>
+    <addForeignKeyConstraint baseTableName="ontology_index" baseColumnNames="update_user_id"
+                             constraintName="fk_ontology_index_update_user_id"
+                             referencedTableName="users" referencedColumnNames="user_id"/>
+    <rollback>
+      <!-- Delete the added constraints -->
+      <dropForeignKeyConstraint baseTableName="dac_rule_audit" constraintName="fk_dac_rule_audit_user_id"/>
+      <dropForeignKeyConstraint baseTableName="dar_collection" constraintName="fk_dar_collection_create_user_id"/>
+      <dropForeignKeyConstraint baseTableName="dar_collection" constraintName="fk_dar_collection_update_user_id"/>
+      <dropForeignKeyConstraint baseTableName="data_access_request" constraintName="fk_data_access_request_user_id"/>
+      <dropForeignKeyConstraint baseTableName="dataset" constraintName="fk_dataset_update_user_id"/>
+      <dropForeignKeyConstraint baseTableName="dataset_authorized_readers" constraintName="fk_dataset_authorized_readers_created_by"/>
+      <dropForeignKeyConstraint baseTableName="email_entity" constraintName="fk_email_entity_user_id"/>
+      <dropForeignKeyConstraint baseTableName="ontology_index" constraintName="fk_ontology_index_create_user_id"/>
+      <dropForeignKeyConstraint baseTableName="ontology_index" constraintName="fk_ontology_index_update_user_id"/>
+      <!-- Delete the users that were inserted by this migration in the rollback. -->
+      <sql>
+        DELETE FROM users WHERE display_name = 'redacted' AND email LIKE 'redacted_%';
+      </sql>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
