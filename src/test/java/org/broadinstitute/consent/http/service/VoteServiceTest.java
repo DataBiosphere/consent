@@ -25,10 +25,12 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -41,6 +43,7 @@ import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -71,6 +74,7 @@ class VoteServiceTest extends AbstractTestHelper {
 
   private VoteService service;
 
+  @Mock private DAOContainer daoContainer;
   @Mock private UserDAO userDAO;
   @Mock private DacDAO dacDAO;
   @Mock private DataAccessRequestDAO dataAccessRequestDAO;
@@ -84,17 +88,13 @@ class VoteServiceTest extends AbstractTestHelper {
 
   @BeforeEach
   void initService() {
-    service =
-        new VoteService(
-            userDAO,
-            dacDAO,
-            dataAccessRequestDAO,
-            datasetDAO,
-            electionDAO,
-            emailService,
-            voteDAO,
-            voteServiceDAO,
-            ontologyService);
+    when(daoContainer.getUserDAO()).thenReturn(userDAO);
+    when(daoContainer.getDacDAO()).thenReturn(dacDAO);
+    when(daoContainer.getDataAccessRequestDAO()).thenReturn(dataAccessRequestDAO);
+    when(daoContainer.getDatasetDAO()).thenReturn(datasetDAO);
+    when(daoContainer.getElectionDAO()).thenReturn(electionDAO);
+    when(daoContainer.getVoteDAO()).thenReturn(voteDAO);
+    service = new VoteService(daoContainer, emailService, voteServiceDAO, ontologyService);
   }
 
   @Test
@@ -118,6 +118,52 @@ class VoteServiceTest extends AbstractTestHelper {
     List<Vote> votes = service.findVotesByIds(List.of());
     assertNotNull(votes);
     assertTrue(votes.isEmpty());
+  }
+
+  @Test
+  void testDeleteOpenDacVotesForUser() {
+    Dac dac = new Dac();
+    dac.setDacId(1);
+    User u = new User();
+    u.setUserId(2);
+    Election e = new Election();
+    e.setElectionId(3);
+    Vote v = new Vote();
+    v.setVoteId(4);
+    v.setUserId(u.getUserId());
+    when(electionDAO.findOpenElectionsByDacId(dac.getDacId())).thenReturn(List.of(e));
+    when(voteDAO.findVotesByElectionIds(List.of(e.getElectionId()))).thenReturn(List.of(v));
+
+    service.deleteOpenDacVotesForUser(dac, u);
+    verify(voteDAO).removeVotesByIds(List.of(v.getVoteId()));
+  }
+
+  @Test
+  void testDeleteOpenDacVotesForUserNoElections() {
+    Dac dac = new Dac();
+    dac.setDacId(1);
+    User u = new User();
+    u.setUserId(2);
+    when(electionDAO.findOpenElectionsByDacId(dac.getDacId())).thenReturn(List.of());
+
+    service.deleteOpenDacVotesForUser(dac, u);
+    verify(voteDAO, never()).findVotesByElectionIds(any());
+    verify(voteDAO, never()).removeVotesByIds(any());
+  }
+
+  @Test
+  void testDeleteOpenDacVotesForUserNoVotes() {
+    Dac dac = new Dac();
+    dac.setDacId(1);
+    User u = new User();
+    u.setUserId(2);
+    Election e = new Election();
+    e.setElectionId(3);
+    when(electionDAO.findOpenElectionsByDacId(dac.getDacId())).thenReturn(List.of(e));
+    when(voteDAO.findVotesByElectionIds(List.of(e.getElectionId()))).thenReturn(List.of());
+
+    service.deleteOpenDacVotesForUser(dac, u);
+    verify(voteDAO, never()).removeVotesByIds(any());
   }
 
   @Test
@@ -1132,6 +1178,17 @@ class VoteServiceTest extends AbstractTestHelper {
     dataset1.setAlias(1);
     dataset1.setName("DUOS Dataset 1");
     dataset1.setDacId(1);
+    String dataLocationUrl = "gs://bucket/dataset1";
+    dataset1.setProperties(
+        Set.of(
+            new DatasetProperty(
+                1,
+                dataset1.getDatasetId(),
+                1,
+                DatasetRegistrationSchemaV1Builder.url,
+                dataLocationUrl,
+                PropertyType.String,
+                new Date())));
 
     Dataset dataset2 = new Dataset();
     dataset1.setDatasetId(2);
@@ -1152,28 +1209,32 @@ class VoteServiceTest extends AbstractTestHelper {
             dac1Member,
             darCode,
             referenceId,
-            List.of(new DatasetMailDTO(dataset1.getName(), dataset1.getDatasetIdentifier())),
+            List.of(
+                new DatasetMailDTO(
+                    dataset1.getName(), dataset1.getDatasetIdentifier(), dataLocationUrl)),
             researcher);
     verify(emailService)
         .sendNewDARRADARApprovalToDAC(
             dac1Chair,
             darCode,
             referenceId,
-            List.of(new DatasetMailDTO(dataset1.getName(), dataset1.getDatasetIdentifier())),
+            List.of(
+                new DatasetMailDTO(
+                    dataset1.getName(), dataset1.getDatasetIdentifier(), dataLocationUrl)),
             researcher);
     verify(emailService)
         .sendNewDARRADARApprovalToDAC(
             dac2Member,
             darCode,
             referenceId,
-            List.of(new DatasetMailDTO(dataset2.getName(), dataset2.getDatasetIdentifier())),
+            List.of(new DatasetMailDTO(dataset2.getName(), dataset2.getDatasetIdentifier(), null)),
             researcher);
     verify(emailService)
         .sendNewDARRADARApprovalToDAC(
             dac2Chair,
             darCode,
             referenceId,
-            List.of(new DatasetMailDTO(dataset2.getName(), dataset2.getDatasetIdentifier())),
+            List.of(new DatasetMailDTO(dataset2.getName(), dataset2.getDatasetIdentifier(), null)),
             researcher);
   }
 

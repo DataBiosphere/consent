@@ -143,7 +143,8 @@ class EmailServiceTest extends AbstractTestHelper {
     verify(sendGridAPI).sendMessage(captor.capture(), eq(user.getEmail()));
     var mail = captor.getValue();
     assertEquals(FROM, mail.getFrom().getEmail());
-    assertEquals(user.getEmail(), mail.getPersonalization().get(0).getTos().get(0).getEmail());
+    assertEquals(
+        user.getEmail(), mail.getPersonalization().getFirst().getTos().getFirst().getEmail());
     assertEquals(subject, mail.getSubject());
 
     verify(emailDAO)
@@ -511,7 +512,7 @@ class EmailServiceTest extends AbstractTestHelper {
         toUser,
         "DAR-00001",
         referenceId,
-        List.of(new DatasetMailDTO("dataset-name", "DUOS-00123")),
+        List.of(new DatasetMailDTO("dataset-name", "DUOS-00123", null)),
         researcherUser);
     verify(sendGridAPI).sendMessage(any(Mail.class), eq(toUser.getEmail()));
     verify(emailDAO)
