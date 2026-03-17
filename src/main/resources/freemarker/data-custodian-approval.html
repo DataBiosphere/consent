@@ -37,10 +37,10 @@
                         <#items as dataset>
                             <tr>
                                 <td style="font-family: 'Montserrat', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">
-                                    ${dataset.identifier}
+                                    ${dataset.identifier()}
                                 </td>
                                 <td style="font-family: 'Montserrat', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">
-                                    ${dataset.name}
+                                    ${dataset.name()}
                                 </td>
                             </tr>
                         </#items>
