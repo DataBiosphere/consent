@@ -19,21 +19,17 @@ import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
-import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
-import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
@@ -44,7 +40,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DaaServiceTest {
+class DaaServiceTest extends AbstractTestHelper {
 
   @Mock private DaaServiceDAO daaServiceDAO;
 
@@ -56,8 +52,6 @@ class DaaServiceTest {
 
   @Mock private UserService userService;
 
-  @Mock private InstitutionDAO institutionDAO;
-
   @Mock private DacDAO dacDAO;
 
   private final InputStream inputStream = mock(InputStream.class);
@@ -68,9 +62,7 @@ class DaaServiceTest {
   private DaaService service;
 
   private void initService() {
-    service =
-        new DaaService(
-            daaServiceDAO, daaDAO, gcsService, emailService, userService, institutionDAO, dacDAO);
+    service = new DaaService(daaServiceDAO, daaDAO, gcsService, emailService, userService, dacDAO);
   }
 
   @Test
@@ -118,7 +110,7 @@ class DaaServiceTest {
     doNothing().when(daaDAO).createDacDaaRelation(any(), any());
 
     initService();
-    service.addDacToDaa(1, 1);
+    assertDoesNotThrow(() -> service.addDacToDaa(1, 1));
   }
 
   @Test
@@ -126,7 +118,7 @@ class DaaServiceTest {
     doNothing().when(daaDAO).deleteDacDaaRelation(any(), any());
 
     initService();
-    service.removeDacFromDaa(1, 1);
+    assertDoesNotThrow(() -> service.removeDacFromDaa(1, 1));
   }
 
   @Test
@@ -141,22 +133,22 @@ class DaaServiceTest {
   void testFindAllWithBroadDaa() {
     Dac broadDac = new Dac();
     broadDac.setName("Broad DAC");
-    broadDac.setDacId(RandomUtils.nextInt(1, 10));
+    broadDac.setDacId(randomInt(1, 10));
 
     Dac otherDac = new Dac();
     otherDac.setName("Other DAC");
-    otherDac.setDacId(RandomUtils.nextInt(11, 20));
+    otherDac.setDacId(randomInt(11, 20));
 
     DataAccessAgreement broadDAA = new DataAccessAgreement();
-    broadDAA.setDaaId(RandomUtils.nextInt(1, 10));
+    broadDAA.setDaaId(randomInt(1, 10));
     broadDAA.setInitialDacId(broadDac.getDacId());
 
     DataAccessAgreement nonBroadDAA1 = new DataAccessAgreement();
-    nonBroadDAA1.setDaaId(RandomUtils.nextInt(11, 20));
+    nonBroadDAA1.setDaaId(randomInt(11, 20));
     nonBroadDAA1.setInitialDacId(otherDac.getDacId());
 
     DataAccessAgreement nonBroadDAA2 = new DataAccessAgreement();
-    nonBroadDAA2.setDaaId(RandomUtils.nextInt(21, 30));
+    nonBroadDAA2.setDaaId(randomInt(21, 30));
     nonBroadDAA2.setInitialDacId(otherDac.getDacId());
 
     when(daaDAO.findAll()).thenReturn(List.of(broadDAA, nonBroadDAA1, nonBroadDAA2));
@@ -179,101 +171,18 @@ class DaaServiceTest {
   }
 
   @Test
-  void testSendDaaRequestEmailsNoSigningOfficials() throws Exception {
-    User user = mock(User.class);
-    when(user.getInstitutionId()).thenReturn(1);
-
-    Institution institution = mock(Institution.class);
-    when(institution.getSigningOfficials()).thenReturn(List.of());
-
-    when(institutionDAO.findInstitutionWithSOById(any())).thenReturn(institution);
-
-    initService();
-
-    assertThrows(NotFoundException.class, () -> service.sendDaaRequestEmails(user, 1));
-  }
-
-  @Test
-  void testSendDaaRequestEmailsUserWithoutInstitution() throws Exception {
-    User user = mock(User.class);
-    when(user.getInstitutionId()).thenReturn(null);
-
-    when(institutionDAO.findInstitutionWithSOById(any())).thenReturn(null);
-
-    initService();
-
-    assertThrows(BadRequestException.class, () -> service.sendDaaRequestEmails(user, 1));
-  }
-
-  @Test
-  void testSendDaaRequestEmailsWithSigningOfficials() throws Exception {
-    User user = mock(User.class);
-    when(user.getInstitutionId()).thenReturn(1);
-
-    SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
-    signingOfficial.setDisplayName("Official Name");
-    signingOfficial.setEmail("official@example.com");
-
-    Institution institution = mock(Institution.class);
-    when(institution.getSigningOfficials()).thenReturn(List.of(signingOfficial));
-
-    when(institutionDAO.findInstitutionWithSOById(any())).thenReturn(institution);
-
-    DataAccessAgreement daa = mock(DataAccessAgreement.class);
-    FileStorageObject file = mock(FileStorageObject.class);
-    when(file.getFileName()).thenReturn("daaName");
-    when(daa.getFile()).thenReturn(file);
-    when(daaDAO.findById(any())).thenReturn(daa);
-
-    initService();
-
-    assertDoesNotThrow(() -> service.sendDaaRequestEmails(user, 1));
-    verify(emailService).sendDaaRequestMessage(any(), any(), any(), any());
-  }
-
-  @Test
-  void testSendDaaRequestEmailsWithMultipleSigningOfficials() throws Exception {
-    User user = mock(User.class);
-    when(user.getInstitutionId()).thenReturn(1);
-
-    SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
-    signingOfficial.setDisplayName("Official Name");
-    signingOfficial.setEmail("official@example.com");
-
-    SimplifiedUser signingOfficial2 = mock(SimplifiedUser.class);
-    signingOfficial2.setDisplayName("Official Name2");
-    signingOfficial2.setEmail("official2@example.com");
-
-    Institution institution = mock(Institution.class);
-    when(institution.getSigningOfficials()).thenReturn(List.of(signingOfficial, signingOfficial2));
-
-    when(institutionDAO.findInstitutionWithSOById(any())).thenReturn(institution);
-
-    DataAccessAgreement daa = mock(DataAccessAgreement.class);
-    FileStorageObject file = mock(FileStorageObject.class);
-    when(file.getFileName()).thenReturn("daaName");
-    when(daa.getFile()).thenReturn(file);
-    when(daaDAO.findById(any())).thenReturn(daa);
-
-    initService();
-
-    assertDoesNotThrow(() -> service.sendDaaRequestEmails(user, 1));
-    verify(emailService, times(2)).sendDaaRequestMessage(any(), any(), any(), any());
-  }
-
-  @Test
   void testSendNewDaaEmails() throws Exception {
     User user = mock(User.class);
 
     SimplifiedUser researcher = mock(SimplifiedUser.class);
     researcher.setDisplayName("Official Name");
     researcher.setEmail("official@example.com");
-    researcher.setInstitutionId(RandomUtils.nextInt(0, 50));
+    researcher.setInstitutionId(randomInt(0, 50));
 
     SimplifiedUser researcher2 = mock(SimplifiedUser.class);
     researcher2.setDisplayName("Official Name2");
     researcher2.setEmail("official2@example.com");
-    researcher2.setInstitutionId(RandomUtils.nextInt(0, 50));
+    researcher2.setInstitutionId(randomInt(0, 50));
 
     SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
     signingOfficial.setDisplayName("Official Name");
@@ -307,7 +216,7 @@ class DaaServiceTest {
     SimplifiedUser researcher = mock(SimplifiedUser.class);
     researcher.setDisplayName("Official Name");
     researcher.setEmail("official@example.com");
-    researcher.setInstitutionId(RandomUtils.nextInt(0, 50));
+    researcher.setInstitutionId(randomInt(0, 50));
 
     SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
     signingOfficial.setDisplayName("Official Name");
@@ -335,7 +244,7 @@ class DaaServiceTest {
   }
 
   @Test
-  void testSendNewDaaEmailsDAANotFound() throws Exception {
+  void testSendNewDaaEmailsDAANotFound() {
     User user = mock(User.class);
 
     initService();
@@ -344,7 +253,7 @@ class DaaServiceTest {
   }
 
   @Test
-  void testSendNewDaaEmailsDAANoResearchersAndSOs() throws Exception {
+  void testSendNewDaaEmailsDAANoResearchersAndSOs() {
     User user = mock(User.class);
 
     DataAccessAgreement daa = mock(DataAccessAgreement.class);
@@ -361,74 +270,6 @@ class DaaServiceTest {
   }
 
   @Test
-  void testSendNewDaaEmailsUserWithoutInstitution() throws Exception {
-    User user = mock(User.class);
-    when(user.getInstitutionId()).thenReturn(null);
-
-    when(institutionDAO.findInstitutionWithSOById(any())).thenReturn(null);
-
-    initService();
-
-    assertThrows(BadRequestException.class, () -> service.sendDaaRequestEmails(user, 1));
-  }
-
-  @Test
-  void testSendNewDaaEmailsWithSigningOfficials() throws Exception {
-    User user = mock(User.class);
-    when(user.getInstitutionId()).thenReturn(1);
-
-    SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
-    signingOfficial.setDisplayName("Official Name");
-    signingOfficial.setEmail("official@example.com");
-
-    Institution institution = mock(Institution.class);
-    when(institution.getSigningOfficials()).thenReturn(List.of(signingOfficial));
-
-    when(institutionDAO.findInstitutionWithSOById(any())).thenReturn(institution);
-
-    DataAccessAgreement daa = mock(DataAccessAgreement.class);
-    FileStorageObject file = mock(FileStorageObject.class);
-    when(file.getFileName()).thenReturn("daaName");
-    when(daa.getFile()).thenReturn(file);
-    when(daaDAO.findById(any())).thenReturn(daa);
-
-    initService();
-
-    assertDoesNotThrow(() -> service.sendDaaRequestEmails(user, 1));
-    verify(emailService).sendDaaRequestMessage(any(), any(), any(), any());
-  }
-
-  @Test
-  void testSendNewDaaEmailsWithMultipleSigningOfficials() throws Exception {
-    User user = mock(User.class);
-    when(user.getInstitutionId()).thenReturn(1);
-
-    SimplifiedUser signingOfficial = mock(SimplifiedUser.class);
-    signingOfficial.setDisplayName("Official Name");
-    signingOfficial.setEmail("official@example.com");
-
-    SimplifiedUser signingOfficial2 = mock(SimplifiedUser.class);
-    signingOfficial2.setDisplayName("Official Name2");
-    signingOfficial2.setEmail("official2@example.com");
-
-    Institution institution = mock(Institution.class);
-    when(institution.getSigningOfficials()).thenReturn(List.of(signingOfficial, signingOfficial2));
-
-    when(institutionDAO.findInstitutionWithSOById(any())).thenReturn(institution);
-
-    DataAccessAgreement daa = mock(DataAccessAgreement.class);
-    FileStorageObject file = mock(FileStorageObject.class);
-    when(file.getFileName()).thenReturn("daaName");
-    when(daa.getFile()).thenReturn(file);
-    when(daaDAO.findById(any())).thenReturn(daa);
-
-    initService();
-
-    assertDoesNotThrow(() -> service.sendDaaRequestEmails(user, 1));
-    verify(emailService, times(2)).sendDaaRequestMessage(any(), any(), any(), any());
-  }
-
-  @Test
   void testFindFileById() {
     BlobId blobId = mock(BlobId.class);
     FileStorageObject file = mock(FileStorageObject.class);
@@ -437,8 +278,7 @@ class DaaServiceTest {
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setFile(file);
 
-    String fileContent = RandomStringUtils.randomAlphanumeric(10);
-    InputStream is = new ByteArrayInputStream((fileContent).getBytes());
+    randomAlphanumeric(10);
 
     when(daaDAO.findById(any())).thenReturn(daa);
 
@@ -448,14 +288,13 @@ class DaaServiceTest {
 
   @Test
   void testFindFileByIdInvalidDaaId() {
-    BlobId blobId = mock(BlobId.class);
+    mock(BlobId.class);
     FileStorageObject file = mock(FileStorageObject.class);
 
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setFile(file);
 
-    String fileContent = RandomStringUtils.randomAlphanumeric(10);
-    InputStream is = new ByteArrayInputStream((fileContent).getBytes());
+    randomAlphanumeric(10);
 
     when(daaDAO.findById(any())).thenThrow(new NotFoundException("not found"));
 
@@ -527,7 +366,7 @@ class DaaServiceTest {
     when(daaDAO.findById(any())).thenReturn(new DataAccessAgreement());
     doNothing().when(daaDAO).deleteDaa(any());
     initService();
-    service.deleteDaa(1);
+    assertDoesNotThrow(() -> service.deleteDaa(1));
   }
 
   @Test
@@ -539,7 +378,7 @@ class DaaServiceTest {
   @Test
   void testIsBroadDAANoDaasNoDacs() {
     initService();
-    assertFalse(service.isBroadDAA(RandomUtils.nextInt(0, 50), List.of(), List.of()));
+    assertFalse(service.isBroadDAA(randomInt(0, 50), List.of(), List.of()));
   }
 
   @Test
@@ -589,9 +428,9 @@ class DaaServiceTest {
     DataAccessAgreement daa1 = new DataAccessAgreement();
     DataAccessAgreement daa2 = new DataAccessAgreement();
     daa1.setDaaId(1);
-    daa1.setInitialDacId(RandomUtils.nextInt(3, 50));
+    daa1.setInitialDacId(randomInt(3, 50));
     daa2.setDaaId(2);
-    daa2.setInitialDacId(RandomUtils.nextInt(3, 50));
+    daa2.setInitialDacId(randomInt(3, 50));
 
     assertFalse(service.isBroadDAA(1, List.of(daa1, daa2), List.of(dac, dac2)));
     assertFalse(service.isBroadDAA(2, List.of(daa1, daa2), List.of(dac, dac2)));
@@ -612,7 +451,7 @@ class DaaServiceTest {
     DataAccessAgreement daa1 = new DataAccessAgreement();
     DataAccessAgreement daa2 = new DataAccessAgreement();
     daa1.setDaaId(1);
-    daa1.setInitialDacId(RandomUtils.nextInt(3, 50));
+    daa1.setInitialDacId(randomInt(3, 50));
     daa2.setDaaId(2);
     daa2.setInitialDacId(2);
 
@@ -626,8 +465,7 @@ class DaaServiceTest {
     DataAccessAgreement daa1 = new DataAccessAgreement();
     when(daaDAO.findByDarReferenceId(any())).thenReturn(List.of(daa1));
 
-    List<DataAccessAgreement> daas =
-        service.findByDarReferenceId(RandomStringUtils.randomAlphabetic(5));
+    List<DataAccessAgreement> daas = service.findByDarReferenceId(randomAlphabetic(5));
     assertFalse(daas.isEmpty());
     assertTrue(daas.stream().map(DataAccessAgreement::getDaaId).toList().contains(daa1.getDaaId()));
   }
@@ -637,8 +475,7 @@ class DaaServiceTest {
     initService();
     when(daaDAO.findByDarReferenceId(any())).thenReturn(List.of());
 
-    List<DataAccessAgreement> daas =
-        service.findByDarReferenceId(RandomStringUtils.randomAlphabetic(5));
+    List<DataAccessAgreement> daas = service.findByDarReferenceId(randomAlphabetic(5));
     assertTrue(daas.isEmpty());
   }
 }

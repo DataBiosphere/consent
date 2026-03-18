@@ -29,7 +29,7 @@ post:
           schema:
             $ref: '../schemas/DataAccessAgreement.yaml'
     403:
-      description: User not authorized to request all dacs.
+      description: User not authorized to create DAA for a DAC.
     404:
       description: Dac Not Found
     500:

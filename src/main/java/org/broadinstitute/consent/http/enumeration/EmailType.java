@@ -15,7 +15,7 @@ public enum EmailType {
   NEW_RESEARCHER(12, "new-researcher-library-request.html"),
   RESEARCHER_APPROVED(13),
   NEW_DATASET(14, "dataset-submitted.html"),
-  NEW_DAA_REQUEST(15, "new-daa-request.html"),
+  //  NEW_DAA_REQUEST(15, "new-daa-request.html"),
   NEW_DAA_UPLOAD_RESEARCHER(16, "new-daa-upload-researcher.html"),
   NEW_DAA_UPLOAD_SO(17, "new-daa-upload-signing-official.html"),
   DATASET_DENIED(18, "dataset-denied.html"),

@@ -303,36 +303,6 @@ class EmailServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSendDaaRequestMessage() throws Exception {
-    User signingOfficial = new User();
-    signingOfficial.setDisplayName("Jane Evans");
-    signingOfficial.setEmail("signingofficial@example.com");
-
-    User user = new User();
-    user.setDisplayName("John Doe");
-    user.setUserId(123);
-
-    String daaName = "DAA-123";
-    int daaId = 456;
-    when(templateHelper.getTemplate(EmailType.NEW_DAA_REQUEST.templateName)).thenReturn(mock());
-
-    service.sendDaaRequestMessage(signingOfficial, user, daaName, daaId);
-
-    verify(sendGridAPI).sendMessage(any(), any());
-    verify(emailDAO)
-        .insert(
-            eq("456"),
-            eq(null),
-            eq(user.getUserId()),
-            eq(EmailType.NEW_DAA_REQUEST.getTypeInt()),
-            any(),
-            any(),
-            any(),
-            any(),
-            any());
-  }
-
-  @Test
   void testSendNewDAAUploadResearcherMessage() throws Exception {
     User researcher = new User();
     researcher.setDisplayName("Jane Evans");
