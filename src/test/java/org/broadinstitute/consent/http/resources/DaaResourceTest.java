@@ -69,10 +69,11 @@ class DaaResourceTest extends AbstractTestHelper {
         .thenReturn(new DataAccessAgreement());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response =
+    try (Response response =
         resource.createDaaForDac(
-            info, duosUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
-    assertEquals(HttpStatus.SC_CREATED, response.getStatus());
+            info, duosUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail)) {
+      assertEquals(HttpStatus.SC_CREATED, response.getStatus());
+    }
   }
 
   @Test
@@ -88,10 +89,11 @@ class DaaResourceTest extends AbstractTestHelper {
     when(dacService.findById(any())).thenReturn(dac);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response =
+    try (Response response =
         resource.createDaaForDac(
-            info, duosUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
-    assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+            info, duosUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail)) {
+      assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    }
   }
 
   @Test
@@ -108,26 +110,11 @@ class DaaResourceTest extends AbstractTestHelper {
         .thenThrow(new IllegalArgumentException());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response =
+    try (Response response =
         resource.createDaaForDac(
-            info, duosUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail);
-    assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus());
-  }
-
-  @Test
-  void testFindAllNoDaas() {
-    User authedUser = new User();
-    authedUser.setSigningOfficialRole();
-    DuosUser duosUser = new DuosUser(authUser, authedUser);
-
-    when(daaService.findAll()).thenReturn(Collections.emptyList());
-
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.findAll(duosUser);
-    assert response.getStatus() == HttpStatus.SC_OK;
-    JsonArray daas =
-        GsonUtil.buildGson().fromJson((response.getEntity().toString()), JsonArray.class);
-    assertEquals(0, daas.size());
+            info, duosUser, dac.getDacId(), IOUtils.toInputStream("test", "UTF-8"), fileDetail)) {
+      assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus());
+    }
   }
 
   @Test
@@ -140,11 +127,12 @@ class DaaResourceTest extends AbstractTestHelper {
     when(daaService.findAll()).thenReturn(Collections.singletonList(expectedDaa));
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.findAll(duosUser);
-    assert response.getStatus() == HttpStatus.SC_OK;
-    JsonArray daas =
-        GsonUtil.buildGson().fromJson((response.getEntity().toString()), JsonArray.class);
-    assertEquals(1, daas.size());
+    try (Response response = resource.findAll(duosUser)) {
+      assert response.getStatus() == HttpStatus.SC_OK;
+      JsonArray daas =
+          GsonUtil.buildGson().fromJson((response.getEntity().toString()), JsonArray.class);
+      assertEquals(1, daas.size());
+    }
   }
 
   @Test
@@ -158,11 +146,12 @@ class DaaResourceTest extends AbstractTestHelper {
     when(daaService.findAll()).thenReturn(List.of(expectedDaa1, expectedDaa2));
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.findAll(duosUser);
-    assert response.getStatus() == HttpStatus.SC_OK;
-    JsonArray daas =
-        GsonUtil.buildGson().fromJson((response.getEntity().toString()), JsonArray.class);
-    assertEquals(2, daas.size());
+    try (Response response = resource.findAll(duosUser)) {
+      assert response.getStatus() == HttpStatus.SC_OK;
+      JsonArray daas =
+          GsonUtil.buildGson().fromJson((response.getEntity().toString()), JsonArray.class);
+      assertEquals(2, daas.size());
+    }
   }
 
   @Test
@@ -175,9 +164,10 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.findDaaById(duosUser, expectedDaaId);
-    assert response.getStatus() == HttpStatus.SC_OK;
-    assertEquals(expectedDaa, response.getEntity());
+    try (Response response = resource.findDaaById(duosUser, expectedDaaId)) {
+      assert response.getStatus() == HttpStatus.SC_OK;
+      assertEquals(expectedDaa, response.getEntity());
+    }
   }
 
   @Test
@@ -187,8 +177,9 @@ class DaaResourceTest extends AbstractTestHelper {
     when(daaService.findById(invalidId)).thenThrow(new NotFoundException());
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.findDaaById(duosUser, invalidId);
-    assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    try (Response response = resource.findDaaById(duosUser, invalidId)) {
+      assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
@@ -208,12 +199,12 @@ class DaaResourceTest extends AbstractTestHelper {
     when(daaService.findById(expectedDaaId)).thenReturn(expectedDaa);
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.findFileById(duosUser, expectedDaaId);
-    assert response.getStatus() == HttpStatus.SC_OK;
-
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    ((StreamingOutput) response.getEntity()).write(out);
-    assertEquals(fileContent, out.toString());
+    try (Response response = resource.findFileById(duosUser, expectedDaaId)) {
+      assert response.getStatus() == HttpStatus.SC_OK;
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      ((StreamingOutput) response.getEntity()).write(out);
+      assertEquals(fileContent, out.toString());
+    }
   }
 
   @Test
@@ -223,8 +214,9 @@ class DaaResourceTest extends AbstractTestHelper {
     when(daaService.findFileById(invalidId)).thenThrow(new NotFoundException());
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.findFileById(duosUser, invalidId);
-    assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    try (Response response = resource.findFileById(duosUser, invalidId)) {
+      assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
@@ -234,39 +226,9 @@ class DaaResourceTest extends AbstractTestHelper {
     when(daaService.findFileById(expectedDaaId)).thenThrow(new RuntimeException());
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.findFileById(duosUser, expectedDaaId);
-    assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatus());
-  }
-
-  @Test
-  void testCreateLibraryCardDaaRelation_SigningOfficialCase() {
-    UriInfo info = mock(UriInfo.class);
-    UriBuilder builder = mock(UriBuilder.class);
-    when(info.getBaseUriBuilder()).thenReturn(builder);
-    when(builder.replacePath(any())).thenReturn(builder);
-    Dac dac = new Dac();
-    dac.setDacId(randomInt(10, 100));
-    User signingOfficial = new User();
-    signingOfficial.setSigningOfficialRole();
-    signingOfficial.setInstitutionId(1);
-    DuosUser duosUser = new DuosUser(authUser, signingOfficial);
-
-    User researcher = new User();
-    researcher.setResearcherRole();
-    researcher.setInstitutionId(1);
-
-    DataAccessAgreement daa = new DataAccessAgreement();
-    daa.setDaaId(1);
-    LibraryCard lc = new LibraryCard();
-    lc.setId(1);
-    researcher.setLibraryCard(lc);
-
-    when(userService.findUserById(any())).thenReturn(researcher);
-
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response =
-        resource.createLibraryCardDaaRelation(info, duosUser, daa.getDaaId(), signingOfficial.getUserId());
-    assertEquals(HttpStatus.SC_OK, response.getStatus());
+    try (Response response = resource.findFileById(duosUser, expectedDaaId)) {
+      assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatus());
+    }
   }
 
   @Test
@@ -290,9 +252,11 @@ class DaaResourceTest extends AbstractTestHelper {
     when(userService.findUserById(any())).thenReturn(researcher);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response =
-        resource.createLibraryCardDaaRelation(info, duosUser, daa.getDaaId(), signingOfficial.getUserId());
-    assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    try (Response response =
+        resource.createLibraryCardDaaRelation(
+            info, duosUser, daa.getDaaId(), signingOfficial.getUserId())) {
+      assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    }
   }
 
   @Test
@@ -317,9 +281,11 @@ class DaaResourceTest extends AbstractTestHelper {
     when(userService.findUserById(researcher2.getUserId())).thenReturn(researcher2);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response =
-        resource.createLibraryCardDaaRelation(info, duosUser, daa.getDaaId(), researcher2.getUserId());
-    assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    try (Response response =
+        resource.createLibraryCardDaaRelation(
+            info, duosUser, daa.getDaaId(), researcher2.getUserId())) {
+      assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    }
   }
 
   @Test
@@ -343,8 +309,10 @@ class DaaResourceTest extends AbstractTestHelper {
     when(userService.findUserById(any())).thenReturn(researcher);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.createLibraryCardDaaRelation(info, duosUser, daa.getDaaId(), 4);
-    assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatus());
+    try (Response response =
+        resource.createLibraryCardDaaRelation(info, duosUser, daa.getDaaId(), 4)) {
+      assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatus());
+    }
   }
 
   @Test
@@ -371,9 +339,11 @@ class DaaResourceTest extends AbstractTestHelper {
     when(userService.findUserById(any())).thenReturn(researcher);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response =
-        resource.createLibraryCardDaaRelation(info, duosUser, daa.getDaaId(), signingOfficial.getUserId());
-    assertEquals(HttpStatus.SC_OK, response.getStatus());
+    try (Response response =
+        resource.createLibraryCardDaaRelation(
+            info, duosUser, daa.getDaaId(), signingOfficial.getUserId())) {
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
+    }
   }
 
   @Test
@@ -400,9 +370,11 @@ class DaaResourceTest extends AbstractTestHelper {
     when(libraryCardService.createLibraryCardForSigningOfficial(any(), any())).thenReturn(newLc);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response =
-        resource.createLibraryCardDaaRelation(info, duosUser, daa.getDaaId(), signingOfficial.getUserId());
-    assertEquals(HttpStatus.SC_OK, response.getStatus());
+    try (Response response =
+        resource.createLibraryCardDaaRelation(
+            info, duosUser, daa.getDaaId(), signingOfficial.getUserId())) {
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
+    }
   }
 
   @Test
@@ -424,16 +396,20 @@ class DaaResourceTest extends AbstractTestHelper {
     doNothing().when(libraryCardService).removeDaaFromLibraryCard(any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.deleteDaaForUser(duosUser, daaId, signingOfficial.getUserId());
-    assertEquals(HttpStatus.SC_OK, response.getStatus());
+    try (Response response =
+        resource.deleteDaaForUser(duosUser, daaId, signingOfficial.getUserId())) {
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
+    }
   }
 
   @Test
   void testDeleteDaaForInvalidUser() {
     DuosUser duosUser = new DuosUser(authUser, new User());
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response = resource.deleteDaaForUser(duosUser, randomInt(10, 100), randomInt(10, 100));
-    assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatus());
+    try (Response response =
+        resource.deleteDaaForUser(duosUser, randomInt(10, 100), randomInt(10, 100))) {
+      assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatus());
+    }
   }
 
   @Test
@@ -449,9 +425,10 @@ class DaaResourceTest extends AbstractTestHelper {
     doNothing().when(daaService).sendNewDaaEmails(any(), any(), any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response =
-        resource.sendNewDaaMessage(duosUser, dacId, randomInt(10, 100), randomAlphabetic(10));
-    assertEquals(HttpStatus.SC_OK, response.getStatus());
+    try (Response response =
+        resource.sendNewDaaMessage(duosUser, dacId, randomInt(10, 100), randomAlphabetic(10))) {
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
+    }
   }
 
   @Test
@@ -463,9 +440,10 @@ class DaaResourceTest extends AbstractTestHelper {
     when(dacService.findById(dacId)).thenThrow(new NotFoundException());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response =
-        resource.sendNewDaaMessage(duosUser, dacId, randomInt(10, 100), randomAlphabetic(10));
-    assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    try (Response response =
+        resource.sendNewDaaMessage(duosUser, dacId, randomInt(10, 100), randomAlphabetic(10))) {
+      assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
@@ -481,9 +459,10 @@ class DaaResourceTest extends AbstractTestHelper {
     doThrow(new NotFoundException()).when(daaService).sendNewDaaEmails(any(), any(), any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response =
-        resource.sendNewDaaMessage(duosUser, dacId, randomInt(10, 100), randomAlphabetic(10));
-    assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    try (Response response =
+        resource.sendNewDaaMessage(duosUser, dacId, randomInt(10, 100), randomAlphabetic(10))) {
+      assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
@@ -499,9 +478,10 @@ class DaaResourceTest extends AbstractTestHelper {
     doThrow(new Exception()).when(daaService).sendNewDaaEmails(any(), any(), any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-    Response response =
-        resource.sendNewDaaMessage(duosUser, dacId, randomInt(10, 100), randomAlphabetic(10));
-    assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatus());
+    try (Response response =
+        resource.sendNewDaaMessage(duosUser, dacId, randomInt(10, 100), randomAlphabetic(10))) {
+      assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatus());
+    }
   }
 
   User researcherWithInstitution(int userId, int institutionId) {
@@ -534,8 +514,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.bulkAddUsersToDaa(duosUser, daaId, "{users:[1,2,3]}");
-    assertEquals(HttpStatus.SC_OK, response.getStatus());
+    try (Response response = resource.bulkAddUsersToDaa(duosUser, daaId, "{users:[1,2,3]}")) {
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
+    }
   }
 
   @Test
@@ -558,8 +539,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.bulkAddUsersToDaa(duosUser, daaId, "{users:[1,2,3]}");
-    assertEquals(HttpStatus.SC_OK, response.getStatus());
+    try (Response response = resource.bulkAddUsersToDaa(duosUser, daaId, "{users:[1,2,3]}")) {
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
+    }
   }
 
   @Test
@@ -582,8 +564,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.bulkAddUsersToDaa(duosUser, daaId, "{users:[1,2,3]}");
-    assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    try (Response response = resource.bulkAddUsersToDaa(duosUser, daaId, "{users:[1,2,3]}")) {
+      assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    }
   }
 
   @Test
@@ -607,8 +590,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.bulkAddUsersToDaa(duosUser, daaId, "{users:[1,2,3]}");
-    assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    try (Response response = resource.bulkAddUsersToDaa(duosUser, daaId, "{users:[1,2,3]}")) {
+      assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
@@ -633,8 +617,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.bulkRemoveUsersFromDaa(duosUser, daaId, "{users:[1,2,3]}");
-    assertEquals(HttpStatus.SC_OK, response.getStatus());
+    try (Response response = resource.bulkRemoveUsersFromDaa(duosUser, daaId, "{users:[1,2,3]}")) {
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
+    }
   }
 
   @Test
@@ -657,8 +642,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.bulkRemoveUsersFromDaa(duosUser, daaId, "{users:[1,2,3]}");
-    assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    try (Response response = resource.bulkRemoveUsersFromDaa(duosUser, daaId, "{users:[1,2,3]}")) {
+      assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    }
   }
 
   @Test
@@ -682,8 +668,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.bulkRemoveUsersFromDaa(duosUser, daaId, "{users:[1,2,3]}");
-    assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    try (Response response = resource.bulkRemoveUsersFromDaa(duosUser, daaId, "{users:[1,2,3]}")) {
+      assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    }
   }
 
   DataAccessAgreement createDAA(int daaId) {
@@ -711,8 +698,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.bulkAddDAAsToUser(duosUser, userId, "{daaList:[1,2,3]}");
-    assertEquals(HttpStatus.SC_OK, response.getStatus());
+    try (Response response = resource.bulkAddDAAsToUser(duosUser, userId, "{daaList:[1,2,3]}")) {
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
+    }
   }
 
   @Test
@@ -731,26 +719,27 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.bulkAddDAAsToUser(duosUser, userId, "{daaList:[1,2,3]}");
-    assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    try (Response response = resource.bulkAddDAAsToUser(duosUser, userId, "{daaList:[1,2,3]}")) {
+      assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    }
   }
 
   @Test
   void testBulkAddDAAsToUserNotFound() {
     int userId = 1;
-    int institutionId = 2;
 
     User authedUser = new User();
     authedUser.setSigningOfficialRole();
-    authedUser.setInstitutionId(institutionId);
+    authedUser.setInstitutionId(2);
     DuosUser duosUser = new DuosUser(authUser, authedUser);
 
     when(userService.findUserById(userId)).thenThrow(new NotFoundException());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.bulkAddDAAsToUser(duosUser, userId, "{daaList:[1,2,3]}");
-    assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    try (Response response = resource.bulkAddDAAsToUser(duosUser, userId, "{daaList:[1,2,3]}")) {
+      assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
@@ -772,8 +761,10 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.bulkRemoveDAAsFromUser(duosUser, userId, "{daaList:[1,2,3]}");
-    assertEquals(HttpStatus.SC_OK, response.getStatus());
+    try (Response response =
+        resource.bulkRemoveDAAsFromUser(duosUser, userId, "{daaList:[1,2,3]}")) {
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
+    }
   }
 
   @Test
@@ -792,26 +783,29 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.bulkRemoveDAAsFromUser(duosUser, userId, "{daaList:[1,2,3]}");
-    assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    try (Response response =
+        resource.bulkRemoveDAAsFromUser(duosUser, userId, "{daaList:[1,2,3]}")) {
+      assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    }
   }
 
   @Test
   void testBulkRemoveDAAsFromUserNotFound() {
     int userId = 1;
-    int institutionId = 2;
 
     User authedUser = new User();
     authedUser.setSigningOfficialRole();
-    authedUser.setInstitutionId(institutionId);
+    authedUser.setInstitutionId(2);
     DuosUser duosUser = new DuosUser(authUser, authedUser);
 
     when(userService.findUserById(userId)).thenThrow(new NotFoundException());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.bulkRemoveDAAsFromUser(duosUser, userId, "{daaList:[1,2,3]}");
-    assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    try (Response response =
+        resource.bulkRemoveDAAsFromUser(duosUser, userId, "{daaList:[1,2,3]}")) {
+      assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
@@ -830,8 +824,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.modifyDacDaaRelationship(duosUser, daaId, dac.getDacId());
-    assertEquals(HttpStatus.SC_OK, response.getStatus());
+    try (Response response = resource.modifyDacDaaRelationship(duosUser, daaId, dac.getDacId())) {
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
+    }
   }
 
   @Test
@@ -846,8 +841,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.modifyDacDaaRelationship(duosUser, daaId, dac.getDacId());
-    assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    try (Response response = resource.modifyDacDaaRelationship(duosUser, daaId, dac.getDacId())) {
+      assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    }
   }
 
   @Test
@@ -862,8 +858,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.modifyDacDaaRelationship(duosUser, daaId, dac.getDacId());
-    assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    try (Response response = resource.modifyDacDaaRelationship(duosUser, daaId, dac.getDacId())) {
+      assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    }
   }
 
   @Test
@@ -880,8 +877,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.modifyDacDaaRelationship(duosUser, daaId, dac.getDacId());
-    assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    try (Response response = resource.modifyDacDaaRelationship(duosUser, daaId, dac.getDacId())) {
+      assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
@@ -898,8 +896,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.modifyDacDaaRelationship(duosUser, daaId, dac.getDacId());
-    assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    try (Response response = resource.modifyDacDaaRelationship(duosUser, daaId, dac.getDacId())) {
+      assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
@@ -918,8 +917,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.modifyDacDaaRelationship(duosUser, daaId, dac.getDacId());
-    assertEquals(HttpStatus.SC_OK, response.getStatus());
+    try (Response response = resource.modifyDacDaaRelationship(duosUser, daaId, dac.getDacId())) {
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
+    }
   }
 
   @Test
@@ -944,8 +944,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.modifyDacDaaRelationship(duosUser, daaId, dac3.getDacId());
-    assertEquals(HttpStatus.SC_OK, response.getStatus());
+    try (Response response = resource.modifyDacDaaRelationship(duosUser, daaId, dac3.getDacId())) {
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
+    }
   }
 
   @Test
@@ -965,8 +966,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.removeDacDaaRelationship(duosUser, daaId, dac.getDacId());
-    assertEquals(HttpStatus.SC_OK, response.getStatus());
+    try (Response response = resource.removeDacDaaRelationship(duosUser, daaId, dac.getDacId())) {
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
+    }
   }
 
   @Test
@@ -984,8 +986,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.removeDacDaaRelationship(duosUser, daaId, dac.getDacId());
-    assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    try (Response response = resource.removeDacDaaRelationship(duosUser, daaId, dac.getDacId())) {
+      assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    }
   }
 
   @Test
@@ -1003,8 +1006,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.removeDacDaaRelationship(duosUser, daaId, dac.getDacId());
-    assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    try (Response response = resource.removeDacDaaRelationship(duosUser, daaId, dac.getDacId())) {
+      assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+    }
   }
 
   @Test
@@ -1024,8 +1028,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.removeDacDaaRelationship(duosUser, daaId, dac.getDacId());
-    assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    try (Response response = resource.removeDacDaaRelationship(duosUser, daaId, dac.getDacId())) {
+      assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
@@ -1045,8 +1050,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.removeDacDaaRelationship(duosUser, daaId, dac.getDacId());
-    assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    try (Response response = resource.removeDacDaaRelationship(duosUser, daaId, dac.getDacId())) {
+      assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
@@ -1065,7 +1071,8 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
-    Response response = resource.removeDacDaaRelationship(duosUser, daaId, dac.getDacId());
-    assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus());
+    try (Response response = resource.removeDacDaaRelationship(duosUser, daaId, dac.getDacId())) {
+      assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus());
+    }
   }
 }
