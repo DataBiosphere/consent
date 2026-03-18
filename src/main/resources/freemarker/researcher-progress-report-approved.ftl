@@ -40,14 +40,14 @@
                         <#items as dataset>
                             <tr>
                                 <td style="font-family: 'Montserrat', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">
-                                    ${dataset.identifier}
+                                    ${dataset.identifier()}
                                 </td>
                                 <td style="font-family: 'Montserrat', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">
-                                    ${dataset.name}
+                                    ${dataset.name()}
                                 </td>
                                 <td style="font-family: 'Montserrat', sans-serif; padding: 5px; border-bottom: 1px solid #cccccc;">
-                                    <#if (dataset.dataLocationUrl)??>
-                                        <a href="${dataset.dataLocationUrl}" style="text-decoration: none; font-family: 'Montserrat', sans-serif; color: #00609F;">${dataset.dataLocationUrl}</a>
+                                    <#if (dataset.dataLocationUrl())??>
+                                        <a href="${dataset.dataLocationUrl()}" style="text-decoration: none; font-family: 'Montserrat', sans-serif; color: #00609F;">${dataset.dataLocationUrl()}</a>
                                     </#if>
                                 </td>
                             </tr>
