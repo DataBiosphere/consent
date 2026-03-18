@@ -7,7 +7,7 @@ public enum EmailType {
   NEW_DAR(4, "new-request.html"),
   DISABLED_DATASET(5),
   CLOSED_DATASET_ELECTION(6),
-  DATA_CUSTODIAN_APPROVAL(7, "data-custodian-approval.html"),
+  DATA_CUSTODIAN_APPROVAL(7, "data-custodian-approval.ftl"),
   RESEARCHER_DAR_APPROVED(8, "researcher-dar-approved.ftl"),
   ADMIN_FLAGGED_DAR_APPROVED(9),
   DAR_CANCEL(10),
@@ -32,7 +32,7 @@ public enum EmailType {
   SO_DAR_APPROVED(29, "so-dar-approved.html"),
   SO_PROGRESS_REPORT_SUBMITTED(30, "so-progress-report-submitted.html"),
   SO_PROGRESS_REPORT_APPROVED(31, "so-progress-report-approved.html"),
-  DAC_RADAR_APPROVED(32, "dac-radar-approved.html"),
+  DAC_RADAR_APPROVED(32, "dac-radar-approved.ftl"),
   NEW_DAR_SO_NEEDS_TO_APPROVE(33, "new-dar-so-needs-to-approve.html"),
   DAC_VOTE_REMINDER_DIGEST(34, "vote-digest.ftl"),
   NEW_STUDY_REGISTRATION_CONFIRMATION(35, "new-study-registration-confirmation.ftl");
