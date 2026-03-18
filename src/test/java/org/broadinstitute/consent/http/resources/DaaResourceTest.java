@@ -21,7 +21,6 @@ import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.consent.http.AbstractTestHelper;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
@@ -49,7 +48,6 @@ class DaaResourceTest extends AbstractTestHelper {
   @Mock private LibraryCardService libraryCardService;
 
   private final AuthUser authUser = new AuthUser("test@test.com");
-  private final DuosUser duosUser = new DuosUser(authUser, new User());
 
   private DaaResource resource;
 
@@ -118,6 +116,10 @@ class DaaResourceTest extends AbstractTestHelper {
 
   @Test
   void testFindAllNoDaas() {
+    User authedUser = new User();
+    authedUser.setSigningOfficialRole();
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
+
     when(daaService.findAll()).thenReturn(Collections.emptyList());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
@@ -130,6 +132,10 @@ class DaaResourceTest extends AbstractTestHelper {
 
   @Test
   void testFindAll() {
+    User authedUser = new User();
+    authedUser.setSigningOfficialRole();
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
+
     DataAccessAgreement expectedDaa = new DataAccessAgreement();
     when(daaService.findAll()).thenReturn(Collections.singletonList(expectedDaa));
 
@@ -143,6 +149,10 @@ class DaaResourceTest extends AbstractTestHelper {
 
   @Test
   void testFindAllMultipleDaas() {
+    User authedUser = new User();
+    authedUser.setSigningOfficialRole();
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
+
     DataAccessAgreement expectedDaa1 = new DataAccessAgreement();
     DataAccessAgreement expectedDaa2 = new DataAccessAgreement();
     when(daaService.findAll()).thenReturn(List.of(expectedDaa1, expectedDaa2));
@@ -607,8 +617,9 @@ class DaaResourceTest extends AbstractTestHelper {
     int institutionId = 2;
 
     User authedUser = new User();
-    authedUser.setAdminRole();
+    authedUser.setSigningOfficialRole();
     authedUser.setInstitutionId(institutionId);
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
 
     List<User> users =
         List.of(
@@ -616,33 +627,6 @@ class DaaResourceTest extends AbstractTestHelper {
             researcherWithInstitution(2, institutionId),
             researcherWithInstitution(3, institutionId));
 
-    when(userService.findUserByEmail(any())).thenReturn(authedUser);
-    when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
-    when(daaService.findById(daaId)).thenReturn(new DataAccessAgreement());
-    when(libraryCardService.removeDaaFromUserLibraryCard(any(), any())).thenReturn(null);
-
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-
-    Response response = resource.bulkRemoveUsersFromDaa(duosUser, daaId, "{users:[1,2,3]}");
-    assertEquals(HttpStatus.SC_OK, response.getStatus());
-  }
-
-  @Test
-  void testBulkRemoveUsersWithAdminAndSO() {
-    int daaId = 4;
-    int institutionId = 2;
-
-    User authedUser = new User();
-    authedUser.setRoles(List.of(UserRoles.Admin(), UserRoles.SigningOfficial()));
-    authedUser.setInstitutionId(5);
-
-    List<User> users =
-        List.of(
-            researcherWithInstitution(1, institutionId),
-            researcherWithInstitution(2, institutionId),
-            researcherWithInstitution(3, institutionId));
-
-    when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
     when(daaService.findById(daaId)).thenReturn(new DataAccessAgreement());
     when(libraryCardService.removeDaaFromUserLibraryCard(any(), any())).thenReturn(null);
@@ -661,6 +645,7 @@ class DaaResourceTest extends AbstractTestHelper {
     User authedUser = new User();
     authedUser.setSigningOfficialRole();
     authedUser.setInstitutionId(4);
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
 
     List<User> users =
         List.of(
@@ -668,7 +653,6 @@ class DaaResourceTest extends AbstractTestHelper {
             researcherWithInstitution(2, institutionId),
             researcherWithInstitution(3, institutionId));
 
-    when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
@@ -685,6 +669,7 @@ class DaaResourceTest extends AbstractTestHelper {
     User authedUser = new User();
     authedUser.setSigningOfficialRole();
     authedUser.setInstitutionId(institutionId);
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
 
     List<User> users =
         List.of(
@@ -692,7 +677,6 @@ class DaaResourceTest extends AbstractTestHelper {
             researcherWithInstitution(2, institutionId),
             researcherWithInstitution(3, institutionId));
 
-    when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
     when(daaService.findById(daaId)).thenThrow(new NotFoundException());
 
@@ -709,41 +693,18 @@ class DaaResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testBulkAddDAAsToUserAsSigningOfficial() {
+  void testBulkAddDAAsToUser() {
     int userId = 1;
     int institutionId = 2;
 
     User authedUser = new User();
     authedUser.setSigningOfficialRole();
     authedUser.setInstitutionId(institutionId);
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
 
     User researcher = researcherWithInstitution(userId, institutionId);
     List<DataAccessAgreement> agreements = List.of(createDAA(1), createDAA(2), createDAA(3));
 
-    when(userService.findUserByEmail(any())).thenReturn(authedUser);
-    when(userService.findUserById(userId)).thenReturn(researcher);
-    when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
-    when(libraryCardService.addDaaToUserLibraryCard(any(), any(), any())).thenReturn(null);
-
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-
-    Response response = resource.bulkAddDAAsToUser(duosUser, userId, "{daaList:[1,2,3]}");
-    assertEquals(HttpStatus.SC_OK, response.getStatus());
-  }
-
-  @Test
-  void testBulkAddDAAsToUserAsAdmin() {
-    int userId = 1;
-    int institutionId = 2;
-
-    User authedUser = new User();
-    authedUser.setAdminRole();
-    authedUser.setInstitutionId(institutionId);
-
-    User researcher = researcherWithInstitution(userId, institutionId);
-    List<DataAccessAgreement> agreements = List.of(createDAA(1), createDAA(2), createDAA(3));
-
-    when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenReturn(researcher);
     when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
     when(libraryCardService.addDaaToUserLibraryCard(any(), any(), any())).thenReturn(null);
@@ -762,10 +723,10 @@ class DaaResourceTest extends AbstractTestHelper {
     User authedUser = new User();
     authedUser.setSigningOfficialRole();
     authedUser.setInstitutionId(4);
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
 
     User researcher = researcherWithInstitution(userId, institutionId);
 
-    when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenReturn(researcher);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
@@ -782,8 +743,8 @@ class DaaResourceTest extends AbstractTestHelper {
     User authedUser = new User();
     authedUser.setSigningOfficialRole();
     authedUser.setInstitutionId(institutionId);
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
 
-    when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenThrow(new NotFoundException());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
@@ -800,34 +761,11 @@ class DaaResourceTest extends AbstractTestHelper {
     User authedUser = new User();
     authedUser.setSigningOfficialRole();
     authedUser.setInstitutionId(institutionId);
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
 
     User researcher = researcherWithInstitution(userId, institutionId);
     List<DataAccessAgreement> agreements = List.of(createDAA(1), createDAA(2), createDAA(3));
 
-    when(userService.findUserByEmail(any())).thenReturn(authedUser);
-    when(userService.findUserById(userId)).thenReturn(researcher);
-    when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
-    when(libraryCardService.removeDaaFromUserLibraryCard(any(), any())).thenReturn(null);
-
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-
-    Response response = resource.bulkRemoveDAAsFromUser(duosUser, userId, "{daaList:[1,2,3]}");
-    assertEquals(HttpStatus.SC_OK, response.getStatus());
-  }
-
-  @Test
-  void testBulkRemoveDAAsFromUserAsAdmin() {
-    int userId = 1;
-    int institutionId = 2;
-
-    User authedUser = new User();
-    authedUser.setAdminRole();
-    authedUser.setInstitutionId(institutionId);
-
-    User researcher = researcherWithInstitution(userId, institutionId);
-    List<DataAccessAgreement> agreements = List.of(createDAA(1), createDAA(2), createDAA(3));
-
-    when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenReturn(researcher);
     when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
     when(libraryCardService.removeDaaFromUserLibraryCard(any(), any())).thenReturn(null);
@@ -846,10 +784,10 @@ class DaaResourceTest extends AbstractTestHelper {
     User authedUser = new User();
     authedUser.setSigningOfficialRole();
     authedUser.setInstitutionId(4);
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
 
     User researcher = researcherWithInstitution(userId, institutionId);
 
-    when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenReturn(researcher);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
@@ -866,34 +804,14 @@ class DaaResourceTest extends AbstractTestHelper {
     User authedUser = new User();
     authedUser.setSigningOfficialRole();
     authedUser.setInstitutionId(institutionId);
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
 
-    when(userService.findUserByEmail(any())).thenReturn(authedUser);
     when(userService.findUserById(userId)).thenThrow(new NotFoundException());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     Response response = resource.bulkRemoveDAAsFromUser(duosUser, userId, "{daaList:[1,2,3]}");
     assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
-  }
-
-  @Test
-  void testAddDacToDaaAdmin() {
-    int daaId = randomInt(10, 100);
-    DataAccessAgreement daa = new DataAccessAgreement();
-    daa.setDaaId(daaId);
-    Dac dac = new Dac();
-    dac.setDacId(randomInt(10, 100));
-
-    User admin = new User();
-    admin.setAdminRole();
-
-    when(daaService.findById(any())).thenReturn(daa);
-    when(userService.findUserByEmail(any())).thenReturn(admin);
-
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-
-    Response response = resource.modifyDacDaaRelationship(duosUser, daaId, dac.getDacId());
-    assertEquals(HttpStatus.SC_OK, response.getStatus());
   }
 
   @Test
@@ -906,9 +824,9 @@ class DaaResourceTest extends AbstractTestHelper {
 
     User chairperson = new User();
     chairperson.setChairpersonRoleWithDAC(dac.getDacId());
+    DuosUser duosUser = new DuosUser(authUser, chairperson);
 
     when(daaService.findById(any())).thenReturn(daa);
-    when(userService.findUserByEmail(any())).thenReturn(chairperson);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -924,8 +842,7 @@ class DaaResourceTest extends AbstractTestHelper {
 
     User chairperson = new User();
     chairperson.setChairpersonRoleWithDAC(randomInt(100, 200));
-
-    when(userService.findUserByEmail(any())).thenReturn(chairperson);
+    DuosUser duosUser = new DuosUser(authUser, chairperson);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -941,8 +858,7 @@ class DaaResourceTest extends AbstractTestHelper {
 
     User researcher = new User();
     researcher.setResearcherRole();
-
-    when(userService.findUserByEmail(any())).thenReturn(researcher);
+    DuosUser duosUser = new DuosUser(authUser, researcher);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -956,10 +872,10 @@ class DaaResourceTest extends AbstractTestHelper {
     Dac dac = new Dac();
     dac.setDacId(randomInt(10, 100));
 
-    User admin = new User();
-    admin.setAdminRole();
+    User authedUser = new User();
+    authedUser.setChairpersonRoleWithDAC(dac.getDacId());
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
 
-    when(userService.findUserByEmail(any())).thenReturn(admin);
     when(daaService.findById(any())).thenThrow(new NotFoundException());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
@@ -974,8 +890,9 @@ class DaaResourceTest extends AbstractTestHelper {
     Dac dac = new Dac();
     dac.setDacId(randomInt(10, 100));
 
-    User admin = new User();
-    admin.setAdminRole();
+    User authedUser = new User();
+    authedUser.setChairpersonRoleWithDAC(dac.getDacId());
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
 
     when(dacService.findById(any())).thenThrow(new NotFoundException());
 
@@ -993,11 +910,11 @@ class DaaResourceTest extends AbstractTestHelper {
     Dac dac = new Dac();
     dac.setDacId(randomInt(10, 100));
 
-    User admin = new User();
-    admin.setAdminRole();
+    User authedUser = new User();
+    authedUser.setChairpersonRoleWithDAC(dac.getDacId());
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
 
     when(daaService.findById(any())).thenReturn(daa);
-    when(userService.findUserByEmail(any())).thenReturn(admin);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -1011,19 +928,19 @@ class DaaResourceTest extends AbstractTestHelper {
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     Dac dac1 = new Dac();
-    dac1.setDacId(randomInt(10, 100));
+    dac1.setDacId(1);
     Dac dac2 = new Dac();
-    dac2.setDacId(randomInt(10, 100));
+    dac2.setDacId(2);
     daa.addDac(dac1);
     daa.addDac(dac2);
     Dac dac3 = new Dac();
-    dac3.setDacId(randomInt(10, 100));
+    dac3.setDacId(3);
 
-    User admin = new User();
-    admin.setAdminRole();
+    User authedUser = new User();
+    authedUser.setChairpersonRoleWithDAC(dac3.getDacId());
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
 
     when(daaService.findById(any())).thenReturn(daa);
-    when(userService.findUserByEmail(any())).thenReturn(admin);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -1032,7 +949,7 @@ class DaaResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testRemoveDacFromDaaAdmin() throws Exception {
+  void testRemoveDacFromDaaChairperson() {
     int daaId = randomInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
@@ -1040,32 +957,11 @@ class DaaResourceTest extends AbstractTestHelper {
     dac.setDacId(randomInt(10, 100));
     daa.addDac(dac);
 
-    User admin = new User();
-    admin.setAdminRole();
+    User authedUser = new User();
+    authedUser.setChairpersonRoleWithDAC(dac.getDacId());
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
 
     when(daaService.findById(any())).thenReturn(daa);
-    when(userService.findUserByEmail(any())).thenReturn(admin);
-
-    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
-
-    Response response = resource.removeDacDaaRelationship(duosUser, daaId, dac.getDacId());
-    assertEquals(HttpStatus.SC_OK, response.getStatus());
-  }
-
-  @Test
-  void testRemoveDacFromDaaChairperson() throws Exception {
-    int daaId = randomInt(10, 100);
-    DataAccessAgreement daa = new DataAccessAgreement();
-    daa.setDaaId(daaId);
-    Dac dac = new Dac();
-    dac.setDacId(randomInt(10, 100));
-    daa.addDac(dac);
-
-    User chairperson = new User();
-    chairperson.setChairpersonRoleWithDAC(dac.getDacId());
-
-    when(daaService.findById(any())).thenReturn(daa);
-    when(userService.findUserByEmail(any())).thenReturn(chairperson);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -1079,13 +975,12 @@ class DaaResourceTest extends AbstractTestHelper {
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     Dac dac = new Dac();
-    dac.setDacId(randomInt(10, 100));
+    dac.setDacId(1);
     daa.addDac(dac);
 
-    User chairperson = new User();
-    chairperson.setChairpersonRoleWithDAC(randomInt(100, 200));
-
-    when(userService.findUserByEmail(any())).thenReturn(chairperson);
+    User authedUser = new User();
+    authedUser.setChairpersonRoleWithDAC(2);
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -1104,8 +999,7 @@ class DaaResourceTest extends AbstractTestHelper {
 
     User researcher = new User();
     researcher.setResearcherRole();
-
-    when(userService.findUserByEmail(any())).thenReturn(researcher);
+    DuosUser duosUser = new DuosUser(authUser, researcher);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -1122,10 +1016,10 @@ class DaaResourceTest extends AbstractTestHelper {
     dac.setDacId(randomInt(10, 100));
     daa.addDac(dac);
 
-    User admin = new User();
-    admin.setAdminRole();
+    User authedUser = new User();
+    authedUser.setChairpersonRoleWithDAC(dac.getDacId());
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
 
-    when(userService.findUserByEmail(any())).thenReturn(admin);
     when(daaService.findById(any())).thenThrow(new NotFoundException());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
@@ -1143,8 +1037,9 @@ class DaaResourceTest extends AbstractTestHelper {
     dac.setDacId(randomInt(10, 100));
     daa.addDac(dac);
 
-    User admin = new User();
-    admin.setAdminRole();
+    User authedUser = new User();
+    authedUser.setChairpersonRoleWithDAC(dac.getDacId());
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
 
     when(dacService.findById(any())).thenThrow(new NotFoundException());
 
@@ -1155,18 +1050,18 @@ class DaaResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testRemoveDacFromDaaDoesNotExist() throws Exception {
+  void testRemoveDacFromDaaDoesNotExist() {
     int daaId = randomInt(10, 100);
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(daaId);
     Dac dac = new Dac();
     dac.setDacId(randomInt(10, 100));
 
-    User admin = new User();
-    admin.setAdminRole();
+    User authedUser = new User();
+    authedUser.setChairpersonRoleWithDAC(dac.getDacId());
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
 
     when(daaService.findById(any())).thenReturn(daa);
-    when(userService.findUserByEmail(any())).thenReturn(admin);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
