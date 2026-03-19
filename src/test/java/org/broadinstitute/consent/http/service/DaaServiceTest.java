@@ -278,8 +278,6 @@ class DaaServiceTest extends AbstractTestHelper {
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setFile(file);
 
-    randomAlphanumeric(10);
-
     when(daaDAO.findById(any())).thenReturn(daa);
 
     initService();
@@ -293,8 +291,6 @@ class DaaServiceTest extends AbstractTestHelper {
 
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setFile(file);
-
-    randomAlphanumeric(10);
 
     when(daaDAO.findById(any())).thenThrow(new NotFoundException("not found"));
 

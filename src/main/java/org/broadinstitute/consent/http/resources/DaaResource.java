@@ -74,9 +74,13 @@ public class DaaResource extends Resource implements ConsentLogger {
       validateFileDetails(fileDetail);
       dacService.findById(dacId);
       User user = duosUser.getUser();
-      // Assert that the user has the correct DAC permissions to add a DAA for the provided DacId.
-      List<Integer> dacIds = user.getRoles().stream().map(UserRole::getDacId).toList();
-      if (!dacIds.contains(dacId)) {
+      // Assert that the user has the correct DAC permissions to add a DAA for the provided dacId.
+      List<Integer> chairpersonDacIds = user.getRoles().stream()
+          .filter(role -> Objects.equals(role.getRoleId(), UserRoles.CHAIRPERSON.getRoleId()))
+          .map(UserRole::getDacId)
+          .filter(Objects::nonNull)
+          .toList();
+      if (!chairpersonDacIds.contains(dacId)) {
         return Response.status(Status.FORBIDDEN).build();
       }
       DataAccessAgreement daa =
@@ -103,13 +107,18 @@ public class DaaResource extends Resource implements ConsentLogger {
       @PathParam("userId") Integer userId) {
     try {
       User authedUser = duosUser.getUser();
-      int authedUserInstitutionId = authedUser.getInstitutionId();
+      Integer authedUserInstitutionId = authedUser.getInstitutionId();
       User user = userService.findUserById(userId);
-      int userInstitutionId = user.getInstitutionId();
+      Integer userInstitutionId = user.getInstitutionId();
       // Assert that the user has the correct institution permissions to add a DAA-LC relationship.
       // Signing officials can only create relationships for library cards associated with the same
       // institution they are associated with.
-      if (authedUserInstitutionId != userInstitutionId) {
+      if (authedUserInstitutionId == null || userInstitutionId == null) {
+        return Response.status(Status.BAD_REQUEST)
+            .entity("Both the signing official and the target user must have an institutionId set.")
+            .build();
+      }
+      if (!Objects.equals(authedUserInstitutionId, userInstitutionId)) {
         return Response.status(Status.FORBIDDEN).build();
       }
       LibraryCard libraryCard =

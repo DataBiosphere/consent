@@ -253,11 +253,13 @@ class DaaResourceTest extends AbstractTestHelper {
     Dac dac = new Dac();
     dac.setDacId(randomInt(10, 100));
     User signingOfficial = new User();
+    signingOfficial.setUserId(1);
     signingOfficial.setSigningOfficialRole();
     signingOfficial.setInstitutionId(2);
     DuosUser duosUser = new DuosUser(authUser, signingOfficial);
 
     User researcher = new User();
+    researcher.setUserId(2);
     researcher.setResearcherRole();
     researcher.setInstitutionId(1);
     DataAccessAgreement daa = new DataAccessAgreement();
@@ -265,12 +267,12 @@ class DaaResourceTest extends AbstractTestHelper {
     LibraryCard lc = new LibraryCard();
     lc.setId(1);
 
-    when(userService.findUserById(any())).thenReturn(researcher);
+    when(userService.findUserById(researcher.getUserId())).thenReturn(researcher);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     try (Response response =
         resource.createLibraryCardDaaRelation(
-            info, duosUser, daa.getDaaId(), signingOfficial.getUserId())) {
+            info, duosUser, daa.getDaaId(), researcher.getUserId())) {
       assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
     }
   }
@@ -342,6 +344,7 @@ class DaaResourceTest extends AbstractTestHelper {
     User signingOfficial = new User();
     signingOfficial.setSigningOfficialRole();
     signingOfficial.setInstitutionId(1);
+    signingOfficial.setUserId(1);
     DuosUser duosUser = new DuosUser(authUser, signingOfficial);
     User researcher = new User();
     researcher.setResearcherRole();
@@ -371,10 +374,13 @@ class DaaResourceTest extends AbstractTestHelper {
     Dac dac = new Dac();
     dac.setDacId(randomInt(10, 100));
     User signingOfficial = new User();
+    signingOfficial.setUserId(1);
     signingOfficial.setSigningOfficialRole();
     signingOfficial.setInstitutionId(1);
+    signingOfficial.setUserId(1);
     DuosUser duosUser = new DuosUser(authUser, signingOfficial);
     User researcher = new User();
+    researcher.setUserId(2);
     researcher.setResearcherRole();
     researcher.setInstitutionId(1);
     DataAccessAgreement daa = new DataAccessAgreement();
@@ -382,13 +388,13 @@ class DaaResourceTest extends AbstractTestHelper {
     LibraryCard newLc = new LibraryCard();
     newLc.setId(1);
 
-    when(userService.findUserById(any())).thenReturn(researcher);
+    when(userService.findUserById(researcher.getUserId())).thenReturn(researcher);
     when(libraryCardService.createLibraryCardForSigningOfficial(any(), any())).thenReturn(newLc);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     try (Response response =
         resource.createLibraryCardDaaRelation(
-            info, duosUser, daa.getDaaId(), signingOfficial.getUserId())) {
+            info, duosUser, daa.getDaaId(), researcher.getUserId())) {
       assertEquals(HttpStatus.SC_OK, response.getStatus());
     }
   }
@@ -404,6 +410,7 @@ class DaaResourceTest extends AbstractTestHelper {
     DuosUser duosUser = new DuosUser(authUser, signingOfficial);
 
     User researcher = new User();
+    researcher.setUserId(2);
     researcher.setResearcherRole();
     researcher.setInstitutionId(signingOfficial.getInstitutionId());
     LibraryCard libraryCard = new LibraryCard();
@@ -431,6 +438,7 @@ class DaaResourceTest extends AbstractTestHelper {
     DuosUser duosUser = new DuosUser(authUser, signingOfficial);
 
     User researcher = new User();
+    researcher.setUserId(2);
     researcher.setResearcherRole();
     researcher.setInstitutionId(signingOfficial.getInstitutionId());
 
