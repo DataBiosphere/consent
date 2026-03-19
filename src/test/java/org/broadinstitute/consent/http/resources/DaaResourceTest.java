@@ -278,6 +278,34 @@ class DaaResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testCreateLibraryCardDaaRelation_NoInstitutionsCase() {
+    UriInfo info = mock(UriInfo.class);
+    Dac dac = new Dac();
+    dac.setDacId(randomInt(10, 100));
+    User signingOfficial = new User();
+    signingOfficial.setUserId(1);
+    signingOfficial.setSigningOfficialRole();
+    DuosUser duosUser = new DuosUser(authUser, signingOfficial);
+
+    User researcher = new User();
+    researcher.setUserId(2);
+    researcher.setResearcherRole();
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
+    LibraryCard lc = new LibraryCard();
+    lc.setId(1);
+
+    when(userService.findUserById(researcher.getUserId())).thenReturn(researcher);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    try (Response response =
+        resource.createLibraryCardDaaRelation(
+            info, duosUser, daa.getDaaId(), researcher.getUserId())) {
+      assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
   void testCreateLibraryCardDaaRelation_InvalidUserCase() {
     UriInfo info = mock(UriInfo.class);
     Dac dac = new Dac();
