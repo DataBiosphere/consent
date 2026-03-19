@@ -75,11 +75,12 @@ public class DaaResource extends Resource implements ConsentLogger {
       dacService.findById(dacId);
       User user = duosUser.getUser();
       // Assert that the user has the correct DAC permissions to add a DAA for the provided dacId.
-      List<Integer> chairpersonDacIds = user.getRoles().stream()
-          .filter(role -> Objects.equals(role.getRoleId(), UserRoles.CHAIRPERSON.getRoleId()))
-          .map(UserRole::getDacId)
-          .filter(Objects::nonNull)
-          .toList();
+      List<Integer> chairpersonDacIds =
+          user.getRoles().stream()
+              .filter(role -> Objects.equals(role.getRoleId(), UserRoles.CHAIRPERSON.getRoleId()))
+              .map(UserRole::getDacId)
+              .filter(Objects::nonNull)
+              .toList();
       if (!chairpersonDacIds.contains(dacId)) {
         return Response.status(Status.FORBIDDEN).build();
       }

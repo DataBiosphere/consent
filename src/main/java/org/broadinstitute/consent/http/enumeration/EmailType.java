@@ -15,7 +15,8 @@ public enum EmailType {
   NEW_RESEARCHER(12, "new-researcher-library-request.html"),
   RESEARCHER_APPROVED(13),
   NEW_DATASET(14, "dataset-submitted.html"),
-  // Deprecated: maintained for historical purposes so legacy references to type 15 remain representable.
+  // Deprecated: maintained for historical purposes so legacy references to type 15 remain
+  // representable.
   @Deprecated
   NEW_DAA_REQUEST(15, null),
   NEW_DAA_UPLOAD_RESEARCHER(16, "new-daa-upload-researcher.html"),
