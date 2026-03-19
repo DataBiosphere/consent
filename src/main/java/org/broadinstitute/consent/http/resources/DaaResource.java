@@ -130,7 +130,7 @@ public class DaaResource extends Resource implements ConsentLogger {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
-  public Response findAll(@Auth DuosUser duosUser) {
+  public Response findAll(@Auth DuosUser ignoredDuosUser) {
     try {
       List<DataAccessAgreement> daas = daaService.findAll();
       return Response.ok(daas).build();
@@ -143,7 +143,7 @@ public class DaaResource extends Resource implements ConsentLogger {
   @Produces(MediaType.APPLICATION_JSON)
   @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON, RESEARCHER})
   @Path("{daaId}")
-  public Response findDaaById(@Auth DuosUser duosUser, @PathParam("daaId") Integer daaId) {
+  public Response findDaaById(@Auth DuosUser ignoredDuosUser, @PathParam("daaId") Integer daaId) {
     try {
       DataAccessAgreement daa = daaService.findById(daaId);
       return Response.ok(daa).build();
@@ -156,7 +156,7 @@ public class DaaResource extends Resource implements ConsentLogger {
   @PermitAll
   @Path("{daaId}/file")
   @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
-  public Response findFileById(@Auth DuosUser duosUser, @PathParam("daaId") Integer daaId) {
+  public Response findFileById(@Auth DuosUser ignoredDuosUser, @PathParam("daaId") Integer daaId) {
     try {
       InputStream daa = daaService.findFileById(daaId);
       StreamingOutput stream = createStreamingOutput(daa);
