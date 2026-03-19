@@ -1,11 +1,12 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.gson.JsonArray;
@@ -402,17 +403,44 @@ class DaaResourceTest extends AbstractTestHelper {
     signingOfficial.setInstitutionId(1);
     DuosUser duosUser = new DuosUser(authUser, signingOfficial);
 
+    User researcher = new User();
+    researcher.setResearcherRole();
+    researcher.setInstitutionId(signingOfficial.getInstitutionId());
     LibraryCard libraryCard = new LibraryCard();
-    libraryCard.setUserId(signingOfficial.getUserId());
+    libraryCard.setUserId(researcher.getUserId());
     libraryCard.setDaaIds(List.of(daaId));
-    signingOfficial.setLibraryCard(libraryCard);
+    researcher.setLibraryCard(libraryCard);
 
-    when(userService.findUserById(signingOfficial.getUserId())).thenReturn(signingOfficial);
+    when(userService.findUserById(researcher.getUserId())).thenReturn(researcher);
     doNothing().when(libraryCardService).removeDaaFromLibraryCard(any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     try (Response response =
-        resource.deleteDaaForUser(duosUser, daaId, signingOfficial.getUserId())) {
+        resource.deleteDaaForUser(duosUser, daaId, researcher.getUserId())) {
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testDeleteDaaValidUserNoLibraryCard() {
+    Integer daaId = randomInt(10, 100);
+
+    User signingOfficial = new User();
+    signingOfficial.setUserId(1);
+    signingOfficial.setSigningOfficialRole();
+    signingOfficial.setInstitutionId(1);
+    DuosUser duosUser = new DuosUser(authUser, signingOfficial);
+
+    User researcher = new User();
+    researcher.setResearcherRole();
+    researcher.setInstitutionId(signingOfficial.getInstitutionId());
+
+    when(userService.findUserById(researcher.getUserId())).thenReturn(researcher);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    try (Response response =
+        resource.deleteDaaForUser(duosUser, daaId, researcher.getUserId())) {
+      verify(libraryCardService, never()).removeDaaFromLibraryCard(any(), any());
       assertEquals(HttpStatus.SC_OK, response.getStatus());
     }
   }
@@ -424,6 +452,36 @@ class DaaResourceTest extends AbstractTestHelper {
     try (Response response =
         resource.deleteDaaForUser(duosUser, randomInt(10, 100), randomInt(10, 100))) {
       assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatus());
+    }
+  }
+
+  @Test
+  void testDeleteDaaDifferentUserInstitution() {
+    Integer daaId = randomInt(10, 100);
+
+    User signingOfficial = new User();
+    signingOfficial.setUserId(1);
+    signingOfficial.setSigningOfficialRole();
+    signingOfficial.setInstitutionId(1);
+    DuosUser duosUser = new DuosUser(authUser, signingOfficial);
+
+    User differentInstitutionUser = new User();
+    differentInstitutionUser.setUserId(2);
+    differentInstitutionUser.setResearcherRole();
+    differentInstitutionUser.setInstitutionId(2);
+
+    LibraryCard libraryCard = new LibraryCard();
+    libraryCard.setUserId(signingOfficial.getUserId());
+    libraryCard.setDaaIds(List.of(daaId));
+    signingOfficial.setLibraryCard(libraryCard);
+
+    when(userService.findUserById(differentInstitutionUser.getUserId())).thenReturn(differentInstitutionUser);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    try (Response response =
+        resource.deleteDaaForUser(duosUser, daaId, differentInstitutionUser.getUserId())) {
+      assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
+      verify(libraryCardService, never()).removeDaaFromLibraryCard(any(), any());
     }
   }
 
