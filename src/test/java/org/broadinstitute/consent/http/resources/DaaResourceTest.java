@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -128,7 +129,7 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     try (Response response = resource.findAll(duosUser)) {
-      assert response.getStatus() == HttpStatus.SC_OK;
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
       JsonArray daas =
           GsonUtil.buildGson().fromJson((response.getEntity().toString()), JsonArray.class);
       assertEquals(1, daas.size());
@@ -147,10 +148,24 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     try (Response response = resource.findAll(duosUser)) {
-      assert response.getStatus() == HttpStatus.SC_OK;
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
       JsonArray daas =
           GsonUtil.buildGson().fromJson((response.getEntity().toString()), JsonArray.class);
       assertEquals(2, daas.size());
+    }
+  }
+
+  @Test
+  void testFindAllException() {
+    User authedUser = new User();
+    authedUser.setSigningOfficialRole();
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
+
+    when(daaService.findAll()).thenThrow(new NotFoundException());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+    try (Response response = resource.findAll(duosUser)) {
+      assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
     }
   }
 
@@ -165,7 +180,7 @@ class DaaResourceTest extends AbstractTestHelper {
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     try (Response response = resource.findDaaById(duosUser, expectedDaaId)) {
-      assert response.getStatus() == HttpStatus.SC_OK;
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
       assertEquals(expectedDaa, response.getEntity());
     }
   }
@@ -200,7 +215,7 @@ class DaaResourceTest extends AbstractTestHelper {
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     try (Response response = resource.findFileById(duosUser, expectedDaaId)) {
-      assert response.getStatus() == HttpStatus.SC_OK;
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       ((StreamingOutput) response.getEntity()).write(out);
       assertEquals(fileContent, out.toString());
