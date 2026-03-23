@@ -69,8 +69,6 @@ paths:
     $ref: 'paths/daaBulkByUserId.yaml'
   /api/daa/dac/{dacId}:
     $ref: 'paths/daaById.yaml'
-  /api/daa/request/{daaId}:
-    $ref: 'paths/daaRequestByDaaId.yaml'
   /api/daa/{dacId}/updated/{oldDaaId}/{newDaaName}:
     $ref: 'paths/daaUpdateByDacId.yaml'
   /api/dac:

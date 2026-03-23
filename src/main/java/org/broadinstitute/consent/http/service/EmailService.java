@@ -27,7 +27,6 @@ import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.message.DACMembersDARRADARApprovedMessage;
-import org.broadinstitute.consent.http.mail.message.DaaRequestMessage;
 import org.broadinstitute.consent.http.mail.message.DacVoteDigestMessage;
 import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
 import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
@@ -228,14 +227,6 @@ public class EmailService implements ConsentLogger {
     sendMessage(
         new NewResearcherLibraryRequestMessage(signingOfficial, researcher),
         researcher.getUserId());
-  }
-
-  public void sendDaaRequestMessage(
-      User signingOfficial, User requestUser, String daaName, Integer daaId)
-      throws TemplateException, IOException {
-    sendMessage(
-        new DaaRequestMessage(signingOfficial, requestUser, daaName, daaId),
-        requestUser.getUserId());
   }
 
   public void sendNewDAAUploadSOMessage(
