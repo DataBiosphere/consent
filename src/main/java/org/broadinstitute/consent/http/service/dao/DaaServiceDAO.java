@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,7 @@ public class DaaServiceDAO implements ConsentLogger {
   }
 
   public Integer createDaaWithFso(Integer userId, Integer dacId, FileStorageObject fso)
-      throws Exception {
+      throws SQLException {
     List<Integer> createdDaaIds = new ArrayList<>();
     jdbi.useHandle(
         handle -> {
@@ -51,6 +52,6 @@ public class DaaServiceDAO implements ConsentLogger {
           }
           handle.commit();
         });
-    return createdDaaIds.isEmpty() ? null : createdDaaIds.get(0);
+    return createdDaaIds.isEmpty() ? null : createdDaaIds.getFirst();
   }
 }
