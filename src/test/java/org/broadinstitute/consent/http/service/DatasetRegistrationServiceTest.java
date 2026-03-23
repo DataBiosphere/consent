@@ -569,7 +569,6 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     List<DatasetServiceDAO.DatasetInsert> inserts = datasetInsertCaptor.getValue();
 
     assertEquals(1, inserts.size());
-
   }
 
   // test inset multiple consent groups
