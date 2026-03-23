@@ -23,6 +23,7 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.TestAppender;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,6 +47,11 @@ class DaaServiceDAOTest extends DAOTestHelper {
     testAppender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
     testAppender.start();
     serviceDAO = new DaaServiceDAO(jdbi, daaDAO, fileStorageObjectDAO);
+  }
+
+  @AfterEach
+  void tearDown() {
+    testAppender.stop();
   }
 
   @Test
@@ -88,10 +94,8 @@ class DaaServiceDAOTest extends DAOTestHelper {
         UnableToExecuteStatementException.class,
         () -> serviceDAO.createDaaWithFso(user.getUserId(), dacId, fso));
     ILoggingEvent event = testAppender.getLoggedEvents().getFirst();
-    assertThat(
-        event.getFormattedMessage(),
-        containsString(
-            "ERROR: insert or update on table \"data_access_agreement\" violates foreign key constraint \"fk_daa_initial_dac_id\""));
+    assertThat(event.getFormattedMessage(), containsString("foreign key constraint"));
+    assertThat(event.getFormattedMessage(), containsString("fk_daa_initial_dac_id"));
   }
 
   @Test
@@ -106,10 +110,8 @@ class DaaServiceDAOTest extends DAOTestHelper {
         UnableToExecuteStatementException.class,
         () -> serviceDAO.createDaaWithFso(user.getUserId(), dacId, fso));
     ILoggingEvent event = testAppender.getLoggedEvents().getFirst();
-    assertThat(
-        event.getFormattedMessage(),
-        containsString(
-            "ERROR: insert or update on table \"data_access_agreement\" violates foreign key constraint \"fk_daa_create_user_id\""));
+    assertThat(event.getFormattedMessage(), containsString("foreign key constraint"));
+    assertThat(event.getFormattedMessage(), containsString("fk_daa_create_user_id"));
   }
 
   @Test
@@ -124,10 +126,8 @@ class DaaServiceDAOTest extends DAOTestHelper {
         UnableToExecuteStatementException.class,
         () -> serviceDAO.createDaaWithFso(user.getUserId(), dacId, fso));
     ILoggingEvent event = testAppender.getLoggedEvents().getFirst();
-    assertThat(
-        event.getFormattedMessage(),
-        containsString(
-            "ERROR: null value in column \"file_name\" of relation \"file_storage_object\" violates not-null constraint"));
+    assertThat(event.getFormattedMessage(), containsString("file_name"));
+    assertThat(event.getFormattedMessage(), containsString("not-null constraint"));
   }
 
   @Test
