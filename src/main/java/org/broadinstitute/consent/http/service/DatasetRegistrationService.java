@@ -216,7 +216,7 @@ public class DatasetRegistrationService implements ConsentLogger {
     // Send notification emails to DAC chairs about new datasets
     sendDatasetSubmittedEmails(datasets);
     // Send confirmation email to submitter
-    sendSubmissionConfirmationEmail(user, registration);
+    sendSubmissionConfirmationEmail(user, registration, datasets.getFirst().getStudyId());
     try (Response response = elasticSearchService.indexDatasets(createdDatasetIds)) {
       if (response.getStatus() >= 400) {
         logWarn(
@@ -936,13 +936,10 @@ public class DatasetRegistrationService implements ConsentLogger {
    * @param registration The dataset registration object containing the details of the submission
    */
   public void sendSubmissionConfirmationEmail(
-      User submitter, DatasetRegistrationSchemaV1 registration) {
+      User submitter, DatasetRegistrationSchemaV1 registration, Integer studyId) {
     try {
       emailService.sendStudySubmissionConfirmation(
-          submitter,
-          registration.getStudyName(),
-          registration.getStudyId(),
-          getAssetsWithDatasets(registration));
+          submitter, registration.getStudyName(), studyId, getAssetsWithDatasets(registration));
     } catch (Exception e) {
       logException(e);
     }
