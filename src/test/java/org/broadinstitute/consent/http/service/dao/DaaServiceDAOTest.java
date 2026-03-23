@@ -123,11 +123,8 @@ class DaaServiceDAOTest extends DAOTestHelper {
     FileStorageObject fso = createFileStorageObject();
     fso.setFileName(null);
     assertThrows(
-        UnableToExecuteStatementException.class,
+        IllegalArgumentException.class,
         () -> serviceDAO.createDaaWithFso(user.getUserId(), dacId, fso));
-    ILoggingEvent event = testAppender.getLoggedEvents().getFirst();
-    assertThat(event.getFormattedMessage(), containsString("file_name"));
-    assertThat(event.getFormattedMessage(), containsString("not-null constraint"));
   }
 
   @Test
@@ -139,7 +136,7 @@ class DaaServiceDAOTest extends DAOTestHelper {
     FileStorageObject fso = createFileStorageObject();
     fso.setCategory(null);
     assertThrows(
-        NullPointerException.class,
+        IllegalArgumentException.class,
         () -> serviceDAO.createDaaWithFso(user.getUserId(), dacId, fso));
   }
 
@@ -152,7 +149,7 @@ class DaaServiceDAOTest extends DAOTestHelper {
     FileStorageObject fso = createFileStorageObject();
     fso.setBlobId(null);
     assertThrows(
-        NullPointerException.class,
+        IllegalArgumentException.class,
         () -> serviceDAO.createDaaWithFso(user.getUserId(), dacId, fso));
   }
 
