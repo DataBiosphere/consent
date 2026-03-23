@@ -21,6 +21,7 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import org.broadinstitute.consent.http.AbstractTestHelper;
@@ -95,7 +96,7 @@ class DaaServiceTest extends AbstractTestHelper {
   @Test
   void testCreateDaaWithFsoDBError() throws Exception {
     when(contentDisposition.getFileName()).thenReturn("file.txt");
-    doThrow(new Exception("db error")).when(daaServiceDAO).createDaaWithFso(any(), any(), any());
+    doThrow(new SQLException("db error")).when(daaServiceDAO).createDaaWithFso(any(), any(), any());
 
     initService();
     ServerErrorException e =
