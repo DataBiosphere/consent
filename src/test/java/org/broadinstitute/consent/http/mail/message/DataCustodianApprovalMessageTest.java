@@ -35,7 +35,8 @@ class DataCustodianApprovalMessageTest {
     User toUser = new User();
     toUser.setDisplayName("Data Custodian");
     String datasetName = "dataset name";
-    List<DatasetMailDTO> datasetMailDTOs = List.of(new DatasetMailDTO(datasetName, "dataset id"));
+    List<DatasetMailDTO> datasetMailDTOs =
+        List.of(new DatasetMailDTO(datasetName, "dataset id", null));
     var serverUrl = "http://localhost:8000/#/";
     String darCode = "Dar Code";
 
@@ -72,7 +73,8 @@ class DataCustodianApprovalMessageTest {
     User toUser = new User();
     toUser.setDisplayName("Data Custodian");
     String datasetName = "dataset name";
-    List<DatasetMailDTO> datasetMailDTOs = List.of(new DatasetMailDTO(datasetName, "dataset id"));
+    List<DatasetMailDTO> datasetMailDTOs =
+        List.of(new DatasetMailDTO(datasetName, "dataset id", null));
     var serverUrl = "http://localhost:8000/#/";
     String darCode = "Dar Code";
 

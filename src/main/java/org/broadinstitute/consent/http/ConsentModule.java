@@ -419,13 +419,8 @@ public class ConsentModule extends AbstractModule {
   @Provides
   VoteService providesVoteService() {
     return new VoteService(
-        providesUserDAO(),
-        providesDacDAO(),
-        providesDataAccessRequestDAO(),
-        providesDatasetDAO(),
-        providesElectionDAO(),
+        providesDAOContainer(),
         providesEmailService(),
-        providesVoteDAO(),
         providesVoteServiceDAO(),
         providesOntologyService());
   }
@@ -468,7 +463,6 @@ public class ConsentModule extends AbstractModule {
         providesGCSService(),
         providesEmailService(),
         providesUserService(),
-        providesInstitutionDAO(),
         providesDacDAO());
   }
 
@@ -609,17 +603,10 @@ public class ConsentModule extends AbstractModule {
         providesUserDAO(),
         providesUserPropertyDAO(),
         providesUserRoleDAO(),
-        providesVoteDAO(),
         providesInstitutionDAO(),
-        providesLibraryCardDAO(),
-        providesAcknowledgementDAO(),
-        providesFileStorageObjectDAO(),
         providesUserServiceDAO(),
         providesDaaDAO(),
-        providesDraftService(),
         providesInstitutionService(),
-        providesDACAutomationRuleDAO(),
-        providesDatasetAuthorizationReaderDAO(),
         providesInstitutionAndLibraryCardEnforcement());
   }
 

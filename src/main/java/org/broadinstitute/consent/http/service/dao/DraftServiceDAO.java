@@ -5,7 +5,6 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.SQLException;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -97,17 +96,6 @@ public class DraftServiceDAO {
     return draft;
   }
 
-  public void deleteDraftsByUser(User user) throws SQLException, NotFoundException {
-    Collection<DraftInterface> userDrafts = findDraftsForUser(user);
-    for (DraftInterface draft : userDrafts) {
-      deleteDraft(draft, user);
-    }
-  }
-
-  public Collection<DraftInterface> findDraftsForUser(User user) {
-    return draftDAO.findDraftsByUserId(user.getUserId());
-  }
-
   private DraftInterface findDraftByDraftUUID(UUID draftUUID) {
     return draftDAO.findDraftById(draftUUID);
   }
@@ -142,7 +130,7 @@ public class DraftServiceDAO {
         handle -> {
           try {
             handle.useTransaction(
-                handler -> {
+                _ -> {
                   draftDAO.deleteDraftByUUIDList(List.of(draft.getUUID()));
                   for (FileStorageObject fileStorageObject : draft.getStoredFiles()) {
                     draftFileStorageServiceDAO.deleteStoredFile(fileStorageObject, user);

@@ -11,7 +11,6 @@ import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 @RegisterRowMapper(UserPropertyMapper.class)
@@ -33,12 +32,6 @@ public interface UserPropertyDAO extends Transactional<UserPropertyDAO> {
           DO UPDATE SET property_value = :propertyValue
       """)
   void insertAll(@BindBean Collection<UserProperty> userProperties);
-
-  @SqlUpdate(
-      """
-    DELETE FROM user_property WHERE user_id = :userId
-    """)
-  void deleteAllPropertiesByUser(@Bind("userId") Integer userId);
 
   @SqlBatch(
       """

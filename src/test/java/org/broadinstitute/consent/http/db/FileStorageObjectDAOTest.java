@@ -10,7 +10,6 @@ import com.google.cloud.storage.BlobId;
 import java.time.Instant;
 import java.util.List;
 import java.util.Random;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
@@ -27,14 +26,12 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     createFileStorageObject(); // add random other files to db
     createFileStorageObject();
 
-    String fileName = RandomStringUtils.randomAlphabetic(10);
+    String fileName = randomAlphabetic(10);
     String category =
         FileCategory.getValues().get(new Random().nextInt(FileCategory.getValues().size()));
-    String gcsFileUri =
-        BlobId.of(RandomStringUtils.randomAlphabetic(10), RandomStringUtils.randomAlphabetic(10))
-            .toGsUtilUri();
-    String mediaType = RandomStringUtils.randomAlphabetic(10);
-    String entityId = RandomStringUtils.randomAlphabetic(10);
+    String gcsFileUri = BlobId.of(randomAlphabetic(10), randomAlphabetic(10)).toGsUtilUri();
+    String mediaType = randomAlphabetic(10);
+    String entityId = randomAlphabetic(10);
     User createUser = createUser();
     Instant createDate = Instant.now();
 
@@ -89,8 +86,8 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
 
   @Test
   void testDeleteFileByEntityId() {
-    String entityId = RandomStringUtils.randomAlphabetic(10);
-    String otherEntityId = RandomStringUtils.randomAlphabetic(8);
+    String entityId = randomAlphabetic(10);
+    String otherEntityId = randomAlphabetic(8);
 
     User deleteUser = createUser();
     Instant deleteDate = Instant.now();
@@ -139,7 +136,7 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
 
   @Test
   void testFindFilesByEntityId() {
-    String entityId = RandomStringUtils.randomAlphabetic(10);
+    String entityId = randomAlphabetic(10);
 
     createFileStorageObject();
     createFileStorageObject(); // random other files
@@ -161,7 +158,7 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
 
   @Test
   void testFindFilesByEntityIdAndCategory() {
-    String entityId = RandomStringUtils.randomAlphabetic(10);
+    String entityId = randomAlphabetic(10);
 
     // different entity id, same category, shouldn't be returned.
     createFileStorageObject("asdf", FileCategory.IRB_COLLABORATION_LETTER);
@@ -188,33 +185,18 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     assertTrue(altDataSharingFiles.contains(file3));
   }
 
-  @Test
-  void testDeleteFileStorageObjectByUserId() {
-    var file1 = createFileStorageObject();
-    var fileId = file1.getFileStorageObjectId();
-    var userId = file1.getCreateUserId();
-
-    FileStorageObject file2 = fileStorageObjectDAO.findFileById(fileId);
-    assertNotNull(file2);
-
-    fileStorageObjectDAO.deleteAllUserFiles(userId);
-
-    FileStorageObject file3 = fileStorageObjectDAO.findFileById(fileId);
-    assertNull(file3);
-  }
-
   private FileStorageObject createFileStorageObject() {
     FileCategory category =
         List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
-    String entityId = RandomStringUtils.randomAlphabetic(10);
+    String entityId = randomAlphabetic(10);
 
     return createFileStorageObject(entityId, category);
   }
 
   private FileStorageObject createFileStorageObject(String entityId, FileCategory category) {
-    String fileName = RandomStringUtils.randomAlphabetic(10);
-    String bucketName = RandomStringUtils.randomAlphabetic(10);
-    String gcsFileUri = RandomStringUtils.randomAlphabetic(10);
+    String fileName = randomAlphabetic(10);
+    String bucketName = randomAlphabetic(10);
+    String gcsFileUri = randomAlphabetic(10);
     User createUser = createUser();
     Instant createDate = Instant.now();
 

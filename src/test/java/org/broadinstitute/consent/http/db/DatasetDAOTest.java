@@ -434,14 +434,14 @@ class DatasetDAOTest extends DAOTestHelper {
     Dac dac = insertDac();
     String name = randomAlphanumeric(20);
     Timestamp now = new Timestamp(new Date().getTime());
-    Integer userId = randomInt(1, 1000);
+    User user = createUser();
 
-    datasetDAO.updateDataset(d.getDatasetId(), name, now, userId, dac.getDacId());
+    datasetDAO.updateDataset(d.getDatasetId(), name, now, user.getUserId(), dac.getDacId());
     Dataset updated = datasetDAO.findDatasetById(d.getDatasetId());
 
     assertEquals(name, updated.getName());
     assertEquals(now, updated.getUpdateDate());
-    assertEquals(userId, updated.getUpdateUserId());
+    assertEquals(user.getUserId(), updated.getUpdateUserId());
     assertEquals(dac.getDacId(), updated.getDacId());
   }
 

@@ -19,12 +19,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
-import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
-import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
@@ -38,7 +36,6 @@ public class DaaService implements ConsentLogger {
   private final GCSService gcsService;
   private final EmailService emailService;
   private final UserService userService;
-  private final InstitutionDAO institutionDAO;
   private final DacDAO dacDAO;
 
   @Inject
@@ -48,14 +45,12 @@ public class DaaService implements ConsentLogger {
       GCSService gcsService,
       EmailService emailService,
       UserService userService,
-      InstitutionDAO institutionDAO,
       DacDAO dacDAO) {
     this.daaServiceDAO = daaServiceDAO;
     this.daaDAO = daaDAO;
     this.gcsService = gcsService;
     this.emailService = emailService;
     this.userService = userService;
-    this.institutionDAO = institutionDAO;
     this.dacDAO = dacDAO;
   }
 
@@ -164,32 +159,6 @@ public class DaaService implements ConsentLogger {
       return daa;
     }
     throw new NotFoundException("Could not find DAA with the provided ID: " + daaId);
-  }
-
-  public void sendDaaRequestEmails(User user, Integer daaId) throws Exception {
-    try {
-      Institution institution = institutionDAO.findInstitutionWithSOById(user.getInstitutionId());
-      if (institution == null) {
-        throw new BadRequestException(
-            "This user has not set their institution: " + user.getDisplayName());
-      }
-      List<SimplifiedUser> signingOfficials = institution.getSigningOfficials();
-      if (signingOfficials.isEmpty()) {
-        throw new NotFoundException(
-            "No signing officials found for user: " + user.getDisplayName());
-      }
-      for (SimplifiedUser signingOfficial : signingOfficials) {
-        DataAccessAgreement daa = findById(daaId);
-        String daaName = daa.getFile().getFileName();
-        User toUser = new User();
-        toUser.setEmail(signingOfficial.getEmail());
-        toUser.setDisplayName(signingOfficial.getDisplayName());
-        emailService.sendDaaRequestMessage(toUser, user, daaName, daaId);
-      }
-    } catch (Exception e) {
-      logException(e);
-      throw (e);
-    }
   }
 
   public void sendNewDaaEmails(User user, Integer daaId, String dacName, String newDaaName)

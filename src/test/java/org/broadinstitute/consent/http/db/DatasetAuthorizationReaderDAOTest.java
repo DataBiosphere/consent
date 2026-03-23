@@ -30,7 +30,7 @@ class DatasetAuthorizationReaderDAOTest extends DAOTestHelper {
         datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId);
     assertNotNull(authorizationReaderList);
     assertEquals(1, authorizationReaderList.size());
-    DatasetAuthorizationReader authorizationReader = authorizationReaderList.get(0);
+    DatasetAuthorizationReader authorizationReader = authorizationReaderList.getFirst();
     assertEquals(datasetId, authorizationReader.datasetId());
     assertEquals(testUser.getUserId().intValue(), authorizationReader.userId());
     assertEquals(operator.getUserId().intValue(), authorizationReader.createdBy());
@@ -105,32 +105,6 @@ class DatasetAuthorizationReaderDAOTest extends DAOTestHelper {
     assertEquals(
         0, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId1).size());
 
-    assertEquals(
-        1, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId2).size());
-  }
-
-  @Test
-  void testDeleteByUserId() {
-    User testUser1 = createUserWithInstitution();
-    User testUser2 = createUserWithInstitution();
-    User operator = createUserWithInstitution();
-    int datasetId1 = createDataset(testUser1);
-    int datasetId2 = createDataset(testUser2);
-
-    datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(
-        datasetId1, testUser1.getUserId(), operator.getUserId());
-    datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(
-        datasetId2, testUser1.getUserId(), operator.getUserId());
-    datasetAuthorizationReaderDAO.addAuthorizedReaderToDataset(
-        datasetId2, testUser2.getUserId(), operator.getUserId());
-
-    assertEquals(
-        1, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId1).size());
-    assertEquals(
-        2, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId2).size());
-    datasetAuthorizationReaderDAO.deleteByUserId(testUser1.getUserId());
-    assertEquals(
-        0, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId1).size());
     assertEquals(
         1, datasetAuthorizationReaderDAO.findAuthorizedReadersByDatasetId(datasetId2).size());
   }

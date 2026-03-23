@@ -161,7 +161,8 @@ class EmailServiceTest extends AbstractTestHelper {
     verify(sendGridAPI).sendMessage(captor.capture(), eq(user.getEmail()));
     var mail = captor.getValue();
     assertEquals(FROM, mail.getFrom().getEmail());
-    assertEquals(user.getEmail(), mail.getPersonalization().get(0).getTos().get(0).getEmail());
+    assertEquals(
+        user.getEmail(), mail.getPersonalization().getFirst().getTos().getFirst().getEmail());
     assertEquals(subject, mail.getSubject());
 
     verify(emailDAO)
@@ -312,36 +313,6 @@ class EmailServiceTest extends AbstractTestHelper {
             eq(null),
             eq(1), // userId
             eq(EmailType.NEW_STUDY_REGISTRATION_CONFIRMATION.getTypeInt()),
-            any(),
-            any(),
-            any(),
-            any(),
-            any());
-  }
-
-  @Test
-  void testSendDaaRequestMessage() throws Exception {
-    User signingOfficial = new User();
-    signingOfficial.setDisplayName("Jane Evans");
-    signingOfficial.setEmail("signingofficial@example.com");
-
-    User user = new User();
-    user.setDisplayName("John Doe");
-    user.setUserId(123);
-
-    String daaName = "DAA-123";
-    int daaId = 456;
-    when(templateHelper.getTemplate(EmailType.NEW_DAA_REQUEST.templateName)).thenReturn(mock());
-
-    service.sendDaaRequestMessage(signingOfficial, user, daaName, daaId);
-
-    verify(sendGridAPI).sendMessage(any(), any());
-    verify(emailDAO)
-        .insert(
-            eq("456"),
-            eq(null),
-            eq(user.getUserId()),
-            eq(EmailType.NEW_DAA_REQUEST.getTypeInt()),
             any(),
             any(),
             any(),
@@ -529,7 +500,7 @@ class EmailServiceTest extends AbstractTestHelper {
         toUser,
         "DAR-00001",
         referenceId,
-        List.of(new DatasetMailDTO("dataset-name", "DUOS-00123")),
+        List.of(new DatasetMailDTO("dataset-name", "DUOS-00123", null)),
         researcherUser);
     verify(sendGridAPI).sendMessage(any(Mail.class), eq(toUser.getEmail()));
     verify(emailDAO)
