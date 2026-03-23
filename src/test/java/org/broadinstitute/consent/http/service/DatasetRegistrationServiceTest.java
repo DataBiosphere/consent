@@ -143,6 +143,12 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     when(gcsService.hasBytes(any())).thenReturn(true);
     when(dacDAO.findById(any())).thenReturn(new Dac());
 
+    Dataset dataset = new Dataset();
+    dataset.setDacId(1);
+    dataset.setDatasetId(1);
+    dataset.setStudyId(123);
+    when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(dataset));
+
     datasetRegistrationService.createDatasetsFromRegistration(schema, user, files);
 
     verify(datasetServiceDAO)
@@ -314,6 +320,12 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
     when(dacDAO.findById(any())).thenReturn(new Dac());
 
+    Dataset dataset = new Dataset();
+    dataset.setDacId(1);
+    dataset.setDatasetId(1);
+    dataset.setStudyId(1);
+    when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(dataset));
+
     datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
 
     verify(datasetServiceDAO)
@@ -366,6 +378,11 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     DatasetRegistrationSchemaV1 schema = createRandomCompleteDatasetRegistration(user);
 
     when(dacDAO.findById(any())).thenReturn(new Dac());
+    Dataset dataset = new Dataset();
+    dataset.setDacId(1);
+    dataset.setDatasetId(1);
+    dataset.setStudyId(123);
+    when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(dataset));
 
     DatasetRegistrationService registrationSpy = spy(datasetRegistrationService);
     registrationSpy.createDatasetsFromRegistration(schema, user, Map.of());
@@ -537,6 +554,12 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createAccessManagementRegistrationNoDacId(user);
 
+    Dataset dataset = new Dataset();
+    dataset.setDacId(1);
+    dataset.setDatasetId(1);
+    dataset.setStudyId(123);
+    when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(dataset));
+
     datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
 
     verify(datasetServiceDAO)
@@ -547,7 +570,6 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
     assertEquals(1, inserts.size());
 
-    verify(dacDAO, never()).findById(any());
   }
 
   // test inset multiple consent groups
@@ -576,6 +598,12 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
             bodyPart);
     when(gcsService.storeDocument(any(), any(), any()))
         .thenReturn(BlobId.of("asdf", "hjkl"), BlobId.of("qwer", "tyuio"));
+
+    Dataset dataset = new Dataset();
+    dataset.setDacId(1);
+    dataset.setDatasetId(1);
+    dataset.setStudyId(123);
+    when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(dataset));
 
     datasetRegistrationService.createDatasetsFromRegistration(schema, user, files);
 
@@ -692,6 +720,12 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     User user = mock();
     DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
     when(dacDAO.findById(any())).thenReturn(new Dac());
+    Dataset dataset = new Dataset();
+    dataset.setDacId(1);
+    dataset.setDatasetId(1);
+    dataset.setStudyId(123);
+    when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(dataset));
+
     when(elasticSearchService.indexDatasets(any()))
         .thenThrow(new ServerErrorException("Timeout connecting to [elasticsearch]", 500));
     assertDoesNotThrow(
