@@ -23,11 +23,6 @@ public class UserUpdateFields {
   private List<Integer> userRoleIds;
   private String eraCommonsId;
   private Boolean daaAcceptance;
-  private String linkedIn;
-  private String oRCID;
-  private String throughDotBio;
-  private String institutionalProfile;
-  private List<String> otherUrls;
 
   public UserUpdateFields() {
     // Default constructor
