@@ -305,7 +305,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertEquals(dataset.getUpdateUserId(), datasetResult.getUpdateUserId());
     assertEquals(dataset.getDacApproval(), datasetResult.getDacApproval());
     assertEquals(dataset.getUpdateDate(), datasetResult.getUpdateDate());
-    verify(emailService, times(0)).sendDatasetApprovedMessage(any(), any(), any());
+    verify(emailService, times(0)).sendDatasetApprovedMessage(any(), any(), any(), any());
   }
 
   @Test
@@ -330,8 +330,14 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   @Test
   void testApproveDataset() throws Exception {
+    User creatorUser = new User();
+    creatorUser.setUserId(2);
+    creatorUser.setEmail("creator@gmail.com");
+    creatorUser.setDisplayName("Jane Doe");
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
+    dataset.setName("Test Dataset");
+    dataset.setCreateUser(creatorUser);
     User user = new User();
     user.setUserId(1);
     user.setEmail("asdf@gmail.com");
@@ -354,13 +360,20 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertTrue(returnedDataset.getDacApproval());
 
     // send approved email
-    verify(emailService, times(1)).sendDatasetApprovedMessage(user, "DAC NAME", "DUOS-000001");
+    verify(emailService, times(1))
+        .sendDatasetApprovedMessage(creatorUser, "DAC NAME", "DUOS-000001", "Test Dataset");
   }
 
   @Test
   void testApproveDataset_DenyDataset() throws Exception {
+    User creatorUser = new User();
+    creatorUser.setUserId(2);
+    creatorUser.setEmail("creator@gmail.com");
+    creatorUser.setDisplayName("Jane Doe");
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
+    dataset.setName("Test Dataset");
+    dataset.setCreateUser(creatorUser);
     User user = new User();
     user.setUserId(1);
     user.setEmail("asdf@gmail.com");
@@ -385,7 +398,7 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     // send denied email
     verify(emailService, times(1))
-        .sendDatasetDeniedMessage(user, "DAC NAME", "DUOS-000001", "dacEmail@gmail.com");
+        .sendDatasetDeniedMessage(creatorUser, "DAC NAME", "DUOS-000001", "dacEmail@gmail.com");
   }
 
   @Test
