@@ -254,6 +254,9 @@ public class DataAccessRequestResource extends Resource {
     }
   }
 
+  /**
+   * @deprecated Use {@link #createDraftDataAccessRequestWithDAARestrictions()} instead.
+   */
   @Deprecated(forRemoval = true) // Use v3 endpoint, to be removed in DT-3054
   @POST
   @Consumes("application/json")
@@ -295,6 +298,9 @@ public class DataAccessRequestResource extends Resource {
     }
   }
 
+  /**
+   * @deprecated Use {@link #updatePartialDataAccessRequestWithDAARestrictions()} instead.
+   */
   @Deprecated(forRemoval = true) // Use v3 endpoint, to be removed in DT-3054
   @PUT
   @Consumes("application/json")
@@ -418,6 +424,10 @@ public class DataAccessRequestResource extends Resource {
     }
   }
 
+  /**
+   * @deprecated This method will be replaced by {@code postProgressReportWithDAARestrictions()} (to
+   *     be introduced in DT-3051).
+   */
   @Deprecated(forRemoval = true) // Use v3 endpoint implemented in DT-3051, to be removed in DT-3054
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
