@@ -254,6 +254,7 @@ public class DataAccessRequestResource extends Resource {
     }
   }
 
+  @Deprecated(forRemoval = true) // Use v3 endpoint, to be removed in DT-3054
   @POST
   @Consumes("application/json")
   @Produces("application/json")
@@ -294,6 +295,7 @@ public class DataAccessRequestResource extends Resource {
     }
   }
 
+  @Deprecated(forRemoval = true) // Use v3 endpoint, to be removed in DT-3054
   @PUT
   @Consumes("application/json")
   @Produces("application/json")
@@ -416,6 +418,7 @@ public class DataAccessRequestResource extends Resource {
     }
   }
 
+  @Deprecated(forRemoval = true) // Use v3 endpoint implemented in DT-3051, to be removed in DT-3054
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
