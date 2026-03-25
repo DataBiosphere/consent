@@ -3,12 +3,14 @@ package org.broadinstitute.consent.http.service;
 import static org.broadinstitute.consent.http.enumeration.UserFields.ERA_EXPIRATION_DATE;
 import static org.broadinstitute.consent.http.enumeration.UserFields.ERA_STATUS;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.time.Instant;
 import java.util.Collections;
@@ -272,6 +274,7 @@ public class UserService implements ConsentLogger {
   public JsonObject findUserWithPropertiesByIdAsJsonObject(DuosUser duosUser, Integer userId) {
     Gson gson = GsonUtil.getInstance();
     User user = findUserById(userId);
+    validateAuthorization(duosUser, user);
     List<UserProperty> props = findAllUserProperties(user.getUserId());
     JsonObject userJson = gson.toJsonTree(user).getAsJsonObject();
     JsonArray propsJson = gson.toJsonTree(props).getAsJsonArray();
@@ -287,6 +290,37 @@ public class UserService implements ConsentLogger {
       userJson.add(USER_STATUS_INFO_FIELD, userStatusInfoJson);
     }
     return userJson;
+  }
+
+  @VisibleForTesting
+  protected void validateAuthorization(DuosUser duosUser, User user) {
+    if (!isAuthorizedToSeeUser(duosUser.getUser(), user)) {
+      throw new ForbiddenException();
+    }
+  }
+
+  @VisibleForTesting
+  protected boolean isAuthorizedToSeeUser(User requestingUser, User user) {
+    if (Objects.isNull(requestingUser)) {
+      return false;
+    }
+
+    // allow a user to get their own details
+    if (requestingUser.getUserId().equals(user.getUserId())) {
+      return true;
+    }
+
+    // allow admins, chairs and members to get user details
+    if (requestingUser.hasUserRole(UserRoles.ADMIN)
+        || requestingUser.hasUserRole(UserRoles.CHAIRPERSON)
+        || requestingUser.hasUserRole(UserRoles.MEMBER)) {
+      return true;
+    }
+
+    // allow submitters and so's to see people in their orgs
+    return (requestingUser.hasUserRole(UserRoles.DATASUBMITTER)
+            || requestingUser.hasUserRole(UserRoles.SIGNINGOFFICIAL))
+        && requestingUser.getInstitutionId().equals(user.getInstitutionId());
   }
 
   private void validateRequiredFields(User user) {
@@ -392,36 +426,36 @@ public class UserService implements ConsentLogger {
 
     public SimplifiedUser() {}
 
-    public void setUserId(Integer userId) {
-      this.userId = userId;
+    public String getDisplayName() {
+      return displayName;
     }
 
     public void setDisplayName(String name) {
       this.displayName = name;
     }
 
-    public void setEmail(String email) {
-      this.email = email;
-    }
-
-    public void setInstitutionId(Integer institutionId) {
-      this.institutionId = institutionId;
-    }
-
-    public String getDisplayName() {
-      return displayName;
-    }
-
     public String getEmail() {
       return email;
+    }
+
+    public void setEmail(String email) {
+      this.email = email;
     }
 
     public Integer getInstitutionId() {
       return institutionId;
     }
 
+    public void setInstitutionId(Integer institutionId) {
+      this.institutionId = institutionId;
+    }
+
     public Integer getUserId() {
       return userId;
+    }
+
+    public void setUserId(Integer userId) {
+      this.userId = userId;
     }
 
     @Override
