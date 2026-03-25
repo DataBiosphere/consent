@@ -350,7 +350,8 @@ public class DatasetService implements ConsentLogger {
     try {
       // if approval state changed
       if (currentApprovalState != datasetReturn.getDacApproval()) {
-        sendDatasetApprovalNotificationEmail(dataset, user, approval);
+        User creatorUser = dataset.getCreateUser();
+        sendDatasetApprovalNotificationEmail(dataset, creatorUser, approval);
       }
     } catch (Exception e) {
       logException(
@@ -365,7 +366,8 @@ public class DatasetService implements ConsentLogger {
       throws Exception {
     Dac dac = dacDAO.findById(dataset.getDacId());
     if (approval) {
-      emailService.sendDatasetApprovedMessage(user, dac.getName(), dataset.getDatasetIdentifier());
+      emailService.sendDatasetApprovedMessage(
+          user, dac.getName(), dataset.getDatasetIdentifier(), dataset.getName());
     } else {
       if (dac.getEmail() != null) {
         String dacEmail = dac.getEmail();

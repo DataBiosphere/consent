@@ -211,9 +211,12 @@ public class EmailService implements ConsentLogger {
         dataSubmitter.getUserId());
   }
 
-  public void sendDatasetApprovedMessage(User user, String dacName, String datasetName)
+  public void sendDatasetApprovedMessage(
+      User user, String dacName, String datasetIdentifier, String datasetName)
       throws TemplateException, IOException {
-    sendMessage(new DatasetApprovedMessage(user, dacName, datasetName), user.getUserId());
+    sendMessage(
+        new DatasetApprovedMessage(user, dacName, datasetIdentifier, datasetName),
+        user.getUserId());
   }
 
   public void sendDatasetDeniedMessage(

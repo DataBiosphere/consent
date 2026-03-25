@@ -33,9 +33,10 @@ class DatasetApprovedMessageTest {
     var serverUrl = "http://localhost:8000/#/";
     User toUser = new User();
     toUser.setDisplayName("researcher name");
+    var datasetIdentifier = "dataset Identifier";
     var datasetName = "dataset name";
-    var message = new DatasetApprovedMessage(toUser, "dac name", datasetName);
-    assertEquals(datasetName, message.getEntityReferenceId());
+    var message = new DatasetApprovedMessage(toUser, "dac name", datasetIdentifier, datasetName);
+    assertEquals(datasetIdentifier, message.getEntityReferenceId());
 
     Template template = helper.getTemplate(message.getTemplateName());
     Writer out = new StringWriter();
@@ -50,8 +51,8 @@ class DatasetApprovedMessageTest {
         Objects.requireNonNull(parsedTemplate.getElementById("content"))
             .text()
             .contains(
-                "Your dataset, dataset name, submitted to the dac name by researcher name for management of future data access requests has "
-                    + "been accepted and can be found in the DUOS Data Library with DUOS ID: dataset name"));
+                "Your dataset, dataset name, submitted to the dac name for management of future data access requests has "
+                    + "been accepted and can be found in the DUOS Data Library with this URL: dataset Identifier"));
 
     // no unspecified values
     assertFalse(templateString.contains("${"));
