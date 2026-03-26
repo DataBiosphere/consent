@@ -12,6 +12,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -425,7 +426,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     try (var response =
-        resource.postProgressReport(
+        resource.postProgressReportWithDAARestrictions(
             authUser,
             request,
             "",
@@ -448,7 +449,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     Response response =
-        resource.postProgressReport(
+        resource.postProgressReportWithDAARestrictions(
             authUser,
             request,
             "",
@@ -468,7 +469,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     try (var response =
-        resource.postProgressReport(
+        resource.postProgressReportWithDAARestrictions(
             authUser,
             request,
             "",
@@ -491,7 +492,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     var ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     try (var response =
-        resource.postProgressReport(
+        resource.postProgressReportWithDAARestrictions(
             authUser,
             request,
             "",
@@ -511,7 +512,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     doThrow(BadRequestException.class).when(userService).validateActiveERACredentials(user);
 
     try (var response =
-        resource.postProgressReport(authUser, request, "", "", null, null, null, null)) {
+        resource.postProgressReportWithDAARestrictions(
+            authUser, request, "", "", null, null, null, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -531,7 +533,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     var ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     try (var response =
-        resource.postProgressReport(
+        resource.postProgressReportWithDAARestrictions(
             authUser,
             request,
             "",
@@ -547,6 +549,73 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
               .toString()
               .contains("Cannot create a progress report for a DAR with an open election"));
     }
+  }
+
+  @Test
+  void testPostProgressReportFailsWhenDAARestricted() {
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+
+    // Mock enforcement to fail
+    doThrow(new ForbiddenException("DAA restriction violated"))
+        .when(datasetService)
+        .enforceDAARestrictions(eq(user), any());
+
+    var collabFile = mockFormDataMultiPart("collab.txt");
+    var ethicsFile = mockFormDataMultiPart("ethics.txt");
+
+    try (var response =
+        resource.postProgressReportWithDAARestrictions(
+            authUser,
+            request,
+            "",
+            "",
+            collabFile.getLeft(),
+            collabFile.getRight(),
+            ethicsFile.getLeft(),
+            ethicsFile.getRight())) {
+
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+
+    // Ensure persistence never happens
+    verify(dataAccessRequestService, never())
+        .createProgressReport(eq(user), any(), eq(parentDar), eq(request));
+  }
+
+  @Test
+  void testPostProgressReportInvokesDAAEnforcement() {
+    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
+
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+
+    DataAccessRequest childDar = generateDataAccessRequest();
+    when(dataAccessRequestService.createProgressReport(eq(user), any(), eq(parentDar), eq(request)))
+        .thenReturn(childDar);
+
+    when(datasetService.findDatasetsByIds(user, childDar.getDatasetIds())).thenReturn(List.of());
+
+    var collabFile = mockFormDataMultiPart("collab.txt");
+    var ethicsFile = mockFormDataMultiPart("ethics.txt");
+
+    try (var response =
+        resource.postProgressReportWithDAARestrictions(
+            authUser,
+            request,
+            "",
+            "",
+            collabFile.getLeft(),
+            collabFile.getRight(),
+            ethicsFile.getLeft(),
+            ethicsFile.getRight())) {
+
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+
+    verify(datasetService).enforceDAARestrictions(eq(user), any());
   }
 
   @Test
