@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -31,18 +32,27 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.db.DAOContainer;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
+import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Reminder;
+import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserVoteReminder;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
+import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.HandleConsumer;
+import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.result.ResultIterable;
+import org.jdbi.v3.core.result.ResultIterator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,8 +75,11 @@ class EmailServiceTest extends AbstractTestHelper {
   @Mock private ElectionDAO electionDAO;
   @Mock private UserDAO userDAO;
   @Mock private MailMessageDAO emailDAO;
+  @Mock private DatasetDAO datasetDAO;
+  @Mock private StudyDAO studyDAO;
   @Mock private SendGridAPI sendGridAPI;
   @Mock private FreeMarkerTemplateHelper templateHelper;
+  @Mock private DAOContainer daoContainer;
 
   @BeforeEach
   void initService() {
@@ -76,7 +89,12 @@ class EmailServiceTest extends AbstractTestHelper {
 
     ServicesConfiguration servicesConfiguration = config.getServicesConfiguration();
     servicesConfiguration.setLocalURL(SERVER_URL);
-    service = new EmailService(userDAO, emailDAO, electionDAO, sendGridAPI, templateHelper, config);
+    when(daoContainer.getElectionDAO()).thenReturn(electionDAO);
+    when(daoContainer.getUserDAO()).thenReturn(userDAO);
+    when(daoContainer.getMailMessageDAO()).thenReturn(emailDAO);
+    when(daoContainer.getDatasetDAO()).thenReturn(datasetDAO);
+    when(daoContainer.getStudyDAO()).thenReturn(studyDAO);
+    service = new EmailService(daoContainer, sendGridAPI, templateHelper, config);
   }
 
   @Test
@@ -574,6 +592,113 @@ class EmailServiceTest extends AbstractTestHelper {
             any(),
             any(),
             any());
+  }
+
+  @Test
+  void testSendNewDatasetInDUOSNotifications_No_New_Datasets() {
+    when(datasetDAO.getRecentDacApprovedDatasetStudyIds()).thenReturn(List.of());
+    when(datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds()).thenReturn(List.of());
+    when(studyDAO.findNameAndDatasetCount(any())).thenReturn(List.of());
+
+    service.sendNewDatasetInDUOSNotifications();
+
+    verify(userDAO, times(0)).getHandle();
+  }
+
+  @Test
+  void testSendNewDatasetInDUOSNotifications_Null_Datasets() {
+    when(datasetDAO.getRecentDacApprovedDatasetStudyIds()).thenReturn(List.of());
+    when(datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds()).thenReturn(List.of());
+    when(studyDAO.findNameAndDatasetCount(any())).thenReturn(null);
+
+    service.sendNewDatasetInDUOSNotifications();
+
+    verify(userDAO, times(0)).getHandle();
+  }
+
+  @Test
+  void testSendNewDatasetInDUOSNotifications() throws IOException {
+    User toUser = new User();
+    toUser.setDisplayName("Test User");
+    toUser.setUserId(1);
+    toUser.setEmail("test@example.com");
+    toUser.setEmailPreference(true);
+    when(datasetDAO.getRecentDacApprovedDatasetStudyIds()).thenReturn(List.of());
+    when(datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds()).thenReturn(List.of());
+    when(studyDAO.findNameAndDatasetCount(any()))
+        .thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, 7)));
+    Handle handle = mock(Handle.class);
+    Jdbi jdbi = mock(Jdbi.class);
+    when(userDAO.getHandle()).thenReturn(handle);
+    when(handle.getJdbi()).thenReturn(jdbi);
+    doAnswer(
+            invocation -> {
+              HandleConsumer<Exception> consumer = invocation.getArgument(0);
+              consumer.useHandle(handle);
+              return null;
+            })
+        .when(jdbi)
+        .useHandle(any());
+    @SuppressWarnings("unchecked")
+    ResultIterator<User> mockIterator = mock(ResultIterator.class);
+    when(mockIterator.hasNext()).thenReturn(true, false);
+    when(mockIterator.next()).thenReturn(toUser);
+    when(userDAO.allEmailReceivingThinlyPopulatedUsers(any(), any()))
+        .thenReturn(ResultIterable.of(mockIterator));
+    when(templateHelper.getTemplate(EmailType.NEW_STUDY_DIGEST.templateName)).thenReturn(mock());
+    EmailService.sendgridThrottleMessageCount = 500;
+    EmailService.sendgridThrottleResetTime = 60;
+    service.sendNewDatasetInDUOSNotifications();
+    verify(userDAO, times(1)).getHandle();
+    verify(emailDAO, times(1))
+        .insert(
+            any(),
+            any(),
+            eq(toUser.getUserId()),
+            eq(EmailType.NEW_STUDY_DIGEST.getTypeInt()),
+            any(),
+            any(),
+            any(),
+            any(),
+            any());
+  }
+
+  @Test
+  void testSendNewDatasetInDUOSNotifications_IOException() throws IOException {
+    User toUser = new User();
+    toUser.setDisplayName("Test User");
+    toUser.setUserId(1);
+    toUser.setEmail("test@example.com");
+    toUser.setEmailPreference(true);
+    when(datasetDAO.getRecentDacApprovedDatasetStudyIds()).thenReturn(List.of());
+    when(datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds()).thenReturn(List.of());
+    when(studyDAO.findNameAndDatasetCount(any()))
+        .thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, 7)));
+    Handle handle = mock(Handle.class);
+    Jdbi jdbi = mock(Jdbi.class);
+    when(userDAO.getHandle()).thenReturn(handle);
+    when(handle.getJdbi()).thenReturn(jdbi);
+    doAnswer(
+            invocation -> {
+              HandleConsumer<Exception> consumer = invocation.getArgument(0);
+              consumer.useHandle(handle);
+              return null;
+            })
+        .when(jdbi)
+        .useHandle(any());
+    ResultIterator<User> mockIterator = mock(ResultIterator.class);
+    when(mockIterator.hasNext()).thenReturn(true, false);
+    when(mockIterator.next()).thenReturn(toUser);
+    when(userDAO.allEmailReceivingThinlyPopulatedUsers(any(), any()))
+        .thenReturn(ResultIterable.of(mockIterator));
+    doThrow(new IOException("Some exception", null))
+        .when(templateHelper)
+        .getTemplate(EmailType.NEW_STUDY_DIGEST.templateName);
+    EmailService.sendgridThrottleMessageCount = 1;
+    EmailService.sendgridThrottleResetTime = 1;
+    Thread.currentThread().interrupt();
+    service.sendNewDatasetInDUOSNotifications();
+    verify(userDAO, times(1)).getHandle();
   }
 
   private List<MailMessage> generateMailMessageList() {

@@ -11,17 +11,24 @@ import freemarker.template.TemplateException;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.db.DAOContainer;
+import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
+import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
@@ -44,6 +51,7 @@ import org.broadinstitute.consent.http.mail.message.NewLibraryCardIssuedMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewResearcherLibraryRequestMessage;
+import org.broadinstitute.consent.http.mail.message.NewStudyDigestMessage;
 import org.broadinstitute.consent.http.mail.message.NewStudyRegistrationConfirmationMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
@@ -55,15 +63,19 @@ import org.broadinstitute.consent.http.mail.message.SoPRApproved;
 import org.broadinstitute.consent.http.mail.message.SoPRSubmitted;
 import org.broadinstitute.consent.http.mail.message.SubmittedCloseoutMessage;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserVoteReminder;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.jdbi.v3.core.result.ResultIterable;
 
 public class EmailService implements ConsentLogger {
 
   private static final int LOOKBACK_DELAY_HOURS = 24;
+  @VisibleForTesting protected static int sendgridThrottleMessageCount = 500;
+  @VisibleForTesting protected static int sendgridThrottleResetTime = 60;
   private final UserDAO userDAO;
   private final MailMessageDAO emailDAO;
   private final ElectionDAO electionDAO;
@@ -71,19 +83,21 @@ public class EmailService implements ConsentLogger {
   private final SendGridAPI sendGridAPI;
   private final String fromAccount;
   private final String serverUrl;
+  private final DatasetDAO datasetDAO;
+  private final StudyDAO studyDAO;
 
   @Inject
   public EmailService(
-      UserDAO userDAO,
-      MailMessageDAO emailDAO,
-      ElectionDAO electionDAO,
+      DAOContainer daoContainer,
       SendGridAPI sendGridAPI,
       FreeMarkerTemplateHelper helper,
       ConsentConfiguration config) {
-    this.userDAO = userDAO;
+    this.userDAO = daoContainer.getUserDAO();
     this.templateHelper = helper;
-    this.emailDAO = emailDAO;
-    this.electionDAO = electionDAO;
+    this.emailDAO = daoContainer.getMailMessageDAO();
+    this.electionDAO = daoContainer.getElectionDAO();
+    this.datasetDAO = daoContainer.getDatasetDAO();
+    this.studyDAO = daoContainer.getStudyDAO();
     this.sendGridAPI = sendGridAPI;
     this.serverUrl = config.getServicesConfiguration().getLocalURL();
     this.fromAccount = config.getMailConfiguration().getGoogleAccount();
@@ -494,5 +508,76 @@ public class EmailService implements ConsentLogger {
         logWarn(e.getMessage());
       }
     }
+  }
+
+  public void sendNewDatasetInDUOSNotifications() {
+    Instant timeBasis = Instant.now();
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE.withZone(ZoneOffset.UTC);
+    String referenceId = dateTimeFormatter.format(timeBasis);
+    Integer emailType = EmailType.NEW_STUDY_DIGEST.getTypeInt();
+    List<StudyDatasetCountRecord> studyInfo = getRecentStudyInfoForDigestMessage();
+    if (studyInfo != null && !studyInfo.isEmpty()) {
+      processNewStudyMessages(emailType, referenceId, studyInfo);
+    } else {
+      logInfo("Skipping New Study Digest emails, no data found to send.");
+    }
+  }
+
+  private void processNewStudyMessages(
+      Integer emailType, String referenceId, List<StudyDatasetCountRecord> studyInfo) {
+    AtomicInteger success = new AtomicInteger(0);
+    AtomicInteger errors = new AtomicInteger(0);
+    userDAO
+        .getHandle()
+        .getJdbi()
+        .useHandle(
+            _ -> {
+              ResultIterable<User> users =
+                  userDAO.allEmailReceivingThinlyPopulatedUsers(emailType, referenceId);
+              users.forEach(
+                  user -> {
+                    try {
+                      sendMessage(
+                          new NewStudyDigestMessage(user, studyInfo, referenceId),
+                          user.getUserId());
+                      success.incrementAndGet();
+                    } catch (IOException | TemplateException e) {
+                      logWarn(
+                          "Failed to send NewStudyDigestMessage email for user %d"
+                              .formatted(user.getUserId()),
+                          e);
+                      errors.incrementAndGet();
+                    }
+                    // sleep for a minute after each batch of 500 because Twiliow/SendGrid may throw
+                    // 429s if we send too many email messages too quickly.
+                    if (((success.get() + errors.get()) % sendgridThrottleMessageCount) == 0) {
+                      logInfo(
+                          "Processing user emails for NewStudyDigestMessage, %d processed.  Pausing for %d seconds."
+                              .formatted(success.get() + errors.get(), sendgridThrottleResetTime));
+                      try {
+                        Thread.sleep(Duration.ofSeconds(sendgridThrottleResetTime).toMillis());
+                      } catch (InterruptedException e) {
+                        logWarn(
+                            "NewStudyDigestMessage process interrupted. %d successfully sent, %d failed"
+                                .formatted(success.get(), errors.get()));
+                        logWarn(e.getMessage());
+                        Thread.currentThread().interrupt();
+                      }
+                    }
+                  });
+            });
+    logInfo(
+        "NewStudyDigestMessage stats: %d successfully sent, %d failed."
+            .formatted(success.get(), errors.get()));
+  }
+
+  private List<StudyDatasetCountRecord> getRecentStudyInfoForDigestMessage() {
+    List<Integer> newDacApprovedDatasetStudyIds = datasetDAO.getRecentDacApprovedDatasetStudyIds();
+    List<Integer> newOpenOrExternalDatasetStudyIds =
+        datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds();
+    Set<Integer> studyIds = new HashSet<>();
+    studyIds.addAll(newDacApprovedDatasetStudyIds);
+    studyIds.addAll(newOpenOrExternalDatasetStudyIds);
+    return studyDAO.findNameAndDatasetCount(studyIds);
   }
 }

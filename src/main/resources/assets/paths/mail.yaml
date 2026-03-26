@@ -44,6 +44,7 @@ get:
           - DAC_RADAR_APPROVED
           - NEW_DAR_SO_NEEDS_TO_APPROVE
           - DAC_VOTE_REMINDER_DIGEST
+          - NEW_STUDY_DIGEST
     - name: limit
       in: query
       description: Number of results to return.  Defaults to 20 if unset.

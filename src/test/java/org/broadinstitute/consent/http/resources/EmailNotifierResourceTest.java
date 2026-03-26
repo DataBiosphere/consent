@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 
 import jakarta.ws.rs.core.Response;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
@@ -47,26 +48,48 @@ class EmailNotifierResourceTest {
   }
 
   @Test
-  void testSendDarExpirationNotices() {
-    try (Response response = resource.sendDarExpirationNotices(authUser)) {
+  void testSendDailyMessages() {
+    try (Response response = resource.sendDailyMessages(authUser)) {
       assertEquals(200, response.getStatus());
     }
   }
 
   @Test
-  void testSendDacVoteDigestNotices() {
-    try (Response response = resource.sendDacVoteDigestNotices(authUser)) {
+  void testSendDailyMessages_VoteDigestMessagesThrows() throws InterruptedException {
+    doNothing().when(emailService).sendNewDatasetInDUOSNotifications();
+    doNothing().when(dataAccessRequestService).sendExpirationNotices();
+    doThrow(new RuntimeException("Exception")).when(emailService).sendVoteDigestMessages();
+    try (Response response = resource.sendDailyMessages(authUser)) {
+      resource.executor.shutdown();
+      resource.executor.awaitTermination(1, TimeUnit.SECONDS);
       assertEquals(200, response.getStatus());
     }
   }
 
   @Test
-  void testSendDacVoteDigestNotices_Exception() {
-    doThrow(new RuntimeException("Some runtime exception"))
+  void testSendDailyMessages_NewDatasetNotificationsThrows() throws InterruptedException {
+    doThrow(new RuntimeException("Exception"))
         .when(emailService)
-        .sendVoteDigestMessages();
-    try (Response response = resource.sendDacVoteDigestNotices(authUser)) {
-      assertEquals(500, response.getStatus());
+        .sendNewDatasetInDUOSNotifications();
+    doNothing().when(dataAccessRequestService).sendExpirationNotices();
+    doNothing().when(emailService).sendVoteDigestMessages();
+    try (Response response = resource.sendDailyMessages(authUser)) {
+      resource.executor.shutdown();
+      resource.executor.awaitTermination(1, TimeUnit.SECONDS);
+      assertEquals(200, response.getStatus());
+    }
+  }
+
+  @Test
+  void testSendDailyMessages_SendExpirationsThrows() throws InterruptedException {
+    doNothing().when(emailService).sendNewDatasetInDUOSNotifications();
+    doThrow(new RuntimeException("Exception"))
+        .when(dataAccessRequestService)
+        .sendExpirationNotices();
+    try (Response response = resource.sendDailyMessages(authUser)) {
+      resource.executor.shutdown();
+      resource.executor.awaitTermination(1, TimeUnit.SECONDS);
+      assertEquals(200, response.getStatus());
     }
   }
 }
