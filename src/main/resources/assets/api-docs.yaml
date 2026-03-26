@@ -287,8 +287,13 @@ paths:
 
   /api/dar/v2/draft/{referenceId}:
     put:
-      summary: Update Draft Data Access Request
-      description: Update Draft Data Access Request
+      deprecated: true
+      summary: |
+        Update Draft Data Access Request
+        See /api/dar/v3/draft/{referenceId} for replacement
+      description: |
+        Update Draft Data Access Request
+        Deprecated in favor of /api/dar/v3/draft/{referenceId}
       parameters:
         - name: referenceId
           in: path

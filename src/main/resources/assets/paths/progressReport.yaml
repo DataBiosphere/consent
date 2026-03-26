@@ -1,6 +1,11 @@
 post:
-  summary: Create a new DAR progress report
-  description: Create a new DAR progress report
+  deprecated: true
+  summary: |
+    Create a new DAR progress report
+    See /api/dar/v3/progress_report/{parentReferenceId} for replacement
+  description: |
+    Create a new DAR progress report
+    Deprecated in favor of /api/dar/v3/progress_report/{parentReferenceId}
   tags:
     - Data Access Request
   parameters:
