@@ -1365,13 +1365,14 @@ class DatasetDAOTest extends DAOTestHelper {
 
   @Test
   void testGetRecentDacApprovedDatasetStudyIds() {
+    User user = createUser();
     Dataset dataset = insertDataset();
     Study study = insertStudyWithProperties();
     datasetDAO.updateStudyId(dataset.getDatasetId(), study.getStudyId());
     List<Integer> studyIds = datasetDAO.getRecentDacApprovedDatasetStudyIds();
 
     assertEquals(0, studyIds.size());
-    datasetDAO.updateDatasetApproval(true, Instant.now(), 1, dataset.getDatasetId());
+    datasetDAO.updateDatasetApproval(true, Instant.now(), user.getUserId(), dataset.getDatasetId());
 
     studyIds = datasetDAO.getRecentDacApprovedDatasetStudyIds();
     assertEquals(1, studyIds.size());
