@@ -94,8 +94,8 @@ class UserUpdateFieldsTest {
   @Test
   void testUpdateData_Case_1() {
     UserUpdateFields fields = new UserUpdateFields();
-    fields.setData(null);
-    assertTrue(Objects.isNull(fields.getData()));
+    fields.setUserData(null);
+    assertTrue(Objects.isNull(fields.getUserData()));
   }
 
   @Test
@@ -103,7 +103,7 @@ class UserUpdateFieldsTest {
     UserUpdateFields fields = new UserUpdateFields();
     Map<String, Object> dataMap = new HashMap<>();
     dataMap.put("data", null);
-    fields.setData(dataMap);
-    assertFalse(fields.getData().isEmpty());
+    fields.setUserData(dataMap);
+    assertFalse(fields.getUserData().isEmpty());
   }
 }

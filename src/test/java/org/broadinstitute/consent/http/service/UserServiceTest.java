@@ -132,7 +132,7 @@ class UserServiceTest extends AbstractTestHelper {
     fields.setDisplayName(randomAlphabetic(10));
     fields.setEmailPreference(true);
     fields.setEraCommonsId(randomAlphabetic(10));
-    fields.setData(Map.of("test", "test"));
+    fields.setUserData(Map.of("test", "test"));
     fields.setDaaAcceptance(true);
     assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
     service.updateUserFieldsById(fields, user.getUserId());

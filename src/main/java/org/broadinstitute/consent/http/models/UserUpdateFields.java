@@ -24,7 +24,7 @@ public class UserUpdateFields {
   private List<Integer> userRoleIds;
   private String eraCommonsId;
   private Boolean daaAcceptance;
-  private Map<String, Object> data;
+  private Map<String, Object> userData;
 
   public UserUpdateFields() {
     // Default constructor
@@ -70,12 +70,12 @@ public class UserUpdateFields {
     this.daaAcceptance = daaAcceptance;
   }
 
-  public Map<String, Object> getData() {
-    return data;
+  public Map<String, Object> getUserData() {
+    return userData;
   }
 
-  public void setData(Map<String, Object> data) {
-    this.data = data;
+  public void setUserData(Map<String, Object> userData) {
+    this.userData = userData;
   }
 
   public List<UserProperty> buildUserProperties(Integer userId) {
