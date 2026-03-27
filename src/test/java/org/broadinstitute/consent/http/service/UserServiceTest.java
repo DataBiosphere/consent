@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -131,6 +132,7 @@ class UserServiceTest extends AbstractTestHelper {
     fields.setDisplayName(randomAlphabetic(10));
     fields.setEmailPreference(true);
     fields.setEraCommonsId(randomAlphabetic(10));
+    fields.setUserData(Map.of("test", "test"));
     fields.setDaaAcceptance(true);
     assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
     service.updateUserFieldsById(fields, user.getUserId());
@@ -139,10 +141,53 @@ class UserServiceTest extends AbstractTestHelper {
     verify(userDAO, times(1)).updateDisplayName(any(), any());
     verify(userDAO, times(1)).updateEmailPreference(any(), any());
     verify(userDAO, times(1)).updateEraCommonsId(any(), any());
+    verify(userDAO, times(1)).updateData(any(), any());
     verify(userPropertyDAO, times(1)).insertAll(any());
     // Verify role additions/deletions.
     verify(userRoleDAO, times(1)).insertUserRoles(List.of(so), 1);
     verify(userRoleDAO, times(1)).removeUserRoles(1, List.of(admin.getRoleId()));
+  }
+
+  @Test
+  void testUpdateUserFieldsById_No_Updates() {
+    User user = new User();
+    user.setUserId(1);
+
+    when(userDAO.findUserById(any())).thenReturn(user);
+
+    UserUpdateFields fields = new UserUpdateFields();
+
+    service.updateUserFieldsById(fields, user.getUserId());
+    // Verify no updates.
+    verify(userDAO, times(0)).updateDisplayName(any(), any());
+    verify(userDAO, times(0)).updateEmailPreference(any(), any());
+    verify(userDAO, times(0)).updateEraCommonsId(any(), any());
+    verify(userDAO, times(0)).updateData(any(), any());
+    verify(userPropertyDAO, times(0)).insertAll(any());
+    // Verify no role additions/deletions.
+    verify(userRoleDAO, times(0)).insertUserRoles(any(), any());
+    verify(userRoleDAO, times(0)).removeUserRoles(any(), any());
+  }
+
+  @Test
+  void testUpdateUserFieldsById_Null_Update() {
+    User user = new User();
+    user.setUserId(1);
+
+    when(userDAO.findUserById(any())).thenReturn(user);
+
+    UserUpdateFields fields = null;
+
+    service.updateUserFieldsById(fields, user.getUserId());
+    // Verify no updates.
+    verify(userDAO, times(0)).updateDisplayName(any(), any());
+    verify(userDAO, times(0)).updateEmailPreference(any(), any());
+    verify(userDAO, times(0)).updateEraCommonsId(any(), any());
+    verify(userDAO, times(0)).updateData(any(), any());
+    verify(userPropertyDAO, times(0)).insertAll(any());
+    // Verify no role additions/deletions.
+    verify(userRoleDAO, times(0)).insertUserRoles(any(), any());
+    verify(userRoleDAO, times(0)).removeUserRoles(any(), any());
   }
 
   @Test

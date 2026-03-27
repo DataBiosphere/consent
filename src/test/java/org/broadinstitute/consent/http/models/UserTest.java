@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.models;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.EnumSet;
@@ -83,5 +84,12 @@ class UserTest {
     assertFalse(user.hasAnyUserRole(List.of(UserRoles.CHAIRPERSON, UserRoles.MEMBER)));
     assertFalse(user.hasAnyUserRole(List.of(UserRoles.SIGNINGOFFICIAL, UserRoles.ITDIRECTOR)));
     assertFalse(user.hasAnyUserRole(List.of(UserRoles.ALUMNI, UserRoles.SERVICE_ACCOUNT)));
+  }
+
+  @Test
+  void testHasNullData() {
+    User user = new User();
+    assertNotNull(user.getUserData());
+    assertTrue(user.getUserData().isEmpty());
   }
 }

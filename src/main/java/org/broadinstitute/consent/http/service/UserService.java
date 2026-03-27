@@ -97,6 +97,9 @@ public class UserService implements ConsentLogger {
       if (Objects.nonNull(userUpdateFields.getEraCommonsId())) {
         userDAO.updateEraCommonsId(userId, userUpdateFields.getEraCommonsId());
       }
+      if (Objects.nonNull(userUpdateFields.getUserData())) {
+        userDAO.updateData(userId, GsonUtil.getInstance().toJson(userUpdateFields.getUserData()));
+      }
 
       // Update User Properties
       List<UserProperty> userProps = userUpdateFields.buildUserProperties(userId);
