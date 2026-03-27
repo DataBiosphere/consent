@@ -2,14 +2,19 @@ package org.broadinstitute.consent.http.db;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOPrefix;
 import org.broadinstitute.consent.http.db.mapper.StudyReducer;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -145,4 +150,15 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       SELECT * FROM study WHERE name = :name
       """)
   Study findStudyByName(@Bind("name") String name);
+
+  @RegisterConstructorMapper(StudyDatasetCountRecord.class)
+  @SqlQuery(
+      """
+    SELECT study.study_id AS id, study.name, count(dataset.dataset_id) AS dataset_count from study
+        INNER JOIN dataset on study.study_id = dataset.study_id
+    WHERE study.study_id IN (<studyIds>)
+    GROUP BY study.study_id, study.name
+    """)
+  List<StudyDatasetCountRecord> findNameAndDatasetCount(
+      @BindList(value = "studyIds", onEmpty = EmptyHandling.NULL_STRING) Set<Integer> studyIds);
 }

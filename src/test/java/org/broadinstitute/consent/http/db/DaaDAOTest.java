@@ -11,7 +11,6 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
@@ -118,7 +117,7 @@ class DaaDAOTest extends DAOTestHelper {
 
   @Test
   void testFindByIdInvalid() {
-    DataAccessAgreement daa3 = daaDAO.findById(RandomUtils.nextInt(10000, 100000));
+    DataAccessAgreement daa3 = daaDAO.findById(randomInt(10000, 100000));
     assertNull(daa3);
   }
 
@@ -129,8 +128,7 @@ class DaaDAOTest extends DAOTestHelper {
     Integer dacId2 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
     Integer daaId1 =
         daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
-    Integer daaId2 =
-        daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId2);
+    daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId2);
     assertNotNull(daaId1);
     DataAccessAgreement daa1 = daaDAO.findByDacId(dacId);
     assertNotNull(daa1);
@@ -151,7 +149,7 @@ class DaaDAOTest extends DAOTestHelper {
     daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId2);
     DataAccessAgreement daa1 = daaDAO.findByDacId(dacId);
     DataAccessAgreement daa2 = daaDAO.findByDacId(dacId2);
-    DataAccessAgreement daa3 = daaDAO.findByDacId(RandomUtils.nextInt(10000, 100000));
+    DataAccessAgreement daa3 = daaDAO.findByDacId(randomInt(10000, 100000));
     assertNotNull(daa1);
     assertNotNull(daa2);
     assertNull(daa3);
@@ -165,8 +163,7 @@ class DaaDAOTest extends DAOTestHelper {
     Integer dacId3 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
     Integer daaId1 =
         daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
-    Integer daaId2 =
-        daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId2);
+    daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId2);
     assertNotNull(daaId1);
     DataAccessAgreement daa1 = daaDAO.findByDacId(dacId);
     assertNotNull(daa1);
