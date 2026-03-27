@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -23,6 +24,7 @@ public class UserUpdateFields {
   private List<Integer> userRoleIds;
   private String eraCommonsId;
   private Boolean daaAcceptance;
+  private Map<String, Object> data;
 
   public UserUpdateFields() {
     // Default constructor
@@ -66,6 +68,14 @@ public class UserUpdateFields {
 
   public void setDaaAcceptance(Boolean daaAcceptance) {
     this.daaAcceptance = daaAcceptance;
+  }
+
+  public Map<String, Object> getData() {
+    return data;
+  }
+
+  public void setData(Map<String, Object> data) {
+    this.data = data;
   }
 
   public List<UserProperty> buildUserProperties(Integer userId) {

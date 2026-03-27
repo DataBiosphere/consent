@@ -12,6 +12,9 @@ properties:
   displayName:
     type: string
     description: Name of the user
+  userData:
+    type: object
+    description: JSON map of keys and values.  Not validated for any particular purpose.
   createDate:
     type: string
     format: date

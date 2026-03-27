@@ -41,6 +41,7 @@ public interface UserDAO extends Transactional<UserDAO> {
           u.email_preference as u_email_preference,
           u.institution_id as u_institution_id,
           u.era_commons_id as u_era_commons_id,
+          u.user_data as u_user_data,
           i.institution_id as i_id,
           i.institution_name as i_name,
           i.it_director_name as i_it_director_name,
@@ -80,6 +81,7 @@ public interface UserDAO extends Transactional<UserDAO> {
           u.email_preference as u_email_preference,
           u.institution_id as u_institution_id,
           u.era_commons_id as u_era_commons_id,
+          u.user_data as u_user_data,
           i.institution_id as i_id,
           i.institution_name as i_name,
           i.it_director_name as i_it_director_name,
@@ -184,6 +186,7 @@ public interface UserDAO extends Transactional<UserDAO> {
           u.email_preference as u_email_preference,
           u.institution_id as u_institution_id,
           u.era_commons_id as u_era_commons_id,
+          u.user_data as u_user_data,
           i.institution_id as i_id,
           i.institution_name as i_name,
           i.it_director_name as i_it_director_name,
@@ -216,7 +219,7 @@ public interface UserDAO extends Transactional<UserDAO> {
           u.user_id as u_user_id, u.email as u_email, u.display_name as u_display_name,
           u.create_date as u_create_date, u.email_preference as u_email_preference,
           u.institution_id as u_institution_id, u.era_commons_id as u_era_commons_id,
-          ur.user_role_id as ur_user_role_id, ur.user_id as ur_user_id,
+          u.user_data as u_user_data, ur.user_role_id as ur_user_role_id, ur.user_id as ur_user_id,
           ur.role_id as ur_role_id, ur.dac_id as ur_dac_id, r.name as ur_name
       FROM users u
       LEFT JOIN user_role ur ON ur.user_id = u.user_id
@@ -252,6 +255,7 @@ public interface UserDAO extends Transactional<UserDAO> {
           u.email_preference as u_email_preference,
           u.institution_id as u_institution_id,
           u.era_commons_id as u_era_commons_id,
+          u.user_data as u_user_data,
           r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id,
           lc.id AS lc_id , lc.user_id AS lc_user_id,
           lc.user_name AS lc_user_name, lc.user_email AS lc_user_email,
@@ -326,6 +330,7 @@ public interface UserDAO extends Transactional<UserDAO> {
           u.email_preference as u_email_preference,
           u.institution_id as u_institution_id,
           u.era_commons_id as u_era_commons_id,
+          u.user_data as u_user_data,
           r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id,
           lc.id AS lc_id , lc.user_id AS lc_user_id,
           lc.user_name AS lc_user_name, lc.user_email AS lc_user_email,
@@ -363,6 +368,7 @@ public interface UserDAO extends Transactional<UserDAO> {
           u.email_preference as u_email_preference,
           u.institution_id as u_institution_id,
           u.era_commons_id as u_era_commons_id,
+          u.user_data as u_user_data,
           r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id,
           lc.id AS lc_id , lc.user_id AS lc_user_id,
           lc.user_name AS lc_user_name, lc.user_email AS lc_user_email,
@@ -387,7 +393,7 @@ public interface UserDAO extends Transactional<UserDAO> {
 
   @RegisterBeanMapper(value = User.class)
   @SqlQuery(
-      "SELECT u.user_id, u.display_name, u.email FROM users u "
+      "SELECT u.user_id, u.display_name, u.email, u.user_data FROM users u "
           + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
           + " LEFT JOIN roles r ON r.role_id = ur.role_id "
           + " WHERE LOWER(r.name) = 'signingofficial' "
@@ -408,4 +414,7 @@ public interface UserDAO extends Transactional<UserDAO> {
 
   @SqlUpdate("UPDATE users SET display_name = :displayName WHERE user_id = :userId")
   void updateDisplayName(@Bind("userId") Integer userId, @Bind("displayName") String displayName);
+
+  @SqlUpdate("UPDATE users SET user_data = :data::jsonb WHERE user_id = :userId")
+  void updateData(@Bind("userId") Integer userId, @Bind("data") String data);
 }

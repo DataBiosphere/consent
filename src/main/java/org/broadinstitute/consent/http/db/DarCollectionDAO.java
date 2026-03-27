@@ -188,7 +188,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   @SqlQuery(
 """
     SELECT c.*,
-       u.user_id as u_user_id, u.email as u_email, u.display_name as u_display_name, u.create_date as u_create_date, u.email_preference as u_email_preference, u.institution_id as u_institution_id, u.era_commons_id as u_era_commons_id,
+       u.user_id as u_user_id, u.email as u_email, u.display_name as u_display_name, u.create_date as u_create_date, u.email_preference as u_email_preference, u.institution_id as u_institution_id, u.era_commons_id as u_era_commons_id, u.user_data as u_user_data,
        i.institution_id as i_id, i.institution_name as i_name, i.it_director_name as i_it_director_name, i.it_director_email as i_it_director_email, i.create_date as i_create_date, i.update_date as i_update_date,
        up.property_id AS up_property_id, up.user_id AS up_user_id, up.property_key as up_property_key, up.property_value AS up_property_value,
        lc.id as lc_id, lc.user_id as lc_user_id, lc.user_name as lc_user_name, lc.user_email as lc_user_email, lc.create_user_id as lc_create_user_id, lc.create_date as lc_create_date, lc.update_date as lc_update_date, lc.update_user_id as lc_update_user_id,
@@ -244,7 +244,7 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
   @SqlQuery(
       """
     SELECT c.*,
-       u.user_id as u_user_id, u.email as u_email, u.display_name as u_display_name, u.create_date as u_create_date, u.email_preference as u_email_preference, u.institution_id as u_institution_id, u.era_commons_id as u_era_commons_id,
+       u.user_id as u_user_id, u.email as u_email, u.display_name as u_display_name, u.create_date as u_create_date, u.email_preference as u_email_preference, u.institution_id as u_institution_id, u.era_commons_id as u_era_commons_id, u.user_data as u_user_data,
        i.institution_id as i_id, i.institution_name as i_name, i.it_director_name as i_it_director_name, i.it_director_email as i_it_director_email, i.create_date as i_create_date, i.update_date as i_update_date,
        up.property_id AS up_property_id, up.user_id AS up_user_id, up.property_key as up_property_key, up.property_value AS up_property_value,
        lc.id as lc_id, lc.user_id as lc_user_id, lc.user_name as lc_user_name, lc.user_email as lc_user_email, lc.create_user_id as lc_create_user_id, lc.create_date as lc_create_date, lc.update_date as lc_update_date, lc.update_user_id as lc_update_user_id,

@@ -727,6 +727,36 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
         0, dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDatasetId()).size());
   }
 
+  /**
+   * Tests the case where a user has been approved for access, then a new election is created, and
+   * that the user still has access until a final no vote is recorded.
+   */
+  @Test
+  void testFindAllApprovedDataAccessRequestsByDatasetId_ApprovedThenNewElectionCase() {
+    String darCode1 = "DAR-" + randomInt(100, 1000000);
+    Dataset dataset1 = createDARDAOTestDataset();
+    User user1 = createUserWithInstitution();
+    DataAccessRequest testDar1 = createDAR(user1, dataset1, darCode1);
+
+    Election e1 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDatasetId());
+    Vote v1 = createFinalVote(dataset1.getCreateUserId(), e1.getElectionId());
+    Date now = new Date();
+    updateVote(true, "", now, v1.getVoteId(), false, e1.getElectionId(), now, false);
+
+    assertEquals(
+        1, dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDatasetId()).size());
+
+    Election e2 = createDataAccessElection(testDar1.getReferenceId(), dataset1.getDatasetId());
+    Vote v2 = createVote(dataset1.getCreateUserId(), e2.getElectionId(), VoteType.FINAL);
+
+    assertEquals(
+        1, dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDatasetId()).size());
+
+    updateVote(false, "", now, v2.getVoteId(), false, e2.getElectionId(), now, false);
+    assertEquals(
+        0, dataAccessRequestDAO.findApprovedDARsByDatasetId(dataset1.getDatasetId()).size());
+  }
+
   @ParameterizedTest
   @ValueSource(longs = {200, 370})
   void testFindAllApprovedDataAccessRequestsByDatasetId_ExpiredDARCase(long submissionDaysAgo) {

@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.broadinstitute.consent.http.enumeration.UserFields;
@@ -28,6 +29,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -324,6 +326,17 @@ class UserDAOTest extends DAOTestHelper {
     assertThrows(
         UnableToExecuteStatementException.class,
         () -> userDAO.updateDisplayName(researcher.getUserId(), newName));
+  }
+
+  @Test
+  void testUpdateData() {
+    User researcher = createUser();
+    Map<String, Object> researcherData = researcher.getUserData();
+    researcherData.put("test", "test");
+    userDAO.updateData(researcher.getUserId(), GsonUtil.getInstance().toJson(researcherData));
+
+    User researcherFromDb = userDAO.findUserById(researcher.getUserId());
+    assertEquals(researcherData, researcherFromDb.getUserData());
   }
 
   @Test

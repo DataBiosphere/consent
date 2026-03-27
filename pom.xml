@@ -483,6 +483,11 @@
 
     <dependency>
       <groupId>org.jdbi</groupId>
+      <artifactId>jdbi3-json</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jdbi</groupId>
       <artifactId>jdbi3-guava</artifactId>
     </dependency>
 

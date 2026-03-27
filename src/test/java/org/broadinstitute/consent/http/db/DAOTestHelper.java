@@ -8,6 +8,8 @@ import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -233,6 +235,9 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     int i3 = randomInt(3, 5);
     String email = randomAlphabetic(i1) + "@" + randomAlphabetic(i2) + "." + randomAlphabetic(i3);
     Integer userId = userDAO.insertUser(email, "display name", institutionId, new Date());
+    Map<String, Object> userData = new HashMap<>();
+    userData.put("email", email);
+    userDAO.updateData(userId, GsonUtil.getInstance().toJson(userData));
     userRoleDAO.insertSingleUserRole(roleId, userId);
     return userDAO.findUserById(userId);
   }
