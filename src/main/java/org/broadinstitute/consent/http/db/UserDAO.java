@@ -413,11 +413,13 @@ public interface UserDAO extends Transactional<UserDAO> {
 
   @RegisterBeanMapper(value = User.class)
   @SqlQuery(
-      "SELECT u.user_id, u.display_name, u.email, u.user_data FROM users u "
-          + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
-          + " LEFT JOIN roles r ON r.role_id = ur.role_id "
-          + " WHERE LOWER(r.name) = 'signingofficial' "
-          + " AND u.institution_id = :institutionId")
+      """
+          SELECT u.user_id, u.display_name, u.email, u.user_data FROM users u
+          LEFT JOIN user_role ur ON ur.user_id = u.user_id
+          LEFT JOIN roles r ON r.role_id = ur.role_id
+          WHERE LOWER(r.name) = 'signingofficial'
+          AND u.institution_id = :institutionId
+        """)
   List<User> getSOsByInstitution(@Bind("institutionId") Integer institutionId);
 
   @SqlUpdate("update users set email_preference = :emailPreference WHERE user_id = :userId")
