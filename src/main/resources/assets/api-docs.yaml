@@ -342,6 +342,9 @@ paths:
   /api/dar/v3/draft/{referenceId}:
     $ref: './paths/darV3DraftByReferenceId.yaml'
 
+  /api/dar/v3/progress_report/{parentReferenceId}:
+    $ref: './paths/progressReportV3.yaml'
+
   /api/dar/v2/{referenceId}/irbDocument:
     get:
       summary: Retrieve DAR IRB Document

@@ -495,6 +495,78 @@ public class DataAccessRequestResource extends Resource {
     }
   }
 
+  @POST
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/v3/progress_report/{parentReferenceId}")
+  @RolesAllowed({RESEARCHER})
+  public Response postProgressReportWithDAARestrictions(
+      @Auth DuosUser duoUser,
+      @Context Request request,
+      @PathParam("parentReferenceId") String parentReferenceId,
+      @FormDataParam("dar") String dar,
+      @FormDataParam("collaboratorRequiredFile") InputStream collabInputStream,
+      @FormDataParam("collaboratorRequiredFile") FormDataContentDisposition collabFileDetails,
+      @FormDataParam("ethicsApprovalRequiredFile") InputStream ethicsInputStream,
+      @FormDataParam("ethicsApprovalRequiredFile") FormDataContentDisposition ethicsFileDetails) {
+    try {
+      User user = duoUser.getUser();
+      // added here because other dataAccessRequestServices calls are invoked that do not normally
+      // require this sequence.  hasValidActiveERACredentials will also check for a LC so no
+      // additional LC check needed.
+      userService.validateActiveERACredentials(user);
+      DataAccessRequest parentDar = dataAccessRequestService.findByReferenceId(parentReferenceId);
+      // needs to happen before docs are uploaded
+      if (!user.getUserId().equals(parentDar.getUserId())) {
+        throw new ForbiddenException("User not authorized to update this Data Access Request");
+      }
+      // Prevent creation if there are open DataAccess elections for the parent DAR
+      List<Election> openElections =
+          dataAccessRequestService.findOpenElectionsByReferenceId(parentDar.getReferenceId());
+      boolean hasOpenDataAccessElections =
+          openElections.stream()
+              .anyMatch(
+                  election ->
+                      election
+                          .getElectionType()
+                          .equalsIgnoreCase(ElectionType.DATA_ACCESS.getValue()));
+      if (hasOpenDataAccessElections) {
+        throw new BadRequestException(
+            "Cannot create a progress report for a DAR: "
+                + parentDar.darCode
+                + " with an open election: "
+                + parentDar.getReferenceId());
+      }
+      DataAccessRequest payload =
+          DataAccessRequest.populateProgressReportFromJsonString(dar, parentDar);
+      populateProgressReportWithDocuments(
+          user,
+          collabInputStream,
+          collabFileDetails,
+          ethicsInputStream,
+          ethicsFileDetails,
+          payload,
+          parentDar);
+
+      // DAA Enforcement
+      datasetService.enforceDAARestrictions(user, payload.getDatasetIds());
+
+      DataAccessRequest progressReport =
+          dataAccessRequestService.createProgressReport(
+              user, payload, parentDar, (ContainerRequest) request);
+      if (Objects.nonNull(progressReport) && !progressReport.getIsCloseoutProgressReport()) {
+        processNewDarCollection(parentDar.getCollectionId());
+      }
+      List<Dataset> datasets =
+          datasetService.findDatasetsByIds(user, progressReport.getDatasetIds());
+      ComplianceLogger.logDARSubmission(
+          user, datasets, ((ContainerRequest) request), HttpStatusCodes.STATUS_CODE_CREATED);
+      return Response.ok(progressReport.convertToSimplifiedDar()).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
   private void processNewDarCollection(Integer collectionId) {
     try {
       // This service method knows how to distinguish between a DAR and a Progress Report.
