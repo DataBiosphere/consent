@@ -501,7 +501,7 @@ public class DataAccessRequestResource extends Resource {
   @Path("/v3/progress_report/{parentReferenceId}")
   @RolesAllowed({RESEARCHER})
   public Response postProgressReportWithDAARestrictions(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duoUser,
       @Context Request request,
       @PathParam("parentReferenceId") String parentReferenceId,
       @FormDataParam("dar") String dar,
@@ -510,7 +510,7 @@ public class DataAccessRequestResource extends Resource {
       @FormDataParam("ethicsApprovalRequiredFile") InputStream ethicsInputStream,
       @FormDataParam("ethicsApprovalRequiredFile") FormDataContentDisposition ethicsFileDetails) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duoUser.getUser();
       // added here because other dataAccessRequestServices calls are invoked that do not normally
       // require this sequence.  hasValidActiveERACredentials will also check for a LC so no
       // additional LC check needed.
@@ -532,7 +532,9 @@ public class DataAccessRequestResource extends Resource {
                           .equalsIgnoreCase(ElectionType.DATA_ACCESS.getValue()));
       if (hasOpenDataAccessElections) {
         throw new BadRequestException(
-            "Cannot create a progress report for a DAR with an open election: "
+            "Cannot create a progress report for a DAR: "
+                + parentDar.darCode
+                + " with an open election: "
                 + parentDar.getReferenceId());
       }
       DataAccessRequest payload =

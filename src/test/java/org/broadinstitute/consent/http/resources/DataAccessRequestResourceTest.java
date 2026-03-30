@@ -414,7 +414,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testPostProgressReportCollabAndEthicsFiles() {
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     DataAccessRequest parentDar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
     DataAccessRequest childDar = generateDataAccessRequest();
@@ -427,7 +426,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
     try (var response =
         resource.postProgressReportWithDAARestrictions(
-            authUser,
+            duosUser,
             request,
             "",
             "",
@@ -441,7 +440,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testPostProgressReportDifferentUser() {
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setUserId(2);
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
@@ -450,7 +448,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
     Response response =
         resource.postProgressReportWithDAARestrictions(
-            authUser,
+            duosUser,
             request,
             "",
             "",
@@ -463,14 +461,13 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testPostProgressReportMissingParentDar() {
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenThrow(NotFoundException.class);
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     try (var response =
         resource.postProgressReportWithDAARestrictions(
-            authUser,
+            duosUser,
             request,
             "",
             "",
@@ -485,7 +482,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testPostProgressReportInvalidJson() {
     String invalidDar = "{\"projectTitle\": \"test\", \"datasetIds\": \"invalid\"}";
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     DataAccessRequest parentDar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
     var collabFile = mockFormDataMultiPart("collab.txt");
@@ -493,7 +489,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
     try (var response =
         resource.postProgressReportWithDAARestrictions(
-            authUser,
+            duosUser,
             request,
             "",
             invalidDar,
@@ -508,19 +504,17 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testPostProgressReportThrowsWhenNoERACommonsID() {
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     doThrow(BadRequestException.class).when(userService).validateActiveERACredentials(user);
 
     try (var response =
         resource.postProgressReportWithDAARestrictions(
-            authUser, request, "", "", null, null, null, null)) {
+            duosUser, request, "", "", null, null, null, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
 
   @Test
   void testPostProgressReportWithOpenElections() {
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     DataAccessRequest parentDar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
     Election election = new Election();
@@ -534,7 +528,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
     try (var response =
         resource.postProgressReportWithDAARestrictions(
-            authUser,
+            duosUser,
             request,
             "",
             "",
@@ -547,14 +541,15 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
           response
               .getEntity()
               .toString()
-              .contains("Cannot create a progress report for a DAR with an open election"));
+              .contains(
+                  "Cannot create a progress report for a DAR: "
+                      + parentDar.getDarCode()
+                      + " with an open election"));
     }
   }
 
   @Test
   void testPostProgressReportFailsWhenDAARestricted() {
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
-
     DataAccessRequest parentDar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
 
@@ -568,7 +563,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
     try (var response =
         resource.postProgressReportWithDAARestrictions(
-            authUser,
+            duosUser,
             request,
             "",
             "",
@@ -587,8 +582,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testPostProgressReportInvokesDAAEnforcement() {
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
-
     DataAccessRequest parentDar = generateDataAccessRequest();
     when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
 
@@ -603,7 +596,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
     try (var response =
         resource.postProgressReportWithDAARestrictions(
-            authUser,
+            duosUser,
             request,
             "",
             "",
@@ -946,6 +939,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     DataAccessRequestData data = new DataAccessRequestData();
     dar.setReferenceId(UUID.randomUUID().toString());
     data.setReferenceId(dar.getReferenceId());
+    dar.setDarCode("DAR-" + randomInt(100, 500));
     dar.setId(new Random().nextInt());
     dar.setDatasetIds(Arrays.asList(1, 2));
     dar.setData(data);
