@@ -19,7 +19,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
-import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
@@ -107,11 +106,11 @@ public class DaaService implements ConsentLogger {
   }
 
   public void addDacToDaa(Integer userId, Integer dacId, Integer daaId) {
-    daaDAO.createDacDaaRelation(dacId, daaId, userId, AuditActions.ADD.getValue().toUpperCase());
+    daaDAO.createDacDaaRelation(dacId, daaId, userId);
   }
 
   public void removeDacFromDaa(Integer userId, Integer dacId, Integer daaId) {
-    daaDAO.deleteDacDaaRelation(daaId, dacId, userId, AuditActions.REMOVE.getValue().toUpperCase());
+    daaDAO.deleteDacDaaRelation(daaId, dacId, userId);
   }
 
   // Note: This method/implementation is not the permanent solution to identifying the Broad DAA.

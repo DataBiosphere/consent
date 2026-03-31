@@ -162,12 +162,9 @@ class DaaDAOTest extends DAOTestHelper {
     assertNotNull(daa2);
     assertEquals(daa2.getInitialDacId(), dacId2);
 
-    daaDAO.createDacDaaRelation(
-        dacId, daa1.getDaaId(), userId, AuditActions.ADD.getValue().toUpperCase());
-    daaDAO.createDacDaaRelation(
-        dacId2, daa2.getDaaId(), userId, AuditActions.ADD.getValue().toUpperCase());
-    daaDAO.createDacDaaRelation(
-        dacId3, daa2.getDaaId(), userId, AuditActions.ADD.getValue().toUpperCase());
+    daaDAO.createDacDaaRelation(dacId, daa1.getDaaId(), userId);
+    daaDAO.createDacDaaRelation(dacId2, daa2.getDaaId(), userId);
+    daaDAO.createDacDaaRelation(dacId3, daa2.getDaaId(), userId);
 
     // Assert new relations exist
     DataAccessAgreement testDAA1 = daaDAO.findById(daa1.getDaaId());
@@ -209,15 +206,13 @@ class DaaDAOTest extends DAOTestHelper {
     assertNotNull(daa2);
     assertEquals(daa2.getInitialDacId(), dacId2);
 
-    daaDAO.createDacDaaRelation(dacId1, daaId1, userId, AuditActions.ADD.getValue().toUpperCase());
-    daaDAO.createDacDaaRelation(dacId2, daaId2, userId, AuditActions.ADD.getValue().toUpperCase());
-    daaDAO.createDacDaaRelation(dacId3, daaId2, userId, AuditActions.ADD.getValue().toUpperCase());
+    daaDAO.createDacDaaRelation(dacId1, daaId1, userId);
+    daaDAO.createDacDaaRelation(dacId2, daaId2, userId);
+    daaDAO.createDacDaaRelation(dacId3, daaId2, userId);
 
     // Delete DAC-DAA Relations
-    daaDAO.deleteDacDaaRelation(
-        daaId1, dacId1, userId, AuditActions.REMOVE.getValue().toUpperCase());
-    daaDAO.deleteDacDaaRelation(
-        daaId2, dacId2, userId, AuditActions.REMOVE.getValue().toUpperCase());
+    daaDAO.deleteDacDaaRelation(daaId1, dacId1, userId);
+    daaDAO.deleteDacDaaRelation(daaId2, dacId2, userId);
 
     // Assert that only 2 of the 3 DAC-DAA relations are removed
     DataAccessAgreement testDAA1 = daaDAO.findById(daa1.getDaaId());
@@ -277,9 +272,9 @@ class DaaDAOTest extends DAOTestHelper {
     Integer dacId3 =
         dacDAO.createDac(randomAlphabetic(5), "Dac 3", randomAlphabetic(15), new Date());
     Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
-    daaDAO.createDacDaaRelation(dacId, daaId, userId, AuditActions.ADD.getValue().toUpperCase());
-    daaDAO.createDacDaaRelation(dacId2, daaId, userId, AuditActions.ADD.getValue().toUpperCase());
-    daaDAO.createDacDaaRelation(dacId3, daaId, userId, AuditActions.ADD.getValue().toUpperCase());
+    daaDAO.createDacDaaRelation(dacId, daaId, userId);
+    daaDAO.createDacDaaRelation(dacId2, daaId, userId);
+    daaDAO.createDacDaaRelation(dacId3, daaId, userId);
     DataAccessAgreement daa = daaDAO.findById(daaId);
 
     assertNotNull(daa);
@@ -298,12 +293,8 @@ class DaaDAOTest extends DAOTestHelper {
     Dac dac2 = createRandomDac();
     DataAccessAgreement daa = createRandomDataAccessAgreement(user, dac1);
     // Associate the DAC to the Data Access Agreeement:
-    daaDAO.createDacDaaRelation(
-        dac1.getDacId(),
-        daa.getDaaId(),
-        user.getUserId(),
-        AuditActions.ADD.getValue().toUpperCase());
-    // Associate the user's Library Card to the Data Access Agreeement:
+    daaDAO.createDacDaaRelation(dac1.getDacId(), daa.getDaaId(), user.getUserId());
+    // Associate the user's Library Card to the Data Access Agreement:
     libraryCardDAO.createLibraryCardDaaRelation(lc.getId(), daa.getDaaId());
     // Create two datasets associated to the DAC and DAA
     Dataset dataset1 = createRandomDataset(user, dac1);
@@ -338,8 +329,7 @@ class DaaDAOTest extends DAOTestHelper {
     Dac dac1 = dacDAO.findById(dac1Id);
     Integer daaId1 =
         daaDAO.createDaa(dataSubmitterId, Instant.now(), dataSubmitterId, Instant.now(), dac1Id);
-    daaDAO.createDacDaaRelation(
-        dac1Id, daaId1, dataSubmitterId, AuditActions.ADD.getValue().toUpperCase());
+    daaDAO.createDacDaaRelation(dac1Id, daaId1, dataSubmitterId);
     DataAccessAgreement daa1 = daaDAO.findById(daaId1);
     Dataset d1 = createRandomDataset(dataSubmitter, dac1);
 
@@ -348,8 +338,7 @@ class DaaDAOTest extends DAOTestHelper {
     Dac dac2 = dacDAO.findById(dacId2);
     Integer daaId2 =
         daaDAO.createDaa(dataSubmitterId, Instant.now(), dataSubmitterId, Instant.now(), dacId2);
-    daaDAO.createDacDaaRelation(
-        dacId2, daaId2, dataSubmitterId, AuditActions.ADD.getValue().toUpperCase());
+    daaDAO.createDacDaaRelation(dacId2, daaId2, dataSubmitterId);
     DataAccessAgreement daa2 = daaDAO.findById(daaId2);
     Dataset d2 = createRandomDataset(dataSubmitter, dac2);
 
@@ -358,8 +347,7 @@ class DaaDAOTest extends DAOTestHelper {
     Dac dac3 = dacDAO.findById(dacId3);
     Integer daaId3 =
         daaDAO.createDaa(dataSubmitterId, Instant.now(), dataSubmitterId, Instant.now(), dacId3);
-    daaDAO.createDacDaaRelation(
-        dacId3, daaId3, dataSubmitterId, AuditActions.ADD.getValue().toUpperCase());
+    daaDAO.createDacDaaRelation(dacId3, daaId3, dataSubmitterId);
     DataAccessAgreement daa3 = daaDAO.findById(daaId3);
     createRandomDataset(dataSubmitter, dac3);
 

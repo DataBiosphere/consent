@@ -28,7 +28,6 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
-import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -109,7 +108,7 @@ class DaaServiceTest extends AbstractTestHelper {
 
   @Test
   void testAddDacToDaa() {
-    doNothing().when(daaDAO).createDacDaaRelation(any(), any(), any(), any());
+    doNothing().when(daaDAO).createDacDaaRelation(any(), any(), any());
 
     initService();
     assertDoesNotThrow(() -> service.addDacToDaa(1, 1, 1));
@@ -119,9 +118,7 @@ class DaaServiceTest extends AbstractTestHelper {
   void testRemoveDacFromDaa() {
     User user = new User();
     user.setUserId(1);
-    doNothing()
-        .when(daaDAO)
-        .deleteDacDaaRelation(1, 1, 1, AuditActions.REMOVE.getValue().toUpperCase());
+    doNothing().when(daaDAO).deleteDacDaaRelation(1, 1, 1);
 
     initService();
     assertDoesNotThrow(() -> service.removeDacFromDaa(user.getUserId(), 1, 1));

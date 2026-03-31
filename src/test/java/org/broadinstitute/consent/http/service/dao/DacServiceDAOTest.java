@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
-import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
@@ -69,8 +68,7 @@ class DacServiceDAOTest extends DAOTestHelper {
                   new Date().toInstant(),
                   dacId);
           // DAC->DAA Association.
-          daaDAO.createDacDaaRelation(
-              dacId, daaId, superUser.getUserId(), AuditActions.ADD.getValue().toUpperCase());
+          daaDAO.createDacDaaRelation(dacId, daaId, superUser.getUserId());
           // Library Card User
           User lcUser = createUser();
           // A user's library card needs an institution

@@ -171,27 +171,21 @@ public interface DaaDAO extends Transactional<DaaDAO> {
 
   @SqlUpdate(
       """
-      WITH audit AS (INSERT INTO daa_audit (daa_id, dac_id, user_id, action, action_date) VALUES (:daaId, :dacId, :userId, :action, NOW()))
+      WITH audit AS (INSERT INTO daa_audit (daa_id, dac_id, user_id, action, action_date) VALUES (:daaId, :dacId, :userId, 'ADD', NOW()))
       INSERT INTO dac_daa (dac_id, daa_id)
       VALUES (:dacId, :daaId)
       ON CONFLICT (dac_id) DO UPDATE SET daa_id = :daaId
       """)
   void createDacDaaRelation(
-      @Bind("dacId") Integer dacId,
-      @Bind("daaId") Integer daaId,
-      @Bind("userId") Integer userId,
-      @Bind("action") String action);
+      @Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId, @Bind("userId") Integer userId);
 
   @SqlUpdate(
       """
-      WITH audit AS (INSERT INTO daa_audit (daa_id, dac_id, user_id, action, action_date) VALUES (:daaId, :dacId, :userId, :action, NOW()))
+      WITH audit AS (INSERT INTO daa_audit (daa_id, dac_id, user_id, action, action_date) VALUES (:daaId, :dacId, :userId, 'REMOVE', NOW()))
       DELETE FROM dac_daa WHERE daa_id = :daaId AND dac_id = :dacId
       """)
   void deleteDacDaaRelation(
-      @Bind("daaId") Integer daaId,
-      @Bind("dacId") Integer dacId,
-      @Bind("userId") Integer userId,
-      @Bind("action") String action);
+      @Bind("daaId") Integer daaId, @Bind("dacId") Integer dacId, @Bind("userId") Integer userId);
 
   /**
    * Relationship chain: User -> Library Card -> Data Access Agreement -> DAC -> Dataset
