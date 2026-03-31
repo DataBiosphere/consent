@@ -25,7 +25,7 @@
     <junit.version>6.0.3</junit.version>
     <mockito.version>5.23.0</mockito.version>
     <sonar.plugin.version>5.5.0.6356</sonar.plugin.version>
-    <netty.override.version>4.2.10.Final</netty.override.version>
+    <netty.override.version>4.2.12.Final</netty.override.version>
     <spotless.version>3.4.0</spotless.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -419,7 +419,7 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.51.0</version>
+        <version>3.52.0</version>
         <scope>import</scope>
       </dependency>
       <dependency>
@@ -547,7 +547,7 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry</artifactId>
-      <version>8.36.0</version>
+      <version>8.37.1</version>
     </dependency>
 
     <dependency>
@@ -775,7 +775,7 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>2.64.0</version>
+      <version>2.64.1</version>
     </dependency>
 
     <dependency>
