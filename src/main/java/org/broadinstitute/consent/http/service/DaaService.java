@@ -106,8 +106,8 @@ public class DaaService implements ConsentLogger {
     return daaDAO.findById(daaId);
   }
 
-  public void addDacToDaa(Integer dacId, Integer daaId) {
-    daaDAO.createDacDaaRelation(dacId, daaId);
+  public void addDacToDaa(Integer userId, Integer dacId, Integer daaId) {
+    daaDAO.createDacDaaRelation(dacId, daaId, userId, AuditActions.ADD.getValue().toUpperCase());
   }
 
   public void removeDacFromDaa(Integer userId, Integer dacId, Integer daaId) {

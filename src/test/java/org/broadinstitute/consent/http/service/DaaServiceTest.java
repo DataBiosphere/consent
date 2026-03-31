@@ -109,10 +109,10 @@ class DaaServiceTest extends AbstractTestHelper {
 
   @Test
   void testAddDacToDaa() {
-    doNothing().when(daaDAO).createDacDaaRelation(any(), any());
+    doNothing().when(daaDAO).createDacDaaRelation(any(), any(), any(), any());
 
     initService();
-    assertDoesNotThrow(() -> service.addDacToDaa(1, 1));
+    assertDoesNotThrow(() -> service.addDacToDaa(1, 1, 1));
   }
 
   @Test

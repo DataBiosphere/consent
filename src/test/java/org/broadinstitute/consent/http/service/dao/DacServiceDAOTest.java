@@ -11,11 +11,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
@@ -54,13 +52,13 @@ class DacServiceDAOTest extends DAOTestHelper {
     List<Dac> dacs = createMockDACs();
     List<Integer> createdDatasetIds = new ArrayList<>();
     dacs.forEach(
-        dac -> {
+        _ -> {
           // DAC
           int dacId =
               dacDAO.createDac(
-                  "dac name: " + RandomStringUtils.randomAlphabetic(10),
-                  "dac description: " + RandomStringUtils.randomAlphabetic(10),
-                  "dac email: " + RandomStringUtils.randomAlphabetic(10),
+                  "dac name: " + randomAlphabetic(10),
+                  "dac description: " + randomAlphabetic(10),
+                  "dac email: " + randomAlphabetic(10),
                   new Date());
           // Data Access Agreement
           int daaId =
@@ -71,28 +69,29 @@ class DacServiceDAOTest extends DAOTestHelper {
                   new Date().toInstant(),
                   dacId);
           // DAC->DAA Association.
-          daaDAO.createDacDaaRelation(dacId, daaId);
+          daaDAO.createDacDaaRelation(
+              dacId, daaId, superUser.getUserId(), AuditActions.ADD.getValue().toUpperCase());
           // Library Card User
           User lcUser = createUser();
           // A user's library card needs an institution
-          int dunsNumber = RandomUtils.nextInt(10, 100);
+          int dunsNumber = randomInt(10, 100);
           institutionDAO.insertInstitution(
-              "institution name: " + RandomStringUtils.randomAlphabetic(10),
-              "it director name: " + RandomStringUtils.randomAlphabetic(10),
-              "it director email: " + RandomStringUtils.randomAlphabetic(10),
-              "institution url: " + RandomStringUtils.randomAlphabetic(10),
+              "institution name: " + randomAlphabetic(10),
+              "it director name: " + randomAlphabetic(10),
+              "it director email: " + randomAlphabetic(10),
+              "institution url: " + randomAlphabetic(10),
               dunsNumber,
-              "org chart url: " + RandomStringUtils.randomAlphabetic(10),
-              "verification url: " + RandomStringUtils.randomAlphabetic(10),
-              "verification file name: " + RandomStringUtils.randomAlphabetic(10),
-              "org type: " + RandomStringUtils.randomAlphabetic(10),
+              "org chart url: " + randomAlphabetic(10),
+              "verification url: " + randomAlphabetic(10),
+              "verification file name: " + randomAlphabetic(10),
+              "org type: " + randomAlphabetic(10),
               superUser.getUserId(),
               new Date());
           int userLcId =
               libraryCardDAO.insertLibraryCard(
                   lcUser.getUserId(),
-                  "library card user name: " + RandomStringUtils.randomAlphabetic(10),
-                  "library card user email: " + RandomStringUtils.randomAlphabetic(10),
+                  "library card user name: " + randomAlphabetic(10),
+                  "library card user email: " + randomAlphabetic(10),
                   superUser.getUserId(),
                   new Date());
           // Library Card User to Data Access Agreement association
@@ -107,10 +106,10 @@ class DacServiceDAOTest extends DAOTestHelper {
           // DAC.
           int datasetId =
               datasetDAO.insertDataset(
-                  "dataset name: " + RandomStringUtils.randomAlphabetic(10),
+                  "dataset name: " + randomAlphabetic(10),
                   Timestamp.from(Instant.now()),
                   superUser.getUserId(),
-                  "object id: " + RandomStringUtils.randomAlphabetic(10),
+                  "object id: " + randomAlphabetic(10),
                   new DataUseBuilder().setGeneralUse(true).build().toString(),
                   dacId);
           createdDatasetIds.add(datasetId);
@@ -194,6 +193,6 @@ class DacServiceDAOTest extends DAOTestHelper {
               dac.setAssociatedDaa(daa);
               return dac;
             })
-        .collect(Collectors.toList());
+        .toList();
   }
 }

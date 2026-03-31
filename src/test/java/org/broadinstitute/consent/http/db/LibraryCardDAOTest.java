@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
@@ -122,7 +123,8 @@ class LibraryCardDAOTest extends DAOTestHelper {
     int daaId =
         daaDAO.createDaa(
             card.getCreateUserId(), Instant.now(), card.getCreateUserId(), Instant.now(), dacId);
-    daaDAO.createDacDaaRelation(dacId, daaId);
+    daaDAO.createDacDaaRelation(
+        dacId, daaId, card.getUserId(), AuditActions.ADD.getValue().toUpperCase());
     libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
 
     libraryCardDAO.deleteLibraryCardById(card.getId());
@@ -236,7 +238,8 @@ class LibraryCardDAOTest extends DAOTestHelper {
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), randomAlphabetic(5), new Date());
     Instant now = Instant.now();
     int daaId = daaDAO.createDaa(libraryCard.getUserId(), now, libraryCard.getUserId(), now, dacId);
-    daaDAO.createDacDaaRelation(dacId, daaId);
+    daaDAO.createDacDaaRelation(
+        dacId, daaId, libraryCard.getUserId(), AuditActions.ADD.getValue().toUpperCase());
     libraryCardDAO.createLibraryCardDaaRelation(libraryCard.getId(), daaId);
     LibraryCard cardFromDAO = libraryCardDAO.findLibraryCardByUserId(libraryCard.getUserId());
     assertNotNull(cardFromDAO);
