@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -10,6 +9,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
@@ -67,8 +67,8 @@ class DacServiceDAOTest extends DAOTestHelper {
                   superUser.getUserId(),
                   new Date().toInstant(),
                   dacId);
-          // DAC->DAA Association.
-          daaDAO.createDacDaaRelation(dacId, daaId, superUser.getUserId());
+          // Note that we are explicitly NOT creating DAC->DAA Association since that prevents DACs
+          // from being deleted
           // Library Card User
           User lcUser = createUser();
           // A user's library card needs an institution
@@ -143,10 +143,10 @@ class DacServiceDAOTest extends DAOTestHelper {
                   .findAll()
                   .forEach(
                       d -> {
-                        List<Integer> daaDacIds = d.getDacs().stream().map(Dac::getDacId).toList();
-                        assertFalse(
-                            daaDacIds.contains(dac.getDacId()),
-                            "There should be no DAAs that have DACs matching this deleted Dac ID");
+                        assertTrue(
+                            d.getDacs() == null
+                                || d.getDacs().isEmpty()
+                                || d.getDacs().stream().allMatch(Objects::isNull));
                       });
               // Assert that there are no Library Cards with DAAs that reference this DAC
               libraryCardDAO
@@ -158,11 +158,10 @@ class DacServiceDAOTest extends DAOTestHelper {
                           daaIds.forEach(
                               daaId -> {
                                 DataAccessAgreement innerDaa = daaDAO.findById(daaId);
-                                List<Integer> innerDacIds =
-                                    innerDaa.getDacs().stream().map(Dac::getDacId).toList();
-                                assertFalse(
-                                    innerDacIds.contains(dac.getDacId()),
-                                    "There should be no Library Cards with DAAs that have DACs matching this deleted Dac ID");
+                                assertTrue(
+                                    innerDaa.getDacs() == null
+                                        || innerDaa.getDacs().isEmpty()
+                                        || innerDaa.getDacs().stream().allMatch(Objects::isNull));
                               });
                         }
                       });
