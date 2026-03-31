@@ -11,9 +11,10 @@
       <column name="daa_id" type="bigint">
         <constraints nullable="false"/>
       </column>
-      <column name="dac_id" type="bigint">
-        <constraints nullable="false"/>
-      </column>
+      <!--
+        Note that we're intentionally allowing dac_id to be nullable for future actions that may not be associated with a specific DAC.
+       -->
+      <column name="dac_id" type="bigint"/>
       <column name="user_id" type="bigint">
         <constraints nullable="false"/>
       </column>
