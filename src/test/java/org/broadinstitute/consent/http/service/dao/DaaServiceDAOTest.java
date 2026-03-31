@@ -77,7 +77,7 @@ class DaaServiceDAOTest extends DAOTestHelper {
           List<DaaAudit> audits = daaDAO.findAuditsByDaaId(daaId);
           assertNotNull(audits);
           assertFalse(audits.isEmpty());
-          assertEquals(AuditActions.CREATE.getValue(), audits.getFirst().action().getValue());
+          assertEquals(AuditActions.CREATE, audits.getFirst().action());
         });
   }
 
