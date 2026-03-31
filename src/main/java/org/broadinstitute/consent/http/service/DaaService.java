@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
@@ -109,8 +110,8 @@ public class DaaService implements ConsentLogger {
     daaDAO.createDacDaaRelation(dacId, daaId);
   }
 
-  public void removeDacFromDaa(Integer dacId, Integer daaId) {
-    daaDAO.deleteDacDaaRelation(dacId, daaId);
+  public void removeDacFromDaa(Integer userId, Integer dacId, Integer daaId) {
+    daaDAO.deleteDacDaaRelation(daaId, dacId, userId, AuditActions.REMOVE.getValue().toUpperCase());
   }
 
   // Note: This method/implementation is not the permanent solution to identifying the Broad DAA.
@@ -216,15 +217,6 @@ public class DaaService implements ConsentLogger {
       throw new BadRequestException("Invalid JSON or missing array with key: " + arrayKey);
     }
     return jsonElementList.stream().distinct().map(e -> findById(e.getAsInt())).toList();
-  }
-
-  public void deleteDaa(Integer daaId) {
-    DataAccessAgreement daa = daaDAO.findById(daaId);
-    if (daa != null) {
-      daaDAO.deleteDaa(daaId);
-    } else {
-      throw new NotFoundException("Could not find DAA with the provided ID: " + daaId);
-    }
   }
 
   public List<DataAccessAgreement> findByDarReferenceId(String referenceId) {

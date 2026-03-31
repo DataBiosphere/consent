@@ -28,6 +28,7 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -116,10 +117,14 @@ class DaaServiceTest extends AbstractTestHelper {
 
   @Test
   void testRemoveDacFromDaa() {
-    doNothing().when(daaDAO).deleteDacDaaRelation(any(), any());
+    User user = new User();
+    user.setUserId(1);
+    doNothing()
+        .when(daaDAO)
+        .deleteDacDaaRelation(1, 1, 1, AuditActions.REMOVE.getValue().toUpperCase());
 
     initService();
-    assertDoesNotThrow(() -> service.removeDacFromDaa(1, 1));
+    assertDoesNotThrow(() -> service.removeDacFromDaa(user.getUserId(), 1, 1));
   }
 
   @Test
@@ -356,20 +361,6 @@ class DaaServiceTest extends AbstractTestHelper {
     String json = "{daaList:[1,2,3]}";
     initService();
     assertThrows(BadRequestException.class, () -> service.findDAAsInJsonArray(json, "invalidKey"));
-  }
-
-  @Test
-  void testDeleteDaa() {
-    when(daaDAO.findById(any())).thenReturn(new DataAccessAgreement());
-    doNothing().when(daaDAO).deleteDaa(any());
-    initService();
-    assertDoesNotThrow(() -> service.deleteDaa(1));
-  }
-
-  @Test
-  void testDeleteDaaDaaNotFound() {
-    initService();
-    assertThrows(NotFoundException.class, () -> service.deleteDaa(1));
   }
 
   @Test

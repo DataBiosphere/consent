@@ -2,9 +2,11 @@ package org.broadinstitute.consent.http.db;
 
 import java.time.Instant;
 import java.util.List;
+import org.broadinstitute.consent.http.db.mapper.DaaAuditMapper;
 import org.broadinstitute.consent.http.db.mapper.DaaMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessAgreementReducer;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapper;
+import org.broadinstitute.consent.http.models.DaaAudit;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
@@ -177,11 +179,14 @@ public interface DaaDAO extends Transactional<DaaDAO> {
 
   @SqlUpdate(
       """
-      DELETE FROM dac_daa
-      WHERE dac_id = :dacId
-      AND daa_id = :daaId
+      WITH audit AS (INSERT INTO daa_audit (daa_id, dac_id, user_id, action, action_date) VALUES (:daaId, :dacId, :userId, :action, NOW()))
+      DELETE FROM dac_daa WHERE daa_id = :daaId AND dac_id = :dacId
       """)
-  void deleteDacDaaRelation(@Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId);
+  void deleteDacDaaRelation(
+      @Bind("daaId") Integer daaId,
+      @Bind("dacId") Integer dacId,
+      @Bind("userId") Integer userId,
+      @Bind("action") String action);
 
   /**
    * Relationship chain: User -> Library Card -> Data Access Agreement -> DAC -> Dataset
@@ -199,14 +204,6 @@ public interface DaaDAO extends Transactional<DaaDAO> {
       WHERE lc.user_id = :userId
       """)
   List<Integer> findDaaDatasetIdsByUserId(@Bind("userId") Integer userId);
-
-  @SqlUpdate(
-      """
-    WITH lc_deletes AS (DELETE FROM lc_daa WHERE lc_daa.daa_id = :daaId),
-    dac_delete AS (DELETE FROM dac_daa WHERE dac_daa.daa_id = :daaId)
-    DELETE FROM data_access_agreement WHERE daa_id = :daaId
-    """)
-  void deleteDaa(@Bind("daaId") Integer daaId);
 
   /**
    * Find all DAAs for a Data Access Request by Reference ID DAR -> dar dataset join table ->
@@ -252,4 +249,25 @@ public interface DaaDAO extends Transactional<DaaDAO> {
           WHERE dd.reference_id = :referenceId
       """)
   List<DataAccessAgreement> findByDarReferenceId(@Bind("referenceId") String referenceId);
+
+  @SqlUpdate(
+      """
+    INSERT INTO daa_audit (daa_id, dac_id, user_id, action, action_date)
+    VALUES (:daaId, :dacId, :userId, :action, NOW())
+    """)
+  void insertAudit(
+      @Bind("daaId") Integer daaId,
+      @Bind("dacId") Integer dacId,
+      @Bind("userId") Integer userId,
+      @Bind("action") String action);
+
+  @RegisterRowMapper(DaaAuditMapper.class)
+  @SqlQuery(
+      """
+    SELECT *
+    FROM daa_audit
+    WHERE daa_id = :daaId
+    ORDER BY action_date DESC
+    """)
+  List<DaaAudit> findAuditsByDaaId(@Bind("daaId") Integer daaId);
 }

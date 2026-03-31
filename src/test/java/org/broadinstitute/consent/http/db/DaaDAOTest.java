@@ -11,7 +11,9 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.models.DaaAudit;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -180,27 +182,56 @@ class DaaDAOTest extends DAOTestHelper {
   @Test
   void testDeleteDaaDacRelation() {
     Integer userId = createUserId();
-    Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
+    Integer dacId1 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
     Integer dacId2 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
     Integer dacId3 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
     Integer daaId1 =
-        daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
+        daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId1);
     Integer daaId2 =
         daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId2);
     assertNotNull(daaId1);
-    DataAccessAgreement daa1 = daaDAO.findByDacId(dacId);
+    DataAccessAgreement daa1 = daaDAO.findByDacId(dacId1);
     assertNotNull(daa1);
-    assertEquals(daa1.getInitialDacId(), dacId);
+    assertEquals(daa1.getInitialDacId(), dacId1);
     DataAccessAgreement daa2 = daaDAO.findByDacId(dacId2);
     assertNotNull(daa2);
     assertEquals(daa2.getInitialDacId(), dacId2);
 
-    daaDAO.createDacDaaRelation(dacId, daa1.getDaaId());
+    daaDAO.createDacDaaRelation(dacId1, daa1.getDaaId());
     daaDAO.createDacDaaRelation(dacId2, daa2.getDaaId());
     daaDAO.createDacDaaRelation(dacId3, daa2.getDaaId());
 
-    daaDAO.deleteDacDaaRelation(dacId, daaId1);
-    daaDAO.deleteDacDaaRelation(dacId2, daaId2);
+    // Delete DAC-DAA Relations
+    daaDAO.deleteDacDaaRelation(
+        daaId1, dacId1, userId, AuditActions.REMOVE.getValue().toUpperCase());
+    daaDAO.deleteDacDaaRelation(
+        daaId2, dacId2, userId, AuditActions.REMOVE.getValue().toUpperCase());
+
+    // Assert that only 2 of the 3 DAC-DAA relations are removed
+    DataAccessAgreement testDAA1 = daaDAO.findByDacId(daa1.getDaaId());
+    assertNotNull(testDAA1);
+    assertNull(testDAA1.getDacs());
+    // DAA 2 should have 1 DAC
+    DataAccessAgreement testDAA2 = daaDAO.findByDacId(daa2.getDaaId());
+    assertNotNull(testDAA2);
+    assertNotNull(testDAA2.getDacs());
+    assertFalse(testDAA2.getDacs().isEmpty());
+    assertFalse(testDAA2.getDacs().stream().anyMatch(dac -> dac.getDacId().equals(dacId1)));
+    assertFalse(testDAA2.getDacs().stream().anyMatch(dac -> dac.getDacId().equals(dacId2)));
+    assertTrue(testDAA2.getDacs().stream().anyMatch(dac -> dac.getDacId().equals(dacId3)));
+
+    // Assert that REMOVE audit records are created. Note that daaDAO.createDaa does not create
+    // audit records.
+    List<DaaAudit> daa1Audits = daaDAO.findAuditsByDaaId(daaId1);
+    assertNotNull(daa1Audits);
+    assertFalse(daa1Audits.isEmpty());
+    assertEquals(AuditActions.REMOVE, daa1Audits.getFirst().action());
+
+    List<DaaAudit> daa2Audits = daaDAO.findAuditsByDaaId(daaId2);
+    assertNotNull(daa2Audits);
+
+    assertFalse(daa2Audits.isEmpty());
+    assertEquals(AuditActions.REMOVE, daa2Audits.getFirst().action());
   }
 
   @Test
@@ -277,26 +308,6 @@ class DaaDAOTest extends DAOTestHelper {
   void testFindDaaDatasetIdsByUserIdNullUser() {
     List<Integer> datasetIds = daaDAO.findDaaDatasetIdsByUserId(null);
     assertTrue(datasetIds.isEmpty());
-  }
-
-  @Test
-  void testDeleteDaa() {
-    Integer userId = createUserId();
-    User user = userDAO.findUserById(userId);
-    Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
-    Integer daaId1 =
-        daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
-    LibraryCard lc = createRandomLibraryCard(user);
-    DataAccessAgreement daa1 = daaDAO.findById(daaId1);
-
-    daaDAO.createDacDaaRelation(dacId, daa1.getDaaId());
-    libraryCardDAO.createLibraryCardDaaRelation(lc.getId(), daaId1);
-
-    daaDAO.deleteDaa(daa1.getDaaId());
-
-    List<DataAccessAgreement> daas = daaDAO.findAll();
-    assertTrue(daas.isEmpty());
-    assertTrue(lc.getDaaIds().isEmpty());
   }
 
   @Test

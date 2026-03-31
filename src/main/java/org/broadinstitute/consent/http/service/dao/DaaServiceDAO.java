@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.Jdbi;
@@ -33,6 +34,7 @@ public class DaaServiceDAO implements ConsentLogger {
           Instant now = Instant.now();
           try {
             Integer daaId = daaDAO.createDaa(userId, now, userId, now, dacId);
+            daaDAO.insertAudit(daaId, dacId, userId, AuditActions.CREATE.getValue().toUpperCase());
             createdDaaIds.add(daaId);
             daaDAO.createDacDaaRelation(dacId, daaId);
             if (fso != null) {

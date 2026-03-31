@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2026-03-31-daa-audit" author="grushton">
+    <createTable tableName="daa_audit">
+      <column name="id" type="bigint" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="daa_id" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="dac_id" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="user_id" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="action" type="varchar(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="action_date" type="timestamp" defaultValueDate="current_timestamp">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addForeignKeyConstraint
+      baseTableName="daa_audit" baseColumnNames="daa_id"
+      constraintName="fk_daa_audit_daa_id"
+      referencedTableName="data_access_agreement" referencedColumnNames="daa_id"/>
+    <addForeignKeyConstraint
+      baseTableName="daa_audit" baseColumnNames="dac_id"
+      constraintName="fk_daa_audit_dac_id"
+      referencedTableName="dac" referencedColumnNames="dac_id"/>
+    <addForeignKeyConstraint
+      baseTableName="daa_audit" baseColumnNames="user_id"
+      constraintName="fk_daa_audit_user_id"
+      referencedTableName="users" referencedColumnNames="user_id"/>
+  </changeSet>
+</databaseChangeLog>

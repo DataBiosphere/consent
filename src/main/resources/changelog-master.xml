@@ -240,4 +240,5 @@
            relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-03-05-user-id-fks.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-03-25-users-data.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-03-31-daa-audit.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>
