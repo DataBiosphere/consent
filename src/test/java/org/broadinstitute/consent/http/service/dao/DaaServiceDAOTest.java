@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service.dao;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -17,7 +18,9 @@ import jakarta.ws.rs.core.MediaType;
 import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.models.DaaAudit;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
@@ -70,6 +73,11 @@ class DaaServiceDAOTest extends DAOTestHelper {
           assertNotNull(daa.getFile());
           assertNotNull(daa.getInitialDacId());
           assertFalse(daa.getDacs().isEmpty());
+          // Assert that audit record is created
+          List<DaaAudit> audits = daaDAO.findAuditsByDaaId(daaId);
+          assertNotNull(audits);
+          assertFalse(audits.isEmpty());
+          assertEquals(AuditActions.CREATE.getValue(), audits.getFirst().action().getValue());
         });
   }
 
