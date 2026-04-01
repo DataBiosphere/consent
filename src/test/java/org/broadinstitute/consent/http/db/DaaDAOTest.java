@@ -38,6 +38,11 @@ class DaaDAOTest extends DAOTestHelper {
     Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
     Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
     assertNotNull(daaId);
+    // Assert that CREATE audit records are created.
+    List<DaaAudit> daaAudits = daaDAO.findAuditsByDaaId(daaId);
+    assertNotNull(daaAudits);
+    assertFalse(daaAudits.isEmpty());
+    assertTrue(daaAudits.stream().anyMatch(a -> a.action().equals(AuditActions.CREATE)));
   }
 
   @Test
@@ -176,16 +181,16 @@ class DaaDAOTest extends DAOTestHelper {
     assertTrue(testDAA2.getDacs().stream().map(Dac::getDacId).toList().contains(dacId2));
     assertTrue(testDAA2.getDacs().stream().map(Dac::getDacId).toList().contains(dacId3));
 
-    // Assert audit records exist
+    // Assert that ADD audit records are created.
     List<DaaAudit> daa1Audits = daaDAO.findAuditsByDaaId(daa1.getDaaId());
     assertNotNull(daa1Audits);
     assertFalse(daa1Audits.isEmpty());
-    assertEquals(AuditActions.ADD, daa1Audits.getFirst().action());
+    assertTrue(daa1Audits.stream().anyMatch(a -> a.action().equals(AuditActions.ADD)));
 
     List<DaaAudit> daa2Audits = daaDAO.findAuditsByDaaId(daa2.getDaaId());
     assertNotNull(daa2Audits);
     assertFalse(daa1Audits.isEmpty());
-    assertEquals(AuditActions.ADD, daa2Audits.getFirst().action());
+    assertTrue(daa2Audits.stream().anyMatch(a -> a.action().equals(AuditActions.ADD)));
   }
 
   @Test
@@ -228,18 +233,17 @@ class DaaDAOTest extends DAOTestHelper {
     assertFalse(testDAA2.getDacs().stream().anyMatch(dac -> dac.getDacId().equals(dacId2)));
     assertTrue(testDAA2.getDacs().stream().anyMatch(dac -> dac.getDacId().equals(dacId3)));
 
-    // Assert that REMOVE audit records are created. Note that daaDAO.createDaa does not create
-    // audit records.
+    // Assert that REMOVE audit records are created.
     List<DaaAudit> daa1Audits = daaDAO.findAuditsByDaaId(daaId1);
     assertNotNull(daa1Audits);
     assertFalse(daa1Audits.isEmpty());
-    assertEquals(AuditActions.REMOVE, daa1Audits.getFirst().action());
+    assertTrue(daa1Audits.stream().anyMatch(a -> a.action().equals(AuditActions.REMOVE)));
 
     List<DaaAudit> daa2Audits = daaDAO.findAuditsByDaaId(daaId2);
     assertNotNull(daa2Audits);
 
     assertFalse(daa2Audits.isEmpty());
-    assertEquals(AuditActions.REMOVE, daa2Audits.getFirst().action());
+    assertTrue(daa2Audits.stream().anyMatch(a -> a.action().equals(AuditActions.REMOVE)));
   }
 
   @Test

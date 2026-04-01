@@ -12,7 +12,6 @@ import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
@@ -156,12 +155,20 @@ public interface DaaDAO extends Transactional<DaaDAO> {
    * @param initialDacId The id for the initial DAC this DAA was created for
    * @return Integer
    */
-  @SqlUpdate(
+  @SqlQuery(
       """
-      INSERT INTO data_access_agreement (create_user_id, create_date, update_user_id, update_date, initial_dac_id)
-      VALUES (:createUserId, :createDate, :updateUserId, :updateDate, :initialDacId)
+      WITH new_daa AS (
+          INSERT INTO data_access_agreement (create_user_id, create_date, update_user_id, update_date, initial_dac_id)
+          VALUES (:createUserId, :createDate, :updateUserId, :updateDate, :initialDacId)
+          RETURNING daa_id
+      ),
+      audit AS (
+          INSERT INTO daa_audit (daa_id, dac_id, user_id, action, action_date)
+          SELECT daa_id, :initialDacId, :createUserId, 'CREATE', NOW()
+          FROM new_daa
+      )
+      SELECT daa_id FROM new_daa
       """)
-  @GetGeneratedKeys
   Integer createDaa(
       @Bind("createUserId") Integer createUserId,
       @Bind("createDate") Instant createDate,
@@ -248,17 +255,6 @@ public interface DaaDAO extends Transactional<DaaDAO> {
           WHERE dd.reference_id = :referenceId
       """)
   List<DataAccessAgreement> findByDarReferenceId(@Bind("referenceId") String referenceId);
-
-  @SqlUpdate(
-      """
-    INSERT INTO daa_audit (daa_id, dac_id, user_id, action, action_date)
-    VALUES (:daaId, :dacId, :userId, :action, NOW())
-    """)
-  void insertAudit(
-      @Bind("daaId") Integer daaId,
-      @Bind("dacId") Integer dacId,
-      @Bind("userId") Integer userId,
-      @Bind("action") String action);
 
   @RegisterRowMapper(DaaAuditMapper.class)
   @SqlQuery(

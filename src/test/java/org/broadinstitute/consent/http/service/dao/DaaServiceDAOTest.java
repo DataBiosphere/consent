@@ -91,6 +91,11 @@ class DaaServiceDAOTest extends DAOTestHelper {
 
     List<FileStorageObject> fsos = fileStorageObjectDAO.findFilesByEntityId(daaId.toString());
     assertTrue(fsos.isEmpty(), "Expected no FileStorageObjects to be created when FSO is null");
+    // Assert that CREATE audit records are created.
+    List<DaaAudit> daaAudits = daaDAO.findAuditsByDaaId(daaId);
+    assertNotNull(daaAudits);
+    assertFalse(daaAudits.isEmpty());
+    assertTrue(daaAudits.stream().anyMatch(a -> a.action().equals(AuditActions.CREATE)));
   }
 
   @Test
