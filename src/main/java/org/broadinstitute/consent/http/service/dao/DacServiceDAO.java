@@ -2,7 +2,9 @@ package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
 import java.sql.SQLException;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.Jdbi;
@@ -11,13 +13,16 @@ import org.jdbi.v3.core.statement.Update;
 public class DacServiceDAO implements ConsentLogger {
 
   private final Jdbi jdbi;
+  private final DaaDAO daaDAO;
 
   @Inject
   public DacServiceDAO(Jdbi jdbi) {
     this.jdbi = jdbi;
+    daaDAO = jdbi.onDemand(DaaDAO.class);
   }
 
-  public void deleteDacAndDaas(User user, Dac dac) throws IllegalArgumentException, SQLException {
+  public void deleteDacAndRemoveDaaAssociation(User user, Dac dac)
+      throws IllegalArgumentException, SQLException {
     // fail fast
     if (dac == null) {
       throw new IllegalArgumentException("Invalid DAC");
@@ -28,11 +33,6 @@ public class DacServiceDAO implements ConsentLogger {
 
           jdbi.useTransaction(
               handler -> {
-                final String deleteFromLcDaa =
-                    "DELETE FROM lc_daa WHERE daa_id in (SELECT daa_id FROM data_access_agreement WHERE initial_dac_id = :dacId)";
-                final String deleteFromDacDaa = "DELETE FROM dac_daa WHERE dac_id = :dacId";
-                final String deleteFromDaa =
-                    "DELETE FROM data_access_agreement WHERE initial_dac_id = :dacId";
                 final String deleteMembers = "DELETE FROM user_role WHERE dac_id = :dacId";
                 final String updateDatasets =
                     "UPDATE dataset SET dac_id = null, dac_approval = null WHERE dac_id = :dacId";
@@ -47,17 +47,10 @@ public class DacServiceDAO implements ConsentLogger {
             """;
                 final String deleteDac = "DELETE FROM dac where dac_id = :dacId";
 
-                Update lcDaaDeletion = handler.createUpdate(deleteFromLcDaa);
-                lcDaaDeletion.bind("dacId", dac.getDacId());
-                lcDaaDeletion.execute();
-
-                Update dacDaaDeletion = handler.createUpdate(deleteFromDacDaa);
-                dacDaaDeletion.bind("dacId", dac.getDacId());
-                dacDaaDeletion.execute();
-
-                Update daaDeletion = handler.createUpdate(deleteFromDaa);
-                daaDeletion.bind("dacId", dac.getDacId());
-                daaDeletion.execute();
+                DataAccessAgreement daa = dac.getAssociatedDaa();
+                if (daa != null) {
+                  daaDAO.deleteDacDaaRelation(daa.getDaaId(), dac.getDacId(), user.getUserId());
+                }
 
                 Update memberDeletion = handler.createUpdate(deleteMembers);
                 memberDeletion.bind("dacId", dac.getDacId());

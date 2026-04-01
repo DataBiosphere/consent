@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -9,15 +11,17 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.IntStream;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.DaaAudit;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
 import org.broadinstitute.consent.http.rules.RuleState;
@@ -67,8 +71,8 @@ class DacServiceDAOTest extends DAOTestHelper {
                   superUser.getUserId(),
                   new Date().toInstant(),
                   dacId);
-          // Note that we are explicitly NOT creating DAC->DAA Association since that prevents DACs
-          // from being deleted
+          // DAC->DAA Association.
+          daaDAO.createDacDaaRelation(dacId, daaId, superUser.getUserId());
           // Library Card User
           User lcUser = createUser();
           // A user's library card needs an institution
@@ -125,7 +129,8 @@ class DacServiceDAOTest extends DAOTestHelper {
         .forEach(
             dac -> {
               assertDoesNotThrow(
-                  () -> serviceDAO.deleteDacAndDaas(superUser, dac), "Delete should not fail");
+                  () -> serviceDAO.deleteDacAndRemoveDaaAssociation(superUser, dac),
+                  "Delete should not fail");
               List<DACAutomationRule> rules =
                   dacAutomationRuleDAO.findAllDACAutomationRulesByDACId(dac.getDacId()).stream()
                       .filter(r -> r.enabledByUserId() != null)
@@ -136,35 +141,20 @@ class DacServiceDAOTest extends DAOTestHelper {
               assertTrue(datasets.isEmpty());
               List<User> members = dacDAO.findMembersByDacId(dac.getDacId());
               assertTrue(members.isEmpty());
+              // DAA deletion is not allowed even when deleting a DAC
               DataAccessAgreement daa = daaDAO.findByDacId(dac.getDacId());
-              assertNull(daa);
-              // Assert that there are no DAAs that reference this DAC
-              daaDAO
-                  .findAll()
-                  .forEach(
-                      d -> {
-                        assertTrue(
-                            d.getDacs() == null
-                                || d.getDacs().isEmpty()
-                                || d.getDacs().stream().allMatch(Objects::isNull));
-                      });
-              // Assert that there are no Library Cards with DAAs that reference this DAC
-              libraryCardDAO
-                  .findAllLibraryCards()
-                  .forEach(
-                      lc -> {
-                        List<Integer> daaIds = lc.getDaaIds();
-                        if (!daaIds.isEmpty()) {
-                          daaIds.forEach(
-                              daaId -> {
-                                DataAccessAgreement innerDaa = daaDAO.findById(daaId);
-                                assertTrue(
-                                    innerDaa.getDacs() == null
-                                        || innerDaa.getDacs().isEmpty()
-                                        || innerDaa.getDacs().stream().allMatch(Objects::isNull));
-                              });
-                        }
-                      });
+              assertNotNull(daa);
+              // Assert that there are DAA audit records for this dac deletion
+              List<DaaAudit> daaAudits = daaDAO.findAuditsByDaaId(daa.getDaaId());
+              assertFalse(daaAudits.isEmpty());
+              assertTrue(daaAudits.stream().anyMatch(a -> a.action().equals(AuditActions.REMOVE)));
+              // Assert that created library cards are not deleted and that their association to the
+              // DAA is not removed
+              List<LibraryCard> libraryCards =
+                  libraryCardDAO.findAllLibraryCards().stream()
+                      .filter(lc -> lc.getDaaIds().contains(daa.getDaaId()))
+                      .toList();
+              assertFalse(libraryCards.isEmpty());
             });
     createdDatasetIds.forEach(
         id -> {

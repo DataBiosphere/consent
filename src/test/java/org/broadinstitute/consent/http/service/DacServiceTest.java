@@ -205,7 +205,9 @@ class DacServiceTest extends AbstractTestHelper {
     dac.setName("DAC name");
     dac.setAssociatedDaa(daa);
     when(dacDAO.findById(any())).thenReturn(dac);
-    doThrow(new IllegalArgumentException()).when(dacServiceDAO).deleteDacAndDaas(any(), any());
+    doThrow(new IllegalArgumentException())
+        .when(dacServiceDAO)
+        .deleteDacAndRemoveDaaAssociation(any(), any());
     initService();
     assertThrows(IllegalArgumentException.class, () -> service.deleteDac(any(), dac.getDacId()));
   }

@@ -3,7 +3,6 @@ package org.broadinstitute.consent.http.service.dao;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -77,7 +76,8 @@ class DaaServiceDAOTest extends DAOTestHelper {
           List<DaaAudit> audits = daaDAO.findAuditsByDaaId(daaId);
           assertNotNull(audits);
           assertFalse(audits.isEmpty());
-          assertEquals(AuditActions.CREATE, audits.getFirst().action());
+          assertTrue(audits.stream().anyMatch(a -> a.action().equals(AuditActions.CREATE)));
+          assertTrue(audits.stream().anyMatch(a -> a.action().equals(AuditActions.ADD)));
         });
   }
 
@@ -91,19 +91,6 @@ class DaaServiceDAOTest extends DAOTestHelper {
 
     List<FileStorageObject> fsos = fileStorageObjectDAO.findFilesByEntityId(daaId.toString());
     assertTrue(fsos.isEmpty(), "Expected no FileStorageObjects to be created when FSO is null");
-  }
-
-  @Test
-  void testCreateDaa_dacFKError() {
-    User user = createUser();
-    Integer dacId = 1; // Non-existent DAC ID to trigger daaDAO.createDaa error
-    FileStorageObject fso = createFileStorageObject();
-    assertThrows(
-        UnableToExecuteStatementException.class,
-        () -> serviceDAO.createDaaWithFso(user.getUserId(), dacId, fso));
-    ILoggingEvent event = testAppender.getLoggedEvents().getFirst();
-    assertThat(event.getFormattedMessage(), containsString("foreign key constraint"));
-    assertThat(event.getFormattedMessage(), containsString("fk_daa_initial_dac_id"));
   }
 
   @Test

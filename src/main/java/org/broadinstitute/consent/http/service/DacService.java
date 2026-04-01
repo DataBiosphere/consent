@@ -205,7 +205,7 @@ public class DacService implements ConsentLogger {
       throw new IllegalArgumentException("This is the Broad DAC, which can not be deleted.");
     }
     try {
-      dacServiceDAO.deleteDacAndDaas(user, fullDac);
+      dacServiceDAO.deleteDacAndRemoveDaaAssociation(user, fullDac);
     } catch (IllegalArgumentException e) {
       String logMessage = "Could not find DAC with the provided id: " + dacId;
       logException(logMessage, e);
