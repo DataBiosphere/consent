@@ -295,5 +295,5 @@ public interface DaaDAO extends Transactional<DaaDAO> {
           """)
   List<Integer> findDaaIdsByDatasetIds(
       @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING)
-          Collection<Integer> datasetIds);
+          List<Integer> datasetIds);
 }

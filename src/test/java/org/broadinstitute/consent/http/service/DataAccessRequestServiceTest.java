@@ -199,6 +199,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
     assertNotNull(newDar);
+    verify(daaDAO).findDaaIdsByDatasetIds(List.of(1, 2, 3));
   }
 
   @Test
@@ -230,6 +231,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         .thenReturn(dar.getDatasetIds());
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
     assertNotNull(newDar);
+    verify(daaDAO).findDaaIdsByDatasetIds(List.of(1, 2, 3));
   }
 
   @Test
