@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -162,6 +164,32 @@ class DacServiceDAOTest extends DAOTestHelper {
           assertNull(ds.getDacId(), "Dataset should not have a DAC");
           assertNull(ds.getDacApproval(), "Dataset should not have a DAC approval");
         });
+  }
+
+  @Test
+  void testDeleteDac_nullDAC() {
+    User superUser = createUser();
+    assertThrows(IllegalArgumentException.class, () ->
+        serviceDAO.deleteDacAndRemoveDaaAssociation(superUser, null), "Should throw IllegalArgumentException when DAC is null");
+  }
+
+  @Test
+  void testDeleteDac_nullDAA() {
+    User superUser = createUser();
+    int dacId =
+        dacDAO.createDac(
+            "dac name: " + randomAlphabetic(10),
+            "dac description: " + randomAlphabetic(10),
+            "dac email: " + randomAlphabetic(10),
+            new Date());
+      Dac dac = dacDAO.findById(dacId);
+      try {
+        serviceDAO.deleteDacAndRemoveDaaAssociation(superUser, dac);
+        List<DaaAudit> daaAudits = daaDAO.findAllDaaAudits();
+        assertTrue(daaAudits.isEmpty(), "There should be no DaaAudits in a DAC delete operation");
+      } catch (Exception e) {
+        fail(e.getMessage());
+      }
   }
 
   /**

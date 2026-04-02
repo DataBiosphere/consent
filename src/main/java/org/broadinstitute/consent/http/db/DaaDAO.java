@@ -265,4 +265,13 @@ public interface DaaDAO extends Transactional<DaaDAO> {
     ORDER BY action_date DESC
     """)
   List<DaaAudit> findAuditsByDaaId(@Bind("daaId") Integer daaId);
+
+  @RegisterRowMapper(DaaAuditMapper.class)
+  @SqlQuery(
+      """
+    SELECT *
+    FROM daa_audit
+    ORDER BY action_date DESC
+    """)
+  List<DaaAudit> findAllDaaAudits();
 }
