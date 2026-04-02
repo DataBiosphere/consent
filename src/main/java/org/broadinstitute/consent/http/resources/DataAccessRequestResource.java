@@ -254,10 +254,6 @@ public class DataAccessRequestResource extends Resource {
     }
   }
 
-  /**
-   * @deprecated Use {@link #createDraftDataAccessRequestWithDAARestrictions()} instead.
-   */
-  @Deprecated(forRemoval = true) // Use v3 endpoint, to be removed in DT-3054
   @POST
   @Consumes("application/json")
   @Produces("application/json")
@@ -277,31 +273,6 @@ public class DataAccessRequestResource extends Resource {
     }
   }
 
-  @POST
-  @Consumes("application/json")
-  @Produces("application/json")
-  @Path("/v3/draft")
-  @RolesAllowed(RESEARCHER)
-  public Response createDraftDataAccessRequestWithDAARestrictions(
-      @Auth AuthUser authUser, @Context UriInfo info, String dar) {
-    try {
-      User user = findUserByEmail(authUser.getEmail());
-      DataAccessRequest newDar = populateDarFromJsonString(user, dar);
-      // DAA Enforcement
-      datasetService.enforceDAARestrictions(user, newDar.getDatasetIds());
-      DataAccessRequest result =
-          dataAccessRequestService.insertDraftDataAccessRequest(user, newDar);
-      URI uri = info.getRequestUriBuilder().path("/" + result.getReferenceId()).build();
-      return Response.created(uri).entity(result.convertToSimplifiedDar()).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  /**
-   * @deprecated Use {@link #updatePartialDataAccessRequestWithDAARestrictions()} instead.
-   */
-  @Deprecated(forRemoval = true) // Use v3 endpoint, to be removed in DT-3054
   @PUT
   @Consumes("application/json")
   @Produces("application/json")
@@ -319,33 +290,6 @@ public class DataAccessRequestResource extends Resource {
       data.setReferenceId(originalDar.getReferenceId());
       originalDar.setData(data);
       originalDar.setDatasetIds(data.getDatasetIds());
-      DataAccessRequest updatedDar =
-          dataAccessRequestService.updateByReferenceId(user, originalDar);
-      return Response.ok().entity(updatedDar.convertToSimplifiedDar()).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @PUT
-  @Consumes("application/json")
-  @Produces("application/json")
-  @Path("/v3/draft/{referenceId}")
-  @RolesAllowed(RESEARCHER)
-  public Response updatePartialDataAccessRequestWithDAARestrictions(
-      @Auth AuthUser authUser, @PathParam("referenceId") String referenceId, String dar) {
-    try {
-      User user = findUserByEmail(authUser.getEmail());
-      DataAccessRequest originalDar = dataAccessRequestService.findByReferenceId(referenceId);
-      checkAuthorizedUpdateUser(user, originalDar);
-      DataAccessRequestData data = DataAccessRequestData.fromString(dar);
-      // Keep dar data reference id in sync with the dar until we fully deprecate
-      // it in dar data.
-      data.setReferenceId(originalDar.getReferenceId());
-      originalDar.setData(data);
-      originalDar.setDatasetIds(data.getDatasetIds());
-      // DAA Enforcement
-      datasetService.enforceDAARestrictions(user, originalDar.getDatasetIds());
       DataAccessRequest updatedDar =
           dataAccessRequestService.updateByReferenceId(user, originalDar);
       return Response.ok().entity(updatedDar.convertToSimplifiedDar()).build();

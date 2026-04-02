@@ -247,10 +247,8 @@ paths:
       deprecated: true
       summary: |
         Create Draft Data Access Request.
-        See /api/dar/v3/draft for replacement
       description: |
         Create Draft Data Access Request.
-        Deprecated in favor of /api/dar/v3/draft
       requestBody:
         required: true
         description: The fields that represent a Draft Data Access Request, json format.
@@ -282,18 +280,13 @@ paths:
         500:
           description: Internal Server Error.
 
-  /api/dar/v3/draft:
-    $ref: './paths/darV3Draft.yaml'
-
   /api/dar/v2/draft/{referenceId}:
     put:
       deprecated: true
       summary: |
         Update Draft Data Access Request
-        See /api/dar/v3/draft/{referenceId} for replacement
       description: |
         Update Draft Data Access Request
-        Deprecated in favor of /api/dar/v3/draft/{referenceId}
       parameters:
         - name: referenceId
           in: path
@@ -338,9 +331,6 @@ paths:
                 $ref: './schemas/DataAccessRequest.yaml'
         500:
           description: Internal Server Error.
-
-  /api/dar/v3/draft/{referenceId}:
-    $ref: './paths/darV3DraftByReferenceId.yaml'
 
   /api/dar/v3/progress_report/{parentReferenceId}:
     $ref: './paths/progressReportV3.yaml'
