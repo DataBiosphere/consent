@@ -20,7 +20,6 @@ import static org.mockito.Mockito.when;
 
 import com.google.gson.Gson;
 import jakarta.ws.rs.BadRequestException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -196,7 +195,7 @@ class DacServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testDeleteDacServiceDAOException() throws SQLException {
+  void testDeleteDacServiceDAOException() {
     DataAccessAgreement daa = new DataAccessAgreement();
     daa.setDaaId(randomInt(1, 10));
     Dac dac = new Dac();
