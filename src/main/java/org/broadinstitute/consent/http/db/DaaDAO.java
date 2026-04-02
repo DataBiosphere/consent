@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
 import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.DaaAuditMapper;
 import org.broadinstitute.consent.http.db.mapper.DaaMapper;
