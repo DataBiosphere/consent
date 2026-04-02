@@ -57,7 +57,7 @@ class DacServiceDAOTest extends DAOTestHelper {
     List<Dac> dacs = createMockDACs();
     List<Integer> createdDatasetIds = new ArrayList<>();
     dacs.forEach(
-        _ -> {
+        ignored -> {
           // DAC
           int dacId =
               dacDAO.createDac(

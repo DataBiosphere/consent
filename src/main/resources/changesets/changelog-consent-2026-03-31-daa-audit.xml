@@ -25,6 +25,11 @@
         <constraints nullable="false"/>
       </column>
     </createTable>
+    <createIndex indexName="idx_daa_audit_daa_id_and_action_date_descending"
+                 tableName="daa_audit">
+      <column name="daa_id"/>
+      <column name="action_date" descending="true"/>
+    </createIndex>
     <!--
       Note that we are not including a FK to the DAC table since not all actions will be associated with a specific DAC.
      -->

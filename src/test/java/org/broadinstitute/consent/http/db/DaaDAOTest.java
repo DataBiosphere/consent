@@ -189,7 +189,7 @@ class DaaDAOTest extends DAOTestHelper {
 
     List<DaaAudit> daa2Audits = daaDAO.findAuditsByDaaId(daa2.getDaaId());
     assertNotNull(daa2Audits);
-    assertFalse(daa1Audits.isEmpty());
+    assertFalse(daa2Audits.isEmpty());
     assertTrue(daa2Audits.stream().anyMatch(a -> a.action().equals(AuditActions.ADD)));
   }
 
