@@ -169,8 +169,10 @@ class DacServiceDAOTest extends DAOTestHelper {
   @Test
   void testDeleteDac_nullDAC() {
     User superUser = createUser();
-    assertThrows(IllegalArgumentException.class, () ->
-        serviceDAO.deleteDacAndRemoveDaaAssociation(superUser, null), "Should throw IllegalArgumentException when DAC is null");
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> serviceDAO.deleteDacAndRemoveDaaAssociation(superUser, null),
+        "Should throw IllegalArgumentException when DAC is null");
   }
 
   @Test
@@ -182,14 +184,14 @@ class DacServiceDAOTest extends DAOTestHelper {
             "dac description: " + randomAlphabetic(10),
             "dac email: " + randomAlphabetic(10),
             new Date());
-      Dac dac = dacDAO.findById(dacId);
-      try {
-        serviceDAO.deleteDacAndRemoveDaaAssociation(superUser, dac);
-        List<DaaAudit> daaAudits = daaDAO.findAllDaaAudits();
-        assertTrue(daaAudits.isEmpty(), "There should be no DaaAudits in a DAC delete operation");
-      } catch (Exception e) {
-        fail(e.getMessage());
-      }
+    Dac dac = dacDAO.findById(dacId);
+    try {
+      serviceDAO.deleteDacAndRemoveDaaAssociation(superUser, dac);
+      List<DaaAudit> daaAudits = daaDAO.findAllDaaAudits();
+      assertTrue(daaAudits.isEmpty(), "There should be no DaaAudits in a DAC delete operation");
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
   }
 
   /**
