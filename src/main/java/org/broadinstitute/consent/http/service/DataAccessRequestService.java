@@ -239,7 +239,7 @@ public class DataAccessRequestService implements ConsentLogger {
     String referenceId;
     List<Integer> datasetIds = dataAccessRequest.getDatasetIds();
 
-    // Save the agreed upon DAAs at the time of DAR creation
+    // Save the agreed upon DAAs at the time of DAR submission
     List<Integer> daaIds = daaDAO.findDaaIdsByDatasetIds(datasetIds);
     darData.setDaaIds(daaIds);
 
@@ -289,7 +289,7 @@ public class DataAccessRequestService implements ConsentLogger {
     Set<Integer> darDatasetIds =
         dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId());
 
-    // Save the agreed upon DAAs at the time of DAR creation
+    // Save the agreed upon DAAs at the time of PR submission
     DataAccessRequestData darData = progressReport.getData();
     List<Integer> daaIds = daaDAO.findDaaIdsByDatasetIds(new ArrayList<>(darDatasetIds));
     darData.setDaaIds(daaIds);

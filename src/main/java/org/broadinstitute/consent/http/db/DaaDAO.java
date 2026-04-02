@@ -278,7 +278,9 @@ public interface DaaDAO extends Transactional<DaaDAO> {
   List<DaaAudit> findAllDaaAudits();
 
   /**
-   * Find all DAAs for a list of dataset IDs
+   * Find all DAAs for a list of dataset IDs. Note that this only finds the DAA IDs for DAAs that
+   * are CURRENTLY associated to the Dataset-DAC assignments. A DAC's DAA assignment can change. We
+   * are also NOT considering the initial DAC that created the DAA.
    *
    * @param datasetIds List of dataset IDs
    * @return List of Data Access Agreement IDs
