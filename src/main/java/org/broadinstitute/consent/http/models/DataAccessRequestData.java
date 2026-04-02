@@ -161,6 +161,7 @@ public class DataAccessRequestData {
   private String piName;
   private String piEmail;
   private String piCountryOfOperation;
+  private List<Integer> daaIds;
 
   @Override
   public String toString() {
@@ -682,6 +683,14 @@ public class DataAccessRequestData {
 
   public void setPiEmail(String piEmail) {
     this.piEmail = piEmail;
+  }
+
+  public List<Integer> getDaaIds() {
+    return daaIds;
+  }
+
+  public void setDaaIds(List<Integer> daaIds) {
+    this.daaIds = daaIds;
   }
 
   // Validate all ontology entries

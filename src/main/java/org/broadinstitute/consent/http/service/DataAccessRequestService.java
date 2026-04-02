@@ -25,6 +25,7 @@ import java.util.UUID;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DAOContainer;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -73,6 +74,7 @@ public class DataAccessRequestService implements ConsentLogger {
   private static final String INTERNAL_COLLABORATOR = "Internal Collaborator";
   private static final String LAB_STAFF = "Lab staff";
   private final CounterService counterService;
+  private final DaaDAO daaDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DarCollectionDAO darCollectionDAO;
   private final ElectionDAO electionDAO;
@@ -102,6 +104,7 @@ public class DataAccessRequestService implements ConsentLogger {
       DACAutomationRuleService ruleService,
       ConsentConfiguration config) {
     this.counterService = counterService;
+    this.daaDAO = container.getDaaDAO();
     this.datasetDAO = container.getDatasetDAO();
     this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
     this.darCollectionDAO = container.getDarCollectionDAO();
@@ -235,6 +238,11 @@ public class DataAccessRequestService implements ConsentLogger {
     }
     String referenceId;
     List<Integer> datasetIds = dataAccessRequest.getDatasetIds();
+
+    // Save the agreed upon DAAs at the time of DAR creation
+    List<Integer> daaIds = daaDAO.findDaaIdsByDatasetIds(datasetIds);
+    darData.setDaaIds(daaIds);
+
     if (Objects.nonNull(existingDar)) {
       referenceId = dataAccessRequest.getReferenceId();
       dataAccessRequestDAO.updateDraftToSubmittedForCollection(collectionId, referenceId);

@@ -369,6 +369,56 @@ class DaaDAOTest extends DAOTestHelper {
     assertFalse(daaIds.contains(daa3.getDaaId()));
   }
 
+  @Test
+  void testFindDaaIdsByDatasetIds() {
+    Integer userId = createUserId();
+    Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
+    Dataset dataset1 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId));
+    Dataset dataset2 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId));
+
+    // Ensure that the DAA is associated to the DAC
+    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    daaDAO.createDacDaaRelation(dacId, daaId, userId);
+
+    List<Integer> daaIds =
+        daaDAO.findDaaIdsByDatasetIds(List.of(dataset1.getDatasetId(), dataset2.getDatasetId()));
+    assertFalse(daaIds.isEmpty());
+    assertEquals(1, daaIds.size());
+    assertTrue(daaIds.contains(daaId));
+  }
+
+  @Test
+  void testFindDaaIdsByDatasetIds_dacNotAssociated() {
+    Integer userId = createUserId();
+    Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
+    Dataset dataset1 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId));
+    Dataset dataset2 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId));
+
+    // Create a DAA but do not associate it to the DAC
+    daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+
+    List<Integer> daaIds =
+        daaDAO.findDaaIdsByDatasetIds(List.of(dataset1.getDatasetId(), dataset2.getDatasetId()));
+    assertTrue(daaIds.isEmpty());
+  }
+
+  @Test
+  void testFindDaaIdsByDatasetIds_datasetsNotAssociated() {
+    Integer userId = createUserId();
+    Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
+    Dataset dataset1 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId));
+    Dataset dataset2 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId));
+
+    // Create a DAA that is associated to a different DAC than the datasets are
+    Integer otherDacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
+    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), otherDacId);
+    daaDAO.createDacDaaRelation(otherDacId, daaId, userId);
+
+    List<Integer> daaIds =
+        daaDAO.findDaaIdsByDatasetIds(List.of(dataset1.getDatasetId(), dataset2.getDatasetId()));
+    assertTrue(daaIds.isEmpty());
+  }
+
   private LibraryCard createRandomLibraryCard(User user) {
     int lcId =
         libraryCardDAO.insertLibraryCard(

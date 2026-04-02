@@ -176,6 +176,7 @@ public class ConsentModule extends AbstractModule {
   public DAOContainer providesDAOContainer() {
     DAOContainer container = new DAOContainer();
     container.setCounterDAO(providesCounterDAO());
+    container.setDaaDAO(providesDaaDAO());
     container.setDacDAO(providesDacDAO());
     container.setDataAccessRequestDAO(providesDataAccessRequestDAO());
     container.setDarCollectionDAO(providesDARCollectionDAO());

@@ -9,6 +9,7 @@ package org.broadinstitute.consent.http.db;
 public class DAOContainer {
 
   private CounterDAO counterDAO;
+  private DaaDAO daaDAO;
   private DacDAO dacDAO;
   private DataAccessRequestDAO dataAccessRequestDAO;
   private DarCollectionDAO darCollectionDAO;
@@ -33,6 +34,14 @@ public class DAOContainer {
 
   public void setCounterDAO(CounterDAO counterDAO) {
     this.counterDAO = counterDAO;
+  }
+
+  public DaaDAO getDaaDAO() {
+    return daaDAO;
+  }
+
+  public void setDaaDAO(DaaDAO daaDAO) {
+    this.daaDAO = daaDAO;
   }
 
   public DacDAO getDacDAO() {
