@@ -5,7 +5,6 @@ import static java.util.stream.Collectors.groupingBy;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -198,14 +197,14 @@ public class DacService implements ConsentLogger {
     dacDAO.updateDac(name, description, email, updateDate, dacId);
   }
 
-  public void deleteDac(User user, Integer dacId) throws IllegalArgumentException, SQLException {
+  public void deleteDac(User user, Integer dacId) throws IllegalArgumentException {
     Dac fullDac = dacDAO.findById(dacId);
     // TODO: Broad DAC logic will be updated with DCJ-498 to not be reliant on name
     if (fullDac.getName().toLowerCase().contains("broad")) {
       throw new IllegalArgumentException("This is the Broad DAC, which can not be deleted.");
     }
     try {
-      dacServiceDAO.deleteDacAndDaas(user, fullDac);
+      dacServiceDAO.deleteDacAndRemoveDaaAssociation(user, fullDac);
     } catch (IllegalArgumentException e) {
       String logMessage = "Could not find DAC with the provided id: " + dacId;
       logException(logMessage, e);

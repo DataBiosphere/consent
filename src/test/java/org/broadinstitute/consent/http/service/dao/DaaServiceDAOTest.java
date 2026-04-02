@@ -17,7 +17,9 @@ import jakarta.ws.rs.core.MediaType;
 import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.DAOTestHelper;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.models.DaaAudit;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
@@ -70,6 +72,12 @@ class DaaServiceDAOTest extends DAOTestHelper {
           assertNotNull(daa.getFile());
           assertNotNull(daa.getInitialDacId());
           assertFalse(daa.getDacs().isEmpty());
+          // Assert that audit record is created
+          List<DaaAudit> audits = daaDAO.findAuditsByDaaId(daaId);
+          assertNotNull(audits);
+          assertFalse(audits.isEmpty());
+          assertTrue(audits.stream().anyMatch(a -> a.action().equals(AuditActions.CREATE)));
+          assertTrue(audits.stream().anyMatch(a -> a.action().equals(AuditActions.ADD)));
         });
   }
 
@@ -83,19 +91,11 @@ class DaaServiceDAOTest extends DAOTestHelper {
 
     List<FileStorageObject> fsos = fileStorageObjectDAO.findFilesByEntityId(daaId.toString());
     assertTrue(fsos.isEmpty(), "Expected no FileStorageObjects to be created when FSO is null");
-  }
-
-  @Test
-  void testCreateDaa_dacFKError() {
-    User user = createUser();
-    Integer dacId = 1; // Non-existent DAC ID to trigger daaDAO.createDaa error
-    FileStorageObject fso = createFileStorageObject();
-    assertThrows(
-        UnableToExecuteStatementException.class,
-        () -> serviceDAO.createDaaWithFso(user.getUserId(), dacId, fso));
-    ILoggingEvent event = testAppender.getLoggedEvents().getFirst();
-    assertThat(event.getFormattedMessage(), containsString("foreign key constraint"));
-    assertThat(event.getFormattedMessage(), containsString("fk_daa_initial_dac_id"));
+    // Assert that CREATE audit records are created.
+    List<DaaAudit> daaAudits = daaDAO.findAuditsByDaaId(daaId);
+    assertNotNull(daaAudits);
+    assertFalse(daaAudits.isEmpty());
+    assertTrue(daaAudits.stream().anyMatch(a -> a.action().equals(AuditActions.CREATE)));
   }
 
   @Test

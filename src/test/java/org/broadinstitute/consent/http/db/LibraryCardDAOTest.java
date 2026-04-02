@@ -122,7 +122,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     int daaId =
         daaDAO.createDaa(
             card.getCreateUserId(), Instant.now(), card.getCreateUserId(), Instant.now(), dacId);
-    daaDAO.createDacDaaRelation(dacId, daaId);
+    daaDAO.createDacDaaRelation(dacId, daaId, card.getUserId());
     libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
 
     libraryCardDAO.deleteLibraryCardById(card.getId());
@@ -236,7 +236,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), randomAlphabetic(5), new Date());
     Instant now = Instant.now();
     int daaId = daaDAO.createDaa(libraryCard.getUserId(), now, libraryCard.getUserId(), now, dacId);
-    daaDAO.createDacDaaRelation(dacId, daaId);
+    daaDAO.createDacDaaRelation(dacId, daaId, libraryCard.getUserId());
     libraryCardDAO.createLibraryCardDaaRelation(libraryCard.getId(), daaId);
     LibraryCard cardFromDAO = libraryCardDAO.findLibraryCardByUserId(libraryCard.getUserId());
     assertNotNull(cardFromDAO);

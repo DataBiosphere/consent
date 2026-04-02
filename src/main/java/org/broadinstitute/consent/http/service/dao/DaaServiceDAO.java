@@ -34,7 +34,7 @@ public class DaaServiceDAO implements ConsentLogger {
           try {
             Integer daaId = daaDAO.createDaa(userId, now, userId, now, dacId);
             createdDaaIds.add(daaId);
-            daaDAO.createDacDaaRelation(dacId, daaId);
+            daaDAO.createDacDaaRelation(dacId, daaId, userId);
             if (fso != null) {
               if (fso.getFileName() == null) {
                 throw new IllegalArgumentException("FileStorageObject must have a File Name");
