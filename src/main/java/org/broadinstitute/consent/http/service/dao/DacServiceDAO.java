@@ -14,6 +14,21 @@ public class DacServiceDAO implements ConsentLogger {
 
   private final Jdbi jdbi;
   private final DaaDAO daaDAO;
+  private static final String DAC_ID = "dacId";
+  private static final String USER_ID = "userId";
+  private static final String DELETE_ROLES_STATEMENT =
+      "DELETE FROM user_role WHERE dac_id = :dacId";
+  private static final String UPDATE_DATASET_STATEMENT =
+      "UPDATE dataset SET dac_id = null, dac_approval = null WHERE dac_id = :dacId";
+  private static final String DELETE_DAC_RULES_STATEMENT =
+      "DELETE FROM dac_rule_settings WHERE dac_id = :dacId ";
+  private static final String AUDIT_DAC_RULE_DELETION_STATEMENT =
+      """
+        INSERT INTO dac_rule_audit(action, dac_id, rule_id, user_id, action_date)
+        SELECT 'REMOVE', s.dac_id, s.rule_id, :userId, current_timestamp
+        FROM dac_rule_settings s
+        WHERE dac_id = :dacId
+      """;
 
   @Inject
   public DacServiceDAO(Jdbi jdbi) {
@@ -33,18 +48,6 @@ public class DacServiceDAO implements ConsentLogger {
 
           jdbi.useTransaction(
               handler -> {
-                final String deleteMembers = "DELETE FROM user_role WHERE dac_id = :dacId";
-                final String updateDatasets =
-                    "UPDATE dataset SET dac_id = null, dac_approval = null WHERE dac_id = :dacId";
-                final String deleteDacAutomationRules =
-                    "DELETE FROM dac_rule_settings WHERE dac_id = :dacId ";
-                final String deleteDacAutomationRulesDeletionAudit =
-                    """
-                    INSERT INTO dac_rule_audit(action, dac_id, rule_id, user_id, action_date)
-                    SELECT 'REMOVE', s.dac_id, s.rule_id, :userId, current_timestamp
-                    FROM dac_rule_settings s
-                    WHERE dac_id = :dacId
-            """;
                 final String deleteDac = "DELETE FROM dac where dac_id = :dacId";
 
                 DataAccessAgreement daa = dac.getAssociatedDaa();
@@ -52,26 +55,27 @@ public class DacServiceDAO implements ConsentLogger {
                   daaDAO.deleteDacDaaRelation(daa.getDaaId(), dac.getDacId(), user.getUserId());
                 }
 
-                Update memberDeletion = handler.createUpdate(deleteMembers);
-                memberDeletion.bind("dacId", dac.getDacId());
+                Update memberDeletion = handler.createUpdate(DELETE_ROLES_STATEMENT);
+                memberDeletion.bind(DAC_ID, dac.getDacId());
                 memberDeletion.execute();
 
-                Update datasetUpdate = handler.createUpdate(updateDatasets);
-                datasetUpdate.bind("dacId", dac.getDacId());
+                Update datasetUpdate = handler.createUpdate(UPDATE_DATASET_STATEMENT);
+                datasetUpdate.bind(DAC_ID, dac.getDacId());
                 datasetUpdate.execute();
 
                 Update dacAutomationRulesDeletionAudit =
-                    handler.createUpdate(deleteDacAutomationRulesDeletionAudit);
-                dacAutomationRulesDeletionAudit.bind("dacId", dac.getDacId());
-                dacAutomationRulesDeletionAudit.bind("userId", user.getUserId());
+                    handler.createUpdate(AUDIT_DAC_RULE_DELETION_STATEMENT);
+                dacAutomationRulesDeletionAudit.bind(DAC_ID, dac.getDacId());
+                dacAutomationRulesDeletionAudit.bind(USER_ID, user.getUserId());
                 dacAutomationRulesDeletionAudit.execute();
 
-                Update dacAutomationRulesDeletion = handler.createUpdate(deleteDacAutomationRules);
-                dacAutomationRulesDeletion.bind("dacId", dac.getDacId());
+                Update dacAutomationRulesDeletion =
+                    handler.createUpdate(DELETE_DAC_RULES_STATEMENT);
+                dacAutomationRulesDeletion.bind(DAC_ID, dac.getDacId());
                 dacAutomationRulesDeletion.execute();
 
                 Update dacDeletion = handler.createUpdate(deleteDac);
-                dacDeletion.bind("dacId", dac.getDacId());
+                dacDeletion.bind(DAC_ID, dac.getDacId());
                 dacDeletion.execute();
                 handler.commit();
               });
