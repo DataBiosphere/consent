@@ -291,7 +291,7 @@ public class DataAccessRequestService implements ConsentLogger {
 
     // Save the agreed upon DAAs at the time of PR submission
     DataAccessRequestData darData = progressReport.getData();
-    List<Integer> daaIds = daaDAO.findDaaIdsByDatasetIds(new ArrayList<>(darDatasetIds));
+    List<Integer> daaIds = daaDAO.findDaaIdsByDatasetIds(new ArrayList<>(progressReportDatasetIds));
     darData.setDaaIds(daaIds);
 
     if (!darDatasetIds.containsAll(progressReportDatasetIds)) {

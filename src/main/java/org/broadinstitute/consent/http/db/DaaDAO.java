@@ -293,6 +293,7 @@ public interface DaaDAO extends Transactional<DaaDAO> {
           INNER JOIN dac ON dac.dac_id = dac_daa.dac_id
           INNER JOIN dataset ON dataset.dac_id = dac.dac_id
           WHERE dataset.dataset_id IN (<datasetIds>)
+          ORDER BY daa.daa_id
           """)
   List<Integer> findDaaIdsByDatasetIds(
       @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING)
