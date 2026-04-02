@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
-import java.sql.SQLException;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
@@ -24,11 +23,12 @@ public class DacServiceDAO implements ConsentLogger {
       "DELETE FROM dac_rule_settings WHERE dac_id = :dacId ";
   private static final String AUDIT_DAC_RULE_DELETION_STATEMENT =
       """
-        INSERT INTO dac_rule_audit(action, dac_id, rule_id, user_id, action_date)
-        SELECT 'REMOVE', s.dac_id, s.rule_id, :userId, current_timestamp
-        FROM dac_rule_settings s
-        WHERE dac_id = :dacId
-      """;
+            INSERT INTO dac_rule_audit(action, dac_id, rule_id, user_id, action_date)
+            SELECT 'REMOVE', s.dac_id, s.rule_id, :userId, current_timestamp
+            FROM dac_rule_settings s
+            WHERE dac_id = :dacId
+          """;
+  private static final String DELETE_DAC_STATEMENT = "DELETE FROM dac where dac_id = :dacId";
 
   @Inject
   public DacServiceDAO(Jdbi jdbi) {
@@ -36,49 +36,40 @@ public class DacServiceDAO implements ConsentLogger {
     daaDAO = jdbi.onDemand(DaaDAO.class);
   }
 
-  public void deleteDacAndRemoveDaaAssociation(User user, Dac dac)
-      throws IllegalArgumentException, SQLException {
+  public void deleteDacAndRemoveDaaAssociation(User user, Dac dac) throws IllegalArgumentException {
     // fail fast
     if (dac == null) {
       throw new IllegalArgumentException("Invalid DAC");
     }
-    jdbi.useHandle(
+    jdbi.useTransaction(
         handle -> {
-          handle.getConnection().setAutoCommit(false);
+          DataAccessAgreement daa = dac.getAssociatedDaa();
+          if (daa != null) {
+            daaDAO.deleteDacDaaRelation(daa.getDaaId(), dac.getDacId(), user.getUserId());
+          }
 
-          jdbi.useTransaction(
-              handler -> {
-                final String deleteDac = "DELETE FROM dac where dac_id = :dacId";
+          Update memberDeletion = handle.createUpdate(DELETE_ROLES_STATEMENT);
+          memberDeletion.bind(DAC_ID, dac.getDacId());
+          memberDeletion.execute();
 
-                DataAccessAgreement daa = dac.getAssociatedDaa();
-                if (daa != null) {
-                  daaDAO.deleteDacDaaRelation(daa.getDaaId(), dac.getDacId(), user.getUserId());
-                }
+          Update datasetUpdate = handle.createUpdate(UPDATE_DATASET_STATEMENT);
+          datasetUpdate.bind(DAC_ID, dac.getDacId());
+          datasetUpdate.execute();
 
-                Update memberDeletion = handler.createUpdate(DELETE_ROLES_STATEMENT);
-                memberDeletion.bind(DAC_ID, dac.getDacId());
-                memberDeletion.execute();
+          Update dacAutomationRulesDeletionAudit =
+              handle.createUpdate(AUDIT_DAC_RULE_DELETION_STATEMENT);
+          dacAutomationRulesDeletionAudit.bind(DAC_ID, dac.getDacId());
+          dacAutomationRulesDeletionAudit.bind(USER_ID, user.getUserId());
+          dacAutomationRulesDeletionAudit.execute();
 
-                Update datasetUpdate = handler.createUpdate(UPDATE_DATASET_STATEMENT);
-                datasetUpdate.bind(DAC_ID, dac.getDacId());
-                datasetUpdate.execute();
+          Update dacAutomationRulesDeletion = handle.createUpdate(DELETE_DAC_RULES_STATEMENT);
+          dacAutomationRulesDeletion.bind(DAC_ID, dac.getDacId());
+          dacAutomationRulesDeletion.execute();
 
-                Update dacAutomationRulesDeletionAudit =
-                    handler.createUpdate(AUDIT_DAC_RULE_DELETION_STATEMENT);
-                dacAutomationRulesDeletionAudit.bind(DAC_ID, dac.getDacId());
-                dacAutomationRulesDeletionAudit.bind(USER_ID, user.getUserId());
-                dacAutomationRulesDeletionAudit.execute();
-
-                Update dacAutomationRulesDeletion =
-                    handler.createUpdate(DELETE_DAC_RULES_STATEMENT);
-                dacAutomationRulesDeletion.bind(DAC_ID, dac.getDacId());
-                dacAutomationRulesDeletion.execute();
-
-                Update dacDeletion = handler.createUpdate(deleteDac);
-                dacDeletion.bind(DAC_ID, dac.getDacId());
-                dacDeletion.execute();
-                handler.commit();
-              });
+          Update dacDeletion = handle.createUpdate(DELETE_DAC_STATEMENT);
+          dacDeletion.bind(DAC_ID, dac.getDacId());
+          dacDeletion.execute();
+          handle.commit();
         });
   }
 }
