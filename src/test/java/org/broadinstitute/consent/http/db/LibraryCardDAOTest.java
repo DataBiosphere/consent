@@ -10,10 +10,12 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.LibraryCardDaaAudit;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -152,10 +154,8 @@ class LibraryCardDAOTest extends DAOTestHelper {
     LibraryCard card = createLibraryCard();
     Integer userId = createUser().getUserId();
     Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
-    Integer daaId1 =
-        daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
-    Integer daaId2 =
-        daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
+    Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
     DataAccessAgreement daa1 = daaDAO.findById(daaId1);
     DataAccessAgreement daa2 = daaDAO.findById(daaId2);
     card.addDaa(daa1.getDaaId());
@@ -290,10 +290,8 @@ class LibraryCardDAOTest extends DAOTestHelper {
     Integer userId = user.getUserId();
     Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
     Integer dacId2 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
-    Integer daaId1 =
-        daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
-    Integer daaId2 =
-        daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId2);
+    Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
     libraryCardDAO.createLibraryCardDaaRelation(card.getUserId(), card.getId(), daaId1);
     libraryCardDAO.createLibraryCardDaaRelation(card.getUserId(), card.getId(), daaId2);
     libraryCardDAO.createLibraryCardDaaRelation(card2.getUserId(), card2.getId(), daaId1);
@@ -313,8 +311,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     LibraryCard card = createLibraryCard(user);
     Integer userId = user.getUserId();
     Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
-    Integer daaId1 =
-        daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
+    Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
 
     try {
       libraryCardDAO.createLibraryCardDaaRelation(card.getUserId(), card.getId(), 2);
@@ -344,10 +341,8 @@ class LibraryCardDAOTest extends DAOTestHelper {
     Integer userId = user.getUserId();
     Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
     Integer dacId2 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
-    Integer daaId1 =
-        daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId);
-    Integer daaId2 =
-        daaDAO.createDaa(userId, new Date().toInstant(), userId, new Date().toInstant(), dacId2);
+    Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
     libraryCardDAO.createLibraryCardDaaRelation(card.getUserId(), card.getId(), daaId1);
     libraryCardDAO.createLibraryCardDaaRelation(card.getUserId(), card.getId(), daaId2);
 
@@ -364,6 +359,63 @@ class LibraryCardDAOTest extends DAOTestHelper {
     lcs = libraryCardDAO.findAllLibraryCards();
     lc1 = lcs.getFirst();
     assertTrue(lc1.getDaaIds().isEmpty());
+  }
+
+  @Test
+  void findAuditsByLibraryCardUserId() {
+    // Create a user, signing official, and library card
+    User user = createUser();
+    User signingOfficial = createUser();
+    Integer lcId =
+        libraryCardDAO.insertLibraryCard(
+            user.getUserId(),
+            user.getDisplayName(),
+            user.getEmail(),
+            signingOfficial.getUserId(),
+            new Date());
+
+    // SO associates user to access agreement 1
+    User chairperson1 = createUser();
+    Integer dacId1 =
+        dacDAO.createDac(
+            randomAlphabetic(5), randomAlphabetic(5), chairperson1.getEmail(), new Date());
+    Integer daaId1 =
+        daaDAO.createDaa(
+            chairperson1.getUserId(),
+            Instant.now(),
+            chairperson1.getUserId(),
+            Instant.now(),
+            dacId1);
+    libraryCardDAO.createLibraryCardDaaRelation(signingOfficial.getUserId(), lcId, daaId1);
+
+    // SO associates user to access agreement 2
+    User chairperson2 = createUser();
+    Integer dacId2 =
+        dacDAO.createDac(
+            randomAlphabetic(5), randomAlphabetic(5), chairperson2.getEmail(), new Date());
+    Integer daaId2 =
+        daaDAO.createDaa(
+            chairperson1.getUserId(),
+            Instant.now(),
+            chairperson2.getUserId(),
+            Instant.now(),
+            dacId2);
+    libraryCardDAO.createLibraryCardDaaRelation(signingOfficial.getUserId(), lcId, daaId2);
+
+    List<LibraryCardDaaAudit> audits = libraryCardDAO.findAuditsByLcUserId(user.getUserId());
+    assertFalse(audits.isEmpty());
+    assertEquals(2, audits.size());
+    assertTrue(
+        audits.stream()
+            .map(LibraryCardDaaAudit::action)
+            .allMatch(action -> action == AuditActions.ADD));
+
+    // Dissociate user from DAA 1 and check that we have a REMOVE audit.
+    libraryCardDAO.deleteLibraryCardDaaRelation(signingOfficial.getUserId(), lcId, daaId1);
+    List<LibraryCardDaaAudit> audits2 = libraryCardDAO.findAuditsByLcUserId(user.getUserId());
+    assertFalse(audits2.isEmpty());
+    assertEquals(3, audits2.size());
+    assertTrue(audits2.stream().anyMatch(audit -> audit.action() == AuditActions.REMOVE));
   }
 
   @Test

@@ -2,11 +2,14 @@ package org.broadinstitute.consent.http.db;
 
 import java.util.Date;
 import java.util.List;
+import org.broadinstitute.consent.http.db.mapper.LibraryCardDaaAuditMapper;
 import org.broadinstitute.consent.http.db.mapper.LibraryCardReducer;
 import org.broadinstitute.consent.http.db.mapper.LibraryCardWithDaaReducer;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.LibraryCardDaaAudit;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
+import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
@@ -151,6 +154,16 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       """)
   void deleteLibraryCardDaaRelation(
       @Bind("userId") Integer userId, @Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
+
+  @RegisterRowMapper(LibraryCardDaaAuditMapper.class)
+  @SqlQuery(
+      """
+    SELECT a.*
+    FROM lc_daa_audit a
+    INNER JOIN library_card lc ON a.lc_id = lc.id AND lc.user_id = :lcUserId
+    ORDER BY a.action_date DESC
+    """)
+  List<LibraryCardDaaAudit> findAuditsByLcUserId(@Bind("lcUserId") Integer lcUserId);
 
   /**
    * Finds library cards by user emails.
