@@ -685,7 +685,7 @@ class UserServiceTest extends AbstractTestHelper {
   void testFindUserWithPropertiesAsJsonObjectById_by_Roles_That_Throw(List<UserRole> userRoles) {
     User user = generateUser();
     Integer userId = user.getUserId();
-    DuosUser requestingDuosUser = generateDuosUserWithRoles(userRoles);
+    DuosUser requestingDuosUser = generateDuosUserWithRoles(userRoles, user.getUserId());
     assertNotEquals(requestingDuosUser.getUser().getUserId(), user.getUserId());
 
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
@@ -700,7 +700,7 @@ class UserServiceTest extends AbstractTestHelper {
       List<UserRole> userRoles) {
     User user = generateUser();
     Integer userId = user.getUserId();
-    DuosUser requestingDuosUser = generateDuosUserWithRoles(userRoles);
+    DuosUser requestingDuosUser = generateDuosUserWithRoles(userRoles, user.getUserId());
     assertNotEquals(requestingDuosUser.getUser().getUserId(), user.getUserId());
 
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
@@ -714,7 +714,7 @@ class UserServiceTest extends AbstractTestHelper {
       List<UserRole> userRoles) {
     User user = generateUser();
     Integer userId = user.getUserId();
-    DuosUser requestingDuosUser = generateDuosUserWithRoles(userRoles);
+    DuosUser requestingDuosUser = generateDuosUserWithRoles(userRoles, user.getUserId());
     assertNotEquals(requestingDuosUser.getUser().getUserId(), user.getUserId());
     user.setInstitutionId(requestingDuosUser.getUser().getInstitutionId() + 1);
 
@@ -730,7 +730,7 @@ class UserServiceTest extends AbstractTestHelper {
       List<UserRole> userRoles) {
     User user = generateUser();
     Integer userId = user.getUserId();
-    DuosUser requestingDuosUser = generateDuosUserWithRoles(userRoles);
+    DuosUser requestingDuosUser = generateDuosUserWithRoles(userRoles, user.getUserId());
     assertNotEquals(requestingDuosUser.getUser().getUserId(), user.getUserId());
     user.setInstitutionId(requestingDuosUser.getUser().getInstitutionId());
 
@@ -758,7 +758,7 @@ class UserServiceTest extends AbstractTestHelper {
 
   @Test
   void testFindUserWithPropertiesAsJsonObjectById_Null_User() {
-    DuosUser requestingDuosUser = generateDuosUserWithRoles(List.of());
+    DuosUser requestingDuosUser = generateDuosUserWithRoles(List.of(), null);
 
     when(userDAO.findUserById(any())).thenReturn(null);
     assertThrows(
@@ -878,8 +878,11 @@ class UserServiceTest extends AbstractTestHelper {
     assertThrows(BadRequestException.class, () -> service.findUsersInJsonArray(json, "invalidKey"));
   }
 
-  private DuosUser generateDuosUserWithRoles(List<UserRole> roles) {
+  private DuosUser generateDuosUserWithRoles(List<UserRole> roles, Integer excludedUserId) {
     User requestingUser = generateUser();
+    if (Objects.equals(requestingUser.getUserId(), excludedUserId)) {
+      requestingUser.setUserId(requestingUser.getUserId() + 1);
+    }
     if (Objects.nonNull(roles) && !roles.isEmpty()) {
       requestingUser.setRoles(roles);
     }
