@@ -134,19 +134,23 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @SqlUpdate(
       """
+      WITH audit AS (INSERT INTO lc_daa_audit (daa_id, lc_id, user_id, action, action_date) VALUES (:daaId, :lcId, :userId, 'ADD', NOW()))
       INSERT INTO lc_daa (lc_id, daa_id)
       VALUES (:lcId, :daaId)
       ON CONFLICT DO NOTHING
       """)
-  void createLibraryCardDaaRelation(@Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
+  void createLibraryCardDaaRelation(
+      @Bind("userId") Integer userId, @Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
 
   @SqlUpdate(
       """
+      WITH audit AS (INSERT INTO lc_daa_audit (daa_id, lc_id, user_id, action, action_date) VALUES (:daaId, :lcId, :userId, 'REMOVE', NOW()))
       DELETE FROM lc_daa
       WHERE lc_id = :lcId
       AND daa_id = :daaId
       """)
-  void deleteLibraryCardDaaRelation(@Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
+  void deleteLibraryCardDaaRelation(
+      @Bind("userId") Integer userId, @Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
 
   /**
    * Finds library cards by user emails.

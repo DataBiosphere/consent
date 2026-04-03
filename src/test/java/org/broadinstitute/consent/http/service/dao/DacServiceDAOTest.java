@@ -99,7 +99,7 @@ class DacServiceDAOTest extends DAOTestHelper {
                   superUser.getUserId(),
                   new Date());
           // Library Card User to Data Access Agreement association
-          libraryCardDAO.createLibraryCardDaaRelation(userLcId, daaId);
+          libraryCardDAO.createLibraryCardDaaRelation(superUser.getUserId(), userLcId, daaId);
           // DAC Member User. When deleting the dac, this role will be deleted
           User member = createUser();
           userRoleDAO.insertSingleUserRole(UserRoles.MEMBER.getRoleId(), member.getUserId());

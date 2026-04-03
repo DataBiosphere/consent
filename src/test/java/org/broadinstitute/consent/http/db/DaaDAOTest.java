@@ -299,7 +299,7 @@ class DaaDAOTest extends DAOTestHelper {
     // Associate the DAC to the Data Access Agreeement:
     daaDAO.createDacDaaRelation(dac1.getDacId(), daa.getDaaId(), user.getUserId());
     // Associate the user's Library Card to the Data Access Agreement:
-    libraryCardDAO.createLibraryCardDaaRelation(lc.getId(), daa.getDaaId());
+    libraryCardDAO.createLibraryCardDaaRelation(lc.getUserId(), lc.getId(), daa.getDaaId());
     // Create two datasets associated to the DAC and DAA
     Dataset dataset1 = createRandomDataset(user, dac1);
     Dataset dataset2 = createRandomDataset(user, dac1);

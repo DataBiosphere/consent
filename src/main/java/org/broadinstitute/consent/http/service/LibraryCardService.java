@@ -94,12 +94,12 @@ public class LibraryCardService implements ConsentLogger {
     return libraryCard;
   }
 
-  public void addDaaToLibraryCard(Integer libraryCardId, Integer daaId) {
-    libraryCardDAO.createLibraryCardDaaRelation(libraryCardId, daaId);
+  public void addDaaToLibraryCard(Integer userId, Integer libraryCardId, Integer daaId) {
+    libraryCardDAO.createLibraryCardDaaRelation(userId, libraryCardId, daaId);
   }
 
-  public void removeDaaFromLibraryCard(Integer libraryCardId, Integer daaId) {
-    libraryCardDAO.deleteLibraryCardDaaRelation(libraryCardId, daaId);
+  public void removeDaaFromLibraryCard(Integer userId, Integer libraryCardId, Integer daaId) {
+    libraryCardDAO.deleteLibraryCardDaaRelation(userId, libraryCardId, daaId);
   }
 
   public LibraryCard addDaaToUserLibraryCard(User user, User signingOfficial, Integer daaId) {
@@ -110,7 +110,7 @@ public class LibraryCardService implements ConsentLogger {
     if (libraryCard == null) {
       libraryCard = createLibraryCardForSigningOfficial(user, signingOfficial);
     }
-    addDaaToLibraryCard(libraryCard.getId(), daaId);
+    addDaaToLibraryCard(user.getUserId(), libraryCard.getId(), daaId);
     return libraryCardDAO.findLibraryCardByUserId(user.getUserId());
   }
 
@@ -118,7 +118,7 @@ public class LibraryCardService implements ConsentLogger {
     LibraryCard libraryCard = findLibraryCardByUserId(user.getUserId());
     // typically there should be one library card per user
     if (libraryCard != null) {
-      removeDaaFromLibraryCard(libraryCard.getId(), daaId);
+      removeDaaFromLibraryCard(user.getUserId(), libraryCard.getId(), daaId);
     }
     return findLibraryCardByUserId(user.getUserId());
   }
@@ -129,8 +129,7 @@ public class LibraryCardService implements ConsentLogger {
     lc.setUserName(user.getDisplayName());
     lc.setUserEmail(user.getEmail());
     lc.setCreateUserId(signingOfficial.getUserId());
-    LibraryCard createdLc = createLibraryCard(lc, user);
-    return createdLc;
+    return createLibraryCard(lc, user);
   }
 
   private void checkForValidInstitution(Integer institutionId, String userEmail) {

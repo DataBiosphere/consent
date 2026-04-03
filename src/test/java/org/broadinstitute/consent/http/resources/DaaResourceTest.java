@@ -447,7 +447,7 @@ class DaaResourceTest extends AbstractTestHelper {
     researcher.setLibraryCard(libraryCard);
 
     when(userService.findUserById(researcher.getUserId())).thenReturn(researcher);
-    doNothing().when(libraryCardService).removeDaaFromLibraryCard(any(), any());
+    doNothing().when(libraryCardService).removeDaaFromLibraryCard(any(), any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     try (Response response = resource.deleteDaaForUser(duosUser, daaId, researcher.getUserId())) {
@@ -474,7 +474,7 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     try (Response response = resource.deleteDaaForUser(duosUser, daaId, researcher.getUserId())) {
-      verify(libraryCardService, never()).removeDaaFromLibraryCard(any(), any());
+      verify(libraryCardService, never()).removeDaaFromLibraryCard(any(), any(), any());
       assertEquals(HttpStatus.SC_OK, response.getStatus());
     }
   }
@@ -516,7 +516,7 @@ class DaaResourceTest extends AbstractTestHelper {
     try (Response response =
         resource.deleteDaaForUser(duosUser, daaId, differentInstitutionUser.getUserId())) {
       assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
-      verify(libraryCardService, never()).removeDaaFromLibraryCard(any(), any());
+      verify(libraryCardService, never()).removeDaaFromLibraryCard(any(), any(), any());
     }
   }
 

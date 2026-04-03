@@ -355,18 +355,26 @@ class LibraryCardServiceTest extends AbstractTestHelper {
 
   @Test
   void testAddDaaToLibraryCard() {
-    doNothing().when(libraryCardDAO).createLibraryCardDaaRelation(any(), any());
+    User user = new User();
+    user.setUserId(1);
+    LibraryCard card = testLibraryCard(user.getUserId());
+    doNothing()
+        .when(libraryCardDAO)
+        .createLibraryCardDaaRelation(user.getUserId(), card.getId(), 1);
 
-    LibraryCard libraryCard = testLibraryCard(1);
-    assertDoesNotThrow(() -> service.addDaaToLibraryCard(libraryCard.getId(), 1));
+    assertDoesNotThrow(() -> service.addDaaToLibraryCard(user.getUserId(), card.getId(), 1));
   }
 
   @Test
   void testRemoveDaaFromLibraryCard() {
-    doNothing().when(libraryCardDAO).deleteLibraryCardDaaRelation(any(), any());
+    User user = new User();
+    user.setUserId(1);
+    LibraryCard card = testLibraryCard(1);
+    doNothing()
+        .when(libraryCardDAO)
+        .deleteLibraryCardDaaRelation(user.getUserId(), card.getId(), 1);
 
-    LibraryCard libraryCard = testLibraryCard(1);
-    assertDoesNotThrow(() -> service.removeDaaFromLibraryCard(libraryCard.getId(), 1));
+    assertDoesNotThrow(() -> service.removeDaaFromLibraryCard(user.getUserId(), card.getId(), 1));
   }
 
   @Test
@@ -382,7 +390,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     Integer userId = user.getUserId();
     when(libraryCardDAO.findLibraryCardByUserId(user.getUserId()))
         .thenReturn(testLibraryCard(userId));
-    doNothing().when(libraryCardDAO).createLibraryCardDaaRelation(any(), any());
+    doNothing().when(libraryCardDAO).createLibraryCardDaaRelation(any(), any(), any());
     LibraryCard card = service.addDaaToUserLibraryCard(user, signingOfficial, 1);
     assertNotNull(card);
   }
@@ -436,7 +444,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     Integer userId = user.getUserId();
     when(libraryCardDAO.findLibraryCardByUserId(user.getUserId()))
         .thenReturn(testLibraryCard(userId));
-    doNothing().when(libraryCardDAO).deleteLibraryCardDaaRelation(any(), any());
+    doNothing().when(libraryCardDAO).deleteLibraryCardDaaRelation(any(), any(), any());
     LibraryCard card = service.removeDaaFromUserLibraryCard(user, 1);
     // The above deletion only affects the lc-daa join table and does not remove library cards
     assertNotNull(card);
