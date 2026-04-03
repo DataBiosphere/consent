@@ -137,10 +137,15 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @SqlUpdate(
       """
-      WITH audit AS (INSERT INTO lc_daa_audit (daa_id, lc_id, user_id, action, action_date) VALUES (:daaId, :lcId, :userId, 'ADD', NOW()))
-      INSERT INTO lc_daa (lc_id, daa_id)
-      VALUES (:lcId, :daaId)
-      ON CONFLICT DO NOTHING
+      WITH lc_daa_insert AS (
+        INSERT INTO lc_daa (lc_id, daa_id)
+        VALUES (:lcId, :daaId)
+        ON CONFLICT DO NOTHING
+        RETURNING lc_id
+      )
+      INSERT INTO lc_daa_audit (daa_id, lc_id, user_id, action, action_date)
+      SELECT :daaId, :lcId, :userId, 'ADD', NOW()
+      WHERE EXISTS (SELECT 1 FROM lc_daa_insert)
       """)
   void createLibraryCardDaaRelation(
       @Bind("userId") Integer userId, @Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);

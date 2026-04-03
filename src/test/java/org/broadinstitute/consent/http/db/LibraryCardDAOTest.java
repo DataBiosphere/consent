@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -362,7 +363,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void findAuditsByLibraryCardUserId() {
+  void testFindAuditsByLibraryCardUserId() {
     // Create a user, signing official, and library card
     User user = createUser();
     User signingOfficial = createUser();
@@ -416,6 +417,39 @@ class LibraryCardDAOTest extends DAOTestHelper {
     assertFalse(audits2.isEmpty());
     assertEquals(3, audits2.size());
     assertTrue(audits2.stream().anyMatch(audit -> audit.action() == AuditActions.REMOVE));
+  }
+
+  @Test
+  void testEnsureAuditInsertsSkippedOnConflict() {
+    // Create a user, signing official, and library card
+    User user = createUser();
+    User signingOfficial = createUser();
+    Integer lcId =
+        libraryCardDAO.insertLibraryCard(
+            user.getUserId(),
+            user.getDisplayName(),
+            user.getEmail(),
+            signingOfficial.getUserId(),
+            new Date());
+
+    // SO associates user to data access agreement
+    User chairperson = createUser();
+    Integer dacId =
+        dacDAO.createDac(
+            randomAlphabetic(5), randomAlphabetic(5), chairperson.getEmail(), new Date());
+    Integer daaId =
+        daaDAO.createDaa(
+            chairperson.getUserId(), Instant.now(), chairperson.getUserId(), Instant.now(), dacId);
+    libraryCardDAO.createLibraryCardDaaRelation(signingOfficial.getUserId(), lcId, daaId);
+
+    // Repeat the same association which should trigger the ON CONFLICT in the SQL and ensure that
+    // we do not insert a duplicate audit record.
+    libraryCardDAO.createLibraryCardDaaRelation(signingOfficial.getUserId(), lcId, daaId);
+
+    List<LibraryCardDaaAudit> audits = libraryCardDAO.findAuditsByLcUserId(user.getUserId());
+    assertFalse(audits.isEmpty());
+    assertEquals(1, audits.size());
+    assertSame(AuditActions.ADD, audits.getFirst().action());
   }
 
   @Test
