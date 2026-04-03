@@ -27,6 +27,7 @@
     <sonar.plugin.version>5.5.0.6356</sonar.plugin.version>
     <netty.override.version>4.2.12.Final</netty.override.version>
     <spotless.version>3.4.0</spotless.version>
+    <jetty.version>12.1.8</jetty.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -426,6 +427,20 @@
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
         <version>${junit.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-bom</artifactId>
+        <version>${jetty.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard</groupId>
+        <artifactId>dropwizard-dependencies</artifactId>
+        <version>${dropwizard.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
