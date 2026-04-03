@@ -206,12 +206,11 @@ class LibraryCardServiceTest extends AbstractTestHelper {
         createUserWithRole(
             UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
     LibraryCard savedCard = testLibraryCard(user.getUserId());
-    LibraryCard payload = savedCard;
 
     when(libraryCardDAO.findLibraryCardByUserId(anyInt())).thenReturn(savedCard);
     assertThrows(
         ConsentConflictException.class,
-        () -> service.createLibraryCard(payload, signingOfficialUser));
+        () -> service.createLibraryCard(savedCard, signingOfficialUser));
   }
 
   @Test
@@ -227,12 +226,10 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     LibraryCard savedCard = testLibraryCard(null);
     savedCard.setUserEmail(user.getEmail());
 
-    LibraryCard payload = savedCard;
-
     when(libraryCardDAO.findLibraryCardByUserEmail(any())).thenReturn(savedCard);
     assertThrows(
         ConsentConflictException.class,
-        () -> service.createLibraryCard(payload, signingOfficialUser));
+        () -> service.createLibraryCard(savedCard, signingOfficialUser));
   }
 
   @Test
