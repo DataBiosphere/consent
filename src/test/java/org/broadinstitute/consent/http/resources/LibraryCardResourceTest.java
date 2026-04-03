@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,14 +17,17 @@ import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.LibraryCardService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -40,6 +42,7 @@ class LibraryCardResourceTest {
   private final List<UserRole> adminRoles = Collections.singletonList(UserRoles.Admin());
   private final User user =
       new User(1, authUser.getEmail(), "Display Name", new Date(), adminRoles);
+  private final DuosUser duosUser = new DuosUser(authUser, user);
   private final User lcUser =
       new User(
           2,
@@ -52,6 +55,7 @@ class LibraryCardResourceTest {
 
   @Mock private UserService userService;
   @Mock private LibraryCardService libraryCardService;
+  @Mock private InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
 
   private LibraryCard mockLibraryCardSetup() {
     LibraryCard mockCard = new LibraryCard();
@@ -62,18 +66,19 @@ class LibraryCardResourceTest {
   }
 
   private User mockSOUser() {
-    User mockUser =
-        new User(
-            2,
-            "testuser@gmail.com",
-            "Test User",
-            new Date(),
-            Collections.singletonList(UserRoles.SigningOfficial()));
-    return mockUser;
+    return new User(
+        2,
+        "testuser@gmail.com",
+        "Test User",
+        new Date(),
+        Collections.singletonList(UserRoles.SigningOfficial()));
   }
 
-  private void initResource() {
-    resource = new LibraryCardResource(userService, libraryCardService);
+  @BeforeEach
+  void initResource() {
+    resource =
+        new LibraryCardResource(
+            userService, libraryCardService, institutionAndLibraryCardEnforcement);
   }
 
   private UnableToExecuteStatementException generateUniqueViolationException() {
@@ -86,123 +91,116 @@ class LibraryCardResourceTest {
   void testGetLibraryCardsAsAdmin() {
     List<LibraryCard> libraryCards = Collections.singletonList(mockLibraryCardSetup());
     when(libraryCardService.findAllLibraryCards()).thenReturn(libraryCards);
-    initResource();
-    Response response = resource.getLibraryCards(authUser);
-    String json = response.getEntity().toString();
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    assertNotNull(json);
+    try (Response response = resource.getLibraryCards(duosUser)) {
+      String json = response.getEntity().toString();
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertNotNull(json);
+    }
   }
 
   @Test
   void testGetLibraryCardsById() {
     LibraryCard card = mockLibraryCardSetup();
     when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
-    initResource();
-    Response response = resource.getLibraryCardById(authUser, 1);
-    String json = response.getEntity().toString();
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-    assertNotNull(json);
+    try (Response response = resource.getLibraryCardById(duosUser, 1)) {
+      String json = response.getEntity().toString();
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertNotNull(json);
+    }
   }
 
   @Test
   void testGetLibraryCardsByIdThrowsNotFoundException() {
     when(libraryCardService.findLibraryCardById(anyInt())).thenThrow(new NotFoundException());
-    initResource();
-    Response response = resource.getLibraryCardById(authUser, 1);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    try (Response response = resource.getLibraryCardById(duosUser, 1)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
   void testGetLibraryCardByInstitutionId() {
     List<LibraryCard> cards = Collections.singletonList(mockLibraryCardSetup());
     when(libraryCardService.findLibraryCardsByInstitutionId(anyInt())).thenReturn(cards);
-    initResource();
-    Response response = resource.getLibraryCardsByInstitutionId(authUser, 1);
-    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    try (Response response = resource.getLibraryCardsByInstitutionId(duosUser, 1)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
   }
 
   @Test
   void testGetLibraryCardByInstitutionIdThrowsNotFoundException() {
     when(libraryCardService.findLibraryCardsByInstitutionId(anyInt()))
         .thenThrow(new NotFoundException());
-    initResource();
-    Response response = resource.getLibraryCardsByInstitutionId(authUser, 1);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    try (Response response = resource.getLibraryCardsByInstitutionId(duosUser, 1)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
-  void testCreateLibraryCard() throws Exception {
+  void testCreateLibraryCard() {
     LibraryCard mockCard = mockLibraryCardSetup();
     String payload = GsonUtil.getInstance().toJson(mockCard);
-    when(userService.findUserByEmail(authUser.getEmail())).thenReturn(user);
     when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class)))
         .thenReturn(mockCard);
-    initResource();
-    Response response = resource.createLibraryCard(authUser, payload);
-    String json = response.getEntity().toString();
-    assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
-    assertNotNull(json);
+    try (Response response = resource.createLibraryCard(duosUser, payload)) {
+      String json = response.getEntity().toString();
+      assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
+      assertNotNull(json);
+    }
   }
 
   @Test
-  void testCreateLibraryCardThrowsIllegalArgumentException() throws Exception {
+  void testCreateLibraryCardThrowsIllegalArgumentException() {
     LibraryCard mockCard = mockLibraryCardSetup();
     String payload = GsonUtil.getInstance().toJson(mockCard);
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class)))
         .thenThrow(new IllegalArgumentException());
-    initResource();
-    Response response = resource.createLibraryCard(authUser, payload);
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    try (Response response = resource.createLibraryCard(duosUser, payload)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
   }
 
   @Test
-  void testCreateLibraryCardThrowsConflictException() throws Exception {
+  void testCreateLibraryCardThrowsConflictException() {
     UnableToExecuteStatementException exception = generateUniqueViolationException();
     String json = GsonUtil.getInstance().toJson(mockLibraryCardSetup());
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class)))
         .thenThrow(exception);
-    initResource();
-    Response response = resource.createLibraryCard(authUser, json);
-    assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());
+    try (Response response = resource.createLibraryCard(duosUser, json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_CONFLICT, response.getStatus());
+    }
   }
 
   @Test
-  void testCreateLibraryCardThrowsBadRequestException() throws Exception {
+  void testCreateLibraryCardThrowsBadRequestException() {
     BadRequestException exception = new BadRequestException();
     String json = GsonUtil.getInstance().toJson(mockLibraryCardSetup());
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class)))
         .thenThrow(exception);
-    initResource();
-    Response response = resource.createLibraryCard(authUser, json);
-    assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    try (Response response = resource.createLibraryCard(duosUser, json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
   }
 
   @Test
-  void testCreateLibraruCardThrowsNotFoundException() throws Exception {
+  void testCreateLibraruCardThrowsNotFoundException() {
     NotFoundException exception = new NotFoundException();
     String json = GsonUtil.getInstance().toJson(mockLibraryCardSetup());
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.createLibraryCard(any(LibraryCard.class), any(User.class)))
         .thenThrow(exception);
-    initResource();
-    Response response = resource.createLibraryCard(authUser, json);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    try (Response response = resource.createLibraryCard(duosUser, json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
   void deleteLibraryCard() {
     LibraryCard card = mockLibraryCardSetup();
     card.setId(1);
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
-    initResource();
-
-    Response response = resource.deleteLibraryCard(authUser, card.getId());
-    assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
-    verify(libraryCardService).deleteLibraryCardById(card.getId());
+    try (Response response = resource.deleteLibraryCard(duosUser, card.getId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
+      verify(libraryCardService).deleteLibraryCardById(card.getId());
+    }
   }
 
   @Test
@@ -210,26 +208,22 @@ class LibraryCardResourceTest {
     LibraryCard card = mockLibraryCardSetup();
     card.setId(1);
     card.setUserId(null);
-    when(userService.findUserByEmail(user.getEmail())).thenReturn(user);
     when(userService.findUserById(null)).thenThrow(new NotFoundException());
     when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
-    initResource();
-
-    Response response = resource.deleteLibraryCard(authUser, card.getId());
-    assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
-    verify(libraryCardService).deleteLibraryCardById(card.getId());
+    try (Response response = resource.deleteLibraryCard(duosUser, card.getId())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NO_CONTENT, response.getStatus());
+      verify(libraryCardService).deleteLibraryCardById(card.getId());
+    }
   }
 
   @Test
   void deleteLibraryCardThrowsNotFoundException() {
     LibraryCard card = mockLibraryCardSetup();
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
     doThrow(new NotFoundException()).when(libraryCardService).deleteLibraryCardById(anyInt());
-    initResource();
-
-    Response response = resource.deleteLibraryCard(authUser, 1);
-    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    try (Response response = resource.deleteLibraryCard(duosUser, 1)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
   }
 
   @Test
@@ -240,18 +234,18 @@ class LibraryCardResourceTest {
     soInstitution.setId(1);
     soUser.setInstitution(soInstitution);
     soUser.setInstitutionId(soInstitution.getId());
-    // Mocks that the user is in a different institution than the SO
+    DuosUser soDuosUser = new DuosUser(authUser, mockSOUser());
+
     Institution lcUserInstitution = new Institution();
     lcUserInstitution.setId(2);
     lcUser.setInstitution(lcUserInstitution);
     lcUser.setInstitutionId(lcUserInstitution.getId());
 
-    when(userService.findUserByEmail(anyString())).thenReturn(soUser);
     when(libraryCardService.findLibraryCardById(anyInt())).thenReturn(card);
     when(userService.findUserById(card.getUserId())).thenReturn(lcUser);
 
-    initResource();
-    Response response = resource.deleteLibraryCard(authUser, 1);
-    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    try (Response response = resource.deleteLibraryCard(soDuosUser, 1)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
   }
 }

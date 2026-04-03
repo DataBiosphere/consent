@@ -29,6 +29,7 @@ import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.LibraryCardDaaAudit;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.junit.jupiter.api.BeforeEach;
@@ -499,6 +500,15 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     when(libraryCardDAO.findLibraryCardByUserId(userId)).thenReturn(null);
     LibraryCard card = service.removeDaaFromUserLibraryCard(user, 1);
     assertNull(card);
+  }
+
+  @Test
+  void testFindLibraryCardDaaAuditsByUserId() {
+    User user = testUser(1);
+    when(libraryCardDAO.findAuditsByLcUserId(user.getUserId())).thenReturn(List.of());
+
+    List<LibraryCardDaaAudit> audits = service.findLibraryCardDaaAuditsByUserId(user.getUserId());
+    assertTrue(audits.isEmpty());
   }
 
   private User testUser(Integer institutionId) {

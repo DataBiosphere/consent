@@ -14,6 +14,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.LibraryCardDaaAudit;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
@@ -130,6 +131,10 @@ public class LibraryCardService implements ConsentLogger {
     lc.setUserEmail(user.getEmail());
     lc.setCreateUserId(signingOfficial.getUserId());
     return createLibraryCard(lc, user);
+  }
+
+  public List<LibraryCardDaaAudit> findLibraryCardDaaAuditsByUserId(Integer userId) {
+    return libraryCardDAO.findAuditsByLcUserId(userId);
   }
 
   private void checkForValidInstitution(Integer institutionId, String userEmail) {
