@@ -282,6 +282,16 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testCreateLibraryCard_InstitutionMismatch() {
+    User soUser =
+        createUserWithRole(
+            UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    soUser.setInstitutionId(1);
+    LibraryCard card = testLibraryCard(2);
+    assertThrows(BadRequestException.class, () -> service.createLibraryCard(card, soUser));
+  }
+
+  @Test
   void testDeleteLibraryCard_NotFound() {
     Institution institution = testInstitution();
     User user = testUser(institution.getId());
