@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.DaaAuditMapper;
 import org.broadinstitute.consent.http.db.mapper.DaaMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessAgreementReducer;
@@ -295,7 +296,7 @@ public interface DaaDAO extends Transactional<DaaDAO> {
           WHERE dataset.dataset_id IN (<datasetIds>)
           ORDER BY daa.daa_id
           """)
-  List<Integer> findDaaIdsByDatasetIds(
+  Set<Integer> findDaaIdsByDatasetIds(
       @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING)
           List<Integer> datasetIds);
 }

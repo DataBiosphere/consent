@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -161,7 +162,7 @@ public class DataAccessRequestData {
   private String piName;
   private String piEmail;
   private String piCountryOfOperation;
-  private List<Integer> daaIds;
+  private Set<Integer> daaIds;
 
   @Override
   public String toString() {
@@ -685,11 +686,11 @@ public class DataAccessRequestData {
     this.piEmail = piEmail;
   }
 
-  public List<Integer> getDaaIds() {
+  public Set<Integer> getDaaIds() {
     return daaIds;
   }
 
-  public void setDaaIds(List<Integer> daaIds) {
+  public void setDaaIds(Set<Integer> daaIds) {
     this.daaIds = daaIds;
   }
 

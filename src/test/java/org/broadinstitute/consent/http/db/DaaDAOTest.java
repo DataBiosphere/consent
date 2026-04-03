@@ -11,6 +11,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.DaaAudit;
@@ -380,7 +381,7 @@ class DaaDAOTest extends DAOTestHelper {
     Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
     daaDAO.createDacDaaRelation(dacId, daaId, userId);
 
-    List<Integer> daaIds =
+    Set<Integer> daaIds =
         daaDAO.findDaaIdsByDatasetIds(List.of(dataset1.getDatasetId(), dataset2.getDatasetId()));
     assertFalse(daaIds.isEmpty());
     assertEquals(1, daaIds.size());
@@ -397,7 +398,7 @@ class DaaDAOTest extends DAOTestHelper {
     // Create a DAA but do not associate it to the DAC
     daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
 
-    List<Integer> daaIds =
+    Set<Integer> daaIds =
         daaDAO.findDaaIdsByDatasetIds(List.of(dataset1.getDatasetId(), dataset2.getDatasetId()));
     assertTrue(daaIds.isEmpty());
   }
@@ -414,7 +415,7 @@ class DaaDAOTest extends DAOTestHelper {
     Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), otherDacId);
     daaDAO.createDacDaaRelation(otherDacId, daaId, userId);
 
-    List<Integer> daaIds =
+    Set<Integer> daaIds =
         daaDAO.findDaaIdsByDatasetIds(List.of(dataset1.getDatasetId(), dataset2.getDatasetId()));
     assertTrue(daaIds.isEmpty());
   }

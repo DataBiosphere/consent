@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import jakarta.ws.rs.BadRequestException;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
@@ -642,7 +643,7 @@ class DataAccessRequestDataTest {
   void testGetSetDaaIds() {
     DataAccessRequestData data = new DataAccessRequestData();
     assertNull(data.getDaaIds());
-    List<Integer> daaIds = List.of(1, 2, 3);
+    Set<Integer> daaIds = Set.of(1, 2, 3);
     data.setDaaIds(daaIds);
     assertEquals(daaIds, data.getDaaIds());
   }
