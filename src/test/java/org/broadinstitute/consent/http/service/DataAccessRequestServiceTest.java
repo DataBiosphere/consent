@@ -38,7 +38,6 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DAOContainer;
-import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -90,7 +89,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   private static final String USER_NAME = "Display Name";
   private final List<UserRole> roles = List.of(UserRoles.Researcher());
   @Mock private CounterService counterService;
-  @Mock private DaaDAO daaDAO;
   @Mock private DataAccessRequestDAO dataAccessRequestDAO;
   @Mock private DarCollectionDAO darCollectionDAO;
   @Mock private DacDAO dacDAO;
@@ -164,7 +162,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     container.setDataAccessRequestDAO(dataAccessRequestDAO);
     container.setDarCollectionDAO(darCollectionDAO);
     container.setInstitutionDAO(institutionDAO);
-    container.setDaaDAO(daaDAO);
     container.setDacDAO(dacDAO);
     container.setUserDAO(userDAO);
     container.setDatasetDAO(dataSetDAO);
@@ -199,7 +196,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         .updateDataByReferenceId(any(), any(), any(), any(), any(), any());
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
     assertNotNull(newDar);
-    verify(daaDAO).findDaaIdsByDatasetIds(List.of(1, 2, 3));
   }
 
   @Test
@@ -231,7 +227,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         .thenReturn(dar.getDatasetIds());
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
     assertNotNull(newDar);
-    verify(daaDAO).findDaaIdsByDatasetIds(List.of(1, 2, 3));
   }
 
   @Test
@@ -310,7 +305,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
             user, progressReport.getDatasetIds(), progressReport.getReferenceId(), request);
     verify(dataAccessRequestDAO)
         .insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
-    verify(daaDAO).findDaaIdsByDatasetIds(progressReport.getDatasetIds());
   }
 
   @Test
@@ -357,7 +351,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     verify(ruleService, never()).triggerDACRuleSettings(any(), any(), any(), any());
     verify(dataAccessRequestDAO)
         .insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
-    verify(daaDAO).findDaaIdsByDatasetIds(progressReport.getDatasetIds());
   }
 
   @Test
@@ -374,7 +367,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     assertThrows(
         BadRequestException.class,
         () -> service.createProgressReport(user, progressReport, parentDar, request));
-    verify(daaDAO).findDaaIdsByDatasetIds(progressReport.getDatasetIds());
   }
 
   @Test
@@ -400,7 +392,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     assertThrows(
         BadRequestException.class,
         () -> service.createProgressReport(user, progressReport, parentDar, request));
-    verify(daaDAO).findDaaIdsByDatasetIds(progressReport.getDatasetIds());
   }
 
   private User createRequestingUser() {
