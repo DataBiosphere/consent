@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -161,6 +162,7 @@ public class DataAccessRequestData {
   private String piName;
   private String piEmail;
   private String piCountryOfOperation;
+  private Set<Integer> daaIds;
 
   @Override
   public String toString() {
@@ -682,6 +684,14 @@ public class DataAccessRequestData {
 
   public void setPiEmail(String piEmail) {
     this.piEmail = piEmail;
+  }
+
+  public Set<Integer> getDaaIds() {
+    return daaIds;
+  }
+
+  public void setDaaIds(Set<Integer> daaIds) {
+    this.daaIds = daaIds;
   }
 
   // Validate all ontology entries
