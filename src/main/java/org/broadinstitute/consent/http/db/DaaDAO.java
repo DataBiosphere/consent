@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.DaaAuditMapper;
 import org.broadinstitute.consent.http.db.mapper.DaaMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessAgreementReducer;
@@ -12,6 +13,8 @@ import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
@@ -274,4 +277,26 @@ public interface DaaDAO extends Transactional<DaaDAO> {
     ORDER BY action_date DESC
     """)
   List<DaaAudit> findAllDaaAudits();
+
+  /**
+   * Find all DAAs for a list of dataset IDs. Note that this only finds the DAA IDs for DAAs that
+   * are CURRENTLY associated to the Dataset-DAC assignments. A DAC's DAA assignment can change. We
+   * are also NOT considering the initial DAC that created the DAA.
+   *
+   * @param datasetIds List of dataset IDs
+   * @return List of Data Access Agreement IDs
+   */
+  @SqlQuery(
+      """
+          SELECT distinct daa.daa_id
+          FROM data_access_agreement daa
+          INNER JOIN dac_daa ON daa.daa_id = dac_daa.daa_id
+          INNER JOIN dac ON dac.dac_id = dac_daa.dac_id
+          INNER JOIN dataset ON dataset.dac_id = dac.dac_id
+          WHERE dataset.dataset_id IN (<datasetIds>)
+          ORDER BY daa.daa_id
+          """)
+  Set<Integer> findDaaIdsByDatasetIds(
+      @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING)
+          List<Integer> datasetIds);
 }
