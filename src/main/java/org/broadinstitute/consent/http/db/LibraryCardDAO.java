@@ -184,11 +184,11 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   @RegisterRowMapper(LibraryCardDaaAuditMapper.class)
   @SqlQuery(
       """
-    SELECT a.*
-    FROM lc_daa_audit a
-    INNER JOIN library_card lc ON a.lc_id = lc.id AND lc.user_id = :lcUserId
-    ORDER BY a.action_date DESC
-    """)
+      SELECT a.*
+      FROM lc_daa_audit a
+      INNER JOIN library_card lc ON a.lc_id = lc.id AND lc.user_id = :lcUserId
+      ORDER BY a.action_date DESC
+      """)
   List<LibraryCardDaaAudit> findAuditsByLcUserId(@Bind("lcUserId") Integer lcUserId);
 
   /**
