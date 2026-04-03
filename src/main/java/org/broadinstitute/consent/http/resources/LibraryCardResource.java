@@ -128,7 +128,7 @@ public class LibraryCardResource extends Resource {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  @Path("history/{userId}")
+  @Path("/history/{userId}")
   @RolesAllowed({ADMIN, SIGNINGOFFICIAL})
   public Response findLibraryCardDaaAuditsByUserId(
       @Auth DuosUser duosUser, @PathParam("userId") Integer userId) {
