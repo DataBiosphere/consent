@@ -232,9 +232,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     when(libraryCardDAO.findLibraryCardByUserEmail(any())).thenReturn(savedCard);
     assertThrows(
         ConsentConflictException.class,
-        () -> {
-          service.createLibraryCard(payload, signingOfficialUser);
-        });
+        () -> service.createLibraryCard(payload, signingOfficialUser));
   }
 
   @Test
@@ -246,10 +244,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     LibraryCard payload = testLibraryCard(null);
 
     assertThrows(
-        BadRequestException.class,
-        () -> {
-          service.createLibraryCard(payload, signingOfficialUser);
-        });
+        BadRequestException.class, () -> service.createLibraryCard(payload, signingOfficialUser));
   }
 
   @Test
@@ -293,11 +288,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
             UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
     soUser.setInstitutionId(1);
     LibraryCard card = testLibraryCard(2);
-    assertThrows(
-        BadRequestException.class,
-        () -> {
-          service.createLibraryCard(card, soUser);
-        });
+    assertThrows(BadRequestException.class, () -> service.createLibraryCard(card, soUser));
   }
 
   @Test
@@ -313,11 +304,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   @Test
   void testFindLibraryCardById_NotFound() {
     when(libraryCardDAO.findLibraryCardById(any())).thenReturn(null);
-    assertThrows(
-        NotFoundException.class,
-        () -> {
-          service.findLibraryCardById(1);
-        });
+    assertThrows(NotFoundException.class, () -> service.findLibraryCardById(1));
   }
 
   @Test
