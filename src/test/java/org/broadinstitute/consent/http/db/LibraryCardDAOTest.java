@@ -573,12 +573,10 @@ class LibraryCardDAOTest extends DAOTestHelper {
     assertFalse(cardsFromDAO.contains(card4));
   }
 
-  private LibraryCard createLibraryCardForIndex() {
+  private void createLibraryCardForIndex() {
     Integer userId = createUser().getUserId();
     String stringValue = "value";
-    Integer id =
-        libraryCardDAO.insertLibraryCard(userId, stringValue, stringValue, userId, new Date());
-    return libraryCardDAO.findLibraryCardById(id);
+    libraryCardDAO.insertLibraryCard(userId, stringValue, stringValue, userId, new Date());
   }
 
   private Institution createInstitution() {
