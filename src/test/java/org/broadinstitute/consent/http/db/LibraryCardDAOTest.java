@@ -120,13 +120,15 @@ class LibraryCardDAOTest extends DAOTestHelper {
     // 3. DAA so we can link it to a user's Library Card
     // 4. Library Card <-> DAA relationship that represents a Signing Official's acceptance of a DAA
     // for the user
+    User signingOfficial = createUser();
     LibraryCard card = createLibraryCard();
     int dacId = dacDAO.createDac(randomAlphabetic(10), randomAlphabetic(10), new Date());
     int daaId =
         daaDAO.createDaa(
             card.getCreateUserId(), Instant.now(), card.getCreateUserId(), Instant.now(), dacId);
     daaDAO.createDacDaaRelation(dacId, daaId, card.getUserId());
-    libraryCardDAO.createLibraryCardDaaRelation(card.getUserId(), card.getId(), daaId);
+    libraryCardDAO.createLibraryCardDaaRelation(
+        card.getUserId(), signingOfficial.getUserId(), card.getId(), daaId);
 
     libraryCardDAO.deleteLibraryCardById(card.getId());
     assertNull(libraryCardDAO.findLibraryCardById(card.getId()));
@@ -152,6 +154,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
 
   @Test
   void testFindLibraryCardDaaByIdMultipleDaas() {
+    User signingOfficial = createUser();
     LibraryCard card = createLibraryCard();
     Integer userId = createUser().getUserId();
     Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
@@ -163,8 +166,10 @@ class LibraryCardDAOTest extends DAOTestHelper {
     card.addDaa(daa2.getDaaId());
     card.addDaaObject(daa1);
     card.addDaaObject(daa2);
-    libraryCardDAO.createLibraryCardDaaRelation(card.getUserId(), card.getId(), daaId1);
-    libraryCardDAO.createLibraryCardDaaRelation(card.getUserId(), card.getId(), daaId2);
+    libraryCardDAO.createLibraryCardDaaRelation(
+        card.getUserId(), signingOfficial.getUserId(), card.getId(), daaId1);
+    libraryCardDAO.createLibraryCardDaaRelation(
+        card.getUserId(), signingOfficial.getUserId(), card.getId(), daaId2);
     Integer id = card.getId();
     LibraryCard cardFromDAO = libraryCardDAO.findLibraryCardDaaById(id);
 
@@ -232,6 +237,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
 
   @Test
   void testFindLibraryCardByUserIdInstitutionId() {
+    User signingOfficial = createUser();
     LibraryCard libraryCard = createLibraryCard();
     int dacId =
         dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), randomAlphabetic(5), new Date());
@@ -239,7 +245,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
     int daaId = daaDAO.createDaa(libraryCard.getUserId(), now, libraryCard.getUserId(), now, dacId);
     daaDAO.createDacDaaRelation(dacId, daaId, libraryCard.getUserId());
     libraryCardDAO.createLibraryCardDaaRelation(
-        libraryCard.getUserId(), libraryCard.getId(), daaId);
+        libraryCard.getUserId(), signingOfficial.getUserId(), libraryCard.getId(), daaId);
     LibraryCard cardFromDAO = libraryCardDAO.findLibraryCardByUserId(libraryCard.getUserId());
     assertNotNull(cardFromDAO);
     assertEquals(cardFromDAO, libraryCard);
@@ -284,6 +290,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
 
   @Test
   void testCreateLibraryCardDaaAssociation() {
+    User signingOfficial = createUser();
     User user = createUser();
     User user2 = createUser();
     LibraryCard card = createLibraryCard(user);
@@ -293,9 +300,12 @@ class LibraryCardDAOTest extends DAOTestHelper {
     Integer dacId2 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
     Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
     Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
-    libraryCardDAO.createLibraryCardDaaRelation(card.getUserId(), card.getId(), daaId1);
-    libraryCardDAO.createLibraryCardDaaRelation(card.getUserId(), card.getId(), daaId2);
-    libraryCardDAO.createLibraryCardDaaRelation(card2.getUserId(), card2.getId(), daaId1);
+    libraryCardDAO.createLibraryCardDaaRelation(
+        card.getUserId(), signingOfficial.getUserId(), card.getId(), daaId1);
+    libraryCardDAO.createLibraryCardDaaRelation(
+        card.getUserId(), signingOfficial.getUserId(), card.getId(), daaId2);
+    libraryCardDAO.createLibraryCardDaaRelation(
+        card2.getUserId(), signingOfficial.getUserId(), card2.getId(), daaId1);
 
     List<LibraryCard> lcs = libraryCardDAO.findAllLibraryCards();
     LibraryCard lc1 = lcs.get(0);
@@ -308,6 +318,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
 
   @Test
   void testCreateLibraryCardDaaAssociationInvalid() {
+    User signingOfficial = createUser();
     User user = createUser();
     LibraryCard card = createLibraryCard(user);
     Integer userId = user.getUserId();
@@ -315,14 +326,16 @@ class LibraryCardDAOTest extends DAOTestHelper {
     Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
 
     try {
-      libraryCardDAO.createLibraryCardDaaRelation(card.getUserId(), card.getId(), 2);
+      libraryCardDAO.createLibraryCardDaaRelation(
+          card.getUserId(), signingOfficial.getUserId(), card.getId(), 2);
     } catch (Exception e) {
       assertEquals(
           PSQLState.FOREIGN_KEY_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
     }
 
     try {
-      libraryCardDAO.createLibraryCardDaaRelation(card.getUserId(), 2, daaId1);
+      libraryCardDAO.createLibraryCardDaaRelation(
+          card.getUserId(), signingOfficial.getUserId(), 2, daaId1);
     } catch (Exception e) {
       assertEquals(
           PSQLState.FOREIGN_KEY_VIOLATION.getState(), ((PSQLException) e.getCause()).getSQLState());
@@ -335,6 +348,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
 
   @Test
   void testDeleteLibraryCardDaaAssociation() {
+    User signingOfficial = createUser();
     User user = createUser();
     User user2 = createUser();
     LibraryCard card = createLibraryCard(user);
@@ -344,19 +358,23 @@ class LibraryCardDAOTest extends DAOTestHelper {
     Integer dacId2 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
     Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
     Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
-    libraryCardDAO.createLibraryCardDaaRelation(card.getUserId(), card.getId(), daaId1);
-    libraryCardDAO.createLibraryCardDaaRelation(card.getUserId(), card.getId(), daaId2);
+    libraryCardDAO.createLibraryCardDaaRelation(
+        card.getUserId(), signingOfficial.getUserId(), card.getId(), daaId1);
+    libraryCardDAO.createLibraryCardDaaRelation(
+        card.getUserId(), signingOfficial.getUserId(), card.getId(), daaId2);
 
     List<LibraryCard> lcs = libraryCardDAO.findAllLibraryCards();
     LibraryCard lc1 = lcs.getFirst();
     assertEquals(2, lc1.getDaaIds().size());
 
-    libraryCardDAO.deleteLibraryCardDaaRelation(card.getUserId(), card.getId(), daaId1);
+    libraryCardDAO.deleteLibraryCardDaaRelation(
+        card.getUserId(), signingOfficial.getUserId(), card.getId(), daaId1);
     lcs = libraryCardDAO.findAllLibraryCards();
     lc1 = lcs.getFirst();
     assertEquals(1, lc1.getDaaIds().size());
 
-    libraryCardDAO.deleteLibraryCardDaaRelation(card.getUserId(), card.getId(), daaId2);
+    libraryCardDAO.deleteLibraryCardDaaRelation(
+        card.getUserId(), signingOfficial.getUserId(), card.getId(), daaId2);
     lcs = libraryCardDAO.findAllLibraryCards();
     lc1 = lcs.getFirst();
     assertTrue(lc1.getDaaIds().isEmpty());
@@ -387,7 +405,8 @@ class LibraryCardDAOTest extends DAOTestHelper {
             chairperson1.getUserId(),
             Instant.now(),
             dacId1);
-    libraryCardDAO.createLibraryCardDaaRelation(signingOfficial.getUserId(), lcId, daaId1);
+    libraryCardDAO.createLibraryCardDaaRelation(
+        user.getUserId(), signingOfficial.getUserId(), lcId, daaId1);
 
     // SO associates user to access agreement 2
     User chairperson2 = createUser();
@@ -401,7 +420,8 @@ class LibraryCardDAOTest extends DAOTestHelper {
             chairperson2.getUserId(),
             Instant.now(),
             dacId2);
-    libraryCardDAO.createLibraryCardDaaRelation(signingOfficial.getUserId(), lcId, daaId2);
+    libraryCardDAO.createLibraryCardDaaRelation(
+        user.getUserId(), signingOfficial.getUserId(), lcId, daaId2);
 
     List<LibraryCardDaaAudit> audits = libraryCardDAO.findAuditsByLcUserId(user.getUserId());
     assertFalse(audits.isEmpty());
@@ -412,7 +432,8 @@ class LibraryCardDAOTest extends DAOTestHelper {
             .allMatch(action -> action == AuditActions.ADD));
 
     // Dissociate user from DAA 1 and check that we have a REMOVE audit.
-    libraryCardDAO.deleteLibraryCardDaaRelation(signingOfficial.getUserId(), lcId, daaId1);
+    libraryCardDAO.deleteLibraryCardDaaRelation(
+        user.getUserId(), signingOfficial.getUserId(), lcId, daaId1);
     List<LibraryCardDaaAudit> audits2 = libraryCardDAO.findAuditsByLcUserId(user.getUserId());
     assertFalse(audits2.isEmpty());
     assertEquals(3, audits2.size());
@@ -440,11 +461,13 @@ class LibraryCardDAOTest extends DAOTestHelper {
     Integer daaId =
         daaDAO.createDaa(
             chairperson.getUserId(), Instant.now(), chairperson.getUserId(), Instant.now(), dacId);
-    libraryCardDAO.createLibraryCardDaaRelation(signingOfficial.getUserId(), lcId, daaId);
+    libraryCardDAO.createLibraryCardDaaRelation(
+        user.getUserId(), signingOfficial.getUserId(), lcId, daaId);
 
     // Repeat the same association which should trigger the ON CONFLICT in the SQL and ensure that
     // we do not insert a duplicate audit record.
-    libraryCardDAO.createLibraryCardDaaRelation(signingOfficial.getUserId(), lcId, daaId);
+    libraryCardDAO.createLibraryCardDaaRelation(
+        user.getUserId(), signingOfficial.getUserId(), lcId, daaId);
 
     List<LibraryCardDaaAudit> audits = libraryCardDAO.findAuditsByLcUserId(user.getUserId());
     assertFalse(audits.isEmpty());

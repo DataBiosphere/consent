@@ -143,12 +143,15 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
         ON CONFLICT DO NOTHING
         RETURNING lc_id
       )
-      INSERT INTO lc_daa_audit (daa_id, lc_id, user_id, action, action_date)
-      SELECT :daaId, :lcId, :userId, 'ADD', NOW()
+      INSERT INTO lc_daa_audit (daa_id, lc_id, lc_user_id, user_id, action, action_date)
+      SELECT :daaId, :lcId, :lcUserId, :userId, 'ADD', NOW()
       WHERE EXISTS (SELECT 1 FROM lc_daa_insert)
       """)
   void createLibraryCardDaaRelation(
-      @Bind("userId") Integer userId, @Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
+      @Bind("lcUserId") Integer lcUserId,
+      @Bind("userId") Integer userId,
+      @Bind("lcId") Integer lcId,
+      @Bind("daaId") Integer daaId);
 
   @SqlUpdate(
       """
@@ -158,20 +161,23 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
         AND daa_id = :daaId
         RETURNING lc_id
       )
-      INSERT INTO lc_daa_audit (daa_id, lc_id, user_id, action, action_date)
-      SELECT :daaId, :lcId, :userId, 'REMOVE', NOW()
+      INSERT INTO lc_daa_audit (daa_id, lc_id, lc_user_id, user_id, action, action_date)
+      SELECT :daaId, :lcId, :lcUserId, :userId, 'REMOVE', NOW()
       WHERE EXISTS (SELECT 1 FROM lc_daa_delete)
       """)
   void deleteLibraryCardDaaRelation(
-      @Bind("userId") Integer userId, @Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
+      @Bind("lcUserId") Integer lcUserId,
+      @Bind("userId") Integer userId,
+      @Bind("lcId") Integer lcId,
+      @Bind("daaId") Integer daaId);
 
   @RegisterRowMapper(LibraryCardDaaAuditMapper.class)
   @SqlQuery(
       """
-      SELECT a.*
-      FROM lc_daa_audit a
-      INNER JOIN library_card lc ON a.lc_id = lc.id AND lc.user_id = :lcUserId
-      ORDER BY a.action_date DESC
+      SELECT *
+      FROM lc_daa_audit
+      WHERE lc_user_id = :lcUserId
+      ORDER BY action_date DESC
       """)
   List<LibraryCardDaaAudit> findAuditsByLcUserId(@Bind("lcUserId") Integer lcUserId);
 

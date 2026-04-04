@@ -447,7 +447,7 @@ class DaaResourceTest extends AbstractTestHelper {
     researcher.setLibraryCard(libraryCard);
 
     when(userService.findUserById(researcher.getUserId())).thenReturn(researcher);
-    doNothing().when(libraryCardService).removeDaaFromLibraryCard(any(), any(), any());
+    doNothing().when(libraryCardService).removeDaaFromLibraryCard(any(), any(), any(), any());
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     try (Response response = resource.deleteDaaForUser(duosUser, daaId, researcher.getUserId())) {
@@ -474,7 +474,7 @@ class DaaResourceTest extends AbstractTestHelper {
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
     try (Response response = resource.deleteDaaForUser(duosUser, daaId, researcher.getUserId())) {
-      verify(libraryCardService, never()).removeDaaFromLibraryCard(any(), any(), any());
+      verify(libraryCardService, never()).removeDaaFromLibraryCard(any(), any(), any(), any());
       assertEquals(HttpStatus.SC_OK, response.getStatus());
     }
   }
@@ -516,7 +516,7 @@ class DaaResourceTest extends AbstractTestHelper {
     try (Response response =
         resource.deleteDaaForUser(duosUser, daaId, differentInstitutionUser.getUserId())) {
       assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatus());
-      verify(libraryCardService, never()).removeDaaFromLibraryCard(any(), any(), any());
+      verify(libraryCardService, never()).removeDaaFromLibraryCard(any(), any(), any(), any());
     }
   }
 
@@ -721,7 +721,7 @@ class DaaResourceTest extends AbstractTestHelper {
 
     when(userService.findUsersInJsonArray(any(), any())).thenReturn(users);
     when(daaService.findById(daaId)).thenReturn(new DataAccessAgreement());
-    when(libraryCardService.removeDaaFromUserLibraryCard(any(), any())).thenReturn(null);
+    when(libraryCardService.removeDaaFromUserLibraryCard(any(), any(), any())).thenReturn(null);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
@@ -865,7 +865,7 @@ class DaaResourceTest extends AbstractTestHelper {
 
     when(userService.findUserById(userId)).thenReturn(researcher);
     when(daaService.findDAAsInJsonArray(any(), any())).thenReturn(agreements);
-    when(libraryCardService.removeDaaFromUserLibraryCard(any(), any())).thenReturn(null);
+    when(libraryCardService.removeDaaFromUserLibraryCard(any(), any(), any())).thenReturn(null);
 
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 

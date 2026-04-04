@@ -95,12 +95,14 @@ public class LibraryCardService implements ConsentLogger {
     return libraryCard;
   }
 
-  public void addDaaToLibraryCard(Integer userId, Integer libraryCardId, Integer daaId) {
-    libraryCardDAO.createLibraryCardDaaRelation(userId, libraryCardId, daaId);
+  public void addDaaToLibraryCard(
+      Integer lcUserId, Integer userId, Integer libraryCardId, Integer daaId) {
+    libraryCardDAO.createLibraryCardDaaRelation(lcUserId, userId, libraryCardId, daaId);
   }
 
-  public void removeDaaFromLibraryCard(Integer userId, Integer libraryCardId, Integer daaId) {
-    libraryCardDAO.deleteLibraryCardDaaRelation(userId, libraryCardId, daaId);
+  public void removeDaaFromLibraryCard(
+      Integer lcUserId, Integer userId, Integer libraryCardId, Integer daaId) {
+    libraryCardDAO.deleteLibraryCardDaaRelation(lcUserId, userId, libraryCardId, daaId);
   }
 
   public LibraryCard addDaaToUserLibraryCard(User user, User signingOfficial, Integer daaId) {
@@ -111,17 +113,19 @@ public class LibraryCardService implements ConsentLogger {
     if (libraryCard == null) {
       libraryCard = createLibraryCardForSigningOfficial(user, signingOfficial);
     }
-    addDaaToLibraryCard(user.getUserId(), libraryCard.getId(), daaId);
+    addDaaToLibraryCard(user.getUserId(), signingOfficial.getUserId(), libraryCard.getId(), daaId);
     return libraryCardDAO.findLibraryCardByUserId(user.getUserId());
   }
 
-  public LibraryCard removeDaaFromUserLibraryCard(User user, Integer daaId) {
-    LibraryCard libraryCard = findLibraryCardByUserId(user.getUserId());
+  public LibraryCard removeDaaFromUserLibraryCard(
+      User lcUser, User signingOfficial, Integer daaId) {
+    LibraryCard libraryCard = findLibraryCardByUserId(lcUser.getUserId());
     // typically there should be one library card per user
     if (libraryCard != null) {
-      removeDaaFromLibraryCard(user.getUserId(), libraryCard.getId(), daaId);
+      removeDaaFromLibraryCard(
+          lcUser.getUserId(), signingOfficial.getUserId(), libraryCard.getId(), daaId);
     }
-    return findLibraryCardByUserId(user.getUserId());
+    return findLibraryCardByUserId(lcUser.getUserId());
   }
 
   public LibraryCard createLibraryCardForSigningOfficial(User user, User signingOfficial) {

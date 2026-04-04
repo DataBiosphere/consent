@@ -333,11 +333,14 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setUserId(1);
     LibraryCard card = testLibraryCard(user.getUserId());
+    User so = new User();
+    so.setUserId(2);
     doNothing()
         .when(libraryCardDAO)
-        .createLibraryCardDaaRelation(user.getUserId(), card.getId(), 1);
+        .createLibraryCardDaaRelation(user.getUserId(), so.getUserId(), card.getId(), 1);
 
-    assertDoesNotThrow(() -> service.addDaaToLibraryCard(user.getUserId(), card.getId(), 1));
+    assertDoesNotThrow(
+        () -> service.addDaaToLibraryCard(user.getUserId(), so.getUserId(), card.getId(), 1));
   }
 
   @Test
@@ -345,11 +348,14 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setUserId(1);
     LibraryCard card = testLibraryCard(1);
+    User so = new User();
+    so.setUserId(2);
     doNothing()
         .when(libraryCardDAO)
-        .deleteLibraryCardDaaRelation(user.getUserId(), card.getId(), 1);
+        .deleteLibraryCardDaaRelation(user.getUserId(), so.getUserId(), card.getId(), 1);
 
-    assertDoesNotThrow(() -> service.removeDaaFromLibraryCard(user.getUserId(), card.getId(), 1));
+    assertDoesNotThrow(
+        () -> service.removeDaaFromLibraryCard(user.getUserId(), so.getUserId(), card.getId(), 1));
   }
 
   @Test
@@ -365,7 +371,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     Integer userId = user.getUserId();
     when(libraryCardDAO.findLibraryCardByUserId(user.getUserId()))
         .thenReturn(testLibraryCard(userId));
-    doNothing().when(libraryCardDAO).createLibraryCardDaaRelation(any(), any(), any());
+    doNothing().when(libraryCardDAO).createLibraryCardDaaRelation(any(), any(), any(), any());
     LibraryCard card = service.addDaaToUserLibraryCard(user, signingOfficial, 1);
     assertNotNull(card);
   }
@@ -419,8 +425,10 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     Integer userId = user.getUserId();
     when(libraryCardDAO.findLibraryCardByUserId(user.getUserId()))
         .thenReturn(testLibraryCard(userId));
-    doNothing().when(libraryCardDAO).deleteLibraryCardDaaRelation(any(), any(), any());
-    LibraryCard card = service.removeDaaFromUserLibraryCard(user, 1);
+    User so = new User();
+    so.setUserId(2);
+    doNothing().when(libraryCardDAO).deleteLibraryCardDaaRelation(any(), any(), any(), any());
+    LibraryCard card = service.removeDaaFromUserLibraryCard(user, so, 1);
     // The above deletion only affects the lc-daa join table and does not remove library cards
     assertNotNull(card);
     assertTrue(card.getDaaIds().isEmpty());
@@ -432,7 +440,9 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     Integer userId = user.getUserId();
     when(libraryCardDAO.findLibraryCardByUserId(user.getUserId()))
         .thenReturn(testLibraryCard(userId));
-    LibraryCard card = service.removeDaaFromUserLibraryCard(user, 1);
+    User so = new User();
+    so.setUserId(2);
+    LibraryCard card = service.removeDaaFromUserLibraryCard(user, so, 1);
     // DAA removal should not delete library cards
     assertNotNull(card);
     assertTrue(card.getDaaIds().isEmpty());
@@ -472,7 +482,9 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     User user = testUser(1);
     Integer userId = user.getUserId();
     when(libraryCardDAO.findLibraryCardByUserId(userId)).thenReturn(null);
-    LibraryCard card = service.removeDaaFromUserLibraryCard(user, 1);
+    User so = new User();
+    so.setUserId(2);
+    LibraryCard card = service.removeDaaFromUserLibraryCard(user, so, 1);
     assertNull(card);
   }
 

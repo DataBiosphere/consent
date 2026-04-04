@@ -16,6 +16,10 @@ get:
   responses:
     200:
       description: Returns all library card history records for the specified user ID. If no records are found, an empty array is returned.
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/FeatureFlag.yaml'
     400:
       description: Bad Request - Invalid user ID provided.
     403:

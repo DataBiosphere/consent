@@ -15,6 +15,11 @@
         Note that library cards are deletable so nullable is true here.
        -->
       <column name="lc_id" type="bigint"/>
+      <!-- user who the audit action affects -->
+      <column name="lc_user_id" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <!-- user who initiated the audit action -->
       <column name="user_id" type="bigint">
         <constraints nullable="false"/>
       </column>
@@ -42,6 +47,10 @@
       baseTableName="lc_daa_audit" baseColumnNames="daa_id"
       constraintName="fk_lc_daa_audit_daa_id"
       referencedTableName="data_access_agreement" referencedColumnNames="daa_id"/>
+    <addForeignKeyConstraint
+      baseTableName="lc_daa_audit" baseColumnNames="lc_user_id"
+      constraintName="fk_lc_daa_audit_lc_user_id"
+      referencedTableName="users" referencedColumnNames="user_id"/>
     <addForeignKeyConstraint
       baseTableName="lc_daa_audit" baseColumnNames="user_id"
       constraintName="fk_lc_daa_audit_user_id"
