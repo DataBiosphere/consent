@@ -171,7 +171,7 @@ public class LibraryCardService implements ConsentLogger {
 
   // helper method for create method, checks to see if card already exists
   private void checkIfCardExists(LibraryCard payload) {
-    LibraryCard result = null;
+    LibraryCard result;
 
     if (payload.getUserId() != null) {
       result = libraryCardDAO.findLibraryCardByUserId(payload.getUserId());

@@ -400,8 +400,8 @@ class UserDAOTest extends DAOTestHelper {
     String email = user.getEmail();
     List<User> users = userDAO.getSOsByInstitution(institutionId);
     assertEquals(1, users.size());
-    assertEquals(displayName, users.get(0).getDisplayName());
-    assertEquals(email, users.get(0).getEmail());
+    assertEquals(displayName, users.getFirst().getDisplayName());
+    assertEquals(email, users.getFirst().getEmail());
 
     List<User> differentInstitutionUsers = userDAO.getSOsByInstitution(institutionId + 1);
     assertEquals(0, differentInstitutionUsers.size());
@@ -420,7 +420,7 @@ class UserDAOTest extends DAOTestHelper {
     Integer userId = card.getUserId();
     List<User> users = userDAO.getUsersFromInstitutionWithCards(lcUser.getInstitutionId());
     assertEquals(1, users.size());
-    User returnedUser = users.get(0);
+    User returnedUser = users.getFirst();
     assertEquals(userId, returnedUser.getUserId());
 
     LibraryCard returnedCard = returnedUser.getLibraryCard();
@@ -449,11 +449,11 @@ class UserDAOTest extends DAOTestHelper {
     assertEquals(1, daa2UserList.size());
     assertNotEquals(daa1UserList, daa2UserList);
 
-    User daa1User = daa1UserList.get(0);
+    User daa1User = daa1UserList.getFirst();
     assertEquals(card1, daa1User.getLibraryCard());
     assertEquals(daa1User.getLibraryCard().getDaaIds(), List.of(daaId1));
 
-    User daa2User = daa2UserList.get(0);
+    User daa2User = daa2UserList.getFirst();
     assertEquals(card2, daa2User.getLibraryCard());
     assertEquals(daa2User.getLibraryCard().getDaaIds(), List.of(daaId2));
   }
@@ -540,7 +540,7 @@ class UserDAOTest extends DAOTestHelper {
         .getHandle()
         .getJdbi()
         .useHandle(
-            handle -> {
+            ignored -> {
               ResultIterable<User> users =
                   userDAO.allEmailReceivingThinlyPopulatedUsers(emailType, referenceId);
               for (User user : users) {
@@ -571,7 +571,7 @@ class UserDAOTest extends DAOTestHelper {
         .getHandle()
         .getJdbi()
         .useHandle(
-            handle -> {
+            ignored -> {
               ResultIterable<User> users =
                   userDAO.allEmailReceivingThinlyPopulatedUsers(emailType, referenceId);
               for (User user : users) {
