@@ -243,38 +243,37 @@ class UserDAOTest extends DAOTestHelper {
 
   @Test
   void testFindUsersWithLCsAndInstitution() {
-    User signingOfficial = createUser();
-    User user = createUserWithInstitution();
+    // Creates an Admin and an SO, and returns the SO
+    User signingOfficial = createUserWithInstitution();
+    // Creates a researcher
+    User user = createUserWithRole(UserRoles.RESEARCHER.getRoleId(), signingOfficial.getInstitutionId());
     int dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), new Date());
     Instant now = Instant.now();
     int daaId = daaDAO.createDaa(user.getUserId(), now, user.getUserId(), now, dacId);
-    int lcId1 =
-        libraryCardDAO.insertLibraryCard(
-            user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
-    libraryCardDAO.createLibraryCardDaaRelation(
-        user.getUserId(), signingOfficial.getUserId(), lcId1, daaId);
+    int lcId1 = libraryCardDAO.insertLibraryCard(user.getUserId(), user.getDisplayName(), user.getEmail(), signingOfficial.getUserId(), new Date());
+    libraryCardDAO.createLibraryCardDaaRelation(user.getUserId(), signingOfficial.getUserId(), lcId1, daaId);
 
-    User user2 = createUserWithInstitution();
+    // Creates another admin and another SO
+    User signingOfficial2 = createUserWithInstitution();
+    // Creates a researcher
+    User user2 = createUserWithRole(UserRoles.RESEARCHER.getRoleId(), signingOfficial2.getInstitutionId());
     int lcId2 =
         libraryCardDAO.insertLibraryCard(
             user2.getUserId(),
             user2.getDisplayName(),
             user2.getEmail(),
-            user2.getUserId(),
+            signingOfficial2.getUserId(),
             new Date());
-    libraryCardDAO.createLibraryCardDaaRelation(
-        user2.getUserId(), signingOfficial.getUserId(), lcId2, daaId);
+    libraryCardDAO.createLibraryCardDaaRelation(user2.getUserId(), signingOfficial2.getUserId(), lcId2, daaId);
 
     List<User> users = userDAO.findUsersWithLCsAndInstitution();
-    // Four users: two admin users, two signing official users with library cards.
-    assertEquals(4, users.size());
-    // Filter out admin users, which don't have institutions.
-    users = users.stream().filter(u -> u.getInstitution() != null).toList();
+    // Filter out non-researchers since those are the ones we've added LCs to and are under test.
+    users = users.stream().filter(u -> u.hasUserRole(UserRoles.RESEARCHER)).toList();
     assertEquals(2, users.size());
-    assertNotNull(users.get(0).getInstitution());
-    assertNotNull(users.get(0).getLibraryCard());
-    assertNotNull(users.get(1).getInstitution());
-    assertNotNull(users.get(1).getLibraryCard());
+    users.forEach(u -> {
+      assertNotNull(u.getInstitution());
+      assertNotNull(u.getLibraryCard());
+    });
   }
 
   @Test
