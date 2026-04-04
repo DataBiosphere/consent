@@ -441,7 +441,7 @@ class LibraryCardDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testEnsureAuditInsertsSkippedOnConflict() {
+  void testEnsureAuditInsertsSkippedOnConflict_Add() {
     // Create a user, signing official, and library card
     User user = createUser();
     User signingOfficial = createUser();
@@ -473,6 +473,48 @@ class LibraryCardDAOTest extends DAOTestHelper {
     assertFalse(audits.isEmpty());
     assertEquals(1, audits.size());
     assertSame(AuditActions.ADD, audits.getFirst().action());
+  }
+
+  @Test
+  void testEnsureAuditInsertsSkippedOnConflict_Remove() {
+    // Create a user, signing official, and library card
+    User user = createUser();
+    User signingOfficial = createUser();
+    Integer lcId =
+        libraryCardDAO.insertLibraryCard(
+            user.getUserId(),
+            user.getDisplayName(),
+            user.getEmail(),
+            signingOfficial.getUserId(),
+            new Date());
+
+    // SO associates user to data access agreement
+    User chairperson = createUser();
+    Integer dacId =
+        dacDAO.createDac(
+            randomAlphabetic(5), randomAlphabetic(5), chairperson.getEmail(), new Date());
+    Integer daaId =
+        daaDAO.createDaa(
+            chairperson.getUserId(), Instant.now(), chairperson.getUserId(), Instant.now(), dacId);
+    libraryCardDAO.createLibraryCardDaaRelation(
+        user.getUserId(), signingOfficial.getUserId(), lcId, daaId);
+
+    // SO Removes association
+    libraryCardDAO.deleteLibraryCardDaaRelation(
+        user.getUserId(), signingOfficial.getUserId(), lcId, daaId);
+
+    // Repeat the same delection which should trigger the ON CONFLICT in the SQL and ensure that
+    // we do not insert a duplicate audit record.
+    libraryCardDAO.deleteLibraryCardDaaRelation(
+        user.getUserId(), signingOfficial.getUserId(), lcId, daaId);
+
+    List<LibraryCardDaaAudit> audits =
+        libraryCardDAO.findAuditsByLcUserId(user.getUserId()).stream()
+            .filter(audit -> audit.action() == AuditActions.REMOVE)
+            .toList();
+    assertFalse(audits.isEmpty());
+    assertEquals(1, audits.size());
+    assertSame(AuditActions.REMOVE, audits.getFirst().action());
   }
 
   @Test
