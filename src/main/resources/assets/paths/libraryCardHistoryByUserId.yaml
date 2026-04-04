@@ -19,7 +19,9 @@ get:
       content:
         application/json:
           schema:
-            $ref: '../schemas/FeatureFlag.yaml'
+            type: array
+            items:
+              $ref: '../schemas/LibraryCardDaaAudit.yaml'
     400:
       description: Bad Request - Invalid user ID provided.
     403:

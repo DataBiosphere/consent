@@ -1,0 +1,39 @@
+type: object
+description: An audit record representing a DAA association or removal event on a Library Card.
+properties:
+  id:
+    type: integer
+    format: int64
+    description: The audit record ID.
+  daaId:
+    type: integer
+    description: The ID of the Data Access Agreement involved in the action.
+  lcId:
+    type: integer
+    nullable: true
+    description: The ID of the Library Card. May be null if the library card has since been deleted.
+  lcUserId:
+    type: integer
+    nullable: true
+    description: The ID of the user associated with the library card at the time of the audit action.
+  userId:
+    type: integer
+    description: The ID of the user who initiated the action (e.g., the Signing Official).
+  action:
+    type: string
+    enum:
+      - ADD
+      - REMOVE
+    description: The action performed on the library card DAA relationship.
+  actionDate:
+    type: integer
+    description: The UTC epoch time this action was created.
+example:
+  id: 1
+  daaId: 10
+  lcId: 5
+  lcUserId: 42
+  userId: 7
+  action: ADD
+  actionDate: 1775312038006
+
