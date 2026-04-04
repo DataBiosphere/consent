@@ -126,7 +126,7 @@ public class DaaResource extends Resource implements ConsentLogger {
           user.getLibraryCard() == null
               ? libraryCardService.createLibraryCardForSigningOfficial(user, authedUser)
               : user.getLibraryCard();
-      libraryCardService.addDaaToLibraryCard(user.getUserId(), libraryCard.getId(), daaId);
+      libraryCardService.addDaaToLibraryCard(authedUser.getUserId(), libraryCard.getId(), daaId);
       URI uri =
           info.getBaseUriBuilder()
               .replacePath("api/libraryCards/{libraryCardId}")
@@ -195,7 +195,7 @@ public class DaaResource extends Resource implements ConsentLogger {
       }
       if (user.getLibraryCard() != null) {
         libraryCardService.removeDaaFromLibraryCard(
-            user.getUserId(), user.getLibraryCard().getId(), daaId);
+            authedUser.getUserId(), user.getLibraryCard().getId(), daaId);
       }
       return Response.ok().build();
     } catch (Exception e) {

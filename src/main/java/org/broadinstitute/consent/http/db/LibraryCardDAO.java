@@ -152,10 +152,15 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @SqlUpdate(
       """
-      WITH audit AS (INSERT INTO lc_daa_audit (daa_id, lc_id, user_id, action, action_date) VALUES (:daaId, :lcId, :userId, 'REMOVE', NOW()))
-      DELETE FROM lc_daa
-      WHERE lc_id = :lcId
-      AND daa_id = :daaId
+      WITH lc_daa_delete AS (
+        DELETE FROM lc_daa
+        WHERE lc_id = :lcId
+        AND daa_id = :daaId
+        RETURNING lc_id
+      )
+      INSERT INTO lc_daa_audit (daa_id, lc_id, user_id, action, action_date)
+      SELECT :daaId, :lcId, :userId, 'REMOVE', NOW()
+      WHERE EXISTS (SELECT 1 FROM lc_daa_delete)
       """)
   void deleteLibraryCardDaaRelation(
       @Bind("userId") Integer userId, @Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
