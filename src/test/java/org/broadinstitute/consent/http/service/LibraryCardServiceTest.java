@@ -19,8 +19,10 @@ import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -43,6 +45,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
 
   private LibraryCardService service;
 
+  @Mock private DaaDAO daaDAO;
   @Mock private InstitutionDAO institutionDAO;
   @Mock private LibraryCardDAO libraryCardDAO;
   @Mock private InstitutionService institutionService;
@@ -53,7 +56,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   void initService() {
     service =
         new LibraryCardService(
-            libraryCardDAO, institutionDAO, institutionService, userDAO, emailService);
+            daaDAO, libraryCardDAO, institutionDAO, institutionService, userDAO, emailService);
   }
 
   @Test
@@ -333,8 +336,13 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setUserId(1);
     LibraryCard card = testLibraryCard(user.getUserId());
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
     User so = new User();
     so.setUserId(2);
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
+    when(libraryCardDAO.findLibraryCardById(card.getId())).thenReturn(card);
+    when(daaDAO.findById(daa.getDaaId())).thenReturn(daa);
     doNothing()
         .when(libraryCardDAO)
         .createLibraryCardDaaRelation(user.getUserId(), so.getUserId(), card.getId(), 1);
@@ -361,6 +369,9 @@ class LibraryCardServiceTest extends AbstractTestHelper {
   @Test
   void testAddDaaToUserLibraryCard() {
     User user = testUser(1);
+    LibraryCard card = testLibraryCard(user.getUserId());
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
     user.setRoles(
         List.of(
             new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
@@ -369,11 +380,13 @@ class LibraryCardServiceTest extends AbstractTestHelper {
             UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
     signingOfficial.setInstitutionId(1);
     Integer userId = user.getUserId();
-    when(libraryCardDAO.findLibraryCardByUserId(user.getUserId()))
-        .thenReturn(testLibraryCard(userId));
+    when(userDAO.findUserById(userId)).thenReturn(user);
+    when(libraryCardDAO.findLibraryCardById(card.getId())).thenReturn(card);
+    when(daaDAO.findById(daa.getDaaId())).thenReturn(daa);
+    when(libraryCardDAO.findLibraryCardByUserId(user.getUserId())).thenReturn(card);
     doNothing().when(libraryCardDAO).createLibraryCardDaaRelation(any(), any(), any(), any());
-    LibraryCard card = service.addDaaToUserLibraryCard(user, signingOfficial, 1);
-    assertNotNull(card);
+    LibraryCard foundCard = service.addDaaToUserLibraryCard(user, signingOfficial, 1);
+    assertNotNull(foundCard);
   }
 
   @Test
@@ -404,6 +417,8 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     Integer userId = user.getUserId();
     LibraryCard payload = testLibraryCard(user.getUserId());
     payload.setUserEmail("testemail");
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(1);
     // There are two calls to findLibraryCardsByUserId for checks before creation
     when(libraryCardDAO.findLibraryCardByUserId(userId))
         .thenReturn(null)
@@ -412,11 +427,69 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     when(institutionDAO.findInstitutionById(institution.getId())).thenReturn(institution);
     when(institutionService.findInstitutionForEmail(any())).thenReturn(institution);
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
-    when(libraryCardDAO.insertLibraryCard(anyInt(), any(), any(), anyInt(), any())).thenReturn(1);
-    when(libraryCardDAO.findLibraryCardById(anyInt())).thenReturn(new LibraryCard());
+    when(libraryCardDAO.insertLibraryCard(
+            eq(user.getUserId()),
+            eq(user.getDisplayName()),
+            eq(user.getEmail()),
+            eq(signingOfficial.getUserId()),
+            any(Date.class)))
+        .thenReturn(payload.getId());
+    when(libraryCardDAO.findLibraryCardById(payload.getId())).thenReturn(payload);
+    when(daaDAO.findById(daa.getDaaId())).thenReturn(daa);
 
     LibraryCard card = service.addDaaToUserLibraryCard(user, signingOfficial, 1);
     assertNotNull(card);
+  }
+
+  @Test
+  void testAddDaaToLibraryCardUserNotFound() {
+    User user = testUser(1);
+    user.setRoles(
+        List.of(
+            new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    User signingOfficial =
+        createUserWithRole(
+            UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    signingOfficial.setInstitutionId(4);
+    when(userDAO.findUserById(user.getUserId())).thenReturn(null);
+    assertThrows(
+        NotFoundException.class,
+        () -> service.addDaaToLibraryCard(user.getUserId(), signingOfficial.getUserId(), 1, 1));
+  }
+
+  @Test
+  void testAddDaaToLibraryCardLCNotFound() {
+    User user = testUser(1);
+    user.setRoles(
+        List.of(
+            new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    User signingOfficial =
+        createUserWithRole(
+            UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    signingOfficial.setInstitutionId(4);
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
+    when(libraryCardDAO.findLibraryCardById(1)).thenReturn(null);
+    assertThrows(
+        NotFoundException.class,
+        () -> service.addDaaToLibraryCard(user.getUserId(), signingOfficial.getUserId(), 1, 1));
+  }
+
+  @Test
+  void testAddDaaToLibraryCardDAANotFound() {
+    User user = testUser(1);
+    user.setRoles(
+        List.of(
+            new UserRole(UserRoles.RESEARCHER.getRoleId(), UserRoles.RESEARCHER.getRoleName())));
+    User signingOfficial =
+        createUserWithRole(
+            UserRoles.SIGNINGOFFICIAL.getRoleId(), UserRoles.SIGNINGOFFICIAL.getRoleName());
+    signingOfficial.setInstitutionId(4);
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
+    when(libraryCardDAO.findLibraryCardById(1)).thenReturn(new LibraryCard());
+    when(daaDAO.findById(1)).thenReturn(null);
+    assertThrows(
+        NotFoundException.class,
+        () -> service.addDaaToLibraryCard(user.getUserId(), signingOfficial.getUserId(), 1, 1));
   }
 
   @Test

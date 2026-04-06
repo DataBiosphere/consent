@@ -128,11 +128,13 @@ public class DaaResource extends Resource implements ConsentLogger {
               : user.getLibraryCard();
       libraryCardService.addDaaToLibraryCard(
           user.getUserId(), authedUser.getUserId(), libraryCard.getId(), daaId);
+      LibraryCard updatedLibraryCard =
+          libraryCardService.findLibraryCardWithDaasById(libraryCard.getId());
       URI uri =
           info.getBaseUriBuilder()
               .replacePath("api/libraryCards/{libraryCardId}")
               .build(libraryCard.getId());
-      return Response.ok().location(uri).entity(libraryCard).build();
+      return Response.ok().location(uri).entity(updatedLibraryCard).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

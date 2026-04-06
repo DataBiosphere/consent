@@ -8,10 +8,12 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.LibraryCardDaaAudit;
@@ -20,6 +22,7 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 
 public class LibraryCardService implements ConsentLogger {
 
+  private final DaaDAO daaDAO;
   private final LibraryCardDAO libraryCardDAO;
   private final InstitutionDAO institutionDAO;
   private final InstitutionService institutionService;
@@ -28,11 +31,13 @@ public class LibraryCardService implements ConsentLogger {
 
   @Inject
   public LibraryCardService(
+      DaaDAO daaDAO,
       LibraryCardDAO libraryCardDAO,
       InstitutionDAO institutionDAO,
       InstitutionService institutionService,
       UserDAO userDAO,
       EmailService emailService) {
+    this.daaDAO = daaDAO;
     this.libraryCardDAO = libraryCardDAO;
     this.institutionDAO = institutionDAO;
     this.institutionService = institutionService;
@@ -97,6 +102,18 @@ public class LibraryCardService implements ConsentLogger {
 
   public void addDaaToLibraryCard(
       Integer lcUserId, Integer userId, Integer libraryCardId, Integer daaId) {
+    User lcUser = userDAO.findUserById(lcUserId);
+    if (lcUser == null) {
+      throw new NotFoundException("User with id " + lcUserId + " not found");
+    }
+    LibraryCard lc = libraryCardDAO.findLibraryCardById(libraryCardId);
+    if (lc == null) {
+      throw new NotFoundException("Library card with id " + libraryCardId + " not found");
+    }
+    DataAccessAgreement daa = daaDAO.findById(daaId);
+    if (daa == null) {
+      throw new NotFoundException("Data Access Agreeement id " + daaId + " not found");
+    }
     libraryCardDAO.createLibraryCardDaaRelation(lcUserId, userId, libraryCardId, daaId);
   }
 

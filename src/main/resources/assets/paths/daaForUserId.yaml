@@ -57,6 +57,6 @@ put:
     403:
       description: User not authorized to create a relationship between a DAA and a User.
     404:
-      description: Data Access Agreement or Library Card Not Found
+      description: User, Data Access Agreement, or Library Card Not Found
     500:
       description: Internal Server Error
