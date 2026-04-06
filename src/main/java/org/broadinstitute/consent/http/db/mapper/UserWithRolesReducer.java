@@ -51,10 +51,12 @@ public class UserWithRolesReducer
     try {
       if (rowView.getColumn("lc_id", Integer.class) != null) {
         LibraryCard lc = rowView.getRow(LibraryCard.class);
-        if (rowView.getColumn("lc_daa_id", Integer.class) != null) {
-          lc.addDaa(rowView.getColumn("lc_daa_id", Integer.class));
+        if (Objects.isNull(user.getLibraryCard())) {
+          user.setLibraryCard(lc);
         }
-        user.setLibraryCard(lc);
+        if (rowView.getColumn("lc_daa_id", Integer.class) != null) {
+          user.getLibraryCard().addDaa(rowView.getColumn("lc_daa_id", Integer.class));
+        }
       }
     } catch (MappingException e) {
       logDebug("Error adding Library Card to User: %s".formatted(e.getMessage()));
