@@ -17,15 +17,22 @@ public class UserWithRolesReducer
 
   @Override
   public void accumulate(Map<Integer, User> map, RowView rowView) {
-    // Some queries look for `user_id` while those that use a prefix look for `u_user_id`
-    Integer userId = 0;
-    if (hasNonZeroColumn(rowView, "user_id")) {
-      userId = rowView.getColumn("user_id", Integer.class);
-    } else if (hasNonZeroColumn(rowView, "u_user_id")) {
-      userId = rowView.getColumn("u_user_id", Integer.class);
-    }
+    Integer userId = resolveUserId(rowView);
     User user = map.computeIfAbsent(userId, id -> rowView.getRow(User.class));
+    addUserRole(rowView, user, userId);
+    addInstitution(rowView, user);
+    addLibraryCard(rowView, user);
+    addUserProperty(rowView, user);
+  }
 
+  private Integer resolveUserId(RowView rowView) {
+    // Some queries look for `user_id` while those that use a prefix look for `u_user_id`
+    return hasOptionalColumn(rowView, "user_id", Integer.class)
+        .or(() -> hasOptionalColumn(rowView, "u_user_id", Integer.class))
+        .orElse(0);
+  }
+
+  private void addUserRole(RowView rowView, User user, Integer userId) {
     try {
       UserRole userRole = mapUserRoleFromRowView(rowView, userId);
       if (userRole != null) {
@@ -34,67 +41,76 @@ public class UserWithRolesReducer
     } catch (MappingException e) {
       logWarn("Error adding User Role to User", e);
     }
+  }
+
+  private void addInstitution(RowView rowView, User user) {
     try {
-      if (Objects.nonNull(rowView.getColumn("i_id", Integer.class))) {
-        Institution institution = rowView.getRow(Institution.class);
-        // There are unusual cases where we somehow create an institution with null values
-        if (Objects.nonNull(institution.getId())) {
-          user.setInstitution(institution);
-        }
-      }
+      hasOptionalColumn(rowView, "i_id", Integer.class)
+          .ifPresent(
+              id -> {
+                Institution institution = rowView.getRow(Institution.class);
+                // There are unusual cases where we somehow create an institution with null values
+                if (Objects.nonNull(institution.getId())) {
+                  user.setInstitution(institution);
+                }
+              });
     } catch (MappingException e) {
       logDebug("Error adding Institution to User: %s".formatted(e.getMessage()));
     }
-    // user role join can cause duplication of data if done in tandem with joins on other tables
-    // ex) The same LC can end up being repeated multiple times
-    // Below only adds LC if not currently saved on the array
+  }
+
+  // user role join can cause duplication of data if done in tandem with joins on other tables
+  // ex) The same LC can end up being repeated multiple times
+  // Below only adds LC if not currently saved on the user
+  private void addLibraryCard(RowView rowView, User user) {
     try {
-      if (rowView.getColumn("lc_id", Integer.class) != null) {
-        LibraryCard lc = rowView.getRow(LibraryCard.class);
-        if (Objects.isNull(user.getLibraryCard())) {
-          user.setLibraryCard(lc);
-        }
-        if (rowView.getColumn("lc_daa_id", Integer.class) != null) {
-          user.getLibraryCard().addDaa(rowView.getColumn("lc_daa_id", Integer.class));
-        }
-      }
+      hasOptionalColumn(rowView, "lc_id", Integer.class)
+          .ifPresent(
+              lcId -> {
+                if (Objects.isNull(user.getLibraryCard())) {
+                  user.setLibraryCard(rowView.getRow(LibraryCard.class));
+                }
+                hasOptionalColumn(rowView, "lc_daa_id", Integer.class)
+                    .ifPresent(daaId -> user.getLibraryCard().addDaa(daaId));
+              });
     } catch (MappingException e) {
       logDebug("Error adding Library Card to User: %s".formatted(e.getMessage()));
     }
+  }
+
+  private void addUserProperty(RowView rowView, User user) {
     try {
-      if (Objects.nonNull(rowView.getColumn("up_property_id", Integer.class))) {
-        UserProperty p = rowView.getRow(UserProperty.class);
-        user.addProperty(p);
-      }
+      hasOptionalColumn(rowView, "up_property_id", Integer.class)
+          .ifPresent(id -> user.addProperty(rowView.getRow(UserProperty.class)));
     } catch (MappingException e) {
       logDebug("Error adding User Property to User: %s".formatted(e.getMessage()));
     }
   }
 
-  // Some queries look for `user_role_id` while those that use a prefix look for `u_user_role_id`
+  // Some queries look for `user_role_id` while those that use a prefix look for `ur_user_role_id`
   private UserRole mapUserRoleFromRowView(RowView rowView, Integer userId) {
-    Integer userRoleId;
-    Integer roleId;
-    String name;
-    Integer dacId = null;
-    // Some queries look for `user_role_id` while those that use a prefix look for `ur_user_role_id`
     if (hasNonZeroColumn(rowView, "user_role_id")) {
-      userRoleId = rowView.getColumn("user_role_id", Integer.class);
-      roleId = rowView.getColumn("role_id", Integer.class);
-      name = rowView.getColumn("name", String.class);
-      if (hasNonZeroColumn(rowView, "dac_id")) {
-        dacId = rowView.getColumn("dac_id", Integer.class);
-      }
-      return new UserRole(userRoleId, userId, roleId, name, dacId);
-    } else if (hasNonZeroColumn(rowView, "ur_user_role_id")) {
-      userRoleId = rowView.getColumn("ur_user_role_id", Integer.class);
-      roleId = rowView.getColumn("ur_role_id", Integer.class);
-      name = rowView.getColumn("ur_name", String.class);
-      if (hasNonZeroColumn(rowView, "ur_dac_id")) {
-        dacId = rowView.getColumn("ur_dac_id", Integer.class);
-      }
-      return new UserRole(userRoleId, userId, roleId, name, dacId);
+      return buildUserRole(rowView, userId, "user_role_id", "role_id", "name", "dac_id");
+    }
+    if (hasNonZeroColumn(rowView, "ur_user_role_id")) {
+      return buildUserRole(
+          rowView, userId, "ur_user_role_id", "ur_role_id", "ur_name", "ur_dac_id");
     }
     return null;
+  }
+
+  private UserRole buildUserRole(
+      RowView rowView,
+      Integer userId,
+      String userRoleIdCol,
+      String roleIdCol,
+      String nameCol,
+      String dacIdCol) {
+    return new UserRole(
+        rowView.getColumn(userRoleIdCol, Integer.class),
+        userId,
+        rowView.getColumn(roleIdCol, Integer.class),
+        rowView.getColumn(nameCol, String.class),
+        hasOptionalColumn(rowView, dacIdCol, Integer.class).orElse(null));
   }
 }
