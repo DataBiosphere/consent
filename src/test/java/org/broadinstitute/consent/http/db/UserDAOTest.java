@@ -79,6 +79,15 @@ class UserDAOTest extends DAOTestHelper {
     int lcId =
         libraryCardDAO.insertLibraryCard(
             user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+    int dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), new Date());
+    int daaId =
+        daaDAO.createDaa(user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), dacId);
+    daaDAO.createDacDaaRelation(dacId, daaId, user.getUserId());
+    libraryCardDAO.createLibraryCardDaaRelation(lcId, daaId);
+    int dacId2 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), new Date());
+    int daaId2 =
+        daaDAO.createDaa(user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), dacId2);
+    libraryCardDAO.createLibraryCardDaaRelation(lcId, daaId2);
     UserProperty eraExpProp = new UserProperty();
     eraExpProp.setPropertyKey(UserFields.ERA_EXPIRATION_DATE.getValue());
     eraExpProp.setPropertyValue(Instant.now().toString());
@@ -107,6 +116,8 @@ class UserDAOTest extends DAOTestHelper {
                 p ->
                     p.getPropertyKey().equals(UserFields.ERA_STATUS.getValue())
                         && p.getPropertyValue().equals(eraAuthProp.getPropertyValue())));
+    assertTrue(foundUser.getLibraryCard().getDaaIds().contains(daaId));
+    assertTrue(foundUser.getLibraryCard().getDaaIds().contains(daaId2));
   }
 
   @Test
