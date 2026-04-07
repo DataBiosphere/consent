@@ -14,7 +14,7 @@ public class LibraryCardDaaAuditMapper implements RowMapper<LibraryCardDaaAudit>
     return new LibraryCardDaaAudit(
         rs.getLong("id"),
         rs.getInt("daa_id"),
-        lcId,
+        lcId > 0 ? lcId : null,
         rs.getInt("lc_user_id"),
         rs.getInt("user_id"),
         AuditActions.valueOf(rs.getString("action").toUpperCase()),
