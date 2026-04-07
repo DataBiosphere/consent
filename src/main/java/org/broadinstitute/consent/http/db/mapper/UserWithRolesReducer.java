@@ -18,7 +18,7 @@ public class UserWithRolesReducer
   @Override
   public void accumulate(Map<Integer, User> map, RowView rowView) {
     Integer userId = resolveUserId(rowView);
-    User user = map.computeIfAbsent(userId, id -> rowView.getRow(User.class));
+    User user = map.computeIfAbsent(userId, ignored -> rowView.getRow(User.class));
     addUserRole(rowView, user, userId);
     addInstitution(rowView, user);
     addLibraryCard(rowView, user);
