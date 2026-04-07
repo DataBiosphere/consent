@@ -40,7 +40,7 @@ class DACMembersDARRADARApprovedMessageTest {
     String datasetName = "dataset-name";
     List<DatasetMailDTO> datasetMailDTOs =
         List.of(new DatasetMailDTO(datasetName, "DUOS-00001", null));
-    String serverUrl = "http://localhost:8080";
+    String serverUrl = "http://localhost:8080/";
     String darCode = "DAR-0001";
     String referenceId = "abcd-12345";
 
