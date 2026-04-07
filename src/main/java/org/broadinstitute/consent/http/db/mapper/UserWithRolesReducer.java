@@ -47,7 +47,7 @@ public class UserWithRolesReducer
     try {
       hasOptionalColumn(rowView, "i_id", Integer.class)
           .ifPresent(
-              id -> {
+              ignored -> {
                 Institution institution = rowView.getRow(Institution.class);
                 // There are unusual cases where we somehow create an institution with null values
                 if (Objects.nonNull(institution.getId())) {
@@ -66,7 +66,7 @@ public class UserWithRolesReducer
     try {
       hasOptionalColumn(rowView, "lc_id", Integer.class)
           .ifPresent(
-              lcId -> {
+              ignored -> {
                 if (Objects.isNull(user.getLibraryCard())) {
                   user.setLibraryCard(rowView.getRow(LibraryCard.class));
                 }
@@ -81,7 +81,7 @@ public class UserWithRolesReducer
   private void addUserProperty(RowView rowView, User user) {
     try {
       hasOptionalColumn(rowView, "up_property_id", Integer.class)
-          .ifPresent(id -> user.addProperty(rowView.getRow(UserProperty.class)));
+          .ifPresent(ignored -> user.addProperty(rowView.getRow(UserProperty.class)));
     } catch (MappingException e) {
       logDebug("Error adding User Property to User: %s".formatted(e.getMessage()));
     }
