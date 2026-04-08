@@ -451,7 +451,7 @@ public class DataAccessRequestService implements ConsentLogger {
 
   @VisibleForTesting
   protected void validateDaas(DataAccessRequest dar) {
-    if (dar.getDatasetIds() == null) {
+    if (dar.getDatasetIds().isEmpty()) {
       throw new IllegalArgumentException("At least one dataset is required");
     }
 

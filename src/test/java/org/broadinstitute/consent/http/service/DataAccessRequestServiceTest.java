@@ -929,6 +929,12 @@ institution or library cards issued: Internal Collaborator member:  \
   }
 
   @Test
+  void testValidateDaas_No_Datasets_Throws() {
+    DataAccessRequest dar = new DataAccessRequest();
+    assertThrows(IllegalArgumentException.class, () -> service.validateDaas(dar));
+  }
+
+  @Test
   void testValidateDaas_No_DAA_Submitted_OR_Required_Allowed() {
     Dataset d = new Dataset();
     d.setDatasetId(10);
