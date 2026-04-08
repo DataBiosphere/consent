@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -382,7 +383,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     parentDar.setUserId(user.getUserId());
     when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
         .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
-    when(daaDAO.findDaaIdsByDatasetIds(parentDar.getDatasetIds())).thenReturn(Set.of());
     doThrow(new UnableToExecuteStatementException("Test exception"))
         .when(dataAccessRequestDAO)
         .insertProgressReport(
@@ -884,7 +884,7 @@ institution or library cards issued: Internal Collaborator member:  \
   }
 
   @Test
-  void testValidateDaas() {
+  void testHasRequiredDaas() {
     Dataset d = new Dataset();
     d.setDatasetId(10);
     Integer daaId = 1;
@@ -895,11 +895,11 @@ institution or library cards issued: Internal Collaborator member:  \
     dar.setData(darData);
     when(daaDAO.findDaaIdsByDatasetIds(List.of(d.getDatasetId()))).thenReturn(Set.of(daaId));
 
-    assertDoesNotThrow(() -> service.validateDaas(dar));
+    assertTrue(service.hasRequiredDaas(dar));
   }
 
   @Test
-  void testValidateDaas_No_DAA_Submitted_Throws() {
+  void testHasRequiredDaas_No_DAA_Submitted_Throws() {
     Dataset d = new Dataset();
     d.setDatasetId(10);
     Integer daaId = 1;
@@ -910,11 +910,11 @@ institution or library cards issued: Internal Collaborator member:  \
     dar.setData(darData);
     when(daaDAO.findDaaIdsByDatasetIds(List.of(d.getDatasetId()))).thenReturn(Set.of(daaId));
 
-    assertThrows(BadRequestException.class, () -> service.validateDaas(dar));
+    assertFalse(service.hasRequiredDaas(dar));
   }
 
   @Test
-  void testValidateDaas_No_DAA_Required_Throws() {
+  void testHasRequiredDaas_No_DAA_Required_Throws() {
     Dataset d = new Dataset();
     d.setDatasetId(10);
     Integer daaId = 1;
@@ -925,17 +925,17 @@ institution or library cards issued: Internal Collaborator member:  \
     dar.setData(darData);
     when(daaDAO.findDaaIdsByDatasetIds(List.of(d.getDatasetId()))).thenReturn(Set.of());
 
-    assertThrows(BadRequestException.class, () -> service.validateDaas(dar));
+    assertFalse(service.hasRequiredDaas(dar));
   }
 
   @Test
-  void testValidateDaas_No_Datasets_Throws() {
+  void testHasRequiredDaas_No_Datasets_Throws() {
     DataAccessRequest dar = new DataAccessRequest();
-    assertThrows(IllegalArgumentException.class, () -> service.validateDaas(dar));
+    assertFalse(service.hasRequiredDaas(dar));
   }
 
   @Test
-  void testValidateDaas_No_DAA_Submitted_OR_Required_Allowed() {
+  void testHasRequiredDaas_No_DAA_Submitted_OR_Required_Allowed() {
     Dataset d = new Dataset();
     d.setDatasetId(10);
     DataAccessRequest dar = new DataAccessRequest();
@@ -945,7 +945,7 @@ institution or library cards issued: Internal Collaborator member:  \
     dar.setData(darData);
     when(daaDAO.findDaaIdsByDatasetIds(List.of(d.getDatasetId()))).thenReturn(Set.of());
 
-    assertDoesNotThrow(() -> service.validateDaas(dar));
+    assertTrue(service.hasRequiredDaas(dar));
   }
 
   @Test

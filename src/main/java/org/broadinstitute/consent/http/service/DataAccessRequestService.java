@@ -259,7 +259,8 @@ public class DataAccessRequestService implements ConsentLogger {
       daaDAO.insertDarDAARelationship(darId, dataAccessRequest.data.getDaaIds());
     }
     syncDataAccessRequestDatasets(datasetIds, referenceId);
-    boolean requiresSOApproval = flagIfSOApprovalIsNeeded(datasetIds, referenceId);
+    boolean requiresSOApproval =
+        flagIfSOApprovalIsNeeded(dataAccessRequest, datasetIds, referenceId);
     if (!requiresSOApproval) {
       ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request);
     }
@@ -321,6 +322,8 @@ public class DataAccessRequestService implements ConsentLogger {
       } catch (TemplateException | IOException e) {
         throw new InternalServerErrorException(e);
       }
+    } else if (!hasRequiredDaas(progressReport)) {
+      dataAccessRequestDAO.updateRequiresSOApproval(true, referenceId);
     }
 
     syncDataAccessRequestDatasets(progressReportDatasetIds, referenceId);
@@ -429,8 +432,6 @@ public class DataAccessRequestService implements ConsentLogger {
         throw new BadRequestException(
             "The selected signing official in the closeout was not found.");
       }
-    } else {
-      validateDaas(progressReport);
     }
   }
 
@@ -450,18 +451,15 @@ public class DataAccessRequestService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  protected void validateDaas(DataAccessRequest dar) {
+  protected boolean hasRequiredDaas(DataAccessRequest dar) {
     if (dar.getDatasetIds().isEmpty()) {
-      throw new IllegalArgumentException("At least one dataset is required");
+      return false;
     }
 
     Set<Integer> requiredDaas = daaDAO.findDaaIdsByDatasetIds(dar.getDatasetIds());
 
-    if (!(requiredDaas.containsAll(dar.getData().getDaaIds())
-        && requiredDaas.size() == dar.getData().getDaaIds().size())) {
-      throw new BadRequestException(
-          "One or more Data Access Agreements are required for and missing from this submission.");
-    }
+    return (requiredDaas.containsAll(dar.getData().getDaaIds())
+        && requiredDaas.size() == dar.getData().getDaaIds().size());
   }
 
   public void validateDar(User user, DataAccessRequest dar) {
@@ -476,7 +474,6 @@ public class DataAccessRequestService implements ConsentLogger {
     validateNoKeyPersonnelDuplicates(dar.getData());
     validatePersonnelInstitutionAndLibraryCardRequirements(user, dar.getData());
     validateCountryOfOperation(dar.getData(), false);
-    validateDaas(dar);
   }
 
   protected void validateCountryOfOperation(DataAccessRequestData darData, boolean skipPI) {
@@ -763,11 +760,13 @@ public class DataAccessRequestService implements ConsentLogger {
     return electionDAO.findOpenElectionsByReferenceIds(List.of(referenceId));
   }
 
-  private boolean flagIfSOApprovalIsNeeded(List<Integer> datasetIds, String referenceId) {
+  private boolean flagIfSOApprovalIsNeeded(
+      DataAccessRequest dar, List<Integer> datasetIds, String referenceId) {
     if (!datasetDAO
-        .filterDatasetIdsByAutomationRuleType(
-            datasetIds, DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name())
-        .isEmpty()) {
+            .filterDatasetIdsByAutomationRuleType(
+                datasetIds, DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name())
+            .isEmpty()
+        || !hasRequiredDaas(dar)) {
       dataAccessRequestDAO.updateRequiresSOApproval(true, referenceId);
       return true;
     }
