@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -457,7 +458,7 @@ class DaaDAOTest extends DAOTestHelper {
             now,
             new DataAccessRequestData(),
             "`");
-    daaDAO.insertDarDAARelationship(darId, Set.of(daa1, daa2));
+    assertDoesNotThrow(() -> daaDAO.insertDarDAARelationship(darId, Set.of(daa1, daa2)));
   }
 
   @Test
@@ -485,7 +486,7 @@ class DaaDAOTest extends DAOTestHelper {
             userId,
             new DataAccessRequestData(),
             "");
-    daaDAO.insertDarDAARelationship(prId, Set.of(daa1, daa2));
+    assertDoesNotThrow(() -> daaDAO.insertDarDAARelationship(prId, Set.of(daa1, daa2)));
   }
 
   @Test
