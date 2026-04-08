@@ -282,6 +282,7 @@ public interface UserDAO extends Transactional<UserDAO> {
           lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date,
           lc.update_user_id AS lc_update_user_id,
           ld.daa_id as lc_daa_id,
+          auth_user.email as lc_daa_authorized_by,
           i.institution_id as i_id,
           i.institution_name as i_name,
           i.it_director_name as i_it_director_name,
@@ -293,6 +294,14 @@ public interface UserDAO extends Transactional<UserDAO> {
           LEFT JOIN roles r ON r.role_id = ur.role_id
           LEFT JOIN library_card lc ON lc.user_id = u.user_id
           LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+          LEFT JOIN LATERAL (
+              SELECT a.user_id
+              FROM lc_daa_audit a
+              WHERE a.lc_id = ld.lc_id AND a.daa_id = ld.daa_id AND a.action = 'ADD'
+              ORDER BY a.action_date DESC
+              LIMIT 1
+          ) audit ON true
+          LEFT JOIN users auth_user ON auth_user.user_id = audit.user_id
           LEFT JOIN institution i ON u.institution_id = i.institution_id
         """)
   List<User> findUsersWithLCsAndInstitution();
@@ -357,6 +366,7 @@ public interface UserDAO extends Transactional<UserDAO> {
           lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date,
           lc.update_user_id AS lc_update_user_id,
           ld.daa_id as lc_daa_id,
+          auth_user.email as lc_daa_authorized_by,
           i.institution_id as i_id,
           i.institution_name as i_name,
           i.it_director_name as i_it_director_name,
@@ -368,6 +378,14 @@ public interface UserDAO extends Transactional<UserDAO> {
           LEFT JOIN roles r ON r.role_id = ur.role_id
           LEFT JOIN library_card lc ON lc.user_id = u.user_id
           LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+          LEFT JOIN LATERAL (
+              SELECT a.user_id
+              FROM lc_daa_audit a
+              WHERE a.lc_id = ld.lc_id AND a.daa_id = ld.daa_id AND a.action = 'ADD'
+              ORDER BY a.action_date DESC
+              LIMIT 1
+          ) audit ON true
+          LEFT JOIN users auth_user ON auth_user.user_id = audit.user_id
           LEFT JOIN institution i ON u.institution_id = i.institution_id
           WHERE u.institution_id = :institutionId
         """)
@@ -395,6 +413,7 @@ public interface UserDAO extends Transactional<UserDAO> {
           lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date,
           lc.update_user_id AS lc_update_user_id,
           ld.daa_id as lc_daa_id,
+          auth_user.email as lc_daa_authorized_by,
           i.institution_id as i_id,
           i.institution_name as i_name,
           i.it_director_name as i_it_director_name,
@@ -406,6 +425,14 @@ public interface UserDAO extends Transactional<UserDAO> {
           LEFT JOIN roles r ON r.role_id = ur.role_id
           LEFT JOIN library_card lc ON lc.user_id = u.user_id
           LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+          LEFT JOIN LATERAL (
+              SELECT a.user_id
+              FROM lc_daa_audit a
+              WHERE a.lc_id = ld.lc_id AND a.daa_id = ld.daa_id AND a.action = 'ADD'
+              ORDER BY a.action_date DESC
+              LIMIT 1
+          ) audit ON true
+          LEFT JOIN users auth_user ON auth_user.user_id = audit.user_id
           LEFT JOIN institution i ON u.institution_id = i.institution_id
           WHERE ld.daa_id = :daaId
         """)

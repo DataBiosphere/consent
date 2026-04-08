@@ -17,6 +17,7 @@ import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.LibraryCardDaaAudit;
+import org.broadinstitute.consent.http.models.LibraryCardDaaDetail;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -314,6 +315,17 @@ class LibraryCardDAOTest extends DAOTestHelper {
     assertEquals(2, lc1.getDaaIds().size());
     assertNotNull(lc2.getDaaIds());
     assertEquals(1, lc2.getDaaIds().size());
+
+    // Verify daaDetails are populated with authorizedBy from the audit table
+    assertNotNull(lc1.getDaaDetails());
+    assertEquals(2, lc1.getDaaDetails().size());
+    for (LibraryCardDaaDetail detail : lc1.getDaaDetails()) {
+      assertNotNull(detail.daaId());
+      assertEquals(signingOfficial.getEmail(), detail.authorizedBy());
+    }
+    assertNotNull(lc2.getDaaDetails());
+    assertEquals(1, lc2.getDaaDetails().size());
+    assertEquals(signingOfficial.getEmail(), lc2.getDaaDetails().getFirst().authorizedBy());
   }
 
   @Test
@@ -366,18 +378,21 @@ class LibraryCardDAOTest extends DAOTestHelper {
     List<LibraryCard> lcs = libraryCardDAO.findAllLibraryCards();
     LibraryCard lc1 = lcs.getFirst();
     assertEquals(2, lc1.getDaaIds().size());
+    assertEquals(2, lc1.getDaaDetails().size());
 
     libraryCardDAO.deleteLibraryCardDaaRelation(
         card.getUserId(), signingOfficial.getUserId(), card.getId(), daaId1);
     lcs = libraryCardDAO.findAllLibraryCards();
     lc1 = lcs.getFirst();
     assertEquals(1, lc1.getDaaIds().size());
+    assertEquals(1, lc1.getDaaDetails().size());
 
     libraryCardDAO.deleteLibraryCardDaaRelation(
         card.getUserId(), signingOfficial.getUserId(), card.getId(), daaId2);
     lcs = libraryCardDAO.findAllLibraryCards();
     lc1 = lcs.getFirst();
     assertTrue(lc1.getDaaIds().isEmpty());
+    assertTrue(lc1.getDaaDetails() == null || lc1.getDaaDetails().isEmpty());
   }
 
   @Test
