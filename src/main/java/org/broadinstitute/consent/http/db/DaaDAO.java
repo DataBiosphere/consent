@@ -2,8 +2,10 @@ package org.broadinstitute.consent.http.db;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.broadinstitute.consent.http.db.mapper.DaaAuditMapper;
+import org.broadinstitute.consent.http.db.mapper.DaaDatasetReducer;
 import org.broadinstitute.consent.http.db.mapper.DaaMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessAgreementReducer;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapper;
@@ -15,6 +17,7 @@ import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
@@ -299,4 +302,25 @@ public interface DaaDAO extends Transactional<DaaDAO> {
   Set<Integer> findDaaIdsByDatasetIds(
       @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING)
           List<Integer> datasetIds);
+
+  @SqlQuery(
+      """
+          SELECT daa.daa_id, dataset.dataset_id
+          FROM data_access_agreement daa
+          INNER JOIN dac_daa ON daa.daa_id = dac_daa.daa_id
+          INNER JOIN dac ON dac.dac_id = dac_daa.dac_id
+          INNER JOIN dataset ON dataset.dac_id = dac.dac_id
+          WHERE dataset.dataset_id IN (<datasetIds>)
+          GROUP BY daa.daa_id, dataset.dataset_id
+          ORDER BY daa.daa_id
+      """)
+  @UseRowReducer(DaaDatasetReducer.class)
+  Map<Integer, Set<Integer>> findDaaIdsByDatasetIds(
+      @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING) Set<Integer> datasetIds);
+
+  @SqlBatch(
+      """
+        INSERT INTO dar_daa (dar_id, daa_id) VALUES (:darId, :daaId)
+    """)
+  void insertDarDAARelationship(@Bind("darId") Integer darId, @Bind("daaId") Set<Integer> daaIds);
 }

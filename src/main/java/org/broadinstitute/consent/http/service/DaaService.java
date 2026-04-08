@@ -13,7 +13,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
@@ -220,5 +222,9 @@ public class DaaService implements ConsentLogger {
 
   public List<DataAccessAgreement> findByDarReferenceId(String referenceId) {
     return daaDAO.findByDarReferenceId(referenceId);
+  }
+
+  public Map<Integer, Set<Integer>> findDaaIdsByDatasetIds(Set<Integer> datasetIds) {
+    return daaDAO.findDaaIdsByDatasetIds(datasetIds);
   }
 }

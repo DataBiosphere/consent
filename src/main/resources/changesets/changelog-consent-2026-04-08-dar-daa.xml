@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2026-04-08-dar-daa" author="otchet">
+    <createTable tableName="dar_daa">
+      <column name="dar_id" type="bigint">
+        <constraints primaryKey="false" nullable="false" foreignKeyName="fkDaa_Dar_DarId" referencedTableName="data_access_request" referencedColumnNames="id" />
+      </column>
+      <column name="daa_id" type="bigint">
+        <constraints nullable="false" foreignKeyName="fkDaa_Daa_DaaId" referencedTableName="data_access_agreement" referencedColumnNames="daa_id" />
+      </column>
+    </createTable>
+  </changeSet>
+</databaseChangeLog>

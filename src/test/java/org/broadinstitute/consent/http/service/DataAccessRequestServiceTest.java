@@ -38,6 +38,7 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DAOContainer;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -94,6 +95,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   @Mock private DacDAO dacDAO;
   @Mock private UserDAO userDAO;
   @Mock private DatasetDAO dataSetDAO;
+  @Mock private DaaDAO daaDAO;
   @Mock private ElectionDAO electionDAO;
   @Mock private EmailService emailService;
   @Mock private DacService dacService;
@@ -168,6 +170,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     container.setElectionDAO(electionDAO);
     container.setVoteDAO(voteDAO);
     container.setMatchDAO(matchDAO);
+    container.setDaaDAO(daaDAO);
     serverUrl = config.getServicesConfiguration().getLocalURL();
     service =
         new DataAccessRequestService(
@@ -211,9 +214,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
     when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class)))
         .thenReturn(randomInt(1, 100));
-    doNothing()
-        .when(dataAccessRequestDAO)
-        .insertDataAccessRequest(
+    when(dataAccessRequestDAO.insertDataAccessRequest(
             anyInt(),
             anyString(),
             anyInt(),
@@ -221,7 +222,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
             any(Date.class),
             any(Date.class),
             any(DataAccessRequestData.class),
-            anyString());
+            anyString()))
+        .thenReturn(1);
     when(dataSetDAO.filterDatasetIdsByAutomationRuleType(
             dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
         .thenReturn(dar.getDatasetIds());
@@ -380,6 +382,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     parentDar.setUserId(user.getUserId());
     when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
         .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
+    when(daaDAO.findDaaIdsByDatasetIds(parentDar.getDatasetIds())).thenReturn(Set.of());
     doThrow(new UnableToExecuteStatementException("Test exception"))
         .when(dataAccessRequestDAO)
         .insertProgressReport(
@@ -878,6 +881,65 @@ institution or library cards issued: Internal Collaborator member:  \
         .thenReturn(List.of(dar1, dar2));
 
     assertEquals(List.of(dar1, dar2), service.getApprovedDARsForDataset(d));
+  }
+
+  @Test
+  void testValidateDaas() {
+    Dataset d = new Dataset();
+    d.setDatasetId(10);
+    Integer daaId = 1;
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setDatasetIds(List.of(d.getDatasetId()));
+    DataAccessRequestData darData = new DataAccessRequestData();
+    darData.setDaaIds(Set.of(daaId));
+    dar.setData(darData);
+    when(daaDAO.findDaaIdsByDatasetIds(List.of(d.getDatasetId()))).thenReturn(Set.of(daaId));
+
+    assertDoesNotThrow(() -> service.validateDaas(dar));
+  }
+
+  @Test
+  void testValidateDaas_No_DAA_Submitted_Throws() {
+    Dataset d = new Dataset();
+    d.setDatasetId(10);
+    Integer daaId = 1;
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setDatasetIds(List.of(d.getDatasetId()));
+    DataAccessRequestData darData = new DataAccessRequestData();
+    darData.setDaaIds(Set.of());
+    dar.setData(darData);
+    when(daaDAO.findDaaIdsByDatasetIds(List.of(d.getDatasetId()))).thenReturn(Set.of(daaId));
+
+    assertThrows(BadRequestException.class, () -> service.validateDaas(dar));
+  }
+
+  @Test
+  void testValidateDaas_No_DAA_Required_Throws() {
+    Dataset d = new Dataset();
+    d.setDatasetId(10);
+    Integer daaId = 1;
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setDatasetIds(List.of(d.getDatasetId()));
+    DataAccessRequestData darData = new DataAccessRequestData();
+    darData.setDaaIds(Set.of(daaId));
+    dar.setData(darData);
+    when(daaDAO.findDaaIdsByDatasetIds(List.of(d.getDatasetId()))).thenReturn(Set.of());
+
+    assertThrows(BadRequestException.class, () -> service.validateDaas(dar));
+  }
+
+  @Test
+  void testValidateDaas_No_DAA_Submitted_OR_Required_Allowed() {
+    Dataset d = new Dataset();
+    d.setDatasetId(10);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setDatasetIds(List.of(d.getDatasetId()));
+    DataAccessRequestData darData = new DataAccessRequestData();
+    darData.setDaaIds(Set.of());
+    dar.setData(darData);
+    when(daaDAO.findDaaIdsByDatasetIds(List.of(d.getDatasetId()))).thenReturn(Set.of());
+
+    assertDoesNotThrow(() -> service.validateDaas(dar));
   }
 
   @Test

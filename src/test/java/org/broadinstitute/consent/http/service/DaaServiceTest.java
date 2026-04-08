@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -23,7 +24,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
@@ -462,5 +465,14 @@ class DaaServiceTest extends AbstractTestHelper {
 
     List<DataAccessAgreement> daas = service.findByDarReferenceId(randomAlphabetic(5));
     assertTrue(daas.isEmpty());
+  }
+
+  @Test
+  void testFindDaaIdsByDatasetIds() {
+    initService();
+    when(daaDAO.findDaaIdsByDatasetIds(anySet())).thenReturn(Map.of());
+
+    Map<Integer, Set<Integer>> daaMap = service.findDaaIdsByDatasetIds(Set.of(1, 2, 3));
+    assertTrue(daaMap.isEmpty());
   }
 }

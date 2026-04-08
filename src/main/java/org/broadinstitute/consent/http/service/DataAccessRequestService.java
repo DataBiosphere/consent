@@ -25,6 +25,7 @@ import java.util.UUID;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DAOContainer;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -74,6 +75,7 @@ public class DataAccessRequestService implements ConsentLogger {
   private static final String LAB_STAFF = "Lab staff";
   private final CounterService counterService;
   private final DataAccessRequestDAO dataAccessRequestDAO;
+  private final DaaDAO daaDAO;
   private final DarCollectionDAO darCollectionDAO;
   private final ElectionDAO electionDAO;
   private final InstitutionService institutionService;
@@ -109,6 +111,7 @@ public class DataAccessRequestService implements ConsentLogger {
     this.matchDAO = container.getMatchDAO();
     this.voteDAO = container.getVoteDAO();
     this.userDAO = container.getUserDAO();
+    this.daaDAO = container.getDaaDAO();
     this.dacService = dacService;
     this.dataAccessRequestServiceDAO = dataAccessRequestServiceDAO;
     this.ruleService = ruleService;
@@ -243,15 +246,17 @@ public class DataAccessRequestService implements ConsentLogger {
           referenceId, user.getUserId(), now, now, darData, user.getEraCommonsId());
     } else {
       referenceId = UUID.randomUUID().toString();
-      dataAccessRequestDAO.insertDataAccessRequest(
-          collectionId,
-          referenceId,
-          user.getUserId(),
-          now,
-          now,
-          now,
-          darData,
-          user.getEraCommonsId());
+      Integer darId =
+          dataAccessRequestDAO.insertDataAccessRequest(
+              collectionId,
+              referenceId,
+              user.getUserId(),
+              now,
+              now,
+              now,
+              darData,
+              user.getEraCommonsId());
+      daaDAO.insertDarDAARelationship(darId, dataAccessRequest.data.getDaaIds());
     }
     syncDataAccessRequestDatasets(datasetIds, referenceId);
     boolean requiresSOApproval = flagIfSOApprovalIsNeeded(datasetIds, referenceId);
@@ -287,13 +292,15 @@ public class DataAccessRequestService implements ConsentLogger {
           "Progress report can only be created for approved datasets in the parent DAR");
     }
     try {
-      dataAccessRequestDAO.insertProgressReport(
-          progressReport.getParentId(),
-          progressReport.getCollectionId(),
-          referenceId,
-          user.getUserId(),
-          progressReport.getData(),
-          user.getEraCommonsId());
+      Integer id =
+          dataAccessRequestDAO.insertProgressReport(
+              progressReport.getParentId(),
+              progressReport.getCollectionId(),
+              referenceId,
+              user.getUserId(),
+              progressReport.getData(),
+              user.getEraCommonsId());
+      daaDAO.insertDarDAARelationship(id, progressReport.getData().getDaaIds());
     } catch (JdbiException e) {
       throw new BadRequestException(
           "Unable to create progress report for Data Access Request " + parentDar.getReferenceId());
@@ -420,6 +427,8 @@ public class DataAccessRequestService implements ConsentLogger {
         throw new BadRequestException(
             "The selected signing official in the closeout was not found.");
       }
+    } else {
+      validateDaas(progressReport);
     }
   }
 
@@ -438,6 +447,21 @@ public class DataAccessRequestService implements ConsentLogger {
     userService.validateActiveERACredentials(user);
   }
 
+  @VisibleForTesting
+  protected void validateDaas(DataAccessRequest dar) {
+    if (dar.getDatasetIds() == null) {
+      throw new IllegalArgumentException("At least one dataset is required");
+    }
+
+    Set<Integer> requiredDaas = daaDAO.findDaaIdsByDatasetIds(dar.getDatasetIds());
+
+    if (!(requiredDaas.containsAll(dar.getData().getDaaIds())
+        && requiredDaas.size() == dar.getData().getDaaIds().size())) {
+      throw new BadRequestException(
+          "One or more Data Access Agreements are required for and missing from this submission.");
+    }
+  }
+
   public void validateDar(User user, DataAccessRequest dar) {
     validateCommonDarAndProgressReportElements(user, dar);
 
@@ -450,6 +474,7 @@ public class DataAccessRequestService implements ConsentLogger {
     validateNoKeyPersonnelDuplicates(dar.getData());
     validatePersonnelInstitutionAndLibraryCardRequirements(user, dar.getData());
     validateCountryOfOperation(dar.getData(), false);
+    validateDaas(dar);
   }
 
   protected void validateCountryOfOperation(DataAccessRequestData darData, boolean skipPI) {

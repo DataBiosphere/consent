@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.resources;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
@@ -20,10 +22,12 @@ import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriInfo;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
@@ -384,6 +388,20 @@ public class DaaResource extends Resource implements ConsentLogger {
       String dacName = dac.getName();
       daaService.sendNewDaaEmails(user, oldDaaId, dacName, newDaaName);
       return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, SIGNINGOFFICIAL, RESEARCHER})
+  @Path("datasets")
+  public Response findDaaForDatasets(@Auth DuosUser duosUser, String json) {
+    try {
+      Gson gson = new Gson();
+      Type setType = new TypeToken<Set<Integer>>() {}.getType();
+      Set<Integer> set = gson.fromJson(json, setType);
+      return Response.ok(daaService.findDaaIdsByDatasetIds(set)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

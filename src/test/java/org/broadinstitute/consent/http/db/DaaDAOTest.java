@@ -11,13 +11,16 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.DaaAudit;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
+import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -386,6 +389,103 @@ class DaaDAOTest extends DAOTestHelper {
     assertFalse(daaIds.isEmpty());
     assertEquals(1, daaIds.size());
     assertTrue(daaIds.contains(daaId));
+  }
+
+  @Test
+  void testFindDaaIdsWithDatasetIds() {
+    Integer userId = createUserId();
+    Integer dacId1 = dacDAO.createDac("dac1", randomAlphabetic(5), "", new Date());
+    Integer dacId2 = dacDAO.createDac("dac2", randomAlphabetic(5), "", new Date());
+    Dataset dataset1 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId1));
+    Dataset dataset2 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId2));
+    Dataset dataset3 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId2));
+
+    Integer daa1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId1);
+    Integer daa2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
+
+    daaDAO.createDacDaaRelation(dacId1, daa1, userId);
+    daaDAO.createDacDaaRelation(dacId2, daa2, userId);
+
+    Map<Integer, Set<Integer>> daaDatasetMap =
+        daaDAO.findDaaIdsByDatasetIds(
+            Set.of(dataset1.getDatasetId(), dataset2.getDatasetId(), dataset3.getDatasetId()));
+    assertFalse(daaDatasetMap.isEmpty());
+    assertEquals(2, daaDatasetMap.size());
+
+    Set<Integer> daa1Datasets = daaDatasetMap.get(daa1);
+    assertEquals(1, daa1Datasets.size());
+    assertTrue(daa1Datasets.contains(dataset1.getDatasetId()));
+
+    Set<Integer> daa2Datasets = daaDatasetMap.get(daa2);
+    assertEquals(2, daa2Datasets.size());
+    assertTrue(daa2Datasets.contains(dataset2.getDatasetId()));
+    assertTrue(daa2Datasets.contains(dataset3.getDatasetId()));
+  }
+
+  @Test
+  void testFindDaaIdsWithDatasetIds_No_IDs() {
+    Map<Integer, Set<Integer>> daaDatasetMap = daaDAO.findDaaIdsByDatasetIds(Set.of());
+    assertTrue(daaDatasetMap.isEmpty());
+  }
+
+  @Test
+  void testFindDaaIdsWithDatasetIds_No_Data() {
+    Map<Integer, Set<Integer>> daaDatasetMap = daaDAO.findDaaIdsByDatasetIds(Set.of(1, 2, 3));
+    assertTrue(daaDatasetMap.isEmpty());
+  }
+
+  @Test
+  void testStoreDarDAARelationshipForDar() {
+    Integer userId = createUserId();
+    Integer dacId1 = dacDAO.createDac("dac1", randomAlphabetic(5), "", new Date());
+    Integer dacId2 = dacDAO.createDac("dac2", randomAlphabetic(5), "", new Date());
+
+    Integer daa1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId1);
+    Integer daa2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
+
+    daaDAO.createDacDaaRelation(dacId1, daa1, userId);
+    daaDAO.createDacDaaRelation(dacId2, daa2, userId);
+    Date now = new Date();
+    Integer darCollectionId = darCollectionDAO.insertDarCollection("ABC", userId, now);
+    Integer darId =
+        dataAccessRequestDAO.insertDataAccessRequest(
+            darCollectionId,
+            UUID.randomUUID().toString(),
+            userId,
+            now,
+            now,
+            now,
+            new DataAccessRequestData(),
+            "`");
+    daaDAO.insertDarDAARelationship(darId, Set.of(daa1, daa2));
+  }
+
+  @Test
+  void testStoreDarDAARelationshipForPR() {
+    Integer userId = createUserId();
+    Integer dacId1 = dacDAO.createDac("dac1", randomAlphabetic(5), "", new Date());
+    Integer dacId2 = dacDAO.createDac("dac2", randomAlphabetic(5), "", new Date());
+
+    Integer daa1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId1);
+    Integer daa2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
+
+    daaDAO.createDacDaaRelation(dacId1, daa1, userId);
+    daaDAO.createDacDaaRelation(dacId2, daa2, userId);
+    Date now = new Date();
+    Integer darCollectionId = darCollectionDAO.insertDarCollection("ABC", userId, now);
+    String darUUID = UUID.randomUUID().toString();
+    Integer darId =
+        dataAccessRequestDAO.insertDataAccessRequest(
+            darCollectionId, darUUID, userId, now, now, now, new DataAccessRequestData(), "`");
+    Integer prId =
+        dataAccessRequestDAO.insertProgressReport(
+            darId,
+            darCollectionId,
+            UUID.randomUUID().toString(),
+            userId,
+            new DataAccessRequestData(),
+            "");
+    daaDAO.insertDarDAARelationship(prId, Set.of(daa1, daa2));
   }
 
   @Test
