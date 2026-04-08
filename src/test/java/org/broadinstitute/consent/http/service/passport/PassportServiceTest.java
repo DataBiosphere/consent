@@ -9,14 +9,19 @@ import static org.mockito.Mockito.when;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
+import org.broadinstitute.consent.http.service.DacService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,13 +34,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class PassportServiceTest extends AbstractTestHelper {
 
   @Mock private DatasetDAO datasetDAO;
+  @Mock private DacService dacService;
   @Mock private DuosUser duosUser;
 
   private PassportService service;
 
   @BeforeEach
   void setUp() {
-    service = new PassportService(datasetDAO);
+    service = new PassportService(datasetDAO, dacService);
   }
 
   @Test
@@ -208,6 +214,162 @@ class PassportServiceTest extends AbstractTestHelper {
     return info;
   }
 
+  // -----------------------------------------------------------------------
+  // generateDataPassport
+  // -----------------------------------------------------------------------
+
+  @Test
+  void generateDataPassport_datasetNotFound_throwsNotFoundException() {
+    when(datasetDAO.findDatasetByAlias(1)).thenReturn(null);
+    assertThrows(NotFoundException.class, () -> service.generateDataPassport("DUOS-000001"));
+  }
+
+  @Test
+  void generateDataPassport_datasetWithNoDac_returnsOnlyConsentedDataUseTermsVisa() {
+    Dataset dataset = datasetWithAlias(1);
+    dataset.setDacId(null);
+    when(datasetDAO.findDatasetByAlias(1)).thenReturn(dataset);
+
+    PassportClaim claim = service.generateDataPassport("DUOS-000001");
+
+    assertNotNull(claim);
+    assertEquals(1, claim.ga4gh_passport_v1().size());
+    assertEquals(
+        VisaClaimTypes.CONSENTED_DATA_USE_TERMS.type,
+        claim.ga4gh_passport_v1().getFirst().ga4gh_visa_v1().type());
+  }
+
+  @Test
+  void generateDataPassport_datasetWithDacAndNoDaa_returnsTwoVisas() {
+    Dataset dataset = datasetWithAlias(1);
+    dataset.setDacId(10);
+    Dac dac = dacWithId(10);
+    dac.setAssociatedDaa(null);
+
+    when(datasetDAO.findDatasetByAlias(1)).thenReturn(dataset);
+    when(dacService.findById(10)).thenReturn(dac);
+
+    PassportClaim claim = service.generateDataPassport("DUOS-000001");
+
+    assertNotNull(claim);
+    assertEquals(2, claim.ga4gh_passport_v1().size());
+    assertVisaTypePresent(claim, VisaClaimTypes.CONSENTED_DATA_USE_TERMS.type);
+    assertVisaTypePresent(claim, VisaClaimTypes.OVERSIGHT_BODIES.type);
+  }
+
+  @Test
+  void generateDataPassport_datasetWithDacAndDaa_returnsThreeVisas() {
+    Dataset dataset = datasetWithAlias(1);
+    dataset.setDacId(10);
+    Dac dac = dacWithId(10);
+    DataAccessAgreement daa = new DataAccessAgreement();
+    daa.setDaaId(99);
+    daa.setCreateDate(Instant.now());
+    dac.setAssociatedDaa(daa);
+
+    when(datasetDAO.findDatasetByAlias(1)).thenReturn(dataset);
+    when(dacService.findById(10)).thenReturn(dac);
+
+    PassportClaim claim = service.generateDataPassport("DUOS-000001");
+
+    assertNotNull(claim);
+    assertEquals(3, claim.ga4gh_passport_v1().size());
+    assertVisaTypePresent(claim, VisaClaimTypes.CONSENTED_DATA_USE_TERMS.type);
+    assertVisaTypePresent(claim, VisaClaimTypes.OVERSIGHT_BODIES.type);
+    assertVisaTypePresent(claim, VisaClaimTypes.REQUIRED_AGREEMENTS.type);
+  }
+
+  @Test
+  void generateDataPassport_subFieldIsDatasetIdentifier() {
+    Dataset dataset = datasetWithAlias(1);
+    dataset.setDacId(null);
+    when(datasetDAO.findDatasetByAlias(1)).thenReturn(dataset);
+
+    PassportClaim claim = service.generateDataPassport("DUOS-000001");
+
+    claim
+        .ga4gh_passport_v1()
+        .forEach(v -> assertEquals("DUOS-000001", v.sub(), "sub should be the dataset identifier"));
+  }
+
+  @Test
+  void generateDataPassport_issFieldIsIss() {
+    Dataset dataset = datasetWithAlias(1);
+    dataset.setDacId(null);
+    when(datasetDAO.findDatasetByAlias(1)).thenReturn(dataset);
+
+    PassportClaim claim = service.generateDataPassport("DUOS-000001");
+
+    claim.ga4gh_passport_v1().forEach(v -> assertEquals(PassportService.ISS, v.iss()));
+  }
+
+  @Test
+  void generateDataPassport_iatAndExpAreEpochSeconds() {
+    Dataset dataset = datasetWithAlias(1);
+    dataset.setDacId(null);
+    when(datasetDAO.findDatasetByAlias(1)).thenReturn(dataset);
+
+    PassportClaim claim = service.generateDataPassport("DUOS-000001");
+
+    long nowSeconds = Instant.now().getEpochSecond();
+    claim
+        .ga4gh_passport_v1()
+        .forEach(
+            v -> {
+              assertTrue(v.iat() <= nowSeconds + 5, "iat should be seconds, not milliseconds");
+              assertTrue(v.exp() > v.iat(), "exp should be after iat");
+              assertEquals(PassportService.EXPIRATION_SECONDS, v.exp() - v.iat());
+            });
+  }
+
+  @Test
+  void generateDataPassport_dacNotFound_returnsOnlyConsentedDataUseTermsVisa() {
+    Dataset dataset = datasetWithAlias(1);
+    dataset.setDacId(10);
+    when(datasetDAO.findDatasetByAlias(1)).thenReturn(dataset);
+    when(dacService.findById(10)).thenReturn(null);
+
+    PassportClaim claim = service.generateDataPassport("DUOS-000001");
+
+    assertEquals(1, claim.ga4gh_passport_v1().size());
+    assertVisaTypePresent(claim, VisaClaimTypes.CONSENTED_DATA_USE_TERMS.type);
+  }
+
+  @Test
+  void
+      generateDataPassport_unsupportedOperationFromDacLookup_returnsOnlyConsentedDataUseTermsVisa() {
+    Dataset dataset = datasetWithAlias(1);
+    dataset.setDacId(10);
+    when(datasetDAO.findDatasetByAlias(1)).thenReturn(dataset);
+    when(dacService.findById(10)).thenThrow(new UnsupportedOperationException("unsupported"));
+
+    PassportClaim claim = service.generateDataPassport("DUOS-000001");
+
+    assertNotNull(claim);
+    assertEquals(1, claim.ga4gh_passport_v1().size());
+    assertVisaTypePresent(claim, VisaClaimTypes.CONSENTED_DATA_USE_TERMS.type);
+  }
+
+  private void assertVisaTypePresent(PassportClaim claim, String type) {
+    assertTrue(
+        claim.ga4gh_passport_v1().stream().anyMatch(v -> type.equals(v.ga4gh_visa_v1().type())),
+        "Expected visa type '%s' to be present".formatted(type));
+  }
+
+  private Dataset datasetWithAlias(int alias) {
+    Dataset d = new Dataset();
+    d.setAlias(alias);
+    d.setCreateDate(new Date());
+    return d;
+  }
+
+  private Dac dacWithId(int dacId) {
+    Dac dac = new Dac();
+    dac.setDacId(dacId);
+    dac.setCreateDate(new Date());
+    return dac;
+  }
+
   private int datasetCounter = 0;
 
   private ApprovedDataset createApprovedDataset() {
@@ -222,5 +384,61 @@ class PassportServiceTest extends AbstractTestHelper {
             Timestamp.from(Instant.now()));
     d.setDatasetIdentifier(datasetIdentifier);
     return d;
+  }
+
+  @Test
+  void testAffiliationAndRole_assertedHandlesSqlDateOnUser() {
+    User user = createUser();
+    java.sql.Date sqlDate = new java.sql.Date(1_700_000_000_000L);
+    user.setCreateDate(sqlDate);
+
+    AffiliationAndRole affiliationAndRole = new AffiliationAndRole(user);
+
+    assertEquals(
+        PassportService.getEpochSeconds(Instant.ofEpochMilli(sqlDate.getTime())),
+        affiliationAndRole.asserted());
+  }
+
+  @Test
+  void testAffiliationAndRole_assertedHandlesSqlDateOnLibraryCard() {
+    User user = createUser();
+    LibraryCard card = new LibraryCard();
+    java.sql.Date sqlDate = new java.sql.Date(1_710_000_000_000L);
+    card.setCreateDate(sqlDate);
+    user.setLibraryCard(card);
+
+    AffiliationAndRole affiliationAndRole = new AffiliationAndRole(user);
+
+    assertEquals(
+        PassportService.getEpochSeconds(Instant.ofEpochMilli(sqlDate.getTime())),
+        affiliationAndRole.asserted());
+  }
+
+  @Test
+  void testResearcherStatus_assertedHandlesSqlDateOnUser() {
+    User user = createUser();
+    java.sql.Date sqlDate = new java.sql.Date(1_720_000_000_000L);
+    user.setCreateDate(sqlDate);
+
+    ResearcherStatus researcherStatus = new ResearcherStatus(user);
+
+    assertEquals(
+        PassportService.getEpochSeconds(Instant.ofEpochMilli(sqlDate.getTime())),
+        researcherStatus.asserted());
+  }
+
+  @Test
+  void testResearcherStatus_assertedHandlesSqlDateOnLibraryCard() {
+    User user = createUser();
+    LibraryCard card = new LibraryCard();
+    java.sql.Date sqlDate = new java.sql.Date(1_730_000_000_000L);
+    card.setCreateDate(sqlDate);
+    user.setLibraryCard(card);
+
+    ResearcherStatus researcherStatus = new ResearcherStatus(user);
+
+    assertEquals(
+        PassportService.getEpochSeconds(Instant.ofEpochMilli(sqlDate.getTime())),
+        researcherStatus.asserted());
   }
 }

@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service.passport;
 import com.google.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -11,9 +12,12 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
+import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
 /** <a href="https://ga4gh.github.io/data-security/ga4gh-passport">GA4GH Passport</a> */
@@ -23,10 +27,12 @@ public class PassportService implements ConsentLogger {
   public static final int EXPIRATION_SECONDS = 3600;
 
   private final DatasetDAO datasetDAO;
+  private final DacService dacService;
 
   @Inject
-  public PassportService(DatasetDAO datasetDAO) {
+  public PassportService(DatasetDAO datasetDAO, DacService dacService) {
     this.datasetDAO = datasetDAO;
+    this.dacService = dacService;
   }
 
   public PassportClaim generatePassport(DuosUser duosUser) {
@@ -55,6 +61,65 @@ public class PassportService implements ConsentLogger {
             .flatMap(List::stream)
             .toList();
     return new PassportClaim(allVisas);
+  }
+
+  /**
+   * Generates a Data Passport for a specific dataset, as proposed in the GA4GH Data Passports
+   * specification (see https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5372874). The returned
+   * {@link PassportClaim} uses the same envelope as a Researcher Passport but contains
+   * dataset-centric visas:
+   *
+   * <ul>
+   *   <li>{@link ConsentedDataUseTermsVisa} — links to the dataset's DUO-coded data use terms
+   *   <li>{@link OversightBodiesVisa} — identifies the DAC governing the dataset
+   *   <li>{@link RequiredAgreementsVisa} — references the DAA users must accept (if one exists)
+   * </ul>
+   *
+   * <p>The {@code sub} field of each visa is the dataset identifier (e.g. {@code DUOS-000001})
+   * rather than a user subject ID, reflecting the dataset-centric nature of the passport.
+   *
+   * @param datasetIdentifier the formatted DUOS identifier, e.g. {@code DUOS-000001}
+   * @return a {@link PassportClaim} containing the Data Passport visas for the dataset
+   * @throws NotFoundException if the dataset does not exist
+   */
+  public PassportClaim generateDataPassport(String datasetIdentifier) {
+    Integer alias = Dataset.parseIdentifierToAlias(datasetIdentifier);
+    Dataset dataset = datasetDAO.findDatasetByAlias(alias);
+    if (dataset == null) {
+      throw new NotFoundException("Dataset not found: " + datasetIdentifier);
+    }
+
+    List<Visa> visas = new ArrayList<>();
+
+    // ConsentedDataUseTerms — always present if the dataset exists
+    visas.add(visaFromVisaClaimType(datasetIdentifier, new ConsentedDataUseTermsVisa(dataset)));
+
+    // OversightBodies + RequiredAgreements — only when the dataset is associated with a DAC
+    if (dataset.getDacId() != null) {
+      try {
+        Dac dac = dacService.findById(dataset.getDacId());
+        addDacBackedVisas(datasetIdentifier, visas, dac);
+      } catch (UnsupportedOperationException e) {
+        logWarn(
+            "Unable to build DAC-backed visas for dataset %s; returning consented-data-use visa only"
+                .formatted(datasetIdentifier),
+            e);
+      }
+    }
+
+    return new PassportClaim(visas);
+  }
+
+  private void addDacBackedVisas(String datasetIdentifier, List<Visa> visas, Dac dac) {
+    if (dac == null) {
+      return;
+    }
+    visas.add(visaFromVisaClaimType(datasetIdentifier, new OversightBodiesVisa(dac)));
+    if (dac.getAssociatedDaa() != null) {
+      visas.add(
+          visaFromVisaClaimType(
+              datasetIdentifier, new RequiredAgreementsVisa(dac.getAssociatedDaa())));
+    }
   }
 
   protected List<Visa> buildControlledAccessGrants(

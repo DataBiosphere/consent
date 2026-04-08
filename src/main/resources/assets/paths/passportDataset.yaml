@@ -1,0 +1,42 @@
+get:
+  summary: Get Data Passport
+  description: |
+    Returns a Data Passport for a given dataset, as proposed in the
+    [GA4GH Data Passports specification](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5372874).
+
+    The response uses the same `ga4gh_passport_v1` envelope as a Researcher Passport
+    (see `/api/passport/userinfo`) but contains dataset-centric visas that describe
+    the governance requirements of the dataset rather than the permissions of a researcher:
+
+    - **ConsentedDataUseTerms** — links to the dataset's DUO-coded data use terms
+    - **OversightBodies** — identifies the DAC responsible for governing access
+    - **RequiredAgreements** — references the Data Access Agreement users must accept (when one exists)
+
+    The `sub` field of each visa is the dataset identifier (e.g. `DUOS-000001`) rather
+    than a user subject ID, reflecting the dataset-centric nature of the passport.
+  tags:
+    - Admin
+  parameters:
+    - name: datasetIdentifier
+      in: path
+      description: The formatted DUOS dataset identifier, e.g. DUOS-000001
+      required: true
+      schema:
+        type: string
+        example: DUOS-000001
+  responses:
+    200:
+      description: A Passport Object containing dataset-centric visas for the specified dataset
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/PassportClaim.yaml'
+    400:
+      description: Bad Request — the dataset identifier could not be parsed
+    403:
+      description: Forbidden — the authenticated user does not have permission to access this resource
+    404:
+      description: Dataset not found
+    500:
+      description: Internal Server Error
+
