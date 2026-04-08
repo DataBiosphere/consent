@@ -71,6 +71,8 @@ paths:
     $ref: 'paths/daaById.yaml'
   /api/daa/{dacId}/updated/{oldDaaId}/{newDaaName}:
     $ref: 'paths/daaUpdateByDacId.yaml'
+  /api/daa/datasets:
+    $ref: 'paths/daaDatasets.yaml'
   /api/dac:
     $ref: 'paths/dac.yaml'
   /api/dac/rules:
