@@ -422,7 +422,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void createCloseoutProgressReport_RequiresSOApproval() throws TemplateException, IOException {
+  void createCloseoutProgressReport_RequiresSOApproval() {
     User user = createUserWithPrerequisites();
     User signingOfficial = createUserWithPrerequisites();
     signingOfficial.setInstitutionId(user.getInstitutionId());
