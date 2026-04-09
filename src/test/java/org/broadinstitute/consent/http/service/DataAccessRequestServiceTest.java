@@ -227,9 +227,42 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         .thenReturn(1);
     when(dataSetDAO.filterDatasetIdsByAutomationRuleType(
             dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
-        .thenReturn(dar.getDatasetIds());
+        .thenReturn(List.of());
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
     assertNotNull(newDar);
+    verify(dataAccessRequestDAO, never()).updateRequiresSOApproval(eq(true), anyString());
+  }
+
+  @Test
+  void testCreateDataAccessRequest_Create_Missing_DAAs() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.addDatasetIds(List.of(1, 2, 3));
+    dar.setCreateDate(new Timestamp(1000));
+    dar.setReferenceId("id");
+    User user = createUserWithPrerequisites();
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
+    when(counterService.getNextDarSequence()).thenReturn(1);
+    when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
+    when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
+    when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class)))
+        .thenReturn(randomInt(1, 100));
+    when(dataAccessRequestDAO.insertDataAccessRequest(
+        anyInt(),
+        anyString(),
+        anyInt(),
+        any(Date.class),
+        any(Date.class),
+        any(Date.class),
+        any(DataAccessRequestData.class),
+        anyString()))
+        .thenReturn(1);
+    when(dataSetDAO.filterDatasetIdsByAutomationRuleType(
+        dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
+        .thenReturn(List.of());
+    when(daaDAO.findDaaIdsByDatasetIds(List.of(1, 2, 3))).thenReturn(Set.of(1));
+    DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
+    assertNotNull(newDar);
+    verify(dataAccessRequestDAO).updateRequiresSOApproval(eq(true), anyString());
   }
 
   @Test
@@ -354,6 +387,36 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     verify(ruleService, never()).triggerDACRuleSettings(any(), any(), any(), any());
     verify(dataAccessRequestDAO)
         .insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
+    verify(dataAccessRequestDAO, never()).updateRequiresSOApproval(eq(true), anyString());
+  }
+
+  @Test
+  void createCloseoutProgressReport_RequiresSOApproval() throws TemplateException, IOException {
+    User user = createUserWithPrerequisites();
+    User signingOfficial = createUserWithPrerequisites();
+    signingOfficial.setInstitutionId(user.getInstitutionId());
+    signingOfficial.setSigningOfficialRole();
+    DataAccessRequest progressReport = generateProgressReport();
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setUserId(user.getUserId());
+    progressReport.setDatasetIds(List.of(3, 4, 5));
+    parentDar.setDatasetIds(List.of(3, 4, 5));
+    progressReport.setSubmissionDate(Timestamp.from(Instant.now()));
+    progressReport.setParentId(parentDar.getId());
+    progressReport.setCollectionId(parentDar.getCollectionId());
+    progressReport.getData().setDaaIds(Set.of(1));
+    when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId()))
+        .thenReturn(progressReport);
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
+        .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
+    when(daaDAO.findDaaIdsByDatasetIds(progressReport.getDatasetIds())).thenReturn(Set.of());
+
+    DataAccessRequest newDar =
+        service.createProgressReport(user, progressReport, parentDar, request);
+
+    assertNotNull(newDar);
+    verify(dataAccessRequestDAO).updateRequiresSOApproval(true, eq(progressReport.referenceId));
   }
 
   @Test
@@ -899,7 +962,7 @@ institution or library cards issued: Internal Collaborator member:  \
   }
 
   @Test
-  void testHasRequiredDaas_No_DAA_Submitted_Throws() {
+  void testHasRequiredDaas_No_DAA_Submitted_False() {
     Dataset d = new Dataset();
     d.setDatasetId(10);
     Integer daaId = 1;
@@ -914,7 +977,7 @@ institution or library cards issued: Internal Collaborator member:  \
   }
 
   @Test
-  void testHasRequiredDaas_No_DAA_Required_Throws() {
+  void testHasRequiredDaas_No_DAA_Required_False() {
     Dataset d = new Dataset();
     d.setDatasetId(10);
     Integer daaId = 1;
@@ -929,7 +992,7 @@ institution or library cards issued: Internal Collaborator member:  \
   }
 
   @Test
-  void testHasRequiredDaas_No_Datasets_Throws() {
+  void testHasRequiredDaas_No_Datasets_False() {
     DataAccessRequest dar = new DataAccessRequest();
     assertFalse(service.hasRequiredDaas(dar));
   }
