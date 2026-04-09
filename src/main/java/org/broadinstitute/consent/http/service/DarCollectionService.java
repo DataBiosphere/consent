@@ -1232,8 +1232,10 @@ public class DarCollectionService implements ConsentLogger {
     dataAccessRequestDAO.updateDarApprovalSO(signingOfficial.getUserId(), dar.getReferenceId());
     User researcher = userDAO.findUserById(dar.getUserId());
     List<Integer> datasetIds = dar.getDatasetIds();
-    dacAutomationRuleService.triggerDACRuleSettings(
-        researcher, datasetIds, dar.getReferenceId(), request);
+    if (!dar.getIsCloseoutProgressReport() && !dar.getHasDMI()) {
+      dacAutomationRuleService.triggerDACRuleSettings(
+          researcher, datasetIds, dar.getReferenceId(), request);
+    }
   }
 
   private void validateSigningOfficialApproval(User signingOfficial, DataAccessRequest dar) {

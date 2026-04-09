@@ -308,7 +308,7 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new BadRequestException(
           "Unable to create progress report for Data Access Request " + parentDar.getReferenceId());
     }
-
+    boolean hasRequiredDaas = hasRequiredDaas(progressReport);
     if (progressReport.getIsCloseoutProgressReport()) {
       try {
         User signingOfficialUser =
@@ -322,13 +322,15 @@ public class DataAccessRequestService implements ConsentLogger {
       } catch (TemplateException | IOException e) {
         throw new InternalServerErrorException(e);
       }
-    } else if (!hasRequiredDaas(progressReport)) {
+    } else if (!hasRequiredDaas) {
       dataAccessRequestDAO.updateRequiresSOApproval(true, referenceId);
     }
 
     syncDataAccessRequestDatasets(progressReportDatasetIds, referenceId);
 
-    if (!progressReport.getIsCloseoutProgressReport() && !progressReport.getHasDMI()) {
+    if (!progressReport.getIsCloseoutProgressReport()
+        && !progressReport.getHasDMI()
+        && hasRequiredDaas) {
       ruleService.triggerDACRuleSettings(user, progressReportDatasetIds, referenceId, request);
     }
 
