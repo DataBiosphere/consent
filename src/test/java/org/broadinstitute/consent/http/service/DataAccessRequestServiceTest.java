@@ -416,7 +416,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         service.createProgressReport(user, progressReport, parentDar, request);
 
     assertNotNull(newDar);
-    verify(dataAccessRequestDAO).updateRequiresSOApproval(true, eq(progressReport.referenceId));
+    verify(dataAccessRequestDAO).updateRequiresSOApproval(true, progressReport.referenceId);
   }
 
   @Test
