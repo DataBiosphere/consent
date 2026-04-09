@@ -474,10 +474,6 @@ public class DataAccessRequestService implements ConsentLogger {
     Set<Integer> datasetDaas =
         daaDAO.findDaaIdsByDatasetIds(datasetIds).stream().collect(Collectors.toSet());
 
-    // TODO: remove once DAAs are turned on and assigned to each DAC in production.
-    if (datasetDaas.isEmpty()) {
-      return true;
-    }
     Set<Integer> userDaas = user.getLibraryCard().getDaaIds().stream().collect(Collectors.toSet());
 
     return userDaas.containsAll(datasetDaas);
