@@ -13,6 +13,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -57,6 +58,7 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataManagementIncident;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
@@ -648,6 +650,63 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     collection.addDar(dar);
 
     assertDoesNotThrow(() -> service.approveDarCollection(signingOfficial, collection, request));
+  }
+
+  @Test
+  void testApproveDarCollectionDMI() {
+    User user = new User();
+    user.setEmail("email");
+    user.setUserId(1);
+    User signingOfficial = new User();
+    signingOfficial.setRoles(List.of(UserRoles.SigningOfficial()));
+    signingOfficial.setEmail("email2");
+    signingOfficial.setUserId(2);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setUserId(user.getUserId());
+    dar.setCloseoutSigningOfficialApprovedUserId(signingOfficial.getUserId());
+    DataAccessRequestData darData = new DataAccessRequestData();
+    darData.setSigningOfficialEmail(signingOfficial.getEmail());
+    darData.setDmi(new DataManagementIncident(List.of("one"), "my incident"));
+    dar.setData(darData);
+    dar.setRequiresSOApproval(true);
+
+    DarCollection collection = new DarCollection();
+    collection.addDar(dar);
+
+    doNothing().when(dataAccessRequestDAO).updateDarApprovalSO(anyInt(), anyString());
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
+    service.approveDarCollection(signingOfficial, collection, request);
+    verify(dacAutomationRuleService, never()).triggerDACRuleSettings(any(), anyList(), anyString(), any());
+  }
+
+  @Test
+  void testApproveDarCollectionCloseout() {
+    User user = new User();
+    user.setEmail("email");
+    user.setUserId(1);
+    User signingOfficial = new User();
+    signingOfficial.setRoles(List.of(UserRoles.SigningOfficial()));
+    signingOfficial.setEmail("email2");
+    signingOfficial.setUserId(2);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setParentId(-1);
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setUserId(user.getUserId());
+    dar.setCloseoutSigningOfficialApprovedUserId(signingOfficial.getUserId());
+    DataAccessRequestData darData = new DataAccessRequestData();
+    darData.setSigningOfficialEmail(signingOfficial.getEmail());
+    darData.setCloseoutSupplement(new CloseoutSupplement(List.of("reasons"), "other text", signingOfficial.getUserId()));
+    dar.setData(darData);
+    dar.setRequiresSOApproval(true);
+
+    DarCollection collection = new DarCollection();
+    collection.addDar(dar);
+
+    doNothing().when(dataAccessRequestDAO).updateDarApprovalSO(anyInt(), anyString());
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
+    service.approveDarCollection(signingOfficial, collection, request);
+    verify(dacAutomationRuleService, never()).triggerDACRuleSettings(any(), anyList(), anyString(), any());
   }
 
   @Test
