@@ -677,7 +677,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     doNothing().when(dataAccessRequestDAO).updateDarApprovalSO(anyInt(), anyString());
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
     service.approveDarCollection(signingOfficial, collection, request);
-    verify(dacAutomationRuleService, never()).triggerDACRuleSettings(any(), anyList(), anyString(), any());
+    verify(dacAutomationRuleService, never())
+        .triggerDACRuleSettings(any(), anyList(), anyString(), any());
   }
 
   @Test
@@ -696,7 +697,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     dar.setCloseoutSigningOfficialApprovedUserId(signingOfficial.getUserId());
     DataAccessRequestData darData = new DataAccessRequestData();
     darData.setSigningOfficialEmail(signingOfficial.getEmail());
-    darData.setCloseoutSupplement(new CloseoutSupplement(List.of("reasons"), "other text", signingOfficial.getUserId()));
+    darData.setCloseoutSupplement(
+        new CloseoutSupplement(List.of("reasons"), "other text", signingOfficial.getUserId()));
     dar.setData(darData);
     dar.setRequiresSOApproval(true);
 
@@ -706,7 +708,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     doNothing().when(dataAccessRequestDAO).updateDarApprovalSO(anyInt(), anyString());
     when(userDAO.findUserById(user.getUserId())).thenReturn(user);
     service.approveDarCollection(signingOfficial, collection, request);
-    verify(dacAutomationRuleService, never()).triggerDACRuleSettings(any(), anyList(), anyString(), any());
+    verify(dacAutomationRuleService, never())
+        .triggerDACRuleSettings(any(), anyList(), anyString(), any());
   }
 
   @Test

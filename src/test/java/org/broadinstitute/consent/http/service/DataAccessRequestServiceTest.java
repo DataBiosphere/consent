@@ -60,6 +60,7 @@ import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
+import org.broadinstitute.consent.http.models.DataManagementIncident;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
@@ -371,6 +372,73 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
             progressReport.getData(),
             user.getEraCommonsId());
     verify(ruleService)
+        .triggerDACRuleSettings(
+            user, progressReport.getDatasetIds(), progressReport.getReferenceId(), request);
+    verify(dataAccessRequestDAO)
+        .insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
+  }
+
+  @Test
+  void createProgressReportDmi() {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.setParentId(parentDar.getId());
+    progressReport.setCollectionId(parentDar.getCollectionId());
+    progressReport.getData().setDmi(new DataManagementIncident(List.of("incident 1"), "A bad day"));
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    User user = createUserWithPrerequisites();
+    parentDar.setUserId(user.getUserId());
+    when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId()))
+        .thenReturn(progressReport);
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
+        .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
+    when(daaDAO.findDaaIdsByDatasetIds(progressReport.getDatasetIds())).thenReturn(Set.of(1));
+    DataAccessRequest newDar =
+        service.createProgressReport(user, progressReport, parentDar, request);
+    assertNotNull(newDar);
+    verify(dataAccessRequestDAO)
+        .insertProgressReport(
+            parentDar.getId(),
+            progressReport.getCollectionId(),
+            progressReport.getReferenceId(),
+            user.getUserId(),
+            progressReport.getData(),
+            user.getEraCommonsId());
+    verify(ruleService, never())
+        .triggerDACRuleSettings(
+            user, progressReport.getDatasetIds(), progressReport.getReferenceId(), request);
+    verify(dataAccessRequestDAO)
+        .insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
+  }
+
+  @Test
+  void createProgressReportNotPreAuthed() {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.setParentId(parentDar.getId());
+    progressReport.setCollectionId(parentDar.getCollectionId());
+    progressReport.getData().setDaaIds(Set.of(1));
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    User user = createUserWithPrerequisites();
+    user.getLibraryCard().setDaaIds(List.of(2));
+    parentDar.setUserId(user.getUserId());
+    when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId()))
+        .thenReturn(progressReport);
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
+        .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
+    when(daaDAO.findDaaIdsByDatasetIds(progressReport.getDatasetIds())).thenReturn(Set.of(1));
+    DataAccessRequest newDar =
+        service.createProgressReport(user, progressReport, parentDar, request);
+    assertNotNull(newDar);
+    verify(dataAccessRequestDAO)
+        .insertProgressReport(
+            parentDar.getId(),
+            progressReport.getCollectionId(),
+            progressReport.getReferenceId(),
+            user.getUserId(),
+            progressReport.getData(),
+            user.getEraCommonsId());
+    verify(ruleService, never())
         .triggerDACRuleSettings(
             user, progressReport.getDatasetIds(), progressReport.getReferenceId(), request);
     verify(dataAccessRequestDAO)

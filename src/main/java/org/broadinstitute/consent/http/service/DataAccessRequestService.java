@@ -407,7 +407,7 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new BadRequestException(
           "Cannot create a progress report for a draft Data Access Request");
     }
-    if (progressReport.getDatasetIds() == null || progressReport.getDatasetIds().isEmpty()) {
+    if (progressReport.getDatasetIds().isEmpty()) {
       throw new BadRequestException("At least one dataset is required");
     }
     if (!Set.copyOf(parentDar.getDatasetIds()).containsAll(progressReport.getDatasetIds())) {
@@ -471,13 +471,15 @@ public class DataAccessRequestService implements ConsentLogger {
   }
 
   private boolean isUserPreAuthorizedForAllDaas(User user, List<Integer> datasetIds) {
+    Set<Integer> datasetDaas =
+        daaDAO.findDaaIdsByDatasetIds(datasetIds).stream().collect(Collectors.toSet());
+
     // TODO: remove once DAAs are turned on and assigned to each DAC in production.
-    if (daaDAO.findDaaIdsByDatasetIds(datasetIds).isEmpty()) {
+    if (datasetDaas.isEmpty()) {
       return true;
     }
     Set<Integer> userDaas = user.getLibraryCard().getDaaIds().stream().collect(Collectors.toSet());
-    Set<Integer> datasetDaas =
-        daaDAO.findDaaIdsByDatasetIds(datasetIds).stream().collect(Collectors.toSet());
+
     return userDaas.containsAll(datasetDaas);
   }
 
