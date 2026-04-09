@@ -4,13 +4,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -228,6 +228,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(dataSetDAO.filterDatasetIdsByAutomationRuleType(
             dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
         .thenReturn(List.of());
+    when(daaDAO.findDaaIdsByDatasetIds(anyList())).thenReturn(Set.of());
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
     assertNotNull(newDar);
     verify(dataAccessRequestDAO, never()).updateRequiresSOApproval(eq(true), anyString());
@@ -240,6 +241,8 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     dar.setCreateDate(new Timestamp(1000));
     dar.setReferenceId("id");
     User user = createUserWithPrerequisites();
+    user.getLibraryCard().setDaaIds(List.of(2));
+    dar.getData().setDaaIds(Set.of(1));
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     when(counterService.getNextDarSequence()).thenReturn(1);
     when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
@@ -259,7 +262,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(dataSetDAO.filterDatasetIdsByAutomationRuleType(
             dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
         .thenReturn(List.of());
-    when(daaDAO.findDaaIdsByDatasetIds(List.of(1, 2, 3))).thenReturn(Set.of(1));
+    when(daaDAO.findDaaIdsByDatasetIds(anyList())).thenReturn(Set.of(1));
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
     assertNotNull(newDar);
     verify(dataAccessRequestDAO).updateRequiresSOApproval(eq(true), anyString());
@@ -419,35 +422,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     verify(dataAccessRequestDAO)
         .insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
     verify(dataAccessRequestDAO, never()).updateRequiresSOApproval(eq(true), anyString());
-  }
-
-  @Test
-  void createCloseoutProgressReport_RequiresSOApproval() {
-    User user = createUserWithPrerequisites();
-    User signingOfficial = createUserWithPrerequisites();
-    signingOfficial.setInstitutionId(user.getInstitutionId());
-    signingOfficial.setSigningOfficialRole();
-    DataAccessRequest progressReport = generateProgressReport();
-    DataAccessRequest parentDar = generateDataAccessRequest();
-    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
-    parentDar.setUserId(user.getUserId());
-    progressReport.setDatasetIds(List.of(3, 4, 5));
-    parentDar.setDatasetIds(List.of(3, 4, 5));
-    progressReport.setSubmissionDate(Timestamp.from(Instant.now()));
-    progressReport.setParentId(parentDar.getId());
-    progressReport.setCollectionId(parentDar.getCollectionId());
-    progressReport.getData().setDaaIds(Set.of(1));
-    when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId()))
-        .thenReturn(progressReport);
-    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
-        .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
-    when(daaDAO.findDaaIdsByDatasetIds(progressReport.getDatasetIds())).thenReturn(Set.of());
-
-    DataAccessRequest newDar =
-        service.createProgressReport(user, progressReport, parentDar, request);
-
-    assertNotNull(newDar);
-    verify(dataAccessRequestDAO).updateRequiresSOApproval(true, progressReport.referenceId);
   }
 
   @Test
@@ -978,7 +952,7 @@ institution or library cards issued: Internal Collaborator member:  \
   }
 
   @Test
-  void testHasRequiredDaas() {
+  void testHasAcknowledgedRequiredDaas() {
     Dataset d = new Dataset();
     d.setDatasetId(10);
     Integer daaId = 1;
@@ -989,11 +963,11 @@ institution or library cards issued: Internal Collaborator member:  \
     dar.setData(darData);
     when(daaDAO.findDaaIdsByDatasetIds(List.of(d.getDatasetId()))).thenReturn(Set.of(daaId));
 
-    assertTrue(service.hasRequiredDaas(dar));
+    assertDoesNotThrow(() -> service.hasAcknowledgedRequiredDaas(dar));
   }
 
   @Test
-  void testHasRequiredDaas_No_DAA_Submitted_False() {
+  void testHasAcknowledgedRequiredDaas_No_DAA_Submitted() {
     Dataset d = new Dataset();
     d.setDatasetId(10);
     Integer daaId = 1;
@@ -1004,11 +978,11 @@ institution or library cards issued: Internal Collaborator member:  \
     dar.setData(darData);
     when(daaDAO.findDaaIdsByDatasetIds(List.of(d.getDatasetId()))).thenReturn(Set.of(daaId));
 
-    assertFalse(service.hasRequiredDaas(dar));
+    assertThrows(BadRequestException.class, () -> service.hasAcknowledgedRequiredDaas(dar));
   }
 
   @Test
-  void testHasRequiredDaas_No_DAA_Required_False() {
+  void testHasRequiredDaas_No_DAA_Acknowledged_Required() {
     Dataset d = new Dataset();
     d.setDatasetId(10);
     Integer daaId = 1;
@@ -1019,17 +993,17 @@ institution or library cards issued: Internal Collaborator member:  \
     dar.setData(darData);
     when(daaDAO.findDaaIdsByDatasetIds(List.of(d.getDatasetId()))).thenReturn(Set.of());
 
-    assertFalse(service.hasRequiredDaas(dar));
+    assertThrows(BadRequestException.class, () -> service.hasAcknowledgedRequiredDaas(dar));
   }
 
   @Test
-  void testHasRequiredDaas_No_Datasets_False() {
+  void testHasAcknowledgedRequiredDaas_No_Datasets() {
     DataAccessRequest dar = new DataAccessRequest();
-    assertFalse(service.hasRequiredDaas(dar));
+    assertThrows(BadRequestException.class, () -> service.hasAcknowledgedRequiredDaas(dar));
   }
 
   @Test
-  void testHasRequiredDaas_No_DAA_Submitted_OR_Required_Allowed() {
+  void testHasRequiredDaas_No_DAA_Submitted_OR_Acknowledged_Required_Allowed() {
     Dataset d = new Dataset();
     d.setDatasetId(10);
     DataAccessRequest dar = new DataAccessRequest();
@@ -1039,7 +1013,7 @@ institution or library cards issued: Internal Collaborator member:  \
     dar.setData(darData);
     when(daaDAO.findDaaIdsByDatasetIds(List.of(d.getDatasetId()))).thenReturn(Set.of());
 
-    assertTrue(service.hasRequiredDaas(dar));
+    assertDoesNotThrow(() -> service.hasAcknowledgedRequiredDaas(dar));
   }
 
   @Test

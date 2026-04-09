@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DAOContainer;
@@ -259,8 +260,7 @@ public class DataAccessRequestService implements ConsentLogger {
       daaDAO.insertDarDAARelationship(darId, dataAccessRequest.data.getDaaIds());
     }
     syncDataAccessRequestDatasets(datasetIds, referenceId);
-    boolean requiresSOApproval =
-        flagIfSOApprovalIsNeeded(dataAccessRequest, datasetIds, referenceId);
+    boolean requiresSOApproval = flagIfSOApprovalIsNeeded(user, datasetIds, referenceId);
     if (!requiresSOApproval) {
       ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request);
     }
@@ -308,7 +308,8 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new BadRequestException(
           "Unable to create progress report for Data Access Request " + parentDar.getReferenceId());
     }
-    boolean hasRequiredDaas = hasRequiredDaas(progressReport);
+    boolean userIsPreAuthedForDaas =
+        isUserPreAuthorizedForAllDaas(user, progressReport.getDatasetIds());
     if (progressReport.getIsCloseoutProgressReport()) {
       try {
         User signingOfficialUser =
@@ -322,7 +323,7 @@ public class DataAccessRequestService implements ConsentLogger {
       } catch (TemplateException | IOException e) {
         throw new InternalServerErrorException(e);
       }
-    } else if (!hasRequiredDaas) {
+    } else if (!userIsPreAuthedForDaas) {
       dataAccessRequestDAO.updateRequiresSOApproval(true, referenceId);
     }
 
@@ -330,7 +331,7 @@ public class DataAccessRequestService implements ConsentLogger {
 
     if (!progressReport.getIsCloseoutProgressReport()
         && !progressReport.getHasDMI()
-        && hasRequiredDaas) {
+        && userIsPreAuthedForDaas) {
       ruleService.triggerDACRuleSettings(user, progressReportDatasetIds, referenceId, request);
     }
 
@@ -435,6 +436,9 @@ public class DataAccessRequestService implements ConsentLogger {
             "The selected signing official in the closeout was not found.");
       }
     }
+    if (!progressReport.getIsCloseoutProgressReport() && !progressReport.getHasDMI()) {
+      hasAcknowledgedRequiredDaas(progressReport);
+    }
   }
 
   @VisibleForTesting
@@ -453,15 +457,28 @@ public class DataAccessRequestService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  protected boolean hasRequiredDaas(DataAccessRequest dar) {
+  protected void hasAcknowledgedRequiredDaas(DataAccessRequest dar) {
     if (dar.getDatasetIds().isEmpty()) {
-      return false;
+      throw new BadRequestException("At least one dataset is required");
     }
 
     Set<Integer> requiredDaas = daaDAO.findDaaIdsByDatasetIds(dar.getDatasetIds());
 
-    return (requiredDaas.containsAll(dar.getData().getDaaIds())
-        && requiredDaas.size() == dar.getData().getDaaIds().size());
+    if (!(requiredDaas.containsAll(dar.getData().getDaaIds())
+        && requiredDaas.size() == dar.getData().getDaaIds().size())) {
+      throw new BadRequestException("All of the DAAs required were not acknowledged.");
+    }
+  }
+
+  private boolean isUserPreAuthorizedForAllDaas(User user, List<Integer> datasetIds) {
+    // TODO: remove once DAAs are turned on and assigned to each DAC in production.
+    if (daaDAO.findDaaIdsByDatasetIds(datasetIds).isEmpty()) {
+      return true;
+    }
+    Set<Integer> userDaas = user.getLibraryCard().getDaaIds().stream().collect(Collectors.toSet());
+    Set<Integer> datasetDaas =
+        daaDAO.findDaaIdsByDatasetIds(datasetIds).stream().collect(Collectors.toSet());
+    return userDaas.containsAll(datasetDaas);
   }
 
   public void validateDar(User user, DataAccessRequest dar) {
@@ -476,6 +493,7 @@ public class DataAccessRequestService implements ConsentLogger {
     validateNoKeyPersonnelDuplicates(dar.getData());
     validatePersonnelInstitutionAndLibraryCardRequirements(user, dar.getData());
     validateCountryOfOperation(dar.getData(), false);
+    hasAcknowledgedRequiredDaas(dar);
   }
 
   protected void validateCountryOfOperation(DataAccessRequestData darData, boolean skipPI) {
@@ -763,12 +781,12 @@ public class DataAccessRequestService implements ConsentLogger {
   }
 
   private boolean flagIfSOApprovalIsNeeded(
-      DataAccessRequest dar, List<Integer> datasetIds, String referenceId) {
+      User user, List<Integer> datasetIds, String referenceId) {
     if (!datasetDAO
             .filterDatasetIdsByAutomationRuleType(
                 datasetIds, DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name())
             .isEmpty()
-        || !hasRequiredDaas(dar)) {
+        || !isUserPreAuthorizedForAllDaas(user, datasetIds)) {
       dataAccessRequestDAO.updateRequiresSOApproval(true, referenceId);
       return true;
     }
