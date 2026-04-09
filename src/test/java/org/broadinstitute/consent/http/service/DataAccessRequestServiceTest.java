@@ -247,17 +247,17 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class)))
         .thenReturn(randomInt(1, 100));
     when(dataAccessRequestDAO.insertDataAccessRequest(
-        anyInt(),
-        anyString(),
-        anyInt(),
-        any(Date.class),
-        any(Date.class),
-        any(Date.class),
-        any(DataAccessRequestData.class),
-        anyString()))
+            anyInt(),
+            anyString(),
+            anyInt(),
+            any(Date.class),
+            any(Date.class),
+            any(Date.class),
+            any(DataAccessRequestData.class),
+            anyString()))
         .thenReturn(1);
     when(dataSetDAO.filterDatasetIdsByAutomationRuleType(
-        dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
+            dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
         .thenReturn(List.of());
     when(daaDAO.findDaaIdsByDatasetIds(List.of(1, 2, 3))).thenReturn(Set.of(1));
     DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
