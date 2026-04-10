@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
@@ -239,15 +240,17 @@ public class DataAccessRequestService implements ConsentLogger {
     }
     String referenceId;
     List<Integer> datasetIds = dataAccessRequest.getDatasetIds();
-
+    Integer darId;
     if (Objects.nonNull(existingDar)) {
       referenceId = dataAccessRequest.getReferenceId();
+      darId = existingDar.getId();
       dataAccessRequestDAO.updateDraftToSubmittedForCollection(collectionId, referenceId);
       dataAccessRequestDAO.updateDataByReferenceId(
           referenceId, user.getUserId(), now, now, darData, user.getEraCommonsId());
+      daaDAO.deleteDarDAARelationship(darId);
     } else {
       referenceId = UUID.randomUUID().toString();
-      Integer darId =
+      darId =
           dataAccessRequestDAO.insertDataAccessRequest(
               collectionId,
               referenceId,
@@ -257,8 +260,8 @@ public class DataAccessRequestService implements ConsentLogger {
               now,
               darData,
               user.getEraCommonsId());
-      daaDAO.insertDarDAARelationship(darId, dataAccessRequest.data.getDaaIds());
     }
+    daaDAO.insertDarDAARelationship(darId, dataAccessRequest.data.getDaaIds());
     syncDataAccessRequestDatasets(datasetIds, referenceId);
     boolean requiresSOApproval = flagIfSOApprovalIsNeeded(user, datasetIds, referenceId);
     if (!requiresSOApproval) {

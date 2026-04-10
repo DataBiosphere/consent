@@ -324,4 +324,10 @@ public interface DaaDAO extends Transactional<DaaDAO> {
         ON CONFLICT DO NOTHING
     """)
   void insertDarDAARelationship(@Bind("darId") Integer darId, @Bind("daaId") Set<Integer> daaIds);
+
+  @SqlUpdate(
+      """
+      DELETE FROM dar_daa WHERE dar_id = :darId
+    """)
+  void deleteDarDAARelationship(@Bind("darId") Integer darId);
 }

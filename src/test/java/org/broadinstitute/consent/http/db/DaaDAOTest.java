@@ -487,15 +487,20 @@ class DaaDAOTest extends DAOTestHelper {
             new DataAccessRequestData(),
             "");
     assertDoesNotThrow(() -> daaDAO.insertDarDAARelationship(prId, Set.of(daa1, daa2)));
-    int count =
-        jdbi.withHandle(
-            handle ->
-                handle
-                    .createQuery("SELECT count(*) FROM dar_daa WHERE dar_id = :prId")
-                    .bind("prId", prId)
-                    .mapTo(Integer.class)
-                    .one());
-    assertEquals(2, count);
+    assertEquals(2, getDarDaaCount(prId));
+
+    daaDAO.deleteDarDAARelationship(prId);
+    assertEquals(0, getDarDaaCount(prId));
+  }
+
+  private static Integer getDarDaaCount(Integer prId) {
+    return jdbi.withHandle(
+        handle ->
+            handle
+                .createQuery("SELECT count(*) FROM dar_daa WHERE dar_id = :prId")
+                .bind("prId", prId)
+                .mapTo(Integer.class)
+                .one());
   }
 
   @Test
