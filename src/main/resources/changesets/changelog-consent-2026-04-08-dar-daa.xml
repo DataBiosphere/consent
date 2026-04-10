@@ -12,5 +12,7 @@
         <constraints nullable="false" foreignKeyName="fkDaa_Daa_DaaId" referencedTableName="data_access_agreement" referencedColumnNames="daa_id" />
       </column>
     </createTable>
+    <createIndex indexName="idx_dar_daa_dar_id" tableName="dar_daa"><column name="dar_id"/></createIndex>
+    <createIndex indexName="idx_dar_daa_daa_id" tableName="dar_daa"><column name="daa_id"/></createIndex>
   </changeSet>
 </databaseChangeLog>
