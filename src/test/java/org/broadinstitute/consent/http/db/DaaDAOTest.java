@@ -375,7 +375,7 @@ class DaaDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindDaaIdsByDatasetIds() {
+  void testMapDaaIdsToDatasetIds() {
     Integer userId = createUserId();
     Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
     Dataset dataset1 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId));
@@ -408,7 +408,7 @@ class DaaDAOTest extends DAOTestHelper {
     daaDAO.createDacDaaRelation(dacId2, daa2, userId);
 
     Map<Integer, Set<Integer>> daaDatasetMap =
-        daaDAO.findDaaIdsByDatasetIds(
+        daaDAO.mapDaaIdsToDatasetIds(
             Set.of(dataset1.getDatasetId(), dataset2.getDatasetId(), dataset3.getDatasetId()));
     assertFalse(daaDatasetMap.isEmpty());
     assertEquals(2, daaDatasetMap.size());
@@ -425,13 +425,13 @@ class DaaDAOTest extends DAOTestHelper {
 
   @Test
   void testFindDaaIdsWithDatasetIds_No_IDs() {
-    Map<Integer, Set<Integer>> daaDatasetMap = daaDAO.findDaaIdsByDatasetIds(Set.of());
+    Map<Integer, Set<Integer>> daaDatasetMap = daaDAO.mapDaaIdsToDatasetIds(Set.of());
     assertTrue(daaDatasetMap.isEmpty());
   }
 
   @Test
   void testFindDaaIdsWithDatasetIds_No_Data() {
-    Map<Integer, Set<Integer>> daaDatasetMap = daaDAO.findDaaIdsByDatasetIds(Set.of(1, 2, 3));
+    Map<Integer, Set<Integer>> daaDatasetMap = daaDAO.mapDaaIdsToDatasetIds(Set.of(1, 2, 3));
     assertTrue(daaDatasetMap.isEmpty());
   }
 
@@ -499,7 +499,7 @@ class DaaDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindDaaIdsByDatasetIds_dacNotAssociated() {
+  void testMapDaaIdsToDatasetIds_dacNotAssociated() {
     Integer userId = createUserId();
     Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
     Dataset dataset1 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId));
@@ -514,7 +514,7 @@ class DaaDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindDaaIdsByDatasetIds_datasetsNotAssociated() {
+  void testMapDaaIdsToDatasetIds_datasetsNotAssociated() {
     Integer userId = createUserId();
     Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
     Dataset dataset1 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId));

@@ -470,7 +470,7 @@ class DaaServiceTest extends AbstractTestHelper {
   @Test
   void testFindDaaIdsByDatasetIds() {
     initService();
-    when(daaDAO.findDaaIdsByDatasetIds(anySet())).thenReturn(Map.of());
+    when(daaDAO.mapDaaIdsToDatasetIds(anySet())).thenReturn(Map.of());
 
     Map<Integer, Set<Integer>> daaMap = service.findDaaIdsByDatasetIds(Set.of(1, 2, 3));
     assertTrue(daaMap.isEmpty());

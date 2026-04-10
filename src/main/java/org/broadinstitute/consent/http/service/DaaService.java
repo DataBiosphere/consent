@@ -225,6 +225,6 @@ public class DaaService implements ConsentLogger {
   }
 
   public Map<Integer, Set<Integer>> findDaaIdsByDatasetIds(Set<Integer> datasetIds) {
-    return daaDAO.findDaaIdsByDatasetIds(datasetIds);
+    return daaDAO.mapDaaIdsToDatasetIds(datasetIds);
   }
 }

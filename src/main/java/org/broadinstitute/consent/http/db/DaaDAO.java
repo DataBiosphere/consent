@@ -315,7 +315,7 @@ public interface DaaDAO extends Transactional<DaaDAO> {
           ORDER BY daa.daa_id
       """)
   @UseRowReducer(DaaDatasetReducer.class)
-  Map<Integer, Set<Integer>> findDaaIdsByDatasetIds(
+  Map<Integer, Set<Integer>> mapDaaIdsToDatasetIds(
       @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING) Set<Integer> datasetIds);
 
   @SqlBatch(
