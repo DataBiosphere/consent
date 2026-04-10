@@ -12,7 +12,6 @@ import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapper;
 import org.broadinstitute.consent.http.models.DaaAudit;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
-import org.jdbi.v3.sqlobject.SingleValue;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
