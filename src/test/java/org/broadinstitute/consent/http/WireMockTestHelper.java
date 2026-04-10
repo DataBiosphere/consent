@@ -16,7 +16,7 @@ public class WireMockTestHelper extends AbstractTestHelper
   @Override
   public void testPlanExecutionStarted(@NonNull TestPlan testPlan) {
     try {
-      if (enableTestContainers() && !wireMockServer.isRunning()) {
+      if (!wireMockServer.isRunning()) {
         wireMockServer.start();
       }
     } catch (Exception e) {
@@ -31,7 +31,9 @@ public class WireMockTestHelper extends AbstractTestHelper
 
   @BeforeEach
   void beforeEach() {
-    wireMockServer.resetAll();
+    if (wireMockServer.isRunning()) {
+      wireMockServer.resetAll();
+    }
   }
 
   public static String mockServerBaseUrl() {

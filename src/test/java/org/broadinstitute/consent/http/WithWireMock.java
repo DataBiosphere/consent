@@ -16,6 +16,10 @@ public interface WithWireMock {
   }
 
   default String getRootUrl(WireMockServer server) {
+    Objects.requireNonNull(server, "WireMockServer must not be null");
+    if (!server.isRunning()) {
+      throw new IllegalStateException("WireMockServer must be started before calling getRootUrl");
+    }
     return server.baseUrl() + "/";
   }
 }
