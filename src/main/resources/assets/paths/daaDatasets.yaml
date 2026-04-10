@@ -1,7 +1,7 @@
 post:
   summary: Mapping between DAAs and Datasets
   description: |
-    Provides insights into which DAA is associated with a list of datasets.  Useful to understand
+    Provides insights into the datasets associated with each DAA.  Useful to understand
     which rules apply to each dataset in a multi-dataset/multi-dac DAR.
   operationId: findDaaForDatasets
   tags:
@@ -31,4 +31,6 @@ post:
     400:
       description: Bad Request (malformed list of dataset ids)
     401:
-      description: Unauthenticated.
+      description: Unauthenticated
+    500:
+      description: Internal server error
