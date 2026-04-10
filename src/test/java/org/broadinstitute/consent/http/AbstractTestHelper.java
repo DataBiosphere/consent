@@ -10,6 +10,12 @@ import org.apache.commons.lang3.RandomUtils;
 
 public abstract class AbstractTestHelper {
 
+  /**
+   * This configuration property is set in pom.xml and used to disable test containers for
+   * integration tests.
+   *
+   * @return "true"|"false"
+   */
   public static boolean enableTestContainers() {
     String defaultProp = "true";
     return Boolean.parseBoolean(System.getProperty("enableTestContainers", defaultProp));
