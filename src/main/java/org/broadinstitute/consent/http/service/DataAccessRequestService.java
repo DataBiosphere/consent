@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
