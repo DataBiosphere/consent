@@ -1,16 +1,19 @@
 package org.broadinstitute.consent.http.db;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
 
+import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
-import org.broadinstitute.consent.http.MockServerTestHelper;
+import org.broadinstitute.consent.http.WireMockTestHelper;
 import org.broadinstitute.consent.http.configurations.OidcConfiguration;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.models.OidcAuthorityConfiguration;
@@ -22,13 +25,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class OidcAuthorityDAOTest extends MockServerTestHelper {
+class OidcAuthorityDAOTest extends WireMockTestHelper {
 
   private OidcAuthorityDAO dao;
 
   @NotNull
   private static String getMockContainerBaseUrl() {
-    return "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort();
+    return mockServerBaseUrl();
   }
 
   @BeforeEach
@@ -65,18 +68,18 @@ class OidcAuthorityDAOTest extends MockServerTestHelper {
         }
         """;
 
-    mockServerClient
-        .when(request().withMethod("GET").withPath("/.well-known/openid-configuration"))
-        .respond(
-            response()
-                .withStatusCode(200)
-                .withHeader("Content-Type", "application/json")
-                .withBody(
-                    bodyFormat.formatted(
-                        expectedIssuer,
-                        expectedAuthorizationEndpoint,
-                        expectedTokenEndpoint,
-                        expectedIssuer)));
+    wireMockServer.stubFor(
+        get(urlPathEqualTo("/.well-known/openid-configuration"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(
+                        bodyFormat.formatted(
+                            expectedIssuer,
+                            expectedAuthorizationEndpoint,
+                            expectedTokenEndpoint,
+                            expectedIssuer))));
     var actual = dao.getOidcAuthorityConfiguration();
     assertEquals(expectedTokenEndpoint, actual.token_endpoint());
     assertEquals(expectedAuthorizationEndpoint, actual.authorization_endpoint());
@@ -101,29 +104,30 @@ class OidcAuthorityDAOTest extends MockServerTestHelper {
     var tokenPath = "/oauth2/token";
     dao.setOidcAuthorityConfiguration(
         new OidcAuthorityConfiguration(null, null, getMockContainerBaseUrl() + tokenPath));
-    mockServerClient
-        .when(
-            request()
-                .withMethod("POST")
-                .withPath(tokenPath)
-                .withQueryStringParameters(
-                    queryParameters.entrySet().stream()
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
-                .withBody(
-                    URLEncodedUtils.format(
-                        formParameters.entrySet().stream()
-                            .flatMap(
-                                entry ->
-                                    entry.getValue().stream()
-                                        .map(
-                                            value -> new BasicNameValuePair(entry.getKey(), value)))
-                            .toList(),
-                        StandardCharsets.UTF_8)))
-        .respond(
-            response()
-                .withStatusCode(200)
+
+    String expectedFormBody =
+        URLEncodedUtils.format(
+            formParameters.entrySet().stream()
+                .flatMap(
+                    entry ->
+                        entry.getValue().stream()
+                            .map(value -> new BasicNameValuePair(entry.getKey(), value)))
+                .toList(),
+            StandardCharsets.UTF_8);
+
+    MappingBuilder mapping =
+        post(urlPathEqualTo(tokenPath)).withRequestBody(equalTo(expectedFormBody));
+    for (var entry : queryParameters.entrySet()) {
+      for (String value : entry.getValue()) {
+        mapping = mapping.withQueryParam(entry.getKey(), equalTo(value));
+      }
+    }
+    wireMockServer.stubFor(
+        mapping.willReturn(
+            aResponse()
+                .withStatus(200)
                 .withHeader("Content-Type", "application/json")
-                .withBody(expectedResponse));
+                .withBody(expectedResponse)));
     var actual = dao.oauthTokenPost(formParameters, queryParameters);
     assertEquals(expectedResponse, actual);
   }

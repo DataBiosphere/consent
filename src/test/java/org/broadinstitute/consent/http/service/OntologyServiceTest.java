@@ -23,7 +23,7 @@ import com.google.gson.JsonArray;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import org.broadinstitute.consent.http.MockServerTestHelper;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.OntologyType;
 import org.broadinstitute.consent.http.matching.TranslationUtil;
@@ -46,7 +46,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 
 @ExtendWith(MockitoExtension.class)
-class OntologyServiceTest extends MockServerTestHelper {
+class OntologyServiceTest extends AbstractTestHelper {
 
   private OntologyService service;
   private TestAppender testAppender;
