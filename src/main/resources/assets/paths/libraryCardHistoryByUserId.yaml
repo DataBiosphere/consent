@@ -1,0 +1,32 @@
+get:
+  description: | 
+    Fetches all library card history records for a given user ID.
+    Admins can see all details of the library card history records.
+    Signing Officials will only see records for users in their institution.
+  tags:
+    - Library Card
+    - Admin
+  parameters:
+    - name: userId
+      in: path
+      description: The User ID of the user whose library card history is being requested.
+      required: true
+      schema:
+        type: integer
+  responses:
+    200:
+      description: Returns all library card history records for the specified user ID. If no records are found, an empty array is returned.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/LibraryCardDaaAudit.yaml'
+    400:
+      description: Bad Request - Invalid user ID provided.
+    403:
+      description: Forbidden - The requester does not have permission to access this resource.
+    404:
+      description: Not Found - User not found
+    500:
+      description: Internal Server Error - An error occurred while processing the request.

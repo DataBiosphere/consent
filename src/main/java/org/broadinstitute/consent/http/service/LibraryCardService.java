@@ -8,17 +8,21 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.LibraryCardDaaAudit;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
 public class LibraryCardService implements ConsentLogger {
 
+  private final DaaDAO daaDAO;
   private final LibraryCardDAO libraryCardDAO;
   private final InstitutionDAO institutionDAO;
   private final InstitutionService institutionService;
@@ -27,11 +31,13 @@ public class LibraryCardService implements ConsentLogger {
 
   @Inject
   public LibraryCardService(
+      DaaDAO daaDAO,
       LibraryCardDAO libraryCardDAO,
       InstitutionDAO institutionDAO,
       InstitutionService institutionService,
       UserDAO userDAO,
       EmailService emailService) {
+    this.daaDAO = daaDAO;
     this.libraryCardDAO = libraryCardDAO;
     this.institutionDAO = institutionDAO;
     this.institutionService = institutionService;
@@ -94,12 +100,26 @@ public class LibraryCardService implements ConsentLogger {
     return libraryCard;
   }
 
-  public void addDaaToLibraryCard(Integer libraryCardId, Integer daaId) {
-    libraryCardDAO.createLibraryCardDaaRelation(libraryCardId, daaId);
+  public void addDaaToLibraryCard(
+      Integer lcUserId, Integer userId, Integer libraryCardId, Integer daaId) {
+    User lcUser = userDAO.findUserById(lcUserId);
+    if (lcUser == null) {
+      throw new NotFoundException("User with id " + lcUserId + " not found");
+    }
+    LibraryCard lc = libraryCardDAO.findLibraryCardById(libraryCardId);
+    if (lc == null) {
+      throw new NotFoundException("Library card with id " + libraryCardId + " not found");
+    }
+    DataAccessAgreement daa = daaDAO.findById(daaId);
+    if (daa == null) {
+      throw new NotFoundException("Data Access Agreeement id " + daaId + " not found");
+    }
+    libraryCardDAO.createLibraryCardDaaRelation(lcUserId, userId, libraryCardId, daaId);
   }
 
-  public void removeDaaFromLibraryCard(Integer libraryCardId, Integer daaId) {
-    libraryCardDAO.deleteLibraryCardDaaRelation(libraryCardId, daaId);
+  public void removeDaaFromLibraryCard(
+      Integer lcUserId, Integer userId, Integer libraryCardId, Integer daaId) {
+    libraryCardDAO.deleteLibraryCardDaaRelation(lcUserId, userId, libraryCardId, daaId);
   }
 
   public LibraryCard addDaaToUserLibraryCard(User user, User signingOfficial, Integer daaId) {
@@ -110,17 +130,19 @@ public class LibraryCardService implements ConsentLogger {
     if (libraryCard == null) {
       libraryCard = createLibraryCardForSigningOfficial(user, signingOfficial);
     }
-    addDaaToLibraryCard(libraryCard.getId(), daaId);
+    addDaaToLibraryCard(user.getUserId(), signingOfficial.getUserId(), libraryCard.getId(), daaId);
     return libraryCardDAO.findLibraryCardByUserId(user.getUserId());
   }
 
-  public LibraryCard removeDaaFromUserLibraryCard(User user, Integer daaId) {
-    LibraryCard libraryCard = findLibraryCardByUserId(user.getUserId());
+  public LibraryCard removeDaaFromUserLibraryCard(
+      User lcUser, User signingOfficial, Integer daaId) {
+    LibraryCard libraryCard = findLibraryCardByUserId(lcUser.getUserId());
     // typically there should be one library card per user
     if (libraryCard != null) {
-      removeDaaFromLibraryCard(libraryCard.getId(), daaId);
+      removeDaaFromLibraryCard(
+          lcUser.getUserId(), signingOfficial.getUserId(), libraryCard.getId(), daaId);
     }
-    return findLibraryCardByUserId(user.getUserId());
+    return findLibraryCardByUserId(lcUser.getUserId());
   }
 
   public LibraryCard createLibraryCardForSigningOfficial(User user, User signingOfficial) {
@@ -129,8 +151,11 @@ public class LibraryCardService implements ConsentLogger {
     lc.setUserName(user.getDisplayName());
     lc.setUserEmail(user.getEmail());
     lc.setCreateUserId(signingOfficial.getUserId());
-    LibraryCard createdLc = createLibraryCard(lc, user);
-    return createdLc;
+    return createLibraryCard(lc, user);
+  }
+
+  public List<LibraryCardDaaAudit> findLibraryCardDaaAuditsByUserId(Integer userId) {
+    return libraryCardDAO.findAuditsByLcUserId(userId);
   }
 
   private void checkForValidInstitution(Integer institutionId, String userEmail) {
@@ -163,7 +188,7 @@ public class LibraryCardService implements ConsentLogger {
 
   // helper method for create method, checks to see if card already exists
   private void checkIfCardExists(LibraryCard payload) {
-    LibraryCard result = null;
+    LibraryCard result;
 
     if (payload.getUserId() != null) {
       result = libraryCardDAO.findLibraryCardByUserId(payload.getUserId());

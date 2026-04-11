@@ -682,6 +682,8 @@ paths:
           description: Institution not found
         500:
           description: Internal server error
+  /api/libraryCards/history/{userId}:
+    $ref: './paths/libraryCardHistoryByUserId.yaml'
   /api/match/reprocess/purpose/{purposeId}:
     post:
       summary: Process all matches for this research purpose (DAR) id

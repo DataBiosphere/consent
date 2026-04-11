@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.33.xsd">
+  <changeSet id="changelog-consent-2026-04-03-lc-daa-audit" author="grushton">
+    <createTable tableName="lc_daa_audit">
+      <column name="id" type="bigint" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="daa_id" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <!--
+        Note that library cards are deletable so nullable is true here.
+       -->
+      <column name="lc_id" type="bigint"/>
+      <!-- user who the audit action affects -->
+      <column name="lc_user_id" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <!-- user who initiated the audit action -->
+      <column name="user_id" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <column name="action" type="varchar(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="action_date" type="timestamp" defaultValueDate="current_timestamp">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <createIndex indexName="idx_lc_daa_audit_daa_id_and_action_date_descending"
+                 tableName="lc_daa_audit">
+      <column name="daa_id"/>
+      <column name="action_date" descending="true"/>
+    </createIndex>
+    <createIndex indexName="idx_lc_daa_audit_lc_id_and_action_date_descending"
+                 tableName="lc_daa_audit">
+      <column name="lc_id"/>
+      <column name="action_date" descending="true"/>
+    </createIndex>
+    <!--
+      Note that we are not including a FK to the LC table since library cards are deletable
+     -->
+    <addForeignKeyConstraint
+      baseTableName="lc_daa_audit" baseColumnNames="daa_id"
+      constraintName="fk_lc_daa_audit_daa_id"
+      referencedTableName="data_access_agreement" referencedColumnNames="daa_id"/>
+    <addForeignKeyConstraint
+      baseTableName="lc_daa_audit" baseColumnNames="lc_user_id"
+      constraintName="fk_lc_daa_audit_lc_user_id"
+      referencedTableName="users" referencedColumnNames="user_id"/>
+    <addForeignKeyConstraint
+      baseTableName="lc_daa_audit" baseColumnNames="user_id"
+      constraintName="fk_lc_daa_audit_user_id"
+      referencedTableName="users" referencedColumnNames="user_id"/>
+  </changeSet>
+</databaseChangeLog>

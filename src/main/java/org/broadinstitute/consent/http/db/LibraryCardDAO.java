@@ -2,11 +2,14 @@ package org.broadinstitute.consent.http.db;
 
 import java.util.Date;
 import java.util.List;
+import org.broadinstitute.consent.http.db.mapper.LibraryCardDaaAuditMapper;
 import org.broadinstitute.consent.http.db.mapper.LibraryCardReducer;
 import org.broadinstitute.consent.http.db.mapper.LibraryCardWithDaaReducer;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.LibraryCardDaaAudit;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
+import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
@@ -134,19 +137,49 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @SqlUpdate(
       """
-      INSERT INTO lc_daa (lc_id, daa_id)
-      VALUES (:lcId, :daaId)
-      ON CONFLICT DO NOTHING
+      WITH lc_daa_insert AS (
+        INSERT INTO lc_daa (lc_id, daa_id)
+        VALUES (:lcId, :daaId)
+        ON CONFLICT DO NOTHING
+        RETURNING lc_id
+      )
+      INSERT INTO lc_daa_audit (daa_id, lc_id, lc_user_id, user_id, action, action_date)
+      SELECT :daaId, :lcId, :lcUserId, :userId, 'ADD', NOW()
+      WHERE EXISTS (SELECT 1 FROM lc_daa_insert)
       """)
-  void createLibraryCardDaaRelation(@Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
+  void createLibraryCardDaaRelation(
+      @Bind("lcUserId") Integer lcUserId,
+      @Bind("userId") Integer userId,
+      @Bind("lcId") Integer lcId,
+      @Bind("daaId") Integer daaId);
 
   @SqlUpdate(
       """
-      DELETE FROM lc_daa
-      WHERE lc_id = :lcId
-      AND daa_id = :daaId
+      WITH lc_daa_delete AS (
+        DELETE FROM lc_daa
+        WHERE lc_id = :lcId
+        AND daa_id = :daaId
+        RETURNING lc_id
+      )
+      INSERT INTO lc_daa_audit (daa_id, lc_id, lc_user_id, user_id, action, action_date)
+      SELECT :daaId, :lcId, :lcUserId, :userId, 'REMOVE', NOW()
+      WHERE EXISTS (SELECT 1 FROM lc_daa_delete)
       """)
-  void deleteLibraryCardDaaRelation(@Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
+  void deleteLibraryCardDaaRelation(
+      @Bind("lcUserId") Integer lcUserId,
+      @Bind("userId") Integer userId,
+      @Bind("lcId") Integer lcId,
+      @Bind("daaId") Integer daaId);
+
+  @RegisterRowMapper(LibraryCardDaaAuditMapper.class)
+  @SqlQuery(
+      """
+      SELECT *
+      FROM lc_daa_audit
+      WHERE lc_user_id = :lcUserId
+      ORDER BY action_date DESC
+      """)
+  List<LibraryCardDaaAudit> findAuditsByLcUserId(@Bind("lcUserId") Integer lcUserId);
 
   /**
    * Finds library cards by user emails.

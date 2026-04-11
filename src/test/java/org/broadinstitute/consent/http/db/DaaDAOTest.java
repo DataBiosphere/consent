@@ -292,6 +292,7 @@ class DaaDAOTest extends DAOTestHelper {
     // Testing the case of a user requesting DAR access to a dataset.
     // That user must have an LC with a DAA associated to the same DAC that the dataset is
     // associated to.
+    User signingOfficial = createUser();
     User user = createUserWithInstitution();
     LibraryCard lc = createRandomLibraryCard(user);
     Dac dac1 = createRandomDac();
@@ -300,7 +301,8 @@ class DaaDAOTest extends DAOTestHelper {
     // Associate the DAC to the Data Access Agreeement:
     daaDAO.createDacDaaRelation(dac1.getDacId(), daa.getDaaId(), user.getUserId());
     // Associate the user's Library Card to the Data Access Agreement:
-    libraryCardDAO.createLibraryCardDaaRelation(lc.getId(), daa.getDaaId());
+    libraryCardDAO.createLibraryCardDaaRelation(
+        lc.getUserId(), signingOfficial.getUserId(), lc.getId(), daa.getDaaId());
     // Create two datasets associated to the DAC and DAA
     Dataset dataset1 = createRandomDataset(user, dac1);
     Dataset dataset2 = createRandomDataset(user, dac1);
