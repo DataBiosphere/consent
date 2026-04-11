@@ -93,10 +93,19 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       daa.create_date as daa_create_date,
       daa.update_user_id as daa_update_user_id,
       daa.update_date as daa_update_date,
-      daa.initial_dac_id as daa_initial_dac_id
+      daa.initial_dac_id as daa_initial_dac_id,
+      auth_user.email as daa_authorized_by
       FROM library_card lc
       LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
       LEFT JOIN data_access_agreement daa ON ld.daa_id = daa.daa_id
+      LEFT JOIN LATERAL (
+          SELECT a.user_id
+          FROM lc_daa_audit a
+          WHERE a.lc_id = ld.lc_id AND a.daa_id = ld.daa_id AND a.action = 'ADD'
+          ORDER BY a.action_date DESC
+          LIMIT 1
+      ) audit ON true
+      LEFT JOIN users auth_user ON auth_user.user_id = audit.user_id
       WHERE lc.id = :libraryCardId
       """)
   LibraryCard findLibraryCardDaaById(@Bind("libraryCardId") Integer libraryCardId);
