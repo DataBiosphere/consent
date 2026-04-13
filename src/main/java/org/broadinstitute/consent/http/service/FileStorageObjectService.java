@@ -114,4 +114,8 @@ public class FileStorageObjectService implements ConsentLogger {
     fetchAndPopulateMultipleUploadedFiles(fileStorageObjects);
     return fileStorageObjects;
   }
+
+  public List<FileStorageObject> fetchAllMetadataByEntityId(String entityId) {
+    return fileStorageObjectDAO.findFileMetadataByEntityId(entityId);
+  }
 }

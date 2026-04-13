@@ -3,15 +3,18 @@ package org.broadinstitute.consent.http.db;
 import java.time.Instant;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapper;
+import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOPrefix;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 @RegisterRowMapper(FileStorageObjectMapper.class)
+@RegisterRowMapper(FileStorageObjectMapperWithFSOPrefix.class)
 public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
 
   @SqlUpdate(
@@ -103,4 +106,19 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
           """)
   List<FileStorageObject> findFilesByEntityIdAndCategory(
       @Bind("entityId") String entityId, @Bind("category") String category);
+
+  @UseRowMapper(FileStorageObjectMapperWithFSOPrefix.class)
+  @SqlQuery(
+      """
+          SELECT
+          """
+          + FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX
+          + " "
+          + """
+          FROM file_storage_object fso
+          WHERE fso.entity_id = :entityId
+            AND (fso.deleted = false OR fso.deleted IS NULL)
+          ORDER BY fso.create_date DESC
+          """)
+  List<FileStorageObject> findFileMetadataByEntityId(@Bind("entityId") String entityId);
 }
