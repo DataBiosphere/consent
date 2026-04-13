@@ -1,0 +1,32 @@
+get:
+  summary: Get document metadata by entity
+  description: Returns metadata for all non-deleted file storage objects associated with the given entity and entity id.
+  tags:
+    - Document
+  parameters:
+    - name: entity
+      in: path
+      description: Entity type. Supported values are dataset and study.
+      required: true
+      schema:
+        type: string
+    - name: entityId
+      in: path
+      description: Entity identifier.
+      required: true
+      schema:
+        type: string
+  responses:
+    200:
+      description: Returns file metadata records. Empty list is returned when there are no documents.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../schemas/FileStorageObject.yaml'
+    403:
+      description: User does not have read access to this entity.
+    404:
+      description: Entity was not found.
+
