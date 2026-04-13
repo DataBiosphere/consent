@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
@@ -210,5 +211,23 @@ class FileStorageObjectServiceTest {
     assertArrayEquals(content1.getBytes(), returned.get(0).getUploadedFile().readAllBytes());
     assertArrayEquals(content2.getBytes(), returned.get(1).getUploadedFile().readAllBytes());
     assertArrayEquals(content3.getBytes(), returned.get(2).getUploadedFile().readAllBytes());
+  }
+
+  @Test
+  void testFetchAllMetadataByEntityId() {
+    String entityId = RandomStringUtils.randomAlphabetic(10);
+    FileStorageObject file1 = new FileStorageObject();
+    FileStorageObject file2 = new FileStorageObject();
+    List<FileStorageObject> expected = List.of(file1, file2);
+
+    when(fileStorageObjectDAO.findFileMetadataByEntityId(entityId)).thenReturn(expected);
+
+    initService();
+
+    List<FileStorageObject> returned = service.fetchAllMetadataByEntityId(entityId);
+
+    assertEquals(expected, returned);
+    verify(fileStorageObjectDAO).findFileMetadataByEntityId(entityId);
+    verifyNoInteractions(gcsService);
   }
 }
