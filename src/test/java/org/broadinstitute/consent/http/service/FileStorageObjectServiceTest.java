@@ -215,7 +215,7 @@ class FileStorageObjectServiceTest {
 
   @Test
   void testFetchAllMetadataByEntityId() {
-    String entityId = RandomStringUtils.randomAlphabetic(10);
+    String entityId = RandomStringUtils.secure().nextAlphabetic(10);
     FileStorageObject file1 = new FileStorageObject();
     FileStorageObject file2 = new FileStorageObject();
     List<FileStorageObject> expected = List.of(file1, file2);
