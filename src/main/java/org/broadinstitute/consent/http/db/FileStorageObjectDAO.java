@@ -14,7 +14,6 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.transaction.Transactional;
 
 @RegisterRowMapper(FileStorageObjectMapper.class)
-@RegisterRowMapper(FileStorageObjectMapperWithFSOPrefix.class)
 public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
 
   @SqlUpdate(

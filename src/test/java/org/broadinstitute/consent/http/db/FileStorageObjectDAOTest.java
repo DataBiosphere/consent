@@ -279,8 +279,8 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
 
   private FileStorageObject createFileStorageObject(String entityId, FileCategory category) {
     String fileName = randomAlphabetic(10);
-    String bucketName = randomAlphabetic(10);
-    String gcsFileUri = randomAlphabetic(10);
+    String gcsFileUri = BlobId.of(randomAlphabetic(10), randomAlphabetic(10)).toGsUtilUri();
+    String mediaType = randomAlphabetic(10);
     User createUser = createUser();
     Instant createDate = Instant.now();
 
@@ -288,8 +288,8 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
         fileStorageObjectDAO.insertNewFile(
             fileName,
             category.getValue(),
-            bucketName,
             gcsFileUri,
+            mediaType,
             entityId,
             createUser.getUserId(),
             createDate);
