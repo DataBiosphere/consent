@@ -278,9 +278,9 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
   }
 
   private FileStorageObject createFileStorageObject(String entityId, FileCategory category) {
-    String fileName = randomAlphabetic(10);
-    String gcsFileUri = BlobId.of(randomAlphabetic(10), randomAlphabetic(10)).toGsUtilUri();
-    String mediaType = randomAlphabetic(10);
+    String fileName = randomAlphanumeric(10);
+    String gcsFileUri = BlobId.of(randomAlphanumeric(10), randomAlphanumeric(10)).toGsUtilUri();
+    String mediaType = randomAlphanumeric(10);
     User createUser = createUser();
     Instant createDate = Instant.now();
 
