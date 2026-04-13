@@ -21,7 +21,7 @@
     </tr>
     <tr>
       <td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">
-        The studies below were registered in DUOS today! Click the Study link to view the study and its datasets, or go to the <a href="${serverUrl}/datalibrary">DUOS Data Library</a>  to view all studies.
+        The studies below were registered in DUOS today! Click the Study link to view the study and its datasets, or go to the <a href="${serverUrl}datalibrary">DUOS Data Library</a>  to view all studies.
       </td>
     </tr>
     <tr>
@@ -36,7 +36,7 @@
         </thead>
         <tbody>
       <#list newStudies as item>
-        <tr><td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;"><a href="${serverUrl}/studies/${item.id()}">${item.name()}</a></td><td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">${item.datasetCount()}</td></tr>
+        <tr><td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;"><a href="${serverUrl}studies/${item.id()}">${item.name()}</a></td><td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">${item.datasetCount()}</td></tr>
       </#list>
         </tbody>
       </table>

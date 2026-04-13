@@ -24,7 +24,7 @@
                 <p id="content" style="margin: 0;">
                   Your dataset, <b>${datasetName}</b>, submitted to the <b>${dacName}</b> for management of future data access requests has been <b>accepted</b>
                   and can be found in the DUOS Data Library with this URL:
-                  <a href="${serverUrl}/dataset/${datasetIdentifier}" target="_blank"
+                  <a href="${serverUrl}dataset/${datasetIdentifier}" target="_blank"
                      style="text-decoration: none; font-family: 'Montserrat', sans-serif; color: #00609F; font-size: 16px; font-weight: bold;">
                     ${datasetIdentifier}.
                   </a>

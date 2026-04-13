@@ -45,7 +45,7 @@ class NewStudyDigestMessageTest {
     user.setUserId(1);
     user.setEmail("testUser@duos.org");
     user.setDisplayName("Test User");
-    String serverUrl = "http://localhost:8080";
+    String serverUrl = "http://localhost:8080/";
 
     var message = new NewStudyDigestMessage(user, newStudies, referenceId);
 
@@ -62,7 +62,7 @@ class NewStudyDigestMessageTest {
     String templateString = out.toString();
     Document parsedTemplate = Jsoup.parse(templateString);
 
-    String urlStringPattern = "%s/studies/%d\">%s";
+    String urlStringPattern = "%sstudies/%d\">%s";
     assertTrue(templateString.contains(user.getDisplayName()));
     assertEquals(
         "Dear Test User,",

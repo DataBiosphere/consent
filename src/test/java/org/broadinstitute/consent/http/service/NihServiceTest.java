@@ -1,18 +1,19 @@
 package org.broadinstitute.consent.http.service;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.any;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
 
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ServerErrorException;
 import java.time.Instant;
-import org.broadinstitute.consent.http.MockServerTestHelper;
+import org.broadinstitute.consent.http.WireMockTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
@@ -30,7 +31,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class NihServiceTest extends MockServerTestHelper {
+class NihServiceTest extends WireMockTestHelper {
 
   @Mock private UserDAO userDAO;
 
@@ -44,11 +45,10 @@ class NihServiceTest extends MockServerTestHelper {
   void setUp() {
     ServicesConfiguration servicesConfig = new ServicesConfiguration();
     servicesConfig.setTimeoutSeconds(1);
-    servicesConfig.setEcmUrl(
-        "http://" + CONTAINER.getHost() + ":" + CONTAINER.getServerPort() + "/");
+    servicesConfig.setEcmUrl(mockServerBaseUrl() + "/");
     service =
         new NihService(userDAO, nihServiceDAO, new HttpClientUtil(servicesConfig), servicesConfig);
-    mockServerClient.reset();
+    wireMockServer.resetAll();
   }
 
   @Test
@@ -65,12 +65,12 @@ class NihServiceTest extends MockServerTestHelper {
             ecmResponse.externalUserId(),
             String.valueOf(Instant.parse(timestamp).toEpochMilli()),
             ecmResponse.authenticated());
-    mockServerClient
-        .when(request())
-        .respond(
-            response()
-                .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
-                .withBody(GsonUtil.getInstance().toJson(ecmResponse)));
+    wireMockServer.stubFor(
+        any(anyUrl())
+            .willReturn(
+                aResponse()
+                    .withStatus(HttpStatusCodes.STATUS_CODE_OK)
+                    .withBody(GsonUtil.getInstance().toJson(ecmResponse))));
     User syncedUser = service.syncAccount(duosUser);
     assertEquals(user.getUserId(), syncedUser.getUserId());
     verify(nihServiceDAO).updateUserNihStatus(user, nihAccount);
@@ -82,12 +82,12 @@ class NihServiceTest extends MockServerTestHelper {
     user.setUserId(1);
     when(duosUser.getUser()).thenReturn(user);
     LinkInfo ecmResponse = new LinkInfo("test", "test", true);
-    mockServerClient
-        .when(request())
-        .respond(
-            response()
-                .withStatusCode(HttpStatusCodes.STATUS_CODE_BAD_REQUEST)
-                .withBody(GsonUtil.getInstance().toJson(ecmResponse)));
+    wireMockServer.stubFor(
+        any(anyUrl())
+            .willReturn(
+                aResponse()
+                    .withStatus(HttpStatusCodes.STATUS_CODE_BAD_REQUEST)
+                    .withBody(GsonUtil.getInstance().toJson(ecmResponse))));
     assertThrows(BadRequestException.class, () -> service.syncAccount(duosUser));
   }
 
@@ -97,12 +97,12 @@ class NihServiceTest extends MockServerTestHelper {
     user.setUserId(1);
     when(duosUser.getUser()).thenReturn(user);
     LinkInfo ecmResponse = new LinkInfo("test", "test", true);
-    mockServerClient
-        .when(request())
-        .respond(
-            response()
-                .withStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
-                .withBody(GsonUtil.getInstance().toJson(ecmResponse)));
+    wireMockServer.stubFor(
+        any(anyUrl())
+            .willReturn(
+                aResponse()
+                    .withStatus(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
+                    .withBody(GsonUtil.getInstance().toJson(ecmResponse))));
     assertThrows(ServerErrorException.class, () -> service.syncAccount(duosUser));
   }
 
@@ -111,12 +111,12 @@ class NihServiceTest extends MockServerTestHelper {
     User user = new User();
     user.setUserId(1);
     when(duosUser.getUser()).thenReturn(user);
-    mockServerClient
-        .when(request())
-        .respond(
-            response()
-                .withStatusCode(HttpStatusCodes.STATUS_CODE_OK)
-                .withBody(GsonUtil.getInstance().toJson("bad response")));
+    wireMockServer.stubFor(
+        any(anyUrl())
+            .willReturn(
+                aResponse()
+                    .withStatus(HttpStatusCodes.STATUS_CODE_OK)
+                    .withBody(GsonUtil.getInstance().toJson("bad response"))));
     assertThrows(ServerErrorException.class, () -> service.syncAccount(duosUser));
   }
 
@@ -127,9 +127,8 @@ class NihServiceTest extends MockServerTestHelper {
     when(duosUser.getUser()).thenReturn(user);
     when(userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues()))
         .thenReturn(user);
-    mockServerClient
-        .when(request())
-        .respond(response().withStatusCode(HttpStatusCodes.STATUS_CODE_NOT_FOUND));
+    wireMockServer.stubFor(
+        any(anyUrl()).willReturn(aResponse().withStatus(HttpStatusCodes.STATUS_CODE_NOT_FOUND)));
     User syncedUser = service.syncAccount(duosUser);
     assertEquals(user.getUserId(), syncedUser.getUserId());
     verify(nihServiceDAO).deleteNihAccountById(user.getUserId());
@@ -142,9 +141,8 @@ class NihServiceTest extends MockServerTestHelper {
     when(duosUser.getUser()).thenReturn(user);
     when(userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues()))
         .thenReturn(user);
-    mockServerClient
-        .when(request())
-        .respond(response().withStatusCode(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED));
+    wireMockServer.stubFor(
+        any(anyUrl()).willReturn(aResponse().withStatus(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED)));
     User syncedUser = service.syncAccount(duosUser);
     assertEquals(user.getUserId(), syncedUser.getUserId());
     verify(nihServiceDAO, never()).deleteNihAccountById(user.getUserId());
