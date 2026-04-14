@@ -185,6 +185,44 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     assertTrue(altDataSharingFiles.contains(file3));
   }
 
+  @Test
+  void testFindActiveFileByIdAndEntityId() {
+    String entityId = randomAlphabetic(10);
+    FileStorageObject file = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
+
+    FileStorageObject found =
+        fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, file.getFileStorageObjectId());
+
+    assertNotNull(found);
+    assertEquals(file.getFileStorageObjectId(), found.getFileStorageObjectId());
+    assertEquals(entityId, found.getEntityId());
+  }
+
+  @Test
+  void testFindActiveFileByIdAndEntityIdDeletedReturnsNull() {
+    String entityId = randomAlphabetic(10);
+    FileStorageObject file = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
+    User deleteUser = createUser();
+    fileStorageObjectDAO.deleteFileById(file.getFileStorageObjectId(), deleteUser.getUserId());
+
+    FileStorageObject found =
+        fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, file.getFileStorageObjectId());
+
+    assertNull(found);
+  }
+
+  @Test
+  void testFindActiveFileByIdAndEntityIdWrongEntityReturnsNull() {
+    String entityId = randomAlphabetic(10);
+    FileStorageObject file = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
+
+    FileStorageObject found =
+        fileStorageObjectDAO.findActiveFileByIdAndEntityId(
+            randomAlphabetic(8), file.getFileStorageObjectId());
+
+    assertNull(found);
+  }
+
   private FileStorageObject createFileStorageObject() {
     FileCategory category =
         List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
