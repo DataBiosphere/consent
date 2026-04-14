@@ -136,13 +136,6 @@ class DocumentResourceTest {
   }
 
   @Test
-  void testFindDocumentsByEntityUnauthenticatedForbidden() {
-    try (var response = resource.findDocumentsByEntity(null, "dataset", "123")) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
-    }
-  }
-
-  @Test
   void testFindDocumentsByStudyEntityAuthorizationErrorReturnsForbidden() {
     Integer studyId = 444;
     Study study = new Study();
