@@ -32,9 +32,7 @@ class DataPassportVisaTest {
   void consentedDataUseTerms_value_containsDatasetIdentifier() {
     Dataset dataset = datasetWithAlias(42);
     ConsentedDataUseTermsVisa visa = new ConsentedDataUseTermsVisa(dataset);
-    assertEquals(
-        PassportService.ISS + "/dataset/" + dataset.getDatasetIdentifier() + "/dataUse",
-        visa.value());
+    assertEquals(PassportService.ISS + "/dataset/" + dataset.getDatasetIdentifier(), visa.value());
   }
 
   @Test
