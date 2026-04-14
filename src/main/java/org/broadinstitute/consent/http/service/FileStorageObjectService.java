@@ -8,7 +8,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
@@ -78,11 +77,9 @@ public class FileStorageObjectService implements ConsentLogger {
     try {
       Map<BlobId, InputStream> documentMap =
           gcsService.getDocuments(
-              fileStorageObjects.stream()
-                  .map(FileStorageObject::getBlobId)
-                  .collect(Collectors.toList()));
+              fileStorageObjects.stream().map(FileStorageObject::getBlobId).toList());
 
-      fileStorageObjects.forEach((fso) -> fso.setUploadedFile(documentMap.get(fso.getBlobId())));
+      fileStorageObjects.forEach(fso -> fso.setUploadedFile(documentMap.get(fso.getBlobId())));
     } catch (NotFoundException e) {
       throw e; // pass along
     } catch (Exception e) {
@@ -96,6 +93,16 @@ public class FileStorageObjectService implements ConsentLogger {
     FileStorageObject fileStorageObject = fileStorageObjectDAO.findFileById(fileStorageObjectId);
     // download file from GCS
     fetchAndPopulateUploadedFile(fileStorageObject);
+    return fileStorageObject;
+  }
+
+  public FileStorageObject fetchMetadataByEntityIdAndId(
+      String entityId, Integer fileStorageObjectId) throws NotFoundException {
+    FileStorageObject fileStorageObject =
+        fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileStorageObjectId);
+    if (fileStorageObject == null) {
+      throw new NotFoundException("File not found");
+    }
     return fileStorageObject;
   }
 
