@@ -13,7 +13,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import org.broadinstitute.consent.http.enumeration.DocumentEntity;
-import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
@@ -76,21 +75,8 @@ public class DocumentResource extends Resource {
     if (study == null || study.getUuid() == null) {
       throw new NotFoundException("Entity not found");
     }
-    boolean hasReadAccess = Boolean.TRUE.equals(study.getPublicVisibility());
-    if (!hasReadAccess && study.getCreateUserId() != null && user.getUserId() != null) {
-      hasReadAccess = study.getCreateUserId().equals(user.getUserId());
-    }
-    if (!hasReadAccess) {
-      hasReadAccess = user.hasUserRole(UserRoles.ADMIN);
-    }
-    if (!hasReadAccess) {
-      try {
-        hasReadAccess = datasetService.isCreatorCustodianOrAdmin(user, study);
-      } catch (RuntimeException _) {
-        logWarn("Unable to evaluate study authorization for study id: " + studyId);
-      }
-    }
-    if (!hasReadAccess) {
+    if (!Boolean.TRUE.equals(study.getPublicVisibility())
+        && !datasetService.isCreatorCustodianOrAdmin(user, study)) {
       throw new ForbiddenException("User does not have permission");
     }
     return study.getUuid().toString();

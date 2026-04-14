@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -144,9 +143,7 @@ class DocumentResourceTest {
 
     when(duosUser.getUser()).thenReturn(user);
     when(datasetService.findStudy(studyId)).thenReturn(study);
-    doThrow(new NullPointerException("auth failure"))
-        .when(datasetService)
-        .isCreatorCustodianOrAdmin(user, study);
+    when(datasetService.isCreatorCustodianOrAdmin(user, study)).thenReturn(false);
 
     try (var response = resource.findDocumentsByEntity(duosUser, "study", studyId.toString())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
