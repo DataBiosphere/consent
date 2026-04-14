@@ -1,2 +1,2 @@
 org.broadinstitute.consent.http.db.DAOTestHelper
-org.broadinstitute.consent.http.MockServerTestHelper
+org.broadinstitute.consent.http.WireMockTestHelper

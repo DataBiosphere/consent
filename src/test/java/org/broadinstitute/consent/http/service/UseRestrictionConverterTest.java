@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.UUID;
-import org.broadinstitute.consent.http.MockServerTestHelper;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -17,7 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class UseRestrictionConverterTest extends MockServerTestHelper {
+class UseRestrictionConverterTest {
 
   @Test
   void testParseDataUsePurposeEmpty() {

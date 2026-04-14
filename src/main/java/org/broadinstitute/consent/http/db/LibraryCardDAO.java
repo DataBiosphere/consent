@@ -2,11 +2,14 @@ package org.broadinstitute.consent.http.db;
 
 import java.util.Date;
 import java.util.List;
+import org.broadinstitute.consent.http.db.mapper.LibraryCardDaaAuditMapper;
 import org.broadinstitute.consent.http.db.mapper.LibraryCardReducer;
 import org.broadinstitute.consent.http.db.mapper.LibraryCardWithDaaReducer;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.LibraryCardDaaAudit;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
+import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
@@ -62,9 +65,18 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   @SqlQuery(
       """
       SELECT lc.*,
-      ld.daa_id
+      ld.daa_id,
+      auth_user.email as daa_authorized_by
       FROM library_card AS lc
       LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+      LEFT JOIN LATERAL (
+          SELECT a.user_id
+          FROM lc_daa_audit a
+          WHERE a.lc_id = ld.lc_id AND a.daa_id = ld.daa_id AND a.action = 'ADD'
+          ORDER BY a.action_date DESC
+          LIMIT 1
+      ) audit ON true
+      LEFT JOIN users auth_user ON auth_user.user_id = audit.user_id
       WHERE lc.id = :libraryCardId
       """)
   LibraryCard findLibraryCardById(@Bind("libraryCardId") Integer libraryCardId);
@@ -81,10 +93,19 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
       daa.create_date as daa_create_date,
       daa.update_user_id as daa_update_user_id,
       daa.update_date as daa_update_date,
-      daa.initial_dac_id as daa_initial_dac_id
+      daa.initial_dac_id as daa_initial_dac_id,
+      auth_user.email as daa_authorized_by
       FROM library_card lc
       LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
       LEFT JOIN data_access_agreement daa ON ld.daa_id = daa.daa_id
+      LEFT JOIN LATERAL (
+          SELECT a.user_id
+          FROM lc_daa_audit a
+          WHERE a.lc_id = ld.lc_id AND a.daa_id = ld.daa_id AND a.action = 'ADD'
+          ORDER BY a.action_date DESC
+          LIMIT 1
+      ) audit ON true
+      LEFT JOIN users auth_user ON auth_user.user_id = audit.user_id
       WHERE lc.id = :libraryCardId
       """)
   LibraryCard findLibraryCardDaaById(@Bind("libraryCardId") Integer libraryCardId);
@@ -94,9 +115,18 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   @SqlQuery(
       """
       SELECT lc.*,
-      ld.daa_id
+      ld.daa_id,
+      auth_user.email as daa_authorized_by
       FROM library_card AS lc
       LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+      LEFT JOIN LATERAL (
+          SELECT a.user_id
+          FROM lc_daa_audit a
+          WHERE a.lc_id = ld.lc_id AND a.daa_id = ld.daa_id AND a.action = 'ADD'
+          ORDER BY a.action_date DESC
+          LIMIT 1
+      ) audit ON true
+      LEFT JOIN users auth_user ON auth_user.user_id = audit.user_id
       WHERE lc.user_id = :userId
       """)
   LibraryCard findLibraryCardByUserId(@Bind("userId") Integer userId);
@@ -105,9 +135,19 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   @UseRowReducer(LibraryCardReducer.class)
   @SqlQuery(
       """
-      SELECT library_card.*, ld.daa_id
+      SELECT library_card.*,
+      ld.daa_id,
+      auth_user.email as daa_authorized_by
       FROM library_card
       LEFT JOIN lc_daa ld ON library_card.id = ld.lc_id
+      LEFT JOIN LATERAL (
+          SELECT a.user_id
+          FROM lc_daa_audit a
+          WHERE a.lc_id = ld.lc_id AND a.daa_id = ld.daa_id AND a.action = 'ADD'
+          ORDER BY a.action_date DESC
+          LIMIT 1
+      ) audit ON true
+      LEFT JOIN users auth_user ON auth_user.user_id = audit.user_id
       INNER JOIN users u ON library_card.user_id = u.user_id AND u.institution_id = :institutionId
       """)
   List<LibraryCard> findLibraryCardsByInstitutionId(@Bind("institutionId") Integer institutionId);
@@ -117,9 +157,18 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
   @SqlQuery(
       """
       SELECT lc.*,
-      ld.daa_id
+      ld.daa_id,
+      auth_user.email as daa_authorized_by
       FROM library_card AS lc
       LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+      LEFT JOIN LATERAL (
+          SELECT a.user_id
+          FROM lc_daa_audit a
+          WHERE a.lc_id = ld.lc_id AND a.daa_id = ld.daa_id AND a.action = 'ADD'
+          ORDER BY a.action_date DESC
+          LIMIT 1
+      ) audit ON true
+      LEFT JOIN users auth_user ON auth_user.user_id = audit.user_id
       """)
   List<LibraryCard> findAllLibraryCards();
 
@@ -134,19 +183,49 @@ public interface LibraryCardDAO extends Transactional<LibraryCardDAO> {
 
   @SqlUpdate(
       """
-      INSERT INTO lc_daa (lc_id, daa_id)
-      VALUES (:lcId, :daaId)
-      ON CONFLICT DO NOTHING
+      WITH lc_daa_insert AS (
+        INSERT INTO lc_daa (lc_id, daa_id)
+        VALUES (:lcId, :daaId)
+        ON CONFLICT DO NOTHING
+        RETURNING lc_id
+      )
+      INSERT INTO lc_daa_audit (daa_id, lc_id, lc_user_id, user_id, action, action_date)
+      SELECT :daaId, :lcId, :lcUserId, :userId, 'ADD', NOW()
+      WHERE EXISTS (SELECT 1 FROM lc_daa_insert)
       """)
-  void createLibraryCardDaaRelation(@Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
+  void createLibraryCardDaaRelation(
+      @Bind("lcUserId") Integer lcUserId,
+      @Bind("userId") Integer userId,
+      @Bind("lcId") Integer lcId,
+      @Bind("daaId") Integer daaId);
 
   @SqlUpdate(
       """
-      DELETE FROM lc_daa
-      WHERE lc_id = :lcId
-      AND daa_id = :daaId
+      WITH lc_daa_delete AS (
+        DELETE FROM lc_daa
+        WHERE lc_id = :lcId
+        AND daa_id = :daaId
+        RETURNING lc_id
+      )
+      INSERT INTO lc_daa_audit (daa_id, lc_id, lc_user_id, user_id, action, action_date)
+      SELECT :daaId, :lcId, :lcUserId, :userId, 'REMOVE', NOW()
+      WHERE EXISTS (SELECT 1 FROM lc_daa_delete)
       """)
-  void deleteLibraryCardDaaRelation(@Bind("lcId") Integer lcId, @Bind("daaId") Integer daaId);
+  void deleteLibraryCardDaaRelation(
+      @Bind("lcUserId") Integer lcUserId,
+      @Bind("userId") Integer userId,
+      @Bind("lcId") Integer lcId,
+      @Bind("daaId") Integer daaId);
+
+  @RegisterRowMapper(LibraryCardDaaAuditMapper.class)
+  @SqlQuery(
+      """
+      SELECT *
+      FROM lc_daa_audit
+      WHERE lc_user_id = :lcUserId
+      ORDER BY action_date DESC
+      """)
+  List<LibraryCardDaaAudit> findAuditsByLcUserId(@Bind("lcUserId") Integer lcUserId);
 
   /**
    * Finds library cards by user emails.

@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db.mapper;
 
 import java.util.Map;
 import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.LibraryCardDaaDetail;
 import org.jdbi.v3.core.mapper.MappingException;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
@@ -16,7 +17,11 @@ public class LibraryCardReducer
             rowView.getColumn("id", Integer.class), id -> rowView.getRow(LibraryCard.class));
     try {
       if (hasNonZeroColumn(rowView, "daa_id")) {
-        card.addDaa(rowView.getColumn("daa_id", Integer.class));
+        Integer daaId = rowView.getColumn("daa_id", Integer.class);
+        card.addDaa(daaId);
+        String authorizedBy =
+            hasOptionalColumn(rowView, "daa_authorized_by", String.class).orElse(null);
+        card.addDaaDetail(new LibraryCardDaaDetail(daaId, authorizedBy));
       }
     } catch (MappingException e) {
       logWarn("Error adding DAA to Library Card", e);
