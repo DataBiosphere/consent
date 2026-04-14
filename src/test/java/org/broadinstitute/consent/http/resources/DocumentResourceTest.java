@@ -39,12 +39,10 @@ class DocumentResourceTest {
   @Test
   void testFindDocumentsByDatasetEntityReturnsMetadata() {
     Integer datasetId = 123;
-    Dataset dataset = new Dataset();
     List<FileStorageObject> files = List.of(new FileStorageObject());
 
     when(duosUser.getUser()).thenReturn(user);
-    when(datasetService.findDatasetWithoutFSOInformation(datasetId)).thenReturn(dataset);
-    when(datasetService.findDatasetById(user, datasetId)).thenReturn(dataset);
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
     when(fileStorageObjectService.fetchAllMetadataByEntityId(datasetId.toString()))
         .thenReturn(files);
 
@@ -54,6 +52,22 @@ class DocumentResourceTest {
     }
 
     verify(fileStorageObjectService).fetchAllMetadataByEntityId(datasetId.toString());
+  }
+
+  @Test
+  void testFindDocumentsByDatasetEntityMixedCaseReturnsMetadata() {
+    Integer datasetId = 123;
+    List<FileStorageObject> files = List.of(new FileStorageObject());
+
+    when(duosUser.getUser()).thenReturn(user);
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
+    when(fileStorageObjectService.fetchAllMetadataByEntityId(datasetId.toString()))
+        .thenReturn(files);
+
+    try (var response = resource.findDocumentsByEntity(duosUser, "DaTaSeT", datasetId.toString())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(files, response.getEntity());
+    }
   }
 
   @Test
@@ -82,7 +96,8 @@ class DocumentResourceTest {
     Integer datasetId = 111;
 
     when(duosUser.getUser()).thenReturn(user);
-    when(datasetService.findDatasetWithoutFSOInformation(datasetId)).thenReturn(null);
+    when(datasetService.findDatasetByIdForRead(user, datasetId))
+        .thenThrow(new jakarta.ws.rs.NotFoundException("Entity not found"));
 
     try (var response = resource.findDocumentsByEntity(duosUser, "dataset", datasetId.toString())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
@@ -92,11 +107,10 @@ class DocumentResourceTest {
   @Test
   void testFindDocumentsByDatasetEntityForbidden() {
     Integer datasetId = 222;
-    Dataset dataset = new Dataset();
 
     when(duosUser.getUser()).thenReturn(user);
-    when(datasetService.findDatasetWithoutFSOInformation(datasetId)).thenReturn(dataset);
-    when(datasetService.findDatasetById(user, datasetId)).thenReturn(null);
+    when(datasetService.findDatasetByIdForRead(user, datasetId))
+        .thenThrow(new jakarta.ws.rs.ForbiddenException("User does not have permission"));
 
     try (var response = resource.findDocumentsByEntity(duosUser, "dataset", datasetId.toString())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
@@ -125,6 +139,15 @@ class DocumentResourceTest {
   void testFindDocumentsByEntityUnauthenticatedForbidden() {
     try (var response = resource.findDocumentsByEntity(null, "dataset", "123")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @Test
+  void testFindDocumentsByUnsupportedEntityReturnsNotFound() {
+    when(duosUser.getUser()).thenReturn(user);
+
+    try (var response = resource.findDocumentsByEntity(duosUser, "unknown", "123")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
 

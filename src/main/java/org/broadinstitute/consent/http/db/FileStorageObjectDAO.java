@@ -110,10 +110,18 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
   @SqlQuery(
       """
           SELECT
-          """
-          + FileStorageObject.QUERY_FIELDS_WITH_FSO_PREFIX
-          + " "
-          + """
+              fso.file_storage_object_id AS fso_file_storage_object_id,
+              fso.entity_id AS fso_entity_id,
+              fso.file_name AS fso_file_name,
+              fso.category AS fso_category,
+              fso.gcs_file_uri AS fso_gcs_file_uri,
+              fso.media_type AS fso_media_type,
+              fso.create_date AS fso_create_date,
+              fso.create_user_id AS fso_create_user_id,
+              fso.update_date AS fso_update_date,
+              fso.update_user_id AS fso_update_user_id,
+              fso.deleted AS fso_deleted,
+              fso.delete_user_id AS fso_delete_user_id
           FROM file_storage_object fso
           WHERE fso.entity_id = :entityId
             AND (fso.deleted = false OR fso.deleted IS NULL)

@@ -7,6 +7,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
@@ -245,6 +246,24 @@ public class DatasetService implements ConsentLogger {
   public Dataset findDatasetById(User user, Integer id) {
     Dataset dataset = datasetDAO.findDatasetById(id);
     return verifyPublicVisibilityAccess(dataset, user);
+  }
+
+  /**
+   * Finds a dataset by ID and enforces read access using a single dataset query.
+   *
+   * @throws NotFoundException if the dataset does not exist
+   * @throws ForbiddenException if the user cannot view the dataset
+   */
+  public Dataset findDatasetByIdForRead(User user, Integer id) {
+    Dataset dataset = datasetDAO.findDatasetById(id);
+    if (dataset == null) {
+      throw new NotFoundException("Entity not found");
+    }
+    Dataset authorizedDataset = verifyPublicVisibilityAccess(dataset, user);
+    if (authorizedDataset == null) {
+      throw new ForbiddenException("User does not have permission");
+    }
+    return authorizedDataset;
   }
 
   /**

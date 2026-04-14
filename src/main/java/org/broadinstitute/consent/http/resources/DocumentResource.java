@@ -12,9 +12,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
-import java.util.Locale;
+import org.broadinstitute.consent.http.enumeration.DocumentEntity;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
@@ -58,23 +57,19 @@ public class DocumentResource extends Resource {
   }
 
   private String validateEntityAndReadAccess(String entity, String entityId, User user) {
-    return switch (entity.toLowerCase(Locale.ROOT)) {
-      case "dataset" -> validateDatasetReadAccess(entityId, user);
-      case "study" -> validateStudyReadAccess(entityId, user);
-      default -> throw new NotFoundException("Entity not found");
+    DocumentEntity documentEntity =
+        DocumentEntity.fromValue(entity)
+            .orElseThrow(() -> new NotFoundException("Entity not found"));
+
+    return switch (documentEntity) {
+      case DATASET -> validateDatasetReadAccess(entityId, user);
+      case STUDY -> validateStudyReadAccess(entityId, user);
     };
   }
 
   private String validateDatasetReadAccess(String entityId, User user) {
     Integer datasetId = parseNumericEntityId(entityId);
-    Dataset dataset = datasetService.findDatasetWithoutFSOInformation(datasetId);
-    if (dataset == null) {
-      throw new NotFoundException("Entity not found");
-    }
-    Dataset authorizedDataset = datasetService.findDatasetById(user, datasetId);
-    if (authorizedDataset == null) {
-      throw new ForbiddenException("User does not have permission");
-    }
+    datasetService.findDatasetByIdForRead(user, datasetId);
     return datasetId.toString();
   }
 

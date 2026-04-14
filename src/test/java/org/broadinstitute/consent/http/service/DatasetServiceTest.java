@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.gson.Gson;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import java.sql.Timestamp;
@@ -148,6 +149,51 @@ class DatasetServiceTest extends AbstractTestHelper {
 
     assertNotNull(dataset);
     assertEquals(dataset.getName(), getDatasets().getFirst().getName());
+  }
+
+  @Test
+  void testFindDatasetByIdForRead() {
+    Dataset dataset = getDatasets().getFirst();
+    dataset.setStudyId(null);
+    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+
+    Dataset result = datasetService.findDatasetByIdForRead(mockUser, dataset.getDatasetId());
+
+    assertNotNull(result);
+    assertEquals(dataset.getDatasetId(), result.getDatasetId());
+  }
+
+  @Test
+  void testFindDatasetByIdForReadNotFound() {
+    when(datasetDAO.findDatasetById(99)).thenReturn(null);
+
+    assertThrows(
+        NotFoundException.class, () -> datasetService.findDatasetByIdForRead(mockUser, 99));
+  }
+
+  @Test
+  void testFindDatasetByIdForReadForbidden() {
+    User user = new User();
+    user.setUserId(1);
+    user.setEmail("user@email.com");
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(5);
+    dataset.setCreateUserId(3);
+    Study study = new Study();
+    study.setStudyId(7);
+    study.setCreateUserId(4);
+    study.setPublicVisibility(false);
+    StudyProperty property = new StudyProperty();
+    property.setKey("other");
+    property.setValue("[]");
+    study.addProperties(property);
+    dataset.setStudyId(study.getStudyId());
+    dataset.setStudy(study);
+    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+
+    assertThrows(
+        ForbiddenException.class,
+        () -> datasetService.findDatasetByIdForRead(user, dataset.getDatasetId()));
   }
 
   @Test

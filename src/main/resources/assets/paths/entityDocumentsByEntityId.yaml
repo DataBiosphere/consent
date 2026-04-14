@@ -1,5 +1,6 @@
 get:
   summary: Get document metadata by entity
+  operationId: findDocumentsByEntity
   description: Returns metadata for all non-deleted file storage objects associated with the given entity and entity id.
   tags:
     - Document
