@@ -194,8 +194,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     when(datasetDAO.findDatasetById(datasetId)).thenReturn(dataset);
 
     assertThrows(
-        ForbiddenException.class,
-        () -> datasetService.findDatasetByIdForRead(user, datasetId));
+        ForbiddenException.class, () -> datasetService.findDatasetByIdForRead(user, datasetId));
   }
 
   @Test
