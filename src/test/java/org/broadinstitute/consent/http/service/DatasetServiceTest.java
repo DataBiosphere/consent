@@ -189,11 +189,13 @@ class DatasetServiceTest extends AbstractTestHelper {
     study.addProperties(property);
     dataset.setStudyId(study.getStudyId());
     dataset.setStudy(study);
-    when(datasetDAO.findDatasetById(dataset.getDatasetId())).thenReturn(dataset);
+
+    int datasetId = dataset.getDatasetId();
+    when(datasetDAO.findDatasetById(datasetId)).thenReturn(dataset);
 
     assertThrows(
         ForbiddenException.class,
-        () -> datasetService.findDatasetByIdForRead(user, dataset.getDatasetId()));
+        () -> datasetService.findDatasetByIdForRead(user, datasetId));
   }
 
   @Test

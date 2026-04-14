@@ -43,9 +43,6 @@ public class DocumentResource extends Resource {
       @PathParam("entity") String entity,
       @PathParam("entityId") String entityId) {
     try {
-      if (duosUser == null || duosUser.getUser() == null) {
-        throw new ForbiddenException("User does not have permission");
-      }
       User user = duosUser.getUser();
       String fsoEntityId = validateEntityAndReadAccess(entity, entityId, user);
       List<FileStorageObject> fileStorageObjects =

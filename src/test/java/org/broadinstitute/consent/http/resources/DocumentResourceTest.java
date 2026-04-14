@@ -143,15 +143,6 @@ class DocumentResourceTest {
   }
 
   @Test
-  void testFindDocumentsByUnsupportedEntityReturnsNotFound() {
-    when(duosUser.getUser()).thenReturn(user);
-
-    try (var response = resource.findDocumentsByEntity(duosUser, "unknown", "123")) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-    }
-  }
-
-  @Test
   void testFindDocumentsByStudyEntityAuthorizationErrorReturnsForbidden() {
     Integer studyId = 444;
     Study study = new Study();

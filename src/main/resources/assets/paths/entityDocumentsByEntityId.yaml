@@ -26,8 +26,9 @@ get:
             type: array
             items:
               $ref: '../schemas/FileStorageObject.yaml'
+    401:
+      description: Unauthorized. Authentication is required and has failed or has not yet been provided.
     403:
       description: User does not have read access to this entity.
     404:
       description: Entity was not found.
-
