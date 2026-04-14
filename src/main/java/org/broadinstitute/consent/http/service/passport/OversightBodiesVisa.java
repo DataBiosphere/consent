@@ -35,6 +35,7 @@ public class OversightBodiesVisa implements VisaClaimType {
   /**
    * Returns a stable URL identifying the DAC within DUOS. Consumers can dereference this URL to
    * retrieve details about the oversight body, including its members and chairpersons.
+   * TODO: We need a public and stable identifier to point users to for DACs.
    */
   @Override
   public String value() {
