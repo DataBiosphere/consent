@@ -1,0 +1,37 @@
+get:
+  summary: Get document metadata by entity and file id
+  operationId: findDocumentByEntity
+  description: Returns FileStorageObject metadata only. File bytes are not returned.
+  parameters:
+    - name: entity
+      in: path
+      required: true
+      description: Entity type that owns the file
+      schema:
+        type: string
+        enum: [dataset, study]
+    - name: entityId
+      in: path
+      required: true
+      description: Numeric id of the owning entity
+      schema:
+        type: string
+    - name: id
+      in: path
+      required: true
+      description: FileStorageObject id
+      schema:
+        type: integer
+  tags:
+    - Document
+  responses:
+    200:
+      description: FileStorageObject metadata
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/FileStorageObject.yaml'
+    403:
+      description: Forbidden
+    404:
+      description: Not Found
