@@ -35,12 +35,12 @@ public class ConsentedDataUseTermsVisa implements VisaClaimType {
   }
 
   /**
-   * Returns a stable URL pointing to the dataset's data use terms in DUOS. Consumers can
+   * Returns a stable URL pointing to the dataset identifier that describes the consented terms
    * dereference this URL to retrieve the full DUO-coded data use object for the dataset.
    */
   @Override
   public String value() {
-    return "%s/dataset/%s/dataUse".formatted(PassportService.ISS, dataset.getDatasetIdentifier());
+    return "%s/dataset/%s".formatted(PassportService.ISS, dataset.getDatasetIdentifier());
   }
 
   @Override
