@@ -295,6 +295,15 @@ class UserDAOTest extends DAOTestHelper {
         u -> {
           assertNotNull(u.getInstitution());
           assertNotNull(u.getLibraryCard());
+          assertNotNull(u.getLibraryCard().getDaaDetails());
+          assertFalse(u.getLibraryCard().getDaaDetails().isEmpty());
+          u.getLibraryCard()
+              .getDaaDetails()
+              .forEach(
+                  detail -> {
+                    assertNotNull(detail.daaId());
+                    assertNotNull(detail.authorizedBy());
+                  });
         });
   }
 
@@ -447,6 +456,13 @@ class UserDAOTest extends DAOTestHelper {
     LibraryCard returnedCard = returnedUser.getLibraryCard();
     assertEquals(card.getId(), returnedCard.getId());
     assertEquals(userId, returnedCard.getUserId());
+
+    // Verify the daaDetails contain the authorized-by email from the audit table
+    assertNotNull(returnedCard.getDaaDetails());
+    assertEquals(1, returnedCard.getDaaDetails().size());
+    assertEquals(daaId, returnedCard.getDaaDetails().getFirst().daaId());
+    assertEquals(
+        signingOfficial.getEmail(), returnedCard.getDaaDetails().getFirst().authorizedBy());
   }
 
   @Test
