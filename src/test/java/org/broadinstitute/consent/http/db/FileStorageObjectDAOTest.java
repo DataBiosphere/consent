@@ -307,6 +307,75 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     assertNull(found);
   }
 
+  @Test
+  void testFindFileByIdAndEntityIdReturnsDeletedFile() {
+    String entityId = randomAlphabetic(10);
+    FileStorageObject file = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
+    User deleteUser = createUser();
+    fileStorageObjectDAO.deleteFileById(file.getFileStorageObjectId(), deleteUser.getUserId());
+
+    FileStorageObject found =
+        fileStorageObjectDAO.findFileByIdAndEntityId(entityId, file.getFileStorageObjectId());
+
+    assertNotNull(found);
+    assertTrue(found.getDeleted());
+  }
+
+  @Test
+  void testSoftDeleteSetsDeleteFieldsAndPreservesOtherFields() {
+    String entityId = randomAlphabetic(10);
+    FileStorageObject file =
+        createFileStorageObject(entityId, FileCategory.IRB_COLLABORATION_LETTER);
+    User deleteUser = createUser();
+    Instant deleteDate = Instant.now();
+
+    String originalName = file.getFileName();
+    String originalEntityId = file.getEntityId();
+    String originalMediaType = file.getMediaType();
+    Integer originalCreateUserId = file.getCreateUserId();
+
+    int updatedRows =
+        fileStorageObjectDAO.softDelete(
+            file.getFileStorageObjectId(), deleteUser.getUserId(), deleteDate);
+
+    FileStorageObject deletedFile =
+        fileStorageObjectDAO.findFileById(file.getFileStorageObjectId());
+
+    assertEquals(1, updatedRows);
+    assertTrue(deletedFile.getDeleted());
+    assertEquals(deleteUser.getUserId(), deletedFile.getDeleteUserId());
+    assertEquals(deleteDate.getEpochSecond(), deletedFile.getDeleteDate().getEpochSecond());
+    assertEquals(originalName, deletedFile.getFileName());
+    assertEquals(originalEntityId, deletedFile.getEntityId());
+    assertEquals(originalMediaType, deletedFile.getMediaType());
+    assertEquals(originalCreateUserId, deletedFile.getCreateUserId());
+  }
+
+  @Test
+  void testSoftDeleteIdempotentOnRepeatedDelete() {
+    FileStorageObject file = createFileStorageObject();
+    User firstDeleteUser = createUser();
+    User secondDeleteUser = createUser();
+    Instant firstDeleteDate = Instant.now();
+    Instant secondDeleteDate = Instant.now().plusSeconds(5);
+
+    int firstUpdateRows =
+        fileStorageObjectDAO.softDelete(
+            file.getFileStorageObjectId(), firstDeleteUser.getUserId(), firstDeleteDate);
+    int secondUpdateRows =
+        fileStorageObjectDAO.softDelete(
+            file.getFileStorageObjectId(), secondDeleteUser.getUserId(), secondDeleteDate);
+
+    FileStorageObject deletedFile =
+        fileStorageObjectDAO.findFileById(file.getFileStorageObjectId());
+
+    assertEquals(1, firstUpdateRows);
+    assertEquals(0, secondUpdateRows);
+    assertTrue(deletedFile.getDeleted());
+    assertEquals(firstDeleteUser.getUserId(), deletedFile.getDeleteUserId());
+    assertEquals(firstDeleteDate.getEpochSecond(), deletedFile.getDeleteDate().getEpochSecond());
+  }
+
   private FileStorageObject createFileStorageObject() {
     FileCategory category =
         List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));

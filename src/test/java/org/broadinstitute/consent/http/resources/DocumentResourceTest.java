@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -55,15 +57,16 @@ class DocumentResourceTest {
 
   @Test
   void testFindDocumentsByDatasetEntityMixedCaseReturnsMetadata() {
-    Integer datasetId = 123;
+    int datasetId = 123;
     List<FileStorageObject> files = List.of(new FileStorageObject());
 
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
-            user, "DaTaSeT", datasetId.toString()))
+            user, "DaTaSeT", Integer.toString(datasetId)))
         .thenReturn(files);
 
-    try (var response = resource.findDocumentsByEntity(duosUser, "DaTaSeT", datasetId.toString())) {
+    try (var response =
+        resource.findDocumentsByEntity(duosUser, "DaTaSeT", Integer.toString(datasetId))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(files, response.getEntity());
     }
@@ -71,21 +74,22 @@ class DocumentResourceTest {
 
   @Test
   void testFindDocumentsByStudyEntityReturnsMetadata() {
-    Integer studyId = 456;
+    int studyId = 456;
     List<FileStorageObject> files = List.of(new FileStorageObject());
 
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
-            user, "study", studyId.toString()))
+            user, "study", Integer.toString(studyId)))
         .thenReturn(files);
 
-    try (var response = resource.findDocumentsByEntity(duosUser, "study", studyId.toString())) {
+    try (var response =
+        resource.findDocumentsByEntity(duosUser, "study", Integer.toString(studyId))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(files, response.getEntity());
     }
 
     verify(fileStorageObjectService)
-        .fetchAllMetadataByEntityAndEntityIdForRead(user, "study", studyId.toString());
+        .fetchAllMetadataByEntityAndEntityIdForRead(user, "study", Integer.toString(studyId));
   }
 
   @Test
@@ -114,14 +118,15 @@ class DocumentResourceTest {
 
   @Test
   void testFindDocumentsByStudyEntityReturnsEmptyList() {
-    Integer studyId = 333;
+    int studyId = 333;
 
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
-            user, "study", studyId.toString()))
+            user, "study", Integer.toString(studyId)))
         .thenReturn(List.of());
 
-    try (var response = resource.findDocumentsByEntity(duosUser, "study", studyId.toString())) {
+    try (var response =
+        resource.findDocumentsByEntity(duosUser, "study", Integer.toString(studyId))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(List.of(), response.getEntity());
     }
@@ -129,58 +134,60 @@ class DocumentResourceTest {
 
   @Test
   void testFindDocumentsByStudyEntityForbidden() {
-    Integer studyId = 444;
+    int studyId = 444;
 
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
-            user, "study", studyId.toString()))
+            user, "study", Integer.toString(studyId)))
         .thenThrow(new jakarta.ws.rs.ForbiddenException("User does not have permission"));
 
-    try (var response = resource.findDocumentsByEntity(duosUser, "study", studyId.toString())) {
+    try (var response =
+        resource.findDocumentsByEntity(duosUser, "study", Integer.toString(studyId))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
   }
 
   @Test
   void testFindDocumentByDatasetEntityReturnsMetadata() {
-    Integer datasetId = 123;
-    Integer fileId = 10;
+    int datasetId = 123;
+    int fileId = 10;
     FileStorageObject fileStorageObject = new FileStorageObject();
 
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.fetchMetadataByEntityAndEntityIdForRead(
-            user, "dataset", datasetId.toString(), fileId))
+            user, "dataset", Integer.toString(datasetId), fileId))
         .thenReturn(fileStorageObject);
 
     try (var response =
-        resource.findDocumentByEntity(duosUser, "dataset", datasetId.toString(), fileId)) {
+        resource.findDocumentByEntity(duosUser, "dataset", Integer.toString(datasetId), fileId)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(fileStorageObject, response.getEntity());
     }
 
     verify(fileStorageObjectService)
-        .fetchMetadataByEntityAndEntityIdForRead(user, "dataset", datasetId.toString(), fileId);
+        .fetchMetadataByEntityAndEntityIdForRead(
+            user, "dataset", Integer.toString(datasetId), fileId);
   }
 
   @Test
   void testFindDocumentByStudyEntityReturnsMetadata() {
-    Integer studyId = 456;
+    int studyId = 456;
     Integer fileId = 11;
     FileStorageObject fileStorageObject = new FileStorageObject();
 
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.fetchMetadataByEntityAndEntityIdForRead(
-            user, "study", studyId.toString(), fileId))
+            user, "study", Integer.toString(studyId), fileId))
         .thenReturn(fileStorageObject);
 
     try (var response =
-        resource.findDocumentByEntity(duosUser, "study", studyId.toString(), fileId)) {
+        resource.findDocumentByEntity(duosUser, "study", Integer.toString(studyId), fileId)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(fileStorageObject, response.getEntity());
     }
 
     verify(fileStorageObjectService)
-        .fetchMetadataByEntityAndEntityIdForRead(user, "study", studyId.toString(), fileId);
+        .fetchMetadataByEntityAndEntityIdForRead(user, "study", Integer.toString(studyId), fileId);
   }
 
   @Test
@@ -228,6 +235,57 @@ class DocumentResourceTest {
           HttpStatusCodes.STATUS_CODE_NOT_FOUND,
           response.getStatus(),
           "Expected 404 for scenario: " + scenarioDescription);
+    }
+  }
+
+  @Test
+  void testSoftDeleteDocumentByEntitySuccess() {
+    when(duosUser.getUser()).thenReturn(user);
+    doNothing()
+        .when(fileStorageObjectService)
+        .softDeleteByEntityAndEntityIdForWrite(user, "dataset", "123", 10);
+
+    try (var response = resource.softDeleteDocumentByEntity(duosUser, "dataset", "123", 10)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+
+    verify(fileStorageObjectService)
+        .softDeleteByEntityAndEntityIdForWrite(user, "dataset", "123", 10);
+  }
+
+  @Test
+  void testSoftDeleteDocumentByEntityIdempotentWhenAlreadyDeleted() {
+    when(duosUser.getUser()).thenReturn(user);
+    doNothing()
+        .when(fileStorageObjectService)
+        .softDeleteByEntityAndEntityIdForWrite(user, "study", "456", 11);
+
+    try (var response = resource.softDeleteDocumentByEntity(duosUser, "study", "456", 11)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    }
+  }
+
+  @Test
+  void testSoftDeleteDocumentByEntityForbidden() {
+    when(duosUser.getUser()).thenReturn(user);
+    doThrow(new jakarta.ws.rs.ForbiddenException("User does not have permission"))
+        .when(fileStorageObjectService)
+        .softDeleteByEntityAndEntityIdForWrite(user, "dataset", "123", 10);
+
+    try (var response = resource.softDeleteDocumentByEntity(duosUser, "dataset", "123", 10)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @Test
+  void testSoftDeleteDocumentByEntityNotFound() {
+    when(duosUser.getUser()).thenReturn(user);
+    doThrow(new NotFoundException("Entity not found"))
+        .when(fileStorageObjectService)
+        .softDeleteByEntityAndEntityIdForWrite(user, "invalid", "123", 10);
+
+    try (var response = resource.softDeleteDocumentByEntity(duosUser, "invalid", "123", 10)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
 }

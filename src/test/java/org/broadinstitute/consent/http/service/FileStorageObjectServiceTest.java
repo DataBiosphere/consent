@@ -8,12 +8,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -336,5 +338,129 @@ class FileStorageObjectServiceTest {
         service.fetchMetadataByEntityAndEntityIdForRead(user, "study", studyId.toString(), fileId);
 
     assertEquals(fileStorageObject, returned);
+  }
+
+  @Test
+  void testSoftDeleteByEntityAndEntityIdForWriteDatasetSuccess() {
+    User user = new User();
+    user.setUserId(100);
+    Integer datasetId = 123;
+    Integer fileId = 10;
+
+    Dataset dataset = new Dataset();
+    dataset.setCreateUserId(user.getUserId());
+    FileStorageObject fileStorageObject = new FileStorageObject();
+    fileStorageObject.setDeleted(false);
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(dataset);
+    when(fileStorageObjectDAO.findFileByIdAndEntityId(datasetId.toString(), fileId))
+        .thenReturn(fileStorageObject);
+    when(fileStorageObjectDAO.softDelete(eq(fileId), eq(user.getUserId()), any())).thenReturn(1);
+
+    initService();
+
+    service.softDeleteByEntityAndEntityIdForWrite(user, "dataset", datasetId.toString(), fileId);
+
+    verify(fileStorageObjectDAO).softDelete(eq(fileId), eq(user.getUserId()), any());
+  }
+
+  @Test
+  void testSoftDeleteByEntityAndEntityIdForWriteStudySuccess() {
+    User user = new User();
+    user.setUserId(101);
+    Integer studyId = 456;
+    Integer fileId = 11;
+
+    Study study = new Study();
+    study.setUuid(java.util.UUID.randomUUID());
+    FileStorageObject fileStorageObject = new FileStorageObject();
+    fileStorageObject.setDeleted(false);
+
+    when(datasetService.findStudyByIdForRead(user, studyId)).thenReturn(study);
+    when(datasetService.isCreatorCustodianOrAdmin(user, study)).thenReturn(true);
+    when(fileStorageObjectDAO.findFileByIdAndEntityId(study.getUuid().toString(), fileId))
+        .thenReturn(fileStorageObject);
+    when(fileStorageObjectDAO.softDelete(eq(fileId), eq(user.getUserId()), any())).thenReturn(1);
+
+    initService();
+
+    service.softDeleteByEntityAndEntityIdForWrite(user, "study", studyId.toString(), fileId);
+
+    verify(fileStorageObjectDAO).softDelete(eq(fileId), eq(user.getUserId()), any());
+  }
+
+  @Test
+  void testSoftDeleteByEntityAndEntityIdForWriteIdempotentWhenMissing() {
+    User user = new User();
+    user.setUserId(102);
+    Integer datasetId = 123;
+    Integer fileId = 10;
+
+    Dataset dataset = new Dataset();
+    dataset.setCreateUserId(user.getUserId());
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(dataset);
+    when(fileStorageObjectDAO.findFileByIdAndEntityId(datasetId.toString(), fileId))
+        .thenReturn(null);
+
+    initService();
+
+    service.softDeleteByEntityAndEntityIdForWrite(user, "dataset", datasetId.toString(), fileId);
+
+    verify(fileStorageObjectDAO, never()).softDelete(eq(fileId), eq(user.getUserId()), any());
+  }
+
+  @Test
+  void testSoftDeleteByEntityAndEntityIdForWriteIdempotentWhenAlreadyDeleted() {
+    User user = new User();
+    user.setUserId(103);
+    Integer datasetId = 123;
+    Integer fileId = 10;
+
+    Dataset dataset = new Dataset();
+    dataset.setCreateUserId(user.getUserId());
+    FileStorageObject fileStorageObject = new FileStorageObject();
+    fileStorageObject.setDeleted(true);
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(dataset);
+    when(fileStorageObjectDAO.findFileByIdAndEntityId(datasetId.toString(), fileId))
+        .thenReturn(fileStorageObject);
+
+    initService();
+
+    service.softDeleteByEntityAndEntityIdForWrite(user, "dataset", datasetId.toString(), fileId);
+
+    verify(fileStorageObjectDAO, never()).softDelete(eq(fileId), eq(user.getUserId()), any());
+  }
+
+  @Test
+  void testSoftDeleteByEntityAndEntityIdForWriteDatasetForbidden() {
+    User user = new User();
+    user.setUserId(104);
+    Integer datasetId = 123;
+    String entityId = datasetId.toString();
+
+    Dataset dataset = new Dataset();
+    dataset.setCreateUserId(999);
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(dataset);
+
+    initService();
+
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.softDeleteByEntityAndEntityIdForWrite(user, "dataset", entityId, 10));
+  }
+
+  @Test
+  void testSoftDeleteByEntityAndEntityIdForWriteInvalidEntityId() {
+    User user = new User();
+    user.setUserId(105);
+
+    initService();
+
+    assertThrows(
+        NotFoundException.class,
+        () -> service.softDeleteByEntityAndEntityIdForWrite(user, "dataset", "not-a-number", 10));
   }
 }
