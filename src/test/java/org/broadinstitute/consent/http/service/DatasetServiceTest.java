@@ -198,6 +198,48 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testFindStudyByIdForRead() {
+    User user = new User();
+    user.setUserId(1);
+    Study study = new Study();
+    study.setStudyId(7);
+    study.setPublicVisibility(true);
+
+    when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
+
+    Study result = datasetService.findStudyByIdForRead(user, study.getStudyId());
+    assertEquals(study.getStudyId(), result.getStudyId());
+  }
+
+  @Test
+  void testFindStudyByIdForReadNotFound() {
+    when(studyDAO.findStudyById(99)).thenReturn(null);
+
+    assertThrows(NotFoundException.class, () -> datasetService.findStudyByIdForRead(mockUser, 99));
+  }
+
+  @Test
+  void testFindStudyByIdForReadForbidden() {
+    User user = new User();
+    user.setUserId(1);
+    user.setEmail("user@email.com");
+    Study study = new Study();
+    study.setStudyId(7);
+    study.setCreateUserId(4);
+    study.setPublicVisibility(false);
+    StudyProperty property = new StudyProperty();
+    property.setKey("other");
+    property.setValue("[]");
+    study.addProperties(property);
+
+    when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
+
+    assertThrows(
+        ForbiddenException.class,
+        () -> datasetService.findStudyByIdForRead(user, study.getStudyId()));
+  }
+
+  @Test
   void testFindDatasetByIdentifier() {
     Dataset d = new Dataset();
     d.setCreateUserId(1);

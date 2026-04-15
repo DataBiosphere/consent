@@ -22,7 +22,10 @@ import java.util.Map;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,11 +39,12 @@ class FileStorageObjectServiceTest {
   @Mock private FileStorageObjectDAO fileStorageObjectDAO;
 
   @Mock private GCSService gcsService;
+  @Mock private DatasetService datasetService;
 
   private FileStorageObjectService service;
 
   private void initService() {
-    service = new FileStorageObjectService(fileStorageObjectDAO, gcsService);
+    service = new FileStorageObjectService(fileStorageObjectDAO, gcsService, datasetService);
   }
 
   @Test
@@ -251,5 +255,46 @@ class FileStorageObjectServiceTest {
 
     assertThrows(
         NotFoundException.class, () -> service.fetchMetadataByEntityIdAndId(entityId, fileId));
+  }
+
+  @Test
+  void testFetchMetadataByEntityAndEntityIdForReadDataset() {
+    User user = new User();
+    Integer datasetId = 123;
+    Integer fileId = 10;
+    FileStorageObject fileStorageObject = new FileStorageObject();
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(datasetId.toString(), fileId))
+        .thenReturn(fileStorageObject);
+
+    initService();
+
+    FileStorageObject returned =
+        service.fetchMetadataByEntityAndEntityIdForRead(
+            user, "dataset", datasetId.toString(), fileId);
+
+    assertEquals(fileStorageObject, returned);
+  }
+
+  @Test
+  void testFetchMetadataByEntityAndEntityIdForReadStudy() {
+    User user = new User();
+    Integer studyId = 456;
+    Integer fileId = 11;
+    Study study = new Study();
+    study.setUuid(java.util.UUID.randomUUID());
+    FileStorageObject fileStorageObject = new FileStorageObject();
+
+    when(datasetService.findStudyByIdForRead(user, studyId)).thenReturn(study);
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(study.getUuid().toString(), fileId))
+        .thenReturn(fileStorageObject);
+
+    initService();
+
+    FileStorageObject returned =
+        service.fetchMetadataByEntityAndEntityIdForRead(user, "study", studyId.toString(), fileId);
+
+    assertEquals(fileStorageObject, returned);
   }
 }

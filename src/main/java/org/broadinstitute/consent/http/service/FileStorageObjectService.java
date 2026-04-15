@@ -10,19 +10,26 @@ import java.util.Map;
 import java.util.UUID;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
+import org.broadinstitute.consent.http.enumeration.DocumentEntity;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 
 public class FileStorageObjectService implements ConsentLogger {
 
   GCSService gcsService;
   FileStorageObjectDAO fileStorageObjectDAO;
+  DatasetService datasetService;
 
   public FileStorageObjectService(
-      FileStorageObjectDAO fileStorageObjectDAO, GCSService gcsService) {
+      FileStorageObjectDAO fileStorageObjectDAO,
+      GCSService gcsService,
+      DatasetService datasetService) {
     this.fileStorageObjectDAO = fileStorageObjectDAO;
     this.gcsService = gcsService;
+    this.datasetService = datasetService;
   }
 
   FileStorageObject uploadAndStoreFile(
@@ -104,6 +111,47 @@ public class FileStorageObjectService implements ConsentLogger {
       throw new NotFoundException("File not found");
     }
     return fileStorageObject;
+  }
+
+  public FileStorageObject fetchMetadataByEntityAndEntityIdForRead(
+      User user, String entity, String entityId, Integer fileStorageObjectId)
+      throws NotFoundException {
+    String fsoEntityId = resolveFsoEntityIdForRead(user, entity, entityId);
+    return fetchMetadataByEntityIdAndId(fsoEntityId, fileStorageObjectId);
+  }
+
+  private String resolveFsoEntityIdForRead(User user, String entity, String entityId) {
+    DocumentEntity documentEntity =
+        DocumentEntity.fromValue(entity)
+            .orElseThrow(() -> new NotFoundException("Entity not found"));
+
+    return switch (documentEntity) {
+      case DATASET -> resolveDatasetFsoEntityIdForRead(entityId, user);
+      case STUDY -> resolveStudyFsoEntityIdForRead(entityId, user);
+    };
+  }
+
+  private String resolveDatasetFsoEntityIdForRead(String entityId, User user) {
+    Integer datasetId = parseNumericEntityId(entityId);
+    datasetService.findDatasetByIdForRead(user, datasetId);
+    return datasetId.toString();
+  }
+
+  private String resolveStudyFsoEntityIdForRead(String entityId, User user) {
+    Integer studyId = parseNumericEntityId(entityId);
+    Study study = datasetService.findStudyByIdForRead(user, studyId);
+    if (study.getUuid() == null) {
+      throw new NotFoundException("Entity not found");
+    }
+    return study.getUuid().toString();
+  }
+
+  private Integer parseNumericEntityId(String entityId) {
+    try {
+      return Integer.valueOf(entityId);
+    } catch (NumberFormatException _) {
+      throw new NotFoundException("Entity not found");
+    }
   }
 
   public List<FileStorageObject> fetchAllByEntityId(String entityId) throws NotFoundException {
