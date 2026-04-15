@@ -7,13 +7,14 @@ get:
   parameters:
     - name: entity
       in: path
-      description: Entity type. Supported values are dataset and study.
       required: true
+      description: Entity type
       schema:
         type: string
+        enum: [dataset, study]
     - name: entityId
       in: path
-      description: Entity identifier.
+      description: Entity identifier
       required: true
       schema:
         type: string
