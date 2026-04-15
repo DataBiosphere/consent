@@ -14,6 +14,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -31,6 +33,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -336,5 +339,179 @@ class FileStorageObjectServiceTest {
         service.fetchMetadataByEntityAndEntityIdForRead(user, "study", studyId.toString(), fileId);
 
     assertEquals(fileStorageObject, returned);
+  }
+
+  @Test
+  void testUpdateCategoryByEntityAndEntityIdForWriteSuccess() {
+    User user = new User();
+    user.setUserId(200);
+    Integer datasetId = 123;
+    Integer fileId = 10;
+    String entityId = datasetId.toString();
+
+    Dataset dataset = new Dataset();
+    dataset.setCreateUserId(user.getUserId());
+    FileStorageObject existing = new FileStorageObject();
+    existing.setDeleted(false);
+    FileStorageObject updated = new FileStorageObject();
+    updated.setCategory(FileCategory.DATA_USE_LETTER);
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(dataset);
+    when(fileStorageObjectDAO.findFileByIdAndEntityId(entityId, fileId)).thenReturn(existing);
+    when(fileStorageObjectDAO.updateCategory(
+            eq(fileId), eq("dataUseLetter"), eq(user.getUserId()), any()))
+        .thenReturn(1);
+    when(fileStorageObjectDAO.findFileById(fileId)).thenReturn(updated);
+
+    initService();
+
+    FileStorageObject result =
+        service.updateCategoryByEntityAndEntityIdForWrite(
+            user, "dataset", entityId, fileId, "dataUseLetter");
+
+    assertEquals(updated, result);
+    verify(fileStorageObjectDAO)
+        .updateCategory(eq(fileId), eq("dataUseLetter"), eq(user.getUserId()), any());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"invalidCategory", "dataAccessAgreement"})
+  void testUpdateCategoryByEntityAndEntityIdForWriteBadRequestForCategory(String category) {
+    User user = new User();
+    user.setUserId(201);
+
+    initService();
+
+    String entityId = "123";
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            service.updateCategoryByEntityAndEntityIdForWrite(
+                user, "dataset", entityId, 10, category));
+  }
+
+  @Test
+  void testUpdateCategoryByEntityAndEntityIdForWriteNotFoundWhenMissingFile() {
+    User user = new User();
+    user.setUserId(203);
+    Integer datasetId = 123;
+    Integer fileId = 10;
+    String entityId = datasetId.toString();
+    Dataset dataset = new Dataset();
+    dataset.setCreateUserId(user.getUserId());
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(dataset);
+    when(fileStorageObjectDAO.findFileByIdAndEntityId(entityId, fileId)).thenReturn(null);
+
+    initService();
+
+    assertThrows(
+        NotFoundException.class,
+        () ->
+            service.updateCategoryByEntityAndEntityIdForWrite(
+                user, "dataset", entityId, fileId, "dataUseLetter"));
+  }
+
+  @Test
+  void testUpdateCategoryByEntityAndEntityIdForWriteNotFoundWhenDeletedFile() {
+    User user = new User();
+    user.setUserId(204);
+    Integer datasetId = 123;
+    Integer fileId = 10;
+    String entityId = datasetId.toString();
+    Dataset dataset = new Dataset();
+    dataset.setCreateUserId(user.getUserId());
+    FileStorageObject deleted = new FileStorageObject();
+    deleted.setDeleted(true);
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(dataset);
+    when(fileStorageObjectDAO.findFileByIdAndEntityId(entityId, fileId)).thenReturn(deleted);
+
+    initService();
+
+    assertThrows(
+        NotFoundException.class,
+        () ->
+            service.updateCategoryByEntityAndEntityIdForWrite(
+                user, "dataset", entityId, fileId, "dataUseLetter"));
+  }
+
+  @Test
+  void testUpdateCategoryByEntityAndEntityIdForWriteForbidden() {
+    User user = new User();
+    user.setUserId(205);
+    Integer datasetId = 123;
+    String entityId = datasetId.toString();
+    Dataset dataset = new Dataset();
+    dataset.setCreateUserId(999);
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(dataset);
+
+    initService();
+
+    assertThrows(
+        ForbiddenException.class,
+        () ->
+            service.updateCategoryByEntityAndEntityIdForWrite(
+                user, "dataset", entityId, 10, "dataUseLetter"));
+  }
+
+  @Test
+  void testUpdateCategoryByEntityAndEntityIdForWriteInvalidEntityType() {
+    User user = new User();
+    user.setUserId(206);
+
+    initService();
+
+    assertThrows(
+        NotFoundException.class,
+        () ->
+            service.updateCategoryByEntityAndEntityIdForWrite(
+                user, "invalid", "123", 10, "dataUseLetter"));
+  }
+
+  @ParameterizedTest
+  @NullSource
+  @ValueSource(strings = {"", "   "})
+  void testUpdateCategoryByEntityAndEntityIdForWriteNullOrEmptyCategory(String category) {
+    User user = new User();
+    user.setUserId(207);
+
+    initService();
+
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            service.updateCategoryByEntityAndEntityIdForWrite(
+                user, "dataset", "123", 10, category));
+  }
+
+  @Test
+  void testUpdateCategoryByEntityAndEntityIdForWriteSameCategoryStillSucceeds() {
+    User user = new User();
+    user.setUserId(208);
+    Integer datasetId = 123;
+    Integer fileId = 10;
+    Dataset dataset = new Dataset();
+    dataset.setCreateUserId(user.getUserId());
+    FileStorageObject existing = new FileStorageObject();
+    existing.setDeleted(false);
+    existing.setCategory(FileCategory.DATA_USE_LETTER);
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(dataset);
+    when(fileStorageObjectDAO.findFileByIdAndEntityId(datasetId.toString(), fileId))
+        .thenReturn(existing);
+    when(fileStorageObjectDAO.updateCategory(
+            eq(fileId), eq("dataUseLetter"), eq(user.getUserId()), any()))
+        .thenReturn(1);
+    when(fileStorageObjectDAO.findFileById(fileId)).thenReturn(existing);
+
+    initService();
+
+    FileStorageObject result =
+        service.updateCategoryByEntityAndEntityIdForWrite(
+            user, "dataset", datasetId.toString(), fileId, "dataUseLetter");
+
+    assertEquals(existing, result);
   }
 }

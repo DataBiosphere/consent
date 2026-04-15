@@ -5,10 +5,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.util.List;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.FileStorageObjectCategoryUpdateRequest;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.FileStorageObjectService;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,15 +57,16 @@ class DocumentResourceTest {
 
   @Test
   void testFindDocumentsByDatasetEntityMixedCaseReturnsMetadata() {
-    Integer datasetId = 123;
+    int datasetId = 123;
     List<FileStorageObject> files = List.of(new FileStorageObject());
 
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
-            user, "DaTaSeT", datasetId.toString()))
+            user, "DaTaSeT", Integer.toString(datasetId)))
         .thenReturn(files);
 
-    try (var response = resource.findDocumentsByEntity(duosUser, "DaTaSeT", datasetId.toString())) {
+    try (var response =
+        resource.findDocumentsByEntity(duosUser, "DaTaSeT", Integer.toString(datasetId))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(files, response.getEntity());
     }
@@ -71,21 +74,22 @@ class DocumentResourceTest {
 
   @Test
   void testFindDocumentsByStudyEntityReturnsMetadata() {
-    Integer studyId = 456;
+    int studyId = 456;
     List<FileStorageObject> files = List.of(new FileStorageObject());
 
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
-            user, "study", studyId.toString()))
+            user, "study", Integer.toString(studyId)))
         .thenReturn(files);
 
-    try (var response = resource.findDocumentsByEntity(duosUser, "study", studyId.toString())) {
+    try (var response =
+        resource.findDocumentsByEntity(duosUser, "study", Integer.toString(studyId))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(files, response.getEntity());
     }
 
     verify(fileStorageObjectService)
-        .fetchAllMetadataByEntityAndEntityIdForRead(user, "study", studyId.toString());
+        .fetchAllMetadataByEntityAndEntityIdForRead(user, "study", Integer.toString(studyId));
   }
 
   @Test
@@ -114,14 +118,15 @@ class DocumentResourceTest {
 
   @Test
   void testFindDocumentsByStudyEntityReturnsEmptyList() {
-    Integer studyId = 333;
+    int studyId = 333;
 
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
-            user, "study", studyId.toString()))
+            user, "study", Integer.toString(studyId)))
         .thenReturn(List.of());
 
-    try (var response = resource.findDocumentsByEntity(duosUser, "study", studyId.toString())) {
+    try (var response =
+        resource.findDocumentsByEntity(duosUser, "study", Integer.toString(studyId))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(List.of(), response.getEntity());
     }
@@ -129,58 +134,60 @@ class DocumentResourceTest {
 
   @Test
   void testFindDocumentsByStudyEntityForbidden() {
-    Integer studyId = 444;
+    int studyId = 444;
 
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
-            user, "study", studyId.toString()))
+            user, "study", Integer.toString(studyId)))
         .thenThrow(new jakarta.ws.rs.ForbiddenException("User does not have permission"));
 
-    try (var response = resource.findDocumentsByEntity(duosUser, "study", studyId.toString())) {
+    try (var response =
+        resource.findDocumentsByEntity(duosUser, "study", Integer.toString(studyId))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
   }
 
   @Test
   void testFindDocumentByDatasetEntityReturnsMetadata() {
-    Integer datasetId = 123;
+    int datasetId = 123;
     Integer fileId = 10;
     FileStorageObject fileStorageObject = new FileStorageObject();
 
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.fetchMetadataByEntityAndEntityIdForRead(
-            user, "dataset", datasetId.toString(), fileId))
+            user, "dataset", Integer.toString(datasetId), fileId))
         .thenReturn(fileStorageObject);
 
     try (var response =
-        resource.findDocumentByEntity(duosUser, "dataset", datasetId.toString(), fileId)) {
+        resource.findDocumentByEntity(duosUser, "dataset", Integer.toString(datasetId), fileId)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(fileStorageObject, response.getEntity());
     }
 
     verify(fileStorageObjectService)
-        .fetchMetadataByEntityAndEntityIdForRead(user, "dataset", datasetId.toString(), fileId);
+        .fetchMetadataByEntityAndEntityIdForRead(
+            user, "dataset", Integer.toString(datasetId), fileId);
   }
 
   @Test
   void testFindDocumentByStudyEntityReturnsMetadata() {
-    Integer studyId = 456;
+    int studyId = 456;
     Integer fileId = 11;
     FileStorageObject fileStorageObject = new FileStorageObject();
 
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.fetchMetadataByEntityAndEntityIdForRead(
-            user, "study", studyId.toString(), fileId))
+            user, "study", Integer.toString(studyId), fileId))
         .thenReturn(fileStorageObject);
 
     try (var response =
-        resource.findDocumentByEntity(duosUser, "study", studyId.toString(), fileId)) {
+        resource.findDocumentByEntity(duosUser, "study", Integer.toString(studyId), fileId)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(fileStorageObject, response.getEntity());
     }
 
     verify(fileStorageObjectService)
-        .fetchMetadataByEntityAndEntityIdForRead(user, "study", studyId.toString(), fileId);
+        .fetchMetadataByEntityAndEntityIdForRead(user, "study", Integer.toString(studyId), fileId);
   }
 
   @Test
@@ -228,6 +235,102 @@ class DocumentResourceTest {
           HttpStatusCodes.STATUS_CODE_NOT_FOUND,
           response.getStatus(),
           "Expected 404 for scenario: " + scenarioDescription);
+    }
+  }
+
+  @Test
+  void testUpdateDocumentCategoryByEntitySuccess() {
+    FileStorageObjectCategoryUpdateRequest request = new FileStorageObjectCategoryUpdateRequest();
+    request.setCategory("dataUseLetter");
+    FileStorageObject updated = new FileStorageObject();
+
+    when(duosUser.getUser()).thenReturn(user);
+    when(fileStorageObjectService.updateCategoryByEntityAndEntityIdForWrite(
+            user, "dataset", "123", 10, "dataUseLetter"))
+        .thenReturn(updated);
+
+    try (var response =
+        resource.updateDocumentCategoryByEntity(duosUser, "dataset", "123", 10, request)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(updated, response.getEntity());
+    }
+  }
+
+  @Test
+  void testUpdateDocumentCategoryByEntityInvalidCategoryBadRequest() {
+    FileStorageObjectCategoryUpdateRequest request = new FileStorageObjectCategoryUpdateRequest();
+    request.setCategory("invalidCategory");
+
+    when(duosUser.getUser()).thenReturn(user);
+    when(fileStorageObjectService.updateCategoryByEntityAndEntityIdForWrite(
+            user, "dataset", "123", 10, "invalidCategory"))
+        .thenThrow(new BadRequestException("Invalid category"));
+
+    try (var response =
+        resource.updateDocumentCategoryByEntity(duosUser, "dataset", "123", 10, request)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testUpdateDocumentCategoryByEntityInvalidCategoryEntityMappingBadRequest() {
+    FileStorageObjectCategoryUpdateRequest request = new FileStorageObjectCategoryUpdateRequest();
+    request.setCategory("dataAccessAgreement");
+
+    when(duosUser.getUser()).thenReturn(user);
+    when(fileStorageObjectService.updateCategoryByEntityAndEntityIdForWrite(
+            user, "dataset", "123", 10, "dataAccessAgreement"))
+        .thenThrow(new BadRequestException("Category not allowed"));
+
+    try (var response =
+        resource.updateDocumentCategoryByEntity(duosUser, "dataset", "123", 10, request)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testUpdateDocumentCategoryByEntityNotFound() {
+    FileStorageObjectCategoryUpdateRequest request = new FileStorageObjectCategoryUpdateRequest();
+    request.setCategory("dataUseLetter");
+
+    when(duosUser.getUser()).thenReturn(user);
+    when(fileStorageObjectService.updateCategoryByEntityAndEntityIdForWrite(
+            user, "dataset", "123", 10, "dataUseLetter"))
+        .thenThrow(new NotFoundException("File not found"));
+
+    try (var response =
+        resource.updateDocumentCategoryByEntity(duosUser, "dataset", "123", 10, request)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
+  void testUpdateDocumentCategoryByEntityForbidden() {
+    FileStorageObjectCategoryUpdateRequest request = new FileStorageObjectCategoryUpdateRequest();
+    request.setCategory("dataUseLetter");
+
+    when(duosUser.getUser()).thenReturn(user);
+    when(fileStorageObjectService.updateCategoryByEntityAndEntityIdForWrite(
+            user, "dataset", "123", 10, "dataUseLetter"))
+        .thenThrow(new jakarta.ws.rs.ForbiddenException("User does not have permission"));
+
+    try (var response =
+        resource.updateDocumentCategoryByEntity(duosUser, "dataset", "123", 10, request)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @Test
+  void testUpdateDocumentCategoryByEntityNullRequestCategoryBadRequest() {
+    when(duosUser.getUser()).thenReturn(user);
+    when(fileStorageObjectService.updateCategoryByEntityAndEntityIdForWrite(
+            user, "dataset", "123", 10, null))
+        .thenThrow(new BadRequestException("Invalid category"));
+
+    try (var response =
+        resource.updateDocumentCategoryByEntity(
+            duosUser, "dataset", "123", 10, new FileStorageObjectCategoryUpdateRequest())) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
 }

@@ -307,6 +307,63 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     assertNull(found);
   }
 
+  @Test
+  void testUpdateCategory() {
+    String entityId = randomAlphabetic(10);
+    FileStorageObject original = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
+    User updateUser = createUser();
+    Instant updateDate = Instant.now();
+
+    String originalFileName = original.getFileName();
+    String originalMediaType = original.getMediaType();
+    String originalGcsUri = original.getBlobId().toGsUtilUri();
+    Integer originalCreateUserId = original.getCreateUserId();
+    Instant originalCreateDate = original.getCreateDate();
+
+    int rows =
+        fileStorageObjectDAO.updateCategory(
+            original.getFileStorageObjectId(),
+            FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue(),
+            updateUser.getUserId(),
+            updateDate);
+
+    FileStorageObject updated =
+        fileStorageObjectDAO.findFileById(original.getFileStorageObjectId());
+
+    assertEquals(1, rows);
+    assertEquals(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN, updated.getCategory());
+    assertEquals(updateUser.getUserId(), updated.getUpdateUserId());
+    assertEquals(updateDate.getEpochSecond(), updated.getUpdateDate().getEpochSecond());
+
+    assertEquals(originalFileName, updated.getFileName());
+    assertEquals(originalMediaType, updated.getMediaType());
+    assertEquals(originalGcsUri, updated.getBlobId().toGsUtilUri());
+    assertEquals(originalCreateUserId, updated.getCreateUserId());
+    assertEquals(originalCreateDate.getEpochSecond(), updated.getCreateDate().getEpochSecond());
+  }
+
+  @Test
+  void testUpdateCategorySameCategoryStillSucceeds() {
+    FileStorageObject original = createFileStorageObject();
+    User updateUser = createUser();
+    Instant updateDate = Instant.now();
+
+    int rows =
+        fileStorageObjectDAO.updateCategory(
+            original.getFileStorageObjectId(),
+            original.getCategory().getValue(),
+            updateUser.getUserId(),
+            updateDate);
+
+    FileStorageObject updated =
+        fileStorageObjectDAO.findFileById(original.getFileStorageObjectId());
+
+    assertEquals(1, rows);
+    assertEquals(original.getCategory(), updated.getCategory());
+    assertEquals(updateUser.getUserId(), updated.getUpdateUserId());
+    assertEquals(updateDate.getEpochSecond(), updated.getUpdateDate().getEpochSecond());
+  }
+
   private FileStorageObject createFileStorageObject() {
     FileCategory category =
         List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
