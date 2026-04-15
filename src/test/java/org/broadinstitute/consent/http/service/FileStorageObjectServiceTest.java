@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
@@ -294,6 +295,26 @@ class FileStorageObjectServiceTest {
             user, "dataset", datasetId.toString(), fileId);
 
     assertEquals(fileStorageObject, returned);
+  }
+
+  @Test
+  void testAllFetchMetadataByEntityAndEntityIdForReadStudy() {
+    User user = new User();
+    Integer studyId = 456;
+    Study study = new Study();
+    study.setUuid(java.util.UUID.randomUUID());
+    List<FileStorageObject> fileStorageObjects = List.of(new FileStorageObject());
+
+    when(datasetService.findStudyByIdForRead(user, studyId)).thenReturn(study);
+    when(fileStorageObjectDAO.findFileMetadataByEntityId(study.getUuid().toString()))
+        .thenReturn(fileStorageObjects);
+
+    initService();
+
+    List<FileStorageObject> returnedFiles =
+        service.fetchAllMetadataByEntityAndEntityIdForRead(user, "study", studyId.toString());
+
+    assertEquals(fileStorageObjects, returnedFiles);
   }
 
   @Test

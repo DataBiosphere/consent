@@ -9,11 +9,11 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.util.List;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.FileStorageObjectService;
-import java.util.List;
 
 @Path("api/{entity}")
 public class DocumentResource extends Resource {
@@ -35,7 +35,7 @@ public class DocumentResource extends Resource {
       @PathParam("entityId") String entityId) {
     try {
       User user = duosUser.getUser();
-      List<FileStorageObject> fileStorageObjects  =
+      List<FileStorageObject> fileStorageObjects =
           fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
               user, entity, entityId);
       return Response.ok(fileStorageObjects).build();

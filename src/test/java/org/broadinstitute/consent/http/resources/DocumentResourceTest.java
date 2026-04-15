@@ -5,15 +5,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
-import java.util.List;
-import java.util.UUID;
-import org.broadinstitute.consent.http.models.Dataset;
 import jakarta.ws.rs.NotFoundException;
+import java.util.List;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.FileStorageObject;
-import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
-import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.FileStorageObjectService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +22,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DocumentResourceTest {
 
-  @Mock private DatasetService datasetService;
   @Mock private FileStorageObjectService fileStorageObjectService;
   @Mock private DuosUser duosUser;
   @Mock private User user;
@@ -40,20 +35,22 @@ class DocumentResourceTest {
 
   @Test
   void testFindDocumentsByDatasetEntityReturnsMetadata() {
-    Integer datasetId = 123;
+    int datasetId = 123;
     List<FileStorageObject> files = List.of(new FileStorageObject());
 
     when(duosUser.getUser()).thenReturn(user);
-    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
-    when(fileStorageObjectService.fetchAllMetadataByEntityId(datasetId.toString()))
+    when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
+            user, "dataset", Integer.toString(datasetId)))
         .thenReturn(files);
 
-    try (var response = resource.findDocumentsByEntity(duosUser, "dataset", datasetId.toString())) {
+    try (var response =
+        resource.findDocumentsByEntity(duosUser, "dataset", Integer.toString(datasetId))) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(files, response.getEntity());
     }
 
-    verify(fileStorageObjectService).fetchAllMetadataByEntityId(datasetId.toString());
+    verify(fileStorageObjectService)
+        .fetchAllMetadataByEntityAndEntityIdForRead(user, "dataset", Integer.toString(datasetId));
   }
 
   @Test
@@ -62,30 +59,24 @@ class DocumentResourceTest {
     List<FileStorageObject> files = List.of(new FileStorageObject());
 
     when(duosUser.getUser()).thenReturn(user);
-    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
-    when(fileStorageObjectService.fetchAllMetadataByEntityId(datasetId.toString()))
+    when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
+            user, "DaTaSeT", datasetId.toString()))
         .thenReturn(files);
 
     try (var response = resource.findDocumentsByEntity(duosUser, "DaTaSeT", datasetId.toString())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(files, response.getEntity());
     }
-
-    verify(fileStorageObjectService)
-        .fetchMetadataByEntityAndEntityIdForRead(user, "study", studyId.toString(), fileId);
   }
 
   @Test
   void testFindDocumentsByStudyEntityReturnsMetadata() {
     Integer studyId = 456;
-    Study study = new Study();
-    study.setUuid(UUID.randomUUID());
-    study.setPublicVisibility(true);
     List<FileStorageObject> files = List.of(new FileStorageObject());
 
     when(duosUser.getUser()).thenReturn(user);
-    when(datasetService.findStudy(studyId)).thenReturn(study);
-    when(fileStorageObjectService.fetchAllMetadataByEntityId(study.getUuid().toString()))
+    when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
+            user, "study", studyId.toString()))
         .thenReturn(files);
 
     try (var response = resource.findDocumentsByEntity(duosUser, "study", studyId.toString())) {
@@ -93,31 +84,30 @@ class DocumentResourceTest {
       assertEquals(files, response.getEntity());
     }
 
-    verify(fileStorageObjectService).fetchAllMetadataByEntityId(study.getUuid().toString());
+    verify(fileStorageObjectService)
+        .fetchAllMetadataByEntityAndEntityIdForRead(user, "study", studyId.toString());
   }
 
   @Test
-  void testFindDocumentsByDatasetEntityNotFound() {
-    Integer datasetId = 111;
-
+  void testFindDocumentsByEntityNotFound() {
     when(duosUser.getUser()).thenReturn(user);
-    when(datasetService.findDatasetByIdForRead(user, datasetId))
-        .thenThrow(new jakarta.ws.rs.NotFoundException("Entity not found"));
+    when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
+            user, "dataset", "111"))
+        .thenThrow(new NotFoundException("Entity not found"));
 
-    try (var response = resource.findDocumentsByEntity(duosUser, "dataset", datasetId.toString())) {
+    try (var response = resource.findDocumentsByEntity(duosUser, "dataset", "111")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
 
   @Test
-  void testFindDocumentsByDatasetEntityForbidden() {
-    Integer datasetId = 222;
-
+  void testFindDocumentsByEntityForbidden() {
     when(duosUser.getUser()).thenReturn(user);
-    when(datasetService.findDatasetByIdForRead(user, datasetId))
+    when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
+            user, "dataset", "222"))
         .thenThrow(new jakarta.ws.rs.ForbiddenException("User does not have permission"));
 
-    try (var response = resource.findDocumentsByEntity(duosUser, "dataset", datasetId.toString())) {
+    try (var response = resource.findDocumentsByEntity(duosUser, "dataset", "222")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
   }
@@ -125,13 +115,10 @@ class DocumentResourceTest {
   @Test
   void testFindDocumentsByStudyEntityReturnsEmptyList() {
     Integer studyId = 333;
-    Study study = new Study();
-    study.setUuid(UUID.randomUUID());
-    study.setPublicVisibility(true);
 
     when(duosUser.getUser()).thenReturn(user);
-    when(datasetService.findStudy(studyId)).thenReturn(study);
-    when(fileStorageObjectService.fetchAllMetadataByEntityId(study.getUuid().toString()))
+    when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
+            user, "study", studyId.toString()))
         .thenReturn(List.of());
 
     try (var response = resource.findDocumentsByEntity(duosUser, "study", studyId.toString())) {
@@ -141,15 +128,13 @@ class DocumentResourceTest {
   }
 
   @Test
-  void testFindDocumentsByStudyEntityAuthorizationErrorReturnsForbidden() {
+  void testFindDocumentsByStudyEntityForbidden() {
     Integer studyId = 444;
-    Study study = new Study();
-    study.setUuid(UUID.randomUUID());
-    study.setPublicVisibility(false);
 
     when(duosUser.getUser()).thenReturn(user);
-    when(datasetService.findStudy(studyId)).thenReturn(study);
-    when(datasetService.isCreatorCustodianOrAdmin(user, study)).thenReturn(false);
+    when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
+            user, "study", studyId.toString()))
+        .thenThrow(new jakarta.ws.rs.ForbiddenException("User does not have permission"));
 
     try (var response = resource.findDocumentsByEntity(duosUser, "study", studyId.toString())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
@@ -164,7 +149,7 @@ class DocumentResourceTest {
 
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.fetchMetadataByEntityAndEntityIdForRead(
-        user, "dataset", datasetId.toString(), fileId))
+            user, "dataset", datasetId.toString(), fileId))
         .thenReturn(fileStorageObject);
 
     try (var response =
@@ -185,7 +170,7 @@ class DocumentResourceTest {
 
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.fetchMetadataByEntityAndEntityIdForRead(
-        user, "study", studyId.toString(), fileId))
+            user, "study", studyId.toString(), fileId))
         .thenReturn(fileStorageObject);
 
     try (var response =
@@ -209,7 +194,7 @@ class DocumentResourceTest {
   void testFindDocumentByEntityNotFoundWhenEntityMissing() {
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.fetchMetadataByEntityAndEntityIdForRead(
-        user, "dataset", "123", 10))
+            user, "dataset", "123", 10))
         .thenThrow(new NotFoundException("Entity not found"));
 
     try (var response = resource.findDocumentByEntity(duosUser, "dataset", "123", 10)) {
@@ -221,7 +206,7 @@ class DocumentResourceTest {
   void testFindDocumentByEntityForbiddenWhenNoReadAccess() {
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.fetchMetadataByEntityAndEntityIdForRead(
-        user, "dataset", "123", 10))
+            user, "dataset", "123", 10))
         .thenThrow(new jakarta.ws.rs.ForbiddenException("User does not have permission"));
 
     try (var response = resource.findDocumentByEntity(duosUser, "dataset", "123", 10)) {
@@ -235,7 +220,7 @@ class DocumentResourceTest {
       Integer fileId, String scenarioDescription) {
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.fetchMetadataByEntityAndEntityIdForRead(
-        user, "dataset", "123", fileId))
+            user, "dataset", "123", fileId))
         .thenThrow(new NotFoundException("File not found"));
 
     try (var response = resource.findDocumentByEntity(duosUser, "dataset", "123", fileId)) {
