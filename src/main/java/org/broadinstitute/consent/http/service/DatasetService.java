@@ -182,15 +182,24 @@ public class DatasetService implements ConsentLogger {
     if (dataset.getStudy() == null) {
       dataset.setStudy(studyDAO.findStudyById(dataset.getStudyId()));
     }
-    // If not visible, check that the user is authorized to see it
-    if (Boolean.FALSE.equals(dataset.getStudy().getPublicVisibility())) {
-      if (isCreatorOrCustodian(user, dataset)) {
-        return dataset;
-      } else {
-        return null;
-      }
+    if (canReadStudy(user, dataset.getStudy())
+        || Objects.equals(dataset.getCreateUserId(), user.getUserId())) {
+      return dataset;
     }
-    return dataset;
+    return null;
+  }
+
+  protected boolean canReadStudy(User user, Study study) {
+    if (study == null) {
+      return false;
+    }
+    if (user.hasUserRole(UserRoles.ADMIN)) {
+      return true;
+    }
+    if (!Boolean.FALSE.equals(study.getPublicVisibility())) {
+      return true;
+    }
+    return isCreatorOrCustodian(user, study);
   }
 
   protected boolean isCreatorOrCustodian(User user, Dataset dataset) {
@@ -336,6 +345,17 @@ public class DatasetService implements ConsentLogger {
 
   public Study findStudy(Integer studyId) {
     return studyDAO.findStudyById(studyId);
+  }
+
+  public Study findStudyByIdForRead(User user, Integer studyId) {
+    Study study = studyDAO.findStudyById(studyId);
+    if (study == null) {
+      throw new NotFoundException("Entity not found");
+    }
+    if (!canReadStudy(user, study)) {
+      throw new ForbiddenException("User does not have permission");
+    }
+    return study;
   }
 
   public List<DatasetStudySummary> findAllDatasetStudySummaries(User user) {

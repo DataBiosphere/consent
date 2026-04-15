@@ -69,4 +69,15 @@ class FileStorageObjectTest {
     FileStorageObject fso = GsonUtil.buildGson().fromJson(json, FileStorageObject.class);
     assertNull(fso.getBlobId());
   }
+
+  @Test
+  void testFileCategorySerializedNameValue() {
+    FileStorageObject fso = new FileStorageObject();
+    fso.setCategory(FileCategory.DATA_ACCESS_AGREEMENT);
+
+    JsonObject jsonObject =
+        GsonUtil.buildGson().fromJson(GsonUtil.buildGson().toJson(fso), JsonObject.class);
+
+    assertEquals("dataAccessAgreement", jsonObject.get("category").getAsString());
+  }
 }

@@ -27,6 +27,7 @@ public class LibraryCard {
   private Integer updateUserId;
   private List<Integer> daaIds;
   private List<DataAccessAgreement> daas;
+  private List<LibraryCardDaaDetail> daaDetails;
 
   public LibraryCard() {
     this.createDate = new Date();
@@ -154,6 +155,23 @@ public class LibraryCard {
     }
     if (this.daaIds.stream().anyMatch(d -> d.equals(daaId))) {
       this.daaIds.remove(daaId);
+    }
+  }
+
+  public List<LibraryCardDaaDetail> getDaaDetails() {
+    return daaDetails;
+  }
+
+  public void setDaaDetails(List<LibraryCardDaaDetail> daaDetails) {
+    this.daaDetails = daaDetails;
+  }
+
+  public void addDaaDetail(LibraryCardDaaDetail detail) {
+    if (this.daaDetails == null) {
+      this.daaDetails = new ArrayList<>();
+    }
+    if (this.daaDetails.stream().noneMatch(d -> d.daaId().equals(detail.daaId()))) {
+      this.daaDetails.add(detail);
     }
   }
 

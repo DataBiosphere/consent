@@ -86,6 +86,30 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
           """)
   FileStorageObject findFileById(@Bind("fileStorageObjectId") Integer fileStorageObjectId);
 
+  @RegisterRowMapper(FileStorageObjectMapperWithFSOPrefix.class)
+  @SqlQuery(
+      """
+          SELECT
+              fso.file_storage_object_id AS fso_file_storage_object_id,
+              fso.entity_id AS fso_entity_id,
+              fso.file_name AS fso_file_name,
+              fso.category AS fso_category,
+              fso.gcs_file_uri AS fso_gcs_file_uri,
+              fso.media_type AS fso_media_type,
+              fso.create_date AS fso_create_date,
+              fso.create_user_id AS fso_create_user_id,
+              fso.update_date AS fso_update_date,
+              fso.update_user_id AS fso_update_user_id,
+              fso.deleted AS fso_deleted,
+              fso.delete_user_id AS fso_delete_user_id
+          FROM file_storage_object fso
+          WHERE fso.entity_id = :entityId
+                AND fso.file_storage_object_id = :fileStorageObjectId
+                AND (fso.deleted = false OR fso.deleted IS NULL)
+          """)
+  FileStorageObject findActiveFileByIdAndEntityId(
+      @Bind("entityId") String entityId, @Bind("fileStorageObjectId") Integer fileStorageObjectId);
+
   @SqlQuery(
       """
           SELECT *

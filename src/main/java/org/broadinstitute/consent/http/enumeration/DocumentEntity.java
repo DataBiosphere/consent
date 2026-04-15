@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.enumeration;
 
 import java.util.Arrays;
-import java.util.Locale;
 import java.util.Optional;
 
 public enum DocumentEntity {
@@ -14,12 +13,16 @@ public enum DocumentEntity {
     this.value = value;
   }
 
+  public String getValue() {
+    return value;
+  }
+
   public static Optional<DocumentEntity> fromValue(String value) {
-    if (value == null || value.isBlank()) {
+    if (value == null) {
       return Optional.empty();
     }
     return Arrays.stream(values())
-        .filter(entity -> entity.value.equals(value.toLowerCase(Locale.ROOT)))
+        .filter(entity -> entity.getValue().equalsIgnoreCase(value))
         .findFirst();
   }
 }

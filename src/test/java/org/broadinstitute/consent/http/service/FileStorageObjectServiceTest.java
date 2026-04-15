@@ -1,7 +1,11 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.AbstractTestHelper.nextInt;
+import static org.broadinstitute.consent.http.AbstractTestHelper.randomAlphabetic;
+import static org.broadinstitute.consent.http.AbstractTestHelper.randomAlphanumeric;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -10,19 +14,23 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
+import jakarta.ws.rs.NotFoundException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -32,25 +40,29 @@ class FileStorageObjectServiceTest {
   @Mock private FileStorageObjectDAO fileStorageObjectDAO;
 
   @Mock private GCSService gcsService;
+  @Mock private DatasetService datasetService;
 
   private FileStorageObjectService service;
 
   private void initService() {
-    service = new FileStorageObjectService(fileStorageObjectDAO, gcsService);
+    service = new FileStorageObjectService(fileStorageObjectDAO, gcsService, datasetService);
   }
 
   @Test
   void testUploadAndStoreFile() throws IOException {
-    InputStream content = new ByteArrayInputStream(RandomStringUtils.random(20).getBytes());
-    String fileName = RandomStringUtils.randomAlphabetic(10);
-    String mediaType = RandomStringUtils.randomAlphabetic(10);
+    InputStream content = new ByteArrayInputStream(randomAlphanumeric(20).getBytes());
+    String fileName = randomAlphabetic(10);
+    String mediaType = randomAlphabetic(10);
     FileCategory category =
-        List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
-    String entityId = RandomStringUtils.randomAlphabetic(10);
-    Integer createUserId = new Random().nextInt();
+        List.of(FileCategory.values())
+            .get(
+                org.broadinstitute.consent.http.AbstractTestHelper.randomInt(
+                    0, FileCategory.values().length));
+    String entityId = randomAlphabetic(10);
+    Integer createUserId = nextInt();
 
-    String bucket = RandomStringUtils.randomAlphabetic(10);
-    String blob = RandomStringUtils.randomAlphabetic(10);
+    String bucket = randomAlphabetic(10);
+    String blob = randomAlphabetic(10);
 
     when(fileStorageObjectDAO.insertNewFile(
             eq(fileName),
@@ -63,7 +75,7 @@ class FileStorageObjectServiceTest {
         .thenReturn(10);
 
     FileStorageObject newFileStorageObject = new FileStorageObject();
-    newFileStorageObject.setFileName(RandomStringUtils.randomAlphabetic(10));
+    newFileStorageObject.setFileName(randomAlphabetic(10));
 
     when(fileStorageObjectDAO.findFileById(10)).thenReturn(newFileStorageObject);
     when(gcsService.storeDocument(eq(content), eq(mediaType), any()))
@@ -91,13 +103,13 @@ class FileStorageObjectServiceTest {
 
   @Test
   void testFetchById() throws IOException {
-    String bucket = RandomStringUtils.randomAlphabetic(10);
-    String blob = RandomStringUtils.randomAlphabetic(10);
+    String bucket = randomAlphabetic(10);
+    String blob = randomAlphabetic(10);
 
     FileStorageObject file = new FileStorageObject();
     file.setBlobId(BlobId.of(bucket, blob));
 
-    String content = RandomStringUtils.random(100);
+    String content = randomAlphanumeric(100);
 
     when(gcsService.getDocument(BlobId.of(bucket, blob)))
         .thenReturn(new ByteArrayInputStream(content.getBytes()));
@@ -115,12 +127,12 @@ class FileStorageObjectServiceTest {
 
   @Test
   void testFetchAllByEntityId() throws IOException {
-    String bucket1Name = RandomStringUtils.randomAlphabetic(10);
-    String blob1Name = RandomStringUtils.randomAlphabetic(10);
-    String bucket2Name = RandomStringUtils.randomAlphabetic(10);
-    String blob2Name = RandomStringUtils.randomAlphabetic(10);
-    String bucket3Name = RandomStringUtils.randomAlphabetic(10);
-    String blob3Name = RandomStringUtils.randomAlphabetic(10);
+    String bucket1Name = randomAlphabetic(10);
+    String blob1Name = randomAlphabetic(10);
+    String bucket2Name = randomAlphabetic(10);
+    String blob2Name = randomAlphabetic(10);
+    String bucket3Name = randomAlphabetic(10);
+    String blob3Name = randomAlphabetic(10);
 
     FileStorageObject file1 = new FileStorageObject();
     file1.setBlobId(BlobId.of(bucket1Name, blob1Name));
@@ -131,9 +143,9 @@ class FileStorageObjectServiceTest {
     FileStorageObject file3 = new FileStorageObject();
     file3.setBlobId(BlobId.of(bucket3Name, blob3Name));
 
-    String content1 = RandomStringUtils.randomAlphabetic(10);
-    String content2 = RandomStringUtils.randomAlphabetic(10);
-    String content3 = RandomStringUtils.randomAlphabetic(10);
+    String content1 = randomAlphabetic(10);
+    String content2 = randomAlphabetic(10);
+    String content3 = randomAlphabetic(10);
 
     when(gcsService.getDocuments(List.of(file1.getBlobId(), file2.getBlobId(), file3.getBlobId())))
         .thenReturn(
@@ -142,7 +154,7 @@ class FileStorageObjectServiceTest {
                 file2.getBlobId(), new ByteArrayInputStream(content2.getBytes()),
                 file3.getBlobId(), new ByteArrayInputStream(content3.getBytes())));
 
-    String entityId = RandomStringUtils.randomAlphabetic(10);
+    String entityId = randomAlphabetic(10);
 
     when(fileStorageObjectDAO.findFilesByEntityId(entityId))
         .thenReturn(List.of(file1, file2, file3));
@@ -164,12 +176,12 @@ class FileStorageObjectServiceTest {
 
   @Test
   void testFetchAllByEntityIdAndCategory() throws IOException {
-    String bucket1Name = RandomStringUtils.randomAlphabetic(10);
-    String blob1Name = RandomStringUtils.randomAlphabetic(10);
-    String bucket2Name = RandomStringUtils.randomAlphabetic(10);
-    String blob2Name = RandomStringUtils.randomAlphabetic(10);
-    String bucket3Name = RandomStringUtils.randomAlphabetic(10);
-    String blob3Name = RandomStringUtils.randomAlphabetic(10);
+    String bucket1Name = randomAlphabetic(10);
+    String blob1Name = randomAlphabetic(10);
+    String bucket2Name = randomAlphabetic(10);
+    String blob2Name = randomAlphabetic(10);
+    String bucket3Name = randomAlphabetic(10);
+    String blob3Name = randomAlphabetic(10);
 
     FileStorageObject file1 = new FileStorageObject();
     file1.setBlobId(BlobId.of(bucket1Name, blob1Name));
@@ -180,9 +192,9 @@ class FileStorageObjectServiceTest {
     FileStorageObject file3 = new FileStorageObject();
     file3.setBlobId(BlobId.of(bucket3Name, blob3Name));
 
-    String content1 = RandomStringUtils.randomAlphabetic(10);
-    String content2 = RandomStringUtils.randomAlphabetic(10);
-    String content3 = RandomStringUtils.randomAlphabetic(10);
+    String content1 = randomAlphabetic(10);
+    String content2 = randomAlphabetic(10);
+    String content3 = randomAlphabetic(10);
 
     when(gcsService.getDocuments(List.of(file1.getBlobId(), file2.getBlobId(), file3.getBlobId())))
         .thenReturn(
@@ -191,9 +203,12 @@ class FileStorageObjectServiceTest {
                 file2.getBlobId(), new ByteArrayInputStream(content2.getBytes()),
                 file3.getBlobId(), new ByteArrayInputStream(content3.getBytes())));
 
-    String entityId = RandomStringUtils.randomAlphabetic(10);
+    String entityId = randomAlphabetic(10);
     FileCategory category =
-        List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
+        List.of(FileCategory.values())
+            .get(
+                org.broadinstitute.consent.http.AbstractTestHelper.randomInt(
+                    0, FileCategory.values().length));
 
     when(fileStorageObjectDAO.findFilesByEntityIdAndCategory(entityId, category.getValue()))
         .thenReturn(List.of(file1, file2, file3));
@@ -229,5 +244,76 @@ class FileStorageObjectServiceTest {
     assertEquals(expected, returned);
     verify(fileStorageObjectDAO).findFileMetadataByEntityId(entityId);
     verifyNoInteractions(gcsService);
+  }
+
+  @Test
+  void testFetchMetadataByIdForEntity() {
+    Integer fileId = 10;
+    String entityId = randomAlphabetic(10);
+    FileStorageObject fileStorageObject = new FileStorageObject();
+
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId))
+        .thenReturn(fileStorageObject);
+
+    initService();
+
+    FileStorageObject returned = service.fetchMetadataByEntityIdAndId(entityId, fileId);
+
+    assertEquals(fileStorageObject, returned);
+    verify(fileStorageObjectDAO).findActiveFileByIdAndEntityId(entityId, fileId);
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {10, 11, 12})
+  void testFetchMetadataByIdForEntityNotFoundWhenFileMissingDeletedOrWrongEntity(Integer fileId) {
+    String entityId = randomAlphabetic(10);
+
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId)).thenReturn(null);
+
+    initService();
+
+    assertThrows(
+        NotFoundException.class, () -> service.fetchMetadataByEntityIdAndId(entityId, fileId));
+  }
+
+  @Test
+  void testFetchMetadataByEntityAndEntityIdForReadDataset() {
+    User user = new User();
+    Integer datasetId = 123;
+    Integer fileId = 10;
+    FileStorageObject fileStorageObject = new FileStorageObject();
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(datasetId.toString(), fileId))
+        .thenReturn(fileStorageObject);
+
+    initService();
+
+    FileStorageObject returned =
+        service.fetchMetadataByEntityAndEntityIdForRead(
+            user, "dataset", datasetId.toString(), fileId);
+
+    assertEquals(fileStorageObject, returned);
+  }
+
+  @Test
+  void testFetchMetadataByEntityAndEntityIdForReadStudy() {
+    User user = new User();
+    Integer studyId = 456;
+    Integer fileId = 11;
+    Study study = new Study();
+    study.setUuid(java.util.UUID.randomUUID());
+    FileStorageObject fileStorageObject = new FileStorageObject();
+
+    when(datasetService.findStudyByIdForRead(user, studyId)).thenReturn(study);
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(study.getUuid().toString(), fileId))
+        .thenReturn(fileStorageObject);
+
+    initService();
+
+    FileStorageObject returned =
+        service.fetchMetadataByEntityAndEntityIdForRead(user, "study", studyId.toString(), fileId);
+
+    assertEquals(fileStorageObject, returned);
   }
 }
