@@ -232,11 +232,11 @@ class DatasetServiceTest extends AbstractTestHelper {
     property.setValue("[]");
     study.addProperties(property);
 
+    int studyId = study.getStudyId();
     when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
 
     assertThrows(
-        ForbiddenException.class,
-        () -> datasetService.findStudyByIdForRead(user, study.getStudyId()));
+        ForbiddenException.class, () -> datasetService.findStudyByIdForRead(user, studyId));
   }
 
   @Test
