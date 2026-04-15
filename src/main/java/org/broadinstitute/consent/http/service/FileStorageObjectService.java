@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,6 +13,8 @@ import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.enumeration.DocumentEntity;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
@@ -126,6 +129,22 @@ public class FileStorageObjectService implements ConsentLogger {
     return fetchMetadataByEntityIdAndId(fsoEntityId, fileStorageObjectId);
   }
 
+  public void softDeleteByEntityAndEntityIdForWrite(
+      User user, String entity, String entityId, Integer fileStorageObjectId)
+      throws NotFoundException {
+    String fsoEntityId = resolveFsoEntityIdForWrite(user, entity, entityId);
+    FileStorageObject existingFileStorageObject =
+        fileStorageObjectDAO.findFileByIdAndEntityId(fsoEntityId, fileStorageObjectId);
+
+    // Idempotent delete: treat missing or already-deleted records as successful deletes.
+    if (existingFileStorageObject == null
+        || Boolean.TRUE.equals(existingFileStorageObject.getDeleted())) {
+      return;
+    }
+
+    fileStorageObjectDAO.softDelete(fileStorageObjectId, user.getUserId(), Instant.now());
+  }
+
   private String resolveFsoEntityIdForRead(User user, String entity, String entityId) {
     DocumentEntity documentEntity =
         DocumentEntity.fromValue(entity)
@@ -134,6 +153,17 @@ public class FileStorageObjectService implements ConsentLogger {
     return switch (documentEntity) {
       case DATASET -> resolveDatasetFsoEntityIdForRead(entityId, user);
       case STUDY -> resolveStudyFsoEntityIdForRead(entityId, user);
+    };
+  }
+
+  private String resolveFsoEntityIdForWrite(User user, String entity, String entityId) {
+    DocumentEntity documentEntity =
+        DocumentEntity.fromValue(entity)
+            .orElseThrow(() -> new NotFoundException("Entity not found"));
+
+    return switch (documentEntity) {
+      case DATASET -> resolveDatasetFsoEntityIdForWrite(entityId, user);
+      case STUDY -> resolveStudyFsoEntityIdForWrite(entityId, user);
     };
   }
 
@@ -146,6 +176,27 @@ public class FileStorageObjectService implements ConsentLogger {
   private String resolveStudyFsoEntityIdForRead(String entityId, User user) {
     Integer studyId = parseNumericEntityId(entityId);
     Study study = datasetService.findStudyByIdForRead(user, studyId);
+    if (study.getUuid() == null) {
+      throw new NotFoundException("Entity not found");
+    }
+    return study.getUuid().toString();
+  }
+
+  private String resolveDatasetFsoEntityIdForWrite(String entityId, User user) {
+    Integer datasetId = parseNumericEntityId(entityId);
+    Dataset dataset = datasetService.findDatasetByIdForRead(user, datasetId);
+    if (!user.hasUserRole(UserRoles.ADMIN) && !user.getUserId().equals(dataset.getCreateUserId())) {
+      throw new ForbiddenException("User does not have permission");
+    }
+    return datasetId.toString();
+  }
+
+  private String resolveStudyFsoEntityIdForWrite(String entityId, User user) {
+    Integer studyId = parseNumericEntityId(entityId);
+    Study study = datasetService.findStudyByIdForRead(user, studyId);
+    if (!datasetService.isCreatorCustodianOrAdmin(user, study)) {
+      throw new ForbiddenException("User does not have permission");
+    }
     if (study.getUuid() == null) {
       throw new NotFoundException("Entity not found");
     }

@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -59,6 +60,24 @@ public class DocumentResource extends Resource {
           fileStorageObjectService.fetchMetadataByEntityAndEntityIdForRead(
               user, entity, entityId, id);
       return Response.ok(fileStorageObject).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @DELETE
+  @Path("/{entityId}/document/{id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @PermitAll
+  public Response softDeleteDocumentByEntity(
+      @Auth DuosUser duosUser,
+      @PathParam("entity") String entity,
+      @PathParam("entityId") String entityId,
+      @PathParam("id") Integer id) {
+    try {
+      User user = duosUser.getUser();
+      fileStorageObjectService.softDeleteByEntityAndEntityIdForWrite(user, entity, entityId, id);
+      return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
