@@ -3,7 +3,9 @@ package org.broadinstitute.consent.http.resources;
 import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -12,6 +14,7 @@ import jakarta.ws.rs.core.Response;
 import java.util.List;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.FileStorageObjectCategoryUpdateRequest;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.FileStorageObjectService;
 
@@ -59,6 +62,28 @@ public class DocumentResource extends Resource {
           fileStorageObjectService.fetchMetadataByEntityAndEntityIdForRead(
               user, entity, entityId, id);
       return Response.ok(fileStorageObject).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @PUT
+  @Path("/{entityId}/document/{id}")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  @PermitAll
+  public Response updateDocumentCategoryByEntity(
+      @Auth DuosUser duosUser,
+      @PathParam("entity") String entity,
+      @PathParam("entityId") String entityId,
+      @PathParam("id") Integer id,
+      FileStorageObjectCategoryUpdateRequest request) {
+    try {
+      User user = duosUser.getUser();
+      FileStorageObject updatedFileStorageObject =
+          fileStorageObjectService.updateCategoryByEntityAndEntityIdForWrite(
+              user, entity, entityId, id, request == null ? null : request.getCategory());
+      return Response.ok(updatedFileStorageObject).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

@@ -1,17 +1,22 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.enumeration.DocumentEntity;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
@@ -126,6 +131,33 @@ public class FileStorageObjectService implements ConsentLogger {
     return fetchMetadataByEntityIdAndId(fsoEntityId, fileStorageObjectId);
   }
 
+  public FileStorageObject updateCategoryByEntityAndEntityIdForWrite(
+      User user, String entity, String entityId, Integer fileStorageObjectId, String categoryValue)
+      throws NotFoundException {
+    if (categoryValue == null || categoryValue.trim().isEmpty()) {
+      throw new BadRequestException("Invalid category");
+    }
+
+    FileCategory category = FileCategory.findValue(categoryValue.trim());
+    if (category == null) {
+      throw new BadRequestException("Invalid category");
+    }
+
+    validateCategoryAllowedForEntity(entity, category);
+
+    String fsoEntityId = resolveFsoEntityIdForWrite(user, entity, entityId);
+    FileStorageObject existingFileStorageObject =
+        fileStorageObjectDAO.findFileByIdAndEntityId(fsoEntityId, fileStorageObjectId);
+    if (existingFileStorageObject == null
+        || Boolean.TRUE.equals(existingFileStorageObject.getDeleted())) {
+      throw new NotFoundException("File not found");
+    }
+
+    fileStorageObjectDAO.updateCategory(
+        fileStorageObjectId, category.getValue(), user.getUserId(), Instant.now());
+    return fileStorageObjectDAO.findFileById(fileStorageObjectId);
+  }
+
   private String resolveFsoEntityIdForRead(User user, String entity, String entityId) {
     DocumentEntity documentEntity =
         DocumentEntity.fromValue(entity)
@@ -134,6 +166,25 @@ public class FileStorageObjectService implements ConsentLogger {
     return switch (documentEntity) {
       case DATASET -> resolveDatasetFsoEntityIdForRead(entityId, user);
       case STUDY -> resolveStudyFsoEntityIdForRead(entityId, user);
+    };
+  }
+
+  private String resolveFsoEntityIdForWrite(User user, String entity, String entityId) {
+    if ("dac".equalsIgnoreCase(entity) || "dar".equalsIgnoreCase(entity)) {
+      if (!user.hasUserRole(UserRoles.ADMIN)) {
+        throw new ForbiddenException("User does not have permission");
+      }
+      Integer numericEntityId = parseNumericEntityId(entityId);
+      return numericEntityId.toString();
+    }
+
+    DocumentEntity documentEntity =
+        DocumentEntity.fromValue(entity)
+            .orElseThrow(() -> new NotFoundException("Entity not found"));
+
+    return switch (documentEntity) {
+      case DATASET -> resolveDatasetFsoEntityIdForWrite(entityId, user);
+      case STUDY -> resolveStudyFsoEntityIdForWrite(entityId, user);
     };
   }
 
@@ -152,11 +203,54 @@ public class FileStorageObjectService implements ConsentLogger {
     return study.getUuid().toString();
   }
 
+  private String resolveDatasetFsoEntityIdForWrite(String entityId, User user) {
+    Integer datasetId = parseNumericEntityId(entityId);
+    Dataset dataset = datasetService.findDatasetByIdForRead(user, datasetId);
+    if (!user.hasUserRole(UserRoles.ADMIN) && !user.getUserId().equals(dataset.getCreateUserId())) {
+      throw new ForbiddenException("User does not have permission");
+    }
+    return datasetId.toString();
+  }
+
+  private String resolveStudyFsoEntityIdForWrite(String entityId, User user) {
+    Integer studyId = parseNumericEntityId(entityId);
+    Study study = datasetService.findStudyByIdForRead(user, studyId);
+    if (!datasetService.isCreatorCustodianOrAdmin(user, study)) {
+      throw new ForbiddenException("User does not have permission");
+    }
+    if (study.getUuid() == null) {
+      throw new NotFoundException("Entity not found");
+    }
+    return study.getUuid().toString();
+  }
+
   private Integer parseNumericEntityId(String entityId) {
     try {
       return Integer.valueOf(entityId);
     } catch (NumberFormatException _) {
       throw new NotFoundException("Entity not found");
+    }
+  }
+
+  private void validateCategoryAllowedForEntity(String entity, FileCategory category) {
+    Set<FileCategory> allowedCategories;
+    if ("dataset".equalsIgnoreCase(entity) || "study".equalsIgnoreCase(entity)) {
+      allowedCategories =
+          Set.of(
+              FileCategory.IRB_COLLABORATION_LETTER,
+              FileCategory.DATA_USE_LETTER,
+              FileCategory.ALTERNATIVE_DATA_SHARING_PLAN,
+              FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
+    } else if ("dac".equalsIgnoreCase(entity) || "dar".equalsIgnoreCase(entity)) {
+      allowedCategories = Set.of(FileCategory.DATA_ACCESS_AGREEMENT);
+    } else {
+      throw new NotFoundException("Entity not found");
+    }
+
+    if (!allowedCategories.contains(category)) {
+      throw new BadRequestException(
+          String.format(
+              "Category '%s' is not allowed for entity '%s'", category.getValue(), entity));
     }
   }
 

@@ -68,6 +68,21 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
   @SqlUpdate(
       """
           UPDATE file_storage_object
+          SET category=:category,
+              update_user_id=:updateUserId,
+              update_date=:updateDate
+          WHERE file_storage_object_id = :fileStorageObjectId
+            AND (deleted = false OR deleted IS NULL)
+          """)
+  int updateCategory(
+      @Bind("fileStorageObjectId") Integer fileStorageObjectId,
+      @Bind("category") String category,
+      @Bind("updateUserId") Integer updateUserId,
+      @Bind("updateDate") Instant updateDate);
+
+  @SqlUpdate(
+      """
+          UPDATE file_storage_object
           SET deleted=true,
               delete_user_id=:deleteUserId,
               delete_date=:deleteDate
@@ -108,6 +123,16 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
                 AND (fso.deleted = false OR fso.deleted IS NULL)
           """)
   FileStorageObject findActiveFileByIdAndEntityId(
+      @Bind("entityId") String entityId, @Bind("fileStorageObjectId") Integer fileStorageObjectId);
+
+  @SqlQuery(
+      """
+          SELECT *
+          FROM file_storage_object
+          WHERE entity_id = :entityId
+            AND file_storage_object_id = :fileStorageObjectId
+          """)
+  FileStorageObject findFileByIdAndEntityId(
       @Bind("entityId") String entityId, @Bind("fileStorageObjectId") Integer fileStorageObjectId);
 
   @SqlQuery(
