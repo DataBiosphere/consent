@@ -1,0 +1,16 @@
+type: object
+description: Request payload to update an existing FileStorageObject category.
+required:
+  - category
+properties:
+  category:
+    type: string
+    description: File category value.
+    enum:
+      - irbCollaborationLetter
+      - dataUseLetter
+      - alternativeDataSharingPlan
+      - nihInstitutionalCertification
+      - dataAccessAgreement
+      - draftUploadedFile
+
