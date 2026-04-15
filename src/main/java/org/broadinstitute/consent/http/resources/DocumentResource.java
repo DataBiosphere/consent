@@ -9,6 +9,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.util.List;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.User;
@@ -22,6 +23,25 @@ public class DocumentResource extends Resource {
   @Inject
   public DocumentResource(FileStorageObjectService fileStorageObjectService) {
     this.fileStorageObjectService = fileStorageObjectService;
+  }
+
+  @GET
+  @Path("{entityId}/document")
+  @Produces(MediaType.APPLICATION_JSON)
+  @PermitAll
+  public Response findDocumentsByEntity(
+      @Auth DuosUser duosUser,
+      @PathParam("entity") String entity,
+      @PathParam("entityId") String entityId) {
+    try {
+      User user = duosUser.getUser();
+      List<FileStorageObject> fileStorageObjects =
+          fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
+              user, entity, entityId);
+      return Response.ok(fileStorageObjects).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
   }
 
   @GET

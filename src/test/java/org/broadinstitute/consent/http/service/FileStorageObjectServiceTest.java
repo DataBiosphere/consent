@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
@@ -228,6 +230,24 @@ class FileStorageObjectServiceTest {
   }
 
   @Test
+  void testFetchAllMetadataByEntityId() {
+    String entityId = RandomStringUtils.secure().nextAlphabetic(10);
+    FileStorageObject file1 = new FileStorageObject();
+    FileStorageObject file2 = new FileStorageObject();
+    List<FileStorageObject> expected = List.of(file1, file2);
+
+    when(fileStorageObjectDAO.findFileMetadataByEntityId(entityId)).thenReturn(expected);
+
+    initService();
+
+    List<FileStorageObject> returned = service.fetchAllMetadataByEntityId(entityId);
+
+    assertEquals(expected, returned);
+    verify(fileStorageObjectDAO).findFileMetadataByEntityId(entityId);
+    verifyNoInteractions(gcsService);
+  }
+
+  @Test
   void testFetchMetadataByIdForEntity() {
     Integer fileId = 10;
     String entityId = randomAlphabetic(10);
@@ -275,6 +295,26 @@ class FileStorageObjectServiceTest {
             user, "dataset", datasetId.toString(), fileId);
 
     assertEquals(fileStorageObject, returned);
+  }
+
+  @Test
+  void testAllFetchMetadataByEntityAndEntityIdForReadStudy() {
+    User user = new User();
+    Integer studyId = 456;
+    Study study = new Study();
+    study.setUuid(java.util.UUID.randomUUID());
+    List<FileStorageObject> fileStorageObjects = List.of(new FileStorageObject());
+
+    when(datasetService.findStudyByIdForRead(user, studyId)).thenReturn(study);
+    when(fileStorageObjectDAO.findFileMetadataByEntityId(study.getUuid().toString()))
+        .thenReturn(fileStorageObjects);
+
+    initService();
+
+    List<FileStorageObject> returnedFiles =
+        service.fetchAllMetadataByEntityAndEntityIdForRead(user, "study", studyId.toString());
+
+    assertEquals(fileStorageObjects, returnedFiles);
   }
 
   @Test

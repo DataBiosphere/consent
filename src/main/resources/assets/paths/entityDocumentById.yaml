@@ -6,14 +6,14 @@ get:
     - name: entity
       in: path
       required: true
-      description: Entity type that owns the file
+      description: Entity type
       schema:
         type: string
         enum: [dataset, study]
     - name: entityId
       in: path
       required: true
-      description: Numeric id of the owning entity
+      description: Entity identifier
       schema:
         type: string
     - name: id

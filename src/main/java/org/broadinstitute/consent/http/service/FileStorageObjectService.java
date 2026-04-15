@@ -113,6 +113,12 @@ public class FileStorageObjectService implements ConsentLogger {
     return fileStorageObject;
   }
 
+  public List<FileStorageObject> fetchAllMetadataByEntityAndEntityIdForRead(
+      User user, String entity, String entityId) throws NotFoundException {
+    String fsoEntityId = resolveFsoEntityIdForRead(user, entity, entityId);
+    return fetchAllMetadataByEntityId(fsoEntityId);
+  }
+
   public FileStorageObject fetchMetadataByEntityAndEntityIdForRead(
       User user, String entity, String entityId, Integer fileStorageObjectId)
       throws NotFoundException {
@@ -168,5 +174,9 @@ public class FileStorageObjectService implements ConsentLogger {
     // download all files from GCS
     fetchAndPopulateMultipleUploadedFiles(fileStorageObjects);
     return fileStorageObjects;
+  }
+
+  public List<FileStorageObject> fetchAllMetadataByEntityId(String entityId) {
+    return fileStorageObjectDAO.findFileMetadataByEntityId(entityId);
   }
 }

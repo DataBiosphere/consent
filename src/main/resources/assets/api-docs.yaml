@@ -526,6 +526,8 @@ paths:
     $ref: './paths/draftAttachmentsIndex.yaml'
   /api/draft/v1/{draftUUID}/attachments/{fileId}:
     $ref: './paths/draftAttachments.yaml'
+  /api/{entity}/{entityId}/document:
+    $ref: './paths/entityDocumentsByEntityId.yaml'
   /api/tdr/{identifier}/approved/users:
     $ref: './paths/tdrDatasetApprovedUsers.yaml'
   /api/tdr/{identifier}:
