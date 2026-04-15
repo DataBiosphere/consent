@@ -37,3 +37,40 @@ get:
       description: Forbidden
     404:
       description: Not Found
+
+delete:
+  summary: Soft delete a FileStorageObject
+  operationId: softDeleteDocumentByEntity
+  description: Logically deletes a FileStorageObject only. The underlying GCS blob is not removed. This endpoint is idempotent.
+  parameters:
+    - name: entity
+      in: path
+      required: true
+      description: Entity type
+      schema:
+        type: string
+        enum: [dataset, study]
+    - name: entityId
+      in: path
+      required: true
+      description: Entity identifier
+      schema:
+        type: string
+    - name: id
+      in: path
+      required: true
+      description: FileStorageObject id
+      schema:
+        type: integer
+  tags:
+    - Document
+  responses:
+    200:
+      description: FileStorageObject deleted (or already deleted/not found for idempotency)
+    401:
+      description: Unauthorized
+    403:
+      description: Forbidden
+    404:
+      description: Not Found
+
