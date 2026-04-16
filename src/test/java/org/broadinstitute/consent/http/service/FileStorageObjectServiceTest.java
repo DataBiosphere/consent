@@ -291,6 +291,7 @@ class FileStorageObjectServiceTest {
   @Test
   void testFetchMetadataByEntityAndEntityIdForReadDataset() {
     User user = new User();
+    user.setAdminRole(); // ADMIN can read dataset documents
     Integer datasetId = 123;
     Integer fileId = 10;
     FileStorageObject fileStorageObject = new FileStorageObject();
@@ -301,9 +302,7 @@ class FileStorageObjectServiceTest {
 
     initService();
 
-    FileStorageObject returned =
-        service.fetchMetadataByEntityAndEntityIdForRead(
-            user, "dataset", datasetId.toString(), fileId);
+    FileStorageObject returned = service.getDocument(user, "dataset", datasetId.toString(), fileId);
 
     assertEquals(fileStorageObject, returned);
   }
@@ -311,6 +310,7 @@ class FileStorageObjectServiceTest {
   @Test
   void testAllFetchMetadataByEntityAndEntityIdForReadStudy() {
     User user = new User();
+    user.setAdminRole(); // ADMIN can read study documents
     Integer studyId = 456;
     Study study = new Study();
     study.setUuid(java.util.UUID.randomUUID());
@@ -323,7 +323,7 @@ class FileStorageObjectServiceTest {
     initService();
 
     List<FileStorageObject> returnedFiles =
-        service.fetchAllMetadataByEntityAndEntityIdForRead(user, "study", studyId.toString());
+        service.listDocuments(user, "study", studyId.toString());
 
     assertEquals(fileStorageObjects, returnedFiles);
   }
@@ -341,8 +341,7 @@ class FileStorageObjectServiceTest {
 
     initService();
 
-    List<FileStorageObject> returnedFiles =
-        service.fetchAllMetadataByEntityAndEntityIdForRead(user, "dac", dacId.toString());
+    List<FileStorageObject> returnedFiles = service.listDocuments(user, "dac", dacId.toString());
 
     assertEquals(fileStorageObjects, returnedFiles);
     verify(fileStorageObjectDAO).findFileMetadataByEntityId(dacId.toString());
@@ -363,8 +362,7 @@ class FileStorageObjectServiceTest {
 
     initService();
 
-    List<FileStorageObject> returnedFiles =
-        service.fetchAllMetadataByEntityAndEntityIdForRead(user, "dar", darReferenceId);
+    List<FileStorageObject> returnedFiles = service.listDocuments(user, "dar", darReferenceId);
 
     assertEquals(fileStorageObjects, returnedFiles);
     verify(fileStorageObjectDAO).findFileMetadataByEntityId(darReferenceId);
@@ -373,6 +371,7 @@ class FileStorageObjectServiceTest {
   @Test
   void testFetchMetadataByEntityAndEntityIdForReadStudy() {
     User user = new User();
+    user.setAdminRole(); // ADMIN can read study documents
     Integer studyId = 456;
     Integer fileId = 11;
     Study study = new Study();
@@ -385,8 +384,7 @@ class FileStorageObjectServiceTest {
 
     initService();
 
-    FileStorageObject returned =
-        service.fetchMetadataByEntityAndEntityIdForRead(user, "study", studyId.toString(), fileId);
+    FileStorageObject returned = service.getDocument(user, "study", studyId.toString(), fileId);
 
     assertEquals(fileStorageObject, returned);
   }
@@ -399,6 +397,7 @@ class FileStorageObjectServiceTest {
 
     User user = new User();
     user.setUserId(25);
+    user.setAdminRole(); // ADMIN can CRUD DATASET NIH_INSTITUTIONAL_CERTIFICATION
 
     Dataset dataset = new Dataset();
     FileStorageObject created = new FileStorageObject();
@@ -409,7 +408,7 @@ class FileStorageObjectServiceTest {
         .thenReturn(BlobId.of("bucket", "object"));
     when(fileStorageObjectDAO.create(
             eq("upload.pdf"),
-            eq(FileCategory.DATA_USE_LETTER.getValue()),
+            eq(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue()),
             eq(BlobId.of("bucket", "object").toGsUtilUri()),
             eq("application/octet-stream"),
             eq("123"),
@@ -421,14 +420,15 @@ class FileStorageObjectServiceTest {
     initService();
 
     FileStorageObject result =
-        service.uploadDocument(user, "dataset", "123", inputStream, fileDetail, "dataUseLetter");
+        service.uploadDocument(
+            user, "dataset", "123", inputStream, fileDetail, "nihInstitutionalCertification");
 
     assertEquals(created, result);
     verify(datasetService).findDatasetByIdForRead(user, 123);
     verify(fileStorageObjectDAO)
         .create(
             eq("upload.pdf"),
-            eq(FileCategory.DATA_USE_LETTER.getValue()),
+            eq(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue()),
             eq(BlobId.of("bucket", "object").toGsUtilUri()),
             eq("application/octet-stream"),
             eq("123"),
@@ -458,11 +458,13 @@ class FileStorageObjectServiceTest {
   @Test
   void testGetDocumentFileByEntityAndEntityIdForReadDataset() throws Exception {
     User user = new User();
+    user.setAdminRole(); // ADMIN can read any dataset document
     Integer datasetId = 123;
     Integer fileId = 10;
 
     FileStorageObject fileStorageObject = new FileStorageObject();
     fileStorageObject.setBlobId(BlobId.of("bucket", "document"));
+    fileStorageObject.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
 
     byte[] content = "streamed-file-content".getBytes();
 
@@ -486,12 +488,14 @@ class FileStorageObjectServiceTest {
   @Test
   void testGetDocumentFileThrowsBadGatewayWhenGcsFails() {
     User user = new User();
+    user.setAdminRole(); // ADMIN can read dataset documents
     Integer datasetId = 123;
     Integer fileId = 10;
     String entityId = datasetId.toString();
 
     FileStorageObject fileStorageObject = new FileStorageObject();
     fileStorageObject.setBlobId(BlobId.of("bucket", "document"));
+    fileStorageObject.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
 
     when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
     when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId))
@@ -511,6 +515,7 @@ class FileStorageObjectServiceTest {
   @Test
   void testGetDocumentFileThrowsNotFoundWhenMetadataLookupFails() {
     User user = new User();
+    // No role needed here — NotFoundException is thrown before checkAccess (null FSO)
     Integer datasetId = 123;
     Integer fileId = 10;
     String entityId = datasetId.toString();
@@ -529,6 +534,7 @@ class FileStorageObjectServiceTest {
   void testDeleteDocumentSetsDeletedFieldsAndCallsDao() {
     User user = new User();
     user.setUserId(25);
+    user.setAdminRole(); // ADMIN can CRUD dataset documents
     Integer datasetId = 123;
     Integer fileId = 10;
     String entityId = datasetId.toString();
@@ -537,6 +543,7 @@ class FileStorageObjectServiceTest {
     active.setFileStorageObjectId(fileId);
     active.setEntityId(entityId);
     active.setDeleted(false);
+    active.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
 
     FileStorageObject deleted = new FileStorageObject();
     deleted.setFileStorageObjectId(fileId);
@@ -586,6 +593,7 @@ class FileStorageObjectServiceTest {
   void testUpdateDocumentCategoryUpdatesCategoryAndAuditFields() {
     User user = new User();
     user.setUserId(25);
+    user.setAdminRole(); // ADMIN can CRUD dataset documents
     Integer datasetId = 123;
     Integer fileId = 10;
     String entityId = datasetId.toString();
@@ -593,13 +601,13 @@ class FileStorageObjectServiceTest {
     FileStorageObject active = new FileStorageObject();
     active.setFileStorageObjectId(fileId);
     active.setEntityId(entityId);
-    active.setCategory(FileCategory.IRB_COLLABORATION_LETTER);
+    active.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
     active.setDeleted(false);
 
     FileStorageObject updated = new FileStorageObject();
     updated.setFileStorageObjectId(fileId);
     updated.setEntityId(entityId);
-    updated.setCategory(FileCategory.DATA_USE_LETTER);
+    updated.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
     updated.setUpdateUserId(user.getUserId());
     updated.setUpdateDate(java.time.Instant.now());
 
@@ -610,13 +618,15 @@ class FileStorageObjectServiceTest {
     initService();
 
     FileStorageObject result =
-        service.updateDocumentCategory(user, "dataset", entityId, fileId, "dataUseLetter");
+        service.updateDocumentCategory(
+            user, "dataset", entityId, fileId, "nihInstitutionalCertification");
 
-    assertEquals(FileCategory.DATA_USE_LETTER, result.getCategory());
+    assertEquals(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION, result.getCategory());
     assertEquals(user.getUserId(), result.getUpdateUserId());
     assertNotNull(result.getUpdateDate());
     verify(fileStorageObjectDAO)
-        .updateCategory(eq(fileId), eq("dataUseLetter"), eq(user.getUserId()), any());
+        .updateCategory(
+            eq(fileId), eq("nihInstitutionalCertification"), eq(user.getUserId()), any());
   }
 
   @Test
@@ -639,6 +649,7 @@ class FileStorageObjectServiceTest {
   void testUpdateDocumentCategoryThrowsNotFoundWhenFileDeletedOrMissing() {
     User user = new User();
     user.setUserId(25);
+    user.setAdminRole(); // ADMIN can CRUD dataset documents; passes checkAccess
     Integer datasetId = 123;
     Integer fileId = 10;
     String entityId = datasetId.toString();
@@ -652,7 +663,8 @@ class FileStorageObjectServiceTest {
         assertThrows(
             NotFoundException.class,
             () ->
-                service.updateDocumentCategory(user, "dataset", entityId, fileId, "dataUseLetter"));
+                service.updateDocumentCategory(
+                    user, "dataset", entityId, fileId, "nihInstitutionalCertification"));
 
     assertEquals("File not found", exception.getMessage());
     verify(fileStorageObjectDAO, never()).updateCategory(any(), any(), any(), any());

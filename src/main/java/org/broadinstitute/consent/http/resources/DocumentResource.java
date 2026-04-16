@@ -48,8 +48,7 @@ public class DocumentResource extends Resource {
     try {
       User user = duosUser.getUser();
       List<FileStorageObject> fileStorageObjects =
-          fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
-              user, entity, entityId);
+          fileStorageObjectService.listDocuments(user, entity, entityId);
       return Response.ok(fileStorageObjects).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -68,8 +67,7 @@ public class DocumentResource extends Resource {
     try {
       User user = duosUser.getUser();
       FileStorageObject fileStorageObject =
-          fileStorageObjectService.fetchMetadataByEntityAndEntityIdForRead(
-              user, entity, entityId, id);
+          fileStorageObjectService.getDocument(user, entity, entityId, id);
       return Response.ok(fileStorageObject).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

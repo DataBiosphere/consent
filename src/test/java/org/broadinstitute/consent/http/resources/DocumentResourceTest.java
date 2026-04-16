@@ -48,8 +48,7 @@ class DocumentResourceTest {
     List<FileStorageObject> files = List.of(new FileStorageObject());
 
     when(duosUser.getUser()).thenReturn(user);
-    when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
-            user, "dataset", Integer.toString(datasetId)))
+    when(fileStorageObjectService.listDocuments(user, "dataset", Integer.toString(datasetId)))
         .thenReturn(files);
 
     try (var response =
@@ -58,8 +57,7 @@ class DocumentResourceTest {
       assertEquals(files, response.getEntity());
     }
 
-    verify(fileStorageObjectService)
-        .fetchAllMetadataByEntityAndEntityIdForRead(user, "dataset", Integer.toString(datasetId));
+    verify(fileStorageObjectService).listDocuments(user, "dataset", Integer.toString(datasetId));
   }
 
   @Test
@@ -68,8 +66,7 @@ class DocumentResourceTest {
     List<FileStorageObject> files = List.of(new FileStorageObject());
 
     when(duosUser.getUser()).thenReturn(user);
-    when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
-            user, "DaTaSeT", Integer.toString(datasetId)))
+    when(fileStorageObjectService.listDocuments(user, "DaTaSeT", Integer.toString(datasetId)))
         .thenReturn(files);
 
     try (var response =
@@ -85,8 +82,7 @@ class DocumentResourceTest {
     List<FileStorageObject> files = List.of(new FileStorageObject());
 
     when(duosUser.getUser()).thenReturn(user);
-    when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
-            user, "study", Integer.toString(studyId)))
+    when(fileStorageObjectService.listDocuments(user, "study", Integer.toString(studyId)))
         .thenReturn(files);
 
     try (var response =
@@ -95,8 +91,7 @@ class DocumentResourceTest {
       assertEquals(files, response.getEntity());
     }
 
-    verify(fileStorageObjectService)
-        .fetchAllMetadataByEntityAndEntityIdForRead(user, "study", Integer.toString(studyId));
+    verify(fileStorageObjectService).listDocuments(user, "study", Integer.toString(studyId));
   }
 
   @Test
@@ -104,15 +99,14 @@ class DocumentResourceTest {
     List<FileStorageObject> files = List.of(new FileStorageObject());
 
     when(duosUser.getUser()).thenReturn(user);
-    when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(user, "dac", "456"))
-        .thenReturn(files);
+    when(fileStorageObjectService.listDocuments(user, "dac", "456")).thenReturn(files);
 
     try (var response = resource.findDocumentsByEntity(duosUser, "dac", "456")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(files, response.getEntity());
     }
 
-    verify(fileStorageObjectService).fetchAllMetadataByEntityAndEntityIdForRead(user, "dac", "456");
+    verify(fileStorageObjectService).listDocuments(user, "dac", "456");
   }
 
   @Test
@@ -120,24 +114,20 @@ class DocumentResourceTest {
     List<FileStorageObject> files = List.of(new FileStorageObject());
 
     when(duosUser.getUser()).thenReturn(user);
-    when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
-            user, "dar", "DAR-123"))
-        .thenReturn(files);
+    when(fileStorageObjectService.listDocuments(user, "dar", "DAR-123")).thenReturn(files);
 
     try (var response = resource.findDocumentsByEntity(duosUser, "dar", "DAR-123")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(files, response.getEntity());
     }
 
-    verify(fileStorageObjectService)
-        .fetchAllMetadataByEntityAndEntityIdForRead(user, "dar", "DAR-123");
+    verify(fileStorageObjectService).listDocuments(user, "dar", "DAR-123");
   }
 
   @Test
   void testFindDocumentsByEntityNotFound() {
     when(duosUser.getUser()).thenReturn(user);
-    when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
-            user, "dataset", "111"))
+    when(fileStorageObjectService.listDocuments(user, "dataset", "111"))
         .thenThrow(new NotFoundException("Entity not found"));
 
     try (var response = resource.findDocumentsByEntity(duosUser, "dataset", "111")) {
@@ -148,8 +138,7 @@ class DocumentResourceTest {
   @Test
   void testFindDocumentsByEntityForbidden() {
     when(duosUser.getUser()).thenReturn(user);
-    when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
-            user, "dataset", "222"))
+    when(fileStorageObjectService.listDocuments(user, "dataset", "222"))
         .thenThrow(new jakarta.ws.rs.ForbiddenException("User does not have permission"));
 
     try (var response = resource.findDocumentsByEntity(duosUser, "dataset", "222")) {
@@ -162,8 +151,7 @@ class DocumentResourceTest {
     int studyId = 333;
 
     when(duosUser.getUser()).thenReturn(user);
-    when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
-            user, "study", Integer.toString(studyId)))
+    when(fileStorageObjectService.listDocuments(user, "study", Integer.toString(studyId)))
         .thenReturn(List.of());
 
     try (var response =
@@ -178,8 +166,7 @@ class DocumentResourceTest {
     int studyId = 444;
 
     when(duosUser.getUser()).thenReturn(user);
-    when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
-            user, "study", Integer.toString(studyId)))
+    when(fileStorageObjectService.listDocuments(user, "study", Integer.toString(studyId)))
         .thenThrow(new jakarta.ws.rs.ForbiddenException("User does not have permission"));
 
     try (var response =
@@ -195,8 +182,7 @@ class DocumentResourceTest {
     FileStorageObject fileStorageObject = new FileStorageObject();
 
     when(duosUser.getUser()).thenReturn(user);
-    when(fileStorageObjectService.fetchMetadataByEntityAndEntityIdForRead(
-            user, "dataset", Integer.toString(datasetId), fileId))
+    when(fileStorageObjectService.getDocument(user, "dataset", Integer.toString(datasetId), fileId))
         .thenReturn(fileStorageObject);
 
     try (var response =
@@ -206,8 +192,7 @@ class DocumentResourceTest {
     }
 
     verify(fileStorageObjectService)
-        .fetchMetadataByEntityAndEntityIdForRead(
-            user, "dataset", Integer.toString(datasetId), fileId);
+        .getDocument(user, "dataset", Integer.toString(datasetId), fileId);
   }
 
   @Test
@@ -217,8 +202,7 @@ class DocumentResourceTest {
     FileStorageObject fileStorageObject = new FileStorageObject();
 
     when(duosUser.getUser()).thenReturn(user);
-    when(fileStorageObjectService.fetchMetadataByEntityAndEntityIdForRead(
-            user, "study", Integer.toString(studyId), fileId))
+    when(fileStorageObjectService.getDocument(user, "study", Integer.toString(studyId), fileId))
         .thenReturn(fileStorageObject);
 
     try (var response =
@@ -227,8 +211,7 @@ class DocumentResourceTest {
       assertEquals(fileStorageObject, response.getEntity());
     }
 
-    verify(fileStorageObjectService)
-        .fetchMetadataByEntityAndEntityIdForRead(user, "study", Integer.toString(studyId), fileId);
+    verify(fileStorageObjectService).getDocument(user, "study", Integer.toString(studyId), fileId);
   }
 
   @Test
@@ -241,8 +224,7 @@ class DocumentResourceTest {
   @Test
   void testFindDocumentByEntityNotFoundWhenEntityMissing() {
     when(duosUser.getUser()).thenReturn(user);
-    when(fileStorageObjectService.fetchMetadataByEntityAndEntityIdForRead(
-            user, "dataset", "123", 10))
+    when(fileStorageObjectService.getDocument(user, "dataset", "123", 10))
         .thenThrow(new NotFoundException("Entity not found"));
 
     try (var response = resource.findDocumentByEntity(duosUser, "dataset", "123", 10)) {
@@ -253,8 +235,7 @@ class DocumentResourceTest {
   @Test
   void testFindDocumentByEntityForbiddenWhenNoReadAccess() {
     when(duosUser.getUser()).thenReturn(user);
-    when(fileStorageObjectService.fetchMetadataByEntityAndEntityIdForRead(
-            user, "dataset", "123", 10))
+    when(fileStorageObjectService.getDocument(user, "dataset", "123", 10))
         .thenThrow(new jakarta.ws.rs.ForbiddenException("User does not have permission"));
 
     try (var response = resource.findDocumentByEntity(duosUser, "dataset", "123", 10)) {
@@ -374,8 +355,7 @@ class DocumentResourceTest {
   void testFindDocumentByEntityNotFoundWhenFileLookupFails(
       Integer fileId, String scenarioDescription) {
     when(duosUser.getUser()).thenReturn(user);
-    when(fileStorageObjectService.fetchMetadataByEntityAndEntityIdForRead(
-            user, "dataset", "123", fileId))
+    when(fileStorageObjectService.getDocument(user, "dataset", "123", fileId))
         .thenThrow(new NotFoundException("File not found"));
 
     try (var response = resource.findDocumentByEntity(duosUser, "dataset", "123", fileId)) {
