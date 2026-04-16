@@ -7,6 +7,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -20,6 +21,7 @@ import java.io.UncheckedIOException;
 import java.util.List;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.FileStorageObjectCategoryUpdateRequest;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.FileStorageObjectService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -88,6 +90,28 @@ public class DocumentResource extends Resource {
       FileStorageObject deleted =
           fileStorageObjectService.deleteDocument(user, entity, entityId, id);
       return Response.ok(deleted).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @PUT
+  @Path("/{entityId}/document/{id}")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  @PermitAll
+  public Response updateDocumentCategoryByEntity(
+      @Auth DuosUser duosUser,
+      @PathParam("entity") String entity,
+      @PathParam("entityId") String entityId,
+      @PathParam("id") Integer id,
+      FileStorageObjectCategoryUpdateRequest request) {
+    try {
+      User user = duosUser.getUser();
+      String category = request == null ? null : request.getCategory();
+      FileStorageObject updated =
+          fileStorageObjectService.updateDocumentCategory(user, entity, entityId, id, category);
+      return Response.ok(updated).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

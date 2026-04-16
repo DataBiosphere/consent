@@ -72,17 +72,9 @@ public class FileStorageObjectService implements ConsentLogger {
       throw new BadRequestException("File is required");
     }
 
-    FileCategory category = FileCategory.findValue(categoryStr);
-    if (category == null) {
-      throw new BadRequestException("Invalid category");
-    }
-
-    DocumentEntity documentEntity =
-        DocumentEntity.fromValue(entity).orElseThrow(() -> new NotFoundException(ENTITY_NOT_FOUND));
-
-    if (!isCategoryAllowed(documentEntity, category)) {
-      throw new BadRequestException("Category is not allowed for entity");
-    }
+    DocumentEntity documentEntity = requireDocumentEntity(entity);
+    FileCategory category = requireValidCategory(categoryStr);
+    validateCategoryForEntity(documentEntity, category);
 
     String resolvedEntityId = resolveFsoEntityIdForWrite(user, documentEntity, entityId);
     return uploadAndStoreFile(
@@ -189,8 +181,7 @@ public class FileStorageObjectService implements ConsentLogger {
   }
 
   private String resolveFsoEntityIdForRead(User user, String entity, String entityId) {
-    DocumentEntity documentEntity =
-        DocumentEntity.fromValue(entity).orElseThrow(() -> new NotFoundException(ENTITY_NOT_FOUND));
+    DocumentEntity documentEntity = requireDocumentEntity(entity);
 
     return switch (documentEntity) {
       case DATASET -> resolveDatasetFsoEntityIdForRead(entityId, user);
@@ -249,11 +240,30 @@ public class FileStorageObjectService implements ConsentLogger {
     throw new ForbiddenException("User does not have permission");
   }
 
-  private boolean isCategoryAllowed(DocumentEntity entity, FileCategory category) {
+  private boolean isCategoryDisallowed(DocumentEntity entity, FileCategory category) {
     return switch (entity) {
-      case DATASET, STUDY -> DATASET_AND_STUDY_CATEGORIES.contains(category);
-      case DAC, DAR -> DAC_AND_DAR_CATEGORIES.contains(category);
+      case DATASET, STUDY -> !DATASET_AND_STUDY_CATEGORIES.contains(category);
+      case DAC, DAR -> !DAC_AND_DAR_CATEGORIES.contains(category);
     };
+  }
+
+  private DocumentEntity requireDocumentEntity(String entity) {
+    return DocumentEntity.fromValue(entity)
+        .orElseThrow(() -> new NotFoundException(ENTITY_NOT_FOUND));
+  }
+
+  private FileCategory requireValidCategory(String categoryStr) {
+    FileCategory category = FileCategory.findValue(categoryStr);
+    if (category == null) {
+      throw new BadRequestException("Invalid category");
+    }
+    return category;
+  }
+
+  private void validateCategoryForEntity(DocumentEntity entity, FileCategory category) {
+    if (isCategoryDisallowed(entity, category)) {
+      throw new BadRequestException("Category is not allowed for entity");
+    }
   }
 
   private Integer parseNumericEntityId(String entityId) {
@@ -305,15 +315,10 @@ public class FileStorageObjectService implements ConsentLogger {
 
   public FileStorageObject deleteDocument(
       User user, String entity, String entityId, Integer fileStorageObjectId) {
-    DocumentEntity documentEntity =
-        DocumentEntity.fromValue(entity).orElseThrow(() -> new NotFoundException(ENTITY_NOT_FOUND));
+    DocumentEntity documentEntity = requireDocumentEntity(entity);
     String resolvedEntityId = resolveFsoEntityIdForWrite(user, documentEntity, entityId);
-
     FileStorageObject fileStorageObject =
-        fileStorageObjectDAO.findActiveFileByIdAndEntityId(resolvedEntityId, fileStorageObjectId);
-    if (fileStorageObject == null) {
-      throw new NotFoundException("File not found");
-    }
+        fetchMetadataByEntityIdAndId(resolvedEntityId, fileStorageObjectId);
 
     Instant deleteDate = Instant.now();
     fileStorageObjectDAO.softDelete(
@@ -328,6 +333,31 @@ public class FileStorageObjectService implements ConsentLogger {
     fileStorageObject.setDeleted(true);
     fileStorageObject.setDeleteUserId(user.getUserId());
     fileStorageObject.setDeleteDate(deleteDate);
+    return fileStorageObject;
+  }
+
+  public FileStorageObject updateDocumentCategory(
+      User user, String entity, String entityId, Integer fileStorageObjectId, String categoryStr) {
+    DocumentEntity documentEntity = requireDocumentEntity(entity);
+    FileCategory category = requireValidCategory(categoryStr);
+    validateCategoryForEntity(documentEntity, category);
+
+    String resolvedEntityId = resolveFsoEntityIdForWrite(user, documentEntity, entityId);
+    FileStorageObject fileStorageObject =
+        fetchMetadataByEntityIdAndId(resolvedEntityId, fileStorageObjectId);
+
+    Instant updateDate = Instant.now();
+    fileStorageObjectDAO.updateCategory(
+        fileStorageObjectId, category.getValue(), user.getUserId(), updateDate);
+
+    FileStorageObject updated = fileStorageObjectDAO.findById(fileStorageObjectId);
+    if (updated != null) {
+      return updated;
+    }
+
+    fileStorageObject.setCategory(category);
+    fileStorageObject.setUpdateUserId(user.getUserId());
+    fileStorageObject.setUpdateDate(updateDate);
     return fileStorageObject;
   }
 }

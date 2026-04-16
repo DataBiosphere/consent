@@ -537,4 +537,102 @@ class FileStorageObjectServiceTest {
     verify(fileStorageObjectDAO, never()).softDelete(any(), any(), any(), any());
     verify(fileStorageObjectDAO, never()).findById(any());
   }
+
+  @Test
+  void testUpdateDocumentCategoryUpdatesCategoryAndAuditFields() {
+    User user = new User();
+    user.setUserId(25);
+    Integer datasetId = 123;
+    Integer fileId = 10;
+    String entityId = datasetId.toString();
+
+    FileStorageObject active = new FileStorageObject();
+    active.setFileStorageObjectId(fileId);
+    active.setEntityId(entityId);
+    active.setCategory(FileCategory.IRB_COLLABORATION_LETTER);
+    active.setDeleted(false);
+
+    FileStorageObject updated = new FileStorageObject();
+    updated.setFileStorageObjectId(fileId);
+    updated.setEntityId(entityId);
+    updated.setCategory(FileCategory.DATA_USE_LETTER);
+    updated.setUpdateUserId(user.getUserId());
+    updated.setUpdateDate(java.time.Instant.now());
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId)).thenReturn(active);
+    when(fileStorageObjectDAO.findById(fileId)).thenReturn(updated);
+
+    initService();
+
+    FileStorageObject result =
+        service.updateDocumentCategory(user, "dataset", entityId, fileId, "dataUseLetter");
+
+    assertEquals(FileCategory.DATA_USE_LETTER, result.getCategory());
+    assertEquals(user.getUserId(), result.getUpdateUserId());
+    assertNotNull(result.getUpdateDate());
+    verify(fileStorageObjectDAO)
+        .updateCategory(eq(fileId), eq("dataUseLetter"), eq(user.getUserId()), any());
+  }
+
+  @Test
+  void testUpdateDocumentCategoryThrowsBadRequestWhenCategoryInvalid() {
+    User user = new User();
+
+    initService();
+
+    BadRequestException exception =
+        assertThrows(
+            BadRequestException.class,
+            () -> service.updateDocumentCategory(user, "dataset", "123", 10, "notARealCategory"));
+
+    assertEquals("Invalid category", exception.getMessage());
+    verifyNoInteractions(fileStorageObjectDAO);
+    verifyNoInteractions(datasetService);
+  }
+
+  @Test
+  void testUpdateDocumentCategoryThrowsNotFoundWhenFileDeletedOrMissing() {
+    User user = new User();
+    user.setUserId(25);
+    Integer datasetId = 123;
+    Integer fileId = 10;
+    String entityId = datasetId.toString();
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId)).thenReturn(null);
+
+    initService();
+
+    NotFoundException exception =
+        assertThrows(
+            NotFoundException.class,
+            () ->
+                service.updateDocumentCategory(user, "dataset", entityId, fileId, "dataUseLetter"));
+
+    assertEquals("File not found", exception.getMessage());
+    verify(fileStorageObjectDAO, never()).updateCategory(any(), any(), any(), any());
+    verify(fileStorageObjectDAO, never()).findById(any());
+  }
+
+  @Test
+  void testUpdateDocumentCategoryThrowsBadRequestWhenCategoryNotAllowedForEntity() {
+    User user = new User();
+    user.setUserId(25);
+    int datasetId = 123;
+    String entityId = Integer.toString(datasetId);
+
+    initService();
+
+    BadRequestException exception =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                service.updateDocumentCategory(
+                    user, "dataset", entityId, 10, "dataAccessAgreement"));
+
+    assertEquals("Category is not allowed for entity", exception.getMessage());
+    verifyNoInteractions(fileStorageObjectDAO);
+    verifyNoInteractions(datasetService);
+  }
 }

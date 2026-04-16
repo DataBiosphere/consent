@@ -15,6 +15,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.List;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.FileStorageObjectCategoryUpdateRequest;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.FileStorageObjectService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -262,6 +263,75 @@ class DocumentResourceTest {
 
     try (var response = resource.deleteDocumentByEntity(duosUser, "dataset", "123", 10)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @Test
+  void testUpdateDocumentCategoryByEntityReturnsUpdatedMetadata() {
+    FileStorageObjectCategoryUpdateRequest request = new FileStorageObjectCategoryUpdateRequest();
+    request.setCategory("dataUseLetter");
+
+    FileStorageObject updated = new FileStorageObject();
+
+    when(duosUser.getUser()).thenReturn(user);
+    when(fileStorageObjectService.updateDocumentCategory(
+            user, "dataset", "123", 10, "dataUseLetter"))
+        .thenReturn(updated);
+
+    try (var response =
+        resource.updateDocumentCategoryByEntity(duosUser, "dataset", "123", 10, request)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(updated, response.getEntity());
+    }
+
+    verify(fileStorageObjectService)
+        .updateDocumentCategory(user, "dataset", "123", 10, "dataUseLetter");
+  }
+
+  @Test
+  void testUpdateDocumentCategoryByEntityInvalidCategoryReturnsBadRequest() {
+    FileStorageObjectCategoryUpdateRequest request = new FileStorageObjectCategoryUpdateRequest();
+    request.setCategory("badCategory");
+
+    when(duosUser.getUser()).thenReturn(user);
+    when(fileStorageObjectService.updateDocumentCategory(user, "dataset", "123", 10, "badCategory"))
+        .thenThrow(new jakarta.ws.rs.BadRequestException("Invalid category"));
+
+    try (var response =
+        resource.updateDocumentCategoryByEntity(duosUser, "dataset", "123", 10, request)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testUpdateDocumentCategoryByEntityNotFoundReturnsNotFound() {
+    FileStorageObjectCategoryUpdateRequest request = new FileStorageObjectCategoryUpdateRequest();
+    request.setCategory("dataUseLetter");
+
+    when(duosUser.getUser()).thenReturn(user);
+    when(fileStorageObjectService.updateDocumentCategory(
+            user, "dataset", "123", 10, "dataUseLetter"))
+        .thenThrow(new NotFoundException("File not found"));
+
+    try (var response =
+        resource.updateDocumentCategoryByEntity(duosUser, "dataset", "123", 10, request)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
+  void testUpdateDocumentCategoryByEntityCategoryEntityMismatchReturnsBadRequest() {
+    FileStorageObjectCategoryUpdateRequest request = new FileStorageObjectCategoryUpdateRequest();
+    request.setCategory("dataAccessAgreement");
+
+    when(duosUser.getUser()).thenReturn(user);
+    when(fileStorageObjectService.updateDocumentCategory(
+            user, "dataset", "123", 10, "dataAccessAgreement"))
+        .thenThrow(new jakarta.ws.rs.BadRequestException("Category is not allowed for entity"));
+
+    try (var response =
+        resource.updateDocumentCategoryByEntity(duosUser, "dataset", "123", 10, request)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
 

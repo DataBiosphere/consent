@@ -1037,6 +1037,8 @@ components:
       $ref: './schemas/Election.yaml'
     FileStorageObject:
       $ref: './schemas/FileStorageObject.yaml'
+    FileStorageObjectCategoryUpdateRequest:
+      $ref: './schemas/FileStorageObjectCategoryUpdateRequest.yaml'
     Institution:
       $ref: './schemas/Institution.yaml'
     LibraryCard:

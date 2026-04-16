@@ -361,6 +361,31 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     assertNull(untouched.getDeleteDate());
   }
 
+  @Test
+  void testUpdateCategory() {
+    String entityId = randomAlphabetic(10);
+    FileStorageObject original =
+        createFileStorageObject(entityId, FileCategory.IRB_COLLABORATION_LETTER);
+    User updateUser = createUser();
+    Instant updateDate = Instant.now();
+
+    fileStorageObjectDAO.updateCategory(
+        original.getFileStorageObjectId(),
+        FileCategory.DATA_USE_LETTER.getValue(),
+        updateUser.getUserId(),
+        updateDate);
+
+    FileStorageObject updated =
+        fileStorageObjectDAO.findFileById(original.getFileStorageObjectId());
+
+    assertEquals(FileCategory.DATA_USE_LETTER.getValue(), updated.getCategory().getValue());
+    assertEquals(updateUser.getUserId(), updated.getUpdateUserId());
+    assertEquals(updateDate.getEpochSecond(), updated.getUpdateDate().getEpochSecond());
+    assertEquals(original.getFileName(), updated.getFileName());
+    assertEquals(original.getEntityId(), updated.getEntityId());
+    assertEquals(original.getBlobId(), updated.getBlobId());
+  }
+
   private FileStorageObject createFileStorageObject() {
     FileCategory category =
         List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
