@@ -95,7 +95,7 @@ class NihServiceTest extends WireMockTestHelper {
 
   @Test
   void testSyncAccountServerError() throws Exception {
-    // A 500 from ECM is treated as an ECMException, which is caught gracefully:
+    // A 500 from ECM is treated specially, which is caught gracefully:
     // the NIH account is deleted locally and the user is returned without throwing.
     User user = new User();
     user.setUserId(1);

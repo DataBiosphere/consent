@@ -12,7 +12,6 @@ import java.time.Instant;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
-import org.broadinstitute.consent.http.exceptions.ECMException;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.NIHUserAccount;
 import org.broadinstitute.consent.http.models.User;
@@ -47,21 +46,23 @@ public class NihService implements ConsentLogger {
     HttpRequest request = clientUtil.buildGetRequest(ecmRasProviderUrl, duosUser);
     try {
       HttpResponse response = clientUtil.handleHttpRequest(request);
-      // ECM returns a 500 Internal Server Error when there is an AzureB2C error in Sam.
-      if (response.getStatusCode() == HttpStatusCodes.STATUS_CODE_SERVER_ERROR) {
-        throw new ECMException(
-            "ECM Server error while syncing account for user: %s".formatted(duosUser.getEmail()));
-      }
       if (!response.isSuccessStatusCode()) {
-        throw new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
+        // ECM returns a 500 Internal Server Error when there is an AzureB2C error in Sam.
+        if (response.getStatusCode() == HttpStatusCodes.STATUS_CODE_SERVER_ERROR) {
+          // Log this case and remove the user's current account link until problem can be resolved
+          logException(
+              new Exception(
+                  "ECM Server error while syncing account for user: %s"
+                      .formatted(duosUser.getEmail())));
+          serviceDAO.deleteNihAccountById(user.getUserId());
+          return userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues());
+        } else {
+          throw new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
+        }
       }
       String body = response.parseAsString();
       NIHUserAccount nihAccount = parseNihUserAccount(body);
       serviceDAO.updateUserNihStatus(user, nihAccount);
-    } catch (ECMException ecmException) {
-      // Log this case and remove the user's current account link until problem can be resolved
-      logException(ecmException);
-      serviceDAO.deleteNihAccountById(user.getUserId());
     } catch (NotFoundException _) {
       serviceDAO.deleteNihAccountById(user.getUserId());
     } catch (NotAuthorizedException _) {
