@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
+import org.broadinstitute.consent.http.exceptions.SamAzureB2CException;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.sam.CombinedState;
@@ -120,6 +121,12 @@ public class SamDAO implements ConsentLogger {
       HttpResponse response = executeRequest(request);
       String body = response.parseAsString();
       if (!response.isSuccessStatusCode()) {
+        if (body.toLowerCase().contains("cannot update azureb2cid for user")) {
+          throw new SamAzureB2CException(
+              String.format(
+                  "AzureB2C authentication Error for user %s: %s. Please contact support for help with this error.",
+                  authUser.getEmail(), body));
+        }
         String errorMsg =
             String.format(
                 "Error getting combined user status info for user %s: %s",
@@ -142,6 +149,9 @@ public class SamDAO implements ConsentLogger {
           .setEnabled(combinedState.getSamUser().enabled())
           // Ensure that the user has both accepted the ToS and that it is the most recent version.
           .setTosAccepted(tosAccepted);
+    } catch (SamAzureB2CException e) {
+      logException(e);
+      throw e;
     } catch (ForbiddenException e) {
       // Sam throws a 403, not a 404, when the user is not found at this API
       // which is re-thrown in executeRequest

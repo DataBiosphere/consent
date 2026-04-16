@@ -5,7 +5,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -92,18 +94,23 @@ class NihServiceTest extends WireMockTestHelper {
   }
 
   @Test
-  void testSyncAccountServerError() {
+  void testSyncAccountServerError() throws Exception {
+    // A 500 from ECM is treated as an ECMException, which is caught gracefully:
+    // the NIH account is deleted locally and the user is returned without throwing.
     User user = new User();
     user.setUserId(1);
     when(duosUser.getUser()).thenReturn(user);
-    LinkInfo ecmResponse = new LinkInfo("test", "test", true);
+    when(duosUser.getEmail()).thenReturn("test@test.org");
+    when(userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues()))
+        .thenReturn(user);
     wireMockServer.stubFor(
-        any(anyUrl())
-            .willReturn(
-                aResponse()
-                    .withStatus(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
-                    .withBody(GsonUtil.getInstance().toJson(ecmResponse))));
-    assertThrows(ServerErrorException.class, () -> service.syncAccount(duosUser));
+        any(anyUrl()).willReturn(aResponse().withStatus(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)));
+
+    User syncedUser = service.syncAccount(duosUser);
+
+    assertEquals(user.getUserId(), syncedUser.getUserId());
+    verify(nihServiceDAO, times(1)).deleteNihAccountById(user.getUserId());
+    verify(nihServiceDAO, never()).updateUserNihStatus(any(), any());
   }
 
   @Test

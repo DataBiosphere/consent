@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.SamAzureB2CException;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -134,9 +135,11 @@ public class UserResource extends Resource {
     }
   }
 
-  private UserStatusInfo getUserStatusInfo(DuosUser duosUser) {
+  private UserStatusInfo getUserStatusInfo(DuosUser duosUser) throws SamAzureB2CException {
     try {
       return samService.getCombinedUserStatusInfo(duosUser);
+    } catch (SamAzureB2CException e) {
+      throw e;
     } catch (Exception ex) {
       logWarn("Unable to retrieve user status info from Sam: " + ex.getMessage());
       // Intentionally ignore Sam errors here to avoid failing /me on transient outages.
