@@ -124,8 +124,8 @@ public class SamDAO implements ConsentLogger {
         if (body.toLowerCase().contains("cannot update azureb2cid for user")) {
           throw new SamAzureB2CException(
               String.format(
-                  "AzureB2C authentication Error for user %s: %s. Please contact support for help with this error.",
-                  authUser.getEmail(), body));
+                  "AzureB2C authentication Error for user %s. Please contact support for help with this error.",
+                  authUser.getEmail()));
         }
         String errorMsg =
             String.format(
@@ -149,9 +149,6 @@ public class SamDAO implements ConsentLogger {
           .setEnabled(combinedState.getSamUser().enabled())
           // Ensure that the user has both accepted the ToS and that it is the most recent version.
           .setTosAccepted(tosAccepted);
-    } catch (SamAzureB2CException e) {
-      logException(e);
-      throw e;
     } catch (ForbiddenException e) {
       // Sam throws a 403, not a 404, when the user is not found at this API
       // which is re-thrown in executeRequest
