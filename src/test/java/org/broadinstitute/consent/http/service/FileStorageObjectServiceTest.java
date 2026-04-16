@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -405,6 +406,76 @@ class FileStorageObjectServiceTest {
                 user, "dataset", "123", inputStream, fileDetail, "notARealCategory"));
 
     verifyNoInteractions(fileStorageObjectDAO);
+    verifyNoInteractions(gcsService);
+  }
+
+  @Test
+  void testGetDocumentFileByEntityAndEntityIdForReadDataset() throws Exception {
+    User user = new User();
+    Integer datasetId = 123;
+    Integer fileId = 10;
+
+    FileStorageObject fileStorageObject = new FileStorageObject();
+    fileStorageObject.setBlobId(BlobId.of("bucket", "document"));
+
+    byte[] content = "streamed-file-content".getBytes();
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(datasetId.toString(), fileId))
+        .thenReturn(fileStorageObject);
+    when(gcsService.getDocument(fileStorageObject.getBlobId()))
+        .thenReturn(new ByteArrayInputStream(content));
+
+    initService();
+
+    FileStorageObject returned =
+        service.getDocumentFile(user, "dataset", datasetId.toString(), fileId);
+
+    assertEquals(fileStorageObject, returned);
+    assertArrayEquals(content, returned.getUploadedFile().readAllBytes());
+    verify(fileStorageObjectDAO).findActiveFileByIdAndEntityId(datasetId.toString(), fileId);
+    verify(gcsService).getDocument(fileStorageObject.getBlobId());
+  }
+
+  @Test
+  void testGetDocumentFileThrowsBadGatewayWhenGcsFails() {
+    User user = new User();
+    Integer datasetId = 123;
+    Integer fileId = 10;
+    String entityId = datasetId.toString();
+
+    FileStorageObject fileStorageObject = new FileStorageObject();
+    fileStorageObject.setBlobId(BlobId.of("bucket", "document"));
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId))
+        .thenReturn(fileStorageObject);
+    when(gcsService.getDocument(fileStorageObject.getBlobId()))
+        .thenThrow(new RuntimeException("GCS unavailable"));
+
+    initService();
+
+    WebApplicationException exception =
+        assertThrows(
+            WebApplicationException.class,
+            () -> service.getDocumentFile(user, "dataset", entityId, fileId));
+    assertEquals(502, exception.getResponse().getStatus());
+  }
+
+  @Test
+  void testGetDocumentFileThrowsNotFoundWhenMetadataLookupFails() {
+    User user = new User();
+    Integer datasetId = 123;
+    Integer fileId = 10;
+    String entityId = datasetId.toString();
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId)).thenReturn(null);
+
+    initService();
+
+    assertThrows(
+        NotFoundException.class, () -> service.getDocumentFile(user, "dataset", entityId, fileId));
     verifyNoInteractions(gcsService);
   }
 }

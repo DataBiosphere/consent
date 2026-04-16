@@ -1,12 +1,17 @@
 package org.broadinstitute.consent.http.resources;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -277,6 +282,59 @@ class DocumentResourceTest {
         resource.uploadDocument(
             duosUser, "dataset", "123", inputStream, fileDetail, "badCategory")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testFindDocumentFileByEntityReturnsStreamAndHeaders() throws Exception {
+    byte[] content = "test-file-content".getBytes();
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(content);
+
+    FileStorageObject fileStorageObject = new FileStorageObject();
+    fileStorageObject.setFileName("document.pdf");
+    fileStorageObject.setMediaType("application/pdf");
+    fileStorageObject.setUploadedFile(inputStream);
+
+    when(duosUser.getUser()).thenReturn(user);
+    when(fileStorageObjectService.getDocumentFile(user, "dataset", "123", 10))
+        .thenReturn(fileStorageObject);
+
+    try (var response = resource.findDocumentFileByEntity(duosUser, "dataset", "123", 10)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals("application/pdf", response.getHeaderString("Content-Type"));
+      assertEquals(
+          "attachment; filename=\"document.pdf\"", response.getHeaderString("Content-Disposition"));
+
+      StreamingOutput streamingOutput = (StreamingOutput) response.getEntity();
+      ByteArrayOutputStream output = new ByteArrayOutputStream();
+      streamingOutput.write(output);
+      assertArrayEquals(content, output.toByteArray());
+    }
+
+    verify(fileStorageObjectService).getDocumentFile(user, "dataset", "123", 10);
+  }
+
+  @Test
+  void testFindDocumentFileByEntityNotFound() {
+    when(duosUser.getUser()).thenReturn(user);
+    when(fileStorageObjectService.getDocumentFile(user, "dataset", "123", 10))
+        .thenThrow(new NotFoundException("File not found"));
+
+    try (var response = resource.findDocumentFileByEntity(duosUser, "dataset", "123", 10)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
+  void testFindDocumentFileByEntityReturnsBadGatewayWhenStorageFails() {
+    when(duosUser.getUser()).thenReturn(user);
+    when(fileStorageObjectService.getDocumentFile(user, "dataset", "123", 10))
+        .thenThrow(
+            new WebApplicationException(
+                "Failed to retrieve file from storage", Response.Status.BAD_GATEWAY));
+
+    try (var response = resource.findDocumentFileByEntity(duosUser, "dataset", "123", 10)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_GATEWAY, response.getStatus());
     }
   }
 }

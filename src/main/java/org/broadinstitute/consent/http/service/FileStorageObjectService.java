@@ -4,7 +4,9 @@ import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
@@ -281,5 +283,24 @@ public class FileStorageObjectService implements ConsentLogger {
 
   public List<FileStorageObject> fetchAllMetadataByEntityId(String entityId) {
     return fileStorageObjectDAO.findFileMetadataByEntityId(entityId);
+  }
+
+  public FileStorageObject getDocumentFile(
+      User user, String entity, String entityId, Integer fileStorageObjectId) {
+    FileStorageObject fileStorageObject =
+        fetchMetadataByEntityAndEntityIdForRead(user, entity, entityId, fileStorageObjectId);
+    try {
+      InputStream documentStream = gcsService.getDocument(fileStorageObject.getBlobId());
+      fileStorageObject.setUploadedFile(documentStream);
+      return fileStorageObject;
+    } catch (Exception e) {
+      logWarn(
+          "Failed to retrieve file from GCS for fileStorageObjectId "
+              + fileStorageObjectId
+              + ": "
+              + e.getMessage());
+      throw new WebApplicationException(
+          "Failed to retrieve file from storage", e, Response.Status.BAD_GATEWAY);
+    }
   }
 }

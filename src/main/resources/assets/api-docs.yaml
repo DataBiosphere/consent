@@ -518,6 +518,8 @@ paths:
     $ref: './paths/cleanupEmptyCertificationAndAlternativeSharingFiles.yaml'
   /api/{entity}/{entityId}/document/{id}:
     $ref: './paths/entityDocumentById.yaml'
+  /api/{entity}/{entityId}/document/{id}/file:
+    $ref: './paths/entityDocumentFileById.yaml'
   /api/draft/v1:
     $ref: './paths/draftIndex.yaml'
   /api/draft/v1/{draftUUID}:

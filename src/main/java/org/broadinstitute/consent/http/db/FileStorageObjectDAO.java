@@ -99,6 +99,10 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
           """)
   FileStorageObject findFileById(@Bind("fileStorageObjectId") Integer fileStorageObjectId);
 
+  default FileStorageObject findById(Integer fileStorageObjectId) {
+    return findFileById(fileStorageObjectId);
+  }
+
   @RegisterRowMapper(FileStorageObjectMapperWithFSOPrefix.class)
   @SqlQuery(
       """
