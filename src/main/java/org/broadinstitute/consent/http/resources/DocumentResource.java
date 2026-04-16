@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import io.dropwizard.auth.Auth;
 import jakarta.annotation.security.PermitAll;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -68,6 +69,25 @@ public class DocumentResource extends Resource {
           fileStorageObjectService.fetchMetadataByEntityAndEntityIdForRead(
               user, entity, entityId, id);
       return Response.ok(fileStorageObject).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @DELETE
+  @Path("/{entityId}/document/{id}")
+  @Produces(MediaType.APPLICATION_JSON)
+  @PermitAll
+  public Response deleteDocumentByEntity(
+      @Auth DuosUser duosUser,
+      @PathParam("entity") String entity,
+      @PathParam("entityId") String entityId,
+      @PathParam("id") Integer id) {
+    try {
+      User user = duosUser.getUser();
+      FileStorageObject deleted =
+          fileStorageObjectService.deleteDocument(user, entity, entityId, id);
+      return Response.ok(deleted).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

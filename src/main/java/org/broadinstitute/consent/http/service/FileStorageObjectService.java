@@ -31,6 +31,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 
 public class FileStorageObjectService implements ConsentLogger {
 
+  private static final String ENTITY_NOT_FOUND = "Entity not found";
   private static final Set<FileCategory> DATASET_AND_STUDY_CATEGORIES =
       EnumSet.of(
           FileCategory.IRB_COLLABORATION_LETTER,
@@ -77,8 +78,7 @@ public class FileStorageObjectService implements ConsentLogger {
     }
 
     DocumentEntity documentEntity =
-        DocumentEntity.fromValue(entity)
-            .orElseThrow(() -> new NotFoundException("Entity not found"));
+        DocumentEntity.fromValue(entity).orElseThrow(() -> new NotFoundException(ENTITY_NOT_FOUND));
 
     if (!isCategoryAllowed(documentEntity, category)) {
       throw new BadRequestException("Category is not allowed for entity");
@@ -190,13 +190,12 @@ public class FileStorageObjectService implements ConsentLogger {
 
   private String resolveFsoEntityIdForRead(User user, String entity, String entityId) {
     DocumentEntity documentEntity =
-        DocumentEntity.fromValue(entity)
-            .orElseThrow(() -> new NotFoundException("Entity not found"));
+        DocumentEntity.fromValue(entity).orElseThrow(() -> new NotFoundException(ENTITY_NOT_FOUND));
 
     return switch (documentEntity) {
       case DATASET -> resolveDatasetFsoEntityIdForRead(entityId, user);
       case STUDY -> resolveStudyFsoEntityIdForRead(entityId, user);
-      case DAC, DAR -> throw new NotFoundException("Entity not found");
+      case DAC, DAR -> throw new NotFoundException(ENTITY_NOT_FOUND);
     };
   }
 
@@ -210,7 +209,7 @@ public class FileStorageObjectService implements ConsentLogger {
     Integer studyId = parseNumericEntityId(entityId);
     Study study = datasetService.findStudyByIdForRead(user, studyId);
     if (study.getUuid() == null) {
-      throw new NotFoundException("Entity not found");
+      throw new NotFoundException(ENTITY_NOT_FOUND);
     }
     return study.getUuid().toString();
   }
@@ -261,7 +260,7 @@ public class FileStorageObjectService implements ConsentLogger {
     try {
       return Integer.valueOf(entityId);
     } catch (NumberFormatException _) {
-      throw new NotFoundException("Entity not found");
+      throw new NotFoundException(ENTITY_NOT_FOUND);
     }
   }
 
@@ -302,5 +301,33 @@ public class FileStorageObjectService implements ConsentLogger {
       throw new WebApplicationException(
           "Failed to retrieve file from storage", e, Response.Status.BAD_GATEWAY);
     }
+  }
+
+  public FileStorageObject deleteDocument(
+      User user, String entity, String entityId, Integer fileStorageObjectId) {
+    DocumentEntity documentEntity =
+        DocumentEntity.fromValue(entity).orElseThrow(() -> new NotFoundException(ENTITY_NOT_FOUND));
+    String resolvedEntityId = resolveFsoEntityIdForWrite(user, documentEntity, entityId);
+
+    FileStorageObject fileStorageObject =
+        fileStorageObjectDAO.findActiveFileByIdAndEntityId(resolvedEntityId, fileStorageObjectId);
+    if (fileStorageObject == null) {
+      throw new NotFoundException("File not found");
+    }
+
+    Instant deleteDate = Instant.now();
+    fileStorageObjectDAO.softDelete(
+        resolvedEntityId, fileStorageObjectId, user.getUserId(), deleteDate);
+
+    FileStorageObject deleted = fileStorageObjectDAO.findById(fileStorageObjectId);
+    if (deleted != null) {
+      return deleted;
+    }
+
+    // Fallback path for unexpected DAO behavior to preserve response contract.
+    fileStorageObject.setDeleted(true);
+    fileStorageObject.setDeleteUserId(user.getUserId());
+    fileStorageObject.setDeleteDate(deleteDate);
+    return fileStorageObject;
   }
 }

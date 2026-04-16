@@ -91,6 +91,22 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
       @Bind("deleteUserId") Integer deleteUserId,
       @Bind("deleteDate") Instant deleteDate);
 
+  @SqlUpdate(
+      """
+          UPDATE file_storage_object
+          SET deleted=true,
+              delete_user_id=:deleteUserId,
+              delete_date=:deleteDate
+          WHERE entity_id = :entityId
+            AND file_storage_object_id = :fileStorageObjectId
+            AND (deleted = false OR deleted IS NULL)
+          """)
+  void softDelete(
+      @Bind("entityId") String entityId,
+      @Bind("fileStorageObjectId") Integer fileStorageObjectId,
+      @Bind("deleteUserId") Integer deleteUserId,
+      @Bind("deleteDate") Instant deleteDate);
+
   @SqlQuery(
       """
           SELECT *

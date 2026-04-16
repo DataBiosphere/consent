@@ -5,9 +5,11 @@ import static org.broadinstitute.consent.http.AbstractTestHelper.randomAlphabeti
 import static org.broadinstitute.consent.http.AbstractTestHelper.randomAlphanumeric;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -477,5 +479,62 @@ class FileStorageObjectServiceTest {
     assertThrows(
         NotFoundException.class, () -> service.getDocumentFile(user, "dataset", entityId, fileId));
     verifyNoInteractions(gcsService);
+  }
+
+  @Test
+  void testDeleteDocumentSetsDeletedFieldsAndCallsDao() {
+    User user = new User();
+    user.setUserId(25);
+    Integer datasetId = 123;
+    Integer fileId = 10;
+    String entityId = datasetId.toString();
+
+    FileStorageObject active = new FileStorageObject();
+    active.setFileStorageObjectId(fileId);
+    active.setEntityId(entityId);
+    active.setDeleted(false);
+
+    FileStorageObject deleted = new FileStorageObject();
+    deleted.setFileStorageObjectId(fileId);
+    deleted.setEntityId(entityId);
+    deleted.setDeleted(true);
+    deleted.setDeleteUserId(user.getUserId());
+    deleted.setDeleteDate(java.time.Instant.now());
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId)).thenReturn(active);
+    when(fileStorageObjectDAO.findById(fileId)).thenReturn(deleted);
+
+    initService();
+
+    FileStorageObject result = service.deleteDocument(user, "dataset", entityId, fileId);
+
+    assertEquals(Boolean.TRUE, result.getDeleted());
+    assertEquals(user.getUserId(), result.getDeleteUserId());
+    assertNotNull(result.getDeleteDate());
+    verify(fileStorageObjectDAO).softDelete(eq(entityId), eq(fileId), eq(user.getUserId()), any());
+  }
+
+  @Test
+  void testDeleteDocumentThrowsNotFoundWhenFileAlreadyDeleted() {
+    User user = new User();
+    user.setUserId(25);
+    Integer datasetId = 123;
+    Integer fileId = 10;
+    String entityId = datasetId.toString();
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId)).thenReturn(null);
+
+    initService();
+
+    NotFoundException exception =
+        assertThrows(
+            NotFoundException.class,
+            () -> service.deleteDocument(user, "dataset", entityId, fileId));
+
+    assertEquals("File not found", exception.getMessage());
+    verify(fileStorageObjectDAO, never()).softDelete(any(), any(), any(), any());
+    verify(fileStorageObjectDAO, never()).findById(any());
   }
 }

@@ -227,6 +227,44 @@ class DocumentResourceTest {
     }
   }
 
+  @Test
+  void testDeleteDocumentByEntityReturnsUpdatedMetadata() {
+    FileStorageObject deleted = new FileStorageObject();
+    deleted.setDeleted(true);
+
+    when(duosUser.getUser()).thenReturn(user);
+    when(fileStorageObjectService.deleteDocument(user, "dataset", "123", 10)).thenReturn(deleted);
+
+    try (var response = resource.deleteDocumentByEntity(duosUser, "dataset", "123", 10)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(deleted, response.getEntity());
+    }
+
+    verify(fileStorageObjectService).deleteDocument(user, "dataset", "123", 10);
+  }
+
+  @Test
+  void testDeleteDocumentByEntityNotFound() {
+    when(duosUser.getUser()).thenReturn(user);
+    when(fileStorageObjectService.deleteDocument(user, "dataset", "123", 10))
+        .thenThrow(new NotFoundException("File not found"));
+
+    try (var response = resource.deleteDocumentByEntity(duosUser, "dataset", "123", 10)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
+  void testDeleteDocumentByEntityForbidden() {
+    when(duosUser.getUser()).thenReturn(user);
+    when(fileStorageObjectService.deleteDocument(user, "dataset", "123", 10))
+        .thenThrow(new jakarta.ws.rs.ForbiddenException("User does not have permission"));
+
+    try (var response = resource.deleteDocumentByEntity(duosUser, "dataset", "123", 10)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
   @ParameterizedTest(name = "Not found when metadata lookup fails: {1}")
   @CsvSource({"10,file not found", "11,file deleted", "12,file belongs to different entity"})
   void testFindDocumentByEntityNotFoundWhenFileLookupFails(

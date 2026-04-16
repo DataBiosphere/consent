@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -335,6 +336,29 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     assertEquals(category, newFileStorageObject.getCategory().getValue());
     assertEquals(entityId, newFileStorageObject.getEntityId());
     assertEquals(createUser.getUserId(), newFileStorageObject.getCreateUserId());
+  }
+
+  @Test
+  void testSoftDelete() {
+    String entityId = randomAlphabetic(10);
+    String otherEntityId = randomAlphabetic(8);
+    FileStorageObject target = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
+    FileStorageObject other = createFileStorageObject(otherEntityId, FileCategory.DATA_USE_LETTER);
+    User deleteUser = createUser();
+    Instant deleteDate = Instant.now();
+
+    fileStorageObjectDAO.softDelete(
+        entityId, target.getFileStorageObjectId(), deleteUser.getUserId(), deleteDate);
+
+    FileStorageObject deleted = fileStorageObjectDAO.findFileById(target.getFileStorageObjectId());
+    FileStorageObject untouched = fileStorageObjectDAO.findFileById(other.getFileStorageObjectId());
+
+    assertEquals(Boolean.TRUE, deleted.getDeleted());
+    assertEquals(deleteUser.getUserId(), deleted.getDeleteUserId());
+    assertEquals(deleteDate.getEpochSecond(), deleted.getDeleteDate().getEpochSecond());
+    assertNotEquals(Boolean.TRUE, untouched.getDeleted());
+    assertNull(untouched.getDeleteUserId());
+    assertNull(untouched.getDeleteDate());
   }
 
   private FileStorageObject createFileStorageObject() {
