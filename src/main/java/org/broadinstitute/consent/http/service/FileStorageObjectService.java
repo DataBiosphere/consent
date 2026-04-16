@@ -186,7 +186,8 @@ public class FileStorageObjectService implements ConsentLogger {
     return switch (documentEntity) {
       case DATASET -> resolveDatasetFsoEntityIdForRead(entityId, user);
       case STUDY -> resolveStudyFsoEntityIdForRead(entityId, user);
-      case DAC, DAR -> throw new NotFoundException(ENTITY_NOT_FOUND);
+      case DAC -> resolveDacEntityIdForWrite(user, entityId);
+      case DAR -> resolveDarEntityIdForWrite(user, entityId);
     };
   }
 

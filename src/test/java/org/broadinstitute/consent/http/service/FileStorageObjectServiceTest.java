@@ -28,6 +28,8 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
@@ -324,6 +326,48 @@ class FileStorageObjectServiceTest {
         service.fetchAllMetadataByEntityAndEntityIdForRead(user, "study", studyId.toString());
 
     assertEquals(fileStorageObjects, returnedFiles);
+  }
+
+  @Test
+  void testFetchAllMetadataByEntityAndEntityIdForReadDac() {
+    User user = new User();
+    user.setAdminRole();
+    Integer dacId = 456;
+    List<FileStorageObject> fileStorageObjects = List.of(new FileStorageObject());
+
+    when(dacService.findById(dacId)).thenReturn(new Dac());
+    when(fileStorageObjectDAO.findFileMetadataByEntityId(dacId.toString()))
+        .thenReturn(fileStorageObjects);
+
+    initService();
+
+    List<FileStorageObject> returnedFiles =
+        service.fetchAllMetadataByEntityAndEntityIdForRead(user, "dac", dacId.toString());
+
+    assertEquals(fileStorageObjects, returnedFiles);
+    verify(fileStorageObjectDAO).findFileMetadataByEntityId(dacId.toString());
+  }
+
+  @Test
+  void testFetchAllMetadataByEntityAndEntityIdForReadDar() {
+    User user = new User();
+    user.setUserId(25);
+    String darReferenceId = "DAR-123";
+    List<FileStorageObject> fileStorageObjects = List.of(new FileStorageObject());
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setUserId(user.getUserId());
+
+    when(dataAccessRequestService.findByReferenceId(darReferenceId)).thenReturn(dar);
+    when(fileStorageObjectDAO.findFileMetadataByEntityId(darReferenceId))
+        .thenReturn(fileStorageObjects);
+
+    initService();
+
+    List<FileStorageObject> returnedFiles =
+        service.fetchAllMetadataByEntityAndEntityIdForRead(user, "dar", darReferenceId);
+
+    assertEquals(fileStorageObjects, returnedFiles);
+    verify(fileStorageObjectDAO).findFileMetadataByEntityId(darReferenceId);
   }
 
   @Test

@@ -100,6 +100,40 @@ class DocumentResourceTest {
   }
 
   @Test
+  void testFindDocumentsByDacEntityReturnsMetadata() {
+    List<FileStorageObject> files = List.of(new FileStorageObject());
+
+    when(duosUser.getUser()).thenReturn(user);
+    when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(user, "dac", "456"))
+        .thenReturn(files);
+
+    try (var response = resource.findDocumentsByEntity(duosUser, "dac", "456")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(files, response.getEntity());
+    }
+
+    verify(fileStorageObjectService).fetchAllMetadataByEntityAndEntityIdForRead(user, "dac", "456");
+  }
+
+  @Test
+  void testFindDocumentsByDarEntityReturnsMetadata() {
+    List<FileStorageObject> files = List.of(new FileStorageObject());
+
+    when(duosUser.getUser()).thenReturn(user);
+    when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(
+            user, "dar", "DAR-123"))
+        .thenReturn(files);
+
+    try (var response = resource.findDocumentsByEntity(duosUser, "dar", "DAR-123")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(files, response.getEntity());
+    }
+
+    verify(fileStorageObjectService)
+        .fetchAllMetadataByEntityAndEntityIdForRead(user, "dar", "DAR-123");
+  }
+
+  @Test
   void testFindDocumentsByEntityNotFound() {
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.fetchAllMetadataByEntityAndEntityIdForRead(

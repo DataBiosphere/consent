@@ -9,7 +9,7 @@ get:
       description: Entity type
       schema:
         type: string
-        enum: [dataset, study]
+        enum: [dac, dar, dataset, study]
     - name: entityId
       in: path
       required: true
