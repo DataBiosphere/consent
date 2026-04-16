@@ -307,6 +307,36 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     assertNull(found);
   }
 
+  @Test
+  void testCreateFile() {
+    String fileName = randomAlphabetic(10);
+    String category = FileCategory.DATA_USE_LETTER.getValue();
+    String gcsFileUri = BlobId.of(randomAlphabetic(10), randomAlphabetic(10)).toGsUtilUri();
+    String mediaType = randomAlphabetic(10);
+    String entityId = randomAlphabetic(10);
+    User createUser = createUser();
+    Instant createDate = Instant.now();
+
+    Integer newFileStorageObjectId =
+        fileStorageObjectDAO.create(
+            fileName,
+            category,
+            gcsFileUri,
+            mediaType,
+            entityId,
+            createUser.getUserId(),
+            createDate);
+
+    FileStorageObject newFileStorageObject =
+        fileStorageObjectDAO.findFileById(newFileStorageObjectId);
+
+    assertNotNull(newFileStorageObject);
+    assertEquals(fileName, newFileStorageObject.getFileName());
+    assertEquals(category, newFileStorageObject.getCategory().getValue());
+    assertEquals(entityId, newFileStorageObject.getEntityId());
+    assertEquals(createUser.getUserId(), newFileStorageObject.getCreateUserId());
+  }
+
   private FileStorageObject createFileStorageObject() {
     FileCategory category =
         List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));

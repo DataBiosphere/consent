@@ -33,3 +33,56 @@ get:
       description: Forbidden
     404:
       description: Not Found
+post:
+  summary: Upload a document for an entity
+  operationId: uploadDocumentByEntity
+  description: Uploads a document and returns FileStorageObject metadata only (no file bytes).
+  tags:
+    - Document
+  parameters:
+    - name: entity
+      in: path
+      required: true
+      description: Entity type
+      schema:
+        type: string
+        enum: [dac, dar, dataset, study]
+    - name: entityId
+      in: path
+      description: Entity identifier
+      required: true
+      schema:
+        type: string
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          required: [file, category]
+          properties:
+            file:
+              type: string
+              format: binary
+              description: The file to upload
+            category:
+              type: string
+              description: File category
+              enum: [irbCollaborationLetter, dataUseLetter, alternativeDataSharingPlan, nihInstitutionalCertification, dataAccessAgreement]
+  responses:
+    201:
+      description: File uploaded successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/FileStorageObject.yaml'
+    400:
+      description: Invalid category or category/entity mismatch
+    401:
+      description: Unauthorized
+    403:
+      description: Forbidden
+    404:
+      description: Not Found
+    500:
+      description: Internal server error

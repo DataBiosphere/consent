@@ -14,6 +14,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -28,6 +29,7 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -42,11 +44,15 @@ class FileStorageObjectServiceTest {
 
   @Mock private GCSService gcsService;
   @Mock private DatasetService datasetService;
+  @Mock private DacService dacService;
+  @Mock private DataAccessRequestService dataAccessRequestService;
 
   private FileStorageObjectService service;
 
   private void initService() {
-    service = new FileStorageObjectService(fileStorageObjectDAO, gcsService, datasetService);
+    service =
+        new FileStorageObjectService(
+            fileStorageObjectDAO, gcsService, datasetService, dacService, dataAccessRequestService);
   }
 
   @Test
@@ -65,7 +71,7 @@ class FileStorageObjectServiceTest {
     String bucket = randomAlphabetic(10);
     String blob = randomAlphabetic(10);
 
-    when(fileStorageObjectDAO.insertNewFile(
+    when(fileStorageObjectDAO.create(
             eq(fileName),
             eq(category.getValue()),
             eq(BlobId.of(bucket, blob).toGsUtilUri()),
@@ -92,7 +98,7 @@ class FileStorageObjectServiceTest {
     verify(gcsService, times(1)).storeDocument(eq(content), eq(mediaType), any());
 
     verify(fileStorageObjectDAO, times(1))
-        .insertNewFile(
+        .create(
             eq(fileName),
             eq(category.getValue()),
             eq(BlobId.of(bucket, blob).toGsUtilUri()),
@@ -336,5 +342,69 @@ class FileStorageObjectServiceTest {
         service.fetchMetadataByEntityAndEntityIdForRead(user, "study", studyId.toString(), fileId);
 
     assertEquals(fileStorageObject, returned);
+  }
+
+  @Test
+  void testUploadDocumentForDataset() throws Exception {
+    InputStream inputStream = new ByteArrayInputStream("metadata".getBytes());
+    FormDataContentDisposition fileDetail =
+        FormDataContentDisposition.name("file").fileName("upload.pdf").size(32).build();
+
+    User user = new User();
+    user.setUserId(25);
+
+    Dataset dataset = new Dataset();
+    FileStorageObject created = new FileStorageObject();
+    created.setFileStorageObjectId(90);
+
+    when(datasetService.findDatasetByIdForRead(user, 123)).thenReturn(dataset);
+    when(gcsService.storeDocument(eq(inputStream), eq("application/octet-stream"), any()))
+        .thenReturn(BlobId.of("bucket", "object"));
+    when(fileStorageObjectDAO.create(
+            eq("upload.pdf"),
+            eq(FileCategory.DATA_USE_LETTER.getValue()),
+            eq(BlobId.of("bucket", "object").toGsUtilUri()),
+            eq("application/octet-stream"),
+            eq("123"),
+            eq(25),
+            any()))
+        .thenReturn(90);
+    when(fileStorageObjectDAO.findFileById(90)).thenReturn(created);
+
+    initService();
+
+    FileStorageObject result =
+        service.uploadDocument(user, "dataset", "123", inputStream, fileDetail, "dataUseLetter");
+
+    assertEquals(created, result);
+    verify(datasetService).findDatasetByIdForRead(user, 123);
+    verify(fileStorageObjectDAO)
+        .create(
+            eq("upload.pdf"),
+            eq(FileCategory.DATA_USE_LETTER.getValue()),
+            eq(BlobId.of("bucket", "object").toGsUtilUri()),
+            eq("application/octet-stream"),
+            eq("123"),
+            eq(25),
+            any());
+  }
+
+  @Test
+  void testUploadDocumentInvalidCategoryThrowsBadRequest() {
+    InputStream inputStream = new ByteArrayInputStream("metadata".getBytes());
+    FormDataContentDisposition fileDetail =
+        FormDataContentDisposition.name("file").fileName("upload.pdf").size(32).build();
+    User user = new User();
+
+    initService();
+
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            service.uploadDocument(
+                user, "dataset", "123", inputStream, fileDetail, "notARealCategory"));
+
+    verifyNoInteractions(fileStorageObjectDAO);
+    verifyNoInteractions(gcsService);
   }
 }

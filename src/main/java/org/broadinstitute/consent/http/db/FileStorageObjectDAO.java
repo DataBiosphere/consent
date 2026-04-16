@@ -37,6 +37,19 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
       @Bind("createUserId") Integer createUserId,
       @Bind("createDate") Instant createDate);
 
+  // Preferred create contract for new document upload paths.
+  default Integer create(
+      String fileName,
+      String category,
+      String gcsFileUri,
+      String mediaType,
+      String entityId,
+      Integer createUserId,
+      Instant createDate) {
+    return insertNewFile(
+        fileName, category, gcsFileUri, mediaType, entityId, createUserId, createDate);
+  }
+
   @SqlUpdate(
       """
           UPDATE file_storage_object
