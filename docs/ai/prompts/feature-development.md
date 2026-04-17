@@ -1,0 +1,98 @@
+# Feature Development Prompt Template
+
+Use this when implementing a new cross-layer feature.
+
+## What to Provide
+
+- User/problem statement
+- Scope boundaries (in scope and out of scope)
+- Existing classes to mirror
+- Data model or schema impacts
+- Required tests and documentation updates
+
+## Required Constraints
+
+- Keep the Dropwizard + Guice + JDBI architecture intact.
+- Prefer incremental changes over broad rewrites.
+- Keep public API behavior backward compatible unless explicitly approved.
+- Include tests and docs for behavior changes.
+
+## Copy/Paste Prompt
+
+```text
+Implement a new feature in the Consent service using existing architecture patterns.
+
+Feature goal:
+<describe user/business goal>
+
+Scope:
+- In scope: <list>
+- Out of scope: <list>
+
+Mirror existing patterns from:
+- Resource: <class>
+- Service: <class>
+- DAO: <class>
+
+Expected files to touch:
+- <list files>
+
+Acceptance criteria:
+- <criterion 1>
+- <criterion 2>
+- <criterion 3>
+
+Constraints:
+- Keep Resource -> Service -> DAO layering
+- No new framework dependencies
+- Preserve backward compatibility unless stated otherwise
+- Add/update tests and docs as needed
+
+Output format:
+1) short implementation plan
+2) proposed file changes
+3) test plan
+4) risk/compatibility notes
+```
+
+## Usage Example
+
+```text
+Implement a new feature in the Consent service using existing architecture patterns.
+
+Feature goal:
+Support searching users by partial display name for admin tools.
+
+Scope:
+- In scope: query endpoint, service filtering logic, DAO query support
+- Out of scope: UI changes, role model redesign
+
+Mirror existing patterns from:
+- Resource: UserResource
+- Service: UserService
+- DAO: UserDAO
+
+Expected files to touch:
+- src/main/java/org/broadinstitute/consent/http/resources/UserResource.java
+- src/main/java/org/broadinstitute/consent/http/service/UserService.java
+- src/main/java/org/broadinstitute/consent/http/db/UserDAO.java
+- src/test/java/org/broadinstitute/consent/http/resources/UserResourceTest.java
+- src/main/resources/assets/api-docs.yaml
+
+Acceptance criteria:
+- Admins can search users by partial display name
+- Empty query returns validation error
+- Existing user endpoints are unaffected
+
+Constraints:
+- Keep Resource -> Service -> DAO layering
+- No new framework dependencies
+- Preserve backward compatibility unless stated otherwise
+- Add/update tests and docs as needed
+
+Output format:
+1) short implementation plan
+2) proposed file changes
+3) test plan
+4) risk/compatibility notes
+```

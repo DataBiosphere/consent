@@ -67,3 +67,12 @@ If you're making breaking changes to the API, do the following:
 If you're making changes to authentication, authorization, encryption, or audit 
 trails, you should check in with AppSec to see if our security documentation 
 should be updated.
+
+## AI-Assisted Development
+
+We support AI-assisted workflows to speed up development and maintain consistency:
+
+- Use `/docs/ai/README.md` for codebase-specific prompts.
+- Prompts are available for feature development, API endpoints, bugfixes, and refactoring.
+- Always use prompts that match the task and follow existing code patterns.
+- See the table in `/docs/ai/README.md` for which prompt to use for each task.
