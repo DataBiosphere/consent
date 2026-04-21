@@ -44,8 +44,8 @@ public class DacServiceDAO implements ConsentLogger {
   /** Audit the DAC-level DELETE event itself. */
   private static final String AUDIT_DAC_DELETION_STATEMENT =
       """
-            INSERT INTO dac_audit (dac_id, user_id, action, action_date)
-            VALUES (:dacId, :userId, 'DELETE', current_timestamp)
+            INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
+            VALUES (:dacId, :userId, NULL, NULL, 'DELETE', current_timestamp)
           """;
 
   private static final String DELETE_DAC_STATEMENT = "DELETE FROM dac where dac_id = :dacId";
