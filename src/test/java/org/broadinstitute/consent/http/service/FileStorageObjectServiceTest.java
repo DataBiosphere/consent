@@ -76,7 +76,7 @@ class FileStorageObjectServiceTest {
     String bucket = randomAlphabetic(10);
     String blob = randomAlphabetic(10);
 
-    when(fileStorageObjectDAO.create(
+    when(fileStorageObjectDAO.insertNewFile(
             eq(fileName),
             eq(category.getValue()),
             eq(BlobId.of(bucket, blob).toGsUtilUri()),
@@ -103,7 +103,7 @@ class FileStorageObjectServiceTest {
     verify(gcsService, times(1)).storeDocument(eq(content), eq(mediaType), any());
 
     verify(fileStorageObjectDAO, times(1))
-        .create(
+        .insertNewFile(
             eq(fileName),
             eq(category.getValue()),
             eq(BlobId.of(bucket, blob).toGsUtilUri()),
@@ -406,7 +406,7 @@ class FileStorageObjectServiceTest {
     when(datasetService.findDatasetByIdForRead(user, 123)).thenReturn(dataset);
     when(gcsService.storeDocument(eq(inputStream), eq("application/octet-stream"), any()))
         .thenReturn(BlobId.of("bucket", "object"));
-    when(fileStorageObjectDAO.create(
+    when(fileStorageObjectDAO.insertNewFile(
             eq("upload.pdf"),
             eq(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue()),
             eq(BlobId.of("bucket", "object").toGsUtilUri()),
@@ -426,7 +426,7 @@ class FileStorageObjectServiceTest {
     assertEquals(created, result);
     verify(datasetService).findDatasetByIdForRead(user, 123);
     verify(fileStorageObjectDAO)
-        .create(
+        .insertNewFile(
             eq("upload.pdf"),
             eq(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue()),
             eq(BlobId.of("bucket", "object").toGsUtilUri()),
@@ -563,7 +563,7 @@ class FileStorageObjectServiceTest {
     assertEquals(Boolean.TRUE, result.getDeleted());
     assertEquals(user.getUserId(), result.getDeleteUserId());
     assertNotNull(result.getDeleteDate());
-    verify(fileStorageObjectDAO).softDelete(eq(entityId), eq(fileId), eq(user.getUserId()), any());
+    verify(fileStorageObjectDAO).softDelete(entityId, fileId, user.getUserId());
   }
 
   @Test
@@ -585,7 +585,7 @@ class FileStorageObjectServiceTest {
             () -> service.deleteDocument(user, "dataset", entityId, fileId));
 
     assertEquals("File not found", exception.getMessage());
-    verify(fileStorageObjectDAO, never()).softDelete(any(), any(), any(), any());
+    verify(fileStorageObjectDAO, never()).softDelete(any(), any(), any());
     verify(fileStorageObjectDAO, never()).findById(any());
   }
 
@@ -625,8 +625,7 @@ class FileStorageObjectServiceTest {
     assertEquals(user.getUserId(), result.getUpdateUserId());
     assertNotNull(result.getUpdateDate());
     verify(fileStorageObjectDAO)
-        .updateCategory(
-            eq(fileId), eq("nihInstitutionalCertification"), eq(user.getUserId()), any());
+        .updateCategory(fileId, "nihInstitutionalCertification", user.getUserId());
   }
 
   @Test
@@ -667,7 +666,7 @@ class FileStorageObjectServiceTest {
                     user, "dataset", entityId, fileId, "nihInstitutionalCertification"));
 
     assertEquals("File not found", exception.getMessage());
-    verify(fileStorageObjectDAO, never()).updateCategory(any(), any(), any(), any());
+    verify(fileStorageObjectDAO, never()).updateCategory(any(), any(), any());
     verify(fileStorageObjectDAO, never()).findById(any());
   }
 

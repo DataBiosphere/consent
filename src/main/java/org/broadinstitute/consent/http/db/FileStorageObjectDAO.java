@@ -37,19 +37,6 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
       @Bind("createUserId") Integer createUserId,
       @Bind("createDate") Instant createDate);
 
-  // Preferred create contract for new document upload paths.
-  default Integer create(
-      String fileName,
-      String category,
-      String gcsFileUri,
-      String mediaType,
-      String entityId,
-      Integer createUserId,
-      Instant createDate) {
-    return insertNewFile(
-        fileName, category, gcsFileUri, mediaType, entityId, createUserId, createDate);
-  }
-
   @SqlUpdate(
       """
           UPDATE file_storage_object
@@ -96,7 +83,7 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
           UPDATE file_storage_object
           SET deleted=true,
               delete_user_id=:deleteUserId,
-              delete_date=:deleteDate
+              delete_date=NOW()
           WHERE entity_id = :entityId
             AND file_storage_object_id = :fileStorageObjectId
             AND (deleted = false OR deleted IS NULL)
@@ -104,23 +91,21 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
   void softDelete(
       @Bind("entityId") String entityId,
       @Bind("fileStorageObjectId") Integer fileStorageObjectId,
-      @Bind("deleteUserId") Integer deleteUserId,
-      @Bind("deleteDate") Instant deleteDate);
+      @Bind("deleteUserId") Integer deleteUserId);
 
   @SqlUpdate(
       """
           UPDATE file_storage_object
           SET category=:category,
               update_user_id=:updateUserId,
-              update_date=:updateDate
+              update_date=NOW()
           WHERE file_storage_object_id = :fileStorageObjectId
             AND (deleted = false OR deleted IS NULL)
           """)
   void updateCategory(
       @Bind("fileStorageObjectId") Integer fileStorageObjectId,
       @Bind("category") String category,
-      @Bind("updateUserId") Integer updateUserId,
-      @Bind("updateDate") Instant updateDate);
+      @Bind("updateUserId") Integer updateUserId);
 
   @SqlQuery(
       """

@@ -319,7 +319,7 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     Instant createDate = Instant.now();
 
     Integer newFileStorageObjectId =
-        fileStorageObjectDAO.create(
+        fileStorageObjectDAO.insertNewFile(
             fileName,
             category,
             gcsFileUri,
@@ -345,17 +345,15 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     FileStorageObject target = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
     FileStorageObject other = createFileStorageObject(otherEntityId, FileCategory.DATA_USE_LETTER);
     User deleteUser = createUser();
-    Instant deleteDate = Instant.now();
-
     fileStorageObjectDAO.softDelete(
-        entityId, target.getFileStorageObjectId(), deleteUser.getUserId(), deleteDate);
+        entityId, target.getFileStorageObjectId(), deleteUser.getUserId());
 
     FileStorageObject deleted = fileStorageObjectDAO.findFileById(target.getFileStorageObjectId());
     FileStorageObject untouched = fileStorageObjectDAO.findFileById(other.getFileStorageObjectId());
 
     assertEquals(Boolean.TRUE, deleted.getDeleted());
     assertEquals(deleteUser.getUserId(), deleted.getDeleteUserId());
-    assertEquals(deleteDate.getEpochSecond(), deleted.getDeleteDate().getEpochSecond());
+    assertNotNull(deleted.getDeleteDate());
     assertNotEquals(Boolean.TRUE, untouched.getDeleted());
     assertNull(untouched.getDeleteUserId());
     assertNull(untouched.getDeleteDate());
@@ -367,20 +365,17 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     FileStorageObject original =
         createFileStorageObject(entityId, FileCategory.IRB_COLLABORATION_LETTER);
     User updateUser = createUser();
-    Instant updateDate = Instant.now();
-
     fileStorageObjectDAO.updateCategory(
         original.getFileStorageObjectId(),
         FileCategory.DATA_USE_LETTER.getValue(),
-        updateUser.getUserId(),
-        updateDate);
+        updateUser.getUserId());
 
     FileStorageObject updated =
         fileStorageObjectDAO.findFileById(original.getFileStorageObjectId());
 
     assertEquals(FileCategory.DATA_USE_LETTER.getValue(), updated.getCategory().getValue());
     assertEquals(updateUser.getUserId(), updated.getUpdateUserId());
-    assertEquals(updateDate.getEpochSecond(), updated.getUpdateDate().getEpochSecond());
+    assertNotNull(updated.getUpdateDate());
     assertEquals(original.getFileName(), updated.getFileName());
     assertEquals(original.getEntityId(), updated.getEntityId());
     assertEquals(original.getBlobId(), updated.getBlobId());

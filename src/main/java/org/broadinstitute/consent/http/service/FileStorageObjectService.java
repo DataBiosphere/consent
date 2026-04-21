@@ -191,8 +191,7 @@ public class FileStorageObjectService implements ConsentLogger {
         fetchMetadataByEntityIdAndId(resolvedEntityId, fileStorageObjectId);
 
     Instant updateDate = Instant.now();
-    fileStorageObjectDAO.updateCategory(
-        fileStorageObjectId, category.getValue(), user.getUserId(), updateDate);
+    fileStorageObjectDAO.updateCategory(fileStorageObjectId, category.getValue(), user.getUserId());
 
     FileStorageObject updated = fileStorageObjectDAO.findById(fileStorageObjectId);
     if (updated != null) {
@@ -225,8 +224,7 @@ public class FileStorageObjectService implements ConsentLogger {
     checkAccess(user, entity, entityId, fileStorageObject.getCategory(), OperationType.WRITE);
 
     Instant deleteDate = Instant.now();
-    fileStorageObjectDAO.softDelete(
-        resolvedEntityId, fileStorageObjectId, user.getUserId(), deleteDate);
+    fileStorageObjectDAO.softDelete(resolvedEntityId, fileStorageObjectId, user.getUserId());
 
     FileStorageObject deleted = fileStorageObjectDAO.findById(fileStorageObjectId);
     if (deleted != null) {
@@ -459,7 +457,7 @@ public class FileStorageObjectService implements ConsentLogger {
     }
 
     Integer fileStorageObjectId =
-        fileStorageObjectDAO.create(
+        fileStorageObjectDAO.insertNewFile(
             fileName,
             category.getValue(),
             blobId.toGsUtilUri(),
