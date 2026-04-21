@@ -71,7 +71,7 @@ public class FileStorageObjectService implements ConsentLogger {
    * <ol>
    *   <li>Validates file content.
    *   <li>Parses and validates the entity + category.
-   *   <li>Calls {@link #checkAccess} (CRUD).
+   *   <li>Calls {@link #checkAccess} (WRITE).
    *   <li>Resolves entity ID and stores the file.
    * </ol>
    */
@@ -90,7 +90,7 @@ public class FileStorageObjectService implements ConsentLogger {
     DocumentEntity documentEntity = requireDocumentEntity(entity);
     FileCategory category = requireValidCategory(categoryStr);
     validateCategoryForEntity(documentEntity, category);
-    checkAccess(user, entity, entityId, category, OperationType.CRUD);
+    checkAccess(user, entity, entityId, category, OperationType.WRITE);
 
     String resolvedEntityId = resolveEntityId(user, documentEntity, entityId);
     return uploadAndStoreFile(
@@ -175,7 +175,7 @@ public class FileStorageObjectService implements ConsentLogger {
    *
    * <ol>
    *   <li>Parses and validates the new category for the entity.
-   *   <li>Calls {@link #checkAccess} with the new category (CRUD).
+   *   <li>Calls {@link #checkAccess} with the new category (WRITE).
    *   <li>Resolves entity ID, fetches FSO, updates category.
    * </ol>
    */
@@ -184,7 +184,7 @@ public class FileStorageObjectService implements ConsentLogger {
     DocumentEntity documentEntity = requireDocumentEntity(entity);
     FileCategory category = requireValidCategory(categoryStr);
     validateCategoryForEntity(documentEntity, category);
-    checkAccess(user, entity, entityId, category, OperationType.CRUD);
+    checkAccess(user, entity, entityId, category, OperationType.WRITE);
 
     String resolvedEntityId = resolveEntityId(user, documentEntity, entityId);
     FileStorageObject fileStorageObject =
@@ -211,7 +211,7 @@ public class FileStorageObjectService implements ConsentLogger {
    * <ol>
    *   <li>Resolves entity ID.
    *   <li>Fetches FSO metadata (including category).
-   *   <li>Calls {@link #checkAccess} with the file's actual category (CRUD).
+   *   <li>Calls {@link #checkAccess} with the file's actual category (WRITE).
    *   <li>Soft-deletes the record.
    * </ol>
    */
@@ -222,7 +222,7 @@ public class FileStorageObjectService implements ConsentLogger {
     FileStorageObject fileStorageObject =
         fetchMetadataByEntityIdAndId(resolvedEntityId, fileStorageObjectId);
 
-    checkAccess(user, entity, entityId, fileStorageObject.getCategory(), OperationType.CRUD);
+    checkAccess(user, entity, entityId, fileStorageObject.getCategory(), OperationType.WRITE);
 
     Instant deleteDate = Instant.now();
     fileStorageObjectDAO.softDelete(
@@ -253,22 +253,22 @@ public class FileStorageObjectService implements ConsentLogger {
    *   <li><b>DAR</b> – {@link FileCategory#IRB_COLLABORATION_LETTER} and {@link
    *       FileCategory#DATA_USE_LETTER}:
    *       <ul>
-   *         <li>CRUD: DAR creator only.
+   *         <li>WRITE: DAR creator only.
    *         <li>READ: ADMIN, CHAIRPERSON, MEMBER, or DAR creator.
    *       </ul>
    *   <li><b>DAC</b> – {@link FileCategory#DATA_ACCESS_AGREEMENT}:
    *       <ul>
-   *         <li>CRUD: CHAIRPERSON of the specific DAC (entity-scoped) or ADMIN.
+   *         <li>WRITE: CHAIRPERSON of the specific DAC (entity-scoped) or ADMIN.
    *         <li>READ: any authenticated user.
    *       </ul>
    *   <li><b>DATASET</b> – {@link FileCategory#NIH_INSTITUTIONAL_CERTIFICATION}:
    *       <ul>
-   *         <li>CRUD: ADMIN, DATASUBMITTER, or CHAIRPERSON.
+   *         <li>WRITE: ADMIN, DATASUBMITTER, or CHAIRPERSON.
    *         <li>READ: ADMIN, DATASUBMITTER, CHAIRPERSON, or MEMBER.
    *       </ul>
    *   <li><b>STUDY</b> – {@link FileCategory#ALTERNATIVE_DATA_SHARING_PLAN}:
    *       <ul>
-   *         <li>CRUD: ADMIN, DATASUBMITTER, or CHAIRPERSON.
+   *         <li>WRITE: ADMIN, DATASUBMITTER, or CHAIRPERSON.
    *         <li>READ: ADMIN, DATASUBMITTER, or CHAIRPERSON (study must be DAC-linked; enforced by
    *             entity resolution via DatasetService).
    *       </ul>
@@ -325,7 +325,7 @@ public class FileStorageObjectService implements ConsentLogger {
   private void checkDarAccess(User user, String entityId, OperationType op) {
     boolean isCreator = isDarCreator(user, entityId);
 
-    if (op == OperationType.CRUD && !isCreator) {
+    if (op == OperationType.WRITE && !isCreator) {
       throw new ForbiddenException(PERMISSION_DENIED);
     }
 
@@ -335,7 +335,7 @@ public class FileStorageObjectService implements ConsentLogger {
   }
 
   private void checkDacAccess(User user, String entityId, OperationType op) {
-    if (op == OperationType.CRUD) {
+    if (op == OperationType.WRITE) {
       Integer dacId = parseNumericEntityId(entityId);
       if (!isDacChair(user, dacId)) {
         throw new ForbiddenException(PERMISSION_DENIED);
@@ -346,7 +346,7 @@ public class FileStorageObjectService implements ConsentLogger {
   }
 
   private void checkDatasetAccess(User user, OperationType op) {
-    if (op == OperationType.CRUD) {
+    if (op == OperationType.WRITE) {
       ensureHasAnyRole(user, UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON);
       return;
     }
@@ -356,7 +356,7 @@ public class FileStorageObjectService implements ConsentLogger {
   }
 
   private void checkStudyAccess(User user) {
-    // Both READ and CRUD require ADMIN, DATASUBMITTER, or CHAIRPERSON.
+    // Both READ and WRITE require ADMIN, DATASUBMITTER, or CHAIRPERSON.
     // For READ the study must be DAC-linked; that constraint is enforced during entity
     // resolution via DatasetService.findStudyByIdForRead.
     ensureHasAnyRole(user, UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON);

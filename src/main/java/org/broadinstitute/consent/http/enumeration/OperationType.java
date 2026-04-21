@@ -9,5 +9,5 @@ public enum OperationType {
   READ,
 
   /** Create / update / delete operations. */
-  CRUD
+  WRITE
 }

@@ -29,7 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * <p>Matrix under test:
  *
  * <pre>
- * Entity   | Category                     | CRUD                           | READ
+ * Entity   | Category                     | WRITE                           | READ
  * ---------+------------------------------+--------------------------------+-----------------------------
  * DAR      | IRB_COLLABORATION_LETTER     | creator only                   | creator, ADMIN, CHAIR, MEMBER
  * DAR      | DATA_USE_LETTER              | creator only                   | creator, ADMIN, CHAIR, MEMBER
@@ -138,7 +138,7 @@ class FileStorageObjectServiceAccessTest {
                   "dar",
                   DAR_ID,
                   FileCategory.IRB_COLLABORATION_LETTER,
-                  OperationType.CRUD));
+                  OperationType.WRITE));
     }
 
     @Test
@@ -148,7 +148,11 @@ class FileStorageObjectServiceAccessTest {
           ForbiddenException.class,
           () ->
               service.checkAccess(
-                  other, "dar", DAR_ID, FileCategory.IRB_COLLABORATION_LETTER, OperationType.CRUD));
+                  other,
+                  "dar",
+                  DAR_ID,
+                  FileCategory.IRB_COLLABORATION_LETTER,
+                  OperationType.WRITE));
     }
 
     @Test
@@ -231,7 +235,7 @@ class FileStorageObjectServiceAccessTest {
       assertDoesNotThrow(
           () ->
               service.checkAccess(
-                  creator, "dar", DAR_ID, FileCategory.DATA_USE_LETTER, OperationType.CRUD));
+                  creator, "dar", DAR_ID, FileCategory.DATA_USE_LETTER, OperationType.WRITE));
     }
 
     @Test
@@ -241,7 +245,7 @@ class FileStorageObjectServiceAccessTest {
           ForbiddenException.class,
           () ->
               service.checkAccess(
-                  other, "dar", DAR_ID, FileCategory.DATA_USE_LETTER, OperationType.CRUD));
+                  other, "dar", DAR_ID, FileCategory.DATA_USE_LETTER, OperationType.WRITE));
     }
 
     @Test
@@ -301,7 +305,7 @@ class FileStorageObjectServiceAccessTest {
       assertDoesNotThrow(
           () ->
               service.checkAccess(
-                  admin, "dac", DAC_ID, FileCategory.DATA_ACCESS_AGREEMENT, OperationType.CRUD));
+                  admin, "dac", DAC_ID, FileCategory.DATA_ACCESS_AGREEMENT, OperationType.WRITE));
     }
 
     @Test
@@ -310,7 +314,7 @@ class FileStorageObjectServiceAccessTest {
       assertDoesNotThrow(
           () ->
               service.checkAccess(
-                  chair, "dac", DAC_ID, FileCategory.DATA_ACCESS_AGREEMENT, OperationType.CRUD));
+                  chair, "dac", DAC_ID, FileCategory.DATA_ACCESS_AGREEMENT, OperationType.WRITE));
     }
 
     @Test
@@ -320,7 +324,7 @@ class FileStorageObjectServiceAccessTest {
           ForbiddenException.class,
           () ->
               service.checkAccess(
-                  chair, "dac", DAC_ID, FileCategory.DATA_ACCESS_AGREEMENT, OperationType.CRUD));
+                  chair, "dac", DAC_ID, FileCategory.DATA_ACCESS_AGREEMENT, OperationType.WRITE));
     }
 
     @Test
@@ -330,7 +334,7 @@ class FileStorageObjectServiceAccessTest {
           ForbiddenException.class,
           () ->
               service.checkAccess(
-                  member, "dac", DAC_ID, FileCategory.DATA_ACCESS_AGREEMENT, OperationType.CRUD));
+                  member, "dac", DAC_ID, FileCategory.DATA_ACCESS_AGREEMENT, OperationType.WRITE));
     }
 
     @Test
@@ -387,7 +391,7 @@ class FileStorageObjectServiceAccessTest {
                   "dataset",
                   "1",
                   FileCategory.NIH_INSTITUTIONAL_CERTIFICATION,
-                  OperationType.CRUD));
+                  OperationType.WRITE));
     }
 
     @Test
@@ -400,7 +404,7 @@ class FileStorageObjectServiceAccessTest {
                   "dataset",
                   "1",
                   FileCategory.NIH_INSTITUTIONAL_CERTIFICATION,
-                  OperationType.CRUD));
+                  OperationType.WRITE));
     }
 
     @Test
@@ -413,7 +417,7 @@ class FileStorageObjectServiceAccessTest {
                   "dataset",
                   "1",
                   FileCategory.NIH_INSTITUTIONAL_CERTIFICATION,
-                  OperationType.CRUD));
+                  OperationType.WRITE));
     }
 
     @Test
@@ -427,7 +431,7 @@ class FileStorageObjectServiceAccessTest {
                   "dataset",
                   "1",
                   FileCategory.NIH_INSTITUTIONAL_CERTIFICATION,
-                  OperationType.CRUD));
+                  OperationType.WRITE));
     }
 
     @Test
@@ -441,7 +445,7 @@ class FileStorageObjectServiceAccessTest {
                   "dataset",
                   "1",
                   FileCategory.NIH_INSTITUTIONAL_CERTIFICATION,
-                  OperationType.CRUD));
+                  OperationType.WRITE));
     }
 
     @Test
@@ -516,7 +520,7 @@ class FileStorageObjectServiceAccessTest {
                   "study",
                   "1",
                   FileCategory.ALTERNATIVE_DATA_SHARING_PLAN,
-                  OperationType.CRUD));
+                  OperationType.WRITE));
     }
 
     @Test
@@ -529,7 +533,7 @@ class FileStorageObjectServiceAccessTest {
                   "study",
                   "1",
                   FileCategory.ALTERNATIVE_DATA_SHARING_PLAN,
-                  OperationType.CRUD));
+                  OperationType.WRITE));
     }
 
     @Test
@@ -542,7 +546,7 @@ class FileStorageObjectServiceAccessTest {
                   "study",
                   "1",
                   FileCategory.ALTERNATIVE_DATA_SHARING_PLAN,
-                  OperationType.CRUD));
+                  OperationType.WRITE));
     }
 
     @Test
@@ -556,7 +560,7 @@ class FileStorageObjectServiceAccessTest {
                   "study",
                   "1",
                   FileCategory.ALTERNATIVE_DATA_SHARING_PLAN,
-                  OperationType.CRUD));
+                  OperationType.WRITE));
     }
 
     @Test
@@ -570,7 +574,7 @@ class FileStorageObjectServiceAccessTest {
                   "study",
                   "1",
                   FileCategory.ALTERNATIVE_DATA_SHARING_PLAN,
-                  OperationType.CRUD));
+                  OperationType.WRITE));
     }
 
     @Test
