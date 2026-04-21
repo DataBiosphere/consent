@@ -13,9 +13,14 @@ Use this when implementing a new cross-layer feature.
 ## Required Constraints
 
 - Keep the Dropwizard + Guice + JDBI architecture intact.
-- Prefer incremental changes over broad rewrites.
+- Prefer incremental changes to broad rewrites.
 - Keep public API behavior backward compatible unless explicitly approved.
 - Include tests and docs for behavior changes.
+- Run Spotless formatting for changed files before finalizing.
+- Favor Java records for new immutable DTO/view models; use classes when framework or persistence mapping requires them.
+- For potentially large DB-backed results, prefer pagination/streaming/projections and avoid unbounded in-memory collections.
+- Resolve SonarQube issues in touched code and do not introduce new blocker/critical issues.
+- Use only synthetic test data; do not use real or realistic PII (emails, IDs, names, tokens, or secrets).
 
 ## Copy/Paste Prompt
 
@@ -47,6 +52,11 @@ Constraints:
 - No new framework dependencies
 - Preserve backward compatibility unless stated otherwise
 - Add/update tests and docs as needed
+- Run Spotless formatting for changed files before finalizing
+- Favor Java records for new immutable DTO/view models; use classes when framework or persistence mapping requires them
+- For potentially large DB-backed results, prefer pagination/streaming/projections and avoid unbounded in-memory collections
+- Resolve SonarQube issues in touched code and do not introduce new blocker/critical issues
+- Use only synthetic test data; do not use real or realistic PII (emails, IDs, names, tokens, or secrets)
 
 Output format:
 1) short implementation plan
@@ -89,6 +99,11 @@ Constraints:
 - No new framework dependencies
 - Preserve backward compatibility unless stated otherwise
 - Add/update tests and docs as needed
+- Run Spotless formatting for changed files before finalizing
+- Favor Java records for new immutable DTO/view models; use classes when framework or persistence mapping requires them
+- For potentially large DB-backed results, prefer pagination/streaming/projections and avoid unbounded in-memory collections
+- Resolve SonarQube issues in touched code and do not introduce new blocker/critical issues
+- Use only synthetic test data; do not use real or realistic PII (emails, IDs, names, tokens, or secrets)
 
 Output format:
 1) short implementation plan

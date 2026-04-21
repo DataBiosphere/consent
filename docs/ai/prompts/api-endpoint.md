@@ -12,7 +12,7 @@ Use this when adding or modifying HTTP endpoints.
 
 ## Required Constraints
 
-- Keep route conventions under `/api/`.
+- Route auth boundary: paths under `/api` are authenticated by the proxy and decorated with OAUTH context; non-`/api` paths are unauthenticated.
 - Preserve Resource -> Service -> DAO separation.
 - Reuse existing auth/error handling patterns (`@RolesAllowed`, `ErrorResource` patterns).
 - Update OpenAPI docs and tests for contract changes.
@@ -45,6 +45,7 @@ Files to update:
 
 Constraints:
 - Keep endpoint conventions from docs/API_GUIDELINES.md
+- Put authenticated endpoints under `/api`; only place intentionally public endpoints outside `/api`
 - Do not introduce new framework dependencies
 - Add or update tests in src/test/java
 
@@ -83,6 +84,7 @@ Files to update:
 
 Constraints:
 - Keep endpoint conventions from docs/API_GUIDELINES.md
+- Put authenticated endpoints under `/api`; only place intentionally public endpoints outside `/api`
 - Do not introduce new framework dependencies
 - Add or update tests in src/test/java
 
