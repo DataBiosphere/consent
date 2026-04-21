@@ -158,10 +158,10 @@ public class DacResource extends Resource {
   @Path("{dacId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN})
-  public Response deleteDac(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId) {
+  public Response deleteDac(@Auth DuosUser duosUser, @PathParam("dacId") Integer dacId) {
     try {
       findDacOrThrow(dacId);
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       dacService.deleteDac(user, dacId);
       return Response.ok().build();
     } catch (Exception e) {

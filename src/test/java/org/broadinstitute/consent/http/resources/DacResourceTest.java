@@ -347,8 +347,10 @@ class DacResourceTest extends AbstractTestHelper {
   void testDeleteDac_success() {
     Dac dac = new DacBuilder().setDacId(1).setName("name").setDescription("description").build();
     when(dacService.findById(1)).thenReturn(dac);
+    User user = buildUser();
+    DuosUser duosUser = new DuosUser(authUser, user);
 
-    try (Response response = dacResource.deleteDac(authUser, dac.getDacId())) {
+    try (Response response = dacResource.deleteDac(duosUser, dac.getDacId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
   }
@@ -356,8 +358,10 @@ class DacResourceTest extends AbstractTestHelper {
   @Test
   void testDeleteDac_failure() {
     when(dacService.findById(1)).thenReturn(null);
+    User user = buildUser();
+    DuosUser duosUser = new DuosUser(authUser, user);
 
-    try (Response response = dacResource.deleteDac(authUser, 1)) {
+    try (Response response = dacResource.deleteDac(duosUser, 1)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
