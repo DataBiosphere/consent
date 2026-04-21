@@ -518,6 +518,8 @@ paths:
     $ref: './paths/datasetAuthorizedUsers.yaml'
   /api/dataset/cleanupEmptyCertificationAndAlternativeSharingFiles:
     $ref: './paths/cleanupEmptyCertificationAndAlternativeSharingFiles.yaml'
+  /api/{entity}/{entityId}/document/{id}:
+    $ref: './paths/entityDocumentById.yaml'
   /api/draft/v1:
     $ref: './paths/draftIndex.yaml'
   /api/draft/v1/{draftUUID}:
@@ -526,6 +528,8 @@ paths:
     $ref: './paths/draftAttachmentsIndex.yaml'
   /api/draft/v1/{draftUUID}/attachments/{fileId}:
     $ref: './paths/draftAttachments.yaml'
+  /api/{entity}/{entityId}/document:
+    $ref: './paths/entityDocumentsByEntityId.yaml'
   /api/tdr/{identifier}/approved/users:
     $ref: './paths/tdrDatasetApprovedUsers.yaml'
   /api/tdr/{identifier}:
@@ -1031,6 +1035,8 @@ components:
       $ref: './schemas/DatasetRegistrationSchemaV1.yaml'
     Election:
       $ref: './schemas/Election.yaml'
+    FileStorageObject:
+      $ref: './schemas/FileStorageObject.yaml'
     Institution:
       $ref: './schemas/Institution.yaml'
     LibraryCard:

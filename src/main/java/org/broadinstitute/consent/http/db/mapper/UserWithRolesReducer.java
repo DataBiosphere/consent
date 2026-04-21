@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
+import org.broadinstitute.consent.http.models.LibraryCardDaaDetail;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
@@ -71,7 +72,15 @@ public class UserWithRolesReducer
                   user.setLibraryCard(rowView.getRow(LibraryCard.class));
                 }
                 hasOptionalColumn(rowView, "lc_daa_id", Integer.class)
-                    .ifPresent(daaId -> user.getLibraryCard().addDaa(daaId));
+                    .ifPresent(
+                        daaId -> {
+                          user.getLibraryCard().addDaa(daaId);
+                          String authorizedBy =
+                              hasOptionalColumn(rowView, "lc_daa_authorized_by", String.class)
+                                  .orElse(null);
+                          user.getLibraryCard()
+                              .addDaaDetail(new LibraryCardDaaDetail(daaId, authorizedBy));
+                        });
               });
     } catch (MappingException e) {
       logDebug("Error adding Library Card to User: %s".formatted(e.getMessage()));

@@ -185,6 +185,128 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     assertTrue(altDataSharingFiles.contains(file3));
   }
 
+  @Test
+  void testFindFileMetadataByEntityId() {
+    String entityId = randomAlphabetic(10);
+    String otherEntityId = randomAlphabetic(10);
+    User createUser = createUser();
+    Instant oldest = Instant.now().minusSeconds(300);
+    Instant middle = Instant.now().minusSeconds(200);
+    Instant newest = Instant.now().minusSeconds(100);
+
+    Integer oldestId =
+        fileStorageObjectDAO.insertNewFile(
+            randomAlphabetic(10),
+            FileCategory.IRB_COLLABORATION_LETTER.getValue(),
+            BlobId.of(randomAlphabetic(10), randomAlphabetic(10)).toGsUtilUri(),
+            randomAlphabetic(10),
+            entityId,
+            createUser.getUserId(),
+            oldest);
+
+    Integer middleId =
+        fileStorageObjectDAO.insertNewFile(
+            randomAlphabetic(10),
+            FileCategory.DATA_USE_LETTER.getValue(),
+            BlobId.of(randomAlphabetic(10), randomAlphabetic(10)).toGsUtilUri(),
+            randomAlphabetic(10),
+            entityId,
+            createUser.getUserId(),
+            middle);
+
+    Integer newestId =
+        fileStorageObjectDAO.insertNewFile(
+            randomAlphabetic(10),
+            FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue(),
+            BlobId.of(randomAlphabetic(10), randomAlphabetic(10)).toGsUtilUri(),
+            randomAlphabetic(10),
+            entityId,
+            createUser.getUserId(),
+            newest);
+
+    Integer deletedId =
+        fileStorageObjectDAO.insertNewFile(
+            randomAlphabetic(10),
+            FileCategory.IRB_COLLABORATION_LETTER.getValue(),
+            BlobId.of(randomAlphabetic(10), randomAlphabetic(10)).toGsUtilUri(),
+            randomAlphabetic(10),
+            entityId,
+            createUser.getUserId(),
+            Instant.now());
+    fileStorageObjectDAO.deleteFileById(deletedId, createUser.getUserId());
+
+    fileStorageObjectDAO.insertNewFile(
+        randomAlphabetic(10),
+        FileCategory.IRB_COLLABORATION_LETTER.getValue(),
+        BlobId.of(randomAlphabetic(10), randomAlphabetic(10)).toGsUtilUri(),
+        randomAlphabetic(10),
+        otherEntityId,
+        createUser.getUserId(),
+        Instant.now());
+
+    jdbi.useHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    "UPDATE file_storage_object SET deleted = NULL WHERE file_storage_object_id = :id")
+                .bind("id", middleId)
+                .execute());
+
+    List<FileStorageObject> filesFound = fileStorageObjectDAO.findFileMetadataByEntityId(entityId);
+    List<Integer> foundIds =
+        filesFound.stream().map(FileStorageObject::getFileStorageObjectId).toList();
+
+    assertEquals(3, filesFound.size());
+    assertEquals(newestId, filesFound.get(0).getFileStorageObjectId());
+    assertEquals(middleId, filesFound.get(1).getFileStorageObjectId());
+    assertEquals(oldestId, filesFound.get(2).getFileStorageObjectId());
+
+    assertTrue(foundIds.contains(newestId));
+    assertTrue(foundIds.contains(middleId));
+    assertTrue(foundIds.contains(oldestId));
+    assertFalse(foundIds.contains(deletedId));
+
+    filesFound.forEach(file -> assertEquals(entityId, file.getEntityId()));
+  }
+
+  @Test
+  void testFindActiveFileByIdAndEntityId() {
+    String entityId = randomAlphabetic(10);
+    FileStorageObject file = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
+
+    FileStorageObject found =
+        fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, file.getFileStorageObjectId());
+
+    assertNotNull(found);
+    assertEquals(file.getFileStorageObjectId(), found.getFileStorageObjectId());
+    assertEquals(entityId, found.getEntityId());
+  }
+
+  @Test
+  void testFindActiveFileByIdAndEntityIdDeletedReturnsNull() {
+    String entityId = randomAlphabetic(10);
+    FileStorageObject file = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
+    User deleteUser = createUser();
+    fileStorageObjectDAO.deleteFileById(file.getFileStorageObjectId(), deleteUser.getUserId());
+
+    FileStorageObject found =
+        fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, file.getFileStorageObjectId());
+
+    assertNull(found);
+  }
+
+  @Test
+  void testFindActiveFileByIdAndEntityIdWrongEntityReturnsNull() {
+    String entityId = randomAlphabetic(10);
+    FileStorageObject file = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
+
+    FileStorageObject found =
+        fileStorageObjectDAO.findActiveFileByIdAndEntityId(
+            randomAlphabetic(8), file.getFileStorageObjectId());
+
+    assertNull(found);
+  }
+
   private FileStorageObject createFileStorageObject() {
     FileCategory category =
         List.of(FileCategory.values()).get(new Random().nextInt(FileCategory.values().length));
@@ -194,9 +316,9 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
   }
 
   private FileStorageObject createFileStorageObject(String entityId, FileCategory category) {
-    String fileName = randomAlphabetic(10);
-    String bucketName = randomAlphabetic(10);
-    String gcsFileUri = randomAlphabetic(10);
+    String fileName = randomAlphanumeric(10);
+    String gcsFileUri = BlobId.of(randomAlphanumeric(10), randomAlphanumeric(10)).toGsUtilUri();
+    String mediaType = randomAlphanumeric(10);
     User createUser = createUser();
     Instant createDate = Instant.now();
 
@@ -204,8 +326,8 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
         fileStorageObjectDAO.insertNewFile(
             fileName,
             category.getValue(),
-            bucketName,
             gcsFileUri,
+            mediaType,
             entityId,
             createUser.getUserId(),
             createDate);
