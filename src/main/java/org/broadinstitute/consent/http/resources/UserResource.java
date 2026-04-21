@@ -139,6 +139,9 @@ public class UserResource extends Resource {
     try {
       return samService.getCombinedUserStatusInfo(duosUser);
     } catch (SamAzureB2CException e) {
+      logWarn(
+          "Sam azure b2c exception: %s for user: %s"
+              .formatted(e.getMessage(), duosUser.getEmail()));
       throw e;
     } catch (Exception ex) {
       logWarn("Unable to retrieve user status info from Sam: " + ex.getMessage());
