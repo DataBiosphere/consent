@@ -261,13 +261,13 @@ public class DacService implements ConsentLogger {
     return userDAO.findUserById(updatedUser.getUserId());
   }
 
-  public void removeDacMember(Role role, User user, Dac dac, Integer auditUser)
+  public void removeDacMember(Role role, User user, Dac dac, Integer auditUserId)
       throws BadRequestException {
     if (role.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId())) {
       if (dac.getChairpersons().size() <= 1) {
         throw new BadRequestException("Dac requires at least one chairperson.");
       }
-      ruleDAO.auditedDeleteDACRuleSettingByUser(dac.getDacId(), user.getUserId(), auditUser);
+      ruleDAO.auditedDeleteDACRuleSettingByUser(dac.getDacId(), user.getUserId(), auditUserId);
     }
     List<UserRole> dacRoles =
         user.getRoles().stream()
@@ -275,7 +275,7 @@ public class DacService implements ConsentLogger {
             .filter(r -> r.getDacId().equals(dac.getDacId()))
             .filter(r -> r.getRoleId().equals(role.getRoleId()))
             .toList();
-    dacRoles.forEach(userRole -> dacDAO.removeDacMember(userRole.getUserRoleId(), auditUser));
+    dacRoles.forEach(userRole -> dacDAO.removeDacMember(userRole.getUserRoleId(), auditUserId));
     voteService.deleteOpenDacVotesForUser(dac, user);
   }
 
