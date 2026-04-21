@@ -316,6 +316,11 @@ public class FileStorageObjectService implements ConsentLogger {
       return;
     }
 
+    if (entity == DocumentEntity.STUDY) {
+      ensureHasAnyRole(user, UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON);
+      return;
+    }
+
     ensureHasAnyRole(
         user, UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON, UserRoles.MEMBER);
   }

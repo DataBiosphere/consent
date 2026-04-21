@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import java.io.ByteArrayInputStream;
@@ -38,6 +39,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -326,6 +328,46 @@ class FileStorageObjectServiceTest {
         service.listDocuments(user, "study", studyId.toString());
 
     assertEquals(fileStorageObjects, returnedFiles);
+  }
+
+  @ParameterizedTest
+  @CsvSource({"MEMBER,false", "CHAIRPERSON,true"})
+  void testListDocumentsForStudyAccessByRole(String role, boolean allowed) {
+    User user = new User();
+    applyRole(user, role);
+    Integer studyId = 456;
+    Study study = new Study();
+    study.setUuid(java.util.UUID.randomUUID());
+    String studyEntityId = studyId.toString();
+    List<FileStorageObject> fileStorageObjects = List.of(new FileStorageObject());
+
+    initService();
+
+    if (!allowed) {
+      assertThrows(
+          ForbiddenException.class, () -> service.listDocuments(user, "study", studyEntityId));
+      verifyNoInteractions(datasetService);
+      verifyNoInteractions(fileStorageObjectDAO);
+      return;
+    }
+
+    when(datasetService.findStudyByIdForRead(user, studyId)).thenReturn(study);
+    when(fileStorageObjectDAO.findFileMetadataByEntityId(study.getUuid().toString()))
+        .thenReturn(fileStorageObjects);
+
+    List<FileStorageObject> returnedFiles =
+        service.listDocuments(user, "study", studyId.toString());
+
+    assertEquals(fileStorageObjects, returnedFiles);
+    verify(fileStorageObjectDAO).findFileMetadataByEntityId(study.getUuid().toString());
+  }
+
+  private void applyRole(User user, String role) {
+    switch (role) {
+      case "MEMBER" -> user.setMemberRole();
+      case "CHAIRPERSON" -> user.setChairpersonRole();
+      default -> throw new IllegalArgumentException("Unsupported role: " + role);
+    }
   }
 
   @Test
