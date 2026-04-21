@@ -188,6 +188,14 @@ public interface DacDAO extends Transactional<DacDAO> {
       @Bind("description") String description,
       @Bind("userId") Integer userId);
 
+  @SqlUpdate(
+      """
+      WITH deleted AS (DELETE FROM dac where dac_id = :dacId)
+      INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
+      VALUES (:dacId, :userId, NULL, NULL, 'DELETE', NOW())
+      """)
+  void deleteDac(@Bind("dacId") Integer dacId, @Bind("userId") Integer userId);
+
   /**
    * Create a Dac given name, description, and email. Atomically writes a CREATE audit entry.
    *
@@ -269,17 +277,6 @@ public interface DacDAO extends Transactional<DacDAO> {
       @Bind("email") String email,
       @Bind("dacId") Integer dacId,
       @Bind("userId") Integer userId);
-
-  /**
-   * Delete all members from a specified DAC
-   *
-   * @param dacId The DAC id to remove users from
-   */
-  @SqlUpdate("DELETE FROM user_role WHERE dac_id = :dacId")
-  void deleteDacMembers(@Bind("dacId") Integer dacId);
-
-  @SqlUpdate("DELETE FROM dac WHERE dac_id = :dacId")
-  void deleteDac(@Bind("dacId") Integer dacId);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class)

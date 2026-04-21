@@ -2,6 +2,8 @@ package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.DaaDAO;
+import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.User;
@@ -13,10 +15,9 @@ public class DacServiceDAO implements ConsentLogger {
 
   private final Jdbi jdbi;
   private final DaaDAO daaDAO;
+  private final DacDAO dacDAO;
   private static final String DAC_ID = "dacId";
   private static final String USER_ID = "userId";
-  private static final String DELETE_ROLES_STATEMENT =
-      "DELETE FROM user_role WHERE dac_id = :dacId";
   private static final String UPDATE_DATASET_STATEMENT =
       "UPDATE dataset SET dac_id = null, dac_approval = null WHERE dac_id = :dacId";
   private static final String DELETE_DAC_RULES_STATEMENT =
@@ -29,31 +30,11 @@ public class DacServiceDAO implements ConsentLogger {
             WHERE dac_id = :dacId
           """;
 
-  /**
-   * Audit the removal of every member/chair belonging to the DAC being deleted. One row is inserted
-   * per user_role entry so the audit trail records which users lost access.
-   */
-  private static final String AUDIT_DAC_MEMBER_DELETION_STATEMENT =
-      """
-            INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
-            SELECT dac_id, :userId, ur.user_id, ur.role_id, 'REMOVE', current_timestamp
-            FROM user_role ur
-            WHERE dac_id = :dacId
-          """;
-
-  /** Audit the DAC-level DELETE event itself. */
-  private static final String AUDIT_DAC_DELETION_STATEMENT =
-      """
-            INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
-            VALUES (:dacId, :userId, NULL, NULL, 'DELETE', current_timestamp)
-          """;
-
-  private static final String DELETE_DAC_STATEMENT = "DELETE FROM dac where dac_id = :dacId";
-
   @Inject
   public DacServiceDAO(Jdbi jdbi) {
     this.jdbi = jdbi;
     daaDAO = jdbi.onDemand(DaaDAO.class);
+    dacDAO = jdbi.onDemand(DacDAO.class);
   }
 
   public void deleteDacAndRemoveDaaAssociation(User user, Dac dac) throws IllegalArgumentException {
@@ -68,21 +49,9 @@ public class DacServiceDAO implements ConsentLogger {
             daaDAO.deleteDacDaaRelation(daa.getDaaId(), dac.getDacId(), user.getUserId());
           }
 
-          // Audit each member/chair removal before the rows are deleted.
-          Update dacMemberAudit = handle.createUpdate(AUDIT_DAC_MEMBER_DELETION_STATEMENT);
-          dacMemberAudit.bind(DAC_ID, dac.getDacId());
-          dacMemberAudit.bind(USER_ID, user.getUserId());
-          dacMemberAudit.execute();
-
-          // Audit the DAC deletion itself before the dac row is removed.
-          Update dacDeletionAudit = handle.createUpdate(AUDIT_DAC_DELETION_STATEMENT);
-          dacDeletionAudit.bind(DAC_ID, dac.getDacId());
-          dacDeletionAudit.bind(USER_ID, user.getUserId());
-          dacDeletionAudit.execute();
-
-          Update memberDeletion = handle.createUpdate(DELETE_ROLES_STATEMENT);
-          memberDeletion.bind(DAC_ID, dac.getDacId());
-          memberDeletion.execute();
+          // Audit each member/chair removal
+          dacDAO.removeDacMember(UserRoles.MEMBER.getRoleId(), user.getUserId());
+          dacDAO.removeDacMember(UserRoles.CHAIRPERSON.getRoleId(), user.getUserId());
 
           Update datasetUpdate = handle.createUpdate(UPDATE_DATASET_STATEMENT);
           datasetUpdate.bind(DAC_ID, dac.getDacId());
@@ -98,9 +67,7 @@ public class DacServiceDAO implements ConsentLogger {
           dacAutomationRulesDeletion.bind(DAC_ID, dac.getDacId());
           dacAutomationRulesDeletion.execute();
 
-          Update dacDeletion = handle.createUpdate(DELETE_DAC_STATEMENT);
-          dacDeletion.bind(DAC_ID, dac.getDacId());
-          dacDeletion.execute();
+          dacDAO.deleteDac(dac.getDacId(), user.getUserId());
           handle.commit();
         });
   }

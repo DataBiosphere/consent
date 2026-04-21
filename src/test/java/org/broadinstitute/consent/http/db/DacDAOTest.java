@@ -230,6 +230,47 @@ class DacDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testDeleteDac_removesFromFindById() {
+    User user = createUser();
+    Integer dacId = createRandomDAC();
+    assertNotNull(dacDAO.findById(dacId));
+
+    dacDAO.deleteDac(dacId, user.getUserId());
+
+    assertNull(dacDAO.findById(dacId));
+  }
+
+  @Test
+  void testDeleteDac_removedFromFindAll() {
+    User user = createUser();
+    Integer dacId = createRandomDAC();
+    assertTrue(dacDAO.findAll().stream().anyMatch(d -> d.getDacId().equals(dacId)));
+
+    dacDAO.deleteDac(dacId, user.getUserId());
+
+    assertTrue(dacDAO.findAll().stream().noneMatch(d -> d.getDacId().equals(dacId)));
+  }
+
+  @Test
+  void testDeleteDac_createsDeleteAudit() {
+    User user = createUser();
+    Integer dacId = createRandomDAC();
+
+    dacDAO.deleteDac(dacId, user.getUserId());
+
+    List<DacAudit> audits = dacDAO.findAuditsByDacId(dacId);
+    // Should have a CREATE audit (from createRandomDAC) and a DELETE audit
+    assertTrue(audits.stream().anyMatch(a -> AuditActions.DELETE.equals(a.action())));
+    DacAudit deleteAudit =
+        audits.stream().filter(a -> AuditActions.DELETE.equals(a.action())).findFirst().orElseThrow();
+    assertEquals(dacId, deleteAudit.dacId());
+    assertEquals(user.getUserId(), deleteAudit.userId());
+    assertNull(deleteAudit.affectedUserId());
+    assertNull(deleteAudit.roleId());
+    assertNotNull(deleteAudit.actionDate());
+  }
+
+  @Test
   void testUpdateDacWithoutEmail() {
     String newValue = "New Value";
     User user = createUser();
@@ -253,30 +294,6 @@ class DacDAOTest extends DAOTestHelper {
     assertEquals(newValue, updatedDac.getName());
     assertEquals(newValue, updatedDac.getDescription());
     assertEquals(newEmail, updatedDac.getEmail());
-  }
-
-  @Test
-  void testDeleteDacMembers() {
-    Dac dac = insertDacWithEmail();
-    Integer memberRoleId = UserRoles.MEMBER.getRoleId();
-    User user1 = createUser();
-    dacDAO.addDacMember(memberRoleId, user1.getUserId(), dac.getDacId(), user1.getUserId());
-    User user2 = createUser();
-    dacDAO.addDacMember(memberRoleId, user2.getUserId(), dac.getDacId(), user2.getUserId());
-
-    dacDAO.deleteDacMembers(dac.getDacId());
-    List<User> dacMembers = dacDAO.findMembersByDacId(dac.getDacId());
-    assertTrue(dacMembers.isEmpty());
-  }
-
-  @Test
-  void testDeleteDac() {
-    Dac dac = insertDacWithEmail();
-    assertNotNull(dac.getDacId());
-
-    dacDAO.deleteDac(dac.getDacId());
-    Dac deletedDac = dacDAO.findById(dac.getDacId());
-    assertNull(deletedDac);
   }
 
   @Test
