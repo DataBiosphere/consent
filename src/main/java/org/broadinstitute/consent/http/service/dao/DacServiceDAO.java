@@ -1,6 +1,8 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
+import java.util.List;
+import java.util.Objects;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -49,9 +51,17 @@ public class DacServiceDAO implements ConsentLogger {
             daaDAO.deleteDacDaaRelation(daa.getDaaId(), dac.getDacId(), user.getUserId());
           }
 
-          // Audit each member/chair removal
-          dacDAO.removeDacMember(UserRoles.MEMBER.getRoleId(), user.getUserId());
-          dacDAO.removeDacMember(UserRoles.CHAIRPERSON.getRoleId(), user.getUserId());
+          // Find all dac chair/member user roles and audit each removal
+          List<User> dacUsers = dacDAO.findMembersByDacId(dac.getDacId());
+          dacUsers.stream()
+              .map(User::getRoles)
+              .flatMap(List::stream)
+              .filter(
+                  userRole ->
+                      Objects.equals(userRole.getRoleId(), UserRoles.CHAIRPERSON.getRoleId())
+                          || Objects.equals(userRole.getRoleId(), UserRoles.MEMBER.getRoleId()))
+              .forEach(
+                  userRole -> dacDAO.removeDacMember(userRole.getUserRoleId(), user.getUserId()));
 
           Update datasetUpdate = handle.createUpdate(UPDATE_DATASET_STATEMENT);
           datasetUpdate.bind(DAC_ID, dac.getDacId());
