@@ -11,7 +11,6 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
@@ -166,11 +165,6 @@ public class DocumentResource extends Resource {
               "Content-Disposition",
               "attachment; filename=\"" + fileStorageObject.getFileName() + "\"")
           .build();
-    } catch (WebApplicationException e) {
-      if (e.getResponse().getStatus() == Response.Status.BAD_GATEWAY.getStatusCode()) {
-        return Response.status(Response.Status.BAD_GATEWAY).build();
-      }
-      return createExceptionResponse(e);
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

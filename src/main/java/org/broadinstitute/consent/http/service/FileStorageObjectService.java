@@ -149,7 +149,7 @@ public class FileStorageObjectService implements ConsentLogger {
               + ": "
               + e.getMessage());
       throw new WebApplicationException(
-          "Failed to retrieve file from storage", e, Response.Status.BAD_GATEWAY);
+          "Failed to retrieve file from storage", e, Response.Status.INTERNAL_SERVER_ERROR);
     }
   }
 

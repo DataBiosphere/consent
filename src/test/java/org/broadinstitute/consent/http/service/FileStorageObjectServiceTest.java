@@ -509,7 +509,7 @@ class FileStorageObjectServiceTest {
         assertThrows(
             WebApplicationException.class,
             () -> service.getDocumentFile(user, "dataset", entityId, fileId));
-    assertEquals(502, exception.getResponse().getStatus());
+    assertEquals(500, exception.getResponse().getStatus());
   }
 
   @Test

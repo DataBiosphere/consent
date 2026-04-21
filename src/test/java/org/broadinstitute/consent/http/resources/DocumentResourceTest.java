@@ -448,15 +448,15 @@ class DocumentResourceTest {
   }
 
   @Test
-  void testFindDocumentFileByEntityReturnsBadGatewayWhenStorageFails() {
+  void testFindDocumentFileByEntityReturnsInternalServerErrorWhenStorageFails() {
     when(duosUser.getUser()).thenReturn(user);
     when(fileStorageObjectService.getDocumentFile(user, "dataset", "123", 10))
         .thenThrow(
             new WebApplicationException(
-                "Failed to retrieve file from storage", Response.Status.BAD_GATEWAY));
+                "Failed to retrieve file from storage", Response.Status.INTERNAL_SERVER_ERROR));
 
     try (var response = resource.findDocumentFileByEntity(duosUser, "dataset", "123", 10)) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_GATEWAY, response.getStatus());
+      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
   }
 }
