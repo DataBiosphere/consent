@@ -40,8 +40,7 @@ public class DacResource extends Resource {
   private final DatasetService datasetService;
 
   @Inject
-  public DacResource(
-      DacService dacService, DatasetService datasetService) {
+  public DacResource(DacService dacService, DatasetService datasetService) {
     this.dacService = dacService;
     this.datasetService = datasetService;
   }
