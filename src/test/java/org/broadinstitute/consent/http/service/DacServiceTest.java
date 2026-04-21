@@ -154,9 +154,10 @@ class DacServiceTest extends AbstractTestHelper {
   @Test
   void testCreateDac() {
     when(dacDAO.createDac(anyString(), anyString(), any())).thenReturn(getDacs().get(0).getDacId());
+    doNothing().when(dacDAO).insertDacAudit(any(), any(), any(), any(), anyString());
     initService();
 
-    Integer dacId = service.createDac("name", "description");
+    Integer dacId = service.createDac("name", "description", 1);
     assertEquals(getDacs().get(0).getDacId(), dacId);
   }
 
@@ -164,19 +165,21 @@ class DacServiceTest extends AbstractTestHelper {
   void testCreateDacWithEmail() {
     when(dacDAO.createDac(anyString(), anyString(), anyString(), any()))
         .thenReturn(getDacs().get(0).getDacId());
+    doNothing().when(dacDAO).insertDacAudit(any(), any(), any(), any(), anyString());
     initService();
 
-    Integer dacId = service.createDac("name", "description", "email@test.com");
+    Integer dacId = service.createDac("name", "description", "email@test.com", 1);
     assertEquals(getDacs().get(0).getDacId(), dacId);
   }
 
   @Test
   void testUpdateDac() {
     doNothing().when(dacDAO).updateDac(anyString(), anyString(), any(), any());
+    doNothing().when(dacDAO).insertDacAudit(any(), any(), any(), any(), anyString());
     initService();
 
     try {
-      service.updateDac("name", "description", 1);
+      service.updateDac("name", "description", 1, 1);
     } catch (Exception e) {
       fail("Update should not fail");
     }
@@ -185,10 +188,11 @@ class DacServiceTest extends AbstractTestHelper {
   @Test
   void testUpdateDacWithEmail() {
     doNothing().when(dacDAO).updateDac(anyString(), anyString(), anyString(), any(), any());
+    doNothing().when(dacDAO).insertDacAudit(any(), any(), any(), any(), anyString());
     initService();
 
     try {
-      service.updateDac("name", "description", "test@email.com", 1);
+      service.updateDac("name", "description", "test@email.com", 1, 1);
     } catch (Exception e) {
       fail("Update should not fail");
     }
@@ -276,11 +280,11 @@ class DacServiceTest extends AbstractTestHelper {
     dar.setData(new DataAccessRequestData());
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
     when(electionDAO.findOpenElectionsByDacId(any())).thenReturn(elections);
-    doNothing().when(dacDAO).addDacMember(anyInt(), anyInt(), anyInt());
+    doNothing().when(dacDAO).addDacMember(anyInt(), anyInt(), anyInt(), anyInt());
     initService();
 
     Role role = new Role(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
-    User user1 = service.addDacMember(role, user, dac);
+    User user1 = service.addDacMember(role, user, dac, 1);
     assertNotNull(user1);
     assertFalse(user1.getRoles().isEmpty());
     verify(voteService, times(elections.size()))
@@ -294,7 +298,7 @@ class DacServiceTest extends AbstractTestHelper {
     User member = getDacUsers().get(1);
     dac.setChairpersons(Collections.singletonList(getDacUsers().get(0)));
     dac.setMembers(Collections.singletonList(member));
-    doNothing().when(dacDAO).removeDacMember(anyInt());
+    doNothing().when(dacDAO).removeDacMember(anyInt(), anyInt());
     doNothing().when(voteService).deleteOpenDacVotesForUser(any(), any());
     initService();
 
@@ -303,7 +307,7 @@ class DacServiceTest extends AbstractTestHelper {
     } catch (Exception e) {
       fail();
     }
-    verify(dacDAO, atLeastOnce()).removeDacMember(anyInt());
+    verify(dacDAO, atLeastOnce()).removeDacMember(anyInt(), anyInt());
     verify(voteService, atLeastOnce()).deleteOpenDacVotesForUser(any(), any());
   }
 
@@ -315,7 +319,7 @@ class DacServiceTest extends AbstractTestHelper {
     User chair2 = getDacUsers().get(0);
     dac.setChairpersons(Arrays.asList(chair1, chair2));
     dac.setMembers(Collections.singletonList(getDacUsers().get(1)));
-    doNothing().when(dacDAO).removeDacMember(anyInt());
+    doNothing().when(dacDAO).removeDacMember(anyInt(), anyInt());
     doNothing().when(voteService).deleteOpenDacVotesForUser(any(), any());
     when(ruleDAO.auditedDeleteDACRuleSettingByUser(anyInt(), anyInt(), anyInt())).thenReturn(1);
     initService();
@@ -325,7 +329,7 @@ class DacServiceTest extends AbstractTestHelper {
     } catch (Exception e) {
       fail();
     }
-    verify(dacDAO, atLeastOnce()).removeDacMember(anyInt());
+    verify(dacDAO, atLeastOnce()).removeDacMember(anyInt(), anyInt());
     verify(voteService, atLeastOnce()).deleteOpenDacVotesForUser(any(), any());
     verify(ruleDAO, atLeastOnce()).auditedDeleteDACRuleSettingByUser(anyInt(), anyInt(), anyInt());
   }
@@ -343,7 +347,7 @@ class DacServiceTest extends AbstractTestHelper {
         BadRequestException.class,
         () -> {
           service.removeDacMember(role, chair, dac, 1);
-          verify(dacDAO, times(0)).removeDacMember(anyInt());
+          verify(dacDAO, times(0)).removeDacMember(anyInt(), anyInt());
           verify(voteService, times(0)).deleteOpenDacVotesForUser(any(), any());
           verify(ruleDAO, times(0)).auditedDeleteDACRuleSettingByUser(anyInt(), anyInt(), anyInt());
         });

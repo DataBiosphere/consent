@@ -186,7 +186,8 @@ class UserDAOTest extends DAOTestHelper {
   void testFindDACUsersEnabledToVoteByDacNotEmpty() {
     Dac dac = createDac();
     User chair = createUserWithRole(UserRoles.CHAIRPERSON.getRoleId());
-    dacDAO.addDacMember(UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dac.getDacId());
+    dacDAO.addDacMember(
+        UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dac.getDacId(), chair.getUserId());
     Collection<User> users = userDAO.findUsersEnabledToVoteByDAC(dac.getDacId());
     assertFalse(users.isEmpty());
   }
@@ -549,8 +550,10 @@ class UserDAOTest extends DAOTestHelper {
     assertTrue(u.getRoles().contains(chairperson1));
     assertTrue(u.getRoles().contains(chairperson2));
 
-    dacDAO.addDacMember(chairperson1.getRoleId(), u.getUserId(), chairperson1.getDacId());
-    dacDAO.addDacMember(chairperson2.getRoleId(), u.getUserId(), chairperson2.getDacId());
+    dacDAO.addDacMember(
+        chairperson1.getRoleId(), u.getUserId(), chairperson1.getDacId(), u.getUserId());
+    dacDAO.addDacMember(
+        chairperson2.getRoleId(), u.getUserId(), chairperson2.getDacId(), u.getUserId());
 
     User found = userDAO.findUserById(u.getUserId());
     assertEquals(3, found.getRoles().size());

@@ -221,7 +221,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
 
   protected User createUserWithRoleInDac(Integer roleId, Integer dacId) {
     User user = createUserWithRole(roleId);
-    dacDAO.addDacMember(roleId, user.getUserId(), dacId);
+    dacDAO.addDacMember(roleId, user.getUserId(), dacId, user.getUserId());
     return user;
   }
 

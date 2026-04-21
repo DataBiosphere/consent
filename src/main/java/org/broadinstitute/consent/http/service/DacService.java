@@ -22,6 +22,7 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
@@ -177,24 +178,37 @@ public class DacService implements ConsentLogger {
     throw new NotFoundException("Could not find DAC with the provided id: " + dacId);
   }
 
-  public Integer createDac(String name, String description) {
+  public Integer createDac(String name, String description, Integer userId) {
     Date createDate = new Date();
-    return dacDAO.createDac(name, description, createDate);
+    Integer dacId = dacDAO.createDac(name, description, createDate);
+    if (dacId != null) {
+      dacDAO.insertDacAudit(
+          dacId, userId, null, null, AuditActions.CREATE.getValue().toUpperCase());
+    }
+    return dacId;
   }
 
-  public Integer createDac(String name, String description, String email) {
+  public Integer createDac(String name, String description, String email, Integer userId) {
     Date createDate = new Date();
-    return dacDAO.createDac(name, description, email, createDate);
+    Integer dacId = dacDAO.createDac(name, description, email, createDate);
+    if (dacId != null) {
+      dacDAO.insertDacAudit(
+          dacId, userId, null, null, AuditActions.CREATE.getValue().toUpperCase());
+    }
+    return dacId;
   }
 
-  public void updateDac(String name, String description, Integer dacId) {
+  public void updateDac(String name, String description, Integer dacId, Integer userId) {
     Date updateDate = new Date();
     dacDAO.updateDac(name, description, updateDate, dacId);
+    dacDAO.insertDacAudit(dacId, userId, null, null, AuditActions.UPDATE.getValue().toUpperCase());
   }
 
-  public void updateDac(String name, String description, String email, Integer dacId) {
+  public void updateDac(
+      String name, String description, String email, Integer dacId, Integer userId) {
     Date updateDate = new Date();
     dacDAO.updateDac(name, description, email, updateDate, dacId);
+    dacDAO.insertDacAudit(dacId, userId, null, null, AuditActions.UPDATE.getValue().toUpperCase());
   }
 
   public void deleteDac(User user, Integer dacId) throws IllegalArgumentException {
@@ -239,8 +253,9 @@ public class DacService implements ConsentLogger {
     return users;
   }
 
-  public User addDacMember(Role role, User user, Dac dac) throws IllegalArgumentException {
-    dacDAO.addDacMember(role.getRoleId(), user.getUserId(), dac.getDacId());
+  public User addDacMember(Role role, User user, Dac dac, Integer auditUserId)
+      throws IllegalArgumentException {
+    dacDAO.addDacMember(role.getRoleId(), user.getUserId(), dac.getDacId(), auditUserId);
     User updatedUser = userDAO.findUserById(user.getUserId());
     List<Election> elections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
     for (Election e : elections) {
@@ -278,7 +293,7 @@ public class DacService implements ConsentLogger {
             .filter(r -> r.getDacId().equals(dac.getDacId()))
             .filter(r -> r.getRoleId().equals(role.getRoleId()))
             .toList();
-    dacRoles.forEach(userRole -> dacDAO.removeDacMember(userRole.getUserRoleId()));
+    dacRoles.forEach(userRole -> dacDAO.removeDacMember(userRole.getUserRoleId(), auditUser));
     voteService.deleteOpenDacVotesForUser(dac, user);
   }
 

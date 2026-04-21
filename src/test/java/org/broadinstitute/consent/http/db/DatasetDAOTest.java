@@ -1448,7 +1448,7 @@ class DatasetDAOTest extends DAOTestHelper {
   }
 
   private void createUserRole(Integer roleId, Integer userId, Integer dacId) {
-    dacDAO.addDacMember(roleId, userId, dacId);
+    dacDAO.addDacMember(roleId, userId, dacId, userId);
   }
 
   private void createFileStorageObject() {

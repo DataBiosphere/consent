@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import org.broadinstitute.consent.http.db.mapper.DacAuditMapper;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.DacReducer;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOPrefix;
@@ -12,6 +13,7 @@ import org.broadinstitute.consent.http.db.mapper.UserRoleMapper;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DacAudit;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Role;
@@ -254,12 +256,86 @@ public interface DacDAO extends Transactional<DacDAO> {
   List<User> findMembersByDacIdAndRoleId(
       @Bind("dacId") Integer dacId, @Bind("roleId") Integer roleId);
 
-  @SqlUpdate("INSERT INTO user_role (role_id, user_id, dac_id) VALUES (:roleId, :userId, :dacId)")
+  /**
+   * Add a member or chair to a DAC and atomically record an audit entry.
+   *
+   * @param roleId The role to grant (CHAIRPERSON or MEMBER)
+   * @param userId The user receiving the role
+   * @param dacId The DAC the user is being added to
+   * @param auditUserId The user performing the operation (for the audit record)
+   */
+  @SqlUpdate(
+      """
+      WITH inserted_role AS (
+        INSERT INTO user_role (role_id, user_id, dac_id) VALUES (:roleId, :userId, :dacId)
+        RETURNING user_id, role_id, dac_id
+      )
+      INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
+      SELECT dac_id, :auditUserId, user_id, role_id, 'ADD', NOW()
+      FROM inserted_role
+      """)
   void addDacMember(
-      @Bind("roleId") Integer roleId, @Bind("userId") Integer userId, @Bind("dacId") Integer dacId);
+      @Bind("roleId") Integer roleId,
+      @Bind("userId") Integer userId,
+      @Bind("dacId") Integer dacId,
+      @Bind("auditUserId") Integer auditUserId);
 
-  @SqlUpdate("DELETE FROM user_role WHERE user_role_id = :userRoleId")
-  void removeDacMember(@Bind("userRoleId") Integer userRoleId);
+  /**
+   * Remove a member or chair from a DAC and atomically record an audit entry.
+   *
+   * @param userRoleId The user_role row to delete
+   * @param auditUserId The user performing the operation (for the audit record)
+   */
+  @SqlUpdate(
+      """
+      WITH deleted_role AS (
+        DELETE FROM user_role WHERE user_role_id = :userRoleId
+        RETURNING user_id, role_id, dac_id
+      )
+      INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
+      SELECT dac_id, :auditUserId, user_id, role_id, 'REMOVE', NOW()
+      FROM deleted_role
+      WHERE dac_id IS NOT NULL
+      """)
+  void removeDacMember(
+      @Bind("userRoleId") Integer userRoleId, @Bind("auditUserId") Integer auditUserId);
+
+  /**
+   * Insert a single audit row for a DAC-level operation (CREATE, UPDATE, DELETE). {@code
+   * affectedUserId} and {@code roleId} may be null for non-member operations.
+   *
+   * @param dacId The DAC being acted upon
+   * @param userId The actor
+   * @param affectedUserId The user whose role is being changed (null for DAC-level events)
+   * @param roleId The role involved (null for DAC-level events)
+   * @param action The audit action string (e.g. 'CREATE', 'UPDATE', 'DELETE')
+   */
+  @SqlUpdate(
+      """
+      INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
+      VALUES (:dacId, :userId, :affectedUserId, :roleId, :action, NOW())
+      """)
+  void insertDacAudit(
+      @Bind("dacId") Integer dacId,
+      @Bind("userId") Integer userId,
+      @Bind("affectedUserId") Integer affectedUserId,
+      @Bind("roleId") Integer roleId,
+      @Bind("action") String action);
+
+  /**
+   * Return all audit records for a given DAC, newest first.
+   *
+   * @param dacId The DAC id
+   * @return List of DacAudit records
+   */
+  @RegisterRowMapper(DacAuditMapper.class)
+  @SqlQuery(
+      """
+      SELECT * FROM dac_audit
+      WHERE dac_id = :dacId
+      ORDER BY action_date DESC
+      """)
+  List<DacAudit> findAuditsByDacId(@Bind("dacId") Integer dacId);
 
   @UseRowMapper(RoleMapper.class)
   @SqlQuery("SELECT * FROM roles WHERE role_id = :roleId")
