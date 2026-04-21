@@ -67,6 +67,7 @@ public class DacServiceDAO implements ConsentLogger {
           dacAutomationRulesDeletion.bind(DAC_ID, dac.getDacId());
           dacAutomationRulesDeletion.execute();
 
+          // Audit DAC removal
           dacDAO.deleteDac(dac.getDacId(), user.getUserId());
           handle.commit();
         });
