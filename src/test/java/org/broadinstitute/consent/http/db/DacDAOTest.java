@@ -262,7 +262,10 @@ class DacDAOTest extends DAOTestHelper {
     // Should have a CREATE audit (from createRandomDAC) and a DELETE audit
     assertTrue(audits.stream().anyMatch(a -> AuditActions.DELETE.equals(a.action())));
     DacAudit deleteAudit =
-        audits.stream().filter(a -> AuditActions.DELETE.equals(a.action())).findFirst().orElseThrow();
+        audits.stream()
+            .filter(a -> AuditActions.DELETE.equals(a.action()))
+            .findFirst()
+            .orElseThrow();
     assertEquals(dacId, deleteAudit.dacId());
     assertEquals(user.getUserId(), deleteAudit.userId());
     assertNull(deleteAudit.affectedUserId());
