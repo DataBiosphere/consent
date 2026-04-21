@@ -487,6 +487,12 @@ public class FileStorageObjectService implements ConsentLogger {
     return fileStorageObject;
   }
 
+  /**
+   * Fetches metadata for an active (non-deleted) file. Used for write operations (delete,
+   * update-category) where acting on a tombstoned record would be incorrect.
+   *
+   * @throws NotFoundException if no active file exists for the given entity + id pair.
+   */
   public FileStorageObject fetchMetadataByEntityIdAndId(
       String entityId, Integer fileStorageObjectId) throws NotFoundException {
     FileStorageObject fileStorageObject =
@@ -497,16 +503,32 @@ public class FileStorageObjectService implements ConsentLogger {
     return fileStorageObject;
   }
 
+  /**
+   * Returns ALL file metadata for the entity, including soft-deleted records. Callers should
+   * inspect {@link FileStorageObject#getDeleted()} and filter as appropriate for their use case.
+   */
   public List<FileStorageObject> fetchAllMetadataByEntityId(String entityId) {
     return fileStorageObjectDAO.findFileMetadataByEntityId(entityId);
   }
 
+  /**
+   * Returns ALL files for the entity (active + deleted), populated with GCS content. Callers should
+   * inspect {@link FileStorageObject#getDeleted()} and filter as appropriate.
+   */
   public List<FileStorageObject> fetchAllByEntityId(String entityId) throws NotFoundException {
     List<FileStorageObject> fileStorageObjects = fileStorageObjectDAO.findFilesByEntityId(entityId);
     fetchAndPopulateMultipleUploadedFiles(fileStorageObjects);
     return fileStorageObjects;
   }
 
+  /**
+   * Returns ALL files for the entity and category (active + deleted), populated with GCS content.
+   * Callers should inspect {@link FileStorageObject#getDeleted()} and filter as appropriate.
+   *
+   * <p>This is intentionally inclusive so that callers such as DAR processing can still access a
+   * DAA that was soft-deleted (e.g. replaced by a newer version) without losing access to the
+   * underlying GCS object.
+   */
   public List<FileStorageObject> fetchAllByEntityIdAndCategory(
       String entityId, FileCategory category) throws NotFoundException {
     List<FileStorageObject> fileStorageObjects =

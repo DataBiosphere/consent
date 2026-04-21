@@ -119,6 +119,9 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
     return findFileById(fileStorageObjectId);
   }
 
+  /**
+   * Returns the file only if it is not soft-deleted. Used for write operations (delete, update).
+   */
   @RegisterRowMapper(FileStorageObjectMapperWithFSOPrefix.class)
   @SqlQuery(
       """
@@ -143,22 +146,28 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
   FileStorageObject findActiveFileByIdAndEntityId(
       @Bind("entityId") String entityId, @Bind("fileStorageObjectId") Integer fileStorageObjectId);
 
+  /**
+   * Returns ALL file records for the entity, including soft-deleted ones. Callers are responsible
+   * for filtering on {@code deleted} if needed.
+   */
   @SqlQuery(
       """
           SELECT *
           FROM file_storage_object
-          WHERE entity_id = :entityId AND
-                deleted != true
+          WHERE entity_id = :entityId
           """)
   List<FileStorageObject> findFilesByEntityId(@Bind("entityId") String entityId);
 
+  /**
+   * Returns ALL file records for the entity and category, including soft-deleted ones. Callers are
+   * responsible for filtering on {@code deleted} if needed.
+   */
   @SqlQuery(
       """
           SELECT *
           FROM file_storage_object
           WHERE entity_id = :entityId
                 AND category = :category
-                AND deleted != true
           """)
   List<FileStorageObject> findFilesByEntityIdAndCategory(
       @Bind("entityId") String entityId, @Bind("category") String category);
