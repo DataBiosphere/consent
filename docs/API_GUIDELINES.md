@@ -4,7 +4,7 @@ Use these rules when adding or changing endpoints in the Consent service.
 
 ## Endpoint Design
 
-- Keep all routes under `/api/`.
+- Keep authenticated API endpoints under `/api` and only place intentionally public endpoints outside `/api`.
 - Use nouns for resources and HTTP verbs for actions.
 - Prefer plural collection routes (for example `/api/users`) and singular subresources only when semantically necessary.
 - Keep path depth shallow and avoid action-heavy route names.

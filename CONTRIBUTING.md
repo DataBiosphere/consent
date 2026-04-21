@@ -59,7 +59,7 @@ If you're making breaking changes to the API, do the following:
 
 1. Try really hard not to make a breaking change to the API.
 2. Check in with Comms to explain the change and the impact on users.
-3. Write an email to users explaining the change and send it least a few days BEFORE the release goes out. You'll need to explain the change and what users need to do to update their code. Get Comms signoff on the wording.
+3. Write an email to users explaining the change and send it at least a few days BEFORE the release goes out. You'll need to explain the change and what users need to do to update their code. Get Comms signoff on the wording.
 4. Get someone Suitable to send the email to api-users@firecloud.org.
 
 ## FISMA documentation changes
@@ -70,7 +70,7 @@ should be updated.
 
 ## AI-Assisted Development
 
-We support AI-assisted workflows to speed up development and maintain consistency:
+We support AI-assisted workflows to speed up development and maintain consistency.
 For GitHub review guidance, start with `/.github/copilot-instructions.md` and use `/AGENTS.md` as the instruction index.
 
 - Use `/docs/ai/README.md` for codebase-specific prompts.
