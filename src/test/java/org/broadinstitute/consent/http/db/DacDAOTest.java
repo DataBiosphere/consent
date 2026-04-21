@@ -116,9 +116,9 @@ class DacDAOTest extends DAOTestHelper {
     String firstName = "A" + randomAlphabetic(20);
     String secondName = "B" + randomAlphabetic(20);
     String thirdName = "C" + randomAlphabetic(20);
-    Integer dacId1 = createRandomDACWithName(firstName);
-    Integer dacId2 = createRandomDACWithName(thirdName);
-    Integer dacId3 = createRandomDACWithName(secondName);
+    createRandomDACWithName(firstName);
+    createRandomDACWithName(thirdName);
+    createRandomDACWithName(secondName);
     List<Dac> dacs = dacDAO.findAll();
     assertEquals(dacs.get(0).getName(), firstName);
     assertEquals(dacs.get(1).getName(), secondName);
@@ -232,8 +232,9 @@ class DacDAOTest extends DAOTestHelper {
   @Test
   void testUpdateDacWithoutEmail() {
     String newValue = "New Value";
+    User user = createUser();
     Integer dacId = createRandomDAC();
-    dacDAO.updateDac(newValue, newValue, new Date(), dacId);
+    dacDAO.updateDac(newValue, newValue, dacId, user.getUserId());
     Dac updatedDac = dacDAO.findById(dacId);
 
     assertEquals(newValue, updatedDac.getName());
@@ -244,8 +245,9 @@ class DacDAOTest extends DAOTestHelper {
   void testUpdateDacWithEmail() {
     String newValue = "New Value";
     String newEmail = "new_email@test.com";
+    User user = createUser();
     Dac dac = insertDacWithEmail();
-    dacDAO.updateDac(newValue, newValue, newEmail, new Date(), dac.getDacId());
+    dacDAO.updateDac(newValue, newValue, newEmail, dac.getDacId(), user.getUserId());
     Dac updatedDac = dacDAO.findById(dac.getDacId());
 
     assertEquals(newValue, updatedDac.getName());
@@ -455,7 +457,7 @@ class DacDAOTest extends DAOTestHelper {
     Integer dacId = createRandomDAC();
     List<DacAudit> audits = dacDAO.findAuditsByDacId(dacId);
     assertNotNull(audits);
-    assertTrue(audits.isEmpty());
+    assertFalse(audits.isEmpty());
   }
 
   @Test
@@ -466,7 +468,7 @@ class DacDAOTest extends DAOTestHelper {
         UserRoles.MEMBER.getRoleId(), user.getUserId(), dac.getDacId(), user.getUserId());
 
     List<DacAudit> audits = dacDAO.findAuditsByDacId(dac.getDacId());
-    assertThat(audits, hasSize(1));
+    assertThat(audits, hasSize(2));
 
     DacAudit audit = audits.getFirst();
     assertEquals(dac.getDacId(), audit.dacId());
@@ -497,7 +499,7 @@ class DacDAOTest extends DAOTestHelper {
 
     List<DacAudit> audits = dacDAO.findAuditsByDacId(dac.getDacId());
     // Should have 2 audits: ADD from addDacMember, REMOVE from removeDacMember
-    assertThat(audits, hasSize(2));
+    assertThat(audits, hasSize(3));
 
     DacAudit removeAudit = audits.getFirst(); // newest first
     assertEquals(dac.getDacId(), removeAudit.dacId());
@@ -511,15 +513,12 @@ class DacDAOTest extends DAOTestHelper {
   @Test
   void testFindAuditsByDacId_insertDacAuditDirectly() {
     Dac dac = insertDacWithEmail();
-    User user = createUser();
-    dacDAO.insertDacAudit(dac.getDacId(), user.getUserId(), null, null, "CREATE");
 
     List<DacAudit> audits = dacDAO.findAuditsByDacId(dac.getDacId());
     assertThat(audits, hasSize(1));
 
     DacAudit audit = audits.getFirst();
     assertEquals(dac.getDacId(), audit.dacId());
-    assertEquals(user.getUserId(), audit.userId());
     assertNull(audit.affectedUserId());
     assertNull(audit.roleId());
     assertEquals(AuditActions.CREATE, audit.action());
@@ -529,10 +528,8 @@ class DacDAOTest extends DAOTestHelper {
   @Test
   void testFindAuditsByDacId_orderedNewestFirst() throws InterruptedException {
     Dac dac = insertDacWithEmail();
-    User user1 = createUser();
     User user2 = createUser();
 
-    dacDAO.insertDacAudit(dac.getDacId(), user1.getUserId(), null, null, "CREATE");
     // Small sleep to ensure distinct action_date timestamps
     Thread.sleep(10); // NOSONAR
     dacDAO.insertDacAudit(dac.getDacId(), user2.getUserId(), null, null, "UPDATE");
@@ -552,10 +549,6 @@ class DacDAOTest extends DAOTestHelper {
   void testFindAuditsByDacId_isolatedToDac() {
     Dac dac1 = insertDacWithEmail();
     Dac dac2 = insertDacWithEmail();
-    User user = createUser();
-
-    dacDAO.insertDacAudit(dac1.getDacId(), user.getUserId(), null, null, "CREATE");
-    dacDAO.insertDacAudit(dac2.getDacId(), user.getUserId(), null, null, "CREATE");
 
     List<DacAudit> audits1 = dacDAO.findAuditsByDacId(dac1.getDacId());
     List<DacAudit> audits2 = dacDAO.findAuditsByDacId(dac2.getDacId());
@@ -568,9 +561,13 @@ class DacDAOTest extends DAOTestHelper {
 
   private Dac insertDacWithEmail() {
     String testEmail = "test@email.com";
+    User user = createUser();
     Integer id =
         dacDAO.createDac(
-            "Test_" + randomAlphabetic(20), "Test_" + randomAlphabetic(20), testEmail, new Date());
+            "Test_" + randomAlphabetic(20),
+            "Test_" + randomAlphabetic(20),
+            testEmail,
+            user.getUserId());
     return dacDAO.findById(id);
   }
 
@@ -654,7 +651,8 @@ class DacDAOTest extends DAOTestHelper {
   }
 
   private Integer createRandomDACWithName(String name) {
-    return dacDAO.createDac(name, "Test_" + randomAlphabetic(20), new Date());
+    User user = createUser();
+    return dacDAO.createDac(name, "Test_" + randomAlphabetic(20), user.getUserId());
   }
 
   private Integer createRandomDAC() {

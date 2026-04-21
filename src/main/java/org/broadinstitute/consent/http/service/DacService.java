@@ -7,7 +7,6 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -22,7 +21,6 @@ import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
@@ -179,36 +177,20 @@ public class DacService implements ConsentLogger {
   }
 
   public Integer createDac(String name, String description, Integer userId) {
-    Date createDate = new Date();
-    Integer dacId = dacDAO.createDac(name, description, createDate);
-    if (dacId != null) {
-      dacDAO.insertDacAudit(
-          dacId, userId, null, null, AuditActions.CREATE.getValue().toUpperCase());
-    }
-    return dacId;
+    return dacDAO.createDac(name, description, userId);
   }
 
   public Integer createDac(String name, String description, String email, Integer userId) {
-    Date createDate = new Date();
-    Integer dacId = dacDAO.createDac(name, description, email, createDate);
-    if (dacId != null) {
-      dacDAO.insertDacAudit(
-          dacId, userId, null, null, AuditActions.CREATE.getValue().toUpperCase());
-    }
-    return dacId;
+    return dacDAO.createDac(name, description, email, userId);
   }
 
   public void updateDac(String name, String description, Integer dacId, Integer userId) {
-    Date updateDate = new Date();
-    dacDAO.updateDac(name, description, updateDate, dacId);
-    dacDAO.insertDacAudit(dacId, userId, null, null, AuditActions.UPDATE.getValue().toUpperCase());
+    dacDAO.updateDac(name, description, dacId, userId);
   }
 
   public void updateDac(
       String name, String description, String email, Integer dacId, Integer userId) {
-    Date updateDate = new Date();
-    dacDAO.updateDac(name, description, email, updateDate, dacId);
-    dacDAO.insertDacAudit(dacId, userId, null, null, AuditActions.UPDATE.getValue().toUpperCase());
+    dacDAO.updateDac(name, description, email, dacId, userId);
   }
 
   public void deleteDac(User user, Integer dacId) throws IllegalArgumentException {

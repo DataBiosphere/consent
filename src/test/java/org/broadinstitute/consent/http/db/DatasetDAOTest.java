@@ -1494,7 +1494,9 @@ class DatasetDAOTest extends DAOTestHelper {
   private Dac insertDac() {
     Integer id =
         dacDAO.createDac(
-            "Test_" + randomAlphanumeric(20), "Test_" + randomAlphanumeric(20), new Date());
+            "Test_" + randomAlphanumeric(20),
+            "Test_" + randomAlphanumeric(20),
+            createUser().getUserId());
     return dacDAO.findById(id);
   }
 

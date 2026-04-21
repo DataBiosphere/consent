@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import org.broadinstitute.consent.http.models.User;
@@ -289,6 +288,6 @@ class DACAutomationRuleDAOTest extends DAOTestHelper {
 
   private Integer createRandomDAC() {
     return dacDAO.createDac(
-        "Test_" + randomAlphabetic(20), "Test_" + randomAlphanumeric(20), new Date());
+        "Test_" + randomAlphabetic(20), "Test_" + randomAlphanumeric(20), createUser().getUserId());
   }
 }

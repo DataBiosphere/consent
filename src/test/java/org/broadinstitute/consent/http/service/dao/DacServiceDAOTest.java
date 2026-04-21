@@ -64,7 +64,7 @@ class DacServiceDAOTest extends DAOTestHelper {
                   "dac name: " + randomAlphabetic(10),
                   "dac description: " + randomAlphabetic(10),
                   "dac email: " + randomAlphabetic(10),
-                  new Date());
+                  createUser().getUserId());
           // Data Access Agreement
           int daaId =
               daaDAO.createDaa(
@@ -184,7 +184,7 @@ class DacServiceDAOTest extends DAOTestHelper {
             "dac name: " + randomAlphabetic(10),
             "dac description: " + randomAlphabetic(10),
             "dac email: " + randomAlphabetic(10),
-            new Date());
+            superUser.getUserId());
     Dac dac = dacDAO.findById(dacId);
     try {
       serviceDAO.deleteDacAndRemoveDaaAssociation(superUser, dac);
