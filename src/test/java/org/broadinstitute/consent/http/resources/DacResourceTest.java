@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -13,7 +12,6 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.ForbiddenException;
-import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +27,6 @@ import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,8 +41,6 @@ class DacResourceTest extends AbstractTestHelper {
 
   @Mock private DatasetService datasetService;
 
-  @Mock private UserService userService;
-
   private DacResource dacResource;
 
   private final AuthUser authUser = new AuthUser("test@test.com");
@@ -54,7 +49,7 @@ class DacResourceTest extends AbstractTestHelper {
 
   @BeforeEach
   void setUp() {
-    dacResource = new DacResource(dacService, userService, datasetService);
+    dacResource = new DacResource(dacService, datasetService);
   }
 
   @Test
@@ -549,8 +544,9 @@ class DacResourceTest extends AbstractTestHelper {
 
   @Test
   void testApproveDataset_UserNotFound() {
-    when(userService.findUserByEmail(anyString())).thenThrow(NotFoundException.class);
-    try (Response response = dacResource.approveDataset(authUser, 1, 1, "test")) {
+    User user = new User();
+    DuosUser duosUser = new DuosUser(authUser, user);
+    try (Response response = dacResource.approveDataset(duosUser, 1, 1, "test")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
@@ -560,10 +556,10 @@ class DacResourceTest extends AbstractTestHelper {
     User user = new User();
     Dataset dataset = new Dataset();
     dataset.setDacId(2);
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    DuosUser duosUser = new DuosUser(authUser, user);
     when(datasetService.findDatasetWithoutFSOInformation(anyInt())).thenReturn(dataset);
 
-    try (Response response = dacResource.approveDataset(authUser, 1, 1, "test")) {
+    try (Response response = dacResource.approveDataset(duosUser, 1, 1, "test")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
@@ -574,9 +570,9 @@ class DacResourceTest extends AbstractTestHelper {
     user.setChairpersonRoleWithDAC(2);
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    DuosUser duosUser = new DuosUser(authUser, user);
     when(datasetService.findDatasetWithoutFSOInformation(anyInt())).thenReturn(dataset);
-    try (Response response = dacResource.approveDataset(authUser, 1, 1, "test")) {
+    try (Response response = dacResource.approveDataset(duosUser, 1, 1, "test")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
     }
   }
@@ -585,11 +581,11 @@ class DacResourceTest extends AbstractTestHelper {
   void testApproveDataset_EmptyPayload() {
     User user = new User();
     user.setChairpersonRoleWithDAC(1);
+    DuosUser duosUser = new DuosUser(authUser, user);
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
     when(datasetService.findDatasetWithoutFSOInformation(anyInt())).thenReturn(dataset);
-    try (Response response = dacResource.approveDataset(authUser, 1, 1, "{}")) {
+    try (Response response = dacResource.approveDataset(duosUser, 1, 1, "{}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -601,11 +597,11 @@ class DacResourceTest extends AbstractTestHelper {
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
     dataset.setDacApproval(true);
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    DuosUser duosUser = new DuosUser(authUser, user);
     when(datasetService.findDatasetWithoutFSOInformation(anyInt())).thenReturn(dataset);
     when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
         .thenReturn(dataset);
-    try (Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}")) {
+    try (Response response = dacResource.approveDataset(duosUser, 1, 1, "{approval: true}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(GsonUtil.buildGson().toJson(dataset), response.getEntity());
     }
@@ -621,11 +617,11 @@ class DacResourceTest extends AbstractTestHelper {
     datasetResponse.setDacApproval(true);
     dataset.setDacId(1);
     dataset.setDacApproval(false);
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    DuosUser duosUser = new DuosUser(authUser, user);
     when(datasetService.findDatasetWithoutFSOInformation(anyInt())).thenReturn(dataset);
     when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
         .thenReturn(datasetResponse);
-    try (Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: true}")) {
+    try (Response response = dacResource.approveDataset(duosUser, 1, 1, "{approval: true}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
       assertEquals(GsonUtil.buildGson().toJson(datasetResponse), response.getEntity());
     }
@@ -638,11 +634,11 @@ class DacResourceTest extends AbstractTestHelper {
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
     dataset.setDacApproval(true);
-    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    DuosUser duosUser = new DuosUser(authUser, user);
     when(datasetService.findDatasetWithoutFSOInformation(anyInt())).thenReturn(dataset);
     when(datasetService.approveDataset(any(Dataset.class), any(User.class), anyBoolean()))
         .thenThrow(ForbiddenException.class);
-    try (Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: false}")) {
+    try (Response response = dacResource.approveDataset(duosUser, 1, 1, "{approval: false}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
   }

@@ -31,21 +31,18 @@ import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 @Path("api/dac")
 public class DacResource extends Resource {
 
   private final DacService dacService;
-  private final UserService userService;
   private final DatasetService datasetService;
 
   @Inject
   public DacResource(
-      DacService dacService, UserService userService, DatasetService datasetService) {
+      DacService dacService, DatasetService datasetService) {
     this.dacService = dacService;
-    this.userService = userService;
     this.datasetService = datasetService;
   }
 
@@ -281,12 +278,12 @@ public class DacResource extends Resource {
   @Path("{dacId}/dataset/{datasetId}")
   @RolesAllowed({CHAIRPERSON})
   public Response approveDataset(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @PathParam("dacId") Integer dacId,
       @PathParam("datasetId") Integer datasetId,
       String json) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       Dataset dataset = datasetService.findDatasetWithoutFSOInformation(datasetId);
       if (Objects.isNull(dataset) || !Objects.equals(dataset.getDacId(), dacId)) {
         // Vague message is intentional, don't want to reveal too much info
