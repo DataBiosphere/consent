@@ -209,20 +209,20 @@ public class JsonSchemaUtil implements ConsentLogger {
       }
     }
 
-    // For all others, derive from instance location or arguments
-    Object[] args = error.getArguments();
-    if (args != null && args.length > 0) {
-      return args[0].toString();
-    }
-
-    // Fallback: try to extract from schema location or instance location
+    // For all others, derive from instance location first (arguments may be numeric schema
+    // constraints, e.g. minItems argument is the minimum count, not the field name)
     String instanceLoc = error.getInstanceLocation().toString();
     if (instanceLoc != null && !instanceLoc.isEmpty()) {
-      // Extract last path component
       int lastSlash = instanceLoc.lastIndexOf('/');
       if (lastSlash >= 0 && lastSlash < instanceLoc.length() - 1) {
         return instanceLoc.substring(lastSlash + 1);
       }
+    }
+
+    // Fallback to arguments only when instance location yields nothing useful
+    Object[] args = error.getArguments();
+    if (args != null && args.length > 0) {
+      return args[0].toString();
     }
 
     return null;
