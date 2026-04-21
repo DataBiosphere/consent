@@ -40,7 +40,7 @@ tech lead, though ask. Do chase your reviewers (or find others) if they're
 slow; we don't like to let PRs linger. If you get PR feedback it's back to 
 you to address it and then nudge your reviewers for re-review.
 
-Your PR is ready to merge when all of the following things are true:
+Your PR is ready to merge when all the following things are true:
 
 1. At least one, preferably two, reviewers have thumbed (or otherwise approved) your PR
 2. If your change is user-facing, your PO has seen it and signed off
@@ -57,10 +57,10 @@ We strive to minimize breaking changes to the API, but sometimes they're unavoid
 
 If you're making breaking changes to the API, do the following:
 
-0. Try really hard not to make a breaking change to the API.
-1. Check in with Comms to explain the change and the impact on users.
-2. Write an email to users explaining the change and send it least a few days BEFORE the release goes out. You'll need to explain the change and what users need to do to update their code. Get Comms signoff on the wording.
-3. Get someone Suitable to send the email to api-users@firecloud.org.
+1. Try really hard not to make a breaking change to the API.
+2. Check in with Comms to explain the change and the impact on users.
+3. Write an email to users explaining the change and send it least a few days BEFORE the release goes out. You'll need to explain the change and what users need to do to update their code. Get Comms signoff on the wording.
+4. Get someone Suitable to send the email to api-users@firecloud.org.
 
 ## FISMA documentation changes
 
@@ -71,6 +71,7 @@ should be updated.
 ## AI-Assisted Development
 
 We support AI-assisted workflows to speed up development and maintain consistency:
+For GitHub review guidance, start with `/.github/copilot-instructions.md` and use `/AGENTS.md` as the instruction index.
 
 - Use `/docs/ai/README.md` for codebase-specific prompts.
 - Prompts are available for feature development, API endpoints, bugfixes, and refactoring.
