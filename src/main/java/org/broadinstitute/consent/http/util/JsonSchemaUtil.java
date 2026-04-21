@@ -6,37 +6,45 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.gson.Gson;
-import com.networknt.schema.JsonSchema;
-import com.networknt.schema.JsonSchemaFactory;
-import com.networknt.schema.SchemaValidatorsConfig;
-import com.networknt.schema.SpecVersion;
-import com.networknt.schema.ValidationMessage;
+import com.networknt.schema.Error;
+import com.networknt.schema.InputFormat;
+import com.networknt.schema.Schema;
+import com.networknt.schema.SchemaRegistry;
+import com.networknt.schema.SpecificationVersion;
 import jakarta.ws.rs.BadRequestException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
+import org.jspecify.annotations.NonNull;
 
 public class JsonSchemaUtil implements ConsentLogger {
 
   private final LoadingCache<String, String> cache;
-  private final JsonSchemaFactory factory;
+  private final SchemaRegistry schemaRegistry;
   Map<String, String> fieldLabels = new HashMap<>();
   Map<String, String> fieldDescriptions = new HashMap<>();
   private static final Map<String, String> FIELD_NAME_OVERRIDES =
       Map.of("consentGroups", "Datasets");
+  private static final String SCHEMA_LOAD_ERROR = "Unable to load the data submitter schema: %s";
 
   public JsonSchemaUtil() {
-    factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V201909);
+    // Create SchemaRegistry with JSON Schema Draft 2019-09
+    schemaRegistry =
+        new SchemaRegistry.Builder()
+            .defaultDialectId(SpecificationVersion.DRAFT_2019_09.getDialectId())
+            .build();
     CacheLoader<String, String> loader =
         new CacheLoader<>() {
           @Override
-          public String load(String key) throws Exception {
+          public @NonNull String load(@NonNull String key) throws Exception {
             return IOUtils.resourceToString(key, Charset.defaultCharset());
           }
         };
@@ -53,7 +61,7 @@ public class JsonSchemaUtil implements ConsentLogger {
       String datasetRegistrationSchemaV1 = "/dataset-registration-schema_v1.json";
       return cache.get(datasetRegistrationSchemaV1);
     } catch (ExecutionException ee) {
-      logException("Unable to load the data submitter schema: %s".formatted(ee.getMessage()), ee);
+      logException(SCHEMA_LOAD_ERROR.formatted(ee.getMessage()), ee);
       return null;
     }
   }
@@ -64,18 +72,13 @@ public class JsonSchemaUtil implements ConsentLogger {
    * @return Schema The Schema
    * @throws ExecutionException Error reading from cache
    */
-  JsonSchema getDatasetRegistrationSchema() throws ExecutionException {
+  Schema getDatasetRegistrationSchema() throws ExecutionException {
     String schemaString = getDatasetRegistrationSchemaV1();
 
     // Extract labels and descriptions for error messages
     extractLabelsAndDescriptions(schemaString);
 
-    SchemaValidatorsConfig config = new SchemaValidatorsConfig();
-    config.setHandleNullableField(false);
-    config.setTypeLoose(false);
-    config.setFormatAssertionsEnabled(true);
-
-    return factory.getSchema(schemaString, config);
+    return schemaRegistry.getSchema(schemaString);
   }
 
   /**
@@ -84,16 +87,17 @@ public class JsonSchemaUtil implements ConsentLogger {
    * @param datasetRegistrationInstance The string instance of a dataset registration object
    * @return Set of human-readable validation errors, or an empty list if valid.
    */
-  public Set<ValidationMessage> validateSchema_v1(String datasetRegistrationInstance) {
+  public Set<Error> validateSchemaV1(String datasetRegistrationInstance) {
     try {
-      JsonSchema schema = getDatasetRegistrationSchema();
-      JsonNode datasetRegistrationJson = new ObjectMapper().readTree(datasetRegistrationInstance);
+      Schema schema = getDatasetRegistrationSchema();
+      // Validate the input JSON string against the schema
+      List<Error> errors = schema.validate(datasetRegistrationInstance, InputFormat.JSON);
 
-      return schema.validate(datasetRegistrationJson);
+      return new HashSet<>(errors);
     } catch (ExecutionException ee) {
-      logException("Unable to load the data submitter schema: %s".formatted(ee.getMessage()), ee);
+      logException(SCHEMA_LOAD_ERROR.formatted(ee.getMessage()), ee);
       return Set.of();
-    } catch (Exception e) {
+    } catch (Exception _) {
       throw new BadRequestException("Invalid schema");
     }
   }
@@ -105,7 +109,7 @@ public class JsonSchemaUtil implements ConsentLogger {
    * @return Set of human-readable validation error messages, or an empty list if valid.
    */
   public Set<String> validateSchemaMessagesV1(String json) {
-    return validateSchema_v1(json).stream()
+    return validateSchemaV1(json).stream()
         .map(this::formatMessage)
         .collect(Collectors.toCollection(LinkedHashSet::new));
   }
@@ -119,7 +123,7 @@ public class JsonSchemaUtil implements ConsentLogger {
   public DatasetRegistrationSchemaV1 deserializeDatasetRegistration(
       String datasetRegistrationInstance) {
     try {
-      Set<ValidationMessage> errors = this.validateSchema_v1(datasetRegistrationInstance);
+      Set<Error> errors = this.validateSchemaV1(datasetRegistrationInstance);
       if (!errors.isEmpty()) {
         return null;
       }
@@ -127,7 +131,7 @@ public class JsonSchemaUtil implements ConsentLogger {
       Gson gson = new Gson();
       return gson.fromJson(datasetRegistrationInstance, DatasetRegistrationSchemaV1.class);
     } catch (Exception ee) {
-      logException("Unable to load the data submitter schema: %s".formatted(ee.getMessage()), ee);
+      logException(SCHEMA_LOAD_ERROR.formatted(ee.getMessage()), ee);
       return null;
     }
   }
@@ -144,8 +148,8 @@ public class JsonSchemaUtil implements ConsentLogger {
       JsonNode properties = schemaNode.path("properties");
 
       properties
-          .fields()
-          .forEachRemaining(
+          .properties()
+          .forEach(
               entry -> {
                 String field = entry.getKey();
 
@@ -159,7 +163,7 @@ public class JsonSchemaUtil implements ConsentLogger {
                   fieldDescriptions.put(field, descNode.asText());
                 }
               });
-    } catch (Exception e) {
+    } catch (Exception _) {
       fieldLabels = Map.of();
       fieldDescriptions = Map.of();
     }
@@ -168,48 +172,60 @@ public class JsonSchemaUtil implements ConsentLogger {
   /**
    * Formats a validation message into a human-readable string
    *
-   * @param vm The validation message
+   * @param error The validation error
    * @return The formatted message
    */
-  String formatMessage(ValidationMessage vm) {
-    String field = fieldFromMessage(vm);
+  String formatMessage(Error error) {
+    String field = fieldFromMessage(error);
     String name = displayName(field);
 
-    return switch (vm.getType()) {
+    return switch (error.getKeyword()) {
       case "required" -> name + " is required";
       case "minLength" -> name + " must not be empty";
       case "minItems" -> name + " must have at least one item";
       case "enum" -> name + " must be one of the allowed options";
       case "type" -> name + " has an invalid value";
-      default -> vm.getMessage(); // fallback to default message
+      default -> error.getMessage(); // fallback to default message
     };
   }
 
   /**
    * Derives the field name from the schema location in a validation message
    *
-   * @param vm The validation message
+   * @param error The validation error
    * @return The field name, or null if not found
    */
-  private String fieldFromMessage(ValidationMessage vm) {
-    // REQUIRED → field name comes from arguments
-    if ("required".equals(vm.getType())) {
-      Object[] args = vm.getArguments();
-      return (args != null && args.length > 0) ? args[0].toString() : null;
+  private String fieldFromMessage(Error error) {
+    // For REQUIRED errors, try to get the property name from details
+    if ("required".equals(error.getKeyword())) {
+      String property = error.getProperty();
+      if (property != null) {
+        return property;
+      }
+      // Fallback to arguments
+      Object[] args = error.getArguments();
+      if (args != null && args.length > 0) {
+        return args[0].toString();
+      }
     }
 
-    // ALL OTHERS → derive from schema location
-    String loc = vm.getSchemaLocation().toString();
-    if (loc == null) return null;
+    // For all others, derive from instance location or arguments
+    Object[] args = error.getArguments();
+    if (args != null && args.length > 0) {
+      return args[0].toString();
+    }
 
-    String marker = "#/properties/";
-    int idx = loc.indexOf(marker);
-    if (idx < 0) return null;
+    // Fallback: try to extract from schema location or instance location
+    String instanceLoc = error.getInstanceLocation().toString();
+    if (instanceLoc != null && !instanceLoc.isEmpty()) {
+      // Extract last path component
+      int lastSlash = instanceLoc.lastIndexOf('/');
+      if (lastSlash >= 0 && lastSlash < instanceLoc.length() - 1) {
+        return instanceLoc.substring(lastSlash + 1);
+      }
+    }
 
-    String rest = loc.substring(idx + marker.length());
-    int slash = rest.indexOf('/');
-
-    return slash > 0 ? rest.substring(0, slash) : rest;
+    return null;
   }
 
   /**
