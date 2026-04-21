@@ -232,6 +232,13 @@ public class FileStorageObjectService implements ConsentLogger {
     }
 
     // Fallback: preserve response contract if DAO returns null
+    logWarn(
+        "Database did not return deleted FileStorageObject (id: "
+            + fileStorageObjectId
+            + ", entity: "
+            + resolvedEntityId
+            + "). Applying deletion flags in memory. "
+            + "Next query for this file may show inconsistent state.");
     fileStorageObject.setDeleted(true);
     fileStorageObject.setDeleteUserId(user.getUserId());
     fileStorageObject.setDeleteDate(deleteDate);
