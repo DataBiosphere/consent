@@ -190,9 +190,14 @@ public interface DacDAO extends Transactional<DacDAO> {
 
   @SqlUpdate(
       """
-      WITH deleted AS (DELETE FROM dac where dac_id = :dacId)
+      WITH deleted AS (
+        DELETE FROM dac
+        WHERE dac_id = :dacId
+        RETURNING dac_id
+      )
       INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
-      VALUES (:dacId, :userId, NULL, NULL, 'DELETE', NOW())
+      SELECT dac_id, :userId, NULL, NULL, 'DELETE', NOW()
+      FROM deleted
       """)
   void deleteDac(@Bind("dacId") Integer dacId, @Bind("userId") Integer userId);
 

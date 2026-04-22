@@ -16,8 +16,6 @@ import org.jdbi.v3.core.statement.Update;
 public class DacServiceDAO implements ConsentLogger {
 
   private final Jdbi jdbi;
-  private final DaaDAO daaDAO;
-  private final DacDAO dacDAO;
   private static final String DAC_ID = "dacId";
   private static final String USER_ID = "userId";
   private static final String UPDATE_DATASET_STATEMENT =
@@ -35,8 +33,6 @@ public class DacServiceDAO implements ConsentLogger {
   @Inject
   public DacServiceDAO(Jdbi jdbi) {
     this.jdbi = jdbi;
-    daaDAO = jdbi.onDemand(DaaDAO.class);
-    dacDAO = jdbi.onDemand(DacDAO.class);
   }
 
   public void deleteDacAndRemoveDaaAssociation(User user, Dac dac) throws IllegalArgumentException {
@@ -46,9 +42,12 @@ public class DacServiceDAO implements ConsentLogger {
     }
     jdbi.useTransaction(
         handle -> {
+          DaaDAO daaDAO = handle.attach(DaaDAO.class);
+          DacDAO dacDAO = handle.attach(DacDAO.class);
           DataAccessAgreement daa = dac.getAssociatedDaa();
           if (daa != null) {
-            daaDAO.deleteDacDaaRelation(daa.getDaaId(), dac.getDacId(), user.getUserId());
+            daaDAO.deleteDacDaaRelation(
+                daa.getDaaId(), dac.getDacId(), user.getUserId());
           }
 
           // Find all dac chair/member user roles and audit each removal
@@ -61,7 +60,9 @@ public class DacServiceDAO implements ConsentLogger {
                       Objects.equals(userRole.getRoleId(), UserRoles.CHAIRPERSON.getRoleId())
                           || Objects.equals(userRole.getRoleId(), UserRoles.MEMBER.getRoleId()))
               .forEach(
-                  userRole -> dacDAO.removeDacMember(userRole.getUserRoleId(), user.getUserId()));
+                  userRole ->
+                      dacDAO.removeDacMember(
+                          userRole.getUserRoleId(), user.getUserId()));
 
           Update datasetUpdate = handle.createUpdate(UPDATE_DATASET_STATEMENT);
           datasetUpdate.bind(DAC_ID, dac.getDacId());

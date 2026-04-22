@@ -474,10 +474,9 @@ class DacDAOTest extends DAOTestHelper {
 
   @Test
   void testFindAuditsByDacId_empty() {
-    Integer dacId = createRandomDAC();
-    List<DacAudit> audits = dacDAO.findAuditsByDacId(dacId);
+    List<DacAudit> audits = dacDAO.findAuditsByDacId(1);
     assertNotNull(audits);
-    assertFalse(audits.isEmpty());
+    assertTrue(audits.isEmpty());
   }
 
   @Test
