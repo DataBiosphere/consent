@@ -12,9 +12,9 @@ import org.broadinstitute.consent.http.models.Dataset;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for the Data Passport visa types introduced in
- * https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5372874: ConsentedDataUseTermsVisa,
- * OversightBodiesVisa, and RequiredAgreementsVisa.
+ * Unit tests for the Data Passport visa types introduced in <a
+ * href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5372874">GA4GH Data Passports</a>:
+ * ConsentedDataUseTermsVisa, OversightBodiesVisa, and RequiredAgreementsVisa.
  */
 class DataPassportVisaTest {
 
@@ -178,7 +178,54 @@ class DataPassportVisaTest {
   }
 
   // -----------------------------------------------------------------------
-  // Common contract across all three visa types
+  // ApprovedUsersVisa
+  // -----------------------------------------------------------------------
+
+  @Test
+  void approvedUsers_type() {
+    assertEquals(VisaClaimTypes.APPROVED_USERS.type, new ApprovedUsersVisa("DUOS-000001").type());
+  }
+
+  @Test
+  void approvedUsers_value_containsDatasetIdentifier() {
+    ApprovedUsersVisa visa = new ApprovedUsersVisa("DUOS-000042");
+    assertEquals(PassportService.getApprovedUsersEndpoint("DUOS-000042"), visa.value());
+  }
+
+  @Test
+  void approvedUsers_value_containsDatasetIdentifierInUrl() {
+    ApprovedUsersVisa visa = new ApprovedUsersVisa("DUOS-000042");
+    assertTrue(visa.value().contains("DUOS-000042"));
+  }
+
+  @Test
+  void approvedUsers_source_isIss() {
+    assertEquals(PassportService.ISS, new ApprovedUsersVisa("DUOS-000001").source());
+  }
+
+  @Test
+  void approvedUsers_by_isDac() {
+    assertEquals(VisaBy.DAC.name().toLowerCase(), new ApprovedUsersVisa("DUOS-000001").by());
+  }
+
+  @Test
+  void approvedUsers_asserted_isEpochSeconds() {
+    long before = Instant.now().getEpochSecond();
+    long asserted = new ApprovedUsersVisa("DUOS-000001").asserted();
+    long after = Instant.now().getEpochSecond();
+    assertTrue(asserted >= before && asserted <= after);
+  }
+
+  @Test
+  void approvedUsers_asserted_isNotMilliseconds() {
+    long asserted = new ApprovedUsersVisa("DUOS-000001").asserted();
+    long nowSeconds = Instant.now().getEpochSecond();
+    // If asserted were in milliseconds it would be ~1000x larger than nowSeconds
+    assertTrue(asserted <= nowSeconds + 5, "asserted should be seconds, not milliseconds");
+  }
+
+  // -----------------------------------------------------------------------
+  // Common contract across all four visa types
   // -----------------------------------------------------------------------
 
   @Test
@@ -186,7 +233,8 @@ class DataPassportVisaTest {
     VisaClaimType[] visas = {
       new ConsentedDataUseTermsVisa(datasetWithAlias(1)),
       new OversightBodiesVisa(dac(1)),
-      new RequiredAgreementsVisa(daa(1))
+      new RequiredAgreementsVisa(daa(1)),
+      new ApprovedUsersVisa("DUOS-000001")
     };
     for (VisaClaimType v : visas) {
       assertNotNull(v.type(), "type must not be null for " + v.getClass().getSimpleName());

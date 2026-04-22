@@ -8,6 +8,7 @@ public enum VisaClaimTypes {
 
   // GA4GH Data Passport visa types (see
   // https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5372874)
+  APPROVED_USERS("ApprovedUsers"),
   CONSENTED_DATA_USE_TERMS("ConsentedDataUseTerms"),
   OVERSIGHT_BODIES("OversightBodies"),
   REQUIRED_AGREEMENTS("RequiredAgreements");

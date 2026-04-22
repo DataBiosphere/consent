@@ -8,6 +8,7 @@ get:
     (see `/api/passport/userinfo`) but contains dataset-centric visas that describe
     the governance requirements of the dataset rather than the permissions of a researcher:
 
+    - **ApprovedUsers** — links to the dataset's approved user API endpoint
     - **ConsentedDataUseTerms** — links to the dataset's DUO-coded data use terms
     - **OversightBodies** — identifies the DAC responsible for governing access
     - **RequiredAgreements** — references the Data Access Agreement users must accept (when one exists)

@@ -65,8 +65,9 @@ public class PassportService implements ConsentLogger {
 
   /**
    * Generates a Data Passport for a specific dataset, as proposed in the GA4GH Data Passports
-   * specification (see https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5372874). The returned
-   * {@link PassportClaim} uses the same envelope as a Researcher Passport but contains
+   * specification (see <a *
+   * href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5372874">GA4GH Data Passports</a>).
+   * The returned {@link PassportClaim} uses the same envelope as a Researcher Passport but contains
    * dataset-centric visas:
    *
    * <ul>
@@ -90,6 +91,9 @@ public class PassportService implements ConsentLogger {
     }
 
     List<Visa> visas = new ArrayList<>();
+
+    // ApprovedUsers - links to the API endpoint describing approved users for the dataset
+    visas.add(visaFromVisaClaimType(datasetIdentifier, new ApprovedUsersVisa(datasetIdentifier)));
 
     // ConsentedDataUseTerms — always present if the dataset exists
     visas.add(visaFromVisaClaimType(datasetIdentifier, new ConsentedDataUseTermsVisa(dataset)));
@@ -151,5 +155,10 @@ public class PassportService implements ConsentLogger {
 
   public static long getEpochSeconds(Instant instant) {
     return instant.getEpochSecond();
+  }
+
+  public static String getApprovedUsersEndpoint(String datasetIdentifier) {
+    return "https://consent.dsde-prod.broadinstitute.org/api/datataset/%s/approved-users"
+        .formatted(datasetIdentifier);
   }
 }
