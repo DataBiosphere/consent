@@ -5,16 +5,21 @@ import static org.broadinstitute.consent.http.AbstractTestHelper.randomAlphabeti
 import static org.broadinstitute.consent.http.AbstractTestHelper.randomAlphanumeric;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.storage.BlobId;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,13 +29,17 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -42,11 +51,15 @@ class FileStorageObjectServiceTest {
 
   @Mock private GCSService gcsService;
   @Mock private DatasetService datasetService;
+  @Mock private DacService dacService;
+  @Mock private DataAccessRequestService dataAccessRequestService;
 
   private FileStorageObjectService service;
 
   private void initService() {
-    service = new FileStorageObjectService(fileStorageObjectDAO, gcsService, datasetService);
+    service =
+        new FileStorageObjectService(
+            fileStorageObjectDAO, gcsService, datasetService, dacService, dataAccessRequestService);
   }
 
   @Test
@@ -280,6 +293,7 @@ class FileStorageObjectServiceTest {
   @Test
   void testFetchMetadataByEntityAndEntityIdForReadDataset() {
     User user = new User();
+    user.setAdminRole(); // ADMIN can read dataset documents
     Integer datasetId = 123;
     Integer fileId = 10;
     FileStorageObject fileStorageObject = new FileStorageObject();
@@ -290,9 +304,7 @@ class FileStorageObjectServiceTest {
 
     initService();
 
-    FileStorageObject returned =
-        service.fetchMetadataByEntityAndEntityIdForRead(
-            user, "dataset", datasetId.toString(), fileId);
+    FileStorageObject returned = service.getDocument(user, "dataset", datasetId.toString(), fileId);
 
     assertEquals(fileStorageObject, returned);
   }
@@ -300,6 +312,7 @@ class FileStorageObjectServiceTest {
   @Test
   void testAllFetchMetadataByEntityAndEntityIdForReadStudy() {
     User user = new User();
+    user.setAdminRole(); // ADMIN can read study documents
     Integer studyId = 456;
     Study study = new Study();
     study.setUuid(java.util.UUID.randomUUID());
@@ -312,14 +325,95 @@ class FileStorageObjectServiceTest {
     initService();
 
     List<FileStorageObject> returnedFiles =
-        service.fetchAllMetadataByEntityAndEntityIdForRead(user, "study", studyId.toString());
+        service.listDocuments(user, "study", studyId.toString());
 
     assertEquals(fileStorageObjects, returnedFiles);
+  }
+
+  @ParameterizedTest
+  @CsvSource({"MEMBER,false", "CHAIRPERSON,true"})
+  void testListDocumentsForStudyAccessByRole(String role, boolean allowed) {
+    User user = new User();
+    applyRole(user, role);
+    Integer studyId = 456;
+    Study study = new Study();
+    study.setUuid(java.util.UUID.randomUUID());
+    String studyEntityId = studyId.toString();
+    List<FileStorageObject> fileStorageObjects = List.of(new FileStorageObject());
+
+    initService();
+
+    if (!allowed) {
+      assertThrows(
+          ForbiddenException.class, () -> service.listDocuments(user, "study", studyEntityId));
+      verifyNoInteractions(datasetService);
+      verifyNoInteractions(fileStorageObjectDAO);
+      return;
+    }
+
+    when(datasetService.findStudyByIdForRead(user, studyId)).thenReturn(study);
+    when(fileStorageObjectDAO.findFileMetadataByEntityId(study.getUuid().toString()))
+        .thenReturn(fileStorageObjects);
+
+    List<FileStorageObject> returnedFiles =
+        service.listDocuments(user, "study", studyId.toString());
+
+    assertEquals(fileStorageObjects, returnedFiles);
+    verify(fileStorageObjectDAO).findFileMetadataByEntityId(study.getUuid().toString());
+  }
+
+  private void applyRole(User user, String role) {
+    switch (role) {
+      case "MEMBER" -> user.setMemberRole();
+      case "CHAIRPERSON" -> user.setChairpersonRole();
+      default -> throw new IllegalArgumentException("Unsupported role: " + role);
+    }
+  }
+
+  @Test
+  void testFetchAllMetadataByEntityAndEntityIdForReadDac() {
+    User user = new User();
+    user.setAdminRole();
+    Integer dacId = 456;
+    List<FileStorageObject> fileStorageObjects = List.of(new FileStorageObject());
+
+    when(dacService.findById(dacId)).thenReturn(new Dac());
+    when(fileStorageObjectDAO.findFileMetadataByEntityId(dacId.toString()))
+        .thenReturn(fileStorageObjects);
+
+    initService();
+
+    List<FileStorageObject> returnedFiles = service.listDocuments(user, "dac", dacId.toString());
+
+    assertEquals(fileStorageObjects, returnedFiles);
+    verify(fileStorageObjectDAO).findFileMetadataByEntityId(dacId.toString());
+  }
+
+  @Test
+  void testFetchAllMetadataByEntityAndEntityIdForReadDar() {
+    User user = new User();
+    user.setUserId(25);
+    String darReferenceId = "DAR-123";
+    List<FileStorageObject> fileStorageObjects = List.of(new FileStorageObject());
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setUserId(user.getUserId());
+
+    when(dataAccessRequestService.findByReferenceId(darReferenceId)).thenReturn(dar);
+    when(fileStorageObjectDAO.findFileMetadataByEntityId(darReferenceId))
+        .thenReturn(fileStorageObjects);
+
+    initService();
+
+    List<FileStorageObject> returnedFiles = service.listDocuments(user, "dar", darReferenceId);
+
+    assertEquals(fileStorageObjects, returnedFiles);
+    verify(fileStorageObjectDAO).findFileMetadataByEntityId(darReferenceId);
   }
 
   @Test
   void testFetchMetadataByEntityAndEntityIdForReadStudy() {
     User user = new User();
+    user.setAdminRole(); // ADMIN can read study documents
     Integer studyId = 456;
     Integer fileId = 11;
     Study study = new Study();
@@ -332,9 +426,310 @@ class FileStorageObjectServiceTest {
 
     initService();
 
-    FileStorageObject returned =
-        service.fetchMetadataByEntityAndEntityIdForRead(user, "study", studyId.toString(), fileId);
+    FileStorageObject returned = service.getDocument(user, "study", studyId.toString(), fileId);
 
     assertEquals(fileStorageObject, returned);
+  }
+
+  @Test
+  void testUploadDocumentForDataset() throws Exception {
+    InputStream inputStream = new ByteArrayInputStream("metadata".getBytes());
+    FormDataContentDisposition fileDetail =
+        FormDataContentDisposition.name("file").fileName("upload.pdf").size(32).build();
+
+    User user = new User();
+    user.setUserId(25);
+    user.setAdminRole(); // ADMIN can CRUD DATASET NIH_INSTITUTIONAL_CERTIFICATION
+
+    Dataset dataset = new Dataset();
+    FileStorageObject created = new FileStorageObject();
+    created.setFileStorageObjectId(90);
+
+    when(datasetService.findDatasetByIdForRead(user, 123)).thenReturn(dataset);
+    when(gcsService.storeDocument(eq(inputStream), eq("application/octet-stream"), any()))
+        .thenReturn(BlobId.of("bucket", "object"));
+    when(fileStorageObjectDAO.insertNewFile(
+            eq("upload.pdf"),
+            eq(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue()),
+            eq(BlobId.of("bucket", "object").toGsUtilUri()),
+            eq("application/octet-stream"),
+            eq("123"),
+            eq(25),
+            any()))
+        .thenReturn(90);
+    when(fileStorageObjectDAO.findFileById(90)).thenReturn(created);
+
+    initService();
+
+    FileStorageObject result =
+        service.uploadDocument(
+            user, "dataset", "123", inputStream, fileDetail, "nihInstitutionalCertification");
+
+    assertEquals(created, result);
+    verify(datasetService).findDatasetByIdForRead(user, 123);
+    verify(fileStorageObjectDAO)
+        .insertNewFile(
+            eq("upload.pdf"),
+            eq(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue()),
+            eq(BlobId.of("bucket", "object").toGsUtilUri()),
+            eq("application/octet-stream"),
+            eq("123"),
+            eq(25),
+            any());
+  }
+
+  @Test
+  void testUploadDocumentInvalidCategoryThrowsBadRequest() {
+    InputStream inputStream = new ByteArrayInputStream("metadata".getBytes());
+    FormDataContentDisposition fileDetail =
+        FormDataContentDisposition.name("file").fileName("upload.pdf").size(32).build();
+    User user = new User();
+
+    initService();
+
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            service.uploadDocument(
+                user, "dataset", "123", inputStream, fileDetail, "notARealCategory"));
+
+    verifyNoInteractions(fileStorageObjectDAO);
+    verifyNoInteractions(gcsService);
+  }
+
+  @Test
+  void testGetDocumentFileByEntityAndEntityIdForReadDataset() throws Exception {
+    User user = new User();
+    user.setAdminRole(); // ADMIN can read any dataset document
+    Integer datasetId = 123;
+    Integer fileId = 10;
+
+    FileStorageObject fileStorageObject = new FileStorageObject();
+    fileStorageObject.setBlobId(BlobId.of("bucket", "document"));
+    fileStorageObject.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
+
+    byte[] content = "streamed-file-content".getBytes();
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(datasetId.toString(), fileId))
+        .thenReturn(fileStorageObject);
+    when(gcsService.getDocument(fileStorageObject.getBlobId()))
+        .thenReturn(new ByteArrayInputStream(content));
+
+    initService();
+
+    FileStorageObject returned =
+        service.getDocumentFile(user, "dataset", datasetId.toString(), fileId);
+
+    assertEquals(fileStorageObject, returned);
+    assertArrayEquals(content, returned.getUploadedFile().readAllBytes());
+    verify(fileStorageObjectDAO).findActiveFileByIdAndEntityId(datasetId.toString(), fileId);
+    verify(gcsService).getDocument(fileStorageObject.getBlobId());
+  }
+
+  @Test
+  void testGetDocumentFileThrowsBadGatewayWhenGcsFails() {
+    User user = new User();
+    user.setAdminRole(); // ADMIN can read dataset documents
+    Integer datasetId = 123;
+    Integer fileId = 10;
+    String entityId = datasetId.toString();
+
+    FileStorageObject fileStorageObject = new FileStorageObject();
+    fileStorageObject.setBlobId(BlobId.of("bucket", "document"));
+    fileStorageObject.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId))
+        .thenReturn(fileStorageObject);
+    when(gcsService.getDocument(fileStorageObject.getBlobId()))
+        .thenThrow(new RuntimeException("GCS unavailable"));
+
+    initService();
+
+    WebApplicationException exception =
+        assertThrows(
+            WebApplicationException.class,
+            () -> service.getDocumentFile(user, "dataset", entityId, fileId));
+    assertEquals(500, exception.getResponse().getStatus());
+  }
+
+  @Test
+  void testGetDocumentFileThrowsNotFoundWhenMetadataLookupFails() {
+    User user = new User();
+    // No role needed here — NotFoundException is thrown before checkAccess (null FSO)
+    Integer datasetId = 123;
+    Integer fileId = 10;
+    String entityId = datasetId.toString();
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId)).thenReturn(null);
+
+    initService();
+
+    assertThrows(
+        NotFoundException.class, () -> service.getDocumentFile(user, "dataset", entityId, fileId));
+    verifyNoInteractions(gcsService);
+  }
+
+  @Test
+  void testDeleteDocumentSetsDeletedFieldsAndCallsDao() {
+    User user = new User();
+    user.setUserId(25);
+    user.setAdminRole(); // ADMIN can CRUD dataset documents
+    Integer datasetId = 123;
+    Integer fileId = 10;
+    String entityId = datasetId.toString();
+
+    FileStorageObject active = new FileStorageObject();
+    active.setFileStorageObjectId(fileId);
+    active.setEntityId(entityId);
+    active.setDeleted(false);
+    active.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
+
+    FileStorageObject deleted = new FileStorageObject();
+    deleted.setFileStorageObjectId(fileId);
+    deleted.setEntityId(entityId);
+    deleted.setDeleted(true);
+    deleted.setDeleteUserId(user.getUserId());
+    deleted.setDeleteDate(java.time.Instant.now());
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId)).thenReturn(active);
+    when(fileStorageObjectDAO.findById(fileId)).thenReturn(deleted);
+
+    initService();
+
+    FileStorageObject result = service.deleteDocument(user, "dataset", entityId, fileId);
+
+    assertEquals(Boolean.TRUE, result.getDeleted());
+    assertEquals(user.getUserId(), result.getDeleteUserId());
+    assertNotNull(result.getDeleteDate());
+    verify(fileStorageObjectDAO).softDelete(entityId, fileId, user.getUserId());
+  }
+
+  @Test
+  void testDeleteDocumentThrowsNotFoundWhenFileAlreadyDeleted() {
+    User user = new User();
+    user.setUserId(25);
+    Integer datasetId = 123;
+    Integer fileId = 10;
+    String entityId = datasetId.toString();
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId)).thenReturn(null);
+
+    initService();
+
+    NotFoundException exception =
+        assertThrows(
+            NotFoundException.class,
+            () -> service.deleteDocument(user, "dataset", entityId, fileId));
+
+    assertEquals("File not found", exception.getMessage());
+    verify(fileStorageObjectDAO, never()).softDelete(any(), any(), any());
+    verify(fileStorageObjectDAO, never()).findById(any());
+  }
+
+  @Test
+  void testUpdateDocumentCategoryUpdatesCategoryAndAuditFields() {
+    User user = new User();
+    user.setUserId(25);
+    user.setAdminRole(); // ADMIN can CRUD dataset documents
+    Integer datasetId = 123;
+    Integer fileId = 10;
+    String entityId = datasetId.toString();
+
+    FileStorageObject active = new FileStorageObject();
+    active.setFileStorageObjectId(fileId);
+    active.setEntityId(entityId);
+    active.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
+    active.setDeleted(false);
+
+    FileStorageObject updated = new FileStorageObject();
+    updated.setFileStorageObjectId(fileId);
+    updated.setEntityId(entityId);
+    updated.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
+    updated.setUpdateUserId(user.getUserId());
+    updated.setUpdateDate(java.time.Instant.now());
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId)).thenReturn(active);
+    when(fileStorageObjectDAO.findById(fileId)).thenReturn(updated);
+
+    initService();
+
+    FileStorageObject result =
+        service.updateDocumentCategory(
+            user, "dataset", entityId, fileId, "nihInstitutionalCertification");
+
+    assertEquals(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION, result.getCategory());
+    assertEquals(user.getUserId(), result.getUpdateUserId());
+    assertNotNull(result.getUpdateDate());
+    verify(fileStorageObjectDAO)
+        .updateCategory(fileId, "nihInstitutionalCertification", user.getUserId());
+  }
+
+  @Test
+  void testUpdateDocumentCategoryThrowsBadRequestWhenCategoryInvalid() {
+    User user = new User();
+
+    initService();
+
+    BadRequestException exception =
+        assertThrows(
+            BadRequestException.class,
+            () -> service.updateDocumentCategory(user, "dataset", "123", 10, "notARealCategory"));
+
+    assertEquals("Invalid category", exception.getMessage());
+    verifyNoInteractions(fileStorageObjectDAO);
+    verifyNoInteractions(datasetService);
+  }
+
+  @Test
+  void testUpdateDocumentCategoryThrowsNotFoundWhenFileDeletedOrMissing() {
+    User user = new User();
+    user.setUserId(25);
+    user.setAdminRole(); // ADMIN can CRUD dataset documents; passes checkAccess
+    Integer datasetId = 123;
+    Integer fileId = 10;
+    String entityId = datasetId.toString();
+
+    when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId)).thenReturn(null);
+
+    initService();
+
+    NotFoundException exception =
+        assertThrows(
+            NotFoundException.class,
+            () ->
+                service.updateDocumentCategory(
+                    user, "dataset", entityId, fileId, "nihInstitutionalCertification"));
+
+    assertEquals("File not found", exception.getMessage());
+    verify(fileStorageObjectDAO, never()).updateCategory(any(), any(), any());
+    verify(fileStorageObjectDAO, never()).findById(any());
+  }
+
+  @Test
+  void testUpdateDocumentCategoryThrowsBadRequestWhenCategoryNotAllowedForEntity() {
+    User user = new User();
+    user.setUserId(25);
+    int datasetId = 123;
+    String entityId = Integer.toString(datasetId);
+
+    initService();
+
+    BadRequestException exception =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                service.updateDocumentCategory(
+                    user, "dataset", entityId, 10, "dataAccessAgreement"));
+
+    assertEquals("Category is not allowed for entity", exception.getMessage());
+    verifyNoInteractions(fileStorageObjectDAO);
+    verifyNoInteractions(datasetService);
   }
 }

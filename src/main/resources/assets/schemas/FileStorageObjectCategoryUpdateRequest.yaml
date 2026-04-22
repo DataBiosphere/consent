@@ -1,0 +1,15 @@
+type: object
+description: Request body for updating a FileStorageObject category.
+required:
+  - category
+properties:
+  category:
+    type: string
+    description: The new FileStorageObject category.
+    enum:
+      - irbCollaborationLetter
+      - dataUseLetter
+      - alternativeDataSharingPlan
+      - nihInstitutionalCertification
+      - dataAccessAgreement
+
