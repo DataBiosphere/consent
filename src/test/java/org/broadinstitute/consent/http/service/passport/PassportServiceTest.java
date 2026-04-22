@@ -225,7 +225,7 @@ class PassportServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void generateDataPassport_datasetWithNoDac_returnsOnlyConsentedDataUseTermsVisa() {
+  void generateDataPassport_datasetWithNoDac_returnsApprovedUsersAndConsentedDataUseTermsVisas() {
     Dataset dataset = datasetWithAlias(1);
     dataset.setDacId(null);
     when(datasetDAO.findDatasetByAlias(1)).thenReturn(dataset);
@@ -233,14 +233,13 @@ class PassportServiceTest extends AbstractTestHelper {
     PassportClaim claim = service.generateDataPassport("DUOS-000001");
 
     assertNotNull(claim);
-    assertEquals(1, claim.ga4gh_passport_v1().size());
-    assertEquals(
-        VisaClaimTypes.CONSENTED_DATA_USE_TERMS.type,
-        claim.ga4gh_passport_v1().getFirst().ga4gh_visa_v1().type());
+    assertEquals(2, claim.ga4gh_passport_v1().size());
+    assertVisaTypePresent(claim, VisaClaimTypes.APPROVED_USERS.type);
+    assertVisaTypePresent(claim, VisaClaimTypes.CONSENTED_DATA_USE_TERMS.type);
   }
 
   @Test
-  void generateDataPassport_datasetWithDacAndNoDaa_returnsTwoVisas() {
+  void generateDataPassport_datasetWithDacAndNoDaa_returnsThreeVisas() {
     Dataset dataset = datasetWithAlias(1);
     dataset.setDacId(10);
     Dac dac = dacWithId(10);
@@ -252,13 +251,14 @@ class PassportServiceTest extends AbstractTestHelper {
     PassportClaim claim = service.generateDataPassport("DUOS-000001");
 
     assertNotNull(claim);
-    assertEquals(2, claim.ga4gh_passport_v1().size());
+    assertEquals(3, claim.ga4gh_passport_v1().size());
+    assertVisaTypePresent(claim, VisaClaimTypes.APPROVED_USERS.type);
     assertVisaTypePresent(claim, VisaClaimTypes.CONSENTED_DATA_USE_TERMS.type);
     assertVisaTypePresent(claim, VisaClaimTypes.OVERSIGHT_BODIES.type);
   }
 
   @Test
-  void generateDataPassport_datasetWithDacAndDaa_returnsThreeVisas() {
+  void generateDataPassport_datasetWithDacAndDaa_returnsFourVisas() {
     Dataset dataset = datasetWithAlias(1);
     dataset.setDacId(10);
     Dac dac = dacWithId(10);
@@ -273,7 +273,8 @@ class PassportServiceTest extends AbstractTestHelper {
     PassportClaim claim = service.generateDataPassport("DUOS-000001");
 
     assertNotNull(claim);
-    assertEquals(3, claim.ga4gh_passport_v1().size());
+    assertEquals(4, claim.ga4gh_passport_v1().size());
+    assertVisaTypePresent(claim, VisaClaimTypes.APPROVED_USERS.type);
     assertVisaTypePresent(claim, VisaClaimTypes.CONSENTED_DATA_USE_TERMS.type);
     assertVisaTypePresent(claim, VisaClaimTypes.OVERSIGHT_BODIES.type);
     assertVisaTypePresent(claim, VisaClaimTypes.REQUIRED_AGREEMENTS.type);
@@ -323,7 +324,7 @@ class PassportServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void generateDataPassport_dacNotFound_returnsOnlyConsentedDataUseTermsVisa() {
+  void generateDataPassport_dacNotFound_returnsApprovedUsersAndConsentedDataUseTermsVisas() {
     Dataset dataset = datasetWithAlias(1);
     dataset.setDacId(10);
     when(datasetDAO.findDatasetByAlias(1)).thenReturn(dataset);
@@ -331,13 +332,14 @@ class PassportServiceTest extends AbstractTestHelper {
 
     PassportClaim claim = service.generateDataPassport("DUOS-000001");
 
-    assertEquals(1, claim.ga4gh_passport_v1().size());
+    assertEquals(2, claim.ga4gh_passport_v1().size());
+    assertVisaTypePresent(claim, VisaClaimTypes.APPROVED_USERS.type);
     assertVisaTypePresent(claim, VisaClaimTypes.CONSENTED_DATA_USE_TERMS.type);
   }
 
   @Test
   void
-      generateDataPassport_unsupportedOperationFromDacLookup_returnsOnlyConsentedDataUseTermsVisa() {
+      generateDataPassport_unsupportedOperationFromDacLookup_returnsApprovedUsersAndConsentedDataUseTermsVisas() {
     Dataset dataset = datasetWithAlias(1);
     dataset.setDacId(10);
     when(datasetDAO.findDatasetByAlias(1)).thenReturn(dataset);
@@ -346,7 +348,8 @@ class PassportServiceTest extends AbstractTestHelper {
     PassportClaim claim = service.generateDataPassport("DUOS-000001");
 
     assertNotNull(claim);
-    assertEquals(1, claim.ga4gh_passport_v1().size());
+    assertEquals(2, claim.ga4gh_passport_v1().size());
+    assertVisaTypePresent(claim, VisaClaimTypes.APPROVED_USERS.type);
     assertVisaTypePresent(claim, VisaClaimTypes.CONSENTED_DATA_USE_TERMS.type);
   }
 
