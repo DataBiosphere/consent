@@ -15,7 +15,6 @@ import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
-import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.configurations.OidcConfiguration;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
@@ -226,11 +225,6 @@ public class ConsentModule extends AbstractModule {
   @Provides
   ServicesConfiguration providesServicesConfiguration() {
     return config.getServicesConfiguration();
-  }
-
-  @Provides
-  GoogleOAuth2Config providesGoogleOAuth2Config() {
-    return config.getGoogleAuthentication();
   }
 
   @Provides
