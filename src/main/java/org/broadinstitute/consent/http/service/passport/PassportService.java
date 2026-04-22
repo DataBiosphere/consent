@@ -71,6 +71,7 @@ public class PassportService implements ConsentLogger {
    * dataset-centric visas:
    *
    * <ul>
+   *   <li>{@link ApprovedUsersVisa} — links to the dataset's approved user API endpoint
    *   <li>{@link ConsentedDataUseTermsVisa} — links to the dataset's DUO-coded data use terms
    *   <li>{@link OversightBodiesVisa} — identifies the DAC governing the dataset
    *   <li>{@link RequiredAgreementsVisa} — references the DAA users must accept (if one exists)
