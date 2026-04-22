@@ -543,7 +543,7 @@ class DacResourceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testApproveDataset_UserNotFound() {
+  void testApproveDataset_DatasetNotFound() {
     User user = new User();
     DuosUser duosUser = new DuosUser(authUser, user);
     try (Response response = dacResource.approveDataset(duosUser, 1, 1, "test")) {
