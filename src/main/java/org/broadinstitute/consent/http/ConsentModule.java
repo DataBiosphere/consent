@@ -278,7 +278,8 @@ public class ConsentModule extends AbstractModule {
 
   @Provides
   FileStorageObjectService providesFileStorageObjectService() {
-    return new FileStorageObjectService(providesFileStorageObjectDAO(), providesGCSService());
+    return new FileStorageObjectService(
+        providesFileStorageObjectDAO(), providesGCSService(), providesDatasetService());
   }
 
   @Provides

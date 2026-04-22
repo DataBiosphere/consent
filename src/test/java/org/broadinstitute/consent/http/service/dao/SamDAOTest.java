@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.when;
 
@@ -27,6 +28,7 @@ import org.broadinstitute.consent.http.WireMockTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.exceptions.SamAzureB2CException;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.sam.CombinedState;
 import org.broadinstitute.consent.http.models.sam.EmailResponse;
@@ -302,6 +304,35 @@ class SamDAOTest extends WireMockTestHelper {
             .willReturn(aResponse().withStatus(HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY)));
 
     assertThrows(WebApplicationException.class, () -> samDAO.getCombinedUserStatusInfo(duosUser));
+  }
+
+  private static Stream<Arguments> provideAzureB2CErrorBodies() {
+    return Stream.of(
+        // JSON message field with mixed case
+        Arguments.of("{\"message\": \"Cannot update azureB2cId for user test@test.org\"}"),
+        // All uppercase (case-insensitive check)
+        Arguments.of("CANNOT UPDATE AZUREB2CID FOR USER test@test.org"),
+        // All lowercase
+        Arguments.of("cannot update azureb2cid for user test@test.org"),
+        // Plain string with surrounding context
+        Arguments.of("Error: cannot update azureB2cId for user test@test.org due to conflict"));
+  }
+
+  @ParameterizedTest
+  @MethodSource("provideAzureB2CErrorBodies")
+  void testGetCombinedUserStatusInfoAzureB2CError(String errorBody) {
+    wireMockServer.stubFor(
+        any(anyUrl())
+            .willReturn(
+                aResponse()
+                    .withStatus(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
+                    .withBody(errorBody)));
+    when(duosUser.getEmail()).thenReturn("test@test.org");
+
+    SamAzureB2CException ex =
+        assertThrows(SamAzureB2CException.class, () -> samDAO.getCombinedUserStatusInfo(duosUser));
+    assertNotNull(ex.getMessage());
+    assertTrue(ex.getMessage().contains("test@test.org"));
   }
 
   @Test
