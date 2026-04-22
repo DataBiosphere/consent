@@ -37,6 +37,7 @@ import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.exceptions.SamAzureB2CException;
 import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -168,6 +169,34 @@ class UserResourceTest extends AbstractTestHelper {
     Response response = userResource.getUser(du);
     // Ensure that even if Sam fails, we still return the user information.
     assertEquals(Status.OK.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  void testGetMe_SamAzureB2CException_Returns500() throws Exception {
+    // SamAzureB2CException should NOT be silently swallowed - it propagates and returns a 500
+    User user = createUserWithRole();
+    DuosUser du = new DuosUser(authUser, user);
+    when(samService.getCombinedUserStatusInfo(du))
+        .thenThrow(new SamAzureB2CException("AzureB2C error for user test@test.org"));
+
+    Response response = userResource.getUser(du);
+    assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
+  }
+
+  @Test
+  void testGetMe_SamAzureB2CException_ErrorMessageContainsDetails() throws Exception {
+    // The error message from SamAzureB2CException should be returned in the response
+    User user = createUserWithRole();
+    DuosUser du = new DuosUser(authUser, user);
+    String errorMessage =
+        "AzureB2C authentication Error for user test@test.org: Please contact support.";
+    when(samService.getCombinedUserStatusInfo(du))
+        .thenThrow(new SamAzureB2CException(errorMessage));
+
+    Response response = userResource.getUser(du);
+    assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
+    assertNotNull(response.getEntity());
+    assertTrue(response.getEntity().toString().contains(errorMessage));
   }
 
   @Test

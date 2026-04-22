@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,7 @@ public class DaaServiceDAO implements ConsentLogger {
   }
 
   public Integer createDaaWithFso(Integer userId, Integer dacId, FileStorageObject fso)
-      throws Exception {
+      throws SQLException {
     List<Integer> createdDaaIds = new ArrayList<>();
     jdbi.useHandle(
         handle -> {
@@ -33,8 +34,17 @@ public class DaaServiceDAO implements ConsentLogger {
           try {
             Integer daaId = daaDAO.createDaa(userId, now, userId, now, dacId);
             createdDaaIds.add(daaId);
-            daaDAO.createDacDaaRelation(dacId, daaId);
+            daaDAO.createDacDaaRelation(dacId, daaId, userId);
             if (fso != null) {
+              if (fso.getFileName() == null) {
+                throw new IllegalArgumentException("FileStorageObject must have a File Name");
+              }
+              if (fso.getCategory() == null) {
+                throw new IllegalArgumentException("FileStorageObject must have a FileCategory");
+              }
+              if (fso.getBlobId() == null) {
+                throw new IllegalArgumentException("FileStorageObject must have a BlobId");
+              }
               fsoDAO.insertNewFile(
                   fso.getFileName(),
                   fso.getCategory().getValue(),
@@ -51,6 +61,6 @@ public class DaaServiceDAO implements ConsentLogger {
           }
           handle.commit();
         });
-    return createdDaaIds.isEmpty() ? null : createdDaaIds.get(0);
+    return createdDaaIds.isEmpty() ? null : createdDaaIds.getFirst();
   }
 }

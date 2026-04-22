@@ -177,6 +177,7 @@ public class ConsentModule extends AbstractModule {
   public DAOContainer providesDAOContainer() {
     DAOContainer container = new DAOContainer();
     container.setCounterDAO(providesCounterDAO());
+    container.setDaaDAO(providesDaaDAO());
     container.setDacDAO(providesDacDAO());
     container.setDataAccessRequestDAO(providesDataAccessRequestDAO());
     container.setDarCollectionDAO(providesDARCollectionDAO());
@@ -278,7 +279,8 @@ public class ConsentModule extends AbstractModule {
 
   @Provides
   FileStorageObjectService providesFileStorageObjectService() {
-    return new FileStorageObjectService(providesFileStorageObjectDAO(), providesGCSService());
+    return new FileStorageObjectService(
+        providesFileStorageObjectDAO(), providesGCSService(), providesDatasetService());
   }
 
   @Provides
@@ -357,12 +359,7 @@ public class ConsentModule extends AbstractModule {
   @Provides
   EmailService providesEmailService() {
     return new EmailService(
-        providesUserDAO(),
-        providesMailMessageDAO(),
-        providesElectionDAO(),
-        providesSendGridAPI(),
-        providesFreeMarkerTemplateHelper(),
-        config);
+        providesDAOContainer(), providesSendGridAPI(), providesFreeMarkerTemplateHelper(), config);
   }
 
   @Provides
@@ -571,6 +568,7 @@ public class ConsentModule extends AbstractModule {
   @Provides
   LibraryCardService providesLibraryCardService() {
     return new LibraryCardService(
+        providesDaaDAO(),
         providesLibraryCardDAO(),
         providesInstitutionDAO(),
         providesInstitutionService(),

@@ -172,13 +172,13 @@ class DacDAOTest extends DAOTestHelper {
     Integer daaId1 =
         daaDAO.createDaa(user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), dacId1);
     createFSO(user.getUserId(), daaId1);
-    daaDAO.createDacDaaRelation(dacId1, daaId1);
+    daaDAO.createDacDaaRelation(dacId1, daaId1, user.getUserId());
 
     Integer dacId2 = createRandomDAC();
     Integer daaId2 =
         daaDAO.createDaa(user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), dacId2);
     createFSO(user.getUserId(), daaId2);
-    daaDAO.createDacDaaRelation(dacId2, daaId2);
+    daaDAO.createDacDaaRelation(dacId2, daaId2, user.getUserId());
 
     dacDAO
         .findAll()
@@ -204,7 +204,7 @@ class DacDAOTest extends DAOTestHelper {
     Integer daaId =
         daaDAO.createDaa(user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), id);
     DataAccessAgreement daa = daaDAO.findById(daaId);
-    daaDAO.createDacDaaRelation(id, daaId);
+    daaDAO.createDacDaaRelation(id, daaId, user.getUserId());
     Dac dac = dacDAO.findById(id);
     DataAccessAgreement dacDaa = dac.getAssociatedDaa();
     assertEquals(id, dac.getDacId());

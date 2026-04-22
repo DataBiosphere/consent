@@ -45,7 +45,7 @@ jobs:
         env:
           BEE_NAME: ${{ steps.setup.outputs.bee-name }}
       - name: Store Test Result Artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: test-reports

@@ -8,11 +8,14 @@ public class DatasetApprovedMessage extends MailMessage {
 
   private static final String DATASET_APPROVED = "Dataset approved for DUOS";
   private final String dacName;
+  private final String datasetIdentifier;
   private final String datasetName;
 
-  public DatasetApprovedMessage(User toUser, String dacName, String datasetName) {
+  public DatasetApprovedMessage(
+      User toUser, String dacName, String datasetIdentifier, String datasetName) {
     super(toUser, EmailType.DATASET_APPROVED);
     this.dacName = dacName;
+    this.datasetIdentifier = datasetIdentifier;
     this.datasetName = datasetName;
   }
 
@@ -24,8 +27,12 @@ public class DatasetApprovedMessage extends MailMessage {
   @Override
   public Object createModel(String serverUrl) {
     return Map.of(
+        "serverUrl",
+        serverUrl,
         "dataSubmitterName",
         toUser.getDisplayName(),
+        "datasetIdentifier",
+        datasetIdentifier,
         "datasetName",
         datasetName,
         "dacName",
@@ -34,6 +41,6 @@ public class DatasetApprovedMessage extends MailMessage {
 
   @Override
   public String getEntityReferenceId() {
-    return datasetName;
+    return datasetIdentifier;
   }
 }

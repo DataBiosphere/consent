@@ -5,6 +5,7 @@ import static org.broadinstitute.consent.http.enumeration.UserFields.ERA_STATUS;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -20,13 +21,17 @@ import static org.mockito.Mockito.when;
 
 import com.google.gson.JsonObject;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
@@ -54,6 +59,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -71,6 +77,21 @@ class UserServiceTest extends AbstractTestHelper {
   @Mock private InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
 
   private UserService service;
+
+  private static User generateUser() {
+    User u = new User();
+    int i1 = randomInt(10, 50);
+    int i2 = randomInt(10, 50);
+    int i3 = randomInt(5, 25);
+    String email = randomAlphabetic(i1) + "@" + randomAlphabetic(i2) + "." + randomAlphabetic(i3);
+    String displayName = randomAlphabetic(i1) + " " + randomAlphabetic(i2);
+    u.setEmail(email);
+    u.setEraCommonsId(email);
+    u.setDisplayName(displayName);
+    u.setUserId(randomInt(1, 100));
+    u.setInstitutionId(randomInt(1, 100));
+    return u;
+  }
 
   @BeforeEach
   void initService() {
@@ -111,6 +132,7 @@ class UserServiceTest extends AbstractTestHelper {
     fields.setDisplayName(randomAlphabetic(10));
     fields.setEmailPreference(true);
     fields.setEraCommonsId(randomAlphabetic(10));
+    fields.setUserData(Map.of("test", "test"));
     fields.setDaaAcceptance(true);
     assertEquals(1, fields.buildUserProperties(user.getUserId()).size());
     service.updateUserFieldsById(fields, user.getUserId());
@@ -119,10 +141,53 @@ class UserServiceTest extends AbstractTestHelper {
     verify(userDAO, times(1)).updateDisplayName(any(), any());
     verify(userDAO, times(1)).updateEmailPreference(any(), any());
     verify(userDAO, times(1)).updateEraCommonsId(any(), any());
+    verify(userDAO, times(1)).updateData(any(), any());
     verify(userPropertyDAO, times(1)).insertAll(any());
     // Verify role additions/deletions.
     verify(userRoleDAO, times(1)).insertUserRoles(List.of(so), 1);
     verify(userRoleDAO, times(1)).removeUserRoles(1, List.of(admin.getRoleId()));
+  }
+
+  @Test
+  void testUpdateUserFieldsById_No_Updates() {
+    User user = new User();
+    user.setUserId(1);
+
+    when(userDAO.findUserById(any())).thenReturn(user);
+
+    UserUpdateFields fields = new UserUpdateFields();
+
+    service.updateUserFieldsById(fields, user.getUserId());
+    // Verify no updates.
+    verify(userDAO, times(0)).updateDisplayName(any(), any());
+    verify(userDAO, times(0)).updateEmailPreference(any(), any());
+    verify(userDAO, times(0)).updateEraCommonsId(any(), any());
+    verify(userDAO, times(0)).updateData(any(), any());
+    verify(userPropertyDAO, times(0)).insertAll(any());
+    // Verify no role additions/deletions.
+    verify(userRoleDAO, times(0)).insertUserRoles(any(), any());
+    verify(userRoleDAO, times(0)).removeUserRoles(any(), any());
+  }
+
+  @Test
+  void testUpdateUserFieldsById_Null_Update() {
+    User user = new User();
+    user.setUserId(1);
+
+    when(userDAO.findUserById(any())).thenReturn(user);
+
+    UserUpdateFields fields = null;
+
+    service.updateUserFieldsById(fields, user.getUserId());
+    // Verify no updates.
+    verify(userDAO, times(0)).updateDisplayName(any(), any());
+    verify(userDAO, times(0)).updateEmailPreference(any(), any());
+    verify(userDAO, times(0)).updateEraCommonsId(any(), any());
+    verify(userDAO, times(0)).updateData(any(), any());
+    verify(userPropertyDAO, times(0)).insertAll(any());
+    // Verify no role additions/deletions.
+    verify(userRoleDAO, times(0)).insertUserRoles(any(), any());
+    verify(userRoleDAO, times(0)).removeUserRoles(any(), any());
   }
 
   @Test
@@ -589,7 +654,7 @@ class UserServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testFindUserWithPropertiesAsJsonObjectByIdNonAuthUser() {
+  void testFindUserWithPropertiesAsJsonObjectById_BySelf() {
     User user = generateUser();
     user.setLibraryCard(new LibraryCard());
     UserStatusInfo info =
@@ -613,6 +678,111 @@ class UserServiceTest extends AbstractTestHelper {
     assertTrue(userJson.get(UserService.LIBRARY_CARD_FIELD).getAsJsonObject().isJsonObject());
     assertTrue(userJson.get(UserService.USER_PROPERTIES_FIELD).getAsJsonArray().isJsonArray());
     assertNull(userJson.get(UserService.USER_STATUS_INFO_FIELD));
+  }
+
+  @ParameterizedTest
+  @MethodSource("rolesThatThrow")
+  void testFindUserWithPropertiesAsJsonObjectById_by_Roles_That_Throw(List<UserRole> userRoles) {
+    User user = generateUser();
+    Integer userId = user.getUserId();
+    DuosUser requestingDuosUser = generateDuosUserWithRoles(userRoles, user.getUserId());
+    assertNotEquals(requestingDuosUser.getUser().getUserId(), user.getUserId());
+
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.findUserWithPropertiesByIdAsJsonObject(requestingDuosUser, userId));
+  }
+
+  @ParameterizedTest
+  @MethodSource("rolesThatDontThrow")
+  void testFindUserWithPropertiesAsJsonObjectById_by_Roles_That_Dont_Throw(
+      List<UserRole> userRoles) {
+    User user = generateUser();
+    Integer userId = user.getUserId();
+    DuosUser requestingDuosUser = generateDuosUserWithRoles(userRoles, user.getUserId());
+    assertNotEquals(requestingDuosUser.getUser().getUserId(), user.getUserId());
+
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
+    assertDoesNotThrow(
+        () -> service.findUserWithPropertiesByIdAsJsonObject(requestingDuosUser, userId));
+  }
+
+  @ParameterizedTest
+  @MethodSource("rolesThatMightThrow")
+  void testFindUserWithPropertiesAsJsonObjectById_Different_Inst_Should_Throw(
+      List<UserRole> userRoles) {
+    User user = generateUser();
+    Integer userId = user.getUserId();
+    DuosUser requestingDuosUser = generateDuosUserWithRoles(userRoles, user.getUserId());
+    assertNotEquals(requestingDuosUser.getUser().getUserId(), user.getUserId());
+    user.setInstitutionId(requestingDuosUser.getUser().getInstitutionId() + 1);
+
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.findUserWithPropertiesByIdAsJsonObject(requestingDuosUser, userId));
+  }
+
+  @ParameterizedTest
+  @MethodSource("rolesThatMightThrow")
+  void testFindUserWithPropertiesAsJsonObjectById_Same_Inst_Should_Not_Throw(
+      List<UserRole> userRoles) {
+    User user = generateUser();
+    Integer userId = user.getUserId();
+    DuosUser requestingDuosUser = generateDuosUserWithRoles(userRoles, user.getUserId());
+    assertNotEquals(requestingDuosUser.getUser().getUserId(), user.getUserId());
+    user.setInstitutionId(requestingDuosUser.getUser().getInstitutionId());
+
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
+    assertDoesNotThrow(
+        () -> service.findUserWithPropertiesByIdAsJsonObject(requestingDuosUser, userId));
+  }
+
+  @Test
+  void testFindUserWithPropertiesAsJsonObjectById_Null_Requester() {
+    User user = generateUser();
+    Integer userId = user.getUserId();
+    AuthUser authUser =
+        new AuthUser()
+            .setEmail("not the user's email address")
+            .setAuthToken("Token")
+            .setUserStatusInfo(null);
+    DuosUser requestingDuosUser = new DuosUser(authUser, null);
+
+    when(userDAO.findUserById(user.getUserId())).thenReturn(user);
+    assertThrows(
+        ForbiddenException.class,
+        () -> service.findUserWithPropertiesByIdAsJsonObject(requestingDuosUser, userId));
+  }
+
+  @Test
+  void testFindUserWithPropertiesAsJsonObjectById_Null_User() {
+    DuosUser requestingDuosUser = generateDuosUserWithRoles(List.of(), null);
+
+    when(userDAO.findUserById(any())).thenReturn(null);
+    assertThrows(
+        NotFoundException.class,
+        () -> service.findUserWithPropertiesByIdAsJsonObject(requestingDuosUser, null));
+  }
+
+  static Stream<List<UserRole>> rolesThatThrow() {
+    return Stream.of(
+        List.of(UserRoles.ITDirector()),
+        null,
+        List.of(UserRoles.Alumni()),
+        List.of(UserRoles.Researcher()));
+  }
+
+  static Stream<List<UserRole>> rolesThatDontThrow() {
+    return Stream.of(
+        List.of(UserRoles.ITDirector(), UserRoles.Admin()),
+        List.of(UserRoles.Alumni(), UserRoles.Chairperson()),
+        List.of(UserRoles.Researcher(), UserRoles.Member()));
+  }
+
+  static Stream<List<UserRole>> rolesThatMightThrow() {
+    return Stream.of(List.of(UserRoles.SigningOfficial()), List.of(UserRoles.DataSubmitter()));
   }
 
   @Test
@@ -708,24 +878,30 @@ class UserServiceTest extends AbstractTestHelper {
     assertThrows(BadRequestException.class, () -> service.findUsersInJsonArray(json, "invalidKey"));
   }
 
+  private DuosUser generateDuosUserWithRoles(List<UserRole> roles, Integer excludedUserId) {
+    User requestingUser = generateUser();
+    if (Objects.equals(requestingUser.getUserId(), excludedUserId)) {
+      requestingUser.setUserId(requestingUser.getUserId() + 1);
+    }
+    if (Objects.nonNull(roles) && !roles.isEmpty()) {
+      requestingUser.setRoles(roles);
+    }
+    UserStatusInfo info =
+        new UserStatusInfo()
+            .setUserEmail(requestingUser.getEmail())
+            .setEnabled(true)
+            .setUserSubjectId("subjectId");
+    AuthUser authUser =
+        new AuthUser()
+            .setEmail(requestingUser.getEmail())
+            .setAuthToken(randomAlphabetic(30))
+            .setUserStatusInfo(info);
+    return new DuosUser(authUser, requestingUser);
+  }
+
   private User generateUserWithoutInstitution() {
     User u = generateUser();
     u.setInstitutionId(null);
-    return u;
-  }
-
-  private static User generateUser() {
-    User u = new User();
-    int i1 = randomInt(10, 50);
-    int i2 = randomInt(10, 50);
-    int i3 = randomInt(5, 25);
-    String email = randomAlphabetic(i1) + "@" + randomAlphabetic(i2) + "." + randomAlphabetic(i3);
-    String displayName = randomAlphabetic(i1) + " " + randomAlphabetic(i2);
-    u.setEmail(email);
-    u.setEraCommonsId(email);
-    u.setDisplayName(displayName);
-    u.setUserId(randomInt(1, 100));
-    u.setInstitutionId(randomInt(1, 100));
     return u;
   }
 

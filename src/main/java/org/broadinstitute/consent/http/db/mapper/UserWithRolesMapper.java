@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.db.mapper;
 
+import com.google.gson.Gson;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import org.jdbi.v3.core.statement.StatementContext;
 public class UserWithRolesMapper implements RowMapper<User>, RowMapperHelper {
 
   private final Map<Integer, User> users = new HashMap<>();
+  private final Gson gson = new Gson();
 
   public User map(ResultSet r, StatementContext ctx) throws SQLException {
     User user;
@@ -28,6 +30,9 @@ public class UserWithRolesMapper implements RowMapper<User>, RowMapperHelper {
       user.setDisplayName(r.getString("display_name"));
       user.setCreateDate(r.getDate("create_date"));
       user.setEmailPreference(r.getBoolean("email_preference"));
+      if (hasColumn(r, "user_data")) {
+        user.setUserData(gson.fromJson(r.getString("user_data"), HashMap.class));
+      }
       user.setRoles(new ArrayList<>());
 
       if (hasColumn(r, "era_commons_id")) {

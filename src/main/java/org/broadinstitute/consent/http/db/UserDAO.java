@@ -11,6 +11,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.jdbi.v3.core.result.ResultIterable;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
@@ -41,6 +42,7 @@ public interface UserDAO extends Transactional<UserDAO> {
           u.email_preference as u_email_preference,
           u.institution_id as u_institution_id,
           u.era_commons_id as u_era_commons_id,
+          u.user_data as u_user_data,
           i.institution_id as i_id,
           i.institution_name as i_name,
           i.it_director_name as i_it_director_name,
@@ -53,13 +55,22 @@ public interface UserDAO extends Transactional<UserDAO> {
           lc.user_name AS lc_user_name, lc.user_email AS lc_user_email,
           lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date,
           lc.update_user_id AS lc_update_user_id,
-          ld.daa_id as lc_daa_id
+          ld.daa_id as lc_daa_id,
+          auth_user.email as lc_daa_authorized_by
       FROM users u
       LEFT JOIN user_role ur ON ur.user_id = u.user_id
       LEFT JOIN roles r ON r.role_id = ur.role_id
       LEFT JOIN institution i ON u.institution_id = i.institution_id
       LEFT JOIN library_card lc ON lc.user_id = u.user_id
       LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+      LEFT JOIN LATERAL (
+          SELECT a.user_id
+          FROM lc_daa_audit a
+          WHERE a.lc_id = ld.lc_id AND a.daa_id = ld.daa_id AND a.action = 'ADD'
+          ORDER BY a.action_date DESC
+          LIMIT 1
+      ) audit ON true
+      LEFT JOIN users auth_user ON auth_user.user_id = audit.user_id
       WHERE u.user_id = :userId
       """)
   User findUserById(@Bind("userId") Integer userId);
@@ -80,6 +91,7 @@ public interface UserDAO extends Transactional<UserDAO> {
           u.email_preference as u_email_preference,
           u.institution_id as u_institution_id,
           u.era_commons_id as u_era_commons_id,
+          u.user_data as u_user_data,
           i.institution_id as i_id,
           i.institution_name as i_name,
           i.it_director_name as i_it_director_name,
@@ -93,6 +105,7 @@ public interface UserDAO extends Transactional<UserDAO> {
           lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date,
           lc.update_user_id AS lc_update_user_id,
           ld.daa_id as lc_daa_id,
+          auth_user.email as lc_daa_authorized_by,
           up.property_id as up_property_id, up.property_key as up_property_key,
           up.property_value as up_property_value
       FROM users u
@@ -101,6 +114,14 @@ public interface UserDAO extends Transactional<UserDAO> {
       LEFT JOIN institution i ON u.institution_id = i.institution_id
       LEFT JOIN library_card lc ON lc.user_id = u.user_id
       LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+      LEFT JOIN LATERAL (
+          SELECT a.user_id
+          FROM lc_daa_audit a
+          WHERE a.lc_id = ld.lc_id AND a.daa_id = ld.daa_id AND a.action = 'ADD'
+          ORDER BY a.action_date DESC
+          LIMIT 1
+      ) audit ON true
+      LEFT JOIN users auth_user ON auth_user.user_id = audit.user_id
       LEFT JOIN user_property up ON up.user_id = u.user_id AND up.property_key IN (<keys>)
       WHERE u.user_id = :userId
       """)
@@ -184,6 +205,7 @@ public interface UserDAO extends Transactional<UserDAO> {
           u.email_preference as u_email_preference,
           u.institution_id as u_institution_id,
           u.era_commons_id as u_era_commons_id,
+          u.user_data as u_user_data,
           i.institution_id as i_id,
           i.institution_name as i_name,
           i.it_director_name as i_it_director_name,
@@ -196,16 +218,44 @@ public interface UserDAO extends Transactional<UserDAO> {
           lc.user_name AS lc_user_name, lc.user_email AS lc_user_email,
           lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date,
           lc.update_user_id AS lc_update_user_id,
-          ld.daa_id as lc_daa_id
+          ld.daa_id as lc_daa_id,
+          auth_user.email as lc_daa_authorized_by
       FROM users u
       LEFT JOIN user_role ur ON ur.user_id = u.user_id
       LEFT JOIN roles r ON r.role_id = ur.role_id
       LEFT JOIN institution i ON u.institution_id = i.institution_id
       LEFT JOIN library_card lc ON lc.user_id = u.user_id
       LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+      LEFT JOIN LATERAL (
+          SELECT a.user_id
+          FROM lc_daa_audit a
+          WHERE a.lc_id = ld.lc_id AND a.daa_id = ld.daa_id AND a.action = 'ADD'
+          ORDER BY a.action_date DESC
+          LIMIT 1
+      ) audit ON true
+      LEFT JOIN users auth_user ON auth_user.user_id = audit.user_id
       WHERE LOWER(u.email) = LOWER(:email)
       """)
   User findUserByEmail(@Bind("email") String email);
+
+  @RegisterBeanMapper(value = User.class, prefix = "u")
+  @SqlQuery(
+      """
+      SELECT
+          u.user_id as u_user_id,
+          u.email as u_email,
+          u.display_name as u_display_name,
+          u.create_date as u_create_date,
+          u.email_preference as u_email_preference,
+          u.institution_id as u_institution_id,
+          u.era_commons_id as u_era_commons_id
+      FROM users u
+      LEFT OUTER JOIN email_entity ee ON ee.user_id = u.user_id AND ee.email_type = :emailType AND ee.entity_reference_id = :referenceId
+      WHERE u.email_preference = true
+        AND ee.entity_reference_id IS NULL
+      """)
+  ResultIterable<User> allEmailReceivingThinlyPopulatedUsers(
+      @Bind("emailType") Integer emailType, @Bind("referenceId") String referenceId);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class, prefix = "ur")
@@ -216,7 +266,7 @@ public interface UserDAO extends Transactional<UserDAO> {
           u.user_id as u_user_id, u.email as u_email, u.display_name as u_display_name,
           u.create_date as u_create_date, u.email_preference as u_email_preference,
           u.institution_id as u_institution_id, u.era_commons_id as u_era_commons_id,
-          ur.user_role_id as ur_user_role_id, ur.user_id as ur_user_id,
+          u.user_data as u_user_data, ur.user_role_id as ur_user_role_id, ur.user_id as ur_user_id,
           ur.role_id as ur_role_id, ur.dac_id as ur_dac_id, r.name as ur_name
       FROM users u
       LEFT JOIN user_role ur ON ur.user_id = u.user_id
@@ -252,12 +302,14 @@ public interface UserDAO extends Transactional<UserDAO> {
           u.email_preference as u_email_preference,
           u.institution_id as u_institution_id,
           u.era_commons_id as u_era_commons_id,
+          u.user_data as u_user_data,
           r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id,
           lc.id AS lc_id , lc.user_id AS lc_user_id,
           lc.user_name AS lc_user_name, lc.user_email AS lc_user_email,
           lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date,
           lc.update_user_id AS lc_update_user_id,
           ld.daa_id as lc_daa_id,
+          auth_user.email as lc_daa_authorized_by,
           i.institution_id as i_id,
           i.institution_name as i_name,
           i.it_director_name as i_it_director_name,
@@ -269,6 +321,14 @@ public interface UserDAO extends Transactional<UserDAO> {
           LEFT JOIN roles r ON r.role_id = ur.role_id
           LEFT JOIN library_card lc ON lc.user_id = u.user_id
           LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+          LEFT JOIN LATERAL (
+              SELECT a.user_id
+              FROM lc_daa_audit a
+              WHERE a.lc_id = ld.lc_id AND a.daa_id = ld.daa_id AND a.action = 'ADD'
+              ORDER BY a.action_date DESC
+              LIMIT 1
+          ) audit ON true
+          LEFT JOIN users auth_user ON auth_user.user_id = audit.user_id
           LEFT JOIN institution i ON u.institution_id = i.institution_id
         """)
   List<User> findUsersWithLCsAndInstitution();
@@ -326,12 +386,14 @@ public interface UserDAO extends Transactional<UserDAO> {
           u.email_preference as u_email_preference,
           u.institution_id as u_institution_id,
           u.era_commons_id as u_era_commons_id,
+          u.user_data as u_user_data,
           r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id,
           lc.id AS lc_id , lc.user_id AS lc_user_id,
           lc.user_name AS lc_user_name, lc.user_email AS lc_user_email,
           lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date,
           lc.update_user_id AS lc_update_user_id,
           ld.daa_id as lc_daa_id,
+          auth_user.email as lc_daa_authorized_by,
           i.institution_id as i_id,
           i.institution_name as i_name,
           i.it_director_name as i_it_director_name,
@@ -343,6 +405,14 @@ public interface UserDAO extends Transactional<UserDAO> {
           LEFT JOIN roles r ON r.role_id = ur.role_id
           LEFT JOIN library_card lc ON lc.user_id = u.user_id
           LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+          LEFT JOIN LATERAL (
+              SELECT a.user_id
+              FROM lc_daa_audit a
+              WHERE a.lc_id = ld.lc_id AND a.daa_id = ld.daa_id AND a.action = 'ADD'
+              ORDER BY a.action_date DESC
+              LIMIT 1
+          ) audit ON true
+          LEFT JOIN users auth_user ON auth_user.user_id = audit.user_id
           LEFT JOIN institution i ON u.institution_id = i.institution_id
           WHERE u.institution_id = :institutionId
         """)
@@ -363,12 +433,14 @@ public interface UserDAO extends Transactional<UserDAO> {
           u.email_preference as u_email_preference,
           u.institution_id as u_institution_id,
           u.era_commons_id as u_era_commons_id,
+          u.user_data as u_user_data,
           r.name, ur.role_id, ur.user_role_id, ur.dac_id, ur.user_id,
           lc.id AS lc_id , lc.user_id AS lc_user_id,
           lc.user_name AS lc_user_name, lc.user_email AS lc_user_email,
           lc.create_user_id AS lc_create_user_id, lc.create_date AS lc_create_date,
           lc.update_user_id AS lc_update_user_id,
           ld.daa_id as lc_daa_id,
+          auth_user.email as lc_daa_authorized_by,
           i.institution_id as i_id,
           i.institution_name as i_name,
           i.it_director_name as i_it_director_name,
@@ -380,6 +452,14 @@ public interface UserDAO extends Transactional<UserDAO> {
           LEFT JOIN roles r ON r.role_id = ur.role_id
           LEFT JOIN library_card lc ON lc.user_id = u.user_id
           LEFT JOIN lc_daa ld ON lc.id = ld.lc_id
+          LEFT JOIN LATERAL (
+              SELECT a.user_id
+              FROM lc_daa_audit a
+              WHERE a.lc_id = ld.lc_id AND a.daa_id = ld.daa_id AND a.action = 'ADD'
+              ORDER BY a.action_date DESC
+              LIMIT 1
+          ) audit ON true
+          LEFT JOIN users auth_user ON auth_user.user_id = audit.user_id
           LEFT JOIN institution i ON u.institution_id = i.institution_id
           WHERE ld.daa_id = :daaId
         """)
@@ -387,11 +467,13 @@ public interface UserDAO extends Transactional<UserDAO> {
 
   @RegisterBeanMapper(value = User.class)
   @SqlQuery(
-      "SELECT u.user_id, u.display_name, u.email FROM users u "
-          + " LEFT JOIN user_role ur ON ur.user_id = u.user_id "
-          + " LEFT JOIN roles r ON r.role_id = ur.role_id "
-          + " WHERE LOWER(r.name) = 'signingofficial' "
-          + " AND u.institution_id = :institutionId")
+      """
+          SELECT u.user_id, u.display_name, u.email, u.user_data FROM users u
+          LEFT JOIN user_role ur ON ur.user_id = u.user_id
+          LEFT JOIN roles r ON r.role_id = ur.role_id
+          WHERE LOWER(r.name) = 'signingofficial'
+          AND u.institution_id = :institutionId
+        """)
   List<User> getSOsByInstitution(@Bind("institutionId") Integer institutionId);
 
   @SqlUpdate("update users set email_preference = :emailPreference WHERE user_id = :userId")
@@ -408,4 +490,7 @@ public interface UserDAO extends Transactional<UserDAO> {
 
   @SqlUpdate("UPDATE users SET display_name = :displayName WHERE user_id = :userId")
   void updateDisplayName(@Bind("userId") Integer userId, @Bind("displayName") String displayName);
+
+  @SqlUpdate("UPDATE users SET user_data = :data::jsonb WHERE user_id = :userId")
+  void updateData(@Bind("userId") Integer userId, @Bind("data") String data);
 }

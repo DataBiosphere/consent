@@ -235,6 +235,7 @@ public class DataAccessRequestService implements ConsentLogger {
     }
     String referenceId;
     List<Integer> datasetIds = dataAccessRequest.getDatasetIds();
+
     if (Objects.nonNull(existingDar)) {
       referenceId = dataAccessRequest.getReferenceId();
       dataAccessRequestDAO.updateDraftToSubmittedForCollection(collectionId, referenceId);
@@ -280,6 +281,7 @@ public class DataAccessRequestService implements ConsentLogger {
     List<Integer> progressReportDatasetIds = progressReport.getDatasetIds();
     Set<Integer> darDatasetIds =
         dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId());
+
     if (!darDatasetIds.containsAll(progressReportDatasetIds)) {
       throw new BadRequestException(
           "Progress report can only be created for approved datasets in the parent DAR");

@@ -47,7 +47,18 @@ public class NihService implements ConsentLogger {
     try {
       HttpResponse response = clientUtil.handleHttpRequest(request);
       if (!response.isSuccessStatusCode()) {
-        throw new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
+        // ECM returns a 500 Internal Server Error when there is an AzureB2C error in Sam.
+        if (response.getStatusCode() == HttpStatusCodes.STATUS_CODE_SERVER_ERROR) {
+          // Log this case and remove the user's current account link until problem can be resolved
+          logException(
+              new Exception(
+                  "ECM Server error while syncing account for user: %s"
+                      .formatted(duosUser.getEmail())));
+          serviceDAO.deleteNihAccountById(user.getUserId());
+          return userDAO.findUserWithPropertiesById(user.getUserId(), UserFields.getValues());
+        } else {
+          throw new ServerErrorException(response.getStatusMessage(), response.getStatusCode());
+        }
       }
       String body = response.parseAsString();
       NIHUserAccount nihAccount = parseNihUserAccount(body);

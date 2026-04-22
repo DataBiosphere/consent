@@ -45,6 +45,9 @@ put:
             daaAcceptance:
               description: Will be "true" if the user has accepted the Broad and NIH's Data Access Agreement.
               type: boolean
+            userData:
+              type: object
+              description: JSON map of keys and values.  Not validated for any particular purpose.
   responses:
     200:
       description: The user, along with researcher properties and library cards

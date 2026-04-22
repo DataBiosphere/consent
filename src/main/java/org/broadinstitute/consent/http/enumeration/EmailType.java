@@ -21,8 +21,8 @@ public enum EmailType {
   NEW_DAA_REQUEST(15, null),
   NEW_DAA_UPLOAD_RESEARCHER(16, "new-daa-upload-researcher.html"),
   NEW_DAA_UPLOAD_SO(17, "new-daa-upload-signing-official.html"),
-  DATASET_DENIED(18, "dataset-denied.html"),
-  DATASET_APPROVED(19, "dataset-approved.html"),
+  DATASET_DENIED(18, "dataset-denied.ftl"),
+  DATASET_APPROVED(19, "dataset-approved.ftl"),
   DAR_EXPIRED(20, "dar-expired.html"),
   DAR_EXPIRATION_REMINDER(21, "dar-expiration-reminder.html"),
   NEW_PROGRESS_REPORT_REQUEST(22, "new-progress-report-request.html"),
@@ -38,7 +38,9 @@ public enum EmailType {
   DAC_RADAR_APPROVED(32, "dac-radar-approved.ftl"),
   NEW_DAR_SO_NEEDS_TO_APPROVE(33, "new-dar-so-needs-to-approve.html"),
   DAC_VOTE_REMINDER_DIGEST(34, "vote-digest.ftl"),
-  NEW_STUDY_REGISTRATION_CONFIRMATION(35, "new-study-registration-confirmation.ftl");
+  NEW_STUDY_REGISTRATION_CONFIRMATION(35, "new-study-registration-confirmation.ftl"),
+  NEW_STUDY_DIGEST(36, "new-study-digest.ftl"),
+  ;
 
   private final Integer typeInt;
   public final String templateName;

@@ -2,15 +2,19 @@ package org.broadinstitute.consent.http.db;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
+import org.broadinstitute.consent.http.db.mapper.DaaAuditMapper;
 import org.broadinstitute.consent.http.db.mapper.DaaMapper;
 import org.broadinstitute.consent.http.db.mapper.DataAccessAgreementReducer;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapper;
+import org.broadinstitute.consent.http.models.DaaAudit;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
+import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
@@ -154,12 +158,20 @@ public interface DaaDAO extends Transactional<DaaDAO> {
    * @param initialDacId The id for the initial DAC this DAA was created for
    * @return Integer
    */
-  @SqlUpdate(
+  @SqlQuery(
       """
-      INSERT INTO data_access_agreement (create_user_id, create_date, update_user_id, update_date, initial_dac_id)
-      VALUES (:createUserId, :createDate, :updateUserId, :updateDate, :initialDacId)
+      WITH new_daa AS (
+          INSERT INTO data_access_agreement (create_user_id, create_date, update_user_id, update_date, initial_dac_id)
+          VALUES (:createUserId, :createDate, :updateUserId, :updateDate, :initialDacId)
+          RETURNING daa_id
+      ),
+      audit AS (
+          INSERT INTO daa_audit (daa_id, dac_id, user_id, action, action_date)
+          SELECT daa_id, :initialDacId, :createUserId, 'CREATE', NOW()
+          FROM new_daa
+      )
+      SELECT daa_id FROM new_daa
       """)
-  @GetGeneratedKeys
   Integer createDaa(
       @Bind("createUserId") Integer createUserId,
       @Bind("createDate") Instant createDate,
@@ -169,19 +181,21 @@ public interface DaaDAO extends Transactional<DaaDAO> {
 
   @SqlUpdate(
       """
-    INSERT INTO dac_daa (dac_id, daa_id)
-    VALUES (:dacId, :daaId)
-    ON CONFLICT (dac_id) DO UPDATE SET daa_id = :daaId
-  """)
-  void createDacDaaRelation(@Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId);
+      WITH audit AS (INSERT INTO daa_audit (daa_id, dac_id, user_id, action, action_date) VALUES (:daaId, :dacId, :userId, 'ADD', NOW()))
+      INSERT INTO dac_daa (dac_id, daa_id)
+      VALUES (:dacId, :daaId)
+      ON CONFLICT (dac_id) DO UPDATE SET daa_id = :daaId
+      """)
+  void createDacDaaRelation(
+      @Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId, @Bind("userId") Integer userId);
 
   @SqlUpdate(
       """
-      DELETE FROM dac_daa
-      WHERE dac_id = :dacId
-      AND daa_id = :daaId
+      WITH audit AS (INSERT INTO daa_audit (daa_id, dac_id, user_id, action, action_date) VALUES (:daaId, :dacId, :userId, 'REMOVE', NOW()))
+      DELETE FROM dac_daa WHERE daa_id = :daaId AND dac_id = :dacId
       """)
-  void deleteDacDaaRelation(@Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId);
+  void deleteDacDaaRelation(
+      @Bind("daaId") Integer daaId, @Bind("dacId") Integer dacId, @Bind("userId") Integer userId);
 
   /**
    * Relationship chain: User -> Library Card -> Data Access Agreement -> DAC -> Dataset
@@ -199,14 +213,6 @@ public interface DaaDAO extends Transactional<DaaDAO> {
       WHERE lc.user_id = :userId
       """)
   List<Integer> findDaaDatasetIdsByUserId(@Bind("userId") Integer userId);
-
-  @SqlUpdate(
-      """
-    WITH lc_deletes AS (DELETE FROM lc_daa WHERE lc_daa.daa_id = :daaId),
-    dac_delete AS (DELETE FROM dac_daa WHERE dac_daa.daa_id = :daaId)
-    DELETE FROM data_access_agreement WHERE daa_id = :daaId
-    """)
-  void deleteDaa(@Bind("daaId") Integer daaId);
 
   /**
    * Find all DAAs for a Data Access Request by Reference ID DAR -> dar dataset join table ->
@@ -252,4 +258,45 @@ public interface DaaDAO extends Transactional<DaaDAO> {
           WHERE dd.reference_id = :referenceId
       """)
   List<DataAccessAgreement> findByDarReferenceId(@Bind("referenceId") String referenceId);
+
+  @RegisterRowMapper(DaaAuditMapper.class)
+  @SqlQuery(
+      """
+    SELECT *
+    FROM daa_audit
+    WHERE daa_id = :daaId
+    ORDER BY action_date DESC
+    """)
+  List<DaaAudit> findAuditsByDaaId(@Bind("daaId") Integer daaId);
+
+  @RegisterRowMapper(DaaAuditMapper.class)
+  @SqlQuery(
+      """
+    SELECT *
+    FROM daa_audit
+    ORDER BY action_date DESC
+    """)
+  List<DaaAudit> findAllDaaAudits();
+
+  /**
+   * Find all DAAs for a list of dataset IDs. Note that this only finds the DAA IDs for DAAs that
+   * are CURRENTLY associated to the Dataset-DAC assignments. A DAC's DAA assignment can change. We
+   * are also NOT considering the initial DAC that created the DAA.
+   *
+   * @param datasetIds List of dataset IDs
+   * @return List of Data Access Agreement IDs
+   */
+  @SqlQuery(
+      """
+          SELECT distinct daa.daa_id
+          FROM data_access_agreement daa
+          INNER JOIN dac_daa ON daa.daa_id = dac_daa.daa_id
+          INNER JOIN dac ON dac.dac_id = dac_daa.dac_id
+          INNER JOIN dataset ON dataset.dac_id = dac.dac_id
+          WHERE dataset.dataset_id IN (<datasetIds>)
+          ORDER BY daa.daa_id
+          """)
+  Set<Integer> findDaaIdsByDatasetIds(
+      @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING)
+          List<Integer> datasetIds);
 }

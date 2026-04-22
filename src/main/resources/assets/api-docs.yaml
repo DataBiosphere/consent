@@ -244,10 +244,8 @@ paths:
       deprecated: true
       summary: |
         Create Draft Data Access Request.
-        See /api/dar/v3/draft for replacement
       description: |
         Create Draft Data Access Request.
-        Deprecated in favor of /api/dar/v3/draft
       requestBody:
         required: true
         description: The fields that represent a Draft Data Access Request, json format.
@@ -279,13 +277,13 @@ paths:
         500:
           description: Internal Server Error.
 
-  /api/dar/v3/draft:
-    $ref: './paths/darV3Draft.yaml'
-
   /api/dar/v2/draft/{referenceId}:
     put:
-      summary: Update Draft Data Access Request
-      description: Update Draft Data Access Request
+      deprecated: true
+      summary: |
+        Update Draft Data Access Request
+      description: |
+        Update Draft Data Access Request
       parameters:
         - name: referenceId
           in: path
@@ -331,8 +329,8 @@ paths:
         500:
           description: Internal Server Error.
 
-  /api/dar/v3/draft/{referenceId}:
-    $ref: './paths/darV3DraftByReferenceId.yaml'
+  /api/dar/v3/progress_report/{parentReferenceId}:
+    $ref: './paths/progressReportV3.yaml'
 
   /api/dar/v2/{referenceId}/irbDocument:
     get:
@@ -515,6 +513,8 @@ paths:
     $ref: './paths/datasetAuthorizedUsers.yaml'
   /api/dataset/cleanupEmptyCertificationAndAlternativeSharingFiles:
     $ref: './paths/cleanupEmptyCertificationAndAlternativeSharingFiles.yaml'
+  /api/{entity}/{entityId}/document/{id}:
+    $ref: './paths/entityDocumentById.yaml'
   /api/draft/v1:
     $ref: './paths/draftIndex.yaml'
   /api/draft/v1/{draftUUID}:
@@ -523,6 +523,8 @@ paths:
     $ref: './paths/draftAttachmentsIndex.yaml'
   /api/draft/v1/{draftUUID}/attachments/{fileId}:
     $ref: './paths/draftAttachments.yaml'
+  /api/{entity}/{entityId}/document:
+    $ref: './paths/entityDocumentsByEntityId.yaml'
   /api/tdr/{identifier}/approved/users:
     $ref: './paths/tdrDatasetApprovedUsers.yaml'
   /api/tdr/{identifier}:
@@ -545,10 +547,8 @@ paths:
           description: Email successfully sent
         500:
           description: Server error.
-  /api/emailNotifier/darExpirationNotices:
-    $ref: './paths/darExpirationNotices.yaml'
-  /api/emailNotifier/dacVoteDigestNotices:
-    $ref: './paths/dacOpenVotesNotificationDigest.yaml'
+  /api/emailNotifier/dailyMessages:
+    $ref: './paths/dailyMessages.yaml'
   /feature:
     $ref: './paths/feature.yaml'
   /feature/{id}:
@@ -683,6 +683,8 @@ paths:
           description: Institution not found
         500:
           description: Internal server error
+  /api/libraryCards/history/{userId}:
+    $ref: './paths/libraryCardHistoryByUserId.yaml'
   /api/match/reprocess/purpose/{purposeId}:
     post:
       summary: Process all matches for this research purpose (DAR) id
@@ -1020,6 +1022,8 @@ components:
       $ref: './schemas/DatasetRegistrationSchemaV1.yaml'
     Election:
       $ref: './schemas/Election.yaml'
+    FileStorageObject:
+      $ref: './schemas/FileStorageObject.yaml'
     Institution:
       $ref: './schemas/Institution.yaml'
     LibraryCard:

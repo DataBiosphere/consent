@@ -15,8 +15,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
@@ -28,6 +32,8 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.jdbi.v3.core.result.ResultIterable;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -73,6 +79,15 @@ class UserDAOTest extends DAOTestHelper {
     int lcId =
         libraryCardDAO.insertLibraryCard(
             user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
+    int dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), new Date());
+    int daaId =
+        daaDAO.createDaa(user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), dacId);
+    daaDAO.createDacDaaRelation(dacId, daaId, user.getUserId());
+    libraryCardDAO.createLibraryCardDaaRelation(user.getUserId(), user.getUserId(), lcId, daaId);
+    int dacId2 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), new Date());
+    int daaId2 =
+        daaDAO.createDaa(user.getUserId(), Instant.now(), user.getUserId(), Instant.now(), dacId2);
+    libraryCardDAO.createLibraryCardDaaRelation(user.getUserId(), user.getUserId(), lcId, daaId2);
     UserProperty eraExpProp = new UserProperty();
     eraExpProp.setPropertyKey(UserFields.ERA_EXPIRATION_DATE.getValue());
     eraExpProp.setPropertyValue(Instant.now().toString());
@@ -101,6 +116,8 @@ class UserDAOTest extends DAOTestHelper {
                 p ->
                     p.getPropertyKey().equals(UserFields.ERA_STATUS.getValue())
                         && p.getPropertyValue().equals(eraAuthProp.getPropertyValue())));
+    assertTrue(foundUser.getLibraryCard().getDaaIds().contains(daaId));
+    assertTrue(foundUser.getLibraryCard().getDaaIds().contains(daaId2));
   }
 
   @Test
@@ -237,35 +254,57 @@ class UserDAOTest extends DAOTestHelper {
 
   @Test
   void testFindUsersWithLCsAndInstitution() {
-    User user = createUserWithInstitution();
+    // Creates an Admin and an SO, and returns the SO
+    User signingOfficial = createUserWithInstitution();
+    // Creates a researcher
+    User user =
+        createUserWithRole(UserRoles.RESEARCHER.getRoleId(), signingOfficial.getInstitutionId());
     int dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), new Date());
     Instant now = Instant.now();
     int daaId = daaDAO.createDaa(user.getUserId(), now, user.getUserId(), now, dacId);
     int lcId1 =
         libraryCardDAO.insertLibraryCard(
-            user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
-    libraryCardDAO.createLibraryCardDaaRelation(lcId1, daaId);
+            user.getUserId(),
+            user.getDisplayName(),
+            user.getEmail(),
+            signingOfficial.getUserId(),
+            new Date());
+    libraryCardDAO.createLibraryCardDaaRelation(
+        user.getUserId(), signingOfficial.getUserId(), lcId1, daaId);
 
-    User user2 = createUserWithInstitution();
+    // Creates another admin and another SO
+    User signingOfficial2 = createUserWithInstitution();
+    // Creates a researcher
+    User user2 =
+        createUserWithRole(UserRoles.RESEARCHER.getRoleId(), signingOfficial2.getInstitutionId());
     int lcId2 =
         libraryCardDAO.insertLibraryCard(
             user2.getUserId(),
             user2.getDisplayName(),
             user2.getEmail(),
-            user2.getUserId(),
+            signingOfficial2.getUserId(),
             new Date());
-    libraryCardDAO.createLibraryCardDaaRelation(lcId2, daaId);
+    libraryCardDAO.createLibraryCardDaaRelation(
+        user2.getUserId(), signingOfficial2.getUserId(), lcId2, daaId);
 
     List<User> users = userDAO.findUsersWithLCsAndInstitution();
-    // Four users: two admin users, two signing official users with library cards.
-    assertEquals(4, users.size());
-    // Filter out admin users, which don't have institutions.
-    users = users.stream().filter(u -> u.getInstitution() != null).toList();
+    // Filter out non-researchers since those are the ones we've added LCs to and are under test.
+    users = users.stream().filter(u -> u.hasUserRole(UserRoles.RESEARCHER)).toList();
     assertEquals(2, users.size());
-    assertNotNull(users.get(0).getInstitution());
-    assertNotNull(users.get(0).getLibraryCard());
-    assertNotNull(users.get(1).getInstitution());
-    assertNotNull(users.get(1).getLibraryCard());
+    users.forEach(
+        u -> {
+          assertNotNull(u.getInstitution());
+          assertNotNull(u.getLibraryCard());
+          assertNotNull(u.getLibraryCard().getDaaDetails());
+          assertFalse(u.getLibraryCard().getDaaDetails().isEmpty());
+          u.getLibraryCard()
+              .getDaaDetails()
+              .forEach(
+                  detail -> {
+                    assertNotNull(detail.daaId());
+                    assertNotNull(detail.authorizedBy());
+                  });
+        });
   }
 
   @Test
@@ -327,6 +366,17 @@ class UserDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testUpdateData() {
+    User researcher = createUser();
+    Map<String, Object> researcherData = researcher.getUserData();
+    researcherData.put("test", "test");
+    userDAO.updateData(researcher.getUserId(), GsonUtil.getInstance().toJson(researcherData));
+
+    User researcherFromDb = userDAO.findUserById(researcher.getUserId());
+    assertEquals(researcherData, researcherFromDb.getUserData());
+  }
+
+  @Test
   void testFindUsersForDatasetsByRole() {
     Dataset dataset = createDataset();
     Dac dac = createDac();
@@ -380,8 +430,8 @@ class UserDAOTest extends DAOTestHelper {
     String email = user.getEmail();
     List<User> users = userDAO.getSOsByInstitution(institutionId);
     assertEquals(1, users.size());
-    assertEquals(displayName, users.get(0).getDisplayName());
-    assertEquals(email, users.get(0).getEmail());
+    assertEquals(displayName, users.getFirst().getDisplayName());
+    assertEquals(email, users.getFirst().getEmail());
 
     List<User> differentInstitutionUsers = userDAO.getSOsByInstitution(institutionId + 1);
     assertEquals(0, differentInstitutionUsers.size());
@@ -389,33 +439,45 @@ class UserDAOTest extends DAOTestHelper {
 
   @Test
   void testGetUsersFromInstitutionWithCards() {
+    User signingOfficial = createUser();
     int dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), new Date());
     Instant now = Instant.now();
     LibraryCard card = createLibraryCard();
     int daaId = daaDAO.createDaa(card.getUserId(), now, card.getUserId(), now, dacId);
-    libraryCardDAO.createLibraryCardDaaRelation(card.getId(), daaId);
+    libraryCardDAO.createLibraryCardDaaRelation(
+        card.getUserId(), signingOfficial.getUserId(), card.getId(), daaId);
     User lcUser = userDAO.findUserById(card.getUserId());
     Integer userId = card.getUserId();
     List<User> users = userDAO.getUsersFromInstitutionWithCards(lcUser.getInstitutionId());
     assertEquals(1, users.size());
-    User returnedUser = users.get(0);
+    User returnedUser = users.getFirst();
     assertEquals(userId, returnedUser.getUserId());
 
     LibraryCard returnedCard = returnedUser.getLibraryCard();
     assertEquals(card.getId(), returnedCard.getId());
     assertEquals(userId, returnedCard.getUserId());
+
+    // Verify the daaDetails contain the authorized-by email from the audit table
+    assertNotNull(returnedCard.getDaaDetails());
+    assertEquals(1, returnedCard.getDaaDetails().size());
+    assertEquals(daaId, returnedCard.getDaaDetails().getFirst().daaId());
+    assertEquals(
+        signingOfficial.getEmail(), returnedCard.getDaaDetails().getFirst().authorizedBy());
   }
 
   @Test
   void testGetUsersWithCardsByDaaId() {
+    User signingOfficial = createUser();
     int dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), new Date());
     Instant now = Instant.now();
     LibraryCard card1 = createLibraryCard();
     int daaId1 = daaDAO.createDaa(card1.getUserId(), now, card1.getUserId(), now, dacId);
-    libraryCardDAO.createLibraryCardDaaRelation(card1.getId(), daaId1);
+    libraryCardDAO.createLibraryCardDaaRelation(
+        card1.getUserId(), signingOfficial.getUserId(), card1.getId(), daaId1);
     LibraryCard card2 = createLibraryCard();
     int daaId2 = daaDAO.createDaa(card2.getUserId(), now, card2.getUserId(), now, dacId);
-    libraryCardDAO.createLibraryCardDaaRelation(card2.getId(), daaId2);
+    libraryCardDAO.createLibraryCardDaaRelation(
+        card2.getUserId(), signingOfficial.getUserId(), card2.getId(), daaId2);
 
     List<User> daa1UserList = userDAO.getUsersWithCardsByDaaId(daaId1);
     assertEquals(1, daa1UserList.size());
@@ -424,11 +486,11 @@ class UserDAOTest extends DAOTestHelper {
     assertEquals(1, daa2UserList.size());
     assertNotEquals(daa1UserList, daa2UserList);
 
-    User daa1User = daa1UserList.get(0);
+    User daa1User = daa1UserList.getFirst();
     assertEquals(card1, daa1User.getLibraryCard());
     assertEquals(daa1User.getLibraryCard().getDaaIds(), List.of(daaId1));
 
-    User daa2User = daa2UserList.get(0);
+    User daa2User = daa2UserList.getFirst();
     assertEquals(card2, daa2User.getLibraryCard());
     assertEquals(daa2User.getLibraryCard().getDaaIds(), List.of(daaId2));
   }
@@ -496,6 +558,67 @@ class UserDAOTest extends DAOTestHelper {
     assertTrue(found.getRoles().contains(chairperson1));
     assertTrue(found.getRoles().stream().anyMatch(chairperson2::equals));
     assertTrue(found.getRoles().contains(chairperson2));
+  }
+
+  @Test
+  void testFindAllEmailReceivingThinlyPopulatedUsers() {
+    createUser();
+    createUser();
+    User u3 = createUser();
+
+    userDAO.updateEmailPreference(u3.getUserId(), false);
+
+    AtomicInteger count = new AtomicInteger();
+    AtomicBoolean user3Found = new AtomicBoolean(false);
+    Integer emailType = EmailType.NEW_STUDY_DIGEST.getTypeInt();
+    String referenceId = "referenceId";
+
+    userDAO
+        .getHandle()
+        .getJdbi()
+        .useHandle(
+            ignored -> {
+              ResultIterable<User> users =
+                  userDAO.allEmailReceivingThinlyPopulatedUsers(emailType, referenceId);
+              for (User user : users) {
+                count.getAndIncrement();
+                if (user.getUserId().equals(u3.getUserId())) {
+                  user3Found.set(true);
+                } else {
+                  // simulate having sent a message so we won't send one again.
+                  mailMessageDAO.insert(
+                      referenceId,
+                      null,
+                      user.getUserId(),
+                      emailType,
+                      Instant.now(),
+                      "",
+                      null,
+                      null,
+                      Instant.now());
+                }
+              }
+            });
+    assertEquals(2, count.get());
+    assertFalse(user3Found.get());
+
+    // verify entries that were "sent messages" don't show up in the list again.
+    count.set(0);
+    userDAO
+        .getHandle()
+        .getJdbi()
+        .useHandle(
+            ignored -> {
+              ResultIterable<User> users =
+                  userDAO.allEmailReceivingThinlyPopulatedUsers(emailType, referenceId);
+              for (User user : users) {
+                count.getAndIncrement();
+                if (user.getUserId().equals(u3.getUserId())) {
+                  user3Found.set(true);
+                }
+              }
+            });
+    assertEquals(0, count.get());
   }
 
   private Dac createDac() {

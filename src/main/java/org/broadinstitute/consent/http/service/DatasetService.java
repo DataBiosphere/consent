@@ -7,6 +7,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
@@ -181,15 +182,24 @@ public class DatasetService implements ConsentLogger {
     if (dataset.getStudy() == null) {
       dataset.setStudy(studyDAO.findStudyById(dataset.getStudyId()));
     }
-    // If not visible, check that the user is authorized to see it
-    if (Boolean.FALSE.equals(dataset.getStudy().getPublicVisibility())) {
-      if (isCreatorOrCustodian(user, dataset)) {
-        return dataset;
-      } else {
-        return null;
-      }
+    if (canReadStudy(user, dataset.getStudy())
+        || Objects.equals(dataset.getCreateUserId(), user.getUserId())) {
+      return dataset;
     }
-    return dataset;
+    return null;
+  }
+
+  protected boolean canReadStudy(User user, Study study) {
+    if (study == null) {
+      return false;
+    }
+    if (user.hasUserRole(UserRoles.ADMIN)) {
+      return true;
+    }
+    if (!Boolean.FALSE.equals(study.getPublicVisibility())) {
+      return true;
+    }
+    return isCreatorOrCustodian(user, study);
   }
 
   protected boolean isCreatorOrCustodian(User user, Dataset dataset) {
@@ -245,6 +255,24 @@ public class DatasetService implements ConsentLogger {
   public Dataset findDatasetById(User user, Integer id) {
     Dataset dataset = datasetDAO.findDatasetById(id);
     return verifyPublicVisibilityAccess(dataset, user);
+  }
+
+  /**
+   * Finds a dataset by ID and enforces read access using a single dataset query.
+   *
+   * @throws NotFoundException if the dataset does not exist
+   * @throws ForbiddenException if the user cannot view the dataset
+   */
+  public Dataset findDatasetByIdForRead(User user, Integer id) {
+    Dataset dataset = datasetDAO.findDatasetById(id);
+    if (dataset == null) {
+      throw new NotFoundException("Entity not found");
+    }
+    Dataset authorizedDataset = verifyPublicVisibilityAccess(dataset, user);
+    if (authorizedDataset == null) {
+      throw new ForbiddenException("User does not have permission");
+    }
+    return authorizedDataset;
   }
 
   /**
@@ -319,6 +347,17 @@ public class DatasetService implements ConsentLogger {
     return studyDAO.findStudyById(studyId);
   }
 
+  public Study findStudyByIdForRead(User user, Integer studyId) {
+    Study study = studyDAO.findStudyById(studyId);
+    if (study == null) {
+      throw new NotFoundException("Entity not found");
+    }
+    if (!canReadStudy(user, study)) {
+      throw new ForbiddenException("User does not have permission");
+    }
+    return study;
+  }
+
   public List<DatasetStudySummary> findAllDatasetStudySummaries(User user) {
     List<DatasetStudySummary> summaries = datasetDAO.findAllDatasetStudySummaries();
     return verifyPublicVisibilityAccess(summaries, user);
@@ -350,7 +389,8 @@ public class DatasetService implements ConsentLogger {
     try {
       // if approval state changed
       if (currentApprovalState != datasetReturn.getDacApproval()) {
-        sendDatasetApprovalNotificationEmail(dataset, user, approval);
+        User creatorUser = dataset.getCreateUser();
+        sendDatasetApprovalNotificationEmail(dataset, creatorUser, approval);
       }
     } catch (Exception e) {
       logException(
@@ -365,7 +405,8 @@ public class DatasetService implements ConsentLogger {
       throws Exception {
     Dac dac = dacDAO.findById(dataset.getDacId());
     if (approval) {
-      emailService.sendDatasetApprovedMessage(user, dac.getName(), dataset.getDatasetIdentifier());
+      emailService.sendDatasetApprovedMessage(
+          user, dac.getName(), dataset.getDatasetIdentifier(), dataset.getName());
     } else {
       if (dac.getEmail() != null) {
         String dacEmail = dac.getEmail();

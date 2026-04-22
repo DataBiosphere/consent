@@ -4,7 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -86,5 +89,21 @@ class UserUpdateFieldsTest {
     // Role ids outside the range of existing roles should not be removed
     List<Integer> roleIdsToRemove = fields.getRoleIdsToRemove(ALL_ROLE_IDS);
     assertTrue(roleIdsToRemove.isEmpty());
+  }
+
+  @Test
+  void testUpdateData_Case_1() {
+    UserUpdateFields fields = new UserUpdateFields();
+    fields.setUserData(null);
+    assertTrue(Objects.isNull(fields.getUserData()));
+  }
+
+  @Test
+  void testUpdateData_Case_2() {
+    UserUpdateFields fields = new UserUpdateFields();
+    Map<String, Object> dataMap = new HashMap<>();
+    dataMap.put("data", null);
+    fields.setUserData(dataMap);
+    assertFalse(fields.getUserData().isEmpty());
   }
 }

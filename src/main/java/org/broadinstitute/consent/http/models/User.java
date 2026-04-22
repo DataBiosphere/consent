@@ -7,7 +7,9 @@ import java.beans.Transient;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -18,6 +20,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.jdbi.v3.json.Json;
 
 public class User {
 
@@ -28,7 +31,8 @@ public class User {
           + " u.create_date as u_create_date, "
           + " u.email_preference as u_email_preference, "
           + " u.institution_id as u_institution_id,"
-          + " u.era_commons_id as u_era_commons_id ";
+          + " u.era_commons_id as u_era_commons_id, "
+          + " u.user_data as u_user_data ";
 
   @JsonProperty private Integer userId;
 
@@ -49,6 +53,8 @@ public class User {
   @JsonProperty private String eraCommonsId;
 
   @JsonProperty private UserStatusInfo userStatusInfo;
+
+  @JsonProperty private Map<String, Object> userData;
 
   private Institution institution;
 
@@ -305,6 +311,18 @@ public class User {
 
   public void setUserStatusInfo(UserStatusInfo userStatusInfo) {
     this.userStatusInfo = userStatusInfo;
+  }
+
+  @Json
+  public void setUserData(Map<String, Object> data) {
+    this.userData = data;
+  }
+
+  public Map<String, Object> getUserData() {
+    if (this.userData == null) {
+      this.userData = new HashMap<>();
+    }
+    return userData;
   }
 
   @Override

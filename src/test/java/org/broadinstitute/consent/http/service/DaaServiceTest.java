@@ -21,6 +21,7 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import org.broadinstitute.consent.http.AbstractTestHelper;
@@ -95,7 +96,7 @@ class DaaServiceTest extends AbstractTestHelper {
   @Test
   void testCreateDaaWithFsoDBError() throws Exception {
     when(contentDisposition.getFileName()).thenReturn("file.txt");
-    doThrow(new Exception("db error")).when(daaServiceDAO).createDaaWithFso(any(), any(), any());
+    doThrow(new SQLException("db error")).when(daaServiceDAO).createDaaWithFso(any(), any(), any());
 
     initService();
     ServerErrorException e =
@@ -107,18 +108,20 @@ class DaaServiceTest extends AbstractTestHelper {
 
   @Test
   void testAddDacToDaa() {
-    doNothing().when(daaDAO).createDacDaaRelation(any(), any());
+    doNothing().when(daaDAO).createDacDaaRelation(1, 1, 1);
 
     initService();
-    assertDoesNotThrow(() -> service.addDacToDaa(1, 1));
+    assertDoesNotThrow(() -> service.addDacToDaa(1, 1, 1));
   }
 
   @Test
   void testRemoveDacFromDaa() {
-    doNothing().when(daaDAO).deleteDacDaaRelation(any(), any());
+    User user = new User();
+    user.setUserId(1);
+    doNothing().when(daaDAO).deleteDacDaaRelation(1, 1, 1);
 
     initService();
-    assertDoesNotThrow(() -> service.removeDacFromDaa(1, 1));
+    assertDoesNotThrow(() -> service.removeDacFromDaa(user.getUserId(), 1, 1));
   }
 
   @Test
@@ -355,20 +358,6 @@ class DaaServiceTest extends AbstractTestHelper {
     String json = "{daaList:[1,2,3]}";
     initService();
     assertThrows(BadRequestException.class, () -> service.findDAAsInJsonArray(json, "invalidKey"));
-  }
-
-  @Test
-  void testDeleteDaa() {
-    when(daaDAO.findById(any())).thenReturn(new DataAccessAgreement());
-    doNothing().when(daaDAO).deleteDaa(any());
-    initService();
-    assertDoesNotThrow(() -> service.deleteDaa(1));
-  }
-
-  @Test
-  void testDeleteDaaDaaNotFound() {
-    initService();
-    assertThrows(NotFoundException.class, () -> service.deleteDaa(1));
   }
 
   @Test
