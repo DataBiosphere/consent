@@ -158,7 +158,7 @@ public class PassportService implements ConsentLogger {
   }
 
   public static String getApprovedUsersEndpoint(String datasetIdentifier) {
-    return "https://consent.dsde-prod.broadinstitute.org/api/datataset/%s/approved-users"
+    return "https://consent.dsde-prod.broadinstitute.org/api/datataset/%s/approvedUsers"
         .formatted(datasetIdentifier);
   }
 }
