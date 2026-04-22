@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service.passport;
 
 import java.time.Instant;
+import java.util.List;
 import org.broadinstitute.consent.http.models.Dataset;
 
 /**
@@ -39,8 +40,8 @@ public class ConsentedDataUseTermsVisa implements VisaClaimType {
    * dereference this URL to retrieve the full DUO-coded data use object for the dataset.
    */
   @Override
-  public String value() {
-    return "%s/dataset/%s".formatted(PassportService.ISS, dataset.getDatasetIdentifier());
+  public List<String> value() {
+    return PassportService.dataUseToTermArray(dataset.getDataUse());
   }
 
   @Override

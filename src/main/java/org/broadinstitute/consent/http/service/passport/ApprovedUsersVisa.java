@@ -19,7 +19,7 @@ public class ApprovedUsersVisa implements VisaClaimType {
   }
 
   @Override
-  public String value() {
+  public Object value() {
     return PassportService.getApprovedUsersEndpoint(datasetIdentifier);
   }
 

@@ -38,7 +38,7 @@ public class OversightBodiesVisa implements VisaClaimType {
    * need a public and stable identifier to point users to for DACs.
    */
   @Override
-  public String value() {
+  public Object value() {
     return "%s/dac/%d".formatted(PassportService.ISS, dac.getDacId());
   }
 

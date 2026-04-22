@@ -35,7 +35,7 @@ public class ResearcherStatus implements VisaClaimType {
   }
 
   @Override
-  public String value() {
+  public Object value() {
     // See https://broadworkbench.atlassian.net/browse/DT-2863
     // This will be replaced with an external profile link.
     return PassportService.ISS;

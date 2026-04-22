@@ -37,7 +37,7 @@ public class ControlledAccessGrants implements VisaClaimType {
   }
 
   @Override
-  public String value() {
+  public Object value() {
     return String.format(
         "%s/dataset/%s", PassportService.ISS, approvedDataset.getDatasetIdentifier());
   }

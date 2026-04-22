@@ -37,7 +37,7 @@ public class RequiredAgreementsVisa implements VisaClaimType {
    * agreement before granting access.
    */
   @Override
-  public String value() {
+  public Object value() {
     return "%s/daa/%d".formatted(PassportService.ISS, daa.getDaaId());
   }
 

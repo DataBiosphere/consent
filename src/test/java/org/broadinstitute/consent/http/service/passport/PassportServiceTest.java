@@ -146,7 +146,7 @@ class PassportServiceTest extends AbstractTestHelper {
     User user = createUser();
     user.setEmail(email);
     AffiliationAndRole affiliationAndRole = new AffiliationAndRole(user);
-    assertEquals(AffiliationAndRole.DEFAULT_VALUE, affiliationAndRole.value());
+    assertEquals(AffiliationAndRole.DEFAULT_VALUE, affiliationAndRole.value().toString());
     assertEquals(PassportService.ISS, affiliationAndRole.source());
     assertTrue(affiliationAndRole.asserted() > 0);
   }
@@ -157,7 +157,7 @@ class PassportServiceTest extends AbstractTestHelper {
     LibraryCard card = new LibraryCard();
     user.setLibraryCard(card);
     AffiliationAndRole affiliationAndRole = new AffiliationAndRole(user);
-    assertTrue(affiliationAndRole.value().contains("faculty@example.org"));
+    assertTrue(affiliationAndRole.value().toString().contains("faculty@example.org"));
     assertEquals(PassportService.ISS, affiliationAndRole.source());
     assertEquals(VisaBy.SO.name().toLowerCase(), affiliationAndRole.by());
     assertTrue(affiliationAndRole.asserted() > 0);

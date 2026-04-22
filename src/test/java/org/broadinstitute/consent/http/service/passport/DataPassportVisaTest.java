@@ -1,13 +1,17 @@
 package org.broadinstitute.consent.http.service.passport;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.DataUse;
+import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.junit.jupiter.api.Test;
 
@@ -29,10 +33,158 @@ class DataPassportVisaTest {
   }
 
   @Test
-  void consentedDataUseTerms_value_containsDatasetIdentifier() {
+  void consentedDataUseTerms_value_isListOfDuoTerms() {
     Dataset dataset = datasetWithAlias(42);
     ConsentedDataUseTermsVisa visa = new ConsentedDataUseTermsVisa(dataset);
-    assertEquals(PassportService.ISS + "/dataset/" + dataset.getDatasetIdentifier(), visa.value());
+    assertInstanceOf(List.class, visa.value());
+  }
+
+  @Test
+  void consentedDataUseTerms_value_emptyListWhenDataUseIsNull() {
+    Dataset dataset = datasetWithAlias(1);
+    dataset.setDataUse(null);
+    List<?> terms = (List<?>) new ConsentedDataUseTermsVisa(dataset).value();
+    assertNotNull(terms);
+    assertTrue(terms.isEmpty());
+  }
+
+  @Test
+  void consentedDataUseTerms_value_generalUse() {
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    List<?> terms = valueFor(dataUse);
+    assertTrue(terms.contains("DUO:0000004"), "GRU should map to DUO:0000004");
+  }
+
+  @Test
+  void consentedDataUseTerms_value_hmbResearch() {
+    DataUse dataUse = new DataUseBuilder().setHmbResearch(true).build();
+    List<?> terms = valueFor(dataUse);
+    assertTrue(terms.contains("DUO:0000006"), "HMB should map to DUO:0000006");
+  }
+
+  @Test
+  void consentedDataUseTerms_value_diseaseRestrictions_includesDuoClassifierAndTermIds() {
+    DataUse dataUse =
+        new DataUseBuilder().setDiseaseRestrictions(List.of("MONDO:0005267", "HP:0001250")).build();
+    List<?> terms = valueFor(dataUse);
+    assertTrue(terms.contains("DUO:0000007"), "DS should include DUO:0000007 classifier");
+    assertTrue(terms.contains("MONDO:0005267"), "disease term MONDO:0005267 should be included");
+    assertTrue(terms.contains("HP:0001250"), "disease term HP:0001250 should be included");
+  }
+
+  @Test
+  void consentedDataUseTerms_value_diseaseRestrictions_emptyListDoesNotAddClassifier() {
+    DataUse dataUse = new DataUseBuilder().setDiseaseRestrictions(List.of()).build();
+    List<?> terms = valueFor(dataUse);
+    assertTrue(
+        terms.stream().noneMatch("DUO:0000007"::equals),
+        "Empty disease list should not add DUO:0000007");
+  }
+
+  @Test
+  void consentedDataUseTerms_value_populationOriginsAncestry() {
+    DataUse dataUse = new DataUseBuilder().setPopulationOriginsAncestry(true).build();
+    List<?> terms = valueFor(dataUse);
+    assertTrue(terms.contains("DUO:0000011"), "POA should map to DUO:0000011");
+  }
+
+  @Test
+  void consentedDataUseTerms_value_geneticStudiesOnly() {
+    DataUse dataUse = new DataUseBuilder().setGeneticStudiesOnly(true).build();
+    List<?> terms = valueFor(dataUse);
+    assertTrue(terms.contains("DUO:0000016"), "GSO should map to DUO:0000016");
+  }
+
+  @Test
+  void consentedDataUseTerms_value_methodsResearch() {
+    DataUse dataUse = new DataUseBuilder().setMethodsResearch(true).build();
+    List<?> terms = valueFor(dataUse);
+    assertTrue(terms.contains("DUO:0000015"), "NMDS should map to DUO:0000015");
+  }
+
+  @Test
+  void consentedDataUseTerms_value_nonProfitUse() {
+    DataUse dataUse = new DataUseBuilder().setNonProfitUse(true).build();
+    List<?> terms = valueFor(dataUse);
+    assertTrue(terms.contains("DUO:0000018"), "NPU should map to DUO:0000018");
+  }
+
+  @Test
+  void consentedDataUseTerms_value_publicationResults() {
+    DataUse dataUse = new DataUseBuilder().setPublicationResults(true).build();
+    List<?> terms = valueFor(dataUse);
+    assertTrue(terms.contains("DUO:0000019"), "PUB should map to DUO:0000019");
+  }
+
+  @Test
+  void consentedDataUseTerms_value_collaboratorRequired() {
+    DataUse dataUse = new DataUseBuilder().setCollaboratorRequired(true).build();
+    List<?> terms = valueFor(dataUse);
+    assertTrue(terms.contains("DUO:0000020"), "COL should map to DUO:0000020");
+  }
+
+  @Test
+  void consentedDataUseTerms_value_ethicsApprovalRequired() {
+    DataUse dataUse = new DataUseBuilder().setEthicsApprovalRequired(true).build();
+    List<?> terms = valueFor(dataUse);
+    assertTrue(terms.contains("DUO:0000021"), "IRB should map to DUO:0000021");
+  }
+
+  @Test
+  void consentedDataUseTerms_value_geographicalRestrictions() {
+    DataUse dataUse = new DataUseBuilder().setGeographicalRestrictions("US-only").build();
+    List<?> terms = valueFor(dataUse);
+    assertTrue(terms.contains("DUO:0000022"), "GS should map to DUO:0000022");
+  }
+
+  @Test
+  void consentedDataUseTerms_value_geographicalRestrictions_blankStringNotIncluded() {
+    DataUse dataUse = new DataUseBuilder().setGeographicalRestrictions("   ").build();
+    List<?> terms = valueFor(dataUse);
+    assertTrue(
+        terms.stream().noneMatch("DUO:0000022"::equals),
+        "Blank geographical restriction should not add DUO:0000022");
+  }
+
+  @Test
+  void consentedDataUseTerms_value_publicationMoratorium() {
+    DataUse dataUse = new DataUseBuilder().setPublicationMoratorium("2027-01-01").build();
+    List<?> terms = valueFor(dataUse);
+    assertTrue(terms.contains("DUO:0000024"), "MOR should map to DUO:0000024");
+  }
+
+  @Test
+  void consentedDataUseTerms_value_multipleCombinedTerms() {
+    DataUse dataUse =
+        new DataUseBuilder()
+            .setHmbResearch(true)
+            .setEthicsApprovalRequired(true)
+            .setNonProfitUse(true)
+            .build();
+    List<?> terms = valueFor(dataUse);
+    assertTrue(terms.contains("DUO:0000006"));
+    assertTrue(terms.contains("DUO:0000021"));
+    assertTrue(terms.contains("DUO:0000018"));
+  }
+
+  @Test
+  void consentedDataUseTerms_value_falseBooleansNotIncluded() {
+    DataUse dataUse =
+        new DataUseBuilder()
+            .setGeneralUse(false)
+            .setHmbResearch(false)
+            .setNonProfitUse(false)
+            .build();
+    List<?> terms = valueFor(dataUse);
+    assertTrue(terms.isEmpty(), "False boolean fields should not produce any DUO terms");
+  }
+
+  // Helper: build a dataset with the given DataUse and return the visa value
+  @SuppressWarnings("unchecked")
+  private List<String> valueFor(DataUse dataUse) {
+    Dataset dataset = datasetWithAlias(1);
+    dataset.setDataUse(dataUse);
+    return (List<String>) new ConsentedDataUseTermsVisa(dataset).value();
   }
 
   @Test
@@ -90,7 +242,7 @@ class DataPassportVisaTest {
   @Test
   void oversightBodies_value_containsDacId() {
     Dac dac = dac(7);
-    assertEquals(PassportService.ISS + "/dac/7", new OversightBodiesVisa(dac).value());
+    assertEquals(PassportService.ISS + "/dac/7", new OversightBodiesVisa(dac).value().toString());
   }
 
   @Test
@@ -145,7 +297,8 @@ class DataPassportVisaTest {
 
   @Test
   void requiredAgreements_value_containsDaaId() {
-    assertEquals(PassportService.ISS + "/daa/5", new RequiredAgreementsVisa(daa(5)).value());
+    assertEquals(
+        PassportService.ISS + "/daa/5", new RequiredAgreementsVisa(daa(5)).value().toString());
   }
 
   @Test
@@ -189,13 +342,13 @@ class DataPassportVisaTest {
   @Test
   void approvedUsers_value_containsDatasetIdentifier() {
     ApprovedUsersVisa visa = new ApprovedUsersVisa("DUOS-000042");
-    assertEquals(PassportService.getApprovedUsersEndpoint("DUOS-000042"), visa.value());
+    assertEquals(PassportService.getApprovedUsersEndpoint("DUOS-000042"), visa.value().toString());
   }
 
   @Test
   void approvedUsers_value_containsDatasetIdentifierInUrl() {
     ApprovedUsersVisa visa = new ApprovedUsersVisa("DUOS-000042");
-    assertTrue(visa.value().contains("DUOS-000042"));
+    assertTrue(visa.value().toString().contains("DUOS-000042"));
   }
 
   @Test

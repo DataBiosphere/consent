@@ -36,7 +36,7 @@ public class AffiliationAndRole implements VisaClaimType {
   }
 
   @Override
-  public String value() {
+  public Object value() {
     if (user.getEmail() == null) {
       return DEFAULT_VALUE;
     }
