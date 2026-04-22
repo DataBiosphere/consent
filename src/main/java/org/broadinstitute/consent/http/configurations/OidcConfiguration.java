@@ -1,12 +1,14 @@
 package org.broadinstitute.consent.http.configurations;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotNull;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class OidcConfiguration {
   @NotNull private String authorityEndpoint;
   private String extraAuthParams;
   private boolean addClientIdToScope = false;
-  private String clientId;
+  @NotNull private String clientId;
   private String clientSecret;
 
   public String getAuthorityEndpoint() {
