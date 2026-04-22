@@ -46,8 +46,7 @@ public class DacServiceDAO implements ConsentLogger {
           DacDAO dacDAO = handle.attach(DacDAO.class);
           DataAccessAgreement daa = dac.getAssociatedDaa();
           if (daa != null) {
-            daaDAO.deleteDacDaaRelation(
-                daa.getDaaId(), dac.getDacId(), user.getUserId());
+            daaDAO.deleteDacDaaRelation(daa.getDaaId(), dac.getDacId(), user.getUserId());
           }
 
           // Find all dac chair/member user roles and audit each removal
@@ -60,9 +59,7 @@ public class DacServiceDAO implements ConsentLogger {
                       Objects.equals(userRole.getRoleId(), UserRoles.CHAIRPERSON.getRoleId())
                           || Objects.equals(userRole.getRoleId(), UserRoles.MEMBER.getRoleId()))
               .forEach(
-                  userRole ->
-                      dacDAO.removeDacMember(
-                          userRole.getUserRoleId(), user.getUserId()));
+                  userRole -> dacDAO.removeDacMember(userRole.getUserRoleId(), user.getUserId()));
 
           Update datasetUpdate = handle.createUpdate(UPDATE_DATASET_STATEMENT);
           datasetUpdate.bind(DAC_ID, dac.getDacId());
