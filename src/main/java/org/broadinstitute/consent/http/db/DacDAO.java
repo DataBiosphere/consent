@@ -390,7 +390,7 @@ public interface DacDAO extends Transactional<DacDAO> {
       """
       SELECT * FROM dac_audit
       WHERE dac_id = :dacId
-      ORDER BY action_date DESC
+      ORDER BY action_date DESC, id DESC
       """)
   List<DacAudit> findAuditsByDacId(@Bind("dacId") Integer dacId);
 
