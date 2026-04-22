@@ -257,15 +257,16 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     List<Integer> foundIds =
         filesFound.stream().map(FileStorageObject::getFileStorageObjectId).toList();
 
-    assertEquals(3, filesFound.size());
-    assertEquals(newestId, filesFound.get(0).getFileStorageObjectId());
-    assertEquals(middleId, filesFound.get(1).getFileStorageObjectId());
-    assertEquals(oldestId, filesFound.get(2).getFileStorageObjectId());
+    assertEquals(4, filesFound.size()); // includes 1 soft-deleted record
+    assertEquals(deletedId, filesFound.get(0).getFileStorageObjectId());
+    assertEquals(newestId, filesFound.get(1).getFileStorageObjectId());
+    assertEquals(middleId, filesFound.get(2).getFileStorageObjectId());
+    assertEquals(oldestId, filesFound.get(3).getFileStorageObjectId());
 
     assertTrue(foundIds.contains(newestId));
     assertTrue(foundIds.contains(middleId));
     assertTrue(foundIds.contains(oldestId));
-    assertFalse(foundIds.contains(deletedId));
+    assertTrue(foundIds.contains(deletedId));
 
     filesFound.forEach(file -> assertEquals(entityId, file.getEntityId()));
   }

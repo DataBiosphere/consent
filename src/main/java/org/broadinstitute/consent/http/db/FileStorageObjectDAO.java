@@ -190,7 +190,6 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
               fso.delete_user_id AS fso_delete_user_id
           FROM file_storage_object fso
           WHERE fso.entity_id = :entityId
-            AND (fso.deleted = false OR fso.deleted IS NULL)
           ORDER BY fso.create_date DESC
           """)
   List<FileStorageObject> findFileMetadataByEntityId(@Bind("entityId") String entityId);
