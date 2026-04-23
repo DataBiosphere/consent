@@ -487,7 +487,7 @@ class DaaDAOTest extends DAOTestHelper {
   @Test
   void testCreateDacDaaRelation_ReplaceExistingRelation() {
     Integer userId = createUserId();
-    Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
+    Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", userId);
     Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
     Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
 
@@ -518,7 +518,7 @@ class DaaDAOTest extends DAOTestHelper {
   @Test
   void testCreateDacDaaRelation_AuditTrailForReplacement() {
     Integer userId = createUserId();
-    Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
+    Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", userId);
     Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
     Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
 
@@ -542,7 +542,7 @@ class DaaDAOTest extends DAOTestHelper {
   @Test
   void testCreateDacDaaRelation_MultipleReplacements() {
     Integer userId = createUserId();
-    Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
+    Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", userId);
     Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
     Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
     Integer daaId3 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
