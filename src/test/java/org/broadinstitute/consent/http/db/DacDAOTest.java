@@ -551,7 +551,19 @@ class DacDAOTest extends DAOTestHelper {
 
     // Small sleep to ensure distinct action_date timestamps
     Thread.sleep(10); // NOSONAR
-    dacDAO.insertDacAudit(dac.getDacId(), user2.getUserId(), null, null, "UPDATE");
+    jdbi.useHandle(
+        h -> {
+          String insert =
+              """
+              INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
+              VALUES (:dacId, :userId, NULL, NULL, :action, NOW())
+              """;
+          h.createUpdate(insert)
+              .bind("dacId", dac.getDacId())
+              .bind("userId", user2.getUserId())
+              .bind("action", AuditActions.UPDATE.name())
+              .execute();
+        });
 
     List<DacAudit> audits = dacDAO.findAuditsByDacId(dac.getDacId());
     assertThat(audits, hasSize(2));

@@ -358,28 +358,6 @@ public interface DacDAO extends Transactional<DacDAO> {
       @Bind("userRoleId") Integer userRoleId, @Bind("auditUserId") Integer auditUserId);
 
   /**
-   * Insert a single audit row for a DAC-level operation (CREATE, UPDATE, DELETE). {@code
-   * affectedUserId} and {@code roleId} may be null for non-member operations.
-   *
-   * @param dacId The DAC being acted upon
-   * @param userId The actor
-   * @param affectedUserId The user whose role is being changed (null for DAC-level events)
-   * @param roleId The role involved (null for DAC-level events)
-   * @param action The audit action string (e.g. 'CREATE', 'UPDATE', 'DELETE')
-   */
-  @SqlUpdate(
-      """
-      INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
-      VALUES (:dacId, :userId, :affectedUserId, :roleId, :action, NOW())
-      """)
-  void insertDacAudit(
-      @Bind("dacId") Integer dacId,
-      @Bind("userId") Integer userId,
-      @Bind("affectedUserId") Integer affectedUserId,
-      @Bind("roleId") Integer roleId,
-      @Bind("action") String action);
-
-  /**
    * Return all audit records for a given DAC, newest first.
    *
    * @param dacId The DAC id
