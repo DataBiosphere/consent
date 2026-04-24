@@ -418,7 +418,7 @@ class DacServiceDAOTest extends DAOTestHelper {
     assertEquals(darOwner.getUserId(), controlledDarUserId);
     assertNotNull(controlledDarUpdateDate);
     assertTrue(controlledDarUpdateDate.toInstant().isAfter(controlledDarUpdatedAt.toInstant()));
-    assertTrue(controlledDarAdminNotes.startsWith(existingAdminNote + "\nOn "));
+    assertTrue(controlledDarAdminNotes.startsWith(existingAdminNote + " On "));
     // Dataset identifier should be in formatted DUOS-XXXXXX form when alias is available, or object
     // ID otherwise
     assertTrue(

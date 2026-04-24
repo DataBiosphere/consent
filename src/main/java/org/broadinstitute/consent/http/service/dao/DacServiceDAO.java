@@ -76,13 +76,13 @@ public class DacServiceDAO implements ConsentLogger {
            UPDATE data_access_request dar
            SET admin_dar_notes =
                    CONCAT_WS(
-                       E'\n',
+                       ' ',
                        NULLIF(dar.admin_dar_notes, ''),
                        CONCAT(
                            'On ',
                            TO_CHAR(current_timestamp AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
                            ' the following datasets were removed administratively from this request because the responsible Data Access Committee no longer manages access using DUOS.',
-                           E'\n',
+                           ' ',
                            affected.removed_dataset_identifiers)),
                update_date = NOW()
             FROM (
