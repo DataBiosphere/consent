@@ -11,7 +11,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -459,7 +458,7 @@ class DacServiceTest extends AbstractTestHelper {
 
     DacDatasetExternalizationResponse actual = service.convertDacDatasetsToExternal(1, 10, request);
     assertEquals(expected, actual);
-    verify(elasticSearchService).indexDatasets(eq(List.of(101, 102)));
+    verify(elasticSearchService).indexDatasets(List.of(101, 102));
   }
 
   @Test

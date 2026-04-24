@@ -227,11 +227,9 @@ public class DacServiceDAO implements ConsentLogger {
   }
 
   private List<Integer> findDatasetIdsForDac(org.jdbi.v3.core.Handle handle, Integer dacId) {
-    return handle
-        .createQuery(FIND_DATASET_IDS_FOR_DAC_STATEMENT)
-        .bind(DAC_ID, dacId)
-        .mapTo(Integer.class)
-        .list();
+    try (var query = handle.createQuery(FIND_DATASET_IDS_FOR_DAC_STATEMENT)) {
+      return query.bind(DAC_ID, dacId).mapTo(Integer.class).list();
+    }
   }
 
   private DacDatasetExternalizationResponse buildEmptyResponse(
@@ -245,12 +243,13 @@ public class DacServiceDAO implements ConsentLogger {
       List<Integer> datasetIds,
       DacDatasetExternalizationRequest request) {
     List<String> accessManagementValues = getAccessManagementValues(request);
-    return handle
-        .createQuery(FIND_CONVERTIBLE_DATASET_IDS_STATEMENT)
-        .bindList(DATASET_IDS, datasetIds)
-        .bindList(ACCESS_MANAGEMENT_VALUES, accessManagementValues)
-        .mapTo(Integer.class)
-        .list();
+    try (var query = handle.createQuery(FIND_CONVERTIBLE_DATASET_IDS_STATEMENT)) {
+      return query
+          .bindList(DATASET_IDS, datasetIds)
+          .bindList(ACCESS_MANAGEMENT_VALUES, accessManagementValues)
+          .mapTo(Integer.class)
+          .list();
+    }
   }
 
   private List<String> getAccessManagementValues(DacDatasetExternalizationRequest request) {
@@ -260,11 +259,9 @@ public class DacServiceDAO implements ConsentLogger {
   }
 
   private int countExternalDatasets(org.jdbi.v3.core.Handle handle, List<Integer> datasetIds) {
-    return handle
-        .createQuery(COUNT_EXTERNAL_DATASETS_STATEMENT)
-        .bindList(DATASET_IDS, datasetIds)
-        .mapTo(Integer.class)
-        .one();
+    try (var query = handle.createQuery(COUNT_EXTERNAL_DATASETS_STATEMENT)) {
+      return query.bindList(DATASET_IDS, datasetIds).mapTo(Integer.class).one();
+    }
   }
 
   private ExternalizationMetrics computeMetrics(
@@ -289,29 +286,23 @@ public class DacServiceDAO implements ConsentLogger {
 
   private int countDarDatasetRelations(
       org.jdbi.v3.core.Handle handle, List<Integer> convertibleDatasetIds) {
-    return handle
-        .createQuery(COUNT_DAR_DATASET_RELATIONS_FOR_DATASETS_STATEMENT)
-        .bindList(DATASET_IDS, convertibleDatasetIds)
-        .mapTo(Integer.class)
-        .one();
+    try (var query = handle.createQuery(COUNT_DAR_DATASET_RELATIONS_FOR_DATASETS_STATEMENT)) {
+      return query.bindList(DATASET_IDS, convertibleDatasetIds).mapTo(Integer.class).one();
+    }
   }
 
   private int countDistinctUsers(
       org.jdbi.v3.core.Handle handle, List<Integer> convertibleDatasetIds) {
-    return handle
-        .createQuery(COUNT_DISTINCT_USERS_FOR_DATASETS_STATEMENT)
-        .bindList(DATASET_IDS, convertibleDatasetIds)
-        .mapTo(Integer.class)
-        .one();
+    try (var query = handle.createQuery(COUNT_DISTINCT_USERS_FOR_DATASETS_STATEMENT)) {
+      return query.bindList(DATASET_IDS, convertibleDatasetIds).mapTo(Integer.class).one();
+    }
   }
 
   private int countOpenElections(
       org.jdbi.v3.core.Handle handle, List<Integer> convertibleDatasetIds) {
-    return handle
-        .createQuery(COUNT_OPEN_ELECTIONS_FOR_DATASETS_STATEMENT)
-        .bindList(DATASET_IDS, convertibleDatasetIds)
-        .mapTo(Integer.class)
-        .one();
+    try (var query = handle.createQuery(COUNT_OPEN_ELECTIONS_FOR_DATASETS_STATEMENT)) {
+      return query.bindList(DATASET_IDS, convertibleDatasetIds).mapTo(Integer.class).one();
+    }
   }
 
   private void executeExternalizationUpdates(
@@ -321,17 +312,17 @@ public class DacServiceDAO implements ConsentLogger {
       DacDatasetExternalizationRequest request) {
     List<String> accessManagementValues = getAccessManagementValues(request);
 
-    handle
-        .createUpdate(CLEAR_DAC_FIELDS_FOR_DATASETS_STATEMENT)
-        .bindList(DATASET_IDS, convertibleDatasetIds)
-        .bind(USER_ID, userId)
-        .execute();
+    try (var clearDac = handle.createUpdate(CLEAR_DAC_FIELDS_FOR_DATASETS_STATEMENT)) {
+      clearDac.bindList(DATASET_IDS, convertibleDatasetIds).bind(USER_ID, userId).execute();
+    }
 
-    handle
-        .createUpdate(UPDATE_CONTROLLED_DATASETS_TO_EXTERNAL_STATEMENT)
-        .bindList(DATASET_IDS, convertibleDatasetIds)
-        .bindList(ACCESS_MANAGEMENT_VALUES, accessManagementValues)
-        .execute();
+    try (var updateToExternal =
+        handle.createUpdate(UPDATE_CONTROLLED_DATASETS_TO_EXTERNAL_STATEMENT)) {
+      updateToExternal
+          .bindList(DATASET_IDS, convertibleDatasetIds)
+          .bindList(ACCESS_MANAGEMENT_VALUES, accessManagementValues)
+          .execute();
+    }
 
     if (request.shouldRevokeApprovedAccess()) {
       revokeApprovedAccess(handle, convertibleDatasetIds);
@@ -344,23 +335,20 @@ public class DacServiceDAO implements ConsentLogger {
 
   private void revokeApprovedAccess(
       org.jdbi.v3.core.Handle handle, List<Integer> convertibleDatasetIds) {
-    handle
-        .createUpdate(APPEND_ADMIN_DAR_NOTES_FOR_DATASETS_STATEMENT)
-        .bindList(DATASET_IDS, convertibleDatasetIds)
-        .execute();
-
-    handle
-        .createUpdate(DELETE_DAR_DATASET_RELATIONS_FOR_DATASETS_STATEMENT)
-        .bindList(DATASET_IDS, convertibleDatasetIds)
-        .execute();
+    try (var appendNotes = handle.createUpdate(APPEND_ADMIN_DAR_NOTES_FOR_DATASETS_STATEMENT)) {
+      appendNotes.bindList(DATASET_IDS, convertibleDatasetIds).execute();
+    }
+    try (var deleteRelations =
+        handle.createUpdate(DELETE_DAR_DATASET_RELATIONS_FOR_DATASETS_STATEMENT)) {
+      deleteRelations.bindList(DATASET_IDS, convertibleDatasetIds).execute();
+    }
   }
 
   private void cancelOpenElections(
       org.jdbi.v3.core.Handle handle, List<Integer> convertibleDatasetIds) {
-    handle
-        .createUpdate(CANCEL_OPEN_ELECTIONS_FOR_DATASETS_STATEMENT)
-        .bindList(DATASET_IDS, convertibleDatasetIds)
-        .execute();
+    try (var cancel = handle.createUpdate(CANCEL_OPEN_ELECTIONS_FOR_DATASETS_STATEMENT)) {
+      cancel.bindList(DATASET_IDS, convertibleDatasetIds).execute();
+    }
   }
 
   private DacDatasetExternalizationResponse buildResponse(
@@ -392,25 +380,21 @@ public class DacServiceDAO implements ConsentLogger {
       Integer dacId, DacDatasetExternalizationRequest request) {
     return jdbi.withHandle(
         handle -> {
-          List<Integer> datasetIds =
-              handle
-                  .createQuery(FIND_DATASET_IDS_FOR_DAC_STATEMENT)
-                  .bind(DAC_ID, dacId)
-                  .mapTo(Integer.class)
-                  .list();
+          List<Integer> datasetIds;
+          try (var dacQuery = handle.createQuery(FIND_DATASET_IDS_FOR_DAC_STATEMENT)) {
+            datasetIds = dacQuery.bind(DAC_ID, dacId).mapTo(Integer.class).list();
+          }
           if (datasetIds.isEmpty()) {
             return List.of();
           }
-          List<String> accessManagementValues =
-              request.shouldConvertOpenAccessDatasets()
-                  ? List.of(CONTROLLED_ACCESS_MANAGEMENT, "open")
-                  : List.of(CONTROLLED_ACCESS_MANAGEMENT);
-          return handle
-              .createQuery(FIND_CONVERTIBLE_DATASET_IDS_STATEMENT)
-              .bindList(DATASET_IDS, datasetIds)
-              .bindList(ACCESS_MANAGEMENT_VALUES, accessManagementValues)
-              .mapTo(Integer.class)
-              .list();
+          List<String> accessManagementValues = getAccessManagementValues(request);
+          try (var convertibleQuery = handle.createQuery(FIND_CONVERTIBLE_DATASET_IDS_STATEMENT)) {
+            return convertibleQuery
+                .bindList(DATASET_IDS, datasetIds)
+                .bindList(ACCESS_MANAGEMENT_VALUES, accessManagementValues)
+                .mapTo(Integer.class)
+                .list();
+          }
         });
   }
 }
