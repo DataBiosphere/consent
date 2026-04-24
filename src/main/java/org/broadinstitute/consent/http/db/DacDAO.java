@@ -238,6 +238,7 @@ public interface DacDAO extends Transactional<DacDAO> {
                delete_user_id = :userId,
                delete_date    = NOW()
         WHERE  dac_id = :dacId
+          AND  deleted IS NOT TRUE
         RETURNING dac_id
       )
       INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)

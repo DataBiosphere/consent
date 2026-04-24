@@ -307,6 +307,28 @@ class DacDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testDeleteDac_idempotent_doesNotOverwriteOrAddAudit() {
+    User firstDeleter = createUser();
+    User secondDeleter = createUser();
+    Integer dacId = createRandomDAC();
+
+    dacDAO.deleteDac(dacId, firstDeleter.getUserId());
+    dacDAO.deleteDac(dacId, secondDeleter.getUserId());
+
+    // delete_user_id must still reflect the first caller
+    Dac deleted = dacDAO.findDeletedDacById(dacId);
+    assertNotNull(deleted);
+    assertEquals(firstDeleter.getUserId(), deleted.getDeleteUserId());
+
+    // exactly one DELETE audit entry — the second call was a no-op
+    long deleteAuditCount =
+        dacDAO.findAuditsByDacId(dacId).stream()
+            .filter(a -> AuditActions.DELETE.equals(a.action()))
+            .count();
+    assertEquals(1, deleteAuditCount);
+  }
+
+  @Test
   void testUpdateDacWithoutEmail() {
     String newValue = "New Value";
     User user = createUser();
