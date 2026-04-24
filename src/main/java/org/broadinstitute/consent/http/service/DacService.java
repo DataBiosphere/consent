@@ -7,7 +7,6 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -177,24 +176,21 @@ public class DacService implements ConsentLogger {
     throw new NotFoundException("Could not find DAC with the provided id: " + dacId);
   }
 
-  public Integer createDac(String name, String description) {
-    Date createDate = new Date();
-    return dacDAO.createDac(name, description, createDate);
+  public Integer createDac(String name, String description, Integer userId) {
+    return dacDAO.createDac(name, description, userId);
   }
 
-  public Integer createDac(String name, String description, String email) {
-    Date createDate = new Date();
-    return dacDAO.createDac(name, description, email, createDate);
+  public Integer createDac(String name, String description, String email, Integer userId) {
+    return dacDAO.createDac(name, description, email, userId);
   }
 
-  public void updateDac(String name, String description, Integer dacId) {
-    Date updateDate = new Date();
-    dacDAO.updateDac(name, description, updateDate, dacId);
+  public void updateDac(String name, String description, Integer dacId, Integer userId) {
+    dacDAO.updateDac(name, description, dacId, userId);
   }
 
-  public void updateDac(String name, String description, String email, Integer dacId) {
-    Date updateDate = new Date();
-    dacDAO.updateDac(name, description, email, updateDate, dacId);
+  public void updateDac(
+      String name, String description, String email, Integer dacId, Integer userId) {
+    dacDAO.updateDac(name, description, email, dacId, userId);
   }
 
   public void deleteDac(User user, Integer dacId) throws IllegalArgumentException {
@@ -239,8 +235,9 @@ public class DacService implements ConsentLogger {
     return users;
   }
 
-  public User addDacMember(Role role, User user, Dac dac) throws IllegalArgumentException {
-    dacDAO.addDacMember(role.getRoleId(), user.getUserId(), dac.getDacId());
+  public User addDacMember(Role role, User user, Dac dac, Integer auditUserId)
+      throws IllegalArgumentException {
+    dacDAO.addDacMember(role.getRoleId(), user.getUserId(), dac.getDacId(), auditUserId);
     User updatedUser = userDAO.findUserById(user.getUserId());
     List<Election> elections = electionDAO.findOpenElectionsByDacId(dac.getDacId());
     for (Election e : elections) {
@@ -264,13 +261,13 @@ public class DacService implements ConsentLogger {
     return userDAO.findUserById(updatedUser.getUserId());
   }
 
-  public void removeDacMember(Role role, User user, Dac dac, Integer auditUser)
+  public void removeDacMember(Role role, User user, Dac dac, Integer auditUserId)
       throws BadRequestException {
     if (role.getRoleId().equals(UserRoles.CHAIRPERSON.getRoleId())) {
       if (dac.getChairpersons().size() <= 1) {
         throw new BadRequestException("Dac requires at least one chairperson.");
       }
-      ruleDAO.auditedDeleteDACRuleSettingByUser(dac.getDacId(), user.getUserId(), auditUser);
+      ruleDAO.auditedDeleteDACRuleSettingByUser(dac.getDacId(), user.getUserId(), auditUserId);
     }
     List<UserRole> dacRoles =
         user.getRoles().stream()
@@ -278,7 +275,7 @@ public class DacService implements ConsentLogger {
             .filter(r -> r.getDacId().equals(dac.getDacId()))
             .filter(r -> r.getRoleId().equals(role.getRoleId()))
             .toList();
-    dacRoles.forEach(userRole -> dacDAO.removeDacMember(userRole.getUserRoleId()));
+    dacRoles.forEach(userRole -> dacDAO.removeDacMember(userRole.getUserRoleId(), auditUserId));
     voteService.deleteOpenDacVotesForUser(dac, user);
   }
 

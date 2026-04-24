@@ -1,7 +1,11 @@
 package org.broadinstitute.consent.http.service.dao;
 
 import com.google.inject.Inject;
+import java.util.List;
+import java.util.Objects;
 import org.broadinstitute.consent.http.db.DaaDAO;
+import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.User;
@@ -12,11 +16,8 @@ import org.jdbi.v3.core.statement.Update;
 public class DacServiceDAO implements ConsentLogger {
 
   private final Jdbi jdbi;
-  private final DaaDAO daaDAO;
   private static final String DAC_ID = "dacId";
   private static final String USER_ID = "userId";
-  private static final String DELETE_ROLES_STATEMENT =
-      "DELETE FROM user_role WHERE dac_id = :dacId";
   private static final String UPDATE_DATASET_STATEMENT =
       "UPDATE dataset SET dac_id = null, dac_approval = null WHERE dac_id = :dacId";
   private static final String DELETE_DAC_RULES_STATEMENT =
@@ -28,12 +29,10 @@ public class DacServiceDAO implements ConsentLogger {
             FROM dac_rule_settings s
             WHERE dac_id = :dacId
           """;
-  private static final String DELETE_DAC_STATEMENT = "DELETE FROM dac where dac_id = :dacId";
 
   @Inject
   public DacServiceDAO(Jdbi jdbi) {
     this.jdbi = jdbi;
-    daaDAO = jdbi.onDemand(DaaDAO.class);
   }
 
   public void deleteDacAndRemoveDaaAssociation(User user, Dac dac) throws IllegalArgumentException {
@@ -43,14 +42,24 @@ public class DacServiceDAO implements ConsentLogger {
     }
     jdbi.useTransaction(
         handle -> {
+          DaaDAO daaDAO = handle.attach(DaaDAO.class);
+          DacDAO dacDAO = handle.attach(DacDAO.class);
           DataAccessAgreement daa = dac.getAssociatedDaa();
           if (daa != null) {
             daaDAO.deleteDacDaaRelation(daa.getDaaId(), dac.getDacId(), user.getUserId());
           }
 
-          Update memberDeletion = handle.createUpdate(DELETE_ROLES_STATEMENT);
-          memberDeletion.bind(DAC_ID, dac.getDacId());
-          memberDeletion.execute();
+          // Find all dac chair/member user roles and audit each removal
+          List<User> dacUsers = dacDAO.findMembersByDacId(dac.getDacId());
+          dacUsers.stream()
+              .map(User::getRoles)
+              .flatMap(List::stream)
+              .filter(
+                  userRole ->
+                      Objects.equals(userRole.getRoleId(), UserRoles.CHAIRPERSON.getRoleId())
+                          || Objects.equals(userRole.getRoleId(), UserRoles.MEMBER.getRoleId()))
+              .forEach(
+                  userRole -> dacDAO.removeDacMember(userRole.getUserRoleId(), user.getUserId()));
 
           Update datasetUpdate = handle.createUpdate(UPDATE_DATASET_STATEMENT);
           datasetUpdate.bind(DAC_ID, dac.getDacId());
@@ -66,9 +75,8 @@ public class DacServiceDAO implements ConsentLogger {
           dacAutomationRulesDeletion.bind(DAC_ID, dac.getDacId());
           dacAutomationRulesDeletion.execute();
 
-          Update dacDeletion = handle.createUpdate(DELETE_DAC_STATEMENT);
-          dacDeletion.bind(DAC_ID, dac.getDacId());
-          dacDeletion.execute();
+          // Audit DAC removal
+          dacDAO.deleteDac(dac.getDacId(), user.getUserId());
           handle.commit();
         });
   }

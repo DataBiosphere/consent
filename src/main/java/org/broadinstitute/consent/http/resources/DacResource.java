@@ -26,25 +26,22 @@ import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetApproval;
+import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DatasetService;
-import org.broadinstitute.consent.http.service.UserService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 @Path("api/dac")
 public class DacResource extends Resource {
 
   private final DacService dacService;
-  private final UserService userService;
   private final DatasetService datasetService;
 
   @Inject
-  public DacResource(
-      DacService dacService, UserService userService, DatasetService datasetService) {
+  public DacResource(DacService dacService, DatasetService datasetService) {
     this.dacService = dacService;
-    this.userService = userService;
     this.datasetService = datasetService;
   }
 
@@ -65,7 +62,7 @@ public class DacResource extends Resource {
   @POST
   @Produces("application/json")
   @RolesAllowed({ADMIN})
-  public Response createDac(@Auth AuthUser authUser, String json) {
+  public Response createDac(@Auth DuosUser duosUser, String json) {
     try {
       Dac dac = GsonUtil.buildGson().fromJson(json, Dac.class);
       if (dac == null) {
@@ -77,11 +74,14 @@ public class DacResource extends Resource {
       if (dac.getDescription() == null) {
         throw new BadRequestException("DAC Description is required");
       }
+      User actingUser = duosUser.getUser();
       Integer dacId;
       if (Objects.isNull(dac.getEmail())) {
-        dacId = dacService.createDac(dac.getName(), dac.getDescription());
+        dacId = dacService.createDac(dac.getName(), dac.getDescription(), actingUser.getUserId());
       } else {
-        dacId = dacService.createDac(dac.getName(), dac.getDescription(), dac.getEmail());
+        dacId =
+            dacService.createDac(
+                dac.getName(), dac.getDescription(), dac.getEmail(), actingUser.getUserId());
       }
       if (dacId == null) {
         throw new ServerErrorException(
@@ -101,9 +101,9 @@ public class DacResource extends Resource {
   @PUT
   @Produces("application/json")
   @RolesAllowed({ADMIN, CHAIRPERSON})
-  public Response updateDac(@Auth AuthUser authUser, String json) {
+  public Response updateDac(@Auth DuosUser duosUser, String json) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       Dac dac = GsonUtil.buildGson().fromJson(json, Dac.class);
       if (dac == null) {
         throw new BadRequestException("DAC is required");
@@ -125,9 +125,10 @@ public class DacResource extends Resource {
         throw new BadRequestException("DAC Description is required");
       }
       if (Objects.isNull(dac.getEmail())) {
-        dacService.updateDac(dac.getName(), dac.getDescription(), dac.getDacId());
+        dacService.updateDac(dac.getName(), dac.getDescription(), dac.getDacId(), user.getUserId());
       } else {
-        dacService.updateDac(dac.getName(), dac.getDescription(), dac.getEmail(), dac.getDacId());
+        dacService.updateDac(
+            dac.getName(), dac.getDescription(), dac.getEmail(), dac.getDacId(), user.getUserId());
       }
       Dac savedDac = dacService.findById(dac.getDacId());
       return Response.ok().entity(unmarshal(savedDac)).build();
@@ -153,10 +154,10 @@ public class DacResource extends Resource {
   @Path("{dacId}")
   @Produces("application/json")
   @RolesAllowed({ADMIN})
-  public Response deleteDac(@Auth AuthUser authUser, @PathParam("dacId") Integer dacId) {
+  public Response deleteDac(@Auth DuosUser duosUser, @PathParam("dacId") Integer dacId) {
     try {
       findDacOrThrow(dacId);
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       dacService.deleteDac(user, dacId);
       return Response.ok().build();
     } catch (Exception e) {
@@ -168,7 +169,7 @@ public class DacResource extends Resource {
   @Path("{dacId}/member/{userId}")
   @RolesAllowed({ADMIN, CHAIRPERSON})
   public Response addDacMember(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @PathParam("dacId") Integer dacId,
       @PathParam("userId") Integer userId) {
     try {
@@ -176,8 +177,8 @@ public class DacResource extends Resource {
       Role role = dacService.getMemberRole();
       User user = findDacUser(userId);
       Dac dac = findDacOrThrow(dacId);
-      checkUserRoleInDac(dac, authUser);
-      User member = dacService.addDacMember(role, user, dac);
+      checkUserRoleInDac(dac, duosUser);
+      User member = dacService.addDacMember(role, user, dac, duosUser.getUserId());
       return Response.ok().entity(member).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -188,16 +189,15 @@ public class DacResource extends Resource {
   @Path("{dacId}/member/{userId}")
   @RolesAllowed({ADMIN, CHAIRPERSON})
   public Response removeDacMember(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @PathParam("dacId") Integer dacId,
       @PathParam("userId") Integer userId) {
     try {
       Role role = dacService.getMemberRole();
       User user = findDacUser(userId);
       Dac dac = findDacOrThrow(dacId);
-      checkUserRoleInDac(dac, authUser);
-      User auditUser = userService.findUserByEmail(authUser.getEmail());
-      dacService.removeDacMember(role, user, dac, auditUser.getUserId());
+      checkUserRoleInDac(dac, duosUser);
+      dacService.removeDacMember(role, user, dac, duosUser.getUserId());
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -208,7 +208,7 @@ public class DacResource extends Resource {
   @Path("{dacId}/chair/{userId}")
   @RolesAllowed({ADMIN, CHAIRPERSON})
   public Response addDacChair(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @PathParam("dacId") Integer dacId,
       @PathParam("userId") Integer userId) {
     try {
@@ -216,8 +216,8 @@ public class DacResource extends Resource {
       Role role = dacService.getChairpersonRole();
       User user = findDacUser(userId);
       Dac dac = findDacOrThrow(dacId);
-      checkUserRoleInDac(dac, authUser);
-      User member = dacService.addDacMember(role, user, dac);
+      checkUserRoleInDac(dac, duosUser);
+      User member = dacService.addDacMember(role, user, dac, duosUser.getUserId());
       return Response.ok().entity(member).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -228,16 +228,15 @@ public class DacResource extends Resource {
   @Path("{dacId}/chair/{userId}")
   @RolesAllowed({ADMIN, CHAIRPERSON})
   public Response removeDacChair(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @PathParam("dacId") Integer dacId,
       @PathParam("userId") Integer userId) {
     try {
       Role role = dacService.getChairpersonRole();
       User user = findDacUser(userId);
       Dac dac = findDacOrThrow(dacId);
-      checkUserRoleInDac(dac, authUser);
-      User auditUser = userService.findUserByEmail(authUser.getEmail());
-      dacService.removeDacMember(role, user, dac, auditUser.getUserId());
+      checkUserRoleInDac(dac, duosUser);
+      dacService.removeDacMember(role, user, dac, duosUser.getUserId());
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -248,10 +247,10 @@ public class DacResource extends Resource {
   @Path("{dacId}/datasets")
   @Produces("application/json")
   @RolesAllowed({ADMIN, MEMBER, CHAIRPERSON})
-  public Response findAllDacDatasets(@Auth AuthUser user, @PathParam("dacId") Integer dacId) {
+  public Response findAllDacDatasets(@Auth DuosUser duosUser, @PathParam("dacId") Integer dacId) {
     try {
       Dac dac = findDacOrThrow(dacId);
-      checkUserRoleInDac(dac, user);
+      checkUserRoleInDac(dac, duosUser);
       List<Dataset> datasets = dacService.findDatasetsByDacId(dacId);
       return Response.ok().entity(unmarshal(datasets)).build();
     } catch (Exception e) {
@@ -278,12 +277,12 @@ public class DacResource extends Resource {
   @Path("{dacId}/dataset/{datasetId}")
   @RolesAllowed({CHAIRPERSON})
   public Response approveDataset(
-      @Auth AuthUser authUser,
+      @Auth DuosUser duosUser,
       @PathParam("dacId") Integer dacId,
       @PathParam("datasetId") Integer datasetId,
       String json) {
     try {
-      User user = userService.findUserByEmail(authUser.getEmail());
+      User user = duosUser.getUser();
       Dataset dataset = datasetService.findDatasetWithoutFSOInformation(datasetId);
       if (Objects.isNull(dataset) || !Objects.equals(dataset.getDacId(), dacId)) {
         // Vague message is intentional, don't want to reveal too much info
@@ -348,11 +347,11 @@ public class DacResource extends Resource {
    * modifications to chairs and members in a DAC that they are a chairperson in.
    *
    * @param dac The Dac
-   * @param authUser The AuthUser
+   * @param duosUser The DuosUser
    * @throws NotAuthorizedException Not authorized
    */
-  private void checkUserRoleInDac(Dac dac, AuthUser authUser) throws NotAuthorizedException {
-    User user = userService.findUserByEmail(authUser.getEmail());
+  private void checkUserRoleInDac(Dac dac, DuosUser duosUser) throws NotAuthorizedException {
+    User user = duosUser.getUser();
     if (user.getRoles().stream()
         .anyMatch(ur -> ur.getRoleId().equals(UserRoles.ADMIN.getRoleId()))) {
       return;

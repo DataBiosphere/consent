@@ -1,9 +1,9 @@
 package org.broadinstitute.consent.http.db;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import org.broadinstitute.consent.http.db.mapper.DacAuditMapper;
 import org.broadinstitute.consent.http.db.mapper.DacMapper;
 import org.broadinstitute.consent.http.db.mapper.DacReducer;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOPrefix;
@@ -12,6 +12,7 @@ import org.broadinstitute.consent.http.db.mapper.UserRoleMapper;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesMapper;
 import org.broadinstitute.consent.http.db.mapper.UserWithRolesReducer;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DacAudit;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Role;
@@ -22,7 +23,6 @@ import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
-import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
@@ -163,66 +163,125 @@ public interface DacDAO extends Transactional<DacDAO> {
   Dac findById(@Bind("dacId") Integer dacId);
 
   /**
-   * Create a Dac given name, description, and create date
+   * Create a Dac given name and description. Atomically writes a CREATE audit entry.
    *
    * @param name The name for the new DAC
    * @param description The description for the new DAC
-   * @param createDate The date this new DAC was created
-   * @return Integer
+   * @param userId The user performing the operation (for the audit record)
+   * @return Integer the new dac_id
    */
-  @SqlUpdate(
-      "INSERT INTO dac (name, description, create_date) VALUES (:name, :description, :createDate)")
-  @GetGeneratedKeys
+  @SqlQuery(
+      """
+      WITH new_dac AS (
+        INSERT INTO dac (name, description, create_date) VALUES (:name, :description, NOW())
+        RETURNING dac_id
+      ),
+      audit AS (
+        INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
+        SELECT dac_id, :userId, NULL, NULL, 'CREATE', NOW()
+        FROM new_dac
+      )
+      SELECT dac_id FROM new_dac
+      """)
   Integer createDac(
       @Bind("name") String name,
       @Bind("description") String description,
-      @Bind("createDate") Date createDate);
+      @Bind("userId") Integer userId);
+
+  @SqlUpdate(
+      """
+      WITH deleted AS (
+        DELETE FROM dac
+        WHERE dac_id = :dacId
+        RETURNING dac_id
+      )
+      INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
+      SELECT dac_id, :userId, NULL, NULL, 'DELETE', NOW()
+      FROM deleted
+      """)
+  void deleteDac(@Bind("dacId") Integer dacId, @Bind("userId") Integer userId);
 
   /**
-   * Create a Dac given name, description, and create date
+   * Create a Dac given name, description, and email. Atomically writes a CREATE audit entry.
    *
    * @param name The name for the new DAC
    * @param description The description for the new DAC
    * @param email The email for the new DAC
-   * @param createDate The date this new DAC was created
-   * @return Integer
+   * @param userId The user performing the operation (for the audit record)
+   * @return Integer the new dac_id
    */
-  @SqlUpdate(
-      "INSERT INTO dac (name, description, email, create_date) VALUES (:name, :description, :email, :createDate)")
-  @GetGeneratedKeys
+  @SqlQuery(
+      """
+      WITH new_dac AS (
+        INSERT INTO dac (name, description, email, create_date)
+        VALUES (:name, :description, :email, NOW())
+        RETURNING dac_id
+      ),
+      audit AS (
+        INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
+        SELECT dac_id, :userId, NULL, NULL, 'CREATE', NOW()
+        FROM new_dac
+      )
+      SELECT dac_id FROM new_dac
+      """)
   Integer createDac(
       @Bind("name") String name,
       @Bind("description") String description,
       @Bind("email") String email,
-      @Bind("createDate") Date createDate);
+      @Bind("userId") Integer userId);
 
+  /**
+   * Update a DAC's name and description. Atomically writes an UPDATE audit entry.
+   *
+   * @param name The new name
+   * @param description The new description
+   * @param dacId The DAC id
+   * @param userId The user performing the operation (for the audit record)
+   */
   @SqlUpdate(
-      "UPDATE dac SET name = :name, description = :description, update_date = :updateDate WHERE dac_id = :dacId")
+      """
+      WITH updated AS (
+        UPDATE dac SET name = :name, description = :description, update_date = NOW()
+        WHERE dac_id = :dacId
+        RETURNING dac_id
+      )
+      INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
+      SELECT dac_id, :userId, NULL, NULL, 'UPDATE', NOW()
+      FROM updated
+      """)
   void updateDac(
       @Bind("name") String name,
       @Bind("description") String description,
-      @Bind("updateDate") Date updateDate,
-      @Bind("dacId") Integer dacId);
+      @Bind("dacId") Integer dacId,
+      @Bind("userId") Integer userId);
 
+  /**
+   * Update a DAC's name, description, and email. Atomically writes an UPDATE audit entry.
+   *
+   * @param name The new name
+   * @param description The new description
+   * @param email The new email
+   * @param dacId The DAC id
+   * @param userId The user performing the operation (for the audit record)
+   */
   @SqlUpdate(
-      "UPDATE dac SET name = :name, description = :description, email = :email, update_date = :updateDate WHERE dac_id = :dacId")
+      """
+      WITH updated AS (
+        UPDATE dac SET name = :name, description = :description, email = :email,
+          update_date = NOW()
+        WHERE dac_id = :dacId
+        RETURNING dac_id
+      )
+      INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
+      SELECT dac_id, :userId, NULL, NULL, 'UPDATE', NOW()
+      FROM updated
+      """)
   void updateDac(
       @Bind("name") String name,
       @Bind("description") String description,
       @Bind("email") String email,
-      @Bind("updateDate") Date updateDate,
-      @Bind("dacId") Integer dacId);
-
-  /**
-   * Delete all members from a specified DAC
-   *
-   * @param dacId The DAC id to remove users from
-   */
-  @SqlUpdate("DELETE FROM user_role WHERE dac_id = :dacId")
-  void deleteDacMembers(@Bind("dacId") Integer dacId);
-
-  @SqlUpdate("DELETE FROM dac WHERE dac_id = :dacId")
-  void deleteDac(@Bind("dacId") Integer dacId);
+      @Bind("dacId") Integer dacId,
+      @Bind("userId") Integer userId);
 
   @RegisterBeanMapper(value = User.class, prefix = "u")
   @RegisterBeanMapper(value = UserRole.class)
@@ -254,12 +313,64 @@ public interface DacDAO extends Transactional<DacDAO> {
   List<User> findMembersByDacIdAndRoleId(
       @Bind("dacId") Integer dacId, @Bind("roleId") Integer roleId);
 
-  @SqlUpdate("INSERT INTO user_role (role_id, user_id, dac_id) VALUES (:roleId, :userId, :dacId)")
+  /**
+   * Add a member or chair to a DAC and atomically record an audit entry.
+   *
+   * @param roleId The role to grant (CHAIRPERSON or MEMBER)
+   * @param userId The user receiving the role
+   * @param dacId The DAC the user is being added to
+   * @param auditUserId The user performing the operation (for the audit record)
+   */
+  @SqlUpdate(
+      """
+      WITH inserted_role AS (
+        INSERT INTO user_role (role_id, user_id, dac_id) VALUES (:roleId, :userId, :dacId)
+        RETURNING user_id, role_id, dac_id
+      )
+      INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
+      SELECT dac_id, :auditUserId, user_id, role_id, 'ADD', NOW()
+      FROM inserted_role
+      """)
   void addDacMember(
-      @Bind("roleId") Integer roleId, @Bind("userId") Integer userId, @Bind("dacId") Integer dacId);
+      @Bind("roleId") Integer roleId,
+      @Bind("userId") Integer userId,
+      @Bind("dacId") Integer dacId,
+      @Bind("auditUserId") Integer auditUserId);
 
-  @SqlUpdate("DELETE FROM user_role WHERE user_role_id = :userRoleId")
-  void removeDacMember(@Bind("userRoleId") Integer userRoleId);
+  /**
+   * Remove a member or chair from a DAC and atomically record an audit entry.
+   *
+   * @param userRoleId The user_role row to delete
+   * @param auditUserId The user performing the operation (for the audit record)
+   */
+  @SqlUpdate(
+      """
+      WITH deleted_role AS (
+        DELETE FROM user_role WHERE user_role_id = :userRoleId
+        RETURNING user_id, role_id, dac_id
+      )
+      INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
+      SELECT dac_id, :auditUserId, user_id, role_id, 'REMOVE', NOW()
+      FROM deleted_role
+      WHERE dac_id IS NOT NULL
+      """)
+  void removeDacMember(
+      @Bind("userRoleId") Integer userRoleId, @Bind("auditUserId") Integer auditUserId);
+
+  /**
+   * Return all audit records for a given DAC, newest first.
+   *
+   * @param dacId The DAC id
+   * @return List of DacAudit records
+   */
+  @RegisterRowMapper(DacAuditMapper.class)
+  @SqlQuery(
+      """
+      SELECT * FROM dac_audit
+      WHERE dac_id = :dacId
+      ORDER BY action_date DESC, id DESC
+      """)
+  List<DacAudit> findAuditsByDacId(@Bind("dacId") Integer dacId);
 
   @UseRowMapper(RoleMapper.class)
   @SqlQuery("SELECT * FROM roles WHERE role_id = :roleId")

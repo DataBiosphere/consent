@@ -56,6 +56,10 @@ class DacServiceDAOTest extends DAOTestHelper {
     //  * DatasetAutomationRules associated to the DAC
     List<Dac> dacs = createMockDACs();
     List<Integer> createdDatasetIds = new ArrayList<>();
+    // DAC Member User. When deleting the dac, users DAC role will be deleted but not their
+    // Researcher role
+    User member = createUser();
+    userRoleDAO.insertSingleUserRole(UserRoles.RESEARCHER.getRoleId(), member.getUserId());
     dacs.forEach(
         ignored -> {
           // DAC
@@ -64,7 +68,7 @@ class DacServiceDAOTest extends DAOTestHelper {
                   "dac name: " + randomAlphabetic(10),
                   "dac description: " + randomAlphabetic(10),
                   "dac email: " + randomAlphabetic(10),
-                  new Date());
+                  createUser().getUserId());
           // Data Access Agreement
           int daaId =
               daaDAO.createDaa(
@@ -101,12 +105,13 @@ class DacServiceDAOTest extends DAOTestHelper {
           // Library Card User to Data Access Agreement association
           libraryCardDAO.createLibraryCardDaaRelation(
               lcUser.getUserId(), superUser.getUserId(), userLcId, daaId);
-          // DAC Member User. When deleting the dac, this role will be deleted
-          User member = createUser();
-          userRoleDAO.insertSingleUserRole(UserRoles.MEMBER.getRoleId(), member.getUserId());
+          // User as a DAC Member. When deleting the dac, users DAC role will be deleted
+          dacDAO.addDacMember(
+              UserRoles.MEMBER.getRoleId(), member.getUserId(), dacId, superUser.getUserId());
           // DAC Chair User. When deleting the dac, this role will be deleted
           User chair = createUser();
-          userRoleDAO.insertSingleUserRole(UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId());
+          dacDAO.addDacMember(
+              UserRoles.CHAIRPERSON.getRoleId(), chair.getUserId(), dacId, superUser.getUserId());
           // Dataset associated to the DAC. The Dataset will become dissociated from the deleted
           // DAC.
           int datasetId =
@@ -165,6 +170,15 @@ class DacServiceDAOTest extends DAOTestHelper {
           assertNull(ds.getDacId(), "Dataset should not have a DAC");
           assertNull(ds.getDacApproval(), "Dataset should not have a DAC approval");
         });
+    // Assert that Member's Researcher role still exists, but their Member role does not
+    User updatedMember = userDAO.findUserById(member.getUserId());
+    assertNotNull(updatedMember);
+    assertTrue(
+        updatedMember.getRoles().stream()
+            .anyMatch(r -> r.getRoleId().equals(UserRoles.RESEARCHER.getRoleId())));
+    assertFalse(
+        updatedMember.getRoles().stream()
+            .anyMatch(r -> r.getRoleId().equals(UserRoles.MEMBER.getRoleId())));
   }
 
   @Test
@@ -184,7 +198,7 @@ class DacServiceDAOTest extends DAOTestHelper {
             "dac name: " + randomAlphabetic(10),
             "dac description: " + randomAlphabetic(10),
             "dac email: " + randomAlphabetic(10),
-            new Date());
+            superUser.getUserId());
     Dac dac = dacDAO.findById(dacId);
     try {
       serviceDAO.deleteDacAndRemoveDaaAssociation(superUser, dac);
