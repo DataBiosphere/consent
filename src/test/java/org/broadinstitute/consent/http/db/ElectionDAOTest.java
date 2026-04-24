@@ -761,7 +761,9 @@ class ElectionDAOTest extends DAOTestHelper {
   private Dac createDac() {
     Integer id =
         dacDAO.createDac(
-            "Test_" + randomAlphabetic(20), "Test_" + randomAlphabetic(20), new Date());
+            "Test_" + randomAlphabetic(20),
+            "Test_" + randomAlphabetic(20),
+            createUser().getUserId());
     return dacDAO.findById(id);
   }
 
