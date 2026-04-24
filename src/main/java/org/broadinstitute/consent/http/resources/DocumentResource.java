@@ -26,7 +26,7 @@ import org.broadinstitute.consent.http.service.FileStorageObjectService;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
-@Path("api/{entity}")
+@Path("api/document/{entity}")
 public class DocumentResource extends Resource {
 
   private final FileStorageObjectService fileStorageObjectService;
@@ -37,7 +37,7 @@ public class DocumentResource extends Resource {
   }
 
   @GET
-  @Path("{entityId}/document")
+  @Path("/{entityId}")
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
   public Response findDocumentsByEntity(
@@ -55,7 +55,7 @@ public class DocumentResource extends Resource {
   }
 
   @GET
-  @Path("/{entityId}/document/{id}")
+  @Path("/{entityId}/{id}")
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
   public Response findDocumentByEntity(
@@ -74,7 +74,7 @@ public class DocumentResource extends Resource {
   }
 
   @DELETE
-  @Path("/{entityId}/document/{id}")
+  @Path("/{entityId}/{id}")
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
   public Response deleteDocumentByEntity(
@@ -93,7 +93,7 @@ public class DocumentResource extends Resource {
   }
 
   @PUT
-  @Path("/{entityId}/document/{id}")
+  @Path("/{entityId}/{id}")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
@@ -115,7 +115,7 @@ public class DocumentResource extends Resource {
   }
 
   @POST
-  @Path("{entityId}/document")
+  @Path("{entityId}")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   @PermitAll
@@ -139,7 +139,7 @@ public class DocumentResource extends Resource {
   }
 
   @GET
-  @Path("/{entityId}/document/{id}/file")
+  @Path("/{entityId}/{id}/file")
   @PermitAll
   public Response findDocumentFileByEntity(
       @Auth DuosUser duosUser,
