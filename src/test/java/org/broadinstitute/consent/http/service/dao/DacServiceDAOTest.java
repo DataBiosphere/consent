@@ -26,6 +26,7 @@ import org.broadinstitute.consent.http.models.DacDatasetExternalizationResponse;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetAudit;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.rules.DACAutomationRule;
@@ -432,6 +433,13 @@ class DacServiceDAOTest extends DAOTestHelper {
                     .bind("datasetId", f.controlledDatasetId())
                     .mapTo(Timestamp.class)
                     .one()));
+
+    List<DatasetAudit> controlledDatasetAudits =
+        datasetDAO.findAuditsByDatasetId(f.controlledDatasetId());
+    assertEquals(1, controlledDatasetAudits.size());
+    assertEquals(AuditActions.UPDATE.getValue(), controlledDatasetAudits.getFirst().getAction());
+    assertEquals(f.admin().getUserId(), controlledDatasetAudits.getFirst().getUser());
+    assertTrue(datasetDAO.findAuditsByDatasetId(f.openDatasetId()).isEmpty());
   }
 
   @Test
@@ -606,6 +614,16 @@ class DacServiceDAOTest extends DAOTestHelper {
                     .mapTo(Timestamp.class)
                     .one());
     assertNull(openDacApprovalDate);
+
+    List<DatasetAudit> controlledDatasetAudits =
+        datasetDAO.findAuditsByDatasetId(f.controlledDatasetId());
+    List<DatasetAudit> openDatasetAudits = datasetDAO.findAuditsByDatasetId(f.openDatasetId());
+    assertEquals(1, controlledDatasetAudits.size());
+    assertEquals(1, openDatasetAudits.size());
+    assertEquals(AuditActions.UPDATE.getValue(), controlledDatasetAudits.getFirst().getAction());
+    assertEquals(AuditActions.UPDATE.getValue(), openDatasetAudits.getFirst().getAction());
+    assertEquals(f.admin().getUserId(), controlledDatasetAudits.getFirst().getUser());
+    assertEquals(f.admin().getUserId(), openDatasetAudits.getFirst().getUser());
   }
 
   @Test
@@ -809,6 +827,7 @@ class DacServiceDAOTest extends DAOTestHelper {
                     .mapTo(Integer.class)
                     .one());
     assertEquals(1, darDatasetRowCount, "Dry run must not delete dar_dataset rows");
+    assertTrue(datasetDAO.findAuditsByDatasetId(datasetId).isEmpty());
   }
 
   @Test

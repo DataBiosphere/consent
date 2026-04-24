@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DacDatasetExternalizationRequest;
@@ -21,6 +22,7 @@ public class DacServiceDAO implements ConsentLogger {
   private final Jdbi jdbi;
   private static final String DAC_ID = "dacId";
   private static final String USER_ID = "userId";
+  private static final String ACTION = "action";
   private static final String DATASET_IDS = "datasetIds";
   private static final String ACCESS_MANAGEMENT_VALUES = "accessManagementValues";
   private static final String CONTROLLED_ACCESS_MANAGEMENT = "controlled";
@@ -141,6 +143,13 @@ public class DacServiceDAO implements ConsentLogger {
             SELECT 'REMOVE', s.dac_id, s.rule_id, :userId, current_timestamp
             FROM dac_rule_settings s
             WHERE dac_id = :dacId
+          """;
+  private static final String AUDIT_EXTERNALIZED_DATASETS_STATEMENT =
+      """
+            INSERT INTO dataset_audit(dataset_id, change_action, modified_by_user, modification_date, object_id, name)
+            SELECT d.dataset_id, :action, :userId, current_timestamp, d.object_id, d.name
+            FROM dataset d
+            WHERE d.dataset_id IN (<datasetIds>)
           """;
 
   @Inject
@@ -324,6 +333,8 @@ public class DacServiceDAO implements ConsentLogger {
           .execute();
     }
 
+    auditExternalizedDatasets(handle, convertibleDatasetIds, userId);
+
     if (request.shouldRevokeApprovedAccess()) {
       revokeApprovedAccess(handle, convertibleDatasetIds);
     }
@@ -348,6 +359,17 @@ public class DacServiceDAO implements ConsentLogger {
       org.jdbi.v3.core.Handle handle, List<Integer> convertibleDatasetIds) {
     try (var cancel = handle.createUpdate(CANCEL_OPEN_ELECTIONS_FOR_DATASETS_STATEMENT)) {
       cancel.bindList(DATASET_IDS, convertibleDatasetIds).execute();
+    }
+  }
+
+  private void auditExternalizedDatasets(
+      org.jdbi.v3.core.Handle handle, List<Integer> convertibleDatasetIds, Integer userId) {
+    try (var audit = handle.createUpdate(AUDIT_EXTERNALIZED_DATASETS_STATEMENT)) {
+      audit
+          .bindList(DATASET_IDS, convertibleDatasetIds)
+          .bind(USER_ID, userId)
+          .bind(ACTION, AuditActions.UPDATE.getValue())
+          .execute();
     }
   }
 
