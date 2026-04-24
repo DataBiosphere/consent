@@ -24,8 +24,6 @@ public class DacServiceDAO implements ConsentLogger {
   private static final String DATASET_IDS = "datasetIds";
   private static final String ACCESS_MANAGEMENT_VALUES = "accessManagementValues";
   private static final String CONTROLLED_ACCESS_MANAGEMENT = "controlled";
-  private static final String DELETE_ROLES_STATEMENT =
-      "DELETE FROM user_role WHERE dac_id = :dacId";
   private static final String UPDATE_DATASET_STATEMENT =
       """
           UPDATE dataset
@@ -202,120 +200,202 @@ public class DacServiceDAO implements ConsentLogger {
     Instant startedAt = Instant.now();
     return jdbi.inTransaction(
         handle -> {
-          List<Integer> datasetIds =
-              handle
-                  .createQuery(FIND_DATASET_IDS_FOR_DAC_STATEMENT)
-                  .bind(DAC_ID, dacId)
-                  .mapTo(Integer.class)
-                  .list();
+          List<Integer> datasetIds = findDatasetIdsForDac(handle, dacId);
           if (datasetIds.isEmpty()) {
-            return new DacDatasetExternalizationResponse(
-                dacId,
-                request.isDryRun(),
-                request.reason(),
-                startedAt,
-                Instant.now(),
-                0,
-                0,
-                0,
-                0,
-                0,
-                0);
+            return buildEmptyResponse(dacId, request, startedAt);
           }
 
-          List<String> accessManagementValues =
-              request.shouldConvertOpenAccessDatasets()
-                  ? List.of(CONTROLLED_ACCESS_MANAGEMENT, "open")
-                  : List.of(CONTROLLED_ACCESS_MANAGEMENT);
           List<Integer> convertibleDatasetIds =
-              handle
-                  .createQuery(FIND_CONVERTIBLE_DATASET_IDS_STATEMENT)
-                  .bindList(DATASET_IDS, datasetIds)
-                  .bindList(ACCESS_MANAGEMENT_VALUES, accessManagementValues)
-                  .mapTo(Integer.class)
-                  .list();
-          int externalDatasets =
-              handle
-                  .createQuery(COUNT_EXTERNAL_DATASETS_STATEMENT)
-                  .bindList(DATASET_IDS, datasetIds)
-                  .mapTo(Integer.class)
-                  .one();
-          int convertedToExternal = convertibleDatasetIds.size();
+              findConvertibleDatasets(handle, datasetIds, request);
+          int externalDatasets = countExternalDatasets(handle, datasetIds);
 
-          int darDatasetApprovalsRevoked = 0;
-          int usersWithAccessRemoved = 0;
-          if (request.shouldRevokeApprovedAccess() && !convertibleDatasetIds.isEmpty()) {
-            darDatasetApprovalsRevoked =
-                handle
-                    .createQuery(COUNT_DAR_DATASET_RELATIONS_FOR_DATASETS_STATEMENT)
-                    .bindList(DATASET_IDS, convertibleDatasetIds)
-                    .mapTo(Integer.class)
-                    .one();
-            usersWithAccessRemoved =
-                handle
-                    .createQuery(COUNT_DISTINCT_USERS_FOR_DATASETS_STATEMENT)
-                    .bindList(DATASET_IDS, convertibleDatasetIds)
-                    .mapTo(Integer.class)
-                    .one();
-          }
-
-          int openElectionsCanceled = 0;
-          if (request.shouldCancelOpenElections() && !convertibleDatasetIds.isEmpty()) {
-            openElectionsCanceled =
-                handle
-                    .createQuery(COUNT_OPEN_ELECTIONS_FOR_DATASETS_STATEMENT)
-                    .bindList(DATASET_IDS, convertibleDatasetIds)
-                    .mapTo(Integer.class)
-                    .one();
-          }
+          ExternalizationMetrics metrics =
+              computeMetrics(handle, convertibleDatasetIds, request);
 
           if (!request.isDryRun() && !convertibleDatasetIds.isEmpty()) {
-            handle
-                .createUpdate(CLEAR_DAC_FIELDS_FOR_DATASETS_STATEMENT)
-                .bindList(DATASET_IDS, convertibleDatasetIds)
-                .bind(USER_ID, userId)
-                .execute();
-
-            handle
-                .createUpdate(UPDATE_CONTROLLED_DATASETS_TO_EXTERNAL_STATEMENT)
-                .bindList(DATASET_IDS, convertibleDatasetIds)
-                .bindList(ACCESS_MANAGEMENT_VALUES, accessManagementValues)
-                .execute();
-
-            if (request.shouldRevokeApprovedAccess()) {
-              handle
-                  .createUpdate(APPEND_ADMIN_DAR_NOTES_FOR_DATASETS_STATEMENT)
-                  .bindList(DATASET_IDS, convertibleDatasetIds)
-                  .execute();
-
-              handle
-                  .createUpdate(DELETE_DAR_DATASET_RELATIONS_FOR_DATASETS_STATEMENT)
-                  .bindList(DATASET_IDS, convertibleDatasetIds)
-                  .execute();
-            }
-
-            if (request.shouldCancelOpenElections()) {
-              handle
-                  .createUpdate(CANCEL_OPEN_ELECTIONS_FOR_DATASETS_STATEMENT)
-                  .bindList(DATASET_IDS, convertibleDatasetIds)
-                  .execute();
-            }
+            executeExternalizationUpdates(handle, convertibleDatasetIds, userId, request);
           }
 
-          return new DacDatasetExternalizationResponse(
-              dacId,
-              request.isDryRun(),
-              request.reason(),
-              startedAt,
-              Instant.now(),
-              datasetIds.size(),
-              convertedToExternal,
-              externalDatasets,
-              darDatasetApprovalsRevoked,
-              openElectionsCanceled,
-              usersWithAccessRemoved);
+          return buildResponse(
+              dacId, request, startedAt, datasetIds.size(), convertibleDatasetIds.size(),
+              externalDatasets, metrics);
         });
   }
+
+  private List<Integer> findDatasetIdsForDac(
+      org.jdbi.v3.core.Handle handle, Integer dacId) {
+    return handle
+        .createQuery(FIND_DATASET_IDS_FOR_DAC_STATEMENT)
+        .bind(DAC_ID, dacId)
+        .mapTo(Integer.class)
+        .list();
+  }
+
+  private DacDatasetExternalizationResponse buildEmptyResponse(
+      Integer dacId, DacDatasetExternalizationRequest request, Instant startedAt) {
+    return new DacDatasetExternalizationResponse(
+        dacId,
+        request.isDryRun(),
+        request.reason(),
+        startedAt,
+        Instant.now(),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0);
+  }
+
+  private List<Integer> findConvertibleDatasets(
+      org.jdbi.v3.core.Handle handle,
+      List<Integer> datasetIds,
+      DacDatasetExternalizationRequest request) {
+    List<String> accessManagementValues = getAccessManagementValues(request);
+    return handle
+        .createQuery(FIND_CONVERTIBLE_DATASET_IDS_STATEMENT)
+        .bindList(DATASET_IDS, datasetIds)
+        .bindList(ACCESS_MANAGEMENT_VALUES, accessManagementValues)
+        .mapTo(Integer.class)
+        .list();
+  }
+
+  private List<String> getAccessManagementValues(DacDatasetExternalizationRequest request) {
+    return request.shouldConvertOpenAccessDatasets()
+        ? List.of(CONTROLLED_ACCESS_MANAGEMENT, "open")
+        : List.of(CONTROLLED_ACCESS_MANAGEMENT);
+  }
+
+  private int countExternalDatasets(
+      org.jdbi.v3.core.Handle handle, List<Integer> datasetIds) {
+    return handle
+        .createQuery(COUNT_EXTERNAL_DATASETS_STATEMENT)
+        .bindList(DATASET_IDS, datasetIds)
+        .mapTo(Integer.class)
+        .one();
+  }
+
+  private ExternalizationMetrics computeMetrics(
+      org.jdbi.v3.core.Handle handle,
+      List<Integer> convertibleDatasetIds,
+      DacDatasetExternalizationRequest request) {
+    int darDatasetApprovalsRevoked = 0;
+    int usersWithAccessRemoved = 0;
+    if (request.shouldRevokeApprovedAccess() && !convertibleDatasetIds.isEmpty()) {
+      darDatasetApprovalsRevoked =
+          countDarDatasetRelations(handle, convertibleDatasetIds);
+      usersWithAccessRemoved = countDistinctUsers(handle, convertibleDatasetIds);
+    }
+
+    int openElectionsCanceled = 0;
+    if (request.shouldCancelOpenElections() && !convertibleDatasetIds.isEmpty()) {
+      openElectionsCanceled = countOpenElections(handle, convertibleDatasetIds);
+    }
+
+    return new ExternalizationMetrics(
+        darDatasetApprovalsRevoked, usersWithAccessRemoved, openElectionsCanceled);
+  }
+
+  private int countDarDatasetRelations(
+      org.jdbi.v3.core.Handle handle, List<Integer> convertibleDatasetIds) {
+    return handle
+        .createQuery(COUNT_DAR_DATASET_RELATIONS_FOR_DATASETS_STATEMENT)
+        .bindList(DATASET_IDS, convertibleDatasetIds)
+        .mapTo(Integer.class)
+        .one();
+  }
+
+  private int countDistinctUsers(
+      org.jdbi.v3.core.Handle handle, List<Integer> convertibleDatasetIds) {
+    return handle
+        .createQuery(COUNT_DISTINCT_USERS_FOR_DATASETS_STATEMENT)
+        .bindList(DATASET_IDS, convertibleDatasetIds)
+        .mapTo(Integer.class)
+        .one();
+  }
+
+  private int countOpenElections(
+      org.jdbi.v3.core.Handle handle, List<Integer> convertibleDatasetIds) {
+    return handle
+        .createQuery(COUNT_OPEN_ELECTIONS_FOR_DATASETS_STATEMENT)
+        .bindList(DATASET_IDS, convertibleDatasetIds)
+        .mapTo(Integer.class)
+        .one();
+  }
+
+  private void executeExternalizationUpdates(
+      org.jdbi.v3.core.Handle handle,
+      List<Integer> convertibleDatasetIds,
+      Integer userId,
+      DacDatasetExternalizationRequest request) {
+    List<String> accessManagementValues = getAccessManagementValues(request);
+
+    handle
+        .createUpdate(CLEAR_DAC_FIELDS_FOR_DATASETS_STATEMENT)
+        .bindList(DATASET_IDS, convertibleDatasetIds)
+        .bind(USER_ID, userId)
+        .execute();
+
+    handle
+        .createUpdate(UPDATE_CONTROLLED_DATASETS_TO_EXTERNAL_STATEMENT)
+        .bindList(DATASET_IDS, convertibleDatasetIds)
+        .bindList(ACCESS_MANAGEMENT_VALUES, accessManagementValues)
+        .execute();
+
+    if (request.shouldRevokeApprovedAccess()) {
+      revokeApprovedAccess(handle, convertibleDatasetIds);
+    }
+
+    if (request.shouldCancelOpenElections()) {
+      cancelOpenElections(handle, convertibleDatasetIds);
+    }
+  }
+
+  private void revokeApprovedAccess(
+      org.jdbi.v3.core.Handle handle, List<Integer> convertibleDatasetIds) {
+    handle
+        .createUpdate(APPEND_ADMIN_DAR_NOTES_FOR_DATASETS_STATEMENT)
+        .bindList(DATASET_IDS, convertibleDatasetIds)
+        .execute();
+
+    handle
+        .createUpdate(DELETE_DAR_DATASET_RELATIONS_FOR_DATASETS_STATEMENT)
+        .bindList(DATASET_IDS, convertibleDatasetIds)
+        .execute();
+  }
+
+  private void cancelOpenElections(
+      org.jdbi.v3.core.Handle handle, List<Integer> convertibleDatasetIds) {
+    handle
+        .createUpdate(CANCEL_OPEN_ELECTIONS_FOR_DATASETS_STATEMENT)
+        .bindList(DATASET_IDS, convertibleDatasetIds)
+        .execute();
+  }
+
+  private DacDatasetExternalizationResponse buildResponse(
+      Integer dacId,
+      DacDatasetExternalizationRequest request,
+      Instant startedAt,
+      int datasetsTotalInDac,
+      int convertedToExternal,
+      int externalDatasets,
+      ExternalizationMetrics metrics) {
+    return new DacDatasetExternalizationResponse(
+        dacId,
+        request.isDryRun(),
+        request.reason(),
+        startedAt,
+        Instant.now(),
+        datasetsTotalInDac,
+        convertedToExternal,
+        externalDatasets,
+        metrics.darDatasetApprovalsRevoked(),
+        metrics.openElectionsCanceled(),
+        metrics.usersWithAccessRemoved());
+  }
+
+  private record ExternalizationMetrics(
+      int darDatasetApprovalsRevoked, int usersWithAccessRemoved, int openElectionsCanceled) {}
 
   public List<Integer> findConvertibleDatasetIds(
       Integer dacId, DacDatasetExternalizationRequest request) {
