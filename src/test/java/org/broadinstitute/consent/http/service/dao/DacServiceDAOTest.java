@@ -212,8 +212,26 @@ class DacServiceDAOTest extends DAOTestHelper {
     }
   }
 
-  @Test
-  void testConvertDacDatasetsToExternal() {
+  // Fixture record and builder shared by the three focused externalization tests below.
+  private record ExternalizationTestFixture(
+      Integer dacId,
+      Integer controlledDatasetId,
+      Integer openDatasetId,
+      String controlledDatasetObjectId,
+      String openDatasetObjectId,
+      String referenceId,
+      String openReferenceId,
+      Date controlledDarUpdatedAt,
+      Date openDarUpdatedAt,
+      String existingAdminNote,
+      Integer controlledElectionId,
+      Integer openElectionId,
+      User admin,
+      User darOwner,
+      User openDarOwner,
+      DacDatasetExternalizationResponse response) {}
+
+  private ExternalizationTestFixture buildExternalizationFixture() {
     User admin = createUser();
     User darOwner = createUser();
     User openDarOwner = createUser();
@@ -225,6 +243,8 @@ class DacServiceDAOTest extends DAOTestHelper {
             admin.getUserId());
     String controlledDatasetObjectId = "controlled-" + randomAlphabetic(10);
     String openDatasetObjectId = "open-" + randomAlphabetic(10);
+    Integer accessManagementKeyId =
+        datasetDAO.getDictionaryTerms().stream().map(d -> d.getKeyId()).findFirst().orElseThrow();
     Integer datasetId =
         datasetDAO.insertDataset(
             "dataset name: " + randomAlphabetic(10),
@@ -241,9 +261,6 @@ class DacServiceDAOTest extends DAOTestHelper {
             openDatasetObjectId,
             new DataUseBuilder().setGeneralUse(true).build().toString(),
             dacId);
-
-    Integer accessManagementKeyId =
-        datasetDAO.getDictionaryTerms().stream().map(d -> d.getKeyId()).findFirst().orElseThrow();
     jdbi.useHandle(
         handle ->
             handle
@@ -266,10 +283,8 @@ class DacServiceDAOTest extends DAOTestHelper {
                 .bind("datasetId", openDatasetId)
                 .bind("propertyKey", accessManagementKeyId)
                 .execute());
-
     datasetDAO.updateDatasetApproval(true, Instant.now(), admin.getUserId(), datasetId);
     datasetDAO.updateDatasetApproval(true, Instant.now(), admin.getUserId(), openDatasetId);
-
     String referenceId = randomAlphabetic(8);
     String openReferenceId = randomAlphabetic(8);
     Date controlledDarCreatedAt = Date.from(Instant.now().minusSeconds(7200));
@@ -299,108 +314,127 @@ class DacServiceDAOTest extends DAOTestHelper {
                 .bind("note", existingAdminNote)
                 .bind("referenceId", referenceId)
                 .execute());
-
     Integer controlledElectionId =
         electionDAO.insertElection("DataAccess", "Open", new Date(), referenceId, datasetId);
     Integer openElectionId =
         electionDAO.insertElection(
             "DataAccess", "Open", new Date(), openReferenceId, openDatasetId);
-
     DacDatasetExternalizationResponse response =
         serviceDAO.convertDacDatasetsToExternal(
             dacId,
             admin.getUserId(),
             new DacDatasetExternalizationRequest("policy update", false, true, true, null));
+    return new ExternalizationTestFixture(
+        dacId,
+        datasetId,
+        openDatasetId,
+        controlledDatasetObjectId,
+        openDatasetObjectId,
+        referenceId,
+        openReferenceId,
+        controlledDarUpdatedAt,
+        openDarUpdatedAt,
+        existingAdminNote,
+        controlledElectionId,
+        openElectionId,
+        admin,
+        darOwner,
+        openDarOwner,
+        response);
+  }
 
-    assertEquals(2, response.datasetsTotalInDac());
-    assertEquals(1, response.datasetsConvertedToExternal());
-    assertEquals(1, response.darDatasetApprovalsRevoked());
-    assertEquals(1, response.openElectionsCanceled());
+  @Test
+  void testConvertDacDatasetsToExternal() {
+    ExternalizationTestFixture f = buildExternalizationFixture();
 
-    String accessManagementValue =
+    assertEquals(2, f.response().datasetsTotalInDac());
+    assertEquals(1, f.response().datasetsConvertedToExternal());
+    assertEquals(1, f.response().darDatasetApprovalsRevoked());
+    assertEquals(1, f.response().openElectionsCanceled());
+
+    String controlledAccessManagement =
         jdbi.withHandle(
             handle ->
                 handle
                     .createQuery(
                         "SELECT property_value FROM dataset_property WHERE dataset_id = :datasetId AND schema_property = 'accessManagement'")
-                    .bind("datasetId", datasetId)
+                    .bind("datasetId", f.controlledDatasetId())
                     .mapTo(String.class)
                     .one());
-    assertEquals("external", accessManagementValue);
+    assertEquals("external", controlledAccessManagement);
 
-    String openAccessManagementValue =
+    String openAccessManagement =
         jdbi.withHandle(
             handle ->
                 handle
                     .createQuery(
                         "SELECT property_value FROM dataset_property WHERE dataset_id = :datasetId AND schema_property = 'accessManagement'")
-                    .bind("datasetId", openDatasetId)
+                    .bind("datasetId", f.openDatasetId())
                     .mapTo(String.class)
                     .one());
-    assertEquals("open", openAccessManagementValue);
+    assertEquals("open", openAccessManagement);
 
-    Integer remainingDarDatasetRows =
+    int remainingControlledRelations =
         jdbi.withHandle(
             handle ->
                 handle
                     .createQuery(
-                        "SELECT COUNT(*) FROM dar_dataset WHERE reference_id = :referenceId AND dataset_id = :datasetId")
-                    .bind("referenceId", referenceId)
-                    .bind("datasetId", datasetId)
+                        "SELECT COUNT(*) FROM dar_dataset WHERE reference_id = :ref AND dataset_id = :ds")
+                    .bind("ref", f.referenceId())
+                    .bind("ds", f.controlledDatasetId())
                     .mapTo(Integer.class)
                     .one());
-    assertEquals(0, remainingDarDatasetRows);
+    assertEquals(0, remainingControlledRelations);
 
-    Integer remainingOpenDarDatasetRows =
+    int remainingOpenRelations =
         jdbi.withHandle(
             handle ->
                 handle
                     .createQuery(
-                        "SELECT COUNT(*) FROM dar_dataset WHERE reference_id = :referenceId AND dataset_id = :datasetId")
-                    .bind("referenceId", openReferenceId)
-                    .bind("datasetId", openDatasetId)
+                        "SELECT COUNT(*) FROM dar_dataset WHERE reference_id = :ref AND dataset_id = :ds")
+                    .bind("ref", f.openReferenceId())
+                    .bind("ds", f.openDatasetId())
                     .mapTo(Integer.class)
                     .one());
-    assertEquals(1, remainingOpenDarDatasetRows);
+    assertEquals(1, remainingOpenRelations);
 
-    String controlledElectionStatus =
-        electionDAO.findElectionById(controlledElectionId).getStatus();
-    String openElectionStatus = electionDAO.findElectionById(openElectionId).getStatus();
-    assertEquals("Canceled", controlledElectionStatus);
-    assertEquals("Open", openElectionStatus);
+    assertEquals("Canceled", electionDAO.findElectionById(f.controlledElectionId()).getStatus());
+    assertEquals("Open", electionDAO.findElectionById(f.openElectionId()).getStatus());
 
-    Integer controlledDatasetDacId = datasetDAO.findDatasetById(datasetId).getDacId();
-    Boolean controlledDatasetDacApproval = datasetDAO.findDatasetById(datasetId).getDacApproval();
-    Timestamp controlledDatasetDacApprovalDate =
+    assertNull(datasetDAO.findDatasetById(f.controlledDatasetId()).getDacId());
+    assertNull(datasetDAO.findDatasetById(f.controlledDatasetId()).getDacApproval());
+    Timestamp dacApprovalDate =
         jdbi.withHandle(
             handle ->
                 handle
                     .createQuery(
                         "SELECT dac_approval_date FROM dataset WHERE dataset_id = :datasetId")
-                    .bind("datasetId", datasetId)
+                    .bind("datasetId", f.controlledDatasetId())
                     .mapTo(Timestamp.class)
                     .one());
-    Integer controlledDatasetUpdateUserId =
+    assertNull(dacApprovalDate);
+    Integer updateUserId =
         jdbi.withHandle(
             handle ->
                 handle
                     .createQuery("SELECT update_user_id FROM dataset WHERE dataset_id = :datasetId")
-                    .bind("datasetId", datasetId)
+                    .bind("datasetId", f.controlledDatasetId())
                     .mapTo(Integer.class)
                     .one());
-    Timestamp controlledDatasetUpdateDate =
+    assertEquals(f.admin().getUserId(), updateUserId);
+    assertNotNull(
         jdbi.withHandle(
             handle ->
                 handle
                     .createQuery("SELECT update_date FROM dataset WHERE dataset_id = :datasetId")
-                    .bind("datasetId", datasetId)
+                    .bind("datasetId", f.controlledDatasetId())
                     .mapTo(Timestamp.class)
-                    .one());
-    assertNull(controlledDatasetDacId);
-    assertNull(controlledDatasetDacApproval);
-    assertNull(controlledDatasetDacApprovalDate);
-    assertEquals(admin.getUserId(), controlledDatasetUpdateUserId);
-    assertNotNull(controlledDatasetUpdateDate);
+                    .one()));
+  }
+
+  @Test
+  void testConvertDacDatasetsToExternal_controlledDarUpdated() {
+    ExternalizationTestFixture f = buildExternalizationFixture();
 
     Integer controlledDarUserId =
         jdbi.withHandle(
@@ -408,7 +442,7 @@ class DacServiceDAOTest extends DAOTestHelper {
                 handle
                     .createQuery(
                         "SELECT user_id FROM data_access_request WHERE reference_id = :referenceId")
-                    .bind("referenceId", referenceId)
+                    .bind("referenceId", f.referenceId())
                     .mapTo(Integer.class)
                     .one());
     Timestamp controlledDarUpdateDate =
@@ -417,7 +451,7 @@ class DacServiceDAOTest extends DAOTestHelper {
                 handle
                     .createQuery(
                         "SELECT update_date FROM data_access_request WHERE reference_id = :referenceId")
-                    .bind("referenceId", referenceId)
+                    .bind("referenceId", f.referenceId())
                     .mapTo(Timestamp.class)
                     .one());
     String controlledDarAdminNotes =
@@ -426,42 +460,49 @@ class DacServiceDAOTest extends DAOTestHelper {
                 handle
                     .createQuery(
                         "SELECT admin_dar_notes FROM data_access_request WHERE reference_id = :referenceId")
-                    .bind("referenceId", referenceId)
+                    .bind("referenceId", f.referenceId())
                     .mapTo(String.class)
                     .one());
-    assertEquals(darOwner.getUserId(), controlledDarUserId);
+
+    assertEquals(f.darOwner().getUserId(), controlledDarUserId);
     assertNotNull(controlledDarUpdateDate);
-    assertTrue(controlledDarUpdateDate.toInstant().isAfter(controlledDarUpdatedAt.toInstant()));
-    assertTrue(controlledDarAdminNotes.startsWith(existingAdminNote + " On "));
-    // Dataset identifier should be in formatted DUOS-XXXXXX form when alias is available, or object
-    // ID otherwise
+    assertTrue(controlledDarUpdateDate.toInstant().isAfter(f.controlledDarUpdatedAt().toInstant()));
+    assertTrue(controlledDarAdminNotes.startsWith(f.existingAdminNote() + " On "));
+    // Dataset identifier should be in DUOS-XXXXXX form when alias is available, or object ID
+    // otherwise
     assertTrue(
         controlledDarAdminNotes.contains("DUOS-")
-            || controlledDarAdminNotes.contains(controlledDatasetObjectId),
+            || controlledDarAdminNotes.contains(f.controlledDatasetObjectId()),
         "Admin notes should contain dataset identifier in DUOS-XXXXXX or object ID format");
-    assertFalse(controlledDarAdminNotes.contains(openDatasetObjectId));
+    assertFalse(controlledDarAdminNotes.contains(f.openDatasetObjectId()));
     assertTrue(
         controlledDarAdminNotes.contains(
             "the following datasets were removed administratively from this request because the responsible Data Access Committee no longer manages access using DUOS."));
+  }
 
-    Integer openDatasetDacId = datasetDAO.findDatasetById(openDatasetId).getDacId();
-    Boolean openDatasetDacApproval = datasetDAO.findDatasetById(openDatasetId).getDacApproval();
-    Timestamp openDatasetDacApprovalDate =
+  @Test
+  void testConvertDacDatasetsToExternal_openDatasetUnchanged() {
+    ExternalizationTestFixture f = buildExternalizationFixture();
+
+    assertNotNull(datasetDAO.findDatasetById(f.openDatasetId()).getDacId());
+    assertNotNull(datasetDAO.findDatasetById(f.openDatasetId()).getDacApproval());
+    Timestamp openDacApprovalDate =
         jdbi.withHandle(
             handle ->
                 handle
                     .createQuery(
                         "SELECT dac_approval_date FROM dataset WHERE dataset_id = :datasetId")
-                    .bind("datasetId", openDatasetId)
+                    .bind("datasetId", f.openDatasetId())
                     .mapTo(Timestamp.class)
                     .one());
+    assertNotNull(openDacApprovalDate);
     Integer openDarUserId =
         jdbi.withHandle(
             handle ->
                 handle
                     .createQuery(
                         "SELECT user_id FROM data_access_request WHERE reference_id = :referenceId")
-                    .bind("referenceId", openReferenceId)
+                    .bind("referenceId", f.openReferenceId())
                     .mapTo(Integer.class)
                     .one());
     Timestamp openDarUpdateDate =
@@ -470,7 +511,7 @@ class DacServiceDAOTest extends DAOTestHelper {
                 handle
                     .createQuery(
                         "SELECT update_date FROM data_access_request WHERE reference_id = :referenceId")
-                    .bind("referenceId", openReferenceId)
+                    .bind("referenceId", f.openReferenceId())
                     .mapTo(Timestamp.class)
                     .one());
     String openDarAdminNotes =
@@ -479,14 +520,11 @@ class DacServiceDAOTest extends DAOTestHelper {
                 handle
                     .createQuery(
                         "SELECT admin_dar_notes FROM data_access_request WHERE reference_id = :referenceId")
-                    .bind("referenceId", openReferenceId)
+                    .bind("referenceId", f.openReferenceId())
                     .mapTo(String.class)
                     .one());
-    assertNotNull(openDatasetDacId);
-    assertNotNull(openDatasetDacApproval);
-    assertNotNull(openDatasetDacApprovalDate);
-    assertEquals(openDarOwner.getUserId(), openDarUserId);
-    assertEquals(openDarUpdatedAt.toInstant(), openDarUpdateDate.toInstant());
+    assertEquals(f.openDarOwner().getUserId(), openDarUserId);
+    assertEquals(f.openDarUpdatedAt().toInstant(), openDarUpdateDate.toInstant());
     assertNull(openDarAdminNotes);
   }
 
