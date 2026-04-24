@@ -42,8 +42,7 @@
       constraintName="fk_daa_audit_user_id"
       referencedTableName="users" referencedColumnNames="user_id"/>
     <!--
-      This FK was temporarily dropped here to support hard DAC deletion.
-      It has been restored in changelog-consent-2026-04-24-dac-soft-delete.xml now that DACs are soft-deleted.
+      Note that existing DAC deletion functionality requires this FK to be dropped until we implement soft deletion for DACs.
      -->
     <dropForeignKeyConstraint
       baseTableName="data_access_agreement"
