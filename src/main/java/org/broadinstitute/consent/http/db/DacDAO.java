@@ -165,8 +165,8 @@ public interface DacDAO extends Transactional<DacDAO> {
   Dac findById(@Bind("dacId") Integer dacId);
 
   /**
-   * Find a soft-deleted DAC by id. Returns the DAC row only if it has been soft-deleted.
-   * Intended for audit/admin use cases where the caller needs to inspect a deleted DAC.
+   * Find a soft-deleted DAC by id. Returns the DAC row only if it has been soft-deleted. Intended
+   * for audit/admin use cases where the caller needs to inspect a deleted DAC.
    *
    * @param dacId The dac_id to lookup
    * @return Dac, or null if the DAC does not exist or has not been deleted

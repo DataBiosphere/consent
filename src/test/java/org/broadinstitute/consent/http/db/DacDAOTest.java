@@ -733,6 +733,4 @@ class DacDAOTest extends DAOTestHelper {
         userId,
         Instant.now());
   }
-
-
 }
