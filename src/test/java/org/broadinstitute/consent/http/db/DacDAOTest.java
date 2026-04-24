@@ -274,6 +274,33 @@ class DacDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testSoftDeleteDac_setsDeletedFields() {
+    User user = createUser();
+    Integer dacId = createRandomDAC();
+
+    dacDAO.deleteDac(dacId, user.getUserId());
+
+    // findById should return null (deleted is filtered)
+    assertNull(dacDAO.findById(dacId));
+    // findAll should not contain the deleted DAC
+    assertTrue(dacDAO.findAll().stream().noneMatch(d -> d.getDacId().equals(dacId)));
+    // Verify audit entry exists
+    List<DacAudit> audits = dacDAO.findAuditsByDacId(dacId);
+    assertTrue(audits.stream().anyMatch(a -> AuditActions.DELETE.equals(a.action())));
+  }
+
+  @Test
+  void testFindByIdAfterSoftDelete_returnsNull() {
+    User user = createUser();
+    Integer dacId = createRandomDAC();
+    assertNotNull(dacDAO.findById(dacId));
+
+    dacDAO.deleteDac(dacId, user.getUserId());
+
+    assertNull(dacDAO.findById(dacId));
+  }
+
+  @Test
   void testUpdateDacWithoutEmail() {
     String newValue = "New Value";
     User user = createUser();

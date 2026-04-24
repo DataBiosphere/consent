@@ -86,6 +86,7 @@ public interface DacDAO extends Transactional<DacDAO> {
       LEFT JOIN dac_daa dd ON dac.dac_id = dd.dac_id
       LEFT JOIN data_access_agreement daa ON dd.daa_id = daa.daa_id
       LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+      WHERE dac.deleted IS NOT TRUE
       ORDER BY dac.name
       """)
   List<Dac> findAll();
@@ -159,6 +160,7 @@ public interface DacDAO extends Transactional<DacDAO> {
       LEFT JOIN data_access_agreement daa ON dd.daa_id = daa.daa_id
       LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
       WHERE dac.dac_id = :dacId
+        AND dac.deleted IS NOT TRUE
       """)
   Dac findById(@Bind("dacId") Integer dacId);
 
@@ -190,14 +192,17 @@ public interface DacDAO extends Transactional<DacDAO> {
 
   @SqlUpdate(
       """
-      WITH deleted AS (
-        DELETE FROM dac
-        WHERE dac_id = :dacId
+      WITH soft_deleted AS (
+        UPDATE dac
+        SET    deleted        = true,
+               delete_user_id = :userId,
+               delete_date    = NOW()
+        WHERE  dac_id = :dacId
         RETURNING dac_id
       )
       INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
       SELECT dac_id, :userId, NULL, NULL, 'DELETE', NOW()
-      FROM deleted
+      FROM   soft_deleted
       """)
   void deleteDac(@Bind("dacId") Integer dacId, @Bind("userId") Integer userId);
 
@@ -396,6 +401,7 @@ public interface DacDAO extends Transactional<DacDAO> {
       FROM dac d
       INNER JOIN dataset ds ON d.dac_id = ds.dac_id
       WHERE ds.dataset_id IN (<datasetIds>)
+        AND d.deleted IS NOT TRUE
       """)
   Set<Dac> findDacsForDatasetIds(
       @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING)
@@ -410,6 +416,7 @@ public interface DacDAO extends Transactional<DacDAO> {
       INNER JOIN dar_dataset dd ON dd.dataset_id = d.dataset_id
       INNER JOIN data_access_request dar ON dd.reference_id = dar.reference_id
       WHERE dar.collection_id = :collectionId
+        AND dac.deleted IS NOT TRUE
       """)
   Collection<Dac> findDacsForCollectionId(@Bind("collectionId") Integer collectionId);
 }
