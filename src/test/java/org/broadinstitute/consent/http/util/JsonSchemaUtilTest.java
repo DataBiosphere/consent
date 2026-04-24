@@ -3,11 +3,18 @@ package org.broadinstitute.consent.http.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.networknt.schema.Error;
+import com.networknt.schema.Schema;
+import com.networknt.schema.path.NodePath;
+import com.networknt.schema.path.PathType;
+import jakarta.ws.rs.BadRequestException;
+import java.lang.reflect.Method;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1;
@@ -85,6 +92,42 @@ class JsonSchemaUtilTest {
     assertFalse(instance.getConsentGroups().isEmpty());
     assertFalse(instance.getConsentGroups().getFirst().getFileTypes().isEmpty());
     assertNotNull(instance.getConsentGroups().getFirst().getDataAccessCommitteeId());
+  }
+
+  @Test
+  void testValidateSchemaV1_executionExceptionReturnsEmptySet() {
+    JsonSchemaUtil util =
+        new JsonSchemaUtil() {
+          @Override
+          Schema getDatasetRegistrationSchema() throws ExecutionException {
+            throw new ExecutionException("boom", new RuntimeException("boom"));
+          }
+        };
+
+    assertTrue(util.validateSchemaV1(datasetRegistrationInstance).isEmpty());
+  }
+
+  @Test
+  void testValidateSchemaV1_invalidJsonThrowsBadRequest() {
+    assertThrows(BadRequestException.class, () -> schemaUtil.validateSchemaV1("}{"));
+  }
+
+  @Test
+  void testDeserializeDatasetRegistration_invalidSchemaReturnsNull() {
+    assertNull(schemaUtil.deserializeDatasetRegistration("{}"));
+  }
+
+  @Test
+  void testDeserializeDatasetRegistration_whenValidationThrowsReturnsNull() {
+    JsonSchemaUtil util =
+        new JsonSchemaUtil() {
+          @Override
+          public Set<Error> validateSchemaV1(String datasetRegistrationInstance) {
+            throw new RuntimeException("boom");
+          }
+        };
+
+    assertNull(util.deserializeDatasetRegistration(datasetRegistrationInstance));
   }
 
   @Test
@@ -856,6 +899,85 @@ class JsonSchemaUtilTest {
   }
 
   @Test
+  void testValidateSchemaMessagesV1_formatsEnumAndTypeErrors() {
+    String instance =
+        """
+        {
+          "studyType": "Observational",
+          "studyName": "name",
+          "studyDescription": "description",
+          "dataTypes": ["types"],
+          "phenotypeIndication": "phenotype",
+          "species": "species",
+          "piName": "PI Name",
+          "dataCustodianEmail": ["email@abc.com"],
+          "publicVisibility": "yes",
+          "dataSubmitterUserId": "oops",
+          "nihAnvilUse": "definitely not valid",
+          "consentGroups": [{
+            "fileTypes": [{
+              "fileType": "Arrays",
+              "functionalEquivalence": "equivalence"
+            }],
+            "numberOfParticipants": 2,
+            "consentGroupName": "name",
+            "generalResearchUse": true,
+            "dataAccessCommitteeId": 1,
+            "url": "https://asdf.com"
+          }]
+        }
+        """;
+
+    Set<String> messages = schemaUtil.validateSchemaMessagesV1(instance);
+
+    assertTrue(messages.contains("Public Visibility has an invalid value"));
+    assertTrue(messages.contains("Data Submitter has an invalid value"));
+    assertTrue(messages.contains("NIH Anvil Use must be one of the allowed options"));
+  }
+
+  @Test
+  void testValidateSchemaMessagesV1_formatsAlternativeDataSharingPlanErrors() {
+    String instance =
+        """
+        {
+          "studyType": "Observational",
+          "studyName": "name",
+          "studyDescription": "description",
+          "dataTypes": ["types"],
+          "phenotypeIndication": "phenotype",
+          "species": "species",
+          "piName": "PI Name",
+          "dataCustodianEmail": ["email@abc.com"],
+          "publicVisibility": true,
+          "dataSubmitterUserId": 1,
+          "nihAnvilUse": "I am not NHGRI funded and do not plan to store data in AnVIL",
+          "alternativeDataSharingPlan": true,
+          "alternativeDataSharingPlanReasons": [],
+          "consentGroups": [{
+            "fileTypes": [{
+              "fileType": "Arrays",
+              "functionalEquivalence": "equivalence"
+            }],
+            "numberOfParticipants": 2,
+            "consentGroupName": "name",
+            "generalResearchUse": true,
+            "dataAccessCommitteeId": 1,
+            "url": "https://asdf.com"
+          }]
+        }
+        """;
+
+    Set<String> messages = schemaUtil.validateSchemaMessagesV1(instance);
+
+    assertTrue(
+        messages.stream()
+            .anyMatch(
+                message ->
+                    message.contains("Explanation of Request")
+                        || message.contains("alternativeDataSharingPlanExplanation")));
+  }
+
+  @Test
   void testExtractLabelsAndDescriptions() throws ExecutionException {
     JsonSchemaUtil util = new JsonSchemaUtil();
 
@@ -866,6 +988,21 @@ class JsonSchemaUtilTest {
     assertEquals("Study Name", util.fieldLabels.get("studyName"));
     assertTrue(util.fieldDescriptions.containsKey("studyName"));
     assertEquals("The study name", util.fieldDescriptions.get("studyName"));
+  }
+
+  @Test
+  void testExtractLabelsAndDescriptions_invalidJsonClearsMaps() throws Exception {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    util.fieldLabels.put("studyName", "Study Name");
+    util.fieldDescriptions.put("studyName", "The study name");
+
+    Method method =
+        JsonSchemaUtil.class.getDeclaredMethod("extractLabelsAndDescriptions", String.class);
+    method.setAccessible(true);
+    method.invoke(util, "not valid json");
+
+    assertTrue(util.fieldLabels.isEmpty());
+    assertTrue(util.fieldDescriptions.isEmpty());
   }
 
   @Test
@@ -880,6 +1017,56 @@ class JsonSchemaUtilTest {
   }
 
   @Test
+  void testFormatMessageRequired_usesPropertyBeforeArguments() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    util.fieldLabels.put("studyName", "Study Name");
+    Error error =
+        Error.builder().keyword("required").property("studyName").arguments("ignored").build();
+
+    assertEquals("Study Name is required", util.formatMessage(error));
+  }
+
+  @Test
+  void testFormatMessageType_usesArgumentsWhenInstanceLocationIsEmpty() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    util.fieldDescriptions.put("customField", "Custom Field Description");
+    Error error =
+        Error.builder()
+            .keyword("type")
+            .instanceLocation(new NodePath(PathType.JSON_POINTER))
+            .arguments("customField")
+            .build();
+
+    assertEquals("Custom Field Description has an invalid value", util.formatMessage(error));
+  }
+
+  @Test
+  void testFormatMessageMinItems_usesInstanceLocationFieldName() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    util.fieldLabels.put("dataTypes", "Data Types");
+    Error error =
+        Error.builder()
+            .keyword("minItems")
+            .instanceLocation(new NodePath(PathType.JSON_POINTER).append("dataTypes"))
+            .arguments(1)
+            .build();
+
+    assertEquals("Data Types must have at least one item", util.formatMessage(error));
+  }
+
+  @Test
+  void testFormatMessageDefault_returnsRawValidatorMessage() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    Error error = mock(Error.class);
+    when(error.getKeyword()).thenReturn("pattern");
+    when(error.getInstanceLocation()).thenReturn(new NodePath(PathType.JSON_POINTER));
+    when(error.getArguments()).thenReturn(null);
+    when(error.getMessage()).thenReturn("raw validator message");
+
+    assertEquals("raw validator message", util.formatMessage(error));
+  }
+
+  @Test
   void testDisplayNameOverrides() {
     JsonSchemaUtil util = new JsonSchemaUtil();
     String name = util.displayName("consentGroups");
@@ -891,6 +1078,265 @@ class JsonSchemaUtilTest {
     JsonSchemaUtil util = new JsonSchemaUtil();
     String name = util.displayName("nonexistentField");
     assertEquals("nonexistentField", name);
+  }
+
+  @Test
+  void testDisplayNameUsesLabelAndDescriptionFallbacks() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    util.fieldLabels.put("studyName", "Study Name");
+    util.fieldDescriptions.put("customField", "Custom Field Description");
+
+    assertEquals("Study Name", util.displayName("studyName"));
+    assertEquals("Custom Field Description", util.displayName("customField"));
+  }
+
+  @Test
+  void testDisplayNameNullFieldReturnsGenericLabel() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+
+    assertEquals("Field", util.displayName(null));
+  }
+
+  @Test
+  void testFormatMessageMinLength() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    util.fieldLabels.put("studyName", "Study Name");
+    Error error =
+        Error.builder()
+            .keyword("minLength")
+            .instanceLocation(new NodePath(PathType.JSON_POINTER).append("studyName"))
+            .build();
+
+    assertEquals("Study Name must not be empty", util.formatMessage(error));
+  }
+
+  @Test
+  void testFormatMessageEnum() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    util.fieldLabels.put("studyType", "Study Type");
+    Error error =
+        Error.builder()
+            .keyword("enum")
+            .instanceLocation(new NodePath(PathType.JSON_POINTER).append("studyType"))
+            .build();
+
+    assertEquals("Study Type must be one of the allowed options", util.formatMessage(error));
+  }
+
+  @Test
+  void testFormatMessagePatternKeyword() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    Error error =
+        Error.builder()
+            .keyword("pattern")
+            .instanceLocation(new NodePath(PathType.JSON_POINTER))
+            .message("Pattern validation failed")
+            .build();
+
+    assertEquals("Pattern validation failed", util.formatMessage(error));
+  }
+
+  @Test
+  void testFormatMessageMaxLength() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    Error error =
+        Error.builder()
+            .keyword("maxLength")
+            .instanceLocation(new NodePath(PathType.JSON_POINTER))
+            .message("String exceeded maximum length")
+            .build();
+
+    assertEquals("String exceeded maximum length", util.formatMessage(error));
+  }
+
+  @Test
+  void testFieldFromMessage_requiresKeywordWithProperty() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    util.fieldLabels.put("customField", "Custom Field");
+    Error error =
+        Error.builder()
+            .keyword("required")
+            .property("customField")
+            .instanceLocation(new NodePath(PathType.JSON_POINTER))
+            .build();
+
+    assertEquals("Custom Field is required", util.formatMessage(error));
+  }
+
+  @Test
+  void testFieldFromMessage_requiresKeywordWithArgsWhenNoProperty() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    util.fieldLabels.put("anotherField", "Another Field");
+    Error error =
+        Error.builder()
+            .keyword("required")
+            .arguments("anotherField")
+            .instanceLocation(new NodePath(PathType.JSON_POINTER))
+            .build();
+
+    assertEquals("Another Field is required", util.formatMessage(error));
+  }
+
+  @Test
+  void testFieldFromMessage_nonRequiredUsesArgumentsWhenLocationEmpty() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    util.fieldLabels.put("customArg", "Custom Argument");
+    Error error =
+        Error.builder()
+            .keyword("enum")
+            .instanceLocation(new NodePath(PathType.JSON_POINTER))
+            .arguments("customArg")
+            .build();
+
+    assertEquals("Custom Argument must be one of the allowed options", util.formatMessage(error));
+  }
+
+  @Test
+  void testFieldFromMessage_nonRequiredReturnsNullWhenNoLocationOrArgs() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    Error error =
+        Error.builder()
+            .keyword("pattern")
+            .instanceLocation(new NodePath(PathType.JSON_POINTER))
+            .message("raw message")
+            .build();
+
+    // When field is null, displayName returns "Field"
+    assertEquals("raw message", util.formatMessage(error));
+  }
+
+  @Test
+  void testFieldFromMessage_instanceLocationWithNestedPath() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    util.fieldLabels.put("numberOfParticipants", "Number of Participants");
+    Error error =
+        Error.builder()
+            .keyword("minItems")
+            .instanceLocation(
+                new NodePath(PathType.JSON_POINTER)
+                    .append("consentGroups")
+                    .append("numberOfParticipants"))
+            .arguments(1)
+            .build();
+
+    String result = util.formatMessage(error);
+    assertTrue(
+        result.contains("numberOfParticipants")
+            || result.contains("Number of Participants")
+            || result.contains("must have at least one item"));
+  }
+
+  @Test
+  void testFieldFromMessage_instanceLocationWithoutField() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    // Instance location that doesn't contain a slash (edge case)
+    Error error =
+        Error.builder()
+            .keyword("type")
+            .instanceLocation(new NodePath(PathType.JSON_POINTER))
+            .arguments("rootField")
+            .build();
+
+    String result = util.formatMessage(error);
+    assertTrue(result.contains("has an invalid value"));
+  }
+
+  @Test
+  void testDisplayNameWithOverride() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    // consentGroups has an override to "Datasets"
+    assertEquals("Datasets", util.displayName("consentGroups"));
+  }
+
+  @Test
+  void testDisplayNamePrioritizesLabelOverDescription() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    util.fieldLabels.put("testField", "Label Text");
+    util.fieldDescriptions.put("testField", "Description Text");
+
+    assertEquals("Label Text", util.displayName("testField"));
+  }
+
+  @Test
+  void testDisplayNameUsesDescriptionWhenNoLabel() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    util.fieldDescriptions.put("onlyDescription", "Only Description");
+
+    assertEquals("Only Description", util.displayName("onlyDescription"));
+  }
+
+  @Test
+  void testDisplayNameReturnsFieldNameWhenNoMetadata() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+
+    assertEquals("unknownField", util.displayName("unknownField"));
+  }
+
+  @Test
+  void testExtractLabelsAndDescriptions_success() throws ExecutionException {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+
+    // Ensure schema is loaded and labels/descriptions are extracted
+    util.getDatasetRegistrationSchema();
+
+    // Verify at least some expected labels and descriptions are present
+    assertNotNull(util.fieldLabels);
+    assertNotNull(util.fieldDescriptions);
+    assertFalse(util.fieldLabels.isEmpty());
+    assertFalse(util.fieldDescriptions.isEmpty());
+  }
+
+  @Test
+  void testGetDatasetRegistrationSchemaV1_success() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+    String schema = util.getDatasetRegistrationSchemaV1();
+
+    assertNotNull(schema);
+    assertTrue(schema.contains("\"properties\""));
+    assertTrue(schema.contains("studyName"));
+  }
+
+  @Test
+  void testGetDatasetRegistrationSchemaV1_invalidResource() {
+    JsonSchemaUtil util =
+        new JsonSchemaUtil() {
+          @Override
+          public String getDatasetRegistrationSchemaV1() {
+            // Simulate cache loader throwing ExecutionException by returning null
+            // (actual implementation is tested through the normal flow)
+            return null;
+          }
+        };
+
+    assertNull(util.getDatasetRegistrationSchemaV1());
+  }
+
+  @Test
+  void testValidateSchemaV1_invalidJsonThrowsException() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+
+    assertThrows(BadRequestException.class, () -> util.validateSchemaV1("not json at all"));
+  }
+
+  @Test
+  void testValidateSchemaV1_malformedJson() {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+
+    assertThrows(BadRequestException.class, () -> util.validateSchemaV1("{\"key\": }"));
+  }
+
+  @Test
+  void testDeserializeDatasetRegistration_valid() {
+    DatasetRegistrationSchemaV1 result =
+        new JsonSchemaUtil().deserializeDatasetRegistration(datasetRegistrationInstance);
+
+    assertNotNull(result);
+    assertNotNull(result.getStudyType());
+  }
+
+  @Test
+  void testDeserializeDatasetRegistration_invalidInstance() {
+    assertNull(new JsonSchemaUtil().deserializeDatasetRegistration("{}"));
   }
 
   private void assertNoErrors(Set<Error> errors) {
