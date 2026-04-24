@@ -13,7 +13,7 @@
 
     <!-- 1b. Add delete_user_id and delete_date columns (consistent with FSO pattern) -->
     <addColumn tableName="dac">
-      <column name="delete_user_id" type="integer"/>
+      <column name="delete_user_id" type="bigint"/>
       <column name="delete_date" type="timestamp"/>
     </addColumn>
     <addForeignKeyConstraint
