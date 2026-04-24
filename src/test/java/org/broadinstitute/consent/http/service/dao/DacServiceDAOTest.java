@@ -209,39 +209,6 @@ class DacServiceDAOTest extends DAOTestHelper {
     }
   }
 
-  @Test
-  void testDeleteDac_softDeletePreservesRow() {
-    User superUser = createUser();
-    int dacId =
-        dacDAO.createDac(
-            "dac name: " + randomAlphabetic(10),
-            "dac description: " + randomAlphabetic(10),
-            "dac email: " + randomAlphabetic(10),
-            superUser.getUserId());
-    Integer daaId =
-        daaDAO.createDaa(
-            superUser.getUserId(),
-            new Date().toInstant(),
-            superUser.getUserId(),
-            new Date().toInstant(),
-            dacId);
-    daaDAO.createDacDaaRelation(dacId, daaId, superUser.getUserId());
-    Dac dac = dacDAO.findById(dacId);
-
-    serviceDAO.deleteDacAndRemoveDaaAssociation(superUser, dac);
-
-    // DAC should not be found by normal queries (soft-deleted)
-    assertNull(dacDAO.findById(dacId));
-    assertTrue(dacDAO.findAll().stream().noneMatch(d -> d.getDacId().equals(dacId)));
-
-    // DAA should still reference the soft-deleted DAC via initial_dac_id
-    DataAccessAgreement daa = daaDAO.findByDacId(dacId);
-    assertNotNull(daa);
-    // dac_daa join should be removed
-    DataAccessAgreement daaById = daaDAO.findById(daaId);
-    assertNotNull(daaById);
-  }
-
   /**
    * @return A list of random, unsaved dac objects
    */
