@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.gson.Gson;
 import jakarta.ws.rs.BadRequestException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -452,17 +453,7 @@ class DacServiceTest extends AbstractTestHelper {
         new DacDatasetExternalizationRequest("policy update", false, true, true, null);
     DacDatasetExternalizationResponse expected =
         new DacDatasetExternalizationResponse(
-            1,
-            false,
-            "policy update",
-            java.time.Instant.now(),
-            java.time.Instant.now(),
-            2,
-            1,
-            1,
-            3,
-            0,
-            2);
+            1, false, "policy update", Instant.now(), Instant.now(), 2, 1, 1, 3, 0, 2);
     when(dacServiceDAO.findConvertibleDatasetIds(anyInt(), any())).thenReturn(List.of(101, 102));
     when(dacServiceDAO.convertDacDatasetsToExternal(anyInt(), anyInt(), any()))
         .thenReturn(expected);
@@ -485,17 +476,7 @@ class DacServiceTest extends AbstractTestHelper {
     when(dacServiceDAO.convertDacDatasetsToExternal(anyInt(), anyInt(), any()))
         .thenReturn(
             new DacDatasetExternalizationResponse(
-                1,
-                true,
-                "policy update",
-                java.time.Instant.now(),
-                java.time.Instant.now(),
-                2,
-                1,
-                1,
-                3,
-                0,
-                2));
+                1, true, "policy update", Instant.now(), Instant.now(), 2, 1, 1, 3, 0, 2));
     initService();
 
     service.convertDacDatasetsToExternal(1, 10, request);

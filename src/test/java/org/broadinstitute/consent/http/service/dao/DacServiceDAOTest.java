@@ -836,6 +836,159 @@ class DacServiceDAOTest extends DAOTestHelper {
         "Admin notes should contain dataset identifiers");
   }
 
+  @Test
+  void testConvertDacDatasetsToExternalDryRunDoesNotMutate() {
+    User admin = createUser();
+    Integer dacId =
+        dacDAO.createDac(
+            "dac name: " + randomAlphabetic(10),
+            "dac description: " + randomAlphabetic(10),
+            "dac email: " + randomAlphabetic(10),
+            new Date());
+
+    Integer accessManagementKeyId =
+        datasetDAO.getDictionaryTerms().stream().map(d -> d.getKeyId()).findFirst().orElseThrow();
+    Integer datasetId =
+        datasetDAO.insertDataset(
+            "dataset name: " + randomAlphabetic(10),
+            Timestamp.from(Instant.now()),
+            admin.getUserId(),
+            "obj-" + randomAlphabetic(10),
+            new DataUseBuilder().setGeneralUse(true).build().toString(),
+            dacId);
+    jdbi.useHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    """
+                        INSERT INTO dataset_property(dataset_id, property_key, schema_property, property_value, property_type, create_date)
+                        VALUES (:datasetId, :propertyKey, 'accessManagement', 'controlled', 'string', now())
+                        """)
+                .bind("datasetId", datasetId)
+                .bind("propertyKey", accessManagementKeyId)
+                .execute());
+
+    String referenceId = randomAlphabetic(8);
+    dataAccessRequestDAO.insertDraftDataAccessRequest(
+        referenceId,
+        admin.getUserId(),
+        new Date(),
+        new Date(),
+        new org.broadinstitute.consent.http.models.DataAccessRequestData());
+    dataAccessRequestDAO.insertDARDatasetRelation(referenceId, datasetId);
+
+    DacDatasetExternalizationResponse response =
+        serviceDAO.convertDacDatasetsToExternal(
+            dacId,
+            admin.getUserId(),
+            new DacDatasetExternalizationRequest("policy update", true, true, true, null));
+
+    assertTrue(response.dryRun());
+    assertEquals(1, response.datasetsConvertedToExternal());
+    assertEquals(1, response.darDatasetApprovalsRevoked());
+
+    // Dry run must not mutate any data
+    String accessManagementValue =
+        jdbi.withHandle(
+            handle ->
+                handle
+                    .createQuery(
+                        "SELECT property_value FROM dataset_property WHERE dataset_id = :datasetId AND schema_property = 'accessManagement'")
+                    .bind("datasetId", datasetId)
+                    .mapTo(String.class)
+                    .one());
+    assertEquals("controlled", accessManagementValue, "Dry run must not update access management");
+
+    Integer darDatasetRowCount =
+        jdbi.withHandle(
+            handle ->
+                handle
+                    .createQuery(
+                        "SELECT COUNT(*) FROM dar_dataset WHERE reference_id = :referenceId AND dataset_id = :datasetId")
+                    .bind("referenceId", referenceId)
+                    .bind("datasetId", datasetId)
+                    .mapTo(Integer.class)
+                    .one());
+    assertEquals(1, darDatasetRowCount, "Dry run must not delete dar_dataset rows");
+  }
+
+  @Test
+  void testConvertDacDatasetsToExternalEmptyDac() {
+    User admin = createUser();
+    Integer dacId =
+        dacDAO.createDac(
+            "dac name: " + randomAlphabetic(10),
+            "dac description: " + randomAlphabetic(10),
+            "dac email: " + randomAlphabetic(10),
+            new Date());
+
+    DacDatasetExternalizationResponse response =
+        serviceDAO.convertDacDatasetsToExternal(
+            dacId,
+            admin.getUserId(),
+            new DacDatasetExternalizationRequest("policy update", false, true, true, null));
+
+    assertEquals(0, response.datasetsTotalInDac());
+    assertEquals(0, response.datasetsConvertedToExternal());
+    assertEquals(0, response.darDatasetApprovalsRevoked());
+    assertEquals(0, response.openElectionsCanceled());
+  }
+
+  @Test
+  void testFindConvertibleDatasetIds_EmptyDac() {
+    Integer dacId =
+        dacDAO.createDac(
+            "dac name: " + randomAlphabetic(10),
+            "dac description: " + randomAlphabetic(10),
+            "dac email: " + randomAlphabetic(10),
+            new Date());
+
+    List<Integer> result =
+        serviceDAO.findConvertibleDatasetIds(
+            dacId, new DacDatasetExternalizationRequest("policy update", false, true, true, null));
+
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void testFindConvertibleDatasetIds_WithControlledDataset() {
+    User admin = createUser();
+    Integer dacId =
+        dacDAO.createDac(
+            "dac name: " + randomAlphabetic(10),
+            "dac description: " + randomAlphabetic(10),
+            "dac email: " + randomAlphabetic(10),
+            new Date());
+    Integer accessManagementKeyId =
+        datasetDAO.getDictionaryTerms().stream().map(d -> d.getKeyId()).findFirst().orElseThrow();
+    Integer datasetId =
+        datasetDAO.insertDataset(
+            "dataset name: " + randomAlphabetic(10),
+            Timestamp.from(Instant.now()),
+            admin.getUserId(),
+            "obj-" + randomAlphabetic(10),
+            new DataUseBuilder().setGeneralUse(true).build().toString(),
+            dacId);
+    jdbi.useHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    """
+                        INSERT INTO dataset_property(dataset_id, property_key, schema_property, property_value, property_type, create_date)
+                        VALUES (:datasetId, :propertyKey, 'accessManagement', 'controlled', 'string', now())
+                        """)
+                .bind("datasetId", datasetId)
+                .bind("propertyKey", accessManagementKeyId)
+                .execute());
+
+    List<Integer> result =
+        serviceDAO.findConvertibleDatasetIds(
+            dacId, new DacDatasetExternalizationRequest("policy update", false, true, true, null));
+
+    assertEquals(1, result.size());
+    assertEquals(datasetId, result.get(0));
+  }
+
   /**
    * @return A list of random, unsaved dac objects
    */

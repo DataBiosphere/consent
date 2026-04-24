@@ -19,6 +19,9 @@ public class DacServiceDAO implements ConsentLogger {
   private final DaaDAO daaDAO;
   private static final String DAC_ID = "dacId";
   private static final String USER_ID = "userId";
+  private static final String DATASET_IDS = "datasetIds";
+  private static final String ACCESS_MANAGEMENT_VALUES = "accessManagementValues";
+  private static final String CONTROLLED_ACCESS_MANAGEMENT = "controlled";
   private static final String DELETE_ROLES_STATEMENT =
       "DELETE FROM user_role WHERE dac_id = :dacId";
   private static final String UPDATE_DATASET_STATEMENT =
@@ -213,19 +216,19 @@ public class DacServiceDAO implements ConsentLogger {
 
           List<String> accessManagementValues =
               request.shouldConvertOpenAccessDatasets()
-                  ? List.of("controlled", "open")
-                  : List.of("controlled");
+                  ? List.of(CONTROLLED_ACCESS_MANAGEMENT, "open")
+                  : List.of(CONTROLLED_ACCESS_MANAGEMENT);
           List<Integer> convertibleDatasetIds =
               handle
                   .createQuery(FIND_CONVERTIBLE_DATASET_IDS_STATEMENT)
-                  .bindList("datasetIds", datasetIds)
-                  .bindList("accessManagementValues", accessManagementValues)
+                  .bindList(DATASET_IDS, datasetIds)
+                  .bindList(ACCESS_MANAGEMENT_VALUES, accessManagementValues)
                   .mapTo(Integer.class)
                   .list();
           int externalDatasets =
               handle
                   .createQuery(COUNT_EXTERNAL_DATASETS_STATEMENT)
-                  .bindList("datasetIds", datasetIds)
+                  .bindList(DATASET_IDS, datasetIds)
                   .mapTo(Integer.class)
                   .one();
           int convertedToExternal = convertibleDatasetIds.size();
@@ -236,13 +239,13 @@ public class DacServiceDAO implements ConsentLogger {
             darDatasetApprovalsRevoked =
                 handle
                     .createQuery(COUNT_DAR_DATASET_RELATIONS_FOR_DATASETS_STATEMENT)
-                    .bindList("datasetIds", convertibleDatasetIds)
+                    .bindList(DATASET_IDS, convertibleDatasetIds)
                     .mapTo(Integer.class)
                     .one();
             usersWithAccessRemoved =
                 handle
                     .createQuery(COUNT_DISTINCT_USERS_FOR_DATASETS_STATEMENT)
-                    .bindList("datasetIds", convertibleDatasetIds)
+                    .bindList(DATASET_IDS, convertibleDatasetIds)
                     .mapTo(Integer.class)
                     .one();
           }
@@ -252,7 +255,7 @@ public class DacServiceDAO implements ConsentLogger {
             openElectionsCanceled =
                 handle
                     .createQuery(COUNT_OPEN_ELECTIONS_FOR_DATASETS_STATEMENT)
-                    .bindList("datasetIds", convertibleDatasetIds)
+                    .bindList(DATASET_IDS, convertibleDatasetIds)
                     .mapTo(Integer.class)
                     .one();
           }
@@ -260,32 +263,32 @@ public class DacServiceDAO implements ConsentLogger {
           if (!request.isDryRun() && !convertibleDatasetIds.isEmpty()) {
             handle
                 .createUpdate(CLEAR_DAC_FIELDS_FOR_DATASETS_STATEMENT)
-                .bindList("datasetIds", convertibleDatasetIds)
+                .bindList(DATASET_IDS, convertibleDatasetIds)
                 .bind(USER_ID, userId)
                 .execute();
 
             handle
                 .createUpdate(UPDATE_CONTROLLED_DATASETS_TO_EXTERNAL_STATEMENT)
-                .bindList("datasetIds", convertibleDatasetIds)
-                .bindList("accessManagementValues", accessManagementValues)
+                .bindList(DATASET_IDS, convertibleDatasetIds)
+                .bindList(ACCESS_MANAGEMENT_VALUES, accessManagementValues)
                 .execute();
 
             if (request.shouldRevokeApprovedAccess()) {
               handle
                   .createUpdate(APPEND_ADMIN_DAR_NOTES_FOR_DATASETS_STATEMENT)
-                  .bindList("datasetIds", convertibleDatasetIds)
+                  .bindList(DATASET_IDS, convertibleDatasetIds)
                   .execute();
 
               handle
                   .createUpdate(DELETE_DAR_DATASET_RELATIONS_FOR_DATASETS_STATEMENT)
-                  .bindList("datasetIds", convertibleDatasetIds)
+                  .bindList(DATASET_IDS, convertibleDatasetIds)
                   .execute();
             }
 
             if (request.shouldCancelOpenElections()) {
               handle
                   .createUpdate(CANCEL_OPEN_ELECTIONS_FOR_DATASETS_STATEMENT)
-                  .bindList("datasetIds", convertibleDatasetIds)
+                  .bindList(DATASET_IDS, convertibleDatasetIds)
                   .execute();
             }
           }
@@ -320,12 +323,12 @@ public class DacServiceDAO implements ConsentLogger {
           }
           List<String> accessManagementValues =
               request.shouldConvertOpenAccessDatasets()
-                  ? List.of("controlled", "open")
-                  : List.of("controlled");
+                  ? List.of(CONTROLLED_ACCESS_MANAGEMENT, "open")
+                  : List.of(CONTROLLED_ACCESS_MANAGEMENT);
           return handle
               .createQuery(FIND_CONVERTIBLE_DATASET_IDS_STATEMENT)
-              .bindList("datasetIds", datasetIds)
-              .bindList("accessManagementValues", accessManagementValues)
+              .bindList(DATASET_IDS, datasetIds)
+              .bindList(ACCESS_MANAGEMENT_VALUES, accessManagementValues)
               .mapTo(Integer.class)
               .list();
         });

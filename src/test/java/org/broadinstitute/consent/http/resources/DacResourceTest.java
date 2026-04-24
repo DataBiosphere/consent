@@ -15,6 +15,7 @@ import com.google.gson.JsonArray;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -633,17 +634,7 @@ class DacResourceTest extends AbstractTestHelper {
     when(userService.findUserByEmail(anyString())).thenReturn(user);
     DacDatasetExternalizationResponse summary =
         new DacDatasetExternalizationResponse(
-            1,
-            false,
-            "policy update",
-            java.time.Instant.now(),
-            java.time.Instant.now(),
-            3,
-            2,
-            1,
-            4,
-            1,
-            2);
+            1, false, "policy update", Instant.now(), Instant.now(), 3, 2, 1, 4, 1, 2);
     when(dacService.convertDacDatasetsToExternal(anyInt(), anyInt(), any())).thenReturn(summary);
     String json =
         gson.toJson(new DacDatasetExternalizationRequest("policy update", false, true, true, null));
@@ -658,6 +649,20 @@ class DacResourceTest extends AbstractTestHelper {
   void testConvertDatasetsToExternalEmptyPayload() {
     try (Response response = dacResource.convertDatasetsToExternal(authUser, 1, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testConvertDatasetsToExternalServiceException() {
+    User user = buildAdmin(authUser);
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    when(dacService.convertDacDatasetsToExternal(anyInt(), anyInt(), any()))
+        .thenThrow(new RuntimeException("Unexpected service error"));
+    String json =
+        gson.toJson(new DacDatasetExternalizationRequest("policy update", false, true, true, null));
+
+    try (Response response = dacResource.convertDatasetsToExternal(authUser, 1, json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
   }
 
