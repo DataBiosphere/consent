@@ -230,7 +230,7 @@ class DacDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDeleteDac_removesFromFindById() {
+  void testFindByIdAfterSoftDelete_returnsNull() {
     User user = createUser();
     Integer dacId = createRandomDAC();
     assertNotNull(dacDAO.findById(dacId));
@@ -238,6 +238,39 @@ class DacDAOTest extends DAOTestHelper {
     dacDAO.deleteDac(dacId, user.getUserId());
 
     assertNull(dacDAO.findById(dacId));
+  }
+
+  @Test
+  void testFindDeletedDacById_returnsDeletedDac() {
+    User user = createUser();
+    Integer dacId = createRandomDAC();
+    assertNotNull(dacDAO.findById(dacId));
+
+    dacDAO.deleteDac(dacId, user.getUserId());
+
+    // findById returns null for soft-deleted DACs
+    assertNull(dacDAO.findById(dacId));
+
+    // findDeletedDacById returns the soft-deleted row with delete metadata set
+    Dac deleted = dacDAO.findDeletedDacById(dacId);
+    assertNotNull(deleted);
+    assertEquals(dacId, deleted.getDacId());
+    assertTrue(deleted.getDeleted());
+    assertEquals(user.getUserId(), deleted.getDeleteUserId());
+    assertNotNull(deleted.getDeleteDate());
+  }
+
+  @Test
+  void testFindDeletedDacById_returnsNullForActiveDAC() {
+    Integer dacId = createRandomDAC();
+
+    // An active (non-deleted) DAC should not be returned by findDeletedDacById
+    assertNull(dacDAO.findDeletedDacById(dacId));
+  }
+
+  @Test
+  void testFindDeletedDacById_returnsNullForNonExistentId() {
+    assertNull(dacDAO.findDeletedDacById(Integer.MAX_VALUE));
   }
 
   @Test
@@ -271,33 +304,6 @@ class DacDAOTest extends DAOTestHelper {
     assertNull(deleteAudit.affectedUserId());
     assertNull(deleteAudit.roleId());
     assertNotNull(deleteAudit.actionDate());
-  }
-
-  @Test
-  void testSoftDeleteDac_setsDeletedFields() {
-    User user = createUser();
-    Integer dacId = createRandomDAC();
-
-    dacDAO.deleteDac(dacId, user.getUserId());
-
-    // findById should return null (deleted is filtered)
-    assertNull(dacDAO.findById(dacId));
-    // findAll should not contain the deleted DAC
-    assertTrue(dacDAO.findAll().stream().noneMatch(d -> d.getDacId().equals(dacId)));
-    // Verify audit entry exists
-    List<DacAudit> audits = dacDAO.findAuditsByDacId(dacId);
-    assertTrue(audits.stream().anyMatch(a -> AuditActions.DELETE.equals(a.action())));
-  }
-
-  @Test
-  void testFindByIdAfterSoftDelete_returnsNull() {
-    User user = createUser();
-    Integer dacId = createRandomDAC();
-    assertNotNull(dacDAO.findById(dacId));
-
-    dacDAO.deleteDac(dacId, user.getUserId());
-
-    assertNull(dacDAO.findById(dacId));
   }
 
   @Test
@@ -727,4 +733,6 @@ class DacDAOTest extends DAOTestHelper {
         userId,
         Instant.now());
   }
+
+
 }

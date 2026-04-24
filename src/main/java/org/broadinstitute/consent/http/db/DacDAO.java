@@ -165,6 +165,46 @@ public interface DacDAO extends Transactional<DacDAO> {
   Dac findById(@Bind("dacId") Integer dacId);
 
   /**
+   * Find a soft-deleted DAC by id. Returns the DAC row only if it has been soft-deleted.
+   * Intended for audit/admin use cases where the caller needs to inspect a deleted DAC.
+   *
+   * @param dacId The dac_id to lookup
+   * @return Dac, or null if the DAC does not exist or has not been deleted
+   */
+  @RegisterBeanMapper(value = DataAccessAgreement.class, prefix = "daa")
+  @RegisterBeanMapper(value = FileStorageObjectDAO.class)
+  @UseRowReducer(DacReducer.class)
+  @SqlQuery(
+      """
+      SELECT dac.*,
+        daa.daa_id as daa_daa_id,
+        daa.create_user_id as daa_create_user_id,
+        daa.create_date as daa_create_date,
+        daa.update_user_id as daa_update_user_id,
+        daa.update_date as daa_update_date,
+        daa.initial_dac_id as daa_initial_dac_id,
+        fso.file_storage_object_id AS fso_file_storage_object_id,
+        fso.entity_id AS fso_entity_id,
+        fso.file_name AS fso_file_name,
+        fso.category AS fso_category,
+        fso.gcs_file_uri AS fso_gcs_file_uri,
+        fso.media_type AS fso_media_type,
+        fso.deleted AS fso_deleted,
+        fso.delete_user_id AS fso_delete_user_id,
+        fso.create_date AS fso_create_date,
+        fso.create_user_id AS fso_create_user_id,
+        fso.update_date AS fso_update_date,
+        fso.update_user_id AS fso_update_user_id
+      FROM dac
+      LEFT JOIN dac_daa dd ON dac.dac_id = dd.dac_id
+      LEFT JOIN data_access_agreement daa ON dd.daa_id = daa.daa_id
+      LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+      WHERE dac.dac_id = :dacId
+        AND dac.deleted IS TRUE
+      """)
+  Dac findDeletedDacById(@Bind("dacId") Integer dacId);
+
+  /**
    * Create a Dac given name and description. Atomically writes a CREATE audit entry.
    *
    * @param name The name for the new DAC
