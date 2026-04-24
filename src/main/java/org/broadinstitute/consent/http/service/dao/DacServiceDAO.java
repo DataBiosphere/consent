@@ -31,6 +31,7 @@ public class DacServiceDAO implements ConsentLogger {
           UPDATE dataset
           SET dac_id = null,
               dac_approval = null,
+              dac_approval_date = null,
               update_user_id = :userId,
               update_date = NOW()
           WHERE dac_id = :dacId

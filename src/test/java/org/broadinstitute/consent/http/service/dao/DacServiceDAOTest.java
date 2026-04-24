@@ -213,6 +213,55 @@ class DacServiceDAOTest extends DAOTestHelper {
     }
   }
 
+  @Test
+  void testDeleteDac_clearsDacApprovalDate() {
+    User admin = createUser();
+    Integer dacId =
+        dacDAO.createDac(
+            "dac name: " + randomAlphabetic(10),
+            "dac description: " + randomAlphabetic(10),
+            "dac email: " + randomAlphabetic(10),
+            admin.getUserId());
+    Integer datasetId =
+        datasetDAO.insertDataset(
+            "dataset name: " + randomAlphabetic(10),
+            Timestamp.from(Instant.now()),
+            admin.getUserId(),
+            "obj-" + randomAlphabetic(10),
+            new DataUseBuilder().setGeneralUse(true).build().toString(),
+            dacId);
+    // Approve the dataset so dac_approval_date is populated
+    datasetDAO.updateDatasetApproval(true, Instant.now(), admin.getUserId(), datasetId);
+
+    Timestamp dacApprovalDateBefore =
+        jdbi.withHandle(
+            handle ->
+                handle
+                    .createQuery(
+                        "SELECT dac_approval_date FROM dataset WHERE dataset_id = :datasetId")
+                    .bind("datasetId", datasetId)
+                    .mapTo(Timestamp.class)
+                    .one());
+    assertNotNull(dacApprovalDateBefore, "dac_approval_date should be set after approval");
+
+    Dac dac = dacDAO.findById(dacId);
+    serviceDAO.deleteDacAndRemoveDaaAssociation(admin, dac);
+
+    Dataset updated = datasetDAO.findDatasetById(datasetId);
+    assertNull(updated.getDacId(), "dac_id should be null after DAC deletion");
+    assertNull(updated.getDacApproval(), "dac_approval should be null after DAC deletion");
+    Timestamp dacApprovalDateAfter =
+        jdbi.withHandle(
+            handle ->
+                handle
+                    .createQuery(
+                        "SELECT dac_approval_date FROM dataset WHERE dataset_id = :datasetId")
+                    .bind("datasetId", datasetId)
+                    .mapTo(Timestamp.class)
+                    .one());
+    assertNull(dacApprovalDateAfter, "dac_approval_date should be null after DAC deletion");
+  }
+
   // Fixture record and builder shared by the three focused externalization tests below.
   private record ExternalizationTestFixture(
       Integer dacId,

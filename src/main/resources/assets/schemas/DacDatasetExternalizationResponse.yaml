@@ -10,13 +10,13 @@ properties:
     type: string
     description: Request reason supplied by the caller.
   startedAt:
-    type: string
-    format: date-time
-    description: Timestamp when processing started.
+    type: integer
+    format: int64
+    description: Timestamp when processing started, as epoch milliseconds.
   completedAt:
-    type: string
-    format: date-time
-    description: Timestamp when processing completed.
+    type: integer
+    format: int64
+    description: Timestamp when processing completed, as epoch milliseconds.
   datasetsTotalInDac:
     type: integer
     description: Number of datasets currently associated with the DAC.
@@ -39,8 +39,8 @@ example:
   dacId: 42
   dryRun: false
   reason: Policy change to external access model
-  startedAt: '2026-04-23T15:03:11Z'
-  completedAt: '2026-04-23T15:03:12Z'
+  startedAt: 1745420591000
+  completedAt: 1745420592417
   datasetsTotalInDac: 12
   datasetsConvertedToExternal: 9
   datasetsAlreadyExternal: 3
