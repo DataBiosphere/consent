@@ -209,21 +209,24 @@ public class DacServiceDAO implements ConsentLogger {
               findConvertibleDatasets(handle, datasetIds, request);
           int externalDatasets = countExternalDatasets(handle, datasetIds);
 
-          ExternalizationMetrics metrics =
-              computeMetrics(handle, convertibleDatasetIds, request);
+          ExternalizationMetrics metrics = computeMetrics(handle, convertibleDatasetIds, request);
 
           if (!request.isDryRun() && !convertibleDatasetIds.isEmpty()) {
             executeExternalizationUpdates(handle, convertibleDatasetIds, userId, request);
           }
 
           return buildResponse(
-              dacId, request, startedAt, datasetIds.size(), convertibleDatasetIds.size(),
-              externalDatasets, metrics);
+              dacId,
+              request,
+              startedAt,
+              datasetIds.size(),
+              convertibleDatasetIds.size(),
+              externalDatasets,
+              metrics);
         });
   }
 
-  private List<Integer> findDatasetIdsForDac(
-      org.jdbi.v3.core.Handle handle, Integer dacId) {
+  private List<Integer> findDatasetIdsForDac(org.jdbi.v3.core.Handle handle, Integer dacId) {
     return handle
         .createQuery(FIND_DATASET_IDS_FOR_DAC_STATEMENT)
         .bind(DAC_ID, dacId)
@@ -234,17 +237,7 @@ public class DacServiceDAO implements ConsentLogger {
   private DacDatasetExternalizationResponse buildEmptyResponse(
       Integer dacId, DacDatasetExternalizationRequest request, Instant startedAt) {
     return new DacDatasetExternalizationResponse(
-        dacId,
-        request.isDryRun(),
-        request.reason(),
-        startedAt,
-        Instant.now(),
-        0,
-        0,
-        0,
-        0,
-        0,
-        0);
+        dacId, request.isDryRun(), request.reason(), startedAt, Instant.now(), 0, 0, 0, 0, 0, 0);
   }
 
   private List<Integer> findConvertibleDatasets(
@@ -266,8 +259,7 @@ public class DacServiceDAO implements ConsentLogger {
         : List.of(CONTROLLED_ACCESS_MANAGEMENT);
   }
 
-  private int countExternalDatasets(
-      org.jdbi.v3.core.Handle handle, List<Integer> datasetIds) {
+  private int countExternalDatasets(org.jdbi.v3.core.Handle handle, List<Integer> datasetIds) {
     return handle
         .createQuery(COUNT_EXTERNAL_DATASETS_STATEMENT)
         .bindList(DATASET_IDS, datasetIds)
@@ -282,8 +274,7 @@ public class DacServiceDAO implements ConsentLogger {
     int darDatasetApprovalsRevoked = 0;
     int usersWithAccessRemoved = 0;
     if (request.shouldRevokeApprovedAccess() && !convertibleDatasetIds.isEmpty()) {
-      darDatasetApprovalsRevoked =
-          countDarDatasetRelations(handle, convertibleDatasetIds);
+      darDatasetApprovalsRevoked = countDarDatasetRelations(handle, convertibleDatasetIds);
       usersWithAccessRemoved = countDistinctUsers(handle, convertibleDatasetIds);
     }
 
