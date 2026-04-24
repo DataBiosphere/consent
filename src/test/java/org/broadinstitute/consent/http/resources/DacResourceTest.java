@@ -23,6 +23,8 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DacBuilder;
+import org.broadinstitute.consent.http.models.DacDatasetExternalizationRequest;
+import org.broadinstitute.consent.http.models.DacDatasetExternalizationResponse;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.User;
@@ -622,6 +624,40 @@ class DacResourceTest extends AbstractTestHelper {
         .thenThrow(ForbiddenException.class);
     try (Response response = dacResource.approveDataset(authUser, 1, 1, "{approval: false}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @Test
+  void testConvertDatasetsToExternal() {
+    User user = buildAdmin(authUser);
+    when(userService.findUserByEmail(anyString())).thenReturn(user);
+    DacDatasetExternalizationResponse summary =
+        new DacDatasetExternalizationResponse(
+            1,
+            false,
+            "policy update",
+            java.time.Instant.now(),
+            java.time.Instant.now(),
+            3,
+            2,
+            1,
+            4,
+            1,
+            2);
+    when(dacService.convertDacDatasetsToExternal(anyInt(), anyInt(), any())).thenReturn(summary);
+    String json =
+        gson.toJson(new DacDatasetExternalizationRequest("policy update", false, true, true, null));
+
+    try (Response response = dacResource.convertDatasetsToExternal(authUser, 1, json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(GsonUtil.buildGson().toJson(summary), response.getEntity());
+    }
+  }
+
+  @Test
+  void testConvertDatasetsToExternalEmptyPayload() {
+    try (Response response = dacResource.convertDatasetsToExternal(authUser, 1, "")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
 

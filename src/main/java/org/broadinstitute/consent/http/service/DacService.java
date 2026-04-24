@@ -25,6 +25,8 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DacDatasetExternalizationRequest;
+import org.broadinstitute.consent.http.models.DacDatasetExternalizationResponse;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -43,6 +45,7 @@ public class DacService implements ConsentLogger {
   private final ElectionDAO electionDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final VoteService voteService;
+  private final ElasticSearchService elasticSearchService;
   private final DaaService daaService;
   private final DacServiceDAO dacServiceDAO;
   private final DACAutomationRuleDAO ruleDAO;
@@ -55,6 +58,7 @@ public class DacService implements ConsentLogger {
       ElectionDAO electionDAO,
       DataAccessRequestDAO dataAccessRequestDAO,
       VoteService voteService,
+      ElasticSearchService elasticSearchService,
       DaaService daaService,
       DacServiceDAO dacServiceDAO,
       DACAutomationRuleDAO ruleDAO) {
@@ -64,6 +68,7 @@ public class DacService implements ConsentLogger {
     this.electionDAO = electionDAO;
     this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.voteService = voteService;
+    this.elasticSearchService = elasticSearchService;
     this.daaService = daaService;
     this.dacServiceDAO = dacServiceDAO;
     this.ruleDAO = ruleDAO;
@@ -323,5 +328,30 @@ public class DacService implements ConsentLogger {
     return dacDAO.findDacsForDatasetIds(datasetIds).stream()
         .map(dac -> findById(dac.getDacId()))
         .collect(Collectors.toUnmodifiableSet());
+  }
+
+  public DacDatasetExternalizationResponse convertDacDatasetsToExternal(
+      Integer dacId, Integer userId, DacDatasetExternalizationRequest request) {
+    if (request == null) {
+      throw new IllegalArgumentException("Request payload is required");
+    }
+    if (request.reason() == null || request.reason().isBlank()) {
+      throw new IllegalArgumentException("A reason is required");
+    }
+    if (!request.shouldRevokeApprovedAccess()) {
+      throw new IllegalArgumentException("revokeApprovedAccess must be true");
+    }
+    findById(dacId);
+    List<Integer> modifiedDatasetIds = dacServiceDAO.findConvertibleDatasetIds(dacId, request);
+    DacDatasetExternalizationResponse response =
+        dacServiceDAO.convertDacDatasetsToExternal(dacId, userId, request);
+    if (!request.isDryRun() && modifiedDatasetIds != null && !modifiedDatasetIds.isEmpty()) {
+      try {
+        elasticSearchService.indexDatasets(modifiedDatasetIds);
+      } catch (Exception e) {
+        logException("Unable to reindex datasets after DAC externalization", e);
+      }
+    }
+    return response;
   }
 }

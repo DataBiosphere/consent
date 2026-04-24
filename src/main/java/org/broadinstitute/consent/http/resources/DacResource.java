@@ -24,6 +24,8 @@ import java.util.Optional;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DacDatasetExternalizationRequest;
+import org.broadinstitute.consent.http.models.DacDatasetExternalizationResponse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetApproval;
 import org.broadinstitute.consent.http.models.Role;
@@ -302,6 +304,28 @@ public class DacResource extends Resource {
       }
       Dataset updatedDataset = datasetService.approveDataset(dataset, user, payload.getApproval());
       return Response.ok().entity(unmarshal(updatedDataset)).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Path("{dacId}/datasets/externalize")
+  @Consumes("application/json")
+  @Produces("application/json")
+  @RolesAllowed({ADMIN})
+  public Response convertDatasetsToExternal(
+      @Auth AuthUser authUser, @PathParam("dacId") Integer dacId, String json) {
+    try {
+      if (Objects.isNull(json) || json.isBlank()) {
+        throw new BadRequestException("Request body is empty");
+      }
+      DacDatasetExternalizationRequest payload =
+          GsonUtil.buildGson().fromJson(json, DacDatasetExternalizationRequest.class);
+      User user = userService.findUserByEmail(authUser.getEmail());
+      DacDatasetExternalizationResponse response =
+          dacService.convertDacDatasetsToExternal(dacId, user.getUserId(), payload);
+      return Response.ok().entity(unmarshal(response)).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

@@ -1,0 +1,51 @@
+type: object
+properties:
+  dacId:
+    type: integer
+    description: DAC identifier used for the operation.
+  dryRun:
+    type: boolean
+    description: Indicates whether this was executed in dry-run mode.
+  reason:
+    type: string
+    description: Request reason supplied by the caller.
+  startedAt:
+    type: string
+    format: date-time
+    description: Timestamp when processing started.
+  completedAt:
+    type: string
+    format: date-time
+    description: Timestamp when processing completed.
+  datasetsTotalInDac:
+    type: integer
+    description: Number of datasets currently associated with the DAC.
+  datasetsConvertedToExternal:
+    type: integer
+    description: Number of datasets transitioned from controlled/open to external.
+  datasetsAlreadyExternal:
+    type: integer
+    description: Number of datasets already marked external before execution.
+  darDatasetApprovalsRevoked:
+    type: integer
+    description: Number of DAR-dataset relationships removed.
+  openElectionsCanceled:
+    type: integer
+    description: Number of open data-access elections canceled.
+  usersWithAccessRemoved:
+    type: integer
+    description: Number of distinct users impacted by approval revocations.
+example:
+  dacId: 42
+  dryRun: false
+  reason: Policy change to external access model
+  startedAt: '2026-04-23T15:03:11Z'
+  completedAt: '2026-04-23T15:03:12Z'
+  datasetsTotalInDac: 12
+  datasetsConvertedToExternal: 9
+  datasetsAlreadyExternal: 3
+  darDatasetApprovalsRevoked: 41
+  openElectionsCanceled: 7
+  usersWithAccessRemoved: 29
+
+
