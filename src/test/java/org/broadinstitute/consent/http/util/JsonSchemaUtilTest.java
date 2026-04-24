@@ -6,14 +6,17 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.common.cache.LoadingCache;
 import com.networknt.schema.Error;
 import com.networknt.schema.Schema;
 import com.networknt.schema.path.NodePath;
 import com.networknt.schema.path.PathType;
 import jakarta.ws.rs.BadRequestException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -1297,16 +1300,19 @@ class JsonSchemaUtilTest {
   }
 
   @Test
-  void testGetDatasetRegistrationSchemaV1_invalidResource() {
-    JsonSchemaUtil util =
-        new JsonSchemaUtil() {
-          @Override
-          public String getDatasetRegistrationSchemaV1() {
-            // Simulate cache loader throwing ExecutionException by returning null
-            // (actual implementation is tested through the normal flow)
-            return null;
-          }
-        };
+  @SuppressWarnings("unchecked")
+  void testGetDatasetRegistrationSchemaV1_executionExceptionReturnsNull() throws Exception {
+    JsonSchemaUtil util = new JsonSchemaUtil();
+
+    // Replace the private final cache field with a mock that throws ExecutionException
+    LoadingCache<String, String> mockCache = mock(LoadingCache.class);
+    when(mockCache.get(any()))
+        .thenThrow(
+            new ExecutionException("resource not found", new RuntimeException("underlying cause")));
+
+    Field cacheField = JsonSchemaUtil.class.getDeclaredField("cache");
+    cacheField.setAccessible(true);
+    cacheField.set(util, mockCache);
 
     assertNull(util.getDatasetRegistrationSchemaV1());
   }
