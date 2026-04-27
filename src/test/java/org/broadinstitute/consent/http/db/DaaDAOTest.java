@@ -144,22 +144,6 @@ class DaaDAOTest extends DAOTestHelper {
     assertNull(daa3);
   }
 
-  @Test
-  void testFindByDacIdInvalid() {
-    Integer userId = createUserId();
-    Integer dacId =
-        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
-    Integer dacId2 =
-        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
-    daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
-    daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
-    DataAccessAgreement daa1 = daaDAO.findByDacId(dacId);
-    DataAccessAgreement daa2 = daaDAO.findByDacId(dacId2);
-    DataAccessAgreement daa3 = daaDAO.findByDacId(randomInt(10000, 100000));
-    assertNotNull(daa1);
-    assertNotNull(daa2);
-    assertNull(daa3);
-  }
 
   @Test
   void testCreateDaaDacRelation() {
@@ -304,6 +288,94 @@ class DaaDAOTest extends DAOTestHelper {
     assertNotNull(daa);
     assertNotNull(daa.getDacs());
     assertEquals(3, daa.getDacs().size());
+  }
+
+  @Test
+  void testFindWithDacs_excludesSoftDeletedDac() {
+    Integer userId = createUser().getUserId();
+    Integer dacId1 =
+        dacDAO.createDac(
+            randomAlphabetic(5), "Dac 1", randomAlphabetic(15), createUser().getUserId());
+    Integer dacId2 =
+        dacDAO.createDac(
+            randomAlphabetic(5), "Dac 2", randomAlphabetic(15), createUser().getUserId());
+    Integer dacId3 =
+        dacDAO.createDac(
+            randomAlphabetic(5), "Dac 3", randomAlphabetic(15), createUser().getUserId());
+    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId1);
+    daaDAO.createDacDaaRelation(dacId1, daaId, userId);
+    daaDAO.createDacDaaRelation(dacId2, daaId, userId);
+    daaDAO.createDacDaaRelation(dacId3, daaId, userId);
+
+    // Baseline: all 3 DACs appear
+    DataAccessAgreement daaBeforeDelete = daaDAO.findById(daaId);
+    assertNotNull(daaBeforeDelete.getDacs());
+    assertEquals(3, daaBeforeDelete.getDacs().size());
+
+    // Soft-delete one DAC
+    dacDAO.deleteDac(dacId3, userId);
+
+    // Only the 2 non-deleted DACs should appear in the dacs list
+    DataAccessAgreement daaAfterDelete = daaDAO.findById(daaId);
+    assertNotNull(daaAfterDelete);
+    assertNotNull(daaAfterDelete.getDacs());
+    assertEquals(2, daaAfterDelete.getDacs().size());
+    List<Integer> remainingDacIds =
+        daaAfterDelete.getDacs().stream().map(Dac::getDacId).toList();
+    assertTrue(remainingDacIds.contains(dacId1));
+    assertTrue(remainingDacIds.contains(dacId2));
+    assertFalse(remainingDacIds.contains(dacId3));
+  }
+
+  @Test
+  void testFindById_excludesSoftDeletedDac() {
+    Integer userId = createUser().getUserId();
+    Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", userId);
+    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    daaDAO.createDacDaaRelation(dacId, daaId, userId);
+
+    // Before soft-deletion the DAC is visible in the DAA
+    DataAccessAgreement daaBefore = daaDAO.findById(daaId);
+    assertNotNull(daaBefore);
+    assertNotNull(daaBefore.getDacs());
+    assertFalse(daaBefore.getDacs().isEmpty());
+    assertTrue(daaBefore.getDacs().stream().map(Dac::getDacId).toList().contains(dacId));
+
+    // Soft-delete the DAC
+    dacDAO.deleteDac(dacId, userId);
+
+    // The soft-deleted DAC must not appear in the DAA's dacs list
+    DataAccessAgreement daaAfter = daaDAO.findById(daaId);
+    assertNotNull(daaAfter);
+    assertNull(daaAfter.getDacs());
+  }
+
+  @Test
+  void testFindAll_excludesSoftDeletedDac() {
+    Integer userId = createUser().getUserId();
+    Integer dacId1 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", userId);
+    Integer dacId2 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", userId);
+    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId1);
+    daaDAO.createDacDaaRelation(dacId1, daaId, userId);
+    daaDAO.createDacDaaRelation(dacId2, daaId, userId);
+
+    // Before deletion: both DACs appear in the DAA's dacs list
+    List<DataAccessAgreement> daasBeforeDelete = daaDAO.findAll();
+    assertEquals(1, daasBeforeDelete.size());
+    assertNotNull(daasBeforeDelete.getFirst().getDacs());
+    assertEquals(2, daasBeforeDelete.getFirst().getDacs().size());
+
+    // Soft-delete one DAC
+    dacDAO.deleteDac(dacId2, userId);
+
+    // After deletion: only the non-deleted DAC appears in the DAA's dacs list
+    List<DataAccessAgreement> daasAfterDelete = daaDAO.findAll();
+    assertEquals(1, daasAfterDelete.size());
+    DataAccessAgreement daaAfter = daasAfterDelete.getFirst();
+    assertNotNull(daaAfter.getDacs());
+    assertEquals(1, daaAfter.getDacs().size());
+    assertTrue(daaAfter.getDacs().stream().map(Dac::getDacId).toList().contains(dacId1));
+    assertFalse(daaAfter.getDacs().stream().map(Dac::getDacId).toList().contains(dacId2));
   }
 
   @Test
@@ -515,29 +587,6 @@ class DaaDAOTest extends DAOTestHelper {
     assertTrue(audits2.stream().anyMatch(a -> a.action().equals(AuditActions.ADD)));
   }
 
-  @Test
-  void testCreateDacDaaRelation_AuditTrailForReplacement() {
-    Integer userId = createUserId();
-    Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", userId);
-    Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
-    Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
-
-    // Create initial relation
-    daaDAO.createDacDaaRelation(dacId, daaId1, userId);
-
-    // Replace with new relation
-    daaDAO.createDacDaaRelation(dacId, daaId2, userId);
-
-    // Verify both REMOVE and ADD actions are recorded
-    List<DaaAudit> audits1Final = daaDAO.findAuditsByDaaId(daaId1);
-    assertTrue(audits1Final.stream().anyMatch(a -> a.action().equals(AuditActions.REMOVE)));
-
-    List<DaaAudit> audits2Final = daaDAO.findAuditsByDaaId(daaId2);
-    assertTrue(audits2Final.stream().anyMatch(a -> a.action().equals(AuditActions.ADD)));
-    long addActionsNew =
-        audits2Final.stream().filter(a -> a.action().equals(AuditActions.ADD)).count();
-    assertTrue(addActionsNew > 0);
-  }
 
   @Test
   void testCreateDacDaaRelation_MultipleReplacements() {

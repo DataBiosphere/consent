@@ -265,7 +265,7 @@ public interface DaaDAO extends Transactional<DaaDAO> {
           FROM data_access_agreement daa
           LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
           INNER JOIN dac_daa ON daa.daa_id = dac_daa.daa_id
-          INNER JOIN dac ON dac.dac_id = dac_daa.dac_id AND dac.deleted IS NOT TRUE
+          INNER JOIN dac ON dac.dac_id = dac_daa.dac_id
           INNER JOIN dataset ON dataset.dac_id = dac.dac_id
           INNER JOIN dar_dataset dd on dd.dataset_id = dataset.dataset_id
           WHERE dd.reference_id = :referenceId
@@ -297,14 +297,14 @@ public interface DaaDAO extends Transactional<DaaDAO> {
    * are also NOT considering the initial DAC that created the DAA.
    *
    * @param datasetIds List of dataset IDs
-   * @return List of Data Access Agreement IDs
+   * @return Set of Data Access Agreement IDs
    */
   @SqlQuery(
       """
           SELECT distinct daa.daa_id
           FROM data_access_agreement daa
           INNER JOIN dac_daa ON daa.daa_id = dac_daa.daa_id
-          INNER JOIN dac ON dac.dac_id = dac_daa.dac_id AND dac.deleted IS NOT TRUE
+          INNER JOIN dac ON dac.dac_id = dac_daa.dac_id
           INNER JOIN dataset ON dataset.dac_id = dac.dac_id
           WHERE dataset.dataset_id IN (<datasetIds>)
           ORDER BY daa.daa_id
