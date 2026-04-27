@@ -144,7 +144,6 @@ class DaaDAOTest extends DAOTestHelper {
     assertNull(daa3);
   }
 
-
   @Test
   void testCreateDaaDacRelation() {
     Integer userId = createUserId();
@@ -320,8 +319,7 @@ class DaaDAOTest extends DAOTestHelper {
     assertNotNull(daaAfterDelete);
     assertNotNull(daaAfterDelete.getDacs());
     assertEquals(2, daaAfterDelete.getDacs().size());
-    List<Integer> remainingDacIds =
-        daaAfterDelete.getDacs().stream().map(Dac::getDacId).toList();
+    List<Integer> remainingDacIds = daaAfterDelete.getDacs().stream().map(Dac::getDacId).toList();
     assertTrue(remainingDacIds.contains(dacId1));
     assertTrue(remainingDacIds.contains(dacId2));
     assertFalse(remainingDacIds.contains(dacId3));
@@ -586,7 +584,6 @@ class DaaDAOTest extends DAOTestHelper {
     List<DaaAudit> audits2 = daaDAO.findAuditsByDaaId(daaId2);
     assertTrue(audits2.stream().anyMatch(a -> a.action().equals(AuditActions.ADD)));
   }
-
 
   @Test
   void testCreateDacDaaRelation_MultipleReplacements() {
