@@ -159,8 +159,49 @@ public interface DacDAO extends Transactional<DacDAO> {
       LEFT JOIN data_access_agreement daa ON dd.daa_id = daa.daa_id
       LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
       WHERE dac.dac_id = :dacId
+        AND dac.deleted IS NOT TRUE
       """)
   Dac findById(@Bind("dacId") Integer dacId);
+
+  /**
+   * Find a soft-deleted DAC by id. Returns the DAC row only if it has been soft-deleted. Intended
+   * for audit/admin use cases where the caller needs to inspect a deleted DAC.
+   *
+   * @param dacId The dac_id to lookup
+   * @return Dac, or null if the DAC does not exist or has not been deleted
+   */
+  @RegisterBeanMapper(value = DataAccessAgreement.class, prefix = "daa")
+  @RegisterBeanMapper(value = FileStorageObjectDAO.class)
+  @UseRowReducer(DacReducer.class)
+  @SqlQuery(
+      """
+      SELECT dac.*,
+        daa.daa_id as daa_daa_id,
+        daa.create_user_id as daa_create_user_id,
+        daa.create_date as daa_create_date,
+        daa.update_user_id as daa_update_user_id,
+        daa.update_date as daa_update_date,
+        daa.initial_dac_id as daa_initial_dac_id,
+        fso.file_storage_object_id AS fso_file_storage_object_id,
+        fso.entity_id AS fso_entity_id,
+        fso.file_name AS fso_file_name,
+        fso.category AS fso_category,
+        fso.gcs_file_uri AS fso_gcs_file_uri,
+        fso.media_type AS fso_media_type,
+        fso.deleted AS fso_deleted,
+        fso.delete_user_id AS fso_delete_user_id,
+        fso.create_date AS fso_create_date,
+        fso.create_user_id AS fso_create_user_id,
+        fso.update_date AS fso_update_date,
+        fso.update_user_id AS fso_update_user_id
+      FROM dac
+      LEFT JOIN dac_daa dd ON dac.dac_id = dd.dac_id
+      LEFT JOIN data_access_agreement daa ON dd.daa_id = daa.daa_id
+      LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+      WHERE dac.dac_id = :dacId
+        AND dac.deleted IS TRUE
+      """)
+  Dac findDeletedDacById(@Bind("dacId") Integer dacId);
 
   /**
    * Create a Dac given name and description. Atomically writes a CREATE audit entry.
@@ -190,14 +231,18 @@ public interface DacDAO extends Transactional<DacDAO> {
 
   @SqlUpdate(
       """
-      WITH deleted AS (
-        DELETE FROM dac
-        WHERE dac_id = :dacId
+      WITH soft_deleted AS (
+        UPDATE dac
+        SET    deleted        = true,
+               delete_user_id = :userId,
+               delete_date    = NOW()
+        WHERE  dac_id = :dacId
+          AND  deleted IS NOT TRUE
         RETURNING dac_id
       )
       INSERT INTO dac_audit (dac_id, user_id, affected_user_id, role_id, action, action_date)
       SELECT dac_id, :userId, NULL, NULL, 'DELETE', NOW()
-      FROM deleted
+      FROM   soft_deleted
       """)
   void deleteDac(@Bind("dacId") Integer dacId, @Bind("userId") Integer userId);
 
@@ -396,6 +441,7 @@ public interface DacDAO extends Transactional<DacDAO> {
       FROM dac d
       INNER JOIN dataset ds ON d.dac_id = ds.dac_id
       WHERE ds.dataset_id IN (<datasetIds>)
+        AND d.deleted IS NOT TRUE
       """)
   Set<Dac> findDacsForDatasetIds(
       @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING)
@@ -410,6 +456,7 @@ public interface DacDAO extends Transactional<DacDAO> {
       INNER JOIN dar_dataset dd ON dd.dataset_id = d.dataset_id
       INNER JOIN data_access_request dar ON dd.reference_id = dar.reference_id
       WHERE dar.collection_id = :collectionId
+        AND dac.deleted IS NOT TRUE
       """)
   Collection<Dac> findDacsForCollectionId(@Bind("collectionId") Integer collectionId);
 }
