@@ -220,6 +220,24 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindByReferenceIdIncludesAdminDarNotes() {
+    DataAccessRequest dar = createDataAccessRequestV3();
+    String adminDarNote = "Administrative note";
+    jdbi.useHandle(
+        handle ->
+            handle
+                .createUpdate(
+                    "UPDATE data_access_request SET admin_dar_notes = :note WHERE reference_id = :referenceId")
+                .bind("note", adminDarNote)
+                .bind("referenceId", dar.getReferenceId())
+                .execute());
+
+    DataAccessRequest foundDar = dataAccessRequestDAO.findByReferenceId(dar.getReferenceId());
+    assertNotNull(foundDar);
+    assertEquals(adminDarNote, foundDar.getAdminDarNotes());
+  }
+
+  @Test
   void testFindByReferenceIds() {
     DataAccessRequest dar1 = createDataAccessRequestV3();
     DataAccessRequest dar2 = createDataAccessRequestV3();

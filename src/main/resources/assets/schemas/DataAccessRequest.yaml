@@ -54,6 +54,9 @@ properties:
   eraCommonsId:
     type: string
     description: The submitter's eraCommonsId at the time of request submission.
+  adminDarNotes:
+    type: string
+    description: Administrative notes appended when datasets are removed from this DAR by DUOS administration actions.
   projectTitle:
     type: string
     description: Project Title
