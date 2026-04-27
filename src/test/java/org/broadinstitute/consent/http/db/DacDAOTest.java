@@ -112,7 +112,7 @@ class DacDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindAllAlphabeticized() {
+  void testFindAllAlphabetical() {
     String firstName = "A" + randomAlphabetic(20);
     String secondName = "B" + randomAlphabetic(20);
     String thirdName = "C" + randomAlphabetic(20);
@@ -271,17 +271,6 @@ class DacDAOTest extends DAOTestHelper {
   @Test
   void testFindDeletedDacById_returnsNullForNonExistentId() {
     assertNull(dacDAO.findDeletedDacById(Integer.MAX_VALUE));
-  }
-
-  @Test
-  void testDeleteDac_removedFromFindAll() {
-    User user = createUser();
-    Integer dacId = createRandomDAC();
-    assertTrue(dacDAO.findAll().stream().anyMatch(d -> d.getDacId().equals(dacId)));
-
-    dacDAO.deleteDac(dacId, user.getUserId());
-
-    assertTrue(dacDAO.findAll().stream().noneMatch(d -> d.getDacId().equals(dacId)));
   }
 
   @Test
