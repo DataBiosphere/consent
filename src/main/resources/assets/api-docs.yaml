@@ -235,9 +235,6 @@ paths:
   /api/dar/v2:
     $ref: './paths/darV2.yaml'
 
-  /api/dar/v3:
-    $ref: './paths/darV3.yaml'
-
   /api/dar/v2/{referenceId}:
     $ref: './paths/darV2ByReferenceId.yaml'
 
@@ -334,8 +331,6 @@ paths:
         500:
           description: Internal Server Error.
 
-  /api/dar/v3/progress_report/{parentReferenceId}:
-    $ref: './paths/progressReportV3.yaml'
 
   /api/dar/v2/{referenceId}/irbDocument:
     get:
