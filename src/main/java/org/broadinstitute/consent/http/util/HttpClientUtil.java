@@ -162,16 +162,26 @@ public class HttpClientUtil implements ConsentLogger {
       }
       if (response != null) {
         return switch (response.getStatusCode()) {
-          case HttpStatusCodes.STATUS_CODE_BAD_REQUEST ->
-              throw new BadRequestException(response.getStatusMessage());
-          case HttpStatusCodes.STATUS_CODE_UNAUTHORIZED ->
-              throw new NotAuthorizedException(response.getStatusMessage());
-          case HttpStatusCodes.STATUS_CODE_FORBIDDEN ->
-              throw new ForbiddenException(response.getStatusMessage());
-          case HttpStatusCodes.STATUS_CODE_NOT_FOUND ->
-              throw new NotFoundException(response.getStatusMessage());
-          case HttpStatusCodes.STATUS_CODE_CONFLICT ->
-              throw new ConsentConflictException(response.getStatusMessage());
+          case HttpStatusCodes.STATUS_CODE_BAD_REQUEST -> {
+            logErrorResponse(response);
+            throw new BadRequestException(response.getStatusMessage());
+          }
+          case HttpStatusCodes.STATUS_CODE_UNAUTHORIZED -> {
+            logErrorResponse(response);
+            throw new NotAuthorizedException(response.getStatusMessage());
+          }
+          case HttpStatusCodes.STATUS_CODE_FORBIDDEN -> {
+            logErrorResponse(response);
+            throw new ForbiddenException(response.getStatusMessage());
+          }
+          case HttpStatusCodes.STATUS_CODE_NOT_FOUND -> {
+            logErrorResponse(response);
+            throw new NotFoundException(response.getStatusMessage());
+          }
+          case HttpStatusCodes.STATUS_CODE_CONFLICT -> {
+            logErrorResponse(response);
+            throw new ConsentConflictException(response.getStatusMessage());
+          }
           default -> response;
         };
       }
@@ -187,5 +197,19 @@ public class HttpClientUtil implements ConsentLogger {
         .setAuthorization("Bearer " + authUser.getAuthToken())
         .setAccept(MediaType.APPLICATION_JSON)
         .set("X-App-ID", "DUOS");
+  }
+
+  private void logErrorResponse(HttpResponse response) {
+    String stackTrace =
+        StackWalker.getInstance()
+            .walk(
+                frames ->
+                    frames
+                        .map(StackWalker.StackFrame::toString)
+                        .collect(java.util.stream.Collectors.joining(" -> ")));
+    logWarn(
+        String.format(
+            "HttpClient Request Failed: %s %s. Stack Trace: %s",
+            response.getStatusCode(), response.getStatusMessage(), stackTrace));
   }
 }
