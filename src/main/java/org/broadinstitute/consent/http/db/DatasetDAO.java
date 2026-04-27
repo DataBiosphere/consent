@@ -632,7 +632,7 @@ FROM data_access_request dar
          INNER JOIN library_card lc on dar.user_id = lc.user_id
          INNER JOIN dar_dataset dd ON dd.reference_id = dar.reference_id
          INNER JOIN dataset d on d.dataset_id = dd.dataset_id
-         INNER JOIN dac on dac.dac_id = d.dac_id
+         INNER JOIN dac on dac.dac_id = d.dac_id AND dac.deleted IS NOT TRUE
          INNER JOIN (
                 SELECT DISTINCT e.reference_id, e.dataset_id, LAST_VALUE(v.vote)
                     OVER(
