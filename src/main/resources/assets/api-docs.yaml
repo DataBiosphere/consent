@@ -205,6 +205,8 @@ paths:
           description: Internal Server Error
   /api/dac/{dacId}/datasets:
     $ref: './paths/datasetsByDacId.yaml'
+  /api/dac/{dacId}/datasets/externalize:
+    $ref: './paths/dacDatasetExternalizeById.yaml'
   /api/dac/users/{term}:
     get:
       summary: Find Users by Search Term
@@ -1023,6 +1025,10 @@ components:
       $ref: './schemas/DataAccessAgreement.yaml'
     DataAccessCommittee:
       $ref: './schemas/Dac.yaml'
+    DacDatasetExternalizationRequest:
+      $ref: './schemas/DacDatasetExternalizationRequest.yaml'
+    DacDatasetExternalizationResponse:
+      $ref: './schemas/DacDatasetExternalizationResponse.yaml'
     DataAccessRequest:
       $ref: './schemas/DataAccessRequest.yaml'
     Dataset:

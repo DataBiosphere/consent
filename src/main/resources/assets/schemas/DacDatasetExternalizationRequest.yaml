@@ -1,0 +1,34 @@
+type: object
+required:
+  - reason
+properties:
+  reason:
+    type: string
+    minLength: 1
+    maxLength: 1000
+    description: Required justification for externalizing datasets.
+  dryRun:
+    type: boolean
+    default: false
+    description: If true, returns counts only and applies no database mutations.
+  revokeApprovedAccess:
+    type: boolean
+    default: true
+    description: If true, removes DAR-to-dataset approvals for converted datasets.
+  cancelOpenElections:
+    type: boolean
+    default: true
+    description: If true, cancels open data-access elections for converted datasets.
+  convertOpenAccessDatasets:
+    type: boolean
+    default: false
+    description: If true, converts both controlled and open datasets; otherwise controlled only.
+example:
+  reason: Policy change to external access model
+  dryRun: true
+  revokeApprovedAccess: true
+  cancelOpenElections: true
+  convertOpenAccessDatasets: false
+
+
+
