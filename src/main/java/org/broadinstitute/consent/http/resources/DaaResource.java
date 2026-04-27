@@ -29,6 +29,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.models.DaaBulkAssignmentResult;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DuosUser;
@@ -229,6 +230,21 @@ public class DaaResource extends Resource implements ConsentLogger {
         libraryCardService.addDaaToUserLibraryCard(user, authedUser, daaId);
       }
       return Response.ok().build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @POST
+  @Produces(MediaType.APPLICATION_JSON)
+  @RolesAllowed({ADMIN})
+  @Path("/{daaId}/assign-all-eligible-users")
+  public Response assignDaaToAllEligibleUsers(
+      @Auth DuosUser duosUser, @PathParam("daaId") Integer daaId) {
+    try {
+      User authedUser = duosUser.getUser();
+      DaaBulkAssignmentResult result = daaService.assignDaaToAllEligibleUsers(daaId, authedUser);
+      return Response.ok(result).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }

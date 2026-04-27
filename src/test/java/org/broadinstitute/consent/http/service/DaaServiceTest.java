@@ -31,9 +31,11 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.models.DaaBulkAssignmentResult;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
+import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
@@ -58,6 +60,8 @@ class DaaServiceTest extends AbstractTestHelper {
 
   @Mock private DacDAO dacDAO;
 
+  @Mock private LibraryCardService libraryCardService;
+
   private final InputStream inputStream = mock(InputStream.class);
 
   private final FormDataContentDisposition contentDisposition =
@@ -66,7 +70,96 @@ class DaaServiceTest extends AbstractTestHelper {
   private DaaService service;
 
   private void initService() {
-    service = new DaaService(daaServiceDAO, daaDAO, gcsService, emailService, userService, dacDAO);
+    service =
+        new DaaService(
+            daaServiceDAO,
+            daaDAO,
+            gcsService,
+            emailService,
+            userService,
+            dacDAO,
+            libraryCardService);
+  }
+
+  @Test
+  void testAssignDaaToAllEligibleUsers() {
+    Integer daaId = randomInt(10, 100);
+    User authedUser = new User();
+    authedUser.setUserId(randomInt(101, 200));
+
+    User user1 = new User();
+    user1.setUserId(1);
+    user1.setInstitutionId(1);
+    LibraryCard lc1 = new LibraryCard();
+    lc1.setId(11);
+    user1.setLibraryCard(lc1);
+
+    User user2 = new User();
+    user2.setUserId(2);
+    user2.setInstitutionId(2);
+    LibraryCard lc2 = new LibraryCard();
+    lc2.setId(22);
+    user2.setLibraryCard(lc2);
+
+    when(daaDAO.findById(daaId)).thenReturn(new DataAccessAgreement());
+    when(userService.findAllUsersWithInstitutionAndLibraryCard()).thenReturn(List.of(user1, user2));
+
+    initService();
+    DaaBulkAssignmentResult result = service.assignDaaToAllEligibleUsers(daaId, authedUser);
+
+    assertEquals(daaId, result.getDaaId());
+    assertEquals(2, result.getTotalEligibleUsers());
+    assertEquals(2, result.getAssignedCount());
+    assertEquals(0, result.getSkippedCount());
+    assertTrue(result.getErrors().isEmpty());
+  }
+
+  @Test
+  void testAssignDaaToAllEligibleUsersPartialFailure() {
+    Integer daaId = randomInt(10, 100);
+    User authedUser = new User();
+    authedUser.setUserId(randomInt(101, 200));
+
+    User user1 = new User();
+    user1.setUserId(1);
+    user1.setInstitutionId(1);
+    LibraryCard lc1 = new LibraryCard();
+    lc1.setId(11);
+    user1.setLibraryCard(lc1);
+
+    User user2 = new User();
+    user2.setUserId(2);
+    user2.setInstitutionId(2);
+    LibraryCard lc2 = new LibraryCard();
+    lc2.setId(22);
+    user2.setLibraryCard(lc2);
+
+    when(daaDAO.findById(daaId)).thenReturn(new DataAccessAgreement());
+    when(userService.findAllUsersWithInstitutionAndLibraryCard()).thenReturn(List.of(user1, user2));
+    doNothing()
+        .doThrow(new RuntimeException("duplicate relation"))
+        .when(libraryCardService)
+        .addDaaToLibraryCard(any(), any(), any(), any());
+
+    initService();
+    DaaBulkAssignmentResult result = service.assignDaaToAllEligibleUsers(daaId, authedUser);
+
+    assertEquals(2, result.getTotalEligibleUsers());
+    assertEquals(1, result.getAssignedCount());
+    assertEquals(1, result.getSkippedCount());
+    assertEquals(1, result.getErrors().size());
+  }
+
+  @Test
+  void testAssignDaaToAllEligibleUsersDaaNotFound() {
+    Integer daaId = randomInt(10, 100);
+    User authedUser = new User();
+    authedUser.setUserId(randomInt(101, 200));
+    when(daaDAO.findById(daaId)).thenReturn(null);
+
+    initService();
+    assertThrows(
+        NotFoundException.class, () -> service.assignDaaToAllEligibleUsers(daaId, authedUser));
   }
 
   @Test

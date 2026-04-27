@@ -57,6 +57,8 @@ paths:
     $ref: 'paths/daa.yaml'
   /api/daa/{daaId}:
     $ref: 'paths/daaByDaaId.yaml'
+  /api/daa/{daaId}/assign-all-eligible-users:
+    $ref: 'paths/daaAssignAllEligibleUsersByDaaId.yaml'
   /api/daa/{daaId}/file:
     $ref: 'paths/daaFileByDaaId.yaml'
   /api/daa/{daaId}/{userId}:
