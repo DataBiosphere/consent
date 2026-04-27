@@ -22,8 +22,6 @@ public class ServicesConfiguration {
   // nosemgrep
   public static final String BROAD_ZENDESK_URL = "https://broadinstitute.zendesk.com";
 
-  @NotNull private String ontologyURL;
-
   @NotNull private String localURL;
 
   @NotNull private String samUrl;
@@ -53,14 +51,6 @@ public class ServicesConfiguration {
   private Integer cacheExpireMinutes = 1;
 
   private boolean activateSupportNotifications = false;
-
-  public String getOntologyURL() {
-    return ontologyURL;
-  }
-
-  public void setOntologyURL(String ontologyURL) {
-    this.ontologyURL = ontologyURL;
-  }
 
   public String getLocalURL() {
     return localURL;

@@ -30,7 +30,7 @@ class StatusResourceTest {
   void testHealthy() {
     SortedMap<String, Result> checks = new TreeMap<>();
     checks.put(DB_ENV, Result.healthy());
-    checks.put(ConsentApplication.ONTOLOGY_CHECK, Result.healthy());
+    checks.put(ConsentApplication.ES_CHECK, Result.healthy());
     StatusResource statusResource = initStatusResource(checks);
 
     Response response = statusResource.getStatus();
@@ -43,7 +43,7 @@ class StatusResourceTest {
         Result.unhealthy(new Exception("Cannot connect to the postgresql database"));
     SortedMap<String, Result> checks = new TreeMap<>();
     checks.put(DB_ENV, postgresql);
-    checks.put(ConsentApplication.ONTOLOGY_CHECK, Result.healthy());
+    checks.put(ConsentApplication.ES_CHECK, Result.healthy());
     StatusResource statusResource = initStatusResource(checks);
 
     Response response = statusResource.getStatus();
@@ -51,11 +51,11 @@ class StatusResourceTest {
   }
 
   @Test
-  void testUnhealthyOntology() {
-    Result ontology = Result.unhealthy("Ontology is down");
+  void testUnhealthyES() {
+    Result elasticSearch = Result.unhealthy("ES is down");
     SortedMap<String, Result> checks = new TreeMap<>();
     checks.put(DB_ENV, Result.healthy());
-    checks.put(ConsentApplication.ONTOLOGY_CHECK, ontology);
+    checks.put(ConsentApplication.ES_CHECK, elasticSearch);
     StatusResource statusResource = initStatusResource(checks);
 
     Response response = statusResource.getStatus();
@@ -67,7 +67,6 @@ class StatusResourceTest {
   void testNotDegraded() {
     SortedMap<String, Result> checks = new TreeMap<>();
     checks.put(DB_ENV, Result.healthy());
-    checks.put(ConsentApplication.ONTOLOGY_CHECK, Result.healthy());
     checks.put(ConsentApplication.ES_CHECK, Result.healthy());
     checks.put(ConsentApplication.GCS_CHECK, Result.healthy());
     checks.put(ConsentApplication.SAM_CHECK, Result.healthy());
@@ -85,7 +84,6 @@ class StatusResourceTest {
   void testDegraded() {
     SortedMap<String, Result> checks = new TreeMap<>();
     checks.put(DB_ENV, Result.healthy());
-    checks.put(ConsentApplication.ONTOLOGY_CHECK, Result.healthy());
     checks.put(ConsentApplication.ES_CHECK, Result.healthy());
     checks.put(ConsentApplication.GCS_CHECK, Result.healthy());
     checks.put(ConsentApplication.SAM_CHECK, Result.unhealthy("Sam is Down"));

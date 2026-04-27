@@ -420,7 +420,7 @@
         <groupId>org.jdbi</groupId>
         <artifactId>jdbi3-bom</artifactId>
         <type>pom</type>
-        <version>3.51.0</version>
+        <version>3.52.1</version>
         <scope>import</scope>
       </dependency>
       <dependency>
@@ -467,7 +467,7 @@
     <dependency>
       <groupId>com.networknt</groupId>
       <artifactId>json-schema-validator</artifactId>
-      <version>1.5.9</version>
+      <version>3.0.2</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>

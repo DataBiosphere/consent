@@ -254,7 +254,7 @@ class MatchDAOTest extends DAOTestHelper {
         dacDAO.createDac(
             "Test_" + RandomStringUtils.random(20, true, true),
             "Test_" + RandomStringUtils.random(20, true, true),
-            new Date());
+            createUser().getUserId());
     return dacDAO.findById(id);
   }
 

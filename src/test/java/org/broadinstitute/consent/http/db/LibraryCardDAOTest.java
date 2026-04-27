@@ -123,7 +123,8 @@ class LibraryCardDAOTest extends DAOTestHelper {
     // for the user
     User signingOfficial = createUser();
     LibraryCard card = createLibraryCard();
-    int dacId = dacDAO.createDac(randomAlphabetic(10), randomAlphabetic(10), new Date());
+    int dacId =
+        dacDAO.createDac(randomAlphabetic(10), randomAlphabetic(10), createUser().getUserId());
     int daaId =
         daaDAO.createDaa(
             card.getCreateUserId(), Instant.now(), card.getCreateUserId(), Instant.now(), dacId);
@@ -158,7 +159,8 @@ class LibraryCardDAOTest extends DAOTestHelper {
     User signingOfficial = createUser();
     LibraryCard card = createLibraryCard();
     Integer userId = createUser().getUserId();
-    Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
+    Integer dacId =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
     Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
     Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
     DataAccessAgreement daa1 = daaDAO.findById(daaId1);
@@ -241,7 +243,11 @@ class LibraryCardDAOTest extends DAOTestHelper {
     User signingOfficial = createUser();
     LibraryCard libraryCard = createLibraryCard();
     int dacId =
-        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), randomAlphabetic(5), new Date());
+        dacDAO.createDac(
+            randomAlphabetic(5),
+            randomAlphabetic(5),
+            randomAlphabetic(5),
+            createUser().getUserId());
     Instant now = Instant.now();
     int daaId = daaDAO.createDaa(libraryCard.getUserId(), now, libraryCard.getUserId(), now, dacId);
     daaDAO.createDacDaaRelation(dacId, daaId, libraryCard.getUserId());
@@ -297,8 +303,10 @@ class LibraryCardDAOTest extends DAOTestHelper {
     LibraryCard card = createLibraryCard(user);
     LibraryCard card2 = createLibraryCard(user2);
     Integer userId = user.getUserId();
-    Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
-    Integer dacId2 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
+    Integer dacId =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
+    Integer dacId2 =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
     Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
     Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
     libraryCardDAO.createLibraryCardDaaRelation(
@@ -334,7 +342,8 @@ class LibraryCardDAOTest extends DAOTestHelper {
     User user = createUser();
     LibraryCard card = createLibraryCard(user);
     Integer userId = user.getUserId();
-    Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
+    Integer dacId =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
     Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
 
     try {
@@ -366,8 +375,10 @@ class LibraryCardDAOTest extends DAOTestHelper {
     LibraryCard card = createLibraryCard(user);
     createLibraryCard(user2);
     Integer userId = user.getUserId();
-    Integer dacId = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
-    Integer dacId2 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", new Date());
+    Integer dacId =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
+    Integer dacId2 =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
     Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
     Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
     libraryCardDAO.createLibraryCardDaaRelation(
@@ -412,7 +423,10 @@ class LibraryCardDAOTest extends DAOTestHelper {
     User chairperson1 = createUser();
     Integer dacId1 =
         dacDAO.createDac(
-            randomAlphabetic(5), randomAlphabetic(5), chairperson1.getEmail(), new Date());
+            randomAlphabetic(5),
+            randomAlphabetic(5),
+            chairperson1.getEmail(),
+            chairperson1.getUserId());
     Integer daaId1 =
         daaDAO.createDaa(
             chairperson1.getUserId(),
@@ -427,7 +441,10 @@ class LibraryCardDAOTest extends DAOTestHelper {
     User chairperson2 = createUser();
     Integer dacId2 =
         dacDAO.createDac(
-            randomAlphabetic(5), randomAlphabetic(5), chairperson2.getEmail(), new Date());
+            randomAlphabetic(5),
+            randomAlphabetic(5),
+            chairperson2.getEmail(),
+            chairperson2.getUserId());
     Integer daaId2 =
         daaDAO.createDaa(
             chairperson1.getUserId(),
@@ -472,7 +489,10 @@ class LibraryCardDAOTest extends DAOTestHelper {
     User chairperson = createUser();
     Integer dacId =
         dacDAO.createDac(
-            randomAlphabetic(5), randomAlphabetic(5), chairperson.getEmail(), new Date());
+            randomAlphabetic(5),
+            randomAlphabetic(5),
+            chairperson.getEmail(),
+            chairperson.getUserId());
     Integer daaId =
         daaDAO.createDaa(
             chairperson.getUserId(), Instant.now(), chairperson.getUserId(), Instant.now(), dacId);
@@ -507,7 +527,10 @@ class LibraryCardDAOTest extends DAOTestHelper {
     User chairperson = createUser();
     Integer dacId =
         dacDAO.createDac(
-            randomAlphabetic(5), randomAlphabetic(5), chairperson.getEmail(), new Date());
+            randomAlphabetic(5),
+            randomAlphabetic(5),
+            chairperson.getEmail(),
+            chairperson.getUserId());
     Integer daaId =
         daaDAO.createDaa(
             chairperson.getUserId(), Instant.now(), chairperson.getUserId(), Instant.now(), dacId);

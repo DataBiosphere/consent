@@ -518,8 +518,12 @@ paths:
     $ref: './paths/datasetAuthorizedUsers.yaml'
   /api/dataset/cleanupEmptyCertificationAndAlternativeSharingFiles:
     $ref: './paths/cleanupEmptyCertificationAndAlternativeSharingFiles.yaml'
-  /api/{entity}/{entityId}/document/{id}:
-    $ref: './paths/entityDocumentById.yaml'
+  /api/document/{entity}/{entityId}:
+      $ref: './paths/documentsByEntityId.yaml'
+  /api/document/{entity}/{entityId}/{id}:
+    $ref: './paths/documentById.yaml'
+  /api/document/{entity}/{entityId}/{id}/file:
+    $ref: './paths/documentFileById.yaml'
   /api/draft/v1:
     $ref: './paths/draftIndex.yaml'
   /api/draft/v1/{draftUUID}:
@@ -528,8 +532,6 @@ paths:
     $ref: './paths/draftAttachmentsIndex.yaml'
   /api/draft/v1/{draftUUID}/attachments/{fileId}:
     $ref: './paths/draftAttachments.yaml'
-  /api/{entity}/{entityId}/document:
-    $ref: './paths/entityDocumentsByEntityId.yaml'
   /api/tdr/{identifier}/approved/users:
     $ref: './paths/tdrDatasetApprovedUsers.yaml'
   /api/tdr/{identifier}:
@@ -1037,6 +1039,8 @@ components:
       $ref: './schemas/Election.yaml'
     FileStorageObject:
       $ref: './schemas/FileStorageObject.yaml'
+    FileStorageObjectCategoryUpdateRequest:
+      $ref: './schemas/FileStorageObjectCategoryUpdateRequest.yaml'
     Institution:
       $ref: './schemas/Institution.yaml'
     LibraryCard:

@@ -184,10 +184,23 @@ public interface DaaDAO extends Transactional<DaaDAO> {
 
   @SqlUpdate(
       """
-      WITH audit AS (INSERT INTO daa_audit (daa_id, dac_id, user_id, action, action_date) VALUES (:daaId, :dacId, :userId, 'ADD', NOW()))
+      WITH previous_dac_daa AS (
+          SELECT daa_id
+          FROM dac_daa
+          WHERE dac_id = :dacId
+      ),
+      delete_audit AS (
+          INSERT INTO daa_audit (daa_id, dac_id, user_id, action, action_date)
+          SELECT daa_id, :dacId, :userId, 'REMOVE', NOW()
+          FROM previous_dac_daa
+      ),
+      add_audit AS (
+          INSERT INTO daa_audit (daa_id, dac_id, user_id, action, action_date)
+          VALUES (:daaId, :dacId, :userId, 'ADD', NOW())
+      )
       INSERT INTO dac_daa (dac_id, daa_id)
       VALUES (:dacId, :daaId)
-      ON CONFLICT (dac_id) DO UPDATE SET daa_id = :daaId
+      ON CONFLICT (dac_id) DO UPDATE SET daa_id = EXCLUDED.daa_id
       """)
   void createDacDaaRelation(
       @Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId, @Bind("userId") Integer userId);
