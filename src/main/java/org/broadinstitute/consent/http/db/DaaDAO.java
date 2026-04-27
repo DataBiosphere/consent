@@ -60,7 +60,7 @@ public interface DaaDAO extends Transactional<DaaDAO> {
           FROM data_access_agreement daa
           LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
           LEFT JOIN dac_daa dd ON daa.daa_id = dd.daa_id
-          LEFT JOIN dac ON dd.dac_id = dac.dac_id
+          LEFT JOIN dac ON dd.dac_id = dac.dac_id AND dac.deleted IS NOT TRUE
       """)
   List<DataAccessAgreement> findAll();
 
@@ -101,7 +101,7 @@ public interface DaaDAO extends Transactional<DaaDAO> {
           FROM data_access_agreement daa
           LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
           LEFT JOIN dac_daa dd ON daa.daa_id = dd.daa_id
-          LEFT JOIN dac ON dd.dac_id = dac.dac_id
+          LEFT JOIN dac ON dd.dac_id = dac.dac_id AND dac.deleted IS NOT TRUE
           WHERE daa.daa_id = :daaId
       """)
   DataAccessAgreement findById(@Bind("daaId") Integer daaId);
@@ -297,7 +297,7 @@ public interface DaaDAO extends Transactional<DaaDAO> {
    * are also NOT considering the initial DAC that created the DAA.
    *
    * @param datasetIds List of dataset IDs
-   * @return List of Data Access Agreement IDs
+   * @return Set of Data Access Agreement IDs
    */
   @SqlQuery(
       """

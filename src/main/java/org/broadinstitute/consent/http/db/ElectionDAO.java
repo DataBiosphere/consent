@@ -226,6 +226,7 @@ public interface ElectionDAO extends Transactional<ElectionDAO> {
       INNER JOIN dataset ds on d.dac_id = ds.dac_id
       INNER JOIN election e on ds.dataset_id = e.dataset_id
       WHERE e.election_id = :electionId
+        AND d.deleted IS NOT TRUE
       """)
   Dac findDacForElection(@Bind("electionId") Integer electionId);
 

@@ -112,7 +112,7 @@ class DacDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindAllAlphabeticized() {
+  void testFindAllAlphabetical() {
     String firstName = "A" + randomAlphabetic(20);
     String secondName = "B" + randomAlphabetic(20);
     String thirdName = "C" + randomAlphabetic(20);
@@ -230,7 +230,7 @@ class DacDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDeleteDac_removesFromFindById() {
+  void testFindByIdAfterSoftDelete_returnsNull() {
     User user = createUser();
     Integer dacId = createRandomDAC();
     assertNotNull(dacDAO.findById(dacId));
@@ -241,14 +241,36 @@ class DacDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testDeleteDac_removedFromFindAll() {
+  void testFindDeletedDacById_returnsDeletedDac() {
     User user = createUser();
     Integer dacId = createRandomDAC();
-    assertTrue(dacDAO.findAll().stream().anyMatch(d -> d.getDacId().equals(dacId)));
+    assertNotNull(dacDAO.findById(dacId));
 
     dacDAO.deleteDac(dacId, user.getUserId());
 
-    assertTrue(dacDAO.findAll().stream().noneMatch(d -> d.getDacId().equals(dacId)));
+    // findById returns null for soft-deleted DACs
+    assertNull(dacDAO.findById(dacId));
+
+    // findDeletedDacById returns the soft-deleted row with delete metadata set
+    Dac deleted = dacDAO.findDeletedDacById(dacId);
+    assertNotNull(deleted);
+    assertEquals(dacId, deleted.getDacId());
+    assertTrue(deleted.getDeleted());
+    assertEquals(user.getUserId(), deleted.getDeleteUserId());
+    assertNotNull(deleted.getDeleteDate());
+  }
+
+  @Test
+  void testFindDeletedDacById_returnsNullForActiveDAC() {
+    Integer dacId = createRandomDAC();
+
+    // An active (non-deleted) DAC should not be returned by findDeletedDacById
+    assertNull(dacDAO.findDeletedDacById(dacId));
+  }
+
+  @Test
+  void testFindDeletedDacById_returnsNullForNonExistentId() {
+    assertNull(dacDAO.findDeletedDacById(Integer.MAX_VALUE));
   }
 
   @Test
@@ -271,6 +293,28 @@ class DacDAOTest extends DAOTestHelper {
     assertNull(deleteAudit.affectedUserId());
     assertNull(deleteAudit.roleId());
     assertNotNull(deleteAudit.actionDate());
+  }
+
+  @Test
+  void testDeleteDac_idempotent_doesNotOverwriteOrAddAudit() {
+    User firstDeleter = createUser();
+    User secondDeleter = createUser();
+    Integer dacId = createRandomDAC();
+
+    dacDAO.deleteDac(dacId, firstDeleter.getUserId());
+    dacDAO.deleteDac(dacId, secondDeleter.getUserId());
+
+    // delete_user_id must still reflect the first caller
+    Dac deleted = dacDAO.findDeletedDacById(dacId);
+    assertNotNull(deleted);
+    assertEquals(firstDeleter.getUserId(), deleted.getDeleteUserId());
+
+    // exactly one DELETE audit entry — the second call was a no-op
+    long deleteAuditCount =
+        dacDAO.findAuditsByDacId(dacId).stream()
+            .filter(a -> AuditActions.DELETE.equals(a.action()))
+            .count();
+    assertEquals(1, deleteAuditCount);
   }
 
   @Test

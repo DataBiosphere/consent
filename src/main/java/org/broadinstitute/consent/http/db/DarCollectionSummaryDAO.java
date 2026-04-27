@@ -52,7 +52,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       INNER JOIN user_role ur
         ON dacUser.user_id = ur.user_id AND ur.role_id = :roleId AND ur.dac_id IS NOT NULL
       INNER JOIN dac dac
-        ON ur.dac_id = dac.dac_id
+        ON ur.dac_id = dac.dac_id AND dac.deleted IS NOT TRUE
       -- Datasets available to DAC
       INNER JOIN dataset d
         ON d.dac_id = dac.dac_id
@@ -150,7 +150,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               INNER JOIN dar_dataset dd
               ON latest_dar.reference_id = dd.reference_id
               LEFT JOIN dataset ON dataset.dataset_id = dd.dataset_id
-              LEFT JOIN dac ON dac.dac_id = dataset.dac_id
+              LEFT JOIN dac ON dac.dac_id = dataset.dac_id AND dac.deleted IS NOT TRUE
               WHERE u.institution_id = :institutionId
                 AND (e.latest = e.election_id OR e.election_id IS NULL)
               GROUP BY
@@ -211,7 +211,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
                 ) AS e ON e.reference_id = latest_dar.reference_id
           INNER JOIN dar_dataset dd ON latest_dar.reference_id = dd.reference_id
           LEFT JOIN dataset ON dataset.dataset_id = dd.dataset_id
-          LEFT JOIN dac ON dac.dac_id = dataset.dac_id
+          LEFT JOIN dac ON dac.dac_id = dataset.dac_id AND dac.deleted IS NOT TRUE
           WHERE (e.latest = e.election_id OR e.election_id IS NULL)
           GROUP BY
               c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id,
@@ -275,7 +275,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
           INNER JOIN
               dar_dataset dd ON latest_dar.reference_id = dd.reference_id
           LEFT JOIN dataset ON dataset.dataset_id = dd.dataset_id
-          LEFT JOIN dac ON dac.dac_id = dataset.dac_id
+          LEFT JOIN dac ON dac.dac_id = dataset.dac_id AND dac.deleted IS NOT TRUE
           WHERE
               c.create_user_id = :userId
               AND (e.latest = e.election_id OR e.election_id IS NULL)
@@ -334,7 +334,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       INNER JOIN dar_dataset dd
         ON latest_dar.reference_id = dd.reference_id
       LEFT JOIN dataset ON dataset.dataset_id = dd.dataset_id
-      LEFT JOIN dac ON dac.dac_id = dataset.dac_id
+      LEFT JOIN dac ON dac.dac_id = dataset.dac_id AND dac.deleted IS NOT TRUE
       WHERE c.collection_id= :collectionId
         AND dd.dataset_id IN (<datasetIds>)
         AND (e.latest = e.election_id OR e.election_id IS NULL)
@@ -397,7 +397,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
               INNER JOIN dar_dataset dd
               ON latest_dar.reference_id = dd.reference_id
               LEFT JOIN dataset ON dataset.dataset_id = dd.dataset_id
-              LEFT JOIN dac ON dac.dac_id = dataset.dac_id
+              LEFT JOIN dac ON dac.dac_id = dataset.dac_id AND dac.deleted IS NOT TRUE
               WHERE c.collection_id = :collectionId
                 AND (e.latest = e.election_id OR e.election_id IS NULL)
               GROUP BY
