@@ -420,8 +420,8 @@ class DaaDAOTest extends DAOTestHelper {
   @Test
   void testFindDaaIdsWithDatasetIds() {
     Integer userId = createUserId();
-    Integer dacId1 = dacDAO.createDac("dac1", randomAlphabetic(5), "", new Date());
-    Integer dacId2 = dacDAO.createDac("dac2", randomAlphabetic(5), "", new Date());
+    Integer dacId1 = dacDAO.createDac("dac1", randomAlphabetic(5), "", userId);
+    Integer dacId2 = dacDAO.createDac("dac2", randomAlphabetic(5), "", userId);
     Dataset dataset1 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId1));
     Dataset dataset2 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId2));
     Dataset dataset3 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId2));
@@ -463,8 +463,8 @@ class DaaDAOTest extends DAOTestHelper {
   @Test
   void testStoreDarDAARelationshipForDar() {
     Integer userId = createUserId();
-    Integer dacId1 = dacDAO.createDac("dac1", randomAlphabetic(5), "", new Date());
-    Integer dacId2 = dacDAO.createDac("dac2", randomAlphabetic(5), "", new Date());
+    Integer dacId1 = dacDAO.createDac("dac1", randomAlphabetic(5), "", userId);
+    Integer dacId2 = dacDAO.createDac("dac2", randomAlphabetic(5), "", userId);
 
     Integer daa1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId1);
     Integer daa2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
@@ -489,8 +489,8 @@ class DaaDAOTest extends DAOTestHelper {
   @Test
   void testStoreDarDAARelationshipForPR() {
     Integer userId = createUserId();
-    Integer dacId1 = dacDAO.createDac("dac1", randomAlphabetic(5), "", new Date());
-    Integer dacId2 = dacDAO.createDac("dac2", randomAlphabetic(5), "", new Date());
+    Integer dacId1 = dacDAO.createDac("dac1", randomAlphabetic(5), "", userId);
+    Integer dacId2 = dacDAO.createDac("dac2", randomAlphabetic(5), "", userId);
 
     Integer daa1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId1);
     Integer daa2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);

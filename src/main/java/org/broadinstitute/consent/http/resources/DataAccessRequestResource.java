@@ -128,33 +128,6 @@ public class DataAccessRequestResource extends Resource {
     }
   }
 
-  @POST
-  @Consumes("application/json")
-  @Produces("application/json")
-  @RolesAllowed(RESEARCHER)
-  @Path("/v3")
-  public Response createDataAccessRequestWithDAARestrictions(
-      @Auth AuthUser authUser, @Context Request request, @Context UriInfo info, String dar) {
-    try {
-      User user = findUserByEmail(authUser.getEmail());
-      DataAccessRequest payload = populateDarFromJsonString(user, dar);
-      // DAA Enforcement
-      datasetService.enforceDAARestrictions(user, payload.getDatasetIds());
-      DataAccessRequest newDar =
-          dataAccessRequestService.createDataAccessRequest(
-              user, payload, (ContainerRequest) request);
-      processNewDarCollection(newDar.getCollectionId());
-      URI uri = info.getRequestUriBuilder().build();
-      matchService.reprocessMatchesForPurpose(newDar.getReferenceId());
-      List<Dataset> datasets = datasetService.findDatasetsByIds(user, newDar.getDatasetIds());
-      ComplianceLogger.logDARSubmission(
-          user, datasets, ((ContainerRequest) request), HttpStatusCodes.STATUS_CODE_CREATED);
-      return Response.created(uri).entity(newDar.convertToSimplifiedDar()).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
   @GET
   @Path("/v2/{referenceId}")
   @Produces("application/json")
@@ -368,11 +341,6 @@ public class DataAccessRequestResource extends Resource {
     }
   }
 
-  /**
-   * @deprecated This method will be replaced by {@code postProgressReportWithDAARestrictions()} (to
-   *     be introduced in DT-3051).
-   */
-  @Deprecated(forRemoval = true) // Use v3 endpoint implemented in DT-3051, to be removed in DT-3054
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
@@ -423,78 +391,6 @@ public class DataAccessRequestResource extends Resource {
           ethicsFileDetails,
           payload,
           parentDar);
-      DataAccessRequest progressReport =
-          dataAccessRequestService.createProgressReport(
-              user, payload, parentDar, (ContainerRequest) request);
-      if (Objects.nonNull(progressReport) && !progressReport.getIsCloseoutProgressReport()) {
-        processNewDarCollection(parentDar.getCollectionId());
-      }
-      List<Dataset> datasets =
-          datasetService.findDatasetsByIds(user, progressReport.getDatasetIds());
-      ComplianceLogger.logDARSubmission(
-          user, datasets, ((ContainerRequest) request), HttpStatusCodes.STATUS_CODE_CREATED);
-      return Response.ok(progressReport.convertToSimplifiedDar()).build();
-    } catch (Exception e) {
-      return createExceptionResponse(e);
-    }
-  }
-
-  @POST
-  @Consumes(MediaType.MULTIPART_FORM_DATA)
-  @Produces(MediaType.APPLICATION_JSON)
-  @Path("/v3/progress_report/{parentReferenceId}")
-  @RolesAllowed({RESEARCHER})
-  public Response postProgressReportWithDAARestrictions(
-      @Auth DuosUser duoUser,
-      @Context Request request,
-      @PathParam("parentReferenceId") String parentReferenceId,
-      @FormDataParam("dar") String dar,
-      @FormDataParam("collaboratorRequiredFile") InputStream collabInputStream,
-      @FormDataParam("collaboratorRequiredFile") FormDataContentDisposition collabFileDetails,
-      @FormDataParam("ethicsApprovalRequiredFile") InputStream ethicsInputStream,
-      @FormDataParam("ethicsApprovalRequiredFile") FormDataContentDisposition ethicsFileDetails) {
-    try {
-      User user = duoUser.getUser();
-      // added here because other dataAccessRequestServices calls are invoked that do not normally
-      // require this sequence.  hasValidActiveERACredentials will also check for a LC so no
-      // additional LC check needed.
-      userService.validateActiveERACredentials(user);
-      DataAccessRequest parentDar = dataAccessRequestService.findByReferenceId(parentReferenceId);
-      // needs to happen before docs are uploaded
-      if (!user.getUserId().equals(parentDar.getUserId())) {
-        throw new ForbiddenException("User not authorized to update this Data Access Request");
-      }
-      // Prevent creation if there are open DataAccess elections for the parent DAR
-      List<Election> openElections =
-          dataAccessRequestService.findOpenElectionsByReferenceId(parentDar.getReferenceId());
-      boolean hasOpenDataAccessElections =
-          openElections.stream()
-              .anyMatch(
-                  election ->
-                      election
-                          .getElectionType()
-                          .equalsIgnoreCase(ElectionType.DATA_ACCESS.getValue()));
-      if (hasOpenDataAccessElections) {
-        throw new BadRequestException(
-            "Cannot create a progress report for a DAR: "
-                + parentDar.darCode
-                + " with an open election: "
-                + parentDar.getReferenceId());
-      }
-      DataAccessRequest payload =
-          DataAccessRequest.populateProgressReportFromJsonString(dar, parentDar);
-      populateProgressReportWithDocuments(
-          user,
-          collabInputStream,
-          collabFileDetails,
-          ethicsInputStream,
-          ethicsFileDetails,
-          payload,
-          parentDar);
-
-      // DAA Enforcement
-      datasetService.enforceDAARestrictions(user, payload.getDatasetIds());
-
       DataAccessRequest progressReport =
           dataAccessRequestService.createProgressReport(
               user, payload, parentDar, (ContainerRequest) request);
