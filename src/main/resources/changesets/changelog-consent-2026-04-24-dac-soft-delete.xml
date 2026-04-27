@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.33.xsd">
+  <changeSet id="changelog-consent-2026-04-24-dac-soft-delete" author="grushton">
+    <!-- 1a. Add deleted column to dac (mirrors file_storage_object.deleted pattern) -->
+    <addColumn tableName="dac">
+      <column name="deleted" type="boolean" defaultValueBoolean="false">
+        <constraints nullable="false"/>
+      </column>
+    </addColumn>
+
+    <!-- 1b. Add delete_user_id and delete_date columns (consistent with FSO pattern) -->
+    <addColumn tableName="dac">
+      <column name="delete_user_id" type="bigint"/>
+      <column name="delete_date" type="timestamp"/>
+    </addColumn>
+    <addForeignKeyConstraint
+      baseTableName="dac" baseColumnNames="delete_user_id"
+      constraintName="fk_dac_delete_user_id"
+      referencedTableName="users" referencedColumnNames="user_id"/>
+
+    <!-- 1c. Add index on deleted column for query performance -->
+    <createIndex indexName="idx_dac_deleted" tableName="dac">
+      <column name="deleted"/>
+    </createIndex>
+
+    <rollback>
+      <!-- Reverse 1c: drop index -->
+      <dropIndex indexName="idx_dac_deleted" tableName="dac"/>
+
+      <!-- Reverse 1b: drop fk and columns delete_user_id / delete_date -->
+      <dropForeignKeyConstraint baseTableName="dac"
+                                constraintName="fk_dac_delete_user_id"/>
+      <dropColumn tableName="dac" columnName="delete_date"/>
+      <dropColumn tableName="dac" columnName="delete_user_id"/>
+
+      <!-- Reverse 1a: drop deleted column -->
+      <dropColumn tableName="dac" columnName="deleted"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
+

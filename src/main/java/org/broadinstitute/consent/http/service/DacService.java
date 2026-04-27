@@ -76,10 +76,12 @@ public class DacService implements ConsentLogger {
   public List<Dac> findAll() {
     List<Dac> dacs = dacDAO.findAll();
     for (Dac dac : dacs) {
-      DataAccessAgreement associatedDaa = dac.getAssociatedDaa();
-      associatedDaa.setBroadDaa(
-          daaService.isBroadDAA(associatedDaa.getDaaId(), List.of(associatedDaa), List.of(dac)));
-      dac.setAssociatedDaa(associatedDaa);
+      if (dac.getAssociatedDaa() != null) {
+        DataAccessAgreement associatedDaa = dac.getAssociatedDaa();
+        associatedDaa.setBroadDaa(
+            daaService.isBroadDAA(associatedDaa.getDaaId(), List.of(associatedDaa), List.of(dac)));
+        dac.setAssociatedDaa(associatedDaa);
+      }
     }
     return dacs;
   }

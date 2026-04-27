@@ -38,7 +38,6 @@ logging:
     "org.broadinstitute.consent.http.cloudstore.GCSService": OFF
 services:
   localURL: http://localhost:8000/#/
-  ontologyURL: http://localhost:8180/
   samUrl: https://localhost:8181/
   ecmUrl: http://localhost:8182/
 mailConfiguration:

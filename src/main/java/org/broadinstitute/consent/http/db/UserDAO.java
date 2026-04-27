@@ -350,7 +350,7 @@ public interface UserDAO extends Transactional<UserDAO> {
       FROM users u
       INNER JOIN user_role ur ON ur.user_id = u.user_id AND ur.role_id in (<roleIds>)
       INNER JOIN roles r on r.role_id = ur.role_id
-      INNER JOIN dac d ON d.dac_id = ur.dac_id
+      INNER JOIN dac d ON d.dac_id = ur.dac_id AND d.deleted IS NOT TRUE
       INNER JOIN dataset ds ON ds.dac_id = d.dac_id
       WHERE ds.dataset_id in (<datasetIds>)
     """)
