@@ -16,7 +16,7 @@ jobs:
           cache: 'maven'
       - name: Validate
         run: |
-          mvn io.github.chains-project:maven-lockfile:validate
+          mvn io.github.chains-project:maven-lockfile:validate -DincludeMavenPlugins=true -DallowEnvironmentalValidationFailure=true
       - name: Spotless Check
         run: mvn -q spotless:check --batch-mode
       - name: Package
