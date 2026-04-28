@@ -276,7 +276,7 @@ public class DaaService implements ConsentLogger {
 
     logInfo(
         String.format(
-            "Bulk DAA assignment completed. DAA ID: %d, Total eligible: %d, Assigned: %d, Skipped: %d",
+            "Bulk DAA assignment completed. DAA ID: %d, Total users eligible: %d, Assigned: %d, Skipped: %d",
             daaId, eligibleUsers.size(), assignedCount, skippedCount));
 
     return new DaaBulkAssignmentResult(
