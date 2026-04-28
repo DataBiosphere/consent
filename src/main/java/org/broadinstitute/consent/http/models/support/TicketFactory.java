@@ -8,6 +8,12 @@ import org.zendesk.client.v2.model.Ticket;
 
 public class TicketFactory {
 
+  private static final String REQUEST = "request";
+
+  private TicketFactory() {
+    // private constructor to prevent instantiation
+  }
+
   /**
    * Generate the created Request object from the Zendesk request response content.
    *
@@ -17,7 +23,11 @@ public class TicketFactory {
   public static Request parseRequestResponse(String response) {
     Gson gson = GsonUtil.getInstance();
     JsonObject obj = gson.fromJson(response, JsonObject.class);
-    JsonObject request = obj.get("request").getAsJsonObject();
+    if (obj == null || !obj.has(REQUEST) || !obj.get(REQUEST).isJsonObject()) {
+      throw new IllegalStateException(
+          "Invalid Zendesk response: 'request' field is missing or not a JSON object.");
+    }
+    JsonObject request = obj.get(REQUEST).getAsJsonObject();
     return gson.fromJson(request, Request.class);
   }
 
