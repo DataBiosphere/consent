@@ -60,6 +60,7 @@ public class DataAccessRequest {
   @JsonProperty public List<Integer> datasetIds;
   @JsonProperty private Map<Integer, Election> elections;
   @JsonProperty private String eraCommonsId;
+  @JsonProperty private String adminDarNotes;
 
   @JsonProperty public Integer approvingSigningOfficialUserId;
   @JsonProperty public Timestamp approvingSigningOfficialApprovedDate;
@@ -245,6 +246,14 @@ public class DataAccessRequest {
 
   public void setEraCommonsId(String eraCommonsId) {
     this.eraCommonsId = eraCommonsId;
+  }
+
+  public String getAdminDarNotes() {
+    return adminDarNotes;
+  }
+
+  public void setAdminDarNotes(String adminDarNotes) {
+    this.adminDarNotes = adminDarNotes;
   }
 
   public Integer getCloseoutSigningOfficialApprovedUserId() {
@@ -482,13 +491,15 @@ public class DataAccessRequest {
     if (dar.getEraCommonsId() != null) {
       copy.put("eraCommonsId", dar.getEraCommonsId());
     }
+    if (dar.getAdminDarNotes() != null) {
+      copy.put("adminDarNotes", dar.getAdminDarNotes());
+    }
     if (dar.getCloseoutSigningOfficialApprovedUserId() != null) {
       copy.put(
           "closeoutSigningOfficialApprovedUserId", dar.getCloseoutSigningOfficialApprovedUserId());
     }
     if (dar.getCloseoutSigningOfficialApprovedDate() != null) {
-      copy.put(
-          "closeoutSigningOfficialApprovedDate", dar.getCloseoutSigningOfficialApprovedUserId());
+      copy.put("closeoutSigningOfficialApprovedDate", dar.getCloseoutSigningOfficialApprovedDate());
     }
     if (dar.getApprovingSigningOfficialUserId() != null) {
       copy.put("approvingSigningOfficialUserId", dar.getApprovingSigningOfficialUserId());

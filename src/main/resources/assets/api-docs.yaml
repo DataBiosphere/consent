@@ -209,6 +209,8 @@ paths:
           description: Internal Server Error
   /api/dac/{dacId}/datasets:
     $ref: './paths/datasetsByDacId.yaml'
+  /api/dac/{dacId}/datasets/externalize:
+    $ref: './paths/dacDatasetExternalizeById.yaml'
   /api/dac/users/{term}:
     get:
       summary: Find Users by Search Term
@@ -236,9 +238,6 @@ paths:
           description: Internal Server Error
   /api/dar/v2:
     $ref: './paths/darV2.yaml'
-
-  /api/dar/v3:
-    $ref: './paths/darV3.yaml'
 
   /api/dar/v2/{referenceId}:
     $ref: './paths/darV2ByReferenceId.yaml'
@@ -336,8 +335,6 @@ paths:
         500:
           description: Internal Server Error.
 
-  /api/dar/v3/progress_report/{parentReferenceId}:
-    $ref: './paths/progressReportV3.yaml'
 
   /api/dar/v2/{referenceId}/irbDocument:
     get:
@@ -1027,6 +1024,10 @@ components:
       $ref: './schemas/DataAccessAgreement.yaml'
     DataAccessCommittee:
       $ref: './schemas/Dac.yaml'
+    DacDatasetExternalizationRequest:
+      $ref: './schemas/DacDatasetExternalizationRequest.yaml'
+    DacDatasetExternalizationResponse:
+      $ref: './schemas/DacDatasetExternalizationResponse.yaml'
     DataAccessRequest:
       $ref: './schemas/DataAccessRequest.yaml'
     Dataset:

@@ -14,12 +14,14 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.gson.Gson;
 import jakarta.ws.rs.BadRequestException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,6 +38,8 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DacDatasetExternalizationRequest;
+import org.broadinstitute.consent.http.models.DacDatasetExternalizationResponse;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
@@ -69,6 +73,8 @@ class DacServiceTest extends AbstractTestHelper {
 
   @Mock private VoteService voteService;
 
+  @Mock private ElasticSearchService elasticSearchService;
+
   @Mock private DaaService daaService;
 
   @Mock private DacServiceDAO dacServiceDAO;
@@ -84,6 +90,7 @@ class DacServiceTest extends AbstractTestHelper {
             electionDAO,
             dataAccessRequestDAO,
             voteService,
+            elasticSearchService,
             daaService,
             dacServiceDAO,
             ruleDAO);
@@ -431,6 +438,56 @@ class DacServiceTest extends AbstractTestHelper {
 
     List<Dac> dacsForUser = service.findDacsWithMembersOption(false);
     assertEquals(dacsForUser.size(), dacs.size());
+  }
+
+  @Test
+  void testConvertDacDatasetsToExternal() throws Exception {
+    Dac dac = new Dac();
+    dac.setDacId(1);
+    when(dacDAO.findById(1)).thenReturn(dac);
+    when(dacDAO.findMembersByDacIdAndRoleId(anyInt(), anyInt())).thenReturn(List.of());
+    DacDatasetExternalizationRequest request =
+        new DacDatasetExternalizationRequest("policy update", false, true, true, null);
+    DacDatasetExternalizationResponse expected =
+        new DacDatasetExternalizationResponse(
+            1, false, "policy update", Instant.now(), Instant.now(), 2, 1, 1, 3, 0, 2);
+    when(dacServiceDAO.findConvertibleDatasetIds(anyInt(), any())).thenReturn(List.of(101, 102));
+    when(dacServiceDAO.convertDacDatasetsToExternal(anyInt(), anyInt(), any()))
+        .thenReturn(expected);
+    initService();
+
+    DacDatasetExternalizationResponse actual = service.convertDacDatasetsToExternal(1, 10, request);
+    assertEquals(expected, actual);
+    verify(elasticSearchService).indexDatasets(List.of(101, 102));
+  }
+
+  @Test
+  void testConvertDacDatasetsToExternalDryRunSkipsReindex() throws Exception {
+    Dac dac = new Dac();
+    dac.setDacId(1);
+    when(dacDAO.findById(1)).thenReturn(dac);
+    when(dacDAO.findMembersByDacIdAndRoleId(anyInt(), anyInt())).thenReturn(List.of());
+    DacDatasetExternalizationRequest request =
+        new DacDatasetExternalizationRequest("policy update", true, true, true, null);
+    when(dacServiceDAO.findConvertibleDatasetIds(anyInt(), any())).thenReturn(List.of(101, 102));
+    when(dacServiceDAO.convertDacDatasetsToExternal(anyInt(), anyInt(), any()))
+        .thenReturn(
+            new DacDatasetExternalizationResponse(
+                1, true, "policy update", Instant.now(), Instant.now(), 2, 1, 1, 3, 0, 2));
+    initService();
+
+    service.convertDacDatasetsToExternal(1, 10, request);
+
+    verify(elasticSearchService, never()).indexDatasets(any());
+  }
+
+  @Test
+  void testConvertDacDatasetsToExternalRequiresRevocation() {
+    initService();
+    DacDatasetExternalizationRequest request =
+        new DacDatasetExternalizationRequest("policy update", false, false, true, null);
+    assertThrows(
+        IllegalArgumentException.class, () -> service.convertDacDatasetsToExternal(1, 10, request));
   }
 
   /* Helper functions */

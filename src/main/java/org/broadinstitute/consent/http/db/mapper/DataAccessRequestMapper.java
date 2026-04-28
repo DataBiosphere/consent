@@ -44,6 +44,9 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
     }
     dar.setData(data);
     dar.setEraCommonsId(resultSet.getString("era_commons_id"));
+    if (hasColumn(resultSet, "admin_dar_notes")) {
+      dar.setAdminDarNotes(resultSet.getString("admin_dar_notes"));
+    }
     dar.setCloseoutSigningOfficialApprovedDate(
         resultSet.getTimestamp("closeout_so_approval_timestamp"));
     if (hasNonZeroColumn(resultSet, "closeout_approving_so_id")) {

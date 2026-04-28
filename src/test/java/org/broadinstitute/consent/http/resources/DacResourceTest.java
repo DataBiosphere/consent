@@ -13,6 +13,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.core.Response;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -21,6 +22,8 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DacBuilder;
+import org.broadinstitute.consent.http.models.DacDatasetExternalizationRequest;
+import org.broadinstitute.consent.http.models.DacDatasetExternalizationResponse;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DuosUser;
@@ -640,6 +643,46 @@ class DacResourceTest extends AbstractTestHelper {
         .thenThrow(ForbiddenException.class);
     try (Response response = dacResource.approveDataset(duosUser, 1, 1, "{approval: false}")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+    }
+  }
+
+  @Test
+  void testConvertDatasetsToExternal() {
+    User user = buildAdmin(authUser);
+    DuosUser duosUser = new DuosUser(authUser, user);
+    DacDatasetExternalizationResponse summary =
+        new DacDatasetExternalizationResponse(
+            1, false, "policy update", Instant.now(), Instant.now(), 3, 2, 1, 4, 1, 2);
+    when(dacService.convertDacDatasetsToExternal(anyInt(), anyInt(), any())).thenReturn(summary);
+    String json =
+        gson.toJson(new DacDatasetExternalizationRequest("policy update", false, true, true, null));
+
+    try (Response response = dacResource.convertDatasetsToExternal(duosUser, 1, json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(GsonUtil.buildGson().toJson(summary), response.getEntity());
+    }
+  }
+
+  @Test
+  void testConvertDatasetsToExternalEmptyPayload() {
+    User user = buildAdmin(authUser);
+    DuosUser duosUser = new DuosUser(authUser, user);
+    try (Response response = dacResource.convertDatasetsToExternal(duosUser, 1, "")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testConvertDatasetsToExternalServiceException() {
+    User user = buildAdmin(authUser);
+    DuosUser duosUser = new DuosUser(authUser, user);
+    when(dacService.convertDacDatasetsToExternal(anyInt(), anyInt(), any()))
+        .thenThrow(new RuntimeException("Unexpected service error"));
+    String json =
+        gson.toJson(new DacDatasetExternalizationRequest("policy update", false, true, true, null));
+
+    try (Response response = dacResource.convertDatasetsToExternal(duosUser, 1, json)) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
   }
 

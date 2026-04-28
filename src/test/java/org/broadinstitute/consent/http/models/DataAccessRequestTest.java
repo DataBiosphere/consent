@@ -8,6 +8,7 @@ import jakarta.ws.rs.BadRequestException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class DataAccessRequestTest {
@@ -231,7 +232,9 @@ class DataAccessRequestTest {
     dar.setCloseoutSigningOfficialApprovedDate(now);
     dar.setCloseoutSigningOfficialApprovedUserId(1);
     dar.setRequiresSOApproval(true);
-    assertDoesNotThrow(dar::convertToSimplifiedDar);
+    dar.setAdminDarNotes("admin notes");
+    Map<String, Object> simplifiedDar = assertDoesNotThrow(dar::convertToSimplifiedDar);
+    assertEquals("admin notes", simplifiedDar.get("adminDarNotes"));
   }
 
   @Test
