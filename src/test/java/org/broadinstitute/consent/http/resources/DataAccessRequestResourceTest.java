@@ -12,7 +12,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -110,7 +109,6 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Mock private UriInfo info;
   @Mock private UriBuilder builder;
   @Mock private User mockUser;
-  @Mock private ContainerRequest containerRequest;
   private DataAccessRequestResource resource;
 
   @BeforeEach
@@ -412,10 +410,21 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     return Pair.of(inputStream, formData);
   }
 
+  private void mockProgressReportUserAndParentDar(DataAccessRequest parentDar) {
+    when(userService.findUserByEmail(any())).thenReturn(user);
+    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+  }
+
+  private void mockNoOpenProgressReportElections(DataAccessRequest parentDar) {
+    when(dataAccessRequestService.findOpenElectionsByReferenceId(parentDar.getReferenceId()))
+        .thenReturn(List.of());
+  }
+
   @Test
   void testPostProgressReportCollabAndEthicsFiles() {
     DataAccessRequest parentDar = generateDataAccessRequest();
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    mockProgressReportUserAndParentDar(parentDar);
+    mockNoOpenProgressReportElections(parentDar);
     DataAccessRequest childDar = generateDataAccessRequest();
     when(dataAccessRequestService.createProgressReport(eq(user), any(), eq(parentDar), eq(request)))
         .thenReturn(childDar);
@@ -425,7 +434,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     try (var response =
-        resource.postProgressReportWithDAARestrictions(
+        resource.postProgressReport(
             duosUser,
             request,
             "",
@@ -442,12 +451,12 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testPostProgressReportDifferentUser() {
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setUserId(2);
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    mockProgressReportUserAndParentDar(parentDar);
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     Response response =
-        resource.postProgressReportWithDAARestrictions(
+        resource.postProgressReport(
             duosUser,
             request,
             "",
@@ -461,12 +470,13 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testPostProgressReportMissingParentDar() {
+    when(userService.findUserByEmail(any())).thenReturn(user);
     when(dataAccessRequestService.findByReferenceId(any())).thenThrow(NotFoundException.class);
     Pair<InputStream, FormDataContentDisposition> collabFile = mockFormDataMultiPart("collab.txt");
     Pair<InputStream, FormDataContentDisposition> ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     try (var response =
-        resource.postProgressReportWithDAARestrictions(
+        resource.postProgressReport(
             duosUser,
             request,
             "",
@@ -483,12 +493,13 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   void testPostProgressReportInvalidJson() {
     String invalidDar = "{\"projectTitle\": \"test\", \"datasetIds\": \"invalid\"}";
     DataAccessRequest parentDar = generateDataAccessRequest();
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    mockProgressReportUserAndParentDar(parentDar);
+    mockNoOpenProgressReportElections(parentDar);
     var collabFile = mockFormDataMultiPart("collab.txt");
     var ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     try (var response =
-        resource.postProgressReportWithDAARestrictions(
+        resource.postProgressReport(
             duosUser,
             request,
             "",
@@ -504,11 +515,11 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
 
   @Test
   void testPostProgressReportThrowsWhenNoERACommonsID() {
+    when(userService.findUserByEmail(any())).thenReturn(user);
     doThrow(BadRequestException.class).when(userService).validateActiveERACredentials(user);
 
     try (var response =
-        resource.postProgressReportWithDAARestrictions(
-            duosUser, request, "", "", null, null, null, null)) {
+        resource.postProgressReport(duosUser, request, "", "", null, null, null, null)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
@@ -516,7 +527,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
   @Test
   void testPostProgressReportWithOpenElections() {
     DataAccessRequest parentDar = generateDataAccessRequest();
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    mockProgressReportUserAndParentDar(parentDar);
     Election election = new Election();
     election.setStatus(ElectionStatus.OPEN.getValue());
     election.setElectionType(ElectionType.DATA_ACCESS.getValue());
@@ -527,7 +538,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     var ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     try (var response =
-        resource.postProgressReportWithDAARestrictions(
+        resource.postProgressReport(
             duosUser,
             request,
             "",
@@ -542,27 +553,25 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
               .getEntity()
               .toString()
               .contains(
-                  "Cannot create a progress report for a DAR: "
-                      + parentDar.getDarCode()
-                      + " with an open election"));
+                  "Cannot create a progress report for a DAR with an open election: "
+                      + parentDar.getReferenceId()));
     }
   }
 
   @Test
   void testPostProgressReportFailsWhenDAARestricted() {
     DataAccessRequest parentDar = generateDataAccessRequest();
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
-
-    // Mock enforcement to fail
+    mockProgressReportUserAndParentDar(parentDar);
+    mockNoOpenProgressReportElections(parentDar);
     doThrow(new ForbiddenException("DAA restriction violated"))
-        .when(datasetService)
-        .enforceDAARestrictions(eq(user), any());
+        .when(dataAccessRequestService)
+        .createProgressReport(eq(user), any(), eq(parentDar), eq(request));
 
     var collabFile = mockFormDataMultiPart("collab.txt");
     var ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     try (var response =
-        resource.postProgressReportWithDAARestrictions(
+        resource.postProgressReport(
             duosUser,
             request,
             "",
@@ -575,15 +584,15 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
 
-    // Ensure persistence never happens
-    verify(dataAccessRequestService, never())
+    verify(dataAccessRequestService, times(1))
         .createProgressReport(eq(user), any(), eq(parentDar), eq(request));
   }
 
   @Test
-  void testPostProgressReportInvokesDAAEnforcement() {
+  void testPostProgressReportDelegatesToCreateProgressReport() {
     DataAccessRequest parentDar = generateDataAccessRequest();
-    when(dataAccessRequestService.findByReferenceId(any())).thenReturn(parentDar);
+    mockProgressReportUserAndParentDar(parentDar);
+    mockNoOpenProgressReportElections(parentDar);
 
     DataAccessRequest childDar = generateDataAccessRequest();
     when(dataAccessRequestService.createProgressReport(eq(user), any(), eq(parentDar), eq(request)))
@@ -595,7 +604,7 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
     var ethicsFile = mockFormDataMultiPart("ethics.txt");
 
     try (var response =
-        resource.postProgressReportWithDAARestrictions(
+        resource.postProgressReport(
             duosUser,
             request,
             "",
@@ -608,7 +617,8 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
     }
 
-    verify(datasetService).enforceDAARestrictions(eq(user), any());
+    verify(dataAccessRequestService)
+        .createProgressReport(eq(user), any(), eq(parentDar), eq(request));
   }
 
   @Test
@@ -1032,18 +1042,15 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       DataAccessRequestData data = new DataAccessRequestData();
       data.setReferenceId(dar.getReferenceId());
       dar.setData(data);
-      when(dataAccessRequestService.createDataAccessRequest(any(), any(), any())).thenReturn(dar);
-      doNothing().when(matchService).reprocessMatchesForPurpose(any());
-      doNothing().when(darCollectionService).createElectionsForNewDarCollection(any());
-      doNothing().when(darCollectionService).sendNewDARCollectionMessage(any());
+      when(dataAccessRequestService.insertDraftDataAccessRequest(any(), any())).thenReturn(dar);
+      when(builder.path(anyString())).thenReturn(builder);
       when(builder.build()).thenReturn(URI.create("https://test.domain.org/some/path"));
       when(info.getRequestUriBuilder()).thenReturn(builder);
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
 
-    try (Response response =
-        resource.createDataAccessRequestWithDAARestrictions(authUser, containerRequest, info, "")) {
+    try (Response response = resource.createDraftDataAccessRequest(authUser, info, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
   }
@@ -1060,13 +1067,14 @@ class DataAccessRequestResourceTest extends AbstractTestHelper {
       DataAccessRequestData data = new DataAccessRequestData();
       data.setReferenceId(dar.getReferenceId());
       dar.setData(data);
-      doThrow(BadRequestException.class).when(datasetService).enforceDAARestrictions(any(), any());
+      doThrow(BadRequestException.class)
+          .when(dataAccessRequestService)
+          .insertDraftDataAccessRequest(any(), any());
     } catch (Exception e) {
       fail("Initialization Exception: " + e.getMessage());
     }
 
-    try (Response response =
-        resource.createDataAccessRequestWithDAARestrictions(authUser, containerRequest, info, "")) {
+    try (Response response = resource.createDraftDataAccessRequest(authUser, info, "")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
     }
   }
