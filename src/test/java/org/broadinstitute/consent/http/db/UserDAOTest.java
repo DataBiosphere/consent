@@ -668,4 +668,31 @@ class UserDAOTest extends DAOTestHelper {
             user.getUserId(), user.getDisplayName(), user.getEmail(), user.getUserId(), new Date());
     return libraryCardDAO.findLibraryCardById(id);
   }
+
+  @Test
+  void testInsertUser() {
+    String email = "test.user." + randomAlphanumeric(10) + "@test.com";
+    String displayName = "Test User " + randomAlphanumeric(10);
+    Integer institutionId =
+        institutionDAO.insertInstitution(
+            "Institution",
+            "it director",
+            "it director email",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            1,
+            new Date());
+    Date createDate = new Date();
+    Integer userId = userDAO.insertUser(email, displayName, institutionId, createDate);
+    assertNotNull(userId);
+    User user = userDAO.findUserById(userId);
+    assertNotNull(user);
+    assertEquals(email, user.getEmail());
+    assertEquals(displayName, user.getDisplayName());
+    assertEquals(institutionId, user.getInstitutionId());
+  }
 }
