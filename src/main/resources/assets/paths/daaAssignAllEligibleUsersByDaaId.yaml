@@ -1,0 +1,38 @@
+post:
+  summary: Assign DAA to all eligible users
+  operationId: assignDaaToAllEligibleUsers
+  description: Assigns the specified Data Access Agreement to all users that currently have both an institution and a library card.
+  parameters:
+    - name: daaId
+      in: path
+      description: The DAA ID
+      required: true
+      schema:
+        type: integer
+  tags:
+    - DAA
+  responses:
+    200:
+      description: Bulk assignment result
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              daaId:
+                type: integer
+              totalEligibleUsers:
+                type: integer
+              assignedCount:
+                type: integer
+              skippedCount:
+                type: integer
+              errors:
+                type: array
+                items:
+                  type: string
+    404:
+      description: DAA Not Found
+    500:
+      description: Internal Server Error
+

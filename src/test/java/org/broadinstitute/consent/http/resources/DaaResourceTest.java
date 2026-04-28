@@ -26,6 +26,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.DaaBulkAssignmentResult;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DuosUser;
@@ -701,6 +702,44 @@ class DaaResourceTest extends AbstractTestHelper {
     resource = new DaaResource(daaService, dacService, userService, libraryCardService);
 
     try (Response response = resource.bulkAddUsersToDaa(duosUser, daaId, "{users:[1,2,3]}")) {
+      assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
+    }
+  }
+
+  @Test
+  void testAssignDaaToAllEligibleUsers() {
+    Integer daaId = 4;
+    User authedUser = new User();
+    authedUser.setUserId(1);
+    authedUser.setAdminRole();
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
+
+    DaaBulkAssignmentResult expectedResult =
+        new DaaBulkAssignmentResult(daaId, 3, 2, 1, List.of("test error"));
+    when(daaService.assignDaaToAllEligibleUsers(daaId, authedUser)).thenReturn(expectedResult);
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+
+    try (Response response = resource.assignDaaToAllEligibleUsers(duosUser, daaId)) {
+      assertEquals(HttpStatus.SC_OK, response.getStatus());
+      assertEquals(expectedResult, response.getEntity());
+    }
+  }
+
+  @Test
+  void testAssignDaaToAllEligibleUsersDaaNotFound() {
+    Integer daaId = 4;
+    User authedUser = new User();
+    authedUser.setUserId(1);
+    authedUser.setAdminRole();
+    DuosUser duosUser = new DuosUser(authUser, authedUser);
+
+    when(daaService.assignDaaToAllEligibleUsers(daaId, authedUser))
+        .thenThrow(new NotFoundException());
+
+    resource = new DaaResource(daaService, dacService, userService, libraryCardService);
+
+    try (Response response = resource.assignDaaToAllEligibleUsers(duosUser, daaId)) {
       assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
     }
   }
