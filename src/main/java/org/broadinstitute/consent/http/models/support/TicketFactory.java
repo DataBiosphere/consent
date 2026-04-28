@@ -24,7 +24,7 @@ public class TicketFactory {
     Gson gson = GsonUtil.getInstance();
     JsonObject obj = gson.fromJson(response, JsonObject.class);
     if (obj == null || !obj.has(REQUEST) || !obj.get(REQUEST).isJsonObject()) {
-      throw new IllegalArgumentException(
+      throw new IllegalStateException(
           "Invalid Zendesk response: 'request' field is missing or not a JSON object.");
     }
     JsonObject request = obj.get(REQUEST).getAsJsonObject();

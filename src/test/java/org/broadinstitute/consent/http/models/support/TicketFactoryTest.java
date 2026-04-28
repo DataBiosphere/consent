@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.google.gson.JsonSyntaxException;
 import java.util.Collections;
 import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -38,15 +39,16 @@ class TicketFactoryTest {
   @Test
   void testParseRequestResponse_InvalidJson() {
     String invalidResponse = "invalid json";
-    assertThrows(Exception.class, () -> TicketFactory.parseRequestResponse(invalidResponse));
+    assertThrows(
+        JsonSyntaxException.class, () -> TicketFactory.parseRequestResponse(invalidResponse));
   }
 
   @Test
   void testParseRequestResponse_MissingRequest() {
     String missingRequestResponse = "{}";
-    IllegalArgumentException e =
+    IllegalStateException e =
         assertThrows(
-            IllegalArgumentException.class,
+            IllegalStateException.class,
             () -> TicketFactory.parseRequestResponse(missingRequestResponse));
     assertEquals(
         "Invalid Zendesk response: 'request' field is missing or not a JSON object.",
@@ -61,9 +63,9 @@ class TicketFactoryTest {
                   "request": null
                 }
                 """;
-    IllegalArgumentException e =
+    IllegalStateException e =
         assertThrows(
-            IllegalArgumentException.class,
+            IllegalStateException.class,
             () -> TicketFactory.parseRequestResponse(nullRequestResponse));
     assertEquals(
         "Invalid Zendesk response: 'request' field is missing or not a JSON object.",
@@ -78,9 +80,9 @@ class TicketFactoryTest {
                   "request": "I am a string"
                 }
                 """;
-    IllegalArgumentException e =
+    IllegalStateException e =
         assertThrows(
-            IllegalArgumentException.class,
+            IllegalStateException.class,
             () -> TicketFactory.parseRequestResponse(notAnObjectResponse));
     assertEquals(
         "Invalid Zendesk response: 'request' field is missing or not a JSON object.",
