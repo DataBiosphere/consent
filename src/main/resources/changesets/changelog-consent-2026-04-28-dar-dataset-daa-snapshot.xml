@@ -3,7 +3,7 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
-  <changeSet id="changelog-consent-2026-04-28-dar-dataset-daa-snapshot" author="copilot">
+  <changeSet id="changelog-consent-2026-04-28-dar-dataset-daa-snapshot" author="otchet">
     <createTable tableName="dar_dataset_daa_snapshot">
       <column name="dar_id" type="bigint">
         <constraints nullable="false"
