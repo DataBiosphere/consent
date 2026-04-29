@@ -163,23 +163,23 @@ public class HttpClientUtil implements ConsentLogger {
       if (response != null) {
         return switch (response.getStatusCode()) {
           case HttpStatusCodes.STATUS_CODE_BAD_REQUEST -> {
-            logErrorResponse(response);
+            logErrorResponse(request, response);
             throw new BadRequestException(response.getStatusMessage());
           }
           case HttpStatusCodes.STATUS_CODE_UNAUTHORIZED -> {
-            logErrorResponse(response);
+            logErrorResponse(request, response);
             throw new NotAuthorizedException(response.getStatusMessage());
           }
           case HttpStatusCodes.STATUS_CODE_FORBIDDEN -> {
-            logErrorResponse(response);
+            logErrorResponse(request, response);
             throw new ForbiddenException(response.getStatusMessage());
           }
           case HttpStatusCodes.STATUS_CODE_NOT_FOUND -> {
-            logErrorResponse(response);
+            logErrorResponse(request, response);
             throw new NotFoundException(response.getStatusMessage());
           }
           case HttpStatusCodes.STATUS_CODE_CONFLICT -> {
-            logErrorResponse(response);
+            logErrorResponse(request, response);
             throw new ConsentConflictException(response.getStatusMessage());
           }
           default -> response;
@@ -199,17 +199,20 @@ public class HttpClientUtil implements ConsentLogger {
         .set("X-App-ID", "DUOS");
   }
 
-  private void logErrorResponse(HttpResponse response) {
+  private void logErrorResponse(HttpRequest request, HttpResponse response) {
     String stackTrace =
         StackWalker.getInstance()
             .walk(
                 frames ->
                     frames
+                        .limit(8)
                         .map(StackWalker.StackFrame::toString)
                         .collect(java.util.stream.Collectors.joining(" -> ")));
+    String method = request.getRequestMethod();
+    String url = String.valueOf(request.getUrl());
     logWarn(
         String.format(
-            "HttpClient Request Failed: %s %s. Stack Trace: %s",
-            response.getStatusCode(), response.getStatusMessage(), stackTrace));
+            "HttpClient Request Failed: %s %s [%s %s]. Stack Trace: %s",
+            response.getStatusCode(), response.getStatusMessage(), method, url, stackTrace));
   }
 }
