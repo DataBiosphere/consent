@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.db;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,12 +12,17 @@ import org.broadinstitute.consent.http.db.mapper.DataAccessAgreementReducer;
 import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapper;
 import org.broadinstitute.consent.http.models.DaaAudit;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarDatasetDaaSnapshot;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
+import org.broadinstitute.consent.http.models.DatasetDaaMapping;
+import org.broadinstitute.consent.http.models.DatasetDaaSnapshotDetail;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
+import org.jdbi.v3.sqlobject.customizer.BindMethods;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -337,6 +343,44 @@ public interface DaaDAO extends Transactional<DaaDAO> {
         ON CONFLICT DO NOTHING
     """)
   void insertDarDAARelationship(@Bind("darId") Integer darId, @Bind("daaId") Set<Integer> daaIds);
+
+  @RegisterConstructorMapper(DatasetDaaMapping.class)
+  @SqlQuery(
+      """
+          SELECT dataset.dataset_id AS datasetId, daa.daa_id AS daaId
+          FROM dataset
+          INNER JOIN dac ON dataset.dac_id = dac.dac_id
+          INNER JOIN dac_daa ON dac.dac_id = dac_daa.dac_id
+          INNER JOIN data_access_agreement daa ON dac_daa.daa_id = daa.daa_id
+          WHERE dataset.dataset_id IN (<datasetIds>)
+          ORDER BY dataset.dataset_id
+          """)
+  List<DatasetDaaMapping> findCurrentDaaMappingsByDatasetIds(
+      @BindList(value = "datasetIds", onEmpty = EmptyHandling.NULL_STRING)
+          List<Integer> datasetIds);
+
+  @SqlBatch(
+      """
+          INSERT INTO dar_dataset_daa_snapshot (dar_id, dataset_id, daa_id, captured_at)
+          VALUES (:darId, :datasetId, :daaId, :capturedAt)
+          ON CONFLICT (dar_id, dataset_id)
+          DO UPDATE SET daa_id = EXCLUDED.daa_id, captured_at = EXCLUDED.captured_at
+          """)
+  void insertDarDatasetDaaSnapshots(@BindMethods Collection<DarDatasetDaaSnapshot> snapshots);
+
+  @RegisterConstructorMapper(DatasetDaaSnapshotDetail.class)
+  @SqlQuery(
+      """
+          SELECT ddds.dataset_id AS datasetId,
+                 ddds.daa_id AS daaId,
+                 ddds.captured_at AS capturedAt
+          FROM dar_dataset_daa_snapshot ddds
+          INNER JOIN data_access_request dar ON ddds.dar_id = dar.id
+          WHERE dar.reference_id = :referenceId
+          ORDER BY ddds.dataset_id
+          """)
+  List<DatasetDaaSnapshotDetail> findDatasetDaaSnapshotsByReferenceId(
+      @Bind("referenceId") String referenceId);
 
   @SqlUpdate(
       """

@@ -1,0 +1,13 @@
+type: object
+description: Snapshot of the DAA associated to a dataset when a DAR or progress report was submitted.
+required:
+  - daaId
+  - capturedAt
+properties:
+  daaId:
+    type: integer
+    description: The DAA ID captured for the dataset.
+  capturedAt:
+    type: number
+    description: When the snapshot was captured, in milliseconds since the epoch.
+

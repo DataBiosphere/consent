@@ -246,4 +246,5 @@
   <include file="changesets/changelog-consent-2026-04-24-dac-soft-delete.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-04-23-dar-admin-notes.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-04-08-dar-daa.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-04-28-dar-dataset-daa-snapshot.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>

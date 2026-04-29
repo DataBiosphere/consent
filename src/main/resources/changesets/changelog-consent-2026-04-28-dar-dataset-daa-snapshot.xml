@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2026-04-28-dar-dataset-daa-snapshot" author="copilot">
+    <createTable tableName="dar_dataset_daa_snapshot">
+      <column name="dar_id" type="bigint">
+        <constraints nullable="false"
+                     foreignKeyName="fkDarDatasetDaaSnapshot_DarId"
+                     referencedTableName="data_access_request"
+                     referencedColumnNames="id"/>
+      </column>
+      <column name="dataset_id" type="bigint">
+        <constraints nullable="false"
+                     foreignKeyName="fkDarDatasetDaaSnapshot_DatasetId"
+                     referencedTableName="dataset"
+                     referencedColumnNames="dataset_id"/>
+      </column>
+      <column name="daa_id" type="bigint">
+        <constraints nullable="false"
+                     foreignKeyName="fkDarDatasetDaaSnapshot_DaaId"
+                     referencedTableName="data_access_agreement"
+                     referencedColumnNames="daa_id"/>
+      </column>
+      <column name="captured_at" type="timestamp">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addUniqueConstraint tableName="dar_dataset_daa_snapshot"
+                         columnNames="dar_id,dataset_id"
+                         constraintName="uq_dar_dataset_daa_snapshot_dar_dataset"/>
+    <createIndex indexName="idx_dar_dataset_daa_snapshot_dar_id"
+                 tableName="dar_dataset_daa_snapshot">
+      <column name="dar_id"/>
+    </createIndex>
+    <createIndex indexName="idx_dar_dataset_daa_snapshot_dataset_id"
+                 tableName="dar_dataset_daa_snapshot">
+      <column name="dataset_id"/>
+    </createIndex>
+    <createIndex indexName="idx_dar_dataset_daa_snapshot_daa_id"
+                 tableName="dar_dataset_daa_snapshot">
+      <column name="daa_id"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>
+

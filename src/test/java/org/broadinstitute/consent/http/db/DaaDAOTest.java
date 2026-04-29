@@ -19,19 +19,21 @@ import org.broadinstitute.consent.http.enumeration.AuditActions;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.models.DaaAudit;
 import org.broadinstitute.consent.http.models.Dac;
+import org.broadinstitute.consent.http.models.DarDatasetDaaSnapshot;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetDaaMapping;
+import org.broadinstitute.consent.http.models.DatasetDaaSnapshotDetail;
 import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
 class DaaDAOTest extends DAOTestHelper {
+
+  private static final int NON_EXISTENT_ID = Integer.MAX_VALUE;
 
   private Integer createUserId() {
     return createUser().getUserId();
@@ -124,7 +126,7 @@ class DaaDAOTest extends DAOTestHelper {
 
   @Test
   void testFindByIdInvalid() {
-    DataAccessAgreement daa3 = daaDAO.findById(randomInt(10000, 100000));
+    DataAccessAgreement daa3 = daaDAO.findById(NON_EXISTENT_ID);
     assertNull(daa3);
   }
 
@@ -144,7 +146,7 @@ class DaaDAOTest extends DAOTestHelper {
     DataAccessAgreement daa2 = daaDAO.findByDacId(dacId2);
     assertNotNull(daa2);
     assertEquals(daa2.getInitialDacId(), dacId2);
-    DataAccessAgreement daa3 = daaDAO.findByDacId(3);
+    DataAccessAgreement daa3 = daaDAO.findByDacId(NON_EXISTENT_ID);
     assertNull(daa3);
   }
 
@@ -173,13 +175,13 @@ class DaaDAOTest extends DAOTestHelper {
 
     // Assert new relations exist
     DataAccessAgreement testDAA1 = daaDAO.findById(daa1.getDaaId());
-    assertTrue(testDAA1.getDacs().stream().map(Dac::getDacId).toList().contains(dacId));
-    assertFalse(testDAA1.getDacs().stream().map(Dac::getDacId).toList().contains(dacId2));
-    assertFalse(testDAA1.getDacs().stream().map(Dac::getDacId).toList().contains(dacId3));
+    assertTrue(dacIdIn(testDAA1, dacId));
+    assertFalse(dacIdIn(testDAA1, dacId2));
+    assertFalse(dacIdIn(testDAA1, dacId3));
     DataAccessAgreement testDAA2 = daaDAO.findById(daa2.getDaaId());
-    assertFalse(testDAA2.getDacs().stream().map(Dac::getDacId).toList().contains(dacId));
-    assertTrue(testDAA2.getDacs().stream().map(Dac::getDacId).toList().contains(dacId2));
-    assertTrue(testDAA2.getDacs().stream().map(Dac::getDacId).toList().contains(dacId3));
+    assertFalse(dacIdIn(testDAA2, dacId));
+    assertTrue(dacIdIn(testDAA2, dacId2));
+    assertTrue(dacIdIn(testDAA2, dacId3));
 
     // Assert that ADD audit records are created.
     List<DaaAudit> daa1Audits = daaDAO.findAuditsByDaaId(daa1.getDaaId());
@@ -341,7 +343,7 @@ class DaaDAOTest extends DAOTestHelper {
     assertNotNull(daaBefore);
     assertNotNull(daaBefore.getDacs());
     assertFalse(daaBefore.getDacs().isEmpty());
-    assertTrue(daaBefore.getDacs().stream().map(Dac::getDacId).toList().contains(dacId));
+    assertTrue(dacIdIn(daaBefore, dacId));
 
     // Soft-delete the DAC
     dacDAO.deleteDac(dacId, userId);
@@ -376,8 +378,8 @@ class DaaDAOTest extends DAOTestHelper {
     DataAccessAgreement daaAfter = daasAfterDelete.getFirst();
     assertNotNull(daaAfter.getDacs());
     assertEquals(1, daaAfter.getDacs().size());
-    assertTrue(daaAfter.getDacs().stream().map(Dac::getDacId).toList().contains(dacId1));
-    assertFalse(daaAfter.getDacs().stream().map(Dac::getDacId).toList().contains(dacId2));
+    assertTrue(dacIdIn(daaAfter, dacId1));
+    assertFalse(dacIdIn(daaAfter, dacId2));
   }
 
   @Test
@@ -526,7 +528,9 @@ class DaaDAOTest extends DAOTestHelper {
 
   @Test
   void testFindDaaIdsWithDatasetIds_No_Data() {
-    Map<Integer, Set<Integer>> daaDatasetMap = daaDAO.mapDaaIdsToDatasetIds(Set.of(1, 2, 3));
+    Map<Integer, Set<Integer>> daaDatasetMap =
+        daaDAO.mapDaaIdsToDatasetIds(
+            Set.of(NON_EXISTENT_ID - 2, NON_EXISTENT_ID - 1, NON_EXISTENT_ID));
     assertTrue(daaDatasetMap.isEmpty());
   }
 
@@ -586,6 +590,130 @@ class DaaDAOTest extends DAOTestHelper {
 
     daaDAO.deleteDarDAARelationship(prId);
     assertEquals(0, getDarDaaCount(prId));
+  }
+
+  @Test
+  void testFindCurrentDaaMappingsByDatasetIds() {
+    Integer userId = createUserId();
+    Integer dacId1 = dacDAO.createDac("dac1", randomAlphabetic(5), "", userId);
+    Integer dacId2 = dacDAO.createDac("dac2", randomAlphabetic(5), "", userId);
+    Dataset dataset1 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId1));
+    Dataset dataset2 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId2));
+
+    Integer daa1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId1);
+    Integer daa2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
+    daaDAO.createDacDaaRelation(dacId1, daa1, userId);
+    daaDAO.createDacDaaRelation(dacId2, daa2, userId);
+
+    List<DatasetDaaMapping> mappings =
+        daaDAO.findCurrentDaaMappingsByDatasetIds(
+            List.of(dataset1.getDatasetId(), dataset2.getDatasetId()));
+
+    assertEquals(2, mappings.size());
+    assertTrue(
+        mappings.stream()
+            .anyMatch(
+                mapping ->
+                    mapping.datasetId().equals(dataset1.getDatasetId())
+                        && mapping.daaId().equals(daa1)));
+    assertTrue(
+        mappings.stream()
+            .anyMatch(
+                mapping ->
+                    mapping.datasetId().equals(dataset2.getDatasetId())
+                        && mapping.daaId().equals(daa2)));
+  }
+
+  @Test
+  void testFindDatasetDaaSnapshotsByReferenceId() {
+    Integer userId = createUserId();
+    Integer dacId1 = dacDAO.createDac("dac1", randomAlphabetic(5), "", userId);
+    Integer dacId2 = dacDAO.createDac("dac2", randomAlphabetic(5), "", userId);
+    Dataset dataset1 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId1));
+    Dataset dataset2 = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId2));
+    Integer daa1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId1);
+    Integer daa2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
+    Date now = new Date();
+    Integer darCollectionId = darCollectionDAO.insertDarCollection("ABC", userId, now);
+    String referenceId = UUID.randomUUID().toString();
+    Integer darId =
+        dataAccessRequestDAO.insertDataAccessRequest(
+            darCollectionId,
+            referenceId,
+            userId,
+            now,
+            now,
+            now,
+            new DataAccessRequestData(),
+            "eraCommonsId");
+    Timestamp capturedAt = Timestamp.from(Instant.now());
+
+    daaDAO.insertDarDatasetDaaSnapshots(
+        List.of(
+            new DarDatasetDaaSnapshot(darId, dataset1.getDatasetId(), daa1, capturedAt),
+            new DarDatasetDaaSnapshot(darId, dataset2.getDatasetId(), daa2, capturedAt)));
+
+    List<DatasetDaaSnapshotDetail> snapshots =
+        daaDAO.findDatasetDaaSnapshotsByReferenceId(referenceId);
+
+    assertEquals(2, snapshots.size());
+    assertTrue(
+        snapshots.stream()
+            .anyMatch(
+                snapshot ->
+                    snapshot.datasetId().equals(dataset1.getDatasetId())
+                        && snapshot.daaId().equals(daa1)
+                        && snapshot.capturedAt().equals(capturedAt)));
+    assertTrue(
+        snapshots.stream()
+            .anyMatch(
+                snapshot ->
+                    snapshot.datasetId().equals(dataset2.getDatasetId())
+                        && snapshot.daaId().equals(daa2)
+                        && snapshot.capturedAt().equals(capturedAt)));
+  }
+
+  @Test
+  void testFindDatasetDaaSnapshotsByProgressReportReferenceId() {
+    Integer userId = createUserId();
+    Integer dacId = dacDAO.createDac("dac", randomAlphabetic(5), "", userId);
+    Dataset dataset = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId));
+    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Date now = new Date();
+    Integer darCollectionId = darCollectionDAO.insertDarCollection("ABC", userId, now);
+    Integer parentDarId =
+        dataAccessRequestDAO.insertDataAccessRequest(
+            darCollectionId,
+            UUID.randomUUID().toString(),
+            userId,
+            now,
+            now,
+            now,
+            new DataAccessRequestData(),
+            "eraCommonsId");
+    String progressReportReferenceId = UUID.randomUUID().toString();
+    Integer progressReportId =
+        dataAccessRequestDAO.insertProgressReport(
+            parentDarId,
+            darCollectionId,
+            progressReportReferenceId,
+            userId,
+            new DataAccessRequestData(),
+            "eraCommonsId");
+    Timestamp capturedAt = Timestamp.from(Instant.now());
+
+    daaDAO.insertDarDatasetDaaSnapshots(
+        List.of(
+            new DarDatasetDaaSnapshot(
+                progressReportId, dataset.getDatasetId(), daaId, capturedAt)));
+
+    List<DatasetDaaSnapshotDetail> snapshots =
+        daaDAO.findDatasetDaaSnapshotsByReferenceId(progressReportReferenceId);
+
+    assertEquals(1, snapshots.size());
+    assertEquals(dataset.getDatasetId(), snapshots.getFirst().datasetId());
+    assertEquals(daaId, snapshots.getFirst().daaId());
+    assertEquals(capturedAt, snapshots.getFirst().capturedAt());
   }
 
   private static Integer getDarDaaCount(Integer prId) {
@@ -669,6 +797,33 @@ class DaaDAOTest extends DAOTestHelper {
     return datasetDAO.findDatasetById(datasetId);
   }
 
+  /** Returns true when {@code daa}'s dacs list contains the given dacId. */
+  private static boolean dacIdIn(DataAccessAgreement daa, Integer dacId) {
+    return daa.getDacs().stream().map(Dac::getDacId).toList().contains(dacId);
+  }
+
+  @Test
+  void testFindAllDaaAudits() {
+    Integer userId = createUserId();
+    Integer dacId1 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", userId);
+    Integer dacId2 = dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", userId);
+    Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId1);
+    Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId2);
+    daaDAO.createDacDaaRelation(dacId1, daaId1, userId);
+    daaDAO.createDacDaaRelation(dacId2, daaId2, userId);
+
+    List<DaaAudit> allAudits = daaDAO.findAllDaaAudits();
+    assertNotNull(allAudits);
+    assertFalse(allAudits.isEmpty());
+    // CREATE audit for each DAA + ADD audit for each relation = at least 4 records
+    assertTrue(allAudits.size() >= 4);
+    assertTrue(allAudits.stream().anyMatch(a -> a.action().equals(AuditActions.CREATE)));
+    assertTrue(allAudits.stream().anyMatch(a -> a.action().equals(AuditActions.ADD)));
+    List<Integer> auditDaaIds = allAudits.stream().map(DaaAudit::daaId).toList();
+    assertTrue(auditDaaIds.contains(daaId1));
+    assertTrue(auditDaaIds.contains(daaId2));
+  }
+
   @Test
   void testCreateDacDaaRelation_ReplaceExistingRelation() {
     Integer userId = createUserId();
@@ -679,7 +834,7 @@ class DaaDAOTest extends DAOTestHelper {
     // Create initial relation DAC -> DAA1
     daaDAO.createDacDaaRelation(dacId, daaId1, userId);
     DataAccessAgreement daa1FirstCreate = daaDAO.findById(daaId1);
-    assertTrue(daa1FirstCreate.getDacs().stream().map(Dac::getDacId).toList().contains(dacId));
+    assertTrue(dacIdIn(daa1FirstCreate, dacId));
 
     // Replace with DAC -> DAA2 (DAC to different DAA)
     daaDAO.createDacDaaRelation(dacId, daaId2, userId);
@@ -690,7 +845,7 @@ class DaaDAOTest extends DAOTestHelper {
 
     // Verify DAA2 now has DAC association
     DataAccessAgreement daa2AfterReplace = daaDAO.findById(daaId2);
-    assertTrue(daa2AfterReplace.getDacs().stream().map(Dac::getDacId).toList().contains(dacId));
+    assertTrue(dacIdIn(daa2AfterReplace, dacId));
 
     // Verify audit records for both REMOVE and ADD are created
     List<DaaAudit> audits1 = daaDAO.findAuditsByDaaId(daaId1);
@@ -711,21 +866,21 @@ class DaaDAOTest extends DAOTestHelper {
     // First assignment: DAC -> DAA1
     daaDAO.createDacDaaRelation(dacId, daaId1, userId);
     DataAccessAgreement daa1After1st = daaDAO.findById(daaId1);
-    assertTrue(daa1After1st.getDacs().stream().map(Dac::getDacId).toList().contains(dacId));
+    assertTrue(dacIdIn(daa1After1st, dacId));
 
     // Second assignment: DAC -> DAA2 (replaces DAA1)
     daaDAO.createDacDaaRelation(dacId, daaId2, userId);
     DataAccessAgreement daa1After2nd = daaDAO.findById(daaId1);
     assertNull(daa1After2nd.getDacs());
     DataAccessAgreement daa2After2nd = daaDAO.findById(daaId2);
-    assertTrue(daa2After2nd.getDacs().stream().map(Dac::getDacId).toList().contains(dacId));
+    assertTrue(dacIdIn(daa2After2nd, dacId));
 
     // Third assignment: DAC -> DAA3 (replaces DAA2)
     daaDAO.createDacDaaRelation(dacId, daaId3, userId);
     DataAccessAgreement daa2After3rd = daaDAO.findById(daaId2);
     assertNull(daa2After3rd.getDacs());
     DataAccessAgreement daa3After3rd = daaDAO.findById(daaId3);
-    assertTrue(daa3After3rd.getDacs().stream().map(Dac::getDacId).toList().contains(dacId));
+    assertTrue(dacIdIn(daa3After3rd, dacId));
 
     // Verify complete audit trail
     List<DaaAudit> audits1 = daaDAO.findAuditsByDaaId(daaId1);
