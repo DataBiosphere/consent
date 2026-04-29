@@ -384,6 +384,17 @@ public interface DaaDAO extends Transactional<DaaDAO> {
 
   @SqlUpdate(
       """
+          DELETE FROM dar_dataset_daa_snapshot
+          WHERE dar_id = (
+              SELECT id
+              FROM data_access_request
+              WHERE reference_id = :referenceId
+          )
+          """)
+  void deleteDarDatasetDaaSnapshotsByReferenceId(@Bind("referenceId") String referenceId);
+
+  @SqlUpdate(
+      """
       DELETE FROM dar_daa WHERE dar_id = :darId
     """)
   void deleteDarDAARelationship(@Bind("darId") Integer darId);

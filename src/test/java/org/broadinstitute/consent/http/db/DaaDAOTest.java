@@ -716,6 +716,51 @@ class DaaDAOTest extends DAOTestHelper {
     assertEquals(capturedAt, snapshots.getFirst().capturedAt());
   }
 
+  @Test
+  void testDeleteDarDatasetDaaSnapshotsByReferenceId() {
+    Integer userId = createUserId();
+    Integer dacId = dacDAO.createDac("dac", randomAlphabetic(5), "", userId);
+    Dataset dataset = createRandomDataset(userDAO.findUserById(userId), dacDAO.findById(dacId));
+    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Date now = new Date();
+    Integer darCollectionId = darCollectionDAO.insertDarCollection("ABC", userId, now);
+
+    String targetReferenceId = UUID.randomUUID().toString();
+    Integer targetDarId =
+        dataAccessRequestDAO.insertDataAccessRequest(
+            darCollectionId,
+            targetReferenceId,
+            userId,
+            now,
+            now,
+            now,
+            new DataAccessRequestData(),
+            "eraCommonsId");
+
+    String otherReferenceId = UUID.randomUUID().toString();
+    Integer otherDarId =
+        dataAccessRequestDAO.insertDataAccessRequest(
+            darCollectionId,
+            otherReferenceId,
+            userId,
+            now,
+            now,
+            now,
+            new DataAccessRequestData(),
+            "eraCommonsId");
+
+    Timestamp capturedAt = Timestamp.from(Instant.now());
+    daaDAO.insertDarDatasetDaaSnapshots(
+        List.of(
+            new DarDatasetDaaSnapshot(targetDarId, dataset.getDatasetId(), daaId, capturedAt),
+            new DarDatasetDaaSnapshot(otherDarId, dataset.getDatasetId(), daaId, capturedAt)));
+
+    daaDAO.deleteDarDatasetDaaSnapshotsByReferenceId(targetReferenceId);
+
+    assertTrue(daaDAO.findDatasetDaaSnapshotsByReferenceId(targetReferenceId).isEmpty());
+    assertEquals(1, daaDAO.findDatasetDaaSnapshotsByReferenceId(otherReferenceId).size());
+  }
+
   private static Integer getDarDaaCount(Integer prId) {
     return jdbi.withHandle(
         handle ->
