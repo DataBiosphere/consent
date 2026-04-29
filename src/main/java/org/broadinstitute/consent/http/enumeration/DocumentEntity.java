@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public enum DocumentEntity {
+  DAC("dac"),
+  DAR("dar"),
   DATASET("dataset"),
   STUDY("study");
 

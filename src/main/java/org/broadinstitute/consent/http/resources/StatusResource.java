@@ -69,10 +69,6 @@ public class StatusResource extends Resource {
         results.getOrDefault(
             ConsentApplication.ES_CHECK,
             HealthCheck.Result.unhealthy("Unable to access Elastic Search"));
-    HealthCheck.Result ontology =
-        results.getOrDefault(
-            ConsentApplication.ONTOLOGY_CHECK,
-            HealthCheck.Result.unhealthy("Unable to access Ontology"));
     HealthCheck.Result sam =
         results.getOrDefault(
             ConsentApplication.SAM_CHECK, HealthCheck.Result.unhealthy("Unable to access Sam"));
@@ -82,7 +78,6 @@ public class StatusResource extends Resource {
     boolean degraded =
         (!gcs.isHealthy()
             || !elasticSearch.isHealthy()
-            || !ontology.isHealthy()
             || !sam.isHealthy()
             || !sendGrid.isHealthy());
     formattedResults.put(DEGRADED, degraded);

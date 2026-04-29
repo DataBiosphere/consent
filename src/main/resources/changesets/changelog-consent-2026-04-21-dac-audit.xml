@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.33.xsd">
+  <changeSet id="changelog-consent-2026-04-21-dac-audit" author="grushton">
+    <createTable tableName="dac_audit">
+      <column name="id" type="bigint" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <!--
+        Note: no FK to the dac table since we audit DAC deletions; dac_id is recorded before
+        the DAC row is removed so the value remains historically meaningful.
+      -->
+      <column name="dac_id" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <!-- user_id: the actor who performed the operation (admin, chairperson, etc.) -->
+      <column name="user_id" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <!--
+        affected_user_id: the user being added or removed (nullable; only set for
+        ADD / REMOVE member/chair operations).
+      -->
+      <column name="affected_user_id" type="bigint"/>
+      <!--
+        role_id: the role being granted or revoked (nullable; only set for
+        ADD / REMOVE member/chair operations).
+      -->
+      <column name="role_id" type="integer"/>
+      <column name="action" type="varchar(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="action_date" type="timestamp" defaultValueDate="current_timestamp">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <createIndex indexName="idx_dac_audit_dac_id_and_action_date_descending"
+                 tableName="dac_audit">
+      <column name="dac_id"/>
+      <column name="action_date" descending="true"/>
+    </createIndex>
+    <addForeignKeyConstraint
+      baseTableName="dac_audit" baseColumnNames="user_id"
+      constraintName="fk_dac_audit_user_id"
+      referencedTableName="users" referencedColumnNames="user_id"/>
+    <!--
+      affected_user_id is nullable; only populated for ADD/REMOVE operations so we
+      can track which user's role changed.
+    -->
+    <addForeignKeyConstraint
+      baseTableName="dac_audit" baseColumnNames="affected_user_id"
+      constraintName="fk_dac_audit_affected_user_id"
+      referencedTableName="users" referencedColumnNames="user_id"/>
+  </changeSet>
+</databaseChangeLog>

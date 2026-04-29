@@ -113,7 +113,7 @@ class DatasetRegistrationSchemaV1AssetsTest {
         """;
 
     // Validate the schema
-    var errors = jsonSchemaUtil.validateSchema_v1(json);
+    var errors = jsonSchemaUtil.validateSchemaV1(json);
 
     // Verify no validation errors
     assertTrue(
@@ -147,7 +147,7 @@ class DatasetRegistrationSchemaV1AssetsTest {
         """;
 
     // Validate the schema
-    var errors = jsonSchemaUtil.validateSchema_v1(json);
+    var errors = jsonSchemaUtil.validateSchemaV1(json);
 
     // Verify no validation errors
     assertTrue(
@@ -181,7 +181,7 @@ class DatasetRegistrationSchemaV1AssetsTest {
         """;
 
     // Validate the schema
-    var errors = jsonSchemaUtil.validateSchema_v1(json);
+    var errors = jsonSchemaUtil.validateSchemaV1(json);
 
     // Verify no validation errors
     assertTrue(
