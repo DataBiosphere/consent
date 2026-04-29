@@ -404,6 +404,15 @@ class MailMessageDAOTest extends DAOTestHelper {
     assertEquals(messageYesterday.getEmailId(), messages4.getFirst().getEmailId());
   }
 
+  @Test
+  void testFetchMessageById() {
+    MailMessage message = generateMessage(Instant.now());
+    MailMessage fetchedMessage = mailMessageDAO.fetchMessageById(message.getEmailId());
+    assertEquals(message.getEmailId(), fetchedMessage.getEmailId());
+    assertEquals(message.getUserId(), fetchedMessage.getUserId());
+    assertEquals(message.getEmailType(), fetchedMessage.getEmailType());
+  }
+
   private MailMessage generateMessage(Instant instant) {
     User user = createUser();
     Integer messageId =

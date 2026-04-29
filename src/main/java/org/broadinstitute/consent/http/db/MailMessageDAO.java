@@ -17,9 +17,12 @@ import org.jdbi.v3.sqlobject.transaction.Transactional;
 public interface MailMessageDAO extends Transactional<MailMessageDAO> {
 
   @SqlUpdate(
-      "INSERT INTO email_entity "
-          + "(entity_reference_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date) VALUES "
-          + "(:entityReferenceId, :voteId, :userId, :emailType, :dateSent, :emailText, :sendGridResponse, :sendGridStatus, :createDate)")
+      """
+      INSERT INTO email_entity
+          (entity_reference_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date)
+      VALUES
+          (:entityReferenceId, :voteId, :userId, :emailType, :dateSent, :emailText, :sendGridResponse, :sendGridStatus, :createDate)
+      """)
   @GetGeneratedKeys
   Integer insert(
       @Nullable @Bind("entityReferenceId") String entityReferenceId,
@@ -34,7 +37,8 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
 
   @SqlQuery(
       """
-      SELECT entity_reference_id, email_entity_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date FROM email_entity e
+      SELECT entity_reference_id, email_entity_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date
+      FROM email_entity e
       WHERE email_type = :emailType
       ORDER BY create_date DESC
       OFFSET :offset
@@ -47,7 +51,8 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
 
   @SqlQuery(
       """
-      SELECT entity_reference_id, email_entity_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date FROM email_entity e
+      SELECT entity_reference_id, email_entity_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date
+      FROM email_entity e
       WHERE user_id = :userId
       ORDER BY create_date DESC
       OFFSET :offset
@@ -58,7 +63,8 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
 
   @SqlQuery(
       """
-      SELECT entity_reference_id, email_entity_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date FROM email_entity e
+      SELECT entity_reference_id, email_entity_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date
+      FROM email_entity e
       WHERE create_date BETWEEN SYMMETRIC :start AND :end
       ORDER BY create_date DESC
       OFFSET :offset
@@ -72,7 +78,8 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
 
   @SqlQuery(
       """
-      SELECT entity_reference_id, email_entity_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date FROM email_entity e
+      SELECT entity_reference_id, email_entity_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date
+      FROM email_entity e
       WHERE email_entity_id = :emailId
       """)
   MailMessage fetchMessageById(@Bind("emailId") Integer emailId);
