@@ -11,6 +11,7 @@ public class MailMessageMapper implements RowMapper<MailMessage> {
   public MailMessage map(ResultSet r, StatementContext ctx) throws SQLException {
 
     return new MailMessage(
+        r.getString("entity_reference_id"),
         r.getInt("email_entity_id"),
         r.getInt("vote_id"),
         r.getInt("user_id"),

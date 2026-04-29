@@ -428,7 +428,7 @@ class MailMessageDAOTest extends DAOTestHelper {
             now);
 
     MailMessage message = mailMessageDAO.fetchMessageById(messageId);
-    // Note that entityReferenceId is not returned as part of MailMessage
+    assertEquals(entityReferenceId, message.getEntityReferenceId());
     assertEquals(user.getUserId(), message.getUserId());
     assertEquals(emailType, message.getEmailType());
     assertEquals(nowDate, message.getDateSent());

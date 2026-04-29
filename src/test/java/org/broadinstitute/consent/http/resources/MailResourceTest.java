@@ -133,6 +133,7 @@ class MailResourceTest extends AbstractTestHelper {
 
   private MailMessage generateMailMessage(int emailType) {
     return new MailMessage(
+        randomAlphanumeric(10),
         nextInt(),
         nextInt(),
         nextInt(),

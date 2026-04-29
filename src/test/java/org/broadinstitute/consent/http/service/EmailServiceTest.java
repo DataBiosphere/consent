@@ -707,6 +707,7 @@ class EmailServiceTest extends AbstractTestHelper {
 
   private MailMessage generateMailMessage() {
     return new MailMessage(
+        randomAlphanumeric(10),
         randomInt(1, 10),
         randomInt(11, 20),
         randomInt(21, 30),

@@ -4,9 +4,10 @@ import java.util.Date;
 
 public class MailMessage {
 
+  private String entityReferenceId;
   private Integer emailId;
   private Integer voteId;
-  private Integer dacUserId;
+  private Integer userId;
   private Integer emailType;
   private Date dateSent;
   private String emailText;
@@ -15,24 +16,34 @@ public class MailMessage {
   private Date createDate;
 
   public MailMessage(
+      String entityReferenceId,
       Integer emailId,
       Integer voteId,
-      Integer dacUserId,
+      Integer userId,
       Integer emailType,
       Date dateSent,
       String emailText,
       String sendgridResponse,
       Integer sendgridStatus,
       Date createDate) {
+    this.entityReferenceId = entityReferenceId;
     this.emailId = emailId;
     this.voteId = voteId;
-    this.dacUserId = dacUserId;
+    this.userId = userId;
     this.emailType = emailType;
     this.dateSent = dateSent;
     this.emailText = emailText;
     this.sendgridResponse = sendgridResponse;
     this.sendgridStatus = sendgridStatus;
     this.createDate = createDate;
+  }
+
+  public String getEntityReferenceId() {
+    return entityReferenceId;
+  }
+
+  public void setEntityReferenceId(String entityReferenceId) {
+    this.entityReferenceId = entityReferenceId;
   }
 
   public Integer getEmailId() {
@@ -52,11 +63,11 @@ public class MailMessage {
   }
 
   public Integer getUserId() {
-    return dacUserId;
+    return userId;
   }
 
-  public void setDacUserId(Integer dacUserId) {
-    this.dacUserId = dacUserId;
+  public void setUserId(Integer userId) {
+    this.userId = userId;
   }
 
   public Integer getEmailType() {
