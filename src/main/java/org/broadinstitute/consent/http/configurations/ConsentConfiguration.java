@@ -28,8 +28,6 @@ public class ConsentConfiguration extends Configuration {
   @Valid @NotNull
   private FreeMarkerConfiguration freeMarkerConfiguration = new FreeMarkerConfiguration();
 
-  @Valid @NotNull private GoogleOAuth2Config googleAuthentication = new GoogleOAuth2Config();
-
   @JsonProperty("httpClient")
   public JerseyClientConfiguration getJerseyClientConfiguration() {
     return httpClient;
@@ -59,14 +57,6 @@ public class ConsentConfiguration extends Configuration {
 
   public FreeMarkerConfiguration getFreeMarkerConfiguration() {
     return freeMarkerConfiguration;
-  }
-
-  public GoogleOAuth2Config getGoogleAuthentication() {
-    return googleAuthentication;
-  }
-
-  public void setGoogleAuthentication(GoogleOAuth2Config googleAuthentication) {
-    this.googleAuthentication = googleAuthentication;
   }
 
   public ElasticSearchConfiguration getElasticSearchConfiguration() {

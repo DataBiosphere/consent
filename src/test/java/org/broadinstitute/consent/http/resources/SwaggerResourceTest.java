@@ -9,22 +9,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
+import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.configurations.OidcConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class SwaggerResourceTest {
+class SwaggerResourceTest extends AbstractTestHelper {
 
   private SwaggerResource swaggerResource;
 
   @BeforeEach
   void setUp() {
-    GoogleOAuth2Config config = new GoogleOAuth2Config();
-    config.setClientId(RandomStringUtils.random(10, true, true));
+    OidcConfiguration config = new OidcConfiguration();
+    config.setClientId(randomAlphanumeric(10));
     swaggerResource = new SwaggerResource(config);
   }
 

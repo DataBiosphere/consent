@@ -20,9 +20,6 @@ servers:
   - url: /
 
 security:
-  - googleoauth:
-      - email
-      - profile
   - oidc:
       - openid
       - email
@@ -973,14 +970,6 @@ paths:
           description: Internal Server Error
 components:
   securitySchemes:
-    googleoauth:
-      type: oauth2
-      flows:
-        implicit:
-          authorizationUrl: https://accounts.google.com/o/oauth2/auth
-          scopes:
-            email: email authorization
-            profile: profile authorization
     oidc:
       type: oauth2
       flows:
