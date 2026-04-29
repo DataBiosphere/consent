@@ -126,11 +126,12 @@ class MailResourceTest extends AbstractTestHelper {
 
   private List<MailMessage> generateMailMessageList() {
     List<MailMessage> messageList = new ArrayList<>();
-    EnumSet.allOf(EmailType.class).forEach(t -> messageList.add(generateMailMessage(t.toString())));
+    EnumSet.allOf(EmailType.class)
+        .forEach(t -> messageList.add(generateMailMessage(t.getTypeInt())));
     return messageList;
   }
 
-  private MailMessage generateMailMessage(String emailType) {
+  private MailMessage generateMailMessage(int emailType) {
     return new MailMessage(
         nextInt(),
         nextInt(),

@@ -406,11 +406,36 @@ class MailMessageDAOTest extends DAOTestHelper {
 
   @Test
   void testFetchMessageById() {
-    MailMessage message = generateMessage(Instant.now());
-    MailMessage fetchedMessage = mailMessageDAO.fetchMessageById(message.getEmailId());
-    assertEquals(message.getEmailId(), fetchedMessage.getEmailId());
-    assertEquals(message.getUserId(), fetchedMessage.getUserId());
-    assertEquals(message.getEmailType(), fetchedMessage.getEmailType());
+    User user = createUser();
+    String entityReferenceId = randomAlphanumeric(10);
+    Integer voteId = randomInt(1, 1000);
+    Integer emailType = EmailType.NEW_DAR.getTypeInt();
+    Instant now = Instant.now();
+    Date nowDate = Date.from(now);
+    String emailText = randomAlphanumeric(1000);
+    String sendGridResponse = randomAlphanumeric(1000);
+    Integer sendGridStatus = 200;
+    Integer messageId =
+        mailMessageDAO.insert(
+            entityReferenceId,
+            voteId,
+            user.getUserId(),
+            emailType,
+            now,
+            emailText,
+            sendGridResponse,
+            sendGridStatus,
+            now);
+
+    MailMessage message = mailMessageDAO.fetchMessageById(messageId);
+    // Note that entityReferenceId is not returned as part of MailMessage
+    assertEquals(user.getUserId(), message.getUserId());
+    assertEquals(emailType, message.getEmailType());
+    assertEquals(nowDate, message.getDateSent());
+    assertEquals(emailText, message.getEmailText());
+    assertEquals(sendGridStatus, message.getSendgridStatus());
+    assertEquals(sendGridResponse, message.getSendgridResponse());
+    assertEquals(nowDate, message.getCreateDate());
   }
 
   private MailMessage generateMessage(Instant instant) {

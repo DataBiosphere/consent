@@ -710,7 +710,7 @@ class EmailServiceTest extends AbstractTestHelper {
         randomInt(1, 10),
         randomInt(11, 20),
         randomInt(21, 30),
-        randomAlphanumeric(10),
+        randomInt(1, 10),
         new Date(),
         randomAlphanumeric(10),
         randomAlphanumeric(10),

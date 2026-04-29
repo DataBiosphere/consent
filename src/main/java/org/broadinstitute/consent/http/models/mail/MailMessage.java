@@ -7,7 +7,7 @@ public class MailMessage {
   private Integer emailId;
   private Integer voteId;
   private Integer dacUserId;
-  private String emailType;
+  private Integer emailType;
   private Date dateSent;
   private String emailText;
   private String sendgridResponse;
@@ -18,7 +18,7 @@ public class MailMessage {
       Integer emailId,
       Integer voteId,
       Integer dacUserId,
-      String emailType,
+      Integer emailType,
       Date dateSent,
       String emailText,
       String sendgridResponse,
@@ -59,11 +59,11 @@ public class MailMessage {
     this.dacUserId = dacUserId;
   }
 
-  public String getEmailType() {
+  public Integer getEmailType() {
     return emailType;
   }
 
-  public void setEmailType(String emailType) {
+  public void setEmailType(Integer emailType) {
     this.emailType = emailType;
   }
 
