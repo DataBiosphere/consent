@@ -209,6 +209,7 @@ properties:
       "$ref": "./ConsentGroup.yaml"
   assets:
     type: object
+    title: DatasetRegistrationSchemaV1Assets
     description: Study Assets
 required:
   - studyName

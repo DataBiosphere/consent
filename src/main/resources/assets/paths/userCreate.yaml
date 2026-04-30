@@ -18,6 +18,7 @@ post:
       application/json:
         schema:
           type: object
+          title: CreateUserRequest
           properties:
             displayName:
               type: string

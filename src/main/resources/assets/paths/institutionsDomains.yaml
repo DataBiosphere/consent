@@ -11,6 +11,7 @@ post:
       application/json:
         schema:
           type: object
+          title: InstitutionDomainsRequest
           properties:
             institutionDomainMap:
               type: object

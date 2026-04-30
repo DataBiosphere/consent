@@ -8,6 +8,7 @@ properties:
     description: The public DUOS identifier for a dataset
   dataUse:
     type: object
+    title: DatasetSearchDataUse
     description: The data use associated with the dataset
     properties:
       primary:
@@ -25,4 +26,5 @@ properties:
     description: The unique identifier for a DAC
   study:
     type: object
+    title: DatasetSearchStudy
     description: The study associated with the dataset

@@ -15,6 +15,7 @@ post:
       application/json:
         schema:
           type: object
+          title: BulkDaaUserRequest
           properties:
             daaList:
               type: array
@@ -56,6 +57,7 @@ delete:
       application/json:
         schema:
           type: object
+          title: BulkDaaUserRequest
           properties:
             daaList:
               type: array

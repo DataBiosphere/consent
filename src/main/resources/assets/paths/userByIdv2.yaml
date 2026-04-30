@@ -44,6 +44,7 @@ put:
       application/json:
         schema:
           type: object
+          title: UpdateUserRequest
           properties:
             displayName:
               description: The display name for the user
