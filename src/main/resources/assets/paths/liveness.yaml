@@ -1,5 +1,6 @@
 get:
   summary: Liveness Endpoint
+  operationId: livenessGet
   description: Liveness endpoint for conducting quick health checks on the application.
   tags:
     - Status

@@ -1,5 +1,6 @@
 get:
   summary: Get Study by Id
+  operationId: apiDatasetStudyStudyIdGet
   description: Finds Study and Properties of the Study specified by id.
   parameters:
     - name: studyId
@@ -23,6 +24,7 @@ get:
       description: Server error
 put:
   summary: Update Dataset Registration By Study Id
+  operationId: apiDatasetStudyStudyIdPut
   description: Updates Dataset Registration specified by Study Id.
   tags:
     - Study
@@ -85,6 +87,7 @@ put:
       description: Server error
 delete:
   summary: Delete Study
+  operationId: apiDatasetStudyStudyIdDelete
   description: |
     Deletes Study, Datasets, and all properties of the Study specified by id.
     * Admins can delete any study
@@ -109,6 +112,7 @@ delete:
       description: Server error
 patch:
   summary: Patch Study
+  operationId: apiDatasetStudyStudyIdPatch
   description: |
     This API allows Admins, Chairpersons, and Data Submitters to patch a limited set of study
     properties. All fields are optional and if not provided, will be ignored.

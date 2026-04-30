@@ -30,3 +30,5 @@ get:
       description: Not Found - User not found
     500:
       description: Internal Server Error - An error occurred while processing the request.
+
+  operationId: apiLibraryCardsHistoryUserIdGet

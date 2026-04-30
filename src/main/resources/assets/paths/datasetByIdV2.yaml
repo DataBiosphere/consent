@@ -1,5 +1,6 @@
 get:
   summary: Get Dataset by Id
+  operationId: apiDatasetV2IdGet
   description: Finds Dataset and DatasetProperties of the Dataset specified by id.
   parameters:
     - name: id

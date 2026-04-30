@@ -21,5 +21,13 @@ get:
             format: binary
     404:
       description: No DAA File found with the given ID
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/ErrorResponse.yaml'

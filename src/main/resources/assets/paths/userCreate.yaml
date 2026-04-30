@@ -1,5 +1,6 @@
 post:
   summary: Create User
+  operationId: apiUserCreatePost
   requestBody:
     description: |
       Creates a User. Admins are allowed to create users with the following roles:

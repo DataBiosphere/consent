@@ -52,6 +52,7 @@ put:
       description: Internal Server Error
 get:
   summary: Get all DACs
+  operationId: apiDacGet
   description: All Data Access Committees with a list of chairpersons and members
   parameters:
     - name: withUsers

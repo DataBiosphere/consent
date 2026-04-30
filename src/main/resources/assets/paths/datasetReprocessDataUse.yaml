@@ -1,5 +1,6 @@
 put:
   summary: Admin Only API to update a Dataset's Translated Data Use
+  operationId: apiDatasetIdReprocessDatausePut
   description: | 
     This endpoint allows an admin to update the translated data use for a dataset. This is used 
     when the data use has changed and the dataset needs to be reprocessed to update the translated 

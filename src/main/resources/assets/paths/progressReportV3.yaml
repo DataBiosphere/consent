@@ -1,5 +1,6 @@
 post:
   summary: Create a new DAR progress report
+  operationId: apiDarV3ProgressReportParentReferenceIdPost
   description: Create a new DAR progress report
   tags:
     - Data Access Request

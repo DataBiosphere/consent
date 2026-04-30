@@ -1,5 +1,6 @@
 get:
       summary: Get all matches for the listed research purpose (DAR) ids 
+      operationId: apiMatchPurposeBatchGet
       description: Get all matches for the listed research purpose (DAR) ids
       tags:
         - Data Access Request

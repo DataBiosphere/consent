@@ -1,5 +1,6 @@
 get:
   summary: Get Mail Messages by Date Range.
+  operationId: apiMailRangeGet
   description: |
     Admin only feature returns MailMessage list filtered by Date Range.
   parameters:
