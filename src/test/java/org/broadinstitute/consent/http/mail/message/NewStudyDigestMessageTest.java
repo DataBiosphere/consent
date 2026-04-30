@@ -37,7 +37,7 @@ class NewStudyDigestMessageTest {
   void testNewStudyDigestMessage() throws TemplateException, IOException {
     List<StudyDatasetCountRecord> newStudies = new ArrayList<>();
     StudyDatasetCountRecord record1 = new StudyDatasetCountRecord("My new study", 3, 1);
-    StudyDatasetCountRecord record2 = new StudyDatasetCountRecord("My other new study", 4, 2);
+    StudyDatasetCountRecord record2 = new StudyDatasetCountRecord("My other new study", 4000, 2);
     newStudies.add(record1);
     newStudies.add(record2);
     String referenceId = "My reference id";
