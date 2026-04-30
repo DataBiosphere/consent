@@ -29,8 +29,11 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.DarDocumentType;
@@ -39,16 +42,19 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
 import org.broadinstitute.consent.http.models.AuthUser;
+import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetDaaSnapshot;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Error;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.DaaService;
+import org.broadinstitute.consent.http.service.DacService;
 import org.broadinstitute.consent.http.service.DarCollectionService;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.DatasetService;
@@ -63,6 +69,7 @@ import org.glassfish.jersey.server.ContainerRequest;
 public class DataAccessRequestResource extends Resource {
 
   private final DaaService daaService;
+  private final DacService dacService;
   private final DataAccessRequestService dataAccessRequestService;
   private final DarCollectionService darCollectionService;
   private final GCSService gcsService;
@@ -73,6 +80,7 @@ public class DataAccessRequestResource extends Resource {
   @Inject
   public DataAccessRequestResource(
       DaaService daaService,
+      DacService dacService,
       DataAccessRequestService dataAccessRequestService,
       GCSService gcsService,
       UserService userService,
@@ -80,6 +88,7 @@ public class DataAccessRequestResource extends Resource {
       MatchService matchService,
       DarCollectionService darCollectionService) {
     this.daaService = daaService;
+    this.dacService = dacService;
     this.dataAccessRequestService = dataAccessRequestService;
     this.gcsService = gcsService;
     this.userService = userService;
@@ -134,12 +143,12 @@ public class DataAccessRequestResource extends Resource {
   @PermitAll
   public Response getByReferenceId(
       @Auth DuosUser duosUser, @PathParam("referenceId") String referenceId) {
-    validateAuthedRoleUser(
-        List.of(
-            UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER, UserRoles.SIGNINGOFFICIAL),
-        duosUser,
-        referenceId);
     try {
+      validateAuthedRoleUser(
+          List.of(
+              UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER, UserRoles.SIGNINGOFFICIAL),
+          duosUser,
+          referenceId);
       DataAccessRequest dar = dataAccessRequestService.findByReferenceId(referenceId);
       if (Objects.nonNull(dar)) {
         return Response.status(Response.Status.OK).entity(dar.convertToSimplifiedDar()).build();
@@ -166,6 +175,26 @@ public class DataAccessRequestResource extends Resource {
           List.of(UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER), duosUser, referenceId);
       List<DataAccessAgreement> dataAccessAgreements = daaService.findByDarReferenceId(referenceId);
       return Response.status(Response.Status.OK).entity(dataAccessAgreements).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Path("/v2/{referenceId}/dataset-daa-snapshots")
+  @Produces("application/json")
+  @PermitAll
+  public Response getDatasetDaaSnapshotsByReferenceId(
+      @Auth DuosUser duosUser, @PathParam("referenceId") String referenceId) {
+    try {
+      validateAuthedRoleUser(
+          List.of(
+              UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER, UserRoles.SIGNINGOFFICIAL),
+          duosUser,
+          referenceId);
+      Map<Integer, DatasetDaaSnapshot> snapshots =
+          dataAccessRequestService.findDatasetDaaSnapshotsByReferenceId(referenceId);
+      return Response.status(Response.Status.OK).entity(snapshots).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
@@ -662,6 +691,13 @@ public class DataAccessRequestResource extends Resource {
    * access the resource. In practice, pass in allowableRoles for users that are not the create user
    * (i.e. Admin) so they can also have access to the DAR.
    *
+   * <p>Additional restrictions apply for non-admin, non-creator users:
+   *
+   * <ul>
+   *   <li>CHAIRPERSON / MEMBER: must belong to a DAC that governs at least one dataset on the DAR.
+   *   <li>SIGNINGOFFICIAL: must share an institution with the DAR creator.
+   * </ul>
+   *
    * @param allowableRoles List of roles that would allow the user to access the resource
    * @param duosUser The DuosUser
    * @param referenceId The referenceId of the resource.
@@ -677,6 +713,56 @@ public class DataAccessRequestResource extends Resource {
       logWarn("DataAccessRequest '" + referenceId + "' has an invalid userId");
       super.validateAuthedRoleUser(allowableRoles, user, dataAccessRequest.getUserId());
     }
+
+    boolean isCreator =
+        Objects.nonNull(dataAccessRequest.getUserId())
+            && dataAccessRequest.getUserId().equals(user.getUserId());
+    boolean isAdmin = user.hasUserRole(UserRoles.ADMIN);
+
+    if (!isCreator && !isAdmin) {
+      if (user.hasUserRole(UserRoles.CHAIRPERSON) || user.hasUserRole(UserRoles.MEMBER)) {
+        validateDacMembership(user, dataAccessRequest);
+      }
+      if (user.hasUserRole(UserRoles.SIGNINGOFFICIAL)) {
+        validateSigningOfficialInstitution(user, dataAccessRequest);
+      }
+    }
+
     return dataAccessRequest;
+  }
+
+  /**
+   * Verifies that the user is a chair or member of at least one DAC that governs a dataset
+   * referenced by the given DAR.
+   */
+  private void validateDacMembership(User user, DataAccessRequest dar) {
+    List<Integer> datasetIds = dar.getDatasetIds();
+    if (CollectionUtils.isEmpty(datasetIds)) {
+      throw new ForbiddenException("User does not have permission");
+    }
+    Set<Dac> dacsForDatasets = dacService.findByDatasetId(datasetIds);
+    boolean isMember =
+        dacsForDatasets.stream()
+            .anyMatch(
+                dac ->
+                    (dac.getChairpersons() != null
+                            && dac.getChairpersons().stream()
+                                .anyMatch(c -> c.getUserId().equals(user.getUserId())))
+                        || (dac.getMembers() != null
+                            && dac.getMembers().stream()
+                                .anyMatch(m -> m.getUserId().equals(user.getUserId()))));
+    if (!isMember) {
+      throw new ForbiddenException("User does not have permission");
+    }
+  }
+
+  /** Verifies that the signing official shares an institution with the user who created the DAR. */
+  private void validateSigningOfficialInstitution(User signingOfficial, DataAccessRequest dar) {
+    User darCreator = userService.findUserById(dar.getUserId());
+    if (darCreator == null
+        || signingOfficial.getInstitutionId() == null
+        || !signingOfficial.getInstitutionId().equals(darCreator.getInstitutionId())) {
+      throw new ForbiddenException("User does not have permission");
+    }
   }
 }

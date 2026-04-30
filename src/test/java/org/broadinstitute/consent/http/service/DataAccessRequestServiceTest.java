@@ -33,6 +33,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -62,6 +63,9 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataManagementIncident;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetDaaMapping;
+import org.broadinstitute.consent.http.models.DatasetDaaSnapshot;
+import org.broadinstitute.consent.http.models.DatasetDaaSnapshotDetail;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.IntellectualProperty;
@@ -236,6 +240,58 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testCreateDataAccessRequest_CapturesDatasetDaaSnapshots() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setReferenceId("id");
+    dar.setDatasetIds(List.of(1, 2));
+    User user = createUserWithPrerequisites();
+    when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
+    when(counterService.getNextDarSequence()).thenReturn(1);
+    when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
+    when(dataAccessRequestDAO.findByReferenceId(argThat(new LongerThanTwo()))).thenReturn(dar);
+    when(darCollectionDAO.insertDarCollection(anyString(), anyInt(), any(Date.class)))
+        .thenReturn(99);
+    when(dataAccessRequestDAO.insertDataAccessRequest(
+            anyInt(),
+            anyString(),
+            anyInt(),
+            any(Date.class),
+            any(Date.class),
+            any(Date.class),
+            any(DataAccessRequestData.class),
+            anyString()))
+        .thenReturn(12);
+    when(dataSetDAO.filterDatasetIdsByAutomationRuleType(
+            dar.getDatasetIds(), DACAutomationRuleType.REQUIRE_SO_DAR_APPROVAL.name()))
+        .thenReturn(List.of());
+    when(daaDAO.findDaaIdsByDatasetIds(anyList())).thenReturn(Set.of());
+    when(daaDAO.findCurrentDaaMappingsByDatasetIds(dar.getDatasetIds()))
+        .thenReturn(List.of(new DatasetDaaMapping(1, 10), new DatasetDaaMapping(2, 20)));
+
+    DataAccessRequest newDar = service.createDataAccessRequest(user, dar, request);
+
+    assertNotNull(newDar);
+    verify(daaDAO)
+        .insertDarDatasetDaaSnapshots(
+            argThat(
+                snapshots ->
+                    snapshots.size() == 2
+                        && snapshots.stream().allMatch(snapshot -> snapshot.darId().equals(12))
+                        && snapshots.stream()
+                            .anyMatch(
+                                snapshot ->
+                                    snapshot.datasetId().equals(1)
+                                        && snapshot.daaId().equals(10)
+                                        && snapshot.capturedAt() != null)
+                        && snapshots.stream()
+                            .anyMatch(
+                                snapshot ->
+                                    snapshot.datasetId().equals(2)
+                                        && snapshot.daaId().equals(20)
+                                        && snapshot.capturedAt() != null)));
+  }
+
+  @Test
   void testCreateDataAccessRequest_Create_Missing_DAAs() {
     DataAccessRequest dar = generateDataAccessRequest();
     dar.addDatasetIds(List.of(1, 2, 3));
@@ -379,6 +435,48 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void createProgressReportCapturesDatasetDaaSnapshots() {
+    DataAccessRequest parentDar = generateDataAccessRequest();
+    DataAccessRequest progressReport = generateProgressReport();
+    progressReport.setParentId(parentDar.getId());
+    progressReport.setCollectionId(parentDar.getCollectionId());
+    progressReport.setDatasetIds(List.of(1, 2));
+    parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
+    parentDar.setUserId(1);
+    parentDar.setDatasetIds(List.of(1, 2));
+    User user = createUserWithPrerequisites();
+    when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId()))
+        .thenReturn(progressReport);
+    when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
+        .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
+    when(daaDAO.findCurrentDaaMappingsByDatasetIds(progressReport.getDatasetIds()))
+        .thenReturn(List.of(new DatasetDaaMapping(1, 10), new DatasetDaaMapping(2, 20)));
+
+    DataAccessRequest newDar =
+        service.createProgressReport(user, progressReport, parentDar, request);
+
+    assertNotNull(newDar);
+    verify(daaDAO)
+        .insertDarDatasetDaaSnapshots(
+            argThat(
+                snapshots ->
+                    snapshots.size() == 2
+                        && snapshots.stream().allMatch(snapshot -> snapshot.darId() != null)
+                        && snapshots.stream()
+                            .anyMatch(
+                                snapshot ->
+                                    snapshot.datasetId().equals(1)
+                                        && snapshot.daaId().equals(10)
+                                        && snapshot.capturedAt() != null)
+                        && snapshots.stream()
+                            .anyMatch(
+                                snapshot ->
+                                    snapshot.datasetId().equals(2)
+                                        && snapshot.daaId().equals(20)
+                                        && snapshot.capturedAt() != null)));
+  }
+
+  @Test
   void createProgressReportDmi() {
     DataAccessRequest parentDar = generateDataAccessRequest();
     DataAccessRequest progressReport = generateProgressReport();
@@ -490,6 +588,37 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     verify(dataAccessRequestDAO)
         .insertAllDarDatasets(argThat(new DarDatasetMatcher(progressReport)));
     verify(dataAccessRequestDAO, never()).updateRequiresSOApproval(eq(true), anyString());
+    verify(daaDAO, never()).insertDarDatasetDaaSnapshots(any());
+  }
+
+  @Test
+  void findDatasetDaaSnapshotsByReferenceId() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    Timestamp capturedAt = Timestamp.from(Instant.now());
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    when(daaDAO.findDatasetDaaSnapshotsByReferenceId(dar.getReferenceId()))
+        .thenReturn(
+            List.of(
+                new DatasetDaaSnapshotDetail(1, 10, capturedAt),
+                new DatasetDaaSnapshotDetail(2, 20, capturedAt)));
+
+    Map<Integer, DatasetDaaSnapshot> snapshots =
+        service.findDatasetDaaSnapshotsByReferenceId(dar.getReferenceId());
+
+    assertEquals(2, snapshots.size());
+    assertEquals(new DatasetDaaSnapshot(10, capturedAt), snapshots.get(1));
+    assertEquals(new DatasetDaaSnapshot(20, capturedAt), snapshots.get(2));
+  }
+
+  @Test
+  void findDatasetDaaSnapshotsByReferenceIdNotFound() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    when(dataAccessRequestDAO.findByReferenceId(dar.getReferenceId())).thenReturn(dar);
+    when(daaDAO.findDatasetDaaSnapshotsByReferenceId(dar.getReferenceId())).thenReturn(List.of());
+
+    assertThrows(
+        NotFoundException.class,
+        () -> service.findDatasetDaaSnapshotsByReferenceId(dar.getReferenceId()));
   }
 
   @Test

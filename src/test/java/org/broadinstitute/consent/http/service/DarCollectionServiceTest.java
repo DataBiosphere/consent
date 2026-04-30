@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
@@ -93,6 +94,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   @Mock private VoteDAO voteDAO;
   @Mock private UserDAO userDAO;
   @Mock private DacDAO dacDAO;
+  @Mock private DaaDAO daaDAO;
   @Mock private Jdbi jdbi;
   @Mock private DACAutomationRuleService dacAutomationRuleService;
   @Mock private ContainerRequest request;
@@ -107,9 +109,53 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(jdbi.onDemand(VoteDAO.class)).thenReturn(voteDAO);
     when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
     when(jdbi.onDemand(DacDAO.class)).thenReturn(dacDAO);
+    when(jdbi.onDemand(DaaDAO.class)).thenReturn(daaDAO);
     service =
         new DarCollectionService(
             jdbi, darCollectionServiceDAO, emailService, dacAutomationRuleService);
+  }
+
+  @Test
+  void testUpdateCollectionToDraftStatusDeletesSnapshots() {
+    String firstReferenceId = UUID.randomUUID().toString();
+    String secondReferenceId = UUID.randomUUID().toString();
+    Integer collectionId = 123;
+    Integer userId = 456;
+    Date now = new Date();
+
+    DataAccessRequest firstDar = new DataAccessRequest();
+    firstDar.setReferenceId(firstReferenceId);
+    firstDar.setUserId(userId);
+    firstDar.setCreateDate(new Timestamp(now.getTime() - 2_000));
+    firstDar.setSubmissionDate(new Timestamp(now.getTime() - 1_000));
+    DataAccessRequestData firstData = new DataAccessRequestData();
+    firstData.setProjectTitle("project-1");
+    firstDar.setData(firstData);
+
+    DataAccessRequest secondDar = new DataAccessRequest();
+    secondDar.setReferenceId(secondReferenceId);
+    secondDar.setUserId(userId);
+    secondDar.setCreateDate(new Timestamp(now.getTime()));
+    secondDar.setSubmissionDate(new Timestamp(now.getTime()));
+    DataAccessRequestData secondData = new DataAccessRequestData();
+    secondData.setProjectTitle("project-2");
+    secondDar.setData(secondData);
+
+    DarCollection sourceCollection = new DarCollection();
+    sourceCollection.setDarCollectionId(collectionId);
+    sourceCollection.addDar(firstDar);
+    sourceCollection.addDar(secondDar);
+
+    DarCollection updatedCollection = new DarCollection();
+    updatedCollection.setDarCollectionId(collectionId);
+    updatedCollection.addDar(firstDar);
+    when(darCollectionDAO.findDARCollectionByCollectionId(collectionId))
+        .thenReturn(updatedCollection);
+
+    service.updateCollectionToDraftStatus(sourceCollection);
+
+    verify(daaDAO).deleteDarDatasetDaaSnapshotsByReferenceId(firstReferenceId);
+    verify(daaDAO).deleteDarDatasetDaaSnapshotsByReferenceId(secondReferenceId);
   }
 
   @Test

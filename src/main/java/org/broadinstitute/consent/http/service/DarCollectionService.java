@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
@@ -66,6 +67,7 @@ public class DarCollectionService implements ConsentLogger {
 
   private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
   private final DacDAO dacDAO;
+  private final DaaDAO daaDAO;
   private final DarCollectionDAO darCollectionDAO;
   private final DarCollectionSummaryDAO darCollectionSummaryDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
@@ -84,6 +86,7 @@ public class DarCollectionService implements ConsentLogger {
       EmailService emailService,
       DACAutomationRuleService dacAutomationRuleService) {
     this.dacDAO = jdbi.onDemand(DacDAO.class);
+    this.daaDAO = jdbi.onDemand(DaaDAO.class);
     this.darCollectionDAO = jdbi.onDemand(DarCollectionDAO.class);
     this.darCollectionSummaryDAO = jdbi.onDemand(DarCollectionSummaryDAO.class);
     this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
@@ -491,6 +494,7 @@ public class DarCollectionService implements ConsentLogger {
                   new Gson().fromJson(d.getData().toString(), DataAccessRequestData.class);
               newData.setStatus(null);
               newData.setReferenceId(d.getReferenceId());
+              daaDAO.deleteDarDatasetDaaSnapshotsByReferenceId(d.getReferenceId());
               dataAccessRequestDAO.updateDataByReferenceId(
                   d.getReferenceId(), d.getUserId(), null, now, newData, null);
             });

@@ -18,7 +18,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -44,9 +46,13 @@ import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarDataset;
+import org.broadinstitute.consent.http.models.DarDatasetDaaSnapshot;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetDaaMapping;
+import org.broadinstitute.consent.http.models.DatasetDaaSnapshot;
+import org.broadinstitute.consent.http.models.DatasetDaaSnapshotDetail;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
@@ -262,6 +268,7 @@ public class DataAccessRequestService implements ConsentLogger {
     }
     daaDAO.insertDarDAARelationship(darId, dataAccessRequest.data.getDaaIds());
     syncDataAccessRequestDatasets(datasetIds, referenceId);
+    captureDatasetDaaSnapshots(darId, datasetIds, new Timestamp(now.getTime()));
     boolean requiresSOApproval = flagIfSOApprovalIsNeeded(user, datasetIds, referenceId);
     if (!requiresSOApproval) {
       ruleService.triggerDACRuleSettings(user, datasetIds, referenceId, request);
@@ -294,8 +301,9 @@ public class DataAccessRequestService implements ConsentLogger {
       throw new BadRequestException(
           "Progress report can only be created for approved datasets in the parent DAR");
     }
+    Integer id;
     try {
-      Integer id =
+      id =
           dataAccessRequestDAO.insertProgressReport(
               progressReport.getParentId(),
               progressReport.getCollectionId(),
@@ -330,6 +338,9 @@ public class DataAccessRequestService implements ConsentLogger {
     }
 
     syncDataAccessRequestDatasets(progressReportDatasetIds, referenceId);
+    if (!progressReport.getIsCloseoutProgressReport()) {
+      captureDatasetDaaSnapshots(id, progressReportDatasetIds, Timestamp.from(Instant.now()));
+    }
 
     if (!progressReport.getIsCloseoutProgressReport()
         && !progressReport.getHasDMI()
@@ -338,6 +349,23 @@ public class DataAccessRequestService implements ConsentLogger {
     }
 
     return findByReferenceId(referenceId);
+  }
+
+  public Map<Integer, DatasetDaaSnapshot> findDatasetDaaSnapshotsByReferenceId(String referenceId) {
+    findByReferenceId(referenceId);
+    List<DatasetDaaSnapshotDetail> snapshots =
+        Objects.requireNonNullElse(
+            daaDAO.findDatasetDaaSnapshotsByReferenceId(referenceId), List.of());
+    if (snapshots.isEmpty()) {
+      throw new NotFoundException(
+          "No dataset to DAA snapshot found for Data Access Request reference Id");
+    }
+    Map<Integer, DatasetDaaSnapshot> result = new LinkedHashMap<>();
+    for (DatasetDaaSnapshotDetail snapshot : snapshots) {
+      result.put(
+          snapshot.datasetId(), new DatasetDaaSnapshot(snapshot.daaId(), snapshot.capturedAt()));
+    }
+    return result;
   }
 
   public void approveDataAccessRequestCloseout(User signingOfficial, String referenceId) {
@@ -791,5 +819,23 @@ public class DataAccessRequestService implements ConsentLogger {
       return true;
     }
     return false;
+  }
+
+  private void captureDatasetDaaSnapshots(
+      Integer darId, List<Integer> datasetIds, Timestamp capturedAt) {
+    List<DatasetDaaMapping> datasetDaaMappings =
+        Objects.requireNonNullElse(
+            daaDAO.findCurrentDaaMappingsByDatasetIds(datasetIds), List.of());
+    if (datasetDaaMappings.isEmpty()) {
+      return;
+    }
+    List<DarDatasetDaaSnapshot> snapshots =
+        datasetDaaMappings.stream()
+            .map(
+                mapping ->
+                    new DarDatasetDaaSnapshot(
+                        darId, mapping.datasetId(), mapping.daaId(), capturedAt))
+            .toList();
+    daaDAO.insertDarDatasetDaaSnapshots(snapshots);
   }
 }
