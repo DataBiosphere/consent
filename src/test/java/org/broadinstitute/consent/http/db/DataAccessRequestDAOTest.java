@@ -38,6 +38,7 @@ import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.Election;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.jdbi.v3.core.JdbiException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -1266,15 +1267,17 @@ class DataAccessRequestDAOTest extends DAOTestHelper {
     dataAccessRequestDAO.insertDARDatasetRelation(
         darTwo.getReferenceId(), datasetThree.getDatasetId());
     mailMessageDAO.insert(
-        darOne.getReferenceId(),
-        null,
-        userOneId,
-        EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(),
-        Instant.now(),
-        "hello world!",
-        "success",
-        200,
-        Instant.now());
+        new MailMessage(
+            darOne.getReferenceId(),
+            null,
+            null,
+            userOneId,
+            EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(),
+            Date.from(Instant.now()),
+            "hello world!",
+            "success",
+            200,
+            Date.from(Instant.now())));
     List<DataAccessRequest> dars =
         dataAccessRequestDAO.findAgedDARsByEmailTypeOlderThanInterval(
             EmailType.DAR_EXPIRATION_REMINDER.getTypeInt(),
