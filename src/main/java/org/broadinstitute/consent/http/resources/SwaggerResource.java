@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
+import org.broadinstitute.consent.http.configurations.OidcConfiguration;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.parboiled.common.FileUtils;
 
@@ -24,11 +24,11 @@ public class SwaggerResource implements ConsentLogger {
       new MediaType("application", "javascript").toString();
   protected static final String MEDIA_TYPE_PNG = new MediaType("image", "png").toString();
 
-  private final GoogleOAuth2Config config;
+  private final OidcConfiguration config;
   private final String swaggerUiPath;
 
   @Inject
-  public SwaggerResource(GoogleOAuth2Config config) {
+  public SwaggerResource(OidcConfiguration config) {
     this.config = config;
     this.swaggerUiPath = loadSwaggerUiPath();
   }

@@ -36,7 +36,7 @@
         </thead>
         <tbody>
       <#list newStudies as item>
-        <tr><td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;"><a href="${serverUrl}studies/${item.id()}">${item.name()}</a></td><td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">${item.datasetCount()}</td></tr>
+        <tr><td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;"><a href="${serverUrl}studies/${item.id()?c}">${item.name()}</a></td><td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">${item.datasetCount()}</td></tr>
       </#list>
         </tbody>
       </table>

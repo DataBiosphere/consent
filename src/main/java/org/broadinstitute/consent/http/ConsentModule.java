@@ -15,8 +15,8 @@ import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration;
-import org.broadinstitute.consent.http.configurations.GoogleOAuth2Config;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
+import org.broadinstitute.consent.http.configurations.OidcConfiguration;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.db.AcknowledgementDAO;
 import org.broadinstitute.consent.http.db.CounterDAO;
@@ -225,11 +225,6 @@ public class ConsentModule extends AbstractModule {
   @Provides
   ServicesConfiguration providesServicesConfiguration() {
     return config.getServicesConfiguration();
-  }
-
-  @Provides
-  GoogleOAuth2Config providesGoogleOAuth2Config() {
-    return config.getGoogleAuthentication();
   }
 
   @Provides
@@ -649,13 +644,18 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
+  OidcConfiguration providesOidcConfiguration() {
+    return config.getOidcConfiguration();
+  }
+
+  @Provides
   OidcAuthorityDAO providesOidcAuthorityDAO() {
-    return new OidcAuthorityDAO(providesHttpClientUtil(), config.getOidcConfiguration());
+    return new OidcAuthorityDAO(providesHttpClientUtil(), providesOidcConfiguration());
   }
 
   @Provides
   OidcService providesOidcService() {
-    return new OidcService(providesOidcAuthorityDAO(), config.getOidcConfiguration());
+    return new OidcService(providesOidcAuthorityDAO(), providesOidcConfiguration());
   }
 
   @Provides
