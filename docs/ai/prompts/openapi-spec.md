@@ -9,17 +9,23 @@ Use this when adding, editing, or reviewing OpenAPI path definitions in either:
 
 ## `operationId` Naming Convention
 
-All **new** `operationId` values must follow the path-derived camelCase pattern:
+All **new** `operationId` values must follow the path-derived camelCase pattern.
 
+**Authenticated routes** (paths under `/api`):
 ```
 api<PathSegments><HttpVerb>
+```
+
+**Unauthenticated routes** (paths outside `/api`):
+```
+<pathSegments><HttpVerb>
 ```
 
 Rules:
 
 | Part | Rule | Example |
 |---|---|---|
-| Prefix | Always start with `api` | `api…` |
+| Prefix | `api` for routes under `/api`; **no prefix** for routes outside `/api` | `/api/…` → `api…`; `/liveness` → `liveness…` |
 | Path segments | Concatenate each segment in PascalCase; drop slashes and underscores | `/draft/v1/` → `DraftV1` |
 | Path parameters | Use the parameter name in PascalCase | `{draftUUID}` → `DraftUUID`, `{fileId}` → `FileId` |
 | Version segments | Include as-is in PascalCase | `v2` → `V2` |
@@ -36,10 +42,15 @@ Rules:
 | `/api/user/{userId}` | PUT | `apiUserUserIdPut` |
 | `/api/dataset/v2/{id}` | GET | `apiDatasetV2IdGet` |
 | `/api/dac/{dacId}/rules/{ruleId}/toggle` | PUT | `apiDacDacIdRulesRuleIdTogglePut` |
+| `/liveness` | GET | `livenessGet` |
+| `/tos/text` | GET | `tosTextGet` |
+| `/feature/{id}` | GET | `featureIdGet` |
+| `/ontology/search` | GET | `ontologySearchGet` |
 
 > **Legacy names** (e.g. `findDacById`, `deleteDac`, `approveCollection`) exist in older
 > files and must not be used as models for new work. They are retained only for backward
-> compatibility with generated clients.
+> compatibility with generated clients. They do **not** establish a naming pattern — use
+> the path-derived rules above instead.
 
 ---
 
