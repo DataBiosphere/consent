@@ -17,6 +17,7 @@ post:
         application/json:
           schema:
             type: object
+            title: SupportUploadToken
             properties:
               token:
                 type: string

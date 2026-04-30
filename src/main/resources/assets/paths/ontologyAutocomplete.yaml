@@ -44,10 +44,6 @@ get:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              message:
-                type: string
-                description: Description of the validation error.
+            $ref: '../schemas/ErrorResponse.yaml'
     500:
       description: Internal Server Error
