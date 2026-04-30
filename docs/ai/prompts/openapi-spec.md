@@ -91,14 +91,16 @@ Location: src/main/resources/assets/paths/<filename>.yaml
   OR inline in src/main/resources/assets/api-docs.yaml (if the operation is not yet in a path file)
 
 operationId to use:
-<derive from the path-derived camelCase rule: api<PathSegments><HttpVerb>>
+<derive from the path-derived camelCase rule: api<PathSegments><HttpVerb>> for authenticated routes under /api
+<derive from the path-derived camelCase rule: <PathSegments><HttpVerb>> for unauthenticated routes outside /api
 
 Files to update:
 - src/main/resources/assets/paths/<filename>.yaml  (preferred; extract from api-docs.yaml if currently inline)
 - src/main/resources/assets/api-docs.yaml  (if new path reference or inline operation)
 
 Constraints:
-- operationId must follow the api<PathSegments><HttpVerb> pattern.
+- operationId must follow the api<PathSegments><HttpVerb> pattern if under /api (for authenticated routes).
+- operationId must follow the <PathSegments><HttpVerb> pattern when not served under /api (for unauthenticated routes).
 - operationId must be unique across paths/ files AND inline operations in api-docs.yaml.
 - operationId must be a direct peer of summary/description/tags — not nested inside a block scalar.
 - summary and description must correspond to this verb's actual behavior (do not copy from another verb block).
