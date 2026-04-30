@@ -1,5 +1,6 @@
 get:
   summary: Get dataset to DAA snapshots for a Data Access Request or Progress Report by reference Id
+  operationId: getDatasetDaaSnapshotsByReferenceId
   description: Returns a map of dataset IDs to the DAA snapshot that was captured when the DAR or non-closeout progress report was submitted.
   parameters:
     - name: referenceId
