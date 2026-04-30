@@ -63,7 +63,7 @@ jobs:
 
   upload-test-reports:
     needs: [smoke-tests]
-    if: always()
+    if: false #always()
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -77,7 +77,7 @@ jobs:
       subuuid: ${{ github.run_id }}
 
   report-workflow:
-    if: github.ref == 'refs/heads/develop'
+    if: false #github.ref == 'refs/heads/develop'
     uses: broadinstitute/sherlock/.github/workflows/client-report-workflow.yaml@main
     with:
       relates-to-chart-releases: 'consent-dev'
