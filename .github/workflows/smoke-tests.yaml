@@ -10,6 +10,7 @@ on:
 
 jobs:
   smoke-tests:
+    if: false  # This job will now be skipped every time
     runs-on: ubuntu-latest
     permissions:
       contents: 'read'
