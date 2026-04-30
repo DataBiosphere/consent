@@ -646,7 +646,7 @@ class DaaDAOTest extends DAOTestHelper {
             now,
             new DataAccessRequestData(),
             "eraCommonsId");
-    Timestamp capturedAt = Timestamp.from(Instant.now());
+    Timestamp capturedAt = snapshotCapturedAt();
 
     daaDAO.insertDarDatasetDaaSnapshots(
         List.of(
@@ -700,7 +700,7 @@ class DaaDAOTest extends DAOTestHelper {
             userId,
             new DataAccessRequestData(),
             "eraCommonsId");
-    Timestamp capturedAt = Timestamp.from(Instant.now());
+    Timestamp capturedAt = snapshotCapturedAt();
 
     daaDAO.insertDarDatasetDaaSnapshots(
         List.of(
@@ -769,6 +769,10 @@ class DaaDAOTest extends DAOTestHelper {
                 .bind("prId", prId)
                 .mapTo(Integer.class)
                 .one());
+  }
+
+  private static Timestamp snapshotCapturedAt() {
+    return Timestamp.from(Instant.parse("2026-04-30T12:34:56.123456Z"));
   }
 
   @Test
