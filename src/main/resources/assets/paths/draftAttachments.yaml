@@ -1,7 +1,7 @@
 get:
   summary: Get a specific file attachment associated with a draft
   operationId: apiDraftV1DraftUUIDAttachmentsFileIdGet
-  description: Provides the an individual file attachment connected to a draft.
+  description: Provides an individual file attachment connected to a draft.
   tags:
     - Draft
   parameters:
@@ -33,9 +33,9 @@ get:
     500:
        description: An unrecoverable error occurred when attempting to return this attachment.
 delete:
-  summary: Get the list of attachments associated with a draft
+  summary: Delete the attachment associated with a draft by UUID and file ID
   operationId: apiDraftV1DraftUUIDAttachmentsFileIdDelete
-  description: Provides the list of attachments that are part of a draft.
+  description: Delete the attachment associated with a draft by UUID and file ID
   tags:
     - Draft
   parameters:

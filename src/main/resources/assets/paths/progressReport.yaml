@@ -1,7 +1,7 @@
 post:
   deprecated: true
-  summary: |
   operationId: apiDarV2ProgressReportParentReferenceIdPost
+  summary: |
     Create a new DAR progress report
     See /api/dar/v3/progress_report/{parentReferenceId} for replacement
   description: |
