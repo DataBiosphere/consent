@@ -1,6 +1,6 @@
 post:
   summary: Create or update feature flag
-  operationId: createOrUpdateFeatureFlag
+  operationId: apiFeatureIdPost
   description: |
     Create a new feature flag or update an existing one. 
     Requires Admin role.
@@ -74,7 +74,7 @@ post:
 
 delete:
   summary: Delete feature flag
-  operationId: deleteFeatureFlag
+  operationId: apiFeatureIdDelete
   description: |
     Delete a feature flag by its ID.
     Requires Admin role.

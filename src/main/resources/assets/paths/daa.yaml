@@ -1,6 +1,6 @@
 get:
   summary: Find all DAAs
-  operationId: findAll
+  operationId: apiDaaGet
   description: Fetches all DAAs
   tags:
     - DAA

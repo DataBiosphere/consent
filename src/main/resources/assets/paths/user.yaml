@@ -1,6 +1,6 @@
 post:
   summary: Create User
-  operationId: createResearcher
+  operationId: apiUserPost
   description: Create a user with RESEARCHER role using the user's current authentication status.
   tags:
     - User
@@ -19,7 +19,7 @@ post:
       description: Server error.
 put:
   summary: Update limited user fields
-  operationId: updateSelf
+  operationId: apiUserPut
   description: |
     Updates a limited number of the current user's fields 
     and sends a support request if institutions or signing official updates are provided

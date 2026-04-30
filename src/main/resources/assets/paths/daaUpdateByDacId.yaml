@@ -1,6 +1,6 @@
 post:
   summary: Alert appropriate Signing Officials & Researchers of a new DAA Upload for the provided DAC
-  operationId: sendNewDaaMessage
+  operationId: apiDaaDacIdUpdatedOldDaaIdNewDaaNamePost
   description: Email Signing Officials & Researchers that a new DAA was uploaded
   parameters:
     - name: dacId

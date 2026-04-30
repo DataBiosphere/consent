@@ -1,6 +1,6 @@
 get:
   summary: Get document metadata by entity
-  operationId: findDocumentsByEntity
+  operationId: apiDocumentEntityEntityIdGet
   description: Returns metadata for all non-deleted file storage objects associated with the given entity and entity id.
   tags:
     - Document
@@ -35,7 +35,7 @@ get:
       description: Not Found
 post:
   summary: Upload a document for an entity
-  operationId: uploadDocumentByEntity
+  operationId: apiDocumentEntityEntityIdPost
   description: Uploads a document and returns FileStorageObject metadata only (no file bytes).
   tags:
     - Document

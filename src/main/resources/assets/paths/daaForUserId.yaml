@@ -1,6 +1,6 @@
 delete:
   summary: Delete DAA link
-  operationId: deleteDaaForUser
+  operationId: apiDaaDaaIdUserIdDelete
   description: Delete the link between a Data Access Agreement and a User
   parameters:
     - name: daaId
@@ -28,7 +28,7 @@ delete:
       description: Internal Server Error
 put:
   summary: Create a DAA-Library Card Relationship
-  operationId: createLibraryCardDaaRelation
+  operationId: apiDaaDaaIdUserIdPut
   description: Create a link between a Data Access Agreement and a User
   parameters:
     - name: daaId

@@ -1,6 +1,6 @@
 post:
   summary: Bulk add DAAs to a user
-  operationId: bulkAddDAAsToUser
+  operationId: apiDaaBulkUserUserIdPost
   description: Bulk add Data Access Agreements to a user
   parameters:
     - name: userId
@@ -42,7 +42,7 @@ post:
       description: Internal Server Error
 delete:
   summary: Bulk remove DAAs from a user
-  operationId: bulkRemoveDAAsFromUser
+  operationId: apiDaaBulkUserUserIdDelete
   description: Bulk remove Data Access Agreements from a user
   parameters:
     - name: userId

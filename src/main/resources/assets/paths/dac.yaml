@@ -1,6 +1,6 @@
 post:
   summary: Create a DAC
-  operationId: createDac
+  operationId: apiDacPost
   description: Create a Data Access Committee
   requestBody:
     description: Data Access Committee
@@ -26,7 +26,7 @@ post:
       description: Internal Server Error
 put:
   summary: Update a DAC
-  operationId: updateDac
+  operationId: apiDacPut
   description: |
     Update a Data Access Committee. Admins can update any Data Access Committee
     Chairpersons can only update Data Access Committees for which they are a Chairperson for.

@@ -1,6 +1,6 @@
 put:
   summary: Cancel DAR Collection By ID
-  operationId: cancelDarCollectionById
+  operationId: apiCollectionsCollectionIdCancelPut
   description: Returns DAR Collection after canceling associated dars
   tags:
     - DAR Collection
