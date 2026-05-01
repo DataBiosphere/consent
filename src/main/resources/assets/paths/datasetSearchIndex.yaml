@@ -1,6 +1,6 @@
 post:
   summary: Search the dataset index
-  operationId: searchDatasetIndex
+  operationId: apiDatasetSearchIndexPost
   description: Returns all results matching a search query.
   requestBody:
     description: Search query

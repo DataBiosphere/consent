@@ -1,5 +1,6 @@
 put:
   summary: Toggles a rule from on to off or off to on.
+  operationId: apiDacDacIdRulesRuleIdTogglePut
   parameters:
     - name: dacId
       in: path

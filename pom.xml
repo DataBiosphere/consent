@@ -351,6 +351,9 @@
               <output>${project.build.directory}/openapi-validation</output>
               <skipValidateSpec>false</skipValidateSpec>
               <strictSpec>true</strictSpec>
+              <configOptions>
+                <generateAliasAsModel>true</generateAliasAsModel>
+              </configOptions>
             </configuration>
           </execution>
         </executions>

@@ -1,5 +1,6 @@
 get:
   summary: Get the NIH Institutional Certification document for a dataset.
+  operationId: apiDatasetIdNihInstitutionalCertificationGet
   description: Provides a stream containing the file as supplied by the data submitter or custodian.
   tags:
     - Dataset

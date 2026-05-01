@@ -1,7 +1,7 @@
 get:
   summary: Find All Study Names
   description: Returns a list of all the actively used dataset study names.
-  operationId: findAllStudyNames
+  operationId: apiDatasetStudyNamesGet
   tags:
     - Dataset
     - Study

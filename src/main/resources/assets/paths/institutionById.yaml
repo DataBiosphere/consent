@@ -1,5 +1,6 @@
 get:
   summary: Institution GET
+  operationId: apiInstitutionsIdGet
   description: Fetches Institution based on id param
   tags:
     - Institutions
@@ -24,6 +25,7 @@ get:
       description: Internal Server Error
 patch:
     summary: Institution PATCH
+    operationId: apiInstitutionsIdPatch
     description: |
       Updates institution based on id and json payload. 
       Does not update signing officials of an institution
@@ -80,6 +82,7 @@ patch:
           description: Internal Server Error
 put:
   summary: Institution UPDATE
+  operationId: apiInstitutionsIdPut
   description: Updates institution based on id and json payload. Does not update signing officials of an institution
   tags:
     - Institutions
@@ -108,6 +111,7 @@ put:
       description: Internal Server Error
 delete:
   summary: Institution DELETE
+  operationId: apiInstitutionsIdDelete
   description: Deletes institution based on id
   tags:
     - Institutions

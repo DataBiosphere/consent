@@ -1,5 +1,6 @@
 get:
   summary: Get Synchronized User NIH Account
+  operationId: apiNihSyncGet
   description: Get a synchronized user account fetches known linked accounts
   tags:
     - User

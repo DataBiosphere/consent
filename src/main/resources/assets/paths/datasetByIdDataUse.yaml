@@ -1,6 +1,6 @@
 put:
   summary: Admin Only API to update the Dataset's Data Use object from JSON
-  operationId: updateDatasetDataUse
+  operationId: apiDatasetIdDatausePut
   description: | 
     Admin Only API to update the Dataset's Data Use object from JSON.
     ## Note

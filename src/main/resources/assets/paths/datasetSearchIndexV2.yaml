@@ -1,6 +1,6 @@
 post:
   summary: Search the dataset index
-  operationId: searchDatasetIndexV2
+  operationId: apiDatasetSearchIndexV2Post
   description: |
     Returns all results matching a search query in a streaming format. Includes full ElasticSearch
     response that includes timing, shards, hits:total, hits:max_score, and hits:hits which contains

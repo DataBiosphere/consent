@@ -1,5 +1,6 @@
 get:
   summary: Get Study Registration by Dataset Identifier
+  operationId: apiDatasetRegistrationDatasetIdentifierGet
   description: Finds Study in Dataset Registration Format limited to the provided dataset identifier
   parameters:
     - name: datasetIdentifier

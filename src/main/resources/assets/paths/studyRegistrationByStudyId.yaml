@@ -1,5 +1,6 @@
 get:
   summary: Get Study Registration by Study Id
+  operationId: apiDatasetStudyRegistrationStudyIdGet
   description: Finds Study in Dataset Registration Format
   parameters:
     - name: studyId

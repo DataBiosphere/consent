@@ -1,5 +1,6 @@
 get:
   summary: Find approved users by dataset identifier
+  operationId: apiDatasetIdentifierApprovedUsersGet
   description: Endpoint for authorized SERVICE ACCOUNT users to call that finds all users who have been approved access to this dataset with an accepted DAR.
   parameters:
     - name: identifier

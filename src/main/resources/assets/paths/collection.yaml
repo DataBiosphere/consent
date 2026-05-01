@@ -1,6 +1,6 @@
 get:
   summary: Get DAR Collection By ID
-  operationId: getCollectionById
+  operationId: apiCollectionsCollectionIdGet
   description: Returns a single DAR Collection
   tags:
     - DAR Collection

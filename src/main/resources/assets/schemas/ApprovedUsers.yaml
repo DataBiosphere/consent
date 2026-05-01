@@ -4,6 +4,7 @@ properties:
     type: array
     items:
       type: object
+      title: ApprovedUser
       properties:
         emails:
           type: array

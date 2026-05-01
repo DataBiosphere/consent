@@ -1,5 +1,6 @@
 put:
   summary: Add authorized access reader
+  operationId: apiDatasetIdAuthorizedAccessReadersUserIdPut
   description: |
     Endpoint allows administrators to add an authorized access reader to a dataset
   tags:
@@ -27,6 +28,7 @@ put:
       description: The user is missing the RESEARCHER role required to check access.
 delete:
   summary: Remove authorized access reader
+  operationId: apiDatasetIdAuthorizedAccessReadersUserIdDelete
   description: |
     Endpoint allows administrators to remove an authorized access reader to a dataset
   tags:

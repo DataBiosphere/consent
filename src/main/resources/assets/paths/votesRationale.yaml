@@ -1,5 +1,6 @@
 put:
   summary: Update Vote Rationale by id List
+  operationId: apiVotesRationalePut
   description: | 
     Update Votes' Rationale specified by the ids in provided list.
      * The Rationale for RP Votes can be updated for any election status.
