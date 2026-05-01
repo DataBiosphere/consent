@@ -173,10 +173,11 @@ inside `ContainerTests`.
 
 #### Database
 
-`DAOTestHelper` (a JUnit `TestExecutionListener`) automatically starts a
-[Testcontainers](https://www.testcontainers.org/) Postgres instance and
-overrides the `dw.database.*` properties before the application boots. No local
-Postgres is needed in any environment.
+`ContainerTests` starts its own [Testcontainers](https://www.testcontainers.org/)
+`PostgreSQLContainer` in a static initializer and passes the container's
+coordinates directly to `DropwizardAppExtension` via `ConfigOverride`. The
+hardcoded coordinates in `consent-ci.yaml` are never reached at runtime. No
+local Postgres is needed in any environment.
 
 #### How they run in CI
 
