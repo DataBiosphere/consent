@@ -1,5 +1,6 @@
 put:
   summary: Update Study Data Custodians by Study Id
+  operationId: apiDatasetStudyStudyIdCustodiansPut
   description: Update Study Data Custodians by Study Id
   tags:
     - Admin

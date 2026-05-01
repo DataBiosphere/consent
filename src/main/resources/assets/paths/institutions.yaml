@@ -1,5 +1,6 @@
 get:
   summary: Institution INDEX resource
+  operationId: apiInstitutionsGet
   description: Fetches all institutions
   tags:
     - Institutions
@@ -12,6 +13,7 @@ get:
       description: Internal Server Error
 post:
   summary: Institution CREATE resource
+  operationId: apiInstitutionsPost
   description: Creates new institution record based on json payload
   tags:
     - Institutions

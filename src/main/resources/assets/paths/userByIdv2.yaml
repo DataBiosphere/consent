@@ -1,5 +1,6 @@
 get:
   summary: Find user by id
+  operationId: apiUserUserIdGet
   description: Finds user by the user id. Available to Admin, Chair, and Member roles
   parameters:
     - name: userId
@@ -23,6 +24,7 @@ get:
       description: Server error.
 put:
   summary: Update limited user fields by id
+  operationId: apiUserUserIdPut
   description: | 
     Updates a limited number of user fields by the user id. Available to Admins only
   parameters:
@@ -42,6 +44,7 @@ put:
       application/json:
         schema:
           type: object
+          title: UpdateUserRequest
           properties:
             displayName:
               description: The display name for the user

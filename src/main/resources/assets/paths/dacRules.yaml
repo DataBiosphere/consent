@@ -1,5 +1,6 @@
 get:
   summary: Get a list of automation rules available for DACs in DUOS
+  operationId: apiDacRulesGet
   description: View the rules available.
   tags:
     - DAC

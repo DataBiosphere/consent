@@ -1,5 +1,6 @@
 post:
   summary: Create current user in the Sam system using current login credentials
+  operationId: apiSamRegisterSelfPost
   description: Create current user in the Sam system using current login credentials
   tags:
     - Sam

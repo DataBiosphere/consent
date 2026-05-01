@@ -30,6 +30,7 @@ A good prompt result should include:
 | `feature-development.md` | `src/main/java/org/broadinstitute/consent/http/resources/`, `src/main/java/org/broadinstitute/consent/http/service/` | `src/main/java/org/broadinstitute/consent/http/db/`, `src/main/java/org/broadinstitute/consent/http/models/`, `src/test/java/`, `src/main/resources/assets/api-docs.yaml` |
 | `bugfix.md` | Failing test or relevant resource test in `src/test/java/` | Matching runtime classes in `src/main/java/org/broadinstitute/consent/http/resources/`, `src/main/java/org/broadinstitute/consent/http/service/`, `src/main/java/org/broadinstitute/consent/http/db/` |
 | `refactor.md` | In-scope classes under `src/main/java/org/broadinstitute/consent/http/` | Neighboring tests in `src/test/java/`, API contract references in `src/main/resources/assets/api-docs.yaml`, guidance in `docs/API_GUIDELINES.md` |
+| `openapi-spec.md` | `src/main/resources/assets/paths/`, `src/main/resources/assets/api-docs.yaml` | `src/main/resources/assets/api-docs.yaml` |
 
 ## Available Prompt Templates
 
@@ -37,3 +38,4 @@ A good prompt result should include:
 - `feature-development.md`
 - `bugfix.md`
 - `refactor.md`
+- `openapi-spec.md`

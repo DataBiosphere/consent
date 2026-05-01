@@ -1,5 +1,6 @@
 post:
   summary: Create a support request
+  operationId: supportRequestPost
   description: Create a support request
   tags:
     - Support

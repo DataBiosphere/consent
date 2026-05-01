@@ -1,6 +1,6 @@
 put:
   summary: DAC Chair updates dataset approval status
-  operationId: approveDataset
+  operationId: apiDacDacIdDatasetDatasetIdPut
   description: |
     Endpoint allows DAC Chairs to submit approval decisions for datasets under their purview (or requested purview).
     The request will succeed if dataset has not yet been approved and the user has access to the dataset as a Chairperson.

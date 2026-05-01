@@ -1,6 +1,6 @@
 post:
   summary: Convert DAC datasets to external and revoke DAR access
-  operationId: convertDacDatasetsToExternal
+  operationId: apiDacDacIdDatasetsExternalizePost
   description: |
     Admin-only operation that converts controlled datasets associated with a DAC to external access,
     optionally converts open-access datasets,

@@ -1,5 +1,6 @@
 post:
   summary: Institution DOMAIN Update resource
+  operationId: apiInstitutionsDomainsPost
   description: Updates existing domains for all institutions provided in the JSON payload.
   tags:
     - Institutions
@@ -10,6 +11,7 @@ post:
       application/json:
         schema:
           type: object
+          title: InstitutionDomainsRequest
           properties:
             institutionDomainMap:
               type: object

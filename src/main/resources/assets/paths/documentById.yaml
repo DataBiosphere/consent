@@ -1,6 +1,6 @@
 get:
   summary: Get document metadata by entity and file id
-  operationId: findDocumentByEntity
+  operationId: apiDocumentEntityEntityIdIdGet
   description: Returns FileStorageObject metadata only. File bytes are not returned.
   parameters:
     - name: entity
@@ -40,7 +40,7 @@ get:
 
 put:
   summary: Update document category by entity and file id
-  operationId: updateDocumentCategoryByEntity
+  operationId: apiDocumentEntityEntityIdIdPut
   description: Updates only the FileStorageObject category. File content and storage location remain unchanged.
   parameters:
     - name: entity
@@ -88,7 +88,7 @@ put:
 
 delete:
   summary: Soft delete document metadata by entity and file id
-  operationId: deleteDocumentByEntity
+  operationId: apiDocumentEntityEntityIdIdDelete
   description: Marks a FileStorageObject as deleted without removing the underlying storage object.
   parameters:
     - name: entity

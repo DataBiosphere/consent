@@ -1,5 +1,6 @@
 get:
   summary: Find dataset by dataset identifier.
+  operationId: apiTdrIdentifierGet
   description: Find dataset by dataset identifier.
   parameters:
     - name: identifier

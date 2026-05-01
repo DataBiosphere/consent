@@ -1,6 +1,6 @@
 get:
   summary: Download document file by entity and file id
-  operationId: findDocumentFileByEntity
+  operationId: apiDocumentEntityEntityIdIdFileGet
   description: Streams a document file directly from storage for the specified entity and file id.
   parameters:
     - name: entity

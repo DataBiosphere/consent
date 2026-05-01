@@ -1,5 +1,6 @@
 get:
   summary: Send Daily Notifications
+  operationId: apiEmailNotifierDailyMessagesGet
   description: Send expiration notices for DARs, Vote Reminders, and New Study/Data notices
   tags:
     - Notifier

@@ -1,5 +1,6 @@
 get:
   summary: List of Dataset Study Summary objects
+  operationId: apiDatasetV3Get
   description: |
     Provides a list of datasets and their associated study information in a very minimal format.
   tags:
@@ -15,6 +16,7 @@ get:
               $ref: '../schemas/DatasetStudySummary.yaml'
 post:
   summary: Creates a set of Datasets from a valid dataset registration JsonSchema object
+  operationId: apiDatasetV3Post
   description: Creates a set of Datasets from a valid dataset registration JsonSchema object
   requestBody:
     description: | 

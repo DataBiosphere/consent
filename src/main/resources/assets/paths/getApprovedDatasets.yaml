@@ -1,5 +1,6 @@
 get:
   summary: Get all approved datasets from currently authenticated user
+  operationId: apiUserMeResearcherDatasetsGet
   description: Get all approved datasets from currently authenticated user
   tags:
     - User

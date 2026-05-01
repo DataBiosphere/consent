@@ -1,5 +1,6 @@
 post:
   summary: Index dataset by id
+  operationId: apiDatasetIndexDatasetIdPost
   description: Index a specific dataset in the system
   parameters:
     - name: datasetId
@@ -18,6 +19,7 @@ post:
       description: Dataset not found
 delete:
   summary: Delete dataset index by id
+  operationId: apiDatasetIndexDatasetIdDelete
   description: Delete a specific dataset index in the system
   parameters:
     - name: datasetId

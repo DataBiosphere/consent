@@ -1,5 +1,6 @@
 get:
   summary: Get all Data Access Agreements for Data Access Request by DAR Reference Id
+  operationId: apiDarV2ReferenceIdDaasGet
   description: Returns the Data Access Agreements for Data Access Request by DAR Reference.
   parameters:
     - name: referenceId

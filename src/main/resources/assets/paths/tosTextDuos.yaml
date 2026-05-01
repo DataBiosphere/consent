@@ -1,5 +1,6 @@
 get:
   summary: Gets the DUOS translated Terms of Service Text from Sam
+  operationId: tosTextDuosGet
   description: Gets the DUOS translated Terms of Service Text from Sam
   tags:
     - Sam

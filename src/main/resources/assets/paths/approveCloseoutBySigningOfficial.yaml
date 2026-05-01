@@ -1,5 +1,6 @@
 put:
   summary: Allows the signing official named in a closeout to approve the closeout.
+  operationId: apiDarReferenceIdApproveCloseoutPut
   tags:
     - Data Access Request
   parameters:

@@ -22,6 +22,7 @@ properties:
     description: ID of user that last updated the collection
   dars:
     type: object
+    title: DarCollectionDars
     description: Map of all DARs associated with the collection (referenceId-dar)
     additionalProperties:
       $ref: './DataAccessRequest.yaml'
