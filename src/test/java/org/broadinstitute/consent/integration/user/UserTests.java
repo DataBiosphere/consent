@@ -94,7 +94,7 @@ class UserTests extends ContainerTests {
   @MethodSource("ciUsers")
   void testGetMeForAllCiUsers(CiUser user) {
     String bearer = UUID.randomUUID().toString();
-    Response response =
+    try (Response response =
         getClient()
             .target(String.format("http://localhost:%d/api/user/me", APPLICATION.getLocalPort()))
             .request()
@@ -103,12 +103,12 @@ class UserTests extends ContainerTests {
             .header("OAUTH2_CLAIM_name", user.displayName())
             .header("OAUTH2_CLAIM_access_token", bearer)
             .header("OAUTH2_CLAIM_aud", "test-aud")
-            .get();
-
-    assertEquals(200, response.getStatus());
-    String body = response.readEntity(String.class);
-    assertTrue(
-        body.contains(user.email()),
-        "Response body should contain %s; got: %s".formatted(user.email(), body));
+            .get()) {
+      assertEquals(200, response.getStatus());
+      String body = response.readEntity(String.class);
+      assertTrue(
+          body.contains(user.email()),
+          "Response body should contain %s; got: %s".formatted(user.email(), body));
+    }
   }
 }
