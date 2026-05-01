@@ -155,70 +155,50 @@ Run the dependency checker:
 
 ## Integration Testing
 
-Integration tests live in `src/test/java/**/integration/` and are run with the
-`integration-tests` Maven profile.  They make real HTTP calls against a running
-instance of the application, so a live server and its backing services must be
-available before the tests execute.
+Integration tests live in `src/test/java/**/integration/` and are run as part
+of the standard `mvn test` lifecycle — no special profile, external server, or
+manual Postgres setup is required.
+
+#### How they work
+
+Each test class extends `ContainerTests`, which uses a JUnit 5
+`DropwizardAppExtension` to boot the full application in-process against the
+config at `src/test/resources/consent-ci.yaml`. A WireMock server on port 9999
+stands in for all external services (Sam, ECM, GCS, etc.).
+
+Database seeding is performed programmatically in `ContainerTests.seedDatabase()`
+via typed DAO calls (`@BeforeAll`). The seed data is fully synthetic and
+idempotent. To add new baseline rows, extend the relevant `seed*` helper method
+inside `ContainerTests`.
+
+#### Database
+
+`DAOTestHelper` (a JUnit `TestExecutionListener`) automatically starts a
+[Testcontainers](https://www.testcontainers.org/) Postgres instance and
+overrides the `dw.database.*` properties before the application boots. No local
+Postgres is needed in any environment.
 
 #### How they run in CI
 
-The GitHub Actions workflow at `.github/workflows/integration-tests.yaml`
-handles everything automatically on every push/PR to `develop`:
-
-1. **PostgreSQL 16** and **Elasticsearch 9** are started as service containers.
-2. The application jar is built with `mvn clean package`.
-3. A SQL seed file is loaded into Postgres to provide baseline test data
-   (see [SQL seed file priority](#sql-seed-file-priority) below).
-4. The application is started with the CI config at
-   `.github/config/consent-ci.yaml` and the workflow waits for `GET /status`
-   to return 200.
-5. `mvn test -P integration-tests -DbaseUrl=http://localhost:8080/` is run.
-6. Test reports are uploaded as a workflow artifact (`integration-test-reports`)
-   and the application log as `app-log`.
-
-#### SQL seed file priority
-
-The workflow resolves which SQL file populates the database using this
-precedence (highest to lowest):
-
-| Priority | Source |
-|---|---|
-| 1 | `sql-file` input on a manual `workflow_dispatch` trigger |
-| 2 | `DB_SEED_SQL_FILE` repository/environment variable (set in **Settings → Variables → Actions**) |
-| 3 | `.github/config/seed-ci.sql` — the default synthetic seed checked into the repo |
-| 4 | *(nothing)* — Liquibase initialises a clean schema only |
-
-The seed file at `.github/config/seed-ci.sql` contains one synthetic user per
-application role, a test institution, and a test DAC.  It is idempotent and
-safe to run repeatedly.  Add new rows in the clearly marked sections at the
-bottom of that file; follow the `ON CONFLICT DO NOTHING` / `WHERE NOT EXISTS`
-pattern already used there.
+The GitHub Actions workflow at `.github/workflows/coverage.yaml` runs
+`mvn clean test` on every push/PR to `develop`, which exercises unit and
+integration tests together via Testcontainers — no additional CI configuration
+is needed.
 
 #### Running integration tests locally
 
-A convenience script mirrors the CI workflow exactly:
+**Integration tests only:**
 
 ```bash
-# Full run: build → start services → seed DB → start app → test → cleanup
-./scripts/run-integration-tests.sh
-
-# Skip Maven build when the jar is already up-to-date
-./scripts/run-integration-tests.sh --skip-build
-
-# Use a different SQL seed file (e.g. a recent DB dump)
-./scripts/run-integration-tests.sh --sql-file config/consent-recent.sql
-
-# Run the tests against an already-running environment instead
-./scripts/run-integration-tests.sh --base-url https://consent.dsde-dev.broadinstitute.org/
+mvn clean test -Dtest="org.broadinstitute.consent.integration.**"
 ```
 
-The script requires `docker`, `mvn`, `java`, and `psql` on your `PATH`.
-On exit (pass or fail) it automatically stops the application process and
-removes the Docker containers it started, so nothing is left running.
-
-To run the tests manually against an existing environment, pass a custom base
-URL directly:
+**All tests** (unit + integration together, as CI does):
 
 ```bash
-mvn test -P integration-tests -DbaseUrl=https://consent.dsde-dev.broadinstitute.org/
+mvn clean test
 ```
+
+**From the IDE:** run or debug any test class in the `integration` package
+directly — `DAOTestHelper` activates automatically and provides the database.
+
