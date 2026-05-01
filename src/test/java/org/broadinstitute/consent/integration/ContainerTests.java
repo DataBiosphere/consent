@@ -12,6 +12,7 @@ import jakarta.ws.rs.client.Client;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
@@ -48,24 +49,37 @@ public abstract class ContainerTests implements ConsentLogger {
    */
   protected static final WireMockServer WIRE_MOCK = new WireMockServer(options().port(9999));
 
+  /**
+   * Guards the one-time database seed so it executes only on the first {@code @BeforeAll}
+   * invocation across all concrete subclasses in the same JVM, avoiding redundant JDBI setup and
+   * keeping the seed truly "once per test plan".
+   */
+  private static final AtomicBoolean SEEDED = new AtomicBoolean(false);
+
   // Note: never close the client returned here — the extension manages its lifetime.
   protected static Client getClient() {
     return APPLICATION.client();
   }
 
   /**
-   * Starts WireMock and seeds the database once before any tests run via typed DAO calls.
+   * Starts WireMock and seeds the database once per JVM run via typed DAO calls.
    *
    * <p>{@link DropwizardExtensionsSupport} implements {@code BeforeAllCallback}, which JUnit 5
    * calls before {@code @BeforeAll} methods, so the application and its database are fully started
-   * when this method executes.
+   * when this method executes. A static {@link AtomicBoolean} guard ensures the expensive JDBI
+   * setup and seed inserts are performed only on the first invocation, even though {@code
+   * @BeforeAll} fires once per concrete subclass.
    *
-   * <p>Every operation is idempotent: rows are skipped when they already exist.
+   * <p>Every insert operation is idempotent: rows are skipped when they already exist.
    */
   @BeforeAll
   static void seedDatabase() {
     if (!WIRE_MOCK.isRunning()) {
       WIRE_MOCK.start();
+    }
+
+    if (!SEEDED.compareAndSet(false, true)) {
+      return;
     }
 
     ConsentConfiguration config = APPLICATION.getConfiguration();
