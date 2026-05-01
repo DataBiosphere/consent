@@ -17,9 +17,12 @@ class StatusTests extends ContainerTests {
         "http://localhost:%d/version"
       })
   void testStatusPaths(String path) {
-    Response response =
-        getClient().target(String.format(path, APPLICATION.getLocalPort())).request().get();
-    logWarn(response.readEntity(String.class));
-    assertEquals(200, response.getStatus());
+    try (Response response =
+        getClient().target(String.format(path, APPLICATION.getLocalPort())).request().get()) {
+      if (response.getStatus() != 200) {
+        logWarn(response.readEntity(String.class));
+      }
+      assertEquals(200, response.getStatus());
+    }
   }
 }

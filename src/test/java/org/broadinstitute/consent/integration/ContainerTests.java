@@ -67,8 +67,8 @@ public abstract class ContainerTests implements ConsentLogger {
    * <p>{@link DropwizardExtensionsSupport} implements {@code BeforeAllCallback}, which JUnit 5
    * calls before {@code @BeforeAll} methods, so the application and its database are fully started
    * when this method executes. A static {@link AtomicBoolean} guard ensures the expensive JDBI
-   * setup and seed inserts are performed only on the first invocation, even though {@code
-   * @BeforeAll} fires once per concrete subclass.
+   * setup and seed inserts are performed only on the first invocation, even though
+   * {@code @BeforeAll} fires once per concrete subclass.
    *
    * <p>Every insert operation is idempotent: rows are skipped when they already exist.
    */
