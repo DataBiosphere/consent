@@ -172,7 +172,7 @@ jobs:
           path: target/surefire-reports
   report-workflow:
     if: github.ref == 'refs/heads/develop'
-    uses: broadinstitute/sherlock/.github/workflows/client-report-workflow.yaml@main
+    uses: broadinstitute/sherlock/.github/workflows/client-report-workflow.yaml@26b6fc02e7a5bab765d9237d677d184f413fbc85
     with:
       relates-to-chart-releases: 'consent-dev'
       notify-slack-channels-upon-workflow-failure: ${{ vars.SLACK_NOTIFICATION_CHANNELS }}
