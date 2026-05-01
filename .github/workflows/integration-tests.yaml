@@ -92,14 +92,6 @@ jobs:
             echo "No SQL seed file found; Liquibase will initialise a clean schema."
           fi
 
-      - name: Seed database
-        if: steps.resolve-sql.outputs.sql-file != ''
-        env:
-          PGPASSWORD: ci-password
-        run: |
-          psql -h localhost -U consent -d consent \
-            -f "${{ steps.resolve-sql.outputs.sql-file }}"
-
       # Write a stub GCS service-account JSON so the app can start without
       # real credentials.  All GCS operations will fail at runtime, which is
       # acceptable for integration tests that only exercise HTTP/DB paths.
@@ -143,6 +135,16 @@ jobs:
           echo "=== app log ==="
           cat /tmp/consent-app.log
           exit 1
+
+      # Seed runs after the app starts so that Liquibase has already created
+      # the full schema before any INSERT statements are executed.
+      - name: Seed database
+        if: steps.resolve-sql.outputs.sql-file != ''
+        env:
+          PGPASSWORD: ci-password
+        run: |
+          psql -h localhost -U consent -d consent \
+            -f "${{ steps.resolve-sql.outputs.sql-file }}"
 
       - name: Run integration tests
         run: |

@@ -126,17 +126,8 @@ for i in $(seq 1 30); do
   fi
 done
 
-# ── 4. Seed database ──────────────────────────────────────────────────────────
-echo "── Step 4/7: Seed database ───────────────────────────────────────────"
-if [[ -f "$SQL_FILE" ]]; then
-  echo "  Using: $SQL_FILE"
-  PGPASSWORD="$DB_PASS" psql -h localhost -U "$DB_USER" -d "$DB_NAME" -f "$SQL_FILE"
-else
-  echo "  No seed file found at '$SQL_FILE'; skipping (Liquibase will init schema)."
-fi
-
-# ── 5. Write stub GCS credentials ─────────────────────────────────────────────
-echo "── Step 5/7: Write stub GCS service-account ──────────────────────────"
+# ── 4. Write stub GCS credentials ─────────────────────────────────────────────
+echo "── Step 4/7: Write stub GCS service-account ──────────────────────────"
 cat > "$GCS_STUB" <<'EOF'
 {
   "type": "service_account",
@@ -150,8 +141,8 @@ cat > "$GCS_STUB" <<'EOF'
 }
 EOF
 
-# ── 6. Start application ──────────────────────────────────────────────────────
-echo "── Step 6/7: Start application ───────────────────────────────────────"
+# ── 5. Start application ──────────────────────────────────────────────────────
+echo "── Step 5/7: Start application ───────────────────────────────────────"
 echo "  Log: $APP_LOG"
 java \
   -classpath "target/classes:$(find target/lib -name '*.jar' | tr '\n' ':')" \
@@ -175,6 +166,17 @@ for i in $(seq 1 36); do
     exit 1
   fi
 done
+
+# ── 6. Seed database ──────────────────────────────────────────────────────────
+# Runs after the app starts so that Liquibase has already created the full
+# schema before any INSERT statements are executed.
+echo "── Step 6/7: Seed database ───────────────────────────────────────────"
+if [[ -f "$SQL_FILE" ]]; then
+  echo "  Using: $SQL_FILE"
+  PGPASSWORD="$DB_PASS" psql -h localhost -U "$DB_USER" -d "$DB_NAME" -f "$SQL_FILE"
+else
+  echo "  No seed file found at '$SQL_FILE'; skipping (Liquibase will init schema)."
+fi
 
 # ── 7. Run integration tests ──────────────────────────────────────────────────
 echo "── Step 7/7: Run integration tests ──────────────────────────────────"
