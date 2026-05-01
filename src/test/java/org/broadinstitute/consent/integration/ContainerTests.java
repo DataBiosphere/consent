@@ -5,6 +5,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.jdbi3.JdbiFactory;
+import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.ResourceHelpers;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.ConsentApplication;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
+import org.broadinstitute.consent.http.db.DAOTestHelper;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
@@ -34,13 +36,36 @@ import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 public abstract class ContainerTests implements ConsentLogger {
 
+  /**
+   * PostgreSQL container started once per JVM. Static fields are initialized top-to-bottom, so the
+   * container is running before {@code APPLICATION} is constructed. Testcontainers registers a JVM
+   * shutdown hook via Ryuk, so no explicit {@code @AfterAll} teardown is required.
+   */
+  @SuppressWarnings("resource")
+  private static final PostgreSQLContainer<?> POSTGRES =
+      new PostgreSQLContainer<>(DAOTestHelper.POSTGRES_IMAGE)
+          .withCommand("postgres -c max_connections=20")
+          .waitingFor(Wait.forListeningPorts());
+
+  static {
+    POSTGRES.start();
+  }
+
   protected static final DropwizardAppExtension<ConsentConfiguration> APPLICATION =
       new DropwizardAppExtension<>(
-          ConsentApplication.class, ResourceHelpers.resourceFilePath("consent-ci.yaml"));
+          ConsentApplication.class,
+          ResourceHelpers.resourceFilePath("consent-ci.yaml"),
+          ConfigOverride.config("database.driverClass", POSTGRES.getDriverClassName()),
+          ConfigOverride.config("database.url", POSTGRES.getJdbcUrl()),
+          ConfigOverride.config("database.user", POSTGRES.getUsername()),
+          ConfigOverride.config("database.password", POSTGRES.getPassword()),
+          ConfigOverride.config("database.validationQuery", POSTGRES.getTestQueryString()));
 
   /**
    * WireMock server running on port 9999, which is the fixed base URL used by consent-ci.yaml for
