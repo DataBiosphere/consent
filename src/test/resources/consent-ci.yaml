@@ -26,8 +26,8 @@ logging:
 
 database:
   driverClass: org.postgresql.Driver
-  user: consent
-  password: ci-password
+  user: test
+  password: test
   url: jdbc:postgresql://localhost:5432/consent
   initialSize: 5
   minSize: 5
