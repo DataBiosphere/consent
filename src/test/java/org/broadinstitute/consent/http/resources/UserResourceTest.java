@@ -1216,4 +1216,51 @@ class UserResourceTest extends AbstractTestHelper {
     user.setInstitutionId(1);
     return user;
   }
+
+  // --- redactUser endpoint tests ---
+
+  @Test
+  void testRedactUser_success() {
+    User adminUser = createUserWithRole();
+    adminUser.addRole(UserRoles.Admin());
+    DuosUser adminDuosUser = new DuosUser(authUser, adminUser);
+
+    try (Response response = userResource.redactUser(adminDuosUser, "target@example.com")) {
+      assertEquals(Status.OK.getStatusCode(), response.getStatus());
+      verify(userService).redactUser(adminUser, "target@example.com");
+    }
+  }
+
+  @Test
+  void testRedactUser_missingEmail() {
+    User adminUser = createUserWithRole();
+    DuosUser adminDuosUser = new DuosUser(authUser, adminUser);
+
+    try (Response response = userResource.redactUser(adminDuosUser, null)) {
+      assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    }
+  }
+
+  @Test
+  void testRedactUser_blankEmail() {
+    User adminUser = createUserWithRole();
+    DuosUser adminDuosUser = new DuosUser(authUser, adminUser);
+
+    try (Response response = userResource.redactUser(adminDuosUser, "   ")) {
+      assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    }
+  }
+
+  @Test
+  void testRedactUser_notFound() {
+    User adminUser = createUserWithRole();
+    DuosUser adminDuosUser = new DuosUser(authUser, adminUser);
+    String email = "nobody@example.com";
+
+    doThrow(new NotFoundException("User not found")).when(userService).redactUser(adminUser, email);
+
+    try (Response response = userResource.redactUser(adminDuosUser, email)) {
+      assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+    }
+  }
 }

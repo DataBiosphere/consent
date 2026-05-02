@@ -69,6 +69,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
   protected static FeatureFlagDAO featureFlagDAO;
   protected static OntologyDAO ontologyDAO;
   protected static VoteServiceDAO voteServiceDAO;
+  protected static UserRedactionAuditDAO userRedactionAuditDAO;
   private static DropwizardTestSupport<ConsentConfiguration> testApp;
   // This is a test-only DAO class where we manage the deletion
   // of all records between test runs.
@@ -161,6 +162,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     dacAutomationRuleDAO = jdbi.onDemand(DACAutomationRuleDAO.class);
     featureFlagDAO = jdbi.onDemand(FeatureFlagDAO.class);
     ontologyDAO = jdbi.onDemand(OntologyDAO.class);
+    userRedactionAuditDAO = jdbi.onDemand(UserRedactionAuditDAO.class);
     testingDAO = jdbi.onDemand(TestingDAO.class);
     voteServiceDAO = new VoteServiceDAO(jdbi, voteDAO);
   }

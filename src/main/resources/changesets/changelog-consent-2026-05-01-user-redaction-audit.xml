@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.33.xsd">
+  <changeSet id="changelog-consent-2026-05-01-user-redaction-audit" author="grushton">
+    <!--
+      Audit table that records each time an admin redacts a user's PII from the users table.
+      The original email and display name are preserved here for compliance purposes.
+      We intentionally do NOT add a FK back to the users table for user_id because the
+      redaction replaces PII on that row; the historical record must survive independently.
+    -->
+    <createTable tableName="user_redaction_audit">
+      <column name="id" type="bigint" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <!-- user_id of the account that was redacted -->
+      <column name="user_id" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <!-- admin_user_id of the administrator who performed the redaction -->
+      <column name="admin_user_id" type="bigint">
+        <constraints nullable="false"/>
+      </column>
+      <!-- PII captured before redaction -->
+      <column name="original_email" type="varchar(500)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="original_display_name" type="varchar(500)"/>
+      <column name="action_date" type="timestamp" defaultValueDate="current_timestamp">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createIndex indexName="idx_user_redaction_audit_user_id" tableName="user_redaction_audit">
+      <column name="user_id"/>
+    </createIndex>
+
+    <!-- FK to users for the admin who performed the redaction -->
+    <addForeignKeyConstraint
+      baseTableName="user_redaction_audit" baseColumnNames="admin_user_id"
+      constraintName="fk_user_redaction_audit_admin_user_id"
+      referencedTableName="users" referencedColumnNames="user_id"/>
+
+    <rollback>
+      <dropForeignKeyConstraint baseTableName="user_redaction_audit"
+                                constraintName="fk_user_redaction_audit_admin_user_id"/>
+      <dropIndex indexName="idx_user_redaction_audit_user_id" tableName="user_redaction_audit"/>
+      <dropTable tableName="user_redaction_audit"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
+
