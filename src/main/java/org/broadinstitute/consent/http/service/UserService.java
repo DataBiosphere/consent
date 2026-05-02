@@ -419,9 +419,8 @@ public class UserService implements ConsentLogger {
 
   /**
    * Redact PII from a user account. The user's email and display name are overwritten with
-   * anonymized placeholders (matching the pattern used in the 2026-03-05 FK migration). An audit
-   * record with the original values is persisted atomically in the same SQL statement via a
-   * writeable CTE.
+   * anonymised placeholders, and institution_id is set to null. All original values are persisted
+   * atomically in the same SQL statement via a writeable CTE.
    *
    * @param adminUser the administrator performing the redaction
    * @param email the email address of the user to redact
@@ -430,7 +429,11 @@ public class UserService implements ConsentLogger {
   public void redactUser(User adminUser, String email) {
     User target = findUserByEmail(email);
     userRedactionAuditDAO.redactUser(
-        target.getUserId(), adminUser.getUserId(), target.getEmail(), target.getDisplayName());
+        target.getUserId(),
+        adminUser.getUserId(),
+        target.getEmail(),
+        target.getDisplayName(),
+        target.getInstitutionId());
   }
 
   public static class SimplifiedUser {

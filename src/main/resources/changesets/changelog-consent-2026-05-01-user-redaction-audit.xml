@@ -27,6 +27,7 @@
         <constraints nullable="false"/>
       </column>
       <column name="original_display_name" type="varchar(500)"/>
+      <column name="original_institution_id" type="bigint"/>
       <column name="action_date" type="timestamp" defaultValueDate="current_timestamp">
         <constraints nullable="false"/>
       </column>

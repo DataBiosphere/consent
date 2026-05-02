@@ -942,7 +942,11 @@ class UserServiceTest extends AbstractTestHelper {
 
     verify(userRedactionAuditDAO)
         .redactUser(
-            target.getUserId(), admin.getUserId(), target.getEmail(), target.getDisplayName());
+            target.getUserId(),
+            admin.getUserId(),
+            target.getEmail(),
+            target.getDisplayName(),
+            target.getInstitutionId());
   }
 
   @Test
