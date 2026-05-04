@@ -42,6 +42,7 @@ import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
+import org.broadinstitute.consent.http.db.UserRedactionAuditDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
@@ -125,6 +126,7 @@ public class ConsentModule extends AbstractModule {
   private final DACAutomationRuleDAO rulesDAO;
   private final FeatureFlagDAO featureFlagDAO;
   private final OntologyDAO ontologyDAO;
+  private final UserRedactionAuditDAO userRedactionAuditDAO;
 
   ConsentModule(ConsentConfiguration consentConfiguration, Environment environment) {
     this.config = consentConfiguration;
@@ -164,6 +166,7 @@ public class ConsentModule extends AbstractModule {
     this.rulesDAO = this.jdbi.onDemand(DACAutomationRuleDAO.class);
     this.featureFlagDAO = this.jdbi.onDemand(FeatureFlagDAO.class);
     this.ontologyDAO = this.jdbi.onDemand(OntologyDAO.class);
+    this.userRedactionAuditDAO = this.jdbi.onDemand(UserRedactionAuditDAO.class);
   }
 
   @Override
@@ -601,6 +604,11 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
+  UserRedactionAuditDAO providesUserRedactionAuditDAO() {
+    return userRedactionAuditDAO;
+  }
+
+  @Provides
   UserService providesUserService() {
     return new UserService(
         providesUserDAO(),
@@ -610,7 +618,8 @@ public class ConsentModule extends AbstractModule {
         providesUserServiceDAO(),
         providesDaaDAO(),
         providesInstitutionService(),
-        providesInstitutionAndLibraryCardEnforcement());
+        providesInstitutionAndLibraryCardEnforcement(),
+        providesUserRedactionAuditDAO());
   }
 
   @Provides

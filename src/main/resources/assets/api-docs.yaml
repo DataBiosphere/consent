@@ -925,6 +925,8 @@ paths:
           description: Error processing the request.
   /api/user/create:
     $ref: './paths/userCreate.yaml'
+  /api/user/redact:
+    $ref: './paths/userRedact.yaml'
   /api/nih:
     $ref: './paths/nih.yaml'
   /api/nih/sync:

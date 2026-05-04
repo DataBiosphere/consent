@@ -1,0 +1,30 @@
+post:
+  summary: Redact User
+  operationId: apiUserRedactPost
+  description: |
+    Replaces a user's email and display name with anonymised placeholders and writes
+    an audit record preserving the original values. Only administrators may call this endpoint.
+  tags:
+    - Admin
+  parameters:
+    - name: email
+      in: query
+      required: true
+      description: Email address of the user account to redact.
+      schema:
+        type: string
+        format: email
+  responses:
+    200:
+      description: User successfully redacted.
+    400:
+      description: Missing or blank email query parameter.
+    401:
+      description: Authentication required or insufficient permissions.
+    403:
+      description: Administrator required to redact a user.
+    404:
+      description: No user found with the supplied email address.
+    500:
+      description: Error processing the request.
+

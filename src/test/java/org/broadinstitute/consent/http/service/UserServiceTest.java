@@ -37,6 +37,7 @@ import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
+import org.broadinstitute.consent.http.db.UserRedactionAuditDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -75,6 +76,7 @@ class UserServiceTest extends AbstractTestHelper {
   @Mock private DaaDAO daaDAO;
   @Mock private InstitutionService institutionService;
   @Mock private InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
+  @Mock private UserRedactionAuditDAO userRedactionAuditDAO;
 
   private UserService service;
 
@@ -104,7 +106,8 @@ class UserServiceTest extends AbstractTestHelper {
             userServiceDAO,
             daaDAO,
             institutionService,
-            institutionAndLibraryCardEnforcement);
+            institutionAndLibraryCardEnforcement,
+            userRedactionAuditDAO);
   }
 
   @Test
@@ -924,5 +927,29 @@ class UserServiceTest extends AbstractTestHelper {
     UserRoles rolesEnum = UserRoles.getUserRoleFromId(roleId);
     assert rolesEnum != null;
     return new UserRole(rolesEnum.getRoleId(), rolesEnum.getRoleName());
+  }
+
+  // --- redactUser tests ---
+
+  @Test
+  void testRedactUser_success() {
+    User admin = generateUser();
+    User target = generateUser();
+
+    when(userDAO.findUserByEmail(target.getEmail())).thenReturn(target);
+
+    assertDoesNotThrow(() -> service.redactUser(admin, target.getEmail()));
+
+    verify(userRedactionAuditDAO).redactUser(target.getUserId(), admin.getUserId());
+  }
+
+  @Test
+  void testRedactUser_notFound() {
+    User admin = generateUser();
+    String unknownEmail = "nobody@example.com";
+
+    when(userDAO.findUserByEmail(unknownEmail)).thenReturn(null);
+
+    assertThrows(NotFoundException.class, () -> service.redactUser(admin, unknownEmail));
   }
 }
