@@ -44,15 +44,9 @@ class UserRedactionAuditDAOTest extends DAOTestHelper {
   void testRedactUser_updatesEmailDisplayNameAndNullsInstitutionId() {
     User target = createUserWithInstitution();
     User admin = createUser();
-    String originalEmail = target.getEmail();
     assertNotNull(target.getInstitutionId());
 
-    userRedactionAuditDAO.redactUser(
-        target.getUserId(),
-        admin.getUserId(),
-        originalEmail,
-        target.getDisplayName(),
-        target.getInstitutionId());
+    userRedactionAuditDAO.redactUser(target.getUserId(), admin.getUserId());
 
     User redacted = userDAO.findUserById(target.getUserId());
     assertEquals(redactedEmail(target.getUserId()), redacted.getEmail());
@@ -64,15 +58,9 @@ class UserRedactionAuditDAOTest extends DAOTestHelper {
   void testRedactUser_disablesEmailPreference() {
     User target = createUserWithInstitution();
     User admin = createUser();
-    // Ensure email preference is enabled before redaction so the assertion is meaningful.
     userDAO.updateEmailPreference(target.getUserId(), true);
 
-    userRedactionAuditDAO.redactUser(
-        target.getUserId(),
-        admin.getUserId(),
-        target.getEmail(),
-        target.getDisplayName(),
-        target.getInstitutionId());
+    userRedactionAuditDAO.redactUser(target.getUserId(), admin.getUserId());
 
     User redacted = userDAO.findUserById(target.getUserId());
     assertEquals(Boolean.FALSE, redacted.getEmailPreference());
@@ -86,12 +74,7 @@ class UserRedactionAuditDAOTest extends DAOTestHelper {
     String originalDisplayName = target.getDisplayName();
     Integer originalInstitutionId = target.getInstitutionId();
 
-    userRedactionAuditDAO.redactUser(
-        target.getUserId(),
-        admin.getUserId(),
-        originalEmail,
-        originalDisplayName,
-        originalInstitutionId);
+    userRedactionAuditDAO.redactUser(target.getUserId(), admin.getUserId());
 
     List<Map<String, Object>> rows = queryAuditRows(target.getUserId());
     assertEquals(1, rows.size());
@@ -110,27 +93,23 @@ class UserRedactionAuditDAOTest extends DAOTestHelper {
     User admin = createUser();
     String originalEmail = target.getEmail();
 
-    userRedactionAuditDAO.redactUser(
-        target.getUserId(), admin.getUserId(), originalEmail, null, null);
+    userRedactionAuditDAO.redactUser(target.getUserId(), admin.getUserId());
 
     List<Map<String, Object>> rows = queryAuditRows(target.getUserId());
     assertEquals(1, rows.size());
     Map<String, Object> row = rows.getFirst();
     assertEquals(originalEmail, row.get("original_email"));
-    // nullable columns must be present in the row but contain null
     assertTrue(row.containsKey("original_display_name"));
     assertTrue(row.containsKey("original_institution_id"));
   }
 
   @Test
   void testRedactUser_nullInstitutionId_usersRowRemainsNull() {
-    // createUser() produces a user with no institution; institution_id starts null.
     User target = createUser();
     User admin = createUser();
     assertNull(target.getInstitutionId());
 
-    userRedactionAuditDAO.redactUser(
-        target.getUserId(), admin.getUserId(), target.getEmail(), target.getDisplayName(), null);
+    userRedactionAuditDAO.redactUser(target.getUserId(), admin.getUserId());
 
     User redacted = userDAO.findUserById(target.getUserId());
     assertNull(redacted.getInstitutionId());
@@ -142,12 +121,10 @@ class UserRedactionAuditDAOTest extends DAOTestHelper {
     User admin = createUser();
     assertNull(target.getInstitutionId());
 
-    userRedactionAuditDAO.redactUser(
-        target.getUserId(), admin.getUserId(), target.getEmail(), target.getDisplayName(), null);
+    userRedactionAuditDAO.redactUser(target.getUserId(), admin.getUserId());
 
     List<Map<String, Object>> rows = queryAuditRows(target.getUserId());
     assertEquals(1, rows.size());
-    // original_institution_id column must exist and be null
     assertTrue(rows.getFirst().containsKey("original_institution_id"));
     assertNull(rows.getFirst().get("original_institution_id"));
   }
@@ -156,16 +133,9 @@ class UserRedactionAuditDAOTest extends DAOTestHelper {
   void testRedactUser_idempotent_multipleRedactionsCreateMultipleAuditRows() {
     User target = createUser();
     User admin = createUser();
-    String originalEmail = target.getEmail();
 
-    userRedactionAuditDAO.redactUser(
-        target.getUserId(), admin.getUserId(), originalEmail, target.getDisplayName(), null);
-
-    // A second call (e.g. replayed or re-triggered by an operator) should produce
-    // another audit row but leave the users row unchanged.
-    String alreadyRedactedEmail = redactedEmail(target.getUserId());
-    userRedactionAuditDAO.redactUser(
-        target.getUserId(), admin.getUserId(), alreadyRedactedEmail, "redacted", null);
+    userRedactionAuditDAO.redactUser(target.getUserId(), admin.getUserId());
+    userRedactionAuditDAO.redactUser(target.getUserId(), admin.getUserId());
 
     List<Map<String, Object>> rows = queryAuditRows(target.getUserId());
     assertEquals(2, rows.size());
@@ -176,9 +146,8 @@ class UserRedactionAuditDAOTest extends DAOTestHelper {
     User admin = createUser();
     int nonExistentUserId = Integer.MAX_VALUE;
 
-    // The CTE UPDATE matches no row, so the outer INSERT via SELECT FROM update_user is a no-op.
-    userRedactionAuditDAO.redactUser(
-        nonExistentUserId, admin.getUserId(), "ghost@example.com", "Ghost", null);
+    // The original CTE returns no rows so the UPDATE and INSERT are both no-ops.
+    userRedactionAuditDAO.redactUser(nonExistentUserId, admin.getUserId());
 
     List<Map<String, Object>> rows = queryAuditRows(nonExistentUserId);
     assertTrue(rows.isEmpty());

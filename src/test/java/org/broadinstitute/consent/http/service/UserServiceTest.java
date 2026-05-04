@@ -940,13 +940,7 @@ class UserServiceTest extends AbstractTestHelper {
 
     assertDoesNotThrow(() -> service.redactUser(admin, target.getEmail()));
 
-    verify(userRedactionAuditDAO)
-        .redactUser(
-            target.getUserId(),
-            admin.getUserId(),
-            target.getEmail(),
-            target.getDisplayName(),
-            target.getInstitutionId());
+    verify(userRedactionAuditDAO).redactUser(target.getUserId(), admin.getUserId());
   }
 
   @Test
