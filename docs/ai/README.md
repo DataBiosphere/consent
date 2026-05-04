@@ -24,6 +24,7 @@ These prompts are repository-specific and designed to produce changes that align
 - Reference real project classes and packages (for example `UserResource`, `UserService`, `UserDAO`).
 - Reuse existing patterns before introducing new abstractions.
 - Prefer minimal, reviewable diffs.
+- For PostgreSQL DAO SQL touching multiple datasets/tables, prefer CTEs (`WITH`) when they make queries clearer and avoid repeated scans/work.
 - Require tests for behavior changes.
 - If a prompt output conflicts with repository conventions, repository conventions win.
 

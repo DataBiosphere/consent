@@ -15,6 +15,7 @@ Use this when adding or modifying HTTP endpoints.
 - Route auth boundary: paths under `/api` are authenticated by the proxy and decorated with OAUTH context; non-`/api` paths are unauthenticated.
 - Preserve Resource -> Service -> DAO separation.
 - Reuse existing auth/error handling patterns (`@RolesAllowed`, `ErrorResource` patterns).
+- For PostgreSQL DAO SQL that joins multiple datasets/tables or performs multi-table actions, prefer CTEs (`WITH`) when they improve clarity and reduce repeated work.
 - Update OpenAPI docs and tests for contract changes.
 
 ## Copy/Paste Prompt
@@ -47,6 +48,7 @@ Constraints:
 - Keep endpoint conventions from docs/API_GUIDELINES.md
 - Put authenticated endpoints under `/api`; only place intentionally public endpoints outside `/api`
 - Do not introduce new framework dependencies
+- For PostgreSQL DAO SQL that joins multiple datasets/tables or performs multi-table actions, prefer CTEs (`WITH`) when they improve clarity and reduce repeated work
 - Add or update tests in src/test/java
 
 Output format:
@@ -86,6 +88,7 @@ Constraints:
 - Keep endpoint conventions from docs/API_GUIDELINES.md
 - Put authenticated endpoints under `/api`; only place intentionally public endpoints outside `/api`
 - Do not introduce new framework dependencies
+- For PostgreSQL DAO SQL that joins multiple datasets/tables or performs multi-table actions, prefer CTEs (`WITH`) when they improve clarity and reduce repeated work
 - Add or update tests in src/test/java
 
 Output format:
