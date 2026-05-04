@@ -25,9 +25,10 @@ public interface UserRedactionAuditDAO {
       WITH update_user AS (
         UPDATE users
         SET
-          email          = 'redacted_' || encode(:userId::text::bytea, 'base64'),
-          display_name   = 'redacted',
-          institution_id = NULL
+          email            = 'redacted_' || encode(:userId::text::bytea, 'base64'),
+          display_name     = 'redacted',
+          institution_id   = NULL,
+          email_preference = false
         WHERE user_id = :userId
         RETURNING user_id
       )

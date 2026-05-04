@@ -61,6 +61,24 @@ class UserRedactionAuditDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testRedactUser_disablesEmailPreference() {
+    User target = createUserWithInstitution();
+    User admin = createUser();
+    // Ensure email preference is enabled before redaction so the assertion is meaningful.
+    userDAO.updateEmailPreference(target.getUserId(), true);
+
+    userRedactionAuditDAO.redactUser(
+        target.getUserId(),
+        admin.getUserId(),
+        target.getEmail(),
+        target.getDisplayName(),
+        target.getInstitutionId());
+
+    User redacted = userDAO.findUserById(target.getUserId());
+    assertEquals(Boolean.FALSE, redacted.getEmailPreference());
+  }
+
+  @Test
   void testRedactUser_insertsAuditRow() {
     User target = createUserWithInstitution();
     User admin = createUser();
