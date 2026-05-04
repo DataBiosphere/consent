@@ -19,8 +19,16 @@ Use this when implementing a new cross-layer feature.
 - Run Spotless formatting for changed files before finalizing.
 - Favor Java records for new immutable DTO/view models; use classes when framework or persistence mapping requires them.
 - For potentially large DB-backed results, prefer pagination/streaming/projections and avoid unbounded in-memory collections.
+- For PostgreSQL DAO SQL spanning multiple datasets/tables, prefer CTEs (`WITH`) when they simplify logic or reduce repeated work.
 - Resolve SonarQube issues in touched code and do not introduce new blocker/critical issues.
 - Use only synthetic test data; do not use real or realistic PII (emails, IDs, names, tokens, or secrets).
+
+### CTE Example (Use vs Not)
+
+```text
+Use CTE: gather matching dataset IDs, then update related rows in another table in one query.
+Do not force CTE: a simple single-table lookup/filter is usually clearer as a direct SELECT.
+```
 
 ## Copy/Paste Prompt
 
@@ -55,6 +63,7 @@ Constraints:
 - Run Spotless formatting for changed files before finalizing
 - Favor Java records for new immutable DTO/view models; use classes when framework or persistence mapping requires them
 - For potentially large DB-backed results, prefer pagination/streaming/projections and avoid unbounded in-memory collections
+- For PostgreSQL DAO SQL spanning multiple datasets/tables, prefer CTEs (`WITH`) when they simplify logic or reduce repeated work
 - Resolve SonarQube issues in touched code and do not introduce new blocker/critical issues
 - Use only synthetic test data; do not use real or realistic PII (emails, IDs, names, tokens, or secrets)
 
@@ -102,6 +111,7 @@ Constraints:
 - Run Spotless formatting for changed files before finalizing
 - Favor Java records for new immutable DTO/view models; use classes when framework or persistence mapping requires them
 - For potentially large DB-backed results, prefer pagination/streaming/projections and avoid unbounded in-memory collections
+- For PostgreSQL DAO SQL spanning multiple datasets/tables, prefer CTEs (`WITH`) when they simplify logic or reduce repeated work
 - Resolve SonarQube issues in touched code and do not introduce new blocker/critical issues
 - Use only synthetic test data; do not use real or realistic PII (emails, IDs, names, tokens, or secrets)
 
