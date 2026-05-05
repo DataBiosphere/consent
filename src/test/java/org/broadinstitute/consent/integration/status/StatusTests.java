@@ -10,15 +10,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 class StatusTests extends ContainerTests {
 
   @ParameterizedTest
-  @ValueSource(
-      strings = {
-        "http://localhost:%d/status",
-        "http://localhost:%d/liveness",
-        "http://localhost:%d/version"
-      })
+  @ValueSource(strings = {"/status", "/liveness", "/version"})
   void testStatusPaths(String path) {
-    try (Response response =
-        getClient().target(String.format(path, APPLICATION.getLocalPort())).request().get()) {
+    try (Response response = getClient().target(serviceUrl(path)).request().get()) {
       if (response.getStatus() != 200) {
         logWarn(response.readEntity(String.class));
       }

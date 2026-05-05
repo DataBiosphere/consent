@@ -30,6 +30,7 @@ These instructions apply to code suggestions and PR review in this repository.
 
 - Add or update tests for behavior changes in `src/test/java`.
 - Use synthetic test data only; do not include real or realistic PII, tokens, or secrets.
+- Do not use Mockito lenient stubbing (`lenient()`); prefer strict stubbing and remove unused/mismatched stubs.
 
 ## Source of Truth
 

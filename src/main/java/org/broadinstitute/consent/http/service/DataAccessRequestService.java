@@ -482,7 +482,7 @@ public class DataAccessRequestService implements ConsentLogger {
     if (user.getLibraryCard() == null) {
       throw new NIHComplianceRuleException();
     }
-
+    validateRequestDatasetsAreApproved(dar);
     userService.validateActiveERACredentials(user);
   }
 
@@ -507,6 +507,20 @@ public class DataAccessRequestService implements ConsentLogger {
     Set<Integer> userDaas = user.getLibraryCard().getDaaIds().stream().collect(Collectors.toSet());
 
     return userDaas.containsAll(datasetDaas);
+  }
+
+  @VisibleForTesting
+  protected void validateRequestDatasetsAreApproved(DataAccessRequest dar) {
+    List<Integer> datasetIds = dar.getDatasetIds();
+    Set<Integer> approvedDatasetIds =
+        datasetDAO.findDatasetsByIdList(datasetIds).stream()
+            .filter(dataset -> Boolean.TRUE.equals(dataset.getDacApproval()))
+            .map(Dataset::getDatasetId)
+            .collect(java.util.stream.Collectors.toSet());
+    if (!approvedDatasetIds.containsAll(datasetIds)) {
+      throw new BadRequestException(
+          "All datasets in the DAR must be approved by their respective DAC to create a data access request or progress report.");
+    }
   }
 
   public void validateDar(User user, DataAccessRequest dar) {
