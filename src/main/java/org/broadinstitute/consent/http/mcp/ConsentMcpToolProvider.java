@@ -32,14 +32,13 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 @Singleton
 public class ConsentMcpToolProvider implements ConsentLogger {
 
-  // Input schema for dataset_search as a plain Map (JsonSchema in SDK 0.14.x is a record that
-  // accepts the raw schema via its inputSchemaObject component).
-  // query is optional; omitting it returns all datasets visible to the caller.
-  private static final Map<String, Object> DATASET_SEARCH_SCHEMA_MAP =
-      Map.of(
-          "type",
+  // Typed input schema for dataset_search.
+  // McpSchema.JsonSchema(type, properties, required, additionalProperties, defs, definitions).
+  // properties values are Map<String,Object> (each property is itself a plain map of JSON-Schema
+  // keywords). query is optional; omitting it returns all datasets visible to the caller.
+  private static final McpSchema.JsonSchema DATASET_SEARCH_INPUT_SCHEMA =
+      new McpSchema.JsonSchema(
           "object",
-          "properties",
           Map.of(
               "query",
               Map.of(
@@ -47,7 +46,11 @@ public class ConsentMcpToolProvider implements ConsentLogger {
                   "string",
                   "description",
                   "Case-insensitive text matched against dataset name and study name."
-                      + " Omit to return all datasets visible to the caller.")));
+                      + " Omit to return all datasets visible to the caller.")),
+          /* required= */ null,
+          /* additionalProperties= */ null,
+          /* defs= */ null,
+          /* definitions= */ null);
 
   private final DatasetService datasetService;
   private final AuthorizationHelper authorizationHelper;
@@ -71,19 +74,19 @@ public class ConsentMcpToolProvider implements ConsentLogger {
   // ── dataset_search ──────────────────────────────────────────────────────────────────────────
 
   private McpServerFeatures.SyncToolSpecification datasetSearchToolSpec() {
-    // McpSchema.Tool is a record: (name, title, description, inputSchema, inputSchemaObject,
-    // annotations, extra).  Pass null for the typed JsonSchema and supply the raw map instead.
+    // McpSchema.Tool record in SDK 0.14.1: (name, title, description, inputSchema, outputSchema,
+    // annotations, meta).  Use the builder so outputSchema stays null — passing a raw Map to the
+    // 5th constructor arg would populate outputSchema, which causes the SDK to require structured
+    // content in the result.
     McpSchema.Tool tool =
-        new McpSchema.Tool(
-            "dataset_search",
-            /* title= */ null,
-            "Search DUOS datasets and studies visible to the caller."
-                + " Returns dataset id, name, identifier, study name, and public visibility."
-                + " Provide a query string to filter by name; omit it to list all accessible datasets.",
-            /* inputSchema= */ null,
-            DATASET_SEARCH_SCHEMA_MAP,
-            /* annotations= */ null,
-            /* extra= */ null);
+        McpSchema.Tool.builder()
+            .name("dataset_search")
+            .description(
+                "Search DUOS datasets and studies visible to the caller."
+                    + " Returns dataset id, name, identifier, study name, and public visibility."
+                    + " Provide a query string to filter by name; omit it to list all accessible datasets.")
+            .inputSchema(DATASET_SEARCH_INPUT_SCHEMA)
+            .build();
     return new McpServerFeatures.SyncToolSpecification(tool, this::handleDatasetSearch);
   }
 
