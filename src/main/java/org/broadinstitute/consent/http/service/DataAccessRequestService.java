@@ -443,7 +443,7 @@ public class DataAccessRequestService implements ConsentLogger {
     List<Integer> datasetIds = dar.getDatasetIds();
     Set<Integer> approvedDatasetIds =
         datasetDAO.findDatasetsByIdList(datasetIds).stream()
-            .filter(Dataset::getDacApproval)
+            .filter(dataset -> Boolean.TRUE.equals(dataset.getDacApproval()))
             .map(Dataset::getDatasetId)
             .collect(java.util.stream.Collectors.toSet());
     if (!approvedDatasetIds.containsAll(datasetIds)) {

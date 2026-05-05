@@ -27,8 +27,8 @@ This means:
 
 - **No local Postgres installation is needed** — the container is started automatically.
 - **No CI database provisioning is needed** — the same container is used in CI.
-- Dropwizard binds to ephemeral test ports, and tests call `APPLICATION.getLocalPort()` to
-  reach the active service instance.
+- Dropwizard binds to ephemeral test ports, and tests use the `serviceUrl(...)` helper in
+  [`ContainerTests`](ContainerTests.java) to build URLs for the active service instance.
 - The hardcoded coordinates in `consent-ci.yaml` are never reached at runtime; they serve
   only as documentation of the expected schema.
 - Testcontainers registers a JVM shutdown hook (via Ryuk) that stops the container when the
