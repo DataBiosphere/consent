@@ -1,5 +1,6 @@
 post:
   summary: Accept ToS for current user in the Sam system using current login credentials
+  operationId: apiSamRegisterSelfTosPost
   description: Accept ToS for current user in the Sam system using current login credentials
   tags:
     - Sam
@@ -14,6 +15,7 @@ post:
       description: Internal Server Error
 delete:
   summary: Reject ToS for current user in the Sam system using current login credentials
+  operationId: apiSamRegisterSelfTosDelete
   description: Reject ToS for current user in the Sam system using current login credentials
   tags:
     - Sam

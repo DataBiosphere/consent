@@ -1,5 +1,6 @@
 patch:
   summary: Patch Dataset
+  operationId: apiDatasetIdPatch
   description: |
     This API allows Admins, Chairpersons, and Data Submitters to patch the dataset name and a 
     limited set of dataset properties. Data Location must conform to the schema defined in
@@ -53,6 +54,7 @@ patch:
       description: Server error.
 delete:
   summary: Delete Dataset
+  operationId: apiDatasetIdDelete
   description: Deletes Dataset and DatasetProperties of the Dataset specified by id.
   parameters:
     - name: id

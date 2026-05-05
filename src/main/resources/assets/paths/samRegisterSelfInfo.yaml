@@ -1,5 +1,6 @@
 get:
   summary: Gets the Sam registration status info of the logged in user
+  operationId: apiSamRegisterSelfInfoGet
   description: Gets the Sam registration status info of the logged in user
   tags:
     - Sam

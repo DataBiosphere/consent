@@ -1,5 +1,6 @@
 delete:
   summary: Delete eRA Commons Account
+  operationId: apiNihDelete
   description: Removes Linked Account information for the authenticated user
   tags:
     - User

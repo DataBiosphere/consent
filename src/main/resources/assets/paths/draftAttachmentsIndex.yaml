@@ -1,5 +1,6 @@
 get:
   summary: Get the list of all attachments associated with a draft
+  operationId: apiDraftV1DraftUUIDAttachmentsGet
   description: Provides the full list of attachments that are part of a draft.
   tags:
     - Draft
@@ -26,6 +27,7 @@ get:
       description: The draft cannot be found.
 post:
   summary: Upload attachments to the draft.
+  operationId: apiDraftV1DraftUUIDAttachmentsPost
   description: Upload attachments associated with this draft.
   tags:
     - Draft

@@ -25,6 +25,7 @@ import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserPropertyDAO;
+import org.broadinstitute.consent.http.db.UserRedactionAuditDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.enumeration.UserFields;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
@@ -56,6 +57,7 @@ public class UserService implements ConsentLogger {
   private final DaaDAO daaDAO;
   private final InstitutionService institutionService;
   private final InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
+  private final UserRedactionAuditDAO userRedactionAuditDAO;
 
   @Inject
   public UserService(
@@ -66,7 +68,8 @@ public class UserService implements ConsentLogger {
       UserServiceDAO userServiceDAO,
       DaaDAO daaDAO,
       InstitutionService institutionService,
-      InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement) {
+      InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement,
+      UserRedactionAuditDAO userRedactionAuditDAO) {
     this.userDAO = userDAO;
     this.userPropertyDAO = userPropertyDAO;
     this.userRoleDAO = userRoleDAO;
@@ -75,6 +78,7 @@ public class UserService implements ConsentLogger {
     this.daaDAO = daaDAO;
     this.institutionService = institutionService;
     this.institutionAndLibraryCardEnforcement = institutionAndLibraryCardEnforcement;
+    this.userRedactionAuditDAO = userRedactionAuditDAO;
   }
 
   /**
@@ -419,6 +423,21 @@ public class UserService implements ConsentLogger {
    */
   public User enforceInstitutionAndLibraryCardRules(String email) {
     return institutionAndLibraryCardEnforcement.enforceInstitutionAndLibraryCardRules(email);
+  }
+
+  /**
+   * Redact PII from a user account. The database captures the original values atomically — no PII
+   * is passed through the application layer. The user's email and display name are replaced with
+   * anonymised placeholders, institution_id is nulled, and email_preference is disabled. An audit
+   * record is written in the same SQL statement.
+   *
+   * @param adminUser the administrator performing the redaction
+   * @param email the email address of the user to redact
+   * @throws NotFoundException if no user exists with the given email
+   */
+  public void redactUser(User adminUser, String email) {
+    User target = findUserByEmail(email);
+    userRedactionAuditDAO.redactUser(target.getUserId(), adminUser.getUserId());
   }
 
   public static class SimplifiedUser {

@@ -1,5 +1,6 @@
 get:
   summary: Get a list of Dataset Draft Submissions
+  operationId: apiDraftV1Get
   description: Provides a list of Dataset Draft Submissions stored by the authenticated user.
   tags:
     - Draft
@@ -18,6 +19,7 @@ get:
       description: Internal server error.  Something went wrong with the valid input provided.
 post:
   summary: Creates a new draft submission by posting a JSON file.
+  operationId: apiDraftV1Post
   description: Creates an incomplete or work-in-progress study/dataset submission form to be resumed at a later date.
   requestBody:
     description: |

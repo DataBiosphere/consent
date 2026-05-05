@@ -1,5 +1,6 @@
 put:
   summary: Updates Vote values by id List
+  operationId: apiVotesPut
   description: | 
     Updates votes specified by the ids in provided list. Requires the authenticated user to be the owner of all votes to be updated.
     * The following fields can be updated via this endpoint

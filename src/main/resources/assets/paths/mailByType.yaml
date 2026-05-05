@@ -1,5 +1,6 @@
 get:
   summary: Get Mail Messages by EmailType.
+  operationId: apiMailTypeTypeGet
   description: |
     Admin only feature returns MailMessage list filtered by EmailType.
   parameters:

@@ -1,5 +1,6 @@
 get:
   summary: Get DAC automation rule audits by DAC ID
+  operationId: apiDacDacIdRulesAuditGet
   description: View the audit entries for a DAC's automation rules
   parameters:
     - name: dacId

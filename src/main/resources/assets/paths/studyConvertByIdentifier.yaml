@@ -1,5 +1,6 @@
 put:
   summary: Convert Dataset to Study
+  operationId: apiDatasetStudyConvertDatasetIdentifierPut
   description: Converts a Dataset into a Study and updates modifiable fields
   tags:
     - Admin

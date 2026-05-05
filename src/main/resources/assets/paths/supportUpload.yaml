@@ -1,5 +1,6 @@
 post:
   summary: Create a file upload for a support request
+  operationId: supportUploadPost
   description: Create a file upload for a support request
   tags:
     - Support
@@ -16,6 +17,7 @@ post:
         application/json:
           schema:
             type: object
+            title: SupportUploadToken
             properties:
               token:
                 type: string

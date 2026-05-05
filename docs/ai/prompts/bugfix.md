@@ -16,6 +16,7 @@ Use this when fixing an incorrect behavior, error response, or failing test.
 - Fix the smallest responsible scope (Resource, Service, or DAO).
 - Reuse existing exception and error response patterns.
 - Avoid behavior changes outside the bug scope.
+- For PostgreSQL DAO bugs involving multi-dataset/multi-table SQL, prefer CTE-based (`WITH`) fixes when they simplify logic and reduce repeated work.
 
 ## Copy/Paste Prompt
 
@@ -38,6 +39,7 @@ Constraints:
 - Add or update a test that reproduces the issue
 - Keep existing API contract unless the bug is contract-related
 - Reuse existing error handling patterns
+- For PostgreSQL DAO bugs involving multi-dataset/multi-table SQL, prefer CTE-based (`WITH`) fixes when they simplify logic and reduce repeated work
 
 Output format:
 1) root-cause analysis
@@ -68,6 +70,7 @@ Constraints:
 - Add or update a test that reproduces the issue
 - Keep existing API contract unless the bug is contract-related
 - Reuse existing error handling patterns
+- For PostgreSQL DAO bugs involving multi-dataset/multi-table SQL, prefer CTE-based (`WITH`) fixes when they simplify logic and reduce repeated work
 
 Output format:
 1) root-cause analysis

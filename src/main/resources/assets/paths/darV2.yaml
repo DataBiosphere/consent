@@ -1,6 +1,7 @@
 post:
   deprecated: true
   summary: Create Data Access Request
+  operationId: apiDarV2Post
   description: |
     Create Data Access Request, version 2.
     Deprecated in favor of /api/dar/v3
@@ -26,6 +27,7 @@ post:
       description: Internal Server Error.
 get:
   summary: Get all Data Access Requests
+  operationId: apiDarV2Get
   description: Returns the list of all Data Access Requests
   tags:
     - Data Access Request

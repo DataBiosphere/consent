@@ -115,17 +115,23 @@ public class EmailService implements ConsentLogger {
       EmailType emailType,
       String content) {
     Instant now = Instant.now();
-    Instant dateSent = (Objects.nonNull(response) && response.getStatusCode() < 400) ? now : null;
-    emailDAO.insert(
-        entityReferenceId,
-        voteId,
-        userId,
-        emailType.getTypeInt(),
-        dateSent,
-        content,
-        Objects.nonNull(response) ? response.getBody() : null,
-        Objects.nonNull(response) ? response.getStatusCode() : null,
-        now);
+    Date dateSent =
+        (Objects.nonNull(response) && response.getStatusCode() < 400) ? Date.from(now) : null;
+    String sendgridResponse = Objects.nonNull(response) ? response.getBody() : null;
+    Integer sendgridStatus = Objects.nonNull(response) ? response.getStatusCode() : null;
+    org.broadinstitute.consent.http.models.mail.MailMessage mailMessage =
+        new org.broadinstitute.consent.http.models.mail.MailMessage(
+            entityReferenceId,
+            null,
+            voteId,
+            userId,
+            emailType.getTypeInt(),
+            dateSent,
+            content,
+            sendgridResponse,
+            sendgridStatus,
+            Date.from(now));
+    emailDAO.insert(mailMessage);
   }
 
   @VisibleForTesting

@@ -1,6 +1,6 @@
 put:
   summary: Resubmit DAR Collection By ID
-  operationId: resubmitDarCollection
+  operationId: apiCollectionsCollectionIdResubmitPut
   description: Returns new draft Data Access Request from a previously canceled DAR Collection
   tags:
     - DAR Collection

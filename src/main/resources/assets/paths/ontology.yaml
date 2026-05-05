@@ -5,7 +5,7 @@ post:
     ontology file storage location. Note that this starts an async operation
     that may take several minutes to complete depending on the size of the
     ontology file.
-  operationId: indexOntology
+  operationId: apiOntologyPost
   parameters:
     - name: ontologyType
       in: query
@@ -27,7 +27,7 @@ post:
 delete:
   summary: Index Ontology Deletion
   description: Index Ontology Deletion
-  operationId: indexOntologyDeletion
+  operationId: apiOntologyDelete
   parameters:
     - name: ontologyType
       in: query

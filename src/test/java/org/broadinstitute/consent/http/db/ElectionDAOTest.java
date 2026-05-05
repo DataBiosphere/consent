@@ -31,6 +31,7 @@ import org.broadinstitute.consent.http.models.Reminder;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserVoteReminder;
 import org.broadinstitute.consent.http.models.Vote;
+import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -691,15 +692,17 @@ class ElectionDAOTest extends DAOTestHelper {
     String referenceId = Instant.now().toString();
     Integer emailType = EmailType.COLLECT.getTypeInt();
     mailMessageDAO.insert(
-        referenceId,
-        null,
-        vote.getUserId(),
-        emailType,
-        null,
-        "Extra, Extra!",
-        null,
-        null,
-        Instant.now());
+        new MailMessage(
+            referenceId,
+            null,
+            vote.getVoteId(),
+            vote.getUserId(),
+            emailType,
+            Date.from(Instant.now()),
+            "Extra, Extra!",
+            null,
+            null,
+            Date.from(Instant.now())));
 
     List<UserVoteReminder> userVoteReminders =
         electionDAO.findElectionReminders(-1, emailType, referenceId);

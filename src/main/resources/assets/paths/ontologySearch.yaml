@@ -1,7 +1,7 @@
 get:
   summary: Search Ontology terms by ids
   description: Search Ontology terms by ids
-  operationId: searchOntologyTerms
+  operationId: ontologySearchGet
   parameters:
     - name: ids
       in: query

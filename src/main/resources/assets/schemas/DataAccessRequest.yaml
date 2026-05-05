@@ -48,6 +48,7 @@ properties:
     description: Unique DAR Code
   elections:
     type: object
+    title: DataAccessRequestElections
     description: Map of elections tied to the DAR (electionid - election)
     additionalProperties:
       $ref: './Election.yaml'

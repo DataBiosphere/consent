@@ -1,5 +1,6 @@
 post:
   summary: Index all datasets
+  operationId: apiDatasetIndexPost
   description: Index all datasets in the system
   tags:
     - Admin

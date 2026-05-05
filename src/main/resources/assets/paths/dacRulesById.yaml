@@ -1,5 +1,6 @@
 get:
   summary: Get DAC automation rules by ID
+  operationId: apiDacDacIdRulesGet
   description: View the rules available and their state
   parameters:
     - name: dacId

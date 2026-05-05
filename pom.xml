@@ -17,7 +17,7 @@
     <liquibase.version>4.33.0</liquibase.version>
     <dropwizard.version>5.0.1</dropwizard.version>
     <logback.version>1.5.25</logback.version>
-    <postgres.version>42.7.10</postgres.version>
+    <postgres.version>42.7.11</postgres.version>
     <surefire.version>3.5.5</surefire.version>
     <swagger.ui.version>5.32.5</swagger.ui.version>
     <swagger.ui.path>META-INF/resources/webjars/swagger-ui/${swagger.ui.version}/</swagger.ui.path>
@@ -25,7 +25,7 @@
     <junit.version>6.0.3</junit.version>
     <mockito.version>5.23.0</mockito.version>
     <sonar.plugin.version>5.6.0.6792</sonar.plugin.version>
-    <netty.override.version>4.2.12.Final</netty.override.version>
+    <netty.override.version>4.2.13.Final</netty.override.version>
     <spotless.version>3.4.0</spotless.version>
     <jetty.version>12.1.8</jetty.version>
 
@@ -35,52 +35,6 @@
     <sonar.projectKey>DataBiosphere_consent</sonar.projectKey>
     <sonar.projectName>consent</sonar.projectName>
   </properties>
-
-  <profiles>
-    <profile>
-      <id>all-tests</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>${surefire.version}</version>
-            <configuration>
-              <!-- @{argLine} is necessary here so that the jacoco:prepare-agent output is included for tests -->
-              <!-- Updated configuration for mockito-->
-              <argLine>@{argLine} -Xmx1024m -XX:TieredStopAtLevel=1
-                -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar
-                -Xshare:off
-              </argLine>
-              <includes>**/*.java</includes>
-              <excludes>**/integration/**/*.java</excludes>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>integration-tests</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>${surefire.version}</version>
-            <configuration>
-              <includes>**/integration/**/*.java</includes>
-              <systemProperties>
-                <enableTestContainers>false</enableTestContainers>
-              </systemProperties>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
 
   <build>
     <testResources>
@@ -155,7 +109,7 @@
           </suppressionFiles>
           <autoUpdate>true</autoUpdate>
         </configuration>
-        <version>12.2.1</version>
+        <version>12.2.2</version>
         <executions>
           <execution>
             <goals>
@@ -397,6 +351,9 @@
               <output>${project.build.directory}/openapi-validation</output>
               <skipValidateSpec>false</skipValidateSpec>
               <strictSpec>true</strictSpec>
+              <configOptions>
+                <generateAliasAsModel>true</generateAliasAsModel>
+              </configOptions>
             </configuration>
           </execution>
         </executions>
@@ -451,6 +408,13 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <dependency>
+        <groupId>io.sentry</groupId>
+        <artifactId>sentry-bom</artifactId>
+        <version>8.40.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -460,7 +424,7 @@
     <dependency>
       <groupId>io.swagger.parser.v3</groupId>
       <artifactId>swagger-parser</artifactId>
-      <version>2.1.40</version>
+      <version>2.1.41</version>
     </dependency>
 
     <!-- json-schema-validator 1.0.83 -> 1.0.84 introduced a breaking dependency change, it now requires jackson core -->
@@ -472,7 +436,7 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.21.2</version>
+      <version>2.21.3</version>
     </dependency>
 
     <dependency>
@@ -569,7 +533,6 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry</artifactId>
-      <version>8.40.0</version>
     </dependency>
 
     <dependency>
@@ -835,7 +798,7 @@
     <dependency>
       <groupId>org.elasticsearch.client</groupId>
       <artifactId>elasticsearch-rest-client</artifactId>
-      <version>9.3.3</version>
+      <version>9.3.4</version>
     </dependency>
 
     <dependency>

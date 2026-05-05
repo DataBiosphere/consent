@@ -15,6 +15,7 @@ Use this for behavior-preserving cleanup (readability, maintainability, duplicat
 - Keep Resource -> Service -> DAO layering.
 - Do not introduce new frameworks unless explicitly approved.
 - Make changes in small, reviewable steps.
+- For complex PostgreSQL DAO SQL across multiple datasets/tables, prefer CTE-based (`WITH`) restructuring when it improves clarity and avoids repeated work.
 
 ## Copy/Paste Prompt
 
@@ -35,6 +36,7 @@ Out of scope:
 Constraints:
 - Preserve behavior and endpoint contracts
 - Keep existing architecture and DI style
+- For complex PostgreSQL DAO SQL across multiple datasets/tables, prefer CTE-based (`WITH`) restructuring when it improves clarity and avoids repeated work
 - Update tests only as needed for maintainability or determinism
 
 Output format:
@@ -63,6 +65,7 @@ Out of scope:
 Constraints:
 - Preserve behavior and endpoint contracts
 - Keep existing architecture and DI style
+- For complex PostgreSQL DAO SQL across multiple datasets/tables, prefer CTE-based (`WITH`) restructuring when it improves clarity and avoids repeated work
 - Update tests only as needed for maintainability or determinism
 
 Output format:

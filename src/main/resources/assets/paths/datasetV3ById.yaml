@@ -1,5 +1,6 @@
 put:
   summary: Updates a dataset from a valid DatasetUpdate object
+  operationId: apiDatasetV3DatasetIdPut
   description: Updates a dataset from a valid DatasetUpdate object, returns a full dataset object
   parameters:
     - name: datasetId

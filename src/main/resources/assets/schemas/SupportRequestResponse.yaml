@@ -2,6 +2,7 @@ type: object
 properties:
   request:
     type: object
+    title: SupportRequest
     properties:
       url:
         description: The request location in Zendesk
@@ -22,11 +23,13 @@ properties:
         type: number
       via:
         type: object
+        title: SupportRequestVia
         properties:
           channel:
             type: string
           source:
             type: object
+            title: SupportRequestViaSource
             properties:
               from:
                 type: string
@@ -38,6 +41,7 @@ properties:
         type: array
         items:
           type: object
+          title: SupportRequestCustomField
           properties:
             id:
               type: number

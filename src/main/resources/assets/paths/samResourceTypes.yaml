@@ -1,5 +1,6 @@
 get:
   summary: Sam Resource Types
+  operationId: apiSamResourceTypesGet
   description: Sam Resource Types
   tags:
     - Sam

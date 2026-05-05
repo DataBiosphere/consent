@@ -1,5 +1,6 @@
 get:
   summary: Find approved users by dataset identifier
+  operationId: apiTdrIdentifierApprovedUsersGet
   description: Finds all users who have been approved access to this dataset with an accepted DAR.
   parameters:
     - name: identifier

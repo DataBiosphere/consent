@@ -1,6 +1,6 @@
 get:
   summary: Get DAC by ID
-  operationId: findDacById
+  operationId: apiDacDacIdGet
   description: Get Data Access Committee by Id
   parameters:
     - name: dacId
@@ -24,7 +24,7 @@ get:
       description: Internal Server Error
 delete:
   summary: Delete DAC by ID
-  operationId: deleteDac
+  operationId: apiDacDacIdDelete
   description: Delete Data Access Committee by Id
   parameters:
     - name: dacId

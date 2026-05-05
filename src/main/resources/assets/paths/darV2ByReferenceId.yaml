@@ -1,5 +1,6 @@
 get:
   summary: Get a Data Access Request by Reference Id
+  operationId: apiDarV2ReferenceIdGet
   description: Returns the created Data Access Request.
   parameters:
     - name: referenceId
@@ -25,6 +26,7 @@ get:
       description: Server Error
 put:
   summary: Update a Data Access Request by Reference Id
+  operationId: apiDarV2ReferenceIdPut
   description: Returns the updated Data Access Request.
   parameters:
     - name: referenceId
@@ -55,6 +57,7 @@ put:
       description: Internal Server Error.
 delete:
   summary: Delete DAR by Reference Id
+  operationId: apiDarV2ReferenceIdDelete
   description: | 
     Deletes a draft DAR by reference id. Admins may delete all drafts, researchers can only delete their own drafts.
   parameters:

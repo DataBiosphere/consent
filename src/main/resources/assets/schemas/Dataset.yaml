@@ -67,6 +67,7 @@ properties:
     description: The sample collection ID, if defined
   dataUse:
     type: object
+    title: DatasetDataUse
     description: The Data Use question/answer set for this dataset (used for the associated consent).
   dacApproval:
     type: boolean
