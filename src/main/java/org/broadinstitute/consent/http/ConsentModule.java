@@ -702,4 +702,53 @@ public class ConsentModule extends AbstractModule {
   OntologyDAO providesOntologyDAO() {
     return ontologyDAO;
   }
+
+  // ── MCP ──────────────────────────────────────────────────────────────────────────────────────
+
+  @Provides
+  @com.google.inject.Singleton
+  io.modelcontextprotocol.server.transport.HttpServletSseServerTransportProvider
+      providesMcpTransport() {
+    // SDK 0.14.x builder API (constructor is private):
+    //   HttpServletSseServerTransportProvider.builder()
+    //       .jsonMapper(McpJsonMapper)       – ConsentMcpJsonMapper (networknt-free Jackson impl)
+    //       .sseEndpoint(String)             – GET  /mcp  → SSE stream
+    //       .messageEndpoint(String)         – POST /mcp/messages → client→server
+    //       .keepAliveInterval(Duration)     – SSE heartbeat interval
+    //       .build()
+    // contextExtractor captures the Bearer token from each POST /mcp/messages request and stores it
+    // in McpTransportContext under the key "bearer". Tool handlers retrieve it via
+    // exchange.transportContext().get("bearer"), which works across Reactor scheduler threads where
+    // ThreadLocal propagation would fail.
+    return io.modelcontextprotocol.server.transport.HttpServletSseServerTransportProvider.builder()
+        .jsonMapper(
+            new org.broadinstitute.consent.http.mcp.ConsentMcpJsonMapper(
+                new com.fasterxml.jackson.databind.ObjectMapper()))
+        .sseEndpoint("/mcp")
+        .messageEndpoint("/mcp/messages")
+        .keepAliveInterval(java.time.Duration.ofSeconds(30))
+        .contextExtractor(
+            req -> {
+              String auth = req.getHeader("Authorization");
+              String bearer = (auth != null && auth.startsWith("Bearer ")) ? auth.substring(7) : "";
+              return io.modelcontextprotocol.common.McpTransportContext.create(
+                  java.util.Map.of("bearer", bearer));
+            })
+        .build();
+  }
+
+  @Provides
+  @com.google.inject.Singleton
+  io.modelcontextprotocol.server.McpSyncServer providesMcpServer(
+      io.modelcontextprotocol.server.transport.HttpServletSseServerTransportProvider transport,
+      org.broadinstitute.consent.http.mcp.ConsentMcpToolProvider toolProvider) {
+    return io.modelcontextprotocol.server.McpServer.sync(transport)
+        .serverInfo("consent-mcp", "1.0.0")
+        .capabilities(
+            io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.builder()
+                .tools(/* listChanged= */ false)
+                .build())
+        .tools(toolProvider.allTools())
+        .build();
+  }
 }

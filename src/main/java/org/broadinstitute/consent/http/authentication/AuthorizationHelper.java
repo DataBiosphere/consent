@@ -37,6 +37,27 @@ public class AuthorizationHelper implements ConsentLogger {
     return claimsCache.cache;
   }
 
+  /**
+   * Resolve an AuthUser from a raw Bearer token. Looks up the token in the ClaimsCache (populated
+   * by RequestHeaderCacheFilter for Jersey requests, or McpClaimsFilter for MCP SSE requests), then
+   * builds the AuthUser from the cached OAUTH2_CLAIM headers.
+   *
+   * @param bearerToken raw token value without the "Bearer " prefix
+   * @return resolved AuthUser
+   * @throws NotAuthorizedException if the token is absent, blank, or not present in the cache
+   */
+  public AuthUser resolveAuthUser(String bearerToken) {
+    if (bearerToken == null || bearerToken.isBlank()) {
+      throw new NotAuthorizedException("Missing Bearer token");
+    }
+    Map<String, String> headers = getCache().getIfPresent(bearerToken);
+    if (headers == null) {
+      throw new NotAuthorizedException(
+          "Token not recognized — ensure the /mcp path has AuthType oauth2 configured in Apache");
+    }
+    return buildAuthUserFromHeaders(headers);
+  }
+
   protected AuthUser buildAuthUserFromHeaders(Map<String, String> headers) {
     String aud = headers.get(ClaimsCache.OAUTH2_CLAIM_aud);
     String token = headers.get(ClaimsCache.OAUTH2_CLAIM_access_token);

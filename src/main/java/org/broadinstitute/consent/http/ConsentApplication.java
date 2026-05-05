@@ -14,13 +14,17 @@ import io.dropwizard.core.setup.Bootstrap;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.jdbi3.bundles.JdbiExceptionsBundle;
+import io.modelcontextprotocol.server.McpSyncServer;
+import io.modelcontextprotocol.server.transport.HttpServletSseServerTransportProvider;
 import io.sentry.Sentry;
 import io.sentry.SentryLevel;
+import jakarta.servlet.DispatcherType;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.text.MessageFormat;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -140,6 +144,20 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     final Injector injector = Guice.createInjector(new ConsentModule(config, env));
     System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
     env.jersey().register(JerseyGsonProvider.class);
+
+    // MCP Server-Sent Events endpoint
+    // McpClaimsFilter must be registered BEFORE the servlet so it runs first on /mcp/* requests.
+    // It reads OAUTH2_CLAIM_* headers set by Apache mod_oauth2 and populates ClaimsCache,
+    // mirroring what RequestHeaderCacheFilter does for Jersey requests on /api.
+    HttpServletSseServerTransportProvider mcpTransport =
+        injector.getInstance(HttpServletSseServerTransportProvider.class);
+    env.servlets()
+        .addFilter("mcp-claims-filter", new org.broadinstitute.consent.http.mcp.McpClaimsFilter())
+        .addMappingForUrlPatterns(
+            EnumSet.of(DispatcherType.REQUEST), /* isMatchAfterFilter= */ false, "/mcp/*");
+    env.servlets().addServlet("mcp-sse", mcpTransport).addMapping("/mcp/*");
+    McpSyncServer mcpServer = injector.getInstance(McpSyncServer.class);
+    env.lifecycle().manage(new org.broadinstitute.consent.http.mcp.ConsentMcpManaged(mcpServer));
 
     // Metric Registry
     MetricRegistry metricRegistry = new MetricRegistry();
