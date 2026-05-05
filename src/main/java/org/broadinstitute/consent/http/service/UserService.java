@@ -239,6 +239,14 @@ public class UserService implements ConsentLogger {
     return users.stream().map(SimplifiedUser::new).toList();
   }
 
+  public List<User> findAllUsersWithInstitutionAndLibraryCard() {
+    return userDAO.findUsersWithLCsAndInstitution().stream()
+        .filter(user -> Objects.nonNull(user.getInstitutionId()))
+        .filter(user -> Objects.nonNull(user.getLibraryCard()))
+        .filter(user -> Objects.nonNull(user.getLibraryCard().getId()))
+        .toList();
+  }
+
   public List<UserProperty> findAllUserProperties(Integer userId) {
     return userPropertyDAO.findUserPropertiesByUserIdAndPropertyKeys(
         userId, UserFields.getValues());
