@@ -16,6 +16,7 @@ Use this for behavior-preserving cleanup (readability, maintainability, duplicat
 - Do not introduce new frameworks unless explicitly approved.
 - Make changes in small, reviewable steps.
 - For complex PostgreSQL DAO SQL across multiple datasets/tables, prefer CTE-based (`WITH`) restructuring when it improves clarity and avoids repeated work.
+- Do not use Mockito lenient stubbing (`lenient()`); keep tests strict-stubbing compliant.
 
 ## Copy/Paste Prompt
 
@@ -38,6 +39,7 @@ Constraints:
 - Keep existing architecture and DI style
 - For complex PostgreSQL DAO SQL across multiple datasets/tables, prefer CTE-based (`WITH`) restructuring when it improves clarity and avoids repeated work
 - Update tests only as needed for maintainability or determinism
+- Do not use Mockito lenient stubbing (`lenient()`); keep tests strict-stubbing compliant
 
 Output format:
 1) refactor plan in small steps
@@ -67,6 +69,7 @@ Constraints:
 - Keep existing architecture and DI style
 - For complex PostgreSQL DAO SQL across multiple datasets/tables, prefer CTE-based (`WITH`) restructuring when it improves clarity and avoids repeated work
 - Update tests only as needed for maintainability or determinism
+- Do not use Mockito lenient stubbing (`lenient()`); keep tests strict-stubbing compliant
 
 Output format:
 1) refactor plan in small steps

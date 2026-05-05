@@ -19,6 +19,7 @@ A good prompt result should include:
 - A short implementation plan
 - Concrete file-by-file changes
 - Tests to add/update
+- Test stubbing that remains strict-stubbing compliant (no Mockito `lenient()`)
 - Risks or compatibility notes
 - Follow-up verification commands
 

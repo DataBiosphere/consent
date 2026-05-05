@@ -188,6 +188,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     dar.setCollectionId(null);
     dar.addDatasetIds(List.of(1, 2, 3));
     User user = createUserWithPrerequisites();
+    mockApprovedDatasets(dar.getDatasetIds());
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     when(counterService.getNextDarSequence()).thenReturn(1);
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
@@ -205,6 +206,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     dar.setCreateDate(new Timestamp(1000));
     dar.setReferenceId("id");
     User user = createUserWithPrerequisites();
+    mockApprovedDatasets(dar.getDatasetIds());
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     when(counterService.getNextDarSequence()).thenReturn(1);
     when(dataAccessRequestDAO.findByReferenceId("id")).thenReturn(null);
@@ -237,6 +239,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     dar.setReferenceId("id");
     dar.setSubmissionDate(Timestamp.from(Instant.now()));
     User user = createUserWithPrerequisites();
+    mockApprovedDatasets(dar.getDatasetIds());
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
     assertThrows(
@@ -248,6 +251,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   void testCreateDataAccessRequestCreateWithoutERACommons() {
     DataAccessRequest dar = generateDataAccessRequest();
     User user = createUserWithPrerequisites();
+    mockApprovedDatasets(dar.getDatasetIds());
     doThrow(BadRequestException.class).when(userService).validateActiveERACredentials(user);
     assertThrows(
         BadRequestException.class, () -> service.createDataAccessRequest(user, dar, request));
@@ -284,6 +288,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setCollectionId(parentDar.getCollectionId());
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     User user = createUserWithPrerequisites();
+    mockApprovedDatasets(progressReport.getDatasetIds());
     parentDar.setUserId(user.getUserId());
     when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId()))
         .thenReturn(progressReport);
@@ -323,6 +328,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setParentId(parentDar.getId());
     progressReport.setCollectionId(parentDar.getCollectionId());
     progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
+    mockApprovedDatasets(progressReport.getDatasetIds());
 
     when(userService.findUserById(2)).thenReturn(signingOfficial);
     when(dataAccessRequestDAO.findByReferenceId(progressReport.getReferenceId()))
@@ -361,6 +367,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setCollectionId(parentDar.getCollectionId());
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     User user = createUserWithPrerequisites();
+    mockApprovedDatasets(progressReport.getDatasetIds());
     parentDar.setUserId(user.getUserId());
     when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
         .thenReturn(Set.of());
@@ -377,6 +384,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setCollectionId(parentDar.getCollectionId());
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     User user = createUserWithPrerequisites();
+    mockApprovedDatasets(progressReport.getDatasetIds());
     parentDar.setUserId(user.getUserId());
     when(dataAccessRequestDAO.findDatasetApprovalsByDar(parentDar.getReferenceId()))
         .thenReturn(Set.copyOf(progressReport.getDatasetIds()));
@@ -407,6 +415,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   void validateProgressReportParentDarIsDraft() {
     User user = createUserWithPrerequisites();
     DataAccessRequest progressReport = generateProgressReport();
+    mockApprovedDatasets(progressReport.getDatasetIds());
     DataAccessRequest parentDar = generateDataAccessRequest();
     BadRequestException exception =
         assertThrows(
@@ -422,6 +431,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = createUserWithPrerequisites();
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.setDatasetIds(Collections.emptyList());
+    mockApprovedDatasets(progressReport.getDatasetIds());
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setUserId(user.getUserId());
@@ -437,6 +447,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = createUserWithPrerequisites();
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.getData().setProgressReportSummary(null);
+    mockApprovedDatasets(progressReport.getDatasetIds());
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setUserId(user.getUserId());
@@ -452,6 +463,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = createUserWithPrerequisites();
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.setDatasetIds(List.of(3, 4, 5)); // IDs not all in parent DAR
+    mockApprovedDatasets(progressReport.getDatasetIds());
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setDatasetIds(List.of(1, 2, 3));
@@ -477,6 +489,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setSubmissionDate(Timestamp.from(Instant.now()));
     progressReport.setParentId(parentDar.getId());
     progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
+    mockApprovedDatasets(progressReport.getDatasetIds());
 
     doThrow(NotFoundException.class).when(userService).findUserById(2);
 
@@ -503,6 +516,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setSubmissionDate(Timestamp.from(Instant.now()));
     progressReport.setParentId(parentDar.getId());
     progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
+    mockApprovedDatasets(progressReport.getDatasetIds());
 
     when(userService.findUserById(2)).thenReturn(signingOfficial);
 
@@ -530,6 +544,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setSubmissionDate(Timestamp.from(Instant.now()));
     progressReport.setParentId(parentDar.getId());
     progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
+    mockApprovedDatasets(progressReport.getDatasetIds());
 
     when(userService.findUserById(2)).thenReturn(signingOfficial);
 
@@ -557,6 +572,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     progressReport.setSubmissionDate(Timestamp.from(Instant.now()));
     progressReport.setParentId(parentDar.getId());
     progressReport.getData().setCloseoutSupplement(new CloseoutSupplement(List.of("test"), "", 2));
+    mockApprovedDatasets(progressReport.getDatasetIds());
 
     when(userService.findUserById(2)).thenReturn(signingOfficial);
 
@@ -568,6 +584,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = createUserWithPrerequisites();
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.setDatasetIds(List.of(1, 2));
+    mockApprovedDatasets(progressReport.getDatasetIds());
     DataAccessRequest parentDar = generateDataAccessRequest();
     parentDar.setSubmissionDate(Timestamp.from(Instant.now()));
     parentDar.setDatasetIds(List.of(1, 2, 3));
@@ -581,6 +598,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     user.setLibraryCard(new LibraryCard());
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.setDatasetIds(List.of(1, 2));
+    mockApprovedDatasets(progressReport.getDatasetIds());
     DataAccessRequestData progressReportData = progressReport.getData();
     Collaborator collaborator1 = createCollaborator("1" + user.getEmail());
     progressReportData.setInternalCollaborators(Collections.singletonList(collaborator1));
@@ -609,6 +627,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     User user = createUserWithPrerequisites();
     DataAccessRequest progressReport = generateProgressReport();
     progressReport.setDatasetIds(List.of(1, 2));
+    mockApprovedDatasets(progressReport.getDatasetIds());
     DataAccessRequestData progressReportData = progressReport.getData();
     Collaborator collaborator1 = createCollaborator("alice@1otherdomain.org");
     progressReportData.setInternalCollaborators(Collections.singletonList(collaborator1));
@@ -656,7 +675,18 @@ library card) eve@yetanotherdomain.org\
   void validateCommonNullDarDataThrows() {
     User user = createUserWithPrerequisites();
     DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
     dar.setData(null);
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> service.validateCommonDarAndProgressReportElements(user, dar));
+  }
+
+  @Test
+  void validateCommonNullReferenceIdThrows() {
+    User user = createUserWithPrerequisites();
+    DataAccessRequest dar = generateDataAccessRequest();
+    dar.setReferenceId(null);
     assertThrows(
         IllegalArgumentException.class,
         () -> service.validateCommonDarAndProgressReportElements(user, dar));
@@ -666,6 +696,8 @@ library card) eve@yetanotherdomain.org\
   void validateCommonDoesNotThrow() {
     User validUser = createUserWithPrerequisites();
     DataAccessRequest validDar = generateDataAccessRequest();
+    when(dataSetDAO.findDatasetsByIdList(validDar.getDatasetIds()))
+        .thenReturn(List.of(approvedDataset(validDar.getDatasetIds().getFirst())));
     assertDoesNotThrow(
         () -> service.validateCommonDarAndProgressReportElements(validUser, validDar));
   }
@@ -679,6 +711,49 @@ library card) eve@yetanotherdomain.org\
     assertThrows(
         NIHComplianceRuleException.class,
         () -> service.validateCommonDarAndProgressReportElements(validUser, validDar));
+  }
+
+  @Test
+  void validateCommonDatasetsNotApprovedThrows() {
+    User validUser = createUserWithPrerequisites();
+    DataAccessRequest validDar = generateDataAccessRequest();
+    when(dataSetDAO.findDatasetsByIdList(validDar.getDatasetIds()))
+        .thenReturn(List.of(unapprovedDataset(validDar.getDatasetIds().getFirst())));
+
+    BadRequestException exception =
+        assertThrows(
+            BadRequestException.class,
+            () -> service.validateCommonDarAndProgressReportElements(validUser, validDar));
+    assertThat(
+        exception.getMessage(),
+        containsString(
+            "All datasets in the DAR must be approved by their respective DAC to create a data access request or progress report."));
+  }
+
+  @Test
+  void validateRequestDatasetsAreApprovedDoesNotThrowWhenAllApproved() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    Integer datasetId = dar.getDatasetIds().getFirst();
+    when(dataSetDAO.findDatasetsByIdList(dar.getDatasetIds()))
+        .thenReturn(List.of(approvedDataset(datasetId)));
+
+    assertDoesNotThrow(() -> service.validateRequestDatasetsAreApproved(dar));
+  }
+
+  @Test
+  void validateRequestDatasetsAreApprovedThrowsWhenAnyDatasetUnapproved() {
+    DataAccessRequest dar = generateDataAccessRequest();
+    Integer datasetId = dar.getDatasetIds().getFirst();
+    when(dataSetDAO.findDatasetsByIdList(dar.getDatasetIds()))
+        .thenReturn(List.of(unapprovedDataset(datasetId)));
+
+    BadRequestException exception =
+        assertThrows(
+            BadRequestException.class, () -> service.validateRequestDatasetsAreApproved(dar));
+    assertThat(
+        exception.getMessage(),
+        containsString(
+            "All datasets in the DAR must be approved by their respective DAC to create a data access request or progress report."));
   }
 
   @Test
@@ -736,6 +811,7 @@ library card) eve@yetanotherdomain.org\
   void validateDar() {
     DataAccessRequest dar = generateDataAccessRequest();
     User user = createUserWithPrerequisites();
+    mockApprovedDatasets(dar.getDatasetIds());
     when(institutionService.findInstitutionForEmail(any())).thenReturn(user.getInstitution());
     assertDoesNotThrow(() -> service.validateDar(user, dar));
   }
@@ -1376,6 +1452,25 @@ institution or library cards issued: Internal Collaborator member:  \
     user.setLibraryCard(new LibraryCard());
     user.setEraCommonsId("eraCommonsId");
     return user;
+  }
+
+  private Dataset approvedDataset(Integer datasetId) {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(datasetId);
+    dataset.setDacApproval(true);
+    return dataset;
+  }
+
+  private Dataset unapprovedDataset(Integer datasetId) {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(datasetId);
+    dataset.setDacApproval(false);
+    return dataset;
+  }
+
+  private void mockApprovedDatasets(List<Integer> datasetIds) {
+    when(dataSetDAO.findDatasetsByIdList(datasetIds))
+        .thenReturn(datasetIds.stream().map(this::approvedDataset).toList());
   }
 
   @Test

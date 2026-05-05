@@ -22,6 +22,7 @@ Use this when implementing a new cross-layer feature.
 - For PostgreSQL DAO SQL spanning multiple datasets/tables, prefer CTEs (`WITH`) when they simplify logic or reduce repeated work.
 - Resolve SonarQube issues in touched code and do not introduce new blocker/critical issues.
 - Use only synthetic test data; do not use real or realistic PII (emails, IDs, names, tokens, or secrets).
+- Do not use Mockito lenient stubbing (`lenient()`); keep tests strict-stubbing compliant.
 
 ### CTE Example (Use vs Not)
 
@@ -66,6 +67,7 @@ Constraints:
 - For PostgreSQL DAO SQL spanning multiple datasets/tables, prefer CTEs (`WITH`) when they simplify logic or reduce repeated work
 - Resolve SonarQube issues in touched code and do not introduce new blocker/critical issues
 - Use only synthetic test data; do not use real or realistic PII (emails, IDs, names, tokens, or secrets)
+- Do not use Mockito lenient stubbing (`lenient()`); keep tests strict-stubbing compliant
 
 Output format:
 1) short implementation plan
@@ -114,6 +116,7 @@ Constraints:
 - For PostgreSQL DAO SQL spanning multiple datasets/tables, prefer CTEs (`WITH`) when they simplify logic or reduce repeated work
 - Resolve SonarQube issues in touched code and do not introduce new blocker/critical issues
 - Use only synthetic test data; do not use real or realistic PII (emails, IDs, names, tokens, or secrets)
+- Do not use Mockito lenient stubbing (`lenient()`); keep tests strict-stubbing compliant
 
 Output format:
 1) short implementation plan

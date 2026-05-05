@@ -24,5 +24,6 @@ This repository uses multiple instruction entry points.
 - `/api` routes are authenticated (proxy/OAUTH-decorated); non-`/api` routes are unauthenticated.
 - Update `src/main/resources/assets/api-docs.yaml` when API contracts change.
 - Add/update tests for behavior changes.
+- Avoid Mockito lenient stubbing (`lenient()`); keep tests strict-stubbing compliant.
 - Use synthetic test data only.
 

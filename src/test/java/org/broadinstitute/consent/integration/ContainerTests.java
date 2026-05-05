@@ -57,10 +57,12 @@ public abstract class ContainerTests implements ConsentLogger {
     POSTGRES.start();
   }
 
-  protected static final DropwizardAppExtension<ConsentConfiguration> APPLICATION =
+  public static final DropwizardAppExtension<ConsentConfiguration> APPLICATION =
       new DropwizardAppExtension<>(
           ConsentApplication.class,
           ResourceHelpers.resourceFilePath("consent-ci.yaml"),
+          ConfigOverride.config("server.applicationConnectors[0].port", "0"),
+          ConfigOverride.config("server.adminConnectors[0].port", "0"),
           ConfigOverride.config("database.driverClass", POSTGRES.getDriverClassName()),
           ConfigOverride.config("database.url", POSTGRES.getJdbcUrl()),
           ConfigOverride.config("database.user", POSTGRES.getUsername()),
@@ -84,6 +86,11 @@ public abstract class ContainerTests implements ConsentLogger {
   // Note: never close the client returned here — the extension manages its lifetime.
   protected static Client getClient() {
     return APPLICATION.client();
+  }
+
+  protected static String serviceUrl(String path) {
+    String normalizedPath = path.startsWith("/") ? path : "/" + path;
+    return "http://localhost:%d%s".formatted(APPLICATION.getLocalPort(), normalizedPath);
   }
 
   /**
