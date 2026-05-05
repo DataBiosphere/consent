@@ -414,6 +414,11 @@ public class DataAccessRequest {
     // object and not the original DAR.
     originalDataCopy.setReferenceId(referenceId);
 
+    // We need to set the new DAAs that were in place on the DAR because the DAAs may have been
+    // updated
+    // from the original DAR.
+    originalDataCopy.setDaaIds(newData.getDaaIds());
+
     newDar.setData(originalDataCopy);
     return newDar;
   }

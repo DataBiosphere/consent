@@ -687,6 +687,9 @@ public class DataAccessRequestData {
   }
 
   public Set<Integer> getDaaIds() {
+    if (Objects.isNull(daaIds)) {
+      daaIds = Collections.emptySet();
+    }
     return daaIds;
   }
 

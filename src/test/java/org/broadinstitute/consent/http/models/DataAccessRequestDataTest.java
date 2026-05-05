@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.google.gson.Gson;
 import jakarta.ws.rs.BadRequestException;
 import java.util.List;
 import java.util.Set;
@@ -642,7 +643,7 @@ class DataAccessRequestDataTest {
   @Test
   void testGetSetDaaIds() {
     DataAccessRequestData data = new DataAccessRequestData();
-    assertNull(data.getDaaIds());
+    assertTrue(data.getDaaIds().isEmpty());
     Set<Integer> daaIds = Set.of(1, 2, 3);
     data.setDaaIds(daaIds);
     assertEquals(daaIds, data.getDaaIds());
@@ -652,5 +653,16 @@ class DataAccessRequestDataTest {
   void testGetDatasetIds_returnsEmptyListWhenNull() {
     DataAccessRequestData data = new DataAccessRequestData();
     assertTrue(data.getDatasetIds().isEmpty());
+  }
+
+  @Test
+  void testJsonSerializeDeserialize() {
+    DataAccessRequestData data = new DataAccessRequestData();
+    Set<Integer> daaIds = Set.of(1, 2, 3);
+    data.setDaaIds(daaIds);
+    Gson gson = new Gson();
+    String json = gson.toJson(data);
+    DataAccessRequestData data2 = gson.fromJson(json, DataAccessRequestData.class);
+    assertEquals(data.getDaaIds(), data2.getDaaIds());
   }
 }

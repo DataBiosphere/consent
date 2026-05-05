@@ -17,6 +17,7 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
+import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -424,7 +425,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
           VALUES (:collectionId, :referenceId, :userId, :createDate,
             :submissionDate, :updateDate, regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb, :eraCommonsId)
       """)
-  void insertDataAccessRequest(
+  @GetGeneratedKeys
+  Integer insertDataAccessRequest(
       @Bind("collectionId") Integer collectionId,
       @Bind("referenceId") String referenceId,
       @Bind("userId") Integer userId,
@@ -450,7 +452,8 @@ public interface DataAccessRequestDAO extends Transactional<DataAccessRequestDAO
             (parent_id, collection_id, reference_id, user_id, create_date, submission_date, update_date, data, era_commons_id)
           VALUES (:parentId, :collectionId, :referenceId, :userId, now(), now(), now(), regexp_replace(:data, '\\\\u0000', '', 'g')::jsonb, :eraCommonsId)
       """)
-  void insertProgressReport(
+  @GetGeneratedKeys
+  Integer insertProgressReport(
       @Bind("parentId") Integer parentId,
       @Bind("collectionId") Integer collectionId,
       @Bind("referenceId") String referenceId,
