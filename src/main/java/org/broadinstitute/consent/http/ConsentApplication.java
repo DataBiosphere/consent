@@ -51,6 +51,7 @@ import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.health.GCSHealthCheck;
 import org.broadinstitute.consent.http.health.SamHealthCheck;
 import org.broadinstitute.consent.http.health.SendGridHealthCheck;
+import org.broadinstitute.consent.http.mcp.ConsentMcpManaged;
 import org.broadinstitute.consent.http.mcp.McpClaimsFilter;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
@@ -158,7 +159,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
             EnumSet.of(DispatcherType.REQUEST), /* isMatchAfterFilter= */ false, "/mcp");
     env.servlets().addServlet("mcp-stateless", mcpTransport).addMapping("/mcp");
     McpStatelessSyncServer mcpServer = injector.getInstance(McpStatelessSyncServer.class);
-    env.lifecycle().manage(new org.broadinstitute.consent.http.mcp.ConsentMcpManaged(mcpServer));
+    env.lifecycle().manage(new ConsentMcpManaged(mcpServer));
 
     // Metric Registry
     MetricRegistry metricRegistry = new MetricRegistry();
