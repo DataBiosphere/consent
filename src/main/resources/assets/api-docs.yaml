@@ -54,6 +54,8 @@ paths:
     $ref: 'paths/daa.yaml'
   /api/daa/{daaId}:
     $ref: 'paths/daaByDaaId.yaml'
+  /api/daa/{daaId}/assign-all-eligible-users:
+    $ref: 'paths/daaAssignAllEligibleUsersByDaaId.yaml'
   /api/daa/{daaId}/file:
     $ref: 'paths/daaFileByDaaId.yaml'
   /api/daa/{daaId}/{userId}:
@@ -68,6 +70,8 @@ paths:
     $ref: 'paths/daaById.yaml'
   /api/daa/{dacId}/updated/{oldDaaId}/{newDaaName}:
     $ref: 'paths/daaUpdateByDacId.yaml'
+  /api/daa/datasets:
+    $ref: 'paths/daaDatasets.yaml'
   /api/dac:
     $ref: 'paths/dac.yaml'
   /api/dac/rules:
@@ -232,14 +236,14 @@ paths:
   /api/dar/v2:
     $ref: './paths/darV2.yaml'
 
-  /api/dar/v3:
-    $ref: './paths/darV3.yaml'
-
   /api/dar/v2/{referenceId}:
     $ref: './paths/darV2ByReferenceId.yaml'
 
   /api/dar/v2/{referenceId}/daas:
     $ref: './paths/darV2DAAsByReferenceId.yaml'
+
+  /api/dar/v2/{referenceId}/dataset-daa-snapshots:
+    $ref: './paths/darV2DatasetDaaSnapshotsByReferenceId.yaml'
 
   /api/dar/v2/draft:
     post:
@@ -335,8 +339,6 @@ paths:
         500:
           description: Internal Server Error.
 
-  /api/dar/v3/progress_report/{parentReferenceId}:
-    $ref: './paths/progressReportV3.yaml'
 
   /api/dar/v2/{referenceId}/irbDocument:
     get:
@@ -1053,6 +1055,8 @@ components:
       $ref: './schemas/DataAccessRequest.yaml'
     Dataset:
       $ref: './schemas/Dataset.yaml'
+    DatasetDaaSnapshot:
+      $ref: './schemas/DatasetDaaSnapshot.yaml'
     DatasetApproval:
       $ref: './schemas/DatasetApproval.yaml'
     DatasetProperty:

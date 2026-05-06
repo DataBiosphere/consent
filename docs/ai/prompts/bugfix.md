@@ -17,6 +17,7 @@ Use this when fixing an incorrect behavior, error response, or failing test.
 - Reuse existing exception and error response patterns.
 - Avoid behavior changes outside the bug scope.
 - For PostgreSQL DAO bugs involving multi-dataset/multi-table SQL, prefer CTE-based (`WITH`) fixes when they simplify logic and reduce repeated work.
+- Do not use Mockito lenient stubbing (`lenient()`); keep stubbing strict and remove unused stubs.
 
 ## Copy/Paste Prompt
 
@@ -40,6 +41,7 @@ Constraints:
 - Keep existing API contract unless the bug is contract-related
 - Reuse existing error handling patterns
 - For PostgreSQL DAO bugs involving multi-dataset/multi-table SQL, prefer CTE-based (`WITH`) fixes when they simplify logic and reduce repeated work
+- Do not use Mockito lenient stubbing (`lenient()`); keep stubbing strict and remove unused stubs
 
 Output format:
 1) root-cause analysis
@@ -71,6 +73,7 @@ Constraints:
 - Keep existing API contract unless the bug is contract-related
 - Reuse existing error handling patterns
 - For PostgreSQL DAO bugs involving multi-dataset/multi-table SQL, prefer CTE-based (`WITH`) fixes when they simplify logic and reduce repeated work
+- Do not use Mockito lenient stubbing (`lenient()`); keep stubbing strict and remove unused stubs
 
 Output format:
 1) root-cause analysis

@@ -96,7 +96,7 @@ class UserTests extends ContainerTests {
     String bearer = UUID.randomUUID().toString();
     try (Response response =
         getClient()
-            .target(String.format("http://localhost:%d/api/user/me", APPLICATION.getLocalPort()))
+            .target(serviceUrl("/api/user/me"))
             .request()
             .header(HttpHeaders.AUTHORIZATION, "Bearer " + bearer)
             .header("OAUTH2_CLAIM_email", user.email())

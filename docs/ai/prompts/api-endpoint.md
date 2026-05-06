@@ -17,6 +17,7 @@ Use this when adding or modifying HTTP endpoints.
 - Reuse existing auth/error handling patterns (`@RolesAllowed`, `ErrorResource` patterns).
 - For PostgreSQL DAO SQL that joins multiple datasets/tables or performs multi-table actions, prefer CTEs (`WITH`) when they improve clarity and reduce repeated work.
 - Update OpenAPI docs and tests for contract changes.
+- Do not use Mockito lenient stubbing (`lenient()`); keep tests strict-stubbing compliant.
 
 ## Copy/Paste Prompt
 
@@ -50,6 +51,7 @@ Constraints:
 - Do not introduce new framework dependencies
 - For PostgreSQL DAO SQL that joins multiple datasets/tables or performs multi-table actions, prefer CTEs (`WITH`) when they improve clarity and reduce repeated work
 - Add or update tests in src/test/java
+- Do not use Mockito lenient stubbing (`lenient()`); keep tests strict-stubbing compliant
 
 Output format:
 1) short plan
@@ -90,6 +92,7 @@ Constraints:
 - Do not introduce new framework dependencies
 - For PostgreSQL DAO SQL that joins multiple datasets/tables or performs multi-table actions, prefer CTEs (`WITH`) when they improve clarity and reduce repeated work
 - Add or update tests in src/test/java
+- Do not use Mockito lenient stubbing (`lenient()`); keep tests strict-stubbing compliant
 
 Output format:
 1) short plan

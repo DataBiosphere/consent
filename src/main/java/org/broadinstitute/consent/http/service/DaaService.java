@@ -11,15 +11,19 @@ import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.models.DaaBulkAssignmentResult;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.FileStorageObject;
@@ -37,6 +41,7 @@ public class DaaService implements ConsentLogger {
   private final EmailService emailService;
   private final UserService userService;
   private final DacDAO dacDAO;
+  private final LibraryCardService libraryCardService;
 
   @Inject
   public DaaService(
@@ -45,13 +50,15 @@ public class DaaService implements ConsentLogger {
       GCSService gcsService,
       EmailService emailService,
       UserService userService,
-      DacDAO dacDAO) {
+      DacDAO dacDAO,
+      LibraryCardService libraryCardService) {
     this.daaServiceDAO = daaServiceDAO;
     this.daaDAO = daaDAO;
     this.gcsService = gcsService;
     this.emailService = emailService;
     this.userService = userService;
     this.dacDAO = dacDAO;
+    this.libraryCardService = libraryCardService;
   }
 
   /**
@@ -220,5 +227,59 @@ public class DaaService implements ConsentLogger {
 
   public List<DataAccessAgreement> findByDarReferenceId(String referenceId) {
     return daaDAO.findByDarReferenceId(referenceId);
+  }
+
+  public Map<Integer, Set<Integer>> findDaaIdsByDatasetIds(Set<Integer> datasetIds) {
+    return daaDAO.mapDaaIdsToDatasetIds(datasetIds);
+  }
+
+  /**
+   * Bulk assign a Data Access Agreement to all DUOS users who have both an institution and a
+   * library card assigned.
+   *
+   * @param daaId The DAA ID to assign
+   * @param admin The user performing the bulk assignment (will be recorded in audit)
+   * @return DaaBulkAssignmentResult containing assignment statistics and any errors
+   */
+  public DaaBulkAssignmentResult assignDaaToAllEligibleUsers(Integer daaId, User admin) {
+    // Validate that the DAA exists
+    findById(daaId);
+
+    // Get all users with both institution and library card assigned
+    List<User> eligibleUsers = userService.findAllUsersWithInstitutionAndLibraryCard();
+
+    int assignedCount = 0;
+    int skippedCount = 0;
+    List<String> errors = new ArrayList<>();
+
+    for (User user : eligibleUsers) {
+      try {
+        if (user.getLibraryCard() == null || user.getLibraryCard().getId() == null) {
+          skippedCount++;
+          continue;
+        }
+        // Users are pre-filtered to have an institution and an existing library card.
+        libraryCardService.addDaaToLibraryCard(
+            user.getUserId(), admin.getUserId(), user.getLibraryCard().getId(), daaId);
+        assignedCount++;
+      } catch (Exception e) {
+        // Log the error but continue processing other users
+        String errorMsg =
+            String.format(
+                "Failed to assign DAA %d to user %d (%s): %s",
+                daaId, user.getUserId(), user.getEmail(), e.getMessage());
+        logWarn(errorMsg);
+        errors.add(errorMsg);
+        skippedCount++;
+      }
+    }
+
+    logInfo(
+        String.format(
+            "Bulk DAA assignment completed. DAA ID: %d, Total users eligible: %d, Assigned: %d, Skipped: %d",
+            daaId, eligibleUsers.size(), assignedCount, skippedCount));
+
+    return new DaaBulkAssignmentResult(
+        daaId, eligibleUsers.size(), assignedCount, skippedCount, errors);
   }
 }
