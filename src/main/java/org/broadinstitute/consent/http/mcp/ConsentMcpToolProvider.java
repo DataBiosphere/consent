@@ -2,8 +2,8 @@ package org.broadinstitute.consent.http.mcp;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import io.modelcontextprotocol.server.McpServerFeatures;
-import io.modelcontextprotocol.server.McpSyncServerExchange;
+import io.modelcontextprotocol.common.McpTransportContext;
+import io.modelcontextprotocol.server.McpStatelessServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
 import java.util.List;
 import java.util.Map;
@@ -67,13 +67,13 @@ public class ConsentMcpToolProvider implements ConsentLogger {
   }
 
   /** Returns all registered tool specifications. Add new tools here as phases are completed. */
-  public List<McpServerFeatures.SyncToolSpecification> allTools() {
+  public List<McpStatelessServerFeatures.SyncToolSpecification> allTools() {
     return List.of(datasetSearchToolSpec());
   }
 
   // ── dataset_search ──────────────────────────────────────────────────────────────────────────
 
-  private McpServerFeatures.SyncToolSpecification datasetSearchToolSpec() {
+  private McpStatelessServerFeatures.SyncToolSpecification datasetSearchToolSpec() {
     // McpSchema.Tool record in SDK 0.14.1: (name, title, description, inputSchema, outputSchema,
     // annotations, meta).  Use the builder so outputSchema stays null — passing a raw Map to the
     // 5th constructor arg would populate outputSchema, which causes the SDK to require structured
@@ -87,7 +87,7 @@ public class ConsentMcpToolProvider implements ConsentLogger {
                     + " Provide a query string to filter by name; omit it to list all accessible datasets.")
             .inputSchema(DATASET_SEARCH_INPUT_SCHEMA)
             .build();
-    return new McpServerFeatures.SyncToolSpecification(tool, this::handleDatasetSearch);
+    return new McpStatelessServerFeatures.SyncToolSpecification(tool, this::handleDatasetSearch);
   }
 
   /**
@@ -98,12 +98,13 @@ public class ConsentMcpToolProvider implements ConsentLogger {
    * by a case-insensitive substring match on dataset name or study name.
    */
   private McpSchema.CallToolResult handleDatasetSearch(
-      McpSyncServerExchange exchange, Map<String, Object> args) {
+      McpTransportContext context, McpSchema.CallToolRequest request) {
     try {
-      User caller = McpAuthHelper.resolveUser(exchange, authorizationHelper, userService);
+      User caller = McpAuthHelper.resolveUser(context, authorizationHelper, userService);
 
       List<DatasetStudySummary> summaries = datasetService.findAllDatasetStudySummaries(caller);
 
+      Map<String, Object> args = request.arguments() != null ? request.arguments() : Map.of();
       String query = args.containsKey("query") ? String.valueOf(args.get("query")).strip() : "";
       if (!query.isBlank()) {
         String q = query.toLowerCase();

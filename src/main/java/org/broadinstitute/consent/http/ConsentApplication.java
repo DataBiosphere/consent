@@ -14,8 +14,8 @@ import io.dropwizard.core.setup.Bootstrap;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.jdbi3.bundles.JdbiExceptionsBundle;
-import io.modelcontextprotocol.server.McpSyncServer;
-import io.modelcontextprotocol.server.transport.HttpServletSseServerTransportProvider;
+import io.modelcontextprotocol.server.McpStatelessSyncServer;
+import io.modelcontextprotocol.server.transport.HttpServletStatelessServerTransport;
 import io.sentry.Sentry;
 import io.sentry.SentryLevel;
 import jakarta.servlet.DispatcherType;
@@ -51,6 +51,7 @@ import org.broadinstitute.consent.http.health.ElasticSearchHealthCheck;
 import org.broadinstitute.consent.http.health.GCSHealthCheck;
 import org.broadinstitute.consent.http.health.SamHealthCheck;
 import org.broadinstitute.consent.http.health.SendGridHealthCheck;
+import org.broadinstitute.consent.http.mcp.McpClaimsFilter;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DuosUser;
 import org.broadinstitute.consent.http.resources.DACAutomationRuleResource;
@@ -145,18 +146,18 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
     env.jersey().register(JerseyGsonProvider.class);
 
-    // MCP Server-Sent Events endpoint
-    // McpClaimsFilter must be registered BEFORE the servlet so it runs first on /mcp/* requests.
+    // MCP stateless endpoint (POST /mcp)
+    // McpClaimsFilter must be registered BEFORE the servlet so it runs first.
     // It reads OAUTH2_CLAIM_* headers set by Apache mod_oauth2 and populates ClaimsCache,
     // mirroring what RequestHeaderCacheFilter does for Jersey requests on /api.
-    HttpServletSseServerTransportProvider mcpTransport =
-        injector.getInstance(HttpServletSseServerTransportProvider.class);
+    HttpServletStatelessServerTransport mcpTransport =
+        injector.getInstance(HttpServletStatelessServerTransport.class);
     env.servlets()
-        .addFilter("mcp-claims-filter", new org.broadinstitute.consent.http.mcp.McpClaimsFilter())
+        .addFilter("mcp-claims-filter", new McpClaimsFilter())
         .addMappingForUrlPatterns(
-            EnumSet.of(DispatcherType.REQUEST), /* isMatchAfterFilter= */ false, "/mcp/*");
-    env.servlets().addServlet("mcp-sse", mcpTransport).addMapping("/mcp/*");
-    McpSyncServer mcpServer = injector.getInstance(McpSyncServer.class);
+            EnumSet.of(DispatcherType.REQUEST), /* isMatchAfterFilter= */ false, "/mcp");
+    env.servlets().addServlet("mcp-stateless", mcpTransport).addMapping("/mcp");
+    McpStatelessSyncServer mcpServer = injector.getInstance(McpStatelessSyncServer.class);
     env.lifecycle().manage(new org.broadinstitute.consent.http.mcp.ConsentMcpManaged(mcpServer));
 
     // Metric Registry

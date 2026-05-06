@@ -4,10 +4,15 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.core.Configuration;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.jdbi3.JdbiFactory;
+import io.modelcontextprotocol.common.McpTransportContext;
+import io.modelcontextprotocol.server.McpServer;
+import io.modelcontextprotocol.server.McpStatelessSyncServer;
+import io.modelcontextprotocol.server.transport.HttpServletStatelessServerTransport;
 import jakarta.ws.rs.client.Client;
 import org.broadinstitute.consent.http.authentication.AuthorizationHelper;
 import org.broadinstitute.consent.http.authentication.DuosUserAuthenticator;
@@ -47,6 +52,8 @@ import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
+import org.broadinstitute.consent.http.mcp.ConsentMcpJsonMapper;
+import org.broadinstitute.consent.http.mcp.ConsentMcpToolProvider;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DACAutomationRuleService;
@@ -706,43 +713,37 @@ public class ConsentModule extends AbstractModule {
   // ── MCP ──────────────────────────────────────────────────────────────────────────────────────
 
   @Provides
-  @com.google.inject.Singleton
-  io.modelcontextprotocol.server.transport.HttpServletSseServerTransportProvider
-      providesMcpTransport() {
-    // SDK 0.14.x builder API (constructor is private):
-    //   HttpServletSseServerTransportProvider.builder()
-    //       .jsonMapper(McpJsonMapper)       – ConsentMcpJsonMapper (networknt-free Jackson impl)
-    //       .sseEndpoint(String)             – GET  /mcp  → SSE stream
-    //       .messageEndpoint(String)         – POST /mcp/messages → client→server
-    //       .keepAliveInterval(Duration)     – SSE heartbeat interval
-    //       .build()
-    // contextExtractor captures the Bearer token from each POST /mcp/messages request and stores it
-    // in McpTransportContext under the key "bearer". Tool handlers retrieve it via
-    // exchange.transportContext().get("bearer"), which works across Reactor scheduler threads where
-    // ThreadLocal propagation would fail.
-    return io.modelcontextprotocol.server.transport.HttpServletSseServerTransportProvider.builder()
-        .jsonMapper(
-            new org.broadinstitute.consent.http.mcp.ConsentMcpJsonMapper(
-                new com.fasterxml.jackson.databind.ObjectMapper()))
-        .sseEndpoint("/mcp")
-        .messageEndpoint("/mcp/messages")
-        .keepAliveInterval(java.time.Duration.ofSeconds(30))
+  @Singleton
+  HttpServletStatelessServerTransport providesMcpTransport() {
+    // HttpServletStatelessServerTransport (SDK 0.14.x non-deprecated transport):
+    //   .jsonMapper(McpJsonMapper)       – ConsentMcpJsonMapper (networknt-free Jackson impl)
+    //   .messageEndpoint(String)        – single endpoint for all MCP traffic (POST /mcp)
+    //   .contextExtractor(extractor)    – captures Bearer token per-request into
+    // McpTransportContext
+    //
+    // The contextExtractor stores the Bearer token under key "bearer". Tool handlers receive the
+    // McpTransportContext as their first BiFunction parameter and call McpAuthHelper.resolveUser()
+    // to authenticate the caller without relying on ThreadLocal propagation.
+    return HttpServletStatelessServerTransport.builder()
+        .jsonMapper(new ConsentMcpJsonMapper(new com.fasterxml.jackson.databind.ObjectMapper()))
+        .messageEndpoint("/mcp")
         .contextExtractor(
             req -> {
               String auth = req.getHeader("Authorization");
               String bearer = (auth != null && auth.startsWith("Bearer ")) ? auth.substring(7) : "";
-              return io.modelcontextprotocol.common.McpTransportContext.create(
-                  java.util.Map.of("bearer", bearer));
+              return McpTransportContext.create(java.util.Map.of("bearer", bearer));
             })
         .build();
   }
 
   @Provides
   @com.google.inject.Singleton
-  io.modelcontextprotocol.server.McpSyncServer providesMcpServer(
-      io.modelcontextprotocol.server.transport.HttpServletSseServerTransportProvider transport,
-      org.broadinstitute.consent.http.mcp.ConsentMcpToolProvider toolProvider) {
-    return io.modelcontextprotocol.server.McpServer.sync(transport)
+  McpStatelessSyncServer providesMcpServer(
+      HttpServletStatelessServerTransport transport, ConsentMcpToolProvider toolProvider) {
+    // McpServer.sync() is overloaded: sync(McpStatelessServerTransport) →
+    // StatelessSyncSpecification
+    // → McpStatelessSyncServer. This overload (and its return type) are not deprecated.
+    return McpServer.sync(transport)
         .serverInfo("consent-mcp", "1.0.0")
         .capabilities(
             io.modelcontextprotocol.spec.McpSchema.ServerCapabilities.builder()

@@ -1,12 +1,10 @@
 package org.broadinstitute.consent.http.mcp;
 
-import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
-import java.util.List;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 
 /**
- * Utility class for converting domain objects into {@link McpServerFeatures} CallToolResult values.
+ * Utility class for building {@link McpSchema.CallToolResult} values from domain objects.
  *
  * <p>All serialisation uses {@link GsonUtil#buildGson()} to stay consistent with the REST layer's
  * JSON output format (date handling, enum names, etc.).
@@ -23,8 +21,7 @@ public final class McpToolResults {
    */
   public static McpSchema.CallToolResult of(Object value) {
     String json = GsonUtil.buildGson().toJson(value);
-    return new McpSchema.CallToolResult(
-        List.of(new McpSchema.TextContent(json)), /* isError= */ false);
+    return McpSchema.CallToolResult.builder().addTextContent(json).isError(false).build();
   }
 
   /**
@@ -34,8 +31,7 @@ public final class McpToolResults {
    * @return a non-error CallToolResult with a single text content item
    */
   public static McpSchema.CallToolResult ofText(String text) {
-    return new McpSchema.CallToolResult(
-        List.of(new McpSchema.TextContent(text)), /* isError= */ false);
+    return McpSchema.CallToolResult.builder().addTextContent(text).isError(false).build();
   }
 
   /**
@@ -45,7 +41,6 @@ public final class McpToolResults {
    * @return an error CallToolResult
    */
   public static McpSchema.CallToolResult error(String message) {
-    return new McpSchema.CallToolResult(
-        List.of(new McpSchema.TextContent(message)), /* isError= */ true);
+    return McpSchema.CallToolResult.builder().addTextContent(message).isError(true).build();
   }
 }

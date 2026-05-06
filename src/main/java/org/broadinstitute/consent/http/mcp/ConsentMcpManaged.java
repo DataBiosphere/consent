@@ -1,33 +1,32 @@
 package org.broadinstitute.consent.http.mcp;
 
 import io.dropwizard.lifecycle.Managed;
-import io.modelcontextprotocol.server.McpSyncServer;
+import io.modelcontextprotocol.server.McpStatelessSyncServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Dropwizard {@link Managed} wrapper for {@link McpSyncServer}.
+ * Dropwizard {@link Managed} wrapper for {@link McpStatelessSyncServer}.
  *
  * <p>Dropwizard calls {@link #start()} after all resources are registered and the HTTP server is
  * running, and calls {@link #stop()} during graceful shutdown before the JVM exits.
  *
- * <p>In SDK 0.14.x, {@code McpSyncServer} has no explicit {@code start()} method — it begins
- * serving as soon as the transport servlet receives connections. {@code closeGracefully()} is
- * synchronous (returns void), so no reactive block is needed.
+ * <p>{@code McpStatelessSyncServer} has no explicit {@code start()} method — it begins serving as
+ * soon as the transport servlet receives connections. {@code closeGracefully()} handles shutdown.
  */
 public class ConsentMcpManaged implements Managed {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsentMcpManaged.class);
 
-  private final McpSyncServer server;
+  private final McpStatelessSyncServer server;
 
-  public ConsentMcpManaged(McpSyncServer server) {
+  public ConsentMcpManaged(McpStatelessSyncServer server) {
     this.server = server;
   }
 
   @Override
   public void start() {
-    // McpSyncServer 0.14.x starts automatically when the transport receives the first connection.
+    // McpStatelessSyncServer starts automatically when the transport servlet receives connections.
     LOGGER.info("Consent MCP server ready");
   }
 
