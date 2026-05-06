@@ -32,6 +32,7 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
 @Singleton
 public class ConsentMcpToolProvider implements ConsentLogger {
 
+  private static final String QUERY = "query";
   // Typed input schema for dataset_search.
   // McpSchema.JsonSchema(type, properties, required, additionalProperties, defs, definitions).
   // properties values are Map<String,Object> (each property is itself a plain map of JSON-Schema
@@ -40,7 +41,7 @@ public class ConsentMcpToolProvider implements ConsentLogger {
       new McpSchema.JsonSchema(
           "object",
           Map.of(
-              "query",
+              QUERY,
               Map.of(
                   "type",
                   "string",
@@ -51,6 +52,13 @@ public class ConsentMcpToolProvider implements ConsentLogger {
           /* additionalProperties= */ null,
           /* defs= */ null,
           /* definitions= */ null);
+
+  // Output schema for dataset_search: an array of dataset/study summary objects.
+  // outputSchema on Tool.builder() takes Map<String,Object>, not McpSchema.JsonSchema
+  // (unlike inputSchema which takes McpSchema.JsonSchema).
+  // Declaring an outputSchema causes the SDK to expect structuredContent in the result,
+  // which McpToolResults.of() now provides.
+  private static final Map<String, Object> DATASET_SEARCH_OUTPUT_SCHEMA = Map.of("type", "array");
 
   private final DatasetService datasetService;
   private final AuthorizationHelper authorizationHelper;
@@ -86,6 +94,7 @@ public class ConsentMcpToolProvider implements ConsentLogger {
                     + " Returns dataset id, name, identifier, study name, and public visibility."
                     + " Provide a query string to filter by name; omit it to list all accessible datasets.")
             .inputSchema(DATASET_SEARCH_INPUT_SCHEMA)
+            .outputSchema(DATASET_SEARCH_OUTPUT_SCHEMA)
             .build();
     return new McpStatelessServerFeatures.SyncToolSpecification(tool, this::handleDatasetSearch);
   }
@@ -105,7 +114,7 @@ public class ConsentMcpToolProvider implements ConsentLogger {
       List<DatasetStudySummary> summaries = datasetService.findAllDatasetStudySummaries(caller);
 
       Map<String, Object> args = request.arguments() != null ? request.arguments() : Map.of();
-      String query = args.containsKey("query") ? String.valueOf(args.get("query")).strip() : "";
+      String query = args.containsKey(QUERY) ? String.valueOf(args.get(QUERY)).strip() : "";
       if (!query.isBlank()) {
         String q = query.toLowerCase();
         summaries =
