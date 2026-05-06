@@ -15,9 +15,9 @@ import org.broadinstitute.consent.http.service.UserService;
  * contextExtractor (configured in ConsentModule) captures the raw Bearer token from the request and
  * stores it in {@link McpTransportContext} under the key {@code "bearer"}.
  *
- * <p>Tool handlers (and the auto-generated handlers in {@link McpToolScanner}) call
- * {@link #resolveDuosUser} to obtain a {@link DuosUser} that can be passed directly to resource
- * methods annotated with {@link McpTool}.
+ * <p>Tool handlers (and the auto-generated handlers in {@link McpToolScanner}) call {@link
+ * #resolveDuosUser} to obtain a {@link DuosUser} that can be passed directly to resource methods
+ * annotated with {@link McpTool}.
  */
 public final class McpAuthHelper {
 

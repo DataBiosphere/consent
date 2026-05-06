@@ -131,8 +131,7 @@ public final class McpToolScanner implements ConsentLogger {
 
     // Any remaining McpToolParam entries are MCP-only additions not present on the method.
     for (McpToolParam extra : paramOverrides.values()) {
-      properties.put(
-          extra.name(), Map.of("type", extra.type(), DESCRIPTION, extra.description()));
+      properties.put(extra.name(), Map.of("type", extra.type(), DESCRIPTION, extra.description()));
       if (extra.required()) {
         required.add(extra.name());
       }
