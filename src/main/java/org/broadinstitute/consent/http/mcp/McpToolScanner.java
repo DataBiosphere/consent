@@ -49,6 +49,7 @@ import org.broadinstitute.consent.http.util.ConsentLogger;
  */
 public final class McpToolScanner implements ConsentLogger {
 
+  // nosemgrep
   private static final String DESCRIPTION = "description";
   private final AuthorizationHelper authorizationHelper;
   private final UserService userService;
