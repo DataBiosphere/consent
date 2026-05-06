@@ -3,8 +3,19 @@ get:
   operationId: apiDatasetV3Get
   description: |
     Provides a list of datasets and their associated study information in a very minimal format.
+    Results are limited to datasets the caller is permitted to see.
+    Use the optional `query` parameter to filter by dataset name or study name.
   tags:
     - Dataset
+  parameters:
+    - name: query
+      in: query
+      required: false
+      description: >
+        Case-insensitive substring filter applied to dataset name and study name.
+        Omit to return all datasets visible to the caller.
+      schema:
+        type: string
   responses:
     200:
       description: List of Dataset Study Summary objects

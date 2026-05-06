@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.mcp;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.modelcontextprotocol.spec.McpSchema;
+import java.util.Map;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,28 +41,46 @@ public final class McpToolResults {
       Object parsed = OBJECT_MAPPER.readValue(json, OBJECT_TYPE);
       return McpSchema.CallToolResult.builder().structuredContent(parsed).isError(false).build();
     } catch (Exception e) {
-      LOGGER.warn("Failed to parse tool result as structured content; falling back to text", e);
-      return McpSchema.CallToolResult.builder().addTextContent(json).isError(false).build();
+      // Still use structuredContent in the fallback — returning addTextContent when the tool
+      // declares an outputSchema causes the SDK to reject the result entirely.
+      LOGGER.warn("Failed to parse tool result as structured content; wrapping as raw string", e);
+      return McpSchema.CallToolResult.builder()
+          .structuredContent(Map.of("raw", json))
+          .isError(false)
+          .build();
     }
   }
 
   /**
    * Wrap a plain text message as a successful tool result.
    *
+   * <p>Uses {@code structuredContent} so the result is accepted by the SDK even when the tool
+   * declares an {@code outputSchema}.
+   *
    * @param text the text to return
-   * @return a non-error CallToolResult with a single text content item
+   * @return a non-error CallToolResult with structured content
    */
   public static McpSchema.CallToolResult ofText(String text) {
-    return McpSchema.CallToolResult.builder().addTextContent(text).isError(false).build();
+    return McpSchema.CallToolResult.builder()
+        .structuredContent(Map.of("text", text))
+        .isError(false)
+        .build();
   }
 
   /**
-   * Build an error result. The MCP client will receive isError=true and the message as text.
+   * Build an error result.
+   *
+   * <p>Uses {@code structuredContent} so the SDK does not reject the result when the tool declares
+   * an {@code outputSchema}. The {@code isError} flag signals to the MCP client that the call
+   * failed; the {@code error} field carries the human-readable reason.
    *
    * @param message a human-readable error description
    * @return an error CallToolResult
    */
   public static McpSchema.CallToolResult error(String message) {
-    return McpSchema.CallToolResult.builder().addTextContent(message).isError(true).build();
+    return McpSchema.CallToolResult.builder()
+        .structuredContent(Map.of("error", message))
+        .isError(true)
+        .build();
   }
 }

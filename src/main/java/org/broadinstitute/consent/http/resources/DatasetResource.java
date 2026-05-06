@@ -39,6 +39,8 @@ import java.util.stream.Collectors;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.UnprocessableEntityException;
+import org.broadinstitute.consent.http.mcp.McpTool;
+import org.broadinstitute.consent.http.mcp.McpToolParam;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -63,6 +65,7 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
+@SuppressWarnings("unused")
 @Path("api/dataset")
 public class DatasetResource extends Resource {
 
@@ -227,14 +230,43 @@ public class DatasetResource extends Resource {
     }
   }
 
+  @McpTool(
+      name = "dataset_search",
+      description =
+          """
+              Search DUOS datasets and studies visible to the caller.
+              Returns dataset id, name, identifier, study name, and public visibility.
+              Provide a query string to filter by name; omit it to list all accessible datasets.
+              """,
+      outputType = "array",
+      params = {
+        @McpToolParam(
+            name = "query",
+            type = "string",
+            description =
+                "Case-insensitive text matched against dataset name and study name."
+                    + " Omit to return all datasets visible to the caller.",
+            required = false)
+      })
   @GET
   @Produces("application/json")
   @PermitAll
   @Path("/v3")
-  public Response findAllDatasetStudySummaries(@Auth DuosUser duosUser) {
+  public Response findAllDatasetStudySummaries(
+      @Auth DuosUser duosUser, @QueryParam("query") String query) {
     try {
       List<DatasetStudySummary> summaries =
           datasetService.findAllDatasetStudySummaries(duosUser.getUser());
+      if (query != null && !query.isBlank()) {
+        String q = query.strip().toLowerCase();
+        summaries =
+            summaries.stream()
+                .filter(
+                    d ->
+                        (d.dataset_name() != null && d.dataset_name().toLowerCase().contains(q))
+                            || (d.study_name() != null && d.study_name().toLowerCase().contains(q)))
+                .toList();
+      }
       return Response.ok(summaries).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
@@ -573,6 +605,20 @@ public class DatasetResource extends Resource {
     }
   }
 
+  @McpTool(
+      name = "dataset_approved_users",
+      description =
+          """
+          Get the list of users approved to access a dataset. Returns an array user email addresses.
+          """,
+      outputType = "array",
+      params = {
+        @McpToolParam(
+            name = "identifier",
+            type = "string",
+            description = "The dataset identifier",
+            required = true)
+      })
   @GET
   @Produces("application/json")
   @RolesAllowed(RESEARCHER)
