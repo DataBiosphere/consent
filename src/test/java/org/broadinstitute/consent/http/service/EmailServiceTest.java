@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -98,7 +99,7 @@ class EmailServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void sendMessage() throws Exception {
+  void testSendMessage() throws Exception {
     String userEmail = "user@duos";
     User user = new User();
     user.setEmail(userEmail);
@@ -107,9 +108,9 @@ class EmailServiceTest extends AbstractTestHelper {
     String entityReferenceId = "entityReferenceId";
     Integer userId = 1234;
     Integer voteId = 4567;
-    when(templateHelper.getTemplate(EmailType.COLLECT.templateName)).thenReturn(mock());
+    when(templateHelper.getTemplate(EmailType.NEW_CASE.templateName)).thenReturn(mock());
     var message =
-        new org.broadinstitute.consent.http.mail.message.MailMessage(user, EmailType.COLLECT) {
+        new org.broadinstitute.consent.http.mail.message.MailMessage(user, EmailType.NEW_CASE) {
           @Override
           public String createSubject() {
             return subject;
@@ -131,7 +132,7 @@ class EmailServiceTest extends AbstractTestHelper {
           }
         };
     Template template = mock();
-    when(templateHelper.getTemplate(EmailType.COLLECT.templateName)).thenReturn(template);
+    when(templateHelper.getTemplate(EmailType.NEW_CASE.templateName)).thenReturn(template);
     Response response = new Response();
     response.setStatusCode(200);
     response.setBody("body");
@@ -165,6 +166,14 @@ class EmailServiceTest extends AbstractTestHelper {
         user.getEmail(), mail.getPersonalization().getFirst().getTos().getFirst().getEmail());
     assertEquals(subject, mail.getSubject());
 
+    // Verify sendgrid categories are set according to the EmailType configuration
+    if (EmailType.NEW_CASE.getSendGridCategories() != null
+        && !EmailType.NEW_CASE.getSendGridCategories().isEmpty()) {
+      assertEquals(EmailType.NEW_CASE.getSendGridCategories(), mail.getCategories());
+    } else {
+      assertTrue(mail.getCategories() == null || mail.getCategories().isEmpty());
+    }
+
     verify(emailDAO)
         .insert(
             argThat(
@@ -172,7 +181,7 @@ class EmailServiceTest extends AbstractTestHelper {
                     Objects.equals(m.entityReferenceId(), entityReferenceId)
                         && Objects.equals(m.voteId(), voteId)
                         && Objects.equals(m.userId(), 1234)
-                        && Objects.equals(m.emailType(), EmailType.COLLECT.getTypeInt())
+                        && Objects.equals(m.emailType(), EmailType.NEW_CASE.getTypeInt())
                         && Objects.equals(m.dateSent(), Date.from(fixedInstant))
                         && Objects.equals(m.emailText(), emailText)
                         && Objects.equals(m.sendgridResponse(), response.getBody())
