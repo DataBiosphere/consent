@@ -108,7 +108,6 @@ class EmailServiceTest extends AbstractTestHelper {
     String entityReferenceId = "entityReferenceId";
     Integer userId = 1234;
     Integer voteId = 4567;
-    when(templateHelper.getTemplate(EmailType.NEW_CASE.templateName)).thenReturn(mock());
     var message =
         new org.broadinstitute.consent.http.mail.message.MailMessage(user, EmailType.NEW_CASE) {
           @Override
@@ -166,13 +165,12 @@ class EmailServiceTest extends AbstractTestHelper {
         user.getEmail(), mail.getPersonalization().getFirst().getTos().getFirst().getEmail());
     assertEquals(subject, mail.getSubject());
 
-    // Verify sendgrid categories are set according to the EmailType configuration
-    if (EmailType.NEW_CASE.getSendGridCategories() != null
-        && !EmailType.NEW_CASE.getSendGridCategories().isEmpty()) {
-      assertEquals(EmailType.NEW_CASE.getSendGridCategories(), mail.getCategories());
-    } else {
-      assertTrue(mail.getCategories() == null || mail.getCategories().isEmpty());
-    }
+    // Verify sendgrid categories are configured for NEW_CASE and applied to the outgoing mail
+    assertTrue(
+        EmailType.NEW_CASE.getSendGridCategories() != null
+            && !EmailType.NEW_CASE.getSendGridCategories().isEmpty(),
+        "Expected NEW_CASE to define SendGrid categories");
+    assertEquals(EmailType.NEW_CASE.getSendGridCategories(), mail.getCategories());
 
     verify(emailDAO)
         .insert(

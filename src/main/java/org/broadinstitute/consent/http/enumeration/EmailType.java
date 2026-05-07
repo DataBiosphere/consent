@@ -69,7 +69,7 @@ public enum EmailType {
   private final List<String> categories;
 
   EmailType(Integer typeInt) {
-    this(typeInt, null, null);
+    this(typeInt, null, EmailTypeConstants.SENDGRID_CATEGORIES);
   }
 
   EmailType(Integer typeInt, String templateName, List<String> categories) {
