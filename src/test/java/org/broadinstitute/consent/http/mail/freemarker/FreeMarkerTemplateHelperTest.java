@@ -22,7 +22,13 @@ class FreeMarkerTemplateHelperTest {
   @BeforeEach
   void setUp() {
     try (var mockedFreeMarker = mockConstruction(Configuration.class)) {
-      freeMarkerTemplateHelper = new FreeMarkerTemplateHelper(new FreeMarkerConfiguration());
+      // Provide a config that matches production usage so the helper will
+      // prefix template requests with the configured directory.
+      FreeMarkerConfiguration fmConfig = new FreeMarkerConfiguration();
+      fmConfig.setTemplateDirectory("freemarker");
+      fmConfig.setDefaultEncoding("UTF-8");
+
+      freeMarkerTemplateHelper = new FreeMarkerTemplateHelper(fmConfig);
       mockedConfiguration = mockedFreeMarker.constructed().getFirst();
     }
   }
@@ -31,7 +37,8 @@ class FreeMarkerTemplateHelperTest {
   void getTemplate() throws Exception {
     var templateName = "template name";
     Template template = mock();
-    when(mockedConfiguration.getTemplate(templateName)).thenReturn(template);
+    var expectedPath = "freemarker/%s".formatted(templateName);
+    when(mockedConfiguration.getTemplate(expectedPath)).thenReturn(template);
     assertEquals(template, freeMarkerTemplateHelper.getTemplate(templateName));
   }
 }
