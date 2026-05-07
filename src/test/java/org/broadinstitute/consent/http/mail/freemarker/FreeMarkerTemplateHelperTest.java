@@ -23,7 +23,7 @@ class FreeMarkerTemplateHelperTest {
   void setUp() {
     try (var mockedFreeMarker = mockConstruction(Configuration.class)) {
       freeMarkerTemplateHelper = new FreeMarkerTemplateHelper(new FreeMarkerConfiguration());
-      mockedConfiguration = mockedFreeMarker.constructed().get(0);
+      mockedConfiguration = mockedFreeMarker.constructed().getFirst();
     }
   }
 

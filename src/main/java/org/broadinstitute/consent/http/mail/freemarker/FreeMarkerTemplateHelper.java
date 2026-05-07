@@ -1,6 +1,5 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
-import freemarker.core.HTMLOutputFormat;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateExceptionHandler;
@@ -14,8 +13,6 @@ public class FreeMarkerTemplateHelper {
 
   public FreeMarkerTemplateHelper(FreeMarkerConfiguration config) {
     freeMarkerConfig = new Configuration(Configuration.VERSION_2_3_34);
-    // Use HTML output format so Freemarker understands ?no_esc and other HTML-specific built-ins
-    freeMarkerConfig.setOutputFormat(HTMLOutputFormat.INSTANCE);
     // Recognize standard file extensions if templates use them in the future
     freeMarkerConfig.setRecognizeStandardFileExtensions(true);
     freeMarkerConfig.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
@@ -30,7 +27,7 @@ public class FreeMarkerTemplateHelper {
     // Ensure we request the template with the configured directory as a prefix so
     // templates are loaded from e.g. "freemarker/<templateName>". Trim any leading '/'.
     String dir = templateDirectory == null ? "" : templateDirectory.replaceFirst("^/", "");
-    String path = dir.isEmpty() ? templateName : dir + "/" + templateName;
+    String path = dir.isEmpty() ? templateName : "%s/%s".formatted(dir, templateName);
     return freeMarkerConfig.getTemplate(path);
   }
 }
