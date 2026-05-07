@@ -56,6 +56,6 @@ class SubmittedCloseoutMessageTest {
     assertTrue(templateString.contains("closeout for your review and approval"));
     assertEquals(
         "Hello Test User,",
-        Objects.requireNonNull(parsedTemplate.getElementById("displayName")).text());
+        Objects.requireNonNull(parsedTemplate.getElementById("userName")).text());
   }
 }

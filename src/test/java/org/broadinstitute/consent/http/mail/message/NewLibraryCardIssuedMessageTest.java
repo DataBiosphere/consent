@@ -51,7 +51,7 @@ class NewLibraryCardIssuedMessageTest {
 
     assertEquals(
         "Hello %s,".formatted(toUser.getDisplayName()),
-        getElementTextById(parsedTemplate, "displayName"));
+        getElementTextById(parsedTemplate, "userName"));
     assertThat(
         getElementTextById(parsedTemplate, "content"),
         containsString(
