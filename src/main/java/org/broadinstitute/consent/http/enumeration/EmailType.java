@@ -2,7 +2,7 @@ package org.broadinstitute.consent.http.enumeration;
 
 import java.util.List;
 
-class EmailTypeConstants {
+final class EmailTypeConstants {
   public static final List<String> SENDGRID_CATEGORIES = List.of("DUOS");
 
   private EmailTypeConstants() {

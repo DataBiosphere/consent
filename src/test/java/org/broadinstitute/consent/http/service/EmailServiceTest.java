@@ -662,6 +662,7 @@ class EmailServiceTest extends AbstractTestHelper {
             })
         .when(jdbi)
         .useHandle(any());
+    @SuppressWarnings("unchecked")
     ResultIterator<User> mockIterator = mock(ResultIterator.class);
     when(mockIterator.hasNext()).thenReturn(true, false);
     when(mockIterator.next()).thenReturn(toUser);
