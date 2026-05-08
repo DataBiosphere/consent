@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models.support;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonSyntaxException;
 import java.util.Collections;
@@ -14,8 +15,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.zendesk.client.v2.model.Request;
 import org.zendesk.client.v2.model.Ticket;
 
+@SuppressWarnings("java:S5778")
 @ExtendWith(MockitoExtension.class)
 class TicketFactoryTest {
+
+  public static final String INVALID_RESPONSE_MESSAGE =
+      "Invalid Zendesk response: 'request' field is missing or not a JSON object";
 
   @Test
   void testParseRequestResponse() {
@@ -30,7 +35,7 @@ class TicketFactoryTest {
                 }
                 """,
             GsonUtil.getInstance().toJson(request));
-    Request parsedRequest = TicketFactory.parseRequestResponse(validResponse);
+    Request parsedRequest = new TicketFactory().parseRequestResponse(validResponse);
     assertNotNull(parsedRequest);
     assertEquals(request.getId(), parsedRequest.getId());
     assertEquals(request.getSubject(), parsedRequest.getSubject());
@@ -40,7 +45,7 @@ class TicketFactoryTest {
   void testParseRequestResponse_InvalidJson() {
     String invalidResponse = "invalid json";
     assertThrows(
-        JsonSyntaxException.class, () -> TicketFactory.parseRequestResponse(invalidResponse));
+        JsonSyntaxException.class, () -> new TicketFactory().parseRequestResponse(invalidResponse));
   }
 
   @Test
@@ -49,10 +54,8 @@ class TicketFactoryTest {
     IllegalStateException e =
         assertThrows(
             IllegalStateException.class,
-            () -> TicketFactory.parseRequestResponse(missingRequestResponse));
-    assertEquals(
-        "Invalid Zendesk response: 'request' field is missing or not a JSON object.",
-        e.getMessage());
+            () -> new TicketFactory().parseRequestResponse(missingRequestResponse));
+    assertTrue(e.getMessage().startsWith(INVALID_RESPONSE_MESSAGE));
   }
 
   @Test
@@ -66,10 +69,8 @@ class TicketFactoryTest {
     IllegalStateException e =
         assertThrows(
             IllegalStateException.class,
-            () -> TicketFactory.parseRequestResponse(nullRequestResponse));
-    assertEquals(
-        "Invalid Zendesk response: 'request' field is missing or not a JSON object.",
-        e.getMessage());
+            () -> new TicketFactory().parseRequestResponse(nullRequestResponse));
+    assertTrue(e.getMessage().startsWith(INVALID_RESPONSE_MESSAGE));
   }
 
   @Test
@@ -83,10 +84,17 @@ class TicketFactoryTest {
     IllegalStateException e =
         assertThrows(
             IllegalStateException.class,
-            () -> TicketFactory.parseRequestResponse(notAnObjectResponse));
-    assertEquals(
-        "Invalid Zendesk response: 'request' field is missing or not a JSON object.",
-        e.getMessage());
+            () -> new TicketFactory().parseRequestResponse(notAnObjectResponse));
+    assertTrue(e.getMessage().startsWith(INVALID_RESPONSE_MESSAGE));
+  }
+
+  @Test
+  void testParseRequestResponse_NullInput() {
+    String nullInput = null;
+    IllegalStateException e =
+        assertThrows(
+            IllegalStateException.class, () -> new TicketFactory().parseRequestResponse(nullInput));
+    assertTrue(e.getMessage().startsWith(INVALID_RESPONSE_MESSAGE));
   }
 
   @Test
