@@ -97,7 +97,8 @@ class TicketFactoryTest {
   void testParseRequestResponse_NullInput() {
     String nullInput = null;
     IllegalStateException e =
-        assertThrows(IllegalStateException.class, () -> TicketFactory.parseRequestResponse(nullInput));
+        assertThrows(
+            IllegalStateException.class, () -> TicketFactory.parseRequestResponse(nullInput));
     assertTrue(e.getMessage().startsWith(INVALID_RESPONSE_MESSAGE));
     // error message should contain the original input string representation ("null")
     assertTrue(e.getMessage().contains(String.valueOf(nullInput)));
