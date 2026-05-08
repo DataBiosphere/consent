@@ -81,9 +81,6 @@ public class SupportRequestService implements ConsentLogger {
    * @return The response
    * @throws Exception The exception
    */
-  @SuppressWarnings({
-    "java:S2209"
-  }) // We need a non-static TicketFactory.parseRequestResponse() method
   public Request postTicketToSupport(DuosTicket ticket) throws Exception {
     if (configuration.isActivateSupportNotifications()) {
       GenericUrl genericUrl = new GenericUrl(configuration.postSupportRequestUrl());
