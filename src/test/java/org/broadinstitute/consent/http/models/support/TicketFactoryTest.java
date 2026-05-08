@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.models.support;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonSyntaxException;
 import java.util.Collections;
@@ -16,6 +17,9 @@ import org.zendesk.client.v2.model.Ticket;
 
 @ExtendWith(MockitoExtension.class)
 class TicketFactoryTest {
+
+  public static final String INVALID_RESPONSE_MESSAGE =
+      "Invalid Zendesk response: 'request' field is missing or not a JSON object";
 
   @Test
   void testParseRequestResponse() {
@@ -50,9 +54,9 @@ class TicketFactoryTest {
         assertThrows(
             IllegalStateException.class,
             () -> TicketFactory.parseRequestResponse(missingRequestResponse));
-    assertEquals(
-        "Invalid Zendesk response: 'request' field is missing or not a JSON object.",
-        e.getMessage());
+    assertTrue(e.getMessage().startsWith(INVALID_RESPONSE_MESSAGE));
+    // error message should contain the original input
+    assertTrue(e.getMessage().contains(missingRequestResponse));
   }
 
   @Test
@@ -67,9 +71,9 @@ class TicketFactoryTest {
         assertThrows(
             IllegalStateException.class,
             () -> TicketFactory.parseRequestResponse(nullRequestResponse));
-    assertEquals(
-        "Invalid Zendesk response: 'request' field is missing or not a JSON object.",
-        e.getMessage());
+    assertTrue(e.getMessage().startsWith(INVALID_RESPONSE_MESSAGE));
+    // error message should contain the original input
+    assertTrue(e.getMessage().contains(nullRequestResponse));
   }
 
   @Test
@@ -84,9 +88,19 @@ class TicketFactoryTest {
         assertThrows(
             IllegalStateException.class,
             () -> TicketFactory.parseRequestResponse(notAnObjectResponse));
-    assertEquals(
-        "Invalid Zendesk response: 'request' field is missing or not a JSON object.",
-        e.getMessage());
+    assertTrue(e.getMessage().startsWith(INVALID_RESPONSE_MESSAGE));
+    // error message should contain the original input
+    assertTrue(e.getMessage().contains(notAnObjectResponse));
+  }
+
+  @Test
+  void testParseRequestResponse_NullInput() {
+    String nullInput = null;
+    IllegalStateException e =
+        assertThrows(IllegalStateException.class, () -> TicketFactory.parseRequestResponse(nullInput));
+    assertTrue(e.getMessage().startsWith(INVALID_RESPONSE_MESSAGE));
+    // error message should contain the original input string representation ("null")
+    assertTrue(e.getMessage().contains(String.valueOf(nullInput)));
   }
 
   @Test
