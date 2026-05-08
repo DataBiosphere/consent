@@ -25,11 +25,13 @@ public class SupportRequestService implements ConsentLogger {
 
   private final HttpClientUtil clientUtil;
   private final ServicesConfiguration configuration;
+  private final TicketFactory ticketFactory;
 
   @Inject
   public SupportRequestService(ServicesConfiguration configuration) {
     this.clientUtil = new HttpClientUtil(configuration);
     this.configuration = configuration;
+    this.ticketFactory = new TicketFactory();
   }
 
   /**
@@ -79,6 +81,9 @@ public class SupportRequestService implements ConsentLogger {
    * @return The response
    * @throws Exception The exception
    */
+  @SuppressWarnings({
+    "java:S2209"
+  }) // We need a non-static TicketFactory.parseRequestResponse() method
   public Request postTicketToSupport(DuosTicket ticket) throws Exception {
     if (configuration.isActivateSupportNotifications()) {
       GenericUrl genericUrl = new GenericUrl(configuration.postSupportRequestUrl());
@@ -97,7 +102,7 @@ public class SupportRequestService implements ConsentLogger {
         logException(errorMessage, errorException);
         throw errorException;
       }
-      return TicketFactory.parseRequestResponse(
+      return ticketFactory.parseRequestResponse(
           IOUtils.toString(response.getContent(), Charset.defaultCharset()));
     }
     throw new BadRequestException("Not configured to send support requests");
