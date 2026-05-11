@@ -173,7 +173,7 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
   FileStorageObject findActiveFileByIdAndEntityIdAndCategories(
       @Bind("entityId") String entityId,
       @Bind("fileStorageObjectId") Integer fileStorageObjectId,
-      @BindList("categories") List<String> categories);
+      @BindList("categories") List<String> categories, onEmpty = EmptyHandling.NULL_STRING);
 
   /**
    * Returns ALL file records for the entity, including soft-deleted ones. Callers are responsible
