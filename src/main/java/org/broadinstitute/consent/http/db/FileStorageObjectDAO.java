@@ -7,6 +7,7 @@ import org.broadinstitute.consent.http.db.mapper.FileStorageObjectMapperWithFSOP
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -146,6 +147,34 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
   FileStorageObject findActiveFileByIdAndEntityId(
       @Bind("entityId") String entityId, @Bind("fileStorageObjectId") Integer fileStorageObjectId);
 
+  /** Returns the file only when it belongs to the entity and one of the allowed categories. */
+  @RegisterRowMapper(FileStorageObjectMapperWithFSOPrefix.class)
+  @SqlQuery(
+      """
+          SELECT
+              fso.file_storage_object_id AS fso_file_storage_object_id,
+              fso.entity_id AS fso_entity_id,
+              fso.file_name AS fso_file_name,
+              fso.category AS fso_category,
+              fso.gcs_file_uri AS fso_gcs_file_uri,
+              fso.media_type AS fso_media_type,
+              fso.create_date AS fso_create_date,
+              fso.create_user_id AS fso_create_user_id,
+              fso.update_date AS fso_update_date,
+              fso.update_user_id AS fso_update_user_id,
+              fso.deleted AS fso_deleted,
+              fso.delete_user_id AS fso_delete_user_id
+          FROM file_storage_object fso
+          WHERE fso.entity_id = :entityId
+                AND fso.file_storage_object_id = :fileStorageObjectId
+                AND (fso.deleted = false OR fso.deleted IS NULL)
+                AND fso.category IN (<categories>)
+          """)
+  FileStorageObject findActiveFileByIdAndEntityIdAndCategories(
+      @Bind("entityId") String entityId,
+      @Bind("fileStorageObjectId") Integer fileStorageObjectId,
+      @BindList("categories") List<String> categories);
+
   /**
    * Returns ALL file records for the entity, including soft-deleted ones. Callers are responsible
    * for filtering on {@code deleted} if needed.
@@ -193,4 +222,28 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
           ORDER BY fso.create_date DESC
           """)
   List<FileStorageObject> findFileMetadataByEntityId(@Bind("entityId") String entityId);
+
+  @UseRowMapper(FileStorageObjectMapperWithFSOPrefix.class)
+  @SqlQuery(
+      """
+          SELECT
+              fso.file_storage_object_id AS fso_file_storage_object_id,
+              fso.entity_id AS fso_entity_id,
+              fso.file_name AS fso_file_name,
+              fso.category AS fso_category,
+              fso.gcs_file_uri AS fso_gcs_file_uri,
+              fso.media_type AS fso_media_type,
+              fso.create_date AS fso_create_date,
+              fso.create_user_id AS fso_create_user_id,
+              fso.update_date AS fso_update_date,
+              fso.update_user_id AS fso_update_user_id,
+              fso.deleted AS fso_deleted,
+              fso.delete_user_id AS fso_delete_user_id
+          FROM file_storage_object fso
+          WHERE fso.entity_id = :entityId
+                AND fso.category IN (<categories>)
+          ORDER BY fso.create_date DESC
+          """)
+  List<FileStorageObject> findFileMetadataByEntityIdAndCategories(
+      @Bind("entityId") String entityId, @BindList("categories") List<String> categories);
 }
