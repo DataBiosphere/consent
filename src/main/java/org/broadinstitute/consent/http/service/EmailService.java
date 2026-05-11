@@ -147,6 +147,11 @@ public class EmailService implements ConsentLogger {
             mailMessage.createSubject(),
             new Email(mailMessage.toUser.getEmail()),
             new Content("text/html", content));
+    // Add SendGrid categories for email analytics if categories are defined for the email type
+    if (mailMessage.emailType.getSendGridCategories() != null
+        && !mailMessage.emailType.getSendGridCategories().isEmpty()) {
+      mailMessage.emailType.getSendGridCategories().forEach(message::addCategory);
+    }
     // Checks that the user has not disabled email before sending
     Response response = sendGridAPI.sendMessage(message, mailMessage.toUser.getEmail());
     saveEmailAndResponse(
