@@ -25,11 +25,13 @@ public class SupportRequestService implements ConsentLogger {
 
   private final HttpClientUtil clientUtil;
   private final ServicesConfiguration configuration;
+  private final TicketFactory ticketFactory;
 
   @Inject
   public SupportRequestService(ServicesConfiguration configuration) {
     this.clientUtil = new HttpClientUtil(configuration);
     this.configuration = configuration;
+    this.ticketFactory = new TicketFactory();
   }
 
   /**
@@ -97,7 +99,7 @@ public class SupportRequestService implements ConsentLogger {
         logException(errorMessage, errorException);
         throw errorException;
       }
-      return TicketFactory.parseRequestResponse(
+      return ticketFactory.parseRequestResponse(
           IOUtils.toString(response.getContent(), Charset.defaultCharset()));
     }
     throw new BadRequestException("Not configured to send support requests");
