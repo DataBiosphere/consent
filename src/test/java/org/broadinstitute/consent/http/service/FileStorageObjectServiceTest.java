@@ -299,7 +299,10 @@ class FileStorageObjectServiceTest {
     FileStorageObject fileStorageObject = new FileStorageObject();
 
     when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
-    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(datasetId.toString(), fileId))
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityIdAndCategories(
+            datasetId.toString(),
+            fileId,
+            List.of(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue())))
         .thenReturn(fileStorageObject);
 
     initService();
@@ -319,7 +322,9 @@ class FileStorageObjectServiceTest {
     List<FileStorageObject> fileStorageObjects = List.of(new FileStorageObject());
 
     when(datasetService.findStudyByIdForRead(user, studyId)).thenReturn(study);
-    when(fileStorageObjectDAO.findFileMetadataByEntityId(study.getUuid().toString()))
+    when(fileStorageObjectDAO.findFileMetadataByEntityIdAndCategories(
+            study.getUuid().toString(),
+            List.of(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue())))
         .thenReturn(fileStorageObjects);
 
     initService();
@@ -352,14 +357,19 @@ class FileStorageObjectServiceTest {
     }
 
     when(datasetService.findStudyByIdForRead(user, studyId)).thenReturn(study);
-    when(fileStorageObjectDAO.findFileMetadataByEntityId(study.getUuid().toString()))
+    when(fileStorageObjectDAO.findFileMetadataByEntityIdAndCategories(
+            study.getUuid().toString(),
+            List.of(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue())))
         .thenReturn(fileStorageObjects);
 
     List<FileStorageObject> returnedFiles =
         service.listDocuments(user, "study", studyId.toString());
 
     assertEquals(fileStorageObjects, returnedFiles);
-    verify(fileStorageObjectDAO).findFileMetadataByEntityId(study.getUuid().toString());
+    verify(fileStorageObjectDAO)
+        .findFileMetadataByEntityIdAndCategories(
+            study.getUuid().toString(),
+            List.of(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue()));
   }
 
   private void applyRole(User user, String role) {
@@ -378,7 +388,8 @@ class FileStorageObjectServiceTest {
     List<FileStorageObject> fileStorageObjects = List.of(new FileStorageObject());
 
     when(dacService.findById(dacId)).thenReturn(new Dac());
-    when(fileStorageObjectDAO.findFileMetadataByEntityId(dacId.toString()))
+    when(fileStorageObjectDAO.findFileMetadataByEntityIdAndCategories(
+            dacId.toString(), List.of(FileCategory.DATA_ACCESS_AGREEMENT.getValue())))
         .thenReturn(fileStorageObjects);
 
     initService();
@@ -386,7 +397,9 @@ class FileStorageObjectServiceTest {
     List<FileStorageObject> returnedFiles = service.listDocuments(user, "dac", dacId.toString());
 
     assertEquals(fileStorageObjects, returnedFiles);
-    verify(fileStorageObjectDAO).findFileMetadataByEntityId(dacId.toString());
+    verify(fileStorageObjectDAO)
+        .findFileMetadataByEntityIdAndCategories(
+            dacId.toString(), List.of(FileCategory.DATA_ACCESS_AGREEMENT.getValue()));
   }
 
   @Test
@@ -399,7 +412,11 @@ class FileStorageObjectServiceTest {
     dar.setUserId(user.getUserId());
 
     when(dataAccessRequestService.findByReferenceId(darReferenceId)).thenReturn(dar);
-    when(fileStorageObjectDAO.findFileMetadataByEntityId(darReferenceId))
+    when(fileStorageObjectDAO.findFileMetadataByEntityIdAndCategories(
+            darReferenceId,
+            List.of(
+                FileCategory.IRB_COLLABORATION_LETTER.getValue(),
+                FileCategory.DATA_USE_LETTER.getValue())))
         .thenReturn(fileStorageObjects);
 
     initService();
@@ -407,7 +424,12 @@ class FileStorageObjectServiceTest {
     List<FileStorageObject> returnedFiles = service.listDocuments(user, "dar", darReferenceId);
 
     assertEquals(fileStorageObjects, returnedFiles);
-    verify(fileStorageObjectDAO).findFileMetadataByEntityId(darReferenceId);
+    verify(fileStorageObjectDAO)
+        .findFileMetadataByEntityIdAndCategories(
+            darReferenceId,
+            List.of(
+                FileCategory.IRB_COLLABORATION_LETTER.getValue(),
+                FileCategory.DATA_USE_LETTER.getValue()));
   }
 
   @Test
@@ -421,7 +443,10 @@ class FileStorageObjectServiceTest {
     FileStorageObject fileStorageObject = new FileStorageObject();
 
     when(datasetService.findStudyByIdForRead(user, studyId)).thenReturn(study);
-    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(study.getUuid().toString(), fileId))
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityIdAndCategories(
+            study.getUuid().toString(),
+            fileId,
+            List.of(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue())))
         .thenReturn(fileStorageObject);
 
     initService();
@@ -511,7 +536,10 @@ class FileStorageObjectServiceTest {
     byte[] content = "streamed-file-content".getBytes();
 
     when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
-    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(datasetId.toString(), fileId))
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityIdAndCategories(
+            datasetId.toString(),
+            fileId,
+            List.of(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue())))
         .thenReturn(fileStorageObject);
     when(gcsService.getDocument(fileStorageObject.getBlobId()))
         .thenReturn(new ByteArrayInputStream(content));
@@ -523,7 +551,11 @@ class FileStorageObjectServiceTest {
 
     assertEquals(fileStorageObject, returned);
     assertArrayEquals(content, returned.getUploadedFile().readAllBytes());
-    verify(fileStorageObjectDAO).findActiveFileByIdAndEntityId(datasetId.toString(), fileId);
+    verify(fileStorageObjectDAO)
+        .findActiveFileByIdAndEntityIdAndCategories(
+            datasetId.toString(),
+            fileId,
+            List.of(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue()));
     verify(gcsService).getDocument(fileStorageObject.getBlobId());
   }
 
@@ -540,7 +572,8 @@ class FileStorageObjectServiceTest {
     fileStorageObject.setCategory(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION);
 
     when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
-    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId))
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityIdAndCategories(
+            entityId, fileId, List.of(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue())))
         .thenReturn(fileStorageObject);
     when(gcsService.getDocument(fileStorageObject.getBlobId()))
         .thenThrow(new RuntimeException("GCS unavailable"));
@@ -563,7 +596,9 @@ class FileStorageObjectServiceTest {
     String entityId = datasetId.toString();
 
     when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
-    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId)).thenReturn(null);
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityIdAndCategories(
+            entityId, fileId, List.of(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue())))
+        .thenReturn(null);
 
     initService();
 
@@ -595,7 +630,9 @@ class FileStorageObjectServiceTest {
     deleted.setDeleteDate(java.time.Instant.now());
 
     when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
-    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId)).thenReturn(active);
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityIdAndCategories(
+            entityId, fileId, List.of(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue())))
+        .thenReturn(active);
     when(fileStorageObjectDAO.findById(fileId)).thenReturn(deleted);
 
     initService();
@@ -617,7 +654,9 @@ class FileStorageObjectServiceTest {
     String entityId = datasetId.toString();
 
     when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
-    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId)).thenReturn(null);
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityIdAndCategories(
+            entityId, fileId, List.of(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue())))
+        .thenReturn(null);
 
     initService();
 
@@ -654,7 +693,9 @@ class FileStorageObjectServiceTest {
     updated.setUpdateDate(java.time.Instant.now());
 
     when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
-    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId)).thenReturn(active);
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityIdAndCategories(
+            entityId, fileId, List.of(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue())))
+        .thenReturn(active);
     when(fileStorageObjectDAO.findById(fileId)).thenReturn(updated);
 
     initService();
@@ -696,7 +737,9 @@ class FileStorageObjectServiceTest {
     String entityId = datasetId.toString();
 
     when(datasetService.findDatasetByIdForRead(user, datasetId)).thenReturn(new Dataset());
-    when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId)).thenReturn(null);
+    when(fileStorageObjectDAO.findActiveFileByIdAndEntityIdAndCategories(
+            entityId, fileId, List.of(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue())))
+        .thenReturn(null);
 
     initService();
 
