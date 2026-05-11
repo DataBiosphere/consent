@@ -8,6 +8,7 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -173,7 +174,7 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
   FileStorageObject findActiveFileByIdAndEntityIdAndCategories(
       @Bind("entityId") String entityId,
       @Bind("fileStorageObjectId") Integer fileStorageObjectId,
-      @BindList("categories") List<String> categories, onEmpty = EmptyHandling.NULL_STRING);
+      @BindList(value = "categories", onEmpty = EmptyHandling.NULL_STRING) List<String> categories);
 
   /**
    * Returns ALL file records for the entity, including soft-deleted ones. Callers are responsible
@@ -245,5 +246,6 @@ public interface FileStorageObjectDAO extends Transactional<InstitutionDAO> {
           ORDER BY fso.create_date DESC
           """)
   List<FileStorageObject> findFileMetadataByEntityIdAndCategories(
-      @Bind("entityId") String entityId, @BindList("categories") List<String> categories);
+      @Bind("entityId") String entityId,
+      @BindList(value = "categories", onEmpty = EmptyHandling.NULL_STRING) List<String> categories);
 }
