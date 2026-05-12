@@ -776,19 +776,28 @@ class FileStorageObjectServiceTest {
     verifyNoInteractions(datasetService);
   }
 
-  @ParameterizedTest
-  @ValueSource(strings = {"dataset", "study", "dac", "dar"})
-  void testListDocumentsForbiddenForAdmin(String entity) {
+  @Test
+  void testListDocumentsAllowedForAdminRead() {
     User user = new User();
     user.setAdminRole();
+    String entityId = "123";
+    List<FileStorageObject> fileStorageObjects = List.of(new FileStorageObject());
+
+    when(datasetService.findDatasetByIdForRead(user, Integer.valueOf(entityId)))
+        .thenReturn(new Dataset());
+    when(fileStorageObjectDAO.findFileMetadataByEntityIdAndCategories(
+            entityId, List.of(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue())))
+        .thenReturn(fileStorageObjects);
 
     initService();
 
-    assertThrows(ForbiddenException.class, () -> service.listDocuments(user, entity, "123"));
-    verifyNoInteractions(datasetService);
-    verifyNoInteractions(dacService);
-    verifyNoInteractions(dataAccessRequestService);
-    verifyNoInteractions(fileStorageObjectDAO);
+    List<FileStorageObject> returned = service.listDocuments(user, "dataset", entityId);
+
+    assertEquals(fileStorageObjects, returned);
+    verify(datasetService).findDatasetByIdForRead(user, Integer.valueOf(entityId));
+    verify(fileStorageObjectDAO)
+        .findFileMetadataByEntityIdAndCategories(
+            entityId, List.of(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue()));
   }
 
   @Test

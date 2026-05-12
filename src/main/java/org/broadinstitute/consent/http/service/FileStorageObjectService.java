@@ -260,23 +260,23 @@ public class FileStorageObjectService implements ConsentLogger {
    *       FileCategory#DATA_USE_LETTER}:
    *       <ul>
    *         <li>WRITE: DAR creator only.
-   *         <li>READ: CHAIRPERSON, MEMBER, or DAR creator.
+   *         <li>READ: ADMIN, CHAIRPERSON, MEMBER, or DAR creator.
    *       </ul>
    *   <li><b>DAC</b> – {@link FileCategory#DATA_ACCESS_AGREEMENT}:
    *       <ul>
    *         <li>WRITE: CHAIRPERSON of the specific DAC (entity-scoped).
-   *         <li>READ: any authenticated non-ADMIN user.
+   *         <li>READ: any authenticated user.
    *       </ul>
    *   <li><b>DATASET</b> – {@link FileCategory#NIH_INSTITUTIONAL_CERTIFICATION}:
    *       <ul>
    *         <li>WRITE: DATASUBMITTER or CHAIRPERSON.
-   *         <li>READ: DATASUBMITTER, CHAIRPERSON, or MEMBER.
+   *         <li>READ: ADMIN, DATASUBMITTER, CHAIRPERSON, or MEMBER.
    *       </ul>
    *   <li><b>STUDY</b> – {@link FileCategory#ALTERNATIVE_DATA_SHARING_PLAN}:
    *       <ul>
    *         <li>WRITE: DATASUBMITTER or CHAIRPERSON.
-   *         <li>READ: DATASUBMITTER or CHAIRPERSON (study must be DAC-linked; enforced by entity
-   *             resolution via DatasetService).
+   *         <li>READ: ADMIN, DATASUBMITTER, or CHAIRPERSON (study must be DAC-linked; enforced by
+   *             entity resolution via DatasetService).
    *       </ul>
    * </ul>
    *
@@ -288,7 +288,7 @@ public class FileStorageObjectService implements ConsentLogger {
    */
   public void checkAccess(
       User user, String entity, String entityId, FileCategory category, OperationType op) {
-    if (hasRole(user, UserRoles.ADMIN)) {
+    if (op == OperationType.WRITE && hasRole(user, UserRoles.ADMIN)) {
       throw new ForbiddenException(PERMISSION_DENIED);
     }
 
@@ -306,7 +306,7 @@ public class FileStorageObjectService implements ConsentLogger {
       case DAR -> checkDarAccess(user, entityId, op);
       case DAC -> checkDacAccess(user, entityId, op);
       case DATASET -> checkDatasetAccess(user, op);
-      case STUDY -> checkStudyAccess(user);
+      case STUDY -> checkStudyAccess(user, op);
     }
   }
 
@@ -323,17 +323,18 @@ public class FileStorageObjectService implements ConsentLogger {
     if (entity == DocumentEntity.DAR) {
       boolean isCreator = isDarCreator(user, entityId);
       if (!isCreator) {
-        ensureHasAnyRole(user, UserRoles.CHAIRPERSON, UserRoles.MEMBER);
+        ensureHasAnyRole(user, UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER);
       }
       return;
     }
 
     if (entity == DocumentEntity.STUDY) {
-      ensureHasAnyRole(user, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON);
+      ensureHasAnyRole(user, UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON);
       return;
     }
 
-    ensureHasAnyRole(user, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON, UserRoles.MEMBER);
+    ensureHasAnyRole(
+        user, UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON, UserRoles.MEMBER);
   }
 
   private void checkDarAccess(User user, String entityId, OperationType op) {
@@ -344,7 +345,7 @@ public class FileStorageObjectService implements ConsentLogger {
     }
 
     if (op == OperationType.READ && !isCreator) {
-      ensureHasAnyRole(user, UserRoles.CHAIRPERSON, UserRoles.MEMBER);
+      ensureHasAnyRole(user, UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER);
     }
   }
 
@@ -365,14 +366,20 @@ public class FileStorageObjectService implements ConsentLogger {
       return;
     }
 
-    ensureHasAnyRole(user, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON, UserRoles.MEMBER);
+    ensureHasAnyRole(
+        user, UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON, UserRoles.MEMBER);
   }
 
-  private void checkStudyAccess(User user) {
-    // Both READ and WRITE require DATASUBMITTER or CHAIRPERSON.
+  private void checkStudyAccess(User user, OperationType op) {
+    if (op == OperationType.WRITE) {
+      ensureHasAnyRole(user, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON);
+      return;
+    }
+
+    // READ requires ADMIN, DATASUBMITTER, or CHAIRPERSON.
     // For READ the study must be DAC-linked; that constraint is enforced during entity
     // resolution via DatasetService.findStudyByIdForRead.
-    ensureHasAnyRole(user, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON);
+    ensureHasAnyRole(user, UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON);
   }
 
   // ---------------------------------------------------------------------------

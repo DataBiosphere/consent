@@ -147,16 +147,17 @@ class DocumentResourceTest {
   }
 
   @Test
-  void testFindDocumentsByEntityAdminForbidden() {
+  void testFindDocumentsByEntityAdminReadAllowed() {
     User admin = new User();
     admin.setAdminRole();
+    List<FileStorageObject> files = List.of(new FileStorageObject());
 
     when(duosUser.getUser()).thenReturn(admin);
-    when(fileStorageObjectService.listDocuments(admin, "dataset", "222"))
-        .thenThrow(new jakarta.ws.rs.ForbiddenException("User does not have permission"));
+    when(fileStorageObjectService.listDocuments(admin, "dataset", "222")).thenReturn(files);
 
     try (var response = resource.findDocumentsByEntity(duosUser, "dataset", "222")) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(files, response.getEntity());
     }
   }
 
