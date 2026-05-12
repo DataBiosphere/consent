@@ -117,7 +117,7 @@ public class FileStorageObjectService implements ConsentLogger {
     checkAccess(user, entity, entityId, null, OperationType.READ);
 
     String resolvedEntityId = resolveEntityId(user, documentEntity, entityId);
-    return fetchMetadataByEntityIdAndId(resolvedEntityId, fileStorageObjectId);
+    return fetchMetadataByEntityIdAndId(resolvedEntityId, fileStorageObjectId, documentEntity);
   }
 
   /**
@@ -134,7 +134,8 @@ public class FileStorageObjectService implements ConsentLogger {
       User user, String entity, String entityId, Integer fileStorageObjectId) {
     DocumentEntity documentEntity = requireDocumentEntity(entity);
     String resolvedEntityId = resolveEntityId(user, documentEntity, entityId);
-    FileStorageObject fso = fetchMetadataByEntityIdAndId(resolvedEntityId, fileStorageObjectId);
+    FileStorageObject fso =
+        fetchMetadataByEntityIdAndId(resolvedEntityId, fileStorageObjectId, documentEntity);
 
     checkAccess(user, entity, entityId, fso.getCategory(), OperationType.READ);
 
@@ -167,7 +168,7 @@ public class FileStorageObjectService implements ConsentLogger {
     checkAccess(user, entity, entityId, null, OperationType.READ);
 
     String resolvedEntityId = resolveEntityId(user, documentEntity, entityId);
-    return fetchAllMetadataByEntityId(resolvedEntityId);
+    return fetchAllMetadataByEntityId(resolvedEntityId, documentEntity);
   }
 
   /**
@@ -188,7 +189,7 @@ public class FileStorageObjectService implements ConsentLogger {
 
     String resolvedEntityId = resolveEntityId(user, documentEntity, entityId);
     FileStorageObject fileStorageObject =
-        fetchMetadataByEntityIdAndId(resolvedEntityId, fileStorageObjectId);
+        fetchMetadataByEntityIdAndId(resolvedEntityId, fileStorageObjectId, documentEntity);
 
     Instant updateDate = Instant.now();
     fileStorageObjectDAO.updateCategory(fileStorageObjectId, category.getValue(), user.getUserId());
@@ -219,7 +220,7 @@ public class FileStorageObjectService implements ConsentLogger {
     DocumentEntity documentEntity = requireDocumentEntity(entity);
     String resolvedEntityId = resolveEntityId(user, documentEntity, entityId);
     FileStorageObject fileStorageObject =
-        fetchMetadataByEntityIdAndId(resolvedEntityId, fileStorageObjectId);
+        fetchMetadataByEntityIdAndId(resolvedEntityId, fileStorageObjectId, documentEntity);
 
     checkAccess(user, entity, entityId, fileStorageObject.getCategory(), OperationType.WRITE);
 
@@ -504,11 +505,34 @@ public class FileStorageObjectService implements ConsentLogger {
   }
 
   /**
+   * Fetches metadata for an active file constrained to categories valid for the requested entity.
+   * This prevents records for another document domain from being returned when IDs overlap.
+   */
+  public FileStorageObject fetchMetadataByEntityIdAndId(
+      String entityId, Integer fileStorageObjectId, DocumentEntity entity)
+      throws NotFoundException {
+    FileStorageObject fileStorageObject =
+        fileStorageObjectDAO.findActiveFileByIdAndEntityIdAndCategories(
+            entityId, fileStorageObjectId, allowedCategoryValuesForEntity(entity));
+    if (fileStorageObject == null) {
+      throw new NotFoundException("File not found");
+    }
+    return fileStorageObject;
+  }
+
+  /**
    * Returns ALL file metadata for the entity, including soft-deleted records. Callers should
    * inspect {@link FileStorageObject#getDeleted()} and filter as appropriate for their use case.
    */
   public List<FileStorageObject> fetchAllMetadataByEntityId(String entityId) {
     return fileStorageObjectDAO.findFileMetadataByEntityId(entityId);
+  }
+
+  /** Returns file metadata scoped to categories valid for the requested entity. */
+  public List<FileStorageObject> fetchAllMetadataByEntityId(
+      String entityId, DocumentEntity entity) {
+    return fileStorageObjectDAO.findFileMetadataByEntityIdAndCategories(
+        entityId, allowedCategoryValuesForEntity(entity));
   }
 
   /**
@@ -594,6 +618,18 @@ public class FileStorageObjectService implements ConsentLogger {
       case DAC -> category == FileCategory.DATA_ACCESS_AGREEMENT;
       case DATASET -> category == FileCategory.NIH_INSTITUTIONAL_CERTIFICATION;
       case STUDY -> category == FileCategory.ALTERNATIVE_DATA_SHARING_PLAN;
+    };
+  }
+
+  private List<String> allowedCategoryValuesForEntity(DocumentEntity entity) {
+    return switch (entity) {
+      case DAR ->
+          List.of(
+              FileCategory.IRB_COLLABORATION_LETTER.getValue(),
+              FileCategory.DATA_USE_LETTER.getValue());
+      case DAC -> List.of(FileCategory.DATA_ACCESS_AGREEMENT.getValue());
+      case DATASET -> List.of(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue());
+      case STUDY -> List.of(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue());
     };
   }
 

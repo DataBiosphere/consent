@@ -272,6 +272,30 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindFileMetadataByEntityIdAndCategoriesFiltersCategory() {
+    String entityId = randomAlphabetic(10);
+
+    FileStorageObject matching1 =
+        createFileStorageObject(entityId, FileCategory.IRB_COLLABORATION_LETTER);
+    FileStorageObject matching2 = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
+    createFileStorageObject(entityId, FileCategory.DATA_ACCESS_AGREEMENT);
+    createFileStorageObject(randomAlphabetic(8), FileCategory.IRB_COLLABORATION_LETTER);
+
+    List<FileStorageObject> filesFound =
+        fileStorageObjectDAO.findFileMetadataByEntityIdAndCategories(
+            entityId,
+            List.of(
+                FileCategory.IRB_COLLABORATION_LETTER.getValue(),
+                FileCategory.DATA_USE_LETTER.getValue()));
+
+    assertEquals(2, filesFound.size());
+    List<Integer> foundIds =
+        filesFound.stream().map(FileStorageObject::getFileStorageObjectId).toList();
+    assertTrue(foundIds.contains(matching1.getFileStorageObjectId()));
+    assertTrue(foundIds.contains(matching2.getFileStorageObjectId()));
+  }
+
+  @Test
   void testFindActiveFileByIdAndEntityId() {
     String entityId = randomAlphabetic(10);
     FileStorageObject file = createFileStorageObject(entityId, FileCategory.DATA_USE_LETTER);
@@ -305,6 +329,20 @@ class FileStorageObjectDAOTest extends DAOTestHelper {
     FileStorageObject found =
         fileStorageObjectDAO.findActiveFileByIdAndEntityId(
             randomAlphabetic(8), file.getFileStorageObjectId());
+
+    assertNull(found);
+  }
+
+  @Test
+  void testFindActiveFileByIdAndEntityIdAndCategoriesWrongCategoryReturnsNull() {
+    String entityId = randomAlphabetic(10);
+    FileStorageObject file = createFileStorageObject(entityId, FileCategory.DATA_ACCESS_AGREEMENT);
+
+    FileStorageObject found =
+        fileStorageObjectDAO.findActiveFileByIdAndEntityIdAndCategories(
+            entityId,
+            file.getFileStorageObjectId(),
+            List.of(FileCategory.IRB_COLLABORATION_LETTER.getValue()));
 
     assertNull(found);
   }
