@@ -85,6 +85,44 @@ class DaaDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindAllDacOnlyProperFileCategory() {
+    Integer userId = createUserId();
+    Integer dacId =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
+    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    fileStorageObjectDAO.insertNewFile(
+        randomAlphabetic(10),
+        FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue(),
+        randomAlphabetic(10),
+        MediaType.TEXT_PLAIN_TYPE.getType(),
+        daaId.toString(),
+        userId,
+        Instant.now());
+    Integer fsoId =
+        fileStorageObjectDAO.insertNewFile(
+            randomAlphabetic(10),
+            FileCategory.DATA_ACCESS_AGREEMENT.getValue(),
+            randomAlphabetic(10),
+            MediaType.TEXT_PLAIN_TYPE.getType(),
+            daaId.toString(),
+            userId,
+            Instant.now());
+    fileStorageObjectDAO.insertNewFile(
+        randomAlphabetic(10),
+        FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue(),
+        randomAlphabetic(10),
+        MediaType.TEXT_PLAIN_TYPE.getType(),
+        daaId.toString(),
+        userId,
+        Instant.now());
+    List<DataAccessAgreement> daa = daaDAO.findAll();
+    assertNotNull(daa);
+    assertEquals(1, daa.size());
+    assertNotNull(daa.getFirst().getFile());
+    assertEquals(fsoId, daa.getFirst().getFile().getFileStorageObjectId());
+  }
+
+  @Test
   void testFindAllMultipleDaas() {
     Integer userId = createUserId();
     Integer dacId =
@@ -266,6 +304,14 @@ class DaaDAOTest extends DAOTestHelper {
             daaId.toString(),
             userId,
             Instant.now());
+    fileStorageObjectDAO.insertNewFile(
+        randomAlphabetic(10),
+        FileCategory.DATA_USE_LETTER.getValue(),
+        randomAlphabetic(10),
+        MediaType.TEXT_PLAIN_TYPE.getType(),
+        daaId.toString(),
+        userId,
+        Instant.now());
     DataAccessAgreement daa = daaDAO.findById(daaId);
     assertNotNull(daa);
     assertNotNull(daa.getFile());

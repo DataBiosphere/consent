@@ -67,7 +67,7 @@ public interface DaaDAO extends Transactional<DaaDAO> {
                 dac.name,
                 dac.description
           FROM data_access_agreement daa
-          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id AND fso.category = 'dataAccessAgreement'
           LEFT JOIN dac_daa dd ON daa.daa_id = dd.daa_id
           LEFT JOIN dac ON dd.dac_id = dac.dac_id AND dac.deleted IS NOT TRUE
       """)
@@ -108,7 +108,7 @@ public interface DaaDAO extends Transactional<DaaDAO> {
                 dac.name,
                 dac.description
           FROM data_access_agreement daa
-          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id AND fso.category = 'dataAccessAgreement'
           LEFT JOIN dac_daa dd ON daa.daa_id = dd.daa_id
           LEFT JOIN dac ON dd.dac_id = dac.dac_id AND dac.deleted IS NOT TRUE
           WHERE daa.daa_id = :daaId
@@ -150,7 +150,7 @@ public interface DaaDAO extends Transactional<DaaDAO> {
                 dac.name,
                 dac.description
           FROM data_access_agreement daa
-          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id AND fso.category = 'dataAccessAgreement'
           LEFT JOIN dac_daa dd ON daa.daa_id = dd.daa_id
           LEFT JOIN dac ON dd.dac_id = dac.dac_id
           WHERE daa.initial_dac_id = :dacId
@@ -272,7 +272,7 @@ public interface DaaDAO extends Transactional<DaaDAO> {
                 dac.name,
                 dac.description
           FROM data_access_agreement daa
-          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id
+          LEFT JOIN file_storage_object fso ON daa.daa_id::text = fso.entity_id AND fso.category = 'dataAccessAgreement'
           INNER JOIN dac_daa ON daa.daa_id = dac_daa.daa_id
           INNER JOIN dac ON dac.dac_id = dac_daa.dac_id
           INNER JOIN dataset ON dataset.dac_id = dac.dac_id
