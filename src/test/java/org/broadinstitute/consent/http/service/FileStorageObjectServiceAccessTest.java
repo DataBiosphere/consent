@@ -31,11 +31,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * <pre>
  * Entity   | Category                     | WRITE                           | READ
  * ---------+------------------------------+--------------------------------+-----------------------------
- * DAR      | IRB_COLLABORATION_LETTER     | creator only                   | creator, ADMIN, CHAIR, MEMBER
- * DAR      | DATA_USE_LETTER              | creator only                   | creator, ADMIN, CHAIR, MEMBER
- * DAC      | DATA_ACCESS_AGREEMENT        | ADMIN or DAC-scoped CHAIR      | any authenticated user
- * DATASET  | NIH_INSTITUTIONAL_CERT       | ADMIN, DATASUBMITTER, CHAIR    | + MEMBER
- * STUDY    | ALTERNATIVE_DATA_SHARING_PLAN| ADMIN, DATASUBMITTER, CHAIR    | same (no MEMBER)
+ * DAR      | IRB_COLLABORATION_LETTER     | creator only (ADMIN denied)    | creator, ADMIN, CHAIR, MEMBER
+ * DAR      | DATA_USE_LETTER              | creator only (ADMIN denied)    | creator, ADMIN, CHAIR, MEMBER
+ * DAC      | DATA_ACCESS_AGREEMENT        | DAC-scoped CHAIR only          | any authenticated user
+ * DATASET  | NIH_INSTITUTIONAL_CERT       | DATASUBMITTER, CHAIR           | ADMIN, DATASUBMITTER, CHAIR, MEMBER
+ * STUDY    | ALTERNATIVE_DATA_SHARING_PLAN| DATASUBMITTER, CHAIR           | ADMIN, DATASUBMITTER, CHAIR
  * </pre>
  */
 @ExtendWith(MockitoExtension.class)
@@ -300,9 +300,10 @@ class FileStorageObjectServiceAccessTest {
     private static final int DAC_INT_ID = 10;
 
     @Test
-    void crudAllowedForAdmin() {
+    void crudDeniedForAdmin() {
       User admin = adminUser();
-      assertDoesNotThrow(
+      assertThrows(
+          ForbiddenException.class,
           () ->
               service.checkAccess(
                   admin, "dac", DAC_ID, FileCategory.DATA_ACCESS_AGREEMENT, OperationType.WRITE));
@@ -382,9 +383,10 @@ class FileStorageObjectServiceAccessTest {
   class DatasetNihInstitutionalCertification {
 
     @Test
-    void crudAllowedForAdmin() {
+    void crudDeniedForAdmin() {
       User admin = adminUser();
-      assertDoesNotThrow(
+      assertThrows(
+          ForbiddenException.class,
           () ->
               service.checkAccess(
                   admin,
@@ -511,9 +513,10 @@ class FileStorageObjectServiceAccessTest {
   class StudyAlternativeDataSharingPlan {
 
     @Test
-    void crudAllowedForAdmin() {
+    void crudDeniedForAdmin() {
       User admin = adminUser();
-      assertDoesNotThrow(
+      assertThrows(
+          ForbiddenException.class,
           () ->
               service.checkAccess(
                   admin,
@@ -809,9 +812,9 @@ class FileStorageObjectServiceAccessTest {
   }
 
   @Test
-  void isDacChairReturnsTrueForAdmin() {
+  void isDacChairReturnsFalseForAdmin() {
     User admin = adminUser();
-    assertTrue(service.isDacChair(admin, 10));
+    assertFalse(service.isDacChair(admin, 10));
   }
 
   @Test
