@@ -159,22 +159,9 @@ public interface DaaDAO extends Transactional<DaaDAO> {
 
   @SqlQuery(
       """
-          WITH linked_daa AS (
-              SELECT daa_id
-              FROM dac_daa
-              WHERE dac_id = :dacId
-          ),
-          initial_daa AS (
-              SELECT daa_id
-              FROM data_access_agreement
-              WHERE initial_dac_id = :dacId
-          )
-          SELECT DISTINCT daa_id
-          FROM (
-              SELECT daa_id FROM linked_daa
-              UNION ALL
-              SELECT daa_id FROM initial_daa
-          ) all_daa
+          SELECT daa_id FROM dac_daa WHERE dac_id = :dacId
+          UNION
+          SELECT daa_id FROM data_access_agreement WHERE initial_dac_id = :dacId
           ORDER BY daa_id DESC
           """)
   List<Integer> findDaaIdsByDacId(@Bind("dacId") Integer dacId);
