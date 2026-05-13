@@ -6,7 +6,7 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 
-public class DarExpirationReminderMessageTest extends AbstractMailMessageTest {
+class DarExpirationReminderMessageTest extends AbstractMailMessageTest {
 
   @Test
   void testGetDarExpiredTemplate() throws Exception {

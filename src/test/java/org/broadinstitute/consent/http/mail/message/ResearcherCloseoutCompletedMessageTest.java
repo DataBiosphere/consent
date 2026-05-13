@@ -8,7 +8,7 @@ import java.util.UUID;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 
-public class ResearcherCloseoutCompletedMessageTest extends AbstractMailMessageTest {
+class ResearcherCloseoutCompletedMessageTest extends AbstractMailMessageTest {
 
   @Test
   void testGetResearcherCloseoutCompletedTemplate() throws Exception {
