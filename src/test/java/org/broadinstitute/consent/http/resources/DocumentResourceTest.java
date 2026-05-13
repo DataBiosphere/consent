@@ -147,6 +147,21 @@ class DocumentResourceTest {
   }
 
   @Test
+  void testFindDocumentsByEntityAdminReadAllowed() {
+    User admin = new User();
+    admin.setAdminRole();
+    List<FileStorageObject> files = List.of(new FileStorageObject());
+
+    when(duosUser.getUser()).thenReturn(admin);
+    when(fileStorageObjectService.listDocuments(admin, "dataset", "222")).thenReturn(files);
+
+    try (var response = resource.findDocumentsByEntity(duosUser, "dataset", "222")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+      assertEquals(files, response.getEntity());
+    }
+  }
+
+  @Test
   void testFindDocumentsByStudyEntityReturnsEmptyList() {
     int studyId = 333;
 
@@ -404,6 +419,26 @@ class DocumentResourceTest {
         resource.uploadDocument(
             duosUser, "dataset", "123", inputStream, fileDetail, "badCategory")) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
+  void testUploadDocumentAdminForbidden() throws Exception {
+    ByteArrayInputStream inputStream = new ByteArrayInputStream("file-content".getBytes());
+    User admin = new User();
+    admin.setAdminRole();
+
+    when(fileDetail.getFileName()).thenReturn("document.pdf");
+    when(fileDetail.getSize()).thenReturn(1024L);
+    when(duosUser.getUser()).thenReturn(admin);
+    when(fileStorageObjectService.uploadDocument(
+            admin, "dataset", "123", inputStream, fileDetail, "dataUseLetter"))
+        .thenThrow(new jakarta.ws.rs.ForbiddenException("User does not have permission"));
+
+    try (var response =
+        resource.uploadDocument(
+            duosUser, "dataset", "123", inputStream, fileDetail, "dataUseLetter")) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
     }
   }
 

@@ -30,6 +30,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -300,7 +301,7 @@ class FileStorageObjectServiceTest {
   @Test
   void testFetchMetadataByEntityAndEntityIdForReadDataset() {
     User user = new User();
-    user.setAdminRole(); // ADMIN can read dataset documents
+    user.setMemberRole();
     Integer datasetId = 123;
     Integer fileId = 10;
     FileStorageObject fileStorageObject = new FileStorageObject();
@@ -322,7 +323,7 @@ class FileStorageObjectServiceTest {
   @Test
   void testAllFetchMetadataByEntityAndEntityIdForReadStudy() {
     User user = new User();
-    user.setAdminRole(); // ADMIN can read study documents
+    user.setChairpersonRole();
     Integer studyId = 456;
     Study study = new Study();
     study.setUuid(java.util.UUID.randomUUID());
@@ -390,7 +391,6 @@ class FileStorageObjectServiceTest {
   @Test
   void testFetchAllMetadataByEntityAndEntityIdForReadDac() {
     User user = new User();
-    user.setAdminRole();
     Integer dacId = 456;
     Integer daaId = 789;
     List<FileStorageObject> fileStorageObjects = List.of(new FileStorageObject());
@@ -419,7 +419,7 @@ class FileStorageObjectServiceTest {
 
     User user = new User();
     user.setUserId(25);
-    user.setAdminRole();
+    user.setChairpersonRoleWithDAC(123);
 
     FileStorageObject created = new FileStorageObject();
     created.setFileStorageObjectId(90);
@@ -548,8 +548,8 @@ class FileStorageObjectServiceTest {
   void testUpdateDocumentCategoryForDacFailsWhenFileDaaNotLinkedToDac() {
     User user = new User();
     user.setUserId(25);
-    user.setAdminRole();
     Integer dacId = 123;
+    user.setChairpersonRoleWithDAC(dacId);
     Integer fileId = 10;
 
     FileStorageObject fso = new FileStorageObject();
@@ -575,8 +575,8 @@ class FileStorageObjectServiceTest {
   void testDeleteDocumentForDacFailsWhenFileDaaNotLinkedToDac() {
     User user = new User();
     user.setUserId(25);
-    user.setAdminRole();
     Integer dacId = 123;
+    user.setChairpersonRoleWithDAC(dacId);
     Integer fileId = 10;
 
     FileStorageObject fso = new FileStorageObject();
@@ -599,8 +599,8 @@ class FileStorageObjectServiceTest {
   void testDeleteDocumentForDacUsesDaaEntityIdWhenLinked() {
     User user = new User();
     user.setUserId(25);
-    user.setAdminRole();
     Integer dacId = 123;
+    user.setChairpersonRoleWithDAC(dacId);
     Integer fileId = 10;
 
     FileStorageObject active = new FileStorageObject();
@@ -660,7 +660,7 @@ class FileStorageObjectServiceTest {
   @Test
   void testFetchMetadataByEntityAndEntityIdForReadStudy() {
     User user = new User();
-    user.setAdminRole(); // ADMIN can read study documents
+    user.setChairpersonRole();
     Integer studyId = 456;
     Integer fileId = 11;
     Study study = new Study();
@@ -689,7 +689,7 @@ class FileStorageObjectServiceTest {
 
     User user = new User();
     user.setUserId(25);
-    user.setAdminRole(); // ADMIN can CRUD DATASET NIH_INSTITUTIONAL_CERTIFICATION
+    user.setRoles(List.of(UserRoles.DataSubmitter()));
 
     Dataset dataset = new Dataset();
     FileStorageObject created = new FileStorageObject();
@@ -750,7 +750,7 @@ class FileStorageObjectServiceTest {
   @Test
   void testGetDocumentFileByEntityAndEntityIdForReadDataset() throws Exception {
     User user = new User();
-    user.setAdminRole(); // ADMIN can read any dataset document
+    user.setMemberRole();
     Integer datasetId = 123;
     Integer fileId = 10;
 
@@ -787,7 +787,7 @@ class FileStorageObjectServiceTest {
   @Test
   void testGetDocumentFileThrowsBadGatewayWhenGcsFails() {
     User user = new User();
-    user.setAdminRole(); // ADMIN can read dataset documents
+    user.setMemberRole();
     Integer datasetId = 123;
     Integer fileId = 10;
     String entityId = datasetId.toString();
@@ -836,7 +836,7 @@ class FileStorageObjectServiceTest {
   void testDeleteDocumentSetsDeletedFieldsAndCallsDao() {
     User user = new User();
     user.setUserId(25);
-    user.setAdminRole(); // ADMIN can CRUD dataset documents
+    user.setRoles(List.of(UserRoles.DataSubmitter()));
     Integer datasetId = 123;
     Integer fileId = 10;
     String entityId = datasetId.toString();
@@ -899,7 +899,7 @@ class FileStorageObjectServiceTest {
   void testUpdateDocumentCategoryUpdatesCategoryAndAuditFields() {
     User user = new User();
     user.setUserId(25);
-    user.setAdminRole(); // ADMIN can CRUD dataset documents
+    user.setRoles(List.of(UserRoles.DataSubmitter()));
     Integer datasetId = 123;
     Integer fileId = 10;
     String entityId = datasetId.toString();
@@ -956,7 +956,7 @@ class FileStorageObjectServiceTest {
   void testUpdateDocumentCategoryThrowsNotFoundWhenFileDeletedOrMissing() {
     User user = new User();
     user.setUserId(25);
-    user.setAdminRole(); // ADMIN can CRUD dataset documents; passes checkAccess
+    user.setRoles(List.of(UserRoles.DataSubmitter()));
     Integer datasetId = 123;
     Integer fileId = 10;
     String entityId = datasetId.toString();
@@ -999,5 +999,49 @@ class FileStorageObjectServiceTest {
     assertEquals("Category is not allowed for entity", exception.getMessage());
     verifyNoInteractions(fileStorageObjectDAO);
     verifyNoInteractions(datasetService);
+  }
+
+  @Test
+  void testListDocumentsAllowedForAdminRead() {
+    User user = new User();
+    user.setAdminRole();
+    String entityId = "123";
+    List<FileStorageObject> fileStorageObjects = List.of(new FileStorageObject());
+
+    when(datasetService.findDatasetByIdForRead(user, Integer.valueOf(entityId)))
+        .thenReturn(new Dataset());
+    when(fileStorageObjectDAO.findFileMetadataByEntityIdAndCategories(
+            entityId, List.of(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue())))
+        .thenReturn(fileStorageObjects);
+
+    initService();
+
+    List<FileStorageObject> returned = service.listDocuments(user, "dataset", entityId);
+
+    assertEquals(fileStorageObjects, returned);
+    verify(datasetService).findDatasetByIdForRead(user, Integer.valueOf(entityId));
+    verify(fileStorageObjectDAO)
+        .findFileMetadataByEntityIdAndCategories(
+            entityId, List.of(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue()));
+  }
+
+  @Test
+  void testUploadDocumentForbiddenForAdmin() {
+    InputStream inputStream = new ByteArrayInputStream("metadata".getBytes());
+    FormDataContentDisposition fileDetail =
+        FormDataContentDisposition.name("file").fileName("upload.pdf").size(32).build();
+    User user = new User();
+    user.setAdminRole();
+
+    initService();
+
+    assertThrows(
+        ForbiddenException.class,
+        () ->
+            service.uploadDocument(
+                user, "dataset", "123", inputStream, fileDetail, "nihInstitutionalCertification"));
+    verifyNoInteractions(datasetService);
+    verifyNoInteractions(fileStorageObjectDAO);
+    verifyNoInteractions(gcsService);
   }
 }

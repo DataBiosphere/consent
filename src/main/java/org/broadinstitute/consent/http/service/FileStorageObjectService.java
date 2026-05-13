@@ -47,12 +47,14 @@ public class FileStorageObjectService implements ConsentLogger {
   private static final UserRoles[] DAR_READ_ROLES =
       new UserRoles[] {UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER};
   private static final UserRoles[] DATASET_WRITE_ROLES =
-      new UserRoles[] {UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON};
+      new UserRoles[] {UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON};
   private static final UserRoles[] DATASET_READ_ROLES =
       new UserRoles[] {
         UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON, UserRoles.MEMBER
       };
-  private static final UserRoles[] STUDY_ROLES =
+  private static final UserRoles[] STUDY_WRITE_ROLES =
+      new UserRoles[] {UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON};
+  private static final UserRoles[] STUDY_READ_ROLES =
       new UserRoles[] {UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON};
 
   GCSService gcsService;
@@ -274,17 +276,17 @@ public class FileStorageObjectService implements ConsentLogger {
    *       </ul>
    *   <li><b>DAC</b> – {@link FileCategory#DATA_ACCESS_AGREEMENT}:
    *       <ul>
-   *         <li>WRITE: CHAIRPERSON of the specific DAC (entity-scoped) or ADMIN.
+   *         <li>WRITE: CHAIRPERSON of the specific DAC (entity-scoped).
    *         <li>READ: any authenticated user.
    *       </ul>
    *   <li><b>DATASET</b> – {@link FileCategory#NIH_INSTITUTIONAL_CERTIFICATION}:
    *       <ul>
-   *         <li>WRITE: ADMIN, DATASUBMITTER, or CHAIRPERSON.
+   *         <li>WRITE: DATASUBMITTER or CHAIRPERSON.
    *         <li>READ: ADMIN, DATASUBMITTER, CHAIRPERSON, or MEMBER.
    *       </ul>
    *   <li><b>STUDY</b> – {@link FileCategory#ALTERNATIVE_DATA_SHARING_PLAN}:
    *       <ul>
-   *         <li>WRITE: ADMIN, DATASUBMITTER, or CHAIRPERSON.
+   *         <li>WRITE: DATASUBMITTER or CHAIRPERSON.
    *         <li>READ: ADMIN, DATASUBMITTER, or CHAIRPERSON (study must be DAC-linked; enforced by
    *             entity resolution via DatasetService).
    *       </ul>
@@ -298,6 +300,10 @@ public class FileStorageObjectService implements ConsentLogger {
    */
   public void checkAccess(
       User user, String entity, String entityId, FileCategory category, OperationType op) {
+    if (op == OperationType.WRITE && hasRole(user, UserRoles.ADMIN)) {
+      throw new ForbiddenException(PERMISSION_DENIED);
+    }
+
     DocumentEntity documentEntity = requireDocumentEntity(entity);
 
     if (category == null) {
@@ -312,7 +318,7 @@ public class FileStorageObjectService implements ConsentLogger {
       case DAR -> checkDarAccess(user, entityId, op);
       case DAC -> checkDacAccess(user, entityId, op);
       case DATASET -> checkDatasetAccess(user, op);
-      case STUDY -> checkStudyAccess(user);
+      case STUDY -> checkStudyAccess(user, op);
     }
   }
 
@@ -330,7 +336,7 @@ public class FileStorageObjectService implements ConsentLogger {
           ensureHasAnyRole(user, DAR_READ_ROLES);
         }
       }
-      case STUDY -> ensureHasAnyRole(user, STUDY_ROLES);
+      case STUDY -> ensureHasAnyRole(user, STUDY_READ_ROLES);
       case DATASET -> ensureHasAnyRole(user, DATASET_READ_ROLES);
     }
   }
@@ -359,20 +365,19 @@ public class FileStorageObjectService implements ConsentLogger {
   }
 
   private void checkDatasetAccess(User user, OperationType op) {
-    checkRoleAccessByOperation(user, op);
-  }
-
-  private void checkStudyAccess(User user) {
-    // Both READ and WRITE require the same role set.
-    ensureHasAnyRole(user, STUDY_ROLES);
-  }
-
-  private void checkRoleAccessByOperation(User user, OperationType op) {
     ensureHasAnyRole(
         user,
         op == OperationType.WRITE
             ? FileStorageObjectService.DATASET_WRITE_ROLES
             : FileStorageObjectService.DATASET_READ_ROLES);
+  }
+
+  private void checkStudyAccess(User user, OperationType op) {
+    ensureHasAnyRole(
+        user,
+        op == OperationType.WRITE
+            ? FileStorageObjectService.STUDY_WRITE_ROLES
+            : FileStorageObjectService.STUDY_READ_ROLES);
   }
 
   // ---------------------------------------------------------------------------
@@ -385,14 +390,8 @@ public class FileStorageObjectService implements ConsentLogger {
     return dar.getUserId() != null && dar.getUserId().equals(user.getUserId());
   }
 
-  /**
-   * Returns {@code true} when the user holds the CHAIRPERSON role scoped to the given DAC ID. ADMIN
-   * users are treated as implicit chairs for all DACs.
-   */
+  /** Returns {@code true} when the user holds the CHAIRPERSON role scoped to the given DAC ID. */
   boolean isDacChair(User user, Integer dacId) {
-    if (hasRole(user, UserRoles.ADMIN)) {
-      return true;
-    }
     if (user.getRoles() == null) {
       return false;
     }
