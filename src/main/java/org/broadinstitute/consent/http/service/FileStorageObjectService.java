@@ -41,11 +41,25 @@ public class FileStorageObjectService implements ConsentLogger {
 
   private static final String ENTITY_NOT_FOUND = "Entity not found";
   private static final String PERMISSION_DENIED = "User does not have permission";
+  private static final String FILE_NOT_FOUND = "File not found";
+  private static final List<String> DAC_ALLOWED_CATEGORY_VALUES =
+      List.of(FileCategory.DATA_ACCESS_AGREEMENT.getValue());
+  private static final UserRoles[] DAR_READ_ROLES =
+      new UserRoles[] {UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER};
+  private static final UserRoles[] DATASET_WRITE_ROLES =
+      new UserRoles[] {UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON};
+  private static final UserRoles[] DATASET_READ_ROLES =
+      new UserRoles[] {
+        UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON, UserRoles.MEMBER
+      };
+  private static final UserRoles[] STUDY_ROLES =
+      new UserRoles[] {UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON};
 
   GCSService gcsService;
   FileStorageObjectDAO fileStorageObjectDAO;
   DatasetService datasetService;
   DacService dacService;
+  DaaService daaService;
   DataAccessRequestService dataAccessRequestService;
 
   public FileStorageObjectService(
@@ -53,11 +67,13 @@ public class FileStorageObjectService implements ConsentLogger {
       GCSService gcsService,
       DatasetService datasetService,
       DacService dacService,
+      DaaService daaService,
       DataAccessRequestService dataAccessRequestService) {
     this.fileStorageObjectDAO = fileStorageObjectDAO;
     this.gcsService = gcsService;
     this.datasetService = datasetService;
     this.dacService = dacService;
+    this.daaService = daaService;
     this.dataAccessRequestService = dataAccessRequestService;
   }
 
@@ -92,7 +108,7 @@ public class FileStorageObjectService implements ConsentLogger {
     validateCategoryForEntity(documentEntity, category);
     checkAccess(user, entity, entityId, category, OperationType.WRITE);
 
-    String resolvedEntityId = resolveEntityId(user, documentEntity, entityId);
+    String resolvedEntityId = resolveEntityIdForUpload(user, documentEntity, entityId);
     return uploadAndStoreFile(
         content,
         fileDetail.getFileName(),
@@ -115,9 +131,7 @@ public class FileStorageObjectService implements ConsentLogger {
       User user, String entity, String entityId, Integer fileStorageObjectId) {
     DocumentEntity documentEntity = requireDocumentEntity(entity);
     checkAccess(user, entity, entityId, null, OperationType.READ);
-
-    String resolvedEntityId = resolveEntityId(user, documentEntity, entityId);
-    return fetchMetadataByEntityIdAndId(resolvedEntityId, fileStorageObjectId, documentEntity);
+    return resolveMetadataForEntity(user, documentEntity, entityId, fileStorageObjectId);
   }
 
   /**
@@ -133,9 +147,8 @@ public class FileStorageObjectService implements ConsentLogger {
   public FileStorageObject getDocumentFile(
       User user, String entity, String entityId, Integer fileStorageObjectId) {
     DocumentEntity documentEntity = requireDocumentEntity(entity);
-    String resolvedEntityId = resolveEntityId(user, documentEntity, entityId);
     FileStorageObject fso =
-        fetchMetadataByEntityIdAndId(resolvedEntityId, fileStorageObjectId, documentEntity);
+        resolveMetadataForEntity(user, documentEntity, entityId, fileStorageObjectId);
 
     checkAccess(user, entity, entityId, fso.getCategory(), OperationType.READ);
 
@@ -166,9 +179,7 @@ public class FileStorageObjectService implements ConsentLogger {
   public List<FileStorageObject> listDocuments(User user, String entity, String entityId) {
     DocumentEntity documentEntity = requireDocumentEntity(entity);
     checkAccess(user, entity, entityId, null, OperationType.READ);
-
-    String resolvedEntityId = resolveEntityId(user, documentEntity, entityId);
-    return fetchAllMetadataByEntityId(resolvedEntityId, documentEntity);
+    return resolveMetadataListForEntity(user, documentEntity, entityId);
   }
 
   /**
@@ -187,9 +198,8 @@ public class FileStorageObjectService implements ConsentLogger {
     validateCategoryForEntity(documentEntity, category);
     checkAccess(user, entity, entityId, category, OperationType.WRITE);
 
-    String resolvedEntityId = resolveEntityId(user, documentEntity, entityId);
     FileStorageObject fileStorageObject =
-        fetchMetadataByEntityIdAndId(resolvedEntityId, fileStorageObjectId, documentEntity);
+        resolveMetadataForEntity(user, documentEntity, entityId, fileStorageObjectId);
 
     Instant updateDate = Instant.now();
     fileStorageObjectDAO.updateCategory(fileStorageObjectId, category.getValue(), user.getUserId());
@@ -218,14 +228,14 @@ public class FileStorageObjectService implements ConsentLogger {
   public FileStorageObject deleteDocument(
       User user, String entity, String entityId, Integer fileStorageObjectId) {
     DocumentEntity documentEntity = requireDocumentEntity(entity);
-    String resolvedEntityId = resolveEntityId(user, documentEntity, entityId);
     FileStorageObject fileStorageObject =
-        fetchMetadataByEntityIdAndId(resolvedEntityId, fileStorageObjectId, documentEntity);
+        resolveMetadataForEntity(user, documentEntity, entityId, fileStorageObjectId);
 
     checkAccess(user, entity, entityId, fileStorageObject.getCategory(), OperationType.WRITE);
 
     Instant deleteDate = Instant.now();
-    fileStorageObjectDAO.softDelete(resolvedEntityId, fileStorageObjectId, user.getUserId());
+    fileStorageObjectDAO.softDelete(
+        fileStorageObject.getEntityId(), fileStorageObjectId, user.getUserId());
 
     FileStorageObject deleted = fileStorageObjectDAO.findById(fileStorageObjectId);
     if (deleted != null) {
@@ -237,7 +247,7 @@ public class FileStorageObjectService implements ConsentLogger {
         "Database did not return deleted FileStorageObject (id: "
             + fileStorageObjectId
             + ", entity: "
-            + resolvedEntityId
+            + fileStorageObject.getEntityId()
             + "). Applying deletion flags in memory. "
             + "Next query for this file may show inconsistent state.");
     fileStorageObject.setDeleted(true);
@@ -311,26 +321,18 @@ public class FileStorageObjectService implements ConsentLogger {
   // ---------------------------------------------------------------------------
 
   private void checkEntityLevelReadAccess(User user, DocumentEntity entity, String entityId) {
-    if (entity == DocumentEntity.DAC) {
-      // All authenticated users may list DAC documents.
-      return;
-    }
-
-    if (entity == DocumentEntity.DAR) {
-      boolean isCreator = isDarCreator(user, entityId);
-      if (!isCreator) {
-        ensureHasAnyRole(user, UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER);
+    switch (entity) {
+      case DAC -> {
+        // All authenticated users may list DAC documents.
       }
-      return;
+      case DAR -> {
+        if (!isDarCreator(user, entityId)) {
+          ensureHasAnyRole(user, DAR_READ_ROLES);
+        }
+      }
+      case STUDY -> ensureHasAnyRole(user, STUDY_ROLES);
+      case DATASET -> ensureHasAnyRole(user, DATASET_READ_ROLES);
     }
-
-    if (entity == DocumentEntity.STUDY) {
-      ensureHasAnyRole(user, UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON);
-      return;
-    }
-
-    ensureHasAnyRole(
-        user, UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON, UserRoles.MEMBER);
   }
 
   private void checkDarAccess(User user, String entityId, OperationType op) {
@@ -341,7 +343,7 @@ public class FileStorageObjectService implements ConsentLogger {
     }
 
     if (op == OperationType.READ && !isCreator) {
-      ensureHasAnyRole(user, UserRoles.ADMIN, UserRoles.CHAIRPERSON, UserRoles.MEMBER);
+      ensureHasAnyRole(user, DAR_READ_ROLES);
     }
   }
 
@@ -357,20 +359,20 @@ public class FileStorageObjectService implements ConsentLogger {
   }
 
   private void checkDatasetAccess(User user, OperationType op) {
-    if (op == OperationType.WRITE) {
-      ensureHasAnyRole(user, UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON);
-      return;
-    }
-
-    ensureHasAnyRole(
-        user, UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON, UserRoles.MEMBER);
+    checkRoleAccessByOperation(user, op);
   }
 
   private void checkStudyAccess(User user) {
-    // Both READ and WRITE require ADMIN, DATASUBMITTER, or CHAIRPERSON.
-    // For READ the study must be DAC-linked; that constraint is enforced during entity
-    // resolution via DatasetService.findStudyByIdForRead.
-    ensureHasAnyRole(user, UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON);
+    // Both READ and WRITE require the same role set.
+    ensureHasAnyRole(user, STUDY_ROLES);
+  }
+
+  private void checkRoleAccessByOperation(User user, OperationType op) {
+    ensureHasAnyRole(
+        user,
+        op == OperationType.WRITE
+            ? FileStorageObjectService.DATASET_WRITE_ROLES
+            : FileStorageObjectService.DATASET_READ_ROLES);
   }
 
   // ---------------------------------------------------------------------------
@@ -448,6 +450,76 @@ public class FileStorageObjectService implements ConsentLogger {
     return dacId.toString();
   }
 
+  private String resolveOrCreateDaaEntityIdForDac(User user, String entityId) {
+    Integer dacId = parseNumericEntityId(entityId);
+    dacService.findById(dacId);
+    return daaService.createAndLinkDaaIdForDac(user, dacId).toString();
+  }
+
+  private String resolveEntityIdForUpload(User user, DocumentEntity entity, String entityId) {
+    return entity == DocumentEntity.DAC
+        ? resolveOrCreateDaaEntityIdForDac(user, entityId)
+        : resolveEntityId(user, entity, entityId);
+  }
+
+  private FileStorageObject resolveMetadataForEntity(
+      User user, DocumentEntity entity, String entityId, Integer fileStorageObjectId) {
+    if (entity == DocumentEntity.DAC) {
+      // DAC requests keep dacId in the route and validate that the FSO's daaId belongs to it.
+      return fetchDacMetadataByDacIdAndFileId(entityId, fileStorageObjectId);
+    }
+    String resolvedEntityId = resolveEntityId(user, entity, entityId);
+    return fetchMetadataByEntityIdAndId(resolvedEntityId, fileStorageObjectId, entity);
+  }
+
+  private List<FileStorageObject> resolveMetadataListForEntity(
+      User user, DocumentEntity entity, String entityId) {
+    if (entity == DocumentEntity.DAC) {
+      return fetchAllMetadataByDacId(entityId);
+    }
+    String resolvedEntityId = resolveEntityId(user, entity, entityId);
+    return fetchAllMetadataByEntityId(resolvedEntityId, entity);
+  }
+
+  private List<FileStorageObject> fetchAllMetadataByDacId(String entityId) {
+    Integer dacId = parseNumericEntityId(entityId);
+    dacService.findById(dacId);
+
+    List<Integer> daaIds = daaService.findDaaIdsByDacId(dacId);
+    if (daaIds == null || daaIds.isEmpty()) {
+      return List.of();
+    }
+
+    return daaIds.stream()
+        .map(String::valueOf)
+        .flatMap(
+            daaId ->
+                fileStorageObjectDAO
+                    .findFileMetadataByEntityIdAndCategories(daaId, DAC_ALLOWED_CATEGORY_VALUES)
+                    .stream())
+        .toList();
+  }
+
+  private FileStorageObject fetchDacMetadataByDacIdAndFileId(
+      String entityId, Integer fileStorageObjectId) {
+    Integer dacId = parseNumericEntityId(entityId);
+    dacService.findById(dacId);
+
+    FileStorageObject fso = fileStorageObjectDAO.findFileById(fileStorageObjectId);
+    if (fso == null || Boolean.TRUE.equals(fso.getDeleted())) {
+      throw new NotFoundException(FILE_NOT_FOUND);
+    }
+    if (fso.getCategory() != FileCategory.DATA_ACCESS_AGREEMENT) {
+      throw new NotFoundException(FILE_NOT_FOUND);
+    }
+
+    Integer daaId = parseNumericEntityId(fso.getEntityId());
+    if (!daaService.isDaaLinkedToDac(dacId, daaId)) {
+      throw new NotFoundException(FILE_NOT_FOUND);
+    }
+    return fso;
+  }
+
   // ---------------------------------------------------------------------------
   // Low-level GCS / DAO helpers
   // ---------------------------------------------------------------------------
@@ -499,13 +571,13 @@ public class FileStorageObjectService implements ConsentLogger {
     FileStorageObject fileStorageObject =
         fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileStorageObjectId);
     if (fileStorageObject == null) {
-      throw new NotFoundException("File not found");
+      throw new NotFoundException(FILE_NOT_FOUND);
     }
     return fileStorageObject;
   }
 
   /**
-   * Fetches metadata for an active file constrained to categories valid for the requested entity.
+   * Fetches metadata for an active file constrained to valid categories for the requested entity.
    * This prevents records for another document domain from being returned when IDs overlap.
    */
   public FileStorageObject fetchMetadataByEntityIdAndId(
@@ -515,7 +587,7 @@ public class FileStorageObjectService implements ConsentLogger {
         fileStorageObjectDAO.findActiveFileByIdAndEntityIdAndCategories(
             entityId, fileStorageObjectId, allowedCategoryValuesForEntity(entity));
     if (fileStorageObject == null) {
-      throw new NotFoundException("File not found");
+      throw new NotFoundException(FILE_NOT_FOUND);
     }
     return fileStorageObject;
   }
@@ -528,7 +600,7 @@ public class FileStorageObjectService implements ConsentLogger {
     return fileStorageObjectDAO.findFileMetadataByEntityId(entityId);
   }
 
-  /** Returns file metadata scoped to categories valid for the requested entity. */
+  /** Returns file metadata scoped to valid categories for the requested entity. */
   public List<FileStorageObject> fetchAllMetadataByEntityId(
       String entityId, DocumentEntity entity) {
     return fileStorageObjectDAO.findFileMetadataByEntityIdAndCategories(
