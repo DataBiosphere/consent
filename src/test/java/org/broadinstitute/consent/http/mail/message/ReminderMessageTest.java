@@ -3,30 +3,12 @@ package org.broadinstitute.consent.http.mail.message;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import freemarker.template.Template;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.Objects;
-import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class ReminderMessageTest {
-
-  private FreeMarkerTemplateHelper helper;
-
-  @BeforeEach
-  void setUp() {
-    FreeMarkerConfiguration freeMarkerConfig = new FreeMarkerConfiguration();
-    freeMarkerConfig.setTemplateDirectory("/freemarker");
-    freeMarkerConfig.setDefaultEncoding("UTF-8");
-    helper = new FreeMarkerTemplateHelper(freeMarkerConfig);
-  }
+class ReminderMessageTest extends AbstractMailMessageTest {
 
   @Test
   void testMessageSubject() {
@@ -56,19 +38,15 @@ class ReminderMessageTest {
     assertEquals(vote.getVoteId(), message.getVoteId());
     assertEquals(vote.getElectionId().toString(), message.getEntityReferenceId());
 
-    Template template = helper.getTemplate(message.getTemplateName());
-    Writer out = new StringWriter();
-    template.process(message.createModel("http://testServerUrl"), out);
-    String templateString = out.toString();
-    Document parsedTemplate = Jsoup.parse(templateString);
+    var rendered = renderTemplate(message, "http://testServerUrl");
 
     assertEquals(
         "Broad Data Use Oversight System - Your vote was requested for a Data Access Request",
-        parsedTemplate.title());
+        rendered.document().title());
     assertEquals(
         "Hello Reminder User,",
-        Objects.requireNonNull(parsedTemplate.getElementById("userName")).text());
-    assertTrue(templateString.contains(darCode));
-    assertTrue(templateString.contains(voteUrl));
+        Objects.requireNonNull(rendered.document().getElementById("userName")).text());
+    assertTrue(rendered.content().contains(darCode));
+    assertTrue(rendered.content().contains(voteUrl));
   }
 }
