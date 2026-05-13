@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -52,6 +53,7 @@ class FileStorageObjectServiceTest {
   @Mock private GCSService gcsService;
   @Mock private DatasetService datasetService;
   @Mock private DacService dacService;
+  @Mock private DaaService daaService;
   @Mock private DataAccessRequestService dataAccessRequestService;
 
   private FileStorageObjectService service;
@@ -59,7 +61,12 @@ class FileStorageObjectServiceTest {
   private void initService() {
     service =
         new FileStorageObjectService(
-            fileStorageObjectDAO, gcsService, datasetService, dacService, dataAccessRequestService);
+            fileStorageObjectDAO,
+            gcsService,
+            datasetService,
+            dacService,
+            daaService,
+            dataAccessRequestService);
   }
 
   @Test
@@ -385,11 +392,13 @@ class FileStorageObjectServiceTest {
     User user = new User();
     user.setAdminRole();
     Integer dacId = 456;
+    Integer daaId = 789;
     List<FileStorageObject> fileStorageObjects = List.of(new FileStorageObject());
 
     when(dacService.findById(dacId)).thenReturn(new Dac());
+    when(daaService.findDaaIdsByDacId(dacId)).thenReturn(List.of(daaId));
     when(fileStorageObjectDAO.findFileMetadataByEntityIdAndCategories(
-            dacId.toString(), List.of(FileCategory.DATA_ACCESS_AGREEMENT.getValue())))
+            daaId.toString(), List.of(FileCategory.DATA_ACCESS_AGREEMENT.getValue())))
         .thenReturn(fileStorageObjects);
 
     initService();
@@ -399,7 +408,223 @@ class FileStorageObjectServiceTest {
     assertEquals(fileStorageObjects, returnedFiles);
     verify(fileStorageObjectDAO)
         .findFileMetadataByEntityIdAndCategories(
-            dacId.toString(), List.of(FileCategory.DATA_ACCESS_AGREEMENT.getValue()));
+            daaId.toString(), List.of(FileCategory.DATA_ACCESS_AGREEMENT.getValue()));
+  }
+
+  @Test
+  void testUploadDocumentForDacStoresUsingDaaId() throws Exception {
+    InputStream inputStream = new ByteArrayInputStream("metadata".getBytes());
+    FormDataContentDisposition fileDetail =
+        FormDataContentDisposition.name("file").fileName("upload.pdf").size(32).build();
+
+    User user = new User();
+    user.setUserId(25);
+    user.setAdminRole();
+
+    FileStorageObject created = new FileStorageObject();
+    created.setFileStorageObjectId(90);
+
+    when(daaService.createAndLinkDaaIdForDac(user, 123)).thenReturn(456);
+    when(gcsService.storeDocument(eq(inputStream), eq("application/octet-stream"), any()))
+        .thenReturn(BlobId.of("bucket", "object"));
+    when(fileStorageObjectDAO.insertNewFile(
+            eq("upload.pdf"),
+            eq(FileCategory.DATA_ACCESS_AGREEMENT.getValue()),
+            eq(BlobId.of("bucket", "object").toGsUtilUri()),
+            eq("application/octet-stream"),
+            eq("456"),
+            eq(25),
+            any()))
+        .thenReturn(90);
+    when(fileStorageObjectDAO.findFileById(90)).thenReturn(created);
+
+    initService();
+
+    FileStorageObject result =
+        service.uploadDocument(user, "dac", "123", inputStream, fileDetail, "dataAccessAgreement");
+
+    assertEquals(created, result);
+    verify(fileStorageObjectDAO)
+        .insertNewFile(
+            eq("upload.pdf"),
+            eq(FileCategory.DATA_ACCESS_AGREEMENT.getValue()),
+            eq(BlobId.of("bucket", "object").toGsUtilUri()),
+            eq("application/octet-stream"),
+            eq("456"),
+            eq(25),
+            any());
+  }
+
+  @Test
+  void testGetDocumentForDacFailsWhenFileDaaNotLinkedToDac() {
+    User user = new User();
+    user.setAdminRole();
+    Integer dacId = 123;
+    Integer fileId = 10;
+
+    FileStorageObject fso = new FileStorageObject();
+    fso.setFileStorageObjectId(fileId);
+    fso.setEntityId("999");
+    fso.setCategory(FileCategory.DATA_ACCESS_AGREEMENT);
+    fso.setDeleted(false);
+
+    when(dacService.findById(dacId)).thenReturn(new Dac());
+    when(fileStorageObjectDAO.findFileById(fileId)).thenReturn(fso);
+    when(daaService.isDaaLinkedToDac(dacId, 999)).thenReturn(false);
+
+    initService();
+
+    assertThrows(NotFoundException.class, () -> service.getDocument(user, "dac", "123", fileId));
+  }
+
+  @Test
+  void testListDocumentsForDacAggregatesAcrossLinkedDaaIds() {
+    User user = new User();
+    user.setAdminRole();
+    Integer dacId = 456;
+
+    FileStorageObject daa1File = new FileStorageObject();
+    FileStorageObject daa2File = new FileStorageObject();
+
+    when(dacService.findById(dacId)).thenReturn(new Dac());
+    when(daaService.findDaaIdsByDacId(dacId)).thenReturn(List.of(1001, 1002));
+    when(fileStorageObjectDAO.findFileMetadataByEntityIdAndCategories(
+            "1001", List.of(FileCategory.DATA_ACCESS_AGREEMENT.getValue())))
+        .thenReturn(List.of(daa1File));
+    when(fileStorageObjectDAO.findFileMetadataByEntityIdAndCategories(
+            "1002", List.of(FileCategory.DATA_ACCESS_AGREEMENT.getValue())))
+        .thenReturn(List.of(daa2File));
+
+    initService();
+
+    List<FileStorageObject> returnedFiles = service.listDocuments(user, "dac", dacId.toString());
+
+    assertEquals(2, returnedFiles.size());
+    assertEquals(List.of(daa1File, daa2File), returnedFiles);
+  }
+
+  @Test
+  void testListDocumentsForDacReturnsEmptyWhenNoLinkedDaaIds() {
+    User user = new User();
+    user.setAdminRole();
+    Integer dacId = 456;
+
+    when(dacService.findById(dacId)).thenReturn(new Dac());
+    when(daaService.findDaaIdsByDacId(dacId)).thenReturn(List.of());
+
+    initService();
+
+    List<FileStorageObject> returnedFiles = service.listDocuments(user, "dac", dacId.toString());
+
+    assertTrue(returnedFiles.isEmpty());
+    verifyNoInteractions(fileStorageObjectDAO);
+  }
+
+  @Test
+  void testGetDocumentFileForDacFailsWhenFileDaaNotLinkedToDac() {
+    User user = new User();
+    user.setAdminRole();
+    Integer dacId = 123;
+    Integer fileId = 10;
+
+    FileStorageObject fso = new FileStorageObject();
+    fso.setFileStorageObjectId(fileId);
+    fso.setEntityId("999");
+    fso.setCategory(FileCategory.DATA_ACCESS_AGREEMENT);
+    fso.setDeleted(false);
+
+    when(dacService.findById(dacId)).thenReturn(new Dac());
+    when(fileStorageObjectDAO.findFileById(fileId)).thenReturn(fso);
+    when(daaService.isDaaLinkedToDac(dacId, 999)).thenReturn(false);
+
+    initService();
+
+    assertThrows(
+        NotFoundException.class, () -> service.getDocumentFile(user, "dac", "123", fileId));
+    verifyNoInteractions(gcsService);
+  }
+
+  @Test
+  void testUpdateDocumentCategoryForDacFailsWhenFileDaaNotLinkedToDac() {
+    User user = new User();
+    user.setUserId(25);
+    user.setAdminRole();
+    Integer dacId = 123;
+    Integer fileId = 10;
+
+    FileStorageObject fso = new FileStorageObject();
+    fso.setFileStorageObjectId(fileId);
+    fso.setEntityId("999");
+    fso.setCategory(FileCategory.DATA_ACCESS_AGREEMENT);
+    fso.setDeleted(false);
+
+    when(dacService.findById(dacId)).thenReturn(new Dac());
+    when(fileStorageObjectDAO.findFileById(fileId)).thenReturn(fso);
+    when(daaService.isDaaLinkedToDac(dacId, 999)).thenReturn(false);
+    String category = FileCategory.DATA_ACCESS_AGREEMENT.getValue();
+
+    initService();
+
+    assertThrows(
+        NotFoundException.class,
+        () -> service.updateDocumentCategory(user, "dac", "123", fileId, category));
+    verify(fileStorageObjectDAO, never()).updateCategory(any(), any(), any());
+  }
+
+  @Test
+  void testDeleteDocumentForDacFailsWhenFileDaaNotLinkedToDac() {
+    User user = new User();
+    user.setUserId(25);
+    user.setAdminRole();
+    Integer dacId = 123;
+    Integer fileId = 10;
+
+    FileStorageObject fso = new FileStorageObject();
+    fso.setFileStorageObjectId(fileId);
+    fso.setEntityId("999");
+    fso.setCategory(FileCategory.DATA_ACCESS_AGREEMENT);
+    fso.setDeleted(false);
+
+    when(dacService.findById(dacId)).thenReturn(new Dac());
+    when(fileStorageObjectDAO.findFileById(fileId)).thenReturn(fso);
+    when(daaService.isDaaLinkedToDac(dacId, 999)).thenReturn(false);
+
+    initService();
+
+    assertThrows(NotFoundException.class, () -> service.deleteDocument(user, "dac", "123", fileId));
+    verify(fileStorageObjectDAO, never()).softDelete(any(), any(), any());
+  }
+
+  @Test
+  void testDeleteDocumentForDacUsesDaaEntityIdWhenLinked() {
+    User user = new User();
+    user.setUserId(25);
+    user.setAdminRole();
+    Integer dacId = 123;
+    Integer fileId = 10;
+
+    FileStorageObject active = new FileStorageObject();
+    active.setFileStorageObjectId(fileId);
+    active.setEntityId("777");
+    active.setCategory(FileCategory.DATA_ACCESS_AGREEMENT);
+    active.setDeleted(false);
+
+    FileStorageObject deleted = new FileStorageObject();
+    deleted.setFileStorageObjectId(fileId);
+    deleted.setEntityId("777");
+    deleted.setDeleted(true);
+
+    when(dacService.findById(dacId)).thenReturn(new Dac());
+    when(fileStorageObjectDAO.findFileById(fileId)).thenReturn(active);
+    when(daaService.isDaaLinkedToDac(dacId, 777)).thenReturn(true);
+    when(fileStorageObjectDAO.findById(fileId)).thenReturn(deleted);
+
+    initService();
+
+    FileStorageObject result = service.deleteDocument(user, "dac", "123", fileId);
+
+    assertEquals(deleted, result);
+    verify(fileStorageObjectDAO).softDelete("777", fileId, user.getUserId());
   }
 
   @Test
