@@ -11,6 +11,7 @@ import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -567,5 +568,91 @@ class DaaServiceTest extends AbstractTestHelper {
 
     Map<Integer, Set<Integer>> daaMap = service.findDaaIdsByDatasetIds(Set.of(1, 2, 3));
     assertTrue(daaMap.isEmpty());
+  }
+
+  @Test
+  void testFindDaaIdsByDacIdReturnsDirectLinks() {
+    Integer dacId = 12;
+    when(daaDAO.findDaaIdsByDacId(dacId)).thenReturn(List.of(101, 102));
+
+    initService();
+
+    List<Integer> result = service.findDaaIdsByDacId(dacId);
+
+    assertEquals(List.of(101, 102), result);
+    verify(daaDAO).findDaaIdsByDacId(dacId);
+  }
+
+  @Test
+  void testFindDaaIdsByDacIdReturnsEmptyWhenNoMappingExists() {
+    Integer dacId = 33;
+    when(daaDAO.findDaaIdsByDacId(dacId)).thenReturn(List.of());
+
+    initService();
+
+    assertTrue(service.findDaaIdsByDacId(dacId).isEmpty());
+  }
+
+  @Test
+  void testIsDaaLinkedToDacReturnsTrueForDirectRelation() {
+    Integer dacId = 7;
+    Integer daaId = 55;
+    when(daaDAO.isDaaLinkedToDac(dacId, daaId)).thenReturn(true);
+
+    initService();
+
+    assertTrue(service.isDaaLinkedToDac(dacId, daaId));
+  }
+
+  @Test
+  void testIsDaaLinkedToDacReturnsTrueForInitialDacLink() {
+    Integer dacId = 7;
+    Integer daaId = 88;
+    when(daaDAO.isDaaLinkedToDac(dacId, daaId)).thenReturn(false);
+    when(daaDAO.isDaaInitiallyLinkedToDac(dacId, daaId)).thenReturn(true);
+
+    initService();
+
+    assertTrue(service.isDaaLinkedToDac(dacId, daaId));
+  }
+
+  @Test
+  void testIsDaaLinkedToDacReturnsFalseWhenNoRelationExists() {
+    Integer dacId = 7;
+    Integer daaId = 89;
+    when(daaDAO.isDaaLinkedToDac(dacId, daaId)).thenReturn(false);
+    when(daaDAO.isDaaInitiallyLinkedToDac(dacId, daaId)).thenReturn(false);
+
+    initService();
+
+    assertFalse(service.isDaaLinkedToDac(dacId, daaId));
+  }
+
+  @Test
+  void testCreateAndLinkDaaIdForDacCreatesAndLinksNewDaa() {
+    User user = new User();
+    user.setUserId(999);
+    Integer dacId = 17;
+    when(daaDAO.createDaa(any(), any(), any(), any(), any())).thenReturn(700);
+
+    initService();
+
+    assertEquals(700, service.createAndLinkDaaIdForDac(user, dacId));
+    verify(daaDAO).createDacDaaRelation(dacId, 700, user.getUserId());
+  }
+
+  @Test
+  void testCreateAndLinkDaaIdForDacCreatesNewDaaEvenWhenLinkedDaaExists() {
+    User user = new User();
+    user.setUserId(77);
+    Integer dacId = 18;
+    when(daaDAO.createDaa(any(), any(), any(), any(), any())).thenReturn(801);
+
+    initService();
+
+    assertEquals(801, service.createAndLinkDaaIdForDac(user, dacId));
+    verify(daaDAO).createDacDaaRelation(dacId, 801, user.getUserId());
+    verify(daaDAO, never()).findByDacId(dacId);
+    verify(daaDAO, never()).findDaaIdsByDacId(dacId);
   }
 }

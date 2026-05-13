@@ -189,6 +189,43 @@ class DaaDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testFindDaaIdsByDacIdReturnsAllLinkedAndInitialDaaIds() {
+    Integer userId = createUserId();
+    Integer dacId =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
+
+    Integer daaId1 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    Integer daaId2 = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+
+    daaDAO.createDacDaaRelation(dacId, daaId1, userId);
+    // Re-assignment updates DAC -> DAA mapping to the latest DAA.
+    daaDAO.createDacDaaRelation(dacId, daaId2, userId);
+
+    List<Integer> linkedDaaIds = daaDAO.findDaaIdsByDacId(dacId);
+
+    assertEquals(List.of(daaId2, daaId1), linkedDaaIds);
+  }
+
+  @Test
+  void testIsDaaLinkedToDac() {
+    Integer userId = createUserId();
+    Integer dacId =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
+    Integer otherDacId =
+        dacDAO.createDac(randomAlphabetic(5), randomAlphabetic(5), "", createUser().getUserId());
+
+    Integer daaId = daaDAO.createDaa(userId, Instant.now(), userId, Instant.now(), dacId);
+    daaDAO.createDacDaaRelation(dacId, daaId, userId);
+
+    assertTrue(daaDAO.isDaaLinkedToDac(dacId, daaId));
+    assertFalse(daaDAO.isDaaLinkedToDac(otherDacId, daaId));
+    assertFalse(daaDAO.isDaaLinkedToDac(dacId, NON_EXISTENT_ID));
+    assertTrue(daaDAO.isDaaInitiallyLinkedToDac(dacId, daaId));
+    assertFalse(daaDAO.isDaaInitiallyLinkedToDac(otherDacId, daaId));
+    assertFalse(daaDAO.isDaaInitiallyLinkedToDac(dacId, NON_EXISTENT_ID));
+  }
+
+  @Test
   void testCreateDaaDacRelation() {
     Integer userId = createUserId();
     Integer dacId =

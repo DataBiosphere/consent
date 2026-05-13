@@ -11,6 +11,7 @@ import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -151,10 +152,7 @@ public class DaaService implements ConsentLogger {
     List<DataAccessAgreement> daas = daaDAO.findAll();
     List<Dac> allDacs = dacDAO.findAll();
     if (daas != null) {
-      daas.forEach(
-          daa -> {
-            daa.setBroadDaa(isBroadDAA(daa.getDaaId(), daas, allDacs));
-          });
+      daas.forEach(daa -> daa.setBroadDaa(isBroadDAA(daa.getDaaId(), daas, allDacs)));
       return daas;
     }
     return List.of();
@@ -166,6 +164,28 @@ public class DaaService implements ConsentLogger {
       return daa;
     }
     throw new NotFoundException("Could not find DAA with the provided ID: " + daaId);
+  }
+
+  /**
+   * Returns all DAA IDs associated to a DAC, including both explicit dac_daa links and DAAs whose
+   * initial_dac_id matches the DAC.
+   */
+  public List<Integer> findDaaIdsByDacId(Integer dacId) {
+    List<Integer> daaIds = daaDAO.findDaaIdsByDacId(dacId);
+    return daaIds == null ? List.of() : daaIds;
+  }
+
+  /** Returns true when the provided DAA is associated to the DAC (directly or as initial DAC). */
+  public boolean isDaaLinkedToDac(Integer dacId, Integer daaId) {
+    return daaDAO.isDaaLinkedToDac(dacId, daaId) || daaDAO.isDaaInitiallyLinkedToDac(dacId, daaId);
+  }
+
+  /** Creates a new DAA for the DAC and links it for DAC document upload workflows. */
+  public Integer createAndLinkDaaIdForDac(User user, Integer dacId) {
+    Instant now = Instant.now();
+    Integer daaId = daaDAO.createDaa(user.getUserId(), now, user.getUserId(), now, dacId);
+    addDacToDaa(user.getUserId(), dacId, daaId);
+    return daaId;
   }
 
   public void sendNewDaaEmails(User user, Integer daaId, String dacName, String newDaaName)
@@ -219,7 +239,7 @@ public class DaaService implements ConsentLogger {
     try {
       JsonObject jsonObject = new Gson().fromJson(json, JsonObject.class);
       jsonElementList = jsonObject.getAsJsonArray(arrayKey).asList();
-    } catch (Exception e) {
+    } catch (Exception _) {
       throw new BadRequestException("Invalid JSON or missing array with key: " + arrayKey);
     }
     return jsonElementList.stream().distinct().map(e -> findById(e.getAsInt())).toList();

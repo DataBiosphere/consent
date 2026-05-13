@@ -281,6 +281,7 @@ public class ConsentModule extends AbstractModule {
         providesGCSService(),
         providesDatasetService(),
         providesDacService(),
+        providesDaaService(),
         providesDataAccessRequestService());
   }
 

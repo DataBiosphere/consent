@@ -45,6 +45,7 @@ class FileStorageObjectServiceAccessTest {
   @Mock private GCSService gcsService;
   @Mock private DatasetService datasetService;
   @Mock private DacService dacService;
+  @Mock private DaaService daaService;
   @Mock private DataAccessRequestService dataAccessRequestService;
 
   private FileStorageObjectService service;
@@ -53,7 +54,12 @@ class FileStorageObjectServiceAccessTest {
   void setUp() {
     service =
         new FileStorageObjectService(
-            fileStorageObjectDAO, gcsService, datasetService, dacService, dataAccessRequestService);
+            fileStorageObjectDAO,
+            gcsService,
+            datasetService,
+            dacService,
+            daaService,
+            dataAccessRequestService);
   }
 
   // ---------------------------------------------------------------------------
@@ -790,7 +796,12 @@ class FileStorageObjectServiceAccessTest {
 
     service =
         new FileStorageObjectService(
-            fileStorageObjectDAO, gcsService, datasetService, dacService, dataAccessRequestService);
+            fileStorageObjectDAO,
+            gcsService,
+            datasetService,
+            dacService,
+            daaService,
+            dataAccessRequestService);
 
     assertTrue(service.isDarCreator(user, darId));
   }
@@ -806,7 +817,12 @@ class FileStorageObjectServiceAccessTest {
 
     service =
         new FileStorageObjectService(
-            fileStorageObjectDAO, gcsService, datasetService, dacService, dataAccessRequestService);
+            fileStorageObjectDAO,
+            gcsService,
+            datasetService,
+            dacService,
+            daaService,
+            dataAccessRequestService);
 
     assertFalse(service.isDarCreator(user, darId));
   }

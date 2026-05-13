@@ -157,6 +157,37 @@ public interface DaaDAO extends Transactional<DaaDAO> {
       """)
   DataAccessAgreement findByDacId(@Bind("dacId") Integer dacId);
 
+  @SqlQuery(
+      """
+          SELECT daa_id FROM dac_daa WHERE dac_id = :dacId
+          UNION
+          SELECT daa_id FROM data_access_agreement WHERE initial_dac_id = :dacId
+          ORDER BY daa_id DESC
+          """)
+  List<Integer> findDaaIdsByDacId(@Bind("dacId") Integer dacId);
+
+  @SqlQuery(
+      """
+          SELECT EXISTS (
+              SELECT 1
+              FROM dac_daa
+              WHERE dac_id = :dacId
+                    AND daa_id = :daaId
+          )
+          """)
+  boolean isDaaLinkedToDac(@Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId);
+
+  @SqlQuery(
+      """
+          SELECT EXISTS (
+              SELECT 1
+              FROM data_access_agreement
+              WHERE initial_dac_id = :dacId
+                    AND daa_id = :daaId
+          )
+          """)
+  boolean isDaaInitiallyLinkedToDac(@Bind("dacId") Integer dacId, @Bind("daaId") Integer daaId);
+
   /**
    * Create a Daa given name, description, and create date
    *
