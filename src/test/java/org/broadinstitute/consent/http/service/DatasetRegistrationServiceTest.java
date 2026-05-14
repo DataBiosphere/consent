@@ -62,6 +62,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.AlternativeDataSharingPlanAccessManagement;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.NihICsSupportingStudy;
+import org.broadinstitute.consent.http.mail.message.DatasetSubmittedMessage;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetUpdate;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -410,14 +411,17 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setChairpersonRole();
     Dac dac = mock();
+    User createUser = new User();
+    createUser.setDisplayName("Create User");
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
+    dataset.setCreateUser(createUser);
 
     when(dacDAO.findById(any())).thenReturn(dac);
     when(dacDAO.findMembersByDacId(any())).thenReturn(List.of(user));
 
     datasetRegistrationService.sendDatasetSubmittedEmails(List.of(dataset));
-    verify(emailService, times(1)).sendDatasetSubmittedMessage(any(), any(), any(), any());
+    verify(emailService, times(1)).sendMessage(any(DatasetSubmittedMessage.class), any());
   }
 
   @Test
@@ -430,7 +434,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     when(dacDAO.findMembersByDacId(any())).thenReturn(List.of());
 
     datasetRegistrationService.sendDatasetSubmittedEmails(List.of(dataset));
-    verify(emailService, never()).sendDatasetSubmittedMessage(any(), any(), any(), any());
+    verify(emailService, never()).sendMessage(any(DatasetSubmittedMessage.class), any());
   }
 
   @Test
@@ -439,7 +443,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     when(dacDAO.findById(any())).thenReturn(null);
 
     datasetRegistrationService.sendDatasetSubmittedEmails(List.of(dataset));
-    verify(emailService, never()).sendDatasetSubmittedMessage(any(), any(), any(), any());
+    verify(emailService, never()).sendMessage(any(DatasetSubmittedMessage.class), any());
   }
 
   @Test

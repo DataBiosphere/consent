@@ -258,34 +258,6 @@ class EmailServiceTest extends AbstractTestHelper {
                             m.emailType(), EmailType.DAR_EXPIRATION_REMINDER.getTypeInt())));
   }
 
-  @Test
-  void testSendDatasetSubmittedMessage() throws Exception {
-    User dacChair = new User();
-    dacChair.setUserId(456);
-    dacChair.setDisplayName("Jane Evans");
-    dacChair.setEmail("dacchair@example.com");
-
-    User dataSubmitter = new User();
-    dataSubmitter.setUserId(123);
-    dataSubmitter.setDisplayName("John Doe");
-    dataSubmitter.setEmail("submitter@example.com");
-
-    String dacName = "DAC-123";
-    String datasetName = "testDataset";
-    when(templateHelper.getTemplate(EmailType.NEW_DATASET.templateName)).thenReturn(mock());
-
-    service.sendDatasetSubmittedMessage(dacChair, dataSubmitter, dacName, datasetName);
-
-    verify(sendGridAPI).sendMessage(any(), any());
-    verify(emailDAO)
-        .insert(
-            argThat(
-                m ->
-                    Objects.equals(m.entityReferenceId(), datasetName)
-                        && m.voteId() == null
-                        && Objects.equals(m.userId(), 456)
-                        && Objects.equals(m.emailType(), EmailType.NEW_DATASET.getTypeInt())));
-  }
 
   @Test
   void testSendStudySubmissionConfirmation() throws Exception {

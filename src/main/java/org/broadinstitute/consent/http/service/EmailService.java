@@ -38,7 +38,6 @@ import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage
 import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
-import org.broadinstitute.consent.http.mail.message.DatasetSubmittedMessage;
 import org.broadinstitute.consent.http.mail.message.MailMessage;
 import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
@@ -171,13 +170,6 @@ public class EmailService implements ConsentLogger {
   }
 
 
-  public void sendDatasetSubmittedMessage(
-      User dacChair, User dataSubmitter, String dacName, String datasetName)
-      throws TemplateException, IOException {
-    sendMessage(
-        new DatasetSubmittedMessage(dacChair, dataSubmitter.getDisplayName(), datasetName, dacName),
-        dacChair.getUserId());
-  }
 
   public void sendStudySubmissionConfirmation(
       User dataSubmitter, String studyName, Integer studyId, Map<String, Object> studyAssets)
