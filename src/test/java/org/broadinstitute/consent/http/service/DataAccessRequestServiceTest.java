@@ -54,6 +54,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
+import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.Dac;
@@ -1837,13 +1838,7 @@ institution or library cards issued: Internal Collaborator member:  \
 
     initService();
     service.sendReminderMessage(vote.getVoteId());
-    verify(emailService)
-        .sendReminderMessage(
-            user,
-            vote,
-            collection.getDarCode(),
-            election.getElectionType(),
-            "local_url/dar_collection/" + collection.getDarCollectionId());
+    verify(emailService).sendMessage(any(ReminderMessage.class), any());
     verify(voteDAO).updateVoteReminderFlag(vote.getVoteId(), true);
   }
 

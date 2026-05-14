@@ -37,13 +37,11 @@ import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage
 import org.broadinstitute.consent.http.mail.message.MailMessage;
 import org.broadinstitute.consent.http.mail.message.NewLibraryCardIssuedMessage;
 import org.broadinstitute.consent.http.mail.message.NewStudyDigestMessage;
-import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherCloseoutCompletedMessage;
 import org.broadinstitute.consent.http.mail.message.SubmittedCloseoutMessage;
 import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserVoteReminder;
-import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.result.ResultIterable;
 
@@ -165,12 +163,6 @@ public class EmailService implements ConsentLogger {
       User user, String darCode, Integer userId, String referenceId)
       throws TemplateException, IOException {
     sendMessage(new DarExpirationReminderMessage(user, darCode, referenceId), userId);
-  }
-
-  public void sendReminderMessage(
-      User user, Vote vote, String darCode, String electionType, String url)
-      throws TemplateException, IOException {
-    sendMessage(new ReminderMessage(user, vote, darCode, electionType, url), user.getUserId());
   }
 
   /**
