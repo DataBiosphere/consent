@@ -42,7 +42,6 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
-import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Reminder;
 import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.broadinstitute.consent.http.models.User;
@@ -232,40 +231,6 @@ class EmailServiceTest extends AbstractTestHelper {
                         && Objects.equals(m.userId(), otherUserId)
                         && Objects.equals(
                             m.emailType(), EmailType.DAR_EXPIRATION_REMINDER.getTypeInt())));
-  }
-
-  @Test
-  void testSendNewDAAUploadResearcherMessage() throws Exception {
-    User researcher = new User();
-    researcher.setDisplayName("Jane Evans");
-    researcher.setEmail("signingofficial@example.com");
-
-    Dac dac = new Dac();
-    dac.setDacId(1);
-    dac.setName("DAC-01");
-
-    User user = new User();
-    user.setUserId(123);
-
-    String previousDaaName = "DAA-123";
-
-    String newDaaName = "DAA-456";
-    when(templateHelper.getTemplate(EmailType.NEW_DAA_UPLOAD_RESEARCHER.templateName))
-        .thenReturn(mock());
-
-    service.sendNewDAAUploadResearcherMessage(
-        researcher, dac.getName(), previousDaaName, newDaaName, user.getUserId());
-
-    verify(sendGridAPI).sendMessage(any(), any());
-    verify(emailDAO)
-        .insert(
-            argThat(
-                m ->
-                    Objects.equals(m.entityReferenceId(), "DAC-01")
-                        && m.voteId() == null
-                        && Objects.equals(m.userId(), user.getUserId())
-                        && Objects.equals(
-                            m.emailType(), EmailType.NEW_DAA_UPLOAD_RESEARCHER.getTypeInt())));
   }
 
   @Test

@@ -25,6 +25,7 @@ import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
 import org.broadinstitute.consent.http.models.DaaBulkAssignmentResult;
 import org.broadinstitute.consent.http.models.Dac;
@@ -209,7 +210,7 @@ public class DaaService implements ConsentLogger {
         for (SimplifiedUser researcher : researchers) {
           toUser.setEmail(researcher.getEmail());
           toUser.setDisplayName(researcher.getDisplayName());
-          emailService.sendNewDAAUploadResearcherMessage(
+          sendNewDAAUploadResearcherMessage(
               toUser, dacName, previousDaaName, newDaaName, user.getUserId());
         }
         for (SimplifiedUser signingOfficial : signingOfficials) {
@@ -222,6 +223,15 @@ public class DaaService implements ConsentLogger {
       logException(e);
       throw (e);
     }
+  }
+
+  @VisibleForTesting
+  public void sendNewDAAUploadResearcherMessage(
+      User researcher, String dacName, String previousDaaName, String newDaaName, Integer userId)
+      throws freemarker.template.TemplateException, java.io.IOException {
+    emailService.sendMessage(
+        new NewDAAUploadResearcherMessage(researcher, dacName, previousDaaName, newDaaName),
+        userId);
   }
 
   @VisibleForTesting
