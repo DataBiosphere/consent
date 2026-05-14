@@ -42,7 +42,6 @@ import org.broadinstitute.consent.http.mail.message.NewStudyDigestMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherCloseoutCompletedMessage;
 import org.broadinstitute.consent.http.mail.message.SoDARSubmitted;
-import org.broadinstitute.consent.http.mail.message.SoPRSubmitted;
 import org.broadinstitute.consent.http.mail.message.SubmittedCloseoutMessage;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
@@ -184,23 +183,6 @@ public class EmailService implements ConsentLogger {
         new SoDARSubmitted(user, darCode, researcher, referenceId, datasets), user.getUserId());
   }
 
-  /**
-   * Send a message to a Signing Official that a new progress report has been submitted.
-   *
-   * @param user The user to send the message to
-   * @param darCode The Data Access Request code for which the progress report is submitted
-   * @param researcher The researcher whose progress report has been submitted
-   * @param referenceId The reference ID of the progress report
-   * @param datasets The datasets associated with the progress report
-   * @throws TemplateException Template processing exception
-   * @throws IOException IOException when processing the template or sending the email
-   */
-  public void sendNewSoProgressReportSubmittedEmail(
-      User user, String darCode, User researcher, String referenceId, List<Dataset> datasets)
-      throws TemplateException, IOException {
-    sendMessage(
-        new SoPRSubmitted(user, darCode, researcher, referenceId, datasets), user.getUserId());
-  }
 
   /**
    * Send a message to a researcher that their data access request has expired.

@@ -57,6 +57,7 @@ import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
+import org.broadinstitute.consent.http.mail.message.SoPRSubmitted;
 import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
@@ -2585,7 +2586,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.notifySigningOfficialsOfDARSubmission(
         collection.getMostRecentDar(), researcher, collection.getDarCode());
     verify(emailService, never())
-        .sendNewSoProgressReportSubmittedEmail(any(), any(), any(), any(), any());
+        .sendMessage(any(SoPRSubmitted.class), any());
     verify(emailService, times(1)).sendNewSoDARSubmittedEmail(any(), any(), any(), any(), any());
   }
 
@@ -2627,7 +2628,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.notifySigningOfficialsOfDARSubmission(
         collection.getMostRecentDar(), researcher, collection.getDarCode());
     verify(emailService, times(1))
-        .sendNewSoProgressReportSubmittedEmail(any(), any(), any(), any(), any());
+        .sendMessage(any(SoPRSubmitted.class), any());
     verify(emailService, never()).sendNewSoDARSubmittedEmail(any(), any(), any(), any(), any());
   }
 
@@ -2652,7 +2653,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.notifySigningOfficialsOfDARSubmission(
         collection.getMostRecentDar(), researcher, collection.getDarCode());
     verify(emailService, never())
-        .sendNewSoProgressReportSubmittedEmail(any(), any(), any(), any(), any());
+        .sendMessage(any(SoPRSubmitted.class), any());
     verify(emailService, never()).sendNewSoDARSubmittedEmail(any(), any(), any(), any(), any());
   }
 
