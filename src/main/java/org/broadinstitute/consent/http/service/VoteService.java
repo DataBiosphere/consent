@@ -44,6 +44,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
+import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.SoDARApproved;
 import org.broadinstitute.consent.http.mail.message.SoPRApproved;
@@ -267,7 +268,6 @@ public class VoteService implements ConsentLogger {
           if (!approvedDatasetsInDar.isEmpty()) {
             String darCode = dar.getDarCode();
             User researcher = userDAO.findUserById(dar.getUserId());
-            Integer researcherId = researcher.getUserId();
             List<DatasetMailDTO> datasetMailDTOs =
                 approvedDatasetsInDar.stream()
                     .map(
@@ -290,8 +290,8 @@ public class VoteService implements ConsentLogger {
 
             try {
               if (dar.getProgressReport()) {
-                emailService.sendResearcherProgressReportApproved(
-                    darCode, researcherId, datasetMailDTOs, translation, radarApproved);
+                sendResearcherProgressReportApproved(
+                    researcher, darCode, datasetMailDTOs, translation, radarApproved);
               } else {
                 sendResearcherDarApproved(
                     researcher, darCode, datasetMailDTOs, translation, radarApproved);
@@ -333,6 +333,19 @@ public class VoteService implements ConsentLogger {
       throws TemplateException, IOException {
     emailService.sendMessage(
         new ResearcherDarApprovedMessage(researcher, darCode, datasets, dataUseRestriction, radarApproved),
+        researcher.getUserId());
+  }
+
+  @VisibleForTesting
+  protected void sendResearcherProgressReportApproved(
+      User researcher,
+      String darCode,
+      List<DatasetMailDTO> datasets,
+      String dataUseRestriction,
+      boolean radarApproved)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new ResearcherApprovedProgressReportMessage(researcher, darCode, datasets, dataUseRestriction, radarApproved),
         researcher.getUserId());
   }
 

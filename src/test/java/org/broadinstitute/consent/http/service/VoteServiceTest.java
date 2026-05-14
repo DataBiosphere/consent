@@ -58,6 +58,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
+import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.SoDARApproved;
 import org.broadinstitute.consent.http.mail.message.SoPRApproved;
@@ -486,7 +487,7 @@ class VoteServiceTest extends AbstractTestHelper {
     service.sendDatasetApprovalNotifications(List.of(v1), researcher);
 
     verify(emailService)
-        .sendResearcherProgressReportApproved(any(), any(), anyList(), any(), anyBoolean());
+        .sendMessage(any(ResearcherApprovedProgressReportMessage.class), any());
   }
 
   @Test

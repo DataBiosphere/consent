@@ -54,7 +54,6 @@ import org.broadinstitute.consent.http.mail.message.NewResearcherLibraryRequestM
 import org.broadinstitute.consent.http.mail.message.NewStudyDigestMessage;
 import org.broadinstitute.consent.http.mail.message.NewStudyRegistrationConfirmationMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
-import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherCloseoutCompletedMessage;
 import org.broadinstitute.consent.http.mail.message.SoDARSubmitted;
 import org.broadinstitute.consent.http.mail.message.SoPRSubmitted;
@@ -175,19 +174,6 @@ public class EmailService implements ConsentLogger {
   }
 
 
-  public void sendResearcherProgressReportApproved(
-      String darCode,
-      Integer researcherId,
-      List<DatasetMailDTO> datasets,
-      String dataUseRestriction,
-      boolean radarApproved)
-      throws TemplateException, IOException {
-    User user = userDAO.findUserById(researcherId);
-    sendMessage(
-        new ResearcherApprovedProgressReportMessage(
-            user, darCode, datasets, dataUseRestriction, radarApproved),
-        researcherId);
-  }
 
   public void sendDataCustodianApprovalMessage(
       User custodian,
