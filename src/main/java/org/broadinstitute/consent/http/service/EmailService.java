@@ -56,7 +56,6 @@ import org.broadinstitute.consent.http.mail.message.NewStudyRegistrationConfirma
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherCloseoutCompletedMessage;
-import org.broadinstitute.consent.http.mail.message.SoDARApproved;
 import org.broadinstitute.consent.http.mail.message.SoDARSubmitted;
 import org.broadinstitute.consent.http.mail.message.SoPRApproved;
 import org.broadinstitute.consent.http.mail.message.SoPRSubmitted;
@@ -340,32 +339,6 @@ public class EmailService implements ConsentLogger {
         new SoPRSubmitted(user, darCode, researcher, referenceId, datasets), user.getUserId());
   }
 
-  /**
-   * Send a message to a Signing Official that a new Data Access Request has been approved.
-   *
-   * @param user The user to send the message to
-   * @param darCode The Data Access Request code which is approved
-   * @param researcher The researcher whose DAR has been approved
-   * @param referenceId The reference ID of the DAR
-   * @param datasets The datasets associated with the DAR
-   * @param dataUseRestriction The data use restriction associated with the datasets in the DAR
-   * @throws TemplateException Template processing exception
-   * @throws IOException IOException when processing the template or sending the email
-   */
-  public void sendNewSoDARApprovedEmail(
-      User user,
-      String darCode,
-      User researcher,
-      String referenceId,
-      List<Dataset> datasets,
-      String dataUseRestriction,
-      boolean radarApproved)
-      throws TemplateException, IOException {
-    sendMessage(
-        new SoDARApproved(
-            user, darCode, researcher, referenceId, datasets, dataUseRestriction, radarApproved),
-        user.getUserId());
-  }
 
   /**
    * Send a message to a Signing Official that a new progress report has been approved.

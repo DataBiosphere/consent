@@ -59,6 +59,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.SoDARApproved;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -1128,7 +1129,7 @@ class VoteServiceTest extends AbstractTestHelper {
         .sendNewSoProgressReportApprovedEmail(
             any(), any(), any(), any(), any(), any(), anyBoolean());
     verify(emailService, times(1))
-        .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), eq(false));
+        .sendMessage(any(SoDARApproved.class), any());
   }
 
   @Test
@@ -1155,7 +1156,7 @@ class VoteServiceTest extends AbstractTestHelper {
         .sendNewSoProgressReportApprovedEmail(
             any(), any(), any(), any(), any(), any(), anyBoolean());
     verify(emailService, times(1))
-        .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), eq(true));
+        .sendMessage(any(SoDARApproved.class), any());
   }
 
   @Test
@@ -1270,7 +1271,7 @@ class VoteServiceTest extends AbstractTestHelper {
         .sendNewSoProgressReportApprovedEmail(
             any(), any(), any(), any(), any(), any(), anyBoolean());
     verify(emailService, never())
-        .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
+        .sendMessage(any(SoDARApproved.class), any());
   }
 
   @Test
@@ -1290,7 +1291,7 @@ class VoteServiceTest extends AbstractTestHelper {
         .sendNewSoProgressReportApprovedEmail(
             any(), any(), any(), any(), any(), any(), anyBoolean());
     verify(emailService, never())
-        .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
+        .sendMessage(any(SoDARApproved.class), any());
   }
 
   @Test
@@ -1312,7 +1313,7 @@ class VoteServiceTest extends AbstractTestHelper {
         .sendNewSoProgressReportApprovedEmail(
             any(), any(), any(), any(), any(), any(), anyBoolean());
     verify(emailService, never())
-        .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
+        .sendMessage(any(SoDARApproved.class), any());
   }
 
   @Test
@@ -1336,7 +1337,7 @@ class VoteServiceTest extends AbstractTestHelper {
         .sendNewSoProgressReportApprovedEmail(
             any(), any(), any(), any(), any(), any(), anyBoolean());
     verify(emailService, never())
-        .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
+        .sendMessage(any(SoDARApproved.class), any());
   }
 
   private User createUserWithRole(UserRoles userRoles) {
