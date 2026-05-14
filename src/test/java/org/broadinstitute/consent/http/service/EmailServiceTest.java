@@ -27,7 +27,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
@@ -182,30 +181,6 @@ class EmailServiceTest extends AbstractTestHelper {
                         && Objects.equals(m.sendgridResponse(), response.getBody())
                         && Objects.equals(m.sendgridStatus(), response.getStatusCode())
                         && Objects.equals(m.createDate(), Date.from(fixedInstant))));
-  }
-
-  @Test
-  void testSendResearcherCloseoutCompletedMessage() throws Exception {
-    User user = new User();
-    user.setUserId(123);
-    user.setDisplayName("John Doe");
-    user.setEmail("jd@somewhere");
-    String darCode = "DAR-12345";
-    String referenceId = UUID.randomUUID().toString();
-    when(templateHelper.getTemplate(EmailType.RESEARCHER_CLOSEOUT_COMPLETED.templateName))
-        .thenReturn(mock());
-
-    service.sendResearcherCloseoutCompletedMessage(user, darCode, referenceId);
-    verify(sendGridAPI).sendMessage(any(), eq(user.getEmail()));
-    verify(emailDAO)
-        .insert(
-            argThat(
-                m ->
-                    Objects.equals(m.entityReferenceId(), referenceId)
-                        && m.voteId() == null
-                        && Objects.equals(m.userId(), user.getUserId())
-                        && Objects.equals(
-                            m.emailType(), EmailType.RESEARCHER_CLOSEOUT_COMPLETED.getTypeInt())));
   }
 
   @Test
