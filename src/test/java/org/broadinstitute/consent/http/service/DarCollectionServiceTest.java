@@ -2660,6 +2660,24 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     verify(emailService, never()).sendMessage(any(SoDARSubmitted.class), any());
   }
 
+  @Test
+  void testNotifySigningOfficialsOfDARSubmission_NullResearcher()
+      throws TemplateException, IOException {
+    DarCollection collection = new DarCollection();
+    collection.setDarCode("DAR-000123");
+    collection.setDarCollectionId(1);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setUserId(42);
+    dar.setDatasetIds(List.of(1));
+    collection.addDar(dar);
+
+    service.notifySigningOfficialsOfDARSubmission(
+        collection.getMostRecentDar(), null, collection.getDarCode());
+    verify(emailService, never()).sendMessage(any(SoPRSubmitted.class), any());
+    verify(emailService, never()).sendMessage(any(SoDARSubmitted.class), any());
+  }
+
   private DarCollection generateMockDarCollection(Set<Dataset> datasets) {
     DarCollection collection = new DarCollection();
     collection.addDar(generateMockDarWithDatasetId(datasets));
