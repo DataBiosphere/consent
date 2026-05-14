@@ -46,6 +46,7 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
@@ -816,7 +817,7 @@ public class DarCollectionService implements ConsentLogger {
             emailService.sendProgressReportNewCollectionElectionMessage(
                 voteUsers, collection.getDarCode());
           } else {
-            emailService.sendDarNewCollectionElectionMessage(voteUsers, collection.getDarCode());
+            sendDarNewCollectionElectionMessage(voteUsers, collection.getDarCode());
           }
 
         } catch (Exception e) {
@@ -1173,7 +1174,7 @@ public class DarCollectionService implements ConsentLogger {
           emailService.sendProgressReportNewCollectionElectionMessage(
               List.of(user), darCollection.getDarCode());
         } else {
-          emailService.sendDarNewCollectionElectionMessage(
+          sendDarNewCollectionElectionMessage(
               List.of(user), darCollection.getDarCode());
         }
       } else {
@@ -1199,6 +1200,15 @@ public class DarCollectionService implements ConsentLogger {
     User soUser = userDAO.findUserByEmail(soEmail);
     emailService.sendNewDARSigningOfficialRequestEmail(
         soUser, researcher.getDisplayName(), dataAccessRequest.getDarCode());
+  }
+
+  @VisibleForTesting
+  protected void sendDarNewCollectionElectionMessage(List<User> users, String darCode)
+      throws IOException, TemplateException {
+    String electionType = "Data Access Request";
+    for (User user : users) {
+      emailService.sendMessage(new NewCaseMessage(user, darCode, electionType), user.getUserId());
+    }
   }
 
   @VisibleForTesting

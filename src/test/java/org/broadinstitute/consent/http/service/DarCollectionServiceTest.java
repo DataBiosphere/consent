@@ -54,6 +54,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.CloseoutSupplement;
+import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
@@ -589,7 +590,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.createElectionsForDarCollection(user, collection);
     verify(darCollectionServiceDAO).createElectionsForDarByUser(any(), eq(dar));
     verify(voteDAO).findVoteUsersByElectionReferenceIdList(any());
-    verify(emailService).sendDarNewCollectionElectionMessage(any(), any());
+    verify(emailService).sendMessage(any(NewCaseMessage.class), any());
     verify(darCollectionDAO).findDARCollectionByCollectionId(any());
   }
 
@@ -2160,7 +2161,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.createElectionsForNewDarCollection(1);
     service.sendNewDARCollectionMessage(1);
     verify(emailService).sendNewDARRequestEmail(any(), any(), any(), any());
-    verify(emailService, never()).sendDarNewCollectionElectionMessage(any(), any());
+    verify(emailService, never()).sendMessage(any(NewCaseMessage.class), any());
   }
 
   // Only auto-open DACs
@@ -2207,7 +2208,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.createElectionsForNewDarCollection(1);
     service.sendNewDARCollectionMessage(1);
 
-    verify(emailService).sendDarNewCollectionElectionMessage(any(), any());
+    verify(emailService).sendMessage(any(NewCaseMessage.class), any());
     verify(emailService, never()).sendNewDARRequestEmail(any(), any(), any(), any());
   }
 
@@ -2262,7 +2263,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.createElectionsForNewDarCollection(1);
     service.sendNewDARCollectionMessage(1);
 
-    verify(emailService, never()).sendDarNewCollectionElectionMessage(any(), any());
+    verify(emailService, never()).sendMessage(any(NewCaseMessage.class), any());
     verify(emailService, never()).sendNewDARRequestEmail(any(), any(), any(), any());
     verify(emailService).sendNewDARSigningOfficialRequestEmail(any(), any(), any());
   }
@@ -2319,7 +2320,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.createElectionsForNewDarCollection(1);
     service.sendNewDARCollectionMessage(1);
 
-    verify(emailService, never()).sendDarNewCollectionElectionMessage(any(), any());
+    verify(emailService, never()).sendMessage(any(NewCaseMessage.class), any());
     verify(emailService).sendNewDARRequestEmail(any(), any(), any(), any());
     verify(emailService, never()).sendNewDARSigningOfficialRequestEmail(any(), any(), any());
   }
@@ -2378,7 +2379,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.createElectionsForNewDarCollection(1);
     service.sendNewDARCollectionMessage(1);
 
-    verify(emailService, never()).sendDarNewCollectionElectionMessage(any(), any());
+    verify(emailService, never()).sendMessage(any(NewCaseMessage.class), any());
     verify(emailService).sendNewProgressReportRequestEmail(any(), any(), any(), any(), any());
     verify(emailService, never()).sendNewDARSigningOfficialRequestEmail(any(), any(), any());
   }
@@ -2444,7 +2445,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.createElectionsForNewDarCollection(1);
     service.sendNewDARCollectionMessage(1);
 
-    verify(emailService).sendDarNewCollectionElectionMessage(any(), any());
+    verify(emailService).sendMessage(any(NewCaseMessage.class), any());
     verify(emailService).sendNewDARRequestEmail(any(), any(), any(), any());
   }
 
@@ -2550,7 +2551,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.createElectionsForNewDarCollection(1);
     service.sendNewDARCollectionMessage(1);
 
-    verify(emailService, never()).sendDarNewCollectionElectionMessage(any(), any());
+    verify(emailService, never()).sendMessage(any(NewCaseMessage.class), any());
     verify(emailService, never()).sendNewDARRequestEmail(any(), any(), any(), any());
     verify(emailService).sendNewDARSigningOfficialRequestEmail(any(), any(), any());
   }

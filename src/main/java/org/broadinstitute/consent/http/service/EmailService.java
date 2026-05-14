@@ -37,7 +37,6 @@ import org.broadinstitute.consent.http.mail.message.DacVoteDigestMessage;
 import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
 import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
 import org.broadinstitute.consent.http.mail.message.MailMessage;
-import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARSigningOfficialRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewLibraryCardIssuedMessage;
@@ -163,13 +162,10 @@ public class EmailService implements ConsentLogger {
     return emailDAO.fetchMessagesByCreateDate(start, end, limit, offset);
   }
 
-  public void sendDarNewCollectionElectionMessage(List<User> users, String darCode)
-      throws IOException, TemplateException {
-    String electionType = "Data Access Request";
-    for (User user : users) {
-      sendMessage(new NewCaseMessage(user, darCode, electionType), user.getUserId());
-    }
-  }
+
+
+
+
 
   public void sendProgressReportNewCollectionElectionMessage(List<User> users, String darCode)
       throws IOException, TemplateException {
