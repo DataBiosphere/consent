@@ -33,7 +33,6 @@ import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.message.DacVoteDigestMessage;
-import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
 import org.broadinstitute.consent.http.mail.message.MailMessage;
 import org.broadinstitute.consent.http.mail.message.NewLibraryCardIssuedMessage;
 import org.broadinstitute.consent.http.mail.message.NewStudyDigestMessage;
@@ -149,20 +148,6 @@ public class EmailService implements ConsentLogger {
   public List<org.broadinstitute.consent.http.models.mail.MailMessage>
       fetchEmailMessagesByCreateDate(Date start, Date end, Integer limit, Integer offset) {
     return emailDAO.fetchMessagesByCreateDate(start, end, limit, offset);
-  }
-
-  /**
-   * Remind the user that their data access request is about to expire.
-   *
-   * @param user the user to send the message to
-   * @param darCode the data access request code that's about to expire
-   * @param userId the user id of the person sending the message
-   * @param referenceId the data access request reference id that is expiring
-   */
-  public void sendDarExpirationReminderMessage(
-      User user, String darCode, Integer userId, String referenceId)
-      throws TemplateException, IOException {
-    sendMessage(new DarExpirationReminderMessage(user, darCode, referenceId), userId);
   }
 
   /**

@@ -42,6 +42,7 @@ import org.broadinstitute.consent.http.exceptions.InvalidEmailAddressException;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
+import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
 import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.models.Collaborator;
@@ -785,8 +786,7 @@ public class DataAccessRequestService implements ConsentLogger {
             }
             switch (type) {
               case DAR_EXPIRATION_REMINDER:
-                emailService.sendDarExpirationReminderMessage(
-                    user, darCode, user.getUserId(), referenceId);
+                sendDarExpirationReminderMessage(user, darCode, user.getUserId(), referenceId);
                 break;
               case DAR_EXPIRED:
                 sendDarExpiredMessage(user, darCode, user.getUserId(), referenceId);
@@ -798,6 +798,13 @@ public class DataAccessRequestService implements ConsentLogger {
             logException(e);
           }
         });
+  }
+
+  @VisibleForTesting
+  protected void sendDarExpirationReminderMessage(
+      User user, String darCode, Integer userId, String referenceId)
+      throws TemplateException, IOException {
+    emailService.sendMessage(new DarExpirationReminderMessage(user, darCode, referenceId), userId);
   }
 
   @VisibleForTesting

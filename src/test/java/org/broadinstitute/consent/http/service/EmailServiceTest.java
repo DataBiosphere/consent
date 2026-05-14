@@ -185,31 +185,6 @@ class EmailServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void sendDarExpirationReminderMessage() throws Exception {
-    User user = new User();
-    user.setUserId(123);
-    user.setDisplayName("John Doe");
-    user.setEmail("jd@somewhere");
-    String darCode = "DAR-12345";
-    String referenceId = UUID.randomUUID().toString();
-    Integer otherUserId = 456;
-    when(templateHelper.getTemplate(EmailType.DAR_EXPIRATION_REMINDER.templateName))
-        .thenReturn(mock());
-
-    service.sendDarExpirationReminderMessage(user, darCode, otherUserId, referenceId);
-    verify(sendGridAPI).sendMessage(any(), eq(user.getEmail()));
-    verify(emailDAO)
-        .insert(
-            argThat(
-                m ->
-                    Objects.equals(m.entityReferenceId(), referenceId)
-                        && m.voteId() == null
-                        && Objects.equals(m.userId(), otherUserId)
-                        && Objects.equals(
-                            m.emailType(), EmailType.DAR_EXPIRATION_REMINDER.getTypeInt())));
-  }
-
-  @Test
   void testSendResearcherCloseoutCompletedMessage() throws Exception {
     User user = new User();
     user.setUserId(123);

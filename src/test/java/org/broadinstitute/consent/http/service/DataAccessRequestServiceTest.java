@@ -54,6 +54,8 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
+import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
+import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.Collaborator;
@@ -1840,6 +1842,55 @@ institution or library cards issued: Internal Collaborator member:  \
     service.sendReminderMessage(vote.getVoteId());
     verify(emailService).sendMessage(any(ReminderMessage.class), any());
     verify(voteDAO).updateVoteReminderFlag(vote.getVoteId(), true);
+  }
+
+  @Test
+  void testSendReminderMessageDirectly() throws TemplateException, IOException {
+    User user = new User();
+    user.setUserId(123);
+    user.setDisplayName("John Doe");
+    user.setEmail("jd@somewhere");
+
+    Vote vote = new Vote();
+    vote.setVoteId(randomInt(0, 100));
+
+    String darCode = "DAR-12345";
+    String electionType = "DataAccess";
+    String url = "http://localhost/dar_collection/1";
+
+    initService();
+    service.sendReminderMessage(user, vote, darCode, electionType, url);
+    verify(emailService).sendMessage(any(ReminderMessage.class), eq(user.getUserId()));
+  }
+
+  @Test
+  void testSendDarExpirationReminderMessage() throws TemplateException, IOException {
+    User user = new User();
+    user.setUserId(123);
+    user.setDisplayName("John Doe");
+    user.setEmail("jd@somewhere");
+    String darCode = "DAR-12345";
+    Integer otherUserId = 456;
+    String referenceId = UUID.randomUUID().toString();
+
+    initService();
+    service.sendDarExpirationReminderMessage(user, darCode, otherUserId, referenceId);
+    verify(emailService).sendMessage(any(DarExpirationReminderMessage.class), eq(otherUserId));
+  }
+
+  @Test
+  void testSendDarExpiredMessage() throws TemplateException, IOException {
+    User user = new User();
+    user.setUserId(123);
+    user.setDisplayName("John Doe");
+    user.setEmail("jd@somewhere");
+    String darCode = "DAR-12345";
+    Integer otherUserId = 456;
+    String referenceId = UUID.randomUUID().toString();
+
+    initService();
+    service.sendDarExpiredMessage(user, darCode, otherUserId, referenceId);
+    verify(emailService).sendMessage(any(DarExpiredMessage.class), eq(otherUserId));
   }
 
   @Test
