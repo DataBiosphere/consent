@@ -47,7 +47,6 @@ import org.broadinstitute.consent.http.models.Reminder;
 import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserVoteReminder;
-import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.HandleConsumer;
@@ -469,7 +468,6 @@ class EmailServiceTest extends AbstractTestHelper {
                         && Objects.equals(
                             m.emailType(), EmailType.NEW_LIBRARY_CARD_ISSUED.getTypeInt())));
   }
-
 
   @Test
   void testSendEmailToSOWhenApprovalRqdForNewDAR() throws TemplateException, IOException {

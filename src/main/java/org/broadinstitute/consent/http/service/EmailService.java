@@ -172,8 +172,6 @@ public class EmailService implements ConsentLogger {
     return emailDAO.fetchMessagesByCreateDate(start, end, limit, offset);
   }
 
-
-
   public void sendDataCustodianApprovalMessage(
       User custodian,
       String darCode,
@@ -398,7 +396,6 @@ public class EmailService implements ConsentLogger {
   public void sendNewLibraryCardIssuedMessage(User toUser) throws TemplateException, IOException {
     sendMessage(new NewLibraryCardIssuedMessage(toUser), toUser.getUserId());
   }
-
 
   public void sendVoteDigestMessages() {
     Instant timeBasis = Instant.now();

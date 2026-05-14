@@ -33,6 +33,11 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.mail.message.DACMembersDARRADARApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
+import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.SoDARApproved;
+import org.broadinstitute.consent.http.mail.message.SoPRApproved;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -44,11 +49,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
-import org.broadinstitute.consent.http.mail.message.DACMembersDARRADARApprovedMessage;
-import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
-import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
-import org.broadinstitute.consent.http.mail.message.SoDARApproved;
-import org.broadinstitute.consent.http.mail.message.SoPRApproved;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.util.ComplianceLogger;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -333,7 +333,8 @@ public class VoteService implements ConsentLogger {
       boolean radarApproved)
       throws TemplateException, IOException {
     emailService.sendMessage(
-        new ResearcherDarApprovedMessage(researcher, darCode, datasets, dataUseRestriction, radarApproved),
+        new ResearcherDarApprovedMessage(
+            researcher, darCode, datasets, dataUseRestriction, radarApproved),
         researcher.getUserId());
   }
 
@@ -346,7 +347,8 @@ public class VoteService implements ConsentLogger {
       boolean radarApproved)
       throws TemplateException, IOException {
     emailService.sendMessage(
-        new ResearcherApprovedProgressReportMessage(researcher, darCode, datasets, dataUseRestriction, radarApproved),
+        new ResearcherApprovedProgressReportMessage(
+            researcher, darCode, datasets, dataUseRestriction, radarApproved),
         researcher.getUserId());
   }
 
@@ -361,7 +363,8 @@ public class VoteService implements ConsentLogger {
       boolean radarApproved)
       throws TemplateException, IOException {
     emailService.sendMessage(
-        new SoDARApproved(so, darCode, researcher, referenceId, datasets, dataUseRestriction, radarApproved),
+        new SoDARApproved(
+            so, darCode, researcher, referenceId, datasets, dataUseRestriction, radarApproved),
         so.getUserId());
   }
 
@@ -376,7 +379,8 @@ public class VoteService implements ConsentLogger {
       boolean radarApproved)
       throws TemplateException, IOException {
     emailService.sendMessage(
-        new SoPRApproved(so, darCode, researcher, referenceId, datasets, dataUseRestriction, radarApproved),
+        new SoPRApproved(
+            so, darCode, researcher, referenceId, datasets, dataUseRestriction, radarApproved),
         so.getUserId());
   }
 
@@ -389,7 +393,8 @@ public class VoteService implements ConsentLogger {
       User researcher)
       throws TemplateException, IOException {
     emailService.sendMessage(
-        new DACMembersDARRADARApprovedMessage(dacMember, darCode, researcher, referenceId, datasetList),
+        new DACMembersDARRADARApprovedMessage(
+            dacMember, darCode, researcher, referenceId, datasetList),
         dacMember.getUserId());
   }
 
