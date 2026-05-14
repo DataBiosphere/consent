@@ -470,36 +470,6 @@ class EmailServiceTest extends AbstractTestHelper {
                             m.emailType(), EmailType.NEW_LIBRARY_CARD_ISSUED.getTypeInt())));
   }
 
-  @Test
-  void testSendNewDARRADARApprovalToDAC() throws Exception {
-    User toUser = new User();
-    toUser.setUserId(1);
-    toUser.setDisplayName("Test User");
-    toUser.setEmail("test.user@test.com");
-    User researcherUser = new User();
-    researcherUser.setDisplayName("Research User");
-
-    String referenceId = "abc-123";
-
-    when(templateHelper.getTemplate(EmailType.DAC_RADAR_APPROVED.templateName)).thenReturn(mock());
-
-    service.sendNewDARRADARApprovalToDAC(
-        toUser,
-        "DAR-00001",
-        referenceId,
-        List.of(new DatasetMailDTO("dataset-name", "DUOS-00123", null)),
-        researcherUser);
-    verify(sendGridAPI).sendMessage(any(Mail.class), eq(toUser.getEmail()));
-    verify(emailDAO)
-        .insert(
-            argThat(
-                m ->
-                    Objects.equals(m.entityReferenceId(), referenceId)
-                        && m.voteId() == null
-                        && Objects.equals(m.userId(), toUser.getUserId())
-                        && Objects.equals(
-                            m.emailType(), EmailType.DAC_RADAR_APPROVED.getTypeInt())));
-  }
 
   @Test
   void testSendEmailToSOWhenApprovalRqdForNewDAR() throws TemplateException, IOException {

@@ -33,7 +33,6 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
-import org.broadinstitute.consent.http.mail.message.DACMembersDARRADARApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.DacVoteDigestMessage;
 import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
 import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
@@ -400,18 +399,6 @@ public class EmailService implements ConsentLogger {
     sendMessage(new NewLibraryCardIssuedMessage(toUser), toUser.getUserId());
   }
 
-  public void sendNewDARRADARApprovalToDAC(
-      User dacMember,
-      String darCode,
-      String referenceId,
-      List<DatasetMailDTO> datasetList,
-      User researcher)
-      throws TemplateException, IOException {
-    sendMessage(
-        new DACMembersDARRADARApprovedMessage(
-            dacMember, darCode, researcher, referenceId, datasetList),
-        dacMember.getUserId());
-  }
 
   public void sendVoteDigestMessages() {
     Instant timeBasis = Instant.now();

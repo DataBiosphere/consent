@@ -44,6 +44,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
+import org.broadinstitute.consent.http.mail.message.DACMembersDARRADARApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.SoDARApproved;
@@ -380,6 +381,19 @@ public class VoteService implements ConsentLogger {
   }
 
   @VisibleForTesting
+  protected void sendNewDARRADARApprovalToDAC(
+      User dacMember,
+      String darCode,
+      String referenceId,
+      List<DatasetMailDTO> datasetList,
+      User researcher)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new DACMembersDARRADARApprovedMessage(dacMember, darCode, researcher, referenceId, datasetList),
+        dacMember.getUserId());
+  }
+
+  @VisibleForTesting
   protected void notifyDACOfRadarApprovals(
       List<Dataset> approvedDatasets,
       User researcher,
@@ -405,7 +419,7 @@ public class VoteService implements ConsentLogger {
           members.forEach(
               member -> {
                 try {
-                  emailService.sendNewDARRADARApprovalToDAC(
+                  sendNewDARRADARApprovalToDAC(
                       member, darCode, referenceId, datasets.stream().toList(), researcher);
                 } catch (TemplateException | IOException e) {
                   logWarn("Error sending DAR approval to DAC: " + e.getMessage(), e);

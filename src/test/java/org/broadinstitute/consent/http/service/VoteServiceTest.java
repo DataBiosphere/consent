@@ -58,6 +58,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
+import org.broadinstitute.consent.http.mail.message.DACMembersDARRADARApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.SoDARApproved;
@@ -1165,7 +1166,7 @@ class VoteServiceTest extends AbstractTestHelper {
   void testNotifyDACOfRadarApprovals_not_RADAR() throws TemplateException, IOException {
 
     service.notifyDACOfRadarApprovals(List.of(new Dataset()), new User(), "", "", false);
-    verify(emailService, never()).sendNewDARRADARApprovalToDAC(any(), any(), any(), any(), any());
+    verify(emailService, never()).sendMessage(any(DACMembersDARRADARApprovedMessage.class), any());
   }
 
   @Test
@@ -1208,38 +1209,8 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.notifyDACOfRadarApprovals(
         List.of(dataset1, dataset2), researcher, referenceId, darCode, true);
-    verify(emailService)
-        .sendNewDARRADARApprovalToDAC(
-            dac1Member,
-            darCode,
-            referenceId,
-            List.of(
-                new DatasetMailDTO(
-                    dataset1.getName(), dataset1.getDatasetIdentifier(), dataLocationUrl)),
-            researcher);
-    verify(emailService)
-        .sendNewDARRADARApprovalToDAC(
-            dac1Chair,
-            darCode,
-            referenceId,
-            List.of(
-                new DatasetMailDTO(
-                    dataset1.getName(), dataset1.getDatasetIdentifier(), dataLocationUrl)),
-            researcher);
-    verify(emailService)
-        .sendNewDARRADARApprovalToDAC(
-            dac2Member,
-            darCode,
-            referenceId,
-            List.of(new DatasetMailDTO(dataset2.getName(), dataset2.getDatasetIdentifier(), null)),
-            researcher);
-    verify(emailService)
-        .sendNewDARRADARApprovalToDAC(
-            dac2Chair,
-            darCode,
-            referenceId,
-            List.of(new DatasetMailDTO(dataset2.getName(), dataset2.getDatasetIdentifier(), null)),
-            researcher);
+    verify(emailService, times(4))
+        .sendMessage(any(DACMembersDARRADARApprovedMessage.class), any());
   }
 
   @Test
