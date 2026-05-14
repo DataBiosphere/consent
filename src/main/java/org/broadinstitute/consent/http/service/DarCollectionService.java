@@ -50,6 +50,7 @@ import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
+import org.broadinstitute.consent.http.mail.message.SoDARSubmitted;
 import org.broadinstitute.consent.http.mail.message.SoPRSubmitted;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
@@ -1251,6 +1252,14 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   @VisibleForTesting
+  protected void sendNewSoDARSubmittedEmail(
+      User user, String darCode, User researcher, String referenceId, List<Dataset> datasets)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new SoDARSubmitted(user, darCode, researcher, referenceId, datasets), user.getUserId());
+  }
+
+  @VisibleForTesting
   protected void notifySigningOfficialsOfDARSubmission(
       DataAccessRequest dar, User researcher, String darCode)
       throws TemplateException, IOException {
@@ -1273,8 +1282,7 @@ public class DarCollectionService implements ConsentLogger {
         sendNewSoProgressReportSubmittedEmail(
             so, darCode, researcher, dar.getReferenceId(), datasets);
       } else {
-        emailService.sendNewSoDARSubmittedEmail(
-            so, darCode, researcher, dar.getReferenceId(), datasets);
+        sendNewSoDARSubmittedEmail(so, darCode, researcher, dar.getReferenceId(), datasets);
       }
     }
   }

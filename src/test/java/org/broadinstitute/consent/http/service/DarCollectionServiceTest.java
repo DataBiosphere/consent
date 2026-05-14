@@ -57,6 +57,7 @@ import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
+import org.broadinstitute.consent.http.mail.message.SoDARSubmitted;
 import org.broadinstitute.consent.http.mail.message.SoPRSubmitted;
 import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.Dac;
@@ -2585,9 +2586,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     service.notifySigningOfficialsOfDARSubmission(
         collection.getMostRecentDar(), researcher, collection.getDarCode());
-    verify(emailService, never())
-        .sendMessage(any(SoPRSubmitted.class), any());
-    verify(emailService, times(1)).sendNewSoDARSubmittedEmail(any(), any(), any(), any(), any());
+    verify(emailService, never()).sendMessage(any(SoPRSubmitted.class), any());
+    verify(emailService, times(1)).sendMessage(any(SoDARSubmitted.class), any());
   }
 
   @Test
@@ -2627,9 +2627,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     service.notifySigningOfficialsOfDARSubmission(
         collection.getMostRecentDar(), researcher, collection.getDarCode());
-    verify(emailService, times(1))
-        .sendMessage(any(SoPRSubmitted.class), any());
-    verify(emailService, never()).sendNewSoDARSubmittedEmail(any(), any(), any(), any(), any());
+    verify(emailService, times(1)).sendMessage(any(SoPRSubmitted.class), any());
+    verify(emailService, never()).sendMessage(any(SoDARSubmitted.class), any());
   }
 
   @Test
@@ -2652,9 +2651,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     service.notifySigningOfficialsOfDARSubmission(
         collection.getMostRecentDar(), researcher, collection.getDarCode());
-    verify(emailService, never())
-        .sendMessage(any(SoPRSubmitted.class), any());
-    verify(emailService, never()).sendNewSoDARSubmittedEmail(any(), any(), any(), any(), any());
+    verify(emailService, never()).sendMessage(any(SoPRSubmitted.class), any());
+    verify(emailService, never()).sendMessage(any(SoDARSubmitted.class), any());
   }
 
   private DarCollection generateMockDarCollection(Set<Dataset> datasets) {

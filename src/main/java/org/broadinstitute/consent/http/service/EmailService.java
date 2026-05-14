@@ -41,9 +41,7 @@ import org.broadinstitute.consent.http.mail.message.NewLibraryCardIssuedMessage;
 import org.broadinstitute.consent.http.mail.message.NewStudyDigestMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherCloseoutCompletedMessage;
-import org.broadinstitute.consent.http.mail.message.SoDARSubmitted;
 import org.broadinstitute.consent.http.mail.message.SubmittedCloseoutMessage;
-import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserVoteReminder;
@@ -164,25 +162,6 @@ public class EmailService implements ConsentLogger {
         new NewDARSigningOfficialRequestMessage(signingOfficial, darCode, researcherName),
         signingOfficial.getUserId());
   }
-
-  /**
-   * Send a message to a Signing Official that a new Data Access Request has been submitted.
-   *
-   * @param user The user to send the message to
-   * @param darCode The Data Access Request code which is submitted
-   * @param researcher The researcher whose DAR has been submitted
-   * @param referenceId The reference ID of the DAR
-   * @param datasets The datasets associated with the DAR
-   * @throws TemplateException Template processing exception
-   * @throws IOException IOException when processing the template or sending the email
-   */
-  public void sendNewSoDARSubmittedEmail(
-      User user, String darCode, User researcher, String referenceId, List<Dataset> datasets)
-      throws TemplateException, IOException {
-    sendMessage(
-        new SoDARSubmitted(user, darCode, researcher, referenceId, datasets), user.getUserId());
-  }
-
 
   /**
    * Send a message to a researcher that their data access request has expired.
