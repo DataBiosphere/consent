@@ -36,7 +36,6 @@ import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.message.DacVoteDigestMessage;
 import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
 import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
-import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
 import org.broadinstitute.consent.http.mail.message.MailMessage;
 import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
@@ -166,17 +165,6 @@ public class EmailService implements ConsentLogger {
   public List<org.broadinstitute.consent.http.models.mail.MailMessage>
       fetchEmailMessagesByCreateDate(Date start, Date end, Integer limit, Integer offset) {
     return emailDAO.fetchMessagesByCreateDate(start, end, limit, offset);
-  }
-
-
-
-
-  public void sendDatasetApprovedMessage(
-      User user, String dacName, String datasetIdentifier, String datasetName)
-      throws TemplateException, IOException {
-    sendMessage(
-        new DatasetApprovedMessage(user, dacName, datasetIdentifier, datasetName),
-        user.getUserId());
   }
 
   public void sendDatasetDeniedMessage(

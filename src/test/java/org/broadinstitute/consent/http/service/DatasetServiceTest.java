@@ -42,6 +42,7 @@ import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -394,7 +395,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertEquals(dataset.getUpdateUserId(), datasetResult.getUpdateUserId());
     assertEquals(dataset.getDacApproval(), datasetResult.getDacApproval());
     assertEquals(dataset.getUpdateDate(), datasetResult.getUpdateDate());
-    verify(emailService, times(0)).sendDatasetApprovedMessage(any(), any(), any(), any());
+    verify(emailService, times(0)).sendMessage(any(DatasetApprovedMessage.class), any());
   }
 
   @Test
@@ -449,8 +450,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertTrue(returnedDataset.getDacApproval());
 
     // send approved email
-    verify(emailService, times(1))
-        .sendDatasetApprovedMessage(creatorUser, "DAC NAME", "DUOS-000001", "Test Dataset");
+    verify(emailService, times(1)).sendMessage(any(DatasetApprovedMessage.class), any());
   }
 
   @Test

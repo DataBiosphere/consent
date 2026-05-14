@@ -258,8 +258,6 @@ class EmailServiceTest extends AbstractTestHelper {
                             m.emailType(), EmailType.DAR_EXPIRATION_REMINDER.getTypeInt())));
   }
 
-
-
   @Test
   void testSendNewDAAUploadResearcherMessage() throws Exception {
     User researcher = new User();

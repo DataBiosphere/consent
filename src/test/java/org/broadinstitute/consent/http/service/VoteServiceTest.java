@@ -10,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -850,8 +849,7 @@ class VoteServiceTest extends AbstractTestHelper {
 
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code", false);
-      verify(emailService, times(1))
-          .sendMessage(any(DataCustodianApprovalMessage.class), any());
+      verify(emailService, times(1)).sendMessage(any(DataCustodianApprovalMessage.class), any());
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -898,8 +896,7 @@ class VoteServiceTest extends AbstractTestHelper {
         () ->
             service.notifyCustodiansOfApprovedDatasets(
                 datasetsList, researcher, "Dar Code", false));
-    verify(emailService, times(0))
-        .sendMessage(any(DataCustodianApprovalMessage.class), any());
+    verify(emailService, times(0)).sendMessage(any(DataCustodianApprovalMessage.class), any());
   }
 
   @Test
@@ -952,8 +949,7 @@ class VoteServiceTest extends AbstractTestHelper {
 
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", false);
-      verify(emailService, times(3))
-          .sendMessage(any(DataCustodianApprovalMessage.class), any());
+      verify(emailService, times(3)).sendMessage(any(DataCustodianApprovalMessage.class), any());
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -1009,8 +1005,7 @@ class VoteServiceTest extends AbstractTestHelper {
 
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", true);
-      verify(emailService, times(3))
-          .sendMessage(any(DataCustodianApprovalMessage.class), any());
+      verify(emailService, times(3)).sendMessage(any(DataCustodianApprovalMessage.class), any());
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -1071,8 +1066,7 @@ class VoteServiceTest extends AbstractTestHelper {
 
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", false);
-      verify(emailService, times(3))
-          .sendMessage(any(DataCustodianApprovalMessage.class), any());
+      verify(emailService, times(3)).sendMessage(any(DataCustodianApprovalMessage.class), any());
     } catch (Exception e) {
       fail(e.getMessage());
     }
