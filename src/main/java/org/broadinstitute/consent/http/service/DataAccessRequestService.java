@@ -45,6 +45,7 @@ import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedExce
 import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
 import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
+import org.broadinstitute.consent.http.mail.message.SubmittedCloseoutMessage;
 import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
@@ -328,7 +329,7 @@ public class DataAccessRequestService implements ConsentLogger {
         User signingOfficialUser =
             userService.findUserById(
                 progressReport.getData().getCloseoutSupplement().signingOfficialId());
-        emailService.sendSubmittedCloseoutMessage(
+        sendSubmittedCloseoutMessage(
             signingOfficialUser,
             parentDar.getDarCode(),
             referenceId,
@@ -381,7 +382,7 @@ public class DataAccessRequestService implements ConsentLogger {
     chairs.forEach(
         chairperson -> {
           try {
-            emailService.sendSubmittedCloseoutMessage(
+            sendSubmittedCloseoutMessage(
                 chairperson,
                 dar.getDarCode(),
                 dar.getReferenceId(),
@@ -798,6 +799,14 @@ public class DataAccessRequestService implements ConsentLogger {
             logException(e);
           }
         });
+  }
+
+  @VisibleForTesting
+  protected void sendSubmittedCloseoutMessage(
+      User toUser, String darId, String referenceId, String closeoutUrl)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new SubmittedCloseoutMessage(toUser, darId, referenceId, closeoutUrl), toUser.getUserId());
   }
 
   @VisibleForTesting

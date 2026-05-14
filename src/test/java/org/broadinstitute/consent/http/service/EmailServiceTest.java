@@ -226,30 +226,6 @@ class EmailServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSendSubmittedCloseoutMessage() throws Exception {
-    String darId = "DAR-123";
-    String referenceId = "ref-456";
-    String closeoutUrl = SERVER_URL + "dar/" + darId + "/closeout";
-    when(templateHelper.getTemplate(EmailType.SUBMITTED_CLOSEOUT.templateName)).thenReturn(mock());
-    User toUser = new User();
-    toUser.setDisplayName("Test User");
-    toUser.setEmail("test.user@test.com");
-    when(templateHelper.getTemplate(EmailType.SUBMITTED_CLOSEOUT.templateName)).thenReturn(mock());
-
-    service.sendSubmittedCloseoutMessage(toUser, darId, referenceId, closeoutUrl);
-    verify(sendGridAPI).sendMessage(any(Mail.class), eq(toUser.getEmail()));
-    verify(emailDAO)
-        .insert(
-            argThat(
-                m ->
-                    Objects.equals(m.entityReferenceId(), referenceId)
-                        && m.voteId() == null
-                        && Objects.equals(m.userId(), toUser.getUserId())
-                        && Objects.equals(
-                            m.emailType(), EmailType.SUBMITTED_CLOSEOUT.getTypeInt())));
-  }
-
-  @Test
   void testSendNewLibraryCardIssuedMessage() throws Exception {
     User toUser = new User();
     toUser.setDisplayName("Test User");

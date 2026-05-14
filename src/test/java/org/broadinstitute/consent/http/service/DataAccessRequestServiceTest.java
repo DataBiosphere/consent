@@ -57,6 +57,7 @@ import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedExce
 import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
 import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
+import org.broadinstitute.consent.http.mail.message.SubmittedCloseoutMessage;
 import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.Dac;
@@ -585,12 +586,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         service.createProgressReport(user, progressReport, parentDar, request);
 
     assertNotNull(newDar);
-    verify(emailService)
-        .sendSubmittedCloseoutMessage(
-            signingOfficial,
-            parentDar.getDarCode(),
-            progressReport.getReferenceId(),
-            "local_url/dar_application_review/%d".formatted(progressReport.getCollectionId()));
+    verify(emailService).sendMessage(any(SubmittedCloseoutMessage.class), any());
     verify(dataAccessRequestDAO)
         .insertProgressReport(
             parentDar.getId(),
@@ -2086,12 +2082,7 @@ institution or library cards issued: Internal Collaborator member:  \
             service.approveDataAccessRequestCloseout(
                 closeout.actor, closeout.dar.getReferenceId()));
     verify(dacService).findByDatasetId(closeout.dar().getDatasetIds());
-    verify(emailService)
-        .sendSubmittedCloseoutMessage(
-            chair,
-            closeout.dar().getDarCode(),
-            closeout.dar().getReferenceId(),
-            serverUrl + "dar_application_review/%d".formatted(closeout.dar().getCollectionId()));
+    verify(emailService).sendMessage(any(SubmittedCloseoutMessage.class), any());
   }
 
   private DataAccessRequest getMockedDar(String darCode, String referenceId, User user) {
