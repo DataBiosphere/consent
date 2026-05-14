@@ -43,6 +43,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.mail.message.DACMembersDARRADARApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.SoDARApproved;
@@ -850,7 +851,7 @@ class VoteServiceTest extends AbstractTestHelper {
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code", false);
       verify(emailService, times(1))
-          .sendDataCustodianApprovalMessage(any(), any(), any(), any(), any(), eq(false));
+          .sendMessage(any(DataCustodianApprovalMessage.class), any());
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -898,7 +899,7 @@ class VoteServiceTest extends AbstractTestHelper {
             service.notifyCustodiansOfApprovedDatasets(
                 datasetsList, researcher, "Dar Code", false));
     verify(emailService, times(0))
-        .sendDataCustodianApprovalMessage(any(), any(), any(), any(), any(), anyBoolean());
+        .sendMessage(any(DataCustodianApprovalMessage.class), any());
   }
 
   @Test
@@ -952,7 +953,7 @@ class VoteServiceTest extends AbstractTestHelper {
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", false);
       verify(emailService, times(3))
-          .sendDataCustodianApprovalMessage(any(), any(), any(), any(), any(), eq(false));
+          .sendMessage(any(DataCustodianApprovalMessage.class), any());
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -1009,7 +1010,7 @@ class VoteServiceTest extends AbstractTestHelper {
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", true);
       verify(emailService, times(3))
-          .sendDataCustodianApprovalMessage(any(), any(), any(), any(), any(), eq(true));
+          .sendMessage(any(DataCustodianApprovalMessage.class), any());
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -1071,7 +1072,7 @@ class VoteServiceTest extends AbstractTestHelper {
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", false);
       verify(emailService, times(3))
-          .sendDataCustodianApprovalMessage(any(), any(), any(), any(), any(), eq(false));
+          .sendMessage(any(DataCustodianApprovalMessage.class), any());
     } catch (Exception e) {
       fail(e.getMessage());
     }

@@ -34,6 +34,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.mail.message.DACMembersDARRADARApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.SoDARApproved;
@@ -399,6 +400,21 @@ public class VoteService implements ConsentLogger {
   }
 
   @VisibleForTesting
+  protected void sendDataCustodianApprovalMessage(
+      User custodian,
+      String darCode,
+      List<DatasetMailDTO> datasets,
+      String dataDepositorName,
+      String researcherEmail,
+      boolean radarApproved)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new DataCustodianApprovalMessage(
+            custodian, darCode, datasets, dataDepositorName, researcherEmail, radarApproved),
+        custodian.getUserId());
+  }
+
+  @VisibleForTesting
   protected void notifyDACOfRadarApprovals(
       List<Dataset> approvedDatasets,
       User researcher,
@@ -562,7 +578,7 @@ public class VoteService implements ConsentLogger {
                           d.getName(), d.getDatasetIdentifier(), getDataLocationUrl(d)))
               .toList();
       try {
-        emailService.sendDataCustodianApprovalMessage(
+        sendDataCustodianApprovalMessage(
             entry.getKey(),
             darCode,
             datasetMailDTOs,

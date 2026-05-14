@@ -36,7 +36,6 @@ import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.message.DacVoteDigestMessage;
 import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
 import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
-import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
 import org.broadinstitute.consent.http.mail.message.DatasetSubmittedMessage;
@@ -62,7 +61,6 @@ import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserVoteReminder;
 import org.broadinstitute.consent.http.models.Vote;
-import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.result.ResultIterable;
 
@@ -172,19 +170,6 @@ public class EmailService implements ConsentLogger {
     return emailDAO.fetchMessagesByCreateDate(start, end, limit, offset);
   }
 
-  public void sendDataCustodianApprovalMessage(
-      User custodian,
-      String darCode,
-      List<DatasetMailDTO> datasets,
-      String dataDepositorName,
-      String researcherEmail,
-      boolean radarApproved)
-      throws TemplateException, IOException {
-    sendMessage(
-        new DataCustodianApprovalMessage(
-            custodian, darCode, datasets, dataDepositorName, researcherEmail, radarApproved),
-        custodian.getUserId());
-  }
 
   public void sendDatasetSubmittedMessage(
       User dacChair, User dataSubmitter, String dacName, String datasetName)
