@@ -226,7 +226,7 @@ public class DaaService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  public void sendNewDAAUploadResearcherMessage(
+  protected void sendNewDAAUploadResearcherMessage(
       User researcher, String dacName, String previousDaaName, String newDaaName, Integer userId)
       throws freemarker.template.TemplateException, java.io.IOException {
     emailService.sendMessage(
@@ -235,7 +235,7 @@ public class DaaService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  public void sendNewDAAUploadSOMessage(
+  protected void sendNewDAAUploadSOMessage(
       User signingOfficial,
       String dacName,
       String previousDaaName,

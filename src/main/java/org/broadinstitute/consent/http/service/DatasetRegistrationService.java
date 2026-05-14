@@ -932,7 +932,7 @@ public class DatasetRegistrationService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  public void sendDatasetSubmittedMessage(
+  protected void sendDatasetSubmittedMessage(
       User dacChair, User dataSubmitter, String dacName, String datasetName)
       throws TemplateException, IOException {
     emailService.sendMessage(
@@ -941,7 +941,7 @@ public class DatasetRegistrationService implements ConsentLogger {
   }
 
   @VisibleForTesting
-  public void sendStudySubmissionConfirmation(
+  protected void sendStudySubmissionConfirmation(
       User dataSubmitter, String studyName, Integer studyId, Map<String, Object> studyAssets)
       throws TemplateException, IOException {
     emailService.sendMessage(

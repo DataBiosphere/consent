@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.service;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -420,16 +421,16 @@ public class DatasetService implements ConsentLogger {
     }
   }
 
-  @com.google.common.annotations.VisibleForTesting
-  public void sendDatasetDeniedMessage(
+  @VisibleForTesting
+  protected void sendDatasetDeniedMessage(
       User user, String dacName, String datasetName, String dacEmail)
       throws TemplateException, IOException {
     emailService.sendMessage(
         new DatasetDeniedMessage(user, dacName, datasetName, dacEmail), user.getUserId());
   }
 
-  @com.google.common.annotations.VisibleForTesting
-  public void sendDatasetApprovedMessage(
+  @VisibleForTesting
+  protected void sendDatasetApprovedMessage(
       User user, String dacName, String datasetIdentifier, String datasetName)
       throws TemplateException, IOException {
     emailService.sendMessage(
