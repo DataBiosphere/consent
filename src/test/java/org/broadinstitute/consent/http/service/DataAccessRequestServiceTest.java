@@ -118,7 +118,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   @Mock private DACAutomationRuleService ruleService;
   @Mock private ContainerRequest request;
   private DataAccessRequestService service;
-  private String serverUrl;
 
   private static Collaborator createCollaborator() {
     return createCollaborator("collaborator@test.com");
@@ -181,7 +180,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     container.setVoteDAO(voteDAO);
     container.setMatchDAO(matchDAO);
     container.setDaaDAO(daaDAO);
-    serverUrl = config.getServicesConfiguration().getLocalURL();
     service =
         new DataAccessRequestService(
             counterService,
