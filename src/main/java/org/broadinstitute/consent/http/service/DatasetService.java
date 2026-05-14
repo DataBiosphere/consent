@@ -33,6 +33,7 @@ import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -412,12 +413,20 @@ public class DatasetService implements ConsentLogger {
     } else {
       if (dac.getEmail() != null) {
         String dacEmail = dac.getEmail();
-        emailService.sendDatasetDeniedMessage(
+        sendDatasetDeniedMessage(
             user, dac.getName(), dataset.getDatasetIdentifier(), dacEmail);
       } else {
         logWarn("Unable to send dataset denied email to DAC: " + dac.getDacId());
       }
     }
+  }
+
+  @com.google.common.annotations.VisibleForTesting
+  public void sendDatasetDeniedMessage(
+      User user, String dacName, String datasetName, String dacEmail)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new DatasetDeniedMessage(user, dacName, datasetName, dacEmail), user.getUserId());
   }
 
   @com.google.common.annotations.VisibleForTesting

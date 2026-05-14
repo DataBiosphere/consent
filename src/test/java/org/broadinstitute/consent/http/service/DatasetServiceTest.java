@@ -43,6 +43,7 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -486,8 +487,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertFalse(returnedDataset.getDacApproval());
 
     // send denied email
-    verify(emailService, times(1))
-        .sendDatasetDeniedMessage(creatorUser, "DAC NAME", "DUOS-000001", "dacEmail@gmail.com");
+    verify(emailService, times(1)).sendMessage(any(DatasetDeniedMessage.class), any());
   }
 
   @Test
@@ -516,7 +516,7 @@ class DatasetServiceTest extends AbstractTestHelper {
     assertFalse(returnedDataset.getDacApproval());
 
     // do not send denied email
-    verify(emailService, times(0)).sendDatasetDeniedMessage(user, "DAC NAME", "DUOS-000001", "");
+    verify(emailService, never()).sendMessage(any(DatasetDeniedMessage.class), any());
   }
 
   @Test
