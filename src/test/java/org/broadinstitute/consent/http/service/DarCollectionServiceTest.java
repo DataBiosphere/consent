@@ -2264,6 +2264,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(userDAO.findUsersByRoleId(UserRoles.ADMIN.getRoleId())).thenReturn(List.of());
     when(userDAO.findUsersForDatasetsByRole(anyList(), anyList())).thenReturn(Set.of(member));
     when(userDAO.findUserById(any())).thenReturn(new User());
+    when(userDAO.findUserByEmail(signingOfficial.getEmail())).thenReturn(signingOfficial);
 
     service.createElectionsForNewDarCollection(1);
     service.sendNewDARCollectionMessage(1);
@@ -2554,6 +2555,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(userDAO.findUsersForDatasetsByRole(anyList(), anyList()))
         .thenReturn(Set.of(member, chair));
     when(userDAO.findUserById(any())).thenReturn(new User());
+    when(userDAO.findUserByEmail(signingOfficial.getEmail())).thenReturn(signingOfficial);
 
     service.createElectionsForNewDarCollection(1);
     service.sendNewDARCollectionMessage(1);
