@@ -53,9 +53,10 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
-import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
+import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
+import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
@@ -2380,7 +2381,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.sendNewDARCollectionMessage(1);
 
     verify(emailService, never()).sendMessage(any(NewCaseMessage.class), any());
-    verify(emailService).sendNewProgressReportRequestEmail(any(), any(), any(), any(), any());
+    verify(emailService).sendMessage(any(NewProgressReportRequestMessage.class), any());
     verify(emailService, never()).sendNewDARSigningOfficialRequestEmail(any(), any(), any());
   }
 

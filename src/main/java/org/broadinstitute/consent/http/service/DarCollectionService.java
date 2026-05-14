@@ -48,6 +48,7 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
+import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
@@ -815,8 +816,7 @@ public class DarCollectionService implements ConsentLogger {
           List<User> voteUsers =
               voteDAO.findVoteUsersByElectionReferenceIdList(createdElectionReferenceIds);
           if (dar.getProgressReport()) {
-            sendProgressReportNewCollectionElectionMessage(
-                voteUsers, collection.getDarCode());
+            sendProgressReportNewCollectionElectionMessage(voteUsers, collection.getDarCode());
           } else {
             sendDarNewCollectionElectionMessage(voteUsers, collection.getDarCode());
           }
@@ -1172,16 +1172,14 @@ public class DarCollectionService implements ConsentLogger {
       if (isAutoOpen) {
         // Send election notification for auto-open DACs
         if (latestDar.getProgressReport()) {
-          sendProgressReportNewCollectionElectionMessage(
-              List.of(user), darCollection.getDarCode());
+          sendProgressReportNewCollectionElectionMessage(List.of(user), darCollection.getDarCode());
         } else {
-          sendDarNewCollectionElectionMessage(
-              List.of(user), darCollection.getDarCode());
+          sendDarNewCollectionElectionMessage(List.of(user), darCollection.getDarCode());
         }
       } else {
         // Send manual notification for manual DACs
         if (latestDar.getProgressReport()) {
-          emailService.sendNewProgressReportRequestEmail(
+          sendNewProgressReportRequestEmail(
               user,
               dacToDatasetsMap,
               researcherName,
@@ -1218,6 +1216,20 @@ public class DarCollectionService implements ConsentLogger {
     for (User user : users) {
       emailService.sendMessage(new NewProgressReportCaseMessage(user, darCode), user.getUserId());
     }
+  }
+
+  @VisibleForTesting
+  protected void sendNewProgressReportRequestEmail(
+      User user,
+      Map<String, List<String>> dacDatasetMap,
+      String researcherName,
+      String darCode,
+      String referenceId)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new NewProgressReportRequestMessage(
+            user, darCode, referenceId, dacDatasetMap, researcherName),
+        user.getUserId());
   }
 
   @VisibleForTesting

@@ -40,7 +40,6 @@ import org.broadinstitute.consent.http.mail.message.MailMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARSigningOfficialRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewLibraryCardIssuedMessage;
-import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewStudyDigestMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherCloseoutCompletedMessage;
@@ -161,12 +160,6 @@ public class EmailService implements ConsentLogger {
     return emailDAO.fetchMessagesByCreateDate(start, end, limit, offset);
   }
 
-
-
-
-
-
-
   public void sendNewDARRequestEmail(
       User user, Map<String, List<String>> dacDatasetMap, String researcherName, String darCode)
       throws TemplateException, IOException {
@@ -180,19 +173,6 @@ public class EmailService implements ConsentLogger {
     sendMessage(
         new NewDARSigningOfficialRequestMessage(signingOfficial, darCode, researcherName),
         signingOfficial.getUserId());
-  }
-
-  public void sendNewProgressReportRequestEmail(
-      User user,
-      Map<String, List<String>> dacDatasetMap,
-      String researcherName,
-      String darCode,
-      String referenceId)
-      throws TemplateException, IOException {
-    sendMessage(
-        new NewProgressReportRequestMessage(
-            user, darCode, referenceId, dacDatasetMap, researcherName),
-        user.getUserId());
   }
 
   /**
