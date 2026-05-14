@@ -47,6 +47,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
+import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
@@ -814,7 +815,7 @@ public class DarCollectionService implements ConsentLogger {
           List<User> voteUsers =
               voteDAO.findVoteUsersByElectionReferenceIdList(createdElectionReferenceIds);
           if (dar.getProgressReport()) {
-            emailService.sendProgressReportNewCollectionElectionMessage(
+            sendProgressReportNewCollectionElectionMessage(
                 voteUsers, collection.getDarCode());
           } else {
             sendDarNewCollectionElectionMessage(voteUsers, collection.getDarCode());
@@ -1171,7 +1172,7 @@ public class DarCollectionService implements ConsentLogger {
       if (isAutoOpen) {
         // Send election notification for auto-open DACs
         if (latestDar.getProgressReport()) {
-          emailService.sendProgressReportNewCollectionElectionMessage(
+          sendProgressReportNewCollectionElectionMessage(
               List.of(user), darCollection.getDarCode());
         } else {
           sendDarNewCollectionElectionMessage(
@@ -1208,6 +1209,14 @@ public class DarCollectionService implements ConsentLogger {
     String electionType = "Data Access Request";
     for (User user : users) {
       emailService.sendMessage(new NewCaseMessage(user, darCode, electionType), user.getUserId());
+    }
+  }
+
+  @VisibleForTesting
+  protected void sendProgressReportNewCollectionElectionMessage(List<User> users, String darCode)
+      throws IOException, TemplateException {
+    for (User user : users) {
+      emailService.sendMessage(new NewProgressReportCaseMessage(user, darCode), user.getUserId());
     }
   }
 

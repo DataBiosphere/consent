@@ -55,6 +55,7 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
+import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
@@ -919,8 +920,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.createElectionsForDarCollection(user, collection);
 
     verify(darCollectionDAO).findDARCollectionByCollectionId(collection.getDarCollectionId());
-    verify(emailService)
-        .sendProgressReportNewCollectionElectionMessage(List.of(voteUser), collection.getDarCode());
+    verify(emailService).sendMessage(any(NewProgressReportCaseMessage.class), any());
   }
 
   @Test

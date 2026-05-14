@@ -40,7 +40,6 @@ import org.broadinstitute.consent.http.mail.message.MailMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARSigningOfficialRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewLibraryCardIssuedMessage;
-import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewStudyDigestMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
@@ -167,12 +166,6 @@ public class EmailService implements ConsentLogger {
 
 
 
-  public void sendProgressReportNewCollectionElectionMessage(List<User> users, String darCode)
-      throws IOException, TemplateException {
-    for (User user : users) {
-      sendMessage(new NewProgressReportCaseMessage(user, darCode), user.getUserId());
-    }
-  }
 
   public void sendNewDARRequestEmail(
       User user, Map<String, List<String>> dacDatasetMap, String researcherName, String darCode)
