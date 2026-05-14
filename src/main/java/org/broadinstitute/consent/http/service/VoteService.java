@@ -44,6 +44,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
+import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.util.ComplianceLogger;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -290,8 +291,8 @@ public class VoteService implements ConsentLogger {
                 emailService.sendResearcherProgressReportApproved(
                     darCode, researcherId, datasetMailDTOs, translation, radarApproved);
               } else {
-                emailService.sendResearcherDarApproved(
-                    darCode, researcherId, datasetMailDTOs, translation, radarApproved);
+                sendResearcherDarApproved(
+                    researcher, darCode, datasetMailDTOs, translation, radarApproved);
               }
             } catch (Exception e) {
               logException("Error sending researcher dar approved email: " + e.getMessage(), e);
@@ -318,6 +319,19 @@ public class VoteService implements ConsentLogger {
             }
           }
         });
+  }
+
+  @VisibleForTesting
+  protected void sendResearcherDarApproved(
+      User researcher,
+      String darCode,
+      List<DatasetMailDTO> datasets,
+      String dataUseRestriction,
+      boolean radarApproved)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new ResearcherDarApprovedMessage(researcher, darCode, datasets, dataUseRestriction, radarApproved),
+        researcher.getUserId());
   }
 
   @VisibleForTesting

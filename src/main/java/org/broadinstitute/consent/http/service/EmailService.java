@@ -56,7 +56,6 @@ import org.broadinstitute.consent.http.mail.message.NewStudyRegistrationConfirma
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherCloseoutCompletedMessage;
-import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
 import org.broadinstitute.consent.http.mail.message.SoDARApproved;
 import org.broadinstitute.consent.http.mail.message.SoDARSubmitted;
 import org.broadinstitute.consent.http.mail.message.SoPRApproved;
@@ -134,8 +133,7 @@ public class EmailService implements ConsentLogger {
     emailDAO.insert(mailMessage);
   }
 
-  @VisibleForTesting
-  protected void sendMessage(MailMessage mailMessage, Integer userId)
+  public void sendMessage(MailMessage mailMessage, Integer userId)
       throws IOException, TemplateException {
     Writer out = new StringWriter();
     Template template = templateHelper.getTemplate(mailMessage.getTemplateName());
@@ -178,19 +176,6 @@ public class EmailService implements ConsentLogger {
     return emailDAO.fetchMessagesByCreateDate(start, end, limit, offset);
   }
 
-  public void sendResearcherDarApproved(
-      String darCode,
-      Integer researcherId,
-      List<DatasetMailDTO> datasets,
-      String dataUseRestriction,
-      boolean radarApproved)
-      throws TemplateException, IOException {
-    User user = userDAO.findUserById(researcherId);
-    sendMessage(
-        new ResearcherDarApprovedMessage(
-            user, darCode, datasets, dataUseRestriction, radarApproved),
-        researcherId);
-  }
 
   public void sendResearcherProgressReportApproved(
       String darCode,

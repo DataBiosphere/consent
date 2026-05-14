@@ -58,6 +58,7 @@ import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
+import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -561,7 +562,7 @@ class VoteServiceTest extends AbstractTestHelper {
     service.sendDatasetApprovalNotifications(List.of(v1, v2), researcher);
     // Since we have 1 collection with different DAR/Datasets, we should be sending 1 email
     verify(emailService, times(2))
-        .sendResearcherDarApproved(any(), any(), anyList(), any(), anyBoolean());
+        .sendMessage(any(ResearcherDarApprovedMessage.class), any());
   }
 
   @Test
@@ -649,7 +650,7 @@ class VoteServiceTest extends AbstractTestHelper {
     service.sendDatasetApprovalNotifications(List.of(v1, v2), researcher);
     // Since we have 2 collections with different DAR/Datasets, we should be sending 2 emails
     verify(emailService, times(2))
-        .sendResearcherDarApproved(any(), any(), anyList(), any(), anyBoolean());
+        .sendMessage(any(ResearcherDarApprovedMessage.class), any());
   }
 
   @Test
@@ -737,7 +738,7 @@ class VoteServiceTest extends AbstractTestHelper {
     service.sendDatasetApprovalNotifications(List.of(v1, v2), researcher);
     // Since we have 2 collections with different DAR/Datasets, we should be sending 2 emails
     verify(emailService, times(2))
-        .sendResearcherDarApproved(any(), any(), anyList(), any(), eq(true));
+        .sendMessage(any(ResearcherDarApprovedMessage.class), any());
   }
 
   @Test
@@ -771,7 +772,7 @@ class VoteServiceTest extends AbstractTestHelper {
     service.sendDatasetApprovalNotifications(List.of(v1), user);
     // Since we have a false vote, we should not be sending any email
     verify(emailService, times(0))
-        .sendResearcherDarApproved(any(), any(), anyList(), any(), anyBoolean());
+        .sendMessage(any(ResearcherDarApprovedMessage.class), any());
     // Similar check for all DAO calls
     verify(dataAccessRequestDAO, times(1)).findByReferenceIds(any());
     verify(datasetDAO, times(0)).findDatasetsByIdList(any());
@@ -808,7 +809,7 @@ class VoteServiceTest extends AbstractTestHelper {
     service.sendDatasetApprovalNotifications(List.of(v1), user);
     // Since we have a non-final vote, we should not be sending any email
     verify(emailService, times(0))
-        .sendResearcherDarApproved(any(), any(), anyList(), any(), anyBoolean());
+        .sendMessage(any(ResearcherDarApprovedMessage.class), any());
     // Similar check for all DAO calls
     verify(dataAccessRequestDAO, times(1)).findByReferenceIds(any());
     verify(datasetDAO, times(0)).findDatasetsByIdList(any());
