@@ -187,30 +187,6 @@ class EmailServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSendNewResearcherEmail() throws Exception {
-    User user = new User();
-    user.setUserId(1234);
-    user.setDisplayName("John Doe");
-
-    User so = new User();
-    user.setEmail("fake_email@asdf.com");
-
-    when(templateHelper.getTemplate(EmailType.NEW_RESEARCHER.templateName)).thenReturn(mock());
-
-    service.sendNewResearcherMessage(user, so);
-
-    verify(sendGridAPI).sendMessage(any(), any());
-    verify(emailDAO)
-        .insert(
-            argThat(
-                m ->
-                    Objects.equals(m.entityReferenceId(), "1234")
-                        && m.voteId() == null
-                        && Objects.equals(m.userId(), 1234)
-                        && Objects.equals(m.emailType(), EmailType.NEW_RESEARCHER.getTypeInt())));
-  }
-
-  @Test
   void sendDarExpiredMessage() throws Exception {
     User user = new User();
     user.setUserId(123);

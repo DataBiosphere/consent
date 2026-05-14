@@ -22,6 +22,9 @@ public enum EmailType {
   ADMIN_FLAGGED_DAR_APPROVED(9),
   DAR_CANCEL(10),
   DELEGATE_RESPONSIBILITIES(11),
+  // Deprecated: maintained for historical purposes so legacy references to type 12 remain
+  // representable.
+  @Deprecated
   NEW_RESEARCHER(12, "new-researcher-library-request.ftl", EmailTypeConstants.SENDGRID_CATEGORIES),
   RESEARCHER_APPROVED(13),
   NEW_DATASET(14, "dataset-submitted.ftl", EmailTypeConstants.SENDGRID_CATEGORIES),
