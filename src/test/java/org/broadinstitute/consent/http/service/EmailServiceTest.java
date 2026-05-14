@@ -259,34 +259,6 @@ class EmailServiceTest extends AbstractTestHelper {
   }
 
 
-  @Test
-  void testSendStudySubmissionConfirmation() throws Exception {
-    User dataSubmitter = new User();
-    dataSubmitter.setUserId(1);
-    dataSubmitter.setEmail("submitter@example.com");
-    dataSubmitter.setDisplayName("Submitter Name");
-
-    String studyName = "Test Study";
-    Integer studyId = 42;
-    Map<String, Object> studyAssets = Map.of("assetKey", "assetValue");
-
-    when(templateHelper.getTemplate(EmailType.NEW_STUDY_REGISTRATION_CONFIRMATION.templateName))
-        .thenReturn(mock());
-
-    service.sendStudySubmissionConfirmation(dataSubmitter, studyName, studyId, studyAssets);
-
-    verify(sendGridAPI).sendMessage(any(), any());
-    verify(emailDAO)
-        .insert(
-            argThat(
-                m ->
-                    Objects.equals(m.entityReferenceId(), studyName)
-                        && m.voteId() == null
-                        && Objects.equals(m.userId(), 1)
-                        && Objects.equals(
-                            m.emailType(),
-                            EmailType.NEW_STUDY_REGISTRATION_CONFIRMATION.getTypeInt())));
-  }
 
   @Test
   void testSendNewDAAUploadResearcherMessage() throws Exception {

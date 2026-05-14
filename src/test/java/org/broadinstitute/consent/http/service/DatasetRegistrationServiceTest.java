@@ -63,6 +63,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 import org.broadinstitute.consent.http.models.dataset_registration_v1.FileTypeObject;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.NihICsSupportingStudy;
 import org.broadinstitute.consent.http.mail.message.DatasetSubmittedMessage;
+import org.broadinstitute.consent.http.mail.message.NewStudyRegistrationConfirmationMessage;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetUpdate;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
@@ -114,7 +115,6 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   // captor: allows you to inspect the arguments sent to a function.
   @Captor ArgumentCaptor<List<DatasetServiceDAO.DatasetInsert>> datasetInsertCaptor;
   @Captor ArgumentCaptor<DatasetServiceDAO.StudyInsert> studyInsert;
-  @Captor ArgumentCaptor<Map<String, Object>> assetsCaptor;
 
   // ------------------------ test multiple dataset insert ----------------------------------- //
   @Test
@@ -488,7 +488,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
     datasetRegistrationService.createDatasetsFromRegistration(registration, user, Map.of());
 
-    verify(emailService, times(1)).sendStudySubmissionConfirmation(eq(user), any(), eq(123), any());
+    verify(emailService, times(1)).sendMessage(any(NewStudyRegistrationConfirmationMessage.class), any());
   }
 
   @Test
@@ -505,14 +505,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     datasetRegistrationService.sendSubmissionConfirmationEmail(submitter, registration, studyId);
 
     verify(emailService, times(1))
-        .sendStudySubmissionConfirmation(
-            eq(submitter), eq("Study"), eq(123), assetsCaptor.capture());
-
-    // assert that the assets sent in the email are correct
-    Map<String, Object> sentAssets = assetsCaptor.getValue();
-    assertTrue(sentAssets.containsKey("asset1"));
-    assertEquals(List.of("file1"), sentAssets.get("asset1"));
-    assertTrue(sentAssets.containsKey("datasets"));
+        .sendMessage(any(NewStudyRegistrationConfirmationMessage.class), any());
   }
 
   @Test

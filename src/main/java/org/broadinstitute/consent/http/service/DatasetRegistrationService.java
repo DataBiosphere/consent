@@ -32,6 +32,7 @@ import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.mail.message.DatasetSubmittedMessage;
+import org.broadinstitute.consent.http.mail.message.NewStudyRegistrationConfirmationMessage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -939,6 +940,15 @@ public class DatasetRegistrationService implements ConsentLogger {
         dacChair.getUserId());
   }
 
+  @VisibleForTesting
+  public void sendStudySubmissionConfirmation(
+      User dataSubmitter, String studyName, Integer studyId, Map<String, Object> studyAssets)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new NewStudyRegistrationConfirmationMessage(dataSubmitter, studyName, studyId, studyAssets),
+        dataSubmitter.getUserId());
+  }
+
   /**
    * Sends a confirmation email to the submitter of a dataset registration request with details of
    * their submission.
@@ -949,7 +959,7 @@ public class DatasetRegistrationService implements ConsentLogger {
   public void sendSubmissionConfirmationEmail(
       User submitter, DatasetRegistrationSchemaV1 registration, Integer studyId) {
     try {
-      emailService.sendStudySubmissionConfirmation(
+      sendStudySubmissionConfirmation(
           submitter, registration.getStudyName(), studyId, getAssetsWithDatasets(registration));
     } catch (Exception e) {
       logException(e);

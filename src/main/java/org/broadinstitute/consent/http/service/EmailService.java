@@ -49,7 +49,6 @@ import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage
 import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewResearcherLibraryRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewStudyDigestMessage;
-import org.broadinstitute.consent.http.mail.message.NewStudyRegistrationConfirmationMessage;
 import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherCloseoutCompletedMessage;
 import org.broadinstitute.consent.http.mail.message.SoDARSubmitted;
@@ -171,13 +170,6 @@ public class EmailService implements ConsentLogger {
 
 
 
-  public void sendStudySubmissionConfirmation(
-      User dataSubmitter, String studyName, Integer studyId, Map<String, Object> studyAssets)
-      throws TemplateException, IOException {
-    sendMessage(
-        new NewStudyRegistrationConfirmationMessage(dataSubmitter, studyName, studyId, studyAssets),
-        dataSubmitter.getUserId());
-  }
 
   public void sendDatasetApprovedMessage(
       User user, String dacName, String datasetIdentifier, String datasetName)
