@@ -47,6 +47,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
+import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
 import org.broadinstitute.consent.http.models.Dac;
@@ -1186,7 +1187,7 @@ public class DarCollectionService implements ConsentLogger {
               darCollection.getDarCode(),
               latestDar.getReferenceId());
         } else {
-          emailService.sendNewDARRequestEmail(
+          sendNewDARRequestEmail(
               user, dacToDatasetsMap, researcherName, darCollection.getDarCode());
         }
       }
@@ -1216,6 +1217,14 @@ public class DarCollectionService implements ConsentLogger {
     for (User user : users) {
       emailService.sendMessage(new NewProgressReportCaseMessage(user, darCode), user.getUserId());
     }
+  }
+
+  @VisibleForTesting
+  protected void sendNewDARRequestEmail(
+      User user, Map<String, List<String>> dacDatasetMap, String researcherName, String darCode)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new NewDARRequestMessage(user, darCode, dacDatasetMap, researcherName), user.getUserId());
   }
 
   @VisibleForTesting

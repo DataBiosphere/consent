@@ -54,6 +54,7 @@ import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
+import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
 import org.broadinstitute.consent.http.models.CloseoutSupplement;
@@ -2161,7 +2162,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     when(userDAO.findUsersForDatasetsByRole(anyList(), anyList())).thenReturn(Set.of(chair));
     service.createElectionsForNewDarCollection(1);
     service.sendNewDARCollectionMessage(1);
-    verify(emailService).sendNewDARRequestEmail(any(), any(), any(), any());
+    verify(emailService).sendMessage(any(NewDARRequestMessage.class), any());
     verify(emailService, never()).sendMessage(any(NewCaseMessage.class), any());
   }
 
@@ -2210,7 +2211,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.sendNewDARCollectionMessage(1);
 
     verify(emailService).sendMessage(any(NewCaseMessage.class), any());
-    verify(emailService, never()).sendNewDARRequestEmail(any(), any(), any(), any());
+    verify(emailService, never()).sendMessage(any(NewDARRequestMessage.class), any());
   }
 
   @Test
@@ -2265,7 +2266,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.sendNewDARCollectionMessage(1);
 
     verify(emailService, never()).sendMessage(any(NewCaseMessage.class), any());
-    verify(emailService, never()).sendNewDARRequestEmail(any(), any(), any(), any());
+    verify(emailService, never()).sendMessage(any(NewDARRequestMessage.class), any());
     verify(emailService).sendNewDARSigningOfficialRequestEmail(any(), any(), any());
   }
 
@@ -2322,7 +2323,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.sendNewDARCollectionMessage(1);
 
     verify(emailService, never()).sendMessage(any(NewCaseMessage.class), any());
-    verify(emailService).sendNewDARRequestEmail(any(), any(), any(), any());
+    verify(emailService).sendMessage(any(NewDARRequestMessage.class), any());
     verify(emailService, never()).sendNewDARSigningOfficialRequestEmail(any(), any(), any());
   }
 
@@ -2447,7 +2448,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.sendNewDARCollectionMessage(1);
 
     verify(emailService).sendMessage(any(NewCaseMessage.class), any());
-    verify(emailService).sendNewDARRequestEmail(any(), any(), any(), any());
+    verify(emailService).sendMessage(any(NewDARRequestMessage.class), any());
   }
 
   @Test
@@ -2553,7 +2554,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.sendNewDARCollectionMessage(1);
 
     verify(emailService, never()).sendMessage(any(NewCaseMessage.class), any());
-    verify(emailService, never()).sendNewDARRequestEmail(any(), any(), any(), any());
+    verify(emailService, never()).sendMessage(any(NewDARRequestMessage.class), any());
     verify(emailService).sendNewDARSigningOfficialRequestEmail(any(), any(), any());
   }
 
