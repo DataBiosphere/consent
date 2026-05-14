@@ -48,6 +48,7 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
+import org.broadinstitute.consent.http.mail.message.NewDARSigningOfficialRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
 import org.broadinstitute.consent.http.mail.message.SoDARSubmitted;
@@ -1200,7 +1201,7 @@ public class DarCollectionService implements ConsentLogger {
       DataAccessRequest dataAccessRequest, User researcher) throws TemplateException, IOException {
     String soEmail = dataAccessRequest.getData().getSigningOfficialEmail();
     User soUser = userDAO.findUserByEmail(soEmail);
-    emailService.sendNewDARSigningOfficialRequestEmail(
+    sendNewDARSigningOfficialRequestEmail(
         soUser, researcher.getDisplayName(), dataAccessRequest.getDarCode());
   }
 
@@ -1227,6 +1228,15 @@ public class DarCollectionService implements ConsentLogger {
       throws TemplateException, IOException {
     emailService.sendMessage(
         new NewDARRequestMessage(user, darCode, dacDatasetMap, researcherName), user.getUserId());
+  }
+
+  @VisibleForTesting
+  protected void sendNewDARSigningOfficialRequestEmail(
+      User signingOfficial, String researcherName, String darCode)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new NewDARSigningOfficialRequestMessage(signingOfficial, darCode, researcherName),
+        signingOfficial.getUserId());
   }
 
   @VisibleForTesting

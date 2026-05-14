@@ -55,6 +55,7 @@ import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
+import org.broadinstitute.consent.http.mail.message.NewDARSigningOfficialRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
 import org.broadinstitute.consent.http.mail.message.SoDARSubmitted;
@@ -2269,7 +2270,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     verify(emailService, never()).sendMessage(any(NewCaseMessage.class), any());
     verify(emailService, never()).sendMessage(any(NewDARRequestMessage.class), any());
-    verify(emailService).sendNewDARSigningOfficialRequestEmail(any(), any(), any());
+    verify(emailService).sendMessage(any(NewDARSigningOfficialRequestMessage.class), any());
   }
 
   @Test
@@ -2326,7 +2327,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     verify(emailService, never()).sendMessage(any(NewCaseMessage.class), any());
     verify(emailService).sendMessage(any(NewDARRequestMessage.class), any());
-    verify(emailService, never()).sendNewDARSigningOfficialRequestEmail(any(), any(), any());
+    verify(emailService, never())
+        .sendMessage(any(NewDARSigningOfficialRequestMessage.class), any());
   }
 
   @Test
@@ -2385,7 +2387,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     verify(emailService, never()).sendMessage(any(NewCaseMessage.class), any());
     verify(emailService).sendMessage(any(NewProgressReportRequestMessage.class), any());
-    verify(emailService, never()).sendNewDARSigningOfficialRequestEmail(any(), any(), any());
+    verify(emailService, never())
+        .sendMessage(any(NewDARSigningOfficialRequestMessage.class), any());
   }
 
   // Mixed auto-open and manual DACs
@@ -2557,7 +2560,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
     verify(emailService, never()).sendMessage(any(NewCaseMessage.class), any());
     verify(emailService, never()).sendMessage(any(NewDARRequestMessage.class), any());
-    verify(emailService).sendNewDARSigningOfficialRequestEmail(any(), any(), any());
+    verify(emailService).sendMessage(any(NewDARSigningOfficialRequestMessage.class), any());
   }
 
   @Test
