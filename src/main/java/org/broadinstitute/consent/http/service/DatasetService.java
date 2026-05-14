@@ -413,8 +413,7 @@ public class DatasetService implements ConsentLogger {
     } else {
       if (dac.getEmail() != null) {
         String dacEmail = dac.getEmail();
-        sendDatasetDeniedMessage(
-            user, dac.getName(), dataset.getDatasetIdentifier(), dacEmail);
+        sendDatasetDeniedMessage(user, dac.getName(), dataset.getDatasetIdentifier(), dacEmail);
       } else {
         logWarn("Unable to send dataset denied email to DAC: " + dac.getDacId());
       }

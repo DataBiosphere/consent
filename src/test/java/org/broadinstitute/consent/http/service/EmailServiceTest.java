@@ -269,39 +269,6 @@ class EmailServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSendNewDAAUploadSOMessage() throws Exception {
-    User signingOfficial = new User();
-    signingOfficial.setDisplayName("Jane Evans");
-    signingOfficial.setEmail("signingofficial@example.com");
-
-    Dac dac = new Dac();
-    dac.setDacId(1);
-    dac.setName("DAC-01");
-
-    User user = new User();
-    user.setUserId(123);
-
-    String previousDaaName = "DAA-123";
-
-    String newDaaName = "DAA-456";
-    when(templateHelper.getTemplate(EmailType.NEW_DAA_UPLOAD_SO.templateName)).thenReturn(mock());
-
-    service.sendNewDAAUploadSOMessage(
-        signingOfficial, dac.getName(), previousDaaName, newDaaName, user.getUserId());
-
-    verify(sendGridAPI).sendMessage(any(), any());
-    verify(emailDAO)
-        .insert(
-            argThat(
-                m ->
-                    Objects.equals(m.entityReferenceId(), "DAC-01")
-                        && m.voteId() == null
-                        && Objects.equals(m.userId(), user.getUserId())
-                        && Objects.equals(
-                            m.emailType(), EmailType.NEW_DAA_UPLOAD_SO.getTypeInt())));
-  }
-
-  @Test
   void testSendResearcherCloseoutCompletedMessage() throws Exception {
     User user = new User();
     user.setUserId(123);

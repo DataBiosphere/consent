@@ -39,7 +39,6 @@ import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
 import org.broadinstitute.consent.http.mail.message.MailMessage;
 import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
 import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
-import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewDARSigningOfficialRequestMessage;
 import org.broadinstitute.consent.http.mail.message.NewLibraryCardIssuedMessage;
@@ -163,17 +162,6 @@ public class EmailService implements ConsentLogger {
   public List<org.broadinstitute.consent.http.models.mail.MailMessage>
       fetchEmailMessagesByCreateDate(Date start, Date end, Integer limit, Integer offset) {
     return emailDAO.fetchMessagesByCreateDate(start, end, limit, offset);
-  }
-
-  public void sendNewDAAUploadSOMessage(
-      User signingOfficial,
-      String dacName,
-      String previousDaaName,
-      String newDaaName,
-      Integer userId)
-      throws TemplateException, IOException {
-    sendMessage(
-        new NewDAAUploadSOMessage(signingOfficial, dacName, previousDaaName, newDaaName), userId);
   }
 
   public void sendNewDAAUploadResearcherMessage(
