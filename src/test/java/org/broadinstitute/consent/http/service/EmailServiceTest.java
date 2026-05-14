@@ -201,27 +201,6 @@ class EmailServiceTest extends AbstractTestHelper {
   }
 
   @Test
-  void testSendNewLibraryCardIssuedMessage() throws Exception {
-    User toUser = new User();
-    toUser.setDisplayName("Test User");
-    toUser.setEmail("test.user@test.com");
-    when(templateHelper.getTemplate(EmailType.NEW_LIBRARY_CARD_ISSUED.templateName))
-        .thenReturn(mock());
-
-    service.sendNewLibraryCardIssuedMessage(toUser);
-    verify(sendGridAPI).sendMessage(any(Mail.class), eq(toUser.getEmail()));
-    verify(emailDAO)
-        .insert(
-            argThat(
-                m ->
-                    Objects.equals(m.entityReferenceId(), toUser.getEmail())
-                        && m.voteId() == null
-                        && Objects.equals(m.userId(), toUser.getUserId())
-                        && Objects.equals(
-                            m.emailType(), EmailType.NEW_LIBRARY_CARD_ISSUED.getTypeInt())));
-  }
-
-  @Test
   void testSendVoteDigestMessages_no_notices() {
     when(electionDAO.findElectionReminders(anyInt(), anyInt(), anyString())).thenReturn(List.of());
     assertDoesNotThrow(() -> service.sendVoteDigestMessages());

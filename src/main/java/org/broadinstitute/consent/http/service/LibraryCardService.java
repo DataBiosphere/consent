@@ -13,6 +13,7 @@ import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.mail.message.NewLibraryCardIssuedMessage;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -61,7 +62,7 @@ public class LibraryCardService implements ConsentLogger {
     User toUser = userDAO.findUserByEmail(libraryCard.getUserEmail());
     if (toUser != null) {
       try {
-        emailService.sendNewLibraryCardIssuedMessage(toUser);
+        sendNewLibraryCardIssuedMessage(toUser);
       } catch (IOException | TemplateException e) {
         logWarn(
             "Failed to send library card issuance notification for user " + user.getUserId(), e);
@@ -152,6 +153,17 @@ public class LibraryCardService implements ConsentLogger {
     lc.setUserEmail(user.getEmail());
     lc.setCreateUserId(signingOfficial.getUserId());
     return createLibraryCard(lc, user);
+  }
+
+  /**
+   * Send a message to the user when they are issued a library card
+   *
+   * @param toUser The user to send the message to
+   * @throws TemplateException Template processing exception
+   * @throws IOException IOException when processing the template or sending the email
+   */
+  public void sendNewLibraryCardIssuedMessage(User toUser) throws TemplateException, IOException {
+    emailService.sendMessage(new NewLibraryCardIssuedMessage(toUser), toUser.getUserId());
   }
 
   public List<LibraryCardDaaAudit> findLibraryCardDaaAuditsByUserId(Integer userId) {

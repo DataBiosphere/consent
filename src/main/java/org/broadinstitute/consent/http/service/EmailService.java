@@ -34,7 +34,6 @@ import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.mail.message.DacVoteDigestMessage;
 import org.broadinstitute.consent.http.mail.message.MailMessage;
-import org.broadinstitute.consent.http.mail.message.NewLibraryCardIssuedMessage;
 import org.broadinstitute.consent.http.mail.message.NewStudyDigestMessage;
 import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.broadinstitute.consent.http.models.User;
@@ -146,17 +145,6 @@ public class EmailService implements ConsentLogger {
   public List<org.broadinstitute.consent.http.models.mail.MailMessage>
       fetchEmailMessagesByCreateDate(Date start, Date end, Integer limit, Integer offset) {
     return emailDAO.fetchMessagesByCreateDate(start, end, limit, offset);
-  }
-
-  /**
-   * Send a message to the user when they are issued a library card
-   *
-   * @param toUser The user to send the message to
-   * @throws TemplateException Template processing exception
-   * @throws IOException IOException when processing the template or sending the email
-   */
-  public void sendNewLibraryCardIssuedMessage(User toUser) throws TemplateException, IOException {
-    sendMessage(new NewLibraryCardIssuedMessage(toUser), toUser.getUserId());
   }
 
   public void sendVoteDigestMessages() {
