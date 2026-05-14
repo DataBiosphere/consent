@@ -4,36 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import freemarker.template.Template;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.List;
-import java.util.Objects;
-import org.broadinstitute.consent.http.AbstractTestHelper;
-import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class ResearcherDarApprovedMessageTest extends AbstractTestHelper {
-
-  private FreeMarkerTemplateHelper helper;
-
-  @BeforeEach
-  void setUp() {
-    FreeMarkerConfiguration freeMarkerConfig = new FreeMarkerConfiguration();
-    freeMarkerConfig.setTemplateDirectory("/freemarker");
-    freeMarkerConfig.setDefaultEncoding("UTF-8");
-    helper = new FreeMarkerTemplateHelper(freeMarkerConfig);
-  }
-
-  String getElementTextById(Document document, String id) {
-    return Objects.requireNonNull(document.getElementById(id)).text();
-  }
+class ResearcherDarApprovedMessageTest extends AbstractMailMessageTest {
 
   @Test
   void testMessageSubject() {
@@ -62,25 +38,21 @@ class ResearcherDarApprovedMessageTest extends AbstractTestHelper {
             false);
     assertEquals(darCode, message.getEntityReferenceId());
 
-    Template template = helper.getTemplate(message.getTemplateName());
-    Writer out = new StringWriter();
-    template.process(message.createModel(""), out);
-    String templateString = out.toString();
-    Document parsedTemplate = Jsoup.parse(templateString);
+    var rendered = renderTemplate(message, "");
 
     assertEquals(
         "Broad Data Use Oversight System - Researcher - Your access to a dataset was approved",
-        parsedTemplate.title());
+        rendered.document().title());
     assertEquals(
-        "Hello " + researcherUserName + ",", getElementTextById(parsedTemplate, "userName"));
+        "Hello " + researcherUserName + ",", getElementTextById(rendered.document(), "userName"));
     assertTrue(
-        templateString.contains(
-            "Your data access request application " + darCode + " was approved"));
-    assertTrue(templateString.contains(datasetId));
-    assertTrue(templateString.contains(datasetName));
-    // Positive test to ensure data location is in the template.
-    assertTrue(templateString.contains(dataLocationUrl));
-    assertTrue(templateString.contains(researcherEmail));
+        rendered
+            .content()
+            .contains("Your data access request application " + darCode + " was approved"));
+    assertTrue(rendered.content().contains(datasetId));
+    assertTrue(rendered.content().contains(datasetName));
+    assertTrue(rendered.content().contains(dataLocationUrl));
+    assertTrue(rendered.content().contains(researcherEmail));
   }
 
   @Test
@@ -104,26 +76,24 @@ class ResearcherDarApprovedMessageTest extends AbstractTestHelper {
             true);
     assertEquals(darCode, message.getEntityReferenceId());
 
-    Template template = helper.getTemplate(message.getTemplateName());
-    Writer out = new StringWriter();
-    template.process(message.createModel(""), out);
-    String templateString = out.toString();
-    Document parsedTemplate = Jsoup.parse(templateString);
+    var rendered = renderTemplate(message, "");
 
     assertEquals(
         "Broad Data Use Oversight System - Researcher - Your access to a dataset was Rule Automated DAR (RADAR) approved",
-        parsedTemplate.title());
+        rendered.document().title());
     assertEquals(
-        "Hello " + researcherUserName + ",", getElementTextById(parsedTemplate, "userName"));
+        "Hello " + researcherUserName + ",", getElementTextById(rendered.document(), "userName"));
     assertTrue(
-        templateString.contains(
-            "Your data access request application "
-                + darCode
-                + " was Rule Automated DAR (RADAR) approved"));
-    assertTrue(templateString.contains(datasetId));
-    assertTrue(templateString.contains(datasetName));
+        rendered
+            .content()
+            .contains(
+                "Your data access request application "
+                    + darCode
+                    + " was Rule Automated DAR (RADAR) approved"));
+    assertTrue(rendered.content().contains(datasetId));
+    assertTrue(rendered.content().contains(datasetName));
     // Negative test to ensure data location is not in the template.
-    assertFalse(templateString.contains(dataLocation));
-    assertTrue(templateString.contains(researcherEmail));
+    assertFalse(rendered.content().contains(dataLocation));
+    assertTrue(rendered.content().contains(researcherEmail));
   }
 }

@@ -4,29 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import freemarker.template.Template;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.Objects;
-import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.User;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class NewResearcherLibraryRequestMessageTest {
-
-  private FreeMarkerTemplateHelper helper;
-
-  @BeforeEach
-  void setUp() {
-    FreeMarkerConfiguration freeMarkerConfig = new FreeMarkerConfiguration();
-    freeMarkerConfig.setTemplateDirectory("/freemarker");
-    freeMarkerConfig.setDefaultEncoding("UTF-8");
-    helper = new FreeMarkerTemplateHelper(freeMarkerConfig);
-  }
+class NewResearcherLibraryRequestMessageTest extends AbstractMailMessageTest {
 
   @Test
   void testGetNewResearcherLibraryRequestTemplate() throws Exception {
@@ -39,26 +21,19 @@ class NewResearcherLibraryRequestMessageTest {
 
     var message = new NewResearcherLibraryRequestMessage(signingOfficial, researcher);
 
-    Template template = helper.getTemplate(message.getTemplateName());
-    Writer out = new StringWriter();
-    template.process(message.createModel(serverUrl), out);
-    String templateString = out.toString();
-    Document parsedTemplate = Jsoup.parse(templateString);
+    var rendered = renderTemplate(message, serverUrl);
 
     assertEquals(
         "Broad Data Use Oversight System - Request from your researcher for Library Card permissions",
-        parsedTemplate.title());
+        rendered.document().title());
     assertEquals(researcher.getUserId().toString(), message.getEntityReferenceId());
-
     assertTrue(
-        Objects.requireNonNull(parsedTemplate.getElementById("content"))
+        Objects.requireNonNull(rendered.document().getElementById("content"))
             .text()
             .contains("A researcher from your institution, John Doe, has registered in DUOS"));
-
     assertEquals(
-        serverUrl, Objects.requireNonNull(parsedTemplate.getElementById("serverUrl")).attr("href"));
-
-    // no unspecified values
-    assertFalse(templateString.contains("${"));
+        serverUrl,
+        Objects.requireNonNull(rendered.document().getElementById("serverUrl")).attr("href"));
+    assertFalse(rendered.content().contains("${"));
   }
 }

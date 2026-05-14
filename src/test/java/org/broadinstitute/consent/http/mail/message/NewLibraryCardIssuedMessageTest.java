@@ -5,31 +5,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import freemarker.template.TemplateException;
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Objects;
-import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
-import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
 import org.broadinstitute.consent.http.models.User;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class NewLibraryCardIssuedMessageTest {
-  private FreeMarkerTemplateHelper helper;
-
-  @BeforeEach
-  void setUp() {
-    FreeMarkerConfiguration freeMarkerConfig = new FreeMarkerConfiguration();
-    freeMarkerConfig.setTemplateDirectory("/freemarker");
-    freeMarkerConfig.setDefaultEncoding("UTF-8");
-    helper = new FreeMarkerTemplateHelper(freeMarkerConfig);
-  }
+class NewLibraryCardIssuedMessageTest extends AbstractMailMessageTest {
 
   @Test
-  void testNewLibraryCardIssuedTemplate() throws IOException, TemplateException {
+  void testNewLibraryCardIssuedTemplate() throws Exception {
     User toUser = new User();
     toUser.setDisplayName("Test User");
     toUser.setEmail("test.user@test.com");
@@ -39,30 +22,21 @@ class NewLibraryCardIssuedMessageTest {
     var message = new NewLibraryCardIssuedMessage(toUser);
     assertEquals(toUser.getEmail(), message.getEntityReferenceId());
 
-    var template = helper.getTemplate(message.getTemplateName());
+    var rendered = renderTemplate(message, serverUrl);
 
-    var out = new StringWriter();
-    template.process(message.createModel(serverUrl), out);
-    var templateString = out.toString();
-    Document parsedTemplate = Jsoup.parse(templateString);
     assertEquals(
         "Broad Data Use Oversight System - Your Library Card Has Been Issued",
-        parsedTemplate.title());
-
+        rendered.document().title());
     assertEquals(
         "Hello %s,".formatted(toUser.getDisplayName()),
-        getElementTextById(parsedTemplate, "userName"));
+        getElementTextById(rendered.document(), "userName"));
     assertThat(
-        getElementTextById(parsedTemplate, "content"),
+        getElementTextById(rendered.document(), "content"),
         containsString(
             "You can now initiate data access requests. Get started by searching for data you would like to access in the DUOS Data Library."));
     assertTrue(
-        Objects.requireNonNull(parsedTemplate.getElementById("content"))
+        Objects.requireNonNull(rendered.document().getElementById("content"))
             .html()
             .contains(expectedUrl));
-  }
-
-  String getElementTextById(Document document, String id) {
-    return Objects.requireNonNull(document.getElementById(id)).text();
   }
 }
