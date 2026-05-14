@@ -57,7 +57,6 @@ import org.broadinstitute.consent.http.mail.message.ReminderMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
 import org.broadinstitute.consent.http.mail.message.ResearcherCloseoutCompletedMessage;
 import org.broadinstitute.consent.http.mail.message.SoDARSubmitted;
-import org.broadinstitute.consent.http.mail.message.SoPRApproved;
 import org.broadinstitute.consent.http.mail.message.SoPRSubmitted;
 import org.broadinstitute.consent.http.mail.message.SubmittedCloseoutMessage;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -337,35 +336,6 @@ public class EmailService implements ConsentLogger {
       throws TemplateException, IOException {
     sendMessage(
         new SoPRSubmitted(user, darCode, researcher, referenceId, datasets), user.getUserId());
-  }
-
-
-  /**
-   * Send a message to a Signing Official that a new progress report has been approved.
-   *
-   * @param user The user to send the message to
-   * @param darCode The Data Access Request code for which the progress report is approved
-   * @param researcher The researcher whose progress report has been approved
-   * @param referenceId The reference ID of the progress report
-   * @param datasets The datasets associated with the progress report
-   * @param dataUseRestriction The data use restriction associated with the datasets in the progress
-   *     report
-   * @throws TemplateException Template processing exception
-   * @throws IOException IOException when processing the template or sending the email
-   */
-  public void sendNewSoProgressReportApprovedEmail(
-      User user,
-      String darCode,
-      User researcher,
-      String referenceId,
-      List<Dataset> datasets,
-      String dataUseRestriction,
-      boolean radarApproved)
-      throws TemplateException, IOException {
-    sendMessage(
-        new SoPRApproved(
-            user, darCode, researcher, referenceId, datasets, dataUseRestriction, radarApproved),
-        user.getUserId());
   }
 
   /**
