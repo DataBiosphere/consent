@@ -22,7 +22,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.zendesk.client.v2.model.Request;
 
 @ExtendWith(MockitoExtension.class)
 public class SupportResourceTest extends ResourceTest {
@@ -55,7 +54,7 @@ public class SupportResourceTest extends ResourceTest {
         }
         """
             .formatted(type);
-    when(supportRequestService.postTicketToSupport(any())).thenReturn(new Request());
+    when(supportRequestService.postTicketToSupport(any())).thenReturn(new JsonObject());
     try (Response response = supportResource.postRequest(body)) {
       assertEquals(HttpStatusCodes.STATUS_CODE_CREATED, response.getStatus());
     }
