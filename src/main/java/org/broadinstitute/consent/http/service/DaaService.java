@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
@@ -228,7 +229,7 @@ public class DaaService implements ConsentLogger {
   @VisibleForTesting
   protected void sendNewDAAUploadResearcherMessage(
       User researcher, String dacName, String previousDaaName, String newDaaName, Integer userId)
-      throws freemarker.template.TemplateException, java.io.IOException {
+      throws TemplateException, IOException {
     emailService.sendMessage(
         new NewDAAUploadResearcherMessage(researcher, dacName, previousDaaName, newDaaName),
         userId);
@@ -241,7 +242,7 @@ public class DaaService implements ConsentLogger {
       String previousDaaName,
       String newDaaName,
       Integer userId)
-      throws freemarker.template.TemplateException, java.io.IOException {
+      throws TemplateException, IOException {
     emailService.sendMessage(
         new NewDAAUploadSOMessage(signingOfficial, dacName, previousDaaName, newDaaName), userId);
   }
