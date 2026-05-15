@@ -1044,7 +1044,8 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   /** Creates elections and votes for DACs with auto-open rules. */
-  private void createElectionsAndVotesForAutoOpenDacs(
+  @VisibleForTesting
+  protected void createElectionsAndVotesForAutoOpenDacs(
       DacUserClassification classification, DataAccessRequest latestDar) {
     if (latestDar.requiresSOApproval && latestDar.getApprovingSigningOfficialUserId() == null) {
       return;
@@ -1378,7 +1379,8 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   /** Helper class to hold classification results for DACs, users, and datasets. */
-  private static class DacUserClassification {
+  @VisibleForTesting
+  static class DacUserClassification {
     Set<Dac> autoOpenDacs = new HashSet<>();
     Set<Dac> manualOpenDacs = new HashSet<>();
     Set<User> autoOpenUsers = new HashSet<>();
