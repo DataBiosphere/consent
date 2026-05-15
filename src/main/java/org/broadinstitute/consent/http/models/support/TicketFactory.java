@@ -17,10 +17,10 @@ public class TicketFactory implements ConsentLogger {
   }
 
   /**
-   * Generate the created Request object from the Zendesk request response content.
+   * Validate and return the response from the Zendesk request.
    *
    * @param response The response content from the Zendesk Request API
-   * @return Parsed request.
+   * @return Parsed Json.
    */
   public JsonObject parseZendeskResponse(String response) {
     Gson gson = GsonUtil.getInstance();
