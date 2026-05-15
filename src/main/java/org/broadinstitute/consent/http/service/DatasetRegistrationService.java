@@ -4,6 +4,7 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 
 import com.google.cloud.storage.BlobId;
 import com.google.common.annotations.VisibleForTesting;
+import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
@@ -30,6 +31,8 @@ import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.mail.message.DatasetSubmittedMessage;
+import org.broadinstitute.consent.http.mail.message.NewStudyRegistrationConfirmationMessage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -902,7 +905,7 @@ public class DatasetRegistrationService implements ConsentLogger {
           logWarn("No chairpersons found for Dataset " + dataset.getDatasetIdentifier());
         } else {
           for (User dacChair : chairPersons) {
-            emailService.sendDatasetSubmittedMessage(
+            sendDatasetSubmittedMessage(
                 dacChair, dataset.getCreateUser(), dac.getName(), dataset.getName());
           }
         }
@@ -928,6 +931,24 @@ public class DatasetRegistrationService implements ConsentLogger {
     return assetsMap;
   }
 
+  @VisibleForTesting
+  protected void sendDatasetSubmittedMessage(
+      User dacChair, User dataSubmitter, String dacName, String datasetName)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new DatasetSubmittedMessage(dacChair, dataSubmitter.getDisplayName(), datasetName, dacName),
+        dacChair.getUserId());
+  }
+
+  @VisibleForTesting
+  protected void sendStudySubmissionConfirmation(
+      User dataSubmitter, String studyName, Integer studyId, Map<String, Object> studyAssets)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new NewStudyRegistrationConfirmationMessage(dataSubmitter, studyName, studyId, studyAssets),
+        dataSubmitter.getUserId());
+  }
+
   /**
    * Sends a confirmation email to the submitter of a dataset registration request with details of
    * their submission.
@@ -938,7 +959,7 @@ public class DatasetRegistrationService implements ConsentLogger {
   public void sendSubmissionConfirmationEmail(
       User submitter, DatasetRegistrationSchemaV1 registration, Integer studyId) {
     try {
-      emailService.sendStudySubmissionConfirmation(
+      sendStudySubmissionConfirmation(
           submitter, registration.getStudyName(), studyId, getAssetsWithDatasets(registration));
     } catch (Exception e) {
       logException(e);

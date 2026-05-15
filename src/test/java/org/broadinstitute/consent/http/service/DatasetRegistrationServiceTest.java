@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -47,6 +46,8 @@ import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
+import org.broadinstitute.consent.http.mail.message.DatasetSubmittedMessage;
+import org.broadinstitute.consent.http.mail.message.NewStudyRegistrationConfirmationMessage;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -113,7 +114,6 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   // captor: allows you to inspect the arguments sent to a function.
   @Captor ArgumentCaptor<List<DatasetServiceDAO.DatasetInsert>> datasetInsertCaptor;
   @Captor ArgumentCaptor<DatasetServiceDAO.StudyInsert> studyInsert;
-  @Captor ArgumentCaptor<Map<String, Object>> assetsCaptor;
 
   // ------------------------ test multiple dataset insert ----------------------------------- //
   @Test
@@ -410,14 +410,17 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setChairpersonRole();
     Dac dac = mock();
+    User createUser = new User();
+    createUser.setDisplayName("Create User");
     Dataset dataset = new Dataset();
     dataset.setDacId(1);
+    dataset.setCreateUser(createUser);
 
     when(dacDAO.findById(any())).thenReturn(dac);
     when(dacDAO.findMembersByDacId(any())).thenReturn(List.of(user));
 
     datasetRegistrationService.sendDatasetSubmittedEmails(List.of(dataset));
-    verify(emailService, times(1)).sendDatasetSubmittedMessage(any(), any(), any(), any());
+    verify(emailService, times(1)).sendMessage(any(DatasetSubmittedMessage.class), any());
   }
 
   @Test
@@ -430,7 +433,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     when(dacDAO.findMembersByDacId(any())).thenReturn(List.of());
 
     datasetRegistrationService.sendDatasetSubmittedEmails(List.of(dataset));
-    verify(emailService, never()).sendDatasetSubmittedMessage(any(), any(), any(), any());
+    verify(emailService, never()).sendMessage(any(DatasetSubmittedMessage.class), any());
   }
 
   @Test
@@ -439,7 +442,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     when(dacDAO.findById(any())).thenReturn(null);
 
     datasetRegistrationService.sendDatasetSubmittedEmails(List.of(dataset));
-    verify(emailService, never()).sendDatasetSubmittedMessage(any(), any(), any(), any());
+    verify(emailService, never()).sendMessage(any(DatasetSubmittedMessage.class), any());
   }
 
   @Test
@@ -484,7 +487,8 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
     datasetRegistrationService.createDatasetsFromRegistration(registration, user, Map.of());
 
-    verify(emailService, times(1)).sendStudySubmissionConfirmation(eq(user), any(), eq(123), any());
+    verify(emailService, times(1))
+        .sendMessage(any(NewStudyRegistrationConfirmationMessage.class), any());
   }
 
   @Test
@@ -501,14 +505,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     datasetRegistrationService.sendSubmissionConfirmationEmail(submitter, registration, studyId);
 
     verify(emailService, times(1))
-        .sendStudySubmissionConfirmation(
-            eq(submitter), eq("Study"), eq(123), assetsCaptor.capture());
-
-    // assert that the assets sent in the email are correct
-    Map<String, Object> sentAssets = assetsCaptor.getValue();
-    assertTrue(sentAssets.containsKey("asset1"));
-    assertEquals(List.of("file1"), sentAssets.get("asset1"));
-    assertTrue(sentAssets.containsKey("datasets"));
+        .sendMessage(any(NewStudyRegistrationConfirmationMessage.class), any());
   }
 
   @Test

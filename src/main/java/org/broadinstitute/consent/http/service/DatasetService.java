@@ -3,9 +3,11 @@ package org.broadinstitute.consent.http.service;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataCustodianEmail;
 
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.InternalServerErrorException;
@@ -31,6 +33,8 @@ import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
+import org.broadinstitute.consent.http.mail.message.DatasetApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.DatasetDeniedMessage;
 import org.broadinstitute.consent.http.models.ApprovedDataset;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
@@ -405,17 +409,33 @@ public class DatasetService implements ConsentLogger {
       throws Exception {
     Dac dac = dacDAO.findById(dataset.getDacId());
     if (approval) {
-      emailService.sendDatasetApprovedMessage(
+      sendDatasetApprovedMessage(
           user, dac.getName(), dataset.getDatasetIdentifier(), dataset.getName());
     } else {
       if (dac.getEmail() != null) {
         String dacEmail = dac.getEmail();
-        emailService.sendDatasetDeniedMessage(
-            user, dac.getName(), dataset.getDatasetIdentifier(), dacEmail);
+        sendDatasetDeniedMessage(user, dac.getName(), dataset.getDatasetIdentifier(), dacEmail);
       } else {
         logWarn("Unable to send dataset denied email to DAC: " + dac.getDacId());
       }
     }
+  }
+
+  @VisibleForTesting
+  protected void sendDatasetDeniedMessage(
+      User user, String dacName, String datasetName, String dacEmail)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new DatasetDeniedMessage(user, dacName, datasetName, dacEmail), user.getUserId());
+  }
+
+  @VisibleForTesting
+  protected void sendDatasetApprovedMessage(
+      User user, String dacName, String datasetIdentifier, String datasetName)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new DatasetApprovedMessage(user, dacName, datasetIdentifier, datasetName),
+        user.getUserId());
   }
 
   public List<Dataset> findDatasetsByIds(User user, List<Integer> datasetIds) {

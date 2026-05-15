@@ -32,6 +32,8 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
+import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
+import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
 import org.broadinstitute.consent.http.models.DaaBulkAssignmentResult;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
@@ -304,9 +306,8 @@ class DaaServiceTest extends AbstractTestHelper {
     when(userService.findSOsByInstitutionId(any()))
         .thenReturn(List.of(signingOfficial, signingOfficial2));
     assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
-    verify(emailService, times(2))
-        .sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any());
-    verify(emailService, times(2)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any());
+    verify(emailService, times(2)).sendMessage(any(NewDAAUploadResearcherMessage.class), any());
+    verify(emailService, times(2)).sendMessage(any(NewDAAUploadSOMessage.class), any());
   }
 
   @Test
@@ -338,9 +339,8 @@ class DaaServiceTest extends AbstractTestHelper {
     when(userService.findSOsByInstitutionId(any()))
         .thenReturn(List.of(signingOfficial, signingOfficial2));
     assertDoesNotThrow(() -> service.sendNewDaaEmails(user, 1, "dacName", "newDaaName"));
-    verify(emailService, times(1))
-        .sendNewDAAUploadResearcherMessage(any(), any(), any(), any(), any());
-    verify(emailService, times(2)).sendNewDAAUploadSOMessage(any(), any(), any(), any(), any());
+    verify(emailService, times(1)).sendMessage(any(NewDAAUploadResearcherMessage.class), any());
+    verify(emailService, times(2)).sendMessage(any(NewDAAUploadSOMessage.class), any());
   }
 
   @Test

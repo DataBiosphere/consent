@@ -54,6 +54,10 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
+import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
+import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
+import org.broadinstitute.consent.http.mail.message.ReminderMessage;
+import org.broadinstitute.consent.http.mail.message.SubmittedCloseoutMessage;
 import org.broadinstitute.consent.http.models.CloseoutSupplement;
 import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.Dac;
@@ -114,7 +118,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   @Mock private DACAutomationRuleService ruleService;
   @Mock private ContainerRequest request;
   private DataAccessRequestService service;
-  private String serverUrl;
 
   private static Collaborator createCollaborator() {
     return createCollaborator("collaborator@test.com");
@@ -177,7 +180,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
     container.setVoteDAO(voteDAO);
     container.setMatchDAO(matchDAO);
     container.setDaaDAO(daaDAO);
-    serverUrl = config.getServicesConfiguration().getLocalURL();
     service =
         new DataAccessRequestService(
             counterService,
@@ -582,12 +584,7 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
         service.createProgressReport(user, progressReport, parentDar, request);
 
     assertNotNull(newDar);
-    verify(emailService)
-        .sendSubmittedCloseoutMessage(
-            signingOfficial,
-            parentDar.getDarCode(),
-            progressReport.getReferenceId(),
-            "local_url/dar_application_review/%d".formatted(progressReport.getCollectionId()));
+    verify(emailService).sendMessage(any(SubmittedCloseoutMessage.class), any());
     verify(dataAccessRequestDAO)
         .insertProgressReport(
             parentDar.getId(),
@@ -1837,14 +1834,57 @@ institution or library cards issued: Internal Collaborator member:  \
 
     initService();
     service.sendReminderMessage(vote.getVoteId());
-    verify(emailService)
-        .sendReminderMessage(
-            user,
-            vote,
-            collection.getDarCode(),
-            election.getElectionType(),
-            "local_url/dar_collection/" + collection.getDarCollectionId());
+    verify(emailService).sendMessage(any(ReminderMessage.class), any());
     verify(voteDAO).updateVoteReminderFlag(vote.getVoteId(), true);
+  }
+
+  @Test
+  void testSendReminderMessageDirectly() throws TemplateException, IOException {
+    User user = new User();
+    user.setUserId(123);
+    user.setDisplayName("John Doe");
+    user.setEmail("jd@somewhere");
+
+    Vote vote = new Vote();
+    vote.setVoteId(randomInt(0, 100));
+
+    String darCode = "DAR-12345";
+    String electionType = "DataAccess";
+    String url = "http://localhost/dar_collection/1";
+
+    initService();
+    service.sendReminderMessage(user, vote, darCode, electionType, url);
+    verify(emailService).sendMessage(any(ReminderMessage.class), eq(user.getUserId()));
+  }
+
+  @Test
+  void testSendDarExpirationReminderMessage() throws TemplateException, IOException {
+    User user = new User();
+    user.setUserId(123);
+    user.setDisplayName("John Doe");
+    user.setEmail("jd@somewhere");
+    String darCode = "DAR-12345";
+    Integer otherUserId = 456;
+    String referenceId = UUID.randomUUID().toString();
+
+    initService();
+    service.sendDarExpirationReminderMessage(user, darCode, otherUserId, referenceId);
+    verify(emailService).sendMessage(any(DarExpirationReminderMessage.class), eq(otherUserId));
+  }
+
+  @Test
+  void testSendDarExpiredMessage() throws TemplateException, IOException {
+    User user = new User();
+    user.setUserId(123);
+    user.setDisplayName("John Doe");
+    user.setEmail("jd@somewhere");
+    String darCode = "DAR-12345";
+    Integer otherUserId = 456;
+    String referenceId = UUID.randomUUID().toString();
+
+    initService();
+    service.sendDarExpiredMessage(user, darCode, otherUserId, referenceId);
+    verify(emailService).sendMessage(any(DarExpiredMessage.class), eq(otherUserId));
   }
 
   @Test
@@ -2040,12 +2080,7 @@ institution or library cards issued: Internal Collaborator member:  \
             service.approveDataAccessRequestCloseout(
                 closeout.actor, closeout.dar.getReferenceId()));
     verify(dacService).findByDatasetId(closeout.dar().getDatasetIds());
-    verify(emailService)
-        .sendSubmittedCloseoutMessage(
-            chair,
-            closeout.dar().getDarCode(),
-            closeout.dar().getReferenceId(),
-            serverUrl + "dar_application_review/%d".formatted(closeout.dar().getCollectionId()));
+    verify(emailService).sendMessage(any(SubmittedCloseoutMessage.class), any());
   }
 
   private DataAccessRequest getMockedDar(String darCode, String referenceId, User user) {

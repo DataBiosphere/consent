@@ -33,6 +33,12 @@ import org.broadinstitute.consent.http.enumeration.ElectionType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.mail.message.DACMembersDARRADARApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
+import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
+import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.SoDARApproved;
+import org.broadinstitute.consent.http.mail.message.SoPRApproved;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -264,7 +270,6 @@ public class VoteService implements ConsentLogger {
           if (!approvedDatasetsInDar.isEmpty()) {
             String darCode = dar.getDarCode();
             User researcher = userDAO.findUserById(dar.getUserId());
-            Integer researcherId = researcher.getUserId();
             List<DatasetMailDTO> datasetMailDTOs =
                 approvedDatasetsInDar.stream()
                     .map(
@@ -287,11 +292,11 @@ public class VoteService implements ConsentLogger {
 
             try {
               if (dar.getProgressReport()) {
-                emailService.sendResearcherProgressReportApproved(
-                    darCode, researcherId, datasetMailDTOs, translation, radarApproved);
+                sendResearcherProgressReportApproved(
+                    researcher, darCode, datasetMailDTOs, translation, radarApproved);
               } else {
-                emailService.sendResearcherDarApproved(
-                    darCode, researcherId, datasetMailDTOs, translation, radarApproved);
+                sendResearcherDarApproved(
+                    researcher, darCode, datasetMailDTOs, translation, radarApproved);
               }
             } catch (Exception e) {
               logException("Error sending researcher dar approved email: " + e.getMessage(), e);
@@ -321,6 +326,95 @@ public class VoteService implements ConsentLogger {
   }
 
   @VisibleForTesting
+  protected void sendResearcherDarApproved(
+      User researcher,
+      String darCode,
+      List<DatasetMailDTO> datasets,
+      String dataUseRestriction,
+      boolean radarApproved)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new ResearcherDarApprovedMessage(
+            researcher, darCode, datasets, dataUseRestriction, radarApproved),
+        researcher.getUserId());
+  }
+
+  @VisibleForTesting
+  protected void sendResearcherProgressReportApproved(
+      User researcher,
+      String darCode,
+      List<DatasetMailDTO> datasets,
+      String dataUseRestriction,
+      boolean radarApproved)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new ResearcherApprovedProgressReportMessage(
+            researcher, darCode, datasets, dataUseRestriction, radarApproved),
+        researcher.getUserId());
+  }
+
+  @VisibleForTesting
+  protected void sendNewSoDARApprovedEmail(
+      User so,
+      String darCode,
+      User researcher,
+      String referenceId,
+      List<Dataset> datasets,
+      String dataUseRestriction,
+      boolean radarApproved)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new SoDARApproved(
+            so, darCode, researcher, referenceId, datasets, dataUseRestriction, radarApproved),
+        so.getUserId());
+  }
+
+  @VisibleForTesting
+  protected void sendNewSoProgressReportApprovedEmail(
+      User so,
+      String darCode,
+      User researcher,
+      String referenceId,
+      List<Dataset> datasets,
+      String dataUseRestriction,
+      boolean radarApproved)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new SoPRApproved(
+            so, darCode, researcher, referenceId, datasets, dataUseRestriction, radarApproved),
+        so.getUserId());
+  }
+
+  @VisibleForTesting
+  protected void sendNewDARRADARApprovalToDAC(
+      User dacMember,
+      String darCode,
+      String referenceId,
+      List<DatasetMailDTO> datasetList,
+      User researcher)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new DACMembersDARRADARApprovedMessage(
+            dacMember, darCode, researcher, referenceId, datasetList),
+        dacMember.getUserId());
+  }
+
+  @VisibleForTesting
+  protected void sendDataCustodianApprovalMessage(
+      User custodian,
+      String darCode,
+      List<DatasetMailDTO> datasets,
+      String dataDepositorName,
+      String researcherEmail,
+      boolean radarApproved)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new DataCustodianApprovalMessage(
+            custodian, darCode, datasets, dataDepositorName, researcherEmail, radarApproved),
+        custodian.getUserId());
+  }
+
+  @VisibleForTesting
   protected void notifyDACOfRadarApprovals(
       List<Dataset> approvedDatasets,
       User researcher,
@@ -346,7 +440,7 @@ public class VoteService implements ConsentLogger {
           members.forEach(
               member -> {
                 try {
-                  emailService.sendNewDARRADARApprovalToDAC(
+                  sendNewDARRADARApprovalToDAC(
                       member, darCode, referenceId, datasets.stream().toList(), researcher);
                 } catch (TemplateException | IOException e) {
                   logWarn("Error sending DAR approval to DAC: " + e.getMessage(), e);
@@ -379,10 +473,10 @@ public class VoteService implements ConsentLogger {
     List<User> signingOfficials = userDAO.getSOsByInstitution(researcher.getInstitutionId());
     for (User so : signingOfficials) {
       if (dar.getProgressReport()) {
-        emailService.sendNewSoProgressReportApprovedEmail(
+        sendNewSoProgressReportApprovedEmail(
             so, darCode, researcher, dar.getReferenceId(), datasets, translation, radarApproved);
       } else {
-        emailService.sendNewSoDARApprovedEmail(
+        sendNewSoDARApprovedEmail(
             so, darCode, researcher, dar.getReferenceId(), datasets, translation, radarApproved);
       }
     }
@@ -484,7 +578,7 @@ public class VoteService implements ConsentLogger {
                           d.getName(), d.getDatasetIdentifier(), getDataLocationUrl(d)))
               .toList();
       try {
-        emailService.sendDataCustodianApprovalMessage(
+        sendDataCustodianApprovalMessage(
             entry.getKey(),
             darCode,
             datasetMailDTOs,

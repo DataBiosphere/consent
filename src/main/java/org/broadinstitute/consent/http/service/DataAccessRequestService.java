@@ -42,6 +42,10 @@ import org.broadinstitute.consent.http.exceptions.InvalidEmailAddressException;
 import org.broadinstitute.consent.http.exceptions.LibraryCardRequiredException;
 import org.broadinstitute.consent.http.exceptions.NIHComplianceRuleException;
 import org.broadinstitute.consent.http.exceptions.SubmittedDARCannotBeEditedException;
+import org.broadinstitute.consent.http.mail.message.DarExpirationReminderMessage;
+import org.broadinstitute.consent.http.mail.message.DarExpiredMessage;
+import org.broadinstitute.consent.http.mail.message.ReminderMessage;
+import org.broadinstitute.consent.http.mail.message.SubmittedCloseoutMessage;
 import org.broadinstitute.consent.http.models.Collaborator;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
@@ -325,7 +329,7 @@ public class DataAccessRequestService implements ConsentLogger {
         User signingOfficialUser =
             userService.findUserById(
                 progressReport.getData().getCloseoutSupplement().signingOfficialId());
-        emailService.sendSubmittedCloseoutMessage(
+        sendSubmittedCloseoutMessage(
             signingOfficialUser,
             parentDar.getDarCode(),
             referenceId,
@@ -378,7 +382,7 @@ public class DataAccessRequestService implements ConsentLogger {
     chairs.forEach(
         chairperson -> {
           try {
-            emailService.sendSubmittedCloseoutMessage(
+            sendSubmittedCloseoutMessage(
                 chairperson,
                 dar.getDarCode(),
                 dar.getReferenceId(),
@@ -783,11 +787,10 @@ public class DataAccessRequestService implements ConsentLogger {
             }
             switch (type) {
               case DAR_EXPIRATION_REMINDER:
-                emailService.sendDarExpirationReminderMessage(
-                    user, darCode, user.getUserId(), referenceId);
+                sendDarExpirationReminderMessage(user, darCode, user.getUserId(), referenceId);
                 break;
               case DAR_EXPIRED:
-                emailService.sendDarExpiredMessage(user, darCode, user.getUserId(), referenceId);
+                sendDarExpiredMessage(user, darCode, user.getUserId(), referenceId);
                 break;
               default:
                 break;
@@ -798,6 +801,36 @@ public class DataAccessRequestService implements ConsentLogger {
         });
   }
 
+  @VisibleForTesting
+  protected void sendSubmittedCloseoutMessage(
+      User toUser, String darId, String referenceId, String closeoutUrl)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new SubmittedCloseoutMessage(toUser, darId, referenceId, closeoutUrl), toUser.getUserId());
+  }
+
+  @VisibleForTesting
+  protected void sendDarExpirationReminderMessage(
+      User user, String darCode, Integer userId, String referenceId)
+      throws TemplateException, IOException {
+    emailService.sendMessage(new DarExpirationReminderMessage(user, darCode, referenceId), userId);
+  }
+
+  @VisibleForTesting
+  protected void sendDarExpiredMessage(
+      User researcher, String darCode, Integer userId, String referenceId)
+      throws TemplateException, IOException {
+    emailService.sendMessage(new DarExpiredMessage(researcher, darCode, referenceId), userId);
+  }
+
+  @VisibleForTesting
+  protected void sendReminderMessage(
+      User user, Vote vote, String darCode, String electionType, String url)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new ReminderMessage(user, vote, darCode, electionType, url), user.getUserId());
+  }
+
   public void sendReminderMessage(Integer voteId) throws IOException, TemplateException {
     Vote vote = voteDAO.findVoteById(voteId);
     Election election = electionDAO.findElectionWithFinalVoteById(vote.getElectionId());
@@ -805,8 +838,7 @@ public class DataAccessRequestService implements ConsentLogger {
         darCollectionDAO.findDARCollectionByReferenceId(election.getReferenceId());
     User user = findUserById(vote.getUserId());
     String voteUrl = serverUrl + "dar_collection/%d".formatted(collection.getDarCollectionId());
-    emailService.sendReminderMessage(
-        user, vote, collection.getDarCode(), election.getElectionType(), voteUrl);
+    sendReminderMessage(user, vote, collection.getDarCode(), election.getElectionType(), voteUrl);
     voteDAO.updateVoteReminderFlag(voteId, true);
   }
 

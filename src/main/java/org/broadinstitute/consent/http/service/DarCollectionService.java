@@ -46,6 +46,13 @@ import org.broadinstitute.consent.http.enumeration.ElectionStatus;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.mail.message.NewCaseMessage;
+import org.broadinstitute.consent.http.mail.message.NewDARRequestMessage;
+import org.broadinstitute.consent.http.mail.message.NewDARSigningOfficialRequestMessage;
+import org.broadinstitute.consent.http.mail.message.NewProgressReportCaseMessage;
+import org.broadinstitute.consent.http.mail.message.NewProgressReportRequestMessage;
+import org.broadinstitute.consent.http.mail.message.SoDARSubmitted;
+import org.broadinstitute.consent.http.mail.message.SoPRSubmitted;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DarCollectionSummary;
@@ -813,10 +820,9 @@ public class DarCollectionService implements ConsentLogger {
           List<User> voteUsers =
               voteDAO.findVoteUsersByElectionReferenceIdList(createdElectionReferenceIds);
           if (dar.getProgressReport()) {
-            emailService.sendProgressReportNewCollectionElectionMessage(
-                voteUsers, collection.getDarCode());
+            sendProgressReportNewCollectionElectionMessage(voteUsers, collection.getDarCode());
           } else {
-            emailService.sendDarNewCollectionElectionMessage(voteUsers, collection.getDarCode());
+            sendDarNewCollectionElectionMessage(voteUsers, collection.getDarCode());
           }
 
         } catch (Exception e) {
@@ -1038,7 +1044,8 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   /** Creates elections and votes for DACs with auto-open rules. */
-  private void createElectionsAndVotesForAutoOpenDacs(
+  @VisibleForTesting
+  protected void createElectionsAndVotesForAutoOpenDacs(
       DacUserClassification classification, DataAccessRequest latestDar) {
     if (latestDar.requiresSOApproval && latestDar.getApprovingSigningOfficialUserId() == null) {
       return;
@@ -1093,7 +1100,8 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   /** Creates standard votes for all users for the given elections. */
-  private void createVotesForAllUsers(
+  @VisibleForTesting
+  protected void createVotesForAllUsers(
       Set<User> users, int dataAccessElectionId, int rpElectionId, DataAccessRequest dar) {
 
     for (User user : users) {
@@ -1151,7 +1159,8 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   /** Notifies users for the given DACs and datasets. */
-  private void notifyUsersForDacs(
+  @VisibleForTesting
+  protected void notifyUsersForDacs(
       Set<User> users,
       Set<Dac> dacs,
       Set<Dataset> datasets,
@@ -1170,23 +1179,21 @@ public class DarCollectionService implements ConsentLogger {
       if (isAutoOpen) {
         // Send election notification for auto-open DACs
         if (latestDar.getProgressReport()) {
-          emailService.sendProgressReportNewCollectionElectionMessage(
-              List.of(user), darCollection.getDarCode());
+          sendProgressReportNewCollectionElectionMessage(List.of(user), darCollection.getDarCode());
         } else {
-          emailService.sendDarNewCollectionElectionMessage(
-              List.of(user), darCollection.getDarCode());
+          sendDarNewCollectionElectionMessage(List.of(user), darCollection.getDarCode());
         }
       } else {
         // Send manual notification for manual DACs
         if (latestDar.getProgressReport()) {
-          emailService.sendNewProgressReportRequestEmail(
+          sendNewProgressReportRequestEmail(
               user,
               dacToDatasetsMap,
               researcherName,
               darCollection.getDarCode(),
               latestDar.getReferenceId());
         } else {
-          emailService.sendNewDARRequestEmail(
+          sendNewDARRequestEmail(
               user, dacToDatasetsMap, researcherName, darCollection.getDarCode());
         }
       }
@@ -1197,8 +1204,72 @@ public class DarCollectionService implements ConsentLogger {
       DataAccessRequest dataAccessRequest, User researcher) throws TemplateException, IOException {
     String soEmail = dataAccessRequest.getData().getSigningOfficialEmail();
     User soUser = userDAO.findUserByEmail(soEmail);
-    emailService.sendNewDARSigningOfficialRequestEmail(
+    sendNewDARSigningOfficialRequestEmail(
         soUser, researcher.getDisplayName(), dataAccessRequest.getDarCode());
+  }
+
+  @VisibleForTesting
+  protected void sendDarNewCollectionElectionMessage(List<User> users, String darCode)
+      throws IOException, TemplateException {
+    String electionType = "Data Access Request";
+    for (User user : users) {
+      emailService.sendMessage(new NewCaseMessage(user, darCode, electionType), user.getUserId());
+    }
+  }
+
+  @VisibleForTesting
+  protected void sendProgressReportNewCollectionElectionMessage(List<User> users, String darCode)
+      throws IOException, TemplateException {
+    for (User user : users) {
+      emailService.sendMessage(new NewProgressReportCaseMessage(user, darCode), user.getUserId());
+    }
+  }
+
+  @VisibleForTesting
+  protected void sendNewDARRequestEmail(
+      User user, Map<String, List<String>> dacDatasetMap, String researcherName, String darCode)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new NewDARRequestMessage(user, darCode, dacDatasetMap, researcherName), user.getUserId());
+  }
+
+  @VisibleForTesting
+  protected void sendNewDARSigningOfficialRequestEmail(
+      User signingOfficial, String researcherName, String darCode)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new NewDARSigningOfficialRequestMessage(signingOfficial, darCode, researcherName),
+        signingOfficial.getUserId());
+  }
+
+  @VisibleForTesting
+  protected void sendNewProgressReportRequestEmail(
+      User user,
+      Map<String, List<String>> dacDatasetMap,
+      String researcherName,
+      String darCode,
+      String referenceId)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new NewProgressReportRequestMessage(
+            user, darCode, referenceId, dacDatasetMap, researcherName),
+        user.getUserId());
+  }
+
+  @VisibleForTesting
+  protected void sendNewSoProgressReportSubmittedEmail(
+      User user, String darCode, User researcher, String referenceId, List<Dataset> datasets)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new SoPRSubmitted(user, darCode, researcher, referenceId, datasets), user.getUserId());
+  }
+
+  @VisibleForTesting
+  protected void sendNewSoDARSubmittedEmail(
+      User user, String darCode, User researcher, String referenceId, List<Dataset> datasets)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new SoDARSubmitted(user, darCode, researcher, referenceId, datasets), user.getUserId());
   }
 
   @VisibleForTesting
@@ -1221,11 +1292,10 @@ public class DarCollectionService implements ConsentLogger {
     List<Dataset> datasets = datasetDAO.findDatasetsByIdList(dar.getDatasetIds());
     for (User so : signingOfficials) {
       if (dar.getProgressReport()) {
-        emailService.sendNewSoProgressReportSubmittedEmail(
+        sendNewSoProgressReportSubmittedEmail(
             so, darCode, researcher, dar.getReferenceId(), datasets);
       } else {
-        emailService.sendNewSoDARSubmittedEmail(
-            so, darCode, researcher, dar.getReferenceId(), datasets);
+        sendNewSoDARSubmittedEmail(so, darCode, researcher, dar.getReferenceId(), datasets);
       }
     }
   }
@@ -1310,7 +1380,8 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   /** Helper class to hold classification results for DACs, users, and datasets. */
-  private static class DacUserClassification {
+  @VisibleForTesting
+  static class DacUserClassification {
     Set<Dac> autoOpenDacs = new HashSet<>();
     Set<Dac> manualOpenDacs = new HashSet<>();
     Set<User> autoOpenUsers = new HashSet<>();

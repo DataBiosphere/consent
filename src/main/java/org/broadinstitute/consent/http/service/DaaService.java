@@ -1,10 +1,12 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
@@ -24,6 +26,8 @@ import org.broadinstitute.consent.http.cloudstore.GCSService;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.enumeration.FileCategory;
+import org.broadinstitute.consent.http.mail.message.NewDAAUploadResearcherMessage;
+import org.broadinstitute.consent.http.mail.message.NewDAAUploadSOMessage;
 import org.broadinstitute.consent.http.models.DaaBulkAssignmentResult;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
@@ -207,20 +211,40 @@ public class DaaService implements ConsentLogger {
         for (SimplifiedUser researcher : researchers) {
           toUser.setEmail(researcher.getEmail());
           toUser.setDisplayName(researcher.getDisplayName());
-          emailService.sendNewDAAUploadResearcherMessage(
+          sendNewDAAUploadResearcherMessage(
               toUser, dacName, previousDaaName, newDaaName, user.getUserId());
         }
         for (SimplifiedUser signingOfficial : signingOfficials) {
           toUser.setEmail(signingOfficial.getEmail());
           toUser.setDisplayName(signingOfficial.getDisplayName());
-          emailService.sendNewDAAUploadSOMessage(
-              toUser, dacName, previousDaaName, newDaaName, user.getUserId());
+          sendNewDAAUploadSOMessage(toUser, dacName, previousDaaName, newDaaName, user.getUserId());
         }
       }
     } catch (Exception e) {
       logException(e);
       throw (e);
     }
+  }
+
+  @VisibleForTesting
+  protected void sendNewDAAUploadResearcherMessage(
+      User researcher, String dacName, String previousDaaName, String newDaaName, Integer userId)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new NewDAAUploadResearcherMessage(researcher, dacName, previousDaaName, newDaaName),
+        userId);
+  }
+
+  @VisibleForTesting
+  protected void sendNewDAAUploadSOMessage(
+      User signingOfficial,
+      String dacName,
+      String previousDaaName,
+      String newDaaName,
+      Integer userId)
+      throws TemplateException, IOException {
+    emailService.sendMessage(
+        new NewDAAUploadSOMessage(signingOfficial, dacName, previousDaaName, newDaaName), userId);
   }
 
   public InputStream findFileById(Integer daaId) {

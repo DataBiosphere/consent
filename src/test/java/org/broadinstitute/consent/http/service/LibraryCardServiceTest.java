@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -21,6 +22,7 @@ import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.InstitutionDAO;
@@ -28,6 +30,7 @@ import org.broadinstitute.consent.http.db.LibraryCardDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.mail.message.NewLibraryCardIssuedMessage;
 import org.broadinstitute.consent.http.models.DataAccessAgreement;
 import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.LibraryCard;
@@ -74,7 +77,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     when(userDAO.findUserByEmail(user.getEmail())).thenReturn(user);
     when(institutionDAO.findInstitutionById(institution.getId())).thenReturn(institution);
     when(institutionService.findInstitutionForEmail(user.getEmail())).thenReturn(institution);
-    doThrow(IOException.class).when(emailService).sendNewLibraryCardIssuedMessage(user);
+    doThrow(IOException.class).when(emailService).sendMessage(any(), eq(user.getUserId()));
     LibraryCard payload = testLibraryCard(user.getUserId());
     payload.setUserEmail(user.getEmail());
     payload.setUserName("username");
@@ -547,7 +550,10 @@ class LibraryCardServiceTest extends AbstractTestHelper {
     LibraryCard card = service.createLibraryCardForSigningOfficial(user, signingOfficial);
     assertNotNull(card);
     assertEquals(card.getId(), newLc.getId());
-    verify(emailService).sendNewLibraryCardIssuedMessage(user);
+    verify(emailService)
+        .sendMessage(
+            argThat(m -> Objects.equals(m.getEntityReferenceId(), user.getEmail())),
+            eq(user.getUserId()));
   }
 
   @Test
@@ -568,6 +574,24 @@ class LibraryCardServiceTest extends AbstractTestHelper {
 
     List<LibraryCardDaaAudit> audits = service.findLibraryCardDaaAuditsByUserId(user.getUserId());
     assertTrue(audits.isEmpty());
+  }
+
+  @Test
+  void testSendNewLibraryCardIssuedMessage() throws Exception {
+    User toUser = new User();
+    toUser.setUserId(123);
+    toUser.setDisplayName("Test User");
+    toUser.setEmail("test.user@test.com");
+
+    service.sendNewLibraryCardIssuedMessage(toUser);
+
+    verify(emailService)
+        .sendMessage(
+            argThat(
+                m ->
+                    m instanceof NewLibraryCardIssuedMessage
+                        && Objects.equals(m.getEntityReferenceId(), toUser.getEmail())),
+            eq(toUser.getUserId()));
   }
 
   private User testUser(Integer institutionId) {

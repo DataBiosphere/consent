@@ -10,8 +10,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -43,6 +41,12 @@ import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.enumeration.VoteType;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
+import org.broadinstitute.consent.http.mail.message.DACMembersDARRADARApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.DataCustodianApprovalMessage;
+import org.broadinstitute.consent.http.mail.message.ResearcherApprovedProgressReportMessage;
+import org.broadinstitute.consent.http.mail.message.ResearcherDarApprovedMessage;
+import org.broadinstitute.consent.http.mail.message.SoDARApproved;
+import org.broadinstitute.consent.http.mail.message.SoPRApproved;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DarCollection;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
@@ -57,7 +61,6 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
-import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -482,8 +485,7 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.sendDatasetApprovalNotifications(List.of(v1), researcher);
 
-    verify(emailService)
-        .sendResearcherProgressReportApproved(any(), any(), anyList(), any(), anyBoolean());
+    verify(emailService).sendMessage(any(ResearcherApprovedProgressReportMessage.class), any());
   }
 
   @Test
@@ -560,8 +562,7 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.sendDatasetApprovalNotifications(List.of(v1, v2), researcher);
     // Since we have 1 collection with different DAR/Datasets, we should be sending 1 email
-    verify(emailService, times(2))
-        .sendResearcherDarApproved(any(), any(), anyList(), any(), anyBoolean());
+    verify(emailService, times(2)).sendMessage(any(ResearcherDarApprovedMessage.class), any());
   }
 
   @Test
@@ -648,8 +649,7 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.sendDatasetApprovalNotifications(List.of(v1, v2), researcher);
     // Since we have 2 collections with different DAR/Datasets, we should be sending 2 emails
-    verify(emailService, times(2))
-        .sendResearcherDarApproved(any(), any(), anyList(), any(), anyBoolean());
+    verify(emailService, times(2)).sendMessage(any(ResearcherDarApprovedMessage.class), any());
   }
 
   @Test
@@ -736,8 +736,7 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.sendDatasetApprovalNotifications(List.of(v1, v2), researcher);
     // Since we have 2 collections with different DAR/Datasets, we should be sending 2 emails
-    verify(emailService, times(2))
-        .sendResearcherDarApproved(any(), any(), anyList(), any(), eq(true));
+    verify(emailService, times(2)).sendMessage(any(ResearcherDarApprovedMessage.class), any());
   }
 
   @Test
@@ -770,8 +769,7 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.sendDatasetApprovalNotifications(List.of(v1), user);
     // Since we have a false vote, we should not be sending any email
-    verify(emailService, times(0))
-        .sendResearcherDarApproved(any(), any(), anyList(), any(), anyBoolean());
+    verify(emailService, times(0)).sendMessage(any(ResearcherDarApprovedMessage.class), any());
     // Similar check for all DAO calls
     verify(dataAccessRequestDAO, times(1)).findByReferenceIds(any());
     verify(datasetDAO, times(0)).findDatasetsByIdList(any());
@@ -807,8 +805,7 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.sendDatasetApprovalNotifications(List.of(v1), user);
     // Since we have a non-final vote, we should not be sending any email
-    verify(emailService, times(0))
-        .sendResearcherDarApproved(any(), any(), anyList(), any(), anyBoolean());
+    verify(emailService, times(0)).sendMessage(any(ResearcherDarApprovedMessage.class), any());
     // Similar check for all DAO calls
     verify(dataAccessRequestDAO, times(1)).findByReferenceIds(any());
     verify(datasetDAO, times(0)).findDatasetsByIdList(any());
@@ -852,8 +849,7 @@ class VoteServiceTest extends AbstractTestHelper {
 
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1, d2), researcher, "Dar Code", false);
-      verify(emailService, times(1))
-          .sendDataCustodianApprovalMessage(any(), any(), any(), any(), any(), eq(false));
+      verify(emailService, times(1)).sendMessage(any(DataCustodianApprovalMessage.class), any());
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -900,8 +896,7 @@ class VoteServiceTest extends AbstractTestHelper {
         () ->
             service.notifyCustodiansOfApprovedDatasets(
                 datasetsList, researcher, "Dar Code", false));
-    verify(emailService, times(0))
-        .sendDataCustodianApprovalMessage(any(), any(), any(), any(), any(), anyBoolean());
+    verify(emailService, times(0)).sendMessage(any(DataCustodianApprovalMessage.class), any());
   }
 
   @Test
@@ -954,8 +949,7 @@ class VoteServiceTest extends AbstractTestHelper {
 
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", false);
-      verify(emailService, times(3))
-          .sendDataCustodianApprovalMessage(any(), any(), any(), any(), any(), eq(false));
+      verify(emailService, times(3)).sendMessage(any(DataCustodianApprovalMessage.class), any());
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -1011,8 +1005,7 @@ class VoteServiceTest extends AbstractTestHelper {
 
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", true);
-      verify(emailService, times(3))
-          .sendDataCustodianApprovalMessage(any(), any(), any(), any(), any(), eq(true));
+      verify(emailService, times(3)).sendMessage(any(DataCustodianApprovalMessage.class), any());
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -1073,8 +1066,7 @@ class VoteServiceTest extends AbstractTestHelper {
 
     try {
       service.notifyCustodiansOfApprovedDatasets(List.of(d1), researcher, "Dar Code", false);
-      verify(emailService, times(3))
-          .sendDataCustodianApprovalMessage(any(), any(), any(), any(), any(), eq(false));
+      verify(emailService, times(3)).sendMessage(any(DataCustodianApprovalMessage.class), any());
     } catch (Exception e) {
       fail(e.getMessage());
     }
@@ -1123,11 +1115,8 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.notifySigningOfficialsOfApprovedDatasets(
         List.of(dataset), researcher, dar, "DAR-000123", "translation", false);
-    verify(emailService, never())
-        .sendNewSoProgressReportApprovedEmail(
-            any(), any(), any(), any(), any(), any(), anyBoolean());
-    verify(emailService, times(1))
-        .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), eq(false));
+    verify(emailService, never()).sendMessage(any(SoPRApproved.class), any());
+    verify(emailService, times(1)).sendMessage(any(SoDARApproved.class), any());
   }
 
   @Test
@@ -1150,18 +1139,15 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.notifySigningOfficialsOfApprovedDatasets(
         List.of(dataset), researcher, dar, "DAR-000123", "translation", true);
-    verify(emailService, never())
-        .sendNewSoProgressReportApprovedEmail(
-            any(), any(), any(), any(), any(), any(), anyBoolean());
-    verify(emailService, times(1))
-        .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), eq(true));
+    verify(emailService, never()).sendMessage(any(SoPRApproved.class), any());
+    verify(emailService, times(1)).sendMessage(any(SoDARApproved.class), any());
   }
 
   @Test
   void testNotifyDACOfRadarApprovals_not_RADAR() throws TemplateException, IOException {
 
     service.notifyDACOfRadarApprovals(List.of(new Dataset()), new User(), "", "", false);
-    verify(emailService, never()).sendNewDARRADARApprovalToDAC(any(), any(), any(), any(), any());
+    verify(emailService, never()).sendMessage(any(DACMembersDARRADARApprovedMessage.class), any());
   }
 
   @Test
@@ -1204,38 +1190,7 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.notifyDACOfRadarApprovals(
         List.of(dataset1, dataset2), researcher, referenceId, darCode, true);
-    verify(emailService)
-        .sendNewDARRADARApprovalToDAC(
-            dac1Member,
-            darCode,
-            referenceId,
-            List.of(
-                new DatasetMailDTO(
-                    dataset1.getName(), dataset1.getDatasetIdentifier(), dataLocationUrl)),
-            researcher);
-    verify(emailService)
-        .sendNewDARRADARApprovalToDAC(
-            dac1Chair,
-            darCode,
-            referenceId,
-            List.of(
-                new DatasetMailDTO(
-                    dataset1.getName(), dataset1.getDatasetIdentifier(), dataLocationUrl)),
-            researcher);
-    verify(emailService)
-        .sendNewDARRADARApprovalToDAC(
-            dac2Member,
-            darCode,
-            referenceId,
-            List.of(new DatasetMailDTO(dataset2.getName(), dataset2.getDatasetIdentifier(), null)),
-            researcher);
-    verify(emailService)
-        .sendNewDARRADARApprovalToDAC(
-            dac2Chair,
-            darCode,
-            referenceId,
-            List.of(new DatasetMailDTO(dataset2.getName(), dataset2.getDatasetIdentifier(), null)),
-            researcher);
+    verify(emailService, times(4)).sendMessage(any(DACMembersDARRADARApprovedMessage.class), any());
   }
 
   @Test
@@ -1265,11 +1220,8 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.notifySigningOfficialsOfApprovedDatasets(
         List.of(dataset), researcher, child, "DAR-000123", "translation", false);
-    verify(emailService, times(1))
-        .sendNewSoProgressReportApprovedEmail(
-            any(), any(), any(), any(), any(), any(), anyBoolean());
-    verify(emailService, never())
-        .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
+    verify(emailService, times(1)).sendMessage(any(SoPRApproved.class), any());
+    verify(emailService, never()).sendMessage(any(SoDARApproved.class), any());
   }
 
   @Test
@@ -1285,11 +1237,8 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.notifySigningOfficialsOfApprovedDatasets(
         List.of(dataset), null, dar, "DAR-000123", "translation", false);
-    verify(emailService, never())
-        .sendNewSoProgressReportApprovedEmail(
-            any(), any(), any(), any(), any(), any(), anyBoolean());
-    verify(emailService, never())
-        .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
+    verify(emailService, never()).sendMessage(any(SoPRApproved.class), any());
+    verify(emailService, never()).sendMessage(any(SoDARApproved.class), any());
   }
 
   @Test
@@ -1307,11 +1256,8 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.notifySigningOfficialsOfApprovedDatasets(
         List.of(dataset), researcher, dar, "DAR-000123", "translation", false);
-    verify(emailService, never())
-        .sendNewSoProgressReportApprovedEmail(
-            any(), any(), any(), any(), any(), any(), anyBoolean());
-    verify(emailService, never())
-        .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
+    verify(emailService, never()).sendMessage(any(SoPRApproved.class), any());
+    verify(emailService, never()).sendMessage(any(SoDARApproved.class), any());
   }
 
   @Test
@@ -1331,11 +1277,8 @@ class VoteServiceTest extends AbstractTestHelper {
 
     service.notifySigningOfficialsOfApprovedDatasets(
         List.of(dataset), researcher, dar, "DAR-000123", "translation", false);
-    verify(emailService, never())
-        .sendNewSoProgressReportApprovedEmail(
-            any(), any(), any(), any(), any(), any(), anyBoolean());
-    verify(emailService, never())
-        .sendNewSoDARApprovedEmail(any(), any(), any(), any(), any(), any(), anyBoolean());
+    verify(emailService, never()).sendMessage(any(SoPRApproved.class), any());
+    verify(emailService, never()).sendMessage(any(SoDARApproved.class), any());
   }
 
   private User createUserWithRole(UserRoles userRoles) {
