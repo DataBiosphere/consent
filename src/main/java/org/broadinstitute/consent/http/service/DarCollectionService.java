@@ -1099,7 +1099,8 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   /** Creates standard votes for all users for the given elections. */
-  private void createVotesForAllUsers(
+  @VisibleForTesting
+  protected void createVotesForAllUsers(
       Set<User> users, int dataAccessElectionId, int rpElectionId, DataAccessRequest dar) {
 
     for (User user : users) {

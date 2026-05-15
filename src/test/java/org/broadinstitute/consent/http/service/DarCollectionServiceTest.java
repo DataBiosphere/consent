@@ -2678,6 +2678,184 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     verify(emailService, never()).sendMessage(any(SoDARSubmitted.class), any());
   }
 
+  @Test
+  void testCreateVotesForAllUsers_EmptyUsers() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setData(new DataAccessRequestData());
+
+    service.createVotesForAllUsers(Set.of(), 1, 2, dar);
+
+    verifyNoInteractions(dacAutomationRuleService);
+  }
+
+  @Test
+  void testCreateVotesForAllUsers_NonChairUser() {
+    User member = createUserWithRole(UserRoles.MEMBER);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setData(new DataAccessRequestData());
+
+    service.createVotesForAllUsers(Set.of(member), 10, 20, dar);
+
+    verify(dacAutomationRuleService).createVoteForElection(10, member.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService).createVoteForElection(20, member.getUserId(), VoteType.DAC);
+    verifyNoMoreInteractions(dacAutomationRuleService);
+  }
+
+  @Test
+  void testCreateVotesForAllUsers_ChairpersonNoManualReview() {
+    User chair = createUserWithRole(UserRoles.CHAIRPERSON);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setData(new DataAccessRequestData()); // all flags null → requiresManualReview() == false
+
+    service.createVotesForAllUsers(Set.of(chair), 10, 20, dar);
+
+    verify(dacAutomationRuleService).createVoteForElection(10, chair.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService).createVoteForElection(20, chair.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(10, chair.getUserId(), VoteType.CHAIRPERSON);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(20, chair.getUserId(), VoteType.CHAIRPERSON);
+    verify(dacAutomationRuleService).createVoteForElection(10, chair.getUserId(), VoteType.FINAL);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(10, chair.getUserId(), VoteType.AGREEMENT);
+    verifyNoMoreInteractions(dacAutomationRuleService);
+  }
+
+  @Test
+  void testCreateVotesForAllUsers_ChairpersonRequiresManualReview() {
+    User chair = createUserWithRole(UserRoles.CHAIRPERSON);
+    DataAccessRequest dar = new DataAccessRequest();
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setPoa(true); // triggers requiresManualReview() == true
+    dar.setData(data);
+
+    service.createVotesForAllUsers(Set.of(chair), 10, 20, dar);
+
+    verify(dacAutomationRuleService).createVoteForElection(10, chair.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService).createVoteForElection(20, chair.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(10, chair.getUserId(), VoteType.CHAIRPERSON);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(20, chair.getUserId(), VoteType.CHAIRPERSON);
+    verify(dacAutomationRuleService).createVoteForElection(10, chair.getUserId(), VoteType.FINAL);
+    verify(dacAutomationRuleService, never())
+        .createVoteForElection(10, chair.getUserId(), VoteType.AGREEMENT);
+  }
+
+  @Test
+  void testCreateVotesForAllUsers_MixedChairAndMember() {
+    User chair = createUserWithRole(UserRoles.CHAIRPERSON);
+    User member = createUserWithRole(UserRoles.MEMBER);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setData(new DataAccessRequestData());
+
+    service.createVotesForAllUsers(Set.of(chair, member), 10, 20, dar);
+
+    // chair gets DAC + CHAIRPERSON + FINAL + AGREEMENT votes
+    verify(dacAutomationRuleService).createVoteForElection(10, chair.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService).createVoteForElection(20, chair.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(10, chair.getUserId(), VoteType.CHAIRPERSON);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(20, chair.getUserId(), VoteType.CHAIRPERSON);
+    verify(dacAutomationRuleService).createVoteForElection(10, chair.getUserId(), VoteType.FINAL);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(10, chair.getUserId(), VoteType.AGREEMENT);
+    // member gets only DAC votes
+    verify(dacAutomationRuleService).createVoteForElection(10, member.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService).createVoteForElection(20, member.getUserId(), VoteType.DAC);
+    verifyNoMoreInteractions(dacAutomationRuleService);
+  }
+
+  @Test
+  void testFindDatasetIdsByDACUser() {
+    User user = new User();
+    user.setUserId(42);
+    List<Integer> expectedIds = List.of(1, 2, 3);
+    when(datasetDAO.findDatasetIdsByDACUserId(user.getUserId())).thenReturn(expectedIds);
+
+    List<Integer> result = service.findDatasetIdsByDACUser(user);
+
+    assertEquals(expectedIds, result);
+    verify(datasetDAO).findDatasetIdsByDACUserId(user.getUserId());
+  }
+
+  @Test
+  void testFindDatasetIdsByDACUser_Empty() {
+    User user = new User();
+    user.setUserId(99);
+    when(datasetDAO.findDatasetIdsByDACUserId(user.getUserId())).thenReturn(List.of());
+
+    List<Integer> result = service.findDatasetIdsByDACUser(user);
+
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void testGetByReferenceId() {
+    User user = mock(User.class);
+    String referenceId = UUID.randomUUID().toString();
+    DarCollection collection = new DarCollection();
+    collection.setDarCollectionId(10);
+    when(darCollectionDAO.findDARCollectionByReferenceId(referenceId)).thenReturn(collection);
+
+    DarCollection result = service.getByReferenceId(user, referenceId);
+
+    assertNotNull(result);
+    assertEquals(10, result.getDarCollectionId());
+  }
+
+  @Test
+  void testGetByReferenceId_NotFound() {
+    User user = mock(User.class);
+    String referenceId = UUID.randomUUID().toString();
+    when(darCollectionDAO.findDARCollectionByReferenceId(referenceId)).thenReturn(null);
+
+    assertThrows(NotFoundException.class, () -> service.getByReferenceId(user, referenceId));
+  }
+
+  @Test
+  void testGetByReferenceId_ServiceException() {
+    User user = mock(User.class);
+    String referenceId = UUID.randomUUID().toString();
+    RuntimeException expected = new RuntimeException("DB error");
+    when(darCollectionDAO.findDARCollectionByReferenceId(referenceId)).thenThrow(expected);
+
+    RuntimeException thrown =
+        assertThrows(RuntimeException.class, () -> service.getByReferenceId(user, referenceId));
+    assertEquals(expected, thrown);
+  }
+
+  @Test
+  void testCancelDarCollectionAsResearcher_NotCollectionOwner() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setData(new DataAccessRequestData());
+    DarCollection collection = createMockCollections().getFirst();
+    collection.addDar(dar);
+    collection.setCreateUserId(999);
+
+    User user = new User();
+    user.setUserId(1);
+
+    assertThrows(
+        NotFoundException.class,
+        () -> service.cancelDarCollectionByRole(user, collection, UserRoles.RESEARCHER));
+    verifyNoInteractions(electionDAO);
+    verifyNoInteractions(dataAccessRequestDAO);
+  }
+
+  @Test
+  void testAddDatasetsToCollection_NoDars() {
+    DarCollection collection = new DarCollection();
+
+    DarCollection result = service.addDatasetsToCollection(collection);
+
+    assertNotNull(result);
+    verifyNoInteractions(dataAccessRequestDAO);
+    verifyNoInteractions(datasetDAO);
+  }
+
   private DarCollection generateMockDarCollection(Set<Dataset> datasets) {
     DarCollection collection = new DarCollection();
     collection.addDar(generateMockDarWithDatasetId(datasets));
