@@ -31,7 +31,7 @@ public class TicketFactory implements ConsentLogger {
       logException("Invalid Zendesk response: %s".formatted(response), e);
       throw e;
     }
-    if (obj == null || !(isVerifiedZendeskRequest(obj) || isSuspendedZendeskRequest(obj))) {
+    if (!(isVerifiedZendeskRequest(obj) || isSuspendedZendeskRequest(obj))) {
       logWarn("Invalid Zendesk response: %s".formatted(response));
       throw new IllegalStateException(
           "Invalid Zendesk response: 'request' field is missing or not a JSON object.");
