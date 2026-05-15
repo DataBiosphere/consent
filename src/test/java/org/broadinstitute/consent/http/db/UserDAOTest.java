@@ -32,7 +32,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserProperty;
 import org.broadinstitute.consent.http.models.UserRole;
-import org.broadinstitute.consent.http.models.mail.MailMessage;
+import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.result.ResultIterable;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
@@ -597,17 +597,8 @@ class UserDAOTest extends DAOTestHelper {
                   // simulate having sent a message so we won't send one again.
                   Date now = Date.from(Instant.now());
                   mailMessageDAO.insert(
-                      new MailMessage(
-                          referenceId,
-                          null,
-                          null,
-                          user.getUserId(),
-                          emailType,
-                          now,
-                          "",
-                          null,
-                          null,
-                          now));
+                      new MailMessageInsert(
+                          referenceId, null, user.getUserId(), emailType, now, "", null, null));
                 }
               }
             });

@@ -45,6 +45,7 @@ import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserVoteReminder;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
+import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.HandleConsumer;
 import org.jdbi.v3.core.Jdbi;
@@ -171,7 +172,7 @@ class EmailServiceTest extends AbstractTestHelper {
     verify(emailDAO)
         .insert(
             argThat(
-                m ->
+                (MailMessageInsert m) ->
                     Objects.equals(m.entityReferenceId(), entityReferenceId)
                         && Objects.equals(m.voteId(), voteId)
                         && Objects.equals(m.userId(), 1234)
@@ -179,8 +180,7 @@ class EmailServiceTest extends AbstractTestHelper {
                         && Objects.equals(m.dateSent(), Date.from(fixedInstant))
                         && Objects.equals(m.emailText(), emailText)
                         && Objects.equals(m.sendgridResponse(), response.getBody())
-                        && Objects.equals(m.sendgridStatus(), response.getStatusCode())
-                        && Objects.equals(m.createDate(), Date.from(fixedInstant))));
+                        && Objects.equals(m.sendgridStatus(), response.getStatusCode())));
   }
 
   @Test

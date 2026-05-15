@@ -36,6 +36,7 @@ import org.broadinstitute.consent.http.mail.message.NewStudyDigestMessage;
 import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserVoteReminder;
+import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.jdbi.v3.core.result.ResultIterable;
 
@@ -94,19 +95,17 @@ public class EmailService implements ConsentLogger {
     Date dateSent = (response != null && response.getStatusCode() < 400) ? Date.from(now) : null;
     String sendgridResponse = response != null ? response.getBody() : null;
     Integer sendgridStatus = response != null ? response.getStatusCode() : null;
-    org.broadinstitute.consent.http.models.mail.MailMessage persistedMailMessage =
-        new org.broadinstitute.consent.http.models.mail.MailMessage(
+    MailMessageInsert mailMessageInsert =
+        new MailMessageInsert(
             mailMessage.getEntityReferenceId(),
-            null,
             mailMessage.getVoteId(),
             userId,
             mailMessage.emailType.getTypeInt(),
             dateSent,
             content,
             sendgridResponse,
-            sendgridStatus,
-            Date.from(now));
-    emailDAO.insert(persistedMailMessage);
+            sendgridStatus);
+    emailDAO.insert(mailMessageInsert);
   }
 
   public List<org.broadinstitute.consent.http.models.mail.MailMessage> fetchEmailMessagesByType(
