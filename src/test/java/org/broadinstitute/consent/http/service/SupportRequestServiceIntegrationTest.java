@@ -12,7 +12,6 @@ import org.broadinstitute.consent.http.models.support.TicketFields;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.zendesk.client.v2.model.Request;
 
 /** This test class should be used for manual integration testing only. */
 class SupportRequestServiceIntegrationTest {
@@ -41,7 +40,7 @@ class SupportRequestServiceIntegrationTest {
                 "Test Description",
                 "Test URL",
                 List.of(token)));
-    Request request = service.postTicketToSupport(ticket);
+    JsonObject request = service.postTicketToSupport(ticket);
     assertNotNull(request);
   }
 }

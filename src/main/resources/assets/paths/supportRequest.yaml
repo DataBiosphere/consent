@@ -1,7 +1,11 @@
 post:
   summary: Create a support request
   operationId: supportRequestPost
-  description: Create a support request
+  description: |
+    Create a support request ticket in Zendesk. 
+    The response may contain either a standard `request` object or a `suspended_ticket` object,
+    depending on whether the request was successfully processed by Zendesk or suspended
+    (e.g., for anonymous or invalid submissions).
   tags:
     - Support
   requestBody:
@@ -11,7 +15,10 @@ post:
           $ref: '../schemas/TicketFields.yaml'
   responses:
     201:
-      description: The created support request
+      description: |
+        Support request submitted successfully.
+        Response contains either a `request` field (successful submission) or a `suspended_ticket` field
+        (suspended/anonymous submission).
       content:
         application/json:
           schema:

@@ -16,7 +16,6 @@ import org.broadinstitute.consent.http.models.support.TicketFields;
 import org.broadinstitute.consent.http.service.SupportRequestService;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.owasp.fileio.FileValidator;
-import org.zendesk.client.v2.model.Request;
 
 @Path("support")
 public class SupportResource extends Resource {
@@ -39,7 +38,7 @@ public class SupportResource extends Resource {
       TicketFields ticketFields = gson.fromJson(body, TicketFields.class);
       DuosTicket ticket = TicketFactory.createTicket(ticketFields);
       logInfo("Support Request Ticket: " + ticket);
-      Request request = supportRequestService.postTicketToSupport(ticket);
+      JsonObject request = supportRequestService.postTicketToSupport(ticket);
       return Response.status(HttpStatusCodes.STATUS_CODE_CREATED).entity(request).build();
     } catch (Exception e) {
       return createExceptionResponse(e);

@@ -5,24 +5,24 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
-import org.zendesk.client.v2.model.Request;
 import org.zendesk.client.v2.model.Ticket;
 
 public class TicketFactory implements ConsentLogger {
 
   private static final String REQUEST = "request";
+  private static final String SUSPENDED_TICKET = "suspended_ticket";
 
   public TicketFactory() {
     // public constructor to allow instantiation for instance methods
   }
 
   /**
-   * Generate the created Request object from the Zendesk request response content.
+   * Validate and return the response from the Zendesk request.
    *
    * @param response The response content from the Zendesk Request API
-   * @return Parsed request.
+   * @return Parsed Json.
    */
-  public Request parseRequestResponse(String response) {
+  public JsonObject parseZendeskResponse(String response) {
     Gson gson = GsonUtil.getInstance();
     JsonObject obj;
     try {
@@ -31,13 +31,21 @@ public class TicketFactory implements ConsentLogger {
       logException("Invalid Zendesk response: %s".formatted(response), e);
       throw e;
     }
-    if (obj == null || !obj.has(REQUEST) || !obj.get(REQUEST).isJsonObject()) {
+    if (!(isVerifiedZendeskRequest(obj) || isSuspendedZendeskRequest(obj))) {
       logWarn("Invalid Zendesk response: %s".formatted(response));
       throw new IllegalStateException(
           "Invalid Zendesk response: 'request' field is missing or not a JSON object.");
     }
-    JsonObject request = obj.get(REQUEST).getAsJsonObject();
-    return gson.fromJson(request, Request.class);
+
+    return obj;
+  }
+
+  private boolean isVerifiedZendeskRequest(JsonObject obj) {
+    return obj != null && obj.has(REQUEST) && obj.get(REQUEST).isJsonObject();
+  }
+
+  private boolean isSuspendedZendeskRequest(JsonObject obj) {
+    return obj != null && obj.has(SUSPENDED_TICKET) && obj.get(SUSPENDED_TICKET).isJsonObject();
   }
 
   /**

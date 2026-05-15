@@ -1,8 +1,12 @@
 type: object
+description: |
+  Response from Zendesk support integration. The response contains either a `request` field
+  (for normal support requests) or a `suspended_ticket` field (for suspended/anonymous requests).
 properties:
   request:
     type: object
     title: SupportRequest
+    description: Standard support request returned by Zendesk
     properties:
       url:
         description: The request location in Zendesk
@@ -82,3 +86,71 @@ properties:
               type: number
             value:
               type: string
+  suspended_ticket:
+    type: object
+    title: SuspendedTicket
+    description: |
+      Suspended/anonymous ticket returned by Zendesk when a request cannot be processed normally.
+      This occurs when submitting requests from unauthenticated or anonymous sources.
+    properties:
+      url:
+        description: The suspended ticket location in Zendesk
+        type: string
+      id:
+        type: number
+      author:
+        type: object
+        title: SuspendedTicketAuthor
+        description: The submitter of the suspended ticket
+        properties:
+          id:
+            type: number
+          name:
+            type: string
+          email:
+            type: string
+      subject:
+        type: string
+      content:
+        type: string
+      cause:
+        type: string
+        description: The reason the ticket was suspended
+      cause_id:
+        type: number
+      error_messages:
+        type: array
+        items:
+          type: string
+      message_id:
+        type: string
+      ticket_id:
+        type: string
+      created_at:
+        type: string
+      updated_at:
+        type: string
+      via:
+        type: object
+        title: SuspendedTicketVia
+        properties:
+          channel:
+            type: string
+          source:
+            type: object
+            title: SuspendedTicketViaSource
+            properties:
+              from:
+                type: object
+              to:
+                type: object
+              rel:
+                type: string
+      attachments:
+        type: array
+        items:
+          type: object
+      recipient:
+        type: string
+      brand_id:
+        type: number
