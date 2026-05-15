@@ -1159,7 +1159,8 @@ public class DarCollectionService implements ConsentLogger {
   }
 
   /** Notifies users for the given DACs and datasets. */
-  private void notifyUsersForDacs(
+  @VisibleForTesting
+  protected void notifyUsersForDacs(
       Set<User> users,
       Set<Dac> dacs,
       Set<Dataset> datasets,
