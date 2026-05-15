@@ -89,8 +89,7 @@ class TicketFactoryTest {
     assertNotNull(parsedResponse);
     assertTrue(parsedResponse.has("suspended_ticket"));
     assertEquals(
-        5555,
-        parsedResponse.get("suspended_ticket").getAsJsonObject().get("id").getAsLong());
+        5555, parsedResponse.get("suspended_ticket").getAsJsonObject().get("id").getAsLong());
   }
 
   @Test
