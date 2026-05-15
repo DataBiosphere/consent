@@ -18,10 +18,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Nullable;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -73,37 +71,6 @@ public class EmailService implements ConsentLogger {
     this.fromAccount = config.getMailConfiguration().getGoogleAccount();
   }
 
-  /**
-   * This method saves an email (either sent or unsent) with all available metadata from the
-   * SendGrid response.
-   */
-  private void saveEmailAndResponse(
-      @Nullable Response response,
-      @Nullable String entityReferenceId,
-      @Nullable Integer voteId,
-      Integer userId,
-      EmailType emailType,
-      String content) {
-    Instant now = Instant.now();
-    Date dateSent =
-        (Objects.nonNull(response) && response.getStatusCode() < 400) ? Date.from(now) : null;
-    String sendgridResponse = Objects.nonNull(response) ? response.getBody() : null;
-    Integer sendgridStatus = Objects.nonNull(response) ? response.getStatusCode() : null;
-    org.broadinstitute.consent.http.models.mail.MailMessage mailMessage =
-        new org.broadinstitute.consent.http.models.mail.MailMessage(
-            entityReferenceId,
-            null,
-            voteId,
-            userId,
-            emailType.getTypeInt(),
-            dateSent,
-            content,
-            sendgridResponse,
-            sendgridStatus,
-            Date.from(now));
-    emailDAO.insert(mailMessage);
-  }
-
   public void sendMessage(MailMessage mailMessage, Integer userId)
       throws IOException, TemplateException {
     Writer out = new StringWriter();
@@ -123,13 +90,23 @@ public class EmailService implements ConsentLogger {
     }
     // Checks that the user has not disabled email before sending
     Response response = sendGridAPI.sendMessage(message, mailMessage.toUser.getEmail());
-    saveEmailAndResponse(
-        response,
-        mailMessage.getEntityReferenceId(),
-        mailMessage.getVoteId(),
-        userId,
-        mailMessage.emailType,
-        content);
+    Instant now = Instant.now();
+    Date dateSent = (response != null && response.getStatusCode() < 400) ? Date.from(now) : null;
+    String sendgridResponse = response != null ? response.getBody() : null;
+    Integer sendgridStatus = response != null ? response.getStatusCode() : null;
+    org.broadinstitute.consent.http.models.mail.MailMessage persistedMailMessage =
+        new org.broadinstitute.consent.http.models.mail.MailMessage(
+            mailMessage.getEntityReferenceId(),
+            null,
+            mailMessage.getVoteId(),
+            userId,
+            mailMessage.emailType.getTypeInt(),
+            dateSent,
+            content,
+            sendgridResponse,
+            sendgridStatus,
+            Date.from(now));
+    emailDAO.insert(persistedMailMessage);
   }
 
   public List<org.broadinstitute.consent.http.models.mail.MailMessage> fetchEmailMessagesByType(
