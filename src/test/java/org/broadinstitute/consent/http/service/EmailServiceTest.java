@@ -191,6 +191,15 @@ class EmailServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testFetchEmailsByUserId() {
+    Integer userId = 123;
+    List<MailMessage> mailMessages = generateMailMessageList();
+    when(emailDAO.fetchMessagesByUserId(eq(userId), anyInt(), anyInt())).thenReturn(mailMessages);
+
+    assertEquals(2, service.fetchEmailMessagesByUserId(userId, 20, 0).size());
+  }
+
+  @Test
   void testFetchEmailsByCreateDate() {
     List<MailMessage> mailMessages = generateMailMessageList();
     Date startDate = new Date();
