@@ -285,7 +285,7 @@ class MailMessageDAOTest extends DAOTestHelper {
         mailMessageDAO.fetchMessagesByType(EmailType.COLLECT.getTypeInt(), 1, 1);
     assertEquals(0, mailMessageList2.size());
 
-    MailMessage mail2 = generateMessage(user, now);
+    generateMessage(user, now);
 
     List<MailMessage> mailMessageList3 =
         mailMessageDAO.fetchMessagesByType(EmailType.COLLECT.getTypeInt(), 1, 1);
