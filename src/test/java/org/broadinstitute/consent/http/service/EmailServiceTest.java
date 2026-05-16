@@ -101,32 +101,13 @@ class EmailServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setEmail(userEmail);
     String subject = "subject";
-    var model = Map.of("key", "value");
+    Map<String, Object> model = Map.of("key", "value");
     String entityReferenceId = "entityReferenceId";
     Integer userId = 1234;
     Integer voteId = 4567;
     var message =
-        new org.broadinstitute.consent.http.mail.message.MailMessage(user, EmailType.NEW_CASE) {
-          @Override
-          public String createSubject() {
-            return subject;
-          }
-
-          @Override
-          public Object createModel(String serverUrl) {
-            return model;
-          }
-
-          @Override
-          public String getEntityReferenceId() {
-            return entityReferenceId;
-          }
-
-          @Override
-          public Integer getVoteId() {
-            return voteId;
-          }
-        };
+        createMailMessage(
+            user, EmailType.NEW_CASE, subject, model, entityReferenceId, voteId, null);
     Template template = mock();
     when(templateHelper.getTemplate(EmailType.NEW_CASE.templateName)).thenReturn(template);
     Response response = new Response();
@@ -178,6 +159,110 @@ class EmailServiceTest extends AbstractTestHelper {
                         && Objects.equals(m.userId(), 1234)
                         && Objects.equals(m.emailType(), EmailType.NEW_CASE.getTypeInt())
                         && Objects.equals(m.dateSent(), Date.from(fixedInstant))
+                        && Objects.equals(m.emailText(), emailText)
+                        && Objects.equals(m.sendgridResponse(), response.getBody())
+                        && Objects.equals(m.sendgridStatus(), response.getStatusCode())));
+  }
+
+  @Test
+  @SuppressWarnings("deprecation")
+  void testSendMessage_SkipsCategoriesAndPersistsNullSendGridValues_WhenResponseIsNull()
+      throws Exception {
+    String userEmail = "user@duos";
+    User user = new User();
+    user.setEmail(userEmail);
+    String subject = "subject";
+    Map<String, Object> model = Map.of("key", "value");
+    String entityReferenceId = "entityReferenceId";
+    Integer userId = 1234;
+    String templateName = "test-template.ftl";
+    var message =
+        createMailMessage(
+            user, EmailType.NEW_DAA_REQUEST, subject, model, entityReferenceId, null, templateName);
+    Template template = mock();
+    when(templateHelper.getTemplate(templateName)).thenReturn(template);
+    when(sendGridAPI.sendMessage(any(), any())).thenReturn(null);
+    String emailText = "emailText";
+    doNothing()
+        .when(template)
+        .process(
+            eq(model),
+            argThat(
+                writer -> {
+                  try {
+                    writer.append(emailText);
+                  } catch (IOException e) {
+                    throw new RuntimeException(e);
+                  }
+                  return true;
+                }));
+
+    service.sendMessage(message, userId);
+
+    var captor = ArgumentCaptor.forClass(Mail.class);
+    verify(sendGridAPI).sendMessage(captor.capture(), eq(user.getEmail()));
+    var mail = captor.getValue();
+    assertTrue(mail.getCategories() == null || mail.getCategories().isEmpty());
+
+    verify(emailDAO)
+        .insert(
+            argThat(
+                (MailMessageInsert m) ->
+                    Objects.equals(m.entityReferenceId(), entityReferenceId)
+                        && m.voteId() == null
+                        && Objects.equals(m.userId(), userId)
+                        && Objects.equals(m.emailType(), EmailType.NEW_DAA_REQUEST.getTypeInt())
+                        && m.dateSent() == null
+                        && Objects.equals(m.emailText(), emailText)
+                        && m.sendgridResponse() == null
+                        && m.sendgridStatus() == null));
+  }
+
+  @Test
+  void testSendMessage_DoesNotSetDateSent_WhenSendGridReturnsErrorResponse() throws Exception {
+    String userEmail = "user@duos";
+    User user = new User();
+    user.setEmail(userEmail);
+    String subject = "subject";
+    Map<String, Object> model = Map.of("key", "value");
+    String entityReferenceId = "entityReferenceId";
+    Integer userId = 1234;
+    Integer voteId = 4567;
+    var message =
+        createMailMessage(
+            user, EmailType.NEW_CASE, subject, model, entityReferenceId, voteId, null);
+    Template template = mock();
+    when(templateHelper.getTemplate(EmailType.NEW_CASE.templateName)).thenReturn(template);
+    Response response = new Response();
+    response.setStatusCode(500);
+    response.setBody("error");
+    when(sendGridAPI.sendMessage(any(), any())).thenReturn(response);
+    String emailText = "emailText";
+    doNothing()
+        .when(template)
+        .process(
+            eq(model),
+            argThat(
+                writer -> {
+                  try {
+                    writer.append(emailText);
+                  } catch (IOException e) {
+                    throw new RuntimeException(e);
+                  }
+                  return true;
+                }));
+
+    service.sendMessage(message, userId);
+
+    verify(emailDAO)
+        .insert(
+            argThat(
+                (MailMessageInsert m) ->
+                    Objects.equals(m.entityReferenceId(), entityReferenceId)
+                        && Objects.equals(m.voteId(), voteId)
+                        && Objects.equals(m.userId(), userId)
+                        && Objects.equals(m.emailType(), EmailType.NEW_CASE.getTypeInt())
+                        && m.dateSent() == null
                         && Objects.equals(m.emailText(), emailText)
                         && Objects.equals(m.sendgridResponse(), response.getBody())
                         && Objects.equals(m.sendgridStatus(), response.getStatusCode())));
@@ -351,13 +436,114 @@ class EmailServiceTest extends AbstractTestHelper {
         .getTemplate(EmailType.NEW_STUDY_DIGEST.templateName);
     EmailService.sendgridThrottleMessageCount = 1;
     EmailService.sendgridThrottleResetTime = 1;
-    Thread.currentThread().interrupt();
-    service.sendNewDatasetInDUOSNotifications();
+    try {
+      Thread.currentThread().interrupt();
+      service.sendNewDatasetInDUOSNotifications();
+    } finally {
+      boolean interruptStatusCleared = Thread.interrupted();
+      assertTrue(interruptStatusCleared || !Thread.currentThread().isInterrupted());
+      EmailService.sendgridThrottleMessageCount = 500;
+      EmailService.sendgridThrottleResetTime = 60;
+    }
     verify(userDAO, times(1)).getHandle();
+  }
+
+  @Test
+  void testSendNewDatasetInDUOSNotifications_ReinterruptsThreadWhenThrottleSleepIsInterrupted()
+      throws IOException {
+    User toUser = new User();
+    toUser.setDisplayName("Test User");
+    toUser.setUserId(1);
+    toUser.setEmail("test@example.com");
+    toUser.setEmailPreference(true);
+    when(datasetDAO.getRecentDacApprovedDatasetStudyIds()).thenReturn(List.of());
+    when(datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds()).thenReturn(List.of());
+    when(studyDAO.findNameAndDatasetCount(any()))
+        .thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, 7)));
+    Handle handle = mock(Handle.class);
+    Jdbi jdbi = mock(Jdbi.class);
+    when(userDAO.getHandle()).thenReturn(handle);
+    when(handle.getJdbi()).thenReturn(jdbi);
+    doAnswer(
+            invocation -> {
+              HandleConsumer<Exception> consumer = invocation.getArgument(0);
+              consumer.useHandle(handle);
+              return null;
+            })
+        .when(jdbi)
+        .useHandle(any());
+    @SuppressWarnings("unchecked")
+    ResultIterator<User> mockIterator = mock(ResultIterator.class);
+    when(mockIterator.hasNext()).thenReturn(true, false);
+    when(mockIterator.next()).thenReturn(toUser);
+    when(userDAO.allEmailReceivingThinlyPopulatedUsers(any(), any()))
+        .thenReturn(ResultIterable.of(mockIterator));
+    when(templateHelper.getTemplate(EmailType.NEW_STUDY_DIGEST.templateName)).thenReturn(mock());
+    Response response = new Response();
+    response.setStatusCode(202);
+    response.setBody("accepted");
+    when(sendGridAPI.sendMessage(any(), any())).thenReturn(response);
+    EmailService.sendgridThrottleMessageCount = 1;
+    EmailService.sendgridThrottleResetTime = 1;
+
+    try {
+      Thread.currentThread().interrupt();
+      service.sendNewDatasetInDUOSNotifications();
+      assertTrue(Thread.currentThread().isInterrupted());
+    } finally {
+      boolean interruptStatusCleared = Thread.interrupted();
+      assertTrue(interruptStatusCleared || !Thread.currentThread().isInterrupted());
+      EmailService.sendgridThrottleMessageCount = 500;
+      EmailService.sendgridThrottleResetTime = 60;
+    }
+
+    verify(userDAO, times(1)).getHandle();
+    verify(emailDAO, times(1))
+        .insert(
+            argThat(
+                m ->
+                    Objects.equals(m.userId(), toUser.getUserId())
+                        && Objects.equals(m.emailType(), EmailType.NEW_STUDY_DIGEST.getTypeInt())));
   }
 
   private List<MailMessage> generateMailMessageList() {
     return Collections.nCopies(2, generateMailMessage());
+  }
+
+  private org.broadinstitute.consent.http.mail.message.MailMessage createMailMessage(
+      User user,
+      EmailType emailType,
+      String subject,
+      Object model,
+      String entityReferenceId,
+      Integer voteId,
+      String templateNameOverride) {
+    return new org.broadinstitute.consent.http.mail.message.MailMessage(user, emailType) {
+      @Override
+      public String getTemplateName() {
+        return templateNameOverride != null ? templateNameOverride : super.getTemplateName();
+      }
+
+      @Override
+      public String createSubject() {
+        return subject;
+      }
+
+      @Override
+      public Object createModel(String serverUrl) {
+        return model;
+      }
+
+      @Override
+      public String getEntityReferenceId() {
+        return entityReferenceId;
+      }
+
+      @Override
+      public Integer getVoteId() {
+        return voteId;
+      }
+    };
   }
 
   private MailMessage generateMailMessage() {
