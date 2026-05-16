@@ -160,66 +160,63 @@ class MailMessageDAOTest extends DAOTestHelper {
     Integer voteId = randomInt(1, 1000);
     String sendGridResponse = randomAlphanumeric(10);
     Integer sendGridStatus = randomInt(200, 399);
+    MailMessageInsert mailMessageInsert =
+        new MailMessageInsert(
+            entityReferenceId,
+            voteId,
+            null,
+            null,
+            Date.from(now),
+            null,
+            sendGridResponse,
+            sendGridStatus);
     assertThrows(
-        UnableToExecuteStatementException.class,
-        () ->
-            mailMessageDAO.insert(
-                new MailMessageInsert(
-                    entityReferenceId,
-                    voteId,
-                    null,
-                    null,
-                    Date.from(now),
-                    null,
-                    sendGridResponse,
-                    sendGridStatus)));
+        UnableToExecuteStatementException.class, () -> mailMessageDAO.insert(mailMessageInsert));
   }
 
   @Test
   void testInsert_MissingEmailType() {
+    User user = createUser();
     Instant now = Instant.now();
     String entityReferenceId = randomAlphanumeric(10);
     Integer voteId = randomInt(1, 1000);
-    Integer userId = randomInt(1, 1000);
     String sendGridResponse = randomAlphanumeric(10);
     Integer sendGridStatus = randomInt(200, 399);
+    MailMessageInsert mailMessageInsert =
+        new MailMessageInsert(
+            entityReferenceId,
+            voteId,
+            user.getUserId(),
+            null,
+            Date.from(now),
+            null,
+            sendGridResponse,
+            sendGridStatus);
     assertThrows(
-        UnableToExecuteStatementException.class,
-        () ->
-            mailMessageDAO.insert(
-                new MailMessageInsert(
-                    entityReferenceId,
-                    voteId,
-                    userId,
-                    null,
-                    Date.from(now),
-                    null,
-                    sendGridResponse,
-                    sendGridStatus)));
+        UnableToExecuteStatementException.class, () -> mailMessageDAO.insert(mailMessageInsert));
   }
 
   @Test
   void testInsert_MissingEmailText() {
+    User user = createUser();
     Instant now = Instant.now();
     String entityReferenceId = randomAlphanumeric(10);
     Integer voteId = randomInt(1, 1000);
-    Integer userId = randomInt(1, 1000);
     Integer emailType = EmailType.COLLECT.getTypeInt();
     String sendGridResponse = randomAlphanumeric(10);
     Integer sendGridStatus = randomInt(200, 399);
+    MailMessageInsert mailMessageInsert =
+        new MailMessageInsert(
+            entityReferenceId,
+            voteId,
+            user.getUserId(),
+            emailType,
+            Date.from(now),
+            null,
+            sendGridResponse,
+            sendGridStatus);
     assertThrows(
-        UnableToExecuteStatementException.class,
-        () ->
-            mailMessageDAO.insert(
-                new MailMessageInsert(
-                    entityReferenceId,
-                    voteId,
-                    userId,
-                    emailType,
-                    Date.from(now),
-                    null,
-                    sendGridResponse,
-                    sendGridStatus)));
+        UnableToExecuteStatementException.class, () -> mailMessageDAO.insert(mailMessageInsert));
   }
 
   @Test
