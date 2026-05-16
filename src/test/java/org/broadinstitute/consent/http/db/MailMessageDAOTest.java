@@ -1,9 +1,9 @@
 package org.broadinstitute.consent.http.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -225,7 +225,7 @@ class MailMessageDAOTest extends DAOTestHelper {
   @Test
   void testInsert_ProvidesCreateDateFromDatabase() {
     User user = createUser();
-    Instant now = Instant.now();
+    Instant historicalInstant = Instant.parse("2000-01-01T00:00:00Z");
     String entityReferenceId = randomAlphanumeric(10);
     Integer voteId = randomInt(1, 1000);
     Integer emailType = EmailType.COLLECT.getTypeInt();
@@ -239,12 +239,12 @@ class MailMessageDAOTest extends DAOTestHelper {
                 voteId,
                 user.getUserId(),
                 emailType,
-                Date.from(now),
+                Date.from(historicalInstant),
                 emailText,
                 sendGridResponse,
                 sendGridStatus));
     assertNotNull(savedMessage.createDate());
-    assertNotEquals(Date.from(now), savedMessage.createDate());
+    assertTrue(savedMessage.createDate().toInstant().isAfter(historicalInstant));
   }
 
   @Test
