@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 import org.broadinstitute.consent.http.db.mapper.MailMessageMapper;
 import org.broadinstitute.consent.http.models.mail.MailMessage;
+import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindMethods;
@@ -19,11 +20,11 @@ public interface MailMessageDAO extends Transactional<MailMessageDAO> {
         INSERT INTO email_entity
           (entity_reference_id, vote_id, user_id, email_type, date_sent, email_text, sendgrid_response, sendgrid_status, create_date)
         VALUES
-          (:entityReferenceId, :voteId, :userId, :emailType, :dateSent, :emailText, :sendgridResponse, :sendgridStatus, :createDate)
+          (:entityReferenceId, :voteId, :userId, :emailType, :dateSent, :emailText, :sendgridResponse, :sendgridStatus, NOW())
         RETURNING *)
       SELECT * FROM insterted_row
       """)
-  MailMessage insert(@BindMethods MailMessage mail);
+  MailMessage insert(@BindMethods MailMessageInsert mail);
 
   @SqlQuery(
       """
