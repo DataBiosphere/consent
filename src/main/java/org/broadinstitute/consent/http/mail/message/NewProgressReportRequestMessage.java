@@ -49,7 +49,6 @@ public class NewProgressReportRequestMessage extends MailMessage {
 
   @Override
   public String getEntityReferenceId() {
-    //
     return referenceId;
   }
 }
