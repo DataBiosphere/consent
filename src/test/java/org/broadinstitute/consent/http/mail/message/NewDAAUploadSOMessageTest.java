@@ -4,10 +4,31 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Map;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 
 class NewDAAUploadSOMessageTest extends AbstractMailMessageTest {
+
+  @Test
+  void testCreateModel_AddsRequiredFields() {
+    User signingOfficial = new User();
+    signingOfficial.setDisplayName("Signing Official User");
+
+    var message = new NewDAAUploadSOMessage(signingOfficial, "DAC Name", "Previous DAA", "New DAA");
+
+    assertRequiredModelFields(
+        message,
+        Map.of(
+            "dacName",
+            "DAC Name",
+            "signingOfficialUserName",
+            "Signing Official User",
+            "previousDaaName",
+            "Previous DAA",
+            "newDaaName",
+            "New DAA"));
+  }
 
   @Test
   void testGetNewDaaUploadSOTemplate() throws Exception {

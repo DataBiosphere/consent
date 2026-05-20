@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
@@ -65,6 +66,44 @@ class SigningOfficialMessagesTest extends AbstractMailMessageTest {
   void testMessageSubject(MailMessage message) {
     assertTrue(
         message.createSubject().contains("Broad Data Use Oversight System - Signing Official"));
+  }
+
+  @ParameterizedTest
+  @MethodSource("messageProvider")
+  void testCreateModel_AddsRequiredFields(MailMessage message) {
+    String radarText =
+        message.createSubject().contains("RADAR") ? "Rule Automated DAR (RADAR) " : "";
+    if (message instanceof SoDARApproved || message instanceof SoPRApproved) {
+      assertRequiredModelFields(
+          message,
+          Map.of(
+              "userName",
+              toUser.getDisplayName(),
+              "darCode",
+              DAR_CODE,
+              "radarText",
+              radarText,
+              "researcherUserName",
+              researcher.getDisplayName(),
+              "researcherEmail",
+              researcher.getEmail(),
+              "datasets",
+              datasets,
+              "dataUseRestriction",
+              TRANSLATION));
+    } else {
+      assertRequiredModelFields(
+          message,
+          Map.of(
+              "userName",
+              toUser.getDisplayName(),
+              "darCode",
+              DAR_CODE,
+              "researcherUserName",
+              researcher.getDisplayName(),
+              "datasets",
+              datasets));
+    }
   }
 
   @ParameterizedTest

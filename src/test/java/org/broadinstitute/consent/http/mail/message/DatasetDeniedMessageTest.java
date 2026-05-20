@@ -4,11 +4,31 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 
 class DatasetDeniedMessageTest extends AbstractMailMessageTest {
+
+  @Test
+  void testCreateModel_AddsRequiredFields() {
+    User toUser = new User();
+    toUser.setDisplayName("researcher name");
+    var message = new DatasetDeniedMessage(toUser, "dac name", "dataset name", "dac email");
+
+    assertRequiredModelFields(
+        message,
+        Map.of(
+            "dataSubmitterName",
+            "researcher name",
+            "datasetName",
+            "dataset name",
+            "dacName",
+            "dac name",
+            "dacEmail",
+            "dac email"));
+  }
 
   @Test
   void testGetDatasetApprovedTemplate() throws Exception {

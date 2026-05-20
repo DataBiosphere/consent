@@ -21,12 +21,17 @@ class NewDARRequestMessageTest extends AbstractMailMessageTest {
     var dacDatasetGroups = Map.of("DAC-01", List.of("DUOS-000001"));
     var message = new NewDARRequestMessage(toUser, "DAR-01", dacDatasetGroups, "ResearcherName");
 
-    Map<String, Object> createdModel = message.createModel();
-
-    assertEquals("Admin", createdModel.get("userName"));
-    assertEquals(dacDatasetGroups, createdModel.get("dacDatasetGroups"));
-    assertEquals("ResearcherName", createdModel.get("researcherUserName"));
-    assertEquals("DAR-01", createdModel.get("darID"));
+    assertRequiredModelFields(
+        message,
+        Map.of(
+            "userName",
+            "Admin",
+            "dacDatasetGroups",
+            dacDatasetGroups,
+            "researcherUserName",
+            "ResearcherName",
+            "darID",
+            "DAR-01"));
   }
 
   @Test
