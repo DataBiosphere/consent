@@ -21,8 +21,8 @@ public class ResearcherCloseoutCompletedMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(Map<String, Object> model) {
-    return mergeModel(model, Map.of("userName", toUser.getDisplayName(), "darCode", darCode));
+  public Map<String, Object> createModel() {
+    return Map.of("userName", toUser.getDisplayName(), "darCode", darCode);
   }
 
   @Override

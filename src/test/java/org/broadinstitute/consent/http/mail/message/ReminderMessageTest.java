@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.mail.message;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.Vote;
@@ -48,5 +49,23 @@ class ReminderMessageTest extends AbstractMailMessageTest {
         Objects.requireNonNull(rendered.document().getElementById("userName")).text());
     assertTrue(rendered.content().contains(darCode));
     assertTrue(rendered.content().contains(voteUrl));
+  }
+
+  @Test
+  void testCreateModel_PreservesVoteUrlServerUrlOverride() {
+    User toUser = new User();
+    toUser.setDisplayName("Reminder User");
+    Vote vote = new Vote();
+    vote.setVoteId(1);
+    vote.setElectionId(123);
+    String voteUrl = "http://testVoteUrl";
+
+    var message = new ReminderMessage(toUser, vote, "DUL-123", "Data Use Limitations", voteUrl);
+
+    Map<String, Object> model = message.createModel("http://defaultServerUrl");
+
+    assertEquals(voteUrl, model.get("serverUrl"));
+    assertEquals("Reminder User", model.get("userName"));
+    assertEquals("DUL-123", model.get("entityName"));
   }
 }

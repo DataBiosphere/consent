@@ -25,18 +25,16 @@ public class DatasetApprovedMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(Map<String, Object> model) {
-    return mergeModel(
-        model,
-        Map.of(
-            "dataSubmitterName",
-            toUser.getDisplayName(),
-            "datasetIdentifier",
-            datasetIdentifier,
-            "datasetName",
-            datasetName,
-            "dacName",
-            dacName));
+  public Map<String, Object> createModel() {
+    return Map.of(
+        "dataSubmitterName",
+        toUser.getDisplayName(),
+        "datasetIdentifier",
+        datasetIdentifier,
+        "datasetName",
+        datasetName,
+        "dacName",
+        dacName);
   }
 
   @Override

@@ -35,20 +35,18 @@ public class DataCustodianApprovalMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(Map<String, Object> model) {
-    return mergeModel(
-        model,
-        Map.of(
-            "datasets",
-            datasets,
-            "dataDepositorName",
-            dataDepositorName,
-            "darCode",
-            darCode,
-            "researcherEmail",
-            researcherEmail,
-            "radarText",
-            radarText));
+  public Map<String, Object> createModel() {
+    return Map.of(
+        "datasets",
+        datasets,
+        "dataDepositorName",
+        dataDepositorName,
+        "darCode",
+        darCode,
+        "researcherEmail",
+        researcherEmail,
+        "radarText",
+        radarText);
   }
 
   @Override

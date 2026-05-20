@@ -30,18 +30,16 @@ public class SoPRSubmitted extends MailMessage {
   }
 
   @Override
-  public Object createModel(Map<String, Object> model) {
-    return mergeModel(
-        model,
-        Map.of(
-            "userName",
-            toUser.getDisplayName(),
-            "darCode",
-            darCode,
-            "researcherUserName",
-            researcher.getDisplayName(),
-            "datasets",
-            datasets));
+  public Map<String, Object> createModel() {
+    return Map.of(
+        "userName",
+        toUser.getDisplayName(),
+        "darCode",
+        darCode,
+        "researcherUserName",
+        researcher.getDisplayName(),
+        "datasets",
+        datasets);
   }
 
   @Override

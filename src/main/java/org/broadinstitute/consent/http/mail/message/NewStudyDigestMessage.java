@@ -24,9 +24,8 @@ public class NewStudyDigestMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(Map<String, Object> model) {
-    return mergeModel(
-        model, Map.of("userName", toUser.getDisplayName(), "newStudies", newStudiesList));
+  public Map<String, Object> createModel() {
+    return Map.of("userName", toUser.getDisplayName(), "newStudies", newStudiesList);
   }
 
   @Override

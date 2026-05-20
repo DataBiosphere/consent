@@ -40,24 +40,22 @@ public class SoDARApproved extends MailMessage {
   }
 
   @Override
-  public Object createModel(Map<String, Object> model) {
-    return mergeModel(
-        model,
-        Map.of(
-            "userName",
-            toUser.getDisplayName(),
-            "darCode",
-            darCode,
-            "radarText",
-            radarText,
-            "researcherUserName",
-            researcher.getDisplayName(),
-            "researcherEmail",
-            researcher.getEmail(),
-            "datasets",
-            datasets,
-            "dataUseRestriction",
-            dataUseRestriction));
+  public Map<String, Object> createModel() {
+    return Map.of(
+        "userName",
+        toUser.getDisplayName(),
+        "darCode",
+        darCode,
+        "radarText",
+        radarText,
+        "researcherUserName",
+        researcher.getDisplayName(),
+        "researcherEmail",
+        researcher.getEmail(),
+        "datasets",
+        datasets,
+        "dataUseRestriction",
+        dataUseRestriction);
   }
 
   @Override

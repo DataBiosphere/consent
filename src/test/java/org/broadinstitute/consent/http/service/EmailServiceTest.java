@@ -525,8 +525,8 @@ class EmailServiceTest extends AbstractTestHelper {
       }
 
       @Override
-      public Object createModel(Map<String, Object> model) {
-        return model;
+      public Map<String, Object> createModel() {
+        return Map.of();
       }
 
       @Override

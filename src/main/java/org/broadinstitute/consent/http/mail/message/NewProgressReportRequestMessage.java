@@ -35,18 +35,16 @@ public class NewProgressReportRequestMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(Map<String, Object> model) {
-    return mergeModel(
-        model,
-        Map.of(
-            "userName",
-            toUser.getDisplayName(),
-            "dacDatasetGroups",
-            dacDatasetMap,
-            "researcherUserName",
-            researcherName,
-            "darID",
-            darCode));
+  public Map<String, Object> createModel() {
+    return Map.of(
+        "userName",
+        toUser.getDisplayName(),
+        "dacDatasetGroups",
+        dacDatasetMap,
+        "researcherUserName",
+        researcherName,
+        "darID",
+        darCode);
   }
 
   @Override
