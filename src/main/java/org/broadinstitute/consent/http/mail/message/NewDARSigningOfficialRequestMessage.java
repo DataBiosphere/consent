@@ -24,12 +24,16 @@ public class NewDARSigningOfficialRequestMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(String serverUrl) {
-    return Map.of(
-        "serverUrl", serverUrl,
-        "userName", toUser.getDisplayName(),
-        "researcherUserName", researcherName,
-        "darID", darCode);
+  public Object createModel(Map<String, Object> model) {
+    return mergeModel(
+        model,
+        Map.of(
+            "userName",
+            toUser.getDisplayName(),
+            "researcherUserName",
+            researcherName,
+            "darID",
+            darCode));
   }
 
   @Override

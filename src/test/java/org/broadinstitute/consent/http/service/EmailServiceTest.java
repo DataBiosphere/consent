@@ -102,13 +102,11 @@ class EmailServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setEmail(userEmail);
     String subject = "subject";
-    Map<String, Object> model = Map.of("key", "value");
     String entityReferenceId = "entityReferenceId";
     Integer userId = 1234;
     Integer voteId = 4567;
     var message =
-        createMailMessage(
-            user, EmailType.NEW_CASE, subject, model, entityReferenceId, voteId, null);
+        createMailMessage(user, EmailType.NEW_CASE, subject, entityReferenceId, voteId, null);
     Template template = mock();
     when(templateHelper.getTemplate(EmailType.NEW_CASE.templateName)).thenReturn(template);
     Response response = new Response();
@@ -119,7 +117,7 @@ class EmailServiceTest extends AbstractTestHelper {
     doNothing()
         .when(template)
         .process(
-            eq(model),
+            eq(Map.of("serverUrl", SERVER_URL)),
             argThat(
                 writer -> {
                   try {
@@ -173,13 +171,12 @@ class EmailServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setEmail(userEmail);
     String subject = "subject";
-    Map<String, Object> model = Map.of("key", "value");
     String entityReferenceId = "entityReferenceId";
     Integer userId = 1234;
     String templateName = "test-template.ftl";
     var message =
         createMailMessage(
-            user, EmailType.NEW_DAA_REQUEST, subject, model, entityReferenceId, null, templateName);
+            user, EmailType.NEW_DAA_REQUEST, subject, entityReferenceId, null, templateName);
     Template template = mock();
     when(templateHelper.getTemplate(templateName)).thenReturn(template);
     when(sendGridAPI.sendMessage(any(), any())).thenReturn(null);
@@ -187,7 +184,7 @@ class EmailServiceTest extends AbstractTestHelper {
     doNothing()
         .when(template)
         .process(
-            eq(model),
+            eq(Map.of("serverUrl", SERVER_URL)),
             argThat(
                 writer -> {
                   try {
@@ -225,13 +222,11 @@ class EmailServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setEmail(userEmail);
     String subject = "subject";
-    Map<String, Object> model = Map.of("key", "value");
     String entityReferenceId = "entityReferenceId";
     Integer userId = 1234;
     Integer voteId = 4567;
     var message =
-        createMailMessage(
-            user, EmailType.NEW_CASE, subject, model, entityReferenceId, voteId, null);
+        createMailMessage(user, EmailType.NEW_CASE, subject, entityReferenceId, voteId, null);
     Template template = mock();
     when(templateHelper.getTemplate(EmailType.NEW_CASE.templateName)).thenReturn(template);
     Response response = new Response();
@@ -242,7 +237,7 @@ class EmailServiceTest extends AbstractTestHelper {
     doNothing()
         .when(template)
         .process(
-            eq(model),
+            eq(Map.of("serverUrl", SERVER_URL)),
             argThat(
                 writer -> {
                   try {
@@ -515,7 +510,6 @@ class EmailServiceTest extends AbstractTestHelper {
       User user,
       EmailType emailType,
       String subject,
-      Object model,
       String entityReferenceId,
       Integer voteId,
       String templateNameOverride) {
@@ -531,7 +525,7 @@ class EmailServiceTest extends AbstractTestHelper {
       }
 
       @Override
-      public Object createModel(String serverUrl) {
+      public Object createModel(Map<String, Object> model) {
         return model;
       }
 

@@ -27,16 +27,18 @@ public class DatasetSubmittedMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(String serverUrl) {
-    return Map.of(
-        "dacChairName",
-        toUser.getDisplayName(),
-        "dataSubmitterName",
-        dataSubmitterName,
-        "datasetName",
-        datasetName,
-        "dacName",
-        dacName);
+  public Object createModel(Map<String, Object> model) {
+    return mergeModel(
+        model,
+        Map.of(
+            "dacChairName",
+            toUser.getDisplayName(),
+            "dataSubmitterName",
+            dataSubmitterName,
+            "datasetName",
+            datasetName,
+            "dacName",
+            dacName));
   }
 
   @Override

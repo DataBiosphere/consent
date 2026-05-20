@@ -34,20 +34,22 @@ public class ResearcherApprovedProgressReportMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(String serverUrl) {
-    return Map.of(
-        "researcherName",
-        toUser.getDisplayName(),
-        "darCode",
-        darCode,
-        "datasets",
-        datasets,
-        "dataUseRestriction",
-        dataUseRestriction,
-        "radarText",
-        radarText,
-        "researcherEmail",
-        toUser.getEmail());
+  public Object createModel(Map<String, Object> model) {
+    return mergeModel(
+        model,
+        Map.of(
+            "researcherName",
+            toUser.getDisplayName(),
+            "darCode",
+            darCode,
+            "datasets",
+            datasets,
+            "dataUseRestriction",
+            dataUseRestriction,
+            "radarText",
+            radarText,
+            "researcherEmail",
+            toUser.getEmail()));
   }
 
   @Override

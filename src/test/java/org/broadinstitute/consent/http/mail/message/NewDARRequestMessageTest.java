@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.mail.message;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -12,6 +13,27 @@ import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 
 class NewDARRequestMessageTest extends AbstractMailMessageTest {
+
+  @Test
+  void testCreateModel_MergesCallerProvidedModel() {
+    User toUser = new User();
+    toUser.setDisplayName("Admin");
+
+    var dacDatasetGroups = Map.of("DAC-01", List.of("DUOS-000001"));
+    var message = new NewDARRequestMessage(toUser, "DAR-01", dacDatasetGroups, "ResearcherName");
+
+    Map<?, ?> createdModel =
+        assertInstanceOf(
+            Map.class,
+            message.createModel(
+                Map.of("serverUrl", "http://testServerUrl", "customKey", "customValue")));
+
+    assertEquals("http://testServerUrl", createdModel.get("serverUrl"));
+    assertEquals("customValue", createdModel.get("customKey"));
+    assertEquals("Admin", createdModel.get("userName"));
+    assertEquals("ResearcherName", createdModel.get("researcherUserName"));
+    assertEquals("DAR-01", createdModel.get("darID"));
+  }
 
   @Test
   void testGetNewDARRequestTemplate() throws Exception {

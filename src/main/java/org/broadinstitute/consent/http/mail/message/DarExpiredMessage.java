@@ -21,8 +21,8 @@ public class DarExpiredMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(String serverUrl) {
-    return Map.of("researcherName", toUser.getDisplayName(), "darCode", darCode);
+  public Object createModel(Map<String, Object> model) {
+    return mergeModel(model, Map.of("researcherName", toUser.getDisplayName(), "darCode", darCode));
   }
 
   @Override

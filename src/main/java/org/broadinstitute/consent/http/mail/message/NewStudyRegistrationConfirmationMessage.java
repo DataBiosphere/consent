@@ -27,16 +27,18 @@ public class NewStudyRegistrationConfirmationMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(String serverUrl) {
-    return Map.of(
-        "studySubmitterName",
-        toUser.getDisplayName(),
-        "studyName",
-        studyName,
-        "studyId",
-        studyId,
-        "studyAssets",
-        studyAssets);
+  public Object createModel(Map<String, Object> model) {
+    return mergeModel(
+        model,
+        Map.of(
+            "studySubmitterName",
+            toUser.getDisplayName(),
+            "studyName",
+            studyName,
+            "studyId",
+            studyId,
+            "studyAssets",
+            studyAssets));
   }
 
   @Override

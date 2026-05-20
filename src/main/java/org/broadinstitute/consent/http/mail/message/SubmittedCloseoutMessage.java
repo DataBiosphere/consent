@@ -28,8 +28,10 @@ public class SubmittedCloseoutMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(String linkUrl) {
-    return Map.of("displayName", toUser.getDisplayName(), "darId", darId, "linkUrl", closeoutUrl);
+  public Object createModel(Map<String, Object> model) {
+    return mergeModel(
+        model,
+        Map.of("displayName", toUser.getDisplayName(), "darId", darId, "linkUrl", closeoutUrl));
   }
 
   @Override

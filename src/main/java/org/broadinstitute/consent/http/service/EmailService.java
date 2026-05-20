@@ -18,6 +18,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
@@ -76,7 +77,7 @@ public class EmailService implements ConsentLogger {
       throws IOException, TemplateException {
     Writer out = new StringWriter();
     Template template = templateHelper.getTemplate(mailMessage.getTemplateName());
-    template.process(mailMessage.createModel(serverUrl), out);
+    template.process(mailMessage.createModel(Map.of("serverUrl", serverUrl)), out);
     String content = out.toString();
     Mail message =
         new Mail(
