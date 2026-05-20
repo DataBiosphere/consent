@@ -14,17 +14,17 @@ import org.junit.jupiter.api.Test;
 class NewDARRequestMessageTest extends AbstractMailMessageTest {
 
   @Test
-  void testCreateModel_AddsServerUrl() {
+  void testCreateModel_AddsNewDarRequestFields() {
     User toUser = new User();
     toUser.setDisplayName("Admin");
 
     var dacDatasetGroups = Map.of("DAC-01", List.of("DUOS-000001"));
     var message = new NewDARRequestMessage(toUser, "DAR-01", dacDatasetGroups, "ResearcherName");
 
-    Map<String, Object> createdModel = message.createModel("http://testServerUrl");
+    Map<String, Object> createdModel = message.createModel();
 
-    assertEquals("http://testServerUrl", createdModel.get("serverUrl"));
     assertEquals("Admin", createdModel.get("userName"));
+    assertEquals(dacDatasetGroups, createdModel.get("dacDatasetGroups"));
     assertEquals("ResearcherName", createdModel.get("researcherUserName"));
     assertEquals("DAR-01", createdModel.get("darID"));
   }
