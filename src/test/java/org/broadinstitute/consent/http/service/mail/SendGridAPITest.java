@@ -106,6 +106,23 @@ class SendGridAPITest {
   }
 
   @Test
+  void sendMessageDoesNotAttachAsmWhenGroupInvalid() throws Exception {
+    MailConfiguration config = new MailConfiguration();
+    config.setGoogleAccount(FROM);
+    config.setActivateEmailNotifications(true);
+    config.setSendGridUnsubscribeGroupId(0); // invalid group ID should be treated as missing/absent
+    SendGridAPI configuredSendGridApi = new SendGridAPI(config, userDAO);
+
+    Mail mail =
+        new Mail(new Email(FROM), "Subject", new Email(TO), new Content("text/html", "Body"));
+
+    assertEquals(RESPONSE, sendGridAPI.sendMessage(mail, TO));
+
+    verify(sendGrid).makeCall(any());
+    assertNull(mail.getASM());
+  }
+
+  @Test
   void sendMessageUserMissing() {
     reset(userDAO);
     reset(sendGrid);
