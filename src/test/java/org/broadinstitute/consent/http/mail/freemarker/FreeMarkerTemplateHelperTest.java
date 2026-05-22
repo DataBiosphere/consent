@@ -47,6 +47,26 @@ class FreeMarkerTemplateHelperTest {
 
   @Test
   void renderedTemplatePreservesRawAsmUnsubscribeToken() throws Exception {
+    String renderedTemplate =
+        renderTemplate(
+            Map.of(
+                "researcherName", "Synthetic User",
+                "darCode", "DAR-123",
+                "sendGridUnsubscribeGroupId", 12345));
+
+    assertTrue(renderedTemplate.contains("href=\"<%asm_group_unsubscribe_raw_url%>\""));
+  }
+
+  @Test
+  void renderedTemplateFallsBackWhenAsmUnsubscribeGroupMissing() throws Exception {
+    String renderedTemplate =
+        renderTemplate(Map.of("researcherName", "Synthetic User", "darCode", "DAR-123"));
+
+    assertTrue(
+        renderedTemplate.contains("To manage DUOS email notifications, please sign in to DUOS."));
+  }
+
+  private String renderTemplate(Map<String, Object> model) throws Exception {
     FreeMarkerConfiguration fmConfig = new FreeMarkerConfiguration();
     fmConfig.setTemplateDirectory("freemarker");
     fmConfig.setDefaultEncoding("UTF-8");
@@ -55,8 +75,8 @@ class FreeMarkerTemplateHelperTest {
     Template template = realTemplateHelper.getTemplate("dar-expired.ftl");
     StringWriter out = new StringWriter();
 
-    template.process(Map.of("researcherName", "Synthetic User", "darCode", "DAR-123"), out);
+    template.process(model, out);
 
-    assertTrue(out.toString().contains("href=\"<%asm_group_unsubscribe_raw_url%>\""));
+    return out.toString();
   }
 }
