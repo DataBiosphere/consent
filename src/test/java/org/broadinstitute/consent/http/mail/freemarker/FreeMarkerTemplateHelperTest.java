@@ -59,12 +59,14 @@ class FreeMarkerTemplateHelperTest {
   }
 
   @Test
-  void renderedTemplateFallsBackWhenAsmUnsubscribeGroupMissing() throws Exception {
+  void renderedTemplateShowsDuosProfileLinkWhenAsmUnsubscribeGroupMissing() throws Exception {
     String renderedTemplate =
         renderTemplate(Map.of("researcherName", "Synthetic User", "darCode", "DAR-123"));
 
+    assertTrue(renderedTemplate.contains("To manage DUOS email notifications, please sign in to"));
     assertTrue(
-        renderedTemplate.contains("To manage DUOS email notifications, please sign in to DUOS."));
+        renderedTemplate.contains(
+            "<a href=\"https://duos.org/profile\" style=\"color: #00609F; text-decoration: none;\">DUOS</a>"));
     assertFalse(renderedTemplate.contains("<%asm_group_unsubscribe_raw_url%>"));
   }
 

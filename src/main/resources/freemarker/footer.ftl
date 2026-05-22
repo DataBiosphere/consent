@@ -21,7 +21,7 @@
             </p>
           <#else>
             <p style="margin: 0;">
-              To manage DUOS email notifications, please sign in to DUOS.
+              To manage DUOS email notifications, please sign in to <a href="https://duos.org/profile" style="color: #00609F; text-decoration: none;">DUOS</a>.
             </p>
           </#if>
         </td>
