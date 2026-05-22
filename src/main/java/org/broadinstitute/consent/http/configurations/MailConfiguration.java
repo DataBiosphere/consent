@@ -14,6 +14,9 @@ public class MailConfiguration {
 
   @NotNull private String sendGridStatusUrl;
 
+  // Nullable — absent in test configs is fine
+  private Integer sendGridUnsubscribeGroupId;
+
   public boolean isActivateEmailNotifications() {
     return activateEmailNotifications;
   }
@@ -44,5 +47,13 @@ public class MailConfiguration {
 
   public void setSendGridStatusUrl(String sendGridStatusUrl) {
     this.sendGridStatusUrl = sendGridStatusUrl;
+  }
+
+  public Integer getSendGridUnsubscribeGroupId() {
+    return sendGridUnsubscribeGroupId;
+  }
+
+  public void setSendGridUnsubscribeGroupId(Integer sendGridUnsubscribeGroupId) {
+    this.sendGridUnsubscribeGroupId = sendGridUnsubscribeGroupId;
   }
 }
