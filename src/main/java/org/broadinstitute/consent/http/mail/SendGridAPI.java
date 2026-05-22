@@ -61,7 +61,7 @@ public class SendGridAPI implements ConsentLogger {
     }
 
     // Attach ASM block so SendGrid can render the unsubscribe URL
-    if (unsubscribeGroupId != null) {
+    if (unsubscribeGroupId != null && unsubscribeGroupId > 0) {
       ASM asm = new ASM();
       asm.setGroupId(unsubscribeGroupId);
       // groupsToDisplay controls which groups appear on the SendGrid

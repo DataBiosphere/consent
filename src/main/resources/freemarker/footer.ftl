@@ -12,12 +12,18 @@
           <p style="margin: 0 0 6px;">
             Broad Institute &bull; Merkin Building, 415 Main Street, Cambridge, MA 02142
           </p>
-          <p style="margin: 0;">
-            <a href="<%asm_group_unsubscribe_raw_url%>"
-               style="color: #00609F; text-decoration: underline; font-size: 12px;">
-              Unsubscribe from DUOS email notifications
-            </a>
-          </p>
+          <#if sendGridUnsubscribeGroupId?? && sendGridUnsubscribeGroupId?has_content>
+            <p style="margin: 0;">
+              <a href="<%asm_group_unsubscribe_raw_url%>"
+                 style="color: #00609F; text-decoration: underline; font-size: 12px;">
+                Unsubscribe from DUOS email notifications
+              </a>
+            </p>
+          <#else>
+            <p style="margin: 0;">
+              To manage DUOS email notifications, please sign in to DUOS.
+            </p>
+          </#if>
         </td>
       </tr>
     </table>
