@@ -1,9 +1,8 @@
 package org.broadinstitute.consent.http.service.mail;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.reset;
@@ -89,10 +88,9 @@ class SendGridAPITest {
 
       assertEquals(RESPONSE, configuredSendGridApi.sendMessage(mail, TO));
 
-      ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
-      verify(configuredSendGrid).makeCall(requestCaptor.capture());
-      assertTrue(requestCaptor.getValue().getBody().contains("\"group_id\":12345"));
-      assertTrue(requestCaptor.getValue().getBody().contains("\"groups_to_display\":[12345]"));
+      verify(configuredSendGrid).makeCall(any());
+      assertEquals(UNSUBSCRIBE_GROUP_ID, mail.getASM().getGroupId());
+      assertArrayEquals(new int[] {UNSUBSCRIBE_GROUP_ID}, mail.getASM().getGroupsToDisplay());
     }
   }
 
@@ -103,9 +101,8 @@ class SendGridAPITest {
 
     assertEquals(RESPONSE, sendGridAPI.sendMessage(mail, TO));
 
-    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
-    verify(sendGrid).makeCall(requestCaptor.capture());
-    assertFalse(requestCaptor.getValue().getBody().contains("\"asm\":"));
+    verify(sendGrid).makeCall(any());
+    assertNull(mail.getASM());
   }
 
   @Test
