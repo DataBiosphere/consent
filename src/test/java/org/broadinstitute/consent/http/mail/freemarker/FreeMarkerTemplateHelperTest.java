@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.mail.freemarker;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockConstruction;
@@ -64,6 +65,7 @@ class FreeMarkerTemplateHelperTest {
 
     assertTrue(
         renderedTemplate.contains("To manage DUOS email notifications, please sign in to DUOS."));
+    assertFalse(renderedTemplate.contains("<%asm_group_unsubscribe_raw_url%>"));
   }
 
   private String renderTemplate(Map<String, Object> model) throws Exception {
