@@ -10,7 +10,7 @@
             </a>.
           </p>
           <p style="margin: 0 0 6px;">
-            Broad Institute of MIT and Harvard &bull; 415 Main Street, Cambridge, MA 02142
+            Broad Institute &bull; Merkin Building, 415 Main Street, Cambridge, MA 02142
           </p>
           <p style="margin: 0;">
             <a href="<%asm_group_unsubscribe_raw_url%>"
