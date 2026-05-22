@@ -1,7 +1,9 @@
 package org.broadinstitute.consent.http.service.mail;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.reset;
@@ -14,6 +16,8 @@ import com.sendgrid.Request;
 import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
 import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Content;
+import com.sendgrid.helpers.mail.objects.Email;
 import java.io.IOException;
 import java.util.Map;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
@@ -32,6 +36,7 @@ class SendGridAPITest {
 
   private static final String FROM = "from@broadinstitute.org";
   private static final String TO = "to@broadinstitute.org";
+  private static final int UNSUBSCRIBE_GROUP_ID = 12345;
   private static final Response RESPONSE = new Response();
 
   private SendGrid sendGrid;
@@ -46,7 +51,7 @@ class SendGridAPITest {
     config.setActivateEmailNotifications(true);
     try (var mockedSendGrid = mockConstruction(SendGrid.class)) {
       sendGridAPI = new SendGridAPI(config, userDAO);
-      sendGrid = mockedSendGrid.constructed().get(0);
+      sendGrid = mockedSendGrid.constructed().getFirst();
     }
     when(userDAO.findUserByEmail(TO)).thenReturn(new User());
     when(sendGrid.makeCall(any())).thenReturn(RESPONSE);
@@ -66,6 +71,41 @@ class SendGridAPITest {
     ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
     verify(sendGrid).makeCall(requestCaptor.capture());
     assertEquals(messageBody, requestCaptor.getValue().getBody());
+  }
+
+  @Test
+  void sendMessageAttachesAsmWhenGroupConfigured() throws Exception {
+    try (var mockedSendGrid = mockConstruction(SendGrid.class)) {
+      MailConfiguration config = new MailConfiguration();
+      config.setGoogleAccount(FROM);
+      config.setActivateEmailNotifications(true);
+      config.setSendGridUnsubscribeGroupId(UNSUBSCRIBE_GROUP_ID);
+      SendGridAPI configuredSendGridApi = new SendGridAPI(config, userDAO);
+      SendGrid configuredSendGrid = mockedSendGrid.constructed().getFirst();
+      when(configuredSendGrid.makeCall(any())).thenReturn(RESPONSE);
+
+      Mail mail =
+          new Mail(new Email(FROM), "Subject", new Email(TO), new Content("text/html", "Body"));
+
+      assertEquals(RESPONSE, configuredSendGridApi.sendMessage(mail, TO));
+
+      ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+      verify(configuredSendGrid).makeCall(requestCaptor.capture());
+      assertTrue(requestCaptor.getValue().getBody().contains("\"group_id\":12345"));
+      assertTrue(requestCaptor.getValue().getBody().contains("\"groups_to_display\":[12345]"));
+    }
+  }
+
+  @Test
+  void sendMessageDoesNotAttachAsmWhenGroupMissing() throws Exception {
+    Mail mail =
+        new Mail(new Email(FROM), "Subject", new Email(TO), new Content("text/html", "Body"));
+
+    assertEquals(RESPONSE, sendGridAPI.sendMessage(mail, TO));
+
+    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+    verify(sendGrid).makeCall(requestCaptor.capture());
+    assertFalse(requestCaptor.getValue().getBody().contains("\"asm\":"));
   }
 
   @Test
