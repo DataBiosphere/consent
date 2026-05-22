@@ -13,7 +13,7 @@
             Broad Institute of MIT and Harvard &bull; 415 Main Street, Cambridge, MA 02142
           </p>
           <p style="margin: 0;">
-            <a href="<%asm_group_unsubscribe_url%>"
+            <a href="<%asm_group_unsubscribe_raw_url%>"
                style="color: #00609F; text-decoration: underline; font-size: 12px;">
               Unsubscribe from DUOS email notifications
             </a>
