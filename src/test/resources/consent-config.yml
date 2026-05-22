@@ -45,6 +45,7 @@ mailConfiguration:
   googleAccount: test@gmail.com
   sendGridApiKey: test-key
   sendGridStatusUrl: test-sg-status
+  sendGridUnsubscribeGroupId: null
 freeMarkerConfiguration:
   templateDirectory: /freemarker
   defaultEncoding: UTF-8
