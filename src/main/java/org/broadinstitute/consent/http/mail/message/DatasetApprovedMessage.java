@@ -25,10 +25,8 @@ public class DatasetApprovedMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(String serverUrl) {
+  public Map<String, Object> createModel() {
     return Map.of(
-        "serverUrl",
-        serverUrl,
         "dataSubmitterName",
         toUser.getDisplayName(),
         "datasetIdentifier",

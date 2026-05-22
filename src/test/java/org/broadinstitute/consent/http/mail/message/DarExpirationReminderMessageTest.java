@@ -2,11 +2,23 @@ package org.broadinstitute.consent.http.mail.message;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.Map;
 import java.util.UUID;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 
 class DarExpirationReminderMessageTest extends AbstractMailMessageTest {
+
+  @Test
+  void testCreateModel_AddsRequiredFields() {
+    User requestUser = new User();
+    requestUser.setDisplayName("Test User");
+
+    var message =
+        new DarExpirationReminderMessage(requestUser, "DAR-123", UUID.randomUUID().toString());
+
+    assertRequiredModelFields(message, Map.of("userName", "Test User", "darCode", "DAR-123"));
+  }
 
   @Test
   void testGetDarExpiredTemplate() throws Exception {

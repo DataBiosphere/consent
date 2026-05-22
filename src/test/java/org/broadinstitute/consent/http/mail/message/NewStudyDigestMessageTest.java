@@ -8,12 +8,26 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 
 class NewStudyDigestMessageTest extends AbstractMailMessageTest {
+
+  @Test
+  void testCreateModel_AddsRequiredFields() {
+    List<StudyDatasetCountRecord> newStudies =
+        List.of(
+            new StudyDatasetCountRecord("My new study", 3, 1),
+            new StudyDatasetCountRecord("My other new study", 4000, 2));
+    User user = new User();
+    user.setDisplayName("Test User");
+    var message = new NewStudyDigestMessage(user, newStudies, "My reference id");
+
+    assertRequiredModelFields(message, Map.of("userName", "Test User", "newStudies", newStudies));
+  }
 
   @Test
   void testNewStudyDigestMessage() throws Exception {

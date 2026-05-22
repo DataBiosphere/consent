@@ -5,11 +5,21 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 
 class NewLibraryCardIssuedMessageTest extends AbstractMailMessageTest {
+
+  @Test
+  void testCreateModel_AddsRequiredFields() {
+    User toUser = new User();
+    toUser.setDisplayName("Test User");
+    var message = new NewLibraryCardIssuedMessage(toUser);
+
+    assertRequiredModelFields(message, Map.of("displayName", "Test User"));
+  }
 
   @Test
   void testNewLibraryCardIssuedTemplate() throws Exception {

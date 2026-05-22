@@ -14,6 +14,27 @@ import org.junit.jupiter.api.Test;
 class NewDARRequestMessageTest extends AbstractMailMessageTest {
 
   @Test
+  void testCreateModel_AddsNewDarRequestFields() {
+    User toUser = new User();
+    toUser.setDisplayName("Admin");
+
+    var dacDatasetGroups = Map.of("DAC-01", List.of("DUOS-000001"));
+    var message = new NewDARRequestMessage(toUser, "DAR-01", dacDatasetGroups, "ResearcherName");
+
+    assertRequiredModelFields(
+        message,
+        Map.of(
+            "userName",
+            "Admin",
+            "dacDatasetGroups",
+            dacDatasetGroups,
+            "researcherUserName",
+            "ResearcherName",
+            "darID",
+            "DAR-01"));
+  }
+
+  @Test
   void testGetNewDARRequestTemplate() throws Exception {
     User toUser = new User();
     toUser.setDisplayName("Admin");

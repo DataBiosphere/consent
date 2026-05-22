@@ -30,7 +30,7 @@ public class DacVoteDigestMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(String serverUrl) {
+  public Map<String, Object> createModel() {
     List<Reminder> sortedReminderList =
         userReminderList.stream()
             .filter(r -> r.createDate() != null)
@@ -40,11 +40,14 @@ public class DacVoteDigestMessage extends MailMessage {
     List<Reminder> lastWeekReminders = getLastWeekReminders(sortedReminderList);
     List<Reminder> olderReminders = getOlderReminders(sortedReminderList);
     return Map.of(
-        "userName", toUser.getDisplayName(),
-        "openedThisWeek", currentWeekReminders,
-        "openedLastWeek", lastWeekReminders,
-        "olderRequests", olderReminders,
-        "serverUrl", serverUrl);
+        "userName",
+        toUser.getDisplayName(),
+        "openedThisWeek",
+        currentWeekReminders,
+        "openedLastWeek",
+        lastWeekReminders,
+        "olderRequests",
+        olderReminders);
   }
 
   @Override

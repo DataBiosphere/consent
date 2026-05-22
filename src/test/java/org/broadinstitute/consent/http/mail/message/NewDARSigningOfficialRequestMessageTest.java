@@ -3,6 +3,7 @@ package org.broadinstitute.consent.http.mail.message;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.Dataset;
@@ -10,6 +11,18 @@ import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 
 class NewDARSigningOfficialRequestMessageTest extends AbstractMailMessageTest {
+
+  @Test
+  void testCreateModel_AddsRequiredFields() {
+    User signingOfficial = new User();
+    signingOfficial.setDisplayName("SO");
+    var message =
+        new NewDARSigningOfficialRequestMessage(signingOfficial, "DAR-01", "ResearcherName");
+
+    assertRequiredModelFields(
+        message,
+        Map.of("userName", "SO", "researcherUserName", "ResearcherName", "darID", "DAR-01"));
+  }
 
   @Test
   void testGetNewDARRequestTemplate() throws Exception {

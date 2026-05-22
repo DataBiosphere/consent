@@ -5,12 +5,39 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.junit.jupiter.api.Test;
 
 class DataCustodianApprovalMessageTest extends AbstractMailMessageTest {
+
+  @Test
+  void testCreateModel_AddsRequiredFields() {
+    User toUser = new User();
+    toUser.setDisplayName("Data Custodian");
+    List<DatasetMailDTO> datasetMailDTOs =
+        List.of(new DatasetMailDTO("dataset name", "dataset id", null));
+
+    var message =
+        new DataCustodianApprovalMessage(
+            toUser, "Dar Code", datasetMailDTOs, "Depositor", "researcher@email.com", false);
+
+    assertRequiredModelFields(
+        message,
+        Map.of(
+            "datasets",
+            datasetMailDTOs,
+            "dataDepositorName",
+            "Depositor",
+            "darCode",
+            "Dar Code",
+            "researcherEmail",
+            "researcher@email.com",
+            "radarText",
+            ""));
+  }
 
   @Test
   void testGetDataCustodianApprovalTemplate() throws Exception {

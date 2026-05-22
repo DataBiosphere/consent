@@ -27,16 +27,9 @@ public class NewCaseMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(String serverUrl) {
+  public Map<String, Object> createModel() {
     return Map.of(
-        "userName",
-        toUser.getDisplayName(),
-        "electionType",
-        type,
-        "entityName",
-        referenceId,
-        "serverUrl",
-        serverUrl);
+        "userName", toUser.getDisplayName(), "electionType", type, "entityName", referenceId);
   }
 
   @Override

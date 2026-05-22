@@ -34,13 +34,16 @@ public class DACMembersDARRADARApprovedMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(String serverUrl) {
+  public Map<String, Object> createModel() {
     return Map.of(
-        "userName", toUser.getDisplayName(),
-        "darCode", darCode,
-        "researcherUserName", researcher.getDisplayName(),
-        "datasets", datasets,
-        "serverUrl", serverUrl);
+        "userName",
+        toUser.getDisplayName(),
+        "darCode",
+        darCode,
+        "researcherUserName",
+        researcher.getDisplayName(),
+        "datasets",
+        datasets);
   }
 
   @Override

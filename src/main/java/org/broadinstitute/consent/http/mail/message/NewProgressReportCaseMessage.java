@@ -20,9 +20,8 @@ public class NewProgressReportCaseMessage extends MailMessage {
   }
 
   @Override
-  public Object createModel(String serverUrl) {
-    return Map.of(
-        "userName", toUser.getDisplayName(), "entityName", referenceId, "serverUrl", serverUrl);
+  public Map<String, Object> createModel() {
+    return Map.of("userName", toUser.getDisplayName(), "entityName", referenceId);
   }
 
   @Override

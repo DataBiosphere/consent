@@ -4,11 +4,33 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 
 class DatasetSubmittedMessageTest extends AbstractMailMessageTest {
+
+  @Test
+  void testCreateModel_AddsRequiredFields() {
+    User dacChair = new User();
+    dacChair.setDisplayName("dacChairName");
+
+    var message =
+        new DatasetSubmittedMessage(dacChair, "dataSubmitterName", "testDataset", "dacName");
+
+    assertRequiredModelFields(
+        message,
+        Map.of(
+            "dacChairName",
+            "dacChairName",
+            "dataSubmitterName",
+            "dataSubmitterName",
+            "datasetName",
+            "testDataset",
+            "dacName",
+            "dacName"));
+  }
 
   @Test
   void testGetDatasetSubmittedTemplate() throws Exception {

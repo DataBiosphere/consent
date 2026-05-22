@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Map;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dto.DatasetMailDTO;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,34 @@ class ResearcherProgressReportApprovedMessageTest extends AbstractMailMessageTes
     var message =
         new ResearcherApprovedProgressReportMessage(new User(), "DAR-123", List.of(), "", false);
     assertEquals("Your DUOS Progress Report Results", message.createSubject());
+  }
+
+  @Test
+  void testCreateModel_AddsRequiredFields() {
+    User researcher = new User();
+    researcher.setDisplayName("Researcher User");
+    researcher.setEmail("researcher@test.com");
+    List<DatasetMailDTO> datasets =
+        List.of(new DatasetMailDTO("dataset-name", "DUOS-00001", "gs://bucket/object"));
+    var message =
+        new ResearcherApprovedProgressReportMessage(
+            researcher, "DAR-123", datasets, "General Use", false);
+
+    assertRequiredModelFields(
+        message,
+        Map.of(
+            "researcherName",
+            "Researcher User",
+            "darCode",
+            "DAR-123",
+            "datasets",
+            datasets,
+            "dataUseRestriction",
+            "General Use",
+            "radarText",
+            "",
+            "researcherEmail",
+            "researcher@test.com"));
   }
 
   @Test

@@ -9,12 +9,42 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.models.Reminder;
 import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 
 class DacVoteDigestMessageTest extends AbstractMailMessageTest {
+
+  @Test
+  void testCreateModel_AddsRequiredFields() {
+    User toUser = new User();
+    toUser.setUserId(1);
+    toUser.setDisplayName("Reminder User");
+    Instant timeBasis = Instant.now();
+    Reminder olderReminder =
+        new Reminder(toUser.getUserId(), "DAR-1", 2, timeBasis.minus(21, ChronoUnit.DAYS));
+    Reminder lastWeekReminder =
+        new Reminder(toUser.getUserId(), "DAR-2", 3, timeBasis.minus(7, ChronoUnit.DAYS));
+    Reminder currentWeekReminder =
+        new Reminder(toUser.getUserId(), "DAR-3", 4, timeBasis.minus(1, ChronoUnit.DAYS));
+    List<Reminder> reminderList = List.of(lastWeekReminder, currentWeekReminder, olderReminder);
+
+    var message = new DacVoteDigestMessage(toUser, reminderList, "ref-id", timeBasis);
+
+    assertRequiredModelFields(
+        message,
+        Map.of(
+            "userName",
+            "Reminder User",
+            "openedThisWeek",
+            List.of(currentWeekReminder),
+            "openedLastWeek",
+            List.of(lastWeekReminder),
+            "olderRequests",
+            List.of(olderReminder)));
+  }
 
   @Test
   void testMessageSubject() {

@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.mail.message;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.broadinstitute.consent.http.enumeration.EmailType;
 import org.broadinstitute.consent.http.models.User;
 
@@ -19,7 +21,13 @@ public abstract class MailMessage {
 
   public abstract String createSubject();
 
-  public abstract Object createModel(String serverUrl);
+  public final Map<String, Object> createModel(String serverUrl) {
+    Map<String, Object> model = new HashMap<>(createModel());
+    model.putIfAbsent("serverUrl", serverUrl);
+    return model;
+  }
+
+  public abstract Map<String, Object> createModel();
 
   public abstract String getEntityReferenceId();
 

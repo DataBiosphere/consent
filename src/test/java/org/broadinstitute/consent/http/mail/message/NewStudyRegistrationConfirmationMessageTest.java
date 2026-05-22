@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.mail.message;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -8,6 +9,29 @@ import org.broadinstitute.consent.http.models.User;
 import org.junit.jupiter.api.Test;
 
 class NewStudyRegistrationConfirmationMessageTest extends AbstractMailMessageTest {
+
+  @Test
+  void testCreateModel_AddsRequiredFields() {
+    User submitter = new User();
+    submitter.setDisplayName("Test User");
+    Map<String, Object> assets = Map.of("assetType", List.of("asset1"));
+
+    var message =
+        new NewStudyRegistrationConfirmationMessage(submitter, "Cancer Research", 123, assets);
+
+    assertRequiredModelFields(
+        message,
+        Map.of(
+            "studySubmitterName",
+            "Test User",
+            "studyName",
+            "Cancer Research",
+            "studyId",
+            123,
+            "studyAssets",
+            assets));
+    assertEquals("Cancer Research", message.getEntityReferenceId());
+  }
 
   @Test
   void testMessageTemplate_singleAsset() throws Exception {

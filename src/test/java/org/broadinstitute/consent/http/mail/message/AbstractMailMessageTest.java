@@ -1,6 +1,9 @@
 package org.broadinstitute.consent.http.mail.message;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.io.StringWriter;
+import java.util.Map;
 import java.util.Objects;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.FreeMarkerConfiguration;
@@ -39,6 +42,15 @@ abstract class AbstractMailMessageTest extends AbstractTestHelper {
     template.process(message.createModel(serverUrl), out);
     var content = out.toString();
     return new RenderedTemplate(content, Jsoup.parse(content));
+  }
+
+  /** Asserts that the message model contains the expected required fields and values. */
+  protected void assertRequiredModelFields(
+      MailMessage message, Map<String, Object> expectedRequiredFields) {
+    Map<String, Object> createdModel = message.createModel();
+    expectedRequiredFields.forEach(
+        (key, value) ->
+            assertEquals(value, createdModel.get(key), "Unexpected model value for " + key));
   }
 
   /** Returns the visible text of the element with the given {@code id}, failing if absent. */
