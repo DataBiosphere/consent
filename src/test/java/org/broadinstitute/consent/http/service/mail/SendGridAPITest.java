@@ -107,19 +107,24 @@ class SendGridAPITest {
 
   @Test
   void sendMessageDoesNotAttachAsmWhenGroupInvalid() throws Exception {
-    MailConfiguration config = new MailConfiguration();
-    config.setGoogleAccount(FROM);
-    config.setActivateEmailNotifications(true);
-    config.setSendGridUnsubscribeGroupId(0); // invalid group ID should be treated as missing/absent
-    SendGridAPI configuredSendGridApi = new SendGridAPI(config, userDAO);
+    try (var mockedSendGrid = mockConstruction(SendGrid.class)) {
+      MailConfiguration config = new MailConfiguration();
+      config.setGoogleAccount(FROM);
+      config.setActivateEmailNotifications(true);
+      // invalid group ID should be treated as missing/absent
+      config.setSendGridUnsubscribeGroupId(0);
+      SendGridAPI configuredSendGridApi = new SendGridAPI(config, userDAO);
+      SendGrid configuredSendGrid = mockedSendGrid.constructed().getFirst();
+      when(configuredSendGrid.makeCall(any())).thenReturn(RESPONSE);
 
-    Mail mail =
-        new Mail(new Email(FROM), "Subject", new Email(TO), new Content("text/html", "Body"));
+      Mail mail =
+          new Mail(new Email(FROM), "Subject", new Email(TO), new Content("text/html", "Body"));
 
-    assertEquals(RESPONSE, sendGridAPI.sendMessage(mail, TO));
+      assertEquals(RESPONSE, configuredSendGridApi.sendMessage(mail, TO));
 
-    verify(sendGrid).makeCall(any());
-    assertNull(mail.getASM());
+      verify(configuredSendGrid).makeCall(any());
+      assertNull(mail.getASM());
+    }
   }
 
   @Test
