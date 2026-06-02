@@ -13,6 +13,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -23,6 +24,8 @@ import static org.mockito.Mockito.when;
 import com.google.gson.Gson;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import java.sql.Timestamp;
@@ -51,8 +54,11 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetAuthorizationReader;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.DatasetStudySummary;
+import org.broadinstitute.consent.http.models.Dictionary;
 import org.broadinstitute.consent.http.models.Study;
+import org.broadinstitute.consent.http.models.StudyConversion;
 import org.broadinstitute.consent.http.models.StudyPatch;
 import org.broadinstitute.consent.http.models.StudyProperty;
 import org.broadinstitute.consent.http.models.User;
@@ -1077,6 +1083,543 @@ class DatasetServiceTest extends AbstractTestHelper {
     when(datasetServiceDAO.patchStudy(study, user, patch)).thenReturn(study);
     when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
     assertDoesNotThrow(() -> datasetService.patchStudy(study.getStudyId(), user, patch));
+  }
+
+  // ==================== convertDatasetToStudy ====================
+
+  @Test
+  void testConvertDatasetToStudy_NonAdminThrows() {
+    User nonAdmin = new User();
+    nonAdmin.setUserId(2);
+    Dataset dataset = new Dataset();
+    StudyConversion conversion = new StudyConversion();
+    assertThrows(
+        NotAuthorizedException.class,
+        () -> datasetService.convertDatasetToStudy(nonAdmin, dataset, conversion));
+  }
+
+  @Test
+  void testConvertDatasetToStudy_AdminCreatesNewStudy() {
+    User admin = getAdmin();
+    Dataset dataset = buildDataset(10, 5);
+    StudyConversion conversion = new StudyConversion();
+    conversion.setName("New Study");
+
+    int newStudyId = 42;
+    Study createdStudy = new Study();
+    createdStudy.setStudyId(newStudyId);
+
+    when(studyDAO.findStudyByName("New Study")).thenReturn(null);
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(newStudyId);
+    when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
+    when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
+
+    Study result = datasetService.convertDatasetToStudy(admin, dataset, conversion);
+
+    assertNotNull(result);
+    verify(studyDAO).insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    verify(datasetDAO).updateStudyId(10, newStudyId);
+  }
+
+  @Test
+  void testConvertDatasetToStudy_DacIdUpdated() {
+    User admin = getAdmin();
+    Dataset dataset = buildDataset(10, 5);
+    StudyConversion conversion = new StudyConversion();
+    conversion.setName("Study");
+    conversion.setDacId(99);
+
+    int newStudyId = 42;
+    Study createdStudy = new Study();
+    createdStudy.setStudyId(newStudyId);
+
+    when(studyDAO.findStudyByName("Study")).thenReturn(null);
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(newStudyId);
+    when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
+    when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
+
+    datasetService.convertDatasetToStudy(admin, dataset, conversion);
+
+    verify(datasetDAO).updateDatasetDacId(10, 99);
+  }
+
+  @Test
+  void testConvertDatasetToStudy_DataUseUpdated() {
+    User admin = getAdmin();
+    Dataset dataset = buildDataset(10, 5);
+    DataUse dataUse = new DataUseBuilder().setGeneralUse(true).build();
+    StudyConversion conversion = new StudyConversion();
+    conversion.setName("Study");
+    conversion.setDataUse(dataUse);
+
+    int newStudyId = 42;
+    Study createdStudy = new Study();
+    createdStudy.setStudyId(newStudyId);
+
+    when(studyDAO.findStudyByName("Study")).thenReturn(null);
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(newStudyId);
+    when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
+    when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
+    when(ontologyService.translateDataUse(any(), any())).thenReturn("GRU");
+
+    datasetService.convertDatasetToStudy(admin, dataset, conversion);
+
+    verify(datasetServiceDAO).updateDatasetDataUse(eq(admin), eq(dataset), eq(dataUse), any());
+  }
+
+  @Test
+  void testConvertDatasetToStudy_DatasetNameUpdated() {
+    User admin = getAdmin();
+    Dataset dataset = buildDataset(10, 5);
+    StudyConversion conversion = new StudyConversion();
+    conversion.setName("Study");
+    conversion.setDatasetName("New Dataset Name");
+
+    int newStudyId = 42;
+    Study createdStudy = new Study();
+    createdStudy.setStudyId(newStudyId);
+
+    when(studyDAO.findStudyByName("Study")).thenReturn(null);
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(newStudyId);
+    when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
+    when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
+
+    datasetService.convertDatasetToStudy(admin, dataset, conversion);
+
+    verify(datasetDAO).updateDatasetName(10, "New Dataset Name");
+  }
+
+  @Test
+  void testConvertDatasetToStudy_LegacyPropsInserted() {
+    User admin = getAdmin();
+    Dataset dataset = buildDataset(10, 5);
+    StudyConversion conversion = new StudyConversion();
+    conversion.setName("Study");
+    conversion.setPhenotype("Cancer");
+    conversion.setSpecies("Human");
+    conversion.setNumberOfParticipants(200);
+
+    int newStudyId = 42;
+    Study createdStudy = new Study();
+    createdStudy.setStudyId(newStudyId);
+
+    Dictionary phenotypeDict = new Dictionary(1, "Phenotype/Indication", false, 1, 1);
+    Dictionary speciesDict = new Dictionary(2, "Species", false, 2, 2);
+    Dictionary participantsDict = new Dictionary(3, "# of participants", false, 3, 3);
+
+    when(studyDAO.findStudyByName("Study")).thenReturn(null);
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(newStudyId);
+    when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
+    when(datasetDAO.getDictionaryTerms())
+        .thenReturn(List.of(phenotypeDict, speciesDict, participantsDict));
+
+    datasetService.convertDatasetToStudy(admin, dataset, conversion);
+
+    verify(datasetDAO, times(3)).insertDatasetProperties(any());
+  }
+
+  @Test
+  void testConvertDatasetToStudy_LegacyPropUpdated() {
+    User admin = getAdmin();
+    DatasetProperty existingPhenotype = new DatasetProperty();
+    existingPhenotype.setPropertyName("Phenotype/Indication");
+    existingPhenotype.setPropertyKey(1);
+    Dataset dataset = buildDataset(10, 5);
+    dataset.setProperties(Set.of(existingPhenotype));
+
+    StudyConversion conversion = new StudyConversion();
+    conversion.setName("Study");
+    conversion.setPhenotype("UpdatedPhenotype");
+
+    int newStudyId = 42;
+    Study createdStudy = new Study();
+    createdStudy.setStudyId(newStudyId);
+    Dictionary phenotypeDict = new Dictionary(1, "Phenotype/Indication", false, 1, 1);
+
+    when(studyDAO.findStudyByName("Study")).thenReturn(null);
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(newStudyId);
+    when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
+    when(datasetDAO.getDictionaryTerms()).thenReturn(List.of(phenotypeDict));
+
+    datasetService.convertDatasetToStudy(admin, dataset, conversion);
+
+    verify(datasetDAO).updateDatasetProperty(10, 1, "UpdatedPhenotype");
+    verify(datasetDAO, never()).insertDatasetProperties(any());
+  }
+
+  @Test
+  void testConvertDatasetToStudy_NewPropsInserted() {
+    User admin = getAdmin();
+    Dataset dataset = buildDataset(10, 5);
+    StudyConversion conversion = new StudyConversion();
+    conversion.setName("Study");
+    conversion.setDataLocation("gs://bucket/data");
+    conversion.setUrl("https://example.com/study");
+
+    int newStudyId = 42;
+    Study createdStudy = new Study();
+    createdStudy.setStudyId(newStudyId);
+    Dictionary dataLocationDict = new Dictionary(4, "Data Location", false, 4, 4);
+    Dictionary urlDict = new Dictionary(5, "URL", false, 5, 5);
+
+    when(studyDAO.findStudyByName("Study")).thenReturn(null);
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(newStudyId);
+    when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
+    when(datasetDAO.getDictionaryTerms()).thenReturn(List.of(dataLocationDict, urlDict));
+
+    datasetService.convertDatasetToStudy(admin, dataset, conversion);
+
+    verify(datasetDAO, times(2)).insertDatasetProperties(any());
+  }
+
+  @Test
+  void testConvertDatasetToStudy_NewPropUpdated() {
+    User admin = getAdmin();
+    DatasetProperty existingDataLocation = new DatasetProperty();
+    existingDataLocation.setSchemaProperty("dataLocation");
+    existingDataLocation.setPropertyKey(4);
+    Dataset dataset = buildDataset(10, 5);
+    dataset.setProperties(Set.of(existingDataLocation));
+
+    StudyConversion conversion = new StudyConversion();
+    conversion.setName("Study");
+    conversion.setDataLocation("gs://new-bucket/data");
+
+    int newStudyId = 42;
+    Study createdStudy = new Study();
+    createdStudy.setStudyId(newStudyId);
+
+    when(studyDAO.findStudyByName("Study")).thenReturn(null);
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(newStudyId);
+    when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
+    when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
+
+    datasetService.convertDatasetToStudy(admin, dataset, conversion);
+
+    verify(datasetDAO).updateDatasetProperty(10, 4, "gs://new-bucket/data");
+    verify(datasetDAO, never()).insertDatasetProperties(any());
+  }
+
+  @Test
+  void testConvertDatasetToStudy_DataSubmitterEmailFound() {
+    User admin = getAdmin();
+    Dataset dataset = buildDataset(10, 5);
+    StudyConversion conversion = new StudyConversion();
+    conversion.setName("Study");
+    conversion.setDataSubmitterEmail("submitter@test.com");
+
+    int newStudyId = 42;
+    Study createdStudy = new Study();
+    createdStudy.setStudyId(newStudyId);
+    User submitter = new User();
+    submitter.setUserId(99);
+
+    when(studyDAO.findStudyByName("Study")).thenReturn(null);
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(newStudyId);
+    when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
+    when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
+    when(userDAO.findUserByEmail("submitter@test.com")).thenReturn(submitter);
+
+    datasetService.convertDatasetToStudy(admin, dataset, conversion);
+
+    verify(datasetDAO).updateDatasetCreateUserId(anyInt(), anyInt());
+  }
+
+  @Test
+  void testConvertDatasetToStudy_DataSubmitterEmailNotFound() {
+    User admin = getAdmin();
+    Dataset dataset = buildDataset(10, 5);
+    StudyConversion conversion = new StudyConversion();
+    conversion.setName("Study");
+    conversion.setDataSubmitterEmail("unknown@test.com");
+
+    int newStudyId = 42;
+    Study createdStudy = new Study();
+    createdStudy.setStudyId(newStudyId);
+
+    when(studyDAO.findStudyByName("Study")).thenReturn(null);
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(newStudyId);
+    when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
+    when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
+    when(userDAO.findUserByEmail("unknown@test.com")).thenReturn(null);
+
+    datasetService.convertDatasetToStudy(admin, dataset, conversion);
+
+    verify(datasetDAO, never()).updateDatasetCreateUserId(any(), any());
+  }
+
+  @Test
+  void testConvertDatasetToStudy_AdminUpdatesExistingStudy() {
+    User admin = getAdmin();
+    Dataset dataset = buildDataset(10, 5);
+    StudyConversion conversion = new StudyConversion();
+    conversion.setName("Existing Study");
+
+    Study existingStudy = new Study();
+    existingStudy.setStudyId(77);
+
+    when(studyDAO.findStudyByName("Existing Study")).thenReturn(existingStudy);
+    when(studyDAO.findStudyById(77)).thenReturn(existingStudy);
+    when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
+
+    Study result = datasetService.convertDatasetToStudy(admin, dataset, conversion);
+
+    assertNotNull(result);
+    verify(studyDAO).updateStudy(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    verify(studyDAO, never())
+        .insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void testConvertDatasetToStudy_StudyPropsInsertedWhenKeyMissing() {
+    User admin = getAdmin();
+    Dataset dataset = buildDataset(10, 5);
+    StudyConversion conversion = new StudyConversion();
+    conversion.setName("Study");
+    conversion.setNihAnvilUse("Yes");
+
+    int newStudyId = 42;
+    Study createdStudy = new Study();
+    createdStudy.setStudyId(newStudyId);
+    // Existing prop has a different key — nihAnvilUse is absent
+    createdStudy.addProperties(
+        new StudyProperty("phenotypeIndication", "Cancer", PropertyType.String));
+
+    when(studyDAO.findStudyByName("Study")).thenReturn(null);
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(newStudyId);
+    when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
+    when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
+
+    datasetService.convertDatasetToStudy(admin, dataset, conversion);
+
+    verify(studyDAO).insertStudyProperty(eq(newStudyId), eq("nihAnvilUse"), any(), any());
+  }
+
+  @Test
+  void testConvertDatasetToStudy_StudyPropsUpdatedWhenMatching() {
+    User admin = getAdmin();
+    Dataset dataset = buildDataset(10, 5);
+    StudyConversion conversion = new StudyConversion();
+    conversion.setName("Study");
+    conversion.setNihAnvilUse("Yes");
+
+    int newStudyId = 42;
+    Study createdStudy = new Study();
+    createdStudy.setStudyId(newStudyId);
+    // Existing prop matches exactly — same key, value, and type as the conversion prop
+    createdStudy.addProperties(new StudyProperty("nihAnvilUse", "Yes", PropertyType.String));
+
+    when(studyDAO.findStudyByName("Study")).thenReturn(null);
+    when(studyDAO.insertStudy(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        .thenReturn(newStudyId);
+    when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
+    when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
+
+    datasetService.convertDatasetToStudy(admin, dataset, conversion);
+
+    verify(studyDAO).updateStudyProperty(eq(newStudyId), eq("nihAnvilUse"), any(), any());
+  }
+
+  @Test
+  void testConvertDatasetToStudy_NullDatasetCreateUserIdFallsBackToAdminId() {
+    User admin = getAdmin();
+    Dataset dataset = buildDataset(10, null); // null createUserId → use admin's userId
+    StudyConversion conversion = new StudyConversion();
+    conversion.setName("Study");
+
+    int newStudyId = 42;
+    Study createdStudy = new Study();
+    createdStudy.setStudyId(newStudyId);
+
+    when(studyDAO.findStudyByName("Study")).thenReturn(null);
+    when(studyDAO.insertStudy(
+            any(), any(), any(), any(), any(), any(), eq(admin.getUserId()), any(), any()))
+        .thenReturn(newStudyId);
+    when(studyDAO.findStudyById(newStudyId)).thenReturn(createdStudy);
+    when(datasetDAO.getDictionaryTerms()).thenReturn(List.of());
+
+    Study result = datasetService.convertDatasetToStudy(admin, dataset, conversion);
+
+    assertNotNull(result);
+    verify(studyDAO)
+        .insertStudy(any(), any(), any(), any(), any(), any(), eq(admin.getUserId()), any(), any());
+  }
+
+  // ==================== updateStudyCustodians ====================
+
+  @Test
+  void testUpdateStudyCustodians_StudyNotFound() {
+    when(studyDAO.findStudyById(anyInt())).thenReturn(null);
+    assertThrows(
+        NotFoundException.class, () -> datasetService.updateStudyCustodians(mockUser, 99, "[]"));
+  }
+
+  // ==================== deleteDataset ====================
+
+  @Test
+  void testDeleteDataset_NullDataset() throws Exception {
+    when(datasetDAO.findDatasetById(99)).thenReturn(null);
+    assertDoesNotThrow(() -> datasetService.deleteDataset(99, 1));
+    verify(datasetServiceDAO, never()).deleteDataset(any(), any());
+  }
+
+  // ==================== isCreatorCustodianOrAdmin ====================
+
+  @Test
+  void testIsCreatorCustodianOrAdmin_Admin() {
+    User admin = getAdmin();
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setCreateUserId(2);
+    assertTrue(datasetService.isCreatorCustodianOrAdmin(admin, study));
+  }
+
+  @Test
+  void testIsCreatorCustodianOrAdmin_Creator() {
+    User creator = new User();
+    creator.setUserId(5);
+    creator.setEmail("creator@test.com");
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setCreateUserId(creator.getUserId());
+    assertTrue(datasetService.isCreatorCustodianOrAdmin(creator, study));
+  }
+
+  @Test
+  void testIsCreatorCustodianOrAdmin_NeitherAdminNorCreatorNorCustodian() {
+    User user = new User();
+    user.setUserId(5);
+    user.setEmail("user@test.com");
+    Study study = new Study();
+    study.setStudyId(1);
+    study.setCreateUserId(99);
+    assertFalse(datasetService.isCreatorCustodianOrAdmin(user, study));
+  }
+
+  // ==================== patchStudy – exception path ====================
+
+  @Test
+  void testPatchStudy_ExceptionThrowsInternalServerError() throws Exception {
+    Study study = new Study();
+    study.setStudyId(1);
+    User user = new User();
+    user.setUserId(1);
+    StudyPatch patch =
+        new StudyPatch(null, null, null, null, null, null, null, null, null, null, null, null);
+
+    when(studyDAO.findStudyById(1)).thenReturn(study);
+    when(datasetServiceDAO.patchStudy(any(), any(), any()))
+        .thenThrow(new RuntimeException("DB error"));
+
+    assertThrows(
+        InternalServerErrorException.class, () -> datasetService.patchStudy(1, user, patch));
+  }
+
+  // ==================== findDatasetsByIds ====================
+
+  @Test
+  void testFindDatasetsByIds_AdminSeesAll() {
+    User admin = getAdmin();
+    Dataset d1 = new Dataset();
+    d1.setDatasetId(1);
+    d1.setCreateUserId(99);
+
+    when(datasetDAO.findDatasetsByIdList(anyList())).thenReturn(List.of(d1));
+
+    List<Dataset> result = datasetService.findDatasetsByIds(admin, List.of(1));
+
+    assertEquals(1, result.size());
+  }
+
+  @Test
+  void testFindDatasetsByIds_FilteredByVisibility() {
+    User user = new User();
+    user.setUserId(1);
+    user.setEmail("user@test.com");
+
+    Study privateStudy = new Study();
+    privateStudy.setStudyId(10);
+    privateStudy.setCreateUserId(99);
+    privateStudy.setPublicVisibility(false);
+
+    Dataset d1 = new Dataset();
+    d1.setDatasetId(1);
+    d1.setCreateUserId(99);
+    d1.setStudyId(10);
+    d1.setStudy(privateStudy);
+
+    when(datasetDAO.findDatasetsByIdList(anyList())).thenReturn(List.of(d1));
+
+    List<Dataset> result = datasetService.findDatasetsByIds(user, List.of(1));
+
+    assertEquals(0, result.size());
+  }
+
+  // ==================== canReadStudy ====================
+
+  @Test
+  void testCanReadStudy_NullStudy() {
+    User user = new User();
+    user.setUserId(1);
+    assertFalse(datasetService.canReadStudy(user, null));
+  }
+
+  @Test
+  void testCanReadStudy_Admin() {
+    User admin = getAdmin();
+    Study study = new Study();
+    study.setPublicVisibility(false);
+    assertTrue(datasetService.canReadStudy(admin, study));
+  }
+
+  @Test
+  void testCanReadStudy_PublicVisibilityNull() {
+    User user = new User();
+    user.setUserId(1);
+    Study study = new Study();
+    // publicVisibility null → !Boolean.FALSE.equals(null) is true → readable
+    assertTrue(datasetService.canReadStudy(user, study));
+  }
+
+  @Test
+  void testCanReadStudy_PrivateFalseNotCreatorNorCustodian() {
+    User user = new User();
+    user.setUserId(1);
+    user.setEmail("user@test.com");
+    Study study = new Study();
+    study.setCreateUserId(99);
+    study.setPublicVisibility(false);
+    assertFalse(datasetService.canReadStudy(user, study));
+  }
+
+  // ==================== isCreatorOrCustodian(User, Study) – null study ====================
+
+  @Test
+  void testIsCreatorOrCustodian_NullStudy() {
+    User user = new User();
+    user.setUserId(1);
+    assertFalse(datasetService.isCreatorOrCustodian(user, (Study) null));
+  }
+
+  // ==================== Helper ==================== //
+
+  private Dataset buildDataset(int datasetId, Integer createUserId) {
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(datasetId);
+    dataset.setCreateUserId(createUserId);
+    dataset.setProperties(Collections.emptySet());
+    return dataset;
   }
 
   /* Helper functions */
