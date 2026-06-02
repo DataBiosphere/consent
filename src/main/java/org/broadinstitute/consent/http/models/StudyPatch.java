@@ -24,6 +24,7 @@ public record StudyPatch(
     String phenotypeIndication,
     String species,
     String piName,
+    String piEmail,
     List<String> dataCustodianEmail,
     String alternativeDataSharingPlanTargetDeliveryDate,
     String alternativeDataSharingPlanTargetPublicReleaseDate,
@@ -98,6 +99,7 @@ public record StudyPatch(
     checks.add(checkPhenotypeIndication(study));
     checks.add(checkSpecies(study));
     checks.add(checkPiName(study));
+    checks.add(checkPiEmail(study));
     checks.add(checkDataCustodians(study));
     checks.add(checkTargetDate(study));
     checks.add(checkTargetReleaseDate(study));
@@ -157,6 +159,10 @@ public record StudyPatch(
 
   private boolean checkPiName(Study study) {
     return piName() != null && !piName().equals(study.getPiName()) && !piName().isBlank();
+  }
+
+  private boolean checkPiEmail(Study study) {
+    return piEmail() != null && !piEmail().equals(study.getPiEmail()) && !piEmail().isBlank();
   }
 
   private boolean checkDataCustodians(Study study) {

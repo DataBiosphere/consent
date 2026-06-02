@@ -53,6 +53,7 @@ class StudyDAOTest extends DAOTestHelper {
             name,
             description,
             piName,
+            null,
             dataTypes,
             publicVisibility,
             u.getUserId(),
@@ -63,6 +64,7 @@ class StudyDAOTest extends DAOTestHelper {
         RandomStringUtils.randomAlphabetic(20),
         description,
         piName,
+        null,
         dataTypes,
         publicVisibility,
         u.getUserId(),
@@ -101,6 +103,7 @@ class StudyDAOTest extends DAOTestHelper {
             name,
             description,
             piName,
+            null,
             dataTypes,
             publicVisibility,
             u.getUserId(),
@@ -112,6 +115,7 @@ class StudyDAOTest extends DAOTestHelper {
             RandomStringUtils.randomAlphabetic(20),
             description,
             piName,
+            null,
             dataTypes,
             publicVisibility,
             u.getUserId(),
@@ -156,7 +160,15 @@ class StudyDAOTest extends DAOTestHelper {
     UUID uuid = UUID.randomUUID();
     Integer id =
         studyDAO.insertStudy(
-            "name", "description", "asdf", List.of(), true, u.getUserId(), Instant.now(), uuid);
+            "name",
+            "description",
+            "asdf",
+            null,
+            List.of(),
+            true,
+            u.getUserId(),
+            Instant.now(),
+            uuid);
 
     FileStorageObject fso =
         createFileStorageObject(uuid.toString(), FileCategory.ALTERNATIVE_DATA_SHARING_PLAN);
@@ -285,6 +297,7 @@ class StudyDAOTest extends DAOTestHelper {
         newName,
         newDescription,
         newPiName,
+        null,
         newDataTypes,
         true,
         user.getUserId(),
@@ -419,6 +432,7 @@ class StudyDAOTest extends DAOTestHelper {
             name,
             description,
             piName,
+            null,
             dataTypes,
             publicVisibility,
             u.getUserId(),

@@ -1072,6 +1072,7 @@ class DatasetServiceTest extends AbstractTestHelper {
             null,
             null,
             null,
+            null,
             true);
     when(datasetServiceDAO.patchStudy(study, user, patch)).thenReturn(study);
     when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
