@@ -11,8 +11,6 @@ import jakarta.validation.constraints.NotNull;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ConsentConfiguration extends Configuration {
 
-  public ConsentConfiguration() {}
-
   @Valid @NotNull @JsonProperty private final DataSourceFactory database = new DataSourceFactory();
 
   @Valid @NotNull @JsonProperty
@@ -21,12 +19,13 @@ public class ConsentConfiguration extends Configuration {
   @Valid @NotNull @JsonProperty
   private final ServicesConfiguration services = new ServicesConfiguration();
 
-  @Valid @NotNull private JerseyClientConfiguration httpClient = new JerseyClientConfiguration();
+  @Valid @NotNull
+  private final JerseyClientConfiguration httpClient = new JerseyClientConfiguration();
 
-  @Valid @NotNull private MailConfiguration mailConfiguration = new MailConfiguration();
+  @Valid @NotNull private final MailConfiguration mailConfiguration = new MailConfiguration();
 
   @Valid @NotNull
-  private FreeMarkerConfiguration freeMarkerConfiguration = new FreeMarkerConfiguration();
+  private final FreeMarkerConfiguration freeMarkerConfiguration = new FreeMarkerConfiguration();
 
   @JsonProperty("httpClient")
   public JerseyClientConfiguration getJerseyClientConfiguration() {
@@ -38,6 +37,8 @@ public class ConsentConfiguration extends Configuration {
 
   @Valid @NotNull @JsonProperty
   private final OidcConfiguration oidcConfiguration = new OidcConfiguration();
+
+  @Valid @NotNull @JsonProperty private final NihConfiguration nih = new NihConfiguration();
 
   public DataSourceFactory getDataSourceFactory() {
     return database;
@@ -65,5 +66,9 @@ public class ConsentConfiguration extends Configuration {
 
   public OidcConfiguration getOidcConfiguration() {
     return oidcConfiguration;
+  }
+
+  public NihConfiguration getNihConfiguration() {
+    return nih;
   }
 }
