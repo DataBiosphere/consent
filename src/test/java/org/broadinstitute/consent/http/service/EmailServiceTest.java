@@ -338,7 +338,7 @@ class EmailServiceTest extends AbstractTestHelper {
   void testSendNewDatasetInDUOSNotifications_No_New_Datasets() {
     when(datasetDAO.getRecentDacApprovedDatasetStudyIds()).thenReturn(List.of());
     when(datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds()).thenReturn(List.of());
-    when(studyDAO.findNameAndDatasetCount(any())).thenReturn(List.of());
+    when(studyDAO.findStudyDatasetCountsWithAccessTypes(any())).thenReturn(List.of());
 
     service.sendNewDatasetInDUOSNotifications();
 
@@ -349,7 +349,7 @@ class EmailServiceTest extends AbstractTestHelper {
   void testSendNewDatasetInDUOSNotifications_Null_Datasets() {
     when(datasetDAO.getRecentDacApprovedDatasetStudyIds()).thenReturn(List.of());
     when(datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds()).thenReturn(List.of());
-    when(studyDAO.findNameAndDatasetCount(any())).thenReturn(null);
+    when(studyDAO.findStudyDatasetCountsWithAccessTypes(any())).thenReturn(null);
 
     service.sendNewDatasetInDUOSNotifications();
 
@@ -365,8 +365,8 @@ class EmailServiceTest extends AbstractTestHelper {
     toUser.setEmailPreference(true);
     when(datasetDAO.getRecentDacApprovedDatasetStudyIds()).thenReturn(List.of());
     when(datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds()).thenReturn(List.of());
-    when(studyDAO.findNameAndDatasetCount(any()))
-        .thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, 7)));
+    when(studyDAO.findStudyDatasetCountsWithAccessTypes(any()))
+        .thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, "open", 7)));
     Handle handle = mock(Handle.class);
     Jdbi jdbi = mock(Jdbi.class);
     when(userDAO.getHandle()).thenReturn(handle);
@@ -407,8 +407,8 @@ class EmailServiceTest extends AbstractTestHelper {
     toUser.setEmailPreference(true);
     when(datasetDAO.getRecentDacApprovedDatasetStudyIds()).thenReturn(List.of());
     when(datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds()).thenReturn(List.of());
-    when(studyDAO.findNameAndDatasetCount(any()))
-        .thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, 7)));
+    when(studyDAO.findStudyDatasetCountsWithAccessTypes(any()))
+        .thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, "open", 7)));
     Handle handle = mock(Handle.class);
     Jdbi jdbi = mock(Jdbi.class);
     when(userDAO.getHandle()).thenReturn(handle);
@@ -454,8 +454,8 @@ class EmailServiceTest extends AbstractTestHelper {
     toUser.setEmailPreference(true);
     when(datasetDAO.getRecentDacApprovedDatasetStudyIds()).thenReturn(List.of());
     when(datasetDAO.getRecentlyCreatedOpenOrExternalDatasetStudyIds()).thenReturn(List.of());
-    when(studyDAO.findNameAndDatasetCount(any()))
-        .thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, 7)));
+    when(studyDAO.findStudyDatasetCountsWithAccessTypes(any()))
+        .thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, "open", 7)));
     Handle handle = mock(Handle.class);
     Jdbi jdbi = mock(Jdbi.class);
     when(userDAO.getHandle()).thenReturn(handle);

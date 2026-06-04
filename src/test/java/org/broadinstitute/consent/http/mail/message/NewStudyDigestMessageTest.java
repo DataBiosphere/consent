@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +21,8 @@ class NewStudyDigestMessageTest extends AbstractMailMessageTest {
   void testCreateModel_AddsRequiredFields() {
     List<StudyDatasetCountRecord> newStudies =
         List.of(
-            new StudyDatasetCountRecord("My new study", 3, 1),
-            new StudyDatasetCountRecord("My other new study", 4000, 2));
+            new StudyDatasetCountRecord("My new study", 3, any(), 1),
+            new StudyDatasetCountRecord("My other new study", 4000, any(), 2));
     User user = new User();
     user.setDisplayName("Test User");
     var message = new NewStudyDigestMessage(user, newStudies, "My reference id");
@@ -32,8 +33,10 @@ class NewStudyDigestMessageTest extends AbstractMailMessageTest {
   @Test
   void testNewStudyDigestMessage() throws Exception {
     List<StudyDatasetCountRecord> newStudies = new ArrayList<>();
-    StudyDatasetCountRecord record1 = new StudyDatasetCountRecord("My new study", 3, 1);
-    StudyDatasetCountRecord record2 = new StudyDatasetCountRecord("My other new study", 4000, 2);
+    StudyDatasetCountRecord record1 =
+        new StudyDatasetCountRecord("My new study", 3, "controlled, external", 1);
+    StudyDatasetCountRecord record2 =
+        new StudyDatasetCountRecord("My other new study", 4000, "open", 2);
     newStudies.add(record1);
     newStudies.add(record2);
     String referenceId = "My reference id";
@@ -58,9 +61,13 @@ class NewStudyDigestMessageTest extends AbstractMailMessageTest {
         Objects.requireNonNull(rendered.document().getElementById("userName")).text());
     assertThat(
         rendered.document().body().html(),
-        containsString(urlStringPattern.formatted(serverUrl, record1.id(), record1.name())));
+        containsString(
+            urlStringPattern.formatted(
+                serverUrl, record1.id(), record1.name(), record1.accessTypes())));
     assertThat(
         rendered.document().body().html(),
-        containsString(urlStringPattern.formatted(serverUrl, record2.id(), record2.name())));
+        containsString(
+            urlStringPattern.formatted(
+                serverUrl, record2.id(), record2.name(), record2.accessTypes())));
   }
 }

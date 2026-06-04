@@ -10,9 +10,12 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
@@ -21,6 +24,7 @@ import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.StudyDatasetCountRecord;
@@ -380,22 +384,67 @@ class StudyDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindNameAndDatasetCount() {
+  void testFindStudyDatasetCountsWithAccessTypes() {
     Study study1 = insertStudyWithProperties();
     Study study2 = insertStudyWithProperties();
-    IntStream.range(0, 19).forEach(i -> insertDatasetForStudy(study1.getStudyId()));
-    IntStream.range(0, 5).forEach(i -> insertDatasetForStudy(study2.getStudyId()));
+
+    Dataset controlledDataset = insertDatasetForStudy(study1.getStudyId());
+
+    insertAccessManagementDatasetProperty(controlledDataset.getDatasetId(), "controlled");
+
+    Dataset openDataset = insertDatasetForStudy(study1.getStudyId());
+    insertAccessManagementDatasetProperty(openDataset.getDatasetId(), "open");
+
+    Dataset externalDataset = insertDatasetForStudy(study1.getStudyId());
+    insertAccessManagementDatasetProperty(externalDataset.getDatasetId(), "external");
+
+    IntStream.range(0, 16)
+        .forEach(
+            i -> {
+              Dataset dataset = insertDatasetForStudy(study1.getStudyId());
+              insertAccessManagementDatasetProperty(dataset.getDatasetId(), "controlled");
+            });
+
+    IntStream.range(0, 5)
+        .forEach(
+            i -> {
+              Dataset dataset = insertDatasetForStudy(study2.getStudyId());
+              insertAccessManagementDatasetProperty(dataset.getDatasetId(), "open");
+            });
+
     List<StudyDatasetCountRecord> records =
-        studyDAO.findNameAndDatasetCount(Set.of(study1.getStudyId()));
+        studyDAO.findStudyDatasetCountsWithAccessTypes(Set.of(study1.getStudyId()));
+
     assertEquals(1, records.size());
+    assertEquals(study1.getStudyId(), records.getFirst().id());
+    assertEquals(study1.getName(), records.getFirst().name());
+    assertEquals("controlled,external,open", records.getFirst().accessTypes());
     assertEquals(19, records.getFirst().datasetCount());
 
-    records = studyDAO.findNameAndDatasetCount(Set.of(study2.getStudyId()));
+    records = studyDAO.findStudyDatasetCountsWithAccessTypes(Set.of(study2.getStudyId()));
+
     assertEquals(1, records.size());
+    assertEquals(study2.getStudyId(), records.getFirst().id());
+    assertEquals(study2.getName(), records.getFirst().name());
+    assertEquals("open", records.getFirst().accessTypes());
     assertEquals(5, records.getFirst().datasetCount());
 
-    records = studyDAO.findNameAndDatasetCount(Set.of(study1.getStudyId(), study2.getStudyId()));
+    records =
+        studyDAO.findStudyDatasetCountsWithAccessTypes(
+            Set.of(study1.getStudyId(), study2.getStudyId()));
+
     assertEquals(2, records.size());
+
+    Map<Integer, StudyDatasetCountRecord> recordsByStudyId =
+        records.stream()
+            .collect(Collectors.toMap(StudyDatasetCountRecord::id, Function.identity()));
+
+    assertEquals(19, recordsByStudyId.get(study1.getStudyId()).datasetCount());
+    assertEquals(
+        "controlled,external,open", recordsByStudyId.get(study1.getStudyId()).accessTypes());
+
+    assertEquals(5, recordsByStudyId.get(study2.getStudyId()).datasetCount());
+    assertEquals("open", recordsByStudyId.get(study2.getStudyId()).accessTypes());
   }
 
   private FileStorageObject createFileStorageObject(String entityId, FileCategory category) {
@@ -469,5 +518,18 @@ class StudyDAOTest extends DAOTestHelper {
     Integer id =
         datasetDAO.insertDataset(name, now, user.getUserId(), objectId, dataUse.toString(), null);
     return datasetDAO.findDatasetById(id);
+  }
+
+  private void insertAccessManagementDatasetProperty(Integer datasetId, String propertyValue) {
+    datasetDAO.insertDatasetProperties(
+        List.of(
+            new DatasetProperty(
+                1,
+                datasetId,
+                1,
+                "accessManagement",
+                propertyValue,
+                PropertyType.String,
+                Date.from(Instant.now()))));
   }
 }
