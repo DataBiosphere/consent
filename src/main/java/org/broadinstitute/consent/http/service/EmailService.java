@@ -213,6 +213,6 @@ public class EmailService implements ConsentLogger {
     Set<Integer> studyIds = new HashSet<>();
     studyIds.addAll(newDacApprovedDatasetStudyIds);
     studyIds.addAll(newOpenOrExternalDatasetStudyIds);
-    return studyDAO.findNameAndDatasetCount(studyIds);
+    return studyDAO.findStudyDatasetCountsWithAccessTypes(studyIds);
   }
 }
