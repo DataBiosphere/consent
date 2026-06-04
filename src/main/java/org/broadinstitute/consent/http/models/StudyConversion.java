@@ -13,6 +13,7 @@ public class StudyConversion {
   private String phenotype;
   private String species;
   private String piName;
+  private String piEmail;
   private String dataSubmitterEmail;
   private Boolean publicVisibility;
   private String nihAnvilUse;
@@ -69,6 +70,14 @@ public class StudyConversion {
 
   public void setPiName(String piName) {
     this.piName = piName;
+  }
+
+  public String getPiEmail() {
+    return piEmail;
+  }
+
+  public void setPiEmail(String piEmail) {
+    this.piEmail = piEmail;
   }
 
   public String getDataSubmitterEmail() {
@@ -149,6 +158,7 @@ public class StudyConversion {
     study.setDescription(getDescription());
     study.setPublicVisibility(getPublicVisibility());
     study.setPiName(getPiName());
+    study.setPiEmail(getPiEmail());
     study.setDataTypes(getDataTypes());
     return study;
   }

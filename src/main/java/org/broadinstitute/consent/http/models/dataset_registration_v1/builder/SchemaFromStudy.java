@@ -67,6 +67,7 @@ public class SchemaFromStudy {
           findStringPropValue(study.getProperties(), phenotypeIndication));
       schemaV1.setSpecies(findStringPropValue(study.getProperties(), species));
       schemaV1.setPiName(study.getPiName());
+      schemaV1.setPiEmail(study.getPiEmail());
       schemaV1.setDataSubmitterUserId(study.getCreateUserId());
       schemaV1.setDataCustodianEmail(
           findListStringPropValue(study.getProperties(), dataCustodianEmail));

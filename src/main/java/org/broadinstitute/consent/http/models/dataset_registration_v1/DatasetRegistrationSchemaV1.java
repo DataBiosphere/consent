@@ -32,6 +32,7 @@ import java.util.Map;
   "phenotypeIndication",
   "species",
   "piName",
+  "piEmail",
   "dataSubmitterUserId",
   "dataCustodianEmail",
   "publicVisibility",
@@ -106,6 +107,11 @@ public class DatasetRegistrationSchemaV1 {
   @JsonProperty("piName")
   @JsonPropertyDescription("Principal Investigator Name")
   private String piName;
+
+  /** Principal Investigator Email */
+  @JsonProperty("piEmail")
+  @JsonPropertyDescription("Principal Investigator Email")
+  private String piEmail;
 
   /** The user creating the dataset submission (Required) */
   @JsonProperty("dataSubmitterUserId")
@@ -377,6 +383,18 @@ public class DatasetRegistrationSchemaV1 {
   @JsonProperty("piName")
   public void setPiName(String piName) {
     this.piName = piName;
+  }
+
+  /** Principal Investigator Email */
+  @JsonProperty("piEmail")
+  public String getPiEmail() {
+    return piEmail;
+  }
+
+  /** Principal Investigator Email */
+  @JsonProperty("piEmail")
+  public void setPiEmail(String piEmail) {
+    this.piEmail = piEmail;
   }
 
   /** The user creating the dataset submission (Required) */
@@ -839,6 +857,10 @@ public class DatasetRegistrationSchemaV1 {
     sb.append('=');
     sb.append(((this.piName == null) ? "<null>" : this.piName));
     sb.append(',');
+    sb.append("piEmail");
+    sb.append('=');
+    sb.append(((this.piEmail == null) ? "<null>" : this.piEmail));
+    sb.append(',');
     sb.append("dataSubmitterUserId");
     sb.append('=');
     sb.append(((this.dataSubmitterUserId == null) ? "<null>" : this.dataSubmitterUserId));
@@ -1102,6 +1124,7 @@ public class DatasetRegistrationSchemaV1 {
         ((result * 31)
             + ((this.nihICsSupportingStudy == null) ? 0 : this.nihICsSupportingStudy.hashCode()));
     result = ((result * 31) + ((this.piName == null) ? 0 : this.piName.hashCode()));
+    result = ((result * 31) + ((this.piEmail == null) ? 0 : this.piEmail.hashCode()));
     result = ((result * 31) + ((this.dbGaPPhsID == null) ? 0 : this.dbGaPPhsID.hashCode()));
     result =
         ((result * 31)
@@ -1409,6 +1432,9 @@ public class DatasetRegistrationSchemaV1 {
                                                 && ((this.piName == rhs.piName)
                                                     || ((this.piName != null)
                                                         && this.piName.equals(rhs.piName))))
+                                            && ((this.piEmail == rhs.piEmail)
+                                                || ((this.piEmail != null)
+                                                    && this.piEmail.equals(rhs.piEmail)))
                                             && ((this.dbGaPPhsID == rhs.dbGaPPhsID)
                                                 || ((this.dbGaPPhsID != null)
                                                     && this.dbGaPPhsID.equals(rhs.dbGaPPhsID))))

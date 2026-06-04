@@ -248,4 +248,5 @@
   <include file="changesets/changelog-consent-2026-05-01-user-redaction-audit.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-04-08-dar-daa.xml" relativeToChangelogFile="true" />
   <include file="changesets/changelog-consent-2026-04-28-dar-dataset-daa-snapshot.xml" relativeToChangelogFile="true" />
+  <include file="changesets/changelog-consent-2026-06-02-study-pi-email.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>

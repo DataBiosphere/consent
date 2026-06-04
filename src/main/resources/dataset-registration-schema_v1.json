@@ -157,6 +157,12 @@
       "description" : "Principal Investigator Name",
       "minLength" : 1
     },
+    "piEmail" : {
+      "type" : "string",
+      "format" : "email",
+      "label" : "Principal Investigator Email",
+      "description" : "Principal Investigator Email"
+    },
     "dataSubmitterUserId" : {
       "type" : "integer",
       "label" : "Data Submitter",

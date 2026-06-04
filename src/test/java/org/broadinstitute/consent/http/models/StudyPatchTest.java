@@ -43,34 +43,35 @@ class StudyPatchTest extends AbstractTestHelper {
   void testIsPatchableNoValues() {
     Study study = mockStudy();
     StudyPatch patch =
-        new StudyPatch(null, null, null, null, null, null, null, null, null, null, null);
+        new StudyPatch(null, null, null, null, null, null, null, null, null, null, null, null);
     assertFalse(patch.isPatchable(study));
   }
 
   @Test
   void testIsPatchableSameValues() {
-    Study study = mockStudy();
+    Study mockStudy = mockStudy();
     StudyPatch patch =
         new StudyPatch(
-            study.getName(),
+            mockStudy.getName(),
             StudyType.OBSERVATIONAL,
-            study.getDescription(),
-            study.getDataTypes(),
+            mockStudy.getDescription(),
+            mockStudy.getDataTypes(),
             "CANCER",
             "HUMAN",
-            study.getPiName(),
+            mockStudy.getPiName(),
+            mockStudy.getPiEmail(),
             List.of("EMAIL1", "EMAIL2"),
             "01/01/2020",
             "01/01/2020",
-            study.getPublicVisibility());
-    assertFalse(patch.isPatchable(study));
+            mockStudy.getPublicVisibility());
+    assertFalse(patch.isPatchable(mockStudy));
   }
 
   @Test
   void testIsPatchableName() {
     Study study = mockStudy();
     StudyPatch patch =
-        new StudyPatch("Name", null, null, null, null, null, null, null, null, null, null);
+        new StudyPatch("Name", null, null, null, null, null, null, null, null, null, null, null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -79,7 +80,7 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
-            null, StudyType.ANALYTICAL, null, null, null, null, null, null, null, null, null);
+            null, StudyType.ANALYTICAL, null, null, null, null, null, null, null, null, null, null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -87,7 +88,8 @@ class StudyPatchTest extends AbstractTestHelper {
   void testIsPatchableDescription() {
     Study study = mockStudy();
     StudyPatch patch =
-        new StudyPatch(null, null, "Description", null, null, null, null, null, null, null, null);
+        new StudyPatch(
+            null, null, "Description", null, null, null, null, null, null, null, null, null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -96,7 +98,18 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, List.of("type1", "type2"), null, null, null, null, null, null, null);
+            null,
+            null,
+            null,
+            List.of("type1", "type2"),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -104,7 +117,8 @@ class StudyPatchTest extends AbstractTestHelper {
   void testIsPatchablePhenotype() {
     Study study = mockStudy();
     StudyPatch patch =
-        new StudyPatch(null, null, null, null, "New Phenotype", null, null, null, null, null, null);
+        new StudyPatch(
+            null, null, null, null, "New Phenotype", null, null, null, null, null, null, null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -112,7 +126,8 @@ class StudyPatchTest extends AbstractTestHelper {
   void testIsPatchableSpecies() {
     Study study = mockStudy();
     StudyPatch patch =
-        new StudyPatch(null, null, null, null, null, "New Species", null, null, null, null, null);
+        new StudyPatch(
+            null, null, null, null, null, "New Species", null, null, null, null, null, null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -120,7 +135,17 @@ class StudyPatchTest extends AbstractTestHelper {
   void testIsPatchablePIName() {
     Study study = mockStudy();
     StudyPatch patch =
-        new StudyPatch(null, null, null, null, null, null, "New PI Name", null, null, null, null);
+        new StudyPatch(
+            null, null, null, null, null, null, "New PI Name", null, null, null, null, null);
+    assertTrue(patch.isPatchable(study));
+  }
+
+  @Test
+  void testIsPatchablePIEmail() {
+    Study study = mockStudy();
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, null, null, null, null, "New PI Email", null, null, null, null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -129,6 +154,7 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
+            null,
             null,
             null,
             null,
@@ -147,7 +173,8 @@ class StudyPatchTest extends AbstractTestHelper {
   void testIsPatchableTargetDeliveryDate() {
     Study study = mockStudy();
     StudyPatch patch =
-        new StudyPatch(null, null, null, null, null, null, null, null, "New Date", null, null);
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, null, "New Date", null, null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -155,7 +182,8 @@ class StudyPatchTest extends AbstractTestHelper {
   void testIsPatchableTargetReleaseDate() {
     Study study = mockStudy();
     StudyPatch patch =
-        new StudyPatch(null, null, null, null, null, null, null, null, null, "New Date", null);
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, null, null, "New Date", null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -163,7 +191,7 @@ class StudyPatchTest extends AbstractTestHelper {
   void testIsPatchablePublicVisibility() {
     Study study = mockStudy();
     StudyPatch patch =
-        new StudyPatch(null, null, null, null, null, null, null, null, null, null, false);
+        new StudyPatch(null, null, null, null, null, null, null, null, null, null, null, false);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -173,6 +201,7 @@ class StudyPatchTest extends AbstractTestHelper {
     study.setDescription(randomAlphabetic(20));
     study.setDataTypes(List.of(randomAlphabetic(20), randomAlphabetic(20)));
     study.setPiName(randomAlphabetic(20));
+    study.setPiEmail(randomAlphabetic(20));
     study.setPublicVisibility(true);
     study.addProperties(
         new StudyProperty(STUDY_TYPE, StudyType.OBSERVATIONAL.value(), PropertyType.String),

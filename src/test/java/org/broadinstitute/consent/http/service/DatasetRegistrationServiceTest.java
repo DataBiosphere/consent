@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 import com.google.cloud.storage.BlobId;
 import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
@@ -51,6 +52,7 @@ import org.broadinstitute.consent.http.mail.message.NewStudyRegistrationConfirma
 import org.broadinstitute.consent.http.models.Dac;
 import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.broadinstitute.consent.http.models.DatasetPatch;
 import org.broadinstitute.consent.http.models.DatasetProperty;
 import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
@@ -182,6 +184,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
     assertEquals(schema.getStudyName(), capturedStudyInsert.name());
     assertEquals(schema.getPiName(), capturedStudyInsert.piName());
+    assertEquals(schema.getPiEmail(), capturedStudyInsert.piEmail());
     assertEquals(schema.getStudyDescription(), capturedStudyInsert.description());
     assertEquals(schema.getDataTypes(), capturedStudyInsert.dataTypes());
     assertEquals(schema.getPublicVisibility(), capturedStudyInsert.publicVisibility());
@@ -348,6 +351,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
     assertEquals(schema.getStudyName(), capturedStudyInsert.name());
     assertEquals(schema.getPiName(), capturedStudyInsert.piName());
+    assertEquals(schema.getPiEmail(), capturedStudyInsert.piEmail());
     assertEquals(schema.getStudyDescription(), capturedStudyInsert.description());
     assertEquals(schema.getDataTypes(), capturedStudyInsert.dataTypes());
     assertEquals(schema.getPublicVisibility(), capturedStudyInsert.publicVisibility());
@@ -628,6 +632,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
     assertEquals(schema.getStudyName(), capturedStudyInsert.name());
     assertEquals(schema.getPiName(), capturedStudyInsert.piName());
+    assertEquals(schema.getPiEmail(), capturedStudyInsert.piEmail());
     assertEquals(schema.getStudyDescription(), capturedStudyInsert.description());
     assertEquals(schema.getDataTypes(), capturedStudyInsert.dataTypes());
     assertEquals(schema.getPublicVisibility(), capturedStudyInsert.publicVisibility());
@@ -953,6 +958,123 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     assertDoesNotThrow(() -> datasetRegistrationService.deleteFile(new FileStorageObject(), null));
   }
 
+  @Test
+  void testPatchDatasetSuccess() throws Exception {
+    int datasetId = 1;
+    User user = new User();
+    DatasetPatch patch = mock();
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(datasetId);
+    when(datasetDAO.findDatasetById(datasetId)).thenReturn(dataset);
+
+    Dataset result = datasetRegistrationService.patchDataset(datasetId, user, patch);
+
+    assertEquals(dataset, result);
+    verify(datasetServiceDAO, times(1)).patchDataset(datasetId, user, patch);
+  }
+
+  @Test
+  void testPatchDatasetThrowsOnSQLException() throws Exception {
+    int datasetId = 1;
+    User user = new User();
+    DatasetPatch patch = mock();
+    doThrow(new SQLException("boom")).when(datasetServiceDAO).patchDataset(anyInt(), any(), any());
+
+    assertThrows(
+        InternalServerErrorException.class,
+        () -> datasetRegistrationService.patchDataset(datasetId, user, patch));
+    verify(datasetDAO, never()).findDatasetById(anyInt());
+  }
+
+  @Test
+  void testFindStudyByIdFound() {
+    Study study = new Study();
+    study.setStudyId(1);
+    when(studyDAO.findStudyById(1)).thenReturn(study);
+
+    assertEquals(study, datasetRegistrationService.findStudyById(1));
+  }
+
+  @Test
+  void testFindStudyByIdNotFound() {
+    when(studyDAO.findStudyById(1)).thenReturn(null);
+
+    assertThrows(NotFoundException.class, () -> datasetRegistrationService.findStudyById(1));
+  }
+
+  @Test
+  void testUpdateDatasetNullNameThrows() {
+    User user = mock();
+    org.broadinstitute.consent.http.models.DatasetUpdate update =
+        new org.broadinstitute.consent.http.models.DatasetUpdate(null, 1, List.of());
+
+    assertThrows(
+        BadRequestException.class,
+        () -> datasetRegistrationService.updateDataset(1, user, update, Map.of()));
+  }
+
+  @Test
+  void testUpdateDatasetNullDacIdThrows() {
+    User user = mock();
+    org.broadinstitute.consent.http.models.DatasetUpdate update =
+        new org.broadinstitute.consent.http.models.DatasetUpdate(
+            randomAlphabetic(10), null, List.of());
+
+    assertThrows(
+        BadRequestException.class,
+        () -> datasetRegistrationService.updateDataset(1, user, update, Map.of()));
+  }
+
+  @Test
+  void testUpdateDatasetDacIdMismatchThrows() {
+    User user = mock();
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setDacId(1);
+    when(datasetDAO.findDatasetById(1)).thenReturn(dataset);
+    org.broadinstitute.consent.http.models.DatasetUpdate update =
+        new org.broadinstitute.consent.http.models.DatasetUpdate(
+            randomAlphabetic(10), 2, List.of());
+
+    assertThrows(
+        BadRequestException.class,
+        () -> datasetRegistrationService.updateDataset(1, user, update, Map.of()));
+  }
+
+  @Test
+  void testUpdateStudyFromRegistrationCapturesPiEmail() throws Exception {
+    User user = mock();
+    DatasetRegistrationSchemaV1 schema = createRandomCompleteDatasetRegistration(user);
+    Study study = mock();
+
+    when(dacDAO.findById(any())).thenReturn(new Dac());
+    ArgumentCaptor<DatasetServiceDAO.StudyUpdate> studyUpdateCaptor =
+        ArgumentCaptor.forClass(DatasetServiceDAO.StudyUpdate.class);
+    when(datasetServiceDAO.updateStudy(studyUpdateCaptor.capture(), any(), any()))
+        .thenReturn(study);
+    when(study.getDatasets()).thenReturn(Set.of());
+
+    datasetRegistrationService.updateStudyFromRegistration(1, schema, user, Map.of());
+
+    assertEquals(schema.getPiName(), studyUpdateCaptor.getValue().piName());
+    assertEquals(schema.getPiEmail(), studyUpdateCaptor.getValue().piEmail());
+  }
+
+  @Test
+  void testSendDatasetSubmittedEmailsMembersButNoChairs() throws Exception {
+    Dac dac = mock();
+    Dataset dataset = new Dataset();
+    dataset.setDacId(1);
+    User member = new User();
+    member.setMemberRole();
+
+    when(dacDAO.findById(any())).thenReturn(dac);
+    when(dacDAO.findMembersByDacId(any())).thenReturn(List.of(member));
+
+    datasetRegistrationService.sendDatasetSubmittedEmails(List.of(dataset));
+    verify(emailService, never()).sendMessage(any(DatasetSubmittedMessage.class), any());
+  }
+
   private void assertDataUse(ConsentGroup consentGroup, DataUse dataUse) {
     assertEquals(consentGroup.getCol(), dataUse.getCollaboratorRequired());
     assertEquals(consentGroup.getDiseaseSpecificUse(), dataUse.getDiseaseRestrictions());
@@ -1000,6 +1122,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     schemaV1.setPhenotypeIndication(randomAlphabetic(10));
     schemaV1.setSpecies(randomAlphabetic(10));
     schemaV1.setPiName(randomAlphabetic(10));
+    schemaV1.setPiEmail(randomAlphabetic(10) + "@domain.org");
     when(user.getUserId()).thenReturn(1);
     schemaV1.setDataSubmitterUserId(user.getUserId());
     schemaV1.setDataCustodianEmail(List.of(randomAlphabetic(10) + "@domain.org"));
@@ -1028,6 +1151,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     schemaV1.setPhenotypeIndication(randomAlphabetic(10));
     schemaV1.setSpecies(randomAlphabetic(10));
     schemaV1.setPiName(randomAlphabetic(10));
+    schemaV1.setPiEmail(randomAlphabetic(10) + "@domain.org");
     when(user.getUserId()).thenReturn(1);
     schemaV1.setDataSubmitterUserId(user.getUserId());
     schemaV1.setDataCustodianEmail(List.of(randomAlphabetic(10) + "@domain.org"));
@@ -1055,6 +1179,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     schemaV1.setPhenotypeIndication(randomAlphabetic(10));
     schemaV1.setSpecies(randomAlphabetic(10));
     schemaV1.setPiName(randomAlphabetic(10));
+    schemaV1.setPiEmail(randomAlphabetic(10) + "@domain.org");
     when(user.getUserId()).thenReturn(1);
     schemaV1.setDataSubmitterUserId(user.getUserId());
     schemaV1.setDataCustodianEmail(List.of(randomAlphabetic(10) + "@domain.org"));
@@ -1095,6 +1220,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     schemaV1.setPhenotypeIndication(randomAlphabetic(10));
     schemaV1.setSpecies(randomAlphabetic(10));
     schemaV1.setPiName(randomAlphabetic(10));
+    schemaV1.setPiEmail(randomAlphabetic(10) + "@domain.org");
     when(user.getUserId()).thenReturn(1);
     schemaV1.setDataSubmitterUserId(user.getUserId());
     schemaV1.setDataCustodianEmail(List.of(randomAlphabetic(10) + "@domain.org"));
