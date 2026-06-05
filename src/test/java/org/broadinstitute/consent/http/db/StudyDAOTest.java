@@ -437,10 +437,14 @@ class StudyDAOTest extends DAOTestHelper {
         records.stream()
             .collect(Collectors.toMap(StudyDatasetCountRecord::id, Function.identity()));
 
+    // study1 has 3 initial datasets (controlled/open/external) + 16 controlled = 19 total.
+    // The 5 open datasets are created for study2 and are not included here.
     assertEquals(19, recordsByStudyId.get(study1.getStudyId()).datasetCount());
     assertEquals(
         "controlled,external,open", recordsByStudyId.get(study1.getStudyId()).accessTypes());
 
+    // study2 has exactly 5 open datasets created in the second loop.
+    // The initial 3 datasets created for study1 are not included here.
     assertEquals(5, recordsByStudyId.get(study2.getStudyId()).datasetCount());
     assertEquals("open", recordsByStudyId.get(study2.getStudyId()).accessTypes());
   }
