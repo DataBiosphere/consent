@@ -13,13 +13,23 @@
         <thead style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">
         <tr>
           <th style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">Study Name</th>
-          <th style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">Access Type</th>
+          <th style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">Access Type(s)</th>
           <th style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">Number of Datasets</th>
         </tr>
         </thead>
         <tbody>
       <#list newStudies as item>
-        <tr><td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;"><a href="${serverUrl}studies/${item.id()?c}">${item.name()}</a></td><td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">${item.accessTypes()}</td><td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">${item.datasetCount()}</td></tr>
+        <tr>
+          <td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">
+            <a href="${serverUrl}studies/${item.id()?c}">${item.name()}</a>
+          </td>
+          <td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">
+            <#list item.accessTypes()?split(",") as accessType>${accessType?trim?cap_first}<#sep>, </#list>
+          </td>
+          <td style="padding: 15px 15px 0px; font-family: 'Montserrat', sans-serif; font-size: 16px; color: #1F3B50; text-align: justify; line-height: 25px;">
+            ${item.datasetCount()}
+          </td>
+        </tr>
       </#list>
         </tbody>
       </table>

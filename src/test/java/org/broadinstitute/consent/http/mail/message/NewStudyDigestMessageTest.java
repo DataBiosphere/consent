@@ -60,13 +60,13 @@ class NewStudyDigestMessageTest extends AbstractMailMessageTest {
         Objects.requireNonNull(rendered.document().getElementById("userName")).text());
     assertThat(
         rendered.document().body().html(),
-        containsString(
-            urlStringPattern.formatted(
-                serverUrl, record1.id(), record1.name(), record1.accessTypes())));
+        containsString(urlStringPattern.formatted(serverUrl, record1.id(), record1.name())));
     assertThat(
         rendered.document().body().html(),
-        containsString(
-            urlStringPattern.formatted(
-                serverUrl, record2.id(), record2.name(), record2.accessTypes())));
+        containsString(urlStringPattern.formatted(serverUrl, record2.id(), record2.name())));
+
+    // Assert display-formatted access types from template
+    assertThat(rendered.document().body().html(), containsString("Controlled, External"));
+    assertThat(rendered.document().body().html(), containsString("Open"));
   }
 }
