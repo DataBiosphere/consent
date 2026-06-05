@@ -885,9 +885,8 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   @Test
   void testConvertConsentGroupToDatasetProperties_NoRequestLocation() throws Exception {
     User user = mock();
-    DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
-    ConsentGroup consentGroup = schema.getConsentGroups().getFirst();
-    // requestLocation intentionally not set
+    DatasetRegistrationSchemaV1 schema =
+        createRandomMinimumDatasetRegistration(user); // requestLocation intentionally not set
 
     when(dacDAO.findById(any())).thenReturn(new Dac());
     Dataset dataset = new Dataset();
