@@ -5,7 +5,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,8 +20,8 @@ class NewStudyDigestMessageTest extends AbstractMailMessageTest {
   void testCreateModel_AddsRequiredFields() {
     List<StudyDatasetCountRecord> newStudies =
         List.of(
-            new StudyDatasetCountRecord("My new study", 3, any(), 1),
-            new StudyDatasetCountRecord("My other new study", 4000, any(), 2));
+            new StudyDatasetCountRecord("My new study", 3, "open", 1),
+            new StudyDatasetCountRecord("My other new study", 4000, "controlled", 2));
     User user = new User();
     user.setDisplayName("Test User");
     var message = new NewStudyDigestMessage(user, newStudies, "My reference id");
