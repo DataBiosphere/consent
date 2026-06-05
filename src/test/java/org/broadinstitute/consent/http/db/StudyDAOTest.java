@@ -384,7 +384,7 @@ class StudyDAOTest extends DAOTestHelper {
   }
 
   @Test
-  void testFindStudyDatasetCountsWithAccessTypes() {
+  void testFindStudyDatasetCounts() {
     Study study1 = insertStudyWithProperties();
     Study study2 = insertStudyWithProperties();
 
@@ -413,7 +413,7 @@ class StudyDAOTest extends DAOTestHelper {
             });
 
     List<StudyDatasetCountRecord> records =
-        studyDAO.findStudyDatasetCountsWithAccessTypes(Set.of(study1.getStudyId()));
+        studyDAO.findStudyDatasetCounts(Set.of(study1.getStudyId()));
 
     assertEquals(1, records.size());
     assertEquals(study1.getStudyId(), records.getFirst().id());
@@ -421,7 +421,7 @@ class StudyDAOTest extends DAOTestHelper {
     assertEquals("controlled,external,open", records.getFirst().accessTypes());
     assertEquals(19, records.getFirst().datasetCount());
 
-    records = studyDAO.findStudyDatasetCountsWithAccessTypes(Set.of(study2.getStudyId()));
+    records = studyDAO.findStudyDatasetCounts(Set.of(study2.getStudyId()));
 
     assertEquals(1, records.size());
     assertEquals(study2.getStudyId(), records.getFirst().id());
@@ -429,9 +429,7 @@ class StudyDAOTest extends DAOTestHelper {
     assertEquals("open", records.getFirst().accessTypes());
     assertEquals(5, records.getFirst().datasetCount());
 
-    records =
-        studyDAO.findStudyDatasetCountsWithAccessTypes(
-            Set.of(study1.getStudyId(), study2.getStudyId()));
+    records = studyDAO.findStudyDatasetCounts(Set.of(study1.getStudyId(), study2.getStudyId()));
 
     assertEquals(2, records.size());
 

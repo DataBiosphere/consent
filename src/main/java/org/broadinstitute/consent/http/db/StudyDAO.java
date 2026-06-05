@@ -178,6 +178,6 @@ public interface StudyDAO extends Transactional<StudyDAO> {
       WHERE study.study_id IN (<studyIds>)
       GROUP BY study.study_id, study.name
       """)
-  List<StudyDatasetCountRecord> findStudyDatasetCountsWithAccessTypes(
+  List<StudyDatasetCountRecord> findStudyDatasetCounts(
       @BindList(value = "studyIds", onEmpty = EmptyHandling.NULL_STRING) Set<Integer> studyIds);
 }
