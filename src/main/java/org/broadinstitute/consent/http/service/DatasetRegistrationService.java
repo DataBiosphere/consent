@@ -823,6 +823,16 @@ public class DatasetRegistrationService implements ConsentLogger {
                     return null;
                   }),
               new DatasetPropertyExtractor(
+                  "Request Location",
+                  "requestLocation",
+                  PropertyType.String,
+                  consentGroup -> {
+                    if (Objects.nonNull(consentGroup.getRequestLocation())) {
+                      return consentGroup.getRequestLocation();
+                    }
+                    return null;
+                  }),
+              new DatasetPropertyExtractor(
                   "Access Management",
                   "accessManagement",
                   PropertyType.String,

@@ -36,6 +36,7 @@ import java.util.Map;
   "dataAccessCommitteeId",
   "dataLocation",
   "url",
+  "requestLocation",
   "numberOfParticipants",
   "fileTypes",
   "data"
@@ -151,6 +152,12 @@ public class ConsentGroup {
   @JsonProperty("url")
   @JsonPropertyDescription("Free text field for entering URL of data")
   private URI url;
+
+  /** URL of an external location where data access requests should be submitted */
+  @JsonProperty("requestLocation")
+  @JsonPropertyDescription(
+      "URL of an external location where data access requests should be submitted")
+  private URI requestLocation;
 
   /** # of Participants (Required) */
   @JsonProperty("numberOfParticipants")
@@ -428,6 +435,18 @@ public class ConsentGroup {
   @JsonProperty("url")
   public void setUrl(URI url) {
     this.url = url;
+  }
+
+  /** URL of an external location where data access requests should be submitted */
+  @JsonProperty("requestLocation")
+  public URI getRequestLocation() {
+    return requestLocation;
+  }
+
+  /** URL of an external location where data access requests should be submitted */
+  @JsonProperty("requestLocation")
+  public void setRequestLocation(URI requestLocation) {
+    this.requestLocation = requestLocation;
   }
 
   /** # of Participants (Required) */

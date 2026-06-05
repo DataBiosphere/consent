@@ -554,6 +554,44 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testToDatasetTerm_RequestLocation() {
+    User user = createUser(1, 100);
+    User updateUser = createUser(101, 200);
+    Dac dac = createDac();
+    Study study = createStudy(user);
+    Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
+    dataset.setProperties(
+        Set.of(createDatasetProperty("requestLocation", PropertyType.String, "Request Location")));
+    dataset.setStudy(study);
+    when(userDao.findUserById(user.getUserId())).thenReturn(user);
+
+    DatasetTerm term = service.toDatasetTerm(dataset);
+
+    Optional<DatasetProperty> requestLocationProp =
+        dataset.getProperties().stream()
+            .filter(p -> p.getSchemaProperty().equals("requestLocation"))
+            .findFirst();
+    assertTrue(requestLocationProp.isPresent());
+    assertEquals(
+        requestLocationProp.get().getPropertyValue().toString(), term.getRequestLocation());
+  }
+
+  @Test
+  void testToDatasetTerm_RequestLocation_Missing() {
+    User user = createUser(1, 100);
+    User updateUser = createUser(101, 200);
+    Dac dac = createDac();
+    Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
+    // No requestLocation property
+    dataset.setProperties(Set.of(createDatasetProperty("url", PropertyType.String, "url")));
+    when(userDao.findUserById(user.getUserId())).thenReturn(user);
+
+    DatasetTerm term = service.toDatasetTerm(dataset);
+
+    assertNull(term.getRequestLocation());
+  }
+
+  @Test
   void testToDatasetTermNullDatasetProps() {
     Dataset dataset = new Dataset();
     assertDoesNotThrow(() -> service.toDatasetTerm(dataset));
