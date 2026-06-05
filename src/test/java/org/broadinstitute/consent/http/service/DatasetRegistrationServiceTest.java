@@ -853,6 +853,59 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testConvertConsentGroupToDatasetProperties_RequestLocation() throws Exception {
+    User user = mock();
+    DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
+    ConsentGroup consentGroup = schema.getConsentGroups().getFirst();
+    consentGroup.setRequestLocation(URI.create("https://request.example.org/apply"));
+
+    when(dacDAO.findById(any())).thenReturn(new Dac());
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setStudyId(123);
+    when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(dataset));
+
+    datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
+
+    verify(datasetServiceDAO)
+        .insertDatasetRegistration(studyInsert.capture(), datasetInsertCaptor.capture());
+
+    List<DatasetServiceDAO.DatasetInsert> inserts = datasetInsertCaptor.getValue();
+    List<DatasetProperty> props = inserts.getFirst().props();
+    assertTrue(
+        props.stream()
+            .anyMatch(
+                p ->
+                    p.getSchemaProperty().equals("requestLocation")
+                        && p.getPropertyValue()
+                            .toString()
+                            .equals("https://request.example.org/apply")));
+  }
+
+  @Test
+  void testConvertConsentGroupToDatasetProperties_NoRequestLocation() throws Exception {
+    User user = mock();
+    DatasetRegistrationSchemaV1 schema = createRandomMinimumDatasetRegistration(user);
+    ConsentGroup consentGroup = schema.getConsentGroups().getFirst();
+    // requestLocation intentionally not set
+
+    when(dacDAO.findById(any())).thenReturn(new Dac());
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(1);
+    dataset.setStudyId(123);
+    when(datasetDAO.findDatasetsByIdList(any())).thenReturn(List.of(dataset));
+
+    datasetRegistrationService.createDatasetsFromRegistration(schema, user, Map.of());
+
+    verify(datasetServiceDAO)
+        .insertDatasetRegistration(studyInsert.capture(), datasetInsertCaptor.capture());
+
+    List<DatasetServiceDAO.DatasetInsert> inserts = datasetInsertCaptor.getValue();
+    List<DatasetProperty> props = inserts.getFirst().props();
+    assertTrue(props.stream().noneMatch(p -> p.getSchemaProperty().equals("requestLocation")));
+  }
+
+  @Test
   void cleanupEmptyDatasetNihInstitutionalCertificationFile() {
     User user = new User();
     user.setUserId(1);

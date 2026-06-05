@@ -500,6 +500,10 @@ public class ElasticSearchService implements ConsentLogger {
     findDatasetProperty(dataset.getProperties(), "url")
         .ifPresent(datasetProperty -> term.setUrl(datasetProperty.getPropertyValueAsString()));
 
+    findDatasetProperty(dataset.getProperties(), "requestLocation")
+        .ifPresent(
+            datasetProperty -> term.setRequestLocation(datasetProperty.getPropertyValueAsString()));
+
     findDatasetProperty(dataset.getProperties(), "dataLocation")
         .ifPresent(
             datasetProperty -> term.setDataLocation(datasetProperty.getPropertyValueAsString()));

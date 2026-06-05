@@ -5,6 +5,7 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dataLocation;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.fileTypes;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.numberOfParticipants;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.requestLocation;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.url;
 
 import com.google.gson.JsonArray;
@@ -69,6 +70,10 @@ public class ConsentGroupFromDataset {
       if (Objects.nonNull(urlVal)) {
         URI uri = URI.create(urlVal);
         consentGroup.setUrl(uri);
+      }
+      String requestLocationVal = findStringDSPropValue(dataset.getProperties(), requestLocation);
+      if (Objects.nonNull(requestLocationVal)) {
+        consentGroup.setRequestLocation(URI.create(requestLocationVal));
       }
       consentGroup.setNumberOfParticipants(
           findIntegerDSPropValue(dataset.getProperties(), numberOfParticipants));

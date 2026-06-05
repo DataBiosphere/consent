@@ -84,6 +84,10 @@ properties:
     type: string
     format: uri
     description: Free text field for entering URL of data
+  requestLocation:
+    type: string
+    format: uri
+    description: URL of an external location where data access requests should be submitted
   fileTypes:
     type: array
     items:

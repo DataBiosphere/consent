@@ -46,6 +46,8 @@ put:
                       propertyValue: Description of Dataset
                     - propertyName: url
                       propertyValue: http://...
+                    - propertyName: requestLocation
+                      propertyValue: https://...
                     - propertyName: Sample Collection ID
                       propertyValue: SC-000
             alternativeDataSharingPlan:

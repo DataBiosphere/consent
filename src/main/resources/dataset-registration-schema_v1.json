@@ -654,6 +654,13 @@
           "description" : "Free text field for entering URL of data",
           "minLength" : 1
         },
+        "requestLocation" : {
+          "type" : "string",
+          "format" : "uri",
+          "label" : "Request Location URL",
+          "description" : "URL of an external location where data access requests should be submitted",
+          "minLength" : 1
+        },
         "numberOfParticipants" : {
           "type" : "integer",
           "description" : "# of Participants"

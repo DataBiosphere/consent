@@ -16,6 +16,7 @@ public class DatasetTerm {
   private DataUseSummary dataUse;
   private String dataLocation;
   private String url;
+  private String requestLocation;
   private Integer dacId;
   private Boolean dacApproval;
   private String accessManagement;
@@ -104,6 +105,14 @@ public class DatasetTerm {
 
   public void setUrl(String url) {
     this.url = url;
+  }
+
+  public String getRequestLocation() {
+    return requestLocation;
+  }
+
+  public void setRequestLocation(String requestLocation) {
+    this.requestLocation = requestLocation;
   }
 
   public Integer getDacId() {
