@@ -7,8 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Date;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.PropertyType;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.DatasetProperty;
@@ -16,7 +15,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.ConsentGroup;
 import org.junit.jupiter.api.Test;
 
-class ConsentGroupFromDatasetTest {
+class ConsentGroupFromDatasetTest extends AbstractTestHelper {
 
   @Test
   void testBuildReturnsNullWhenDatasetIsNull() {
@@ -137,14 +136,14 @@ class ConsentGroupFromDatasetTest {
 
   private Dataset createMockDataset() {
     User user = new User();
-    user.setUserId(RandomUtils.nextInt(1, 1000));
-    user.setDisplayName(RandomStringUtils.randomAlphabetic(10));
-    user.setEmail(RandomStringUtils.randomAlphabetic(5) + "@test.com");
+    user.setUserId(randomInt(1, 1000));
+    user.setDisplayName(randomAlphabetic(10));
+    user.setEmail(randomAlphabetic(5) + "@test.com");
     Date now = new Date();
     Dataset dataset = new Dataset();
-    dataset.setName(RandomStringUtils.randomAlphabetic(10));
-    dataset.setDatasetId(RandomUtils.nextInt(1, 1000));
-    dataset.setAlias(RandomUtils.nextInt(1, 1000));
+    dataset.setName(randomAlphabetic(10));
+    dataset.setDatasetId(randomInt(1, 1000));
+    dataset.setAlias(randomInt(1, 1000));
     dataset.setDatasetIdentifier();
     dataset.setCreateUser(user);
     dataset.setCreateUserId(user.getUserId());
