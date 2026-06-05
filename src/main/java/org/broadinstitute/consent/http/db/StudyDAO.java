@@ -164,11 +164,20 @@ public interface StudyDAO extends Transactional<StudyDAO> {
   @RegisterConstructorMapper(StudyDatasetCountRecord.class)
   @SqlQuery(
       """
-    SELECT study.study_id AS id, study.name, count(dataset.dataset_id) AS dataset_count from study
-        INNER JOIN dataset on study.study_id = dataset.study_id
-    WHERE study.study_id IN (<studyIds>)
-    GROUP BY study.study_id, study.name
-    """)
-  List<StudyDatasetCountRecord> findNameAndDatasetCount(
+      SELECT
+          study.study_id AS id,
+          study.name,
+          string_agg(DISTINCT prop.property_value, ',' ORDER BY prop.property_value) AS access_types,
+          count(DISTINCT dataset.dataset_id) AS dataset_count
+      FROM study
+          INNER JOIN dataset
+              ON study.study_id = dataset.study_id
+          INNER JOIN dataset_property prop
+              ON prop.dataset_id = dataset.dataset_id
+             AND prop.schema_property = 'accessManagement'
+      WHERE study.study_id IN (<studyIds>)
+      GROUP BY study.study_id, study.name
+      """)
+  List<StudyDatasetCountRecord> findStudyDatasetCounts(
       @BindList(value = "studyIds", onEmpty = EmptyHandling.NULL_STRING) Set<Integer> studyIds);
 }

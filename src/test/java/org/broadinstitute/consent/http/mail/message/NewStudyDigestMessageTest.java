@@ -20,8 +20,8 @@ class NewStudyDigestMessageTest extends AbstractMailMessageTest {
   void testCreateModel_AddsRequiredFields() {
     List<StudyDatasetCountRecord> newStudies =
         List.of(
-            new StudyDatasetCountRecord("My new study", 3, 1),
-            new StudyDatasetCountRecord("My other new study", 4000, 2));
+            new StudyDatasetCountRecord("My new study", 3, "open", 1),
+            new StudyDatasetCountRecord("My other new study", 4000, "controlled", 2));
     User user = new User();
     user.setDisplayName("Test User");
     var message = new NewStudyDigestMessage(user, newStudies, "My reference id");
@@ -32,8 +32,10 @@ class NewStudyDigestMessageTest extends AbstractMailMessageTest {
   @Test
   void testNewStudyDigestMessage() throws Exception {
     List<StudyDatasetCountRecord> newStudies = new ArrayList<>();
-    StudyDatasetCountRecord record1 = new StudyDatasetCountRecord("My new study", 3, 1);
-    StudyDatasetCountRecord record2 = new StudyDatasetCountRecord("My other new study", 4000, 2);
+    StudyDatasetCountRecord record1 =
+        new StudyDatasetCountRecord("My new study", 3, "controlled, external", 1);
+    StudyDatasetCountRecord record2 =
+        new StudyDatasetCountRecord("My other new study", 4000, "open", 2);
     newStudies.add(record1);
     newStudies.add(record2);
     String referenceId = "My reference id";
@@ -62,5 +64,9 @@ class NewStudyDigestMessageTest extends AbstractMailMessageTest {
     assertThat(
         rendered.document().body().html(),
         containsString(urlStringPattern.formatted(serverUrl, record2.id(), record2.name())));
+
+    // Assert display-formatted access types from template
+    assertThat(rendered.document().body().html(), containsString("Controlled, External"));
+    assertThat(rendered.document().body().html(), containsString("Open"));
   }
 }
