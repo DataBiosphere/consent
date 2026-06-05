@@ -178,17 +178,16 @@ class FeatureFlagServiceTest extends AbstractTestHelper {
   void testCreateOrUpdateFeatureFlag_Update() {
     Integer userId = 1;
     FeatureFlag updatedFlag = new FeatureFlag("existing-feature", "updated-value");
-
     when(featureFlagDAO.exists("existing-feature")).thenReturn(true);
+    doNothing().when(featureFlagDAO).update(anyString(), anyString());
+    doNothing().when(featureFlagDAO).insertAudit(userId, "existing-feature", "UPDATE");
     when(featureFlagDAO.findById("existing-feature")).thenReturn(updatedFlag);
 
     FeatureFlag result =
         service.createOrUpdateFeatureFlag("existing-feature", "updated-value", userId);
-
     assertNotNull(result);
     assertEquals("existing-feature", result.getId());
     assertEquals("updated-value", result.getValue());
-
     verify(featureFlagDAO).exists("existing-feature");
     verify(featureFlagDAO).update("existing-feature", "updated-value");
     verify(featureFlagDAO).insertAudit(userId, "existing-feature", "UPDATE");
