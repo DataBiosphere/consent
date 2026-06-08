@@ -14,8 +14,10 @@ jobs:
           distribution: 'temurin'
           java-version: 25
           cache: 'maven'
-      - name: Validate Maven wrapper
-        uses: apache/maven-wrapper-validator-action@3c8d527e913656f7e1891295dd6ba0a58f535102 # v3.3.2
+      - name: Validate Maven wrapper download
+        env:
+          MAVEN_USER_HOME: ${{ runner.temp }}/maven-wrapper-validation
+        run: ./mvnw -v --batch-mode
       - name: Spotless Check
         run: ./mvnw -q spotless:check --batch-mode
       - name: Package
