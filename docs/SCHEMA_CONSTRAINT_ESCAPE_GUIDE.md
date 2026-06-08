@@ -45,7 +45,7 @@ Current behavior differs from create:
 
 ### Existing Extension Fields
 
-The schema already has intentional extension points:
+The current schema/model path already has intentional extension points that should be preserved in the DTO-based replacement:
 
 - Top-level `assets`: object with `additionalProperties: true`.
 - Top-level `data`: object with `additionalProperties: true`.
@@ -72,6 +72,13 @@ The design must preserve:
 - DAC assignment behavior.
 - Existing API compatibility for registration clients.
 - Search/indexing stability.
+
+Non-goals:
+
+- Do not make registration a fully unstructured JSON blob.
+- Do not bypass governance, matching, DAC, authorization, or voting rules.
+- Do not remove `dataset-registration-schema_v1.json` until schema-driven clients are migrated.
+- Do not validate all flexible metadata globally; validate feature namespaces only where they are consumed.
 
 ## Recommendation
 
@@ -134,7 +141,7 @@ Namespace rules:
 
 - Use one top-level object key per product, partner, or feature namespace, for example `nhgri`, `anvil`, `examplePartner`, or `duosExperimental`.
 - Do not place arbitrary extension keys directly inside `data`; group them under a namespace.
-- Do not duplicate first-class schema fields inside `data` as an override mechanism.
+- Do not duplicate first-class DTO/domain fields inside `data` as an override mechanism.
 - Do not store secrets, credentials, access tokens, or policy decisions in extension data.
 - Prefer scalar, array, and object values that serialize cleanly with Gson.
 - Keep extension data small enough to be practical as a row-level JSON property, not a document store.
@@ -431,6 +438,17 @@ Phase 5: Clean up old model coupling.
 - Keep a response DTO for `GET /api/dataset/study/registration/{studyId}` if clients still need registration-shaped data.
 - Remove `JsonSchemaUtil` registration validation methods when no endpoint uses them.
 
+### Decisions Needed Before Implementation
+
+Before implementing the migration, settle these details:
+
+- Client dependency inventory: identify which clients call `/schemas/dataset-registration/v1` and whether they use it for rendering, validation, or documentation only.
+- Endpoint strategy: decide whether to switch `POST /api/dataset/v3` in place or introduce a new versioned registration endpoint during migration.
+- Error response contract: keep current user-facing validation message behavior or define a new structured validation error response.
+- File handling contract: keep the existing multipart field names for `alternativeDataSharingPlan` and `consentGroups[n].nihInstitutionalCertificationFile`.
+- Response contract: decide whether `GET /api/dataset/study/registration/{studyId}` continues returning registration-shaped data after create/update no longer uses `DatasetRegistrationSchemaV1`.
+- OpenAPI ownership: make OpenAPI the discoverable API contract once JSON Schema is no longer the backend validation source.
+
 ### Where Validation Should Live After Migration
 
 Validation should be split by ownership:
@@ -475,7 +493,7 @@ Required work:
 1. Add the field to the request DTO and response DTO.
 2. Add validation to the create/update validator that owns the field.
 3. Add conversion in `DatasetRegistrationService` for create/update persistence.
-4. Add reconstruction in `SchemaFromStudy` or `ConsentGroupFromDataset`.
+4. Add reconstruction in the registration response mapper. During migration this may still be `SchemaFromStudy` or `ConsentGroupFromDataset`.
 5. Update `src/main/resources/assets/api-docs.yaml` and related OpenAPI schema files.
 6. Add tests for create, update, and registration reconstruction.
 7. Update search indexing if the field is queryable or displayed in search results.
@@ -504,7 +522,7 @@ For extension validation, avoid blocking core registration unless the extension 
 
 ## Decision Checklist
 
-Before adding a new schema field, answer these questions:
+Before adding a new registration field or metadata value, answer these questions:
 
 - Is this required to create a valid study or dataset?
 - Will backend authorization, matching, DAC automation, voting, indexing, or reporting use this value?
@@ -515,6 +533,12 @@ Before adding a new schema field, answer these questions:
 If the answer is no to all, use namespaced `data`.
 
 If any answer is yes, make it a first-class DTO/domain field.
+
+During the migration window, also ask:
+
+- Does an existing client still read `dataset-registration-schema_v1.json` to render or validate this field?
+- If yes, mirror the field in the schema file temporarily as a compatibility artifact.
+- If no, update only DTOs, validators, mappers, OpenAPI, and tests.
 
 ## Recommended Outcome for This Ticket
 
