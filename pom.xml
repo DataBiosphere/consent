@@ -151,6 +151,10 @@
                 <requireJavaVersion>
                   <version>${java.version}</version>
                 </requireJavaVersion>
+                <requirePluginVersions/>
+                <requireReleaseDeps>
+                  <onlyWhenRelease>false</onlyWhenRelease>
+                </requireReleaseDeps>
               </rules>
             </configuration>
           </execution>

@@ -22,15 +22,19 @@ jobs:
           distribution: 'temurin'
           java-version: 25
           cache: 'maven'
+      - name: Validate Maven wrapper
+        uses: apache/maven-wrapper-validator-action@3c8d527e913656f7e1891295dd6ba0a58f535102 # v3.3.2
+      - name: Enforce Maven wrapper checksum pin
+        run: bash scripts/verify-maven-wrapper-checksum.sh
       - name: Test Only
         env:
           MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
-        run: mvn clean jacoco:prepare-agent test jacoco:report --batch-mode
+        run: ./mvnw clean jacoco:prepare-agent test jacoco:report --batch-mode
       - name: Test Report
         continue-on-error: true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
         run: |
-          mvn -v
-          mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar --batch-mode
+          ./mvnw -v
+          ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar --batch-mode

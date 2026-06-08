@@ -14,11 +14,15 @@ jobs:
           distribution: 'temurin'
           java-version: 25
           cache: 'maven'
+      - name: Validate Maven wrapper
+        uses: apache/maven-wrapper-validator-action@3c8d527e913656f7e1891295dd6ba0a58f535102 # v3.3.2
+      - name: Enforce Maven wrapper checksum pin
+        run: bash scripts/verify-maven-wrapper-checksum.sh
       - name: Spotless Check
-        run: mvn -q spotless:check --batch-mode
+        run: ./mvnw -q spotless:check --batch-mode
       - name: Package
         env:
           MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn -Dmaven.test.skip=true -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
         run: |
-          mvn -v
-          mvn clean package  --batch-mode
+          ./mvnw -v
+          ./mvnw clean package --batch-mode
