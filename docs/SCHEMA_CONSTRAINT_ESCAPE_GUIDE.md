@@ -190,6 +190,211 @@ Recommended classes:
 
 The request DTOs should be owned by the API/service code, not generated from JSON Schema.
 
+### Class Shape Examples
+
+These examples are intentionally partial. They show ownership boundaries and expected shape, not every registration field.
+
+Create request DTO:
+
+```java
+public record DatasetRegistrationRequest(
+    String studyName,
+    String studyDescription,
+    List<String> dataTypes,
+    Boolean publicVisibility,
+    String nihAnvilUse,
+    String piName,
+    String piEmail,
+    List<ConsentGroupRegistrationRequest> consentGroups,
+    Map<String, Object> assets,
+    Map<String, Object> data) {}
+```
+
+Consent-group request DTO:
+
+```java
+public record ConsentGroupRegistrationRequest(
+    String consentGroupName,
+    Integer numberOfParticipants,
+    Integer dataAccessCommitteeId,
+    String accessManagement,
+    Boolean generalResearchUse,
+    Boolean hmb,
+    Boolean poa,
+    List<String> diseaseSpecificUse,
+    String otherPrimary,
+    Map<String, Object> data) {}
+```
+
+Create validator:
+
+```java
+public class DatasetRegistrationCreateValidator {
+
+  private final DacDAO dacDAO;
+
+  public void validate(DatasetRegistrationRequest request) {
+    requireNonBlank(request.studyName(), "Study Name is required");
+    requireNonBlank(request.studyDescription(), "Study Description is required");
+    requireNotEmpty(request.dataTypes(), "Data Types is required");
+    requireNotNull(request.publicVisibility(), "Public Visibility is required");
+    requireNonBlank(request.nihAnvilUse(), "NIH AnVIL Use is required");
+    requireNonBlank(request.piName(), "Principal Investigator is required");
+    requireNotEmpty(request.consentGroups(), "Consent Groups are required");
+
+    request.consentGroups().forEach(this::validateConsentGroup);
+  }
+
+  private void validateConsentGroup(ConsentGroupRegistrationRequest group) {
+    requireNonBlank(group.consentGroupName(), "Consent Group Name is required");
+    requireNotNull(group.numberOfParticipants(), "# of Participants is required");
+    validatePrimaryUse(group);
+
+    if (!"open".equals(group.accessManagement())) {
+      requireNotNull(group.dataAccessCommitteeId(), "DAC is required");
+      if (dacDAO.findById(group.dataAccessCommitteeId()) == null) {
+        throw new BadRequestException("Could not find DAC");
+      }
+    }
+  }
+
+  private void validatePrimaryUse(ConsentGroupRegistrationRequest group) {
+    long selectedPrimaryUses =
+        Stream.of(
+                Boolean.TRUE.equals(group.generalResearchUse()),
+                Boolean.TRUE.equals(group.hmb()),
+                Boolean.TRUE.equals(group.poa()),
+                group.diseaseSpecificUse() != null && !group.diseaseSpecificUse().isEmpty(),
+                group.otherPrimary() != null && !group.otherPrimary().isBlank())
+            .filter(Boolean::booleanValue)
+            .count();
+
+    if (!"open".equals(group.accessManagement()) && selectedPrimaryUses != 1) {
+      throw new BadRequestException("Exactly one primary data use is required");
+    }
+  }
+}
+```
+
+Update validator:
+
+```java
+public class DatasetRegistrationUpdateValidator {
+
+  private final DatasetService datasetService;
+
+  public void validate(Study existingStudy, StudyRegistrationUpdateRequest request) {
+    validateRequiredStudyFields(request);
+    validateStudyName(existingStudy, request.studyName());
+    validateConsentGroupMembership(existingStudy, request.consentGroups());
+    validateNoExistingConsentGroupRemoval(existingStudy, request.consentGroups());
+  }
+
+  private void validateStudyName(Study existingStudy, String requestedName) {
+    Set<String> studyNames = datasetService.findAllStudyNames();
+    if (studyNames.contains(requestedName) && !requestedName.equals(existingStudy.getName())) {
+      throw new BadRequestException("Invalid change to Study Name");
+    }
+  }
+
+  private void validateNoExistingConsentGroupRemoval(
+      Study existingStudy, List<ConsentGroupRegistrationUpdateRequest> groups) {
+    Set<Integer> existingIds = SetUtils.emptyIfNull(existingStudy.getDatasetIds());
+    Set<Integer> requestedIds =
+        groups.stream()
+            .map(ConsentGroupRegistrationUpdateRequest::datasetId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+    if (!requestedIds.containsAll(existingIds)) {
+      throw new BadRequestException("Invalid removal of Consent Groups");
+    }
+  }
+}
+```
+
+Mapper from request DTO to service command:
+
+```java
+public class DatasetRegistrationMapper {
+
+  public StudyInsert toStudyInsert(DatasetRegistrationRequest request, User user) {
+    return new StudyInsert(
+        request.studyName(),
+        request.studyDescription(),
+        request.dataTypes(),
+        request.piName(),
+        request.piEmail(),
+        request.publicVisibility(),
+        user.getUserId(),
+        toStudyProperties(request),
+        List.of());
+  }
+
+  public DatasetInsert toDatasetInsert(
+      DatasetRegistrationRequest request,
+      ConsentGroupRegistrationRequest group,
+      User user) {
+    return new DatasetInsert(
+        group.consentGroupName(),
+        group.dataAccessCommitteeId(),
+        toDataUse(group),
+        user.getUserId(),
+        toDatasetProperties(group),
+        List.of());
+  }
+}
+```
+
+Resource after the backend switch:
+
+```java
+public Response createDatasetRegistration(
+    @Auth AuthUser authUser,
+    FormDataMultiPart multipart,
+    @FormDataParam("dataset") String json) {
+  try {
+    DatasetRegistrationRequest request =
+        GsonUtil.getInstance().fromJson(json, DatasetRegistrationRequest.class);
+    createValidator.validate(request);
+
+    User user = userService.findUserByEmail(authUser.getEmail());
+    Map<String, FormDataBodyPart> files = extractFilesFromMultiPart(multipart);
+    List<Dataset> datasets =
+        datasetRegistrationService.createDatasetsFromRegistration(request, user, files);
+
+    return Response.created(studyUri(datasets)).entity(toResponse(datasets)).build();
+  } catch (Exception e) {
+    return createExceptionResponse(e);
+  }
+}
+```
+
+Feature-specific extension validator:
+
+```java
+public class PartnerSubmissionValidator {
+
+  public void validate(DatasetRegistrationRequest request) {
+    Map<String, Object> partnerData = namespace(request.data(), "examplePartner");
+    if (partnerData == null) {
+      return;
+    }
+
+    Object externalStudyId = partnerData.get("externalStudyId");
+    if (!(externalStudyId instanceof String value) || value.isBlank()) {
+      throw new BadRequestException("examplePartner.externalStudyId is required");
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private Map<String, Object> namespace(Map<String, Object> data, String key) {
+    Object value = data == null ? null : data.get(key);
+    return value instanceof Map<?, ?> map ? (Map<String, Object>) map : null;
+  }
+}
+```
+
 ### Migration Phases
 
 Phase 1: Mirror current behavior.
