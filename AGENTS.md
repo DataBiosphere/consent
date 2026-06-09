@@ -11,6 +11,7 @@ This repository uses multiple instruction entry points.
 - `docs/API_GUIDELINES.md`
 - `docs/ARCHITECTURE.md`
 - `docs/ONBOARDING.md`
+- `docs/plans/README.md`
 - `docs/ai/prompts/README.md`
 - `docs/ai/prompts/api-endpoint.md`
 - `docs/ai/prompts/feature-development.md`
@@ -24,6 +25,6 @@ This repository uses multiple instruction entry points.
 - `/api` routes are authenticated (proxy/OAUTH-decorated); non-`/api` routes are unauthenticated.
 - Update `src/main/resources/assets/api-docs.yaml` when API contracts change.
 - Add/update tests for behavior changes.
+- Put new implementation plans and migration design docs under `docs/plans/`.
 - Avoid Mockito lenient stubbing (`lenient()`); keep tests strict-stubbing compliant.
 - Use synthetic test data only.
-

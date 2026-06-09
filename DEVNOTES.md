@@ -1,5 +1,7 @@
 # Local Development
 
+Implementation plans and migration design notes live in [docs/plans](docs/plans). Check that directory before starting larger feature, migration, or refactor work.
+
 * Maven 3.9
 * Java 25
 * Dropwizard Docs: http://www.dropwizard.io/
@@ -202,4 +204,3 @@ mvn clean test
 
 **From the IDE:** run or debug any test class in the `integration` package
 directly — `DAOTestHelper` activates automatically and provides the database.
-
