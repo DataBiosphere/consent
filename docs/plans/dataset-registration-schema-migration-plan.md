@@ -1,8 +1,8 @@
-# Breaking Free of Dataset Registration Schema Constraints
+# Dataset Registration Schema Migration Plan
 
 ## Status
 
-Proposed design guide for the dataset/study registration flow.
+Proposed implementation plan for migrating dataset/study registration away from backend JSON Schema validation.
 
 ## Context
 
