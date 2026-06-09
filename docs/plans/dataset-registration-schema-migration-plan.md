@@ -511,7 +511,7 @@ Keep validation ownership distinct:
 | Hidden policy changes bypass governance | Disallow data-use, DAC, authorization, and matching semantics in extension data. |
 | OpenAPI drift | Update OpenAPI only when first-class fields or endpoint behavior change. |
 
-## Decision Checklist
+## Field Classification Checklist
 
 Before adding a new registration field or metadata value, answer these questions:
 
@@ -530,15 +530,3 @@ During the migration window, also ask:
 - Does an existing client still read `dataset-registration-schema_v1.json` to render or validate this field?
 - If yes, mirror the field in the schema file temporarily as a compatibility artifact.
 - If no, update only DTOs, validators, mappers, OpenAPI, and tests.
-
-## Recommended Outcome for This Ticket
-
-Remove the backend dependency on `dataset-registration-schema_v1.json`, but do not make the entire registration object unstructured. Instead:
-
-- Replace JSON Schema validation with explicit request DTOs and create/update validators.
-- Preserve `dataset-registration-schema_v1.json` temporarily only for compatibility with schema-driven clients.
-- Use top-level `data` for optional study-level metadata that does not need backend validation.
-- Use `consentGroups[n].data` for optional dataset-level metadata that does not need backend validation.
-- Keep `assets` limited to submission/UI asset metadata.
-- Promote only durable backend semantics to first-class DTO/domain fields.
-- Deprecate and remove the schema endpoint after clients no longer depend on it.
