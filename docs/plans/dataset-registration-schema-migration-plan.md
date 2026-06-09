@@ -62,7 +62,7 @@ Observed persistence behavior:
 
 Remove the backend dependency on `dataset-registration-schema_v1.json` while preserving safe creation and update of studies and datasets.
 
-The replacement design should also allow new or partner-specific metadata to be captured without changing a global JSON Schema for every product experiment, partner variation, or non-critical display field.
+The replacement design should also preserve optional client-managed metadata without changing a global JSON Schema for every non-critical display or submission field.
 
 The design must preserve:
 
@@ -78,7 +78,7 @@ Non-goals:
 - Do not make registration a fully unstructured JSON blob.
 - Do not bypass governance, matching, DAC, authorization, or voting rules.
 - Do not remove `dataset-registration-schema_v1.json` until schema-driven clients are migrated.
-- Do not validate all flexible metadata globally; validate feature namespaces only where they are consumed.
+- Do not add backend validation for optional `data` metadata; promote it to a first-class DTO/domain field if backend behavior depends on it.
 
 ## Recommendation
 
@@ -86,7 +86,7 @@ Move from schema-file validation to application-owned validation:
 
 1. Introduce explicit registration request DTOs for study and dataset creation/update.
 2. Validate core required fields with Java/domain validators instead of `JsonSchemaUtil`.
-3. Keep flexible namespaced `data` maps for metadata that should not be globally modeled.
+3. Keep flexible `data` maps for optional metadata that does not need backend validation.
 4. Keep `dataset-registration-schema_v1.json` only during migration for existing clients and `/schemas/dataset-registration/v1`.
 5. Deprecate the schema endpoint once clients no longer build forms or validation from it.
 
@@ -95,14 +95,16 @@ Use this rule of thumb:
 | Need | Recommended path |
 | --- | --- |
 | Capture non-governance metadata | Put it in top-level `data` for study metadata or consent-group `data` for dataset metadata. |
-| Render UI-only labels, choices, or partner-specific form metadata | Put it in `assets` if it is presentation/submission-context metadata and not dataset state. |
+| Render UI-only labels, choices, or form metadata | Put it in `assets` if it is presentation/submission-context metadata and not dataset state. |
 | Add a field used by backend workflows, search filters, permissions, matching, DAC automation, or reporting | Promote it to a first-class DTO/domain/property field. |
 | Relax or change required core registration data | Change the DTO/domain validator contract and document it in OpenAPI. |
 | Change data-use or access-management semantics | Do not use an escape hatch; use explicit domain changes and tests. |
 
 ## Proposed Extension Contract
 
-Treat flexible metadata as namespaced JSON under `data`.
+Treat `data` as optional client-managed metadata. The backend should preserve and round-trip it, but should not use it as an authoritative registration contract.
+
+This metadata may be validated by frontend TypeScript types or other client-side form logic. Backend validation remains focused on first-class DTO/domain fields.
 
 Example study-level extension:
 
@@ -121,30 +123,30 @@ Example study-level extension:
       "dataAccessCommitteeId": 1,
       "generalResearchUse": true,
       "data": {
-        "examplePartner": {
-          "cohortLabel": "pilot-a",
-          "collectionWave": 2
+        "duosRegistration": {
+          "workflowTag": "legacy-import",
+          "internalNotes": "Created during registration migration dry run"
         }
       }
     }
   ],
   "data": {
-    "examplePartner": {
-      "externalStudyId": "EXT-123",
-      "submissionProgram": "pilot"
+    "duosRegistration": {
+      "source": "manual-registration",
+      "migrationBatch": "batch-1"
     }
   }
 }
 ```
 
-Namespace rules:
+Metadata rules:
 
-- Use one top-level object key per product, partner, or feature namespace, for example `nhgri`, `anvil`, `examplePartner`, or `duosExperimental`.
-- Do not place arbitrary extension keys directly inside `data`; group them under a namespace.
+- Prefer grouping related metadata under a stable top-level object key, for example `duosRegistration`, `migration`, or `submissionWorkflow`.
 - Do not duplicate first-class DTO/domain fields inside `data` as an override mechanism.
 - Do not store secrets, credentials, access tokens, or policy decisions in extension data.
 - Prefer scalar, array, and object values that serialize cleanly with Gson.
 - Keep extension data small enough to be practical as a row-level JSON property, not a document store.
+- If backend behavior starts depending on a value in `data`, promote that value to a first-class DTO/domain field.
 
 ## What This Escapes
 
@@ -152,8 +154,8 @@ This approach escapes logical construct churn, not the core DTO/domain contract.
 
 Escaped safely:
 
-- Partner-specific submission metadata.
-- UI workflow hints that need to round-trip with a study or dataset.
+- Optional client-managed submission metadata.
+- UI metadata that needs to round-trip with a study or dataset.
 - Experimental fields that are not used for governance, matching, authorization, or DAC decisions.
 - Metadata that can be ignored by older clients without changing behavior.
 
@@ -377,31 +379,6 @@ public Response createDatasetRegistration(
 }
 ```
 
-Feature-specific extension validator:
-
-```java
-public class PartnerSubmissionValidator {
-
-  public void validate(DatasetRegistrationRequest request) {
-    Map<String, Object> partnerData = namespace(request.data(), "examplePartner");
-    if (partnerData == null) {
-      return;
-    }
-
-    Object externalStudyId = partnerData.get("externalStudyId");
-    if (!(externalStudyId instanceof String value) || value.isBlank()) {
-      throw new BadRequestException("examplePartner.externalStudyId is required");
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  private Map<String, Object> namespace(Map<String, Object> data, String key) {
-    Object value = data == null ? null : data.get(key);
-    return value instanceof Map<?, ?> map ? (Map<String, Object>) map : null;
-  }
-}
-```
-
 ### Migration Phases
 
 Phase 1: Mirror current behavior.
@@ -462,31 +439,31 @@ Validation should be split by ownership:
 | Consent-group add/remove rules | update validator using existing study state |
 | Data-use consistency | domain validator, not flexible `data` |
 | Email/date/URL parsing | DTO/domain validators |
-| Flexible metadata under `data` | feature-specific validator only when that feature consumes the namespace |
+| Optional metadata under `data` | no backend validation; preserve and round-trip only |
 
 The resource layer should only parse input, call validators/services, and map exceptions to HTTP responses. Business validation belongs below the resource layer.
 
-### Adding Flexible Study Metadata
+### Adding Optional Study Metadata
 
-1. Add the namespaced object under top-level `data` in the registration payload.
+1. Add the optional metadata object under top-level `data` in the registration payload.
 2. Submit through `POST /api/dataset/v3` or `PUT /api/dataset/study/{studyId}`.
 3. Read it back through `GET /api/dataset/study/registration/{studyId}`.
-4. If a backend consumer needs the value, read the `StudyProperty` with key `data` and parse the namespaced sub-object.
+4. Do not add backend validation for this metadata.
 
-No DTO, migration, or OpenAPI change is required if the field is purely flexible metadata.
+No DTO, migration, or OpenAPI change is required if the field is optional client-managed metadata.
 
-### Adding Flexible Dataset Metadata
+### Adding Optional Dataset Metadata
 
-1. Add the namespaced object under `consentGroups[n].data`.
+1. Add the optional metadata object under `consentGroups[n].data`.
 2. Submit through the registration create or study update endpoint.
 3. Read it back through `GET /api/dataset/study/registration/{studyId}`.
-4. If a backend consumer needs the value, read the dataset property with `schemaProperty = data` and parse the namespaced sub-object.
+4. Do not add backend validation for this metadata.
 
-No DTO, migration, or OpenAPI change is required if the field is purely flexible metadata.
+No DTO, migration, or OpenAPI change is required if the field is optional client-managed metadata.
 
-### Promoting Extension Data to a First-Class Field
+### Promoting Optional Metadata to a First-Class Field
 
-Promote a flexible field when it becomes part of backend behavior or public API semantics.
+Promote an optional `data` field when it becomes part of backend behavior or public API semantics.
 
 Required work:
 
@@ -505,18 +482,16 @@ Keep validation ownership distinct:
 
 - Create validation: protects the core registration shape and creation business rules.
 - Edit validation: protects update-only rules that require existing study/dataset state.
-- Extension validation: optional consumer-side validation inside a namespace, owned by the feature that reads that namespace.
-
-For extension validation, avoid blocking core registration unless the extension field is required for a specific feature path. If a feature requires its own extension values, validate only that namespace and return feature-specific errors.
+- Optional `data` metadata: not backend-validated. Preserve it for frontend/client-managed workflows.
 
 ## Risks and Mitigations
 
 | Risk | Mitigation |
 | --- | --- |
-| Extension data becomes an untyped dumping ground | Require namespaced keys and promote fields when backend behavior depends on them. |
-| Clients treat extension data as validated contract | Document that `data` is flexible metadata and not globally schema-validated. |
+| Optional `data` becomes an untyped dumping ground | Keep `data` optional and client-managed; promote fields when backend behavior depends on them. |
+| Clients treat optional `data` as backend-validated contract | Document that `data` is preserved by the backend but not backend-validated. |
 | Search/reporting needs emerge later | Promote the field before using it for indexed queries or governance reports. |
-| Conflicting partner keys | Namespacing prevents collisions. |
+| Conflicting optional metadata keys | Prefer grouped metadata under stable top-level keys. |
 | Hidden policy changes bypass governance | Disallow data-use, DAC, authorization, and matching semantics in extension data. |
 | OpenAPI drift | Update OpenAPI only when first-class fields or endpoint behavior change. |
 
@@ -530,7 +505,7 @@ Before adding a new registration field or metadata value, answer these questions
 - Will clients need to discover this field from OpenAPI or another typed contract?
 - Would older clients behave incorrectly if they ignore the value?
 
-If the answer is no to all, use namespaced `data`.
+If the answer is no to all, use optional `data`.
 
 If any answer is yes, make it a first-class DTO/domain field.
 
@@ -546,8 +521,8 @@ Remove the backend dependency on `dataset-registration-schema_v1.json`, but do n
 
 - Replace JSON Schema validation with explicit request DTOs and create/update validators.
 - Preserve `dataset-registration-schema_v1.json` temporarily only for compatibility with schema-driven clients.
-- Use top-level `data` for study-level flexible metadata.
-- Use `consentGroups[n].data` for dataset-level flexible metadata.
+- Use top-level `data` for optional study-level metadata that does not need backend validation.
+- Use `consentGroups[n].data` for optional dataset-level metadata that does not need backend validation.
 - Keep `assets` limited to submission/UI asset metadata.
 - Promote only durable backend semantics to first-class DTO/domain fields.
 - Deprecate and remove the schema endpoint after clients no longer depend on it.
