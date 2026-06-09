@@ -22,15 +22,19 @@ jobs:
           distribution: 'temurin'
           java-version: 25
           cache: 'maven'
+      - name: Validate Maven wrapper download
+        run: |
+          rm -rf "${HOME}/.m2/wrapper/dists"
+          ./mvnw -v --batch-mode
       - name: Test Only
         env:
           MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
-        run: mvn clean jacoco:prepare-agent test jacoco:report --batch-mode
+        run: ./mvnw clean jacoco:prepare-agent test jacoco:report --batch-mode
       - name: Test Report
         continue-on-error: true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
         run: |
-          mvn -v
-          mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar --batch-mode
+          ./mvnw -v
+          ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar --batch-mode

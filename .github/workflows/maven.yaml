@@ -14,11 +14,15 @@ jobs:
           distribution: 'temurin'
           java-version: 25
           cache: 'maven'
+      - name: Validate Maven wrapper download
+        run: |
+          rm -rf "${HOME}/.m2/wrapper/dists"
+          ./mvnw -v --batch-mode
       - name: Spotless Check
-        run: mvn -q spotless:check --batch-mode
+        run: ./mvnw -q spotless:check --batch-mode
       - name: Package
         env:
           MAVEN_OPTS: -Dorg.slf4j.simpleLogger.defaultLogLevel=warn -Dmaven.test.skip=true -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.httpconnectionManager.ttlSeconds=120
         run: |
-          mvn -v
-          mvn clean package  --batch-mode
+          ./mvnw -v
+          ./mvnw clean package --batch-mode
