@@ -23,6 +23,7 @@ Key public methods used by other layers:
 - `searchDatasetsStream(String query)`
 - `indexDataset(Integer datasetId)`
 - `indexDatasets(List<Integer> datasetIds)`
+- `indexDatasetIds(List<Integer> datasetIds)`
 - `indexStudy(Integer studyId)`
 - `deleteIndex(Integer datasetId, Integer userId)`
 - `synchronizeDatasetInESIndex(Dataset dataset, boolean force)`
