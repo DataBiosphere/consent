@@ -15,9 +15,9 @@ jobs:
           java-version: 25
           cache: 'maven'
       - name: Validate Maven wrapper download
-        env:
-          MAVEN_USER_HOME: ${{ runner.temp }}/maven-wrapper-validation
-        run: ./mvnw -v --batch-mode
+        run: |
+          rm -rf "${HOME}/.m2/wrapper/dists"
+          ./mvnw -v --batch-mode
       - name: Spotless Check
         run: ./mvnw -q spotless:check --batch-mode
       - name: Package
