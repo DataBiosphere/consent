@@ -87,6 +87,7 @@ import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
 import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
 import org.broadinstitute.consent.http.service.sam.SamService;
+import org.broadinstitute.consent.http.util.EmailDenyListValidator;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Jdbi;
@@ -208,6 +209,11 @@ public class ConsentModule extends AbstractModule {
   @Provides
   HttpClientUtil providesHttpClientUtil() {
     return new HttpClientUtil(config.getServicesConfiguration());
+  }
+
+  @Provides
+  EmailDenyListValidator providesEmailDenyListValidator() {
+    return new EmailDenyListValidator(config.getNihConfiguration());
   }
 
   @Provides
