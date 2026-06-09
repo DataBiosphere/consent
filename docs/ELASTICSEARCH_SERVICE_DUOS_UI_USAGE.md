@@ -325,7 +325,7 @@ operations that overlap with ElasticSearch index content:
 ### Dataset and Study Name Exposure
 
 - **Unique naming requirement**: The system enforces uniqueness of dataset names and study names
-  (see [DatasetService.java#L205](../src/main/java/org/broadinstitute/consent/http/service/DatasetService.java#L205) - `getDatasetByName`, 
+  (see [DatasetService.java#L246](../src/main/java/org/broadinstitute/consent/http/service/DatasetService.java#L246) - `getDatasetByName`,
   and related DAO methods), which is an architectural requirement for dataset/study identification.
 - **Data exposure consequence**: Because of this uniqueness requirement, dataset names and study names are
   necessarily **exposed in all API responses** that return dataset or study objects, including:
