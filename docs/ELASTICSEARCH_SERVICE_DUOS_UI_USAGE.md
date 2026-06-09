@@ -566,5 +566,3 @@ support. Phases 3B and 4.2/4.3 can be deferred if the cluster unambiguously supp
    institution plus library-card or other status-derived qualifiers. Recommendation: separate
    identity context from eligibility state so document policy remains stable even if login checks
    change.
-
-  ## Access Controls Implementation Plan
