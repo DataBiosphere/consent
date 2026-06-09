@@ -18,6 +18,7 @@ If you are new to the repository, read in this order:
 | `ONBOARDING.md` | New contributors | Local setup, run commands, and first tasks |
 | `ARCHITECTURE.md` | Contributors and reviewers | High-level system design and request flow |
 | `API_GUIDELINES.md` | API authors and reviewers | API conventions, validation, and compatibility rules |
+| `ELASTICSEARCH_SERVICE_DUOS_UI_USAGE.md` | Consent and duos-ui contributors | Cross-repo inventory of ElasticSearch usage and dependencies |
 | `ai/README.md` | Developers using AI tooling | Prompt usage model and best practices |
 | `ai/prompts/*.md` | Developers using AI tooling | Task-specific prompt templates and examples |
 
