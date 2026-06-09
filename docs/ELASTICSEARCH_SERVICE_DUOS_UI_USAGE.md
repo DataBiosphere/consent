@@ -338,8 +338,8 @@ operations that overlap with ElasticSearch index content:
 - **Security implication**: Dataset and study names may reveal sensitive information about data origin,
   research topic, or institutional affiliation. Names are queryable and visible to any authenticated user
   who can access the search endpoints, regardless of visibility flags.
-- **Sources**: [DatasetService.java#L205](../src/main/java/org/broadinstitute/consent/http/service/DatasetService.java#L205), 
-  [ElasticSearchService.java#L212](../src/main/java/org/broadinstitute/consent/http/service/ElasticSearchService.java#L212) (searchDatasets indexes names).
+- **Sources**: [DatasetService.java#L246](../src/main/java/org/broadinstitute/consent/http/service/DatasetService.java#L246),
+  [ElasticSearchService.java#L212](../src/main/java/org/broadinstitute/consent/http/service/ElasticSearchService.java#L212) (search returns documents containing dataset/study names from the index).
 
 ### Summary Table: Constraint Types by Endpoint
 
