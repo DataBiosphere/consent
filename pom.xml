@@ -25,7 +25,7 @@
     <junit.version>6.1.0</junit.version>
     <mockito.version>5.23.0</mockito.version>
     <sonar.plugin.version>5.7.0.6970</sonar.plugin.version>
-    <netty.override.version>4.2.14.Final</netty.override.version>
+    <netty.override.version>4.2.15.Final</netty.override.version>
     <spotless.version>3.6.0</spotless.version>
     <jetty.version>12.1.10</jetty.version>
 
@@ -226,7 +226,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.14</version>
+        <version>0.8.15</version>
         <executions>
           <execution>
             <id>prepare-agent</id>
@@ -425,7 +425,7 @@
       <dependency>
         <groupId>io.sentry</groupId>
         <artifactId>sentry-bom</artifactId>
-        <version>8.43.0</version>
+        <version>8.43.1</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -450,7 +450,7 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.21.4</version>
+      <version>2.22.0</version>
     </dependency>
 
     <dependency>
@@ -770,7 +770,7 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>2.68.0</version>
+      <version>2.69.0</version>
     </dependency>
 
     <dependency>
