@@ -415,16 +415,32 @@ Phase 5: Clean up old model coupling.
 - Keep a response DTO for `GET /api/dataset/study/registration/{studyId}` if clients still need registration-shaped data.
 - Remove `JsonSchemaUtil` registration validation methods when no endpoint uses them.
 
+### DUOS UI Findings
+
+The current `duos-ui` codebase indicates:
+
+- `src/routing/AppRoutes.tsx` routes `/data_submission_form` and `/study_update/:studyId` to `DataSubmissionFormV2`.
+- The legacy `src/pages/data_submission/DataSubmissionForm.jsx` calls `DataSet.getRegistrationSchema()` and validates with `RegistrationValidation.js`.
+- `src/libs/ajax/DataSet.js` and `src/libs/ajax/Schema.js` still expose clients for `/schemas/dataset-registration/v1`.
+- `DataSubmissionFormV2` does not fetch `/schemas/dataset-registration/v1`; it uses TypeScript models and converts a `Study` into a registration-shaped multipart payload with `studyToDatasetSchemaSubmission`.
+- Legacy Cypress tests under `cypress/component/DataSubmission` still depend on a copied `dataset-registration-schema_v1.json` fixture.
+
+This means `/schemas/dataset-registration/v1` is tied to the legacy v1 data submission form and legacy tests. The active submission route is v2, but v2 still posts to the existing backend registration endpoints using a registration-shaped payload.
+
 ### Decisions Needed Before Implementation
 
-Before implementing the migration, settle these details:
+Before implementing the migration, the team should choose from these options.
 
-- Client dependency inventory: identify which clients call `/schemas/dataset-registration/v1` and whether they use it for rendering, validation, or documentation only.
-- Endpoint strategy: decide whether to switch `POST /api/dataset/v3` in place or introduce a new versioned registration endpoint during migration.
-- Error response contract: keep current user-facing validation message behavior or define a new structured validation error response.
-- File handling contract: keep the existing multipart field names for `alternativeDataSharingPlan` and `consentGroups[n].nihInstitutionalCertificationFile`.
-- Response contract: decide whether `GET /api/dataset/study/registration/{studyId}` continues returning registration-shaped data after create/update no longer uses `DatasetRegistrationSchemaV1`.
-- OpenAPI ownership: make OpenAPI the discoverable API contract once JSON Schema is no longer the backend validation source.
+| Decision | Options | Recommended choice |
+| --- | --- | --- |
+| Schema endpoint compatibility | A. Keep `/schemas/dataset-registration/v1` indefinitely.<br>B. Mark it deprecated and remove after v1 data submission code/tests are removed.<br>C. Remove immediately. | B. `duos-ui` v2 no longer appears to fetch the schema, but legacy v1 form code and Cypress fixtures still reference it. Deprecate now, remove after those are deleted or confirmed unused. |
+| Backend endpoint strategy | A. Change `POST /api/dataset/v3` and `PUT /api/dataset/study/{studyId}` in place.<br>B. Add new registration endpoints and migrate v2 UI to them. | A for first implementation. V2 UI already posts registration-shaped multipart payloads to these endpoints, so changing backend validation in place minimizes client churn. Add new endpoints only if the DTO shape intentionally diverges from the current payload. |
+| Backend request shape | A. Keep accepting the current registration-shaped multipart `dataset` payload.<br>B. Replace it with a new DTO payload shape immediately. | A. Keep the wire payload stable while replacing backend validation internals. Rename internal Java types to DTO/domain commands, not the external payload yet. |
+| Error response contract | A. Preserve current `400` behavior and user-facing validation message style.<br>B. Return a structured field-error response. | A initially. Preserve behavior while swapping validators, then consider structured errors as a separate API improvement. |
+| File handling contract | A. Keep current multipart file field names.<br>B. Replace them with new typed file metadata. | A. Keep `alternativeDataSharingPlan` and `consentGroups[n].nihInstitutionalCertificationFile` unchanged to avoid UI and backend file-upload churn. |
+| Registration-shaped response | A. Keep `GET /api/dataset/study/registration/{studyId}` returning registration-shaped data.<br>B. Replace with a new DTO response immediately. | A. V2 UI still benefits from registration-shaped reconstruction. Decouple create/update validation first; response cleanup can happen later. |
+| OpenAPI ownership | A. Treat OpenAPI as the API contract after migration.<br>B. Keep JSON Schema as the form/API contract. | A. Once backend validation is DTO/domain-owned, OpenAPI should describe the supported request/response contract. JSON Schema should not remain the authoritative backend validation source. |
+| Legacy duos-ui cleanup | A. Remove legacy v1 form code, schema ajax clients, and schema fixture tests before backend switch.<br>B. Switch backend first, then remove UI code. | A if feasible. Removing legacy callers first reduces compatibility risk and gives confidence to deprecate `/schemas/dataset-registration/v1`. |
 
 ### Where Validation Should Live After Migration
 
