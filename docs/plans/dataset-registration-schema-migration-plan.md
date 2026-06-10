@@ -259,7 +259,7 @@ public class DatasetRegistrationCreateValidator {
     requireNotNull(group.numberOfParticipants(), "# of Participants is required");
     validatePrimaryUse(group);
 
-    if (!"open".equals(group.accessManagement())) {
+    if ("controlled".equals(group.accessManagement())) {
       requireNotNull(group.dataAccessCommitteeId(), "DAC is required");
       if (dacDAO.findById(group.dataAccessCommitteeId()) == null) {
         throw new BadRequestException("Could not find DAC");
