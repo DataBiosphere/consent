@@ -9,3 +9,4 @@ Use this directory for documents that describe a proposed path forward, migratio
 | Plan | Purpose |
 | --- | --- |
 | `dataset-registration-schema-migration-plan.md` | Plan for migrating dataset/study registration away from `dataset-registration-schema_v1.json` backend validation. |
+| `elasticsearch-service-duos-ui-usage.md` | Plan for adding access control to the information in consent's Elasticsearch infrastructure. |
