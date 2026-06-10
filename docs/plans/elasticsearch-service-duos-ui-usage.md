@@ -442,6 +442,1078 @@ response shaping while preserving current endpoints.
 
 Size key: **S** ≈ 1 day, **M** ≈ 2–3 days, **L** ≈ 4–5 days, **XL** ≈ 1 week+
 
+### Epic Summary
+
+| Epic | Name | Owner | Blocked by | Blocks |
+| --- | --- | --- | --- | --- |
+| A | Discovery & Contract | Infra + Backend | — | B, C, D, E |
+| B | Index Schema & Indexing Pipeline | Backend | A | D, E, F |
+| C | Auth Context Service | Backend | A | D, E |
+| D | Native DLS/FLS Path | Backend + Infra | A, B, C | F |
+| E | Compatibility Fallback | Backend | B, C | F |
+| F | API Hardening | Backend | D or E | G |
+| G | Frontend Alignment | Frontend | F | — |
+| H | Observability, Rollout & Docs | Backend + Infra | D or E | — |
+
+---
+
+### Epic A — Discovery & Contract
+
+**Goal**: Establish facts about the Elasticsearch cluster's security capabilities, evaluate the
+local developer configuration changes needed, and define the formal access contract that all later
+epics are built on. All other epics are blocked on A-1.
+
+---
+
+#### Ticket A-1 — Confirm Elasticsearch cluster security capabilities
+
+**Summary**: Determine whether the target cluster supports DLS, FLS, API keys, and `run_as`.
+
+**Context**: `ElasticSearchSupport.createRestClient` (L17–46) authenticates with a single shared
+`authUser`/`authPassword` credential from `ElasticSearchConfiguration` (L22–24). Before any
+per-request credential work can begin, we need the cluster edition and security feature inventory.
+
+**Acceptance criteria**:
+- Written record of: Elasticsearch version, edition (OSS / Basic / Enterprise), X-Pack Security
+  enabled, DLS/FLS availability, API-key support, and `run_as` privilege availability.
+- Confirm that `org.elasticsearch.client:elasticsearch-rest-client` in the current POM is
+  compatible with any required security API calls (API-key creation, `_security/api_key`).
+- Decision documented: native DLS/FLS path (Epic D), compatibility fallback (Epic E), or both.
+
+**Implementation notes**:
+- Run `GET /_xpack` and `GET /_cluster/settings` against the cluster.
+- `ElasticSearchConfiguration.cloudId` (L20) — if present, the cluster is Elastic Cloud, which
+  always has X-Pack Security; skip edition check and go straight to feature confirmation.
+- `ElasticSearchSupport` uses the low-level `RestClient`; API-key management requires calling
+  `POST /_security/api_key` directly via `Request`/`Response` — confirm this is feasible.
+
+**Dependencies**: None.
+**Size**: S
+
+---
+
+#### Ticket A-2 — Define formal access contract
+
+**Summary**: Enumerate all access dimensions and decide which are document-level vs. field-level.
+
+**Context**: The current access model uses `DatasetService.verifyPublicVisibilityAccess` (L176),
+`canReadStudy` (L196), and `isCreatorOrCustodian` (L209/L216) but these checks are not reflected
+in the Elasticsearch index. This ticket defines the contract that shapes both the `accessPolicy`
+nested object (Ticket B-1) and the auth context resolver (Ticket C-1).
+
+**Acceptance criteria**:
+- Completed matrix: for each dimension (`publicVisibility`, ADMIN bypass, creator, custodian, DAC
+  member/chair, institution allowlist, policy tags) record: data source, enforcement level (DLS
+  filter vs. FLS field bundle), and whether persistent backing currently exists.
+- Field-level security groupings decided: e.g. `"public"` profile grants `datasetName`,
+  `datasetId`, `study.studyName`; `"privileged"` additionally grants `study.dataCustodianEmail`,
+  `study.dataSubmitterEmail`.
+- `publicVisibility` DLS semantics decided: invisible to non-privileged callers, or visible with
+  field redaction?
+
+**Implementation notes**:
+- Start from the `StudyTerm` fields listed in the Indexed Elements section of this document. Flag
+  every field containing PII or internal-only data.
+- `dataCustodianEmail` is currently parsed from the study property bag in
+  `DatasetService.isCreatorOrCustodian` (L224–238), not a dedicated DB column — note this as a
+  storage gap candidate.
+
+**Dependencies**: A-1.
+**Size**: S
+
+---
+
+#### Ticket A-0 — Evaluate local developer Elasticsearch configuration changes
+
+**Summary**: Determine what changes are required to the local developer Elasticsearch setup in
+`config/docker-compose.yaml` to support development and testing of the security work across all
+epics.
+
+**Context**: The local developer environment (`config/docker-compose.yaml`) runs
+`docker.elastic.co/elasticsearch/elasticsearch:9.3.3` with security explicitly disabled:
+- `xpack.security.enabled=false`
+- `xpack.security.transport.ssl.enabled=false`
+- `discovery.type=single-node`
+
+ES 9.x ships with X-Pack Security built in and fully supports DLS, FLS, and API keys when
+security is enabled. The native DLS/FLS path (Epic D) requires security to be enabled for local
+development and testing. The compatibility fallback (Epic E) operates entirely at the application
+layer and requires no Elasticsearch configuration changes.
+
+**Acceptance criteria**:
+- Delta documented between local config (security disabled, 9.3.3, single-node) and cloud
+  production config (version, security settings, credential model).
+- Decision made on local developer security strategy — options:
+  - Option A: enable `xpack.security.enabled=true` by default in `docker-compose.yaml` for all
+    developers, with a bootstrapped `ELASTIC_PASSWORD` env var and a matching `consent.yaml`
+    snippet for local `authUser`/`authPassword`.
+  - Option B: add a separate Docker Compose profile (e.g. `--profile security-dev`) that runs a
+    security-enabled variant; the default profile stays as-is so developers not working on Epic D
+    are not affected.
+- For developers working only on Epic E (fallback): confirm no `docker-compose.yaml` changes are
+  needed — document this explicitly.
+- Developer onboarding notes updated to describe how to run the local ES with security enabled.
+
+**Implementation notes**:
+- When security is enabled in single-node mode, Elasticsearch auto-generates credentials on first
+  boot unless `ELASTIC_PASSWORD` is set. Add `ELASTIC_PASSWORD: <local-dev-password>` to the
+  `elastic` service environment block and add the matching `authUser: elastic` and
+  `authPassword: <local-dev-password>` to `consent.yaml` (or a dev-only `consent-local.yaml`).
+- Docker Compose profile example:
+  ```yaml
+  elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.3.3
+    profiles: [default, security-dev]
+    environment:
+      - xpack.security.enabled=${ES_SECURITY_ENABLED:-false}
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-}
+  ```
+  Developers run `ES_SECURITY_ENABLED=true ELASTIC_PASSWORD=devpassword docker compose up` to
+  enable security without changing the committed file.
+- Confirm whether production/cloud uses the same ES major version (9.x) or a different one. DLS
+  query syntax and API-key semantics are stable across 8.x and 9.x but differ from 7.x.
+- The `xpack.security.transport.ssl.enabled=false` line is correct for single-node development
+  even when `xpack.security.enabled=true` — transport SSL is only required for multi-node
+  clusters.
+
+**Dependencies**: None (can run in parallel with A-1; informs D-2 and D-5 test setup).
+**Size**: S
+
+---
+
+#### Ticket A-3 — Inventory storage gaps for new access dimensions
+
+**Summary**: Identify which access dimensions lack persistent backing and decide where to store them.
+
+**Context**: The `accessPolicy` nested object planned for `DatasetTerm` (B-1) needs a persistent
+source for every field. Dimensions such as `allowedInstitutionIds`, `allowedPrincipalIds`, and
+`policyTags` have no current DB-level representation.
+
+**Acceptance criteria**:
+- For each dimension not covered by existing Study/Dataset/User properties: decision on storage
+  location (existing Study property bag, new DB column, new table, or external config).
+- If new DB tables are required, an entity-relationship sketch and migration script outline.
+- Decision on whether institution allowlists derive solely from `User.institutionId` or require a
+  separate dataset-to-institution mapping table.
+
+**Implementation notes**:
+- `dacId` already exists on `Dataset`; `dataCustodianEmail` already exists in the study property
+  bag — no new storage needed for those dimensions.
+- `allowedPrincipalIds` (explicit user allowlists) and `policyTags` (consent-code-based access
+  tags) are the most likely to require new storage.
+
+**Dependencies**: A-2.
+**Size**: M
+
+---
+
+### Epic B — Index Schema & Indexing Pipeline
+
+**Goal**: Add an `accessPolicy` nested object to every indexed dataset document and ensure all
+reindex paths populate it correctly. Foundation for both Epic D (native DLS/FLS) and Epic E
+(fallback).
+
+**Blocked by**: A-2, A-3.
+**Blocks**: D, E.
+
+---
+
+#### Ticket B-1 — Add `accessPolicy` nested object to `DatasetTerm`
+
+**Summary**: Define `AccessPolicyTerm` and add it as a nested field on `DatasetTerm`.
+
+**Context**: `DatasetTerm` is assembled in `ElasticSearchService.toDatasetTerm` (L429–515).
+Currently it carries no structured access metadata; all visibility logic lives in application code.
+This ticket adds the schema without populating it yet (population is B-3).
+
+**Acceptance criteria**:
+- New `AccessPolicyTerm` class with fields:
+  - `publicVisibility: boolean`
+  - `creatorUserId: Integer`
+  - `creatorEmail: String`
+  - `custodianEmails: List<String>`
+  - `dacId: Integer`
+  - `dacApproval: Boolean`
+  - `allowedInstitutionIds: List<Integer>`
+  - `allowedPrincipalIds: List<Integer>`
+  - `policyTags: List<String>`
+  - `fieldAccessProfile: String` — `"public"` or `"privileged"`
+- `DatasetTerm` gains an `accessPolicy: AccessPolicyTerm` field.
+- Elasticsearch index mapping updated with `accessPolicy` as a `nested` (or `object`) type —
+  confirm with A-1 outcome which is required for the DLS query approach.
+- Existing `DatasetTerm` serialization tests still pass.
+
+**Implementation notes**:
+- Add `AccessPolicyTerm.java` alongside `DatasetTerm.java` in the model/elasticsearch package.
+- Update the index mapping JSON (or the programmatic mapping builder in `ElasticSearchService`) to
+  include the `accessPolicy` block. Leave all fields null/empty for now — B-3 populates them.
+- `nested` type is required if DLS queries need to target individual sub-fields of `accessPolicy`
+  in isolation; `object` suffices if DLS queries treat the whole block as a flat filter context.
+  Decide after A-1.
+
+**Dependencies**: A-2, A-3.
+**Size**: M
+
+---
+
+#### Ticket B-2 — Add `fieldAccessProfile` marker to `DatasetTerm`
+
+**Summary**: Add a `fieldAccessProfile` string field (inside `AccessPolicyTerm`) to signal which
+FLS field bundle applies to the document.
+
+**Context**: FLS in Elasticsearch requires knowing which fields each document grants to which
+caller profile. A profile marker on the document allows the auth context (C-1) to request a
+field-grant list matched to the document's declared profile, without enumerating fields per
+document in the query path.
+
+**Acceptance criteria**:
+- `AccessPolicyTerm.fieldAccessProfile` present (this may overlap with B-1; keep as a separate
+  deliverable to track separately).
+- Valid values: `"public"` (`publicVisibility=true`), `"privileged"` (`publicVisibility=false` or
+  restricted fields present).
+- Unit test: `fieldAccessProfile` is `"public"` for a dataset whose study has
+  `publicVisibility=true`, and `"privileged"` for `publicVisibility=false`.
+
+**Dependencies**: B-1.
+**Size**: S
+
+---
+
+#### Ticket B-3 — Populate `accessPolicy` in `toDatasetTerm` / `toStudyTerm`
+
+**Summary**: Update `ElasticSearchService.toDatasetTerm` (L429) and `toStudyTerm` (L245) to read
+all `accessPolicy` fields from `Dataset`, `Study`, and `User` objects.
+
+**Context**: `ElasticSearchService` already injects `datasetDAO`, `userDAO`, `dacDAO`, `studyDAO`,
+and `institutionDAO` (L58–66). All data needed for `accessPolicy` is reachable — this ticket wires
+the mapping.
+
+**Acceptance criteria**:
+- `accessPolicy.publicVisibility` ← `dataset.getStudy().getPublicVisibility()` (null-safe).
+- `accessPolicy.creatorUserId` ← `dataset.getCreateUserId()`.
+- `accessPolicy.creatorEmail` ← `userDAO.getUserById(createUserId).getEmail()`.
+- `accessPolicy.custodianEmails` ← parsed from study property bag using the same logic as
+  `DatasetService.isCreatorOrCustodian` (L224–238).
+- `accessPolicy.dacId` ← `dataset.getDacId()`.
+- `accessPolicy.dacApproval` ← `dataset.getDacApproval()`.
+- `accessPolicy.fieldAccessProfile` ← `"public"` if `publicVisibility=true`, else `"privileged"`.
+- `allowedInstitutionIds` ← per outcome of A-3; empty list if not yet implemented.
+- Unit test: null study → `accessPolicy.publicVisibility` defaults to `false`, no NPE.
+
+**Implementation notes**:
+- `isCreatorOrCustodian` in `DatasetService` (L224–238) parses custodian email from
+  `study.getProperties()`. Do not call `DatasetService` from `ElasticSearchService` to avoid a
+  circular dependency — extract a private helper `parseCustodianEmails(Study study)` in
+  `ElasticSearchService` instead.
+- Guard all `study` accesses — datasets created outside the registration flow may have a null
+  study reference.
+
+**Dependencies**: B-1, B-2, A-3.
+**Size**: M
+
+---
+
+#### Ticket B-4 — Verify all reindex trigger paths emit current `accessPolicy`
+
+**Summary**: Audit every code path that calls `indexDatasets`, `indexDataset`, `indexStudy`, or
+`synchronizeDatasetInESIndex` and confirm each passes a fully-populated `Dataset` to
+`toDatasetTerm`.
+
+**Context**: Reindex trigger paths:
+- `DatasetRegistrationService.createDatasetsFromRegistration` (L224) → `indexDatasets`
+- `DatasetRegistrationService.updateDataset` (L302) → `synchronizeDatasetInESIndex`
+- `DatasetResource.patchDataset` → `synchronizeDatasetInESIndex`
+- `StudyResource.updateStudyByRegistration` (L266) → `indexStudy`
+- `DacService.convertDacDatasetsToExternal` (L332/L349) → `indexDatasets`
+- Admin endpoints `POST /api/dataset/index` and `POST /api/dataset/index/{datasetId}`
+
+**Acceptance criteria**:
+- Each path verified: `toDatasetTerm` at index time has access to a dataset with `study` and
+  `createUserId` populated. If not, the path is updated to load required associations first.
+- `synchronizeDatasetInESIndex` (L349–359) confirmed to load the dataset fresh from DB before
+  calling `toDatasetTerm`, not relying on a potentially stale in-memory object.
+- Integration test: create a dataset with `publicVisibility=false`, `PATCH` it, verify the
+  reindexed document's `accessPolicy.publicVisibility` is `false`.
+
+**Implementation notes**:
+- `indexStudy` (L324) iterates over all datasets in the study — confirm each fetched `Dataset`
+  object includes its `Study` and properties.
+- `DacService.convertDacDatasetsToExternal` calls `indexDatasets(ids)` with IDs only;
+  `indexDatasets` re-fetches from DB, so it should be fine — but verify the fetch includes the
+  study association.
+
+**Dependencies**: B-3.
+**Size**: M
+
+---
+
+#### Ticket B-5 — Design and implement index version migration strategy
+
+**Summary**: Plan and execute the Elasticsearch index migration required to add the `accessPolicy`
+`nested` field without downtime: new index, alias cutover, background reindex.
+
+**Context**: Adding a `nested` field type requires reindexing all documents — `PUT /_mapping`
+cannot add nested types to a live index. The active index is identified by
+`ElasticSearchConfiguration.datasetIndexName` (L14), exposed as `indexKey` in
+`ElasticSearchService` (L68).
+
+**Acceptance criteria**:
+- Migration runbook: new index name convention (e.g. `datasets-v2`), alias (`datasets`) pointing
+  to the active index, cutover steps, rollback procedure (alias swap back to `v1` within minutes).
+- Reindex script or admin endpoint: creates the new index with the updated mapping, runs
+  `POST /_reindex`, atomically swaps the alias.
+- Application reads/writes using the aliased name from config; no hard-coded index names in code.
+
+**Implementation notes**:
+- Clarify which config field (`indexName` L10 vs. `datasetIndexName` L14) `ElasticSearchService`
+  uses as `indexKey` — there are two fields; only one should be active.
+- Confirm that dataset documents use `datasetId` as the ES document `_id` — this makes the reindex
+  idempotent.
+- Decide whether the reindex script lives as a one-off admin script, a Flyway migration, or a new
+  `POST /api/dataset/index/migrate` admin endpoint.
+
+**Dependencies**: B-3.
+**Size**: M
+
+---
+
+#### Ticket B-6 — Unit-test `accessPolicy` population in `ElasticSearchServiceTest`
+
+**Summary**: Add comprehensive unit tests for `accessPolicy` field population in `toDatasetTerm`
+and `toStudyTerm` before any auth enforcement code is written against them.
+
+**Acceptance criteria**:
+- `publicVisibility=true` → `fieldAccessProfile == "public"`.
+- `publicVisibility=false` → `fieldAccessProfile == "privileged"`.
+- `custodianEmails` populated when study has `dataCustodianEmail` property.
+- `custodianEmails` is empty (not null) when study has no custodian property.
+- Null study → `publicVisibility` defaults to `false`, no NPE.
+- `dacId`, `dacApproval`, `creatorUserId`, `creatorEmail` flow through from dataset and user DAO.
+
+**Implementation notes**:
+- Mirror the existing mock-heavy pattern in `ElasticSearchServiceTest` — mock all DAO calls.
+- Use `@ParameterizedTest` for the `fieldAccessProfile` cases.
+
+**Dependencies**: B-3.
+**Size**: M
+
+---
+
+### Epic C — Auth Context Service
+
+**Goal**: Build a service that resolves an authenticated `DuosUser` into a structured caller
+context for use by both the native DLS path and the compatibility fallback.
+
+**Blocked by**: A-2.
+**Blocks**: D, E.
+
+---
+
+#### Ticket C-1 — Create `DatasetSearchAuthContext` resolver
+
+**Summary**: Implement an immutable record class and resolver service that maps a `DuosUser` to
+all access dimensions needed for Elasticsearch authorization.
+
+**Context**: Access checks are currently scattered across `DatasetService.verifyPublicVisibilityAccess`
+(L176), `canReadStudy` (L196), and `isCreatorOrCustodian` (L209/L216), each evaluated against
+a single dataset per call. The resolver pre-builds a caller context evaluated once per request,
+not once per document.
+
+**Acceptance criteria**:
+- `DatasetSearchAuthContext` (record or immutable class) with:
+  - `Integer userId`
+  - `String userEmail`
+  - `Integer institutionId`
+  - `boolean isAdmin`
+  - `Set<Integer> dacMemberships` — all DAC IDs the user belongs to
+  - `Set<Integer> dacChairScopes` — DAC IDs where the user is chair
+  - `List<String> policyTagGrants` — initially empty, placeholder for future policy-tag grants
+- `DatasetSearchAuthContextResolver` service: accepts a `DuosUser`, returns a
+  `DatasetSearchAuthContext`.
+- `isAdmin` is `true` when user has `UserRoles.ADMIN` (L13 in `UserRoles.java`).
+- `dacMemberships` loaded from `DacDAO` — do not pull in `DacService` as a dependency to keep the
+  graph flat.
+
+**Implementation notes**:
+- `DuosUser.getRoles()` returns the role set; check for `UserRoles.ADMIN`.
+- Keep the resolver stateless; all DB calls happen eagerly in the constructor/factory, not lazily.
+- `DacService` (L51) already resolves DAC memberships — use `dacDAO` directly to avoid
+  introducing a circular dependency through `DacService`.
+
+**Dependencies**: A-2.
+**Size**: M
+
+---
+
+#### Ticket C-2 — Normalize policy evaluation into shared helpers
+
+**Summary**: Extract the shared read-access predicates from `DatasetService` into a policy
+evaluator usable by both search mediation (Epic E) and native DLS role generation (Epic D).
+
+**Context**: `DatasetService.verifyPublicVisibilityAccess` (L176), `canReadStudy` (L196), and
+`isCreatorOrCustodian` (L209/L216) encode the same access logic used by non-search endpoints. The
+compatibility fallback (E-2) must express equivalent logic as Elasticsearch query filters —
+normalizing the Java predicates first makes it easier to write the ES query equivalent and prevents
+the two code paths from diverging.
+
+**Acceptance criteria**:
+- `DatasetAccessPolicy` utility class with pure functions:
+  - `canRead(DatasetSearchAuthContext ctx, AccessPolicyTerm policy)` → boolean
+  - `isCreator(DatasetSearchAuthContext ctx, AccessPolicyTerm policy)` → boolean
+  - `isCustodian(DatasetSearchAuthContext ctx, AccessPolicyTerm policy)` → boolean
+- `DatasetService` existing method signatures unchanged; delegating internally to these helpers
+  is optional but encouraged for single-source-of-truth.
+- Unit tests confirm parity: `DatasetAccessPolicy.canRead` produces the same result as
+  `DatasetService.verifyPublicVisibilityAccess` for all role/visibility combinations.
+
+**Implementation notes**:
+- The helpers accept the pre-resolved `AccessPolicyTerm` (from B-3) rather than the raw `Study`
+  object — this makes them work against both live dataset objects and indexed terms.
+- Do not break the `DatasetService` public API during this refactor.
+
+**Dependencies**: C-1, B-3.
+**Size**: S
+
+---
+
+#### Ticket C-3 — Unit-test auth context for all role/dimension combinations
+
+**Summary**: Parameterized unit tests covering every role and dimension combination for
+`DatasetSearchAuthContext` and `DatasetAccessPolicy`.
+
+**Acceptance criteria**:
+- Test matrix: `ADMIN`, public reader (`RESEARCHER`/`MEMBER`/`SIGNINGOFFICIAL`), dataset creator,
+  study custodian, DAC chair for the dataset's DAC, DAC member (not chair),
+  institution-restricted user, user with no matching institution.
+- Each combination tested for `canRead`, `isCreator`, `isCustodian`.
+- Edge cases: null study, dataset with no DAC, custodian email list empty, user with multiple
+  roles.
+
+**Implementation notes**:
+- Use `@ParameterizedTest` with a method source building `DatasetSearchAuthContext` +
+  `AccessPolicyTerm` pairs with expected `canRead` outcomes.
+- Mock `DacDAO` in `DatasetSearchAuthContextResolver` tests to control DAC membership data.
+
+**Dependencies**: C-1, C-2.
+**Size**: M
+
+---
+
+### Epic D — Native Elasticsearch DLS/FLS Path
+
+**Goal**: Implement per-request Elasticsearch credentials (API keys with inline role descriptors
+or `run_as` headers) that enforce DLS and FLS natively at the cluster level.
+
+**Blocked by**: A-1 (cluster capability confirmed), B-3 (`accessPolicy` indexed), C-1 (auth
+context available).
+**Blocks**: F.
+**Condition**: Proceed only if A-1 confirms DLS/FLS support.
+
+---
+
+#### Ticket D-1 — Extend `ElasticSearchConfiguration` with security-mode settings
+
+**Summary**: Add `securityMode`, privileged service-account credential fields, and
+`fieldAccessProfiles` to `ElasticSearchConfiguration`.
+
+**Context**: `ElasticSearchConfiguration` currently holds a single shared `authUser`/`authPassword`
+(L22–24). The native path requires either a privileged account for API-key generation or a
+`run_as`-capable service account.
+
+**Acceptance criteria**:
+- New fields:
+  - `String securityMode` — `"none"`, `"fallback"`, `"shadow"`, or `"native-dls"`.
+  - `String serviceAccountUser` / `String serviceAccountPassword` — may reuse `authUser`/
+    `authPassword` if the same account has sufficient privilege.
+  - `Map<String, List<String>> fieldAccessProfiles` — maps profile name to list of allowed field
+    glob patterns (e.g. `"public"` → `["datasetId", "datasetName", "study.studyName", ...]`).
+- Application starts cleanly with `securityMode: none` (legacy behavior unchanged).
+- Startup validation: if `securityMode` is `"native-dls"` and `serviceAccountUser` is blank,
+  throw with a descriptive error.
+
+**Implementation notes**:
+- Use Dropwizard `@JsonProperty` / `@NotNull` pattern consistent with existing fields.
+- `fieldAccessProfiles` default should include at minimum `"public"` and `"privileged"` entries
+  reflecting the field lists decided in A-2.
+- Document new keys in the config YAML schema or `docs/`.
+
+**Dependencies**: A-1, A-2.
+**Size**: S
+
+---
+
+#### Ticket D-2 — Per-request credential construction in `ElasticSearchSupport`
+
+**Summary**: Add a method to `ElasticSearchSupport` that constructs a per-request `Request` object
+carrying either an API-key header or `es-security-runas-user` header derived from
+`DatasetSearchAuthContext`.
+
+**Context**: `ElasticSearchSupport.createRestClient` (L17–46) builds a single shared `RestClient`
+at startup. Per-request credentials are passed as HTTP headers on individual `Request` objects
+using the existing low-level `RestClient` — no new client instance is needed per request.
+
+**Acceptance criteria**:
+- `ElasticSearchSupport.buildSecuredRequest(String endpoint, HttpEntity body,
+  DatasetSearchAuthContext ctx, ElasticSearchConfiguration config)` → `Request` with the
+  appropriate per-request auth header.
+- API-key approach: call `POST /_security/api_key` with an inline role descriptor containing the
+  DLS query from D-3 and FLS field list; embed the resulting key as `Authorization: ApiKey <base64>`.
+- `run_as` approach (simpler fallback within D): set header
+  `es-security-runas-user: <ctx.userId>` on a service-account-authenticated request.
+- Unit test: given `isAdmin=true`, generated credential grants unrestricted access.
+- Unit test: given non-admin context, credential includes DLS query and FLS field list.
+
+**Implementation notes**:
+- API keys have a TTL — set to ≤ 5 minutes. Avoid generating one per document; one per request is
+  correct.
+- `run_as` is simpler but requires pre-provisioned ES users for every DUOS user — less dynamic.
+  API-key approach is more self-contained. Confirm feasibility with A-1 outcome.
+
+**Dependencies**: D-1, C-1.
+**Size**: L
+
+---
+
+#### Ticket D-3 — DLS query and FLS field-grant generator
+
+**Summary**: Build `DlsQueryBuilder` and `FlsGrantBuilder` that translate `DatasetSearchAuthContext`
+into an Elasticsearch DLS query string and an FLS field-grant list.
+
+**Context**: The DLS query must express: return documents where `accessPolicy.publicVisibility=true`
+OR `accessPolicy.creatorUserId = <userId>` OR `accessPolicy.custodianEmails` contains `<email>`
+OR `accessPolicy.dacId` is in `<dacMemberships>`. ADMIN bypasses all filters.
+
+**Acceptance criteria**:
+- `DlsQueryBuilder.buildForContext(DatasetSearchAuthContext ctx)` → JSON string.
+  - ADMIN → `{"match_all": {}}`.
+  - Non-admin → `bool` with `should` clauses for `publicVisibility`, creator, custodian, DAC
+    membership; `minimum_should_match: 1`.
+- `FlsGrantBuilder.buildForContext(DatasetSearchAuthContext ctx,
+  Map<String, List<String>> profiles)` → `List<String>` field patterns.
+  - ADMIN → `["*"]`.
+  - Non-admin → field list from the caller's applicable profile.
+- Unit tests for each access dimension and combinations.
+
+**Implementation notes**:
+- Example DLS query for non-admin:
+  ```json
+  {"bool": {"should": [
+    {"term": {"accessPolicy.publicVisibility": true}},
+    {"term": {"accessPolicy.creatorUserId": 42}},
+    {"terms": {"accessPolicy.custodianEmails": ["user@example.com"]}},
+    {"terms": {"accessPolicy.dacId": [1, 3]}}
+  ], "minimum_should_match": 1}}
+  ```
+- If `accessPolicy` is mapped as `nested`, terms must be wrapped in a `nested` query — confirm
+  with B-1 mapping decision.
+
+**Dependencies**: D-2, C-2, B-1.
+**Size**: L
+
+---
+
+#### Ticket D-4 — Wire per-request credentials into `searchDatasets` / `searchDatasetsStream`
+
+**Summary**: Update `ElasticSearchService.searchDatasets` (L212) and `searchDatasetsStream` (L230)
+to use per-request DLS credentials when `securityMode` is `"native-dls"`.
+
+**Acceptance criteria**:
+- Overloads (or updated signatures): `searchDatasets(String query, DatasetSearchAuthContext ctx)`
+  and `searchDatasetsStream(String query, DatasetSearchAuthContext ctx)`.
+- When `securityMode == "native-dls"`: obtain per-request credential from D-2, execute search
+  with that credential.
+- When `securityMode != "native-dls"`: fall through to existing behavior unchanged.
+- `DatasetResource` callers at L425 and L439 updated to pass `duosUser` → resolved
+  `DatasetSearchAuthContext`.
+- Integration test: non-admin cannot retrieve a `publicVisibility=false` dataset via the search
+  endpoint.
+
+**Implementation notes**:
+- Both endpoint methods already have `@Auth DuosUser duosUser` as a parameter (L428, L442) — the
+  user is available, just not currently forwarded.
+- Keep the existing parameterless signatures to avoid breaking admin-only callers that do not have
+  user context; add overloads with `ctx`.
+
+**Dependencies**: D-3, D-2.
+**Size**: M
+
+---
+
+#### Ticket D-5 — Integration tests for DLS and FLS enforcement
+
+**Summary**: Integration tests against a security-enabled Elasticsearch instance validating
+document filtering and field omission.
+
+**Acceptance criteria**:
+- Setup: security-enabled ES (Docker/Testcontainers), two datasets: one `publicVisibility=true`,
+  one `publicVisibility=false`.
+- Test: non-admin search → `publicVisibility=false` document absent from results.
+- Test: dataset creator search → sees own `publicVisibility=false` document.
+- Test: ADMIN → sees all documents.
+- Test: FLS — non-privileged caller's response does not contain `study.dataCustodianEmail`.
+- Test: ADMIN response contains all fields.
+
+**Implementation notes**:
+- Use `testcontainers` with `docker.elastic.co/elasticsearch/elasticsearch:8.x` and
+  `xpack.security.enabled=true`.
+- Seed test data via `ElasticSearchService.indexDataset` (not direct ES API) to exercise the same
+  code path as production and ensure `accessPolicy` is populated.
+
+**Dependencies**: D-4.
+**Size**: L
+
+---
+
+### Epic E — Compatibility Fallback
+
+**Goal**: Server-side query mediation and field allowlisting that enforce access policy without
+native Elasticsearch DLS/FLS. Ships independently of Epic D and becomes the primary Phase 3
+delivery if the cluster lacks DLS/FLS support.
+
+**Blocked by**: B-3 (`accessPolicy` indexed), C-1 (auth context available).
+**Blocks**: F.
+
+---
+
+#### Ticket E-1 — Build `SearchQueryMediator` with DSL sanitization
+
+**Summary**: Implement `SearchQueryMediator` that strips unsafe surfaces from client-provided ES
+DSL before execution.
+
+**Context**: `DatasetResource.searchDatasetIndex` (L425) currently passes the client request body
+directly to `ElasticSearchService.searchDatasets` with no sanitization. A client can include
+`_source` overrides, `script_fields`, `explain`, or `profile` to extract information about
+documents it should not see.
+
+**Acceptance criteria**:
+- `SearchQueryMediator.sanitize(String clientDsl)` → `String`:
+  - Removes top-level keys: `_source`, `docvalue_fields`, `script_fields`, `stored_fields`,
+    `explain`, `profile`, `seq_no_primary_term`, `version`.
+  - Preserves: `query`, `aggs`/`aggregations`, `sort`, `size`, `from`, `search_after`, `pit`,
+    `highlight`.
+  - Result is valid JSON.
+- Unit test: sanitized DSL contains none of the stripped keys.
+- Unit test: DSL with only `query` and `size` is returned unchanged.
+
+**Implementation notes**:
+- Parse using Jackson `ObjectNode`: `((ObjectNode) root).remove(List.of("_source", "explain",
+  ...))` — clean and avoids manual JSON manipulation.
+- Keep sanitization separate from auth filter injection (E-2) for independent testability.
+
+**Dependencies**: C-1.
+**Size**: M
+
+---
+
+#### Ticket E-2 — Inject mandatory authorization filter into `SearchQueryMediator`
+
+**Summary**: Extend `SearchQueryMediator` to wrap the sanitized client query in a `bool.must`
+alongside a server-built access policy filter derived from `DatasetSearchAuthContext`.
+
+**Acceptance criteria**:
+- `SearchQueryMediator.mediate(String clientDsl, DatasetSearchAuthContext ctx)` → `String` produces:
+  ```json
+  {"query": {"bool": {"must": [<sanitized client query>, <access policy filter>]}}, ...}
+  ```
+- ADMIN context → access policy filter is `{"match_all": {}}`.
+- Non-admin → access policy filter equivalent to DLS query from D-3 (same logic, different
+  execution path — reuse `DlsQueryBuilder.buildForContext` if D-3 has shipped, otherwise implement
+  a standalone `AccessFilterBuilder` and unify later).
+- Unit tests for each access dimension: public reader, creator, custodian, DAC member.
+- Negative test: crafted client query attempting to retrieve `publicVisibility=false` documents is
+  blocked by the injected filter.
+
+**Implementation notes**:
+- Jackson `ObjectNode` manipulation: extract the client `query` node, build the `bool.must`
+  wrapper, replace `root.query` with the wrapped version.
+- The `accessPolicy` fields used in the filter must exist in the index (B-3 required as a
+  prerequisite).
+
+**Dependencies**: E-1, C-2, B-3.
+**Size**: L
+
+---
+
+#### Ticket E-3 — Server-managed field allowlist applied to search responses
+
+**Summary**: Strip fields from Elasticsearch response documents that the caller is not permitted
+to see, based on their `fieldAccessProfile`.
+
+**Context**: The fallback path cannot rely on native FLS. The server must remove restricted fields
+from hit `_source` objects before returning the response.
+
+**Acceptance criteria**:
+- `ResponseFieldFilter.applyProfile(String responseJson, String callerProfile,
+  Map<String, List<String>> profileDefs)` → `String`:
+  - For each hit in `hits.hits[*]._source`, removes fields not in the caller's profile grant list.
+  - ADMIN profile → no fields removed.
+  - `"public"` profile → only fields in the `"public"` grant list retained.
+- Unit test: response with `study.dataCustodianEmail` has that field stripped for `"public"`
+  profile caller.
+- Unit test: ADMIN caller receives the full document.
+
+**Implementation notes**:
+- Walk `hits.hits[*]._source` as `Map<String, Object>` and apply a recursive filter against the
+  profile's allowed field glob patterns (e.g. `"study.*"` allows all `study` sub-fields).
+- The caller's profile derives from `DatasetSearchAuthContext.isAdmin` → `"admin"`, otherwise
+  use the document's `accessPolicy.fieldAccessProfile` or a per-caller override from config.
+- The `profileDefs` map comes from `ElasticSearchConfiguration.fieldAccessProfiles` (D-1).
+
+**Dependencies**: E-2, D-1.
+**Size**: M
+
+---
+
+#### Ticket E-4 — Wire `SearchQueryMediator` into `ElasticSearchService`
+
+**Summary**: Wire the mediator (E-1/E-2) and response filter (E-3) into `searchDatasets` and
+`searchDatasetsStream` when `securityMode` is `"fallback"`.
+
+**Acceptance criteria**:
+- When `securityMode == "fallback"`:
+  - Client DSL processed by `SearchQueryMediator.mediate(clientDsl, ctx)` before ES submission.
+  - Response processed by `ResponseFieldFilter.applyProfile(...)` before returning to caller.
+- When `securityMode == "none"`: existing behavior unchanged.
+- Both `searchDatasets` (L212) and `searchDatasetsStream` (L230) updated.
+- `DatasetResource` callers at L425 and L439 updated to pass `duosUser` → resolved
+  `DatasetSearchAuthContext`.
+
+**Implementation notes**:
+- `searchDatasetsStream` returns an `InputStream` — apply the field filter by reading the stream,
+  filtering the JSON, then re-wrapping as an `InputStream` before returning; or convert to
+  `String` internally and stream the result.
+- Keep the `securityMode` switch as a simple if-else in `ElasticSearchService`.
+
+**Dependencies**: E-2, E-3.
+**Size**: S
+
+---
+
+#### Ticket E-5 — Unit-test `SearchQueryMediator` and `ResponseFieldFilter`
+
+**Summary**: Comprehensive unit tests covering all access dimensions and edge cases for the
+mediator and response filter.
+
+**Acceptance criteria**:
+- `SearchQueryMediator` tests: DSL passthrough for ADMIN, correct `bool.must` injection for each
+  non-admin role/dimension.
+- `ResponseFieldFilter` tests: field stripping per profile, ADMIN bypass, nested field handling
+  (`study.dataCustodianEmail`), null/missing source fields are not errors.
+- Negative test: client DSL with injected `_source` override does not expose restricted fields
+  after full mediation pipeline.
+
+**Implementation notes**:
+- Use `JSONAssert` or Jackson-based assertions for comparing query structure.
+- Test the full pipeline end-to-end: `mediate(...)` → mock response JSON → `applyProfile(...)` →
+  assert final field set.
+
+**Dependencies**: E-4.
+**Size**: M
+
+---
+
+### Epic F — API Hardening
+
+**Goal**: Harden the existing search endpoints to always route through the secured/mediated path,
+and design the long-term server-owned search API.
+
+**Blocked by**: Epic D or E (at least one live).
+**Blocks**: G.
+
+---
+
+#### Ticket F-1 — Harden search endpoints to always pass caller context
+
+**Summary**: Update `DatasetResource.searchDatasetIndex` (L425) and `searchDatasetIndexStream`
+(L439) to always forward `duosUser` into the secured search path; remove the parameterless
+passthrough.
+
+**Context**: Both methods already receive `@Auth DuosUser duosUser` (L428, L442) but do not
+currently forward it to the service call (L430, L444). This is the wiring ticket.
+
+**Acceptance criteria**:
+- Both endpoint methods pass `duosUser` → resolved `DatasetSearchAuthContext` to the service.
+- No remaining code path calls the ES service without caller context.
+- Regression tests: non-admin users see only authorized datasets; admin users see all.
+
+**Implementation notes**:
+- Inject `DatasetSearchAuthContextResolver` into `DatasetResource` via Dropwizard constructor
+  injection.
+- The resolver call is cheap (pre-built context) — resolving once per request at the resource
+  layer is the right place.
+
+**Dependencies**: D-4 or E-4.
+**Size**: S
+
+---
+
+#### Ticket F-2 — Design server-owned v3 search API (deferrable)
+
+**Summary**: Define a server-owned search API that accepts structured business parameters instead
+of raw Elasticsearch DSL.
+
+**Acceptance criteria**:
+- API contract: request body schema (text query string, typed facet filters, page/size, sort),
+  response schema (shaped `DatasetTerm` list + total count + facet counts).
+- No raw Elasticsearch DSL in request or response.
+- Design document / ADR capturing field mapping, facet aggregation strategy, sort field allowlist.
+
+**Implementation notes**:
+- The existing `elastic.ts` types construct DSL queries for `accessManagement`, `dataUse`,
+  `dataType`, `dac` facets (see `DatasetSearchTable.jsx:L100–141`). These become the typed filter
+  model in the v3 request schema.
+- Server builds: full-text query across `datasetName`, `study.studyName`, `study.description`,
+  `study.piName`; terms filters per facet; pagination; access policy filter injected server-side.
+
+**Dependencies**: F-1.
+**Size**: L (deferrable)
+
+---
+
+#### Ticket F-3 — Expose v3 search endpoint with backward compatibility (deferrable)
+
+**Summary**: Implement `POST /api/dataset/search/index/v3` and add deprecation notices to v1/v2.
+
+**Acceptance criteria**:
+- v3 endpoint responds with shaped dataset list for valid business-parameter requests.
+- v1 and v2 continue to function; return a `Deprecation` response header pointing to v3.
+- duos-ui integration test verifies v3 returns the same datasets as v2 for equivalent queries.
+
+**Dependencies**: F-2.
+**Size**: M (deferrable)
+
+---
+
+### Epic G — Frontend Alignment
+
+**Goal**: Remove client-side visibility filtering from duos-ui, update all search callers to
+trust server-filtered results, and align Cypress tests with the server-authoritative model.
+
+**Blocked by**: F-1 (or E-4 live behind feature flag).
+**Blocks**: Nothing.
+
+---
+
+#### Ticket G-1 — Remove client-side `publicVisibility` and `dacApproval` filtering
+
+**Summary**: Remove the `'study.publicVisibility': true` term injected in `DatasetSearch.jsx`
+(L34) and any equivalent `dacApproval` filter injection in other search callers.
+
+**Context**: Once the server enforces these filters (F-1), client-side duplication becomes a
+source of drift — and may under-return results for callers who should see private datasets (e.g.
+a creator searching for their own `publicVisibility=false` study).
+
+**Acceptance criteria**:
+- `DatasetSearch.jsx` no longer injects `'study.publicVisibility': true`.
+- All other search callers (`DatasetSearchTable.jsx`, `BucketUtils.ts`, etc.) audited and any
+  equivalent access-policy filter terms removed.
+- Cypress tests updated to not assert that these terms appear in outgoing request bodies.
+- Manual test: an admin user can see `publicVisibility=false` datasets that were previously hidden
+  client-side; verify the server now controls visibility.
+
+**Implementation notes**:
+- Grep for `publicVisibility` and `dacApproval` across `../duos-ui/src/` before making changes
+  to catch all callers.
+- Coordinate on timing: do not remove the client-side filter until the corresponding server-side
+  filter is confirmed live behind `ElasticSearchConfiguration.securityMode`.
+
+**Dependencies**: F-1 live (or E-4 live behind feature flag).
+**Size**: S
+
+---
+
+#### Ticket G-2 — Audit and update all duos-ui search callers
+
+**Summary**: Review all eight search callers for assumptions about unfiltered server results and
+update `elastic.ts` types to reflect the server-authoritative model.
+
+**Context**: Search callers: `useLibraryData.ts`, `DatasetSearch.jsx`, `DatasetSearchTable.jsx`,
+`DACDatasets.jsx`, `DatasetSubmissions.jsx`, `DatasetStatistics.tsx`, `StudyDetails.tsx`,
+`BucketUtils.ts`. Any that inject access-policy-related filters or post-filter results on
+access-policy grounds should be cleaned up.
+
+**Acceptance criteria**:
+- Each caller reviewed; any access-policy DSL filter that the server now handles is removed.
+- No caller sends `_source`, `docvalue_fields`, or `script_fields` (stripped by E-1 in any case,
+  but clean up at source).
+- `elastic.ts` updated: remove any type fields that correspond to now-server-managed request
+  surfaces.
+- All callers compile and Cypress tests pass.
+
+**Implementation notes**:
+- `BucketUtils.ts:L337` — inspect the query for any visibility-related terms.
+- `DACDatasets.jsx:L52` — verify it does not filter by DAC membership client-side (the server
+  handles this via auth context for CHAIRPERSON callers after F-1).
+
+**Dependencies**: G-1, F-1.
+**Size**: M
+
+---
+
+#### Ticket G-3 — Update Cypress tests to reflect server-authoritative results
+
+**Summary**: Update all Cypress component tests that intercept `/api/dataset/search/index/v2` to
+use mock responses that reflect post-enforcement server output, and remove scenarios testing
+now-removed client-side filtering.
+
+**Context**: Tests under `cypress/component/` mock API responses that currently include
+`publicVisibility=false` documents to verify client-side filtering. After the server enforces
+access policy, those mock responses should represent what the server would actually return.
+
+**Acceptance criteria**:
+- Tests no longer assert that `publicVisibility=false` documents injected into mocked responses
+  are hidden by client logic.
+- Mock responses updated to represent only authorized documents (as the server would return).
+- `DataLibrary.spec.tsx:L868–875` — `dacApproval: true` assertion in outgoing query construction
+  removed or updated per G-1 outcome.
+- All updated tests pass in CI.
+
+**Implementation notes**:
+- These are component tests (not E2E) — they test rendering against mocked HTTP. Update mock
+  response bodies; assertions about rendered content can remain where the expected data is still
+  correct.
+- `cypress/component/DataSearch/dataset_search_table.spec.jsx` tests the `DatasetSearchTable`
+  component directly — update both mock data and assertions.
+
+**Dependencies**: G-2.
+**Size**: M
+
+---
+
+#### Ticket G-4 — Update `DatasetSearchTable.jsx` for server-authoritative search
+
+**Summary**: Remove any access-policy filter terms from `DatasetSearchTable.jsx` and align it
+fully with the server-authoritative search flow.
+
+**Context**: `DatasetSearchTable.jsx` is the active dataset search table implementation (at
+`src/components/data_search/DatasetSearchTable.jsx`). It constructs and sends ES queries (L230).
+
+**Acceptance criteria**:
+- No access-policy filter terms injected by `DatasetSearchTable.jsx` (the L100–141 filter block
+  handles UI-selected facets — `accessManagement`, `dataUse`, `dataType`, `dac` — which are
+  user-selected filters and should be retained; only access-policy terms should be removed).
+- Cypress test in `cypress/component/DataSearch/dataset_search_table.spec.jsx` updated.
+
+**Dependencies**: G-2.
+**Size**: M
+
+---
+
+### Epic H — Observability, Rollout, and Documentation
+
+**Goal**: Feature flags for safe staged rollout, audit logging for access enforcement events,
+shadow-mode comparison tooling, and documentation updates.
+
+**Blocked by**: D or E live.
+**Blocks**: Nothing (runs in parallel with G).
+
+---
+
+#### Ticket H-1 — Validate security-mode feature flags and startup behavior
+
+**Summary**: Ensure `ElasticSearchConfiguration.securityMode` controls all modes cleanly and
+the application fails fast on invalid configuration.
+
+**Acceptance criteria**:
+- `securityMode: none` → legacy behavior, no mediator, no per-request credentials.
+- `securityMode: fallback` → `SearchQueryMediator` active; no per-request ES credentials.
+- `securityMode: native-dls` → per-request DLS credentials active; mediator bypassed.
+- `securityMode: shadow` → see H-3.
+- Invalid value → application fails to start with a descriptive error message.
+- `ElasticSearchHealthCheck` reports current `securityMode` in its health check output.
+
+**Implementation notes**:
+- Validate via a custom Dropwizard `@ValidSecurityMode` annotation or a startup lifecycle hook
+  that checks `ElasticSearchConfiguration.securityMode` against an allowed-values set.
+- Document new config keys in `docs/` or the config YAML schema.
+
+**Dependencies**: D-1.
+**Size**: S
+
+---
+
+#### Ticket H-2 — Audit logging and metrics for access enforcement
+
+**Summary**: Add structured logging and metrics for: filtered-result queries, denied-field
+accesses, reindex completion events, and credential creation failures.
+
+**Acceptance criteria**:
+- Log entry per search request: `userId`, `securityMode`, `resultCount`, `durationMs`. No PII
+  (no email addresses, no query text).
+- Log entry per reindex operation: `datasetId`, `triggeredBy`, `accessPolicyPopulated`, `durationMs`.
+- Metrics: `dataset_search_filtered_total` (counter, by `securityMode`),
+  `dataset_reindex_duration_seconds` (histogram).
+
+**Implementation notes**:
+- Use the existing Dropwizard `MetricRegistry` for metrics and SLF4J for structured log entries.
+- `filteredCount` (documents removed by access policy vs. raw ES count) is only estimable in
+  shadow mode (H-3) — omit from non-shadow log entries or approximate.
+
+**Dependencies**: E-4 or D-4.
+**Size**: M
+
+---
+
+#### Ticket H-3 — Staged rollout: shadow mode and cutover criteria
+
+**Summary**: Run secured and legacy result counts in parallel (shadow mode) before full cutover;
+define success criteria and rollback trigger.
+
+**Context**: Shadow mode executes both the mediated/secured query and the current unmediated query
+per request, compares result counts, and logs the difference — measuring enforcement impact before
+it affects users.
+
+**Acceptance criteria**:
+- `securityMode: shadow` (H-1) — primary response is the unmediated (legacy) result; secured
+  result count computed and difference logged.
+- Success criteria documented: e.g. "secured count ≤ 5% below legacy for 48 hours with no
+  false-positive reports from test accounts."
+- Rollback trigger: if secured count diverges by > 10% from legacy, alert fires and `securityMode`
+  can be toggled back to `"none"` via config without code deployment.
+
+**Implementation notes**:
+- Shadow mode requires two ES requests per search — acceptable during rollout, not for production
+  steady-state. Log shadow comparisons at `DEBUG` with a dedicated logger (e.g.
+  `es.shadow.search`) so they can be sampled via log-level config without flooding production.
+
+**Dependencies**: H-2.
+**Size**: S
+
+---
+
+#### Ticket H-4 — Update documentation for server-authoritative enforcement model
+
+**Summary**: Update the inventory and plans documents to reflect the post-enforcement architecture.
+
+**Acceptance criteria**:
+- "Study-Level Visibility and Access" section updated: remove the security-implication note about
+  client-side bypass; add description of server-enforced DLS/FLS or query mediation.
+- Cross-reference matrix updated if any endpoint behavior changed.
+- This plans document updated with final implementation decisions (path taken, what was deferred).
+
+**Dependencies**: G-1, H-1.
+**Size**: S
+
+---
+
+### Critical Path
+
+```
+A-1 → A-2 → A-3
+               ↓                      ↓
+    B-1→B-2→B-3→B-4→B-5→B-6    C-1→C-2→C-3
+                 ↓                      ↓
+          D-1→D-2→D-3→D-4→D-5  (or  E-1→E-2→E-3→E-4→E-5)
+                          ↓
+                       F-1 → [F-2 → F-3 (deferrable)]
+                          ↓
+              G-1→G-2→G-3→G-4    H-1→H-2→H-3→H-4
+```
+
+Rough total (native DLS/FLS path): ~14–18 backend-engineer weeks; ~3–4 frontend-engineer weeks;
+~1–2 infra-engineer weeks. Epics E, F-2, and F-3 can be deferred if the cluster unambiguously
+supports DLS/FLS.
+
 ### Phase 0 — Pre-requisites and Contract
 
 *Blocks all native-security work.*
