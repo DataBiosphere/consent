@@ -427,6 +427,8 @@ The current `duos-ui` codebase indicates:
 
 This means `/schemas/dataset-registration/v1` is tied to the legacy v1 data submission form and legacy tests. The active submission route is v2, but v2 still posts to the existing backend registration endpoints using a registration-shaped payload.
 
+Follow-up for `duos-ui`: centralize client-side handling of optional `data` metadata so DUOS developers and external clients can understand supported keys and behavior. This could be a small utility/model layer with typed constants and helpers for reading/writing known study and dataset `data` values. This should not change backend validation semantics; backend should continue to preserve and round-trip optional `data`.
+
 ### Decisions Needed Before Implementation
 
 Before implementing the migration, the team should choose from these options.
