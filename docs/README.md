@@ -18,13 +18,14 @@ If you are new to the repository, read in this order:
 | `ONBOARDING.md` | New contributors | Local setup, run commands, and first tasks |
 | `ARCHITECTURE.md` | Contributors and reviewers | High-level system design and request flow |
 | `API_GUIDELINES.md` | API authors and reviewers | API conventions, validation, and compatibility rules |
-| `ELASTICSEARCH_SERVICE_DUOS_UI_USAGE.md` | Consent and duos-ui contributors | Cross-repo inventory of ElasticSearch usage and dependencies |
+| `plans/README.md` | Contributors and reviewers | Index of active implementation plans and design notes |
 | `ai/README.md` | Developers using AI tooling | Prompt usage model and best practices |
 | `ai/prompts/*.md` | Developers using AI tooling | Task-specific prompt templates and examples |
 
 ## Documentation Standards
 
 - Keep examples grounded in existing classes and packages.
+- Keep implementation plans and migration designs under `docs/plans/`.
 - Prefer short sections and checklists over long prose.
 - When behavior changes, update docs in the same PR as code changes.
 - If guidance is obsolete, remove or mark it clearly as historical.
