@@ -133,6 +133,7 @@ Search callers (v1/v2):
 - `../duos-ui/src/hooks/useLibraryData.ts` (v2 search path)
 - `../duos-ui/src/pages/DatasetSearch.jsx`
 - `../duos-ui/src/components/data_search/DatasetSearchTable.jsx`
+- `../duos-ui/src/components/DataSearch/dataset_search_table.tsx`
 - `../duos-ui/src/pages/DACDatasets.jsx`
 - `../duos-ui/src/pages/researcher_console/DatasetSubmissions.jsx`
 - `../duos-ui/src/pages/DatasetStatistics.tsx`
@@ -518,6 +519,7 @@ Size key: **S** ≈ 1 day, **M** ≈ 2–3 days, **L** ≈ 4–5 days, **XL** �
 | 5.1 Identify and remove client-side `publicVisibility` and `dacApproval` filtering from `datasetAsset.ts`; replace with trust in server-filtered results | S | Frontend |
 | 5.2 Audit all duos-ui search callers for hard-coded DSL filters that assume server returns unfiltered sets; update callers and types in `elastic.ts` | M | Frontend (depends on 4.1 or 3B being live) |
 | 5.3 Update Cypress component tests and unit tests that intercept `/api/dataset/search/index/v2` to reflect server-authoritative result sets; remove mocked private-dataset scenarios that were testing client filtering | M | Frontend (depends on 5.2) |
+| 5.4 Confirm whether `DatasetSearchTable.jsx` (`src/components/data_search/DatasetSearchTable.jsx`) is still actively used or has been superseded by `dataset_search_table.tsx` (`src/components/DataSearch/dataset_search_table.tsx`). If unused, remove it and any import references. If still in use, update it to remove client-side visibility/approval filters and align it with the server-authoritative search methodology (same as 5.1/5.2 scope). | M | Frontend |
 
 ### Phase 6 — Observability, Rollout, and Documentation
 
