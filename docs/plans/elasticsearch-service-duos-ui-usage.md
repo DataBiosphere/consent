@@ -540,7 +540,7 @@ development and testing. The compatibility fallback (Epic E) operates entirely a
 layer and requires no Elasticsearch configuration changes.
 
 **Acceptance criteria**:
-- Delta documented between local config (security disabled, 9.3.3, single-node) and cloud
+- Delta documented between local config (security disabled, single-node) and cloud
   production config (version, security settings, credential model).
 - Decision made on local developer security strategy — options:
   - Option A: enable `xpack.security.enabled=true` by default in `docker-compose.yaml` for all
