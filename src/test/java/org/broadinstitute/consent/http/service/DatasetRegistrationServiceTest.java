@@ -37,6 +37,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -71,6 +72,7 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetUpda
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -83,6 +85,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
   private DatasetRegistrationService datasetRegistrationService;
+  private ExecutorService executorService;
 
   @Mock private DatasetDAO datasetDAO;
 
@@ -102,6 +105,7 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
   @BeforeEach
   void setUp() {
+    executorService = Executors.newVirtualThreadPerTaskExecutor();
     datasetRegistrationService =
         new DatasetRegistrationService(
             datasetDAO,
@@ -112,7 +116,12 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
             elasticSearchService,
             studyDAO,
             emailService,
-            Executors.newVirtualThreadPerTaskExecutor());
+            executorService);
+  }
+
+  @AfterEach
+  void tearDown() {
+    executorService.shutdown();
   }
 
   // captor: allows you to inspect the arguments sent to a function.

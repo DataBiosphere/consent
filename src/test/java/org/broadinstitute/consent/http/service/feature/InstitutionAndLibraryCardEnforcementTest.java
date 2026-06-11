@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -27,6 +28,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,15 +48,20 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
   @Mock private Jdbi jdbi;
 
   private InstitutionAndLibraryCardEnforcement service;
+  private ExecutorService executorService;
 
   @BeforeEach
   void setUp() {
     when(jdbi.onDemand(InstitutionDAO.class)).thenReturn(institutionDAO);
     when(jdbi.onDemand(LibraryCardDAO.class)).thenReturn(libraryCardDAO);
     when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
-    service =
-        new InstitutionAndLibraryCardEnforcement(
-            jdbi, userServiceDAO, Executors.newVirtualThreadPerTaskExecutor());
+    executorService = Executors.newVirtualThreadPerTaskExecutor();
+    service = new InstitutionAndLibraryCardEnforcement(jdbi, userServiceDAO, executorService);
+  }
+
+  @AfterEach
+  void tearDown() {
+    executorService.shutdown();
   }
 
   @Test

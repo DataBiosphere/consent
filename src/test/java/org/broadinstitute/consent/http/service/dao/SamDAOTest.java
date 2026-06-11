@@ -23,6 +23,7 @@ import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.WebApplicationException;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.WireMockTestHelper;
@@ -39,6 +40,7 @@ import org.broadinstitute.consent.http.models.sam.UserStatusDiagnostics;
 import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,6 +55,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class SamDAOTest extends WireMockTestHelper {
 
   private static SamDAO samDAO;
+  private static ExecutorService executorService;
 
   @Mock private DuosUser duosUser;
 
@@ -63,11 +66,13 @@ class SamDAOTest extends WireMockTestHelper {
     ServicesConfiguration servicesConfig = new ServicesConfiguration();
     servicesConfig.setTimeoutSeconds(1);
     servicesConfig.setSamUrl(mockServerBaseUrl() + "/");
-    samDAO =
-        new SamDAO(
-            new HttpClientUtil(servicesConfig),
-            servicesConfig,
-            Executors.newVirtualThreadPerTaskExecutor());
+    executorService = Executors.newVirtualThreadPerTaskExecutor();
+    samDAO = new SamDAO(new HttpClientUtil(servicesConfig), servicesConfig, executorService);
+  }
+
+  @AfterAll
+  static void tearDown() {
+    executorService.shutdown();
   }
 
   @BeforeEach

@@ -7,12 +7,14 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 
 import jakarta.ws.rs.core.Response;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.EmailService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,12 +29,17 @@ class EmailNotifierResourceTest extends AbstractTestHelper {
   @Mock private AuthUser authUser;
 
   private EmailNotifierResource resource;
+  private ExecutorService executorService;
 
   @BeforeEach
   void setUp() {
-    resource =
-        new EmailNotifierResource(
-            dataAccessRequestService, emailService, Executors.newVirtualThreadPerTaskExecutor());
+    executorService = Executors.newVirtualThreadPerTaskExecutor();
+    resource = new EmailNotifierResource(dataAccessRequestService, emailService, executorService);
+  }
+
+  @AfterEach
+  void tearDown() {
+    executorService.shutdown();
   }
 
   @Test
