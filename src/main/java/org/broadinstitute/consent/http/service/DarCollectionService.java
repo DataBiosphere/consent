@@ -950,13 +950,12 @@ public class DarCollectionService implements ConsentLogger {
       Integer autoOpenUserId = getAutoOpenRuleEnabledByUserId(dacId);
 
       Dac dac = findDac(dacsForDar, dacId);
-      Dataset dataset = findDataset(datasetsForDar, dacId);
-      // If the DAC requires SO approval the submission is not a progress report
+      List<Dataset> datasetsForDac = findAllDatasetsForDac(datasetsForDar, dacId);
       if (autoOpen) {
-        addAutoOpen(result, dacId, autoOpenUserId, dac, dataset);
+        addAutoOpen(result, dacId, autoOpenUserId, dac, datasetsForDac);
         addUsers(result.autoOpenUsers, dacId, adminAndChairUsers, true);
       } else {
-        addManualOpen(result, dac, dataset);
+        addManualOpen(result, dac, datasetsForDac);
         addUsers(result.manualOpenUsers, dacId, adminAndChairUsers, false);
       }
     }
@@ -969,9 +968,9 @@ public class DarCollectionService implements ConsentLogger {
     return dacs.stream().filter(d -> d.getDacId().equals(dacId)).findFirst().orElse(null);
   }
 
-  /** Finds a dataset by its DAC ID from a list of datasets. */
-  private Dataset findDataset(List<Dataset> datasets, Integer dacId) {
-    return datasets.stream().filter(ds -> ds.getDacId().equals(dacId)).findFirst().orElse(null);
+  /** Finds all datasets belonging to the given DAC ID from a list of datasets. */
+  private List<Dataset> findAllDatasetsForDac(List<Dataset> datasets, Integer dacId) {
+    return datasets.stream().filter(ds -> ds.getDacId().equals(dacId)).toList();
   }
 
   /** Checks if an auto-open rule exists for a given DAC ID. */
@@ -1001,26 +1000,22 @@ public class DarCollectionService implements ConsentLogger {
       Integer dacId,
       Integer autoOpenUserId,
       Dac dac,
-      Dataset dataset) {
+      List<Dataset> datasets) {
 
     if (dac != null) {
       result.autoOpenDacs.add(dac);
     }
-    if (dataset != null) {
-      result.autoOpenDatasets.add(dataset);
-    }
+    result.autoOpenDatasets.addAll(datasets);
     result.autoOpenUserIds.put(dacId, autoOpenUserId);
   }
 
   /** Adds DACs and datasets to the manual open classification. */
-  private void addManualOpen(DacUserClassification result, Dac dac, Dataset dataset) {
+  private void addManualOpen(DacUserClassification result, Dac dac, List<Dataset> datasets) {
 
     if (dac != null) {
       result.manualOpenDacs.add(dac);
     }
-    if (dataset != null) {
-      result.manualOpenDatasets.add(dataset);
-    }
+    result.manualOpenDatasets.addAll(datasets);
   }
 
   /** Adds users to the target set based on their DAC roles and the autoOpen flag. */
@@ -1032,7 +1027,7 @@ public class DarCollectionService implements ConsentLogger {
       boolean isAdmin = user.hasUserRole(ADMIN);
 
       if (autoOpen) {
-        if (isChair || isMember || isAdmin) {
+        if (isChair || isMember) {
           targetSet.add(user);
         }
       } else { // manual
@@ -1066,7 +1061,11 @@ public class DarCollectionService implements ConsentLogger {
                 dacAutomationRuleService.createOpenElectionForDAR(latestDar, dataset, RP);
 
             createVotesForAllUsers(
-                classification.autoOpenUsers, dataAccessElectionId, rpElectionId, latestDar);
+                classification.autoOpenUsers,
+                dataAccessElectionId,
+                rpElectionId,
+                latestDar,
+                dataset.getDacId());
 
             return null;
           });
@@ -1102,12 +1101,16 @@ public class DarCollectionService implements ConsentLogger {
   /** Creates standard votes for all users for the given elections. */
   @VisibleForTesting
   protected void createVotesForAllUsers(
-      Set<User> users, int dataAccessElectionId, int rpElectionId, DataAccessRequest dar) {
+      Set<User> users,
+      int dataAccessElectionId,
+      int rpElectionId,
+      DataAccessRequest dar,
+      Integer dacId) {
 
     for (User user : users) {
       createStandardVotes(dataAccessElectionId, rpElectionId, user);
 
-      if (user.hasUserRole(UserRoles.CHAIRPERSON)) {
+      if (user.verifyDACRole(CHAIRPERSON, dacId)) {
         createChairpersonVotes(dataAccessElectionId, rpElectionId, user, dar);
       }
     }

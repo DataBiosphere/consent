@@ -2965,7 +2965,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setData(new DataAccessRequestData());
 
-    service.createVotesForAllUsers(Set.of(), 1, 2, dar);
+    service.createVotesForAllUsers(Set.of(), 1, 2, dar, 1);
 
     verifyNoInteractions(dacAutomationRuleService);
   }
@@ -2976,7 +2976,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setData(new DataAccessRequestData());
 
-    service.createVotesForAllUsers(Set.of(member), 10, 20, dar);
+    service.createVotesForAllUsers(Set.of(member), 10, 20, dar, 1);
 
     verify(dacAutomationRuleService).createVoteForElection(10, member.getUserId(), VoteType.DAC);
     verify(dacAutomationRuleService).createVoteForElection(20, member.getUserId(), VoteType.DAC);
@@ -2985,11 +2985,12 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   @Test
   void testCreateVotesForAllUsers_ChairpersonNoManualReview() {
-    User chair = createUserWithRole(UserRoles.CHAIRPERSON);
+    int dacId = 1;
+    User chair = createUserWithRoleAndDacId(UserRoles.CHAIRPERSON, dacId);
     DataAccessRequest dar = new DataAccessRequest();
     dar.setData(new DataAccessRequestData()); // all flags null → requiresManualReview() == false
 
-    service.createVotesForAllUsers(Set.of(chair), 10, 20, dar);
+    service.createVotesForAllUsers(Set.of(chair), 10, 20, dar, dacId);
 
     verify(dacAutomationRuleService).createVoteForElection(10, chair.getUserId(), VoteType.DAC);
     verify(dacAutomationRuleService).createVoteForElection(20, chair.getUserId(), VoteType.DAC);
@@ -3005,13 +3006,14 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   @Test
   void testCreateVotesForAllUsers_ChairpersonRequiresManualReview() {
-    User chair = createUserWithRole(UserRoles.CHAIRPERSON);
+    int dacId = 1;
+    User chair = createUserWithRoleAndDacId(UserRoles.CHAIRPERSON, dacId);
     DataAccessRequest dar = new DataAccessRequest();
     DataAccessRequestData data = new DataAccessRequestData();
     data.setPoa(true); // triggers requiresManualReview() == true
     dar.setData(data);
 
-    service.createVotesForAllUsers(Set.of(chair), 10, 20, dar);
+    service.createVotesForAllUsers(Set.of(chair), 10, 20, dar, dacId);
 
     verify(dacAutomationRuleService).createVoteForElection(10, chair.getUserId(), VoteType.DAC);
     verify(dacAutomationRuleService).createVoteForElection(20, chair.getUserId(), VoteType.DAC);
@@ -3026,12 +3028,13 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   @Test
   void testCreateVotesForAllUsers_MixedChairAndMember() {
-    User chair = createUserWithRole(UserRoles.CHAIRPERSON);
+    int dacId = 1;
+    User chair = createUserWithRoleAndDacId(UserRoles.CHAIRPERSON, dacId);
     User member = createUserWithRole(UserRoles.MEMBER);
     DataAccessRequest dar = new DataAccessRequest();
     dar.setData(new DataAccessRequestData());
 
-    service.createVotesForAllUsers(Set.of(chair, member), 10, 20, dar);
+    service.createVotesForAllUsers(Set.of(chair, member), 10, 20, dar, dacId);
 
     // chair gets DAC + CHAIRPERSON + FINAL + AGREEMENT votes
     verify(dacAutomationRuleService).createVoteForElection(10, chair.getUserId(), VoteType.DAC);
@@ -3047,6 +3050,475 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     verify(dacAutomationRuleService).createVoteForElection(10, member.getUserId(), VoteType.DAC);
     verify(dacAutomationRuleService).createVoteForElection(20, member.getUserId(), VoteType.DAC);
     verifyNoMoreInteractions(dacAutomationRuleService);
+  }
+
+  @Test
+  void testCreateVotesForAllUsers_AdminUserGetsOnlyDacVotesNotChairpersonVotes() {
+    // Admins are passed through but should never receive chairperson votes since they have no
+    // dacId-scoped CHAIRPERSON role
+    User admin = createUserWithRole(UserRoles.ADMIN);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setData(new DataAccessRequestData());
+
+    service.createVotesForAllUsers(Set.of(admin), 10, 20, dar, 1);
+
+    verify(dacAutomationRuleService).createVoteForElection(10, admin.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService).createVoteForElection(20, admin.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService, never())
+        .createVoteForElection(anyInt(), eq(admin.getUserId()), eq(VoteType.CHAIRPERSON));
+    verify(dacAutomationRuleService, never())
+        .createVoteForElection(anyInt(), eq(admin.getUserId()), eq(VoteType.FINAL));
+    verify(dacAutomationRuleService, never())
+        .createVoteForElection(anyInt(), eq(admin.getUserId()), eq(VoteType.AGREEMENT));
+    verifyNoMoreInteractions(dacAutomationRuleService);
+  }
+
+  @Test
+  void testCreateVotesForAllUsers_ChairOfDifferentDacGetsNochairpersonVotes() {
+    // A chair from DAC 2 should not receive chairperson votes when creating votes for DAC 1's
+    // election
+    int electionDacId = 1;
+    User chairOfOtherDac = createUserWithRoleAndDacId(UserRoles.CHAIRPERSON, 2);
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setData(new DataAccessRequestData());
+
+    service.createVotesForAllUsers(Set.of(chairOfOtherDac), 10, 20, dar, electionDacId);
+
+    verify(dacAutomationRuleService)
+        .createVoteForElection(10, chairOfOtherDac.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(20, chairOfOtherDac.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService, never())
+        .createVoteForElection(anyInt(), eq(chairOfOtherDac.getUserId()), eq(VoteType.CHAIRPERSON));
+    verifyNoMoreInteractions(dacAutomationRuleService);
+  }
+
+  @Test
+  void testCreateElectionsAndVotesForAutoOpenDacs_MultipleDatasetsSameDac() {
+    // Both datasets from the same DAC must each get their own elections
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setData(new DataAccessRequestData());
+
+    Dataset dataset1 = new Dataset();
+    dataset1.setDatasetId(1);
+    dataset1.setDacId(10);
+
+    Dataset dataset2 = new Dataset();
+    dataset2.setDatasetId(2);
+    dataset2.setDacId(10);
+
+    DacUserClassification classification = new DacUserClassification();
+    classification.autoOpenDatasets.add(dataset1);
+    classification.autoOpenDatasets.add(dataset2);
+
+    when(electionDAO.findLastElectionByReferenceIdDatasetIdAndType(any(), anyInt(), any()))
+        .thenReturn(null);
+    when(electionDAO.findElectionsByReferenceIdAndDatasetId(any(), anyInt())).thenReturn(List.of());
+    when(dacAutomationRuleService.createOpenElectionForDAR(
+            any(), any(), eq(ElectionType.DATA_ACCESS)))
+        .thenReturn(100);
+    when(dacAutomationRuleService.createOpenElectionForDAR(any(), any(), eq(ElectionType.RP)))
+        .thenReturn(200);
+    stubInTransactionToExecute();
+
+    service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
+
+    verify(dacAutomationRuleService)
+        .createOpenElectionForDAR(dar, dataset1, ElectionType.DATA_ACCESS);
+    verify(dacAutomationRuleService).createOpenElectionForDAR(dar, dataset1, ElectionType.RP);
+    verify(dacAutomationRuleService)
+        .createOpenElectionForDAR(dar, dataset2, ElectionType.DATA_ACCESS);
+    verify(dacAutomationRuleService).createOpenElectionForDAR(dar, dataset2, ElectionType.RP);
+  }
+
+  // ─── Multi-DAC / autoOpen on+off comprehensive vote coverage ──────────────
+
+  /**
+   * autoOpen ON, two datasets in different DACs, chairs and members are distinct per DAC.
+   *
+   * <p>Verifies that for each dataset's elections:
+   *
+   * <ul>
+   *   <li>The chair of that specific DAC gets DAC + CHAIRPERSON + FINAL + AGREEMENT votes
+   *   <li>The member of that specific DAC gets only DAC votes
+   *   <li>Users from the OTHER DAC get only standard DAC votes (no CHAIRPERSON/FINAL/AGREEMENT)
+   * </ul>
+   */
+  @Test
+  void testElectionVotes_AutoOpenOn_TwoDacs_DistinctChairsAndMembers() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setData(new DataAccessRequestData()); // requiresManualReview() == false
+
+    Dataset dataset1 = new Dataset();
+    dataset1.setDatasetId(1);
+    dataset1.setDacId(10);
+
+    Dataset dataset2 = new Dataset();
+    dataset2.setDatasetId(2);
+    dataset2.setDacId(20);
+
+    User chairDac10 = createUserWithRoleAndDacId(UserRoles.CHAIRPERSON, 10);
+    User memberDac10 = createUserWithRoleAndDacId(UserRoles.MEMBER, 10);
+    User chairDac20 = createUserWithRoleAndDacId(UserRoles.CHAIRPERSON, 20);
+    User memberDac20 = createUserWithRoleAndDacId(UserRoles.MEMBER, 20);
+
+    DacUserClassification classification = new DacUserClassification();
+    classification.autoOpenDatasets.add(dataset1);
+    classification.autoOpenDatasets.add(dataset2);
+    classification.autoOpenUsers.addAll(Set.of(chairDac10, memberDac10, chairDac20, memberDac20));
+
+    when(electionDAO.findLastElectionByReferenceIdDatasetIdAndType(any(), anyInt(), any()))
+        .thenReturn(null);
+    when(electionDAO.findElectionsByReferenceIdAndDatasetId(any(), anyInt())).thenReturn(List.of());
+    // dataset1: DATA_ACCESS=100, RP=200; dataset2: DATA_ACCESS=300, RP=400
+    when(dacAutomationRuleService.createOpenElectionForDAR(
+            any(), eq(dataset1), eq(ElectionType.DATA_ACCESS)))
+        .thenReturn(100);
+    when(dacAutomationRuleService.createOpenElectionForDAR(
+            any(), eq(dataset1), eq(ElectionType.RP)))
+        .thenReturn(200);
+    when(dacAutomationRuleService.createOpenElectionForDAR(
+            any(), eq(dataset2), eq(ElectionType.DATA_ACCESS)))
+        .thenReturn(300);
+    when(dacAutomationRuleService.createOpenElectionForDAR(
+            any(), eq(dataset2), eq(ElectionType.RP)))
+        .thenReturn(400);
+    stubInTransactionToExecute();
+
+    service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
+
+    // ── dataset1 (DAC 10) elections ──────────────────────────────────────────
+    // chairDac10 gets full chair votes for DATA_ACCESS election 100 and RP election 200
+    verify(dacAutomationRuleService)
+        .createVoteForElection(100, chairDac10.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(200, chairDac10.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(100, chairDac10.getUserId(), VoteType.CHAIRPERSON);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(200, chairDac10.getUserId(), VoteType.CHAIRPERSON);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(100, chairDac10.getUserId(), VoteType.FINAL);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(100, chairDac10.getUserId(), VoteType.AGREEMENT);
+    // memberDac10 gets only DAC votes
+    verify(dacAutomationRuleService)
+        .createVoteForElection(100, memberDac10.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(200, memberDac10.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService, never())
+        .createVoteForElection(eq(100), eq(memberDac10.getUserId()), eq(VoteType.CHAIRPERSON));
+    // chairDac20 gets only standard DAC votes for DAC 10's elections (not a chair of DAC 10)
+    verify(dacAutomationRuleService)
+        .createVoteForElection(100, chairDac20.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(200, chairDac20.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService, never())
+        .createVoteForElection(eq(100), eq(chairDac20.getUserId()), eq(VoteType.CHAIRPERSON));
+    verify(dacAutomationRuleService, never())
+        .createVoteForElection(eq(100), eq(chairDac20.getUserId()), eq(VoteType.FINAL));
+    // memberDac20 gets only standard DAC votes for DAC 10's elections
+    verify(dacAutomationRuleService)
+        .createVoteForElection(100, memberDac20.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(200, memberDac20.getUserId(), VoteType.DAC);
+
+    // ── dataset2 (DAC 20) elections ──────────────────────────────────────────
+    // chairDac20 gets full chair votes
+    verify(dacAutomationRuleService)
+        .createVoteForElection(300, chairDac20.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(400, chairDac20.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(300, chairDac20.getUserId(), VoteType.CHAIRPERSON);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(400, chairDac20.getUserId(), VoteType.CHAIRPERSON);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(300, chairDac20.getUserId(), VoteType.FINAL);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(300, chairDac20.getUserId(), VoteType.AGREEMENT);
+    // memberDac20 gets only DAC votes
+    verify(dacAutomationRuleService)
+        .createVoteForElection(300, memberDac20.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(400, memberDac20.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService, never())
+        .createVoteForElection(eq(300), eq(memberDac20.getUserId()), eq(VoteType.CHAIRPERSON));
+    // chairDac10 gets only standard DAC votes for DAC 20's elections (not a chair of DAC 20)
+    verify(dacAutomationRuleService)
+        .createVoteForElection(300, chairDac10.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(400, chairDac10.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService, never())
+        .createVoteForElection(eq(300), eq(chairDac10.getUserId()), eq(VoteType.CHAIRPERSON));
+    verify(dacAutomationRuleService, never())
+        .createVoteForElection(eq(300), eq(chairDac10.getUserId()), eq(VoteType.FINAL));
+    // memberDac10 gets only standard DAC votes for DAC 20's elections
+    verify(dacAutomationRuleService)
+        .createVoteForElection(300, memberDac10.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(400, memberDac10.getUserId(), VoteType.DAC);
+  }
+
+  /**
+   * autoOpen ON, two datasets in different DACs, one user chairs both DACs.
+   *
+   * <p>Verifies that the shared chair receives full CHAIRPERSON + FINAL + AGREEMENT votes for both
+   * DAC 10's and DAC 20's elections (because they have CHAIRPERSON role for each).
+   */
+  @Test
+  void testElectionVotes_AutoOpenOn_TwoDacs_SameUserChairsBothDacs() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setData(new DataAccessRequestData());
+
+    Dataset dataset1 = new Dataset();
+    dataset1.setDatasetId(1);
+    dataset1.setDacId(10);
+
+    Dataset dataset2 = new Dataset();
+    dataset2.setDatasetId(2);
+    dataset2.setDacId(20);
+
+    // sharedChair has CHAIRPERSON role for both DAC 10 and DAC 20
+    User sharedChair = new User();
+    sharedChair.setUserId(randomInt(1, 100000));
+    sharedChair.setEmailPreference(Boolean.TRUE);
+    UserRole roleForDac10 =
+        new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+    roleForDac10.setDacId(10);
+    UserRole roleForDac20 =
+        new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+    roleForDac20.setDacId(20);
+    sharedChair.setRoles(List.of(roleForDac10, roleForDac20));
+
+    DacUserClassification classification = new DacUserClassification();
+    classification.autoOpenDatasets.add(dataset1);
+    classification.autoOpenDatasets.add(dataset2);
+    classification.autoOpenUsers.add(sharedChair);
+
+    when(electionDAO.findLastElectionByReferenceIdDatasetIdAndType(any(), anyInt(), any()))
+        .thenReturn(null);
+    when(electionDAO.findElectionsByReferenceIdAndDatasetId(any(), anyInt())).thenReturn(List.of());
+    when(dacAutomationRuleService.createOpenElectionForDAR(
+            any(), eq(dataset1), eq(ElectionType.DATA_ACCESS)))
+        .thenReturn(100);
+    when(dacAutomationRuleService.createOpenElectionForDAR(
+            any(), eq(dataset1), eq(ElectionType.RP)))
+        .thenReturn(200);
+    when(dacAutomationRuleService.createOpenElectionForDAR(
+            any(), eq(dataset2), eq(ElectionType.DATA_ACCESS)))
+        .thenReturn(300);
+    when(dacAutomationRuleService.createOpenElectionForDAR(
+            any(), eq(dataset2), eq(ElectionType.RP)))
+        .thenReturn(400);
+    stubInTransactionToExecute();
+
+    service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
+
+    // sharedChair gets full chair votes for dataset1 (DAC 10)
+    verify(dacAutomationRuleService)
+        .createVoteForElection(100, sharedChair.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(200, sharedChair.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(100, sharedChair.getUserId(), VoteType.CHAIRPERSON);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(200, sharedChair.getUserId(), VoteType.CHAIRPERSON);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(100, sharedChair.getUserId(), VoteType.FINAL);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(100, sharedChair.getUserId(), VoteType.AGREEMENT);
+    // sharedChair also gets full chair votes for dataset2 (DAC 20)
+    verify(dacAutomationRuleService)
+        .createVoteForElection(300, sharedChair.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(400, sharedChair.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(300, sharedChair.getUserId(), VoteType.CHAIRPERSON);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(400, sharedChair.getUserId(), VoteType.CHAIRPERSON);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(300, sharedChair.getUserId(), VoteType.FINAL);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(300, sharedChair.getUserId(), VoteType.AGREEMENT);
+  }
+
+  /**
+   * autoOpen ON, two datasets in different DACs, same user is chair of DAC 10 and member of DAC 20.
+   *
+   * <p>Verifies that the shared user gets:
+   *
+   * <ul>
+   *   <li>Full CHAIRPERSON + FINAL + AGREEMENT votes for DAC 10's elections
+   *   <li>Only standard DAC votes for DAC 20's elections (member role, not chair)
+   * </ul>
+   */
+  @Test
+  void testElectionVotes_AutoOpenOn_TwoDacs_SameUserChairOfOneAndMemberOfOther() {
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setData(new DataAccessRequestData());
+
+    Dataset dataset1 = new Dataset();
+    dataset1.setDatasetId(1);
+    dataset1.setDacId(10);
+
+    Dataset dataset2 = new Dataset();
+    dataset2.setDatasetId(2);
+    dataset2.setDacId(20);
+
+    // sharedUser: CHAIRPERSON of DAC 10, MEMBER of DAC 20
+    User sharedUser = new User();
+    sharedUser.setUserId(randomInt(1, 100000));
+    sharedUser.setEmailPreference(Boolean.TRUE);
+    UserRole chairRoleDac10 =
+        new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+    chairRoleDac10.setDacId(10);
+    UserRole memberRoleDac20 =
+        new UserRole(UserRoles.MEMBER.getRoleId(), UserRoles.MEMBER.getRoleName());
+    memberRoleDac20.setDacId(20);
+    sharedUser.setRoles(List.of(chairRoleDac10, memberRoleDac20));
+
+    // separateChair is the chair of DAC 20
+    User separateChairDac20 = createUserWithRoleAndDacId(UserRoles.CHAIRPERSON, 20);
+
+    DacUserClassification classification = new DacUserClassification();
+    classification.autoOpenDatasets.add(dataset1);
+    classification.autoOpenDatasets.add(dataset2);
+    classification.autoOpenUsers.add(sharedUser);
+    classification.autoOpenUsers.add(separateChairDac20);
+
+    when(electionDAO.findLastElectionByReferenceIdDatasetIdAndType(any(), anyInt(), any()))
+        .thenReturn(null);
+    when(electionDAO.findElectionsByReferenceIdAndDatasetId(any(), anyInt())).thenReturn(List.of());
+    when(dacAutomationRuleService.createOpenElectionForDAR(
+            any(), eq(dataset1), eq(ElectionType.DATA_ACCESS)))
+        .thenReturn(100);
+    when(dacAutomationRuleService.createOpenElectionForDAR(
+            any(), eq(dataset1), eq(ElectionType.RP)))
+        .thenReturn(200);
+    when(dacAutomationRuleService.createOpenElectionForDAR(
+            any(), eq(dataset2), eq(ElectionType.DATA_ACCESS)))
+        .thenReturn(300);
+    when(dacAutomationRuleService.createOpenElectionForDAR(
+            any(), eq(dataset2), eq(ElectionType.RP)))
+        .thenReturn(400);
+    stubInTransactionToExecute();
+
+    service.createElectionsAndVotesForAutoOpenDacs(classification, dar);
+
+    // ── dataset1 (DAC 10) ─────────────────────────────────────────────────────
+    // sharedUser is chair of DAC 10 → full chair votes
+    verify(dacAutomationRuleService)
+        .createVoteForElection(100, sharedUser.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(200, sharedUser.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(100, sharedUser.getUserId(), VoteType.CHAIRPERSON);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(200, sharedUser.getUserId(), VoteType.CHAIRPERSON);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(100, sharedUser.getUserId(), VoteType.FINAL);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(100, sharedUser.getUserId(), VoteType.AGREEMENT);
+    // separateChairDac20 is not chair of DAC 10 → only DAC votes for dataset1
+    verify(dacAutomationRuleService)
+        .createVoteForElection(100, separateChairDac20.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(200, separateChairDac20.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService, never())
+        .createVoteForElection(
+            eq(100), eq(separateChairDac20.getUserId()), eq(VoteType.CHAIRPERSON));
+
+    // ── dataset2 (DAC 20) ─────────────────────────────────────────────────────
+    // sharedUser is member of DAC 20, not chair → only DAC votes
+    verify(dacAutomationRuleService)
+        .createVoteForElection(300, sharedUser.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(400, sharedUser.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService, never())
+        .createVoteForElection(eq(300), eq(sharedUser.getUserId()), eq(VoteType.CHAIRPERSON));
+    verify(dacAutomationRuleService, never())
+        .createVoteForElection(eq(300), eq(sharedUser.getUserId()), eq(VoteType.FINAL));
+    // separateChairDac20 is chair of DAC 20 → full chair votes
+    verify(dacAutomationRuleService)
+        .createVoteForElection(300, separateChairDac20.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(400, separateChairDac20.getUserId(), VoteType.DAC);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(300, separateChairDac20.getUserId(), VoteType.CHAIRPERSON);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(400, separateChairDac20.getUserId(), VoteType.CHAIRPERSON);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(300, separateChairDac20.getUserId(), VoteType.FINAL);
+    verify(dacAutomationRuleService)
+        .createVoteForElection(300, separateChairDac20.getUserId(), VoteType.AGREEMENT);
+  }
+
+  /**
+   * autoOpen OFF, two datasets in different DACs with distinct chairs.
+   *
+   * <p>Verifies that when no DAC has an auto-open rule, no elections and no votes are created via
+   * the automation path.
+   */
+  @Test
+  void testElectionVotes_AutoOpenOff_TwoDacs_NoElectionsOrVotesCreated() throws Exception {
+    DarCollection collection = new DarCollection();
+    collection.setDarCollectionId(1);
+
+    Dataset dataset1 = new Dataset();
+    dataset1.setDatasetId(1);
+    dataset1.setDacId(10);
+
+    Dataset dataset2 = new Dataset();
+    dataset2.setDatasetId(2);
+    dataset2.setDacId(20);
+
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(UUID.randomUUID().toString());
+    dar.setDatasetIds(List.of(dataset1.getDatasetId(), dataset2.getDatasetId()));
+    collection.addDar(dar);
+
+    Dac dac10 = new Dac();
+    dac10.setDacId(10);
+    dac10.setName("DAC-10");
+
+    Dac dac20 = new Dac();
+    dac20.setDacId(20);
+    dac20.setName("DAC-20");
+
+    User chairDac10 = new User();
+    chairDac10.setUserId(randomInt(1, 100000));
+    UserRole chair10Role =
+        new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+    chair10Role.setDacId(10);
+    chairDac10.setRoles(List.of(chair10Role));
+
+    User chairDac20 = new User();
+    chairDac20.setUserId(randomInt(1, 100000));
+    UserRole chair20Role =
+        new UserRole(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
+    chair20Role.setDacId(20);
+    chairDac20.setRoles(List.of(chair20Role));
+
+    when(darCollectionDAO.findDARCollectionByCollectionId(1)).thenReturn(collection);
+    when(datasetDAO.findDatasetsByIdList(anyList())).thenReturn(List.of(dataset1, dataset2));
+    when(dacDAO.findDacsForDatasetIds(anyList())).thenReturn(Set.of(dac10, dac20));
+    // No auto-open rule for either DAC
+    when(dacAutomationRuleService.findAllByDacId(anyInt())).thenReturn(List.of());
+    when(userDAO.findUsersByRoleId(UserRoles.ADMIN.getRoleId())).thenReturn(List.of());
+    when(userDAO.findUsersForDatasetsByRole(anyList(), anyList()))
+        .thenReturn(Set.of(chairDac10, chairDac20));
+    when(userDAO.findUserById(any())).thenReturn(new User());
+
+    service.createElectionsForNewDarCollection(1);
+
+    // No elections or votes created when auto-open is off
+    verify(dacAutomationRuleService, never()).createOpenElectionForDAR(any(), any(), any());
+    verify(dacAutomationRuleService, never()).createVoteForElection(anyInt(), anyInt(), any());
   }
 
   @Test
@@ -3184,6 +3656,18 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     user.setDisplayName(String.format("%s - %s", userRoles.getRoleName(), user.getUserId()));
     user.setEmail(String.format("%s@test.com", userRoles.getRoleName()));
     UserRole role = new UserRole(userRoles.getRoleId(), userRoles.getRoleName());
+    user.setRoles(List.of(role));
+    user.setEmailPreference(Boolean.TRUE);
+    return user;
+  }
+
+  private User createUserWithRoleAndDacId(UserRoles userRoles, Integer dacId) {
+    User user = new User();
+    user.setUserId(randomInt(1, 100000));
+    user.setDisplayName(String.format("%s - %s", userRoles.getRoleName(), user.getUserId()));
+    user.setEmail(String.format("%s@test.com", userRoles.getRoleName()));
+    UserRole role = new UserRole(userRoles.getRoleId(), userRoles.getRoleName());
+    role.setDacId(dacId);
     user.setRoles(List.of(role));
     user.setEmailPreference(Boolean.TRUE);
     return user;
