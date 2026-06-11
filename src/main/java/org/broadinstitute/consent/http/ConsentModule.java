@@ -13,6 +13,7 @@ import io.dropwizard.lifecycle.Managed;
 import jakarta.ws.rs.client.Client;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.broadinstitute.consent.http.authentication.AuthorizationHelper;
 import org.broadinstitute.consent.http.authentication.DuosUserAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
@@ -192,6 +193,14 @@ public class ConsentModule extends AbstractModule {
               @Override
               public void stop() {
                 executorService.shutdown();
+                try {
+                  if (!executorService.awaitTermination(30, TimeUnit.SECONDS)) {
+                    executorService.shutdownNow();
+                  }
+                } catch (InterruptedException e) {
+                  executorService.shutdownNow();
+                  Thread.currentThread().interrupt();
+                }
               }
             });
   }
