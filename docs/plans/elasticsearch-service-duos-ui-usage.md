@@ -529,8 +529,7 @@ nested object (Ticket B-1) and the auth context resolver (Ticket C-1).
 `config/docker-compose.yaml` to support development and testing of the security work across all
 epics.
 
-**Context**: The local developer environment (`config/docker-compose.yaml`) runs
-`docker.elastic.co/elasticsearch/elasticsearch:9.3.3` with security explicitly disabled:
+**Context**: The local developer environment (`config/docker-compose.yaml`) runs an Elasticsearch container with security explicitly disabled:
 - `xpack.security.enabled=false`
 - `xpack.security.transport.ssl.enabled=false`
 - `discovery.type=single-node`
