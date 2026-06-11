@@ -19,21 +19,21 @@ import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
 import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.broadinstitute.consent.http.util.ConsentLogger;
-import org.broadinstitute.consent.http.util.ThreadUtils;
 import org.jspecify.annotations.NonNull;
 
 public class OntologyService implements ConsentLogger {
 
-  private final ExecutorService executorService =
-      new ThreadUtils().getExecutorService(OntologyService.class);
+  private final ExecutorService executorService;
   private final OntologyDAO ontologyDAO;
   private final OntologyIndexService indexService;
   private final TranslationUtil translationUtil;
 
   @Inject
-  public OntologyService(OntologyDAO ontologyDAO, OntologyIndexService indexService) {
+  public OntologyService(
+      OntologyDAO ontologyDAO, OntologyIndexService indexService, ExecutorService executorService) {
     this.ontologyDAO = ontologyDAO;
     this.indexService = indexService;
+    this.executorService = executorService;
     this.translationUtil = new TranslationUtil(ontologyDAO);
   }
 

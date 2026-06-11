@@ -37,6 +37,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
@@ -110,7 +111,8 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
             gcsService,
             elasticSearchService,
             studyDAO,
-            emailService);
+            emailService,
+            Executors.newVirtualThreadPerTaskExecutor());
   }
 
   // captor: allows you to inspect the arguments sent to a function.

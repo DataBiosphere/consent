@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.AbstractTestHelper;
@@ -51,7 +52,9 @@ public class InstitutionAndLibraryCardEnforcementTest extends AbstractTestHelper
     when(jdbi.onDemand(InstitutionDAO.class)).thenReturn(institutionDAO);
     when(jdbi.onDemand(LibraryCardDAO.class)).thenReturn(libraryCardDAO);
     when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
-    service = new InstitutionAndLibraryCardEnforcement(jdbi, userServiceDAO);
+    service =
+        new InstitutionAndLibraryCardEnforcement(
+            jdbi, userServiceDAO, Executors.newVirtualThreadPerTaskExecutor());
   }
 
   @Test

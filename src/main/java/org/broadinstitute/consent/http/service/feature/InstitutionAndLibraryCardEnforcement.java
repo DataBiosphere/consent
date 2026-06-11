@@ -17,7 +17,6 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
-import org.broadinstitute.consent.http.util.ThreadUtils;
 import org.jdbi.v3.core.Jdbi;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,19 +26,20 @@ import org.jetbrains.annotations.NotNull;
  */
 public class InstitutionAndLibraryCardEnforcement implements ConsentLogger {
 
-  private final ExecutorService executorService =
-      new ThreadUtils().getExecutorService(InstitutionAndLibraryCardEnforcement.class);
+  private final ExecutorService executorService;
   private final InstitutionDAO institutionDAO;
   private final LibraryCardDAO libraryCardDAO;
   private final UserDAO userDAO;
   private final UserServiceDAO userServiceDAO;
 
   @Inject
-  public InstitutionAndLibraryCardEnforcement(Jdbi jdbi, UserServiceDAO userServiceDAO) {
+  public InstitutionAndLibraryCardEnforcement(
+      Jdbi jdbi, UserServiceDAO userServiceDAO, ExecutorService executorService) {
     this.institutionDAO = jdbi.onDemand(InstitutionDAO.class);
     this.libraryCardDAO = jdbi.onDemand(LibraryCardDAO.class);
     this.userDAO = jdbi.onDemand(UserDAO.class);
     this.userServiceDAO = userServiceDAO;
+    this.executorService = executorService;
   }
 
   /**

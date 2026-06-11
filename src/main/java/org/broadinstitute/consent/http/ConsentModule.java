@@ -4,11 +4,15 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.core.Configuration;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.jdbi3.JdbiFactory;
+import io.dropwizard.lifecycle.Managed;
 import jakarta.ws.rs.client.Client;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.broadinstitute.consent.http.authentication.AuthorizationHelper;
 import org.broadinstitute.consent.http.authentication.DuosUserAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
@@ -127,6 +131,15 @@ public class ConsentModule extends AbstractModule {
   private final FeatureFlagDAO featureFlagDAO;
   private final OntologyDAO ontologyDAO;
   private final UserRedactionAuditDAO userRedactionAuditDAO;
+  private final ExecutorService executorService;
+
+  // Lazily-memoized singletons. @Singleton on a @Provides method only covers resolution
+  // through Guice; providers in this module also call each other directly, which bypasses
+  // Guice scoping, so these fields guarantee a single instance on both paths.
+  private OntologyService ontologyService;
+  private DatasetRegistrationService datasetRegistrationService;
+  private InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
+  private SamDAO samDAO;
 
   ConsentModule(ConsentConfiguration consentConfiguration, Environment environment) {
     this.config = consentConfiguration;
@@ -167,12 +180,31 @@ public class ConsentModule extends AbstractModule {
     this.featureFlagDAO = this.jdbi.onDemand(FeatureFlagDAO.class);
     this.ontologyDAO = this.jdbi.onDemand(OntologyDAO.class);
     this.userRedactionAuditDAO = this.jdbi.onDemand(UserRedactionAuditDAO.class);
+
+    // All async work in this application is blocking I/O (Sam calls, Elasticsearch indexing,
+    // batch DB writes), so a single shared virtual-thread executor replaces the per-class
+    // fixed pools previously created by ThreadUtils.
+    this.executorService = Executors.newVirtualThreadPerTaskExecutor();
+    environment
+        .lifecycle()
+        .manage(
+            new Managed() {
+              @Override
+              public void stop() {
+                executorService.shutdown();
+              }
+            });
   }
 
   @Override
   protected void configure() {
     bind(Configuration.class).toInstance(config);
     bind(Environment.class).toInstance(environment);
+  }
+
+  @Provides
+  ExecutorService providesExecutorService() {
+    return executorService;
   }
 
   @Provides
@@ -241,8 +273,14 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
-  OntologyService providesOntologyService() {
-    return new OntologyService(providesOntologyDAO(), providesOntologyIndexService());
+  @Singleton
+  synchronized OntologyService providesOntologyService() {
+    if (ontologyService == null) {
+      ontologyService =
+          new OntologyService(
+              providesOntologyDAO(), providesOntologyIndexService(), providesExecutorService());
+    }
+    return ontologyService;
   }
 
   @Provides
@@ -587,16 +625,22 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
-  DatasetRegistrationService providesDatasetRegistrationService() {
-    return new DatasetRegistrationService(
-        providesDatasetDAO(),
-        providesDacDAO(),
-        providesDatasetServiceDAO(),
-        providesFileStorageObjectDAO(),
-        providesGCSService(),
-        providesElasticSearchService(),
-        providesStudyDAO(),
-        providesEmailService());
+  @Singleton
+  synchronized DatasetRegistrationService providesDatasetRegistrationService() {
+    if (datasetRegistrationService == null) {
+      datasetRegistrationService =
+          new DatasetRegistrationService(
+              providesDatasetDAO(),
+              providesDacDAO(),
+              providesDatasetServiceDAO(),
+              providesFileStorageObjectDAO(),
+              providesGCSService(),
+              providesElasticSearchService(),
+              providesStudyDAO(),
+              providesEmailService(),
+              providesExecutorService());
+    }
+    return datasetRegistrationService;
   }
 
   @Provides
@@ -625,8 +669,14 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
-  InstitutionAndLibraryCardEnforcement providesInstitutionAndLibraryCardEnforcement() {
-    return new InstitutionAndLibraryCardEnforcement(providesJdbi(), providesUserServiceDAO());
+  @Singleton
+  synchronized InstitutionAndLibraryCardEnforcement providesInstitutionAndLibraryCardEnforcement() {
+    if (institutionAndLibraryCardEnforcement == null) {
+      institutionAndLibraryCardEnforcement =
+          new InstitutionAndLibraryCardEnforcement(
+              providesJdbi(), providesUserServiceDAO(), providesExecutorService());
+    }
+    return institutionAndLibraryCardEnforcement;
   }
 
   @Provides
@@ -649,8 +699,16 @@ public class ConsentModule extends AbstractModule {
   }
 
   @Provides
-  SamDAO providesSamDAO() {
-    return new SamDAO(providesHttpClientUtil(), config.getServicesConfiguration());
+  @Singleton
+  synchronized SamDAO providesSamDAO() {
+    if (samDAO == null) {
+      samDAO =
+          new SamDAO(
+              providesHttpClientUtil(),
+              config.getServicesConfiguration(),
+              providesExecutorService());
+    }
+    return samDAO;
   }
 
   @Provides

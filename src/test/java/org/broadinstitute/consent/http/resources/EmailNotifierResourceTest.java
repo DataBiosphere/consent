@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 
 import jakarta.ws.rs.core.Response;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.RandomUtils;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -28,7 +29,9 @@ class EmailNotifierResourceTest {
 
   @BeforeEach
   void setUp() {
-    resource = new EmailNotifierResource(dataAccessRequestService, emailService);
+    resource =
+        new EmailNotifierResource(
+            dataAccessRequestService, emailService, Executors.newVirtualThreadPerTaskExecutor());
   }
 
   @Test

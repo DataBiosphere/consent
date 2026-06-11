@@ -50,7 +50,6 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.NihICsSupp
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate;
 import org.broadinstitute.consent.http.util.ConsentLogger;
-import org.broadinstitute.consent.http.util.ThreadUtils;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 
@@ -68,8 +67,7 @@ public class DatasetRegistrationService implements ConsentLogger {
   private final ElasticSearchService elasticSearchService;
   private final StudyDAO studyDAO;
   private final EmailService emailService;
-  private final ExecutorService executorService =
-      new ThreadUtils().getExecutorService(DatasetRegistrationService.class);
+  private final ExecutorService executorService;
 
   public DatasetRegistrationService(
       DatasetDAO datasetDAO,
@@ -79,7 +77,8 @@ public class DatasetRegistrationService implements ConsentLogger {
       GCSService gcsService,
       ElasticSearchService elasticSearchService,
       StudyDAO studyDAO,
-      EmailService emailService) {
+      EmailService emailService,
+      ExecutorService executorService) {
     this.datasetDAO = datasetDAO;
     this.dacDAO = dacDAO;
     this.datasetServiceDAO = datasetServiceDAO;
@@ -88,6 +87,7 @@ public class DatasetRegistrationService implements ConsentLogger {
     this.elasticSearchService = elasticSearchService;
     this.studyDAO = studyDAO;
     this.emailService = emailService;
+    this.executorService = executorService;
   }
 
   public Dataset patchDataset(Integer datasetId, User user, DatasetPatch patch) {

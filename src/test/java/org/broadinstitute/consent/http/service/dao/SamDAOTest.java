@@ -23,6 +23,7 @@ import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.WebApplicationException;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 import org.broadinstitute.consent.http.WireMockTestHelper;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
@@ -62,7 +63,11 @@ class SamDAOTest extends WireMockTestHelper {
     ServicesConfiguration servicesConfig = new ServicesConfiguration();
     servicesConfig.setTimeoutSeconds(1);
     servicesConfig.setSamUrl(mockServerBaseUrl() + "/");
-    samDAO = new SamDAO(new HttpClientUtil(servicesConfig), servicesConfig);
+    samDAO =
+        new SamDAO(
+            new HttpClientUtil(servicesConfig),
+            servicesConfig,
+            Executors.newVirtualThreadPerTaskExecutor());
   }
 
   @BeforeEach

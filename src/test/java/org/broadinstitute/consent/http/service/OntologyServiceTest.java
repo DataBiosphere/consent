@@ -23,6 +23,7 @@ import com.google.gson.JsonArray;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.Executors;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.enumeration.DataUseTranslationType;
 import org.broadinstitute.consent.http.enumeration.OntologyType;
@@ -63,7 +64,8 @@ class OntologyServiceTest extends AbstractTestHelper {
     testLogger.addAppender(testAppender);
     testAppender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
     testAppender.start();
-    service = new OntologyService(ontologyDAO, indexService);
+    service =
+        new OntologyService(ontologyDAO, indexService, Executors.newVirtualThreadPerTaskExecutor());
   }
 
   @Test
