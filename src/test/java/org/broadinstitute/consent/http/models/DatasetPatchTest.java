@@ -48,6 +48,26 @@ public class DatasetPatchTest {
   }
 
   @Test
+  void testIsPatchableNullProps() {
+    Dataset dataset = new Dataset();
+    dataset.setName(RandomStringUtils.insecure().nextAlphabetic(10));
+    DatasetPatch patch = new DatasetPatch(null, null);
+    assertFalse(patch.isPatchable(dataset));
+  }
+
+  @Test
+  void testValidatePropertiesNullProps() {
+    DatasetPatch patch = new DatasetPatch(null, null);
+    assertFalse(patch.validateProperties());
+  }
+
+  @Test
+  void testValidatePropertiesEmptyProps() {
+    DatasetPatch patch = new DatasetPatch(null, List.of());
+    assertTrue(patch.validateProperties());
+  }
+
+  @Test
   void testInvalidPropertyKeys() {
     DatasetProperty invalidProp = new DatasetProperty();
     invalidProp.setPropertyName(RandomStringUtils.randomAlphanumeric(25));
