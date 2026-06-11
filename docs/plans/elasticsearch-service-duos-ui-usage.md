@@ -562,7 +562,7 @@ layer and requires no Elasticsearch configuration changes.
 - Docker Compose profile example:
   ```yaml
   elastic:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.3.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:<version>
     profiles: [default, security-dev]
     environment:
       - xpack.security.enabled=${ES_SECURITY_ENABLED:-false}
