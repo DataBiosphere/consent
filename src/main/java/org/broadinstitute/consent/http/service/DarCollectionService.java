@@ -874,34 +874,40 @@ public class DarCollectionService implements ConsentLogger {
     if (context == null) {
       return;
     }
-    if (!context.latestDar().getRequiresSOApproval()
-        || context.latestDar().getApprovingSigningOfficialUserId() != null) {
+
+    DataAccessRequest latestDar = context.latestDar();
+    DacUserClassification classification = context.classification();
+    DarCollection darCollection = context.darCollection();
+    String researcherName = context.researcherName();
+    User researcher = context.researcher();
+
+    if (!latestDar.getRequiresSOApproval()
+        || latestDar.getApprovingSigningOfficialUserId() != null) {
       // Notify users for auto-open DACs
       notifyUsersForDacs(
-          context.classification().autoOpenUsers,
-          context.classification().autoOpenDacs,
-          context.classification().autoOpenDatasets,
-          context.latestDar(),
-          context.darCollection(),
-          context.researcherName(),
+          classification.autoOpenUsers,
+          classification.autoOpenDacs,
+          classification.autoOpenDatasets,
+          latestDar,
+          darCollection,
+          researcherName,
           true);
 
       // Notify users for manual DACs
       notifyUsersForDacs(
-          context.classification().manualOpenUsers,
-          context.classification().manualOpenDacs,
-          context.classification().manualOpenDatasets,
-          context.latestDar(),
-          context.darCollection(),
-          context.researcherName(),
+          classification.manualOpenUsers,
+          classification.manualOpenDacs,
+          classification.manualOpenDatasets,
+          latestDar,
+          darCollection,
+          researcherName,
           false);
     } else {
-      notifySpecificSigningOfficialOfApprovalNeeded(context.latestDar(), context.researcher());
+      notifySpecificSigningOfficialOfApprovalNeeded(latestDar, researcher);
     }
 
     // Notify signing officials of DAR submission
-    notifySigningOfficialsOfDARSubmission(
-        context.latestDar(), context.researcher(), context.darCollection().getDarCode());
+    notifySigningOfficialsOfDARSubmission(latestDar, researcher, darCollection.getDarCode());
   }
 
   /** Helper method to retrieve the DAR collection context for processing. */
