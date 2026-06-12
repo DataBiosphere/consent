@@ -953,22 +953,17 @@ public class DarCollectionService implements ConsentLogger {
                           && r.enabledByUserId() != null)
               .findFirst();
 
-      Dac dac =
-          dacsForDar.stream().filter(d -> d.getDacId().equals(dacId)).findFirst().orElse(null);
+      Optional<Dac> dac = dacsForDar.stream().filter(d -> d.getDacId().equals(dacId)).findFirst();
       List<Dataset> datasetsForDac =
           datasetsForDar.stream().filter(ds -> ds.getDacId().equals(dacId)).toList();
 
       if (autoOpenRule.isPresent()) {
-        if (dac != null) {
-          result.autoOpenDacs.add(dac);
-        }
+        dac.ifPresent(result.autoOpenDacs::add);
         result.autoOpenDatasets.addAll(datasetsForDac);
         result.autoOpenUserIds.put(dacId, autoOpenRule.get().enabledByUserId());
         addUsers(result.autoOpenUsers, dacId, dacUsers, true);
       } else {
-        if (dac != null) {
-          result.manualOpenDacs.add(dac);
-        }
+        dac.ifPresent(result.manualOpenDacs::add);
         result.manualOpenDatasets.addAll(datasetsForDac);
         addUsers(result.manualOpenUsers, dacId, dacUsers, false);
       }

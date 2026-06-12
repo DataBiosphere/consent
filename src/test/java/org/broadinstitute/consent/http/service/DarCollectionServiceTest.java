@@ -4290,7 +4290,6 @@ class DarCollectionServiceTest extends AbstractTestHelper {
 
   @Test
   void testClassifyDacsAndUsers_DatasetWithNoMatchingDac_DacNotAddedToResult() {
-    // dataset references dacId=10, but no Dac object with id=10 is in dacsForDar
     Dataset dataset = new Dataset();
     dataset.setDatasetId(1);
     dataset.setDacId(10);
@@ -4305,9 +4304,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DacUserClassification result =
         service.classifyDacsAndUsers(List.of(), List.of(dataset), List.of(chair));
 
-    // DAC object is absent (null guard in classifyDacsAndUsers prevents adding null)
     assertTrue(result.autoOpenDacs.isEmpty());
-    // Dataset, users, and userIds are still classified despite the missing DAC object
     assertTrue(result.autoOpenDatasets.contains(dataset));
     assertTrue(result.autoOpenUsers.contains(chair));
     assertEquals(chair.getUserId(), result.autoOpenUserIds.get(10));
