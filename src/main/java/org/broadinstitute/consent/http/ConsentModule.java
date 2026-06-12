@@ -92,6 +92,7 @@ import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
 import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
 import org.broadinstitute.consent.http.service.sam.SamService;
+import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Jdbi;
@@ -100,7 +101,7 @@ import org.jdbi.v3.gson2.Gson2Plugin;
 import org.jdbi.v3.guava.GuavaPlugin;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 
-public class ConsentModule extends AbstractModule {
+public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   public static final String DB_ENV = "postgresql";
   @Inject private final ConsentConfiguration config;
@@ -193,11 +194,19 @@ public class ConsentModule extends AbstractModule {
               @Override
               public void stop() {
                 executorService.shutdown();
+                // logWarns: We don't need to send operational noise to Sentry
                 try {
                   if (!executorService.awaitTermination(30, TimeUnit.SECONDS)) {
+                    logWarn(
+                        "Shared executor service did not terminate within 30 seconds; "
+                            + "forcing shutdown of remaining tasks");
                     executorService.shutdownNow();
                   }
                 } catch (InterruptedException e) {
+                  logWarn(
+                      "Interrupted while awaiting shared executor service termination; "
+                          + "forcing shutdown of remaining tasks",
+                      e);
                   executorService.shutdownNow();
                   Thread.currentThread().interrupt();
                 }
