@@ -529,8 +529,7 @@ nested object (Ticket B-1) and the auth context resolver (Ticket C-1).
 `config/docker-compose.yaml` to support development and testing of the security work across all
 epics.
 
-**Context**: The local developer environment (`config/docker-compose.yaml`) runs
-`docker.elastic.co/elasticsearch/elasticsearch:9.3.3` with security explicitly disabled:
+**Context**: The local developer environment (`config/docker-compose.yaml`) runs an Elasticsearch container with security explicitly disabled:
 - `xpack.security.enabled=false`
 - `xpack.security.transport.ssl.enabled=false`
 - `discovery.type=single-node`
@@ -541,7 +540,7 @@ development and testing. The compatibility fallback (Epic E) operates entirely a
 layer and requires no Elasticsearch configuration changes.
 
 **Acceptance criteria**:
-- Delta documented between local config (security disabled, 9.3.3, single-node) and cloud
+- Delta documented between local config (security disabled, single-node) and cloud
   production config (version, security settings, credential model).
 - Decision made on local developer security strategy — options:
   - Option A: enable `xpack.security.enabled=true` by default in `docker-compose.yaml` for all
@@ -562,7 +561,7 @@ layer and requires no Elasticsearch configuration changes.
 - Docker Compose profile example:
   ```yaml
   elastic:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.3.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:<version>
     profiles: [default, security-dev]
     environment:
       - xpack.security.enabled=${ES_SECURITY_ENABLED:-false}
