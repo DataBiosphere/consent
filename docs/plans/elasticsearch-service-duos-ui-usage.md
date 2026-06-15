@@ -465,6 +465,63 @@ epics are built on. All other epics are blocked on A-1.
 
 ---
 
+#### Ticket A-0 — Evaluate local developer Elasticsearch configuration changes
+
+**Summary**: Determine what changes are required to the local developer Elasticsearch setup in
+`config/docker-compose.yaml` to support development and testing of the security work across all
+epics.
+
+**Context**: The local developer environment (`config/docker-compose.yaml`) runs an Elasticsearch container with security explicitly disabled:
+- `xpack.security.enabled=false`
+- `xpack.security.transport.ssl.enabled=false`
+- `discovery.type=single-node`
+
+ES 9.x ships with X-Pack Security built in and fully supports DLS, FLS, and API keys when
+security is enabled. The native DLS/FLS path (Epic D) requires security to be enabled for local
+development and testing. The compatibility fallback (Epic E) operates entirely at the application
+layer and requires no Elasticsearch configuration changes.
+
+**Acceptance criteria**:
+- Delta documented between local config (security disabled, single-node) and cloud
+  production config (version, security settings, credential model).
+- Decision made on local developer security strategy — options:
+  - Option A: enable `xpack.security.enabled=true` by default in `docker-compose.yaml` for all
+    developers, with a bootstrapped `ELASTIC_PASSWORD` env var and a matching `consent.yaml`
+    snippet for local `authUser`/`authPassword`.
+  - Option B: add a separate Docker Compose profile (e.g. `--profile security-dev`) that runs a
+    security-enabled variant; the default profile stays as-is so developers not working on Epic D
+    are not affected.
+- For developers working only on Epic E (fallback): confirm no `docker-compose.yaml` changes are
+  needed — document this explicitly.
+- Developer onboarding notes updated to describe how to run the local ES with security enabled.
+
+**Implementation notes**:
+- When security is enabled in single-node mode, Elasticsearch auto-generates credentials on first
+  boot unless `ELASTIC_PASSWORD` is set. Add `ELASTIC_PASSWORD: <local-dev-password>` to the
+  `elastic` service environment block and add the matching `authUser: elastic` and
+  `authPassword: <local-dev-password>` to `consent.yaml` (or a dev-only `consent-local.yaml`).
+- Docker Compose profile example:
+  ```yaml
+  elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:<version>
+    profiles: [default, security-dev]
+    environment:
+      - xpack.security.enabled=${ES_SECURITY_ENABLED:-false}
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-}
+  ```
+  Developers run `ES_SECURITY_ENABLED=true ELASTIC_PASSWORD=devpassword docker compose up` to
+  enable security without changing the committed file.
+- Confirm whether production/cloud uses the same ES major version (9.x) or a different one. DLS
+  query syntax and API-key semantics are stable across 8.x and 9.x but differ from 7.x.
+- The `xpack.security.transport.ssl.enabled=false` line is correct for single-node development
+  even when `xpack.security.enabled=true` — transport SSL is only required for multi-node
+  clusters.
+
+**Dependencies**: None (can run in parallel with A-1; informs D-2 and D-5 test setup).
+**Size**: S
+
+---
+
 #### Ticket A-1 — Confirm Elasticsearch cluster security capabilities
 
 **Summary**: Determine whether the target cluster supports DLS, FLS, API keys, and `run_as`.
@@ -519,63 +576,6 @@ nested object (Ticket B-1) and the auth context resolver (Ticket C-1).
   storage gap candidate.
 
 **Dependencies**: A-1.
-**Size**: S
-
----
-
-#### Ticket A-0 — Evaluate local developer Elasticsearch configuration changes
-
-**Summary**: Determine what changes are required to the local developer Elasticsearch setup in
-`config/docker-compose.yaml` to support development and testing of the security work across all
-epics.
-
-**Context**: The local developer environment (`config/docker-compose.yaml`) runs an Elasticsearch container with security explicitly disabled:
-- `xpack.security.enabled=false`
-- `xpack.security.transport.ssl.enabled=false`
-- `discovery.type=single-node`
-
-ES 9.x ships with X-Pack Security built in and fully supports DLS, FLS, and API keys when
-security is enabled. The native DLS/FLS path (Epic D) requires security to be enabled for local
-development and testing. The compatibility fallback (Epic E) operates entirely at the application
-layer and requires no Elasticsearch configuration changes.
-
-**Acceptance criteria**:
-- Delta documented between local config (security disabled, single-node) and cloud
-  production config (version, security settings, credential model).
-- Decision made on local developer security strategy — options:
-  - Option A: enable `xpack.security.enabled=true` by default in `docker-compose.yaml` for all
-    developers, with a bootstrapped `ELASTIC_PASSWORD` env var and a matching `consent.yaml`
-    snippet for local `authUser`/`authPassword`.
-  - Option B: add a separate Docker Compose profile (e.g. `--profile security-dev`) that runs a
-    security-enabled variant; the default profile stays as-is so developers not working on Epic D
-    are not affected.
-- For developers working only on Epic E (fallback): confirm no `docker-compose.yaml` changes are
-  needed — document this explicitly.
-- Developer onboarding notes updated to describe how to run the local ES with security enabled.
-
-**Implementation notes**:
-- When security is enabled in single-node mode, Elasticsearch auto-generates credentials on first
-  boot unless `ELASTIC_PASSWORD` is set. Add `ELASTIC_PASSWORD: <local-dev-password>` to the
-  `elastic` service environment block and add the matching `authUser: elastic` and
-  `authPassword: <local-dev-password>` to `consent.yaml` (or a dev-only `consent-local.yaml`).
-- Docker Compose profile example:
-  ```yaml
-  elastic:
-    image: docker.elastic.co/elasticsearch/elasticsearch:<version>
-    profiles: [default, security-dev]
-    environment:
-      - xpack.security.enabled=${ES_SECURITY_ENABLED:-false}
-      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-}
-  ```
-  Developers run `ES_SECURITY_ENABLED=true ELASTIC_PASSWORD=devpassword docker compose up` to
-  enable security without changing the committed file.
-- Confirm whether production/cloud uses the same ES major version (9.x) or a different one. DLS
-  query syntax and API-key semantics are stable across 8.x and 9.x but differ from 7.x.
-- The `xpack.security.transport.ssl.enabled=false` line is correct for single-node development
-  even when `xpack.security.enabled=true` — transport SSL is only required for multi-node
-  clusters.
-
-**Dependencies**: None (can run in parallel with A-1; informs D-2 and D-5 test setup).
 **Size**: S
 
 ---
@@ -1053,7 +1053,7 @@ document filtering and field omission.
 - Test: ADMIN response contains all fields.
 
 **Implementation notes**:
-- Use `testcontainers` with `docker.elastic.co/elasticsearch/elasticsearch:8.x` and
+- Use `testcontainers` with `docker.elastic.co/elasticsearch/elasticsearch:9.x` and
   `xpack.security.enabled=true`.
 - Seed test data via `ElasticSearchService.indexDataset` (not direct ES API) to exercise the same
   code path as production and ensure `accessPolicy` is populated.
