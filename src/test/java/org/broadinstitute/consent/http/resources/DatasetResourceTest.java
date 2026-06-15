@@ -352,6 +352,26 @@ class DatasetResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testPatchByDatasetUpdate_nullProperties() {
+    Gson gson = GsonUtil.buildGson();
+
+    Dataset dataset = new Dataset();
+    dataset.setDatasetId(randomInt(1, 100));
+    dataset.setName(randomAlphabetic(10));
+    dataset.setCreateUserId(user.getUserId());
+    when(datasetService.findDatasetById(any(), any())).thenReturn(dataset);
+
+    // Gson omits null fields, so this serializes to {"name":"..."} with no properties key,
+    // which deserializes back to a DatasetPatch with null properties.
+    DatasetPatch patch = new DatasetPatch(randomAlphabetic(20), null);
+
+    try (Response response =
+        resource.patchByDatasetUpdate(duosUser, dataset.getDatasetId(), gson.toJson(patch))) {
+      assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
+    }
+  }
+
+  @Test
   void testValidateDatasetNameSuccess() {
     Dataset testDataset = new Dataset();
     when(datasetService.getDatasetByName("test")).thenReturn(testDataset);

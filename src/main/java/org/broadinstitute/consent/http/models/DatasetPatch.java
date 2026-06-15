@@ -25,6 +25,9 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
     if (name() != null && !name().equals(dataset.getName()) && !name().isBlank()) {
       return true;
     }
+    if (properties() == null) {
+      return false;
+    }
     // Find any cases where the new property value is different from the existing one
     return properties().stream()
         .anyMatch(
@@ -58,6 +61,12 @@ public record DatasetPatch(String name, List<DatasetProperty> properties) {
   }
 
   public boolean validateProperties() {
+    if (properties == null) {
+      return false;
+    }
+    if (properties.isEmpty()) {
+      return true;
+    }
     // The following properties are patch-able:
     Map<String, Function<Object, Boolean>> validators =
         Map.of(
