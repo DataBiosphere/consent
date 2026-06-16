@@ -15,6 +15,7 @@ import jakarta.ws.rs.NotFoundException;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -261,6 +262,14 @@ public class UserService implements ConsentLogger {
     return users.stream().map(SimplifiedUser::new).toList();
   }
 
+  public List<SigningOfficialUser> findSOsWithDataByInstitutionId(Integer institutionId) {
+    if (Objects.isNull(institutionId)) {
+      return Collections.emptyList();
+    }
+    List<User> users = userDAO.getSOsWithDataByInstitution(institutionId);
+    return users.stream().map(SigningOfficialUser::new).toList();
+  }
+
   public List<User> findUsersByInstitutionId(Integer institutionId) {
     if (Objects.isNull(institutionId)) {
       throw new IllegalArgumentException();
@@ -438,6 +447,26 @@ public class UserService implements ConsentLogger {
   public void redactUser(User adminUser, String email) {
     User target = findUserByEmail(email);
     userRedactionAuditDAO.redactUser(target.getUserId(), adminUser.getUserId());
+  }
+
+  public static class SigningOfficialUser extends SimplifiedUser {
+
+    private Map<String, Object> userData;
+
+    public SigningOfficialUser(User user) {
+      super(user);
+      this.userData = user.getUserData();
+    }
+
+    public SigningOfficialUser() {}
+
+    public Map<String, Object> getUserData() {
+      return userData;
+    }
+
+    public void setUserData(Map<String, Object> userData) {
+      this.userData = userData;
+    }
   }
 
   public static class SimplifiedUser {

@@ -460,6 +460,34 @@ class UserServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testFindSOsWithDataByInstitutionId() {
+    User u = generateUser();
+    u.setUserData(Map.of("key", "value"));
+    Integer institutionId = u.getInstitutionId();
+    when(userDAO.getSOsWithDataByInstitution(any())).thenReturn(List.of(u));
+    List<UserService.SigningOfficialUser> users =
+        service.findSOsWithDataByInstitutionId(institutionId);
+    assertEquals(1, users.size());
+    assertEquals(u.getDisplayName(), users.getFirst().getDisplayName());
+    assertEquals(u.getEmail(), users.getFirst().getEmail());
+    assertEquals(u.getInstitutionId(), users.getFirst().getInstitutionId());
+    assertEquals(u.getUserData(), users.getFirst().getUserData());
+  }
+
+  @Test
+  void testFindSOsWithDataByInstitutionId_NullId() {
+    List<UserService.SigningOfficialUser> users = service.findSOsWithDataByInstitutionId(null);
+    assertEquals(0, users.size());
+  }
+
+  @Test
+  void testFindSOsWithDataByInstitutionId_EmptyResult() {
+    when(userDAO.getSOsWithDataByInstitution(any())).thenReturn(Collections.emptyList());
+    List<UserService.SigningOfficialUser> users = service.findSOsWithDataByInstitutionId(1);
+    assertEquals(0, users.size());
+  }
+
+  @Test
   void testFindUsersByInstitutionIdNullId() {
     assertThrows(IllegalArgumentException.class, () -> service.findUsersByInstitutionId(null));
   }
