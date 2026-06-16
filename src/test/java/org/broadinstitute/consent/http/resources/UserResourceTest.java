@@ -513,7 +513,6 @@ class UserResourceTest extends AbstractTestHelper {
   @SuppressWarnings("unchecked")
   void testGetSigningOfficialsByInstitution_AsAdmin_DifferentInstitution() {
     // Admin belongs to institution 1 but queries institution 99 — must succeed.
-    Integer adminInstitutionId = 1;
     Integer queriedInstitutionId = 99;
     User admin = createUserWithInstitution(); // institutionId = 1
     admin.addRole(UserRoles.Admin());

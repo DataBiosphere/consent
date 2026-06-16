@@ -467,6 +467,26 @@ public class UserService implements ConsentLogger {
     public void setUserData(Map<String, Object> userData) {
       this.userData = userData;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      if (!super.equals(o)) {
+        return false;
+      }
+      SigningOfficialUser that = (SigningOfficialUser) o;
+      return Objects.equals(userData, that.userData);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(super.hashCode(), userData);
+    }
   }
 
   public static class SimplifiedUser {

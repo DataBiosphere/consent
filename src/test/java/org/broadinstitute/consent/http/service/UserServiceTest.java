@@ -980,4 +980,79 @@ class UserServiceTest extends AbstractTestHelper {
 
     assertThrows(NotFoundException.class, () -> service.redactUser(admin, unknownEmail));
   }
+
+  @Test
+  void testSigningOfficialUserEquals_sameInstance() {
+    User u = generateUser();
+    u.setUserData(Map.of("key", "value"));
+    UserService.SigningOfficialUser sou = new UserService.SigningOfficialUser(u);
+    assertEquals(sou, sou);
+  }
+
+  @Test
+  void testSigningOfficialUserEquals_equalUsersAndData() {
+    User u = generateUser();
+    u.setUserData(Map.of("key", "value"));
+    UserService.SigningOfficialUser sou1 = new UserService.SigningOfficialUser(u);
+    UserService.SigningOfficialUser sou2 = new UserService.SigningOfficialUser(u);
+    assertEquals(sou1, sou2);
+  }
+
+  @Test
+  void testSigningOfficialUserEquals_differentUserId() {
+    User u1 = generateUser();
+    u1.setUserData(Map.of("key", "value"));
+    User u2 = generateUser();
+    u2.setUserData(Map.of("key", "value"));
+    // Ensure distinct userIds
+    u2.setUserId(u1.getUserId() + 1000);
+    UserService.SigningOfficialUser sou1 = new UserService.SigningOfficialUser(u1);
+    UserService.SigningOfficialUser sou2 = new UserService.SigningOfficialUser(u2);
+    assertNotEquals(sou1, sou2);
+  }
+
+  @Test
+  void testSigningOfficialUserEquals_differentUserData() {
+    User u1 = generateUser();
+    u1.setUserData(Map.of("key", "value1"));
+    User u2 = generateUser();
+    u2.setUserId(u1.getUserId());
+    u2.setUserData(Map.of("key", "value2"));
+    UserService.SigningOfficialUser sou1 = new UserService.SigningOfficialUser(u1);
+    UserService.SigningOfficialUser sou2 = new UserService.SigningOfficialUser(u2);
+    assertNotEquals(sou1, sou2);
+  }
+
+  @Test
+  void testSigningOfficialUserEquals_null() {
+    User u = generateUser();
+    UserService.SigningOfficialUser sou = new UserService.SigningOfficialUser(u);
+    assertNotEquals(null, sou);
+  }
+
+  @Test
+  void testSigningOfficialUserEquals_differentType() {
+    User u = generateUser();
+    UserService.SigningOfficialUser sou = new UserService.SigningOfficialUser(u);
+    assertNotEquals(sou, u);
+  }
+
+  @Test
+  void testSigningOfficialUserHashCode_equalObjectsHaveEqualHash() {
+    User u = generateUser();
+    u.setUserData(Map.of("key", "value"));
+    UserService.SigningOfficialUser sou1 = new UserService.SigningOfficialUser(u);
+    UserService.SigningOfficialUser sou2 = new UserService.SigningOfficialUser(u);
+    assertEquals(sou1.hashCode(), sou2.hashCode());
+  }
+
+  @Test
+  void testSigningOfficialUserHashCode_differentUserIdProducesDifferentHash() {
+    User u1 = generateUser();
+    User u2 = generateUser();
+    u2.setUserId(u1.getUserId() + 1000);
+    UserService.SigningOfficialUser sou1 = new UserService.SigningOfficialUser(u1);
+    UserService.SigningOfficialUser sou2 = new UserService.SigningOfficialUser(u2);
+    assertNotEquals(sou1.hashCode(), sou2.hashCode());
+  }
 }
