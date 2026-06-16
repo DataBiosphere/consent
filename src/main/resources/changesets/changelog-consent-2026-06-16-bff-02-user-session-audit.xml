@@ -93,7 +93,9 @@
         UPDATE user_session_audit
            SET user_email = COALESCE(user_email, NEW.sess->>'userId'),
                idp        = COALESCE(idp, NEW.sess->>'idp')
-         WHERE sid_hash = encode(sha256(NEW.sid::bytea), 'hex');
+         WHERE sid_hash = encode(sha256(NEW.sid::bytea), 'hex')
+           AND ended_at IS NULL
+           AND (user_email IS NULL OR idp IS NULL);
         RETURN NEW;
       END;
       $$ LANGUAGE plpgsql
