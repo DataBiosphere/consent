@@ -452,10 +452,12 @@ public class UserService implements ConsentLogger {
   public static class SigningOfficialUser extends SimplifiedUser {
 
     private Map<String, Object> userData;
+    private String institutionName;
 
     public SigningOfficialUser(User user) {
       super(user);
       this.userData = user.getUserData();
+      this.institutionName = user.getInstitution() != null ? user.getInstitution().getName() : null;
     }
 
     public SigningOfficialUser() {}
@@ -466,6 +468,14 @@ public class UserService implements ConsentLogger {
 
     public void setUserData(Map<String, Object> userData) {
       this.userData = userData;
+    }
+
+    public String getInstitutionName() {
+      return institutionName;
+    }
+
+    public void setInstitutionName(String institutionName) {
+      this.institutionName = institutionName;
     }
 
     @Override
@@ -480,12 +490,13 @@ public class UserService implements ConsentLogger {
         return false;
       }
       SigningOfficialUser that = (SigningOfficialUser) o;
-      return Objects.equals(userData, that.userData);
+      return Objects.equals(userData, that.userData)
+          && Objects.equals(institutionName, that.institutionName);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(super.hashCode(), userData);
+      return Objects.hash(super.hashCode(), userData, institutionName);
     }
   }
 

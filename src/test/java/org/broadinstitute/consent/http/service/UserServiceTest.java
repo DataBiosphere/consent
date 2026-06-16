@@ -463,8 +463,11 @@ class UserServiceTest extends AbstractTestHelper {
   void testFindSOsWithDataByInstitutionId() {
     User u = generateUser();
     u.setUserData(Map.of("key", "value"));
+    Institution institution = new Institution();
+    institution.setName("Broad Institute");
+    u.setInstitution(institution);
     Integer institutionId = u.getInstitutionId();
-    when(userDAO.getSOsWithDataByInstitution(any())).thenReturn(List.of(u));
+    when(userDAO.getSOsWithDataByInstitution(institutionId)).thenReturn(List.of(u));
     List<UserService.SigningOfficialUser> users =
         service.findSOsWithDataByInstitutionId(institutionId);
     assertEquals(1, users.size());
@@ -472,6 +475,19 @@ class UserServiceTest extends AbstractTestHelper {
     assertEquals(u.getEmail(), users.getFirst().getEmail());
     assertEquals(u.getInstitutionId(), users.getFirst().getInstitutionId());
     assertEquals(u.getUserData(), users.getFirst().getUserData());
+    assertEquals("Broad Institute", users.getFirst().getInstitutionName());
+  }
+
+  @Test
+  void testFindSOsWithDataByInstitutionId_NullInstitution() {
+    User u = generateUser();
+    // user.getInstitution() is null — DAO found no matching institution row
+    Integer institutionId = u.getInstitutionId();
+    when(userDAO.getSOsWithDataByInstitution(institutionId)).thenReturn(List.of(u));
+    List<UserService.SigningOfficialUser> users =
+        service.findSOsWithDataByInstitutionId(institutionId);
+    assertEquals(1, users.size());
+    assertNull(users.getFirst().getInstitutionName());
   }
 
   @Test
@@ -1024,6 +1040,22 @@ class UserServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testSigningOfficialUserEquals_differentInstitutionName() {
+    User u1 = generateUser();
+    Institution inst1 = new Institution();
+    inst1.setName("Broad Institute");
+    u1.setInstitution(inst1);
+    User u2 = generateUser();
+    u2.setUserId(u1.getUserId());
+    Institution inst2 = new Institution();
+    inst2.setName("MIT");
+    u2.setInstitution(inst2);
+    UserService.SigningOfficialUser sou1 = new UserService.SigningOfficialUser(u1);
+    UserService.SigningOfficialUser sou2 = new UserService.SigningOfficialUser(u2);
+    assertNotEquals(sou1, sou2);
+  }
+
+  @Test
   void testSigningOfficialUserEquals_null() {
     User u = generateUser();
     UserService.SigningOfficialUser sou = new UserService.SigningOfficialUser(u);
@@ -1054,5 +1086,13 @@ class UserServiceTest extends AbstractTestHelper {
     UserService.SigningOfficialUser sou1 = new UserService.SigningOfficialUser(u1);
     UserService.SigningOfficialUser sou2 = new UserService.SigningOfficialUser(u2);
     assertNotEquals(sou1.hashCode(), sou2.hashCode());
+  }
+
+  @Test
+  void testSigningOfficialUserGetterSetterInstitutionName() {
+    UserService.SigningOfficialUser sou = new UserService.SigningOfficialUser();
+    assertNull(sou.getInstitutionName());
+    sou.setInstitutionName("Broad Institute");
+    assertEquals("Broad Institute", sou.getInstitutionName());
   }
 }
