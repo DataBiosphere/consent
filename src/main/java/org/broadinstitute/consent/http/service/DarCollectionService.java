@@ -285,10 +285,6 @@ public class DarCollectionService implements ConsentLogger {
         s -> {
           Map<String, Integer> statusCount = new HashMap<>();
           Map<Integer, Election> elections = s.getElections();
-          if ((!s.requiresSOApproval() || s.getSOApprover() != null)
-              && elections.size() < s.getDatasetCount()) {
-            s.addAction(DarCollectionActions.OPEN);
-          }
           elections
               .values()
               .forEach(election -> updateStatusCount(statusCount, election.getStatus()));
@@ -319,13 +315,23 @@ public class DarCollectionService implements ConsentLogger {
       return;
     }
 
-    // If there are no elections, only show open
-    if ((!summary.requiresSOApproval() || summary.getSOApprover() != null)
-        && summary.getElections().isEmpty()) {
+    boolean canOpen = !summary.requiresSOApproval() || summary.getSOApprover() != null;
+    boolean hasOpenElection = Objects.nonNull(openCount);
+    boolean hasReopenableElection =
+        summary.getElections().values().stream()
+            .map(election -> ElectionStatus.getStatusFromString(election.getStatus()))
+            .anyMatch(
+                status -> status == ElectionStatus.CLOSED || status == ElectionStatus.CANCELED);
+
+    // Only show open/re-open when there are no active elections to vote on.
+    if (canOpen
+        && !hasOpenElection
+        && (summary.getElections().isEmpty()
+            || summary.getElections().size() < summary.getDatasetCount()
+            || hasReopenableElection)) {
       summary.addAction(DarCollectionActions.OPEN);
     }
 
-    // If there are closed or canceled elections, show open
     // If there are any open elections, show vote
     summary
         .getElections()
@@ -333,15 +339,8 @@ public class DarCollectionService implements ConsentLogger {
         .forEach(
             election -> {
               ElectionStatus status = ElectionStatus.getStatusFromString(election.getStatus());
-              switch (Objects.requireNonNull(status)) {
-                case CLOSED, CANCELED:
-                  summary.addAction(DarCollectionActions.OPEN);
-                  break;
-                case OPEN:
-                  summary.addAction(DarCollectionActions.VOTE);
-                  break;
-                default:
-                  break;
+              if (Objects.requireNonNull(status) == ElectionStatus.OPEN) {
+                summary.addAction(DarCollectionActions.VOTE);
               }
             });
 
