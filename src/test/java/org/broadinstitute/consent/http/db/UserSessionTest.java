@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -51,26 +51,22 @@ class UserSessionTest extends DAOTestHelper {
     jdbi.useHandle(h -> h.execute("DELETE FROM user_sessions WHERE sid = ?", sid));
   }
 
-  private Map<String, Object> querySession(String sid) {
+  private Optional<Map<String, Object>> querySession(String sid) {
     return jdbi.withHandle(
         h ->
-            Objects.requireNonNull(
-                h.createQuery("SELECT * FROM user_sessions WHERE sid = :sid")
-                    .bind("sid", sid)
-                    .mapToMap()
-                    .findOne()
-                    .orElse(null)));
+            h.createQuery("SELECT * FROM user_sessions WHERE sid = :sid")
+                .bind("sid", sid)
+                .mapToMap()
+                .findOne());
   }
 
-  private Map<String, Object> queryAuditBySid(String sid) {
+  private Optional<Map<String, Object>> queryAuditBySid(String sid) {
     return jdbi.withHandle(
         h ->
-            Objects.requireNonNull(
-                h.createQuery("SELECT * FROM user_session_audit WHERE sid_hash = :hash")
-                    .bind("hash", sha256Hex(sid))
-                    .mapToMap()
-                    .findOne()
-                    .orElse(null)));
+            h.createQuery("SELECT * FROM user_session_audit WHERE sid_hash = :hash")
+                .bind("hash", sha256Hex(sid))
+                .mapToMap()
+                .findOne());
   }
 
   /** Simulates the Phase 2 logout handler stamping end_reason before session.destroy(). */
@@ -92,8 +88,7 @@ class UserSessionTest extends DAOTestHelper {
     String sid = UUID.randomUUID().toString();
     insertSession(sid, "{\"idp\":\"google\"}");
 
-    Map<String, Object> row = querySession(sid);
-    assertNotNull(row);
+    Map<String, Object> row = querySession(sid).orElseThrow();
     assertEquals("google", row.get("idp"));
   }
 
@@ -104,7 +99,7 @@ class UserSessionTest extends DAOTestHelper {
 
     updateSessionSess(sid, "{\"idp\":\"azure\"}");
 
-    assertEquals("azure", querySession(sid).get("idp"));
+    assertEquals("azure", querySession(sid).orElseThrow().get("idp"));
   }
 
   @Test
@@ -112,7 +107,7 @@ class UserSessionTest extends DAOTestHelper {
     String sid = UUID.randomUUID().toString();
     insertSession(sid, "{}");
 
-    assertNull(querySession(sid).get("idp"));
+    assertNull(querySession(sid).orElseThrow().get("idp"));
   }
 
   // ---------------------------------------------------------------------------
@@ -124,8 +119,7 @@ class UserSessionTest extends DAOTestHelper {
     String sid = UUID.randomUUID().toString();
     insertSession(sid, "{\"idp\":\"google\",\"userId\":\"researcher@example.com\"}");
 
-    Map<String, Object> audit = queryAuditBySid(sid);
-    assertNotNull(audit);
+    Map<String, Object> audit = queryAuditBySid(sid).orElseThrow();
     assertEquals(sha256Hex(sid), audit.get("sid_hash"));
     assertEquals("researcher@example.com", audit.get("user_email"));
     assertEquals("google", audit.get("idp"));
@@ -141,8 +135,7 @@ class UserSessionTest extends DAOTestHelper {
     String sid = UUID.randomUUID().toString();
     insertSession(sid, "{\"idp\":\"azure\"}");
 
-    Map<String, Object> audit = queryAuditBySid(sid);
-    assertNotNull(audit);
+    Map<String, Object> audit = queryAuditBySid(sid).orElseThrow();
     assertNull(audit.get("user_email"));
     assertEquals("azure", audit.get("idp"));
   }
@@ -157,14 +150,14 @@ class UserSessionTest extends DAOTestHelper {
     String sid = UUID.randomUUID().toString();
     insertSession(sid, "{}");
 
-    Map<String, Object> auditBefore = queryAuditBySid(sid);
+    Map<String, Object> auditBefore = queryAuditBySid(sid).orElseThrow();
     assertNull(auditBefore.get("user_email"));
     assertNull(auditBefore.get("idp"));
 
     // Phase 2: OAuth callback — sess updated with userId and idp.
     updateSessionSess(sid, "{\"userId\":\"researcher@example.com\",\"idp\":\"google\"}");
 
-    Map<String, Object> auditAfter = queryAuditBySid(sid);
+    Map<String, Object> auditAfter = queryAuditBySid(sid).orElseThrow();
     assertEquals("researcher@example.com", auditAfter.get("user_email"));
     assertEquals("google", auditAfter.get("idp"));
   }
@@ -178,7 +171,7 @@ class UserSessionTest extends DAOTestHelper {
 
     updateSessionSess(sid, "{\"userId\":\"second@example.com\",\"idp\":\"azure\"}");
 
-    Map<String, Object> audit = queryAuditBySid(sid);
+    Map<String, Object> audit = queryAuditBySid(sid).orElseThrow();
     assertEquals("first@example.com", audit.get("user_email"));
     assertEquals("google", audit.get("idp"));
   }
@@ -193,12 +186,12 @@ class UserSessionTest extends DAOTestHelper {
     insertSession(
         sid,
         """
-        {"idp":"google","userId":"researcher@example.com"}
-        """);
+            {"idp":"google","userId":"researcher@example.com"}
+            """);
 
     deleteSession(sid);
 
-    Map<String, Object> audit = queryAuditBySid(sid);
+    Map<String, Object> audit = queryAuditBySid(sid).orElseThrow();
     assertNotNull(audit.get("ended_at"));
     assertEquals("expired", audit.get("end_reason"));
   }
@@ -212,13 +205,13 @@ class UserSessionTest extends DAOTestHelper {
     insertSession(
         sid,
         """
-        {"idp":"google","userId":"researcher@example.com"}
-        """);
+            {"idp":"google","userId":"researcher@example.com"}
+            """);
     stampAuditEndReason(sid);
 
     deleteSession(sid);
 
-    Map<String, Object> audit = queryAuditBySid(sid);
+    Map<String, Object> audit = queryAuditBySid(sid).orElseThrow();
     assertNotNull(audit.get("ended_at"));
     assertEquals("logout", audit.get("end_reason"));
   }
