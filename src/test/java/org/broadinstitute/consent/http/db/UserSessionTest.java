@@ -15,71 +15,6 @@ import org.junit.jupiter.api.Test;
 class UserSessionTest extends DAOTestHelper {
 
   // ---------------------------------------------------------------------------
-  // Helpers
-  // ---------------------------------------------------------------------------
-
-  /** Mirrors encode(sha256(sid::bytea), 'hex') used inside the trigger functions. */
-  private static String sha256Hex(String value) {
-    try {
-      MessageDigest digest = MessageDigest.getInstance("SHA-256");
-      byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
-      StringBuilder hex = new StringBuilder(hash.length * 2);
-      for (byte b : hash) {
-        hex.append(String.format("%02x", b));
-      }
-      return hex.toString();
-    } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private void insertSession(String sid, String sessJson) {
-    jdbi.useHandle(
-        h ->
-            h.execute(
-                "INSERT INTO user_sessions (sid, sess, expire) VALUES (?, ?::json, NOW() + INTERVAL '8 hours')",
-                sid,
-                sessJson));
-  }
-
-  private void updateSessionSess(String sid, String sessJson) {
-    jdbi.useHandle(
-        h -> h.execute("UPDATE user_sessions SET sess = ?::json WHERE sid = ?", sessJson, sid));
-  }
-
-  private void deleteSession(String sid) {
-    jdbi.useHandle(h -> h.execute("DELETE FROM user_sessions WHERE sid = ?", sid));
-  }
-
-  private Optional<Map<String, Object>> querySession(String sid) {
-    return jdbi.withHandle(
-        h ->
-            h.createQuery("SELECT * FROM user_sessions WHERE sid = :sid")
-                .bind("sid", sid)
-                .mapToMap()
-                .findOne());
-  }
-
-  private Optional<Map<String, Object>> queryAuditBySid(String sid) {
-    return jdbi.withHandle(
-        h ->
-            h.createQuery("SELECT * FROM user_session_audit WHERE sid_hash = :hash")
-                .bind("hash", sha256Hex(sid))
-                .mapToMap()
-                .findOne());
-  }
-
-  /** Simulates the Phase 2 logout handler stamping end_reason before session.destroy(). */
-  private void stampAuditEndReason(String sid) {
-    jdbi.useHandle(
-        h ->
-            h.execute(
-                "UPDATE user_session_audit SET end_reason = ? WHERE sid_hash = ? AND ended_at IS NULL",
-                "logout",
-                sha256Hex(sid)));
-  }
-
-  // ---------------------------------------------------------------------------
   // sync_session_idp — BEFORE INSERT OR UPDATE
   // ---------------------------------------------------------------------------
 
@@ -214,5 +149,70 @@ class UserSessionTest extends DAOTestHelper {
     Map<String, Object> audit = queryAuditBySid(sid).orElseThrow();
     assertNotNull(audit.get("ended_at"));
     assertEquals("logout", audit.get("end_reason"));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+
+  /** Mirrors encode(sha256(sid::bytea), 'hex') used inside the trigger functions. */
+  private static String sha256Hex(String value) {
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
+      StringBuilder hex = new StringBuilder(hash.length * 2);
+      for (byte b : hash) {
+        hex.append(String.format("%02x", b));
+      }
+      return hex.toString();
+    } catch (NoSuchAlgorithmException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void insertSession(String sid, String sessJson) {
+    jdbi.useHandle(
+        h ->
+            h.execute(
+                "INSERT INTO user_sessions (sid, sess, expire) VALUES (?, ?::json, NOW() + INTERVAL '8 hours')",
+                sid,
+                sessJson));
+  }
+
+  private void updateSessionSess(String sid, String sessJson) {
+    jdbi.useHandle(
+        h -> h.execute("UPDATE user_sessions SET sess = ?::json WHERE sid = ?", sessJson, sid));
+  }
+
+  private void deleteSession(String sid) {
+    jdbi.useHandle(h -> h.execute("DELETE FROM user_sessions WHERE sid = ?", sid));
+  }
+
+  private Optional<Map<String, Object>> querySession(String sid) {
+    return jdbi.withHandle(
+        h ->
+            h.createQuery("SELECT * FROM user_sessions WHERE sid = :sid")
+                .bind("sid", sid)
+                .mapToMap()
+                .findOne());
+  }
+
+  private Optional<Map<String, Object>> queryAuditBySid(String sid) {
+    return jdbi.withHandle(
+        h ->
+            h.createQuery("SELECT * FROM user_session_audit WHERE sid_hash = :hash")
+                .bind("hash", sha256Hex(sid))
+                .mapToMap()
+                .findOne());
+  }
+
+  /** Simulates the Phase 2 logout handler stamping end_reason before session.destroy(). */
+  private void stampAuditEndReason(String sid) {
+    jdbi.useHandle(
+        h ->
+            h.execute(
+                "UPDATE user_session_audit SET end_reason = ? WHERE sid_hash = ? AND ended_at IS NULL",
+                "logout",
+                sha256Hex(sid)));
   }
 }
