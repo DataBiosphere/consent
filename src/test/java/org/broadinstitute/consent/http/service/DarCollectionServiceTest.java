@@ -2045,6 +2045,47 @@ class DarCollectionServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testGetSummaryForRoleByCollectionId_ChairCompletesWhenDatasetElectionsAreClosed() {
+    Dac dac = new Dac();
+    dac.setDacId(1);
+    User user = new User();
+    user.setUserId(1);
+    user.setChairpersonRoleWithDAC(dac.getDacId());
+
+    DarCollectionSummary summary = new DarCollectionSummary();
+    Integer collectionId = randomInt(1, 100);
+    Integer datasetId = 2161;
+    summary.setDarCollectionId(collectionId);
+    summary.addDatasetId(datasetId);
+
+    Election dataAccessElection = new Election();
+    dataAccessElection.setElectionId(1);
+    dataAccessElection.setDatasetId(datasetId);
+    dataAccessElection.setElectionType(ElectionType.DATA_ACCESS.getValue());
+    dataAccessElection.setStatus(ElectionStatus.CLOSED.getValue());
+    summary.addElection(dataAccessElection);
+
+    Election rpElection = new Election();
+    rpElection.setElectionId(2);
+    rpElection.setDatasetId(datasetId);
+    rpElection.setElectionType(ElectionType.RP.getValue());
+    rpElection.setStatus(ElectionStatus.CLOSED.getValue());
+    summary.addElection(rpElection);
+
+    when(darCollectionSummaryDAO.getDarCollectionSummaryForDACByCollectionId(
+            user.getUserId(), List.of(), collectionId))
+        .thenReturn(summary);
+    when(datasetDAO.findDatasetIdsByDacIds(any())).thenReturn(List.of());
+
+    DarCollectionSummary summaryResult =
+        service.getSummaryForRoleByCollectionId(user, UserRoles.CHAIRPERSON, collectionId);
+
+    assertNotNull(summaryResult);
+    assertEquals(DarCollectionStatus.COMPLETE.getValue(), summaryResult.getStatus());
+    assertEquals(Set.of(DarCollectionActions.OPEN.getValue()), summaryResult.getActions());
+  }
+
+  @Test
   void testGetSummaryForRoleByCollectionId_DACMember() {
     Dac dac = new Dac();
     dac.setDacId(1);
