@@ -1,16 +1,20 @@
 package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 
 import jakarta.ws.rs.core.Response;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.lang3.RandomUtils;
+import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.models.AuthUser;
 import org.broadinstitute.consent.http.service.DataAccessRequestService;
 import org.broadinstitute.consent.http.service.EmailService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,24 +22,31 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class EmailNotifierResourceTest {
+class EmailNotifierResourceTest extends AbstractTestHelper {
 
   @Mock private DataAccessRequestService dataAccessRequestService;
   @Mock private EmailService emailService;
   @Mock private AuthUser authUser;
 
   private EmailNotifierResource resource;
+  private ExecutorService executorService;
 
   @BeforeEach
   void setUp() {
-    resource = new EmailNotifierResource(dataAccessRequestService, emailService);
+    executorService = Executors.newVirtualThreadPerTaskExecutor();
+    resource = new EmailNotifierResource(dataAccessRequestService, emailService, executorService);
+  }
+
+  @AfterEach
+  void tearDown() {
+    executorService.shutdown();
   }
 
   @Test
   void testResourceSuccess() throws Exception {
     doNothing().when(dataAccessRequestService).sendReminderMessage(any());
     try (Response response =
-        resource.sendReminderMessage(authUser, String.valueOf(RandomUtils.nextInt(100, 1000)))) {
+        resource.sendReminderMessage(authUser, String.valueOf(randomInt(100, 1000)))) {
       assertEquals(200, response.getStatus());
     }
   }
@@ -61,7 +72,7 @@ class EmailNotifierResourceTest {
     doThrow(new RuntimeException("Exception")).when(emailService).sendVoteDigestMessages();
     try (Response response = resource.sendDailyMessages(authUser)) {
       resource.executor.shutdown();
-      resource.executor.awaitTermination(1, TimeUnit.SECONDS);
+      assertTrue(resource.executor.awaitTermination(1, TimeUnit.SECONDS));
       assertEquals(200, response.getStatus());
     }
   }
@@ -75,7 +86,7 @@ class EmailNotifierResourceTest {
     doNothing().when(emailService).sendVoteDigestMessages();
     try (Response response = resource.sendDailyMessages(authUser)) {
       resource.executor.shutdown();
-      resource.executor.awaitTermination(1, TimeUnit.SECONDS);
+      assertTrue(resource.executor.awaitTermination(1, TimeUnit.SECONDS));
       assertEquals(200, response.getStatus());
     }
   }
@@ -88,7 +99,7 @@ class EmailNotifierResourceTest {
         .sendExpirationNotices();
     try (Response response = resource.sendDailyMessages(authUser)) {
       resource.executor.shutdown();
-      resource.executor.awaitTermination(1, TimeUnit.SECONDS);
+      assertTrue(resource.executor.awaitTermination(1, TimeUnit.SECONDS));
       assertEquals(200, response.getStatus());
     }
   }
