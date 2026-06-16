@@ -572,6 +572,24 @@ class DatasetServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testDeleteStudyDeletesEachDatasetFromIndex() throws Exception {
+    Study study = new Study();
+    study.setStudyId(1);
+    study.addDatasetIds(Set.of(1, 2));
+    User user = new User();
+    user.setUserId(10);
+    Response response = mock(Response.class);
+    when(response.getStatus()).thenReturn(200);
+    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(response);
+
+    datasetService.deleteStudy(study, user);
+
+    verify(elasticSearchService).deleteIndex(1, user.getUserId());
+    verify(elasticSearchService).deleteIndex(2, user.getUserId());
+    verify(datasetServiceDAO).deleteStudy(study, user);
+  }
+
+  @Test
   void testGetStudyWithDatasetsById() {
     when(studyDAO.findStudyById(anyInt())).thenReturn(new Study());
     assertDoesNotThrow(() -> datasetService.getStudyWithDatasetsById(mockUser, 1));
