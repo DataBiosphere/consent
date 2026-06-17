@@ -414,16 +414,16 @@ public class UserResource extends Resource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/institution/{institutionId}/signing-officials")
-  @RolesAllowed({ADMIN, CHAIRPERSON, RESEARCHER})
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, RESEARCHER})
   public Response getSigningOfficialsByInstitution(
       @Auth AuthUser authUser, @PathParam("institutionId") Integer institutionId) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
       if (!user.hasUserRole(UserRoles.ADMIN)
           && !user.hasUserRole(UserRoles.CHAIRPERSON)
+          && !user.hasUserRole(UserRoles.MEMBER)
           && !Objects.equals(user.getInstitutionId(), institutionId)) {
-        throw new ForbiddenException(
-            "Researchers may only view signing officials from their own institution.");
+        throw new ForbiddenException("Researchers may only query their own institution.");
       }
       List<SigningOfficialUser> signingOfficials =
           userService.findSOsWithDataByInstitutionId(institutionId);

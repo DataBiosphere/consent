@@ -566,6 +566,32 @@ class UserResourceTest extends AbstractTestHelper {
 
   @Test
   @SuppressWarnings("unchecked")
+  void testGetSigningOfficialsByInstitution_AsMember_DifferentInstitution() {
+    // DAC member belongs to institution 7 but queries institution 99 — must succeed.
+    Integer memberInstitutionId = 7;
+    Integer queriedInstitutionId = 99;
+    User member = createUserWithRole();
+    member.setInstitutionId(memberInstitutionId);
+    member.addRole(UserRoles.Member());
+    UserService.SigningOfficialUser so = new UserService.SigningOfficialUser();
+    so.setUserId(5);
+    so.setDisplayName("SO User");
+    so.setEmail("so@test.com");
+    so.setInstitutionId(queriedInstitutionId);
+    when(userService.findUserByEmail(any())).thenReturn(member);
+    when(userService.findSOsWithDataByInstitutionId(queriedInstitutionId)).thenReturn(List.of(so));
+
+    Response response =
+        userResource.getSigningOfficialsByInstitution(authUser, queriedInstitutionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    List<UserService.SigningOfficialUser> body =
+        (List<UserService.SigningOfficialUser>) response.getEntity();
+    assertEquals(1, body.size());
+    assertEquals(queriedInstitutionId, body.getFirst().getInstitutionId());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
   void testGetSigningOfficialsByInstitution_AsResearcher_OwnInstitution() {
     Integer institutionId = 5;
     User researcher = createUserWithRole();
