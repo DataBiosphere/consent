@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.33.xsd">
+  <changeSet id="changelog-consent-2026-06-16-bff-user-session-audit" author="grushton">
+    <!--
+      BFF Epic 1 (DT-3606): audit trail for BFF user sessions.
+
+      Stores metadata only — never tokens, never the raw session id. sid_hash is
+      SHA-256(sid) so a specific session can be correlated during an incident or
+      dbGaP audit without exposing a usable credential.
+
+      Four triggers on user_sessions keep this table current automatically so no
+      application code path can skip the audit:
+        sync_session_idp     — BEFORE INSERT OR UPDATE: mirrors idp column from sess JSON
+        audit_session_start  — AFTER INSERT:            creates the audit row
+        audit_session_update — AFTER UPDATE:            backfills user_email / idp once
+                               authentication completes (userId is not yet set when the
+                               session row is first inserted during PKCE initiation)
+        audit_session_end    — AFTER DELETE:            stamps ended_at; defaults
+                               end_reason to 'expired' (the Phase 2 logout handler sets
+                               'logout' before calling session.destroy())
+
+      Retention is enforced by a weekly pg_cron job (see runbook); 24 months is the
+      starting point — confirm the period with the team before production rollout.
+    -->
+    <sql splitStatements="false">
+      CREATE TABLE user_session_audit (
+        id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        sid_hash   VARCHAR(64)  NOT NULL,
+        user_email VARCHAR(255),
+        idp        VARCHAR(16),
+        created_at TIMESTAMP    NOT NULL DEFAULT NOW(),
+        ended_at   TIMESTAMP,
+        end_reason VARCHAR(16)
+      )
+    </sql>
+
+    <createIndex indexName="idx_session_audit_email" tableName="user_session_audit">
+      <column name="user_email"/>
+    </createIndex>
+    <createIndex indexName="idx_session_audit_sid" tableName="user_session_audit">
+      <column name="sid_hash"/>
+    </createIndex>
+
+    <!-- ################################################################## -->
+    <!-- Trigger 1: keep user_sessions.idp in sync with the sess JSON blob  -->
+    <!-- ################################################################## -->
+    <sql splitStatements="false">
+      CREATE OR REPLACE FUNCTION sync_session_idp() RETURNS trigger AS $$
+      BEGIN
+        NEW.idp := NEW.sess->>'idp';
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql
+    </sql>
+    <sql splitStatements="false">
+      CREATE TRIGGER user_sessions_sync_idp
+        BEFORE INSERT OR UPDATE ON user_sessions
+        FOR EACH ROW EXECUTE FUNCTION sync_session_idp()
+    </sql>
+
+    <!-- ################################################################## -->
+    <!-- Trigger 2: open an audit row when a session is created             -->
+    <!-- ################################################################## -->
+    <sql splitStatements="false">
+      CREATE OR REPLACE FUNCTION audit_session_start() RETURNS trigger AS $$
+      BEGIN
+        INSERT INTO user_session_audit (sid_hash, user_email, idp)
+        VALUES (
+          encode(sha256(NEW.sid::bytea), 'hex'),
+          NEW.sess->>'userId',
+          NEW.sess->>'idp'
+        );
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql
+    </sql>
+    <sql splitStatements="false">
+      CREATE TRIGGER user_sessions_audit_start
+        AFTER INSERT ON user_sessions
+        FOR EACH ROW EXECUTE FUNCTION audit_session_start()
+    </sql>
+
+    <!-- ################################################################## -->
+    <!-- Trigger 3: backfill user_email / idp once the OAuth callback       -->
+    <!--            completes and the session JSON is populated             -->
+    <!-- ################################################################## -->
+    <sql splitStatements="false">
+      CREATE OR REPLACE FUNCTION audit_session_update() RETURNS trigger AS $$
+      BEGIN
+        UPDATE user_session_audit
+           SET user_email = COALESCE(user_email, NEW.sess->>'userId'),
+               idp        = COALESCE(idp, NEW.sess->>'idp')
+         WHERE sid_hash = encode(sha256(NEW.sid::bytea), 'hex')
+           AND ended_at IS NULL
+           AND (user_email IS NULL OR idp IS NULL);
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql
+    </sql>
+    <sql splitStatements="false">
+      CREATE TRIGGER user_sessions_audit_update
+        AFTER UPDATE ON user_sessions
+        FOR EACH ROW EXECUTE FUNCTION audit_session_update()
+    </sql>
+
+    <!-- ################################################################## -->
+    <!-- Trigger 4: close the audit row when a session is destroyed         -->
+    <!--            end_reason defaults to 'expired'; the logout handler    -->
+    <!--            stamps 'logout' before calling session.destroy()        -->
+    <!-- ################################################################## -->
+    <sql splitStatements="false">
+      CREATE OR REPLACE FUNCTION audit_session_end() RETURNS trigger AS $$
+      BEGIN
+        UPDATE user_session_audit
+           SET ended_at   = NOW(),
+               end_reason = COALESCE(end_reason, 'expired')
+         WHERE sid_hash = encode(sha256(OLD.sid::bytea), 'hex')
+           AND ended_at IS NULL;
+        RETURN OLD;
+      END;
+      $$ LANGUAGE plpgsql
+    </sql>
+    <sql splitStatements="false">
+      CREATE TRIGGER user_sessions_audit_end
+        AFTER DELETE ON user_sessions
+        FOR EACH ROW EXECUTE FUNCTION audit_session_end()
+    </sql>
+
+    <rollback>
+      <!--
+        Drop triggers before functions (triggers depend on them),
+        then drop the audit table.
+      -->
+      <sql>DROP TRIGGER IF EXISTS user_sessions_sync_idp     ON user_sessions</sql>
+      <sql>DROP TRIGGER IF EXISTS user_sessions_audit_start  ON user_sessions</sql>
+      <sql>DROP TRIGGER IF EXISTS user_sessions_audit_update ON user_sessions</sql>
+      <sql>DROP TRIGGER IF EXISTS user_sessions_audit_end    ON user_sessions</sql>
+      <sql>DROP FUNCTION IF EXISTS sync_session_idp()</sql>
+      <sql>DROP FUNCTION IF EXISTS audit_session_start()</sql>
+      <sql>DROP FUNCTION IF EXISTS audit_session_update()</sql>
+      <sql>DROP FUNCTION IF EXISTS audit_session_end()</sql>
+      <dropIndex indexName="idx_session_audit_email" tableName="user_session_audit"/>
+      <dropIndex indexName="idx_session_audit_sid"   tableName="user_session_audit"/>
+      <dropTable tableName="user_session_audit"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>

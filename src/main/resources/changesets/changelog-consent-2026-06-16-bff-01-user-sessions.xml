@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.33.xsd">
+  <changeSet id="changelog-consent-2026-06-16-bff-user-sessions" author="grushton">
+    <!--
+      BFF Epic 1 (DT-3606): session store table for the Fastify server-side session layer.
+      The pgStore (server/src/session/pgStore.ts) reads/writes against sid, sess, and expire.
+      idp records which identity provider authenticated the session ('google' | 'azure') and
+      is kept in sync with the sess JSON blob by the sync_session_idp trigger defined in
+      the companion audit changeset. Rows are purged by an hourly pg_cron job; the expire
+      index supports both that DELETE and the get() query filter (expire > NOW()).
+    -->
+    <sql splitStatements="false">
+      CREATE TABLE user_sessions (
+        sid    VARCHAR     NOT NULL COLLATE "default",
+        sess   JSON        NOT NULL,
+        expire TIMESTAMP   NOT NULL,
+        idp    VARCHAR(16),
+        CONSTRAINT session_pkey PRIMARY KEY (sid)
+      )
+    </sql>
+    <createIndex indexName="idx_session_expire" tableName="user_sessions">
+      <column name="expire"/>
+    </createIndex>
+    <rollback>
+      <dropIndex indexName="idx_session_expire" tableName="user_sessions"/>
+      <dropTable tableName="user_sessions"/>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
