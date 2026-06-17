@@ -69,13 +69,12 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
         ON dar_all.collection_id = c.collection_id
         AND dar_all.submission_date IS NOT NULL
         AND (LOWER(dar_all.data->>'status') != 'archived' OR dar_all.data->>'status' IS NULL)
-      -- Most recent Open and Closed Data Access Elections for DAC User datasets
-      -- Archived, Canceled, and Final elections are not used for status or action calculations
+      -- Most recent terminal or active Data Access Elections for DAC User datasets
       LEFT JOIN (
         SELECT election.*, MAX(election.election_id) OVER(PARTITION BY election.reference_id, election.dataset_id) AS latest
         FROM election
         WHERE LOWER(election.election_type) = 'dataaccess'
-        AND (LOWER(election.status) = 'open' OR LOWER(election.status) = 'closed')
+        AND LOWER(election.status) IN ('open', 'closed', 'canceled')
       ) AS e
         ON e.reference_id = latest_dar.reference_id
         AND e.dataset_id = d.dataset_id
@@ -87,6 +86,7 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       INNER JOIN dar_dataset dd
         ON latest_dar.reference_id = dd.reference_id
       WHERE dd.dataset_id = d.dataset_id
+        AND (e.latest = e.election_id OR e.election_id IS NULL)
       GROUP BY
         c.collection_id, c.dar_code, latest_dar.submission_date, latest_dar.reference_id, latest_dar.parent_id,
         latest_dar.closeout_approving_so_id, latest_dar.closeout_so_approval_timestamp,
@@ -326,7 +326,9 @@ public interface DarCollectionSummaryDAO extends Transactional<DarCollectionSumm
       LEFT JOIN (
         SELECT election.*, MAX(election.election_id) OVER(PARTITION BY election.reference_id, election.dataset_id) AS latest
         FROM election
-        WHERE LOWER(election.election_type) = 'dataaccess' AND election.dataset_id IN (<datasetIds>)
+        WHERE LOWER(election.election_type) = 'dataaccess'
+        AND LOWER(election.status) IN ('open', 'closed', 'canceled')
+        AND election.dataset_id IN (<datasetIds>)
       ) AS e
         ON e.reference_id = latest_dar.reference_id
       LEFT JOIN vote v
