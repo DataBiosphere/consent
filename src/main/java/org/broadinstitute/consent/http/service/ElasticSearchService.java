@@ -166,6 +166,7 @@ public class ElasticSearchService implements ConsentLogger {
   public Response deleteIndex(Integer datasetId, Integer userId) throws IOException {
     Request deleteRequest =
         new Request(HttpMethod.POST, "/" + esConfig.getDatasetIndexName() + "/_delete_by_query");
+    deleteRequest.addParameter("conflicts", "proceed");
     deleteRequest.setEntity(
         new NStringEntity(DELETE_QUERY.formatted(datasetId), ContentType.APPLICATION_JSON));
     updateDatasetIndexDate(datasetId, userId, null);

@@ -2,17 +2,14 @@ package org.broadinstitute.consent.http.resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Response;
-import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -44,7 +41,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -380,12 +376,11 @@ class StudyResourceTest extends AbstractTestHelper {
     admin.setUserId(study.getCreateUserId());
     when(datasetService.getStudyWithDatasetsById(admin, study.getStudyId())).thenReturn(study);
     when(userService.findUserByEmail(any())).thenReturn(admin);
-    Response esResponse = Mockito.mock(Response.class);
-    when(elasticSearchService.deleteIndex(any(), any())).thenReturn(esResponse);
 
     try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-      verify(elasticSearchService, times(1)).deleteIndex(any(), any());
+      verify(datasetService).deleteStudy(study, admin);
+      verify(elasticSearchService, never()).deleteIndex(any(), any());
     }
   }
 
@@ -395,7 +390,7 @@ class StudyResourceTest extends AbstractTestHelper {
 
     try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-      verify(elasticSearchService, never()).deleteIndex(any(), any());
+      verify(datasetService, never()).deleteStudy(any(), any());
     }
   }
 
@@ -411,7 +406,7 @@ class StudyResourceTest extends AbstractTestHelper {
 
     try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
-      verify(elasticSearchService, never()).deleteIndex(any(), any());
+      verify(datasetService, never()).deleteStudy(any(), any());
     }
   }
 
@@ -427,7 +422,7 @@ class StudyResourceTest extends AbstractTestHelper {
 
     try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, response.getStatus());
-      verify(elasticSearchService, never()).deleteIndex(any(), any());
+      verify(datasetService, never()).deleteStudy(any(), any());
     }
   }
 
@@ -443,7 +438,7 @@ class StudyResourceTest extends AbstractTestHelper {
 
     try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-      verify(elasticSearchService, never()).deleteIndex(any(), any());
+      verify(datasetService).deleteStudy(study, admin);
     }
   }
 
@@ -460,12 +455,12 @@ class StudyResourceTest extends AbstractTestHelper {
 
     try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-      verify(elasticSearchService, never()).deleteIndex(any(), any());
+      verify(datasetService).deleteStudy(study, admin);
     }
   }
 
   @Test
-  void testDeleteStudyByIdElasticSearchFailure() throws Exception {
+  void testDeleteStudyByIdDeleteFailure() throws Exception {
     Study study = createMockStudy();
     study.getDatasets().forEach(d -> d.setDeletable(true));
     User admin = new User();
@@ -473,11 +468,10 @@ class StudyResourceTest extends AbstractTestHelper {
     admin.setUserId(study.getCreateUserId());
     when(datasetService.getStudyWithDatasetsById(admin, study.getStudyId())).thenReturn(study);
     when(userService.findUserByEmail(any())).thenReturn(admin);
-    when(elasticSearchService.deleteIndex(any(), any())).thenThrow(new IOException());
+    doThrow(new RuntimeException()).when(datasetService).deleteStudy(study, admin);
 
     try (var response = resource.deleteStudyById(authUser, study.getStudyId())) {
-      assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
-      verify(elasticSearchService, atLeastOnce()).deleteIndex(any(), any());
+      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
     }
   }
 

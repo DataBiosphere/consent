@@ -639,6 +639,31 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testDeleteIndexProceedsOnVersionConflicts() throws IOException {
+    String datasetIndexName = randomAlphabetic(10);
+    int datasetId = randomInt(1, 100);
+    int userId = randomInt(1, 100);
+
+    when(esConfig.getDatasetIndexName()).thenReturn(datasetIndexName);
+    mockElasticSearchResponse("{\"deleted\":1}");
+
+    try (var _ = service.deleteIndex(datasetId, userId)) {
+      verify(esClient).performRequest(request.capture());
+      Request capturedRequest = request.getValue();
+      assertEquals("POST", capturedRequest.getMethod());
+      assertEquals("/" + datasetIndexName + "/_delete_by_query", capturedRequest.getEndpoint());
+      assertEquals("proceed", capturedRequest.getParameters().get("conflicts"));
+      assertEquals(
+          """
+              { "query": { "bool": { "must": [ { "match": { "_index": "dataset" } }, { "match": { "_id": "%d" } } ] } } }
+              """
+              .formatted(datasetId),
+          new String(
+              capturedRequest.getEntity().getContent().readAllBytes(), StandardCharsets.UTF_8));
+    }
+  }
+
+  @Test
   void testIndexDataset() throws Exception {
     DatasetRecord datasetRecord = createDatasetRecord();
     Dataset dataset1 = datasetRecord.dataset;

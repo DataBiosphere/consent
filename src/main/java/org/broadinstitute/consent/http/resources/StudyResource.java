@@ -21,13 +21,11 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -187,19 +185,7 @@ public class StudyResource extends Resource {
       if (!deletable) {
         throw new BadRequestException("Study has datasets that are in use and cannot be deleted.");
       }
-      Set<Integer> studyDatasetIds = study.getDatasetIds();
       datasetService.deleteStudy(study, user);
-      // Remove from ES index
-      studyDatasetIds.forEach(
-          id -> {
-            try (Response indexResponse = elasticSearchService.deleteIndex(id, user.getUserId())) {
-              if (indexResponse.getStatus() >= Status.BAD_REQUEST.getStatusCode()) {
-                logWarn("Non-OK response when deleting index for dataset with id: " + id);
-              }
-            } catch (IOException e) {
-              logException(e);
-            }
-          });
       return Response.ok().build();
     } catch (Exception e) {
       return createExceptionResponse(e);
