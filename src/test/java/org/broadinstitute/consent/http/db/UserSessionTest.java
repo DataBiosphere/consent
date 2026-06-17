@@ -13,7 +13,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 /* WARNING: This test class makes use of underlying Java Cryptographic functions.  If these cryptographic operations were to reach production code and customer requirements dictate, this code would need to be running in a FIPS compliant JVM.
-*/
+ */
 class UserSessionTest extends DAOTestHelper {
 
   // ---------------------------------------------------------------------------
