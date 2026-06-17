@@ -460,6 +460,50 @@ class UserServiceTest extends AbstractTestHelper {
   }
 
   @Test
+  void testFindSOsWithDataByInstitutionId() {
+    User u = generateUser();
+    u.setUserData(Map.of("key", "value"));
+    Institution institution = new Institution();
+    institution.setName("Broad Institute");
+    u.setInstitution(institution);
+    Integer institutionId = u.getInstitutionId();
+    when(userDAO.getSOsWithDataByInstitution(institutionId)).thenReturn(List.of(u));
+    List<UserService.SigningOfficialUser> users =
+        service.findSOsWithDataByInstitutionId(institutionId);
+    assertEquals(1, users.size());
+    assertEquals(u.getDisplayName(), users.getFirst().getDisplayName());
+    assertEquals(u.getEmail(), users.getFirst().getEmail());
+    assertEquals(u.getInstitutionId(), users.getFirst().getInstitutionId());
+    assertEquals(u.getUserData(), users.getFirst().getUserData());
+    assertEquals("Broad Institute", users.getFirst().getInstitutionName());
+  }
+
+  @Test
+  void testFindSOsWithDataByInstitutionId_NullInstitution() {
+    User u = generateUser();
+    // user.getInstitution() is null — DAO found no matching institution row
+    Integer institutionId = u.getInstitutionId();
+    when(userDAO.getSOsWithDataByInstitution(institutionId)).thenReturn(List.of(u));
+    List<UserService.SigningOfficialUser> users =
+        service.findSOsWithDataByInstitutionId(institutionId);
+    assertEquals(1, users.size());
+    assertNull(users.getFirst().getInstitutionName());
+  }
+
+  @Test
+  void testFindSOsWithDataByInstitutionId_NullId() {
+    List<UserService.SigningOfficialUser> users = service.findSOsWithDataByInstitutionId(null);
+    assertEquals(0, users.size());
+  }
+
+  @Test
+  void testFindSOsWithDataByInstitutionId_EmptyResult() {
+    when(userDAO.getSOsWithDataByInstitution(any())).thenReturn(Collections.emptyList());
+    List<UserService.SigningOfficialUser> users = service.findSOsWithDataByInstitutionId(1);
+    assertEquals(0, users.size());
+  }
+
+  @Test
   void testFindUsersByInstitutionIdNullId() {
     assertThrows(IllegalArgumentException.class, () -> service.findUsersByInstitutionId(null));
   }
@@ -951,5 +995,104 @@ class UserServiceTest extends AbstractTestHelper {
     when(userDAO.findUserByEmail(unknownEmail)).thenReturn(null);
 
     assertThrows(NotFoundException.class, () -> service.redactUser(admin, unknownEmail));
+  }
+
+  @Test
+  void testSigningOfficialUserEquals_sameInstance() {
+    User u = generateUser();
+    u.setUserData(Map.of("key", "value"));
+    UserService.SigningOfficialUser sou = new UserService.SigningOfficialUser(u);
+    assertEquals(sou, sou);
+  }
+
+  @Test
+  void testSigningOfficialUserEquals_equalUsersAndData() {
+    User u = generateUser();
+    u.setUserData(Map.of("key", "value"));
+    UserService.SigningOfficialUser sou1 = new UserService.SigningOfficialUser(u);
+    UserService.SigningOfficialUser sou2 = new UserService.SigningOfficialUser(u);
+    assertEquals(sou1, sou2);
+  }
+
+  @Test
+  void testSigningOfficialUserEquals_differentUserId() {
+    User u1 = generateUser();
+    u1.setUserData(Map.of("key", "value"));
+    User u2 = generateUser();
+    u2.setUserData(Map.of("key", "value"));
+    // Ensure distinct userIds
+    u2.setUserId(u1.getUserId() + 1000);
+    UserService.SigningOfficialUser sou1 = new UserService.SigningOfficialUser(u1);
+    UserService.SigningOfficialUser sou2 = new UserService.SigningOfficialUser(u2);
+    assertNotEquals(sou1, sou2);
+  }
+
+  @Test
+  void testSigningOfficialUserEquals_differentUserData() {
+    User u1 = generateUser();
+    u1.setUserData(Map.of("key", "value1"));
+    User u2 = generateUser();
+    u2.setUserId(u1.getUserId());
+    u2.setUserData(Map.of("key", "value2"));
+    UserService.SigningOfficialUser sou1 = new UserService.SigningOfficialUser(u1);
+    UserService.SigningOfficialUser sou2 = new UserService.SigningOfficialUser(u2);
+    assertNotEquals(sou1, sou2);
+  }
+
+  @Test
+  void testSigningOfficialUserEquals_differentInstitutionName() {
+    User u1 = generateUser();
+    Institution inst1 = new Institution();
+    inst1.setName("Broad Institute");
+    u1.setInstitution(inst1);
+    User u2 = generateUser();
+    u2.setUserId(u1.getUserId());
+    Institution inst2 = new Institution();
+    inst2.setName("MIT");
+    u2.setInstitution(inst2);
+    UserService.SigningOfficialUser sou1 = new UserService.SigningOfficialUser(u1);
+    UserService.SigningOfficialUser sou2 = new UserService.SigningOfficialUser(u2);
+    assertNotEquals(sou1, sou2);
+  }
+
+  @Test
+  void testSigningOfficialUserEquals_null() {
+    User u = generateUser();
+    UserService.SigningOfficialUser sou = new UserService.SigningOfficialUser(u);
+    assertNotEquals(null, sou);
+  }
+
+  @Test
+  void testSigningOfficialUserEquals_differentType() {
+    User u = generateUser();
+    UserService.SigningOfficialUser sou = new UserService.SigningOfficialUser(u);
+    assertNotEquals(sou, u);
+  }
+
+  @Test
+  void testSigningOfficialUserHashCode_equalObjectsHaveEqualHash() {
+    User u = generateUser();
+    u.setUserData(Map.of("key", "value"));
+    UserService.SigningOfficialUser sou1 = new UserService.SigningOfficialUser(u);
+    UserService.SigningOfficialUser sou2 = new UserService.SigningOfficialUser(u);
+    assertEquals(sou1.hashCode(), sou2.hashCode());
+  }
+
+  @Test
+  void testSigningOfficialUserHashCode_differentUserIdProducesDifferentHash() {
+    User u1 = generateUser();
+    User u2 = generateUser();
+    u2.setUserId(u1.getUserId() + 1000);
+    UserService.SigningOfficialUser sou1 = new UserService.SigningOfficialUser(u1);
+    UserService.SigningOfficialUser sou2 = new UserService.SigningOfficialUser(u2);
+    assertNotEquals(sou1.hashCode(), sou2.hashCode());
+  }
+
+  @Test
+  void testSigningOfficialUserGetterSetterInstitutionName() {
+    UserService.SigningOfficialUser sou = new UserService.SigningOfficialUser();
+    assertNull(sou.getInstitutionName());
+    sou.setInstitutionName("Broad Institute");
+    assertEquals("Broad Institute", sou.getInstitutionName());
   }
 }

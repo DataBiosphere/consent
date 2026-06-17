@@ -770,6 +770,8 @@ paths:
     $ref: './paths/getApprovedDatasets.yaml'
   /api/user/institution/{institutionId}:
     $ref: './paths/userInstitutionByInstitutionId.yaml'
+  /api/user/institution/{institutionId}/signing-officials:
+    $ref: './paths/userInstitutionSigningOfficials.yaml'
   /api/user/signing-officials:
     get:
       summary: Find SOs for currently authenticated user's institution
@@ -1093,6 +1095,8 @@ components:
       $ref: './schemas/MatchResult.yaml'
     SimplifiedUser:
       $ref: './schemas/SimplifiedUser.yaml'
+    SigningOfficialUser:
+      $ref: './schemas/SigningOfficialUser.yaml'
     SamSelfDiagnostics:
       $ref: './schemas/SamSelfDiagnostics.yaml'
     SamUserInfo:

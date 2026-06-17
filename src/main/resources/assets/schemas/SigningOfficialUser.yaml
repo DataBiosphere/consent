@@ -1,0 +1,14 @@
+allOf:
+  - $ref: './SimplifiedUser.yaml'
+  - type: object
+    properties:
+      institutionId:
+        type: integer
+        description: The institution this signing official belongs to
+      institutionName:
+        type: string
+        description: The display name of the institution this signing official belongs to
+      userData:
+        type: object
+        description: Arbitrary JSON data stored in the users.user_data column
+        additionalProperties: true

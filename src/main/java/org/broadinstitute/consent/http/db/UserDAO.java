@@ -530,6 +530,28 @@ public interface UserDAO extends Transactional<UserDAO> {
         """)
   List<User> getSOsByInstitution(@Bind("institutionId") Integer institutionId);
 
+  @RegisterBeanMapper(value = User.class, prefix = "u")
+  @RegisterBeanMapper(value = Institution.class, prefix = "i")
+  @UseRowReducer(UserWithRolesReducer.class)
+  @SqlQuery(
+      """
+          SELECT
+              u.user_id as u_user_id,
+              u.display_name as u_display_name,
+              u.email as u_email,
+              u.institution_id as u_institution_id,
+              u.user_data as u_user_data,
+              i.institution_id as i_id,
+              i.institution_name as i_name
+          FROM users u
+          LEFT JOIN user_role ur ON ur.user_id = u.user_id
+          LEFT JOIN roles r ON r.role_id = ur.role_id
+          LEFT JOIN institution i ON i.institution_id = u.institution_id
+          WHERE LOWER(r.name) = 'signingofficial'
+          AND u.institution_id = :institutionId
+        """)
+  List<User> getSOsWithDataByInstitution(@Bind("institutionId") Integer institutionId);
+
   @SqlUpdate("UPDATE users SET email_preference = :emailPreference WHERE user_id = :userId")
   void updateEmailPreference(
       @Bind("userId") Integer userId, @Bind("emailPreference") Boolean emailPreference);

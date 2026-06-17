@@ -510,6 +510,148 @@ class UserResourceTest extends AbstractTestHelper {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
+  void testGetSigningOfficialsByInstitution_AsAdmin_DifferentInstitution() {
+    // Admin belongs to institution 1 but queries institution 99 — must succeed.
+    Integer queriedInstitutionId = 99;
+    User admin = createUserWithInstitution(); // institutionId = 1
+    admin.addRole(UserRoles.Admin());
+    UserService.SigningOfficialUser so = new UserService.SigningOfficialUser();
+    so.setUserId(2);
+    so.setDisplayName("SO User");
+    so.setEmail("so@test.com");
+    so.setInstitutionId(queriedInstitutionId);
+    so.setUserData(Map.of("department", "biology"));
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(userService.findSOsWithDataByInstitutionId(queriedInstitutionId)).thenReturn(List.of(so));
+
+    Response response =
+        userResource.getSigningOfficialsByInstitution(authUser, queriedInstitutionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    List<UserService.SigningOfficialUser> body =
+        (List<UserService.SigningOfficialUser>) response.getEntity();
+    assertEquals(1, body.size());
+    assertEquals(so.getDisplayName(), body.getFirst().getDisplayName());
+    // Confirm the result belongs to the queried institution, not the admin's own.
+    assertEquals(queriedInstitutionId, body.getFirst().getInstitutionId());
+    assertEquals(so.getUserData(), body.getFirst().getUserData());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void testGetSigningOfficialsByInstitution_AsChairperson_DifferentInstitution() {
+    // Chairperson belongs to institution 3 but queries institution 99 — must succeed.
+    Integer chairInstitutionId = 3;
+    Integer queriedInstitutionId = 99;
+    User chair = createUserWithRole();
+    chair.setInstitutionId(chairInstitutionId);
+    chair.addRole(UserRoles.Chairperson());
+    UserService.SigningOfficialUser so = new UserService.SigningOfficialUser();
+    so.setUserId(3);
+    so.setDisplayName("SO User");
+    so.setEmail("so@test.com");
+    so.setInstitutionId(queriedInstitutionId);
+    when(userService.findUserByEmail(any())).thenReturn(chair);
+    when(userService.findSOsWithDataByInstitutionId(queriedInstitutionId)).thenReturn(List.of(so));
+
+    Response response =
+        userResource.getSigningOfficialsByInstitution(authUser, queriedInstitutionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    List<UserService.SigningOfficialUser> body =
+        (List<UserService.SigningOfficialUser>) response.getEntity();
+    assertEquals(1, body.size());
+    // Confirm the result belongs to the queried institution, not the chair's own.
+    assertEquals(queriedInstitutionId, body.getFirst().getInstitutionId());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void testGetSigningOfficialsByInstitution_AsMember_DifferentInstitution() {
+    // DAC member belongs to institution 7 but queries institution 99 — must succeed.
+    Integer memberInstitutionId = 7;
+    Integer queriedInstitutionId = 99;
+    User member = createUserWithRole();
+    member.setInstitutionId(memberInstitutionId);
+    member.addRole(UserRoles.Member());
+    UserService.SigningOfficialUser so = new UserService.SigningOfficialUser();
+    so.setUserId(5);
+    so.setDisplayName("SO User");
+    so.setEmail("so@test.com");
+    so.setInstitutionId(queriedInstitutionId);
+    when(userService.findUserByEmail(any())).thenReturn(member);
+    when(userService.findSOsWithDataByInstitutionId(queriedInstitutionId)).thenReturn(List.of(so));
+
+    Response response =
+        userResource.getSigningOfficialsByInstitution(authUser, queriedInstitutionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    List<UserService.SigningOfficialUser> body =
+        (List<UserService.SigningOfficialUser>) response.getEntity();
+    assertEquals(1, body.size());
+    assertEquals(queriedInstitutionId, body.getFirst().getInstitutionId());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void testGetSigningOfficialsByInstitution_AsResearcher_OwnInstitution() {
+    Integer institutionId = 5;
+    User researcher = createUserWithRole();
+    researcher.setInstitutionId(institutionId);
+    UserService.SigningOfficialUser so = new UserService.SigningOfficialUser();
+    so.setUserId(4);
+    so.setDisplayName("SO User");
+    so.setEmail("so@test.com");
+    so.setInstitutionId(institutionId);
+    when(userService.findUserByEmail(any())).thenReturn(researcher);
+    when(userService.findSOsWithDataByInstitutionId(institutionId)).thenReturn(List.of(so));
+
+    Response response = userResource.getSigningOfficialsByInstitution(authUser, institutionId);
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, response.getStatus());
+    List<UserService.SigningOfficialUser> body =
+        (List<UserService.SigningOfficialUser>) response.getEntity();
+    assertEquals(1, body.size());
+  }
+
+  @Test
+  void testGetSigningOfficialsByInstitution_AsResearcher_DifferentInstitution() {
+    User researcher = createUserWithRole();
+    researcher.setInstitutionId(1);
+    when(userService.findUserByEmail(any())).thenReturn(researcher);
+
+    Response response = userResource.getSigningOfficialsByInstitution(authUser, 99);
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+  }
+
+  @Test
+  void testGetSigningOfficialsByInstitution_AsResearcher_NullInstitution() {
+    // Researcher with no institution set — Objects.equals(null, anyId) is false → 403
+    User researcher = createUserWithRole(); // institutionId is null
+    when(userService.findUserByEmail(any())).thenReturn(researcher);
+
+    Response response = userResource.getSigningOfficialsByInstitution(authUser, 5);
+    assertEquals(HttpStatusCodes.STATUS_CODE_FORBIDDEN, response.getStatus());
+  }
+
+  @Test
+  void testGetSigningOfficialsByInstitution_ServiceThrows() {
+    User admin = createUserWithRole();
+    admin.addRole(UserRoles.Admin());
+    when(userService.findUserByEmail(any())).thenReturn(admin);
+    when(userService.findSOsWithDataByInstitutionId(any()))
+        .thenThrow(new RuntimeException("DB error"));
+
+    Response response = userResource.getSigningOfficialsByInstitution(authUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, response.getStatus());
+  }
+
+  @Test
+  void testGetSigningOfficialsByInstitution_UserNotFound() {
+    when(userService.findUserByEmail(any())).thenThrow(new NotFoundException());
+
+    Response response = userResource.getSigningOfficialsByInstitution(authUser, 1);
+    assertEquals(HttpStatusCodes.STATUS_CODE_NOT_FOUND, response.getStatus());
+  }
+
+  @Test
   void testGetUsersByInstitutionNoInstitution() {
     Integer institutionId = 1;
     doThrow(new NotFoundException()).when(userService).findUsersByInstitutionId(institutionId);

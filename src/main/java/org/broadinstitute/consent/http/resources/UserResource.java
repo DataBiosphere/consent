@@ -50,6 +50,7 @@ import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.DatasetService;
 import org.broadinstitute.consent.http.service.NihService;
 import org.broadinstitute.consent.http.service.UserService;
+import org.broadinstitute.consent.http.service.UserService.SigningOfficialUser;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
 import org.broadinstitute.consent.http.service.sam.SamService;
@@ -405,6 +406,28 @@ public class UserResource extends Resource {
         return Response.ok().entity(signingOfficials).build();
       }
       return Response.ok().entity(Collections.emptyList()).build();
+    } catch (Exception e) {
+      return createExceptionResponse(e);
+    }
+  }
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/institution/{institutionId}/signing-officials")
+  @RolesAllowed({ADMIN, CHAIRPERSON, MEMBER, RESEARCHER})
+  public Response getSigningOfficialsByInstitution(
+      @Auth AuthUser authUser, @PathParam("institutionId") Integer institutionId) {
+    try {
+      User user = userService.findUserByEmail(authUser.getEmail());
+      if (!user.hasUserRole(UserRoles.ADMIN)
+          && !user.hasUserRole(UserRoles.CHAIRPERSON)
+          && !user.hasUserRole(UserRoles.MEMBER)
+          && !Objects.equals(user.getInstitutionId(), institutionId)) {
+        throw new ForbiddenException("Researchers may only query their own institution.");
+      }
+      List<SigningOfficialUser> signingOfficials =
+          userService.findSOsWithDataByInstitutionId(institutionId);
+      return Response.ok().entity(signingOfficials).build();
     } catch (Exception e) {
       return createExceptionResponse(e);
     }
