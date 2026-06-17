@@ -6,8 +6,8 @@ get:
     Results always reflect the requested institution, never the caller's own institution.
 
     **Access rules:**
-    - **Admins** and **DAC Chairpersons** may supply any `institutionId` and will
-      receive the signing officials for that institution, regardless of their own
+    - **Admins**, **DAC Chairpersons**, and **DAC Members** may supply any `institutionId`
+      and will receive the signing officials for that institution, regardless of their own
       institution membership.
     - **Researchers** must supply the `institutionId` of the institution they belong
       to. Requesting any other institution's signing officials returns `403 Forbidden`.
@@ -18,8 +18,8 @@ get:
       in: path
       description: |
         The ID of the institution whose signing officials to retrieve.
-        Researchers must pass their own institution's ID; Admins and DAC Chairpersons
-        may pass any institution's ID.
+        Researchers must pass their own institution's ID; Admins, DAC Chairpersons,
+        and DAC Members may pass any institution's ID.
       required: true
       schema:
         type: integer
@@ -37,8 +37,8 @@ get:
               $ref: '../schemas/SigningOfficialUser.yaml'
     403:
       description: >
-        Forbidden — the authenticated Researcher requested an institution other
-        than their own.
+        Forbidden — the authenticated user is a Researcher who requested an institution
+        other than their own.
     404:
       description: Authenticated user not found
     500:
