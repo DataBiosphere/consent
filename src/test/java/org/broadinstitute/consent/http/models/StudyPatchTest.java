@@ -3,9 +3,12 @@ package org.broadinstitute.consent.http.models;
 import static org.broadinstitute.consent.http.models.StudyPatch.ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE;
 import static org.broadinstitute.consent.http.models.StudyPatch.ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE;
 import static org.broadinstitute.consent.http.models.StudyPatch.DATA_CUSTODIAN_EMAIL;
+import static org.broadinstitute.consent.http.models.StudyPatch.EXTERNAL_IDENTIFIER;
+import static org.broadinstitute.consent.http.models.StudyPatch.EXTERNAL_IDENTIFIER_TYPE;
 import static org.broadinstitute.consent.http.models.StudyPatch.PHENOTYPE_INDICATION;
 import static org.broadinstitute.consent.http.models.StudyPatch.SPECIES_KEY;
 import static org.broadinstitute.consent.http.models.StudyPatch.STUDY_TYPE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -338,6 +341,97 @@ class StudyPatchTest extends AbstractTestHelper {
             null,
             "Single Cell Portal");
     assertTrue(patch.isPatchable(study));
+  }
+
+  @Test
+  void testIsPatchableExternalIdentifierDifferentValue() {
+    Study study = mockStudy();
+    study.addProperty(new StudyProperty(EXTERNAL_IDENTIFIER, "OLD_ID", PropertyType.String));
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, null, null, null, null, "NEW_ID", null);
+    assertTrue(patch.isPatchable(study));
+  }
+
+  @Test
+  void testIsPatchableSameExternalIdentifier() {
+    Study study = mockStudy();
+    String existingValue = randomAlphabetic(10);
+    study.addProperty(new StudyProperty(EXTERNAL_IDENTIFIER, existingValue, PropertyType.String));
+    StudyPatch patch =
+        new StudyPatch(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            existingValue,
+            null);
+    assertFalse(patch.isPatchable(study));
+  }
+
+  @Test
+  void testIsPatchableExternalIdentifierTypeDifferentValue() {
+    Study study = mockStudy();
+    study.addProperty(new StudyProperty(EXTERNAL_IDENTIFIER_TYPE, "Old Type", PropertyType.String));
+    StudyPatch patch =
+        new StudyPatch(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "New Type");
+    assertTrue(patch.isPatchable(study));
+  }
+
+  @Test
+  void testIsPatchableSameExternalIdentifierType() {
+    Study study = mockStudy();
+    String existingValue = randomAlphabetic(10);
+    study.addProperty(
+        new StudyProperty(EXTERNAL_IDENTIFIER_TYPE, existingValue, PropertyType.String));
+    StudyPatch patch =
+        new StudyPatch(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            existingValue);
+    assertFalse(patch.isPatchable(study));
+  }
+
+  @Test
+  void testFromJsonExternalIdentifierFields() {
+    String json =
+        "{\"externalIdentifier\": \"SCP1671\", \"externalIdentifierType\": \"Single Cell Portal\"}";
+    StudyPatch patch = StudyPatch.fromJson(json);
+    assertEquals("SCP1671", patch.externalIdentifier());
+    assertEquals("Single Cell Portal", patch.externalIdentifierType());
   }
 
   private Study mockStudy() {
