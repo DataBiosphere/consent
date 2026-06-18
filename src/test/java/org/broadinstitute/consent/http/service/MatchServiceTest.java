@@ -27,6 +27,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.DataUseBuilder;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Match;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +37,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class MatchServiceTest extends AbstractTestHelper {
 
+  @Mock private Jdbi jdbi;
   @Mock DatasetDAO datasetDAO;
   @Mock private DataAccessRequestDAO dataAccessRequestDAO;
   @Mock private MatchDAO matchDAO;
@@ -46,9 +48,10 @@ class MatchServiceTest extends AbstractTestHelper {
 
   @BeforeEach
   void setUp() {
-    service =
-        new MatchService(
-            matchDAO, dataAccessRequestDAO, datasetDAO, useRestrictionConverter, ontologyService);
+    when(jdbi.onDemand(MatchDAO.class)).thenReturn(matchDAO);
+    when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(dataAccessRequestDAO);
+    when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
+    service = new MatchService(jdbi, useRestrictionConverter, ontologyService);
   }
 
   @Test

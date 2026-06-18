@@ -9,6 +9,8 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.models.Election;
+import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -19,10 +21,13 @@ class ElectionServiceTest {
 
   private ElectionService service;
 
+  @Mock private Jdbi jdbi;
   @Mock private ElectionDAO electionDAO;
 
-  private void initService() {
-    service = new ElectionService(electionDAO);
+  @BeforeEach
+  void setUp() {
+    when(jdbi.onDemand(ElectionDAO.class)).thenReturn(electionDAO);
+    service = new ElectionService(jdbi);
   }
 
   @Test
@@ -30,7 +35,6 @@ class ElectionServiceTest {
     Election election = new Election();
     when(electionDAO.findElectionsByVoteIdsAndType(anyList(), anyString()))
         .thenReturn(List.of(election));
-    initService();
     List<Election> elections = service.findElectionsByVoteIdsAndType(List.of(1, 2), "test");
     assertNotNull(elections);
     assertEquals(1, elections.size());
@@ -41,7 +45,6 @@ class ElectionServiceTest {
     Election election = new Election();
     when(electionDAO.findElectionsWithCardHoldingUsersByElectionIds(anyList()))
         .thenReturn(List.of(election));
-    initService();
     List<Election> elections = service.findElectionsWithCardHoldingUsersByElectionIds(List.of(1));
     assertNotNull(elections);
     assertEquals(1, elections.size());

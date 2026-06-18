@@ -71,6 +71,7 @@ import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -104,19 +105,17 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
 
   @Mock private StudyDAO studyDAO;
 
+  @Mock private Jdbi jdbi;
+
   @BeforeEach
   void initService() {
+    when(jdbi.onDemand(DacDAO.class)).thenReturn(dacDAO);
+    when(jdbi.onDemand(UserDAO.class)).thenReturn(userDao);
+    when(jdbi.onDemand(InstitutionDAO.class)).thenReturn(institutionDAO);
+    when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
+    when(jdbi.onDemand(StudyDAO.class)).thenReturn(studyDAO);
     service =
-        new ElasticSearchService(
-            esClient,
-            esConfig,
-            dacDAO,
-            userDao,
-            ontologyService,
-            institutionDAO,
-            datasetDAO,
-            datasetServiceDAO,
-            studyDAO);
+        new ElasticSearchService(jdbi, datasetServiceDAO, esClient, esConfig, ontologyService);
     service.setIndexKey("_index");
   }
 

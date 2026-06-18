@@ -40,7 +40,7 @@ class DarCollectionServiceDAOTest extends DAOTestHelper {
 
   @BeforeAll
   static void initService() {
-    serviceDAO = new DarCollectionServiceDAO(datasetDAO, electionDAO, jdbi, userDAO);
+    serviceDAO = new DarCollectionServiceDAO(jdbi, datasetDAO, electionDAO, userDAO);
   }
 
   /**

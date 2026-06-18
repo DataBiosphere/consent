@@ -55,6 +55,7 @@ import org.broadinstitute.consent.http.models.sam.UserStatusInfo;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
+import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.transaction.TransactionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,6 +69,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest extends AbstractTestHelper {
 
+  @Mock private Jdbi jdbi;
   @Mock private UserDAO userDAO;
   @Mock private UserPropertyDAO userPropertyDAO;
   @Mock private UserRoleDAO userRoleDAO;
@@ -97,17 +99,15 @@ class UserServiceTest extends AbstractTestHelper {
 
   @BeforeEach
   void initService() {
+    when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
+    when(jdbi.onDemand(UserPropertyDAO.class)).thenReturn(userPropertyDAO);
+    when(jdbi.onDemand(UserRoleDAO.class)).thenReturn(userRoleDAO);
+    when(jdbi.onDemand(InstitutionDAO.class)).thenReturn(institutionDAO);
+    when(jdbi.onDemand(DaaDAO.class)).thenReturn(daaDAO);
+    when(jdbi.onDemand(UserRedactionAuditDAO.class)).thenReturn(userRedactionAuditDAO);
     service =
         new UserService(
-            userDAO,
-            userPropertyDAO,
-            userRoleDAO,
-            institutionDAO,
-            userServiceDAO,
-            daaDAO,
-            institutionService,
-            institutionAndLibraryCardEnforcement,
-            userRedactionAuditDAO);
+            jdbi, userServiceDAO, institutionService, institutionAndLibraryCardEnforcement);
   }
 
   @Test

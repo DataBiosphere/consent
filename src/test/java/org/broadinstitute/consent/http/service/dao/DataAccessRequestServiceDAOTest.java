@@ -35,7 +35,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
 
   @BeforeEach
   void initService() {
-    serviceDAO = new DataAccessRequestServiceDAO(dataAccessRequestDAO, jdbi, darCollectionDAO);
+    serviceDAO = new DataAccessRequestServiceDAO(jdbi, dataAccessRequestDAO, darCollectionDAO);
   }
 
   @Test

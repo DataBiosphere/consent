@@ -21,9 +21,9 @@ public class DataAccessRequestServiceDAO {
 
   @Inject
   public DataAccessRequestServiceDAO(
-      DataAccessRequestDAO dataAccessRequestDAO, Jdbi jdbi, DarCollectionDAO darCollectionDAO) {
-    this.dataAccessRequestDAO = dataAccessRequestDAO;
+      Jdbi jdbi, DataAccessRequestDAO dataAccessRequestDAO, DarCollectionDAO darCollectionDAO) {
     this.jdbi = jdbi;
+    this.dataAccessRequestDAO = dataAccessRequestDAO;
     this.darCollectionDAO = darCollectionDAO;
   }
 

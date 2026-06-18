@@ -20,6 +20,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.LibraryCardDaaAudit;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.jdbi.v3.core.Jdbi;
 
 public class LibraryCardService implements ConsentLogger {
 
@@ -32,17 +33,12 @@ public class LibraryCardService implements ConsentLogger {
 
   @Inject
   public LibraryCardService(
-      DaaDAO daaDAO,
-      LibraryCardDAO libraryCardDAO,
-      InstitutionDAO institutionDAO,
-      InstitutionService institutionService,
-      UserDAO userDAO,
-      EmailService emailService) {
-    this.daaDAO = daaDAO;
-    this.libraryCardDAO = libraryCardDAO;
-    this.institutionDAO = institutionDAO;
+      Jdbi jdbi, InstitutionService institutionService, EmailService emailService) {
+    this.daaDAO = jdbi.onDemand(DaaDAO.class);
+    this.libraryCardDAO = jdbi.onDemand(LibraryCardDAO.class);
+    this.institutionDAO = jdbi.onDemand(InstitutionDAO.class);
     this.institutionService = institutionService;
-    this.userDAO = userDAO;
+    this.userDAO = jdbi.onDemand(UserDAO.class);
     this.emailService = emailService;
   }
 

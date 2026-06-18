@@ -20,6 +20,7 @@ import org.broadinstitute.consent.http.service.dao.NihServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.jdbi.v3.core.Jdbi;
 
 public class NihService implements ConsentLogger {
 
@@ -30,11 +31,11 @@ public class NihService implements ConsentLogger {
 
   @Inject
   public NihService(
-      UserDAO userDAO,
+      Jdbi jdbi,
       NihServiceDAO serviceDAO,
       HttpClientUtil clientUtil,
       ServicesConfiguration configuration) {
-    this.userDAO = userDAO;
+    this.userDAO = jdbi.onDemand(UserDAO.class);
     this.serviceDAO = serviceDAO;
     this.clientUtil = clientUtil;
     this.configuration = configuration;

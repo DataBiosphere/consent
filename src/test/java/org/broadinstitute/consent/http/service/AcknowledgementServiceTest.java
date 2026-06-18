@@ -33,6 +33,7 @@ import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,16 +43,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class AcknowledgementServiceTest extends AbstractTestHelper {
 
-  @Mock private static AcknowledgementDAO acknowledgementDAO;
-  @Mock private static DataAccessRequestDAO dataAccessRequestDAO;
-  @Mock private static EmailService emailService;
+  @Mock private Jdbi jdbi;
+  @Mock private AcknowledgementDAO acknowledgementDAO;
+  @Mock private DataAccessRequestDAO dataAccessRequestDAO;
+  @Mock private EmailService emailService;
 
   private AcknowledgementService acknowledgementService;
 
   @BeforeEach
   void setUp() {
-    acknowledgementService =
-        new AcknowledgementService(acknowledgementDAO, dataAccessRequestDAO, emailService);
+    when(jdbi.onDemand(AcknowledgementDAO.class)).thenReturn(acknowledgementDAO);
+    when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(dataAccessRequestDAO);
+    acknowledgementService = new AcknowledgementService(jdbi, emailService);
   }
 
   @Test

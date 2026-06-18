@@ -16,6 +16,7 @@ import org.broadinstitute.consent.http.enumeration.OperationType;
 import org.broadinstitute.consent.http.enumeration.UserRoles;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.User;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class FileStorageObjectServiceAccessTest {
 
+  @Mock private Jdbi jdbi;
   @Mock private FileStorageObjectDAO fileStorageObjectDAO;
   @Mock private GCSService gcsService;
   @Mock private DatasetService datasetService;
@@ -52,14 +54,10 @@ class FileStorageObjectServiceAccessTest {
 
   @BeforeEach
   void setUp() {
+    when(jdbi.onDemand(FileStorageObjectDAO.class)).thenReturn(fileStorageObjectDAO);
     service =
         new FileStorageObjectService(
-            fileStorageObjectDAO,
-            gcsService,
-            datasetService,
-            dacService,
-            daaService,
-            dataAccessRequestService);
+            jdbi, gcsService, datasetService, dacService, daaService, dataAccessRequestService);
   }
 
   // ---------------------------------------------------------------------------
@@ -794,15 +792,6 @@ class FileStorageObjectServiceAccessTest {
     dar.setUserId(42);
     when(dataAccessRequestService.findByReferenceId(darId)).thenReturn(dar);
 
-    service =
-        new FileStorageObjectService(
-            fileStorageObjectDAO,
-            gcsService,
-            datasetService,
-            dacService,
-            daaService,
-            dataAccessRequestService);
-
     assertTrue(service.isDarCreator(user, darId));
   }
 
@@ -814,15 +803,6 @@ class FileStorageObjectServiceAccessTest {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setUserId(99);
     when(dataAccessRequestService.findByReferenceId(darId)).thenReturn(dar);
-
-    service =
-        new FileStorageObjectService(
-            fileStorageObjectDAO,
-            gcsService,
-            datasetService,
-            dacService,
-            daaService,
-            dataAccessRequestService);
 
     assertFalse(service.isDarCreator(user, darId));
   }

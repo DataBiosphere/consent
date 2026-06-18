@@ -18,6 +18,7 @@ import org.broadinstitute.consent.http.models.DataUse;
 import org.broadinstitute.consent.http.models.Dataset;
 import org.broadinstitute.consent.http.models.Match;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.jdbi.v3.core.Jdbi;
 
 public class MatchService implements ConsentLogger {
 
@@ -29,15 +30,11 @@ public class MatchService implements ConsentLogger {
 
   @Inject
   public MatchService(
-      MatchDAO matchDAO,
-      DataAccessRequestDAO dataAccessRequestDAO,
-      DatasetDAO datasetDAO,
-      UseRestrictionConverter useRestrictionConverter,
-      OntologyService ontologyService) {
-    this.matchDAO = matchDAO;
-    this.dataAccessRequestDAO = dataAccessRequestDAO;
+      Jdbi jdbi, UseRestrictionConverter useRestrictionConverter, OntologyService ontologyService) {
+    this.matchDAO = jdbi.onDemand(MatchDAO.class);
+    this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
     this.useRestrictionConverter = useRestrictionConverter;
-    this.datasetDAO = datasetDAO;
+    this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
     this.dataUseMatcherV4 = new DataUseMatcherV4(ontologyService);
   }
 

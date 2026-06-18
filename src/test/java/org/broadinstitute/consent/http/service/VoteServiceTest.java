@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
-import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -64,6 +63,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.Da
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.server.ContainerRequest;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -77,7 +77,7 @@ class VoteServiceTest extends AbstractTestHelper {
 
   private VoteService service;
 
-  @Mock private DAOContainer daoContainer;
+  @Mock private Jdbi jdbi;
   @Mock private UserDAO userDAO;
   @Mock private DacDAO dacDAO;
   @Mock private DataAccessRequestDAO dataAccessRequestDAO;
@@ -91,13 +91,13 @@ class VoteServiceTest extends AbstractTestHelper {
 
   @BeforeEach
   void initService() {
-    when(daoContainer.getUserDAO()).thenReturn(userDAO);
-    when(daoContainer.getDacDAO()).thenReturn(dacDAO);
-    when(daoContainer.getDataAccessRequestDAO()).thenReturn(dataAccessRequestDAO);
-    when(daoContainer.getDatasetDAO()).thenReturn(datasetDAO);
-    when(daoContainer.getElectionDAO()).thenReturn(electionDAO);
-    when(daoContainer.getVoteDAO()).thenReturn(voteDAO);
-    service = new VoteService(daoContainer, emailService, voteServiceDAO, ontologyService);
+    when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
+    when(jdbi.onDemand(DacDAO.class)).thenReturn(dacDAO);
+    when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(dataAccessRequestDAO);
+    when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
+    when(jdbi.onDemand(ElectionDAO.class)).thenReturn(electionDAO);
+    when(jdbi.onDemand(VoteDAO.class)).thenReturn(voteDAO);
+    service = new VoteService(jdbi, voteServiceDAO, emailService, ontologyService);
   }
 
   @Test

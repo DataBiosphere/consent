@@ -17,6 +17,7 @@ import org.broadinstitute.consent.http.models.DarMetricsSummary;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.DataAccessRequestData;
 import org.broadinstitute.consent.http.models.Dataset;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +27,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class MetricsServiceTest extends AbstractTestHelper {
 
+  @Mock private Jdbi jdbi;
+
   @Mock private DatasetDAO dataSetDAO;
 
   @Mock private DataAccessRequestDAO darDAO;
@@ -34,7 +37,9 @@ class MetricsServiceTest extends AbstractTestHelper {
 
   @BeforeEach
   void initService() {
-    service = new MetricsService(dataSetDAO, darDAO);
+    when(jdbi.onDemand(DatasetDAO.class)).thenReturn(dataSetDAO);
+    when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(darDAO);
+    service = new MetricsService(jdbi);
   }
 
   @Test

@@ -27,7 +27,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DaaDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
@@ -66,6 +65,7 @@ import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.CountryValidator;
 import org.glassfish.jersey.server.ContainerRequest;
+import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.JdbiException;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 
@@ -105,24 +105,24 @@ public class DataAccessRequestService implements ConsentLogger {
 
   @Inject
   public DataAccessRequestService(
-      CounterService counterService,
-      DAOContainer container,
-      DacService dacService,
+      Jdbi jdbi,
       DataAccessRequestServiceDAO dataAccessRequestServiceDAO,
+      CounterService counterService,
+      DacService dacService,
       UserService userService,
       InstitutionService institutionService,
       EmailService emailService,
       DACAutomationRuleService ruleService,
       ConsentConfiguration config) {
     this.counterService = counterService;
-    this.datasetDAO = container.getDatasetDAO();
-    this.dataAccessRequestDAO = container.getDataAccessRequestDAO();
-    this.darCollectionDAO = container.getDarCollectionDAO();
-    this.electionDAO = container.getElectionDAO();
-    this.matchDAO = container.getMatchDAO();
-    this.voteDAO = container.getVoteDAO();
-    this.userDAO = container.getUserDAO();
-    this.daaDAO = container.getDaaDAO();
+    this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
+    this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
+    this.darCollectionDAO = jdbi.onDemand(DarCollectionDAO.class);
+    this.electionDAO = jdbi.onDemand(ElectionDAO.class);
+    this.matchDAO = jdbi.onDemand(MatchDAO.class);
+    this.voteDAO = jdbi.onDemand(VoteDAO.class);
+    this.userDAO = jdbi.onDemand(UserDAO.class);
+    this.daaDAO = jdbi.onDemand(DaaDAO.class);
     this.dacService = dacService;
     this.dataAccessRequestServiceDAO = dataAccessRequestServiceDAO;
     this.ruleService = ruleService;

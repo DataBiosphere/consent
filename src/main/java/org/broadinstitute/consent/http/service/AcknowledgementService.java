@@ -1,5 +1,6 @@
 package org.broadinstitute.consent.http.service;
 
+import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import java.io.IOException;
@@ -14,6 +15,7 @@ import org.broadinstitute.consent.http.models.Acknowledgement;
 import org.broadinstitute.consent.http.models.DataAccessRequest;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.jdbi.v3.core.Jdbi;
 
 public class AcknowledgementService implements ConsentLogger {
 
@@ -22,12 +24,10 @@ public class AcknowledgementService implements ConsentLogger {
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final EmailService emailService;
 
-  public AcknowledgementService(
-      AcknowledgementDAO acknowledgementDAO,
-      DataAccessRequestDAO dataAccessRequestDAO,
-      EmailService emailService) {
-    this.acknowledgementDAO = acknowledgementDAO;
-    this.dataAccessRequestDAO = dataAccessRequestDAO;
+  @Inject
+  public AcknowledgementService(Jdbi jdbi, EmailService emailService) {
+    this.acknowledgementDAO = jdbi.onDemand(AcknowledgementDAO.class);
+    this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
     this.emailService = emailService;
   }
 

@@ -49,6 +49,8 @@ import org.broadinstitute.consent.http.models.Role;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.dao.DacServiceDAO;
+import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -60,6 +62,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DacServiceTest extends AbstractTestHelper {
 
   private DacService service;
+
+  @Mock private Jdbi jdbi;
 
   @Mock private DacDAO dacDAO;
 
@@ -81,25 +85,20 @@ class DacServiceTest extends AbstractTestHelper {
 
   @Mock private DACAutomationRuleDAO ruleDAO;
 
-  private void initService() {
-    service =
-        new DacService(
-            dacDAO,
-            userDAO,
-            dataSetDAO,
-            electionDAO,
-            dataAccessRequestDAO,
-            voteService,
-            elasticSearchService,
-            daaService,
-            dacServiceDAO,
-            ruleDAO);
+  @BeforeEach
+  void setUp() {
+    when(jdbi.onDemand(DacDAO.class)).thenReturn(dacDAO);
+    when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
+    when(jdbi.onDemand(DatasetDAO.class)).thenReturn(dataSetDAO);
+    when(jdbi.onDemand(ElectionDAO.class)).thenReturn(electionDAO);
+    when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(dataAccessRequestDAO);
+    when(jdbi.onDemand(DACAutomationRuleDAO.class)).thenReturn(ruleDAO);
+    service = new DacService(jdbi, dacServiceDAO, voteService, elasticSearchService, daaService);
   }
 
   @Test
   void testFindAll() {
     when(dacDAO.findAll()).thenReturn(Collections.emptyList());
-    initService();
 
     assertTrue(service.findAll().isEmpty());
   }
@@ -129,8 +128,6 @@ class DacServiceTest extends AbstractTestHelper {
     when(dacDAO.findAll()).thenReturn(List.of(broadDac, dac2));
     when(daaService.isBroadDAA(anyInt(), any(), any())).thenReturn(true); // Mock isBroadDAA method
 
-    initService();
-
     List<Dac> foundDacs = service.findAll();
     assertEquals(2, foundDacs.size());
     assertTrue(foundDacs.get(0).getAssociatedDaa().getBroadDaa());
@@ -146,7 +143,6 @@ class DacServiceTest extends AbstractTestHelper {
     when(dacDAO.findMembersByDacIdAndRoleId(dacId, UserRoles.MEMBER.getRoleId()))
         .thenReturn(Collections.singletonList(getDacUsers().get(1)));
     when(daaService.isBroadDAA(anyInt(), any(), any())).thenReturn(true);
-    initService();
 
     Dac dac = service.findById(dacId);
     assertNotNull(dac);
@@ -160,7 +156,6 @@ class DacServiceTest extends AbstractTestHelper {
   void testCreateDac() {
     when(dacDAO.createDac(anyString(), anyString(), any()))
         .thenReturn(getDacs().getFirst().getDacId());
-    initService();
 
     Integer dacId = service.createDac("name", "description", 1);
     assertEquals(getDacs().getFirst().getDacId(), dacId);
@@ -170,7 +165,6 @@ class DacServiceTest extends AbstractTestHelper {
   void testCreateDacWithEmail() {
     when(dacDAO.createDac(anyString(), anyString(), anyString(), any()))
         .thenReturn(getDacs().getFirst().getDacId());
-    initService();
 
     Integer dacId = service.createDac("name", "description", "email@test.com", 1);
     assertEquals(getDacs().getFirst().getDacId(), dacId);
@@ -179,7 +173,6 @@ class DacServiceTest extends AbstractTestHelper {
   @Test
   void testUpdateDac() {
     doNothing().when(dacDAO).updateDac(anyString(), anyString(), any(), any());
-    initService();
 
     try {
       service.updateDac("name", "description", 1, 1);
@@ -191,7 +184,6 @@ class DacServiceTest extends AbstractTestHelper {
   @Test
   void testUpdateDacWithEmail() {
     doNothing().when(dacDAO).updateDac(anyString(), anyString(), anyString(), any(), any());
-    initService();
 
     try {
       service.updateDac("name", "description", "test@email.com", 1, 1);
@@ -213,7 +205,7 @@ class DacServiceTest extends AbstractTestHelper {
     doThrow(new IllegalArgumentException())
         .when(dacServiceDAO)
         .deleteDacAndRemoveDaaAssociation(any(), any());
-    initService();
+
     assertThrows(IllegalArgumentException.class, () -> service.deleteDac(any(), dac.getDacId()));
   }
 
@@ -228,7 +220,6 @@ class DacServiceTest extends AbstractTestHelper {
     dac.setName(dacName);
     dac.setAssociatedDaa(daa);
     when(dacDAO.findById(any())).thenReturn(dac);
-    initService();
 
     if (dac.getName().toLowerCase().contains("broad")) {
       assertThrows(IllegalArgumentException.class, () -> service.deleteDac(any(), dac.getDacId()));
@@ -242,7 +233,6 @@ class DacServiceTest extends AbstractTestHelper {
 
     List<Dataset> datasets = getDatasets();
     when(dataSetDAO.findDatasetsAssociatedWithDac(1)).thenReturn(datasets);
-    initService();
 
     List<Dataset> returned = service.findDatasetsByDacId(1);
     assertNotNull(returned);
@@ -254,7 +244,6 @@ class DacServiceTest extends AbstractTestHelper {
     when(dacDAO.findMembersByDacId(anyInt()))
         .thenReturn(Collections.singletonList(getDacUsers().getFirst()));
     when(dacDAO.findUserRolesForUsers(any())).thenReturn(getDacUsers().getFirst().getRoles());
-    initService();
 
     List<User> users = service.findMembersByDacId(1);
     assertNotNull(users);
@@ -283,7 +272,6 @@ class DacServiceTest extends AbstractTestHelper {
     when(dataAccessRequestDAO.findByReferenceId(any())).thenReturn(dar);
     when(electionDAO.findOpenElectionsByDacId(any())).thenReturn(elections);
     doNothing().when(dacDAO).addDacMember(anyInt(), anyInt(), anyInt(), anyInt());
-    initService();
 
     Role role = new Role(UserRoles.CHAIRPERSON.getRoleId(), UserRoles.CHAIRPERSON.getRoleName());
     User user1 = service.addDacMember(role, user, dac, 1);
@@ -302,7 +290,6 @@ class DacServiceTest extends AbstractTestHelper {
     dac.setMembers(Collections.singletonList(member));
     doNothing().when(dacDAO).removeDacMember(anyInt(), anyInt());
     doNothing().when(voteService).deleteOpenDacVotesForUser(any(), any());
-    initService();
 
     try {
       service.removeDacMember(role, member, dac, 1);
@@ -324,7 +311,6 @@ class DacServiceTest extends AbstractTestHelper {
     doNothing().when(dacDAO).removeDacMember(anyInt(), anyInt());
     doNothing().when(voteService).deleteOpenDacVotesForUser(any(), any());
     when(ruleDAO.auditedDeleteDACRuleSettingByUser(anyInt(), anyInt(), anyInt())).thenReturn(1);
-    initService();
 
     try {
       service.removeDacMember(role, chair1, dac, 1);
@@ -343,7 +329,6 @@ class DacServiceTest extends AbstractTestHelper {
     User chair = getDacUsers().get(0);
     dac.setChairpersons(Collections.singletonList(chair));
     dac.setMembers(Collections.singletonList(getDacUsers().get(1)));
-    initService();
 
     assertThrows(
         BadRequestException.class,
@@ -362,7 +347,6 @@ class DacServiceTest extends AbstractTestHelper {
     user.getRoles().add(new UserRole(UserRoles.ADMIN.getRoleId(), UserRoles.ADMIN.getRoleName()));
 
     // User is an admin user
-    initService();
 
     List<DataAccessRequest> dars = getDataAccessRequests();
 
@@ -377,8 +361,6 @@ class DacServiceTest extends AbstractTestHelper {
     List<Dataset> memberDataSets = Collections.singletonList(getDatasets().getFirst());
     when(dataSetDAO.findDatasetIdsByDACUserId(getMember().getUserId()))
         .thenReturn(List.of(memberDataSets.getFirst().getDatasetId()));
-
-    initService();
 
     List<DataAccessRequest> dars = getDataAccessRequests();
 
@@ -395,8 +377,6 @@ class DacServiceTest extends AbstractTestHelper {
     when(dataSetDAO.findDatasetIdsByDACUserId(getMember().getUserId()))
         .thenReturn(List.of(memberDataSets.getFirst().getDatasetId()));
 
-    initService();
-
     List<DataAccessRequest> dars = getDataAccessRequests();
 
     List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMember());
@@ -410,8 +390,6 @@ class DacServiceTest extends AbstractTestHelper {
     // Member no direct access to datasets
     when(dataSetDAO.findDatasetIdsByDACUserId(getMember().getUserId())).thenReturn(List.of());
 
-    initService();
-
     List<DataAccessRequest> dars = getDataAccessRequests();
 
     List<DataAccessRequest> filtered = service.filterDataAccessRequestsByDac(dars, getMember());
@@ -424,7 +402,6 @@ class DacServiceTest extends AbstractTestHelper {
   void testFindDacsByUserAdminCase() {
     List<Dac> dacs = getDacs();
     when(dacDAO.findAll()).thenReturn(dacs);
-    initService();
 
     List<Dac> dacsForUser = service.findDacsWithMembersOption(false);
     assertEquals(dacsForUser.size(), dacs.size());
@@ -434,7 +411,6 @@ class DacServiceTest extends AbstractTestHelper {
   void testFindDacsByUserChairCase() {
     List<Dac> dacs = getDacs();
     when(dacDAO.findAll()).thenReturn(dacs);
-    initService();
 
     List<Dac> dacsForUser = service.findDacsWithMembersOption(false);
     assertEquals(dacsForUser.size(), dacs.size());
@@ -454,7 +430,6 @@ class DacServiceTest extends AbstractTestHelper {
     when(dacServiceDAO.findConvertibleDatasetIds(anyInt(), any())).thenReturn(List.of(101, 102));
     when(dacServiceDAO.convertDacDatasetsToExternal(anyInt(), anyInt(), any()))
         .thenReturn(expected);
-    initService();
 
     DacDatasetExternalizationResponse actual = service.convertDacDatasetsToExternal(1, 10, request);
     assertEquals(expected, actual);
@@ -474,7 +449,6 @@ class DacServiceTest extends AbstractTestHelper {
         .thenReturn(
             new DacDatasetExternalizationResponse(
                 1, true, "policy update", Instant.now(), Instant.now(), 2, 1, 1, 3, 0, 2));
-    initService();
 
     service.convertDacDatasetsToExternal(1, 10, request);
 
@@ -483,7 +457,7 @@ class DacServiceTest extends AbstractTestHelper {
 
   @Test
   void testConvertDacDatasetsToExternalRequiresRevocation() {
-    initService();
+
     DacDatasetExternalizationRequest request =
         new DacDatasetExternalizationRequest("policy update", false, false, true, null);
     assertThrows(

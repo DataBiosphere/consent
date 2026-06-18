@@ -27,6 +27,8 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUser;
 import org.broadinstitute.consent.http.models.tdr.ApprovedUsers;
+import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -34,6 +36,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class TDRServiceTest extends AbstractTestHelper {
+
+  @Mock private Jdbi jdbi;
 
   @Mock private DataAccessRequestService darService;
 
@@ -48,8 +52,12 @@ class TDRServiceTest extends AbstractTestHelper {
   @Mock AuthUser authUser;
   private TDRService service;
 
-  private void initService() {
-    service = new TDRService(darService, datasetDAO, libraryCardDAO, samDAO, userDAO);
+  @BeforeEach
+  void setUp() {
+    when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
+    when(jdbi.onDemand(LibraryCardDAO.class)).thenReturn(libraryCardDAO);
+    when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
+    service = new TDRService(jdbi, darService, samDAO);
   }
 
   @Test
@@ -88,7 +96,6 @@ class TDRServiceTest extends AbstractTestHelper {
     // internal lab staff.
     when(libraryCardDAO.findByUserEmails(anyList()))
         .thenReturn(List.of(libraryCard1, libraryCard2, libraryCard3));
-    initService();
 
     ApprovedUsers approvedUsers = service.getApprovedUsersForDataset(authUser, dataset);
     List<String> approvedUsersEmails =
@@ -124,7 +131,6 @@ class TDRServiceTest extends AbstractTestHelper {
     when(darService.getApprovedDARsForDataset(dataset)).thenReturn(List.of(dar1, dar2));
     when(userDAO.findUsers(any())).thenReturn(List.of(user1, user2));
 
-    initService();
     ApprovedUsers approvedUsers = service.getApprovedUsersForDataset(authUser, dataset);
     assertTrue(approvedUsers.approvedUsers().isEmpty());
   }
@@ -134,7 +140,6 @@ class TDRServiceTest extends AbstractTestHelper {
     Dataset dataset = new Dataset();
     when(darService.getApprovedDARsForDataset(any())).thenReturn(List.of());
 
-    initService();
     ApprovedUsers approvedUsers = service.getApprovedUsersForDataset(authUser, dataset);
     assertTrue(approvedUsers.approvedUsers().isEmpty());
     verify(userDAO, never()).findUsers(any());
@@ -160,7 +165,6 @@ class TDRServiceTest extends AbstractTestHelper {
 
     when(datasetDAO.findDatasetsByAlias(identifierList)).thenReturn(List.of(dataset1, dataset2));
 
-    initService();
     List<Dataset> datasetIds = service.getDatasetsByIdentifier(identifierList);
 
     assertEquals(datasetIds.size(), identifierList.size());
@@ -187,7 +191,7 @@ class TDRServiceTest extends AbstractTestHelper {
     when(libraryCardDAO.findByUserEmails(anyList())).thenReturn(List.of(libraryCard1));
 
     // Spy the service to intercept logInfo
-    initService();
+
     TDRService spyService = spy(service);
     doNothing().when(spyService).logInfo(any());
 

@@ -5,14 +5,15 @@ import java.util.Collections;
 import java.util.List;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.models.Election;
+import org.jdbi.v3.core.Jdbi;
 
 public class ElectionService {
 
   private final ElectionDAO electionDAO;
 
   @Inject
-  public ElectionService(ElectionDAO electionDAO) {
-    this.electionDAO = electionDAO;
+  public ElectionService(Jdbi jdbi) {
+    this.electionDAO = jdbi.onDemand(ElectionDAO.class);
   }
 
   public List<Election> findElectionsWithCardHoldingUsersByElectionIds(List<Integer> electionIds) {

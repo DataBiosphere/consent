@@ -38,6 +38,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.DraftServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,6 +47,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DraftServiceTest {
+
+  @Mock private Jdbi jdbi;
 
   @Mock private DraftDAO draftDAO;
 
@@ -61,7 +64,8 @@ class DraftServiceTest {
 
   @BeforeEach
   void beforeEach() {
-    draftService = new DraftService(draftDAO, draftServiceDAO, gcsService);
+    when(jdbi.onDemand(DraftDAO.class)).thenReturn(draftDAO);
+    draftService = new DraftService(jdbi, draftServiceDAO, gcsService);
     user = new User();
     user.setEmail("email@email.com");
     user.setUserId(1);

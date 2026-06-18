@@ -36,6 +36,7 @@ import org.broadinstitute.consent.http.util.ComplianceLogger;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.CountryValidator;
 import org.glassfish.jersey.server.ContainerRequest;
+import org.jdbi.v3.core.Jdbi;
 
 public class DACAutomationRuleService implements ConsentLogger {
 
@@ -50,20 +51,13 @@ public class DACAutomationRuleService implements ConsentLogger {
 
   @Inject
   public DACAutomationRuleService(
-      DataAccessRequestDAO dataAccessRequestDAO,
-      DatasetDAO datasetDAO,
-      DACAutomationRuleDAO ruleDAO,
-      ElectionDAO electionDAO,
-      UserDAO userDAO,
-      VoteDAO voteDAO,
-      VoteServiceDAO voteServiceDAO,
-      VoteService voteService) {
-    this.dataAccessRequestDAO = dataAccessRequestDAO;
-    this.datasetDAO = datasetDAO;
-    this.ruleDAO = ruleDAO;
-    this.electionDAO = electionDAO;
-    this.userDAO = userDAO;
-    this.voteDAO = voteDAO;
+      Jdbi jdbi, VoteServiceDAO voteServiceDAO, VoteService voteService) {
+    this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
+    this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
+    this.ruleDAO = jdbi.onDemand(DACAutomationRuleDAO.class);
+    this.electionDAO = jdbi.onDemand(ElectionDAO.class);
+    this.userDAO = jdbi.onDemand(UserDAO.class);
+    this.voteDAO = jdbi.onDemand(VoteDAO.class);
     this.voteService = voteService;
     this.voteServiceDAO = voteServiceDAO;
   }

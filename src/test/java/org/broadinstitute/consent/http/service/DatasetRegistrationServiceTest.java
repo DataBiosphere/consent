@@ -72,6 +72,7 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.DatasetUpda
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -86,6 +87,8 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
 
   private DatasetRegistrationService datasetRegistrationService;
   private ExecutorService executorService;
+
+  @Mock private Jdbi jdbi;
 
   @Mock private DatasetDAO datasetDAO;
 
@@ -106,15 +109,16 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
   @BeforeEach
   void setUp() {
     executorService = Executors.newVirtualThreadPerTaskExecutor();
+    when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
+    when(jdbi.onDemand(DacDAO.class)).thenReturn(dacDAO);
+    when(jdbi.onDemand(FileStorageObjectDAO.class)).thenReturn(fileStorageObjectDAO);
+    when(jdbi.onDemand(StudyDAO.class)).thenReturn(studyDAO);
     datasetRegistrationService =
         new DatasetRegistrationService(
-            datasetDAO,
-            dacDAO,
+            jdbi,
             datasetServiceDAO,
-            fileStorageObjectDAO,
             gcsService,
             elasticSearchService,
-            studyDAO,
             emailService,
             executorService);
   }

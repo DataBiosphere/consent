@@ -12,10 +12,10 @@ import org.jdbi.v3.core.Jdbi;
 
 public class UserServiceDAO {
 
-  Jdbi jdbi;
-  LibraryCardDAO libraryCardDAO;
-  UserDAO userDAO;
-  UserRoleDAO userRoleDAO;
+  private final Jdbi jdbi;
+  private final LibraryCardDAO libraryCardDAO;
+  private final UserDAO userDAO;
+  private final UserRoleDAO userRoleDAO;
 
   @Inject
   public UserServiceDAO(

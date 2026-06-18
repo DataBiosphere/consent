@@ -15,6 +15,7 @@ import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.InstitutionUtil;
+import org.jdbi.v3.core.Jdbi;
 
 public class InstitutionService implements ConsentLogger {
 
@@ -24,11 +25,9 @@ public class InstitutionService implements ConsentLogger {
 
   @Inject
   public InstitutionService(
-      InstitutionDAO institutionDAO,
-      UserDAO userDAO,
-      InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement) {
-    this.institutionDAO = institutionDAO;
-    this.userDAO = userDAO;
+      Jdbi jdbi, InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement) {
+    this.institutionDAO = jdbi.onDemand(InstitutionDAO.class);
+    this.userDAO = jdbi.onDemand(UserDAO.class);
     this.institutionAndLibraryCardEnforcement = institutionAndLibraryCardEnforcement;
   }
 

@@ -43,6 +43,8 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -50,6 +52,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DaaServiceTest extends AbstractTestHelper {
+
+  @Mock private Jdbi jdbi;
 
   @Mock private DaaServiceDAO daaServiceDAO;
 
@@ -72,16 +76,18 @@ class DaaServiceTest extends AbstractTestHelper {
 
   private DaaService service;
 
+  @BeforeEach
+  void setUp() {
+    when(jdbi.onDemand(DaaDAO.class)).thenReturn(daaDAO);
+    when(jdbi.onDemand(DacDAO.class)).thenReturn(dacDAO);
+  }
+
+  // Called per-test rather than @BeforeEach so each test can configure collaborator stubs before
+  // constructing the service.
   private void initService() {
     service =
         new DaaService(
-            daaServiceDAO,
-            daaDAO,
-            gcsService,
-            emailService,
-            userService,
-            dacDAO,
-            libraryCardService);
+            jdbi, daaServiceDAO, gcsService, emailService, userService, libraryCardService);
   }
 
   @Test

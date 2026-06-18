@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
@@ -38,6 +37,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserVoteReminder;
 import org.broadinstitute.consent.http.models.mail.MailMessageInsert;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.result.ResultIterable;
 
 public class EmailService implements ConsentLogger {
@@ -57,16 +57,16 @@ public class EmailService implements ConsentLogger {
 
   @Inject
   public EmailService(
-      DAOContainer daoContainer,
+      Jdbi jdbi,
       SendGridAPI sendGridAPI,
       FreeMarkerTemplateHelper helper,
       ConsentConfiguration config) {
-    this.userDAO = daoContainer.getUserDAO();
+    this.userDAO = jdbi.onDemand(UserDAO.class);
     this.templateHelper = helper;
-    this.emailDAO = daoContainer.getMailMessageDAO();
-    this.electionDAO = daoContainer.getElectionDAO();
-    this.datasetDAO = daoContainer.getDatasetDAO();
-    this.studyDAO = daoContainer.getStudyDAO();
+    this.emailDAO = jdbi.onDemand(MailMessageDAO.class);
+    this.electionDAO = jdbi.onDemand(ElectionDAO.class);
+    this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
+    this.studyDAO = jdbi.onDemand(StudyDAO.class);
     this.sendGridAPI = sendGridAPI;
     this.serverUrl = config.getServicesConfiguration().getLocalURL();
     this.fromAccount = config.getMailConfiguration().getGoogleAccount();

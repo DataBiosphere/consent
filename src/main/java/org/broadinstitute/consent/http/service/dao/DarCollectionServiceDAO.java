@@ -29,10 +29,10 @@ public class DarCollectionServiceDAO {
 
   @Inject
   public DarCollectionServiceDAO(
-      DatasetDAO datasetDAO, ElectionDAO electionDAO, Jdbi jdbi, UserDAO userDAO) {
+      Jdbi jdbi, DatasetDAO datasetDAO, ElectionDAO electionDAO, UserDAO userDAO) {
+    this.jdbi = jdbi;
     this.datasetDAO = datasetDAO;
     this.electionDAO = electionDAO;
-    this.jdbi = jdbi;
     this.userDAO = userDAO;
   }
 

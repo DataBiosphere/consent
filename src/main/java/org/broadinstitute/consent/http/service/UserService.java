@@ -43,6 +43,7 @@ import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.jdbi.v3.core.Jdbi;
 
 public class UserService implements ConsentLogger {
 
@@ -62,24 +63,19 @@ public class UserService implements ConsentLogger {
 
   @Inject
   public UserService(
-      UserDAO userDAO,
-      UserPropertyDAO userPropertyDAO,
-      UserRoleDAO userRoleDAO,
-      InstitutionDAO institutionDAO,
+      Jdbi jdbi,
       UserServiceDAO userServiceDAO,
-      DaaDAO daaDAO,
       InstitutionService institutionService,
-      InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement,
-      UserRedactionAuditDAO userRedactionAuditDAO) {
-    this.userDAO = userDAO;
-    this.userPropertyDAO = userPropertyDAO;
-    this.userRoleDAO = userRoleDAO;
-    this.institutionDAO = institutionDAO;
+      InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement) {
+    this.userDAO = jdbi.onDemand(UserDAO.class);
+    this.userPropertyDAO = jdbi.onDemand(UserPropertyDAO.class);
+    this.userRoleDAO = jdbi.onDemand(UserRoleDAO.class);
+    this.institutionDAO = jdbi.onDemand(InstitutionDAO.class);
     this.userServiceDAO = userServiceDAO;
-    this.daaDAO = daaDAO;
+    this.daaDAO = jdbi.onDemand(DaaDAO.class);
     this.institutionService = institutionService;
     this.institutionAndLibraryCardEnforcement = institutionAndLibraryCardEnforcement;
-    this.userRedactionAuditDAO = userRedactionAuditDAO;
+    this.userRedactionAuditDAO = jdbi.onDemand(UserRedactionAuditDAO.class);
   }
 
   /**
