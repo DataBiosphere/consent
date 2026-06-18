@@ -13,17 +13,10 @@ import org.jdbi.v3.core.Jdbi;
 public class UserServiceDAO {
 
   private final Jdbi jdbi;
-  private final LibraryCardDAO libraryCardDAO;
-  private final UserDAO userDAO;
-  private final UserRoleDAO userRoleDAO;
 
   @Inject
-  public UserServiceDAO(
-      Jdbi jdbi, LibraryCardDAO libraryCardDAO, UserDAO userDAO, UserRoleDAO userRoleDAO) {
+  public UserServiceDAO(Jdbi jdbi) {
     this.jdbi = jdbi;
-    this.libraryCardDAO = libraryCardDAO;
-    this.userDAO = userDAO;
-    this.userRoleDAO = userRoleDAO;
   }
 
   public void insertRoleAndInstitutionTxn(UserRole role, Integer institutionId, Integer userId) {

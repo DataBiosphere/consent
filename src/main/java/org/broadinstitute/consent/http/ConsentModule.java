@@ -702,9 +702,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   synchronized UserServiceDAO providesUserServiceDAO() {
     if (userServiceDAO == null) {
-      userServiceDAO =
-          new UserServiceDAO(
-              providesJdbi(), providesLibraryCardDAO(), providesUserDAO(), providesUserRoleDAO());
+      userServiceDAO = new UserServiceDAO(providesJdbi());
     }
     return userServiceDAO;
   }
