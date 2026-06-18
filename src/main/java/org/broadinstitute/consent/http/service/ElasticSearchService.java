@@ -1,5 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
+import static org.broadinstitute.consent.http.models.StudyPatch.EXTERNAL_IDENTIFIER;
+import static org.broadinstitute.consent.http.models.StudyPatch.EXTERNAL_IDENTIFIER_TYPE;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.assets;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.data;
 
@@ -294,9 +296,9 @@ public class ElasticSearchService implements ConsentLogger {
         .ifPresent(prop -> term.setAssets(buildMapFromPropertyValue(prop.getValue())));
     findStudyProperty(study.getProperties(), data)
         .ifPresent(prop -> term.setData(buildMapFromPropertyValue(prop.getValue())));
-    findStudyProperty(study.getProperties(), "externalIdentifier")
+    findStudyProperty(study.getProperties(), EXTERNAL_IDENTIFIER)
         .ifPresent(prop -> term.setExternalIdentifier(prop.getValue().toString()));
-    findStudyProperty(study.getProperties(), "externalIdentifierType")
+    findStudyProperty(study.getProperties(), EXTERNAL_IDENTIFIER_TYPE)
         .ifPresent(prop -> term.setExternalIdentifierType(prop.getValue().toString()));
     return term;
   }
