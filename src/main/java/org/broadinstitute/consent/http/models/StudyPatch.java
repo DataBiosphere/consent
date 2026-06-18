@@ -28,7 +28,9 @@ public record StudyPatch(
     List<String> dataCustodianEmail,
     String alternativeDataSharingPlanTargetDeliveryDate,
     String alternativeDataSharingPlanTargetPublicReleaseDate,
-    Boolean publicVisibility) {
+    Boolean publicVisibility,
+    String externalIdentifier,
+    String externalIdentifierType) {
 
   public static final String STUDY_TYPE = "studyType";
   public static final String PHENOTYPE_INDICATION = "phenotypeIndication";
@@ -39,6 +41,8 @@ public record StudyPatch(
       "alternativeDataSharingPlanTargetDeliveryDate";
   public static final String ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE =
       "alternativeDataSharingPlanTargetPublicReleaseDate";
+  public static final String EXTERNAL_IDENTIFIER = "externalIdentifier";
+  public static final String EXTERNAL_IDENTIFIER_TYPE = "externalIdentifierType";
 
   public static StudyPatch fromJson(String json) {
     ObjectMapper mapper = new ObjectMapper();
@@ -104,6 +108,8 @@ public record StudyPatch(
     checks.add(checkTargetDate(study));
     checks.add(checkTargetReleaseDate(study));
     checks.add(checkPublicVisibility(study));
+    checks.add(checkExternalIdentifier(study));
+    checks.add(checkExternalIdentifierType(study));
     return checks.stream().anyMatch(Boolean::booleanValue);
   }
 
@@ -218,5 +224,29 @@ public record StudyPatch(
 
   private boolean checkPublicVisibility(Study study) {
     return publicVisibility() != null && !publicVisibility().equals(study.getPublicVisibility());
+  }
+
+  private boolean checkExternalIdentifier(Study study) {
+    Optional<StudyProperty> prop =
+        study.getProperties().stream()
+            .filter(p -> p.getKey().equals(EXTERNAL_IDENTIFIER))
+            .findFirst();
+    if (externalIdentifier() != null) {
+      return prop.map(studyProperty -> !externalIdentifier().equals(studyProperty.getValue()))
+          .orElse(true);
+    }
+    return false;
+  }
+
+  private boolean checkExternalIdentifierType(Study study) {
+    Optional<StudyProperty> prop =
+        study.getProperties().stream()
+            .filter(p -> p.getKey().equals(EXTERNAL_IDENTIFIER_TYPE))
+            .findFirst();
+    if (externalIdentifierType() != null) {
+      return prop.map(studyProperty -> !externalIdentifierType().equals(studyProperty.getValue()))
+          .orElse(true);
+    }
+    return false;
   }
 }

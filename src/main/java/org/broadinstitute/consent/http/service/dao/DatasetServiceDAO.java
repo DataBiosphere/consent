@@ -3,6 +3,8 @@ package org.broadinstitute.consent.http.service.dao;
 import static org.broadinstitute.consent.http.models.StudyPatch.ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE;
 import static org.broadinstitute.consent.http.models.StudyPatch.ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE;
 import static org.broadinstitute.consent.http.models.StudyPatch.DATA_CUSTODIAN_EMAIL;
+import static org.broadinstitute.consent.http.models.StudyPatch.EXTERNAL_IDENTIFIER;
+import static org.broadinstitute.consent.http.models.StudyPatch.EXTERNAL_IDENTIFIER_TYPE;
 import static org.broadinstitute.consent.http.models.StudyPatch.PHENOTYPE_INDICATION;
 import static org.broadinstitute.consent.http.models.StudyPatch.SPECIES_KEY;
 import static org.broadinstitute.consent.http.models.StudyPatch.STUDY_TYPE;
@@ -499,6 +501,15 @@ public class DatasetServiceDAO implements ConsentLogger {
               ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE,
               patch.alternativeDataSharingPlanTargetPublicReleaseDate(),
               PropertyType.String));
+    }
+    if (patch.externalIdentifier() != null) {
+      studyUpdate.props.add(
+          new StudyProperty(EXTERNAL_IDENTIFIER, patch.externalIdentifier(), PropertyType.String));
+    }
+    if (patch.externalIdentifierType() != null) {
+      studyUpdate.props.add(
+          new StudyProperty(
+              EXTERNAL_IDENTIFIER_TYPE, patch.externalIdentifierType(), PropertyType.String));
     }
     return studyUpdate;
   }

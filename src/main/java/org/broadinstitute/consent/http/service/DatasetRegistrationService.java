@@ -782,7 +782,15 @@ public class DatasetRegistrationService implements ConsentLogger {
                       return GsonUtil.getInstance().toJson(registration.getData());
                     }
                     return null;
-                  }));
+                  }),
+              new StudyPropertyExtractor(
+                  "externalIdentifier",
+                  PropertyType.String,
+                  DatasetRegistrationSchemaV1::getExternalIdentifier),
+              new StudyPropertyExtractor(
+                  "externalIdentifierType",
+                  PropertyType.String,
+                  DatasetRegistrationSchemaV1::getExternalIdentifierType));
 
   private static final List<DatasetPropertyExtractor>
       DATASET_REGISTRATION_V1_DATASET_PROPERTY_EXTRACTORS =
