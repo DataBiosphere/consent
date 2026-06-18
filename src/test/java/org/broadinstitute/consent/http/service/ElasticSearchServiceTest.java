@@ -239,7 +239,9 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
         createStudyProperty("phenotypeIndication", PropertyType.String),
         createStudyProperty("species", PropertyType.String),
         createStudyProperty("dataCustodianEmail", PropertyType.Json),
-        createStudyProperty("throughBioId", PropertyType.String));
+        createStudyProperty("throughBioId", PropertyType.String),
+        createStudyProperty("externalIdentifier", PropertyType.String),
+        createStudyProperty("externalIdentifierType", PropertyType.String));
     Dataset dataset = createDataset(user, updateUser, new DataUse(), dac);
     dataset.setProperties(
         Set.of(
@@ -359,6 +361,22 @@ class ElasticSearchServiceTest extends AbstractTestHelper {
             .filter(p -> p.getKey().equals("throughBioId"))
             .findFirst();
     assertTrue(throughBioIdProp.isPresent());
+    Optional<StudyProperty> externalIdentifierProp =
+        datasetRecord.study.getProperties().stream()
+            .filter(p -> p.getKey().equals("externalIdentifier"))
+            .findFirst();
+    assertTrue(externalIdentifierProp.isPresent());
+    assertEquals(
+        externalIdentifierProp.get().getValue().toString(),
+        term.getStudy().getExternalIdentifier());
+    Optional<StudyProperty> externalIdentifierTypeProp =
+        datasetRecord.study.getProperties().stream()
+            .filter(p -> p.getKey().equals("externalIdentifierType"))
+            .findFirst();
+    assertTrue(externalIdentifierTypeProp.isPresent());
+    assertEquals(
+        externalIdentifierTypeProp.get().getValue().toString(),
+        term.getStudy().getExternalIdentifierType());
   }
 
   @ParameterizedTest
