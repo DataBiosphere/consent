@@ -167,47 +167,46 @@ class DarCollectionDAOTest extends DAOTestHelper {
     DataAccessRequest testDar1 = (DataAccessRequest) collectionWithDataset.get(4);
     Dataset dataset = (Dataset) collectionWithDataset.get(2);
     DataAccessRequest testDar2 = createDAR(user, dataset, testDar1.getCollectionId());
-    dataAccessRequestDAO.updateDarCloseoutSO(user.getUserId(), testDar2.getReferenceId());
+    dataAccessRequestDAO.updateDarApprovalSO(user.getUserId(), testDar2.getReferenceId());
 
     DataAccessRequest testDar2Stored =
         dataAccessRequestDAO.findByReferenceId(testDar2.getReferenceId());
-    assertNotNull(testDar2Stored.getCloseoutSigningOfficialApprovedUserId());
-    assertNotNull(testDar2Stored.getCloseoutSigningOfficialApprovedDate());
+    assertNotNull(testDar2Stored.getApprovingSigningOfficialUserId());
+    assertNotNull(testDar2Stored.getApprovingSigningOfficialApprovedDate());
 
     DarCollection darCollection =
         darCollectionDAO.findDARCollectionByCollectionId(testDar2.getCollectionId());
 
-    assertNotNull(darCollection.getMostRecentDar().getCloseoutSigningOfficialApprovedDate());
+    assertNotNull(darCollection.getMostRecentDar().getApprovingSigningOfficialApprovedDate());
     assertEquals(
-        user.getUserId(),
-        darCollection.getMostRecentDar().getCloseoutSigningOfficialApprovedUserId());
+        user.getUserId(), darCollection.getMostRecentDar().getApprovingSigningOfficialUserId());
 
     DarCollection darCollectionByReferenceId =
         darCollectionDAO.findDARCollectionByReferenceId(testDar2.getReferenceId());
     assertNotNull(
-        darCollectionByReferenceId.getMostRecentDar().getCloseoutSigningOfficialApprovedDate());
+        darCollectionByReferenceId.getMostRecentDar().getApprovingSigningOfficialApprovedDate());
     assertEquals(
         user.getUserId(),
-        darCollectionByReferenceId.getMostRecentDar().getCloseoutSigningOfficialApprovedUserId());
+        darCollectionByReferenceId.getMostRecentDar().getApprovingSigningOfficialUserId());
 
     DarCollection darCollectionWithElectionsById =
         darCollectionDAO.findCollectionWithAllElectionsByCollectionId(testDar2.getCollectionId());
     assertNotNull(
-        darCollectionWithElectionsById.getMostRecentDar().getCloseoutSigningOfficialApprovedDate());
-    assertEquals(
-        user.getUserId(),
         darCollectionWithElectionsById
             .getMostRecentDar()
-            .getCloseoutSigningOfficialApprovedUserId());
+            .getApprovingSigningOfficialApprovedDate());
+    assertEquals(
+        user.getUserId(),
+        darCollectionWithElectionsById.getMostRecentDar().getApprovingSigningOfficialUserId());
 
     List<DarCollection> darCollectionList =
         darCollectionDAO.findDARCollectionByCollectionIds(List.of(testDar2.getCollectionId()));
     assertEquals(1, darCollectionList.size());
     assertNotNull(
-        darCollectionList.getFirst().getMostRecentDar().getCloseoutSigningOfficialApprovedDate());
+        darCollectionList.getFirst().getMostRecentDar().getApprovingSigningOfficialApprovedDate());
     assertEquals(
         user.getUserId(),
-        darCollectionList.getFirst().getMostRecentDar().getCloseoutSigningOfficialApprovedUserId());
+        darCollectionList.getFirst().getMostRecentDar().getApprovingSigningOfficialUserId());
   }
 
   @Test

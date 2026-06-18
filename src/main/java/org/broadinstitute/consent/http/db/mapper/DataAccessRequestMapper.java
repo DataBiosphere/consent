@@ -47,13 +47,9 @@ public class DataAccessRequestMapper implements RowMapper<DataAccessRequest>, Ro
     if (hasColumn(resultSet, "admin_dar_notes")) {
       dar.setAdminDarNotes(resultSet.getString("admin_dar_notes"));
     }
-    dar.setCloseoutSigningOfficialApprovedDate(
-        resultSet.getTimestamp("closeout_so_approval_timestamp"));
-    if (hasNonZeroColumn(resultSet, "closeout_approving_so_id")) {
-      dar.setCloseoutSigningOfficialApprovedUserId(resultSet.getInt("closeout_approving_so_id"));
+    if (hasColumn(resultSet, "approving_so_timestamp")) {
+      dar.setApprovingSigningOfficialApprovedDate(resultSet.getTimestamp("approving_so_timestamp"));
     }
-
-    dar.setApprovingSigningOfficialApprovedDate(resultSet.getTimestamp("approving_so_timestamp"));
     if (hasNonZeroColumn(resultSet, "approving_so_id")) {
       dar.setApprovingSigningOfficialUserId(resultSet.getInt("approving_so_id"));
     }

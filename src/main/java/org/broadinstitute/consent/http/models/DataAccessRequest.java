@@ -65,10 +65,6 @@ public class DataAccessRequest {
   @JsonProperty public Integer approvingSigningOfficialUserId;
   @JsonProperty public Timestamp approvingSigningOfficialApprovedDate;
 
-  @JsonProperty public Timestamp closeoutSigningOfficialApprovedDate;
-
-  @JsonProperty public Integer closeoutSigningOfficialApprovedUserId;
-
   @JsonProperty public boolean requiresSOApproval;
 
   public DataAccessRequest() {
@@ -254,24 +250,6 @@ public class DataAccessRequest {
 
   public void setAdminDarNotes(String adminDarNotes) {
     this.adminDarNotes = adminDarNotes;
-  }
-
-  public Integer getCloseoutSigningOfficialApprovedUserId() {
-    return closeoutSigningOfficialApprovedUserId;
-  }
-
-  public void setCloseoutSigningOfficialApprovedUserId(
-      Integer closeoutSigningOfficialApprovedUserId) {
-    this.closeoutSigningOfficialApprovedUserId = closeoutSigningOfficialApprovedUserId;
-  }
-
-  public Timestamp getCloseoutSigningOfficialApprovedDate() {
-    return closeoutSigningOfficialApprovedDate;
-  }
-
-  public void setCloseoutSigningOfficialApprovedDate(
-      Timestamp closeoutSigningOfficialApprovedDate) {
-    this.closeoutSigningOfficialApprovedDate = closeoutSigningOfficialApprovedDate;
   }
 
   public Integer getApprovingSigningOfficialUserId() {
@@ -494,13 +472,6 @@ public class DataAccessRequest {
     if (dar.getAdminDarNotes() != null) {
       copy.put("adminDarNotes", dar.getAdminDarNotes());
     }
-    if (dar.getCloseoutSigningOfficialApprovedUserId() != null) {
-      copy.put(
-          "closeoutSigningOfficialApprovedUserId", dar.getCloseoutSigningOfficialApprovedUserId());
-    }
-    if (dar.getCloseoutSigningOfficialApprovedDate() != null) {
-      copy.put("closeoutSigningOfficialApprovedDate", dar.getCloseoutSigningOfficialApprovedDate());
-    }
     if (dar.getApprovingSigningOfficialUserId() != null) {
       copy.put("approvingSigningOfficialUserId", dar.getApprovingSigningOfficialUserId());
     }
@@ -525,11 +496,6 @@ public class DataAccessRequest {
         && this.getData() != null
         && this.getData().getCloseoutSupplement() != null
         && !this.getData().getCloseoutSupplement().reasons().isEmpty();
-  }
-
-  public boolean getHasSOCloseoutApproval() {
-    return this.getCloseoutSigningOfficialApprovedDate() != null
-        && this.getCloseoutSigningOfficialApprovedUserId() != null;
   }
 
   public boolean getHasDMI() {

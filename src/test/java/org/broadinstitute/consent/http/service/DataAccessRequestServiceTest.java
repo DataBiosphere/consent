@@ -1990,8 +1990,8 @@ institution or library cards issued: Internal Collaborator member:  \
     DataAccessRequest dar = new DataAccessRequest();
     dar.setSubmissionDate(Timestamp.from(Instant.now()));
     dar.setParentId(1);
-    dar.setCloseoutSigningOfficialApprovedDate(Timestamp.from(Instant.now()));
-    dar.setCloseoutSigningOfficialApprovedUserId(1);
+    dar.setApprovingSigningOfficialApprovedDate(Timestamp.from(Instant.now()));
+    dar.setApprovingSigningOfficialUserId(1);
     DataAccessRequestData data = new DataAccessRequestData();
     data.setCloseoutSupplement(new CloseoutSupplement(List.of(""), "", 1));
     dar.setData(data);

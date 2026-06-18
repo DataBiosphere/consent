@@ -93,8 +93,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
         as up_property_key, up.property_value AS up_property_value,
         dar.id AS dar_id, dar.reference_id AS dar_reference_id, dar.collection_id AS dar_collection_id,
         dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, dar.era_commons_id AS dar_era_commons_id,
-        dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date,
-        dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id,
         dar.requires_so_approval AS dar_requires_so_approval, dar.approving_so_timestamp AS dar_approving_signing_official_approved_date,
         dar.approving_so_id AS dar_approving_signing_official_user_id,
         dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date,
@@ -140,8 +138,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
           + "dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, dar.era_commons_id AS dar_era_commons_id, "
           + "dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date, "
           + "dar.update_date AS dar_update_date, dar.data AS data, "
-          + "dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date, "
-          + "dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id, "
           + "dar.requires_so_approval AS dar_requires_so_approval, dar.approving_so_timestamp AS dar_approving_signing_official_approved_date,"
           + "dar.approving_so_id AS dar_approving_signing_official_user_id,"
           + "e.election_id AS e_election_id, e.reference_id AS e_reference_id, e.status AS e_status, e.create_date AS e_create_date, "
@@ -197,8 +193,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
        dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, dar.era_commons_id AS dar_era_commons_id,
        dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date,
        dar.update_date AS dar_update_date, (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
-       dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date,
-       dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id,
        dar.requires_so_approval AS dar_requires_so_approval, dar.approving_so_timestamp AS dar_approving_signing_official_approved_date,
        dar.approving_so_id AS dar_approving_signing_official_user_id,
        e.election_id AS e_election_id, e.reference_id AS e_reference_id, e.status AS e_status, e.create_date AS e_create_date,
@@ -253,8 +247,6 @@ public interface DarCollectionDAO extends Transactional<DarCollectionDAO> {
        dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, dar.era_commons_id AS dar_era_commons_id,
        dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date,
        dar.update_date AS dar_update_date, (regexp_replace(dar.data #>> '{}', '\\\\u0000', '', 'g'))::jsonb AS data,
-       dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date,
-       dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id,
        dar.requires_so_approval AS dar_requires_so_approval, dar.approving_so_timestamp AS dar_approving_signing_official_approved_date,
        dar.approving_so_id AS dar_approving_signing_official_user_id,
        e.election_id AS e_election_id, e.reference_id AS e_reference_id, e.status AS e_status, e.create_date AS e_create_date,

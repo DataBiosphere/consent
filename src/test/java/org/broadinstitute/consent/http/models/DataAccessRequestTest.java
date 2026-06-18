@@ -106,20 +106,6 @@ class DataAccessRequestTest {
   }
 
   @Test
-  void testGetHasCloseoutApproval_False() {
-    DataAccessRequest dar = new DataAccessRequest();
-    assertFalse(dar.getHasSOCloseoutApproval());
-  }
-
-  @Test
-  void testGetHasCloseoutApproval_True() {
-    DataAccessRequest dar = new DataAccessRequest();
-    dar.setCloseoutSigningOfficialApprovedUserId(1);
-    dar.setCloseoutSigningOfficialApprovedDate(Timestamp.from(Instant.now()));
-    assertTrue(dar.getHasSOCloseoutApproval());
-  }
-
-  @Test
   void testGetHasDMI_NoData() {
     DataAccessRequest dar = new DataAccessRequest();
     assertFalse(dar.getHasDMI());
@@ -229,8 +215,6 @@ class DataAccessRequestTest {
     dar.setCreateDate(now);
     dar.setApprovingSigningOfficialUserId(1);
     dar.setApprovingSigningOfficialApprovedDate(now);
-    dar.setCloseoutSigningOfficialApprovedDate(now);
-    dar.setCloseoutSigningOfficialApprovedUserId(1);
     dar.setRequiresSOApproval(true);
     dar.setAdminDarNotes("admin notes");
     Map<String, Object> simplifiedDar = assertDoesNotThrow(dar::convertToSimplifiedDar);

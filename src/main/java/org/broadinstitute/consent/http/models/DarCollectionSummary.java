@@ -31,14 +31,13 @@ public class DarCollectionSummary {
   @Expose private final Map<Integer, Set<String>> parentToReferenceIds;
   @Expose private boolean progressReport;
   @Expose private String latestReferenceId;
-  @Expose private Integer closeoutSigningOfficialId;
-  @Expose private Timestamp closeoutSigningOfficialApprovalDate;
   @Expose private List<String> dacNames;
   @Expose private Integer researcherId;
   @Expose private Integer institutionId;
   @Expose private Set<Integer> datasetIds;
   @Expose private boolean requiresSOApproval;
   @Expose private Integer soApproverId;
+  @Expose private Timestamp soApproverTimestamp;
   private String signingOfficialEmail;
 
   // Normally unused by the UI, but used in data population. Can be included in the JSON response
@@ -148,23 +147,6 @@ public class DarCollectionSummary {
     updateProgressReportStatus();
   }
 
-  public void setCloseoutSigningOfficialId(Integer darCloseoutSigningOfficialApprovalId) {
-    this.closeoutSigningOfficialId = darCloseoutSigningOfficialApprovalId;
-  }
-
-  public Timestamp getCloseoutSigningOfficialApprovalDate() {
-    return closeoutSigningOfficialApprovalDate;
-  }
-
-  public void setCloseoutSigningOfficialApprovalDate(
-      Timestamp darCloseoutSigningOfficialApprovalDate) {
-    this.closeoutSigningOfficialApprovalDate = darCloseoutSigningOfficialApprovalDate;
-  }
-
-  public Integer getCloseoutSigningOfficialApprovalId() {
-    return closeoutSigningOfficialId;
-  }
-
   public boolean isExpired() {
     return expired;
   }
@@ -217,12 +199,20 @@ public class DarCollectionSummary {
     return this.requiresSOApproval;
   }
 
-  public void setSOApprover(Integer soUserId) {
+  public void setSoApproverId(Integer soUserId) {
     this.soApproverId = soUserId;
   }
 
-  public Integer getSOApprover() {
+  public Integer getSoApproverId() {
     return this.soApproverId;
+  }
+
+  public void setSoApproverTimestamp(Timestamp soApproverTimestamp) {
+    this.soApproverTimestamp = soApproverTimestamp;
+  }
+
+  public Timestamp getSoApproverTimestamp() {
+    return this.soApproverTimestamp;
   }
 
   public void setDatasetIds(Set<Integer> datasetIds) {

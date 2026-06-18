@@ -21,9 +21,10 @@ public class DarCollection {
           + "dar.parent_id AS dar_parent_id, dar.user_id AS dar_userId, "
           + "dar.create_date AS dar_create_date, dar.submission_date AS dar_submission_date, "
           + "dar.update_date AS dar_update_date, dar.data AS data, "
-          + "dar.closeout_so_approval_timestamp AS dar_closeout_signing_official_approved_date, "
-          + "dar.closeout_approving_so_id AS dar_closeout_signing_official_approved_user_id, "
-          + "dar.data ->> 'projectTitle' as projectTitle ";
+          + "dar.data ->> 'projectTitle' as projectTitle, "
+          + "dar.requires_so_approval AS dar_requires_so_approval, "
+          + "dar.approving_so_timestamp AS dar_approving_signing_official_approved_date, "
+          + "dar.approving_so_id AS dar_approving_signing_official_user_id ";
 
   @JsonProperty private Integer darCollectionId;
 

@@ -375,7 +375,7 @@ public class DataAccessRequestService implements ConsentLogger {
   public void approveDataAccessRequestCloseout(User signingOfficial, String referenceId) {
     DataAccessRequest dar = dataAccessRequestDAO.findByReferenceId(referenceId);
     validateCloseoutApproval(signingOfficial, dar);
-    dataAccessRequestDAO.updateDarCloseoutSO(signingOfficial.getUserId(), referenceId);
+    dataAccessRequestDAO.updateDarApprovalSO(signingOfficial.getUserId(), referenceId);
     Set<User> chairs = new HashSet<>();
     Set<Dac> dacs = dacService.findByDatasetId(dar.getDatasetIds());
     dacs.forEach(dac -> chairs.addAll(dac.getChairpersons()));
@@ -403,7 +403,7 @@ public class DataAccessRequestService implements ConsentLogger {
           "Signing officials can only approve closeout progress reports.");
     }
 
-    if (dataAccessRequest.getHasSOCloseoutApproval()) {
+    if (dataAccessRequest.getApprovingSigningOfficialUserId() != null) {
       throw new BadRequestException(
           "This progress report closeout has already been approved by a signing official.");
     }

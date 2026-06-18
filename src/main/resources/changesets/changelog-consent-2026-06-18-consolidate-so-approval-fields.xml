@@ -1,0 +1,24 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+  <changeSet id="changelog-consent-2026-06-18-consolidate-so-approval-fields" author="otchet">
+    <!-- Enforce the invariant: a DAR is either a progress report or a regular submission, never both.
+         If both approval columns are set on any row, halt rather than silently discard data. -->
+    <preConditions onFail="HALT">
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*) FROM data_access_request
+        WHERE closeout_approving_so_id IS NOT NULL AND approving_so_id IS NOT NULL
+      </sqlCheck>
+    </preConditions>
+    <!-- Migrate existing closeout SO approvals into the shared approval columns -->
+    <sql>
+      UPDATE data_access_request
+      SET approving_so_id        = closeout_approving_so_id,
+          approving_so_timestamp = closeout_so_approval_timestamp
+      WHERE closeout_approving_so_id IS NOT NULL
+    </sql>
+    <dropForeignKeyConstraint baseTableName="data_access_request" constraintName="fk_so_user_id"/>
+    <dropColumn tableName="data_access_request" columnName="closeout_approving_so_id"/>
+    <dropColumn tableName="data_access_request" columnName="closeout_so_approval_timestamp"/>
+  </changeSet>
+</databaseChangeLog>
