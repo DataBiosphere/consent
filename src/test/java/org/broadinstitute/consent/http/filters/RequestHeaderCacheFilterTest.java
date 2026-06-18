@@ -1,7 +1,6 @@
 package org.broadinstitute.consent.http.filters;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,7 +35,7 @@ class RequestHeaderCacheFilterTest {
 
     filter.filter(requestContext);
 
-    verify(claimsCache).loadCache(eq("test-token"), eq(headers));
+    verify(claimsCache).loadCache("test-token", headers);
   }
 
   @Test
