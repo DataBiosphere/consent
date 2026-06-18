@@ -215,7 +215,7 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
     env.jersey().register(feature);
     env.jersey().register(binder);
 
-    env.jersey().register(RequestHeaderCacheFilter.class);
+    env.jersey().register(injector.getInstance(RequestHeaderCacheFilter.class));
     env.jersey().register(RolesAllowedDynamicFeature.class);
   }
 

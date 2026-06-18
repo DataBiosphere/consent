@@ -27,10 +27,11 @@ public class SupportRequestService implements ConsentLogger {
   private final TicketFactory ticketFactory;
 
   @Inject
-  public SupportRequestService(ServicesConfiguration configuration) {
-    this.clientUtil = new HttpClientUtil(configuration);
+  public SupportRequestService(
+      HttpClientUtil clientUtil, TicketFactory ticketFactory, ServicesConfiguration configuration) {
+    this.clientUtil = clientUtil;
     this.configuration = configuration;
-    this.ticketFactory = new TicketFactory();
+    this.ticketFactory = ticketFactory;
   }
 
   /**

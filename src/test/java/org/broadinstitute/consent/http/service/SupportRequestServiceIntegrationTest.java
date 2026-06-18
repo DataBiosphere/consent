@@ -9,6 +9,7 @@ import org.broadinstitute.consent.http.enumeration.SupportRequestType;
 import org.broadinstitute.consent.http.models.support.DuosTicket;
 import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.models.support.TicketFields;
+import org.broadinstitute.consent.http.util.HttpClientUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,7 @@ class SupportRequestServiceIntegrationTest {
   void setUp() {
     ServicesConfiguration config = new ServicesConfiguration();
     config.setActivateSupportNotifications(true);
-    service = new SupportRequestService(config);
+    service = new SupportRequestService(new HttpClientUtil(config), new TicketFactory(), config);
   }
 
   @Disabled

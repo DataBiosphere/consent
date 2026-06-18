@@ -54,6 +54,34 @@ class ConsentModuleTest extends AbstractTestHelper {
   }
 
   @Test
+  void testSimpleProvidersSameInstance() {
+    // Providers that return pre-built fields or config getters
+    assertSame(module.providesJdbi(), module.providesJdbi());
+    assertSame(
+        module.providesElasticSearchConfiguration(), module.providesElasticSearchConfiguration());
+    assertSame(module.providesMailConfiguration(), module.providesMailConfiguration());
+    assertSame(module.providesServicesConfiguration(), module.providesServicesConfiguration());
+    assertSame(module.providesHealthCheckRegistry(), module.providesHealthCheckRegistry());
+    assertSame(module.providesOidcConfiguration(), module.providesOidcConfiguration());
+    assertSame(module.providesUseRestrictionConverter(), module.providesUseRestrictionConverter());
+    assertSame(module.providesElectionDAO(), module.providesElectionDAO());
+    assertSame(module.providesVoteDAO(), module.providesVoteDAO());
+    assertSame(module.providesStudyDAO(), module.providesStudyDAO());
+    assertSame(module.providesDatasetDAO(), module.providesDatasetDAO());
+    assertSame(
+        module.providesDatasetAuthorizationReaderDAO(),
+        module.providesDatasetAuthorizationReaderDAO());
+    assertSame(module.providesDaaDAO(), module.providesDaaDAO());
+    assertSame(module.providesUserDAO(), module.providesUserDAO());
+    assertSame(module.providesUserRoleDAO(), module.providesUserRoleDAO());
+    assertSame(module.providesFileStorageObjectDAO(), module.providesFileStorageObjectDAO());
+    assertSame(module.providesLibraryCardDAO(), module.providesLibraryCardDAO());
+    assertSame(module.providesDraftDAO(), module.providesDraftDAO());
+    assertSame(module.providesDataAccessRequestDAO(), module.providesDataAccessRequestDAO());
+    assertSame(module.providesDARCollectionDAO(), module.providesDARCollectionDAO());
+  }
+
+  @Test
   void testMemoizedProvidersReturnTheSameInstance() {
     // Infrastructure and DAO-layer singletons
     assertSame(module.providesOntologyService(), module.providesOntologyService());
@@ -111,6 +139,24 @@ class ConsentModuleTest extends AbstractTestHelper {
     assertSame(module.providesDarCollectionService(), module.providesDarCollectionService());
     assertSame(module.providesDraftFileStorageService(), module.providesDraftFileStorageService());
     assertSame(module.providesDraftServiceDAO(), module.providesDraftServiceDAO());
+    assertSame(module.providesAuthorizationHelper(), module.providesAuthorizationHelper());
+    assertSame(module.providesOAuthAuthenticator(), module.providesOAuthAuthenticator());
+    assertSame(
+        module.providesDuosUserOAuthAuthenticator(), module.providesDuosUserOAuthAuthenticator());
+  }
+
+  @Test
+  void testNewSingletonProvidersReturnTheSameInstance() {
+    // New providers added for injectable DI pattern
+    assertSame(module.providesOntologyDAO(), module.providesOntologyDAO());
+    assertSame(module.providesClaimsCache(), module.providesClaimsCache());
+    assertSame(module.providesTranslationUtil(), module.providesTranslationUtil());
+    assertSame(module.providesDataUseUtil(), module.providesDataUseUtil());
+    assertSame(module.providesDataUseMatcherV4(), module.providesDataUseMatcherV4());
+    assertSame(module.providesCountryValidator(), module.providesCountryValidator());
+    assertSame(module.providesInstitutionUtil(), module.providesInstitutionUtil());
+    assertSame(module.providesJsonSchemaUtil(), module.providesJsonSchemaUtil());
+    assertSame(module.providesTicketFactory(), module.providesTicketFactory());
   }
 
   @Test

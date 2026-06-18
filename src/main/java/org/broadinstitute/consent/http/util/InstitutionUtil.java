@@ -4,6 +4,7 @@ import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import java.util.List;
 import org.apache.commons.validator.routines.DomainValidator;
@@ -14,6 +15,7 @@ public class InstitutionUtil implements ConsentLogger {
 
   private final GsonBuilder gson;
 
+  @Inject
   public InstitutionUtil() {
     this.gson = GsonUtil.gsonBuilderWithAdapters();
   }

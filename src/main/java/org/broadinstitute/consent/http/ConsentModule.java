@@ -37,8 +37,13 @@ import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
+import org.broadinstitute.consent.http.filters.ClaimsCache;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.mail.freemarker.FreeMarkerTemplateHelper;
+import org.broadinstitute.consent.http.matching.DataUseMatcherV4;
+import org.broadinstitute.consent.http.matching.DataUseUtil;
+import org.broadinstitute.consent.http.matching.TranslationUtil;
+import org.broadinstitute.consent.http.models.support.TicketFactory;
 import org.broadinstitute.consent.http.service.AcknowledgementService;
 import org.broadinstitute.consent.http.service.CounterService;
 import org.broadinstitute.consent.http.service.DACAutomationRuleService;
@@ -76,10 +81,14 @@ import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
 import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
+import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.broadinstitute.consent.http.util.CountryValidator;
 import org.broadinstitute.consent.http.util.HttpClientUtil;
+import org.broadinstitute.consent.http.util.InstitutionUtil;
+import org.broadinstitute.consent.http.util.JsonSchemaUtil;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.gson2.Gson2Config;
@@ -107,11 +116,24 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   private final LibraryCardDAO libraryCardDAO;
   private final FileStorageObjectDAO fileStorageObjectDAO;
   private final DraftDAO draftDAO;
+  private final OntologyDAO ontologyDAO;
   private final ExecutorService executorService;
 
   // Lazily-memoized singletons. @Singleton on a @Provides method only covers resolution
   // through Guice; providers in this module also call each other directly, which bypasses
   // Guice scoping, so these fields guarantee a single instance on both paths.
+  private ElasticSearchConfiguration elasticSearchConfiguration;
+  private MailConfiguration mailConfiguration;
+  private ServicesConfiguration servicesConfiguration;
+  private OidcConfiguration oidcConfiguration;
+  private ClaimsCache claimsCache;
+  private TranslationUtil translationUtil;
+  private DataUseUtil dataUseUtil;
+  private DataUseMatcherV4 dataUseMatcherV4;
+  private CountryValidator countryValidator;
+  private InstitutionUtil institutionUtil;
+  private JsonSchemaUtil jsonSchemaUtil;
+  private TicketFactory ticketFactory;
   private OntologyService ontologyService;
   private DatasetRegistrationService datasetRegistrationService;
   private InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
@@ -155,6 +177,10 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   private OidcAuthorityDAO oidcAuthorityDAO;
   private OidcService oidcService;
   private SupportRequestService supportRequestService;
+  private UseRestrictionConverter useRestrictionConverter;
+  private AuthorizationHelper authorizationHelper;
+  private OAuthAuthenticator oauthAuthenticator;
+  private DuosUserAuthenticator duosUserAuthenticator;
 
   ConsentModule(ConsentConfiguration consentConfiguration, Environment environment) {
     this.config = consentConfiguration;
@@ -183,6 +209,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
     this.libraryCardDAO = this.jdbi.onDemand((LibraryCardDAO.class));
     this.fileStorageObjectDAO = this.jdbi.onDemand((FileStorageObjectDAO.class));
     this.draftDAO = this.jdbi.onDemand(DraftDAO.class);
+    this.ontologyDAO = this.jdbi.onDemand(OntologyDAO.class);
 
     // All async work in this application is blocking I/O (Sam calls, Elasticsearch indexing,
     // batch DB writes), so a single shared virtual-thread executor replaces the per-class
@@ -222,11 +249,13 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
+  @Singleton
   ExecutorService providesExecutorService() {
     return executorService;
   }
 
   @Provides
+  @Singleton
   Client providesClient() {
     return client;
   }
@@ -241,33 +270,51 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
+  @Singleton
   Jdbi providesJdbi() {
     return jdbi;
   }
 
   @Provides
-  ElasticSearchConfiguration providesElasticSearchConfiguration() {
-    return config.getElasticSearchConfiguration();
+  @Singleton
+  synchronized ElasticSearchConfiguration providesElasticSearchConfiguration() {
+    if (elasticSearchConfiguration == null) {
+      elasticSearchConfiguration = config.getElasticSearchConfiguration();
+    }
+    return elasticSearchConfiguration;
   }
 
   @Provides
-  MailConfiguration providesMailConfiguration() {
-    return config.getMailConfiguration();
+  @Singleton
+  synchronized MailConfiguration providesMailConfiguration() {
+    if (mailConfiguration == null) {
+      mailConfiguration = config.getMailConfiguration();
+    }
+    return mailConfiguration;
   }
 
   @Provides
-  ServicesConfiguration providesServicesConfiguration() {
-    return config.getServicesConfiguration();
+  @Singleton
+  synchronized ServicesConfiguration providesServicesConfiguration() {
+    if (servicesConfiguration == null) {
+      servicesConfiguration = config.getServicesConfiguration();
+    }
+    return servicesConfiguration;
   }
 
   @Provides
+  @Singleton
   HealthCheckRegistry providesHealthCheckRegistry() {
     return environment.healthChecks();
   }
 
   @Provides
-  UseRestrictionConverter providesUseRestrictionConverter() {
-    return new UseRestrictionConverter();
+  @Singleton
+  synchronized UseRestrictionConverter providesUseRestrictionConverter() {
+    if (useRestrictionConverter == null) {
+      useRestrictionConverter = new UseRestrictionConverter();
+    }
+    return useRestrictionConverter;
   }
 
   @Provides
@@ -276,7 +323,10 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
     if (ontologyService == null) {
       ontologyService =
           new OntologyService(
-              providesJdbi(), providesOntologyIndexService(), providesExecutorService());
+              providesOntologyDAO(),
+              providesOntologyIndexService(),
+              providesExecutorService(),
+              providesTranslationUtil());
     }
     return ontologyService;
   }
@@ -292,18 +342,32 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
-  AuthorizationHelper providesAuthorizationHelper() {
-    return new AuthorizationHelper(providesSamService(), providesUserService());
+  @Singleton
+  synchronized AuthorizationHelper providesAuthorizationHelper() {
+    if (authorizationHelper == null) {
+      authorizationHelper =
+          new AuthorizationHelper(
+              providesSamService(), providesUserService(), providesClaimsCache());
+    }
+    return authorizationHelper;
   }
 
   @Provides
-  OAuthAuthenticator providesOAuthAuthenticator() {
-    return new OAuthAuthenticator(providesAuthorizationHelper());
+  @Singleton
+  synchronized OAuthAuthenticator providesOAuthAuthenticator() {
+    if (oauthAuthenticator == null) {
+      oauthAuthenticator = new OAuthAuthenticator(providesAuthorizationHelper());
+    }
+    return oauthAuthenticator;
   }
 
   @Provides
-  DuosUserAuthenticator providesDuosUserOAuthAuthenticator() {
-    return new DuosUserAuthenticator(providesAuthorizationHelper());
+  @Singleton
+  synchronized DuosUserAuthenticator providesDuosUserOAuthAuthenticator() {
+    if (duosUserAuthenticator == null) {
+      duosUserAuthenticator = new DuosUserAuthenticator(providesAuthorizationHelper());
+    }
+    return duosUserAuthenticator;
   }
 
   @Provides
@@ -379,6 +443,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
               providesInstitutionService(),
               providesEmailService(),
               providesRuleService(),
+              providesCountryValidator(),
               config);
     }
     return dataAccessRequestService;
@@ -456,11 +521,13 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
+  @Singleton
   DataAccessRequestDAO providesDataAccessRequestDAO() {
     return dataAccessRequestDAO;
   }
 
   @Provides
+  @Singleton
   DarCollectionDAO providesDARCollectionDAO() {
     return darCollectionDAO;
   }
@@ -484,16 +551,19 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
+  @Singleton
   ElectionDAO providesElectionDAO() {
     return electionDAO;
   }
 
   @Provides
+  @Singleton
   VoteDAO providesVoteDAO() {
     return voteDAO;
   }
 
   @Provides
+  @Singleton
   StudyDAO providesStudyDAO() {
     return studyDAO;
   }
@@ -522,11 +592,13 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
+  @Singleton
   DatasetAuthorizationReaderDAO providesDatasetAuthorizationReaderDAO() {
     return datasetAuthorizationReaderDAO;
   }
 
   @Provides
+  @Singleton
   DatasetDAO providesDatasetDAO() {
     return datasetDAO;
   }
@@ -550,6 +622,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
+  @Singleton
   DaaDAO providesDaaDAO() {
     return daaDAO;
   }
@@ -601,11 +674,13 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
+  @Singleton
   UserDAO providesUserDAO() {
     return userDAO;
   }
 
   @Provides
+  @Singleton
   UserRoleDAO providesUserRoleDAO() {
     return userRoleDAO;
   }
@@ -616,7 +691,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
     if (matchService == null) {
       matchService =
           new MatchService(
-              providesJdbi(), providesUseRestrictionConverter(), providesOntologyService());
+              providesJdbi(), providesUseRestrictionConverter(), providesDataUseMatcherV4());
     }
     return matchService;
   }
@@ -631,11 +706,13 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
+  @Singleton
   FileStorageObjectDAO providesFileStorageObjectDAO() {
     return fileStorageObjectDAO;
   }
 
   @Provides
+  @Singleton
   LibraryCardDAO providesLibraryCardDAO() {
     return libraryCardDAO;
   }
@@ -766,8 +843,12 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
-  OidcConfiguration providesOidcConfiguration() {
-    return config.getOidcConfiguration();
+  @Singleton
+  synchronized OidcConfiguration providesOidcConfiguration() {
+    if (oidcConfiguration == null) {
+      oidcConfiguration = config.getOidcConfiguration();
+    }
+    return oidcConfiguration;
   }
 
   @Provides
@@ -793,12 +874,15 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   synchronized SupportRequestService providesSupportRequestService() {
     if (supportRequestService == null) {
-      supportRequestService = new SupportRequestService(config.getServicesConfiguration());
+      supportRequestService =
+          new SupportRequestService(
+              providesHttpClientUtil(), providesTicketFactory(), providesServicesConfiguration());
     }
     return supportRequestService;
   }
 
   @Provides
+  @Singleton
   DraftDAO providesDraftDAO() {
     return draftDAO;
   }
@@ -820,5 +904,83 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
       draftServiceDAO = new DraftServiceDAO(providesJdbi(), providesDraftFileStorageService());
     }
     return draftServiceDAO;
+  }
+
+  @Provides
+  @Singleton
+  OntologyDAO providesOntologyDAO() {
+    return ontologyDAO;
+  }
+
+  @Provides
+  @Singleton
+  synchronized ClaimsCache providesClaimsCache() {
+    if (claimsCache == null) {
+      claimsCache = new ClaimsCache();
+    }
+    return claimsCache;
+  }
+
+  @Provides
+  @Singleton
+  synchronized TranslationUtil providesTranslationUtil() {
+    if (translationUtil == null) {
+      translationUtil = new TranslationUtil(providesOntologyDAO());
+    }
+    return translationUtil;
+  }
+
+  @Provides
+  @Singleton
+  synchronized DataUseUtil providesDataUseUtil() {
+    if (dataUseUtil == null) {
+      dataUseUtil = new DataUseUtil(providesOntologyService());
+    }
+    return dataUseUtil;
+  }
+
+  @Provides
+  @Singleton
+  synchronized DataUseMatcherV4 providesDataUseMatcherV4() {
+    if (dataUseMatcherV4 == null) {
+      dataUseMatcherV4 = new DataUseMatcherV4(providesDataUseUtil());
+    }
+    return dataUseMatcherV4;
+  }
+
+  @Provides
+  @Singleton
+  synchronized CountryValidator providesCountryValidator() {
+    if (countryValidator == null) {
+      countryValidator = new CountryValidator();
+    }
+    return countryValidator;
+  }
+
+  @Provides
+  @Singleton
+  synchronized InstitutionUtil providesInstitutionUtil() {
+    if (institutionUtil == null) {
+      institutionUtil = new InstitutionUtil();
+    }
+    return institutionUtil;
+  }
+
+  @Provides
+  @Singleton
+  synchronized JsonSchemaUtil providesJsonSchemaUtil() {
+    if (jsonSchemaUtil == null) {
+      jsonSchemaUtil = new JsonSchemaUtil();
+    }
+    return jsonSchemaUtil;
+  }
+
+  @Provides
+  @Singleton
+  synchronized TicketFactory providesTicketFactory() {
+    if (ticketFactory == null) {
+      ticketFactory = new TicketFactory();
+    }
+    return ticketFactory;
   }
 }

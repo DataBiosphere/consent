@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.matching;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParser;
+import com.google.inject.Inject;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -58,6 +59,7 @@ public class TranslationUtil implements ConsentLogger {
   private final OntologyDAO ontologyDAO;
   private final Gson gson = GsonUtil.getInstance();
 
+  @Inject
   public TranslationUtil(OntologyDAO ontologyDAO) {
     this.ontologyDAO = ontologyDAO;
   }

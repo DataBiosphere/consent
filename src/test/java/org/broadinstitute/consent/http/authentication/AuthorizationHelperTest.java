@@ -53,13 +53,13 @@ class AuthorizationHelperTest extends AbstractTestHelper {
   private AuthorizationHelper authorizationHelper;
   private DuosUserAuthenticator duosUserAuthenticator;
   private OAuthAuthenticator oAuthAuthenticator;
-  private final ClaimsCache headerCache = ClaimsCache.getInstance();
+  private final ClaimsCache headerCache = new ClaimsCache();
   private final String bearerToken = randomAlphabetic(100);
   private final MultivaluedMap<String, String> headerMap = new MultivaluedHashMap<>();
 
   @BeforeEach
   void setUp() {
-    authorizationHelper = new AuthorizationHelper(samService, userService);
+    authorizationHelper = new AuthorizationHelper(samService, userService, headerCache);
     headerCache.cache.invalidateAll();
     duosUserAuthenticator = new DuosUserAuthenticator(authorizationHelper);
     oAuthAuthenticator = new OAuthAuthenticator(authorizationHelper);

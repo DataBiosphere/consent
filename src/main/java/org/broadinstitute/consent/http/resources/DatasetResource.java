@@ -82,14 +82,15 @@ public class DatasetResource extends Resource {
       DatasetRegistrationService datasetRegistrationService,
       ElasticSearchService elasticSearchService,
       TDRService tdrService,
-      GCSService gcsService) {
+      GCSService gcsService,
+      JsonSchemaUtil jsonSchemaUtil) {
     this.datasetService = datasetService;
     this.userService = userService;
     this.datasetRegistrationService = datasetRegistrationService;
     this.gcsService = gcsService;
     this.elasticSearchService = elasticSearchService;
     this.tdrService = tdrService;
-    this.jsonSchemaUtil = new JsonSchemaUtil();
+    this.jsonSchemaUtil = jsonSchemaUtil;
   }
 
   @POST
@@ -459,6 +460,8 @@ public class DatasetResource extends Resource {
       @Auth AuthUser authUser, @PathParam("id") Integer id, String dataUseJson) {
     try {
       User user = userService.findUserByEmail(authUser.getEmail());
+      // TODO: Replace new Gson() with GsonUtil.buildGson() — deferred pending Gson configuration
+      // investigation
       Gson gson = new Gson();
       DataUse dataUse = gson.fromJson(dataUseJson, DataUse.class);
       Dataset originalDataset = datasetService.findDatasetById(user, id);

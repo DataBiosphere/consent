@@ -27,8 +27,9 @@ public class AuthorizationHelper implements ConsentLogger {
   protected final UserService userService;
 
   @Inject
-  public AuthorizationHelper(SamService samService, UserService userService) {
-    this.claimsCache = ClaimsCache.getInstance();
+  public AuthorizationHelper(
+      SamService samService, UserService userService, ClaimsCache claimsCache) {
+    this.claimsCache = claimsCache;
     this.samService = samService;
     this.userService = userService;
   }

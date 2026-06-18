@@ -6,6 +6,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.gson.Gson;
+import com.google.inject.Inject;
 import com.networknt.schema.Error;
 import com.networknt.schema.InputFormat;
 import com.networknt.schema.Schema;
@@ -35,6 +36,7 @@ public class JsonSchemaUtil implements ConsentLogger {
       Map.of("consentGroups", "Datasets");
   private static final String SCHEMA_LOAD_ERROR = "Unable to load the data submitter schema: %s";
 
+  @Inject
   public JsonSchemaUtil() {
     // Create SchemaRegistry with JSON Schema Draft 2019-09
     schemaRegistry =

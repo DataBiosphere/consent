@@ -19,7 +19,6 @@ import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
 import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.broadinstitute.consent.http.util.ConsentLogger;
-import org.jdbi.v3.core.Jdbi;
 import org.jspecify.annotations.NonNull;
 
 public class OntologyService implements ConsentLogger {
@@ -31,11 +30,14 @@ public class OntologyService implements ConsentLogger {
 
   @Inject
   public OntologyService(
-      Jdbi jdbi, OntologyIndexService indexService, ExecutorService executorService) {
-    this.ontologyDAO = jdbi.onDemand(OntologyDAO.class);
+      OntologyDAO ontologyDAO,
+      OntologyIndexService indexService,
+      ExecutorService executorService,
+      TranslationUtil translationUtil) {
+    this.ontologyDAO = ontologyDAO;
     this.indexService = indexService;
     this.executorService = executorService;
-    this.translationUtil = new TranslationUtil(this.ontologyDAO);
+    this.translationUtil = translationUtil;
   }
 
   public DataUseSummary translateDataUseSummary(DataUse dataUse) {
