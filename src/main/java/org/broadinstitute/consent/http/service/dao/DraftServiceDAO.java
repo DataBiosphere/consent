@@ -25,10 +25,9 @@ public class DraftServiceDAO {
   private final DraftFileStorageServiceDAO draftFileStorageServiceDAO;
 
   @Inject
-  public DraftServiceDAO(
-      Jdbi jdbi, DraftDAO draftDAO, DraftFileStorageServiceDAO draftFileStorageServiceDAO) {
+  public DraftServiceDAO(Jdbi jdbi, DraftFileStorageServiceDAO draftFileStorageServiceDAO) {
     this.jdbi = jdbi;
-    this.draftDAO = draftDAO;
+    this.draftDAO = jdbi.onDemand(DraftDAO.class);
     this.draftFileStorageServiceDAO = draftFileStorageServiceDAO;
   }
 

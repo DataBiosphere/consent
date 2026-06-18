@@ -57,8 +57,8 @@ class DraftServiceDAOTest extends DAOTestHelper {
     when(gcsService.storeDocument(any(), anyString(), any()))
         .thenReturn(BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
     DraftFileStorageServiceDAO draftFileStorageServiceDAO =
-        new DraftFileStorageServiceDAO(jdbi, gcsService, fileStorageObjectDAO);
-    draftServiceDAO = new DraftServiceDAO(jdbi, draftDAO, draftFileStorageServiceDAO);
+        new DraftFileStorageServiceDAO(jdbi, gcsService);
+    draftServiceDAO = new DraftServiceDAO(jdbi, draftFileStorageServiceDAO);
   }
 
   @Test
@@ -144,6 +144,15 @@ class DraftServiceDAOTest extends DAOTestHelper {
     }
     assertThat(
         draftServiceDAO.getAuthorizedDraft(draft.getUUID(), user).getStoredFiles(), hasSize(0));
+  }
+
+  @Test
+  void testDeleteAttachmentFromDraft_NotFound() throws SQLException {
+    User user = createUser();
+    DraftInterface draft = createDraft(user, 1);
+    assertThrows(
+        NotFoundException.class,
+        () -> draftServiceDAO.deleteDraftAttachment(draft, user, Integer.MAX_VALUE));
   }
 
   @Test

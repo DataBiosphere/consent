@@ -166,7 +166,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     ontologyDAO = jdbi.onDemand(OntologyDAO.class);
     userRedactionAuditDAO = jdbi.onDemand(UserRedactionAuditDAO.class);
     testingDAO = jdbi.onDemand(TestingDAO.class);
-    voteServiceDAO = new VoteServiceDAO(jdbi, voteDAO);
+    voteServiceDAO = new VoteServiceDAO(jdbi);
   }
 
   @BeforeEach()

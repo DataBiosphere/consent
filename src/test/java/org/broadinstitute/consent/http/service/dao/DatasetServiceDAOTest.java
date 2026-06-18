@@ -63,7 +63,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
 
   @BeforeEach
   void setUp() {
-    serviceDAO = new DatasetServiceDAO(jdbi, datasetDAO, studyDAO, datasetAuthorizationReaderDAO);
+    serviceDAO = new DatasetServiceDAO(jdbi);
   }
 
   @Test

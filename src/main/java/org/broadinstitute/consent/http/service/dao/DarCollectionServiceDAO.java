@@ -22,18 +22,17 @@ import org.jdbi.v3.core.statement.Update;
 
 public class DarCollectionServiceDAO {
 
+  private final Jdbi jdbi;
   private final DatasetDAO datasetDAO;
   private final ElectionDAO electionDAO;
-  private final Jdbi jdbi;
   private final UserDAO userDAO;
 
   @Inject
-  public DarCollectionServiceDAO(
-      Jdbi jdbi, DatasetDAO datasetDAO, ElectionDAO electionDAO, UserDAO userDAO) {
+  public DarCollectionServiceDAO(Jdbi jdbi) {
     this.jdbi = jdbi;
-    this.datasetDAO = datasetDAO;
-    this.electionDAO = electionDAO;
-    this.userDAO = userDAO;
+    this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
+    this.electionDAO = jdbi.onDemand(ElectionDAO.class);
+    this.userDAO = jdbi.onDemand(UserDAO.class);
   }
 
   /// Create DAR-Dataset elections that are available to the user.

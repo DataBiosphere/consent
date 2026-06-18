@@ -45,8 +45,7 @@ class DraftFileStorageServiceDAOTest extends DAOTestHelper {
   void setUp() throws IOException {
     when(gcsService.storeDocument(any(), anyString(), any()))
         .thenReturn(BlobId.of(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
-    draftFileStorageServiceDAO =
-        new DraftFileStorageServiceDAO(jdbi, gcsService, fileStorageObjectDAO);
+    draftFileStorageServiceDAO = new DraftFileStorageServiceDAO(jdbi, gcsService);
   }
 
   @Test

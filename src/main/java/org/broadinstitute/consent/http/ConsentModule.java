@@ -388,12 +388,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   synchronized DatasetServiceDAO providesDatasetServiceDAO() {
     if (datasetServiceDAO == null) {
-      datasetServiceDAO =
-          new DatasetServiceDAO(
-              providesJdbi(),
-              providesDatasetDAO(),
-              providesStudyDAO(),
-              providesDatasetAuthorizationReaderDAO());
+      datasetServiceDAO = new DatasetServiceDAO(providesJdbi());
     }
     return datasetServiceDAO;
   }
@@ -476,9 +471,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   synchronized DarCollectionServiceDAO providesDarCollectionServiceDAO() {
     if (darCollectionServiceDAO == null) {
-      darCollectionServiceDAO =
-          new DarCollectionServiceDAO(
-              providesJdbi(), providesDatasetDAO(), providesElectionDAO(), providesUserDAO());
+      darCollectionServiceDAO = new DarCollectionServiceDAO(providesJdbi());
     }
     return darCollectionServiceDAO;
   }
@@ -487,9 +480,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   synchronized DataAccessRequestServiceDAO providesDataAccessRequestServiceDAO() {
     if (dataAccessRequestServiceDAO == null) {
-      dataAccessRequestServiceDAO =
-          new DataAccessRequestServiceDAO(
-              providesJdbi(), providesDataAccessRequestDAO(), providesDARCollectionDAO());
+      dataAccessRequestServiceDAO = new DataAccessRequestServiceDAO(providesJdbi());
     }
     return dataAccessRequestServiceDAO;
   }
@@ -513,7 +504,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   synchronized VoteServiceDAO providesVoteServiceDAO() {
     if (voteServiceDAO == null) {
-      voteServiceDAO = new VoteServiceDAO(providesJdbi(), providesVoteDAO());
+      voteServiceDAO = new VoteServiceDAO(providesJdbi());
     }
     return voteServiceDAO;
   }
@@ -546,8 +537,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   synchronized DaaServiceDAO providesDaaServiceDAO() {
     if (daaServiceDAO == null) {
-      daaServiceDAO =
-          new DaaServiceDAO(providesJdbi(), providesDaaDAO(), providesFileStorageObjectDAO());
+      daaServiceDAO = new DaaServiceDAO(providesJdbi());
     }
     return daaServiceDAO;
   }
@@ -820,8 +810,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   synchronized DraftFileStorageServiceDAO providesDraftFileStorageService() {
     if (draftFileStorageServiceDAO == null) {
       draftFileStorageServiceDAO =
-          new DraftFileStorageServiceDAO(
-              providesJdbi(), providesGCSService(), providesFileStorageObjectDAO());
+          new DraftFileStorageServiceDAO(providesJdbi(), providesGCSService());
     }
     return draftFileStorageServiceDAO;
   }
@@ -830,9 +819,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   synchronized DraftServiceDAO providesDraftServiceDAO() {
     if (draftServiceDAO == null) {
-      draftServiceDAO =
-          new DraftServiceDAO(
-              providesJdbi(), providesDraftDAO(), providesDraftFileStorageService());
+      draftServiceDAO = new DraftServiceDAO(providesJdbi(), providesDraftFileStorageService());
     }
     return draftServiceDAO;
   }
