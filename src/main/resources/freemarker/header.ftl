@@ -1,4 +1,4 @@
-<!-- Shared header for DUOS email templates. Expects the following variables to be set before include:
+<#-- Shared header for DUOS email templates. Expects the following variables to be set before include:
      - pageTitle : the page title to use in the <title> element (optional)
       - greetingHtml : the greeting HTML/text to render in the greeting row (optional)
         If not provided, header will default to "Hello <userName>,".
