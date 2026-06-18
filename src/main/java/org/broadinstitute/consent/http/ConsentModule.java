@@ -450,9 +450,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   @Singleton
   synchronized SendGridAPI providesSendGridAPI() {
     if (sendGridAPI == null) {
-      // SendGridAPI predates the Jdbi migration and owns only a single read; migrating it
-      // requires its own constructor change and is deferred to a separate ticket.
-      sendGridAPI = new SendGridAPI(config.getMailConfiguration(), providesUserDAO());
+      sendGridAPI = new SendGridAPI(config.getMailConfiguration(), providesJdbi());
     }
     return sendGridAPI;
   }

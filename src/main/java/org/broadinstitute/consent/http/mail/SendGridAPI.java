@@ -16,20 +16,20 @@ import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.jdbi.v3.core.Jdbi;
 
 public class SendGridAPI implements ConsentLogger {
 
   private final SendGrid sendGrid;
   private final boolean activateEmailNotifications;
   @Nullable private final Integer unsubscribeGroupId;
-
   private final UserDAO userDAO;
 
-  public SendGridAPI(MailConfiguration config, UserDAO userDAO) {
+  public SendGridAPI(MailConfiguration config, Jdbi jdbi) {
     this.sendGrid = new SendGrid(config.getSendGridApiKey());
     this.activateEmailNotifications = config.isActivateEmailNotifications();
-    this.userDAO = userDAO;
     this.unsubscribeGroupId = config.getSendGridUnsubscribeGroupId();
+    this.userDAO = jdbi.onDemand(UserDAO.class);
   }
 
   /**
