@@ -294,6 +294,10 @@ public class ElasticSearchService implements ConsentLogger {
         .ifPresent(prop -> term.setAssets(buildMapFromPropertyValue(prop.getValue())));
     findStudyProperty(study.getProperties(), data)
         .ifPresent(prop -> term.setData(buildMapFromPropertyValue(prop.getValue())));
+    findStudyProperty(study.getProperties(), "externalIdentifier")
+        .ifPresent(prop -> term.setExternalIdentifier(prop.getValue().toString()));
+    findStudyProperty(study.getProperties(), "externalIdentifierType")
+        .ifPresent(prop -> term.setExternalIdentifierType(prop.getValue().toString()));
     return term;
   }
 
