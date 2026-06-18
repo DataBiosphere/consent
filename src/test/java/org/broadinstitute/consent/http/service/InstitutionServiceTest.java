@@ -25,6 +25,7 @@ import org.broadinstitute.consent.http.models.Institution;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +37,8 @@ class InstitutionServiceTest extends AbstractTestHelper {
 
   private InstitutionService service;
 
+  @Mock private Jdbi jdbi;
+
   @Mock private InstitutionDAO institutionDAO;
 
   @Mock private UserDAO userDAO;
@@ -44,7 +47,9 @@ class InstitutionServiceTest extends AbstractTestHelper {
 
   @BeforeEach
   void setUp() {
-    service = new InstitutionService(institutionDAO, userDAO, institutionAndLibraryCardEnforcement);
+    when(jdbi.onDemand(InstitutionDAO.class)).thenReturn(institutionDAO);
+    when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
+    service = new InstitutionService(jdbi, institutionAndLibraryCardEnforcement);
   }
 
   private Institution initMockModel() {

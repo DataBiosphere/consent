@@ -23,6 +23,7 @@ import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
 import org.broadinstitute.consent.http.models.User;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,6 +42,7 @@ class SendGridAPITest {
   private SendGrid sendGrid;
   private SendGridAPI sendGridAPI;
 
+  @Mock private Jdbi jdbi;
   @Mock private UserDAO userDAO;
 
   @BeforeEach
@@ -48,8 +50,9 @@ class SendGridAPITest {
     MailConfiguration config = new MailConfiguration();
     config.setGoogleAccount(FROM);
     config.setActivateEmailNotifications(true);
+    when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
     try (var mockedSendGrid = mockConstruction(SendGrid.class)) {
-      sendGridAPI = new SendGridAPI(config, userDAO);
+      sendGridAPI = new SendGridAPI(config, jdbi);
       sendGrid = mockedSendGrid.constructed().getFirst();
     }
     when(userDAO.findUserByEmail(TO)).thenReturn(new User());
@@ -79,7 +82,7 @@ class SendGridAPITest {
       config.setGoogleAccount(FROM);
       config.setActivateEmailNotifications(true);
       config.setSendGridUnsubscribeGroupId(UNSUBSCRIBE_GROUP_ID);
-      SendGridAPI configuredSendGridApi = new SendGridAPI(config, userDAO);
+      SendGridAPI configuredSendGridApi = new SendGridAPI(config, jdbi);
       SendGrid configuredSendGrid = mockedSendGrid.constructed().getFirst();
       when(configuredSendGrid.makeCall(any())).thenReturn(RESPONSE);
 
@@ -113,7 +116,7 @@ class SendGridAPITest {
       config.setActivateEmailNotifications(true);
       // invalid group ID should be treated as missing/absent
       config.setSendGridUnsubscribeGroupId(0);
-      SendGridAPI configuredSendGridApi = new SendGridAPI(config, userDAO);
+      SendGridAPI configuredSendGridApi = new SendGridAPI(config, jdbi);
       SendGrid configuredSendGrid = mockedSendGrid.constructed().getFirst();
       when(configuredSendGrid.makeCall(any())).thenReturn(RESPONSE);
 

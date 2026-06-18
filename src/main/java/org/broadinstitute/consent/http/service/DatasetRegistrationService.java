@@ -4,6 +4,7 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 
 import com.google.cloud.storage.BlobId;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
 import freemarker.template.TemplateException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.InternalServerErrorException;
@@ -52,6 +53,7 @@ import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO.StudyUpdate
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.jdbi.v3.core.Jdbi;
 
 /**
  * Specialized service class which specifically handles the process of registering a new dataset
@@ -69,23 +71,21 @@ public class DatasetRegistrationService implements ConsentLogger {
   private final EmailService emailService;
   private final ExecutorService executorService;
 
+  @Inject
   public DatasetRegistrationService(
-      DatasetDAO datasetDAO,
-      DacDAO dacDAO,
+      Jdbi jdbi,
       DatasetServiceDAO datasetServiceDAO,
-      FileStorageObjectDAO fileStorageObjectDAO,
       GCSService gcsService,
       ElasticSearchService elasticSearchService,
-      StudyDAO studyDAO,
       EmailService emailService,
       ExecutorService executorService) {
-    this.datasetDAO = datasetDAO;
-    this.dacDAO = dacDAO;
+    this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
+    this.dacDAO = jdbi.onDemand(DacDAO.class);
     this.datasetServiceDAO = datasetServiceDAO;
-    this.fileStorageObjectDAO = fileStorageObjectDAO;
+    this.fileStorageObjectDAO = jdbi.onDemand(FileStorageObjectDAO.class);
     this.gcsService = gcsService;
     this.elasticSearchService = elasticSearchService;
-    this.studyDAO = studyDAO;
+    this.studyDAO = jdbi.onDemand(StudyDAO.class);
     this.emailService = emailService;
     this.executorService = executorService;
   }

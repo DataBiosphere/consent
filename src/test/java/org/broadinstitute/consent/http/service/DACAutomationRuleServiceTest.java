@@ -53,6 +53,7 @@ import org.broadinstitute.consent.http.rules.RuleImplementationInterface;
 import org.broadinstitute.consent.http.rules.RuleState;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.glassfish.jersey.server.ContainerRequest;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,6 +64,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DACAutomationRuleServiceTest {
 
+  @Mock private Jdbi jdbi;
   @Mock private DataAccessRequestDAO dataAccessRequestDAO;
   @Mock private DatasetDAO datasetDAO;
   @Mock private ElectionDAO electionDAO;
@@ -129,16 +131,13 @@ class DACAutomationRuleServiceTest {
 
   @BeforeEach
   void setUp() {
-    service =
-        new DACAutomationRuleService(
-            dataAccessRequestDAO,
-            datasetDAO,
-            ruleDAO,
-            electionDAO,
-            userDAO,
-            voteDAO,
-            voteServiceDAO,
-            voteService);
+    when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(dataAccessRequestDAO);
+    when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
+    when(jdbi.onDemand(DACAutomationRuleDAO.class)).thenReturn(ruleDAO);
+    when(jdbi.onDemand(ElectionDAO.class)).thenReturn(electionDAO);
+    when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
+    when(jdbi.onDemand(VoteDAO.class)).thenReturn(voteDAO);
+    service = new DACAutomationRuleService(jdbi, voteServiceDAO, voteService);
   }
 
   @Test

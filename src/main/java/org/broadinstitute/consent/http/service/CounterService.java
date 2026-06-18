@@ -2,6 +2,7 @@ package org.broadinstitute.consent.http.service;
 
 import com.google.inject.Inject;
 import org.broadinstitute.consent.http.db.CounterDAO;
+import org.jdbi.v3.core.Jdbi;
 
 public class CounterService {
 
@@ -9,8 +10,8 @@ public class CounterService {
   public static final String DAR_COUNTER = "DAR";
 
   @Inject
-  public CounterService(CounterDAO counterDAO) {
-    this.counterDAO = counterDAO;
+  public CounterService(Jdbi jdbi) {
+    this.counterDAO = jdbi.onDemand(CounterDAO.class);
   }
 
   public Integer getNextDarSequence() {

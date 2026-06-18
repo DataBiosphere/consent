@@ -18,10 +18,10 @@ public class DaaServiceDAO implements ConsentLogger {
   private final FileStorageObjectDAO fsoDAO;
 
   @Inject
-  public DaaServiceDAO(Jdbi jdbi, DaaDAO daaDAO, FileStorageObjectDAO fsoDAO) {
+  public DaaServiceDAO(Jdbi jdbi) {
     this.jdbi = jdbi;
-    this.daaDAO = daaDAO;
-    this.fsoDAO = fsoDAO;
+    this.daaDAO = jdbi.onDemand(DaaDAO.class);
+    this.fsoDAO = jdbi.onDemand(FileStorageObjectDAO.class);
   }
 
   public Integer createDaaWithFso(Integer userId, Integer dacId, FileStorageObject fso)

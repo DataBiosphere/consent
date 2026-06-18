@@ -21,16 +21,15 @@ import org.jdbi.v3.core.Jdbi;
 
 public class DraftFileStorageServiceDAO implements ConsentLogger {
 
-  Jdbi jdbi;
-  GCSService gcsService;
-  FileStorageObjectDAO fileStorageObjectDAO;
+  private final Jdbi jdbi;
+  private final GCSService gcsService;
+  private final FileStorageObjectDAO fileStorageObjectDAO;
 
   @Inject
-  public DraftFileStorageServiceDAO(
-      Jdbi jdbi, GCSService gcsService, FileStorageObjectDAO fileStorageObjectDAO) {
+  public DraftFileStorageServiceDAO(Jdbi jdbi, GCSService gcsService) {
     this.jdbi = jdbi;
     this.gcsService = gcsService;
-    this.fileStorageObjectDAO = fileStorageObjectDAO;
+    this.fileStorageObjectDAO = jdbi.onDemand(FileStorageObjectDAO.class);
   }
 
   public List<FileStorageObject> storeDraftFiles(

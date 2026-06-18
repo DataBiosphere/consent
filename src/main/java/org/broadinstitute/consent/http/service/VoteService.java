@@ -20,7 +20,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.validator.routines.EmailValidator;
-import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
@@ -55,6 +54,7 @@ import org.broadinstitute.consent.http.util.ComplianceLogger;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
 import org.glassfish.jersey.server.ContainerRequest;
+import org.jdbi.v3.core.Jdbi;
 
 public class VoteService implements ConsentLogger {
 
@@ -70,17 +70,17 @@ public class VoteService implements ConsentLogger {
 
   @Inject
   public VoteService(
-      DAOContainer daoContainer,
-      EmailService emailService,
+      Jdbi jdbi,
       VoteServiceDAO voteServiceDAO,
+      EmailService emailService,
       OntologyService ontologyService) {
-    this.userDAO = daoContainer.getUserDAO();
-    this.dacDAO = daoContainer.getDacDAO();
-    this.dataAccessRequestDAO = daoContainer.getDataAccessRequestDAO();
-    this.datasetDAO = daoContainer.getDatasetDAO();
-    this.electionDAO = daoContainer.getElectionDAO();
+    this.userDAO = jdbi.onDemand(UserDAO.class);
+    this.dacDAO = jdbi.onDemand(DacDAO.class);
+    this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
+    this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
+    this.electionDAO = jdbi.onDemand(ElectionDAO.class);
     this.emailService = emailService;
-    this.voteDAO = daoContainer.getVoteDAO();
+    this.voteDAO = jdbi.onDemand(VoteDAO.class);
     this.voteServiceDAO = voteServiceDAO;
     this.ontologyService = ontologyService;
   }

@@ -37,6 +37,7 @@ import org.broadinstitute.consent.http.models.LibraryCard;
 import org.broadinstitute.consent.http.models.LibraryCardDaaAudit;
 import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,6 +49,7 @@ class LibraryCardServiceTest extends AbstractTestHelper {
 
   private LibraryCardService service;
 
+  @Mock private Jdbi jdbi;
   @Mock private DaaDAO daaDAO;
   @Mock private InstitutionDAO institutionDAO;
   @Mock private LibraryCardDAO libraryCardDAO;
@@ -57,9 +59,11 @@ class LibraryCardServiceTest extends AbstractTestHelper {
 
   @BeforeEach
   void initService() {
-    service =
-        new LibraryCardService(
-            daaDAO, libraryCardDAO, institutionDAO, institutionService, userDAO, emailService);
+    when(jdbi.onDemand(DaaDAO.class)).thenReturn(daaDAO);
+    when(jdbi.onDemand(LibraryCardDAO.class)).thenReturn(libraryCardDAO);
+    when(jdbi.onDemand(InstitutionDAO.class)).thenReturn(institutionDAO);
+    when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
+    service = new LibraryCardService(jdbi, institutionService, emailService);
   }
 
   @Test

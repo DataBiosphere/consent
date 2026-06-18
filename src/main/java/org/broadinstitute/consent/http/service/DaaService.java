@@ -37,6 +37,7 @@ import org.broadinstitute.consent.http.service.UserService.SimplifiedUser;
 import org.broadinstitute.consent.http.service.dao.DaaServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.jdbi.v3.core.Jdbi;
 
 public class DaaService implements ConsentLogger {
 
@@ -50,19 +51,18 @@ public class DaaService implements ConsentLogger {
 
   @Inject
   public DaaService(
+      Jdbi jdbi,
       DaaServiceDAO daaServiceDAO,
-      DaaDAO daaDAO,
       GCSService gcsService,
       EmailService emailService,
       UserService userService,
-      DacDAO dacDAO,
       LibraryCardService libraryCardService) {
     this.daaServiceDAO = daaServiceDAO;
-    this.daaDAO = daaDAO;
+    this.daaDAO = jdbi.onDemand(DaaDAO.class);
     this.gcsService = gcsService;
     this.emailService = emailService;
     this.userService = userService;
-    this.dacDAO = dacDAO;
+    this.dacDAO = jdbi.onDemand(DacDAO.class);
     this.libraryCardService = libraryCardService;
   }
 

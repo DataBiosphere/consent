@@ -39,14 +39,11 @@ import java.util.Set;
 import java.util.UUID;
 import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
-import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DaaDAO;
-import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
@@ -80,6 +77,7 @@ import org.broadinstitute.consent.http.models.Vote;
 import org.broadinstitute.consent.http.rules.DACAutomationRuleType;
 import org.broadinstitute.consent.http.service.dao.DataAccessRequestServiceDAO;
 import org.glassfish.jersey.server.ContainerRequest;
+import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -99,10 +97,10 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   private static final String USER_EMAIL = "email@test.org";
   private static final String USER_NAME = "Display Name";
   private final List<UserRole> roles = List.of(UserRoles.Researcher());
+  @Mock private Jdbi jdbi;
   @Mock private CounterService counterService;
   @Mock private DataAccessRequestDAO dataAccessRequestDAO;
   @Mock private DarCollectionDAO darCollectionDAO;
-  @Mock private DacDAO dacDAO;
   @Mock private UserDAO userDAO;
   @Mock private DatasetDAO dataSetDAO;
   @Mock private DaaDAO daaDAO;
@@ -110,7 +108,6 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   @Mock private EmailService emailService;
   @Mock private DacService dacService;
   @Mock private VoteDAO voteDAO;
-  @Mock private InstitutionDAO institutionDAO;
   @Mock private MatchDAO matchDAO;
   @Mock private DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
   @Mock private UserService userService;
@@ -169,23 +166,20 @@ class DataAccessRequestServiceTest extends AbstractTestHelper {
   void initService() {
     ConsentConfiguration config = new ConsentConfiguration();
     config.getServicesConfiguration().setLocalURL("local_url/");
-    DAOContainer container = new DAOContainer();
-    container.setDataAccessRequestDAO(dataAccessRequestDAO);
-    container.setDarCollectionDAO(darCollectionDAO);
-    container.setInstitutionDAO(institutionDAO);
-    container.setDacDAO(dacDAO);
-    container.setUserDAO(userDAO);
-    container.setDatasetDAO(dataSetDAO);
-    container.setElectionDAO(electionDAO);
-    container.setVoteDAO(voteDAO);
-    container.setMatchDAO(matchDAO);
-    container.setDaaDAO(daaDAO);
+    when(jdbi.onDemand(DatasetDAO.class)).thenReturn(dataSetDAO);
+    when(jdbi.onDemand(DataAccessRequestDAO.class)).thenReturn(dataAccessRequestDAO);
+    when(jdbi.onDemand(DarCollectionDAO.class)).thenReturn(darCollectionDAO);
+    when(jdbi.onDemand(ElectionDAO.class)).thenReturn(electionDAO);
+    when(jdbi.onDemand(MatchDAO.class)).thenReturn(matchDAO);
+    when(jdbi.onDemand(VoteDAO.class)).thenReturn(voteDAO);
+    when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
+    when(jdbi.onDemand(DaaDAO.class)).thenReturn(daaDAO);
     service =
         new DataAccessRequestService(
-            counterService,
-            container,
-            dacService,
+            jdbi,
             dataAccessRequestServiceDAO,
+            counterService,
+            dacService,
             userService,
             institutionService,
             emailService,

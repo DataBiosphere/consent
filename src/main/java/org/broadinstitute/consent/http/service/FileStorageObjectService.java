@@ -1,6 +1,7 @@
 package org.broadinstitute.consent.http.service;
 
 import com.google.cloud.storage.BlobId;
+import com.google.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
@@ -27,6 +28,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.jdbi.v3.core.Jdbi;
 
 /**
  * Service layer for FileStorageObject operations.
@@ -57,21 +59,22 @@ public class FileStorageObjectService implements ConsentLogger {
   private static final UserRoles[] STUDY_READ_ROLES =
       new UserRoles[] {UserRoles.ADMIN, UserRoles.DATASUBMITTER, UserRoles.CHAIRPERSON};
 
-  GCSService gcsService;
-  FileStorageObjectDAO fileStorageObjectDAO;
-  DatasetService datasetService;
-  DacService dacService;
-  DaaService daaService;
-  DataAccessRequestService dataAccessRequestService;
+  private final GCSService gcsService;
+  private final FileStorageObjectDAO fileStorageObjectDAO;
+  private final DatasetService datasetService;
+  private final DacService dacService;
+  private final DaaService daaService;
+  private final DataAccessRequestService dataAccessRequestService;
 
+  @Inject
   public FileStorageObjectService(
-      FileStorageObjectDAO fileStorageObjectDAO,
+      Jdbi jdbi,
       GCSService gcsService,
       DatasetService datasetService,
       DacService dacService,
       DaaService daaService,
       DataAccessRequestService dataAccessRequestService) {
-    this.fileStorageObjectDAO = fileStorageObjectDAO;
+    this.fileStorageObjectDAO = jdbi.onDemand(FileStorageObjectDAO.class);
     this.gcsService = gcsService;
     this.datasetService = datasetService;
     this.dacService = dacService;

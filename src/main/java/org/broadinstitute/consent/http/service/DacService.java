@@ -35,6 +35,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.models.UserRole;
 import org.broadinstitute.consent.http.service.dao.DacServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.jdbi.v3.core.Jdbi;
 
 public class DacService implements ConsentLogger {
 
@@ -51,26 +52,21 @@ public class DacService implements ConsentLogger {
 
   @Inject
   public DacService(
-      DacDAO dacDAO,
-      UserDAO userDAO,
-      DatasetDAO dataSetDAO,
-      ElectionDAO electionDAO,
-      DataAccessRequestDAO dataAccessRequestDAO,
+      Jdbi jdbi,
+      DacServiceDAO dacServiceDAO,
       VoteService voteService,
       ElasticSearchService elasticSearchService,
-      DaaService daaService,
-      DacServiceDAO dacServiceDAO,
-      DACAutomationRuleDAO ruleDAO) {
-    this.dacDAO = dacDAO;
-    this.userDAO = userDAO;
-    this.dataSetDAO = dataSetDAO;
-    this.electionDAO = electionDAO;
-    this.dataAccessRequestDAO = dataAccessRequestDAO;
+      DaaService daaService) {
+    this.dacDAO = jdbi.onDemand(DacDAO.class);
+    this.userDAO = jdbi.onDemand(UserDAO.class);
+    this.dataSetDAO = jdbi.onDemand(DatasetDAO.class);
+    this.electionDAO = jdbi.onDemand(ElectionDAO.class);
+    this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
     this.voteService = voteService;
     this.elasticSearchService = elasticSearchService;
     this.daaService = daaService;
     this.dacServiceDAO = dacServiceDAO;
-    this.ruleDAO = ruleDAO;
+    this.ruleDAO = jdbi.onDemand(DACAutomationRuleDAO.class);
   }
 
   public List<Dac> findAll() {

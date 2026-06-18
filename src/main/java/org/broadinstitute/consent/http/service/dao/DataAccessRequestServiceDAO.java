@@ -15,16 +15,15 @@ import org.jdbi.v3.core.statement.Update;
 
 public class DataAccessRequestServiceDAO {
 
+  private final Jdbi jdbi;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DarCollectionDAO darCollectionDAO;
-  private final Jdbi jdbi;
 
   @Inject
-  public DataAccessRequestServiceDAO(
-      DataAccessRequestDAO dataAccessRequestDAO, Jdbi jdbi, DarCollectionDAO darCollectionDAO) {
-    this.dataAccessRequestDAO = dataAccessRequestDAO;
+  public DataAccessRequestServiceDAO(Jdbi jdbi) {
     this.jdbi = jdbi;
-    this.darCollectionDAO = darCollectionDAO;
+    this.dataAccessRequestDAO = jdbi.onDemand(DataAccessRequestDAO.class);
+    this.darCollectionDAO = jdbi.onDemand(DarCollectionDAO.class);
   }
 
   public DataAccessRequest updateByReferenceId(User user, DataAccessRequest dar)

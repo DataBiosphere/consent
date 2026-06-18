@@ -18,9 +18,9 @@ public class VoteServiceDAO {
   private final VoteDAO voteDAO;
 
   @Inject
-  public VoteServiceDAO(Jdbi jdbi, VoteDAO voteDAO) {
+  public VoteServiceDAO(Jdbi jdbi) {
     this.jdbi = jdbi;
-    this.voteDAO = voteDAO;
+    this.voteDAO = jdbi.onDemand(VoteDAO.class);
   }
 
   /**

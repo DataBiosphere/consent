@@ -67,6 +67,7 @@ import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetReg
 import org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -80,6 +81,7 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   private DatasetService datasetService;
 
+  @Mock private Jdbi jdbi;
   @Mock private DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
   @Mock private DatasetDAO datasetDAO;
   @Mock private DaaDAO daaDAO;
@@ -94,18 +96,16 @@ class DatasetServiceTest extends AbstractTestHelper {
 
   @BeforeEach
   void initService() {
+    when(jdbi.onDemand(DatasetAuthorizationReaderDAO.class))
+        .thenReturn(datasetAuthorizationReaderDAO);
+    when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
+    when(jdbi.onDemand(DaaDAO.class)).thenReturn(daaDAO);
+    when(jdbi.onDemand(DacDAO.class)).thenReturn(dacDAO);
+    when(jdbi.onDemand(StudyDAO.class)).thenReturn(studyDAO);
+    when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
     datasetService =
         new DatasetService(
-            datasetAuthorizationReaderDAO,
-            datasetDAO,
-            daaDAO,
-            dacDAO,
-            elasticSearchService,
-            emailService,
-            ontologyService,
-            studyDAO,
-            datasetServiceDAO,
-            userDAO);
+            jdbi, datasetServiceDAO, elasticSearchService, emailService, ontologyService);
   }
 
   @Test

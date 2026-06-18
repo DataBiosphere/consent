@@ -51,15 +51,11 @@ public class DatasetServiceDAO implements ConsentLogger {
   private final StudyDAO studyDAO;
 
   @Inject
-  public DatasetServiceDAO(
-      Jdbi jdbi,
-      DatasetDAO datasetDAO,
-      StudyDAO studyDAO,
-      DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO) {
+  public DatasetServiceDAO(Jdbi jdbi) {
     this.jdbi = jdbi;
-    this.datasetDAO = datasetDAO;
-    this.studyDAO = studyDAO;
-    this.datasetAuthorizationReaderDAO = datasetAuthorizationReaderDAO;
+    this.datasetAuthorizationReaderDAO = jdbi.onDemand(DatasetAuthorizationReaderDAO.class);
+    this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
+    this.studyDAO = jdbi.onDemand(StudyDAO.class);
   }
 
   public void deleteDataset(Dataset dataset, Integer userId) throws Exception {

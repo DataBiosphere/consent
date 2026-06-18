@@ -2,7 +2,6 @@ package org.broadinstitute.consent.http;
 
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import io.dropwizard.client.JerseyClientBuilder;
@@ -23,31 +22,19 @@ import org.broadinstitute.consent.http.configurations.ElasticSearchConfiguration
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.configurations.OidcConfiguration;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.db.AcknowledgementDAO;
-import org.broadinstitute.consent.http.db.CounterDAO;
-import org.broadinstitute.consent.http.db.DACAutomationRuleDAO;
-import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DaaDAO;
-import org.broadinstitute.consent.http.db.DacDAO;
 import org.broadinstitute.consent.http.db.DarCollectionDAO;
-import org.broadinstitute.consent.http.db.DarCollectionSummaryDAO;
 import org.broadinstitute.consent.http.db.DataAccessRequestDAO;
 import org.broadinstitute.consent.http.db.DatasetAuthorizationReaderDAO;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.DraftDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
-import org.broadinstitute.consent.http.db.FeatureFlagDAO;
 import org.broadinstitute.consent.http.db.FileStorageObjectDAO;
-import org.broadinstitute.consent.http.db.InstitutionDAO;
 import org.broadinstitute.consent.http.db.LibraryCardDAO;
-import org.broadinstitute.consent.http.db.MailMessageDAO;
-import org.broadinstitute.consent.http.db.MatchDAO;
 import org.broadinstitute.consent.http.db.OidcAuthorityDAO;
 import org.broadinstitute.consent.http.db.SamDAO;
 import org.broadinstitute.consent.http.db.StudyDAO;
 import org.broadinstitute.consent.http.db.UserDAO;
-import org.broadinstitute.consent.http.db.UserPropertyDAO;
-import org.broadinstitute.consent.http.db.UserRedactionAuditDAO;
 import org.broadinstitute.consent.http.db.UserRoleDAO;
 import org.broadinstitute.consent.http.db.VoteDAO;
 import org.broadinstitute.consent.http.mail.SendGridAPI;
@@ -89,7 +76,6 @@ import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
 import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
-import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -104,35 +90,23 @@ import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   public static final String DB_ENV = "postgresql";
-  @Inject private final ConsentConfiguration config;
-  @Inject private final Environment environment;
+  private final ConsentConfiguration config;
+  private final Environment environment;
   private final Client client;
   private final Jdbi jdbi;
-  private final CounterDAO counterDAO;
   private final ElectionDAO electionDAO;
   private final VoteDAO voteDAO;
   private final StudyDAO studyDAO;
   private final DatasetDAO datasetDAO;
   private final DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO;
   private final DaaDAO daaDAO;
-  private final DacDAO dacDAO;
   private final UserDAO userDAO;
   private final UserRoleDAO userRoleDAO;
-  private final MatchDAO matchDAO;
-  private final MailMessageDAO mailMessageDAO;
-  private final UserPropertyDAO userPropertyDAO;
   private final DataAccessRequestDAO dataAccessRequestDAO;
   private final DarCollectionDAO darCollectionDAO;
-  private final DarCollectionSummaryDAO darCollectionSummaryDAO;
-  private final InstitutionDAO institutionDAO;
   private final LibraryCardDAO libraryCardDAO;
   private final FileStorageObjectDAO fileStorageObjectDAO;
-  private final AcknowledgementDAO acknowledgementDAO;
   private final DraftDAO draftDAO;
-  private final DACAutomationRuleDAO rulesDAO;
-  private final FeatureFlagDAO featureFlagDAO;
-  private final OntologyDAO ontologyDAO;
-  private final UserRedactionAuditDAO userRedactionAuditDAO;
   private final ExecutorService executorService;
 
   // Lazily-memoized singletons. @Singleton on a @Provides method only covers resolution
@@ -142,6 +116,45 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   private DatasetRegistrationService datasetRegistrationService;
   private InstitutionAndLibraryCardEnforcement institutionAndLibraryCardEnforcement;
   private SamDAO samDAO;
+  private EmailService emailService;
+  private ElasticSearchService elasticSearchService;
+  private DatasetServiceDAO datasetServiceDAO;
+  private VoteService voteService;
+  private DatasetService datasetService;
+  private UserService userService;
+  private InstitutionService institutionService;
+  private LibraryCardService libraryCardService;
+  private DacService dacService;
+  private DaaService daaService;
+  private CounterService counterService;
+  private VoteServiceDAO voteServiceDAO;
+  private DaaServiceDAO daaServiceDAO;
+  private DacServiceDAO dacServiceDAO;
+  private DarCollectionServiceDAO darCollectionServiceDAO;
+  private DataAccessRequestServiceDAO dataAccessRequestServiceDAO;
+  private DataAccessRequestService dataAccessRequestService;
+  private UserServiceDAO userServiceDAO;
+  private DACAutomationRuleService ruleService;
+  private GCSService gcsService;
+  private SendGridAPI sendGridAPI;
+  private FreeMarkerTemplateHelper freeMarkerTemplateHelper;
+  private DarCollectionService darCollectionService;
+  private FileStorageObjectService fileStorageObjectService;
+  private ElectionService electionService;
+  private FeatureFlagService featureFlagService;
+  private MatchService matchService;
+  private MetricsService metricsService;
+  private NihService nihService;
+  private NihServiceDAO nihServiceDAO;
+  private AcknowledgementService acknowledgementService;
+  private DraftFileStorageServiceDAO draftFileStorageServiceDAO;
+  private DraftServiceDAO draftServiceDAO;
+  private HttpClientUtil httpClientUtil;
+  private OntologyIndexService ontologyIndexService;
+  private SamService samService;
+  private OidcAuthorityDAO oidcAuthorityDAO;
+  private OidcService oidcService;
+  private SupportRequestService supportRequestService;
 
   ConsentModule(ConsentConfiguration consentConfiguration, Environment environment) {
     this.config = consentConfiguration;
@@ -157,31 +170,19 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
     jdbi.installPlugin(new GuavaPlugin());
     jdbi.getConfig().get(Gson2Config.class).setGson(GsonUtil.buildGson());
 
-    this.counterDAO = this.jdbi.onDemand(CounterDAO.class);
     this.electionDAO = this.jdbi.onDemand(ElectionDAO.class);
     this.voteDAO = this.jdbi.onDemand(VoteDAO.class);
     this.studyDAO = this.jdbi.onDemand(StudyDAO.class);
     this.datasetAuthorizationReaderDAO = this.jdbi.onDemand(DatasetAuthorizationReaderDAO.class);
     this.datasetDAO = this.jdbi.onDemand(DatasetDAO.class);
     this.daaDAO = this.jdbi.onDemand(DaaDAO.class);
-    this.dacDAO = this.jdbi.onDemand(DacDAO.class);
     this.userDAO = this.jdbi.onDemand(UserDAO.class);
     this.userRoleDAO = this.jdbi.onDemand(UserRoleDAO.class);
-    this.matchDAO = this.jdbi.onDemand(MatchDAO.class);
-    this.mailMessageDAO = this.jdbi.onDemand(MailMessageDAO.class);
-    this.userPropertyDAO = this.jdbi.onDemand(UserPropertyDAO.class);
     this.dataAccessRequestDAO = this.jdbi.onDemand(DataAccessRequestDAO.class);
     this.darCollectionDAO = this.jdbi.onDemand(DarCollectionDAO.class);
-    this.darCollectionSummaryDAO = this.jdbi.onDemand(DarCollectionSummaryDAO.class);
-    this.institutionDAO = this.jdbi.onDemand((InstitutionDAO.class));
     this.libraryCardDAO = this.jdbi.onDemand((LibraryCardDAO.class));
     this.fileStorageObjectDAO = this.jdbi.onDemand((FileStorageObjectDAO.class));
-    this.acknowledgementDAO = this.jdbi.onDemand((AcknowledgementDAO.class));
     this.draftDAO = this.jdbi.onDemand(DraftDAO.class);
-    this.rulesDAO = this.jdbi.onDemand(DACAutomationRuleDAO.class);
-    this.featureFlagDAO = this.jdbi.onDemand(FeatureFlagDAO.class);
-    this.ontologyDAO = this.jdbi.onDemand(OntologyDAO.class);
-    this.userRedactionAuditDAO = this.jdbi.onDemand(UserRedactionAuditDAO.class);
 
     // All async work in this application is blocking I/O (Sam calls, Elasticsearch indexing,
     // batch DB writes), so a single shared virtual-thread executor replaces the per-class
@@ -226,38 +227,17 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
-  public DAOContainer providesDAOContainer() {
-    DAOContainer container = new DAOContainer();
-    container.setCounterDAO(providesCounterDAO());
-    container.setDaaDAO(providesDaaDAO());
-    container.setDacDAO(providesDacDAO());
-    container.setDataAccessRequestDAO(providesDataAccessRequestDAO());
-    container.setDarCollectionDAO(providesDARCollectionDAO());
-    container.setDarCollectionSummaryDAO(providesDarCollectionSummaryDAO());
-    container.setDatasetAuthorizationReaderDAO(providesDatasetAuthorizationReaderDAO());
-    container.setDatasetDAO(providesDatasetDAO());
-    container.setElectionDAO(providesElectionDAO());
-    container.setMailMessageDAO(providesMailMessageDAO());
-    container.setMatchDAO(providesMatchDAO());
-    container.setUserPropertyDAO(providesUserPropertyDAO());
-    container.setUserDAO(providesUserDAO());
-    container.setUserRoleDAO(providesUserRoleDAO());
-    container.setVoteDAO(providesVoteDAO());
-    container.setStudyDAO(providesStudyDAO());
-    container.setInstitutionDAO(providesInstitutionDAO());
-    container.setFileStorageObjectDAO(providesFileStorageObjectDAO());
-    container.setAcknowledgementDAO(providesAcknowledgementDAO());
-    return container;
-  }
-
-  @Provides
   Client providesClient() {
     return client;
   }
 
   @Provides
-  HttpClientUtil providesHttpClientUtil() {
-    return new HttpClientUtil(config.getServicesConfiguration());
+  @Singleton
+  synchronized HttpClientUtil providesHttpClientUtil() {
+    if (httpClientUtil == null) {
+      httpClientUtil = new HttpClientUtil(config.getServicesConfiguration());
+    }
+    return httpClientUtil;
   }
 
   @Provides
@@ -296,14 +276,19 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
     if (ontologyService == null) {
       ontologyService =
           new OntologyService(
-              providesOntologyDAO(), providesOntologyIndexService(), providesExecutorService());
+              providesJdbi(), providesOntologyIndexService(), providesExecutorService());
     }
     return ontologyService;
   }
 
   @Provides
-  OntologyIndexService providesOntologyIndexService() {
-    return new OntologyIndexService(providesGCSService(), config.getCloudStoreConfiguration());
+  @Singleton
+  synchronized OntologyIndexService providesOntologyIndexService() {
+    if (ontologyIndexService == null) {
+      ontologyIndexService =
+          new OntologyIndexService(providesGCSService(), config.getCloudStoreConfiguration());
+    }
+    return ontologyIndexService;
   }
 
   @Provides
@@ -322,112 +307,152 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
-  DarCollectionService providesDarCollectionService() {
-    return new DarCollectionService(
-        providesJdbi(),
-        providesDarCollectionServiceDAO(),
-        providesEmailService(),
-        providesRuleService());
+  @Singleton
+  synchronized DarCollectionService providesDarCollectionService() {
+    if (darCollectionService == null) {
+      darCollectionService =
+          new DarCollectionService(
+              providesJdbi(),
+              providesDarCollectionServiceDAO(),
+              providesEmailService(),
+              providesRuleService());
+    }
+    return darCollectionService;
   }
 
   @Provides
-  FileStorageObjectService providesFileStorageObjectService() {
-    return new FileStorageObjectService(
-        providesFileStorageObjectDAO(),
-        providesGCSService(),
-        providesDatasetService(),
-        providesDacService(),
-        providesDaaService(),
-        providesDataAccessRequestService());
+  @Singleton
+  synchronized FileStorageObjectService providesFileStorageObjectService() {
+    if (fileStorageObjectService == null) {
+      fileStorageObjectService =
+          new FileStorageObjectService(
+              providesJdbi(),
+              providesGCSService(),
+              providesDatasetService(),
+              providesDacService(),
+              providesDaaService(),
+              providesDataAccessRequestService());
+    }
+    return fileStorageObjectService;
   }
 
   @Provides
-  GCSService providesGCSService() {
-    return new GCSService(config.getCloudStoreConfiguration());
+  @Singleton
+  synchronized GCSService providesGCSService() {
+    if (gcsService == null) {
+      gcsService = new GCSService(config.getCloudStoreConfiguration());
+    }
+    return gcsService;
   }
 
   @Provides
-  CounterDAO providesCounterDAO() {
-    return counterDAO;
+  @Singleton
+  synchronized CounterService providesCounterService() {
+    if (counterService == null) {
+      counterService = new CounterService(providesJdbi());
+    }
+    return counterService;
   }
 
   @Provides
-  CounterService providesCounterService() {
-    return new CounterService(providesCounterDAO());
+  @Singleton
+  synchronized DACAutomationRuleService providesRuleService() {
+    if (ruleService == null) {
+      ruleService =
+          new DACAutomationRuleService(
+              providesJdbi(), providesVoteServiceDAO(), providesVoteService());
+    }
+    return ruleService;
   }
 
   @Provides
-  DACAutomationRuleService providesRuleService() {
-    return new DACAutomationRuleService(
-        providesDataAccessRequestDAO(),
-        providesDatasetDAO(),
-        providesDACAutomationRuleDAO(),
-        providesElectionDAO(),
-        providesUserDAO(),
-        providesVoteDAO(),
-        providesVoteServiceDAO(),
-        providesVoteService());
+  @Singleton
+  synchronized DataAccessRequestService providesDataAccessRequestService() {
+    if (dataAccessRequestService == null) {
+      dataAccessRequestService =
+          new DataAccessRequestService(
+              providesJdbi(),
+              providesDataAccessRequestServiceDAO(),
+              providesCounterService(),
+              providesDacService(),
+              providesUserService(),
+              providesInstitutionService(),
+              providesEmailService(),
+              providesRuleService(),
+              config);
+    }
+    return dataAccessRequestService;
   }
 
   @Provides
-  DataAccessRequestService providesDataAccessRequestService() {
-    return new DataAccessRequestService(
-        providesCounterService(),
-        providesDAOContainer(),
-        providesDacService(),
-        providesDataAccessRequestServiceDAO(),
-        providesUserService(),
-        providesInstitutionService(),
-        providesEmailService(),
-        providesRuleService(),
-        config);
+  @Singleton
+  synchronized DatasetServiceDAO providesDatasetServiceDAO() {
+    if (datasetServiceDAO == null) {
+      datasetServiceDAO = new DatasetServiceDAO(providesJdbi());
+    }
+    return datasetServiceDAO;
   }
 
   @Provides
-  DatasetServiceDAO providesDatasetServiceDAO() {
-    return new DatasetServiceDAO(
-        jdbi, providesDatasetDAO(), providesStudyDAO(), providesDatasetAuthorizationReaderDAO());
+  @Singleton
+  synchronized DatasetService providesDatasetService() {
+    if (datasetService == null) {
+      datasetService =
+          new DatasetService(
+              providesJdbi(),
+              providesDatasetServiceDAO(),
+              providesElasticSearchService(),
+              providesEmailService(),
+              providesOntologyService());
+    }
+    return datasetService;
   }
 
   @Provides
-  DatasetService providesDatasetService() {
-    return new DatasetService(
-        providesDatasetAuthorizationReaderDAO(),
-        providesDatasetDAO(),
-        providesDaaDAO(),
-        providesDacDAO(),
-        providesElasticSearchService(),
-        providesEmailService(),
-        providesOntologyService(),
-        providesStudyDAO(),
-        providesDatasetServiceDAO(),
-        providesUserDAO());
+  @Singleton
+  synchronized ElectionService providesElectionService() {
+    if (electionService == null) {
+      electionService = new ElectionService(providesJdbi());
+    }
+    return electionService;
   }
 
   @Provides
-  ElectionService providesElectionService() {
-    return new ElectionService(providesElectionDAO());
+  @Singleton
+  synchronized FreeMarkerTemplateHelper providesFreeMarkerTemplateHelper() {
+    if (freeMarkerTemplateHelper == null) {
+      freeMarkerTemplateHelper = new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration());
+    }
+    return freeMarkerTemplateHelper;
   }
 
   @Provides
-  FreeMarkerTemplateHelper providesFreeMarkerTemplateHelper() {
-    return new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration());
+  @Singleton
+  synchronized EmailService providesEmailService() {
+    if (emailService == null) {
+      emailService =
+          new EmailService(
+              providesJdbi(), providesSendGridAPI(), providesFreeMarkerTemplateHelper(), config);
+    }
+    return emailService;
   }
 
   @Provides
-  EmailService providesEmailService() {
-    return new EmailService(
-        providesDAOContainer(), providesSendGridAPI(), providesFreeMarkerTemplateHelper(), config);
+  @Singleton
+  synchronized FeatureFlagService providesFeatureFlagService() {
+    if (featureFlagService == null) {
+      featureFlagService = new FeatureFlagService(providesJdbi());
+    }
+    return featureFlagService;
   }
 
   @Provides
-  FeatureFlagService providesFeatureFlagService() {
-    return new FeatureFlagService(providesFeatureFlagDAO());
-  }
-
-  @Provides
-  SendGridAPI providesSendGridAPI() {
-    return new SendGridAPI(config.getMailConfiguration(), providesUserDAO());
+  @Singleton
+  synchronized SendGridAPI providesSendGridAPI() {
+    if (sendGridAPI == null) {
+      sendGridAPI = new SendGridAPI(config.getMailConfiguration(), providesJdbi());
+    }
+    return sendGridAPI;
   }
 
   @Provides
@@ -441,20 +466,21 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
-  DarCollectionSummaryDAO providesDarCollectionSummaryDAO() {
-    return darCollectionSummaryDAO;
+  @Singleton
+  synchronized DarCollectionServiceDAO providesDarCollectionServiceDAO() {
+    if (darCollectionServiceDAO == null) {
+      darCollectionServiceDAO = new DarCollectionServiceDAO(providesJdbi());
+    }
+    return darCollectionServiceDAO;
   }
 
   @Provides
-  DarCollectionServiceDAO providesDarCollectionServiceDAO() {
-    return new DarCollectionServiceDAO(
-        providesDatasetDAO(), providesElectionDAO(), providesJdbi(), providesUserDAO());
-  }
-
-  @Provides
-  DataAccessRequestServiceDAO providesDataAccessRequestServiceDAO() {
-    return new DataAccessRequestServiceDAO(
-        providesDataAccessRequestDAO(), providesJdbi(), providesDARCollectionDAO());
+  @Singleton
+  synchronized DataAccessRequestServiceDAO providesDataAccessRequestServiceDAO() {
+    if (dataAccessRequestServiceDAO == null) {
+      dataAccessRequestServiceDAO = new DataAccessRequestServiceDAO(providesJdbi());
+    }
+    return dataAccessRequestServiceDAO;
   }
 
   @Provides
@@ -473,17 +499,26 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
-  VoteServiceDAO providesVoteServiceDAO() {
-    return new VoteServiceDAO(providesJdbi(), providesVoteDAO());
+  @Singleton
+  synchronized VoteServiceDAO providesVoteServiceDAO() {
+    if (voteServiceDAO == null) {
+      voteServiceDAO = new VoteServiceDAO(providesJdbi());
+    }
+    return voteServiceDAO;
   }
 
   @Provides
-  VoteService providesVoteService() {
-    return new VoteService(
-        providesDAOContainer(),
-        providesEmailService(),
-        providesVoteServiceDAO(),
-        providesOntologyService());
+  @Singleton
+  synchronized VoteService providesVoteService() {
+    if (voteService == null) {
+      voteService =
+          new VoteService(
+              providesJdbi(),
+              providesVoteServiceDAO(),
+              providesEmailService(),
+              providesOntologyService());
+    }
+    return voteService;
   }
 
   @Provides
@@ -497,13 +532,21 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
-  DaaServiceDAO providesDaaServiceDAO() {
-    return new DaaServiceDAO(providesJdbi(), providesDaaDAO(), providesFileStorageObjectDAO());
+  @Singleton
+  synchronized DaaServiceDAO providesDaaServiceDAO() {
+    if (daaServiceDAO == null) {
+      daaServiceDAO = new DaaServiceDAO(providesJdbi());
+    }
+    return daaServiceDAO;
   }
 
   @Provides
-  DacServiceDAO providesDacServiceDAO() {
-    return new DacServiceDAO(providesJdbi());
+  @Singleton
+  synchronized DacServiceDAO providesDacServiceDAO() {
+    if (dacServiceDAO == null) {
+      dacServiceDAO = new DacServiceDAO(providesJdbi());
+    }
+    return dacServiceDAO;
   }
 
   @Provides
@@ -512,49 +555,49 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
-  DacDAO providesDacDAO() {
-    return dacDAO;
+  @Singleton
+  synchronized DaaService providesDaaService() {
+    if (daaService == null) {
+      daaService =
+          new DaaService(
+              providesJdbi(),
+              providesDaaServiceDAO(),
+              providesGCSService(),
+              providesEmailService(),
+              providesUserService(),
+              providesLibraryCardService());
+    }
+    return daaService;
   }
 
   @Provides
-  DaaService providesDaaService() {
-    return new DaaService(
-        providesDaaServiceDAO(),
-        providesDaaDAO(),
-        providesGCSService(),
-        providesEmailService(),
-        providesUserService(),
-        providesDacDAO(),
-        providesLibraryCardService());
+  @Singleton
+  synchronized DacService providesDacService() {
+    if (dacService == null) {
+      dacService =
+          new DacService(
+              providesJdbi(),
+              providesDacServiceDAO(),
+              providesVoteService(),
+              providesElasticSearchService(),
+              providesDaaService());
+    }
+    return dacService;
   }
 
   @Provides
-  DacService providesDacService() {
-    return new DacService(
-        providesDacDAO(),
-        providesUserDAO(),
-        providesDatasetDAO(),
-        providesElectionDAO(),
-        providesDataAccessRequestDAO(),
-        providesVoteService(),
-        providesElasticSearchService(),
-        providesDaaService(),
-        providesDacServiceDAO(),
-        providesDACAutomationRuleDAO());
-  }
-
-  @Provides
-  ElasticSearchService providesElasticSearchService() {
-    return new ElasticSearchService(
-        ElasticSearchSupport.createRestClient(config.getElasticSearchConfiguration()),
-        config.getElasticSearchConfiguration(),
-        providesDacDAO(),
-        providesUserDAO(),
-        providesOntologyService(),
-        providesInstitutionDAO(),
-        providesDatasetDAO(),
-        providesDatasetServiceDAO(),
-        providesStudyDAO());
+  @Singleton
+  synchronized ElasticSearchService providesElasticSearchService() {
+    if (elasticSearchService == null) {
+      elasticSearchService =
+          new ElasticSearchService(
+              providesJdbi(),
+              providesDatasetServiceDAO(),
+              ElasticSearchSupport.createRestClient(config.getElasticSearchConfiguration()),
+              config.getElasticSearchConfiguration(),
+              providesOntologyService());
+    }
+    return elasticSearchService;
   }
 
   @Provides
@@ -568,38 +611,23 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
-  MatchService providesMatchService() {
-    return new MatchService(
-        providesMatchDAO(),
-        providesDataAccessRequestDAO(),
-        providesDatasetDAO(),
-        providesUseRestrictionConverter(),
-        providesOntologyService());
+  @Singleton
+  synchronized MatchService providesMatchService() {
+    if (matchService == null) {
+      matchService =
+          new MatchService(
+              providesJdbi(), providesUseRestrictionConverter(), providesOntologyService());
+    }
+    return matchService;
   }
 
   @Provides
-  MatchDAO providesMatchDAO() {
-    return matchDAO;
-  }
-
-  @Provides
-  MailMessageDAO providesMailMessageDAO() {
-    return mailMessageDAO;
-  }
-
-  @Provides
-  MetricsService providesMetricsService() {
-    return new MetricsService(providesDatasetDAO(), providesDataAccessRequestDAO());
-  }
-
-  @Provides
-  UserPropertyDAO providesUserPropertyDAO() {
-    return userPropertyDAO;
-  }
-
-  @Provides
-  InstitutionDAO providesInstitutionDAO() {
-    return institutionDAO;
+  @Singleton
+  synchronized MetricsService providesMetricsService() {
+    if (metricsService == null) {
+      metricsService = new MetricsService(providesJdbi());
+    }
+    return metricsService;
   }
 
   @Provides
@@ -613,33 +641,33 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
-  AcknowledgementDAO providesAcknowledgementDAO() {
-    return acknowledgementDAO;
+  @Singleton
+  synchronized InstitutionService providesInstitutionService() {
+    if (institutionService == null) {
+      institutionService =
+          new InstitutionService(providesJdbi(), providesInstitutionAndLibraryCardEnforcement());
+    }
+    return institutionService;
   }
 
   @Provides
-  InstitutionService providesInstitutionService() {
-    return new InstitutionService(
-        providesInstitutionDAO(),
-        providesUserDAO(),
-        providesInstitutionAndLibraryCardEnforcement());
+  @Singleton
+  synchronized LibraryCardService providesLibraryCardService() {
+    if (libraryCardService == null) {
+      libraryCardService =
+          new LibraryCardService(
+              providesJdbi(), providesInstitutionService(), providesEmailService());
+    }
+    return libraryCardService;
   }
 
   @Provides
-  LibraryCardService providesLibraryCardService() {
-    return new LibraryCardService(
-        providesDaaDAO(),
-        providesLibraryCardDAO(),
-        providesInstitutionDAO(),
-        providesInstitutionService(),
-        providesUserDAO(),
-        providesEmailService());
-  }
-
-  @Provides
-  AcknowledgementService providesAcknowledgementService() {
-    return new AcknowledgementService(
-        providesAcknowledgementDAO(), providesDataAccessRequestDAO(), providesEmailService());
+  @Singleton
+  synchronized AcknowledgementService providesAcknowledgementService() {
+    if (acknowledgementService == null) {
+      acknowledgementService = new AcknowledgementService(providesJdbi(), providesEmailService());
+    }
+    return acknowledgementService;
   }
 
   @Provides
@@ -648,13 +676,10 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
     if (datasetRegistrationService == null) {
       datasetRegistrationService =
           new DatasetRegistrationService(
-              providesDatasetDAO(),
-              providesDacDAO(),
+              providesJdbi(),
               providesDatasetServiceDAO(),
-              providesFileStorageObjectDAO(),
               providesGCSService(),
               providesElasticSearchService(),
-              providesStudyDAO(),
               providesEmailService(),
               providesExecutorService());
     }
@@ -662,28 +687,26 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
-  UserServiceDAO providesUserServiceDAO() {
-    return new UserServiceDAO(
-        providesJdbi(), providesLibraryCardDAO(), providesUserDAO(), providesUserRoleDAO());
+  @Singleton
+  synchronized UserServiceDAO providesUserServiceDAO() {
+    if (userServiceDAO == null) {
+      userServiceDAO = new UserServiceDAO(providesJdbi());
+    }
+    return userServiceDAO;
   }
 
   @Provides
-  UserRedactionAuditDAO providesUserRedactionAuditDAO() {
-    return userRedactionAuditDAO;
-  }
-
-  @Provides
-  UserService providesUserService() {
-    return new UserService(
-        providesUserDAO(),
-        providesUserPropertyDAO(),
-        providesUserRoleDAO(),
-        providesInstitutionDAO(),
-        providesUserServiceDAO(),
-        providesDaaDAO(),
-        providesInstitutionService(),
-        providesInstitutionAndLibraryCardEnforcement(),
-        providesUserRedactionAuditDAO());
+  @Singleton
+  synchronized UserService providesUserService() {
+    if (userService == null) {
+      userService =
+          new UserService(
+              providesJdbi(),
+              providesUserServiceDAO(),
+              providesInstitutionService(),
+              providesInstitutionAndLibraryCardEnforcement());
+    }
+    return userService;
   }
 
   @Provides
@@ -698,22 +721,35 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
-  NihService providesNihService() {
-    return new NihService(
-        providesUserDAO(),
-        providesNIHServiceDAO(),
-        providesHttpClientUtil(),
-        config.getServicesConfiguration());
+  @Singleton
+  synchronized NihService providesNihService() {
+    if (nihService == null) {
+      nihService =
+          new NihService(
+              providesJdbi(),
+              providesNIHServiceDAO(),
+              providesHttpClientUtil(),
+              config.getServicesConfiguration());
+    }
+    return nihService;
   }
 
   @Provides
-  NihServiceDAO providesNIHServiceDAO() {
-    return new NihServiceDAO(jdbi);
+  @Singleton
+  synchronized NihServiceDAO providesNIHServiceDAO() {
+    if (nihServiceDAO == null) {
+      nihServiceDAO = new NihServiceDAO(providesJdbi());
+    }
+    return nihServiceDAO;
   }
 
   @Provides
-  SamService providesSamService() {
-    return new SamService(providesSamDAO());
+  @Singleton
+  synchronized SamService providesSamService() {
+    if (samService == null) {
+      samService = new SamService(providesSamDAO());
+    }
+    return samService;
   }
 
   @Provides
@@ -735,18 +771,31 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
-  OidcAuthorityDAO providesOidcAuthorityDAO() {
-    return new OidcAuthorityDAO(providesHttpClientUtil(), providesOidcConfiguration());
+  @Singleton
+  synchronized OidcAuthorityDAO providesOidcAuthorityDAO() {
+    if (oidcAuthorityDAO == null) {
+      oidcAuthorityDAO =
+          new OidcAuthorityDAO(providesHttpClientUtil(), providesOidcConfiguration());
+    }
+    return oidcAuthorityDAO;
   }
 
   @Provides
-  OidcService providesOidcService() {
-    return new OidcService(providesOidcAuthorityDAO(), providesOidcConfiguration());
+  @Singleton
+  synchronized OidcService providesOidcService() {
+    if (oidcService == null) {
+      oidcService = new OidcService(providesOidcAuthorityDAO(), providesOidcConfiguration());
+    }
+    return oidcService;
   }
 
   @Provides
-  SupportRequestService providesSupportRequestService() {
-    return new SupportRequestService(config.getServicesConfiguration());
+  @Singleton
+  synchronized SupportRequestService providesSupportRequestService() {
+    if (supportRequestService == null) {
+      supportRequestService = new SupportRequestService(config.getServicesConfiguration());
+    }
+    return supportRequestService;
   }
 
   @Provides
@@ -755,29 +804,21 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   }
 
   @Provides
-  DraftFileStorageServiceDAO providesDraftFileStorageService() {
-    return new DraftFileStorageServiceDAO(
-        providesJdbi(), providesGCSService(), providesFileStorageObjectDAO());
+  @Singleton
+  synchronized DraftFileStorageServiceDAO providesDraftFileStorageService() {
+    if (draftFileStorageServiceDAO == null) {
+      draftFileStorageServiceDAO =
+          new DraftFileStorageServiceDAO(providesJdbi(), providesGCSService());
+    }
+    return draftFileStorageServiceDAO;
   }
 
   @Provides
-  DraftServiceDAO providesDraftService() {
-    return new DraftServiceDAO(
-        providesJdbi(), providesDraftDAO(), providesDraftFileStorageService());
-  }
-
-  @Provides
-  DACAutomationRuleDAO providesDACAutomationRuleDAO() {
-    return rulesDAO;
-  }
-
-  @Provides
-  FeatureFlagDAO providesFeatureFlagDAO() {
-    return featureFlagDAO;
-  }
-
-  @Provides
-  OntologyDAO providesOntologyDAO() {
-    return ontologyDAO;
+  @Singleton
+  synchronized DraftServiceDAO providesDraftServiceDAO() {
+    if (draftServiceDAO == null) {
+      draftServiceDAO = new DraftServiceDAO(providesJdbi(), providesDraftFileStorageService());
+    }
+    return draftServiceDAO;
   }
 }

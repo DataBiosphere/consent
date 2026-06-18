@@ -38,6 +38,8 @@ import org.broadinstitute.consent.http.models.FileStorageObject;
 import org.broadinstitute.consent.http.models.Study;
 import org.broadinstitute.consent.http.models.User;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -49,6 +51,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class FileStorageObjectServiceTest {
 
+  @Mock private Jdbi jdbi;
   @Mock private FileStorageObjectDAO fileStorageObjectDAO;
 
   @Mock private GCSService gcsService;
@@ -59,15 +62,12 @@ class FileStorageObjectServiceTest {
 
   private FileStorageObjectService service;
 
-  private void initService() {
+  @BeforeEach
+  void setUp() {
+    when(jdbi.onDemand(FileStorageObjectDAO.class)).thenReturn(fileStorageObjectDAO);
     service =
         new FileStorageObjectService(
-            fileStorageObjectDAO,
-            gcsService,
-            datasetService,
-            dacService,
-            daaService,
-            dataAccessRequestService);
+            jdbi, gcsService, datasetService, dacService, daaService, dataAccessRequestService);
   }
 
   @Test
@@ -103,8 +103,6 @@ class FileStorageObjectServiceTest {
     when(gcsService.storeDocument(eq(content), eq(mediaType), any()))
         .thenReturn(BlobId.of(bucket, blob));
 
-    initService();
-
     FileStorageObject returned =
         service.uploadAndStoreFile(content, fileName, mediaType, category, entityId, createUserId);
 
@@ -137,8 +135,6 @@ class FileStorageObjectServiceTest {
         .thenReturn(new ByteArrayInputStream(content.getBytes()));
 
     when(fileStorageObjectDAO.findFileById(10)).thenReturn(file);
-
-    initService();
 
     FileStorageObject returned = service.fetchById(10);
 
@@ -180,8 +176,6 @@ class FileStorageObjectServiceTest {
 
     when(fileStorageObjectDAO.findFilesByEntityId(entityId))
         .thenReturn(List.of(file1, file2, file3));
-
-    initService();
 
     List<FileStorageObject> returned = service.fetchAllByEntityId(entityId);
 
@@ -235,8 +229,6 @@ class FileStorageObjectServiceTest {
     when(fileStorageObjectDAO.findFilesByEntityIdAndCategory(entityId, category.getValue()))
         .thenReturn(List.of(file1, file2, file3));
 
-    initService();
-
     List<FileStorageObject> returned = service.fetchAllByEntityIdAndCategory(entityId, category);
 
     assertEquals(3, returned.size());
@@ -259,8 +251,6 @@ class FileStorageObjectServiceTest {
 
     when(fileStorageObjectDAO.findFileMetadataByEntityId(entityId)).thenReturn(expected);
 
-    initService();
-
     List<FileStorageObject> returned = service.fetchAllMetadataByEntityId(entityId);
 
     assertEquals(expected, returned);
@@ -277,8 +267,6 @@ class FileStorageObjectServiceTest {
     when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId))
         .thenReturn(fileStorageObject);
 
-    initService();
-
     FileStorageObject returned = service.fetchMetadataByEntityIdAndId(entityId, fileId);
 
     assertEquals(fileStorageObject, returned);
@@ -291,8 +279,6 @@ class FileStorageObjectServiceTest {
     String entityId = randomAlphabetic(10);
 
     when(fileStorageObjectDAO.findActiveFileByIdAndEntityId(entityId, fileId)).thenReturn(null);
-
-    initService();
 
     assertThrows(
         NotFoundException.class, () -> service.fetchMetadataByEntityIdAndId(entityId, fileId));
@@ -312,8 +298,6 @@ class FileStorageObjectServiceTest {
             fileId,
             List.of(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue())))
         .thenReturn(fileStorageObject);
-
-    initService();
 
     FileStorageObject returned = service.getDocument(user, "dataset", datasetId.toString(), fileId);
 
@@ -335,8 +319,6 @@ class FileStorageObjectServiceTest {
             List.of(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue())))
         .thenReturn(fileStorageObjects);
 
-    initService();
-
     List<FileStorageObject> returnedFiles =
         service.listDocuments(user, "study", studyId.toString());
 
@@ -353,8 +335,6 @@ class FileStorageObjectServiceTest {
     study.setUuid(java.util.UUID.randomUUID());
     String studyEntityId = studyId.toString();
     List<FileStorageObject> fileStorageObjects = List.of(new FileStorageObject());
-
-    initService();
 
     if (!allowed) {
       assertThrows(
@@ -401,8 +381,6 @@ class FileStorageObjectServiceTest {
             daaId.toString(), List.of(FileCategory.DATA_ACCESS_AGREEMENT.getValue())))
         .thenReturn(fileStorageObjects);
 
-    initService();
-
     List<FileStorageObject> returnedFiles = service.listDocuments(user, "dac", dacId.toString());
 
     assertEquals(fileStorageObjects, returnedFiles);
@@ -438,8 +416,6 @@ class FileStorageObjectServiceTest {
         .thenReturn(90);
     when(fileStorageObjectDAO.findFileById(90)).thenReturn(created);
 
-    initService();
-
     FileStorageObject result =
         service.uploadDocument(user, "dac", "123", inputStream, fileDetail, "dataAccessAgreement");
 
@@ -472,8 +448,6 @@ class FileStorageObjectServiceTest {
     when(fileStorageObjectDAO.findFileById(fileId)).thenReturn(fso);
     when(daaService.isDaaLinkedToDac(dacId, 999)).thenReturn(false);
 
-    initService();
-
     assertThrows(NotFoundException.class, () -> service.getDocument(user, "dac", "123", fileId));
   }
 
@@ -495,8 +469,6 @@ class FileStorageObjectServiceTest {
             "1002", List.of(FileCategory.DATA_ACCESS_AGREEMENT.getValue())))
         .thenReturn(List.of(daa2File));
 
-    initService();
-
     List<FileStorageObject> returnedFiles = service.listDocuments(user, "dac", dacId.toString());
 
     assertEquals(2, returnedFiles.size());
@@ -511,8 +483,6 @@ class FileStorageObjectServiceTest {
 
     when(dacService.findById(dacId)).thenReturn(new Dac());
     when(daaService.findDaaIdsByDacId(dacId)).thenReturn(List.of());
-
-    initService();
 
     List<FileStorageObject> returnedFiles = service.listDocuments(user, "dac", dacId.toString());
 
@@ -536,8 +506,6 @@ class FileStorageObjectServiceTest {
     when(dacService.findById(dacId)).thenReturn(new Dac());
     when(fileStorageObjectDAO.findFileById(fileId)).thenReturn(fso);
     when(daaService.isDaaLinkedToDac(dacId, 999)).thenReturn(false);
-
-    initService();
 
     assertThrows(
         NotFoundException.class, () -> service.getDocumentFile(user, "dac", "123", fileId));
@@ -563,8 +531,6 @@ class FileStorageObjectServiceTest {
     when(daaService.isDaaLinkedToDac(dacId, 999)).thenReturn(false);
     String category = FileCategory.DATA_ACCESS_AGREEMENT.getValue();
 
-    initService();
-
     assertThrows(
         NotFoundException.class,
         () -> service.updateDocumentCategory(user, "dac", "123", fileId, category));
@@ -588,8 +554,6 @@ class FileStorageObjectServiceTest {
     when(dacService.findById(dacId)).thenReturn(new Dac());
     when(fileStorageObjectDAO.findFileById(fileId)).thenReturn(fso);
     when(daaService.isDaaLinkedToDac(dacId, 999)).thenReturn(false);
-
-    initService();
 
     assertThrows(NotFoundException.class, () -> service.deleteDocument(user, "dac", "123", fileId));
     verify(fileStorageObjectDAO, never()).softDelete(any(), any(), any());
@@ -619,8 +583,6 @@ class FileStorageObjectServiceTest {
     when(daaService.isDaaLinkedToDac(dacId, 777)).thenReturn(true);
     when(fileStorageObjectDAO.findById(fileId)).thenReturn(deleted);
 
-    initService();
-
     FileStorageObject result = service.deleteDocument(user, "dac", "123", fileId);
 
     assertEquals(deleted, result);
@@ -643,8 +605,6 @@ class FileStorageObjectServiceTest {
                 FileCategory.IRB_COLLABORATION_LETTER.getValue(),
                 FileCategory.DATA_USE_LETTER.getValue())))
         .thenReturn(fileStorageObjects);
-
-    initService();
 
     List<FileStorageObject> returnedFiles = service.listDocuments(user, "dar", darReferenceId);
 
@@ -673,8 +633,6 @@ class FileStorageObjectServiceTest {
             fileId,
             List.of(FileCategory.ALTERNATIVE_DATA_SHARING_PLAN.getValue())))
         .thenReturn(fileStorageObject);
-
-    initService();
 
     FileStorageObject returned = service.getDocument(user, "study", studyId.toString(), fileId);
 
@@ -709,8 +667,6 @@ class FileStorageObjectServiceTest {
         .thenReturn(90);
     when(fileStorageObjectDAO.findFileById(90)).thenReturn(created);
 
-    initService();
-
     FileStorageObject result =
         service.uploadDocument(
             user, "dataset", "123", inputStream, fileDetail, "nihInstitutionalCertification");
@@ -734,8 +690,6 @@ class FileStorageObjectServiceTest {
     FormDataContentDisposition fileDetail =
         FormDataContentDisposition.name("file").fileName("upload.pdf").size(32).build();
     User user = new User();
-
-    initService();
 
     assertThrows(
         BadRequestException.class,
@@ -769,8 +723,6 @@ class FileStorageObjectServiceTest {
     when(gcsService.getDocument(fileStorageObject.getBlobId()))
         .thenReturn(new ByteArrayInputStream(content));
 
-    initService();
-
     FileStorageObject returned =
         service.getDocumentFile(user, "dataset", datasetId.toString(), fileId);
 
@@ -803,8 +755,6 @@ class FileStorageObjectServiceTest {
     when(gcsService.getDocument(fileStorageObject.getBlobId()))
         .thenThrow(new RuntimeException("GCS unavailable"));
 
-    initService();
-
     WebApplicationException exception =
         assertThrows(
             WebApplicationException.class,
@@ -824,8 +774,6 @@ class FileStorageObjectServiceTest {
     when(fileStorageObjectDAO.findActiveFileByIdAndEntityIdAndCategories(
             entityId, fileId, List.of(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue())))
         .thenReturn(null);
-
-    initService();
 
     assertThrows(
         NotFoundException.class, () -> service.getDocumentFile(user, "dataset", entityId, fileId));
@@ -860,8 +808,6 @@ class FileStorageObjectServiceTest {
         .thenReturn(active);
     when(fileStorageObjectDAO.findById(fileId)).thenReturn(deleted);
 
-    initService();
-
     FileStorageObject result = service.deleteDocument(user, "dataset", entityId, fileId);
 
     assertEquals(Boolean.TRUE, result.getDeleted());
@@ -882,8 +828,6 @@ class FileStorageObjectServiceTest {
     when(fileStorageObjectDAO.findActiveFileByIdAndEntityIdAndCategories(
             entityId, fileId, List.of(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue())))
         .thenReturn(null);
-
-    initService();
 
     NotFoundException exception =
         assertThrows(
@@ -923,8 +867,6 @@ class FileStorageObjectServiceTest {
         .thenReturn(active);
     when(fileStorageObjectDAO.findById(fileId)).thenReturn(updated);
 
-    initService();
-
     FileStorageObject result =
         service.updateDocumentCategory(
             user, "dataset", entityId, fileId, "nihInstitutionalCertification");
@@ -939,8 +881,6 @@ class FileStorageObjectServiceTest {
   @Test
   void testUpdateDocumentCategoryThrowsBadRequestWhenCategoryInvalid() {
     User user = new User();
-
-    initService();
 
     BadRequestException exception =
         assertThrows(
@@ -966,8 +906,6 @@ class FileStorageObjectServiceTest {
             entityId, fileId, List.of(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue())))
         .thenReturn(null);
 
-    initService();
-
     NotFoundException exception =
         assertThrows(
             NotFoundException.class,
@@ -986,8 +924,6 @@ class FileStorageObjectServiceTest {
     user.setUserId(25);
     int datasetId = 123;
     String entityId = Integer.toString(datasetId);
-
-    initService();
 
     BadRequestException exception =
         assertThrows(
@@ -1014,8 +950,6 @@ class FileStorageObjectServiceTest {
             entityId, List.of(FileCategory.NIH_INSTITUTIONAL_CERTIFICATION.getValue())))
         .thenReturn(fileStorageObjects);
 
-    initService();
-
     List<FileStorageObject> returned = service.listDocuments(user, "dataset", entityId);
 
     assertEquals(fileStorageObjects, returned);
@@ -1032,8 +966,6 @@ class FileStorageObjectServiceTest {
         FormDataContentDisposition.name("file").fileName("upload.pdf").size(32).build();
     User user = new User();
     user.setAdminRole();
-
-    initService();
 
     assertThrows(
         ForbiddenException.class,

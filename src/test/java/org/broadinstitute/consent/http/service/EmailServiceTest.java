@@ -32,7 +32,6 @@ import org.broadinstitute.consent.http.AbstractTestHelper;
 import org.broadinstitute.consent.http.configurations.ConsentConfiguration;
 import org.broadinstitute.consent.http.configurations.MailConfiguration;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
-import org.broadinstitute.consent.http.db.DAOContainer;
 import org.broadinstitute.consent.http.db.DatasetDAO;
 import org.broadinstitute.consent.http.db.ElectionDAO;
 import org.broadinstitute.consent.http.db.MailMessageDAO;
@@ -78,7 +77,7 @@ class EmailServiceTest extends AbstractTestHelper {
   @Mock private StudyDAO studyDAO;
   @Mock private SendGridAPI sendGridAPI;
   @Mock private FreeMarkerTemplateHelper templateHelper;
-  @Mock private DAOContainer daoContainer;
+  @Mock private Jdbi jdbi;
 
   @BeforeEach
   void initService() {
@@ -88,12 +87,12 @@ class EmailServiceTest extends AbstractTestHelper {
 
     ServicesConfiguration servicesConfiguration = config.getServicesConfiguration();
     servicesConfiguration.setLocalURL(SERVER_URL);
-    when(daoContainer.getElectionDAO()).thenReturn(electionDAO);
-    when(daoContainer.getUserDAO()).thenReturn(userDAO);
-    when(daoContainer.getMailMessageDAO()).thenReturn(emailDAO);
-    when(daoContainer.getDatasetDAO()).thenReturn(datasetDAO);
-    when(daoContainer.getStudyDAO()).thenReturn(studyDAO);
-    service = new EmailService(daoContainer, sendGridAPI, templateHelper, config);
+    when(jdbi.onDemand(ElectionDAO.class)).thenReturn(electionDAO);
+    when(jdbi.onDemand(UserDAO.class)).thenReturn(userDAO);
+    when(jdbi.onDemand(MailMessageDAO.class)).thenReturn(emailDAO);
+    when(jdbi.onDemand(DatasetDAO.class)).thenReturn(datasetDAO);
+    when(jdbi.onDemand(StudyDAO.class)).thenReturn(studyDAO);
+    service = new EmailService(jdbi, sendGridAPI, templateHelper, config);
   }
 
   @Test
@@ -368,16 +367,16 @@ class EmailServiceTest extends AbstractTestHelper {
     when(studyDAO.findStudyDatasetCounts(any()))
         .thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, "open", 7)));
     Handle handle = mock(Handle.class);
-    Jdbi jdbi = mock(Jdbi.class);
+    Jdbi localJdbi = mock(Jdbi.class);
     when(userDAO.getHandle()).thenReturn(handle);
-    when(handle.getJdbi()).thenReturn(jdbi);
+    when(handle.getJdbi()).thenReturn(localJdbi);
     doAnswer(
             invocation -> {
               HandleConsumer<Exception> consumer = invocation.getArgument(0);
               consumer.useHandle(handle);
               return null;
             })
-        .when(jdbi)
+        .when(localJdbi)
         .useHandle(any());
     @SuppressWarnings("unchecked")
     ResultIterator<User> mockIterator = mock(ResultIterator.class);
@@ -410,16 +409,16 @@ class EmailServiceTest extends AbstractTestHelper {
     when(studyDAO.findStudyDatasetCounts(any()))
         .thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, "open", 7)));
     Handle handle = mock(Handle.class);
-    Jdbi jdbi = mock(Jdbi.class);
+    Jdbi localJdbi = mock(Jdbi.class);
     when(userDAO.getHandle()).thenReturn(handle);
-    when(handle.getJdbi()).thenReturn(jdbi);
+    when(handle.getJdbi()).thenReturn(localJdbi);
     doAnswer(
             invocation -> {
               HandleConsumer<Exception> consumer = invocation.getArgument(0);
               consumer.useHandle(handle);
               return null;
             })
-        .when(jdbi)
+        .when(localJdbi)
         .useHandle(any());
     @SuppressWarnings("unchecked")
     ResultIterator<User> mockIterator = mock(ResultIterator.class);
@@ -457,16 +456,16 @@ class EmailServiceTest extends AbstractTestHelper {
     when(studyDAO.findStudyDatasetCounts(any()))
         .thenReturn(List.of(new StudyDatasetCountRecord("New Study", 1, "open", 7)));
     Handle handle = mock(Handle.class);
-    Jdbi jdbi = mock(Jdbi.class);
+    Jdbi localJdbi = mock(Jdbi.class);
     when(userDAO.getHandle()).thenReturn(handle);
-    when(handle.getJdbi()).thenReturn(jdbi);
+    when(handle.getJdbi()).thenReturn(localJdbi);
     doAnswer(
             invocation -> {
               HandleConsumer<Exception> consumer = invocation.getArgument(0);
               consumer.useHandle(handle);
               return null;
             })
-        .when(jdbi)
+        .when(localJdbi)
         .useHandle(any());
     @SuppressWarnings("unchecked")
     ResultIterator<User> mockIterator = mock(ResultIterator.class);

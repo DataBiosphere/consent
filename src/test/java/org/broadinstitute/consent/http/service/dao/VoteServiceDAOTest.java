@@ -38,7 +38,7 @@ class VoteServiceDAOTest extends DAOTestHelper {
 
   @BeforeEach
   void initService() {
-    serviceDAO = new VoteServiceDAO(jdbi, voteDAO);
+    serviceDAO = new VoteServiceDAO(jdbi);
   }
 
   @Test
@@ -176,6 +176,25 @@ class VoteServiceDAOTest extends DAOTestHelper {
     datasetDAO.insertDatasetProperties(list);
   }
 
+  @Test
+  void testUpdateVotesWithValue_RadarApproveVote() throws Exception {
+    User user = createUser();
+    DataAccessRequest dar = createDataAccessRequestV3();
+    Dataset dataset = createDataset();
+    Election election = createDataAccessElection(dar.getReferenceId(), dataset.getDatasetId());
+    Vote vote = createRadarApproveVote(user.getUserId(), election.getElectionId());
+    String rationale = "rationale";
+
+    List<Vote> votes = serviceDAO.updateVotesWithValue(List.of(vote), true, rationale);
+    assertNotNull(votes);
+    assertFalse(votes.isEmpty());
+    assertTrue(votes.get(0).getVote());
+    assertEquals(rationale, votes.get(0).getRationale());
+    Election foundElection = electionDAO.findElectionById(vote.getElectionId());
+    assertEquals(ElectionStatus.CLOSED.getValue(), foundElection.getStatus());
+    assertEquals(vote.getVoteId(), votes.get(0).getVoteId());
+  }
+
   private Vote createDacVote(Integer userId, Integer electionId) {
     Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.DAC.getValue());
     return voteDAO.findVoteById(voteId);
@@ -183,6 +202,11 @@ class VoteServiceDAOTest extends DAOTestHelper {
 
   private Vote createFinalVote(Integer userId, Integer electionId) {
     Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.FINAL.getValue());
+    return voteDAO.findVoteById(voteId);
+  }
+
+  private Vote createRadarApproveVote(Integer userId, Integer electionId) {
+    Integer voteId = voteDAO.insertVote(userId, electionId, VoteType.RADAR_APPROVE.getValue());
     return voteDAO.findVoteById(voteId);
   }
 

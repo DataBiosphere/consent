@@ -126,7 +126,9 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
             maxConnectionsOverride);
     testApp.before();
 
-    // Initialize DAOs
+    // All DAO proxies are initialized eagerly. onDemand() is cheap (no connection acquired),
+    // so initializing all 23 here is intentional — it keeps test setup uniform across all
+    // subclasses.
     String dbiExtension = "_" + RandomStringUtils.secureStrong().nextAlphabetic(10);
     ConsentConfiguration configuration = testApp.getConfiguration();
     Environment environment = testApp.getEnvironment();
@@ -164,7 +166,7 @@ public class DAOTestHelper extends AbstractTestHelper implements TestExecutionLi
     ontologyDAO = jdbi.onDemand(OntologyDAO.class);
     userRedactionAuditDAO = jdbi.onDemand(UserRedactionAuditDAO.class);
     testingDAO = jdbi.onDemand(TestingDAO.class);
-    voteServiceDAO = new VoteServiceDAO(jdbi, voteDAO);
+    voteServiceDAO = new VoteServiceDAO(jdbi);
   }
 
   @BeforeEach()

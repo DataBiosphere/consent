@@ -37,7 +37,7 @@ class UserServiceDAOTest extends DAOTestHelper {
 
   @BeforeEach
   void setup() {
-    serviceDAO = new UserServiceDAO(jdbi, libraryCardDAO, userDAO, userRoleDAO);
+    serviceDAO = new UserServiceDAO(jdbi);
   }
 
   @Test

@@ -47,7 +47,7 @@ class DaaServiceDAOTest extends DAOTestHelper {
     testLogger.addAppender(testAppender);
     testAppender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
     testAppender.start();
-    serviceDAO = new DaaServiceDAO(jdbi, daaDAO, fileStorageObjectDAO);
+    serviceDAO = new DaaServiceDAO(jdbi);
   }
 
   @AfterEach

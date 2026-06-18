@@ -51,6 +51,7 @@ import org.broadinstitute.consent.http.models.User;
 import org.broadinstitute.consent.http.service.dao.DatasetServiceDAO;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.jdbi.v3.core.Jdbi;
 
 public class DatasetService implements ConsentLogger {
 
@@ -67,26 +68,21 @@ public class DatasetService implements ConsentLogger {
 
   @Inject
   public DatasetService(
-      DatasetAuthorizationReaderDAO datasetAuthorizationReaderDAO,
-      DatasetDAO dataSetDAO,
-      DaaDAO daaDAO,
-      DacDAO dacDAO,
+      Jdbi jdbi,
+      DatasetServiceDAO datasetServiceDAO,
       ElasticSearchService elasticSearchService,
       EmailService emailService,
-      OntologyService ontologyService,
-      StudyDAO studyDAO,
-      DatasetServiceDAO datasetServiceDAO,
-      UserDAO userDAO) {
-    this.datasetAuthorizationReaderDAO = datasetAuthorizationReaderDAO;
-    this.datasetDAO = dataSetDAO;
-    this.daaDAO = daaDAO;
-    this.dacDAO = dacDAO;
+      OntologyService ontologyService) {
+    this.datasetAuthorizationReaderDAO = jdbi.onDemand(DatasetAuthorizationReaderDAO.class);
+    this.datasetDAO = jdbi.onDemand(DatasetDAO.class);
+    this.daaDAO = jdbi.onDemand(DaaDAO.class);
+    this.dacDAO = jdbi.onDemand(DacDAO.class);
     this.elasticSearchService = elasticSearchService;
     this.emailService = emailService;
     this.ontologyService = ontologyService;
-    this.studyDAO = studyDAO;
+    this.studyDAO = jdbi.onDemand(StudyDAO.class);
     this.datasetServiceDAO = datasetServiceDAO;
-    this.userDAO = userDAO;
+    this.userDAO = jdbi.onDemand(UserDAO.class);
   }
 
   public List<Dataset> findDatasetListByDacIds(List<Integer> dacIds) {

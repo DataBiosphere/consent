@@ -6,14 +6,15 @@ import java.util.List;
 import org.broadinstitute.consent.http.db.FeatureFlagDAO;
 import org.broadinstitute.consent.http.models.FeatureFlag;
 import org.broadinstitute.consent.http.util.ConsentLogger;
+import org.jdbi.v3.core.Jdbi;
 
 public class FeatureFlagService implements ConsentLogger {
 
   private final FeatureFlagDAO featureFlagDAO;
 
   @Inject
-  public FeatureFlagService(FeatureFlagDAO featureFlagDAO) {
-    this.featureFlagDAO = featureFlagDAO;
+  public FeatureFlagService(Jdbi jdbi) {
+    this.featureFlagDAO = jdbi.onDemand(FeatureFlagDAO.class);
   }
 
   /**

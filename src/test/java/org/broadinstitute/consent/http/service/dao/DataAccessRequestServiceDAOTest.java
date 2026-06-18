@@ -35,7 +35,7 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
 
   @BeforeEach
   void initService() {
-    serviceDAO = new DataAccessRequestServiceDAO(dataAccessRequestDAO, jdbi, darCollectionDAO);
+    serviceDAO = new DataAccessRequestServiceDAO(jdbi);
   }
 
   @Test
@@ -91,6 +91,45 @@ class DataAccessRequestServiceDAOTest extends DAOTestHelper {
 
     // collection should have the same update date as the updated dar
     assertEquals(dar.getUpdateDate(), collection.getUpdateDate());
+  }
+
+  @Test
+  void testUpdateByReferenceId_NullCollectionId() throws Exception {
+    Dataset dataset = createDataset();
+    User user = createUser();
+    Calendar cal = Calendar.getInstance();
+    cal.set(Calendar.YEAR, 2020);
+    cal.set(Calendar.MONTH, Calendar.JANUARY);
+    cal.set(Calendar.DAY_OF_MONTH, 1);
+    Date old = cal.getTime();
+
+    String referenceId = randomAlphanumeric(10);
+    DarCollection collection = createDarCollection();
+    Integer collectionId = collection.getDarCollectionId();
+    dataAccessRequestDAO.insertDataAccessRequest(
+        collectionId,
+        referenceId,
+        user.getUserId(),
+        old,
+        old,
+        old,
+        new DataAccessRequestData(),
+        user.getEraCommonsId());
+
+    DataAccessRequest dar = new DataAccessRequest();
+    dar.setReferenceId(referenceId);
+    // collectionId intentionally not set — getCollectionId() returns null, skipping collection
+    // update
+    DataAccessRequestData data = new DataAccessRequestData();
+    data.setOtherText("test");
+    dar.setDatasetIds(List.of(dataset.getDatasetId()));
+    dar.setData(data);
+
+    DataAccessRequest updatedDar = serviceDAO.updateByReferenceId(user, dar);
+
+    Timestamp oldTimestamp = new Timestamp(old.getTime());
+    assertFalse(oldTimestamp.equals(updatedDar.getUpdateDate()));
+    assertEquals(List.of(dataset.getDatasetId()), updatedDar.getDatasetIds());
   }
 
   private Dataset createDataset() {
