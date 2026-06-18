@@ -55,6 +55,7 @@ class ConsentModuleTest extends AbstractTestHelper {
 
   @Test
   void testMemoizedProvidersReturnTheSameInstance() {
+    // Infrastructure and DAO-layer singletons
     assertSame(module.providesOntologyService(), module.providesOntologyService());
     assertSame(
         module.providesDatasetRegistrationService(), module.providesDatasetRegistrationService());
@@ -62,6 +63,54 @@ class ConsentModuleTest extends AbstractTestHelper {
         module.providesInstitutionAndLibraryCardEnforcement(),
         module.providesInstitutionAndLibraryCardEnforcement());
     assertSame(module.providesSamDAO(), module.providesSamDAO());
+    assertSame(module.providesHttpClientUtil(), module.providesHttpClientUtil());
+    assertSame(module.providesGCSService(), module.providesGCSService());
+    assertSame(module.providesOntologyIndexService(), module.providesOntologyIndexService());
+    assertSame(module.providesElasticSearchService(), module.providesElasticSearchService());
+    assertSame(module.providesDatasetServiceDAO(), module.providesDatasetServiceDAO());
+    assertSame(module.providesDarCollectionServiceDAO(), module.providesDarCollectionServiceDAO());
+    assertSame(
+        module.providesDataAccessRequestServiceDAO(), module.providesDataAccessRequestServiceDAO());
+    assertSame(module.providesVoteServiceDAO(), module.providesVoteServiceDAO());
+    assertSame(module.providesDaaServiceDAO(), module.providesDaaServiceDAO());
+    assertSame(module.providesDacServiceDAO(), module.providesDacServiceDAO());
+    assertSame(module.providesNIHServiceDAO(), module.providesNIHServiceDAO());
+    assertSame(module.providesUserServiceDAO(), module.providesUserServiceDAO());
+    assertSame(module.providesElectionService(), module.providesElectionService());
+    assertSame(module.providesFeatureFlagService(), module.providesFeatureFlagService());
+    assertSame(module.providesMetricsService(), module.providesMetricsService());
+    assertSame(module.providesSamService(), module.providesSamService());
+    assertSame(module.providesOidcAuthorityDAO(), module.providesOidcAuthorityDAO());
+    assertSame(module.providesOidcService(), module.providesOidcService());
+    assertSame(module.providesSupportRequestService(), module.providesSupportRequestService());
+  }
+
+  @Test
+  void testMemoizedServiceProvidersReturnTheSameInstance() {
+    // Business service singletons
+    assertSame(
+        module.providesFreeMarkerTemplateHelper(), module.providesFreeMarkerTemplateHelper());
+    assertSame(module.providesEmailService(), module.providesEmailService());
+    assertSame(module.providesSendGridAPI(), module.providesSendGridAPI());
+    assertSame(module.providesCounterService(), module.providesCounterService());
+    assertSame(module.providesRuleService(), module.providesRuleService());
+    assertSame(module.providesVoteService(), module.providesVoteService());
+    assertSame(module.providesMatchService(), module.providesMatchService());
+    assertSame(module.providesInstitutionService(), module.providesInstitutionService());
+    assertSame(module.providesLibraryCardService(), module.providesLibraryCardService());
+    assertSame(module.providesUserService(), module.providesUserService());
+    assertSame(module.providesDatasetService(), module.providesDatasetService());
+    assertSame(module.providesDaaService(), module.providesDaaService());
+    assertSame(module.providesDacService(), module.providesDacService());
+    assertSame(module.providesAcknowledgementService(), module.providesAcknowledgementService());
+    assertSame(module.providesNihService(), module.providesNihService());
+    assertSame(
+        module.providesDataAccessRequestService(), module.providesDataAccessRequestService());
+    assertSame(
+        module.providesFileStorageObjectService(), module.providesFileStorageObjectService());
+    assertSame(module.providesDarCollectionService(), module.providesDarCollectionService());
+    assertSame(module.providesDraftFileStorageService(), module.providesDraftFileStorageService());
+    assertSame(module.providesDraftServiceDAO(), module.providesDraftServiceDAO());
   }
 
   @Test
