@@ -20,6 +20,7 @@ import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.broadinstitute.consent.http.util.ConsentLogger;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.jdbi.v3.core.Jdbi;
 
 public class TranslationUtil implements ConsentLogger {
 
@@ -60,8 +61,8 @@ public class TranslationUtil implements ConsentLogger {
   private final Gson gson = GsonUtil.getInstance();
 
   @Inject
-  public TranslationUtil(OntologyDAO ontologyDAO) {
-    this.ontologyDAO = ontologyDAO;
+  public TranslationUtil(Jdbi jdbi) {
+    this.ontologyDAO = jdbi.onDemand(OntologyDAO.class);
   }
 
   /**

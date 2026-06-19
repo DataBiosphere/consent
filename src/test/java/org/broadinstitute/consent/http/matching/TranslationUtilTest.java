@@ -19,6 +19,7 @@ import org.broadinstitute.consent.http.models.ontology.DataUseSummary;
 import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,11 +34,13 @@ class TranslationUtilTest extends AbstractTestHelper {
   private TranslationUtil service;
   private final Gson gson = GsonUtil.getInstance();
 
+  @Mock private Jdbi jdbi;
   @Mock private OntologyDAO ontologyDAO;
 
   @BeforeEach
   void setUpClass() {
-    service = new TranslationUtil(ontologyDAO);
+    when(jdbi.onDemand(OntologyDAO.class)).thenReturn(ontologyDAO);
+    service = new TranslationUtil(jdbi);
   }
 
   @Test

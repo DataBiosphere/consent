@@ -81,7 +81,6 @@ import org.broadinstitute.consent.http.service.dao.UserServiceDAO;
 import org.broadinstitute.consent.http.service.dao.VoteServiceDAO;
 import org.broadinstitute.consent.http.service.feature.InstitutionAndLibraryCardEnforcement;
 import org.broadinstitute.consent.http.service.ontology.ElasticSearchSupport;
-import org.broadinstitute.consent.http.service.ontology.OntologyDAO;
 import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
 import org.broadinstitute.consent.http.service.sam.SamService;
 import org.broadinstitute.consent.http.util.ConsentLogger;
@@ -116,7 +115,6 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
   private final LibraryCardDAO libraryCardDAO;
   private final FileStorageObjectDAO fileStorageObjectDAO;
   private final DraftDAO draftDAO;
-  private final OntologyDAO ontologyDAO;
   private final ExecutorService executorService;
 
   // Lazily-memoized singletons. @Singleton on a @Provides method only covers resolution
@@ -209,7 +207,6 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
     this.libraryCardDAO = this.jdbi.onDemand((LibraryCardDAO.class));
     this.fileStorageObjectDAO = this.jdbi.onDemand((FileStorageObjectDAO.class));
     this.draftDAO = this.jdbi.onDemand(DraftDAO.class);
-    this.ontologyDAO = this.jdbi.onDemand(OntologyDAO.class);
 
     // All async work in this application is blocking I/O (Sam calls, Elasticsearch indexing,
     // batch DB writes), so a single shared virtual-thread executor replaces the per-class
@@ -250,19 +247,19 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  ExecutorService providesExecutorService() {
+  private ExecutorService providesExecutorService() {
     return executorService;
   }
 
   @Provides
   @Singleton
-  Client providesClient() {
+  private Client providesClient() {
     return client;
   }
 
   @Provides
   @Singleton
-  synchronized HttpClientUtil providesHttpClientUtil() {
+  private synchronized HttpClientUtil providesHttpClientUtil() {
     if (httpClientUtil == null) {
       httpClientUtil = new HttpClientUtil(config.getServicesConfiguration());
     }
@@ -271,13 +268,13 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  Jdbi providesJdbi() {
+  private Jdbi providesJdbi() {
     return jdbi;
   }
 
   @Provides
   @Singleton
-  synchronized ElasticSearchConfiguration providesElasticSearchConfiguration() {
+  private synchronized ElasticSearchConfiguration providesElasticSearchConfiguration() {
     if (elasticSearchConfiguration == null) {
       elasticSearchConfiguration = config.getElasticSearchConfiguration();
     }
@@ -286,7 +283,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized MailConfiguration providesMailConfiguration() {
+  private synchronized MailConfiguration providesMailConfiguration() {
     if (mailConfiguration == null) {
       mailConfiguration = config.getMailConfiguration();
     }
@@ -295,7 +292,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized ServicesConfiguration providesServicesConfiguration() {
+  private synchronized ServicesConfiguration providesServicesConfiguration() {
     if (servicesConfiguration == null) {
       servicesConfiguration = config.getServicesConfiguration();
     }
@@ -304,13 +301,13 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  HealthCheckRegistry providesHealthCheckRegistry() {
+  private HealthCheckRegistry providesHealthCheckRegistry() {
     return environment.healthChecks();
   }
 
   @Provides
   @Singleton
-  synchronized UseRestrictionConverter providesUseRestrictionConverter() {
+  private synchronized UseRestrictionConverter providesUseRestrictionConverter() {
     if (useRestrictionConverter == null) {
       useRestrictionConverter = new UseRestrictionConverter();
     }
@@ -319,7 +316,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized OntologyService providesOntologyService() {
+  private synchronized OntologyService providesOntologyService() {
     if (ontologyService == null) {
       ontologyService =
           new OntologyService(
@@ -333,7 +330,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized OntologyIndexService providesOntologyIndexService() {
+  private synchronized OntologyIndexService providesOntologyIndexService() {
     if (ontologyIndexService == null) {
       ontologyIndexService =
           new OntologyIndexService(providesGCSService(), config.getCloudStoreConfiguration());
@@ -343,7 +340,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized AuthorizationHelper providesAuthorizationHelper() {
+  private synchronized AuthorizationHelper providesAuthorizationHelper() {
     if (authorizationHelper == null) {
       authorizationHelper =
           new AuthorizationHelper(
@@ -354,7 +351,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized OAuthAuthenticator providesOAuthAuthenticator() {
+  private synchronized OAuthAuthenticator providesOAuthAuthenticator() {
     if (oauthAuthenticator == null) {
       oauthAuthenticator = new OAuthAuthenticator(providesAuthorizationHelper());
     }
@@ -363,7 +360,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized DuosUserAuthenticator providesDuosUserOAuthAuthenticator() {
+  private synchronized DuosUserAuthenticator providesDuosUserOAuthAuthenticator() {
     if (duosUserAuthenticator == null) {
       duosUserAuthenticator = new DuosUserAuthenticator(providesAuthorizationHelper());
     }
@@ -372,7 +369,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized DarCollectionService providesDarCollectionService() {
+  private synchronized DarCollectionService providesDarCollectionService() {
     if (darCollectionService == null) {
       darCollectionService =
           new DarCollectionService(
@@ -386,7 +383,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized FileStorageObjectService providesFileStorageObjectService() {
+  private synchronized FileStorageObjectService providesFileStorageObjectService() {
     if (fileStorageObjectService == null) {
       fileStorageObjectService =
           new FileStorageObjectService(
@@ -402,7 +399,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized GCSService providesGCSService() {
+  private synchronized GCSService providesGCSService() {
     if (gcsService == null) {
       gcsService = new GCSService(config.getCloudStoreConfiguration());
     }
@@ -411,7 +408,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized CounterService providesCounterService() {
+  private synchronized CounterService providesCounterService() {
     if (counterService == null) {
       counterService = new CounterService(providesJdbi());
     }
@@ -420,7 +417,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized DACAutomationRuleService providesRuleService() {
+  private synchronized DACAutomationRuleService providesRuleService() {
     if (ruleService == null) {
       ruleService =
           new DACAutomationRuleService(
@@ -431,7 +428,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized DataAccessRequestService providesDataAccessRequestService() {
+  private synchronized DataAccessRequestService providesDataAccessRequestService() {
     if (dataAccessRequestService == null) {
       dataAccessRequestService =
           new DataAccessRequestService(
@@ -451,7 +448,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized DatasetServiceDAO providesDatasetServiceDAO() {
+  private synchronized DatasetServiceDAO providesDatasetServiceDAO() {
     if (datasetServiceDAO == null) {
       datasetServiceDAO = new DatasetServiceDAO(providesJdbi());
     }
@@ -460,7 +457,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized DatasetService providesDatasetService() {
+  private synchronized DatasetService providesDatasetService() {
     if (datasetService == null) {
       datasetService =
           new DatasetService(
@@ -475,7 +472,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized ElectionService providesElectionService() {
+  private synchronized ElectionService providesElectionService() {
     if (electionService == null) {
       electionService = new ElectionService(providesJdbi());
     }
@@ -484,7 +481,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized FreeMarkerTemplateHelper providesFreeMarkerTemplateHelper() {
+  private synchronized FreeMarkerTemplateHelper providesFreeMarkerTemplateHelper() {
     if (freeMarkerTemplateHelper == null) {
       freeMarkerTemplateHelper = new FreeMarkerTemplateHelper(config.getFreeMarkerConfiguration());
     }
@@ -493,7 +490,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized EmailService providesEmailService() {
+  private synchronized EmailService providesEmailService() {
     if (emailService == null) {
       emailService =
           new EmailService(
@@ -504,7 +501,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized FeatureFlagService providesFeatureFlagService() {
+  private synchronized FeatureFlagService providesFeatureFlagService() {
     if (featureFlagService == null) {
       featureFlagService = new FeatureFlagService(providesJdbi());
     }
@@ -513,7 +510,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized SendGridAPI providesSendGridAPI() {
+  private synchronized SendGridAPI providesSendGridAPI() {
     if (sendGridAPI == null) {
       sendGridAPI = new SendGridAPI(config.getMailConfiguration(), providesJdbi());
     }
@@ -522,19 +519,19 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  DataAccessRequestDAO providesDataAccessRequestDAO() {
+  private DataAccessRequestDAO providesDataAccessRequestDAO() {
     return dataAccessRequestDAO;
   }
 
   @Provides
   @Singleton
-  DarCollectionDAO providesDARCollectionDAO() {
+  private DarCollectionDAO providesDARCollectionDAO() {
     return darCollectionDAO;
   }
 
   @Provides
   @Singleton
-  synchronized DarCollectionServiceDAO providesDarCollectionServiceDAO() {
+  private synchronized DarCollectionServiceDAO providesDarCollectionServiceDAO() {
     if (darCollectionServiceDAO == null) {
       darCollectionServiceDAO = new DarCollectionServiceDAO(providesJdbi());
     }
@@ -543,7 +540,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized DataAccessRequestServiceDAO providesDataAccessRequestServiceDAO() {
+  private synchronized DataAccessRequestServiceDAO providesDataAccessRequestServiceDAO() {
     if (dataAccessRequestServiceDAO == null) {
       dataAccessRequestServiceDAO = new DataAccessRequestServiceDAO(providesJdbi());
     }
@@ -552,25 +549,25 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  ElectionDAO providesElectionDAO() {
+  private ElectionDAO providesElectionDAO() {
     return electionDAO;
   }
 
   @Provides
   @Singleton
-  VoteDAO providesVoteDAO() {
+  private VoteDAO providesVoteDAO() {
     return voteDAO;
   }
 
   @Provides
   @Singleton
-  StudyDAO providesStudyDAO() {
+  private StudyDAO providesStudyDAO() {
     return studyDAO;
   }
 
   @Provides
   @Singleton
-  synchronized VoteServiceDAO providesVoteServiceDAO() {
+  private synchronized VoteServiceDAO providesVoteServiceDAO() {
     if (voteServiceDAO == null) {
       voteServiceDAO = new VoteServiceDAO(providesJdbi());
     }
@@ -579,7 +576,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized VoteService providesVoteService() {
+  private synchronized VoteService providesVoteService() {
     if (voteService == null) {
       voteService =
           new VoteService(
@@ -593,19 +590,19 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  DatasetAuthorizationReaderDAO providesDatasetAuthorizationReaderDAO() {
+  private DatasetAuthorizationReaderDAO providesDatasetAuthorizationReaderDAO() {
     return datasetAuthorizationReaderDAO;
   }
 
   @Provides
   @Singleton
-  DatasetDAO providesDatasetDAO() {
+  private DatasetDAO providesDatasetDAO() {
     return datasetDAO;
   }
 
   @Provides
   @Singleton
-  synchronized DaaServiceDAO providesDaaServiceDAO() {
+  private synchronized DaaServiceDAO providesDaaServiceDAO() {
     if (daaServiceDAO == null) {
       daaServiceDAO = new DaaServiceDAO(providesJdbi());
     }
@@ -614,7 +611,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized DacServiceDAO providesDacServiceDAO() {
+  private synchronized DacServiceDAO providesDacServiceDAO() {
     if (dacServiceDAO == null) {
       dacServiceDAO = new DacServiceDAO(providesJdbi());
     }
@@ -623,13 +620,13 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  DaaDAO providesDaaDAO() {
+  private DaaDAO providesDaaDAO() {
     return daaDAO;
   }
 
   @Provides
   @Singleton
-  synchronized DaaService providesDaaService() {
+  private synchronized DaaService providesDaaService() {
     if (daaService == null) {
       daaService =
           new DaaService(
@@ -645,7 +642,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized DacService providesDacService() {
+  private synchronized DacService providesDacService() {
     if (dacService == null) {
       dacService =
           new DacService(
@@ -660,7 +657,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized ElasticSearchService providesElasticSearchService() {
+  private synchronized ElasticSearchService providesElasticSearchService() {
     if (elasticSearchService == null) {
       elasticSearchService =
           new ElasticSearchService(
@@ -675,19 +672,19 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  UserDAO providesUserDAO() {
+  private UserDAO providesUserDAO() {
     return userDAO;
   }
 
   @Provides
   @Singleton
-  UserRoleDAO providesUserRoleDAO() {
+  private UserRoleDAO providesUserRoleDAO() {
     return userRoleDAO;
   }
 
   @Provides
   @Singleton
-  synchronized MatchService providesMatchService() {
+  private synchronized MatchService providesMatchService() {
     if (matchService == null) {
       matchService =
           new MatchService(
@@ -698,7 +695,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized MetricsService providesMetricsService() {
+  private synchronized MetricsService providesMetricsService() {
     if (metricsService == null) {
       metricsService = new MetricsService(providesJdbi());
     }
@@ -707,19 +704,19 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  FileStorageObjectDAO providesFileStorageObjectDAO() {
+  private FileStorageObjectDAO providesFileStorageObjectDAO() {
     return fileStorageObjectDAO;
   }
 
   @Provides
   @Singleton
-  LibraryCardDAO providesLibraryCardDAO() {
+  private LibraryCardDAO providesLibraryCardDAO() {
     return libraryCardDAO;
   }
 
   @Provides
   @Singleton
-  synchronized InstitutionService providesInstitutionService() {
+  private synchronized InstitutionService providesInstitutionService() {
     if (institutionService == null) {
       institutionService =
           new InstitutionService(providesJdbi(), providesInstitutionAndLibraryCardEnforcement());
@@ -729,7 +726,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized LibraryCardService providesLibraryCardService() {
+  private synchronized LibraryCardService providesLibraryCardService() {
     if (libraryCardService == null) {
       libraryCardService =
           new LibraryCardService(
@@ -740,7 +737,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized AcknowledgementService providesAcknowledgementService() {
+  private synchronized AcknowledgementService providesAcknowledgementService() {
     if (acknowledgementService == null) {
       acknowledgementService = new AcknowledgementService(providesJdbi(), providesEmailService());
     }
@@ -749,7 +746,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized DatasetRegistrationService providesDatasetRegistrationService() {
+  private synchronized DatasetRegistrationService providesDatasetRegistrationService() {
     if (datasetRegistrationService == null) {
       datasetRegistrationService =
           new DatasetRegistrationService(
@@ -765,7 +762,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized UserServiceDAO providesUserServiceDAO() {
+  private synchronized UserServiceDAO providesUserServiceDAO() {
     if (userServiceDAO == null) {
       userServiceDAO = new UserServiceDAO(providesJdbi());
     }
@@ -774,7 +771,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized UserService providesUserService() {
+  private synchronized UserService providesUserService() {
     if (userService == null) {
       userService =
           new UserService(
@@ -788,7 +785,8 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized InstitutionAndLibraryCardEnforcement providesInstitutionAndLibraryCardEnforcement() {
+  private synchronized InstitutionAndLibraryCardEnforcement
+      providesInstitutionAndLibraryCardEnforcement() {
     if (institutionAndLibraryCardEnforcement == null) {
       institutionAndLibraryCardEnforcement =
           new InstitutionAndLibraryCardEnforcement(
@@ -799,7 +797,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized NihService providesNihService() {
+  private synchronized NihService providesNihService() {
     if (nihService == null) {
       nihService =
           new NihService(
@@ -813,7 +811,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized NihServiceDAO providesNIHServiceDAO() {
+  private synchronized NihServiceDAO providesNIHServiceDAO() {
     if (nihServiceDAO == null) {
       nihServiceDAO = new NihServiceDAO(providesJdbi());
     }
@@ -822,7 +820,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized SamService providesSamService() {
+  private synchronized SamService providesSamService() {
     if (samService == null) {
       samService = new SamService(providesSamDAO());
     }
@@ -831,7 +829,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized SamDAO providesSamDAO() {
+  private synchronized SamDAO providesSamDAO() {
     if (samDAO == null) {
       samDAO =
           new SamDAO(
@@ -844,7 +842,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized OidcConfiguration providesOidcConfiguration() {
+  private synchronized OidcConfiguration providesOidcConfiguration() {
     if (oidcConfiguration == null) {
       oidcConfiguration = config.getOidcConfiguration();
     }
@@ -853,7 +851,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized OidcAuthorityDAO providesOidcAuthorityDAO() {
+  private synchronized OidcAuthorityDAO providesOidcAuthorityDAO() {
     if (oidcAuthorityDAO == null) {
       oidcAuthorityDAO =
           new OidcAuthorityDAO(providesHttpClientUtil(), providesOidcConfiguration());
@@ -863,7 +861,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized OidcService providesOidcService() {
+  private synchronized OidcService providesOidcService() {
     if (oidcService == null) {
       oidcService = new OidcService(providesOidcAuthorityDAO(), providesOidcConfiguration());
     }
@@ -872,7 +870,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized SupportRequestService providesSupportRequestService() {
+  private synchronized SupportRequestService providesSupportRequestService() {
     if (supportRequestService == null) {
       supportRequestService =
           new SupportRequestService(
@@ -883,13 +881,13 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  DraftDAO providesDraftDAO() {
+  private DraftDAO providesDraftDAO() {
     return draftDAO;
   }
 
   @Provides
   @Singleton
-  synchronized DraftFileStorageServiceDAO providesDraftFileStorageService() {
+  private synchronized DraftFileStorageServiceDAO providesDraftFileStorageService() {
     if (draftFileStorageServiceDAO == null) {
       draftFileStorageServiceDAO =
           new DraftFileStorageServiceDAO(providesJdbi(), providesGCSService());
@@ -899,7 +897,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized DraftServiceDAO providesDraftServiceDAO() {
+  private synchronized DraftServiceDAO providesDraftServiceDAO() {
     if (draftServiceDAO == null) {
       draftServiceDAO = new DraftServiceDAO(providesJdbi(), providesDraftFileStorageService());
     }
@@ -908,13 +906,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  OntologyDAO providesOntologyDAO() {
-    return ontologyDAO;
-  }
-
-  @Provides
-  @Singleton
-  synchronized ClaimsCache providesClaimsCache() {
+  private synchronized ClaimsCache providesClaimsCache() {
     if (claimsCache == null) {
       claimsCache = new ClaimsCache();
     }
@@ -923,16 +915,16 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized TranslationUtil providesTranslationUtil() {
+  private synchronized TranslationUtil providesTranslationUtil() {
     if (translationUtil == null) {
-      translationUtil = new TranslationUtil(providesOntologyDAO());
+      translationUtil = new TranslationUtil(jdbi);
     }
     return translationUtil;
   }
 
   @Provides
   @Singleton
-  synchronized DataUseUtil providesDataUseUtil() {
+  private synchronized DataUseUtil providesDataUseUtil() {
     if (dataUseUtil == null) {
       dataUseUtil = new DataUseUtil(providesOntologyService());
     }
@@ -941,7 +933,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized DataUseMatcherV4 providesDataUseMatcherV4() {
+  private synchronized DataUseMatcherV4 providesDataUseMatcherV4() {
     if (dataUseMatcherV4 == null) {
       dataUseMatcherV4 = new DataUseMatcherV4(providesDataUseUtil());
     }
@@ -950,7 +942,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized CountryValidator providesCountryValidator() {
+  private synchronized CountryValidator providesCountryValidator() {
     if (countryValidator == null) {
       countryValidator = new CountryValidator();
     }
@@ -959,7 +951,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized InstitutionUtil providesInstitutionUtil() {
+  private synchronized InstitutionUtil providesInstitutionUtil() {
     if (institutionUtil == null) {
       institutionUtil = new InstitutionUtil();
     }
@@ -968,7 +960,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized JsonSchemaUtil providesJsonSchemaUtil() {
+  private synchronized JsonSchemaUtil providesJsonSchemaUtil() {
     if (jsonSchemaUtil == null) {
       jsonSchemaUtil = new JsonSchemaUtil();
     }
@@ -977,7 +969,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
 
   @Provides
   @Singleton
-  synchronized TicketFactory providesTicketFactory() {
+  private synchronized TicketFactory providesTicketFactory() {
     if (ticketFactory == null) {
       ticketFactory = new TicketFactory();
     }

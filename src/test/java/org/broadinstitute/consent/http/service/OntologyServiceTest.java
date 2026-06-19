@@ -75,7 +75,7 @@ class OntologyServiceTest extends AbstractTestHelper {
     // so tests can assert on their effects without sleeps or teardown races.
     executorService = MoreExecutors.newDirectExecutorService();
     when(jdbi.onDemand(OntologyDAO.class)).thenReturn(ontologyDAO);
-    translationUtil = new TranslationUtil(ontologyDAO);
+    translationUtil = new TranslationUtil(jdbi);
     service = new OntologyService(jdbi, indexService, executorService, translationUtil);
   }
 

@@ -1626,7 +1626,7 @@ class DatasetServiceDAOTest extends DAOTestHelper {
     User user = userDAO.findUserById(dataset.getCreateUserId());
     DataUse newDataUse = new DataUseBuilder().setGeneralUse(true).setHmbResearch(true).build();
     String translatedDataUse =
-        new TranslationUtil(ontologyDAO).translate(newDataUse, DataUseTranslationType.DATASET);
+        new TranslationUtil(jdbi).translate(newDataUse, DataUseTranslationType.DATASET);
     serviceDAO.updateDatasetDataUse(user, dataset, newDataUse, translatedDataUse);
     Dataset updatedDataset = datasetDAO.findDatasetById(dataset.getDatasetId());
     assertEquals(translatedDataUse, updatedDataset.getTranslatedDataUse());
