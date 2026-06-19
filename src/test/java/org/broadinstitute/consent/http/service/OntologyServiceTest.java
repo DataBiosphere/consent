@@ -38,6 +38,7 @@ import org.broadinstitute.consent.http.service.ontology.OntologyIndexService;
 import org.broadinstitute.consent.http.service.ontology.OntologyTerm;
 import org.broadinstitute.consent.http.util.TestAppender;
 import org.broadinstitute.consent.http.util.gson.GsonUtil;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,7 @@ class OntologyServiceTest extends AbstractTestHelper {
   private TestAppender testAppender;
   private TranslationUtil translationUtil;
   private final Gson gson = GsonUtil.getInstance();
+  @Mock private Jdbi jdbi;
   @Mock private OntologyDAO ontologyDAO;
   @Mock private OntologyIndexService indexService;
 
@@ -72,8 +74,9 @@ class OntologyServiceTest extends AbstractTestHelper {
     // A same-thread executor makes indexOntology's async task and callback run synchronously,
     // so tests can assert on their effects without sleeps or teardown races.
     executorService = MoreExecutors.newDirectExecutorService();
+    when(jdbi.onDemand(OntologyDAO.class)).thenReturn(ontologyDAO);
     translationUtil = new TranslationUtil(ontologyDAO);
-    service = new OntologyService(ontologyDAO, indexService, executorService, translationUtil);
+    service = new OntologyService(jdbi, indexService, executorService, translationUtil);
   }
 
   @AfterEach

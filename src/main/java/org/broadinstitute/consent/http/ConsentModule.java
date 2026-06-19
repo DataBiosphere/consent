@@ -323,7 +323,7 @@ public class ConsentModule extends AbstractModule implements ConsentLogger {
     if (ontologyService == null) {
       ontologyService =
           new OntologyService(
-              providesOntologyDAO(),
+              jdbi,
               providesOntologyIndexService(),
               providesExecutorService(),
               providesTranslationUtil());
