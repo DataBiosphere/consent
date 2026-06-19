@@ -722,7 +722,6 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DataAccessRequest dar = new DataAccessRequest();
     dar.setReferenceId(UUID.randomUUID().toString());
     dar.setUserId(user.getUserId());
-    dar.setCloseoutSigningOfficialApprovedUserId(signingOfficial.getUserId());
     DataAccessRequestData darData = new DataAccessRequestData();
     darData.setSigningOfficialEmail(signingOfficial.getEmail());
     darData.setDmi(new DataManagementIncident(List.of("one"), "my incident"));
@@ -737,6 +736,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.approveDarCollection(signingOfficial, collection, request);
     verify(dacAutomationRuleService, never())
         .triggerDACRuleSettings(any(), anyList(), anyString(), any());
+    verify(dataAccessRequestDAO)
+        .updateDarApprovalSO(signingOfficial.getUserId(), dar.getReferenceId());
   }
 
   @Test
@@ -752,7 +753,6 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     dar.setParentId(-1);
     dar.setReferenceId(UUID.randomUUID().toString());
     dar.setUserId(user.getUserId());
-    dar.setCloseoutSigningOfficialApprovedUserId(signingOfficial.getUserId());
     DataAccessRequestData darData = new DataAccessRequestData();
     darData.setSigningOfficialEmail(signingOfficial.getEmail());
     darData.setCloseoutSupplement(
@@ -768,6 +768,8 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     service.approveDarCollection(signingOfficial, collection, request);
     verify(dacAutomationRuleService, never())
         .triggerDACRuleSettings(any(), anyList(), anyString(), any());
+    verify(dataAccessRequestDAO)
+        .updateDarApprovalSO(signingOfficial.getUserId(), dar.getReferenceId());
   }
 
   @Test
@@ -1093,7 +1095,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     summary.addDatasetId(datasetOne.getDatasetId());
     summary.addDatasetId(datasetTwo.getDatasetId());
     summary.setRequiresSOApproval(true);
-    summary.setSOApprover(1);
+    summary.setSoApproverId(1);
     when(darCollectionSummaryDAO.getDarCollectionSummariesForSO(any()))
         .thenReturn(List.of(summary));
 
@@ -1320,7 +1322,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         new CloseoutSupplement(List.of("Closeout"), "Closeout", 1);
     summary.setCloseoutSupplement(closeoutSupplement);
 
-    summary.setCloseoutSigningOfficialApprovalDate(null);
+    summary.setSoApproverId(null);
 
     when(darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId()))
         .thenReturn(List.of(summary));
@@ -1353,7 +1355,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         new CloseoutSupplement(List.of("Closeout"), "Closeout", 1);
     summary.setCloseoutSupplement(closeoutSupplement);
 
-    summary.setCloseoutSigningOfficialApprovalDate(null);
+    summary.setSoApproverId(null);
 
     when(darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId()))
         .thenReturn(List.of(summary));
@@ -1384,7 +1386,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         new CloseoutSupplement(List.of("Closeout"), "Closeout", 1);
     summary.setCloseoutSupplement(closeoutSupplement);
 
-    summary.setCloseoutSigningOfficialApprovalDate(new Timestamp(System.currentTimeMillis()));
+    summary.setSoApproverId(user.getUserId());
 
     when(darCollectionSummaryDAO.getDarCollectionSummariesForSO(user.getInstitutionId()))
         .thenReturn(List.of(summary));
@@ -1410,7 +1412,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
         new CloseoutSupplement(List.of("Closeout"), "Closeout", 1);
     summary.setCloseoutSupplement(closeoutSupplement);
 
-    summary.setCloseoutSigningOfficialApprovalDate(new Timestamp(System.currentTimeMillis()));
+    summary.setSoApproverId(user.getUserId());
 
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(
             user.getUserId(), UserRoles.CHAIRPERSON.getRoleId()))
@@ -1837,7 +1839,7 @@ class DarCollectionServiceTest extends AbstractTestHelper {
     DarCollectionSummary summary = new DarCollectionSummary();
     summary.setLatestReferenceId(UUID.randomUUID().toString());
     summary.setRequiresSOApproval(true);
-    summary.setSOApprover(1);
+    summary.setSoApproverId(1);
     summary.addDatasetId(1);
     when(darCollectionSummaryDAO.getDarCollectionSummariesForDACRole(
             user.getUserId(), UserRoles.CHAIRPERSON.getRoleId()))

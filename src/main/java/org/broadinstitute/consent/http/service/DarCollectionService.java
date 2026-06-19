@@ -316,13 +316,13 @@ public class DarCollectionService implements ConsentLogger {
     if (summary.getCloseoutSupplement() != null) {
       summary.getActions().clear();
       // If the SO has approved the closeout supplement, allow review of the progress report.
-      if (summary.getCloseoutSigningOfficialApprovalDate() != null) {
+      if (summary.getSoApproverId() != null) {
         summary.addAction(DarCollectionActions.REVIEW_PROGRESS_REPORT);
       }
       return;
     }
 
-    boolean canOpen = !summary.requiresSOApproval() || summary.getSOApprover() != null;
+    boolean canOpen = !summary.requiresSOApproval() || summary.getSoApproverId() != null;
     boolean hasOpenElection = Objects.nonNull(openCount);
     boolean hasReopenableElection =
         summary.getElections().values().stream()
@@ -372,12 +372,12 @@ public class DarCollectionService implements ConsentLogger {
   private void updateSummaryActionsForSO(User user, DarCollectionSummary summary) {
     // If the SO has not yet approved the closeout supplement, allow review of the progress report.
     if (summary.getCloseoutSupplement() != null
-        && summary.getCloseoutSigningOfficialApprovalDate() == null
+        && summary.getSoApproverId() == null
         && user.getUserId().equals(summary.getCloseoutSupplement().signingOfficialId())) {
       summary.addAction(DarCollectionActions.REVIEW_PROGRESS_REPORT);
     }
     if (summary.requiresSOApproval()
-        && summary.getSOApprover() == null
+        && summary.getSoApproverId() == null
         && user.getEmail().equalsIgnoreCase(summary.getSigningOfficialEmail())) {
       summary.addAction(DarCollectionActions.APPROVE);
     }
