@@ -10,7 +10,6 @@ import io.dropwizard.testing.ResourceHelpers;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import jakarta.ws.rs.client.Client;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -52,7 +51,6 @@ public abstract class ContainerTests implements ConsentLogger {
   private static final PostgreSQLContainer<?> POSTGRES =
       new PostgreSQLContainer<>(DAOTestHelper.POSTGRES_IMAGE)
           .withCommand("postgres -c max_connections=20")
-          .withTmpFs(Collections.singletonMap("/var/lib/postgresql/data", "rw"))
           .waitingFor(Wait.forListeningPorts());
 
   static {
