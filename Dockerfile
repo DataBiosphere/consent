@@ -10,6 +10,36 @@ COPY src /usr/src/app/src
 
 RUN mvn clean package -Dmaven.test.skip=true --no-transfer-progress
 
-# Published
+# Runtime — FIPS 140-3 hardened
 FROM us.gcr.io/broad-dsp-gcr-public/base/jre:25-jre
+
+# Copy the bc-fips 2.0.0 jar (FIPS 140-3 targeted) from the Maven local cache
+# populated during the build stage into a stable location in the runtime image.
+COPY --from=build \
+     /root/.m2/repository/org/bouncycastle/bc-fips/2.0.0/bc-fips-2.0.0.jar \
+     /opt/bc-fips-2.0.0.jar
+
+# Register bc-fips as the primary JCE security provider in the JVM's security
+# configuration. Existing providers are renumbered (N → N+1) so non-crypto
+# subsystems (XML, GSSAPI, SASL) retain their fallback providers.
+# The TLSv1/TLSv1.1 guard is belt-and-suspenders: JDK 25 already disables them,
+# but the explicit sed ensures they stay out even if the base image is upgraded.
+RUN JAVA_SECURITY="${JAVA_HOME}/conf/security/java.security" \
+    && i=20 \
+    && while [ "$i" -ge 1 ]; do \
+         j=$((i+1)); \
+         sed -i "s/^security\\.provider\\.${i}=/security.provider.${j}=/" "$JAVA_SECURITY"; \
+         i=$((i-1)); \
+       done \
+    && sed -i '/^security\.provider\.2=/i security.provider.1=org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider' \
+         "$JAVA_SECURITY" \
+    && if ! grep -q 'TLSv1,' "$JAVA_SECURITY"; then \
+         sed -i 's/^jdk\.tls\.disabledAlgorithms=/jdk.tls.disabledAlgorithms=TLSv1, TLSv1.1, /' "$JAVA_SECURITY"; \
+       fi
+
+# Add bc-fips to the JVM boot classpath so the security provider class is resolvable
+# during JVM initialisation before any application class is loaded.
+# approved_only=true causes BouncyCastle to reject any non-FIPS algorithm at runtime.
+ENV JAVA_TOOL_OPTIONS="-Xbootclasspath/a:/opt/bc-fips-2.0.0.jar -Dorg.bouncycastle.fips.approved_only=true"
+
 COPY --from=build /usr/src/app/target/consent.jar /opt/consent.jar
