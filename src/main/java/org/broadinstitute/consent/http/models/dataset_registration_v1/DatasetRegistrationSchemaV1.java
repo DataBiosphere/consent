@@ -64,7 +64,9 @@ import java.util.Map;
   "alternativeDataSharingPlanAccessManagement",
   "consentGroups",
   "assets",
-  "data"
+  "data",
+  "externalIdentifier",
+  "externalIdentifierType"
 })
 public class DatasetRegistrationSchemaV1 {
 
@@ -112,6 +114,16 @@ public class DatasetRegistrationSchemaV1 {
   @JsonProperty("piEmail")
   @JsonPropertyDescription("Principal Investigator Email")
   private String piEmail;
+
+  /** External Identifier */
+  @JsonProperty("externalIdentifier")
+  @JsonPropertyDescription("External Identifier")
+  private String externalIdentifier;
+
+  /** External Identifier Type */
+  @JsonProperty("externalIdentifierType")
+  @JsonPropertyDescription("External Identifier Type")
+  private String externalIdentifierType;
 
   /** The user creating the dataset submission (Required) */
   @JsonProperty("dataSubmitterUserId")
@@ -395,6 +407,30 @@ public class DatasetRegistrationSchemaV1 {
   @JsonProperty("piEmail")
   public void setPiEmail(String piEmail) {
     this.piEmail = piEmail;
+  }
+
+  /** External Identifier */
+  @JsonProperty("externalIdentifier")
+  public String getExternalIdentifier() {
+    return externalIdentifier;
+  }
+
+  /** External Identifier */
+  @JsonProperty("externalIdentifier")
+  public void setExternalIdentifier(String externalIdentifier) {
+    this.externalIdentifier = externalIdentifier;
+  }
+
+  /** External Identifier Type */
+  @JsonProperty("externalIdentifierType")
+  public String getExternalIdentifierType() {
+    return externalIdentifierType;
+  }
+
+  /** External Identifier Type */
+  @JsonProperty("externalIdentifierType")
+  public void setExternalIdentifierType(String externalIdentifierType) {
+    this.externalIdentifierType = externalIdentifierType;
   }
 
   /** The user creating the dataset submission (Required) */
@@ -860,6 +896,14 @@ public class DatasetRegistrationSchemaV1 {
     sb.append("piEmail");
     sb.append('=');
     sb.append(((this.piEmail == null) ? "<null>" : this.piEmail));
+    sb.append(',');
+    sb.append("externalIdentifier");
+    sb.append('=');
+    sb.append(((this.externalIdentifier == null) ? "<null>" : this.externalIdentifier));
+    sb.append(',');
+    sb.append("externalIdentifierType");
+    sb.append('=');
+    sb.append(((this.externalIdentifierType == null) ? "<null>" : this.externalIdentifierType));
     sb.append(',');
     sb.append("dataSubmitterUserId");
     sb.append('=');

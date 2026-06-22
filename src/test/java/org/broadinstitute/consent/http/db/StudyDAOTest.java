@@ -376,6 +376,20 @@ class StudyDAOTest extends DAOTestHelper {
   }
 
   @Test
+  void testDeleteStudyPropertyByKey() {
+    Study study = insertStudyWithProperties();
+    Integer id = study.getStudyId();
+    studyDAO.insertStudyProperty(id, "toDelete", PropertyType.String.toString(), "value");
+    studyDAO.insertStudyProperty(id, "toKeep", PropertyType.String.toString(), "value");
+
+    studyDAO.deleteStudyPropertyByKey(id, "toDelete");
+
+    Study found = studyDAO.findStudyById(id);
+    assertTrue(found.getProperties().stream().noneMatch(p -> p.getKey().equals("toDelete")));
+    assertTrue(found.getProperties().stream().anyMatch(p -> p.getKey().equals("toKeep")));
+  }
+
+  @Test
   void testFindStudyByName() {
     Study study = insertStudyWithProperties();
     Study foundStudy = studyDAO.findStudyByName(study.getName());

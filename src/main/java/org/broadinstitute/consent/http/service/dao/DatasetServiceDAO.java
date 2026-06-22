@@ -1,10 +1,6 @@
 package org.broadinstitute.consent.http.service.dao;
 
-import static org.broadinstitute.consent.http.models.StudyPatch.ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE;
-import static org.broadinstitute.consent.http.models.StudyPatch.ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE;
 import static org.broadinstitute.consent.http.models.StudyPatch.DATA_CUSTODIAN_EMAIL;
-import static org.broadinstitute.consent.http.models.StudyPatch.PHENOTYPE_INDICATION;
-import static org.broadinstitute.consent.http.models.StudyPatch.SPECIES_KEY;
 import static org.broadinstitute.consent.http.models.StudyPatch.STUDY_TYPE;
 
 import com.google.inject.Inject;
@@ -438,6 +434,8 @@ public class DatasetServiceDAO implements ConsentLogger {
           StudyUpdate studyUpdate = convertToStudyUpdate(study, user, patch);
           try {
             executeUpdateStudyKeepProps(handle, studyUpdate);
+            // Blank string signals intent to remove the property
+            deleteBlankPatchedStudyProps(handle, study.getStudyId(), patch);
           } catch (Exception e) {
             handle.rollback();
             logException(e);
@@ -446,6 +444,18 @@ public class DatasetServiceDAO implements ConsentLogger {
           handle.commit();
         });
     return studyDAO.findStudyById(study.getStudyId());
+  }
+
+  private void deleteBlankPatchedStudyProps(Handle handle, Integer studyId, StudyPatch patch) {
+    StudyDAO studyDAOLocal = handle.attach(StudyDAO.class);
+    patch
+        .stringPatchProps()
+        .forEach(
+            (key, value) -> {
+              if (value != null && value.isBlank()) {
+                studyDAOLocal.deleteStudyPropertyByKey(studyId, key);
+              }
+            });
   }
 
   // Helper method to convert StudyPatch to StudyUpdate
@@ -467,14 +477,6 @@ public class DatasetServiceDAO implements ConsentLogger {
     if (patch.studyType() != null) {
       studyUpdate.props.add(new StudyProperty(STUDY_TYPE, patch.studyType(), PropertyType.String));
     }
-    if (patch.phenotypeIndication() != null) {
-      studyUpdate.props.add(
-          new StudyProperty(
-              PHENOTYPE_INDICATION, patch.phenotypeIndication(), PropertyType.String));
-    }
-    if (patch.species() != null) {
-      studyUpdate.props.add(new StudyProperty(SPECIES_KEY, patch.species(), PropertyType.String));
-    }
     if (patch.dataCustodianEmail() != null) {
       studyUpdate.props.add(
           new StudyProperty(
@@ -482,20 +484,14 @@ public class DatasetServiceDAO implements ConsentLogger {
               GsonUtil.getInstance().toJson(patch.dataCustodianEmail()),
               PropertyType.Json));
     }
-    if (patch.alternativeDataSharingPlanTargetDeliveryDate() != null) {
-      studyUpdate.props.add(
-          new StudyProperty(
-              ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE,
-              patch.alternativeDataSharingPlanTargetDeliveryDate(),
-              PropertyType.String));
-    }
-    if (patch.alternativeDataSharingPlanTargetPublicReleaseDate() != null) {
-      studyUpdate.props.add(
-          new StudyProperty(
-              ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE,
-              patch.alternativeDataSharingPlanTargetPublicReleaseDate(),
-              PropertyType.String));
-    }
+    patch
+        .stringPatchProps()
+        .forEach(
+            (key, value) -> {
+              if (value != null && !value.isBlank()) {
+                studyUpdate.props.add(new StudyProperty(key, value, PropertyType.String));
+              }
+            });
     return studyUpdate;
   }
 

@@ -20,6 +20,8 @@ public class StudyTerm {
   private List<String> dataTypes;
   private Map<String, Object> assets;
   private Map<String, Object> data;
+  private String externalIdentifier;
+  private String externalIdentifierType;
 
   public String getDescription() {
     return description;
@@ -139,5 +141,21 @@ public class StudyTerm {
 
   public void setData(Map<String, Object> data) {
     this.data = data;
+  }
+
+  public String getExternalIdentifier() {
+    return externalIdentifier;
+  }
+
+  public void setExternalIdentifier(String externalIdentifier) {
+    this.externalIdentifier = externalIdentifier;
+  }
+
+  public String getExternalIdentifierType() {
+    return externalIdentifierType;
+  }
+
+  public void setExternalIdentifierType(String externalIdentifierType) {
+    this.externalIdentifierType = externalIdentifierType;
   }
 }

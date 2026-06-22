@@ -3,9 +3,12 @@ package org.broadinstitute.consent.http.models;
 import static org.broadinstitute.consent.http.models.StudyPatch.ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE;
 import static org.broadinstitute.consent.http.models.StudyPatch.ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE;
 import static org.broadinstitute.consent.http.models.StudyPatch.DATA_CUSTODIAN_EMAIL;
+import static org.broadinstitute.consent.http.models.StudyPatch.EXTERNAL_IDENTIFIER;
+import static org.broadinstitute.consent.http.models.StudyPatch.EXTERNAL_IDENTIFIER_TYPE;
 import static org.broadinstitute.consent.http.models.StudyPatch.PHENOTYPE_INDICATION;
 import static org.broadinstitute.consent.http.models.StudyPatch.SPECIES_KEY;
 import static org.broadinstitute.consent.http.models.StudyPatch.STUDY_TYPE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -43,7 +46,8 @@ class StudyPatchTest extends AbstractTestHelper {
   void testIsPatchableNoValues() {
     Study study = mockStudy();
     StudyPatch patch =
-        new StudyPatch(null, null, null, null, null, null, null, null, null, null, null, null);
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null);
     assertFalse(patch.isPatchable(study));
   }
 
@@ -63,7 +67,9 @@ class StudyPatchTest extends AbstractTestHelper {
             List.of("EMAIL1", "EMAIL2"),
             "01/01/2020",
             "01/01/2020",
-            mockStudy.getPublicVisibility());
+            mockStudy.getPublicVisibility(),
+            null,
+            null);
     assertFalse(patch.isPatchable(mockStudy));
   }
 
@@ -71,7 +77,8 @@ class StudyPatchTest extends AbstractTestHelper {
   void testIsPatchableName() {
     Study study = mockStudy();
     StudyPatch patch =
-        new StudyPatch("Name", null, null, null, null, null, null, null, null, null, null, null);
+        new StudyPatch(
+            "Name", null, null, null, null, null, null, null, null, null, null, null, null, null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -80,7 +87,20 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
-            null, StudyType.ANALYTICAL, null, null, null, null, null, null, null, null, null, null);
+            null,
+            StudyType.ANALYTICAL,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -89,7 +109,20 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
-            null, null, "Description", null, null, null, null, null, null, null, null, null);
+            null,
+            null,
+            "Description",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -109,6 +142,8 @@ class StudyPatchTest extends AbstractTestHelper {
             null,
             null,
             null,
+            null,
+            null,
             null);
     assertTrue(patch.isPatchable(study));
   }
@@ -118,7 +153,20 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, "New Phenotype", null, null, null, null, null, null, null);
+            null,
+            null,
+            null,
+            null,
+            "New Phenotype",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -127,7 +175,20 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, null, "New Species", null, null, null, null, null, null);
+            null,
+            null,
+            null,
+            null,
+            null,
+            "New Species",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -136,7 +197,20 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, null, null, "New PI Name", null, null, null, null, null);
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "New PI Name",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -145,7 +219,20 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, null, null, null, "New PI Email", null, null, null, null);
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "New PI Email",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -165,6 +252,8 @@ class StudyPatchTest extends AbstractTestHelper {
             List.of("new_email1", "new_email2"),
             null,
             null,
+            null,
+            null,
             null);
     assertTrue(patch.isPatchable(study));
   }
@@ -174,7 +263,20 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, null, null, null, null, null, "New Date", null, null);
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "New Date",
+            null,
+            null,
+            null,
+            null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -183,7 +285,20 @@ class StudyPatchTest extends AbstractTestHelper {
     Study study = mockStudy();
     StudyPatch patch =
         new StudyPatch(
-            null, null, null, null, null, null, null, null, null, null, "New Date", null);
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "New Date",
+            null,
+            null,
+            null);
     assertTrue(patch.isPatchable(study));
   }
 
@@ -191,8 +306,175 @@ class StudyPatchTest extends AbstractTestHelper {
   void testIsPatchablePublicVisibility() {
     Study study = mockStudy();
     StudyPatch patch =
-        new StudyPatch(null, null, null, null, null, null, null, null, null, null, null, false);
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, null, null, null, false, null, null);
     assertTrue(patch.isPatchable(study));
+  }
+
+  @Test
+  void testIsPatchableExternalIdentifier() {
+    Study study = mockStudy();
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, null, null, null, null, "SCP1671",
+            null);
+    assertTrue(patch.isPatchable(study));
+  }
+
+  @Test
+  void testIsPatchableExternalIdentifierType() {
+    Study study = mockStudy();
+    StudyPatch patch =
+        new StudyPatch(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "Single Cell Portal");
+    assertTrue(patch.isPatchable(study));
+  }
+
+  @Test
+  void testIsPatchableExternalIdentifierDifferentValue() {
+    Study study = mockStudy();
+    study.addProperty(new StudyProperty(EXTERNAL_IDENTIFIER, "OLD_ID", PropertyType.String));
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, null, null, null, null, "NEW_ID", null);
+    assertTrue(patch.isPatchable(study));
+  }
+
+  @Test
+  void testIsPatchableSameExternalIdentifier() {
+    Study study = mockStudy();
+    String existingValue = randomAlphabetic(10);
+    study.addProperty(new StudyProperty(EXTERNAL_IDENTIFIER, existingValue, PropertyType.String));
+    StudyPatch patch =
+        new StudyPatch(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            existingValue,
+            null);
+    assertFalse(patch.isPatchable(study));
+  }
+
+  @Test
+  void testIsPatchableExternalIdentifierTypeDifferentValue() {
+    Study study = mockStudy();
+    study.addProperty(new StudyProperty(EXTERNAL_IDENTIFIER_TYPE, "Old Type", PropertyType.String));
+    StudyPatch patch =
+        new StudyPatch(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "New Type");
+    assertTrue(patch.isPatchable(study));
+  }
+
+  @Test
+  void testIsPatchableSameExternalIdentifierType() {
+    Study study = mockStudy();
+    String existingValue = randomAlphabetic(10);
+    study.addProperty(
+        new StudyProperty(EXTERNAL_IDENTIFIER_TYPE, existingValue, PropertyType.String));
+    StudyPatch patch =
+        new StudyPatch(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            existingValue);
+    assertFalse(patch.isPatchable(study));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"", " ", "   "})
+  void testIsPatchableExternalIdentifierBlankIsFalseWhenPropertyAbsent(String blank) {
+    Study study = mockStudy();
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, null, null, null, null, blank, null);
+    assertFalse(patch.isPatchable(study));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"", " ", "   "})
+  void testIsPatchableExternalIdentifierBlankIsTrueWhenPropertyExists(String blank) {
+    Study study = mockStudy();
+    study.addProperty(new StudyProperty(EXTERNAL_IDENTIFIER, "SCP1671", PropertyType.String));
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, null, null, null, null, blank, null);
+    assertTrue(patch.isPatchable(study));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"", " ", "   "})
+  void testIsPatchableExternalIdentifierTypeBlankIsFalseWhenPropertyAbsent(String blank) {
+    Study study = mockStudy();
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, null, null, null, null, null, blank);
+    assertFalse(patch.isPatchable(study));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"", " ", "   "})
+  void testIsPatchableExternalIdentifierTypeBlankIsTrueWhenPropertyExists(String blank) {
+    Study study = mockStudy();
+    study.addProperty(
+        new StudyProperty(EXTERNAL_IDENTIFIER_TYPE, "Single Cell Portal", PropertyType.String));
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, null, null, null, null, null, blank);
+    assertTrue(patch.isPatchable(study));
+  }
+
+  @Test
+  void testFromJsonExternalIdentifierFields() {
+    String json =
+        "{\"externalIdentifier\": \"SCP1671\", \"externalIdentifierType\": \"Single Cell Portal\"}";
+    StudyPatch patch = StudyPatch.fromJson(json);
+    assertEquals("SCP1671", patch.externalIdentifier());
+    assertEquals("Single Cell Portal", patch.externalIdentifierType());
   }
 
   private Study mockStudy() {

@@ -211,6 +211,12 @@ properties:
     type: object
     title: DatasetRegistrationSchemaV1Assets
     description: Study Assets
+  externalIdentifier:
+    type: string
+    description: The identifier for this study in an external system (e.g. SCP1671 in Single Cell Portal)
+  externalIdentifierType:
+    type: string
+    description: The name of the external system the identifier belongs to (e.g. Single Cell Portal)
 required:
   - studyName
   - studyDescription

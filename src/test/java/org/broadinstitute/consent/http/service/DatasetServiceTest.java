@@ -1097,7 +1097,9 @@ class DatasetServiceTest extends AbstractTestHelper {
             null,
             null,
             null,
-            true);
+            true,
+            null,
+            null);
     when(datasetServiceDAO.patchStudy(study, user, patch)).thenReturn(study);
     when(studyDAO.findStudyById(study.getStudyId())).thenReturn(study);
     assertDoesNotThrow(() -> datasetService.patchStudy(study.getStudyId(), user, patch));
@@ -1534,7 +1536,8 @@ class DatasetServiceTest extends AbstractTestHelper {
     User user = new User();
     user.setUserId(1);
     StudyPatch patch =
-        new StudyPatch(null, null, null, null, null, null, null, null, null, null, null, null);
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 
     when(studyDAO.findStudyById(1)).thenReturn(study);
     when(datasetServiceDAO.patchStudy(any(), any(), any()))

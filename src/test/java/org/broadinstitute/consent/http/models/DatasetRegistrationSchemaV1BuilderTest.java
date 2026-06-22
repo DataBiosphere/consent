@@ -18,6 +18,8 @@ import static org.broadinstitute.consent.http.models.dataset_registration_v1.bui
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dbGaPPhsID;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.dbGaPStudyRegistrationName;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.embargoReleaseDate;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.externalIdentifier;
+import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.externalIdentifierType;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.fileTypes;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.generalResearchUse;
 import static org.broadinstitute.consent.http.models.dataset_registration_v1.builder.DatasetRegistrationSchemaV1Builder.multiCenterStudy;
@@ -126,6 +128,8 @@ class DatasetRegistrationSchemaV1BuilderTest {
     assertNotNull(schemaV1.getAlternativeDataSharingPlanTargetDeliveryDate());
     assertNotNull(schemaV1.getAlternativeDataSharingPlanTargetPublicReleaseDate());
     assertNotNull(schemaV1.getAlternativeDataSharingPlanAccessManagement());
+    assertNotNull(schemaV1.getExternalIdentifier());
+    assertNotNull(schemaV1.getExternalIdentifierType());
   }
 
   @Test
@@ -364,6 +368,12 @@ class DatasetRegistrationSchemaV1BuilderTest {
             PropertyType.String));
     study.addProperty(
         createStudyProperty(throughBioId, study.getStudyId(), randomString(), PropertyType.String));
+    study.addProperty(
+        createStudyProperty(
+            externalIdentifier, study.getStudyId(), randomString(), PropertyType.String));
+    study.addProperty(
+        createStudyProperty(
+            externalIdentifierType, study.getStudyId(), randomString(), PropertyType.String));
   }
 
   private String randomString() {

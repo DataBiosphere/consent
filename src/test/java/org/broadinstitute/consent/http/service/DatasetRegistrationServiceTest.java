@@ -307,6 +307,9 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
         studyProps,
         "assets",
         PropertyType.coerceToJson(GsonUtil.getInstance().toJson(schema.getAssets())));
+    assertContainsStudyProperty(studyProps, "externalIdentifier", schema.getExternalIdentifier());
+    assertContainsStudyProperty(
+        studyProps, "externalIdentifierType", schema.getExternalIdentifierType());
 
     List<DatasetProperty> datasetProps = inserts.getFirst().props();
     assertContainsDatasetProperty(
@@ -1347,6 +1350,8 @@ class DatasetRegistrationServiceTest extends AbstractTestHelper {
     consentGroup.setDataLocation(ConsentGroup.DataLocation.TDR_LOCATION);
     consentGroup.setDataAccessCommitteeId(new Random().nextInt());
     schemaV1.setAssets(Map.of("key", List.of("value1", "value2")));
+    schemaV1.setExternalIdentifier(randomAlphabetic(10));
+    schemaV1.setExternalIdentifierType(randomAlphabetic(10));
     schemaV1.setConsentGroups(List.of(consentGroup));
     return schemaV1;
   }
