@@ -425,6 +425,49 @@ class StudyPatchTest extends AbstractTestHelper {
     assertFalse(patch.isPatchable(study));
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"", " ", "   "})
+  void testIsPatchableExternalIdentifierBlankIsFalseWhenPropertyAbsent(String blank) {
+    Study study = mockStudy();
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, null, null, null, null, blank, null);
+    assertFalse(patch.isPatchable(study));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"", " ", "   "})
+  void testIsPatchableExternalIdentifierBlankIsTrueWhenPropertyExists(String blank) {
+    Study study = mockStudy();
+    study.addProperty(new StudyProperty(EXTERNAL_IDENTIFIER, "SCP1671", PropertyType.String));
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, null, null, null, null, blank, null);
+    assertTrue(patch.isPatchable(study));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"", " ", "   "})
+  void testIsPatchableExternalIdentifierTypeBlankIsFalseWhenPropertyAbsent(String blank) {
+    Study study = mockStudy();
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, null, null, null, null, null, blank);
+    assertFalse(patch.isPatchable(study));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"", " ", "   "})
+  void testIsPatchableExternalIdentifierTypeBlankIsTrueWhenPropertyExists(String blank) {
+    Study study = mockStudy();
+    study.addProperty(
+        new StudyProperty(EXTERNAL_IDENTIFIER_TYPE, "Single Cell Portal", PropertyType.String));
+    StudyPatch patch =
+        new StudyPatch(
+            null, null, null, null, null, null, null, null, null, null, null, null, null, blank);
+    assertTrue(patch.isPatchable(study));
+  }
+
   @Test
   void testFromJsonExternalIdentifierFields() {
     String json =

@@ -10,7 +10,9 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.consent.http.models.dataset_registration_v1.DatasetRegistrationSchemaV1.StudyType;
@@ -140,27 +142,11 @@ public record StudyPatch(
   }
 
   private boolean checkPhenotypeIndication(Study study) {
-    Optional<StudyProperty> phenoProp =
-        study.getProperties().stream()
-            .filter(p -> p.getKey().equals(PHENOTYPE_INDICATION))
-            .findFirst();
-    if (phenotypeIndication() != null) {
-      return phenoProp
-          .map(studyProperty -> !phenotypeIndication().equals(studyProperty.getValue()))
-          .orElse(true);
-    }
-    return false;
+    return checkStringProperty(study, PHENOTYPE_INDICATION, phenotypeIndication());
   }
 
   private boolean checkSpecies(Study study) {
-    Optional<StudyProperty> speciesProp =
-        study.getProperties().stream().filter(p -> p.getKey().equals(SPECIES_KEY)).findFirst();
-    if (species() != null) {
-      return speciesProp
-          .map(studyProperty -> !species().equals(studyProperty.getValue()))
-          .orElse(true);
-    }
-    return false;
+    return checkStringProperty(study, SPECIES_KEY, species());
   }
 
   private boolean checkPiName(Study study) {
@@ -191,35 +177,17 @@ public record StudyPatch(
   }
 
   private boolean checkTargetDate(Study study) {
-    Optional<StudyProperty> targetDateProp =
-        study.getProperties().stream()
-            .filter(p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE))
-            .findFirst();
-    if (alternativeDataSharingPlanTargetDeliveryDate() != null) {
-      return targetDateProp
-          .map(
-              studyProperty ->
-                  !alternativeDataSharingPlanTargetDeliveryDate().equals(studyProperty.getValue()))
-          .orElse(true);
-    }
-    return false;
+    return checkStringProperty(
+        study,
+        ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE,
+        alternativeDataSharingPlanTargetDeliveryDate());
   }
 
   private boolean checkTargetReleaseDate(Study study) {
-    Optional<StudyProperty> targetReleaseProp =
-        study.getProperties().stream()
-            .filter(
-                p -> p.getKey().equals(ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE))
-            .findFirst();
-    if (alternativeDataSharingPlanTargetPublicReleaseDate() != null) {
-      return targetReleaseProp
-          .map(
-              studyProperty ->
-                  !alternativeDataSharingPlanTargetPublicReleaseDate()
-                      .equals(studyProperty.getValue()))
-          .orElse(true);
-    }
-    return false;
+    return checkStringProperty(
+        study,
+        ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE,
+        alternativeDataSharingPlanTargetPublicReleaseDate());
   }
 
   private boolean checkPublicVisibility(Study study) {
@@ -227,26 +195,36 @@ public record StudyPatch(
   }
 
   private boolean checkExternalIdentifier(Study study) {
-    Optional<StudyProperty> prop =
-        study.getProperties().stream()
-            .filter(p -> p.getKey().equals(EXTERNAL_IDENTIFIER))
-            .findFirst();
-    if (externalIdentifier() != null) {
-      return prop.map(studyProperty -> !externalIdentifier().equals(studyProperty.getValue()))
-          .orElse(true);
-    }
-    return false;
+    return checkStringProperty(study, EXTERNAL_IDENTIFIER, externalIdentifier());
   }
 
   private boolean checkExternalIdentifierType(Study study) {
+    return checkStringProperty(study, EXTERNAL_IDENTIFIER_TYPE, externalIdentifierType());
+  }
+
+  // null=no-op, blank=delete (patchable if property exists), non-blank=upsert
+  private boolean checkStringProperty(Study study, String key, String patchValue) {
+    if (patchValue == null) return false;
     Optional<StudyProperty> prop =
-        study.getProperties().stream()
-            .filter(p -> p.getKey().equals(EXTERNAL_IDENTIFIER_TYPE))
-            .findFirst();
-    if (externalIdentifierType() != null) {
-      return prop.map(studyProperty -> !externalIdentifierType().equals(studyProperty.getValue()))
-          .orElse(true);
-    }
-    return false;
+        study.getProperties().stream().filter(p -> p.getKey().equals(key)).findFirst();
+    if (patchValue.isBlank()) return prop.isPresent();
+    return prop.map(p -> !patchValue.equals(p.getValue())).orElse(true);
+  }
+
+  // Returns all optional string-typed study properties from this patch (null values included).
+  // null=no-op, blank=delete, non-blank=upsert
+  public Map<String, String> stringPatchProps() {
+    Map<String, String> props = new HashMap<>();
+    props.put(PHENOTYPE_INDICATION, phenotypeIndication());
+    props.put(SPECIES_KEY, species());
+    props.put(
+        ALTERNATIVE_DATA_SHARING_PLAN_TARGET_DELIVERY_DATE,
+        alternativeDataSharingPlanTargetDeliveryDate());
+    props.put(
+        ALTERNATIVE_DATA_SHARING_PLAN_TARGET_PUBLIC_RELEASE_DATE,
+        alternativeDataSharingPlanTargetPublicReleaseDate());
+    props.put(EXTERNAL_IDENTIFIER, externalIdentifier());
+    props.put(EXTERNAL_IDENTIFIER_TYPE, externalIdentifierType());
+    return props;
   }
 }
