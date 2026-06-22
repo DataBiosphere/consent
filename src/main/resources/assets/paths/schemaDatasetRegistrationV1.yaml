@@ -1,5 +1,6 @@
 get:
   summary: Dataset Registration Schema V1
+  deprecated: true
   description: Dataset Registration Schema V1
   operationId: schemasDatasetRegistrationV1Get
   tags:
