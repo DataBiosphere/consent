@@ -556,14 +556,14 @@
     </dependency>
 
     <!--
-     See
-     https://broadworkbench.atlassian.net/browse/DCJ-274
-     org.bouncycastle:bcprov-jdk18on:jar:1.76 is vulnerable
+     bc-fips 2.x is the FIPS 140-3 targeted Bouncy Castle provider.
+     It replaces bcprov-jdk18on and is registered as the primary JCE provider
+     at application startup to enforce FIPS 140-3 compliant cryptography.
     -->
     <dependency>
       <groupId>org.bouncycastle</groupId>
-      <artifactId>bcprov-jdk18on</artifactId>
-      <version>1.84</version>
+      <artifactId>bc-fips</artifactId>
+      <version>2.0.0</version>
     </dependency>
 
     <dependency>
@@ -805,6 +805,17 @@
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
       <version>2.69.0</version>
+      <exclusions>
+        <!--
+         Conscrypt is an OpenSSL-backed TLS provider that bypasses the JVM's JCE provider
+         stack, including bc-fips. Excluding it forces GCS to fall back to the JVM's
+         default SSLContext, which uses bc-fips for FIPS 140-3 compliant TLS.
+        -->
+        <exclusion>
+          <groupId>org.conscrypt</groupId>
+          <artifactId>conscrypt-openjdk-uber</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>

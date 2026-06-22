@@ -17,6 +17,7 @@ import io.dropwizard.jdbi3.bundles.JdbiExceptionsBundle;
 import io.sentry.Sentry;
 import io.sentry.SentryLevel;
 import java.lang.reflect.Field;
+import java.security.Security;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -36,6 +37,7 @@ import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.ui.LoggerUIService;
 import liquibase.util.SmartMap;
 import org.apache.commons.lang3.StringUtils;
+import org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider;
 import org.broadinstitute.consent.http.authentication.AuthorizationHelper;
 import org.broadinstitute.consent.http.authentication.DuosUserAuthenticator;
 import org.broadinstitute.consent.http.authentication.OAuthAuthenticator;
@@ -104,6 +106,11 @@ public class ConsentApplication extends Application<ConsentConfiguration> {
   private static final Logger LOGGER = LoggerFactory.getLogger("ConsentApplication");
 
   public static void main(String[] args) throws Exception {
+    // Register the FIPS 140-3 targeted Bouncy Castle provider as the primary JCE provider.
+    // approved_only restricts all BC operations to FIPS-approved algorithms only.
+    System.setProperty("org.bouncycastle.fips.approved_only", "true");
+    Security.insertProviderAt(new BouncyCastleFipsProvider(), 1);
+
     LOGGER.info("Starting Consent Application");
     try {
       String dsn = System.getProperties().getProperty("sentry.dsn");

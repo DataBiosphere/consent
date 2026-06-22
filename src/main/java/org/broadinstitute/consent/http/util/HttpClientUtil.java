@@ -29,7 +29,10 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.config.TlsConfig;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.core5.http.ssl.TLS;
 import org.broadinstitute.consent.http.configurations.ServicesConfiguration;
 import org.broadinstitute.consent.http.exceptions.ConsentConflictException;
 import org.broadinstitute.consent.http.models.AuthUser;
@@ -44,9 +47,29 @@ public class HttpClientUtil implements ConsentLogger {
 
   private final HttpClient httpClient;
 
+  // FIPS 140-3 approved cipher suites — TLS 1.3 suites first, then TLS 1.2 GCM suites.
+  private static final String[] FIPS_CIPHER_SUITES = {
+    "TLS_AES_256_GCM_SHA384",
+    "TLS_AES_128_GCM_SHA256",
+    "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+    "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+    "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384",
+    "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256"
+  };
+
   public HttpClientUtil(ServicesConfiguration configuration) {
     this.configuration = configuration;
-    httpClient = HttpClients.createDefault();
+    httpClient =
+        HttpClients.custom()
+            .setConnectionManager(
+                PoolingHttpClientConnectionManagerBuilder.create()
+                    .setDefaultTlsConfig(
+                        TlsConfig.custom()
+                            .setSupportedProtocols(TLS.V_1_2, TLS.V_1_3)
+                            .setSupportedCipherSuites(FIPS_CIPHER_SUITES)
+                            .build())
+                    .build())
+            .build();
     CacheLoader<URI, SimpleResponse> loader =
         new CacheLoader<>() {
           @Override
